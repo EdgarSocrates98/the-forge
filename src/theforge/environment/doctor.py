@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from theforge.errors import PersistenceError, UsageError
 from theforge.meta import VERSION
 from theforge.protocol import SubprocessTransport, TransportFactory
 from theforge.registry import Registry, check_health
@@ -38,7 +39,7 @@ def _writable(directory: Path) -> bool:
     try:
         with tempfile.NamedTemporaryFile(dir=directory):
             return True
-    except OSError:
+    except Exception:
         return False
 
 
@@ -63,7 +64,14 @@ def run_doctor(
     else:
         checks.append(Check(name="workspace", status="ok" if _writable(forge_dir) else "fail",
                             detail=str(forge_dir)))
-    for record in registry.records():
+    try:
+        records = registry.records(persist=False)
+    except (UsageError, PersistenceError) as exc:
+        checks.append(Check(name="providers", status="fail", detail=str(exc)))
+        records = []
+    for warning in registry.warnings:
+        checks.append(Check(name="registry", status="warn", detail=warning))
+    for record in records:
         health = check_health(record, transport_factory=transport_factory)
         healthy = health.status in ("ok", "degraded")
         status: Literal["ok", "warn", "fail"] = "ok"

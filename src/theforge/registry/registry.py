@@ -64,13 +64,14 @@ class Registry:
             self._write_cache(record)
         return records
 
-    def records(self) -> list[RegistryRecord]:
+    def records(self, *, persist: bool = True) -> list[RegistryRecord]:
         out: list[RegistryRecord] = []
         for entry in self.entries():
             record = self._read_cache(entry)
             if record is None:
                 record = self._describe(entry)
-                self._write_cache(record)
+                if persist:
+                    self._write_cache(record)
             out.append(record)
         return out
 

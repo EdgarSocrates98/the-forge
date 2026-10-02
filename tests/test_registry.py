@@ -207,3 +207,10 @@ def test_refresh_removes_stale_cache(tmp_path: Path) -> None:
     records = {r.entry.id: r for r in Registry(forge).refresh()}
     assert records["fixture-spark"].state == "unreachable"
     assert not cache.exists()
+
+
+def test_records_persist_false_leaves_no_cache(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [SPARK_ENTRY])
+    records = Registry(forge).records(persist=False)
+    assert all(r.state == "ready" for r in records)
+    assert not list((forge / "registry").glob("*.json"))
