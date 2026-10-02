@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "claim": {
+      "type": "string"
+    },
+    "epistemic": {
+      "enum": [
+        "confirmed",
+        "observed",
+        "inferred",
+        "proposed",
+        "unresolved"
+      ]
+    },
+    "hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "location": {
+      "anyOf": [
+        {
+          "properties": {
+            "line": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "subject": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "epistemic",
+    "subject",
+    "claim",
+    "producer"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

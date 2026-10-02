@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "theforge"
+version = "0.1.0"
+description = "Local-first control plane that discovers, routes and governs specialist Forges."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "hypothesis>=6.100", "jsonschema>=4.21", "ruff>=0.6", "mypy>=1.10"]
+
+[project.scripts]
+theforge = "theforge.cli.main:main"
+forge = "theforge.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/theforge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -m 'not slow' --basetemp=.pytest_tmp"
+markers = ["slow: builds packages or needs network (fresh install gate)"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+files = ["src"]
