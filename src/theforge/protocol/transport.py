@@ -112,33 +112,46 @@ class SubprocessTransport:
                 if room > 0:
                     err.extend(chunk[:room])
 
+        def feed_in(stream: IO[bytes]) -> None:
+            try:
+                stream.write(stdin_bytes)
+                stream.close()
+            except OSError:
+                pass
+
         threads = [
             threading.Thread(target=pump_out, args=(proc.stdout,), daemon=True),
             threading.Thread(target=pump_err, args=(proc.stderr,), daemon=True),
+            threading.Thread(target=feed_in, args=(proc.stdin,), daemon=True),
         ]
-        for thread in threads:
-            thread.start()
         try:
-            proc.stdin.write(stdin_bytes)
-            proc.stdin.close()
-        except OSError:
-            pass
-        try:
-            returncode = proc.wait(timeout=timeout)
-        except subprocess.TimeoutExpired as exc:
-            proc.kill()
-            proc.wait()
+            for thread in threads:
+                thread.start()
+            try:
+                returncode = proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired as exc:
+                proc.kill()
+                proc.wait()
+                for thread in threads:
+                    thread.join(timeout=5)
+                raise TransportError(
+                    "FORGE-PROTO-TIMEOUT", f"{op}: no response within {timeout:g}s") from exc
             for thread in threads:
                 thread.join(timeout=5)
-            raise TransportError("FORGE-PROTO-TIMEOUT", f"{op}: no response within {timeout:g}s") \
-                from exc
-        for thread in threads:
-            thread.join(timeout=5)
-        if oversize.is_set():
-            raise TransportError(
-                "FORGE-PROTO-OVERSIZE", f"{op}: stdout exceeded {self.max_stdout} bytes")
-        if returncode != 0:
-            tail = redact_text(err.decode("utf-8", errors="replace").strip()[-500:])
-            raise TransportError(
-                "FORGE-PROTO-EXIT", f"{op}: exit code {returncode}; stderr: {tail}")
-        return bytes(out)
+            if oversize.is_set():
+                raise TransportError(
+                    "FORGE-PROTO-OVERSIZE", f"{op}: stdout exceeded {self.max_stdout} bytes")
+            if returncode != 0:
+                tail = redact_text(err.decode("utf-8", errors="replace").strip())[-500:]
+                raise TransportError(
+                    "FORGE-PROTO-EXIT", f"{op}: exit code {returncode}; stderr: {tail}")
+            return bytes(out)
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+            proc.wait()
+            for pipe in (proc.stdin, proc.stdout, proc.stderr):
+                try:
+                    pipe.close()
+                except OSError:
+                    pass

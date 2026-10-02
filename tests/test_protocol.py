@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,15 @@ def test_transport_failures(mode: str, code: str) -> None:
 
 def test_timeout() -> None:
     assert _failure("timeout", timeout=1).code == "FORGE-PROTO-TIMEOUT"
+
+
+def test_unread_large_stdin_is_bounded_by_timeout() -> None:
+    start = time.monotonic()
+    with pytest.raises(TransportError) as info:
+        SubprocessTransport(bad_argv("no-read")).call(
+            "execute", {"blob": "x" * 2_000_000}, timeout=2)
+    assert info.value.code == "FORGE-PROTO-TIMEOUT"
+    assert time.monotonic() - start < 15
 
 
 def test_crash_stderr_is_redacted() -> None:

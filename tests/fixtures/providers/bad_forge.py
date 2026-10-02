@@ -19,6 +19,9 @@ def main() -> int:
     mode, op = sys.argv[1], sys.argv[-1]
     pid = sys.argv[2] if len(sys.argv) > 3 else "bad-forge"
     producer = {"id": pid, "version": "0.0.1"}
+    if mode == "no-read" and op == "execute":
+        time.sleep(30)
+        return 0
     raw = sys.stdin.read()
     try:
         rid = json.loads(raw).get("request_id", "unknown")
