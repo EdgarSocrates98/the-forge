@@ -2,12 +2,15 @@ import pytest
 
 from theforge.contracts import (
     Confidence,
+    ContextPack,
     ContractError,
+    ExecutionReceipt,
     ExecutionResult,
     ForgeManifest,
     Producer,
     Response,
     RoutingDecision,
+    TaskSpec,
     from_dict,
 )
 
@@ -103,3 +106,45 @@ def test_evidence_epistemic_is_validated() -> None:
     data = {"producer": P, "created_at": "t", "status": "ok", "evidence": [evidence]}
     with pytest.raises(ContractError, match="expected one of"):
         from_dict(ExecutionResult, data)
+
+
+_RC = {"id": "r", "version": "1", "trust": "local"}
+MINIMAL: dict[type, dict[str, object]] = {
+    TaskSpec: {"producer": P, "created_at": "t", "id": "i", "intent": "x", "workspace_root": "."},
+    RoutingDecision: {
+        "producer": P, "created_at": "t", "status": "no_route", "task_id": "t",
+        "reason": "r", "confidence": {"level": "low"},
+    },
+    ContextPack: {
+        "producer": P, "created_at": "t", "status": "complete", "task_id": "t",
+        "provider_id": "p", "root": ".", "budget_bytes": 1,
+    },
+    ExecutionResult: {"producer": P, "created_at": "t", "status": "ok"},
+    ExecutionReceipt: {
+        "producer": P, "created_at": "t", "status": "ok", "run_id": "r", "forge_version": "1",
+        "inputs": {"task_sha256": "a"}, "started_at": "t", "finished_at": "t",
+    },
+}
+
+
+@pytest.mark.parametrize("cls", list(MINIMAL))
+@pytest.mark.parametrize("schema", ["other/v1", "theforge/X/v2"])
+def test_schema_is_pinned(cls: type, schema: str) -> None:
+    from_dict(cls, MINIMAL[cls])
+    with pytest.raises(ContractError, match="unsupported schema"):
+        from_dict(cls, {**MINIMAL[cls], "schema": schema})
+
+
+@pytest.mark.parametrize(("status", "truncated"), [("complete", True), ("truncated", False)])
+def test_context_pack_truncated_matches_status(status: str, truncated: bool) -> None:
+    data = {**MINIMAL[ContextPack], "status": status, "truncated": truncated}
+    with pytest.raises(ContractError, match="truncated flag does not match status"):
+        from_dict(ContextPack, data)
+
+
+@pytest.mark.parametrize("status", ["refused", "provider_failure"])
+def test_receipt_failure_status_requires_error(status: str) -> None:
+    with pytest.raises(ContractError, match="error is required"):
+        from_dict(ExecutionReceipt, {**MINIMAL[ExecutionReceipt], "status": status})
+    ok = {**MINIMAL[ExecutionReceipt], "status": status, "error": {"code": "c", "detail": "d"}}
+    assert from_dict(ExecutionReceipt, ok).error is not None

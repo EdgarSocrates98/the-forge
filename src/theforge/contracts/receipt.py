@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 
+from theforge.contracts.base import ContractError
 from theforge.contracts.types import ErrorInfo, Outcome, Producer, TrustLevel
 
 RECEIPT_SCHEMA = "theforge/ExecutionReceipt/v1"
@@ -38,3 +39,9 @@ class ExecutionReceipt:
     error: ErrorInfo | None = None
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != RECEIPT_SCHEMA:
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {RECEIPT_SCHEMA!r}")
+        if self.status in ("refused", "provider_failure") and self.error is None:
+            raise ContractError(f"receipt status {self.status!r}: error is required")

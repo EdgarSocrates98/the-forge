@@ -56,5 +56,7 @@ class RoutingDecision:
     unknowns: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        if self.schema != ROUTING_SCHEMA:
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {ROUTING_SCHEMA!r}")
         if self.status == "routed" and not self.selected:
             raise ContractError("routed decision requires a selection")

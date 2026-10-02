@@ -27,5 +27,7 @@ class TaskSpec:
     unknowns: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        if self.schema != TASK_SCHEMA:
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {TASK_SCHEMA!r}")
         if not self.intent.strip():
             raise ContractError("task intent must not be empty")

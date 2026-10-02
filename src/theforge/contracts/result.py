@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
+from theforge.contracts.base import ContractError
 from theforge.contracts.types import Epistemic, MetricKind, Producer, Severity
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
@@ -65,3 +66,7 @@ class ExecutionResult:
     metrics: Metrics = field(default_factory=Metrics)
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != RESULT_SCHEMA:
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {RESULT_SCHEMA!r}")
