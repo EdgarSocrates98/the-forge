@@ -1,9 +1,9 @@
 Run:         <RUN>  status: ok
 Task:        "avalie esse contrato OpenAPI" (targets: api; profile: balanced)
-Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[openapi,contrato]  rank=[2, 0, 1, 2]
+Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[contrato,openapi]  rank=[2]
 Selected:    fixture-api api.contract:review (primary)   pattern: route
-Reason:      fixture-api api.contract matched 2 signal types (file_globs:openapi.yaml; keywords:openapi,contrato)
-Confidence:  high   measured: ['file_globs:openapi.yaml', 'keywords:openapi,contrato']   unresolved: []
+Reason:      fixture-api api.contract matched 2 signal types (file_globs:openapi.yaml; keywords:contrato,openapi)
+Confidence:  high   measured: ['file_globs:openapi.yaml', 'keywords:contrato,openapi']   unresolved: []
 Fallbacks:   none
 Context:     1 files, 64/262144 bytes (complete); excluded 0
 Result:      ok: 1 findings, 1 evidence

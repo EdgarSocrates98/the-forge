@@ -44,7 +44,7 @@ def test_case_a_routes_to_spark() -> None:
     assert d.status == "routed"
     assert (d.selected[0].provider, d.selected[0].action) == ("spark-forge", "diagnose")
     assert d.confidence.level == "high"
-    assert d.candidates[0].rank_key == [3, 1, 1, 2]
+    assert d.candidates[0].rank_key == [3]  # presence of types only (cycle 2)
     assert d.confidence.measured_signals == [
         "dependencies:pyspark", "file_globs:*glue*.py", "keywords:glue,lento"]
 
@@ -52,7 +52,7 @@ def test_case_a_routes_to_spark() -> None:
 def test_case_b_routes_to_api() -> None:
     d = route(task("avalie esse contrato OpenAPI"), [SPARK, API], ["api/openapi.yaml"], set())
     assert d.status == "routed" and d.selected[0].provider == "api-forge"
-    assert d.candidates[0].rank_key == [2, 0, 1, 2]
+    assert d.candidates[0].rank_key == [2]
 
 
 def test_tie_is_ambiguous() -> None:
