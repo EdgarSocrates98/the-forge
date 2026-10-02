@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
   "properties": {
     "created_at": {
       "type": "string"
@@ -7,6 +8,7 @@
     "error": {
       "anyOf": [
         {
+          "additionalProperties": false,
           "properties": {
             "code": {
               "type": "string"
@@ -53,6 +55,7 @@
       "type": "string"
     },
     "inputs": {
+      "additionalProperties": false,
       "properties": {
         "context_sha256": {
           "anyOf": [
@@ -90,6 +93,7 @@
       "type": "array"
     },
     "producer": {
+      "additionalProperties": false,
       "properties": {
         "id": {
           "type": "string"
@@ -107,6 +111,7 @@
     "provider": {
       "anyOf": [
         {
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string"

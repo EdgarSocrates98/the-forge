@@ -28,42 +28,48 @@ EXPORTED: tuple[type[Any], ...] = (
     ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
     ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest,
 )
+# Core-only artifacts that never cross the Forge Protocol: their published schemas
+# reject unknown properties at every level. Provider-facing contracts stay open.
+CLOSED_SCHEMAS: tuple[type[Any], ...] = (RoutingDecision, ExecutionReceipt)
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 
 def json_schema(cls: type[Any]) -> dict[str, Any]:
-    return {"$schema": DIALECT, "title": cls.__name__, **_object(cls)}
+    return {"$schema": DIALECT, "title": cls.__name__, **_object(cls, cls in CLOSED_SCHEMAS)}
 
 
-def _object(cls: type[Any]) -> dict[str, Any]:
+def _object(cls: type[Any], closed: bool) -> dict[str, Any]:
     hints = get_type_hints(cls)
     properties: dict[str, Any] = {}
     required: list[str] = []
     for f in fields(cast(Any, cls)):
-        schema = _type(hints[f.name])
+        schema = _type(hints[f.name], closed)
         if "pattern" in f.metadata:
             schema = {**schema, "pattern": f.metadata["pattern"]}
         properties[f.name] = schema
         if f.default is MISSING and f.default_factory is MISSING:
             required.append(f.name)
-    return {"type": "object", "properties": properties, "required": required}
+    result: dict[str, Any] = {"type": "object", "properties": properties, "required": required}
+    if closed:
+        result["additionalProperties"] = False
+    return result
 
 
-def _type(tp: Any) -> dict[str, Any]:
+def _type(tp: Any, closed: bool) -> dict[str, Any]:
     if tp is Any:
         return {}
     origin = get_origin(tp)
     args = get_args(tp)
     if origin in (Union, types.UnionType):
-        return {"anyOf": [_type(a) for a in args]}
+        return {"anyOf": [_type(a, closed) for a in args]}
     if origin is Literal:
         return {"enum": list(args)}
     if origin is list:
-        return {"type": "array", "items": _type(args[0])}
+        return {"type": "array", "items": _type(args[0], closed)}
     if origin is dict:
-        return {"type": "object", "additionalProperties": _type(args[1])}
+        return {"type": "object", "additionalProperties": _type(args[1], closed)}
     if isinstance(tp, type) and is_dataclass(tp):
-        return _object(tp)
+        return _object(tp, closed)
     scalars: dict[Any, str] = {str: "string", int: "integer", float: "number",
                                bool: "boolean", type(None): "null"}
     if tp in scalars:

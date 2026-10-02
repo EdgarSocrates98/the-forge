@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import Producer
+from theforge.contracts.types import SHA256_RE, Producer, check_sha256
 
 CONTEXT_SCHEMA = "theforge/ContextPack/v1"
 
@@ -12,9 +12,12 @@ CONTEXT_SCHEMA = "theforge/ContextPack/v1"
 @dataclass(frozen=True, kw_only=True)
 class ContextFile:
     path: str
-    sha256: str
+    sha256: str = field(metadata={"pattern": SHA256_RE.pattern})
     bytes: int
     reason: str = ""
+
+    def __post_init__(self) -> None:
+        check_sha256(self.sha256, field="sha256")
 
 
 @dataclass(frozen=True, kw_only=True)

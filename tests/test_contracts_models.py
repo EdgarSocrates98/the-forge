@@ -1,7 +1,9 @@
 import pytest
 
 from theforge.contracts import (
+    Artifact,
     Confidence,
+    ContextFile,
     ContextPack,
     ContractError,
     ExecutionReceipt,
@@ -13,6 +15,7 @@ from theforge.contracts import (
     TaskSpec,
     from_dict,
 )
+from theforge.contracts.types import SHA256_RE, check_sha256
 
 P = {"id": "p", "version": "1"}
 CAP = {
@@ -148,3 +151,66 @@ def test_receipt_failure_status_requires_error(status: str) -> None:
         from_dict(ExecutionReceipt, {**MINIMAL[ExecutionReceipt], "status": status})
     ok = {**MINIMAL[ExecutionReceipt], "status": status, "error": {"code": "c", "detail": "d"}}
     assert from_dict(ExecutionReceipt, ok).error is not None
+
+
+GOOD_SHA = "a" * 64
+BAD_SHAS = ["abc", "A" * 64, "g" * 64, "a" * 63, "a" * 65, "", " " + "a" * 63]
+
+
+def _result_with(**extra: object) -> dict[str, object]:
+    return {"producer": P, "created_at": "t", "status": "ok", **extra}
+
+
+def _evidence(**extra: object) -> dict[str, object]:
+    return {"id": "e", "epistemic": "observed", "subject": "s", "claim": "c", "producer": P,
+            **extra}
+
+
+@pytest.mark.parametrize("bad", BAD_SHAS)
+def test_artifact_sha256_format_enforced(bad: str) -> None:
+    with pytest.raises(ContractError, match=r"\$\.artifacts\[0\].*sha256"):
+        from_dict(ExecutionResult, _result_with(artifacts=[{"path": "a", "sha256": bad}]))
+    with pytest.raises(ContractError, match="sha256"):
+        Artifact(path="a", sha256=bad)
+
+
+@pytest.mark.parametrize("bad", BAD_SHAS)
+def test_context_file_sha256_format_enforced(bad: str) -> None:
+    files = [{"path": "f", "sha256": bad, "bytes": 1}]
+    with pytest.raises(ContractError, match=r"\$\.files\[0\].*sha256"):
+        from_dict(ContextPack, {**MINIMAL[ContextPack], "files": files})
+    with pytest.raises(ContractError, match="sha256"):
+        ContextFile(path="f", sha256=bad, bytes=1)
+
+
+@pytest.mark.parametrize("bad", BAD_SHAS)
+def test_evidence_hash_format_enforced(bad: str) -> None:
+    with pytest.raises(ContractError, match=r"\$\.evidence\[0\].*hash"):
+        from_dict(ExecutionResult, _result_with(evidence=[_evidence(hash=bad)]))
+
+
+def test_valid_hashes_and_absent_evidence_hash_accepted() -> None:
+    r = from_dict(ExecutionResult, _result_with(
+        artifacts=[{"path": "a", "sha256": GOOD_SHA}],
+        evidence=[_evidence(), _evidence(id="e2", hash=GOOD_SHA)]))
+    assert r.artifacts[0].sha256 == GOOD_SHA
+    assert r.evidence[0].hash is None and r.evidence[1].hash == GOOD_SHA
+    pack = from_dict(ContextPack, {**MINIMAL[ContextPack],
+                                   "files": [{"path": "f", "sha256": GOOD_SHA, "bytes": 1}]})
+    assert pack.files[0].sha256 == GOOD_SHA
+
+
+def test_check_sha256_helper() -> None:
+    check_sha256(GOOD_SHA, field="x")
+    assert SHA256_RE.fullmatch(GOOD_SHA)
+    with pytest.raises(ContractError, match="x"):
+        check_sha256("ABC", field="x")
+
+
+@pytest.mark.parametrize("cls", list(MINIMAL))
+def test_strict_mode_rejects_unknown_nested_field(cls: type) -> None:
+    data = {**MINIMAL[cls], "producer": {**P, "future": 1}}
+    from_dict(cls, data)  # tolerant default keeps provider forward-compat
+    with pytest.raises(ContractError, match=r"\$\.producer\.future: unknown field"):
+        from_dict(cls, data, strict=True)
+    from_dict(cls, MINIMAL[cls], strict=True)

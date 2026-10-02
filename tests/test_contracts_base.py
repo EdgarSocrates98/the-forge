@@ -103,3 +103,38 @@ def test_literal_is_type_strict() -> None:
 def test_constructor_value_error_wrapped_with_path() -> None:
     with pytest.raises(ContractError, match=r"\$: bad"):
         from_dict(_Raises, {})
+
+
+def test_strict_rejects_unknown_top_level_field() -> None:
+    with pytest.raises(ContractError, match=r"\$\.future_field: unknown field"):
+        from_dict(Inner, {"name": "x", "future_field": 1}, strict=True)
+
+
+def test_strict_rejects_unknown_nested_field_with_path() -> None:
+    data = {"kind": "a", "inner": {"name": "x", "bogus": 1}}
+    assert from_dict(Outer, data) == Outer(kind="a", inner=Inner(name="x"))
+    with pytest.raises(ContractError, match=r"\$\.inner\.bogus: unknown field"):
+        from_dict(Outer, data, strict=True)
+
+
+def test_strict_rejects_unknown_field_inside_list_items() -> None:
+    data = {"kind": "a", "inner": {"name": "x"}, "items": [{"name": "y"}, {"name": "z", "q": 0}]}
+    with pytest.raises(ContractError, match=r"\$\.items\[1\]\.q: unknown field"):
+        from_dict(Outer, data, strict=True)
+
+
+def test_strict_accepts_known_fields_and_free_form_dicts() -> None:
+    obj = Outer(kind="b", inner=Inner(name="x"), items=[Inner(name="y", size=1)],
+                extra={"anything": {"goes": 1}})
+    assert from_dict(Outer, to_dict(obj), strict=True) == obj
+
+
+@dataclass(frozen=True, kw_only=True)
+class _OptionalNested:
+    inner: Inner | None = None
+
+
+def test_strict_applies_through_optional_union() -> None:
+    assert from_dict(_OptionalNested, {"inner": {"name": "x", "z": 1}}).inner == Inner(name="x")
+    with pytest.raises(ContractError, match="unknown field"):
+        from_dict(_OptionalNested, {"inner": {"name": "x", "z": 1}}, strict=True)
