@@ -78,4 +78,4 @@ class RunStore:
     def list_runs(self) -> list[str]:
         if not self.runs_dir.is_dir():
             return []
-        return sorted(p.name for p in self.runs_dir.iterdir() if RUN_ID.match(p.name))
+        return sorted(p.name for p in self.runs_dir.iterdir() if RUN_ID.fullmatch(p.name))
