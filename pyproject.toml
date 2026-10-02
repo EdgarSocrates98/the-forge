@@ -23,7 +23,7 @@ packages = ["src/theforge"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q -m 'not slow'"
+addopts = "-q -m 'not slow' --basetemp=.pytest_tmp"
 markers = ["slow: builds packages or needs network (fresh install gate)"]
 
 [tool.ruff]
