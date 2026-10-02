@@ -101,3 +101,7 @@ def test_resolve_inside_rejects_symlink_escape(tmp_path) -> None:
     except OSError:
         pytest.skip("symlinks not permitted on this host")
     assert resolve_inside(root, root / "link.txt") is None
+
+
+def test_resolve_inside_rejects_nul_byte(tmp_path) -> None:
+    assert resolve_inside(tmp_path, tmp_path / "a\x00b") is None

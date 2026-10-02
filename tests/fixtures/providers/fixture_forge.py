@@ -41,7 +41,12 @@ def main() -> int:
         cap = payload.get("capability")
         if cap not in {c["id"] for c in manifest["capabilities"]}:
             return reply("refused", error=err("FIXTURE-CAP-UNSUPPORTED", str(cap), "capability"))
-        files = [f["path"] for f in payload["context"]["files"]]
+        capability = next(c for c in manifest["capabilities"] if c["id"] == cap)
+        action = payload.get("action")
+        if action not in capability.get("actions", []):
+            return reply("refused", error=err("FIXTURE-ACTION-UNSUPPORTED", str(action),
+                                              "action"))
+        files = [f["path"] for f in (payload.get("context") or {}).get("files") or []]
         return reply("ok", {
             "schema": "theforge/ExecutionResult/v1", "producer": producer,
             "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",

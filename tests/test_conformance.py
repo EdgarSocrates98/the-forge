@@ -95,6 +95,33 @@ def test_unsupported_capability_is_refused(argv: list[str], tmp_path: Path) -> N
     assert resp.error is not None and resp.error.code
 
 
+def test_unsupported_action_is_refused(argv: list[str], tmp_path: Path) -> None:
+    cap = manifest_of(argv).capabilities[0]
+    body = request("execute", execute_payload(tmp_path, cap.id, "zzz-not-an-action"))
+    code, data = raw(argv, "execute", body)
+    resp = from_dict(Response, data)
+    assert code == 0 and resp.status == "refused"
+    assert resp.error is not None and resp.error.code
+
+
+def test_execute_with_incompatible_protocol_is_refused(argv: list[str], tmp_path: Path) -> None:
+    cap = manifest_of(argv).capabilities[0]
+    body = request("execute", execute_payload(tmp_path, cap.id, cap.default_action),
+                   protocol="forge/v9")
+    code, data = raw(argv, "execute", body)
+    assert code == 0 and from_dict(Response, data).status == "refused"
+
+
+def test_execute_finding_evidence_ids_resolve(argv: list[str], tmp_path: Path) -> None:
+    for cap in manifest_of(argv).capabilities:
+        body = request("execute", execute_payload(tmp_path, cap.id, cap.default_action))
+        _, data = raw(argv, "execute", body)
+        result = from_dict(ExecutionResult, from_dict(Response, data).payload)
+        known = {e.id for e in result.evidence}
+        for finding in result.findings:
+            assert set(finding.evidence_ids) <= known
+
+
 def test_invalid_request_yields_error_response(argv: list[str]) -> None:
     code, data = raw(argv, "execute", b"{not json")
     resp = from_dict(Response, data)

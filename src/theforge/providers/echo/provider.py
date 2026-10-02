@@ -27,10 +27,11 @@ from theforge.contracts import (
 from theforge.contracts.canonical import sha256_hex, utc_now
 from theforge.contracts.types import Epistemic, ResponseStatus
 from theforge.meta import VERSION
-from theforge.security.paths import resolve_inside
+from theforge.security.paths import is_secret_name, resolve_inside
 
 PRODUCER = Producer(id="echo-forge", version=VERSION)
 DOC_GLOBS = ["*.txt", "*.md"]
+MAX_READ_BYTES = 1024 * 1024
 UNLOCK_CAPABILITIES = "theforge capabilities list --provider echo-forge"
 
 MANIFEST = ForgeManifest(
@@ -92,7 +93,11 @@ def handle(op: str, raw: bytes) -> dict[str, Any]:
         report = HealthReport(status="ok", checks=[HealthCheck(name="echo", ok=True)])
         return _respond(request_id, "ok", payload=to_dict(report))
     if op == "execute":
-        return _execute(request_id, request.payload)
+        try:
+            return _execute(request_id, request.payload)
+        except Exception as exc:  # noqa: BLE001 - handle() must never crash
+            return _respond(request_id, "error", error=ErrorInfo(
+                code="ECHO-INTERNAL", detail=f"{type(exc).__name__}: {exc}"))
     return _respond(request_id, "refused", error=ErrorInfo(
         code="ECHO-OP-UNSUPPORTED", detail=f"op {op!r} not supported", field="op",
         unlock="ops: describe, health, execute"))
@@ -113,15 +118,24 @@ def _execute(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     root = Path(req.task.workspace_root)
     evidence: list[Evidence] = []
     for index, item in enumerate(req.context.files, start=1):
-        inside = resolve_inside(root, root / item.path)
+        secret = is_secret_name(Path(item.path).name)
+        inside = None if secret else resolve_inside(root, root / item.path)
         actual: str | None = None
+        too_big = False
         if inside is not None:
             try:
-                actual = sha256_hex(inside.read_bytes())
+                if inside.stat().st_size > MAX_READ_BYTES:
+                    too_big = True
+                else:
+                    actual = sha256_hex(inside.read_bytes())
             except OSError:
                 actual = None
         epistemic: Epistemic
-        if actual is None:
+        if secret:
+            epistemic, claim = "unresolved", "secret file not read"
+        elif too_big:
+            epistemic, claim = "unresolved", "file exceeds echo read limit"
+        elif actual is None:
             epistemic, claim = "unresolved", "file missing, unreadable or outside workspace root"
         elif capability.id == "demo.inspect":
             epistemic, claim = "observed", f"{item.bytes} bytes"
