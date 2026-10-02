@@ -1395,7 +1395,7 @@ def resolve_inside(root: Path, candidate: Path) -> Path | None:
 - [ ] **Step 4: Ver passar**
 
 Run: `$PY -m pytest tests/test_security.py`
-Expected: `20 passed` (ou `19 passed, 1 skipped` sem permissão de symlink)
+Expected: `21 passed` (ou `20 passed, 1 skipped` sem permissão de symlink)
 
 - [ ] **Step 5: Commit**
 
