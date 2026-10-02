@@ -29,6 +29,7 @@ from theforge.contracts import (
     to_dict,
 )
 from theforge.contracts.canonical import utc_now
+from theforge.contracts.codes import Codes
 from theforge.contracts.types import BudgetProfile, Outcome
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
@@ -106,12 +107,12 @@ class Forger:
             return self._run(trace, task, request)
         except UsageError as exc:
             self._finish(trace, self._placeholder(run_id, f"usage error: {exc}"), "no_route",
-                         error=ErrorInfo(code="FORGE-USAGE", detail=str(exc)))
+                         error=ErrorInfo(code=Codes.USAGE, detail=str(exc)))
             raise
         except PersistenceError:
             raise
         except Exception as exc:  # noqa: BLE001 - invariant: a persisted task always gets a receipt
-            error = ErrorInfo(code="FORGE-INTERNAL", detail=f"{type(exc).__name__}: {exc}")
+            error = ErrorInfo(code=Codes.INTERNAL, detail=f"{type(exc).__name__}: {exc}")
             decision = trace.decision or self._placeholder(
                 run_id, f"internal error: {error.detail}")
             return self._finish(trace, decision, "provider_failure", error=error)
@@ -160,17 +161,17 @@ class Forger:
 
         if response.status in ("refused", "error"):
             status: Outcome = "refused" if response.status == "refused" else "provider_failure"
-            error = response.error or ErrorInfo(code="FORGE-PROTO-SCHEMA",
+            error = response.error or ErrorInfo(code=Codes.PROTO_SCHEMA,
                                                 detail="error response without error body")
             return self._finish(trace, decision, status, error=error)
         try:
             result = from_dict(ExecutionResult, response.payload, "$.payload")
         except ContractError as exc:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code="FORGE-PROTO-SCHEMA", detail=f"execute: {exc}"))
+                code=Codes.PROTO_SCHEMA, detail=f"execute: {exc}"))
         if result.producer.id != record.entry.id:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code="FORGE-PROTO-PRODUCER",
+                code=Codes.PROTO_PRODUCER,
                 detail=f"result producer {result.producer.id!r} != provider {record.entry.id!r}"))
         result_status: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
         result = replace(result, status=result_status, metrics=Metrics(

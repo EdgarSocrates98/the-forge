@@ -18,6 +18,7 @@ from theforge.contracts import (
     to_dict,
 )
 from theforge.contracts.canonical import canonical_json
+from theforge.contracts.codes import Codes
 from theforge.security.env import safe_env
 from theforge.security.redact import redact_text
 
@@ -64,21 +65,21 @@ class SubprocessTransport:
         try:
             data = json.loads(stdout.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise TransportError("FORGE-PROTO-NOT-JSON", f"{op}: stdout is not JSON ({exc})") \
+            raise TransportError(Codes.PROTO_NOT_JSON, f"{op}: stdout is not JSON ({exc})") \
                 from exc
         try:
             response = from_dict(Response, data)
         except ContractError as exc:
-            raise TransportError("FORGE-PROTO-SCHEMA", f"{op}: {exc}") from exc
+            raise TransportError(Codes.PROTO_SCHEMA, f"{op}: {exc}") from exc
         if response.request_id != request.request_id:
             raise TransportError(
-                "FORGE-PROTO-MISMATCH",
+                Codes.PROTO_MISMATCH,
                 f"{op}: response request_id {response.request_id!r} "
                 f"!= {request.request_id!r}",
             )
         if check_protocol and response.protocol != self.protocol:
             raise TransportError(
-                "FORGE-PROTO-VERSION",
+                Codes.PROTO_VERSION,
                 f"{op}: response protocol {response.protocol!r} != {self.protocol!r}",
             )
         return response
@@ -90,11 +91,11 @@ class SubprocessTransport:
                 stderr=subprocess.PIPE, cwd=cwd, env=safe_env(), shell=False,
             )
         except OSError as exc:
-            raise TransportError("FORGE-PROTO-SPAWN", f"cannot start {self.argv[0]!r}: {exc}") \
+            raise TransportError(Codes.PROTO_SPAWN, f"cannot start {self.argv[0]!r}: {exc}") \
                 from exc
         if proc.stdin is None or proc.stdout is None or proc.stderr is None:
             proc.kill()
-            raise TransportError("FORGE-PROTO-SPAWN", "provider pipes unavailable")
+            raise TransportError(Codes.PROTO_SPAWN, "provider pipes unavailable")
         out = bytearray()
         err = bytearray()
         oversize = threading.Event()
@@ -136,16 +137,16 @@ class SubprocessTransport:
                 for thread in threads:
                     thread.join(timeout=5)
                 raise TransportError(
-                    "FORGE-PROTO-TIMEOUT", f"{op}: no response within {timeout:g}s") from exc
+                    Codes.PROTO_TIMEOUT, f"{op}: no response within {timeout:g}s") from exc
             for thread in threads:
                 thread.join(timeout=5)
             if oversize.is_set():
                 raise TransportError(
-                    "FORGE-PROTO-OVERSIZE", f"{op}: stdout exceeded {self.max_stdout} bytes")
+                    Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
             if returncode != 0:
                 tail = redact_text(err.decode("utf-8", errors="replace").strip())[-500:]
                 raise TransportError(
-                    "FORGE-PROTO-EXIT", f"{op}: exit code {returncode}; stderr: {tail}")
+                    Codes.PROTO_EXIT, f"{op}: exit code {returncode}; stderr: {tail}")
             return bytes(out)
         finally:
             if proc.poll() is None:
