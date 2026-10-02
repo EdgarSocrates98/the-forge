@@ -1,4 +1,4 @@
-"""Provider registry: sources, describe/refresh, cache and trust."""
+"""Provider registry: sources, describe/refresh, cache, trust and health."""
 
 from theforge.registry.config import (
     ProviderEntry,
@@ -7,7 +7,10 @@ from theforge.registry.config import (
     resolve_entries,
     user_config_dir,
 )
+from theforge.registry.health import HealthOutcome, check_health
+from theforge.registry.registry import Registry, RegistryRecord
 
 __all__ = [
-    "ProviderEntry", "builtin_entries", "load_entries", "resolve_entries", "user_config_dir",
+    "HealthOutcome", "ProviderEntry", "Registry", "RegistryRecord", "builtin_entries",
+    "check_health", "load_entries", "resolve_entries", "user_config_dir",
 ]
