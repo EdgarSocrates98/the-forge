@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from helpers import SPARK_ENTRY, bad_argv, bad_entry, write_providers
 
+from helpers import SPARK_ENTRY, bad_argv, bad_entry, write_providers
 from theforge.contracts import to_dict
 from theforge.contracts.canonical import sha256_of
 from theforge.errors import UsageError

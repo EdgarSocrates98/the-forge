@@ -69,7 +69,7 @@ class RunStore:
             return None
         try:
             loaded = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:  # JSONDecodeError and UnicodeDecodeError are ValueErrors
+        except (OSError, ValueError) as exc:  # JSON/Unicode decode errors are ValueErrors
             raise PersistenceError(f"cannot read {path}: {exc}") from exc
         if not isinstance(loaded, dict):
             raise PersistenceError(f"cannot read {path}: expected a JSON object")

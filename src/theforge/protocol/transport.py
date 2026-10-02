@@ -1,5 +1,6 @@
 """Subprocess transport for Forge Protocol v1: `<argv> <op>`, JSON over stdin/stdout."""
 
+import contextlib
 import json
 import subprocess
 import threading
@@ -151,7 +152,5 @@ class SubprocessTransport:
                 proc.kill()
             proc.wait()
             for pipe in (proc.stdin, proc.stdout, proc.stderr):
-                try:
+                with contextlib.suppress(OSError):
                     pipe.close()
-                except OSError:
-                    pass

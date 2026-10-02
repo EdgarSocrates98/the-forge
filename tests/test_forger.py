@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_a, case_b, make_workspace, write_file
 
+from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_a, case_b, make_workspace, write_file
 from theforge.contracts import (
     Capability,
     ErrorInfo,
