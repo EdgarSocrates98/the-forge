@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -87,3 +88,63 @@ def test_glob_matches() -> None:
     files = ["api/openapi.yaml", "jobs/orders_glue_job.py"]
     assert glob_matches(files, ["openapi.yaml", "*glue*.py", "*.scala"]) == \
         ["openapi.yaml", "*glue*.py"]
+
+
+def test_scan_junction_escape(tmp_path: Path) -> None:
+    if os.name != "nt":
+        pytest.skip("junctions are Windows-only")
+    root = tmp_path / "ws"
+    root.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "leak.txt").write_text("s")
+    link = root / "jct"
+    result = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(outside)],
+                            capture_output=True, check=False)
+    if result.returncode != 0 or not link.exists():
+        pytest.skip("cannot create junction on this host")
+    write_file(root, "ok.py")
+    scan = scan_workspace(root, ["."])
+    assert scan.files == ["ok.py"]
+    assert ExcludedFile(path="jct", reason="symlinked_dir") in scan.excluded
+    scan_targeted = scan_workspace(root, ["jct"])
+    assert scan_targeted.files == []
+
+
+def test_scan_symlink_to_secret(tmp_path: Path) -> None:
+    write_file(tmp_path, ".env", "A=1")
+    try:
+        os.symlink(tmp_path / ".env", tmp_path / "notes.txt")
+    except OSError:
+        pytest.skip("symlinks not permitted on this host")
+    scan = scan_workspace(tmp_path, ["."])
+    assert "notes.txt" not in scan.files
+    assert ExcludedFile(path="notes.txt", reason="secret") in scan.excluded
+
+
+def test_scan_max_files_is_global(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("theforge.context.scan.MAX_FILES", 2)
+    for rel in ("a/1.py", "a/2.py", "a/3.py", "b/1.py", "b/2.py"):
+        write_file(tmp_path, rel)
+    scan = scan_workspace(tmp_path, ["a", "b"])
+    assert len(scan.files) == 2
+    assert [e for e in scan.excluded if e.reason == "max_files_reached"] == [
+        ExcludedFile(path="*", reason="max_files_reached")]
+
+
+def test_requirements_skip_urls(tmp_path: Path) -> None:
+    write_file(tmp_path, "requirements.txt",
+               "https://example.com/pkg.whl\ngit+https://github.com/x/y.git\nrequests==2\n")
+    assert workspace_dependencies(tmp_path) == {"requests"}
+
+
+def test_dependency_file_symlink_outside_root(tmp_path: Path) -> None:
+    root = tmp_path / "ws"
+    root.mkdir()
+    outside = tmp_path / "evil.toml"
+    outside.write_text('[project]\ndependencies = ["leaked"]\n')
+    try:
+        os.symlink(outside, root / "pyproject.toml")
+    except OSError:
+        pytest.skip("symlinks not permitted on this host")
+    assert workspace_dependencies(root) == set()

@@ -22,6 +22,7 @@ def scan_workspace(root: Path, targets: Sequence[str]) -> WorkspaceScan:
     root_resolved = root.resolve()
     files: set[str] = set()
     excluded: dict[str, str] = {}
+    capped = False
     for target in list(targets) or ["."]:
         start = root_resolved / target
         inside = resolve_inside(root_resolved, start)
@@ -36,16 +37,24 @@ def scan_workspace(root: Path, targets: Sequence[str]) -> WorkspaceScan:
             for name in sorted(dirnames):
                 if name in IGNORED_DIRS:
                     continue
-                if os.path.islink(os.path.join(dirpath, name)):
-                    rel = (Path(dirpath) / name).relative_to(root_resolved).as_posix()
-                    excluded[rel] = "symlinked_dir"
+                child = Path(dirpath) / name
+                if not _is_plain_dir(root_resolved, Path(dirpath), child):
+                    excluded[child.relative_to(root_resolved).as_posix()] = "symlinked_dir"
                     continue
                 kept.append(name)
             dirnames[:] = kept
             for name in sorted(filenames):
                 if len(files) >= MAX_FILES:
+                    capped = True
                     break
                 _consider(root_resolved, Path(dirpath) / name, files, excluded)
+            if capped:
+                dirnames[:] = []
+                break
+        if capped:
+            break
+    if capped:
+        excluded["*"] = "max_files_reached"
     return WorkspaceScan(
         root=root_resolved,
         files=sorted(files),
@@ -53,11 +62,21 @@ def scan_workspace(root: Path, targets: Sequence[str]) -> WorkspaceScan:
     )
 
 
+def _is_plain_dir(root: Path, parent: Path, child: Path) -> bool:
+    """True only for a real directory inside root: not a symlink, junction or redirect."""
+    if resolve_inside(root, child) is None:
+        return False
+    if os.path.islink(child) or (hasattr(os.path, "isjunction") and os.path.isjunction(child)):
+        return False
+    return child.resolve() == parent.resolve() / child.name
+
+
 def _consider(root: Path, path: Path, files: set[str], excluded: dict[str, str]) -> None:
     rel = path.relative_to(root).as_posix()
-    if is_secret_name(path.name):
+    resolved = resolve_inside(root, path)
+    if is_secret_name(path.name) or (resolved is not None and is_secret_name(resolved.name)):
         excluded[rel] = "secret"
-    elif path.is_symlink() and resolve_inside(root, path) is None:
+    elif resolved is None:
         excluded[rel] = "outside_root"
     else:
         files.add(rel)

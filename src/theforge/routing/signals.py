@@ -7,6 +7,8 @@ import unicodedata
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from theforge.security.paths import resolve_inside
+
 _TOKEN = re.compile(r"\w+")
 _REQ_NAME = re.compile(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
 
@@ -31,27 +33,31 @@ def normalize_dep(name: str) -> str:
 
 
 def glob_matches(files: list[str], globs: list[str]) -> list[str]:
+    # PurePosixPath.match matches from the right, so "openapi.yaml" matches at any depth.
+    # Intended for simple provider globs, not full gitignore-style patterns.
     return [g for g in globs if any(PurePosixPath(f).match(g) for f in files)]
 
 
 def workspace_dependencies(root: Path) -> set[str]:
     names: set[str] = set()
-    names |= _pyproject_deps(root / "pyproject.toml")
+    names |= _pyproject_deps(root, root / "pyproject.toml")
     for req in sorted(root.glob("requirements*.txt")):
-        names |= _requirements_deps(req)
-    names |= _package_json_deps(root / "package.json")
+        names |= _requirements_deps(root, req)
+    names |= _package_json_deps(root, root / "package.json")
     return {normalize_dep(n) for n in names}
 
 
-def _read(path: Path) -> str | None:
+def _read(root: Path, path: Path) -> str | None:
+    if resolve_inside(root, path) is None:
+        return None
     try:
         return path.read_text(encoding="utf-8") if path.is_file() else None
     except (OSError, UnicodeDecodeError):
         return None
 
 
-def _pyproject_deps(path: Path) -> set[str]:
-    text = _read(path)
+def _pyproject_deps(root: Path, path: Path) -> set[str]:
+    text = _read(root, path)
     if text is None:
         return set()
     try:
@@ -72,22 +78,22 @@ def _pyproject_deps(path: Path) -> set[str]:
     return names
 
 
-def _requirements_deps(path: Path) -> set[str]:
-    text = _read(path)
+def _requirements_deps(root: Path, path: Path) -> set[str]:
+    text = _read(root, path)
     if text is None:
         return set()
     names: set[str] = set()
     for line in text.splitlines():
         stripped = line.strip()
-        if not stripped or stripped.startswith(("#", "-")):
+        if not stripped or stripped.startswith(("#", "-", "git+")) or "://" in stripped:
             continue
         if m := _REQ_NAME.match(stripped):
             names.add(m.group(1))
     return names
 
 
-def _package_json_deps(path: Path) -> set[str]:
-    text = _read(path)
+def _package_json_deps(root: Path, path: Path) -> set[str]:
+    text = _read(root, path)
     if text is None:
         return set()
     try:
