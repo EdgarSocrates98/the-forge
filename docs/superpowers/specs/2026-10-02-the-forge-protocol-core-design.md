@@ -189,6 +189,15 @@ Interface interna: `ProviderTransport.call(op, payload) -> Response`. `Subproces
 ### 7.4 CLI (ciclo 1)
 `init`, `doctor`, `status`, `registry list|show <id>|refresh`, `capabilities list|search <q>`, `providers health`, `ask "<texto>" [--capability id] [--action a] [--profile p] [--target path]... [--allow-unverified]`, `explain <run_id>`. Todos aceitam `--json` para saída máquina; default = texto humano.
 
+## Adendo — modelo de trust (decisão do usuário, 2026-10-02)
+
+Substitui o que for conflitante em §7.1:
+
+- Entradas do **projeto** (`.forge/config/providers.toml`) entram sempre como `unverified`; o campo `trust` do arquivo de projeto é ignorado (aviso emitido se presente e diferente de `unverified`).
+- Entradas do **usuário** (`providers.toml` no diretório de config do usuário) definem trust. Precedência por id: builtin > usuário > projeto. Entrada de projeto com id já definido pelo usuário é ignorada (aviso). Para confiar num provider declarado pelo projeto, o usuário copia a entrada para o arquivo dele.
+- Ids builtin (`echo-forge`) são reservados: usuário e projeto não podem redefinir (erro de uso).
+- Providers `unverified` **nunca são executados** — nem `describe` — salvo `--allow-unverified`. Aparecem no registry com estado `untrusted`.
+
 ## 8. Fluxo `ask` e routing
 
 ```text

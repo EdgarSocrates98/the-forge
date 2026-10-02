@@ -2535,6 +2535,35 @@ git commit -m "feat(registry): load provider entries from builtin, user and proj
 ---
 ### Task 9: Registry (describe, cache, trust) e health
 
+> **ADENDO OBRIGATÓRIO (prevalece sobre o texto abaixo) — modelo de trust decidido pelo usuário**
+> Já implementado antes desta task: `resolve_entries(forge_dir, user_dir=None, warnings=None)` força entradas de projeto a `unverified`; `tests/helpers.write_providers` grava por padrão no diretório de config do USUÁRIO (`THEFORGE_CONFIG_DIR`, isolado por teste). Mudanças nesta task:
+> 1. `RecordState` ganha `"untrusted"`.
+> 2. `Registry.__init__` ganha `allow_unverified: bool = False` (guarde em `self.allow_unverified`).
+> 3. `entries()` chama `resolve_entries(self.forge_dir, self.user_dir, self.warnings)`.
+> 4. Em `_describe`, logo após o check de `blocked`: se `entry.trust == "unverified" and not self.allow_unverified` → `return RegistryRecord(entry=entry, state="untrusted", error="provider is unverified and was not executed; trust it in your user providers.toml or pass --allow-unverified")`. Nada é spawnado.
+> 5. Testes: substitua `test_unverified_routable_only_with_opt_in` por:
+> ```python
+> def test_unverified_is_not_executed_without_opt_in(tmp_path: Path) -> None:
+>     entry = {"id": "u-forge", "argv": ["definitely-not-a-real-forge-binary"], "trust": "unverified"}
+>     record = Registry(make_forge(tmp_path, [entry])).get("u-forge")
+>     assert record.state == "untrusted" and not record.routable(allow_unverified=True)
+>
+>
+> def test_unverified_routable_only_with_opt_in(tmp_path: Path) -> None:
+>     forge = make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified")])
+>     record = Registry(forge, allow_unverified=True).get("bad-a")
+>     assert not record.routable() and record.routable(allow_unverified=True)
+>
+>
+> def test_project_file_cannot_grant_trust(tmp_path: Path) -> None:
+>     forge = tmp_path / ".forge"
+>     write_providers(forge, [bad_entry("ok", "bad-a", trust="trusted")], scope="project")
+>     registry = Registry(forge)
+>     assert registry.get("bad-a").state == "untrusted"
+>     assert any("bad-a" in w for w in registry.warnings)
+> ```
+> Contagem esperada de `tests/test_registry.py`: `16 passed`.
+
 **Files:**
 - Create: `src/theforge/registry/registry.py`, `src/theforge/registry/health.py`
 - Modify: `src/theforge/registry/__init__.py`
@@ -3896,6 +3925,15 @@ git commit -m "feat(runs): add redacting run store and .forge workspace layout"
 ---
 ### Task 14: The Forger (orquestrador)
 
+> **ADENDO OBRIGATÓRIO (prevalece sobre o texto abaixo) — modelo de trust**
+> `Registry` agora aceita `allow_unverified` e não executa providers `unverified` sem ele; `write_providers` grava no config do usuário. No `tests/test_forger.py`, troque o helper por:
+> ```python
+> def forger(root: Path, allow_unverified: bool = False, **kw: float) -> Forger:
+>     forge = root / ".forge"
+>     return Forger(root, Registry(forge, allow_unverified=allow_unverified), RunStore(forge), **kw)
+> ```
+> e em `test_unverified_requires_opt_in` use `forger(tmp_path, allow_unverified=True).ask(opted)` na segunda chamada. O orquestrador não muda.
+
 **Files:**
 - Create: `src/theforge/forger/__init__.py`, `src/theforge/forger/orchestrator.py`
 - Test: `tests/test_forger.py`
@@ -4456,6 +4494,9 @@ git commit -m "feat(environment): add offline doctor for host, workspace and pro
 
 ---
 ### Task 16: CLI `theforge` / `forge`
+
+> **ADENDO OBRIGATÓRIO (prevalece sobre o texto abaixo) — modelo de trust**
+> Em `cmd_ask`, crie o registry com `Registry(forge_dir, allow_unverified=args.allow_unverified)`. Demais comandos usam o padrão (não executam `unverified`).
 
 **Files:**
 - Create: `src/theforge/cli/__init__.py`, `main.py`, `commands.py`, `render.py`, `src/theforge/__main__.py`
@@ -5296,6 +5337,13 @@ git commit -m "feat(contracts): publish JSON Schemas with dataclass parity tests
 
 ---
 ### Task 19: Documentação, ADRs e CLAUDE.md
+
+> **ADENDO OBRIGATÓRIO (prevalece sobre o texto abaixo) — modelo de trust**
+> Ajuste os textos para o modelo decidido:
+> - README "Registrar um provider": o `providers.toml` **do usuário** (`%APPDATA%/theforge/providers.toml` no Windows, `~/.config/theforge/providers.toml` no POSIX, ou `$THEFORGE_CONFIG_DIR`) é o único que concede trust. O de projeto (`.forge/config/providers.toml`) pode declarar providers, mas eles entram sempre como `unverified` e não são executados (nem `describe`) sem `--allow-unverified`. Para confiar num provider de projeto, copie a entrada para o arquivo do usuário. Ids builtin são reservados.
+> - `docs/security.md`, linha "Provider malicioso": acrescente "repositório não pode se autoconceder trust; providers `unverified` não são executados".
+> - ADR 0006: troque a frase de precedência por "builtin > usuário > projeto; trust só vem do arquivo do usuário; entradas de projeto são sempre `unverified`; `unverified` nunca é executado sem opt-in".
+> - Template `PROVIDERS_TEMPLATE` já existente em `state.py` NÃO é alterado por esta task.
 
 **Files:**
 - Modify: `README.md`
