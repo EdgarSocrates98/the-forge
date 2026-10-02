@@ -6,6 +6,7 @@ from theforge.context.scan import WorkspaceScan
 from theforge.contracts import ContextFile, ContextPack, ExcludedFile, TaskSpec
 from theforge.contracts.canonical import sha256_hex, utc_now
 from theforge.meta import PRODUCER
+from theforge.security.paths import resolve_inside
 
 BUDGETS: dict[str, int] = {"economy": 64 * 1024, "balanced": 256 * 1024, "max": 1024 * 1024}
 
@@ -26,15 +27,24 @@ def build_context_pack(
     truncated = False
     for _, rel, hits in ranked:
         path = scan.root / rel
+        resolved = resolve_inside(scan.root, path)
+        if resolved is None:
+            excluded.append(ExcludedFile(path=rel, reason="outside_root"))
+            continue
+        remaining = budget - used
         try:
-            size = path.stat().st_size
-            if used + size > budget:
+            if path.stat().st_size > remaining:
                 excluded.append(ExcludedFile(path=rel, reason="budget"))
                 truncated = True
                 continue
-            data = path.read_bytes()
+            with resolved.open("rb") as fh:
+                data = fh.read(remaining + 1)
         except OSError:
             excluded.append(ExcludedFile(path=rel, reason="unreadable"))
+            continue
+        if len(data) > remaining:
+            excluded.append(ExcludedFile(path=rel, reason="budget"))
+            truncated = True
             continue
         files.append(ContextFile(path=rel, sha256=sha256_hex(data), bytes=len(data),
                                  reason=f"glob:{','.join(hits)}"))

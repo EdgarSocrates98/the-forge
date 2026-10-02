@@ -1,6 +1,10 @@
 import hashlib
+import os
+import stat
 from pathlib import Path
+from typing import Any
 
+import pytest
 from helpers import write_file
 
 from theforge.context import BUDGETS, build_context_pack, scan_workspace
@@ -45,6 +49,31 @@ def test_pack_respects_budget(tmp_path: Path) -> None:
     assert [f.path for f in pack.files] == ["small.txt"]
     assert ExcludedFile(path="big.txt", reason="budget") in pack.excluded
     assert pack.truncated and pack.status == "truncated"
+
+
+def test_pack_bounds_read_when_file_grows_after_stat(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    write_file(tmp_path, "small.txt", "0123456789")
+    scan = scan_workspace(tmp_path, ["."])
+    target = tmp_path / "small.txt"
+    with target.open("ab") as fh:
+        fh.write(b"x" * 70_000)
+    real_stat = Path.stat
+
+    def stale_stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
+        result = real_stat(self, *args, **kwargs)
+        if self.name == "small.txt":
+            fields = list(result)
+            fields[stat.ST_SIZE] = 10
+            return os.stat_result(fields)
+        return result
+
+    monkeypatch.setattr(Path, "stat", stale_stat)
+    pack = build_context_pack(task(tmp_path, "economy"), "p", ["*.txt"], scan)
+    assert pack.files == []
+    assert ExcludedFile(path="small.txt", reason="budget") in pack.excluded
+    assert pack.truncated and pack.used_bytes <= pack.budget_bytes
 
 
 def test_pack_without_globs_is_empty(tmp_path: Path) -> None:

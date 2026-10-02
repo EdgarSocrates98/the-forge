@@ -11,14 +11,16 @@ GITIGNORE = (
     "*\n!.gitignore\n!config/\n!config/**\n"
 )
 PROVIDERS_TEMPLATE = """\
-# Providers for this workspace. Each entry: id, argv (list), trust.
-# trust: trusted | local | unverified | blocked   (default: unverified)
+# Providers declared by this workspace. Each entry: id, argv (list).
+# Entries here are ALWAYS 'unverified': they are never executed unless you pass
+# --allow-unverified, or you copy the entry into your user providers.toml
+# (%APPDATA%/theforge/providers.toml, ~/.config/theforge/providers.toml or
+# $THEFORGE_CONFIG_DIR/providers.toml), which is the only file that grants trust.
 # "{python}" in argv is replaced by the interpreter running The Forge.
 #
 # [[providers]]
 # id = "my-forge"
 # argv = ["my-forge-cli", "protocol"]
-# trust = "local"
 """
 
 
