@@ -1,9 +1,9 @@
-"""Provider entries from builtin, user and project sources (later wins by id)."""
+"""Provider entries from builtin, user and project sources (builtin > user > project)."""
 
 import os
 import sys
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -48,7 +48,9 @@ def user_config_dir() -> Path:
     return (Path(xdg) if xdg else Path.home() / ".config") / "theforge"
 
 
-def load_entries(path: Path, source: Source) -> list[ProviderEntry]:
+def load_entries(
+    path: Path, source: Source, warnings: list[str] | None = None
+) -> list[ProviderEntry]:
     if not path.is_file():
         return []
     try:
@@ -68,17 +70,42 @@ def load_entries(path: Path, source: Source) -> list[ProviderEntry]:
         if isinstance(raw.get("argv"), list):
             raw["argv"] = [sys.executable if a == PYTHON_PLACEHOLDER else a for a in raw["argv"]]
         try:
-            entries.append(from_dict(ProviderEntry, raw, f"{path.name}.providers[{index}]"))
+            entry = from_dict(ProviderEntry, raw, f"{path.name}.providers[{index}]")
         except ContractError as exc:
             raise UsageError(str(exc)) from exc
+        if source == "project" and entry.trust != "unverified":
+            if warnings is not None:
+                warnings.append(
+                    f"{path}: providers[{index}] ({entry.id}): trust {entry.trust!r} ignored; "
+                    "project providers are always 'unverified' "
+                    "(trust them in your user providers.toml)")
+            entry = replace(entry, trust="unverified")
+        entries.append(entry)
     return entries
 
 
-def resolve_entries(forge_dir: Path | None, user_dir: Path | None = None) -> list[ProviderEntry]:
+def resolve_entries(
+    forge_dir: Path | None,
+    user_dir: Path | None = None,
+    warnings: list[str] | None = None,
+) -> list[ProviderEntry]:
+    """Precedence by id: builtin > user > project. Builtin ids are reserved."""
     merged: dict[str, ProviderEntry] = {e.id: e for e in builtin_entries()}
-    for entry in load_entries((user_dir or user_config_dir()) / PROVIDERS_FILE, "user"):
-        merged[entry.id] = entry
+    reserved = set(merged)
+    user_path = (user_dir or user_config_dir()) / PROVIDERS_FILE
+    sources: list[tuple[Path, Source]] = [(user_path, "user")]
     if forge_dir is not None:
-        for entry in load_entries(forge_dir / "config" / PROVIDERS_FILE, "project"):
+        sources.append((forge_dir / "config" / PROVIDERS_FILE, "project"))
+    for path, source in sources:
+        for entry in load_entries(path, source, warnings):
+            if entry.id in reserved:
+                raise UsageError(
+                    f"{path}: provider id {entry.id!r} is reserved for a builtin provider")
+            if entry.id in merged:
+                if warnings is not None:
+                    warnings.append(
+                        f"{path}: provider {entry.id!r} ignored; "
+                        "already defined in user providers.toml")
+                continue
             merged[entry.id] = entry
     return sorted(merged.values(), key=lambda e: e.id)

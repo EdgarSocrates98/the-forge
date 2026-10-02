@@ -1,6 +1,7 @@
 """Shared test helpers: fixture provider argv, providers.toml writer, workspaces."""
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,7 +34,9 @@ API_ENTRY = {
 }
 
 
-def write_providers(forge_dir: Path, entries: list[dict[str, Any]]) -> None:
+def write_providers(
+    forge_dir: Path, entries: list[dict[str, Any]], *, scope: str = "user"
+) -> None:
     lines: list[str] = []
     for entry in entries:
         lines += [
@@ -43,7 +46,7 @@ def write_providers(forge_dir: Path, entries: list[dict[str, Any]]) -> None:
             f"trust = {json.dumps(entry.get('trust', 'local'))}",
             "",
         ]
-    config = forge_dir / "config"
+    config = Path(os.environ["THEFORGE_CONFIG_DIR"]) if scope == "user" else forge_dir / "config"
     config.mkdir(parents=True, exist_ok=True)
     (config / "providers.toml").write_text("\n".join(lines), encoding="utf-8")
 
