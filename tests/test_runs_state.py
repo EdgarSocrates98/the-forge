@@ -45,6 +45,37 @@ def test_unknown_artifact_name(tmp_path: Path) -> None:
         store.write(run_id, "secrets", make_task())
 
 
+def test_run_id_rejects_trailing_newline(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="invalid run id"):
+        RunStore(tmp_path).run_dir(new_run_id() + "\n")
+
+
+def test_read_optional_validates_artifact_name(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    run_id = new_run_id()
+    store.create(run_id)
+    with pytest.raises(ValueError, match="unknown run artifact"):
+        store.read_optional(run_id, "../../x")
+
+
+def test_read_optional_corrupt_json_is_persistence_error(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    run_id = new_run_id()
+    store.create(run_id)
+    (store.run_dir(run_id) / "task.json").write_text("{not json", encoding="utf-8")
+    with pytest.raises(PersistenceError, match="cannot read"):
+        store.read_optional(run_id, "task")
+
+
+def test_read_optional_non_dict_is_persistence_error(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    run_id = new_run_id()
+    store.create(run_id)
+    (store.run_dir(run_id) / "task.json").write_text("[1, 2]", encoding="utf-8")
+    with pytest.raises(PersistenceError, match="cannot read"):
+        store.read_optional(run_id, "task")
+
+
 def test_persistence_error(tmp_path: Path) -> None:
     not_a_dir = tmp_path / "forge-file"
     not_a_dir.write_text("x")

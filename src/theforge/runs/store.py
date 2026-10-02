@@ -25,7 +25,7 @@ class RunStore:
         self.runs_dir = forge_dir / "runs"
 
     def run_dir(self, run_id: str) -> Path:
-        if not RUN_ID.match(run_id):
+        if not RUN_ID.fullmatch(run_id):
             raise ValueError(f"invalid run id {run_id!r}")
         return self.runs_dir / run_id
 
@@ -40,19 +40,22 @@ class RunStore:
             raise PersistenceError(f"cannot create run directory {directory}: {exc}") from exc
         return directory
 
-    def write(self, run_id: str, name: str, contract: Any) -> str:
+    def _artifact_path(self, run_id: str, name: str) -> Path:
         if name not in ARTIFACTS:
             raise ValueError(f"unknown run artifact {name!r}")
+        return self.run_dir(run_id) / f"{name}.json"
+
+    def write(self, run_id: str, name: str, contract: Any) -> str:
+        path = self._artifact_path(run_id, name)
         data = redact(to_dict(contract))
-        path = self.run_dir(run_id) / f"{name}.json"
+        text = json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False)
         tmp = path.with_suffix(".json.tmp")
         try:
-            tmp.write_text(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False),
-                           encoding="utf-8")
+            tmp.write_text(text, encoding="utf-8")
             tmp.replace(path)
         except OSError as exc:
             raise PersistenceError(f"cannot write {path}: {exc}") from exc
-        return sha256_of(data)
+        return sha256_of(json.loads(text))
 
     def read(self, run_id: str, name: str) -> dict[str, Any]:
         data = self.read_optional(run_id, name)
@@ -61,10 +64,15 @@ class RunStore:
         return data
 
     def read_optional(self, run_id: str, name: str) -> dict[str, Any] | None:
-        path = self.run_dir(run_id) / f"{name}.json"
+        path = self._artifact_path(run_id, name)
         if not path.is_file():
             return None
-        loaded: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:  # JSONDecodeError and UnicodeDecodeError are ValueErrors
+            raise PersistenceError(f"cannot read {path}: {exc}") from exc
+        if not isinstance(loaded, dict):
+            raise PersistenceError(f"cannot read {path}: expected a JSON object")
         return loaded
 
     def list_runs(self) -> list[str]:
