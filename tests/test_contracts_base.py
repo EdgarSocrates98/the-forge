@@ -72,3 +72,34 @@ def test_non_object_rejected() -> None:
 def test_to_dict_rejects_non_dataclass() -> None:
     with pytest.raises(TypeError):
         to_dict({"a": 1})
+
+
+@dataclass(frozen=True, kw_only=True)
+class _StrictLit:
+    n: Literal[1]
+
+
+@dataclass(frozen=True, kw_only=True)
+class _StrLit:
+    s: Literal["a"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class _Raises:
+    x: int = 0
+
+    def __post_init__(self) -> None:
+        raise ValueError("bad")
+
+
+def test_literal_is_type_strict() -> None:
+    assert from_dict(_StrictLit, {"n": 1}).n == 1
+    for bad in (True, 1.0):
+        with pytest.raises(ContractError, match="expected one of"):
+            from_dict(_StrictLit, {"n": bad})
+    assert from_dict(_StrLit, {"s": "a"}).s == "a"
+
+
+def test_constructor_value_error_wrapped_with_path() -> None:
+    with pytest.raises(ContractError, match=r"\$: bad"):
+        from_dict(_Raises, {})

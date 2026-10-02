@@ -36,6 +36,8 @@ def from_dict(cls: type[T], data: Any, path: str = "$") -> T:
         return cast(T, factory(**kwargs))
     except ContractError as exc:
         raise ContractError(f"{path}: {exc}") from exc
+    except (ValueError, TypeError) as exc:
+        raise ContractError(f"{path}: {exc}") from exc
 
 
 def _coerce(tp: Any, value: Any, path: str) -> Any:
@@ -56,7 +58,7 @@ def _coerce(tp: Any, value: Any, path: str) -> Any:
                 errors.append(str(exc))
         raise ContractError(f"{path}: no union member matched ({'; '.join(errors)})")
     if origin is Literal:
-        if value not in args:
+        if not any(type(value) is type(a) and value == a for a in args):
             raise ContractError(f"{path}: expected one of {list(args)}, got {value!r}")
         return value
     if origin is list:
