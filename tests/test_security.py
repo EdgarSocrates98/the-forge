@@ -47,10 +47,10 @@ def test_redact_structure_and_sensitive_keys() -> None:
 def test_safe_env_drops_credentials() -> None:
     env = safe_env({
         "PATH": "/bin", "AWS_SECRET_ACCESS_KEY": "x", "GITHUB_TOKEN": "y",
-        "SystemRoot": "C:\Windows",
+        "SystemRoot": "C:\\Windows",
     })
     assert env["PATH"] == "/bin"
-    assert env["SystemRoot"] == "C:\Windows"
+    assert env["SystemRoot"] == "C:\\Windows"
     assert "AWS_SECRET_ACCESS_KEY" not in env and "GITHUB_TOKEN" not in env
     assert env["PYTHONIOENCODING"] == "utf-8"
 
