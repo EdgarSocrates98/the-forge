@@ -5,11 +5,11 @@ import os
 import sys
 import textwrap
 import threading
-import time
 from pathlib import Path
 
 import pytest
 
+from helpers import force_kill, pid_alive, wait_gone
 from theforge.protocol.proctree import SpawnedProcess, close, kill_tree, spawn
 
 # A provider stand-in that starts a long-sleeping grandchild, reports its PID and sleeps.
@@ -23,43 +23,6 @@ _TREE_PROVIDER = textwrap.dedent(
 )
 
 
-def _pid_alive(pid: int) -> bool:
-    if sys.platform == "win32":
-        import ctypes
-
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-        kernel32.OpenProcess.restype = ctypes.c_void_p
-        kernel32.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
-        kernel32.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
-        kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
-        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
-        if not handle:
-            return False
-        try:
-            code = ctypes.c_uint32()
-            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
-                return False
-            return code.value == 259  # STILL_ACTIVE
-        finally:
-            kernel32.CloseHandle(handle)
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
-
-
-def _wait_gone(pid: int, timeout: float = 10.0) -> bool:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if not _pid_alive(pid):
-            return True
-        time.sleep(0.05)
-    return not _pid_alive(pid)
-
-
 def _readline(sp: SpawnedProcess, timeout: float = 30.0) -> bytes:
     assert sp.proc.stdout is not None
     stdout = sp.proc.stdout
@@ -69,11 +32,6 @@ def _readline(sp: SpawnedProcess, timeout: float = 30.0) -> bytes:
     reader.join(timeout)
     assert out, "provider did not report its grandchild PID in time"
     return out[0]
-
-
-def _force_kill(pid: int) -> None:
-    with contextlib.suppress(OSError):
-        os.kill(pid, 9 if sys.platform != "win32" else 1)
 
 
 def _close_pipes(sp: SpawnedProcess) -> None:
@@ -91,16 +49,52 @@ def test_kill_tree_terminates_grandchild(tmp_path: Path) -> None:
     try:
         assert sp.tree_kill_supported is True
         grandchild = int(_readline(sp).strip())
-        assert _pid_alive(grandchild)
+        assert pid_alive(grandchild)
         kill_tree(sp, grace_seconds=1.0)
         assert sp.proc.poll() is not None
-        assert _wait_gone(grandchild), f"grandchild {grandchild} survived kill_tree"
+        assert wait_gone(grandchild), f"grandchild {grandchild} survived kill_tree"
     finally:
         kill_tree(sp, grace_seconds=0.5)
         close(sp)
         _close_pipes(sp)
-        if grandchild and _pid_alive(grandchild):
-            _force_kill(grandchild)
+        if grandchild and pid_alive(grandchild):
+            force_kill(grandchild)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Job Object fallback")
+def test_kill_tree_falls_back_to_taskkill_when_job_termination_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from theforge.protocol import proctree
+
+    class _FailingTerminate:
+        def __init__(self, real: object) -> None:
+            self._real = real
+
+        def __getattr__(self, name: str) -> object:
+            return getattr(self._real, name)
+
+        @staticmethod
+        def TerminateJobObject(handle: object, code: int) -> int:  # noqa: N802
+            return 0
+
+    script = tmp_path / "tree_provider.py"
+    script.write_text(_TREE_PROVIDER, encoding="utf-8")
+    sp = spawn([sys.executable, str(script)], cwd=tmp_path, env=dict(os.environ))
+    grandchild = 0
+    try:
+        grandchild = int(_readline(sp).strip())
+        with monkeypatch.context() as patch:
+            patch.setattr(proctree, "_kernel32", _FailingTerminate(proctree._kernel32))
+            kill_tree(sp, grace_seconds=1.0)
+        assert sp.proc.poll() is not None
+        assert wait_gone(grandchild), f"grandchild {grandchild} survived the taskkill fallback"
+    finally:
+        kill_tree(sp, grace_seconds=0.5)
+        close(sp)
+        _close_pipes(sp)
+        if grandchild and pid_alive(grandchild):
+            force_kill(grandchild)
 
 
 def test_kill_tree_is_idempotent_on_exited_process(tmp_path: Path) -> None:

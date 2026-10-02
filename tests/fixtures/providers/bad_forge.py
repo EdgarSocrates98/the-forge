@@ -5,6 +5,7 @@ argv: bad_forge.py MODE [PROVIDER_ID] OP
 
 import json
 import os
+import subprocess
 import sys
 import time
 
@@ -29,12 +30,15 @@ def main() -> int:
         rid = "unknown"
     proto = "forge/v9" if mode == "wrong-major" else "forge/v1"
 
-    def reply(status, payload=None, error=None, request_id=None):
-        sys.stdout.write(json.dumps({
+    def reply(status, payload=None, error=None, request_id=None, reply_op=op):
+        envelope = {
             "protocol": proto, "kind": "Response", "request_id": request_id or rid,
-            "op": op, "producer": producer, "status": status, "payload": payload or {},
+            "op": reply_op, "producer": producer, "status": status, "payload": payload or {},
             "error": error,
-        }))
+        }
+        if mode == "no-op":
+            del envelope["op"]  # Protocol v1 providers may omit op
+        sys.stdout.write(json.dumps(envelope))
         return 0
 
     if op == "describe":
@@ -70,6 +74,27 @@ def main() -> int:
         if mode == "oversize":
             sys.stdout.write("x" * (9 * 1024 * 1024))
             return 0
+        if mode in ("spawn-grandchild-timeout", "exit-leave-grandchild"):
+            # Leave a long-sleeping grandchild behind (it inherits stdout/stderr) and publish
+            # its PID in cwd; then either hang or answer correctly and exit 0.
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+            with open("grandchild.pid.tmp", "w", encoding="utf-8") as fh:
+                fh.write(str(child.pid))
+            os.replace("grandchild.pid.tmp", "grandchild.pid")
+            if mode == "exit-leave-grandchild":
+                reply("ok", dict(RESULT, producer=producer))
+                sys.stdout.flush()
+                os._exit(0)  # do not wait for the child
+            time.sleep(30)
+        if mode in ("stderr-flood", "stderr-flood-crash"):
+            line = "noise token=supersecretvalue123 " + "y" * 60 + "\n"
+            sys.stderr.write(line * (256 * 1024 // len(line) + 1))
+            sys.stderr.write("final failure detail password=hunter2secret\n")
+            sys.stderr.flush()
+            if mode == "stderr-flood-crash":
+                return 3
+        if mode == "wrong-op":
+            return reply("ok", dict(RESULT, producer=producer), reply_op="health")
         if mode == "mismatch":
             return reply("ok", dict(RESULT, producer=producer), request_id="nope")
         if mode == "bad-envelope":

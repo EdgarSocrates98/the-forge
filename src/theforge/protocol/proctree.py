@@ -6,9 +6,10 @@ the whole process group: SIGTERM, a grace period, then SIGKILL.
 Windows: the provider starts suspended, is assigned to a Job Object configured with
 ``JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`` (no breakaway allowed) and only then resumed, so even
 launchers that immediately spawn the real interpreter cannot leave the job. ``kill_tree`` uses
-``TerminateJobObject``. If the job cannot be created or assigned, the process is resumed anyway
-and ``taskkill /T /F`` is the fallback; ``tree_kill_supported`` is then False (orphans whose
-parent already exited can escape it: documented limitation).
+``TerminateJobObject`` (``taskkill /T /F`` if that call fails). If the job cannot be created or
+assigned, the process is resumed anyway and ``taskkill /T /F`` is the fallback;
+``tree_kill_supported`` is then False (orphans whose parent already exited can escape it:
+documented limitation).
 
 Known limitation (POSIX): a descendant that deliberately leaves the group (new ``setsid``,
 daemonization) is not reached.
@@ -141,12 +142,13 @@ if sys.platform == "win32":
             raise
         handle = _open_process(proc.pid)
         if handle is None:
+            error = ctypes.get_last_error()  # capture before other calls overwrite it
             # Cannot resume a suspended process we cannot open: do not leave it hanging.
             proc.kill()
             _reap(proc, _REAP_SECONDS)
             if job:
                 _kernel32.CloseHandle(job)
-            raise OSError(ctypes.get_last_error(), "cannot open spawned provider process")
+            raise OSError(error, "cannot open spawned provider process")
         try:
             assigned = bool(job) and bool(_kernel32.AssignProcessToJobObject(job, handle))
             if not assigned and job:
@@ -164,9 +166,9 @@ if sys.platform == "win32":
 
     def kill_tree(sp: SpawnedProcess, *, grace_seconds: float = 2.0) -> None:
         proc = sp.proc
-        if sp.job_handle is not None:
-            _kernel32.TerminateJobObject(sp.job_handle, 1)
-        elif proc.poll() is None:
+        terminated = sp.job_handle is not None and bool(
+            _kernel32.TerminateJobObject(sp.job_handle, 1))
+        if not terminated and proc.poll() is None:
             # Fallback: recursive kill by PID while the root still exists (PID not reusable).
             with contextlib.suppress(OSError, subprocess.SubprocessError):
                 subprocess.run(

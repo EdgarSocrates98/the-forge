@@ -2,9 +2,11 @@
 
 import contextlib
 import json
+import os
 import subprocess
 import threading
-from collections.abc import Callable, Sequence
+import time
+from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 from typing import IO, Any, Protocol
 
@@ -19,12 +21,17 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import canonical_json
 from theforge.contracts.codes import Codes
+from theforge.protocol import proctree
 from theforge.security.env import safe_env
 from theforge.security.redact import redact_text
 
 MAX_STDOUT_BYTES = 8 * 1024 * 1024
 MAX_STDERR_BYTES = 64 * 1024
 _CHUNK = 65536
+_STDERR_TAIL_CHARS = 500
+_POLL_SECONDS = 0.1
+_GRACE_SECONDS = 2.0
+_JOIN_SECONDS = 5.0
 
 
 class TransportError(Exception):
@@ -77,6 +84,9 @@ class SubprocessTransport:
                 f"{op}: response request_id {response.request_id!r} "
                 f"!= {request.request_id!r}",
             )
+        if response.op is not None and response.op != op:
+            raise TransportError(
+                Codes.PROTO_OP_MISMATCH, f"{op}: response op {response.op!r} != {op!r}")
         if check_protocol and response.protocol != self.protocol:
             raise TransportError(
                 Codes.PROTO_VERSION,
@@ -86,72 +96,147 @@ class SubprocessTransport:
 
     def _run(self, op: str, stdin_bytes: bytes, timeout: float, cwd: Path | None) -> bytes:
         try:
-            proc = subprocess.Popen(
-                [*self.argv, op], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, cwd=cwd, env=safe_env(), shell=False,
-            )
+            sp = proctree.spawn([*self.argv, op], cwd=cwd if cwd is not None else Path.cwd(),
+                                env=safe_env())
         except OSError as exc:
             raise TransportError(Codes.PROTO_SPAWN, f"cannot start {self.argv[0]!r}: {exc}") \
                 from exc
-        if proc.stdin is None or proc.stdout is None or proc.stderr is None:
-            proc.kill()
-            raise TransportError(Codes.PROTO_SPAWN, "provider pipes unavailable")
+        proc = sp.proc
         out = bytearray()
-        err = bytearray()
+        err = _StderrTail(MAX_STDERR_BYTES)
         oversize = threading.Event()
-
-        def pump_out(stream: IO[bytes]) -> None:
-            while chunk := stream.read(_CHUNK):
-                if len(out) + len(chunk) > self.max_stdout:
-                    oversize.set()
-                    proc.kill()
-                    return
-                out.extend(chunk)
-
-        def pump_err(stream: IO[bytes]) -> None:
-            while chunk := stream.read(_CHUNK):
-                room = MAX_STDERR_BYTES - len(err)
-                if room > 0:
-                    err.extend(chunk[:room])
-
-        def feed_in(stream: IO[bytes]) -> None:
-            try:
-                stream.write(stdin_bytes)
-                stream.close()
-            except OSError:
-                pass
-
-        threads = [
-            threading.Thread(target=pump_out, args=(proc.stdout,), daemon=True),
-            threading.Thread(target=pump_err, args=(proc.stderr,), daemon=True),
-            threading.Thread(target=feed_in, args=(proc.stdin,), daemon=True),
-        ]
+        pairs: list[tuple[IO[bytes], threading.Thread]] = []
         try:
-            for thread in threads:
+            if proc.stdin is None or proc.stdout is None or proc.stderr is None:
+                raise TransportError(Codes.PROTO_SPAWN, "provider pipes unavailable")
+
+            def pump_out(stream: IO[bytes]) -> None:
+                with _owned(stream):
+                    while chunk := _read_chunk(stream):
+                        if len(out) + len(chunk) > self.max_stdout:
+                            oversize.set()  # stop reading; the main thread kills the tree
+                            return
+                        out.extend(chunk)
+
+            def pump_err(stream: IO[bytes]) -> None:
+                with _owned(stream):
+                    while chunk := _read_chunk(stream):
+                        err.feed(chunk)
+
+            def feed_in(stream: IO[bytes]) -> None:
+                try:
+                    stream.write(stdin_bytes)
+                    stream.close()
+                except OSError:
+                    pass
+
+            # Each pipe is owned by the only thread that uses it and closed by that thread:
+            # closing a pipe under a pending read blocks (Windows) or races fd reuse (POSIX),
+            # and the thread's reference keeps garbage collection from closing it early.
+            pairs = [
+                (proc.stdout, threading.Thread(target=pump_out, args=(proc.stdout,),
+                                               daemon=True)),
+                (proc.stderr, threading.Thread(target=pump_err, args=(proc.stderr,),
+                                               daemon=True)),
+                (proc.stdin, threading.Thread(target=feed_in, args=(proc.stdin,), daemon=True)),
+            ]
+            for _, thread in pairs:
                 thread.start()
-            try:
-                returncode = proc.wait(timeout=timeout)
-            except subprocess.TimeoutExpired as exc:
-                proc.kill()
-                proc.wait()
-                for thread in threads:
-                    thread.join(timeout=5)
-                raise TransportError(
-                    Codes.PROTO_TIMEOUT, f"{op}: no response within {timeout:g}s") from exc
-            for thread in threads:
-                thread.join(timeout=5)
+            deadline = time.monotonic() + timeout
+            while not oversize.is_set():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TransportError(
+                        Codes.PROTO_TIMEOUT, f"{op}: no response within {timeout:g}s")
+                if _wait_slice(proc, min(remaining, _POLL_SECONDS)):
+                    break
             if oversize.is_set():
                 raise TransportError(
                     Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
-            if returncode != 0:
-                tail = redact_text(err.decode("utf-8", errors="replace").strip())[-500:]
+            # The root exited: end descendants that may still hold the pipes, then drain.
+            _end_tree(sp)
+            _join(pairs)
+            if oversize.is_set():  # the last chunks may arrive after the root exited
                 raise TransportError(
-                    Codes.PROTO_EXIT, f"{op}: exit code {returncode}; stderr: {tail}")
+                    Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
+            if proc.returncode != 0:
+                raise TransportError(
+                    Codes.PROTO_EXIT,
+                    f"{op}: exit code {proc.returncode}; stderr: {err.redacted_tail()}")
             return bytes(out)
         finally:
-            if proc.poll() is None:
-                proc.kill()
-            proc.wait()
-            for pipe in (proc.stdin, proc.stdout, proc.stderr):
-                with contextlib.suppress(OSError):
-                    pipe.close()
+            # Any exit path (timeout, oversize, KeyboardInterrupt, errors): end the whole tree.
+            _end_tree(sp)
+            _join(pairs)
+            for pipe, thread in pairs:
+                if not thread.is_alive():
+                    with contextlib.suppress(OSError):
+                        pipe.close()
+
+
+def _read_chunk(stream: IO[bytes]) -> bytes:
+    """Return whatever is available (up to a chunk) without waiting for a full chunk."""
+    try:
+        return os.read(stream.fileno(), _CHUNK)
+    except (OSError, ValueError):
+        return b""
+
+
+@contextlib.contextmanager
+def _owned(stream: IO[bytes]) -> Iterator[None]:
+    try:
+        yield
+    finally:
+        with contextlib.suppress(OSError):
+            stream.close()
+
+
+def _end_tree(sp: proctree.SpawnedProcess) -> None:
+    """Idempotent: kill the whole tree (even if the root already exited), release the job."""
+    proctree.kill_tree(sp, grace_seconds=_GRACE_SECONDS)
+    proctree.close(sp)
+
+
+def _wait_slice(proc: subprocess.Popen[bytes], seconds: float) -> bool:
+    """Wait up to ``seconds`` for the provider root; True when it has exited."""
+    try:
+        proc.wait(timeout=seconds)
+    except subprocess.TimeoutExpired:
+        return False
+    return True
+
+
+def _join(pairs: list[tuple[IO[bytes], threading.Thread]]) -> None:
+    """Join all pipe threads within one shared bound (never longer than ``_JOIN_SECONDS``)."""
+    deadline = time.monotonic() + _JOIN_SECONDS
+    for _, thread in pairs:
+        thread.join(timeout=max(deadline - time.monotonic(), 0.0))
+
+
+class _StderrTail:
+    """Keeps only the most recent ``limit`` bytes of provider stderr (never persisted raw)."""
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self.buf = bytearray()
+        self.truncated = False
+        self._lock = threading.Lock()
+
+    def feed(self, chunk: bytes) -> None:
+        with self._lock:
+            self.buf.extend(chunk)
+            excess = len(self.buf) - self.limit
+            if excess > 0:
+                del self.buf[:excess]
+                self.truncated = True
+
+    def redacted_tail(self, chars: int = _STDERR_TAIL_CHARS) -> str:
+        with self._lock:
+            raw, truncated = bytes(self.buf), self.truncated
+        text = raw.decode("utf-8", errors="replace")
+        if truncated:
+            # The cut may split a secret: drop the partial first line before redaction.
+            _, newline, rest = text.partition("\n")
+            text = rest if newline else ""
+        tail = redact_text(text).strip()[-chars:]
+        return f"[truncated] {tail}" if truncated else tail
