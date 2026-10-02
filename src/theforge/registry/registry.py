@@ -122,18 +122,25 @@ class Registry:
 
     def _write_cache(self, record: RegistryRecord) -> None:
         path = self._cache_path(record.entry.id)
-        if path is None or record.state != "ready":
+        if path is None:
             return
-        doc = {"schema": CACHE_SCHEMA, **to_dict(record)}
         try:
+            if record.state != "ready" or record.entry.trust == "unverified":
+                path.unlink(missing_ok=True)
+                return
+            doc = {"schema": CACHE_SCHEMA, **to_dict(record)}
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(doc, indent=2, sort_keys=True), encoding="utf-8")
+            tmp = path.with_name(path.name + ".tmp")
+            tmp.write_text(json.dumps(doc, indent=2, sort_keys=True), encoding="utf-8")
+            tmp.replace(path)
         except OSError as exc:
             raise PersistenceError(f"cannot write registry cache {path}: {exc}") from exc
 
     def _read_cache(self, entry: ProviderEntry) -> RegistryRecord | None:
         path = self._cache_path(entry.id)
         if path is None or not path.is_file():
+            return None
+        if entry.trust == "unverified":
             return None
         try:
             doc = json.loads(path.read_text(encoding="utf-8"))
@@ -146,6 +153,11 @@ class Registry:
                 raise ValueError("cache entry is not a ready manifest")
             if sha256_of(to_dict(record.manifest)) != record.manifest_sha256:
                 raise ValueError("manifest hash mismatch")
+            if record.manifest.id != entry.id:
+                raise ValueError("manifest id does not match registry entry")
+            protocol = choose_protocol(record.manifest.protocols)
+            if protocol is None or protocol != record.protocol:
+                raise ValueError("cached protocol does not match negotiated protocol")
             return record
         except (OSError, ValueError) as exc:
             self.warnings.append(f"registry cache for {entry.id} discarded: {exc}")

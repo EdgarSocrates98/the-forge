@@ -18,8 +18,16 @@ class HealthOutcome:
 
 def check_health(
     record: RegistryRecord, *, transport_factory: TransportFactory = SubprocessTransport,
-    timeout: float = HEALTH_TIMEOUT,
+    timeout: float = HEALTH_TIMEOUT, allow_unverified: bool = False,
 ) -> HealthOutcome:
+    if record.entry.trust == "blocked":
+        return HealthOutcome(status="error", error=ErrorInfo(
+            code="FORGE-PROVIDER-BLOCKED", detail=f"{record.entry.id} is blocked"))
+    if record.entry.trust == "unverified" and not allow_unverified:
+        return HealthOutcome(status="error", error=ErrorInfo(
+            code="FORGE-PROVIDER-UNTRUSTED",
+            detail=f"{record.entry.id} is unverified and was not executed; trust it in your "
+                   "user providers.toml or pass --allow-unverified"))
     if record.state != "ready":
         return HealthOutcome(status="error", error=ErrorInfo(
             code="FORGE-PROVIDER-NOT-READY",

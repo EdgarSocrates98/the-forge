@@ -5,6 +5,8 @@ from typing import Any
 import pytest
 from helpers import SPARK_ENTRY, bad_argv, bad_entry, write_providers
 
+from theforge.contracts import to_dict
+from theforge.contracts.canonical import sha256_of
 from theforge.errors import UsageError
 from theforge.registry import Registry, check_health
 
@@ -123,3 +125,85 @@ def test_health_on_not_ready(tmp_path: Path) -> None:
 def test_registry_without_forge_dir_still_describes() -> None:
     records = Registry(None).records()
     assert [r.entry.id for r in records] == ["echo-forge"] and records[0].state == "ready"
+
+
+def _boom(argv: object) -> Any:
+    raise AssertionError("must not spawn")
+
+
+def test_unverified_is_never_cached(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified")])
+    record = Registry(forge, allow_unverified=True).refresh()
+    assert any(r.entry.id == "bad-a" and r.state == "ready" for r in record)
+    assert not (forge / "registry" / "bad-a.json").exists()
+    assert Registry(forge).get("bad-a").state == "untrusted"
+
+
+def test_forged_cache_cannot_launder_unverified(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    path = forge / "registry" / "fixture-spark.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    unverified = {"id": "fixture-spark", "argv": ["definitely-not-a-real-forge-binary"],
+                  "trust": "unverified"}
+    write_providers(forge, [unverified])
+    entry = next(e for e in Registry(forge).entries() if e.id == "fixture-spark")
+    doc["entry"] = to_dict(entry)
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    registry = Registry(forge, transport_factory=_boom)
+    assert registry.get("fixture-spark").state == "untrusted"
+
+
+def test_health_refuses_unverified_and_blocked(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified"),
+                                  {"id": "nope-forge", "argv": ["x"], "trust": "blocked"}])
+    ready = Registry(forge, allow_unverified=True).get("bad-a")
+    assert ready.state == "ready"
+    outcome = check_health(ready, transport_factory=_boom)
+    assert outcome.error is not None and outcome.error.code == "FORGE-PROVIDER-UNTRUSTED"
+    assert check_health(ready, allow_unverified=True).status in {"ok", "degraded"}
+    blocked = Registry(forge).get("nope-forge")
+    outcome = check_health(blocked, transport_factory=_boom, allow_unverified=True)
+    assert outcome.error is not None and outcome.error.code == "FORGE-PROVIDER-BLOCKED"
+
+
+def _tampered(tmp_path: Path, mutate: Any) -> Registry:
+    forge = make_forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    path = forge / "registry" / "fixture-spark.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    mutate(doc)
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    registry = Registry(forge)
+    assert registry.get("fixture-spark").state == "ready"
+    return registry
+
+
+def test_cache_with_wrong_protocol_is_discarded(tmp_path: Path) -> None:
+    def mutate(doc: dict[str, Any]) -> None:
+        doc["protocol"] = "forge/v9"
+    registry = _tampered(tmp_path, mutate)
+    assert registry.get("fixture-spark").protocol == "forge/v1"
+    assert any("fixture-spark" in w for w in registry.warnings)
+
+
+def test_cache_with_wrong_manifest_id_is_discarded(tmp_path: Path) -> None:
+    def mutate(doc: dict[str, Any]) -> None:
+        doc["manifest"]["id"] = "someone-else"
+        doc["manifest_sha256"] = sha256_of(doc["manifest"])
+    registry = _tampered(tmp_path, mutate)
+    manifest = registry.get("fixture-spark").manifest
+    assert manifest is not None and manifest.id == "fixture-spark"
+    assert any("fixture-spark" in w for w in registry.warnings)
+
+
+def test_refresh_removes_stale_cache(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    cache = forge / "registry" / "fixture-spark.json"
+    assert cache.is_file()
+    broken = {**SPARK_ENTRY, "argv": ["definitely-not-a-real-forge-binary"]}
+    write_providers(forge, [broken])
+    records = {r.entry.id: r for r in Registry(forge).refresh()}
+    assert records["fixture-spark"].state == "unreachable"
+    assert not cache.exists()
