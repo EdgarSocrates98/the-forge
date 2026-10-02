@@ -1,0 +1,67 @@
+"""ExecutionResult, Finding and Evidence returned by providers."""
+
+from dataclasses import dataclass, field
+from typing import Literal
+
+from theforge.contracts.types import Epistemic, MetricKind, Producer, Severity
+
+RESULT_SCHEMA = "theforge/ExecutionResult/v1"
+
+
+@dataclass(frozen=True, kw_only=True)
+class Location:
+    path: str
+    line: int | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class Evidence:
+    id: str
+    epistemic: Epistemic
+    subject: str
+    claim: str
+    producer: Producer
+    location: Location | None = None
+    hash: str | None = None
+    limitations: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
+class Finding:
+    id: str
+    title: str
+    severity: Severity = "info"
+    evidence_ids: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
+class Artifact:
+    path: str
+    sha256: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Metric:
+    value: float | None = None
+    kind: MetricKind = "unknown"
+
+
+@dataclass(frozen=True, kw_only=True)
+class Metrics:
+    duration_ms: Metric = field(default_factory=Metric)
+    context_bytes: Metric = field(default_factory=Metric)
+    tokens: Metric = field(default_factory=Metric)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ExecutionResult:
+    schema: str = RESULT_SCHEMA
+    producer: Producer
+    created_at: str
+    status: Literal["ok", "partial"]
+    findings: list[Finding] = field(default_factory=list)
+    evidence: list[Evidence] = field(default_factory=list)
+    artifacts: list[Artifact] = field(default_factory=list)
+    metrics: Metrics = field(default_factory=Metrics)
+    limitations: list[str] = field(default_factory=list)
+    unknowns: list[str] = field(default_factory=list)
