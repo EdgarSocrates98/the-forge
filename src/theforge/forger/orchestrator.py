@@ -12,6 +12,7 @@ from typing import Literal
 from theforge.context import build_context_pack, scan_workspace
 from theforge.contracts import (
     Candidate,
+    Confidence,
     ContractError,
     ErrorInfo,
     ExecuteRequest,
@@ -29,6 +30,7 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.types import BudgetProfile, Outcome
+from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
 from theforge.registry import Registry, RegistryRecord, check_health
@@ -68,6 +70,12 @@ class _Trace:
     context_sha: str | None = None
     result_sha: str | None = None
     record: RegistryRecord | None = None
+    decision: RoutingDecision | None = None
+
+
+def _offers(record: RegistryRecord, capability_id: str, action: str) -> bool:
+    capability = record.manifest.capability(capability_id) if record.manifest else None
+    return capability is not None and action in capability.actions
 
 
 class Forger:
@@ -94,16 +102,39 @@ class Forger:
         )
         trace = _Trace(run_id=run_id, started_at=started,
                        task_sha=self.store.write(run_id, "task", task))
+        try:
+            return self._run(trace, task, request)
+        except UsageError as exc:
+            self._finish(trace, self._placeholder(run_id, f"usage error: {exc}"), "no_route",
+                         error=ErrorInfo(code="FORGE-USAGE", detail=str(exc)))
+            raise
+        except PersistenceError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - invariant: a persisted task always gets a receipt
+            error = ErrorInfo(code="FORGE-INTERNAL", detail=f"{type(exc).__name__}: {exc}")
+            decision = trace.decision or self._placeholder(
+                run_id, f"internal error: {error.detail}")
+            return self._finish(trace, decision, "provider_failure", error=error)
+
+    @staticmethod
+    def _placeholder(run_id: str, reason: str) -> RoutingDecision:
+        return RoutingDecision(status="no_route", reason=reason, confidence=Confidence(level="low"),
+                               task_id=run_id, producer=PRODUCER, created_at=utc_now())
+
+    def _run(self, trace: _Trace, task: TaskSpec, request: AskRequest) -> AskOutcome:
+        run_id = trace.run_id
         records = {r.entry.id: r for r in self.registry.records()}
         scan = scan_workspace(self.root, task.targets)
         decision = route(task, list(records.values()), scan.files,
                          workspace_dependencies(self.root),
                          allow_unverified=request.allow_unverified)
+        trace.decision = decision
         if decision.status != "routed":
             trace.routing_sha = self.store.write(run_id, "routing", decision)
             return self._finish(trace, decision, decision.status)
 
-        decision, record, health_error = self._select_healthy(decision, records)
+        decision, record, health_error = self._select_healthy(task, decision, records)
+        trace.decision = decision
         trace.routing_sha = self.store.write(run_id, "routing", decision)
         if record is None or record.manifest is None:
             return self._finish(trace, decision, "provider_failure", error=health_error)
@@ -137,6 +168,10 @@ class Forger:
         except ContractError as exc:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
                 code="FORGE-PROTO-SCHEMA", detail=f"execute: {exc}"))
+        if result.producer.id != record.entry.id:
+            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
+                code="FORGE-PROTO-PRODUCER",
+                detail=f"result producer {result.producer.id!r} != provider {record.entry.id!r}"))
         result_status: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
         result = replace(result, status=result_status, metrics=Metrics(
             duration_ms=Metric(value=round(duration_ms, 3), kind="measured"),
@@ -152,13 +187,16 @@ class Forger:
         return EXECUTE_TIMEOUTS[task.budget_profile]
 
     def _select_healthy(
-        self, decision: RoutingDecision, records: dict[str, RegistryRecord]
+        self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord]
     ) -> tuple[RoutingDecision, RegistryRecord | None, ErrorInfo | None]:
         primary = decision.selected[0]
         tried: list[str] = []
         last_error: ErrorInfo | None = None
         for candidate in self._fallback_order(decision):
             record = records[candidate.provider]
+            if tried and task.requested_action and not _offers(
+                    record, candidate.capability, task.requested_action):
+                continue
             health = check_health(record, transport_factory=self.transport_factory,
                                   allow_unverified=self.registry.allow_unverified)
             if health.error is None:

@@ -85,6 +85,8 @@ def main() -> int:
             return reply("ok", {"env": sorted(os.environ)})
         if mode == "cwd-probe":
             return reply("ok", {"cwd": os.getcwd()})
+        if mode == "wrong-producer":
+            return reply("ok", dict(RESULT, producer={"id": "someone-else", "version": "0.0.1"}))
         return reply("ok", dict(RESULT, producer=producer))
     return reply("refused", error={"code": "BAD-OP", "detail": op, "field": "op",
                                    "unlock": None})

@@ -1,11 +1,27 @@
+import json
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_a, case_b, make_workspace, write_file
 
-from theforge.contracts.canonical import sha256_of
+from theforge.contracts import (
+    Capability,
+    ErrorInfo,
+    ForgeManifest,
+    Response,
+    RoutingDecision,
+    Signals,
+    TaskSpec,
+)
+from theforge.contracts.canonical import sha256_of, utc_now
+from theforge.errors import UsageError
 from theforge.forger import AskRequest, Forger
-from theforge.registry import Registry
+from theforge.meta import PRODUCER
+from theforge.protocol import ProviderTransport, SubprocessTransport
+from theforge.registry import HealthOutcome, ProviderEntry, Registry, RegistryRecord
+from theforge.routing import route
 from theforge.runs import ARTIFACTS, RunStore
 
 
@@ -141,3 +157,105 @@ def test_secrets_never_persisted(tmp_path: Path) -> None:
                    for p in (tmp_path / ".forge" / "runs").rglob("*.json"))
     for secret in ("hunter2xyz", "abc123secretvalue", "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"):
         assert secret not in blob
+
+
+def _receipt_files(root: Path) -> list[Path]:
+    return sorted((root / ".forge" / "runs").rglob("receipt.json"))
+
+
+def test_invalid_action_writes_receipt_and_reraises(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [])
+    with pytest.raises(UsageError):
+        forger(tmp_path).ask(AskRequest(intent="eco", capability="demo.echo", action="nope"))
+    receipts = _receipt_files(tmp_path)
+    assert len(receipts) == 1
+    data = json.loads(receipts[0].read_text(encoding="utf-8"))
+    assert data["status"] == "no_route"
+    assert data["error"]["code"] == "FORGE-USAGE"
+
+
+class _ExplodingTransport:
+    def __init__(self, inner: ProviderTransport) -> None:
+        self.inner = inner
+
+    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
+             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+        if op == "execute":
+            raise ValueError("boom")
+        return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
+                               check_protocol=check_protocol)
+
+
+def test_unexpected_exception_becomes_provider_failure(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
+
+    def factory(argv: Sequence[str]) -> ProviderTransport:
+        return _ExplodingTransport(SubprocessTransport(argv))
+
+    forge = tmp_path / ".forge"
+    forger_ = Forger(tmp_path, Registry(forge), RunStore(forge), transport_factory=factory)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "provider_failure" and out.result is None
+    assert out.error is not None and out.error.code == "FORGE-INTERNAL"
+    assert out.error.detail == "ValueError: boom"
+    store = RunStore(forge)
+    assert store.read(out.run_id, "receipt")["status"] == "provider_failure"
+    assert store.read_optional(out.run_id, "result") is None
+
+
+def test_wrong_producer_is_rejected(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("wrong-producer", "bad-a")])
+    out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "provider_failure" and out.result is None
+    assert out.error is not None and out.error.code == "FORGE-PROTO-PRODUCER"
+    store = RunStore(tmp_path / ".forge")
+    assert store.read_optional(out.run_id, "result") is None
+    assert store.read(out.run_id, "receipt")["status"] == "provider_failure"
+
+
+def _rec(pid: str, actions: tuple[str, ...], trust: str) -> RegistryRecord:
+    cap = Capability(id="bad.thing", actions=list(actions), default_action=actions[0],
+                     state="supported", operation_class="read_only",
+                     signals=Signals(keywords=["bad"]))
+    manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"],
+                             ops=["describe", "health", "execute"], capabilities=[cap])
+    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust=trust), state="ready",
+                          manifest=manifest, manifest_sha256="h", protocol="forge/v1")
+
+
+def _fallback_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, action: str | None
+) -> tuple[Forger, TaskSpec, RoutingDecision, dict[str, RegistryRecord]]:
+    records = {"a": _rec("a", ("run", "other"), "trusted"), "b": _rec("b", ("run",), "local")}
+    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="x",
+                    workspace_root=str(tmp_path), requested_capability="bad.thing",
+                    requested_action=action)
+    decision = route(task, list(records.values()), [], set())
+    assert decision.selected[0].provider == "a"
+
+    def fake_health(record: RegistryRecord, **_: object) -> HealthOutcome:
+        if record.entry.id == "a":
+            return HealthOutcome(status="unavailable", error=ErrorInfo(code="X-DOWN", detail="d"))
+        return HealthOutcome(status="ok")
+
+    monkeypatch.setattr("theforge.forger.orchestrator.check_health", fake_health)
+    forge = tmp_path / ".forge"
+    return Forger(tmp_path, Registry(forge), RunStore(forge)), task, decision, records
+
+
+def test_fallback_skips_candidate_lacking_requested_action(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    forge_, task, decision, records = _fallback_setup(tmp_path, monkeypatch, "other")
+    _, record, error = forge_._select_healthy(task, decision, records)
+    assert record is None
+    assert error is not None and error.code == "X-DOWN"
+
+
+def test_fallback_substitutes_default_action_when_none_requested(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    forge_, task, decision, records = _fallback_setup(tmp_path, monkeypatch, None)
+    switched, record, _ = forge_._select_healthy(task, decision, records)
+    assert record is not None and record.entry.id == "b"
+    assert switched.selected[0].action == "run"
