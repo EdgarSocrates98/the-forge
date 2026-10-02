@@ -2,9 +2,12 @@ import time
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from helpers import bad_argv
 from theforge.protocol import SubprocessTransport, TransportError, choose_protocol
+from theforge.protocol.negotiate import major
 
 
 @pytest.mark.parametrize(
@@ -14,6 +17,62 @@ from theforge.protocol import SubprocessTransport, TransportError, choose_protoc
 )
 def test_choose_protocol(offered: list[str], expected: str | None) -> None:
     assert choose_protocol(offered) == expected
+
+
+@pytest.mark.parametrize(
+    ("offered", "expected"),
+    [(["forge/v1"], "forge/v1"), (["forge/v1", "forge/v2"], "forge/v1"),
+     (["forge/v2", "forge/v1"], "forge/v1"), (["forge/v2"], None),
+     (["forge/v1", "forge/v1"], "forge/v1"), (["other/1"], None),
+     (["forge/vX"], None), (["forge/v01"], None), (["forge/v0"], None),
+     (["forge/v1 "], None), ([" forge/v1"], None), (["forge/v1\n"], None),
+     (["FORGE/V1"], None), ([""], None), (["forge/v١"], None),
+     (["forge/v1000"], None), (["forge/v01", "forge/v1"], "forge/v1"),
+     (["garbage", "forge/v1", "forge/v1"], "forge/v1")],
+)
+def test_choose_protocol_robust(offered: list[str], expected: str | None) -> None:
+    assert choose_protocol(offered) == expected
+
+
+@pytest.mark.parametrize("offered", [[None], [1], [["forge/v1"]], [{"v": 1}], [b"forge/v1"]])
+def test_choose_protocol_ignores_non_strings(offered: list[object]) -> None:
+    assert choose_protocol(offered) is None  # type: ignore[arg-type]
+    assert choose_protocol([*offered, "forge/v1"]) == "forge/v1"  # type: ignore[list-item]
+
+
+@pytest.mark.parametrize(
+    ("protocol", "expected"),
+    [("forge/v1", 1), ("forge/v2", 2), ("forge/v999", 999), ("forge/v0", None),
+     ("forge/v01", None), ("forge/v1000", None), ("forge/v1\n", None), ("FORGE/V1", None),
+     ("forge/vX", None), ("", None), (None, None), (1, None)],
+)
+def test_major_strict(protocol: object, expected: int | None) -> None:
+    assert major(protocol) == expected  # type: ignore[arg-type]
+
+
+def test_choose_protocol_prefers_highest_common_major() -> None:
+    supported = ("forge/v1", "forge/v2")
+    assert choose_protocol(["forge/v2", "forge/v1"], supported) == "forge/v2"
+    assert choose_protocol(["forge/v1"], supported) == "forge/v1"
+    assert choose_protocol(["forge/v3"], supported) is None
+
+
+_protocol_like = st.one_of(
+    st.text(max_size=12),
+    st.from_regex(r"forge/v[0-9]{1,4}", fullmatch=True),
+    st.sampled_from(["forge/v1", "forge/v2", "forge/v01", "FORGE/V1", "forge/v1 ", ""]),
+)
+
+
+@given(st.lists(_protocol_like, max_size=8), st.randoms(use_true_random=False))
+def test_choose_protocol_total_and_order_independent(offered: list[str], rnd: object) -> None:
+    result = choose_protocol(offered)
+    assert result is None or result in ("forge/v1",)
+    shuffled = list(offered)
+    rnd.shuffle(shuffled)  # type: ignore[attr-defined]
+    assert choose_protocol(shuffled) == result
+    assert choose_protocol(offered + offered) == result
+    assert result == ("forge/v1" if "forge/v1" in offered else None)
 
 
 def test_describe_ok() -> None:
