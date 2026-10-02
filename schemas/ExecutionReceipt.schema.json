@@ -67,6 +67,16 @@
             }
           ]
         },
+        "risk_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "routing_sha256": {
           "anyOf": [
             {
@@ -113,10 +123,40 @@
         {
           "additionalProperties": false,
           "properties": {
+            "executable": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fingerprint": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "id": {
               "type": "string"
             },
             "manifest_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "observed_version": {
               "anyOf": [
                 {
                   "type": "string"

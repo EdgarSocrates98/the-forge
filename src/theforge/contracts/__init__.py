@@ -22,6 +22,12 @@ from theforge.contracts.result import (
     Metric,
     Metrics,
 )
+from theforge.contracts.risk import (
+    OPERATION_CLASS_LIMITATION,
+    PolicyDecision,
+    RiskAssessment,
+    RiskDimensions,
+)
 from theforge.contracts.routing import (
     Candidate,
     Confidence,
@@ -33,10 +39,11 @@ from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, Producer
 
 __all__ = [
-    "PROTOCOL_V1", "Artifact", "Candidate", "Capability", "Confidence", "ContextFile",
-    "ContextPack", "ContractError", "ErrorInfo", "Evidence", "ExcludedFile", "ExecuteRequest",
-    "ExecutionInfo", "ExecutionReceipt", "ExecutionResult", "Finding", "ForgeManifest",
-    "HealthCheck", "HealthReport", "Location", "MatchedSignals", "Metric", "Metrics",
-    "Producer", "ReceiptInputs", "ReceiptProvider", "Request", "Response", "RoutingDecision",
-    "Selection", "Signals", "TaskSpec", "from_dict", "new_request_id", "to_dict",
+    "OPERATION_CLASS_LIMITATION", "PROTOCOL_V1", "Artifact", "Candidate", "Capability",
+    "Confidence", "ContextFile", "ContextPack", "ContractError", "ErrorInfo", "Evidence",
+    "ExcludedFile", "ExecuteRequest", "ExecutionInfo", "ExecutionReceipt", "ExecutionResult",
+    "Finding", "ForgeManifest", "HealthCheck", "HealthReport", "Location", "MatchedSignals",
+    "Metric", "Metrics", "PolicyDecision", "Producer", "ReceiptInputs", "ReceiptProvider",
+    "Request", "Response", "RiskAssessment", "RiskDimensions", "RoutingDecision", "Selection",
+    "Signals", "TaskSpec", "from_dict", "new_request_id", "to_dict",
 ]

@@ -42,6 +42,14 @@
               "type": "integer"
             },
             "type": "array"
+          },
+          "state": {
+            "enum": [
+              "supported",
+              "heuristic",
+              "unresolved",
+              "unsupported"
+            ]
           }
         },
         "required": [

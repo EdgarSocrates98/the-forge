@@ -2,6 +2,7 @@ import pytest
 
 from theforge.contracts import (
     Artifact,
+    Candidate,
     Confidence,
     ContextFile,
     ContextPack,
@@ -11,10 +12,12 @@ from theforge.contracts import (
     ForgeManifest,
     Producer,
     Response,
+    RiskAssessment,
     RoutingDecision,
     TaskSpec,
     from_dict,
 )
+from theforge.contracts.risk import OPERATION_CLASS_LIMITATION
 from theforge.contracts.types import SHA256_RE, check_sha256
 
 P = {"id": "p", "version": "1"}
@@ -214,3 +217,118 @@ def test_strict_mode_rejects_unknown_nested_field(cls: type) -> None:
     with pytest.raises(ContractError, match=r"\$\.producer\.future: unknown field"):
         from_dict(cls, data, strict=True)
     from_dict(cls, MINIMAL[cls], strict=True)
+
+
+# --- Cycle 2 additive fields (task 1.4) -------------------------------------------------
+
+CYCLE1_CANDIDATE = {"provider": "p", "capability": "demo.echo",
+                    "matched": {"keywords": ["x"]}, "rank_key": [1, 0, 0]}
+
+
+def test_cycle1_response_without_op_still_parses() -> None:
+    r = from_dict(Response, {"request_id": "r", "producer": P, "status": "ok"}, strict=True)
+    assert r.op is None
+    assert from_dict(Response, {"request_id": "r", "producer": P, "status": "ok",
+                                "op": "execute"}).op == "execute"
+
+
+def test_cycle1_candidate_defaults_to_supported_state() -> None:
+    c = from_dict(Candidate, CYCLE1_CANDIDATE, strict=True)
+    assert c.state == "supported"
+    assert from_dict(Candidate, {**CYCLE1_CANDIDATE, "state": "heuristic"}).state == "heuristic"
+    with pytest.raises(ContractError, match="expected one of"):
+        from_dict(Candidate, {**CYCLE1_CANDIDATE, "state": "maybe"})
+
+
+def test_cycle1_routing_decision_with_candidates_parses_strictly() -> None:
+    data = {**MINIMAL[RoutingDecision], "status": "ambiguous",
+            "candidates": [CYCLE1_CANDIDATE, {**CYCLE1_CANDIDATE, "provider": "q"}]}
+    decision = from_dict(RoutingDecision, data, strict=True)
+    assert [c.state for c in decision.candidates] == ["supported", "supported"]
+
+
+def test_cycle1_receipt_parses_with_new_optional_fields_absent() -> None:
+    data = {**MINIMAL[ExecutionReceipt], "inputs": {"task_sha256": GOOD_SHA}, "provider": _RC}
+    receipt = from_dict(ExecutionReceipt, data, strict=True)
+    assert receipt.inputs.risk_sha256 is None
+    assert receipt.provider is not None
+    assert (receipt.provider.executable, receipt.provider.fingerprint,
+            receipt.provider.observed_version) == (None, None, None)
+
+
+def test_receipt_carries_observed_identity_and_risk_hash() -> None:
+    provider = {**_RC, "executable": "/usr/bin/demo", "fingerprint": "f",
+                "observed_version": "1.2.3"}
+    data = {**MINIMAL[ExecutionReceipt], "provider": provider,
+            "inputs": {"task_sha256": GOOD_SHA, "risk_sha256": GOOD_SHA}}
+    receipt = from_dict(ExecutionReceipt, data, strict=True)
+    assert receipt.inputs.risk_sha256 == GOOD_SHA
+    assert receipt.provider is not None
+    assert receipt.provider.executable == "/usr/bin/demo"
+    assert receipt.provider.observed_version == "1.2.3"
+
+
+DIMENSIONS = {"read_only": "yes", "local_mutation": "no", "external_read": "no",
+              "external_mutation": "no", "destructive": "no", "credentials": "unknown",
+              "cross_account": "unknown"}
+
+
+def risk_dict(**overrides: object) -> dict[str, object]:
+    data: dict[str, object] = {
+        "producer": P, "created_at": "t", "run_id": "r", "provider_id": "p",
+        "capability": "demo.echo", "action": "echo", "operation_class": "read_only",
+        "source": "provider_declaration", "dimensions": dict(DIMENSIONS),
+        "policy": {"decision": "allow", "rule": "default.read_only.builtin",
+                   "reason": "read_only", "approved": False, "unlock": None},
+        "limitations": [OPERATION_CLASS_LIMITATION],
+    }
+    data.update(overrides)
+    return data
+
+
+def test_risk_assessment_parses_with_declarative_source() -> None:
+    risk = from_dict(RiskAssessment, risk_dict(), strict=True)
+    assert risk.schema == "theforge/RiskAssessment/v1"
+    assert risk.source == "provider_declaration"
+    assert risk.dimensions.credentials == "unknown"
+    assert risk.policy.decision == "allow" and risk.unknowns == []
+    assert OPERATION_CLASS_LIMITATION == (
+        "operation_class is a provider declaration, not sandbox enforcement")
+
+
+@pytest.mark.parametrize("limitations", [[], ["something else"]])
+def test_risk_assessment_requires_fixed_limitation(limitations: list[str]) -> None:
+    with pytest.raises(ContractError, match="operation_class is a provider declaration"):
+        from_dict(RiskAssessment, risk_dict(limitations=limitations))
+
+
+def test_risk_assessment_keeps_extra_limitations() -> None:
+    risk = from_dict(RiskAssessment, risk_dict(
+        limitations=["cwd is not a sandbox", OPERATION_CLASS_LIMITATION]))
+    assert len(risk.limitations) == 2
+
+
+@pytest.mark.parametrize(("field_name", "value"), [
+    ("schema", "theforge/RiskAssessment/v2"),
+    ("source", "sandbox"),
+    ("operation_class", "nuke"),
+    ("dimensions", {**DIMENSIONS, "destructive": "maybe"}),
+    ("policy", {"decision": "perhaps", "rule": "r", "reason": "r", "approved": False}),
+])
+def test_risk_assessment_rejects_invalid_values(field_name: str, value: object) -> None:
+    with pytest.raises(ContractError):
+        from_dict(RiskAssessment, risk_dict(**{field_name: value}))
+
+
+def test_risk_assessment_missing_dimension_rejected() -> None:
+    dims = {k: v for k, v in DIMENSIONS.items() if k != "cross_account"}
+    with pytest.raises(ContractError, match="cross_account: required field missing"):
+        from_dict(RiskAssessment, risk_dict(dimensions=dims))
+
+
+def test_risk_assessment_direct_construction_enforces_invariants() -> None:
+    risk = from_dict(RiskAssessment, risk_dict())
+    with pytest.raises(ContractError, match="unsupported schema"):
+        RiskAssessment(**{**risk.__dict__, "schema": "other/v1"})
+    with pytest.raises(ContractError, match="source"):
+        RiskAssessment(**{**risk.__dict__, "source": "sandbox"})
