@@ -23,7 +23,7 @@ def record(pid: str, caps: list[Capability], trust: str = "local",
                              ops=["describe", "health", "execute"], capabilities=list(caps))
     return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust=trust),
                           state=state, manifest=manifest,
-                          manifest_sha256="h", protocol="forge/v1")
+                          manifest_sha256="0" * 64, protocol="forge/v1")
 
 
 def task(intent: str, **kw: object) -> TaskSpec:

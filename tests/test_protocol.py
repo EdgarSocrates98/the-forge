@@ -6,6 +6,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from helpers import bad_argv
+from theforge.contracts import ExecutionResult, ForgeManifest, Producer, from_dict
+from theforge.contracts.integrity import check_producer, validate_result
 from theforge.protocol import SubprocessTransport, TransportError, choose_protocol
 from theforge.protocol.negotiate import major
 
@@ -78,6 +80,18 @@ def test_choose_protocol_total_and_order_independent(offered: list[str], rnd: ob
 def test_describe_ok() -> None:
     resp = SubprocessTransport(bad_argv("ok")).call("describe", {}, timeout=10)
     assert resp.status == "ok" and resp.payload["id"] == "bad-forge"
+
+
+def test_bad_forge_default_path_is_conformant() -> None:
+    transport = SubprocessTransport(bad_argv("ok"))
+    manifest = from_dict(ForgeManifest, transport.call("describe", {}, timeout=10).payload)
+    expected = Producer(id=manifest.id, version=manifest.version)
+    for op in ("describe", "health", "execute"):
+        resp = transport.call(op, {}, timeout=10)
+        assert resp.op == op
+        assert check_producer(resp.producer, expected=expected, field="producer") is None
+        if op == "execute":
+            validate_result(from_dict(ExecutionResult, resp.payload), expected=expected)
 
 
 def _failure(mode: str, timeout: float = 10) -> TransportError:

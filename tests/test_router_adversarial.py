@@ -27,7 +27,7 @@ def fixture_record(name: str, entry: dict[str, Any]) -> RegistryRecord:
     data = json.loads((PROVIDERS / name).read_text(encoding="utf-8"))
     manifest = from_dict(ForgeManifest, data)
     return RegistryRecord(entry=ProviderEntry(id=entry["id"], argv=["x"], trust="local"),
-                          state="ready", manifest=manifest, manifest_sha256="h",
+                          state="ready", manifest=manifest, manifest_sha256="0" * 64,
                           protocol="forge/v1")
 
 
@@ -45,7 +45,7 @@ def make(pid: str, *, kw: tuple[str, ...] = (), globs: tuple[str, ...] = (),
     manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"], ops=list(ops),
                              capabilities=[capability])
     return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
-                          state="ready", manifest=manifest, manifest_sha256="h",
+                          state="ready", manifest=manifest, manifest_sha256="0" * 64,
                           protocol="forge/v1")
 
 
@@ -193,7 +193,7 @@ def test_capabilities_of_one_provider_never_neutralize_each_other() -> None:
     manifest = ForgeManifest(id="echo-like", version="1", protocols=["forge/v1"],
                              ops=["describe", "health", "execute"], capabilities=caps)
     rec = RegistryRecord(entry=ProviderEntry(id="echo-like", argv=["x"], trust="local"),
-                         state="ready", manifest=manifest, manifest_sha256="h",
+                         state="ready", manifest=manifest, manifest_sha256="0" * 64,
                          protocol="forge/v1")
     d = route(task("eco"), [rec], ["notes.txt"], set())
     assert d.status == "routed" and d.selected[0].capability == "demo.echo"

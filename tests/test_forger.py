@@ -220,7 +220,7 @@ def _rec(pid: str, actions: tuple[str, ...], trust: str) -> RegistryRecord:
     manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"],
                              ops=["describe", "health", "execute"], capabilities=[cap])
     return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust=trust), state="ready",
-                          manifest=manifest, manifest_sha256="h", protocol="forge/v1")
+                          manifest=manifest, manifest_sha256="0" * 64, protocol="forge/v1")
 
 
 def _fallback_setup(

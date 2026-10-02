@@ -32,7 +32,8 @@ def main() -> int:
     def reply(status, payload=None, error=None, request_id=None):
         sys.stdout.write(json.dumps({
             "protocol": proto, "kind": "Response", "request_id": request_id or rid,
-            "producer": producer, "status": status, "payload": payload or {}, "error": error,
+            "op": op, "producer": producer, "status": status, "payload": payload or {},
+            "error": error,
         }))
         return 0
 

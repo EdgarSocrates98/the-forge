@@ -17,7 +17,8 @@ def main() -> int:
     def reply(status, payload=None, error=None):
         sys.stdout.write(json.dumps({
             "protocol": "forge/v1", "kind": "Response", "request_id": rid,
-            "producer": producer, "status": status, "payload": payload or {}, "error": error,
+            "op": op, "producer": producer, "status": status, "payload": payload or {},
+            "error": error,
         }))
         return 0
 
