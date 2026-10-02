@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "candidates": {
+      "items": {
+        "properties": {
+          "capability": {
+            "type": "string"
+          },
+          "matched": {
+            "properties": {
+              "dependencies": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "file_globs": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "keywords": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "rank_key": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider",
+          "capability"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "confidence": {
+      "properties": {
+        "level": {
+          "enum": [
+            "high",
+            "low"
+          ]
+        },
+        "measured_signals": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unresolved": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "type": "object"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "fallbacks_used": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "pattern": {
+      "enum": [
+        "route"
+      ]
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "selected": {
+      "items": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "primary",
+              "specialist"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "capability",
+          "action"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "status": {
+      "enum": [
+        "routed",
+        "ambiguous",
+        "no_route"
+      ]
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "status",
+    "task_id",
+    "reason",
+    "confidence"
+  ],
+  "title": "RoutingDecision",
+  "type": "object"
+}

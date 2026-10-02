@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "context": {
+      "properties": {
+        "budget_bytes": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "excluded": {
+          "items": {
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "properties": {
+              "bytes": {
+                "type": "integer"
+              },
+              "path": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "bytes"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "producer": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "type": "object"
+        },
+        "provider_id": {
+          "type": "string"
+        },
+        "root": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "truncated"
+          ]
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "used_bytes": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "producer",
+        "created_at",
+        "status",
+        "task_id",
+        "provider_id",
+        "root",
+        "budget_bytes"
+      ],
+      "type": "object"
+    },
+    "task": {
+      "properties": {
+        "budget_profile": {
+          "enum": [
+            "economy",
+            "balanced",
+            "max"
+          ]
+        },
+        "constraints": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "producer": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "type": "object"
+        },
+        "requested_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requested_capability": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schema": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "created"
+          ]
+        },
+        "targets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "workspace_root": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "producer",
+        "created_at",
+        "id",
+        "intent",
+        "workspace_root"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "task",
+    "capability",
+    "action",
+    "context"
+  ],
+  "title": "ExecuteRequest",
+  "type": "object"
+}

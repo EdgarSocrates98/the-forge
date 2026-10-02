@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "budget_bytes": {
+      "type": "integer"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "excluded": {
+      "items": {
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "files": {
+      "items": {
+        "properties": {
+          "bytes": {
+            "type": "integer"
+          },
+          "path": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "bytes"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "root": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "truncated"
+      ]
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "used_bytes": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "status",
+    "task_id",
+    "provider_id",
+    "root",
+    "budget_bytes"
+  ],
+  "title": "ContextPack",
+  "type": "object"
+}
