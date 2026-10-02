@@ -9,7 +9,7 @@ IGNORED_DIRS = frozenset({
 })
 SECRET_PATTERNS = (
     ".env", ".env.*", "*.pem", "*.key", "id_rsa*", "id_ed25519*", "*.pfx", "*.p12",
-    "credentials*",
+    "credentials*", ".npmrc", ".netrc", ".pgpass", "*.token", "secrets.*",
 )
 
 

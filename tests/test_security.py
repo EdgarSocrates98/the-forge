@@ -29,6 +29,14 @@ def test_redact_text_removes_secrets(raw: str, leaked: str) -> None:
 
 def test_redact_keeps_plain_text() -> None:
     assert redact_text("tokens: 5 files") == "tokens: 5 files"
+    assert redact_text("max_tokens: 100") == "max_tokens: 100"
+
+
+def test_redact_text_preserves_structure() -> None:
+    assert redact_text('{"password": "hunter2xyz"}') == f'{{"password": "{REDACTED}"}}'
+    assert redact_text("password = 'my pass word'") == f"password = '{REDACTED}'"
+    assert redact_text("postgres://user:s3cretpw@host/db") == f"postgres://user:{REDACTED}@host/db"
+    assert redact_text("GITHUB_TOKEN=x1y2z3") == f"GITHUB_TOKEN={REDACTED}"
 
 
 @given(st.text())
@@ -42,6 +50,15 @@ def test_redact_structure_and_sensitive_keys() -> None:
     assert redact(data) == {
         "intent": f"password={REDACTED}", "nested": [{"api_key": REDACTED}], "count": 3,
     }
+
+
+@pytest.mark.parametrize("value", [["a", "b"], {"k": "v"}, 12345, True])
+def test_redact_sensitive_key_non_str_values(value) -> None:
+    assert redact({"password": value}) == {"password": REDACTED}
+
+
+def test_redact_sensitive_key_keeps_none_and_empty() -> None:
+    assert redact({"token": None, "secret": ""}) == {"token": None, "secret": ""}
 
 
 def test_safe_env_drops_credentials() -> None:
@@ -59,7 +76,8 @@ def test_safe_env_drops_credentials() -> None:
     ("name", "secret"),
     [(".env", True), (".env.local", True), ("id_rsa", True), ("server.pem", True),
      ("creds.key", True), ("credentials.json", True), ("notes.txt", False),
-     ("environment.py", False)],
+     ("environment.py", False), (".npmrc", True), (".netrc", True), (".pgpass", True),
+     ("api.token", True), ("secrets.yaml", True), ("secrets.json", True)],
 )
 def test_secret_names(name: str, secret: bool) -> None:
     assert is_secret_name(name) is secret
