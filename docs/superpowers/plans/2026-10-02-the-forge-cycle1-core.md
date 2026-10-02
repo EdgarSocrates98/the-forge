@@ -3932,7 +3932,8 @@ git commit -m "feat(runs): add redacting run store and .forge workspace layout"
 >     forge = root / ".forge"
 >     return Forger(root, Registry(forge, allow_unverified=allow_unverified), RunStore(forge), **kw)
 > ```
-> e em `test_unverified_requires_opt_in` use `forger(tmp_path, allow_unverified=True).ask(opted)` na segunda chamada. O orquestrador não muda.
+> e em `test_unverified_requires_opt_in` use `forger(tmp_path, allow_unverified=True).ask(opted)` na segunda chamada.
+> No orquestrador, `check_health` agora recusa providers `unverified` sem opt-in: em `_select_healthy` chame `check_health(record, transport_factory=self.transport_factory, allow_unverified=self.registry.allow_unverified)`.
 
 **Files:**
 - Create: `src/theforge/forger/__init__.py`, `src/theforge/forger/orchestrator.py`
@@ -5343,6 +5344,7 @@ git commit -m "feat(contracts): publish JSON Schemas with dataclass parity tests
 > - README "Registrar um provider": o `providers.toml` **do usuário** (`%APPDATA%/theforge/providers.toml` no Windows, `~/.config/theforge/providers.toml` no POSIX, ou `$THEFORGE_CONFIG_DIR`) é o único que concede trust. O de projeto (`.forge/config/providers.toml`) pode declarar providers, mas eles entram sempre como `unverified` e não são executados (nem `describe`) sem `--allow-unverified`. Para confiar num provider de projeto, copie a entrada para o arquivo do usuário. Ids builtin são reservados.
 > - `docs/security.md`, linha "Provider malicioso": acrescente "repositório não pode se autoconceder trust; providers `unverified` não são executados".
 > - ADR 0006: troque a frase de precedência por "builtin > usuário > projeto; trust só vem do arquivo do usuário; entradas de projeto são sempre `unverified`; `unverified` nunca é executado sem opt-in".
+> - `docs/security.md`: adicione linha "Cache de registry adulterado (`.forge/registry/` pode vir no repo)" → mitigação: providers `unverified` nunca são cacheados nem lidos do cache; leitura revalida id e protocolo; pendente: um cache forjado ainda pode falsificar capabilities de um provider já confiável (sem execução de código) — mover cache para diretório do usuário num ciclo futuro.
 > - Template `PROVIDERS_TEMPLATE` já existente em `state.py` NÃO é alterado por esta task.
 
 **Files:**
