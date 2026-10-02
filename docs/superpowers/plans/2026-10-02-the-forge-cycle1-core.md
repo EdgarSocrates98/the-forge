@@ -5346,6 +5346,7 @@ git commit -m "feat(contracts): publish JSON Schemas with dataclass parity tests
 > - ADR 0006: troque a frase de precedência por "builtin > usuário > projeto; trust só vem do arquivo do usuário; entradas de projeto são sempre `unverified`; `unverified` nunca é executado sem opt-in".
 > - `docs/security.md`: adicione linha "Cache de registry adulterado (`.forge/registry/` pode vir no repo)" → mitigação: providers `unverified` nunca são cacheados nem lidos do cache; leitura revalida id e protocolo; pendente: um cache forjado ainda pode falsificar capabilities de um provider já confiável (sem execução de código) — mover cache para diretório do usuário num ciclo futuro.
 > - README (tabela de exit codes) e `docs/cli.md`: acrescente `70` = erro interno inesperado (sem traceback) e `130` = interrompido (Ctrl+C). `docs/protocol.md`: acrescente códigos `FORGE-PROTO-PRODUCER` (result.producer ≠ provider), `FORGE-PROVIDER-UNTRUSTED`, `FORGE-PROVIDER-BLOCKED`, `FORGE-USAGE` e `FORGE-INTERNAL` (receipts de runs que falharam por uso inválido / erro interno).
+> - `CLAUDE.md` (decisão do usuário: MESCLAR): já existe um `CLAUDE.md` não rastreado do usuário (Kiro/SDD). NÃO sobrescreva. Leia-o e grave um arquivo cujo topo é o conteúdo do Step 2 desta task (seção The Forge), seguido de uma linha `---` e do conteúdo original do usuário intacto. Commite só o `CLAUDE.md`; nunca adicione `.kiro/`, `.claude/`, `.agents/`, `.codex/`, `.devin/` nem `AGENTS.md`.
 > - Template `PROVIDERS_TEMPLATE` já existente em `state.py` NÃO é alterado por esta task.
 
 **Files:**
