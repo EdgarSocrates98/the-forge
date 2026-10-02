@@ -2,8 +2,9 @@ import json
 from pathlib import Path
 
 import pytest
-from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_b, make_workspace
 
+from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_b, make_workspace
+from theforge.cli import render
 from theforge.cli.main import main
 
 
@@ -97,3 +98,48 @@ def test_status_and_doctor(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -
     assert code == 0 and json.loads(out)["initialized"] is True
     code, out, _ = run(capsys, "doctor", "--root", root, "--json")
     assert code == 0 and any(c["name"] == "python" for c in json.loads(out)["checks"])
+
+
+def test_unexpected_exception_exits_70_without_traceback(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+        capsys: pytest.CaptureFixture[str]) -> None:
+    def boom(args: object) -> int:
+        raise ValueError("boom")
+
+    monkeypatch.setattr("theforge.cli.main.commands.cmd_status", boom)
+    code, _, err = run(capsys, "status", "--root", str(tmp_path))
+    assert code == 70
+    assert "internal error: ValueError: boom" in err and "Traceback" not in err
+
+
+@pytest.mark.parametrize(("exc", "code", "text"), [
+    (KeyboardInterrupt(), 130, "interrupted"),
+    (BrokenPipeError(), 1, ""),
+])
+def test_interrupt_and_broken_pipe(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+        exc: BaseException, code: int, text: str) -> None:
+    def raiser(args: object) -> int:
+        raise exc
+
+    monkeypatch.setattr("theforge.cli.main.commands.cmd_status", raiser)
+    got, _, err = run(capsys, "status", "--root", str(tmp_path))
+    assert got == code and text in err
+
+
+def test_render_strips_terminal_escapes() -> None:
+    out = render.capabilities({"capabilities": [{
+        "id": "a.b", "provider": "p", "actions": ["x"], "state": "ready",
+        "description": "evil\x1b[31mred"}]})
+    assert "\x1b" not in out and "evil?[31mred" in out
+    data = {"run_id": "r", "status": "ok", "decision": {
+        "selected": [], "reason": "why", "confidence": {"level": "high"}, "candidates": []},
+        "result": {"findings": [{"severity": "low", "title": "bell\x07"}], "evidence": []},
+        "error": None}
+    assert "\x07" not in render.ask(data)
+
+
+def test_explain_tolerates_partial_run() -> None:
+    out = render.explain({"run_id": "x", "task": {"intent": "i"},
+                          "receipt": {"status": "ok"}})
+    assert "Run:" in out and "i" in out

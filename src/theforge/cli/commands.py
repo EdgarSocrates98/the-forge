@@ -173,7 +173,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
         "error": to_dict(outcome.error) if outcome.error else None,
     }
     _emit(args, data, render.ask)
-    return EXIT_BY_STATUS[outcome.status]
+    return EXIT_BY_STATUS.get(outcome.status, 4)
 
 
 def cmd_explain(args: argparse.Namespace) -> int:

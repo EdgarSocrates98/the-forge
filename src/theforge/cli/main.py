@@ -1,6 +1,7 @@
 """Argument parsing and exit-code mapping for `theforge` / `forge`."""
 
 import argparse
+import contextlib
 import sys
 from collections.abc import Sequence
 
@@ -65,7 +66,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _tolerate_unencodable_output() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(AttributeError, ValueError, OSError):
+            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _tolerate_unencodable_output()
     args = build_parser().parse_args(argv)
     try:
         return int(args.handler(args))
@@ -75,3 +83,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     except PersistenceError as exc:
         print(f"theforge: persistence error: {exc}", file=sys.stderr)
         return 5
+    except KeyboardInterrupt:
+        print("theforge: interrupted", file=sys.stderr)
+        return 130
+    except BrokenPipeError:
+        return 1
+    except Exception as exc:
+        print(f"theforge: internal error: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 70
