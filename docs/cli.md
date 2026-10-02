@@ -1,11 +1,11 @@
 # CLI
 
-`theforge` (alias `forge`). Todo subcomando aceita `--root <dir>` (padrão: diretório atual) e `--json`.
+`theforge` (alias `forge`). Todo subcomando aceita `--root <dir>` (padrão: diretório atual) e `--json`, sempre **depois** do subcomando final: `theforge registry list --json`, `theforge init --root X`. Colocá-los antes (`theforge --root X init`) não funciona.
 
 | Comando | Faz | Exit |
 |---|---|---|
 | `init` | cria `.forge/` (idempotente) | 0 |
-| `doctor` | OS, Python, git, host, workspace, providers | 0 / 1 se algo `fail` |
+| `doctor` | OS, Python, git, host, workspace, providers | 0 / 1 só se algum check for `fail` (Python < 3.11, `.forge` sem escrita, provider builtin não saudável, `providers.toml` inválido); provider não builtin não saudável e workspace não inicializado são `warn` (exit 0) |
 | `status` | resumo do workspace | 0 |
 | `registry list` | providers (usa cache) | 0 |
 | `registry refresh` | re-`describe` de todos os providers | 0 |

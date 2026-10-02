@@ -18,17 +18,19 @@ O runtime só usa a stdlib. Os comandos são `theforge` e o alias `forge`. Use `
 
 ## Primeiros passos
 
+Os comandos abaixo assumem o venv ativado (`source .venv/bin/activate`; no Windows, `.venv\Scripts\activate`). Sem ativar, chame `.venv/bin/theforge` (Windows: `.venv\Scripts\theforge`).
+
 ```bash
 theforge doctor
 theforge init
 theforge capabilities list
 theforge ask "eco olá" --capability demo.echo
-theforge explain <run_id>
+theforge explain <run_id>   # o run_id é impresso por `ask`
 ```
 
 ## Registrar um provider
 
-O `providers.toml` **do usuário** é o único que concede trust: `%APPDATA%/theforge/providers.toml` no Windows, `~/.config/theforge/providers.toml` no POSIX, ou `$THEFORGE_CONFIG_DIR/providers.toml`.
+O `providers.toml` **do usuário** é o único que concede trust. Ele fica em `%APPDATA%\theforge\providers.toml` no Windows e em `$XDG_CONFIG_HOME/theforge/providers.toml` no POSIX (fallback `~/.config/theforge/providers.toml`); `$THEFORGE_CONFIG_DIR` sobrescreve o diretório em qualquer plataforma.
 
 ```toml
 [[providers]]
@@ -37,7 +39,7 @@ argv = ["my-forge-cli", "protocol"]   # "{python}" vira o interpretador atual
 trust = "local"                        # trusted | local | unverified | blocked (padrão: unverified)
 ```
 
-O `providers.toml` de projeto (`.forge/config/providers.toml`) pode declarar providers, mas eles entram sempre como `unverified` e não são executados (nem `describe`) sem `--allow-unverified`. Para confiar num provider de projeto, copie a entrada para o arquivo do usuário. Ids builtin (`echo-forge`) são reservados.
+O `providers.toml` de projeto (`.forge/config/providers.toml`) pode declarar providers, mas eles entram sempre como `unverified` e não são executados (nem `describe`) sem `--allow-unverified`. Para confiar num provider de projeto, copie a entrada para o arquivo do usuário. Ids builtin (`echo-forge`) são reservados: usá-los em qualquer `providers.toml` é erro de uso (exit 2). Uma entrada de projeto cujo id já esteja definido no arquivo do usuário é ignorada, com aviso.
 
 Depois rode `theforge registry refresh`.
 

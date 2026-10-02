@@ -43,7 +43,7 @@ sequenceDiagram
 | `protocol` | spawn, timeout, limite de stdout, validação do envelope | decidir rota |
 | `registry` | carregar entradas, `describe`, negociar protocolo, cache, trust, health | executar tarefas |
 | `routing` | ranquear capabilities por sinais declarados | conhecer domínios |
-| `context` | listar arquivos com segurança, montar ContextPack por referência | ler conteúdo para o provider |
+| `context` | listar arquivos com segurança, montar ContextPack por referência | enviar conteúdo de arquivos ao provider (lê os bytes só para calcular sha256 e tamanho) |
 | `forger` | orquestrar um run, fallback de health, receipts | lógica de domínio |
 | `runs` | persistir artefatos redigidos, hashes | interpretar resultados |
 | `cli` | parsing, render, exit codes | lógica de negócio |
