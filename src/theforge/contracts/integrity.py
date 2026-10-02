@@ -13,9 +13,19 @@ from datetime import datetime, timedelta
 from theforge.contracts.base import ContractError
 from theforge.contracts.codes import Codes
 from theforge.contracts.context import ContextPack
+from theforge.contracts.manifest import ForgeManifest
 from theforge.contracts.receipt import ExecutionReceipt
 from theforge.contracts.result import ExecutionResult
-from theforge.contracts.types import SHA256_RE, Producer
+from theforge.contracts.types import (
+    MAX_ACTIONS,
+    MAX_CAPABILITIES,
+    MAX_DEPENDENCIES,
+    MAX_GLOBS,
+    MAX_KEYWORDS,
+    SHA256_RE,
+    Producer,
+    is_catch_all_glob,
+)
 
 _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _SUCCESS = ("ok", "partial")
@@ -214,3 +224,62 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None) ->
                 "result_sha256",
             ))
     _raise_if_any(violations)
+
+
+def _over_limit(cap_id: str, field: str, items: list[str], limit: int) -> Violation | None:
+    if len(items) <= limit:
+        return None
+    name = field.rsplit(".", 1)[-1]
+    return Violation(
+        Codes.MANIFEST_LIMITS,
+        f"capability {cap_id!r} declares {len(items)} {name} (max {limit})",
+        field,
+    )
+
+
+def validate_manifest_limits(manifest: ForgeManifest) -> tuple[Violation, ...]:
+    """Return manifest-limit violations (all ``Codes.MANIFEST_LIMITS``); never raises.
+
+    A violation with ``field == "capabilities"`` is manifest-level (too many capabilities):
+    the provider is invalid. Every other violation is per capability, with ``field``
+    starting ``capabilities[i]`` and the capability id in ``detail``, so the caller can
+    exclude just that capability. Order: manifest level, then per capability in declaration
+    order: actions, keywords, file_globs count, each catch-all glob, dependencies.
+    A capability without actions is already rejected by ``Capability.__post_init__``; it is
+    reported here too, defensively, should one ever bypass construction.
+    """
+    violations: list[Violation] = []
+    count = len(manifest.capabilities)
+    if count > MAX_CAPABILITIES:
+        violations.append(Violation(
+            Codes.MANIFEST_LIMITS,
+            f"manifest {manifest.id} declares {count} capabilities (max {MAX_CAPABILITIES})",
+            "capabilities",
+        ))
+    for i, cap in enumerate(manifest.capabilities):
+        where = f"capabilities[{i}]"
+        if not cap.actions:
+            violations.append(Violation(
+                Codes.MANIFEST_LIMITS, f"capability {cap.id!r} declares no actions",
+                f"{where}.actions",
+            ))
+        checks: list[tuple[str, list[str], int]] = [
+            ("actions", cap.actions, MAX_ACTIONS),
+            ("signals.keywords", cap.signals.keywords, MAX_KEYWORDS),
+            ("signals.file_globs", cap.signals.file_globs, MAX_GLOBS),
+        ]
+        for field, items, limit in checks:
+            if (v := _over_limit(cap.id, f"{where}.{field}", items, limit)) is not None:
+                violations.append(v)
+        for j, glob in enumerate(cap.signals.file_globs):
+            if is_catch_all_glob(glob):
+                violations.append(Violation(
+                    Codes.MANIFEST_LIMITS,
+                    f"capability {cap.id!r} declares catch-all file glob {glob!r}",
+                    f"{where}.signals.file_globs[{j}]",
+                ))
+        deps = cap.signals.dependencies
+        dep_field = f"{where}.signals.dependencies"
+        if (v := _over_limit(cap.id, dep_field, deps, MAX_DEPENDENCIES)) is not None:
+            violations.append(v)
+    return tuple(violations)

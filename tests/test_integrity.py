@@ -3,12 +3,17 @@
 Each invariant has at least one valid and one invalid case asserting the specific code.
 """
 
+import json
+import subprocess
+import sys
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from theforge.contracts import (
     Artifact,
+    Capability,
     ContextFile,
     ContextPack,
     ContractError,
@@ -16,9 +21,12 @@ from theforge.contracts import (
     ExecutionReceipt,
     ExecutionResult,
     Finding,
+    ForgeManifest,
     Producer,
     ReceiptInputs,
     ReceiptProvider,
+    Signals,
+    from_dict,
 )
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import Codes
@@ -29,10 +37,21 @@ from theforge.contracts.integrity import (
     check_producer,
     check_timestamp,
     validate_context_pack,
+    validate_manifest_limits,
     validate_receipt,
     validate_result,
 )
-from theforge.contracts.types import ErrorInfo
+from theforge.contracts.types import (
+    CATCH_ALL_GLOBS,
+    MAX_ACTIONS,
+    MAX_CAPABILITIES,
+    MAX_DEPENDENCIES,
+    MAX_GLOBS,
+    MAX_KEYWORDS,
+    ErrorInfo,
+    is_catch_all_glob,
+)
+from theforge.providers.echo.provider import MANIFEST as ECHO_MANIFEST
 
 H1 = "a" * 64
 H2 = "b" * 64
@@ -379,3 +398,143 @@ def test_receipt_malformed_timestamp_rejected(field: str) -> None:
         validate_receipt(receipt(**{field: "t"}), result_sha256=H1)
     assert exc.value.code == Codes.RECEIPT_INVALID
     assert exc.value.violations[0].field == field
+
+
+# --- manifest limits and catch-all globs (requirements 1.9, 3.2) ---
+
+FIXTURES = Path(__file__).parent / "fixtures" / "providers"
+
+
+def cap(i: int = 0, **signals: list[str]) -> Capability:
+    return Capability(
+        id=f"demo.cap{i}", actions=["run"], default_action="run",
+        state="supported", operation_class="read_only", signals=Signals(**signals),
+    )
+
+
+def manifest_of(*caps: Capability) -> ForgeManifest:
+    return ForgeManifest(
+        id="demo", version="1.0.0", protocols=["forge/v1"],
+        ops=["describe", "health", "execute"], capabilities=list(caps),
+    )
+
+
+def test_limits_are_defined_in_contract_types() -> None:
+    assert (MAX_CAPABILITIES, MAX_KEYWORDS, MAX_GLOBS, MAX_DEPENDENCIES, MAX_ACTIONS) == (
+        256, 64, 32, 32, 16,
+    )
+    assert {"*", "**", "**/*", "*.*", "**/*.*"} <= CATCH_ALL_GLOBS
+
+
+def test_manifest_within_limits_has_no_violations() -> None:
+    m = manifest_of(cap(0, keywords=["a"], file_globs=["*.md"], dependencies=["x"]))
+    assert validate_manifest_limits(m) == ()
+
+
+def test_too_many_capabilities_is_manifest_level_violation() -> None:
+    m = manifest_of(*(cap(i) for i in range(300)))
+    violations = validate_manifest_limits(m)
+    assert len(violations) == 1
+    assert violations[0].code == Codes.MANIFEST_LIMITS
+    assert violations[0].field == "capabilities"
+    assert "300" in violations[0].detail
+
+
+def test_exactly_max_capabilities_is_allowed() -> None:
+    assert validate_manifest_limits(manifest_of(*(cap(i) for i in range(MAX_CAPABILITIES)))) == ()
+
+
+@pytest.mark.parametrize(
+    "glob", ["*", "**", "**/*", "*.*", "**/*.*", "./*", "./**/*", " * "],
+)
+def test_catch_all_glob_rejected_per_capability(glob: str) -> None:
+    m = manifest_of(cap(0, file_globs=["*.md"]), cap(1, file_globs=["*.md", glob]))
+    violations = validate_manifest_limits(m)
+    assert [v.code for v in violations] == [Codes.MANIFEST_LIMITS]
+    assert violations[0].field == "capabilities[1].signals.file_globs[1]"
+    assert "demo.cap1" in violations[0].detail
+
+
+@pytest.mark.parametrize(
+    "glob", ["*.md", "*.txt", "*.scala", "*.py", "*_job.py", "*glue*.py", "openapi.yaml",
+             "**/*.py", "src/**/*"],
+)
+def test_specific_globs_allowed(glob: str) -> None:
+    assert is_catch_all_glob(glob) is False
+    assert validate_manifest_limits(manifest_of(cap(0, file_globs=[glob]))) == ()
+
+
+def test_too_many_keywords_rejected_per_capability() -> None:
+    m = manifest_of(cap(0), cap(1, keywords=[f"k{i}" for i in range(100)]))
+    violations = validate_manifest_limits(m)
+    assert [v.code for v in violations] == [Codes.MANIFEST_LIMITS]
+    assert violations[0].field == "capabilities[1].signals.keywords"
+    assert "demo.cap1" in violations[0].detail and "100" in violations[0].detail
+
+
+@pytest.mark.parametrize(
+    ("signals", "field"),
+    [
+        ({"file_globs": [f"f{i}.py" for i in range(MAX_GLOBS + 1)]}, "signals.file_globs"),
+        ({"dependencies": [f"d{i}" for i in range(MAX_DEPENDENCIES + 1)]}, "signals.dependencies"),
+    ],
+)
+def test_too_many_globs_or_dependencies_rejected(signals: dict[str, list[str]], field: str) -> None:
+    violations = validate_manifest_limits(manifest_of(cap(0, **signals)))
+    assert [(v.code, v.field) for v in violations] == [
+        (Codes.MANIFEST_LIMITS, f"capabilities[0].{field}")
+    ]
+
+
+def test_too_many_actions_rejected() -> None:
+    actions = [f"a{i}" for i in range(MAX_ACTIONS + 1)]
+    c = Capability(id="demo.many", actions=actions, default_action="a0",
+                   state="supported", operation_class="read_only")
+    violations = validate_manifest_limits(manifest_of(c))
+    assert [(v.code, v.field) for v in violations] == [
+        (Codes.MANIFEST_LIMITS, "capabilities[0].actions")
+    ]
+
+
+def test_capability_without_actions_rejected_at_construction() -> None:
+    with pytest.raises(ContractError):
+        Capability(id="demo.none", actions=[], default_action="run",
+                   state="supported", operation_class="read_only")
+
+
+def test_capability_without_actions_reported_not_crashing() -> None:
+    c = cap(0)
+    object.__setattr__(c, "actions", [])  # bypass __post_init__ defensively
+    violations = validate_manifest_limits(manifest_of(c))
+    assert [(v.code, v.field) for v in violations] == [
+        (Codes.MANIFEST_LIMITS, "capabilities[0].actions")
+    ]
+
+
+def test_violations_in_deterministic_order() -> None:
+    bad = cap(0, keywords=[f"k{i}" for i in range(MAX_KEYWORDS + 1)], file_globs=["**/*", "*"])
+    fields = [v.field for v in validate_manifest_limits(manifest_of(bad))]
+    assert fields == [
+        "capabilities[0].signals.keywords",
+        "capabilities[0].signals.file_globs[0]",
+        "capabilities[0].signals.file_globs[1]",
+    ]
+
+
+def test_echo_manifest_within_limits() -> None:
+    assert validate_manifest_limits(ECHO_MANIFEST) == ()
+
+
+@pytest.mark.parametrize("name", ["fixture-spark.json", "fixture-api.json"])
+def test_fixture_manifests_within_limits(name: str) -> None:
+    data = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+    assert validate_manifest_limits(from_dict(ForgeManifest, data)) == ()
+
+
+def test_bad_forge_default_manifest_within_limits() -> None:
+    proc = subprocess.run(
+        [sys.executable, str(FIXTURES / "bad_forge.py"), "default", "describe"],
+        input="{}", capture_output=True, text=True, timeout=30, check=True,
+    )
+    payload = json.loads(proc.stdout)["payload"]
+    assert validate_manifest_limits(from_dict(ForgeManifest, payload)) == ()

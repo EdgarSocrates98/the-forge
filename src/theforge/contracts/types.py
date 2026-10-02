@@ -28,6 +28,26 @@ def check_sha256(value: str, *, field: str) -> None:
         raise ContractError(f"{field}: invalid sha256 {value!r}, expected 64 lowercase hex chars")
 
 
+# Manifest limits (initial values; changing them is a revalidation trigger).
+MAX_CAPABILITIES: Final = 256
+MAX_KEYWORDS: Final = 64
+MAX_GLOBS: Final = 32
+MAX_DEPENDENCIES: Final = 32
+MAX_ACTIONS: Final = 16
+
+# Globs that match every file regardless of name or extension. Extension globs such as
+# "*.md" are legitimate signals and are NOT catch-all.
+CATCH_ALL_GLOBS: Final = frozenset({"*", "**", "**/*", "*.*", "**/*.*"})
+
+
+def is_catch_all_glob(glob: str) -> bool:
+    """True if ``glob`` (ignoring surrounding whitespace and leading ``./``) matches any file."""
+    g = glob.strip()
+    while g.startswith("./"):
+        g = g[2:]
+    return g in CATCH_ALL_GLOBS
+
+
 TRUST_RANK: dict[str, int] = {
     "builtin": 0, "trusted": 1, "local": 2, "unverified": 3, "blocked": 4,
 }
