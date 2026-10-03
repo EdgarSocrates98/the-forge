@@ -125,6 +125,27 @@ def _signals(matched: dict[str, list[str]]) -> str:
     return " ".join(parts) or "requested"
 
 
+_DIMENSIONS = ("read_only", "local_mutation", "external_read", "external_mutation",
+               "destructive", "credentials", "cross_account")
+
+
+def _risk(risk: dict[str, Any] | None) -> list[str]:
+    if not risk:
+        return ["Risk:        not recorded"]
+    policy = risk.get("policy") or {}
+    dims = risk.get("dimensions") or {}
+    approved = "yes" if policy.get("approved") else "no"
+    lines = [f"Risk:        {_clean(risk.get('operation_class', '?'))} "
+             f"(source: {_clean(risk.get('source', '?'))})",
+             f"Policy:      {_clean(policy.get('decision', '?'))}   "
+             f"rule: {_clean(policy.get('rule', '?'))}   approved: {approved}",
+             "Dimensions:  " + " ".join(f"{name}={_clean(dims.get(name, '?'))}"
+                                        for name in _DIMENSIONS)]
+    if policy.get("unlock"):
+        lines[1] += f"   unlock: {_clean(policy['unlock'])}"
+    return lines
+
+
 def explain(data: dict[str, Any]) -> str:
     task = data.get("task") or {}
     routing = data.get("routing") or {}
@@ -159,6 +180,8 @@ def explain(data: dict[str, Any]) -> str:
                      f"   unresolved: {_clean(conf.get('unresolved', '?'))}")
         fallbacks = ", ".join(_clean(f) for f in routing.get("fallbacks_used") or []) or "none"
         lines.append(f"Fallbacks:   {fallbacks}")
+    if task:
+        lines.extend(_risk(data.get("risk")))
     if context:
         lines.append(f"Context:     {len(context.get('files') or [])} files, "
                      f"{_clean(context.get('used_bytes', '?'))}/"

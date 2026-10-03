@@ -167,6 +167,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
     outcome = Forger(root, registry, RunStore(forge_dir)).ask(AskRequest(
         intent=args.intent, targets=args.targets or ["."], capability=args.capability,
         action=args.action, profile=args.profile, allow_unverified=args.allow_unverified,
+        approvals=frozenset(args.approvals or ()),
     ))
     _warn(registry)
     data = {

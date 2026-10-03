@@ -143,3 +143,55 @@ def test_explain_tolerates_partial_run() -> None:
     out = render.explain({"run_id": "x", "task": {"intent": "i"},
                           "receipt": {"status": "ok"}})
     assert "Run:" in out and "i" in out
+
+
+def test_ask_policy_refusal_exits_4_with_unlock(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
+    root = str(tmp_path)
+    code, out, err = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root)
+    assert code == 4
+    assert "--approve bad.thing" in out and "Traceback" not in out + err
+    code, out, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root,
+                       "--json")
+    data = json.loads(out)
+    assert code == 4 and data["status"] == "refused"
+    assert data["error"]["unlock"] == "--approve bad.thing"
+
+
+def test_ask_approve_is_repeatable_and_unlocks(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
+    root = str(tmp_path)
+    code, out, err = run(capsys, "ask", "run it", "--capability", "bad.thing",
+                         "--approve", "demo.echo", "--approve", "bad.thing",
+                         "--root", root, "--json")
+    assert code == 0, err
+    run_id = json.loads(out)["run_id"]
+    code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
+    risk = json.loads(out)["risk"]
+    assert code == 0 and risk["policy"]["approved"] is True
+    assert risk["policy"]["decision"] == "allow"
+    code, out, _ = run(capsys, "explain", run_id, "--root", root)
+    assert code == 0
+    assert "Policy:      allow" in out and "approved: yes" in out
+    assert risk["policy"]["rule"] in out
+    assert "local_mutation=yes" in out and "cross_account=" in out
+
+
+def test_explain_shows_refused_policy_decision(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
+    root = str(tmp_path)
+    _, out, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root,
+                    "--json")
+    run_id = json.loads(out)["run_id"]
+    code, out, _ = run(capsys, "explain", run_id, "--root", root)
+    assert code == 0 and "Policy:      ask" in out
+    assert "default.local_mutation.local" in out and "Risk:" in out
+
+
+def test_explain_without_risk_artifact_is_graceful() -> None:
+    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "risk": None,
+                          "receipt": {"status": "ok"}})
+    assert "Risk:        not recorded" in out and "Policy:" not in out
