@@ -10,10 +10,11 @@ from theforge.registry.config import (
 )
 from theforge.registry.health import HealthOutcome, check_health
 from theforge.registry.identity import ProviderFingerprint, fingerprint
-from theforge.registry.registry import Registry, RegistryRecord
+from theforge.registry.registry import Registry, RegistryRecord, RevalidationOutcome
 
 __all__ = [
     "HealthOutcome", "ProviderEntry", "ProviderFingerprint", "Registry", "RegistryRecord",
+    "RevalidationOutcome",
     "builtin_entries", "check_health", "fingerprint", "load_entries", "resolve_entries",
     "user_cache_dir", "user_config_dir",
 ]

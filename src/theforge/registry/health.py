@@ -1,12 +1,14 @@
 """Provider health check shared by doctor, `providers health` and The Forger."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
-from theforge.contracts import ContractError, ErrorInfo, HealthReport, from_dict
+from theforge.contracts import ContractError, ErrorInfo, HealthReport, Producer, from_dict
 from theforge.contracts.codes import Codes
+from theforge.contracts.integrity import check_producer
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
-from theforge.registry.registry import RegistryRecord
+from theforge.registry.registry import RegistryRecord, provider_cwd
 
 HEALTH_TIMEOUT = 10.0
 
@@ -29,14 +31,23 @@ def check_health(
             code=Codes.PROVIDER_UNTRUSTED,
             detail=f"{record.entry.id} is unverified and was not executed; trust it in your "
                    "user providers.toml or pass --allow-unverified"))
-    if record.state != "ready":
+    if record.state != "ready" or record.manifest is None:
         return HealthOutcome(status="error", error=ErrorInfo(
             code=Codes.PROVIDER_NOT_READY,
             detail=f"{record.entry.id} is {record.state}: {record.error}"))
     try:
-        response = transport_factory(record.entry.argv).call("health", {}, timeout=timeout)
+        with provider_cwd() as cwd:
+            response = transport_factory(record.entry.argv).call(
+                "health", {}, timeout=timeout, cwd=Path(cwd))
     except TransportError as exc:
         return HealthOutcome(status="error", error=ErrorInfo(code=exc.code, detail=exc.detail))
+    violation = check_producer(
+        response.producer,
+        expected=Producer(id=record.entry.id, version=record.manifest.version),
+        field="$.producer")
+    if violation is not None:
+        return HealthOutcome(status="error", error=ErrorInfo(
+            code=violation.code, detail=violation.detail, field=violation.field))
     if response.status != "ok":
         return HealthOutcome(status="error", error=response.error or ErrorInfo(
             code=Codes.HEALTH_FAILED, detail=f"health status {response.status}"))

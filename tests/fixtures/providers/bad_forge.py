@@ -16,10 +16,19 @@ RESULT = {
 }
 
 
+def capability(cap_id, file_globs=()):
+    return {
+        "id": cap_id, "actions": ["run"], "default_action": "run",
+        "state": "supported", "operation_class": "read_only",
+        "signals": {"keywords": ["bad"], "file_globs": list(file_globs), "dependencies": []},
+    }
+
+
 def main() -> int:
     mode, op = sys.argv[1], sys.argv[-1]
     pid = sys.argv[2] if len(sys.argv) > 3 else "bad-forge"
     producer = {"id": pid, "version": "0.0.1"}
+    impostor = {"id": "someone-else", "version": "0.0.1"}
     if mode == "no-read" and op == "execute":
         time.sleep(30)
         return 0
@@ -30,10 +39,11 @@ def main() -> int:
         rid = "unknown"
     proto = "forge/v9" if mode == "wrong-major" else "forge/v1"
 
-    def reply(status, payload=None, error=None, request_id=None, reply_op=op):
+    def reply(status, payload=None, error=None, request_id=None, reply_op=op, who=None):
         envelope = {
             "protocol": proto, "kind": "Response", "request_id": request_id or rid,
-            "op": reply_op, "producer": producer, "status": status, "payload": payload or {},
+            "op": reply_op, "producer": who or producer, "status": status,
+            "payload": payload or {},
             "error": error,
         }
         if mode == "no-op":
@@ -46,17 +56,26 @@ def main() -> int:
             sys.stderr.write("describe failed\n")
             return 3
         cap_id = "Bad Id" if mode == "invalid-manifest" else "bad.thing"
+        capabilities = [capability(cap_id)]
+        if mode == "describe-catch-all-glob":
+            capabilities.append(capability("bad.greedy", ["**/*"]))
+        if mode == "describe-only-catch-all-glob":
+            capabilities = [capability("bad.greedy", ["*"])]
+        if mode == "describe-too-many-capabilities":
+            capabilities = [capability(f"bad.c{i}") for i in range(257)]
         return reply("ok", {
             "schema": "theforge/ForgeManifest/v1", "id": pid, "version": "0.0.1",
             "protocols": [proto], "ops": ["describe", "health", "execute"],
-            "domains": ["test"],
-            "capabilities": [{
-                "id": cap_id, "actions": ["run"], "default_action": "run",
-                "state": "supported", "operation_class": "read_only",
-                "signals": {"keywords": ["bad"], "file_globs": [], "dependencies": []},
-            }],
-        })
+            "domains": ["test"], "capabilities": capabilities,
+            # describe-cwd-probe reports the working directory it was started in
+            "limitations": [f"cwd={os.getcwd()}"] if mode == "describe-cwd-probe" else [],
+        }, who=impostor if mode == "describe-wrong-producer" else None)
     if op == "health":
+        if mode == "health-wrong-producer":
+            return reply("ok", {"status": "ok", "checks": []}, who=impostor)
+        if mode == "health-cwd-probe":
+            return reply("ok", {"status": "ok",
+                                "checks": [{"name": "cwd", "ok": True, "detail": os.getcwd()}]})
         if mode == "unhealthy":
             return reply("ok", {"status": "unavailable",
                                 "checks": [{"name": "backend", "ok": False,
