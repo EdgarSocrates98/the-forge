@@ -3,6 +3,8 @@
 import json
 import os
 import shutil
+import subprocess
+import sys
 import threading
 from pathlib import Path
 from typing import Any
@@ -13,7 +15,7 @@ from helpers import API_ENTRY, PROVIDERS, SPARK_ENTRY, case_a, make_workspace, w
 from theforge.contracts.canonical import sha256_of
 from theforge.forger import AskRequest, Forger
 from theforge.protocol import SubprocessTransport
-from theforge.registry import Registry, user_cache_dir
+from theforge.registry import Registry, fingerprint, user_cache_dir
 from theforge.runs import RunStore
 from theforge.state import init_workspace
 
@@ -277,3 +279,226 @@ def test_tampered_cache_of_non_selected_provider_is_detected_before_decision(
     # the cache was rediscovered from the real provider
     fresh = json.loads(path.read_text(encoding="utf-8"))
     assert fresh["manifest"]["capabilities"][0]["signals"]["dependencies"] == ["fastapi", "flask"]
+
+
+def test_tampered_extra_capability_of_selected_provider_is_rediscovered_before_execute(
+    tmp_path: Path,
+) -> None:
+    forge = make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    case_a(tmp_path)
+    Registry(forge).refresh()
+    path = _cache_files("fixture-spark")[0]
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    injected = {**doc["manifest"]["capabilities"][0], "id": "spark.injected",
+                "operation_class": "local_mutation"}
+    doc["manifest"]["capabilities"].append(injected)
+    doc["manifest_sha256"] = sha256_of(doc["manifest"])
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    # the tampered cache is internally consistent: records() serves it without describing
+    tampered = Registry(forge, transport_factory=_boom).get("fixture-spark")
+    assert tampered.manifest is not None
+    assert [c.id for c in tampered.manifest.capabilities] == ["spark.performance",
+                                                              "spark.injected"]
+
+    store = _CountingStore(forge)
+    out = Forger(tmp_path, Registry(forge), store).ask(
+        AskRequest(intent="analise esse Glue Job porque está lento"))
+    assert out.status == "ok"
+    assert out.decision.selected[0].provider == "fixture-spark"
+    assert out.decision.selected[0].capability == "spark.performance"
+    assert "spark.injected" not in {c.capability for c in out.decision.candidates}
+    assert "registry-revalidated: fixture-spark" in out.decision.limitations
+    assert store.writes.count("routing") == 1
+    assert store.writes.count("result") == 1
+    fresh = json.loads(path.read_text(encoding="utf-8"))
+    assert [c["id"] for c in fresh["manifest"]["capabilities"]] == ["spark.performance"]
+
+
+def _copied_spark(tmp_path: Path) -> tuple[dict[str, Any], Path]:
+    manifest = tmp_path / "fixture-spark.json"
+    shutil.copy(PROVIDERS / "fixture-spark.json", manifest)
+    entry = {**SPARK_ENTRY, "argv": [*SPARK_ENTRY["argv"][:-1], str(manifest)]}
+    return entry, manifest
+
+
+def test_provider_version_change_invalidates_cache(tmp_path: Path) -> None:
+    entry, manifest = _copied_spark(tmp_path)
+    forge = _forge(tmp_path, [entry])
+    Registry(forge).refresh()
+    doc = json.loads(manifest.read_text(encoding="utf-8"))
+    assert doc["version"] == "0.0.1"
+    doc["version"] = "0.0.10"  # a size change too: robust to coarse mtime resolution
+    manifest.write_text(json.dumps(doc), encoding="utf-8")
+    counting = _Counting()
+    record = Registry(forge, transport_factory=counting).get("fixture-spark")
+    assert counting.calls == 1
+    assert record.state == "ready" and record.manifest is not None
+    assert record.manifest.version == "0.0.10"
+    cached = json.loads(_cache_files("fixture-spark")[0].read_text(encoding="utf-8"))
+    assert cached["manifest"]["version"] == "0.0.10"
+
+
+def test_executable_change_invalidates_cache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import theforge.registry.identity as identity
+
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    spark = next(e for e in Registry(forge).entries() if e.id == "fixture-spark")
+    before = fingerprint(spark)
+    other = tmp_path / "bin" / "python-other"
+    other.parent.mkdir()
+    other.write_text("stand-in interpreter", encoding="utf-8")
+    real_which = identity.shutil.which
+
+    def moved_which(cmd: str, *args: Any, **kwargs: Any) -> str | None:
+        return str(other) if cmd == spark.argv[0] else real_which(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(identity.shutil, "which", moved_which)
+    after = fingerprint(spark)
+    assert after.executable == str(other) and after.digest != before.digest
+    counting = _Counting()
+    registry = Registry(forge, transport_factory=counting)
+    sharing = [e.id for e in registry.entries() if e.argv[0] == spark.argv[0]]
+    assert "fixture-spark" in sharing  # echo-forge runs on the same interpreter
+    record = registry.get("fixture-spark")
+    assert record.state == "ready"
+    assert counting.calls == len(sharing)  # every entry on the moved executable re-described
+    cached = json.loads(_cache_files("fixture-spark")[0].read_text(encoding="utf-8"))
+    assert cached["fingerprint"] == after.digest
+
+
+def test_receipt_records_identity_matching_the_cache(tmp_path: Path) -> None:
+    forge = make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    case_a(tmp_path)
+    registry = Registry(forge)
+    registry.refresh()
+    spark = next(e for e in registry.entries() if e.id == "fixture-spark")
+    expected = fingerprint(spark)
+    cached = json.loads(_cache_files("fixture-spark")[0].read_text(encoding="utf-8"))
+    assert cached["fingerprint"] == expected.digest
+    store = RunStore(forge)
+    out = Forger(tmp_path, Registry(forge), store).ask(
+        AskRequest(intent="analise esse Glue Job porque está lento"))
+    assert out.status == "ok"
+    provider = out.receipt.provider
+    assert provider is not None and provider.id == "fixture-spark"
+    assert provider.executable == expected.executable
+    assert provider.fingerprint == expected.digest
+    assert provider.observed_version == "0.0.1"
+    # the manifest hash is recorded separately: it describes the provider, it does not identify it
+    assert provider.manifest_sha256 == cached["manifest_sha256"]
+    persisted = store.read(out.run_id, "receipt")["provider"]
+    assert (persisted["executable"], persisted["fingerprint"], persisted["observed_version"]) == (
+        expected.executable, expected.digest, "0.0.1")
+
+
+def _symlinked_legacy(forge: Path, tmp_path: Path) -> tuple[Path, Path]:
+    target = tmp_path / "outside-target"
+    target.mkdir()
+    (target / "keep.json").write_text("{}", encoding="utf-8")
+    link = forge / "registry"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.symlink(target, link, target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"cannot create directory symlinks here: {exc}")
+    return link, target
+
+
+def test_refresh_unlinks_symlinked_legacy_dir_without_deleting_target(tmp_path: Path) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    link, target = _symlinked_legacy(forge, tmp_path)
+    registry = Registry(forge)
+    registry.refresh()
+    assert not link.exists() and not link.is_symlink()
+    assert (target / "keep.json").is_file()
+    assert any("registry" in w for w in registry.warnings)
+
+
+def test_init_unlinks_symlinked_legacy_dir_without_deleting_target(tmp_path: Path) -> None:
+    init_workspace(tmp_path)
+    link, target = _symlinked_legacy(tmp_path / ".forge", tmp_path)
+    warnings: list[str] = []
+    init_workspace(tmp_path, warnings)
+    assert not link.exists() and not link.is_symlink()
+    assert (target / "keep.json").is_file()
+    assert warnings and "registry" in warnings[0]
+
+
+def _not_os_contention(warnings: list[str]) -> list[str]:
+    """Warnings other than OS-level contention (e.g. a torn or corrupted cache read)."""
+    return [w for w in warnings if "WinError" not in w and "Errno" not in w]
+
+
+def test_concurrent_readers_never_see_a_torn_entry(tmp_path: Path) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    writer = Registry(forge)
+    record = next(r for r in writer.refresh() if r.entry.id == "fixture-spark")
+    readers = [Registry(forge, transport_factory=_boom) for _ in range(2)]
+    stop = threading.Event()
+    errors: list[BaseException] = []
+    hits: list[int] = []
+
+    def write() -> None:
+        try:
+            for _ in range(60):
+                writer._write_cache(record)
+        except BaseException as exc:  # noqa: BLE001 - surfaced by the assertion below
+            errors.append(exc)
+        finally:
+            stop.set()
+
+    def read(registry: Registry) -> None:
+        try:
+            while not stop.is_set():
+                got = registry._read_cache(record.entry)
+                if got is not None:
+                    assert got.manifest_sha256 == record.manifest_sha256
+                    hits.append(1)
+        except BaseException as exc:  # noqa: BLE001 - surfaced by the assertion below
+            errors.append(exc)
+
+    threads = [threading.Thread(target=write),
+               *(threading.Thread(target=read, args=(r,)) for r in readers)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert errors == []
+    assert hits
+    for registry in (writer, *readers):
+        assert _not_os_contention(registry.warnings) == []
+    assert not list((user_cache_dir() / "registry").glob("*.tmp"))
+    assert Registry(forge, transport_factory=_boom).get("fixture-spark").state == "ready"
+
+
+_WRITER_SCRIPT = """
+import json, sys
+from pathlib import Path
+from theforge.registry import Registry
+registry = Registry(Path(sys.argv[1]))
+record = next(r for r in registry.records() if r.entry.id == "fixture-spark")
+assert record.state == "ready", record
+for _ in range(int(sys.argv[2])):
+    registry._write_cache(record)
+print(json.dumps(registry.warnings))
+"""
+
+
+def test_concurrent_writer_processes_leave_a_valid_entry(tmp_path: Path) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    procs = [subprocess.Popen([sys.executable, "-c", _WRITER_SCRIPT, str(forge), "40"],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+             for _ in range(3)]
+    outputs = [p.communicate(timeout=120) for p in procs]
+    for proc, (out, err) in zip(procs, outputs, strict=True):
+        assert proc.returncode == 0, err
+        assert _not_os_contention(json.loads(out)) == []
+    assert len(_cache_files("fixture-spark")) == 1
+    assert not list((user_cache_dir() / "registry").glob("*.tmp"))
+    reread = Registry(forge, transport_factory=_boom)
+    assert reread.get("fixture-spark").state == "ready"
+    assert not any("fixture-spark" in w for w in reread.warnings)
