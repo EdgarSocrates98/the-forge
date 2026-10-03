@@ -125,6 +125,7 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "duplicate-protocols": ("ok", None),
     "health-cwd-probe": ("ok", None),
     "describe-catch-all-glob": ("ok", None),  # only the greedy capability is excluded
+    "describe-off-taxonomy": ("ok", None),  # only the off-taxonomy capability is excluded
     "stderr-flood": ("ok", None),
     "exit-leave-grandchild": ("ok", None),
     "env-probe-full": ("ok", None),
@@ -139,6 +140,10 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "capability-spam": ("no_route", None),
     "keyword-spam": ("no_route", None),
     "wide-glob": ("no_route", None),
+    "describe-bad-version": ("no_route", None),
+    "describe-only-off-taxonomy": ("no_route", None),
+    "describe-colliding-alias": ("no_route", None),
+    "describe-refused": ("no_route", None),
     "no-execute-op": ("refused", Codes.PROTO_OP_UNSUPPORTED),
     # the manifest embeds the per-call temporary cwd, so it differs on every describe: the
     # revalidation before routing sees it change twice and refuses an unstable registry
@@ -193,6 +198,10 @@ NO_ROUTE_STATE = {
     "capability-spam": "invalid",
     "keyword-spam": "invalid",
     "wide-glob": "invalid",
+    "describe-bad-version": "invalid",
+    "describe-only-off-taxonomy": "invalid",
+    "describe-colliding-alias": "invalid",
+    "describe-refused": "invalid",
 }
 GRANDCHILD_MODES = ("spawn-grandchild-timeout", "exit-leave-grandchild")
 MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS")

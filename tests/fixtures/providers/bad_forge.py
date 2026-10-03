@@ -62,6 +62,11 @@ MANIFEST_PROTOCOLS = {
 SPAM_CAPABILITIES = 300
 SPAM_KEYWORDS = 100
 
+# Not SemVer 2.0.0 (leading "v") and longer than the 64 characters the registry echoes back.
+BAD_VERSION = "v1.2.3" + "-long" * 20
+# A refused describe whose detail carries a secret and exceeds the 500-character cap.
+REFUSED_DETAIL = "specialist not importable token=supersecretvalue123 " + "z" * 600
+
 
 def capability(cap_id, file_globs=(), operation_class="read_only", keywords=("bad",)):
     return {
@@ -80,7 +85,8 @@ def env_lines():
 def main() -> int:
     mode, op = sys.argv[1], sys.argv[-1]
     pid = sys.argv[2] if len(sys.argv) > 3 else "bad-forge"
-    producer = {"id": pid, "version": "0.0.1"}
+    version = BAD_VERSION if mode == "describe-bad-version" else "0.0.1"
+    producer = {"id": pid, "version": version}
     impostor = {"id": "someone-else", "version": "0.0.1"}
     if mode == "no-read" and op == "execute":
         time.sleep(30)
@@ -110,6 +116,9 @@ def main() -> int:
         if mode == "describe-crash":
             sys.stderr.write("describe failed\n")
             return 3
+        if mode == "describe-refused":
+            return reply("refused", error={"code": "BAD-NOT-INSTALLED", "detail": REFUSED_DETAIL,
+                                           "field": None, "unlock": "install the specialist"})
         cap_id = "Bad Id" if mode == "invalid-manifest" else "bad.thing"
         capabilities = [capability(
             cap_id, operation_class=OPERATION_CLASSES.get(mode, "read_only"),
@@ -126,8 +135,17 @@ def main() -> int:
             capabilities = [capability("bad.greedy", ["*"])]
         if mode == "describe-too-many-capabilities":
             capabilities = [capability(f"bad.c{i}") for i in range(257)]
+        if mode == "describe-off-taxonomy":
+            # reserved namespace + generic segment: two violations, one capability
+            capabilities.append(capability("theforge.all"))
+        if mode == "describe-only-off-taxonomy":
+            capabilities = [capability("forge.misc")]
+        if mode == "describe-colliding-alias":
+            other = capability("bad.other")
+            other["aliases"] = ["bad.thing"]  # alias equal to another capability's id
+            capabilities.append(other)
         return reply("ok", {
-            "schema": "theforge/ForgeManifest/v1", "id": pid, "version": "0.0.1",
+            "schema": "theforge/ForgeManifest/v1", "id": pid, "version": version,
             "protocols": MANIFEST_PROTOCOLS.get(mode, [proto]),
             "ops": ["describe", "health"] if mode == "no-execute-op"
             else ["describe", "health", "execute"],

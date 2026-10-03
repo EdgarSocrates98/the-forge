@@ -467,3 +467,54 @@ def test_no_core_caller_uses_the_callers_cwd(
     for op, cwd in recording.calls:
         assert isinstance(cwd, Path), (op, cwd)
         assert cwd.resolve() != tmp_path.resolve(), op
+
+
+def test_malformed_version_is_invalid_with_truncated_version(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("describe-bad-version", "bad-a")])
+    record = Registry(forge).get("bad-a")
+    error = record.error or ""
+    assert record.state == "invalid" and not record.routable(allow_unverified=True)
+    assert error.startswith(f"{Codes.MANIFEST_VERSION}: version ")
+    assert "v1.2.3-long" in error and "SemVer 2.0.0" in error
+    assert ("-long" * 20) not in error  # the received version is echoed truncated
+    assert not cache_files("bad-a")
+
+
+def test_off_taxonomy_capability_is_excluded_once_with_warning(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("describe-off-taxonomy", "bad-a")])
+    registry = Registry(forge)
+    record = registry.get("bad-a")
+    assert record.state == "ready" and record.manifest is not None
+    assert [c.id for c in record.manifest.capabilities] == ["bad.thing"]
+    assert record.manifest_sha256 == sha256_of(to_dict(record.manifest))
+    excluded = [w for w in registry.warnings if "theforge.all" in w]
+    assert len(excluded) == 1, registry.warnings  # several violations, one exclusion
+    assert excluded[0].startswith(
+        f"bad-a: capability 'theforge.all' excluded ({Codes.MANIFEST_TAXONOMY}: ")
+
+
+def test_only_off_taxonomy_capabilities_is_invalid(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("describe-only-off-taxonomy", "bad-a")])
+    record = Registry(forge).get("bad-a")
+    assert record.state == "invalid" and not record.routable(allow_unverified=True)
+    assert Codes.MANIFEST_TAXONOMY in (record.error or "")
+    assert "forge.misc" in (record.error or "")
+
+
+def test_colliding_alias_makes_provider_invalid(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("describe-colliding-alias", "bad-a")])
+    record = Registry(forge).get("bad-a")
+    assert record.state == "invalid" and not record.routable(allow_unverified=True)
+    assert "alias equal to capability id" in (record.error or "")
+    assert "bad.thing" in (record.error or "")
+
+
+def test_refused_describe_records_redacted_truncated_detail(tmp_path: Path) -> None:
+    forge = make_forge(tmp_path, [bad_entry("describe-refused", "bad-a")])
+    record = Registry(forge).get("bad-a")
+    error = record.error or ""
+    assert record.state == "invalid" and not record.routable(allow_unverified=True)
+    prefix = "describe refused BAD-NOT-INSTALLED: "
+    assert error.startswith(prefix + "specialist not importable token=")
+    assert "supersecretvalue123" not in error
+    assert len(error) - len(prefix) == 500

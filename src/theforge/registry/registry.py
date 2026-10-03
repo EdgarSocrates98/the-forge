@@ -9,10 +9,19 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, Literal
 
-from theforge.contracts import ContractError, ForgeManifest, Producer, from_dict, to_dict
+from theforge.contracts import (
+    ContractError,
+    ErrorInfo,
+    ForgeManifest,
+    Producer,
+    from_dict,
+    to_dict,
+)
 from theforge.contracts.canonical import sha256_of, utc_now
 from theforge.contracts.codes import Codes
 from theforge.contracts.integrity import check_producer, validate_manifest_limits
+from theforge.contracts.semver import parse_semver
+from theforge.contracts.taxonomy import validate_taxonomy
 from theforge.errors import UsageError
 from theforge.protocol import (
     SUPPORTED_PROTOCOLS,
@@ -23,7 +32,7 @@ from theforge.protocol import (
 )
 from theforge.registry.config import ProviderEntry, resolve_entries, user_cache_dir
 from theforge.registry.identity import fingerprint
-from theforge.security.redact import redact
+from theforge.security.redact import redact, redact_text
 from theforge.state import LEGACY_REGISTRY_DIR, remove_legacy_cache
 
 RecordState = Literal[
@@ -32,6 +41,8 @@ RecordState = Literal[
 CACHE_SCHEMA: Final = "theforge/RegistryCache/v2"
 DESCRIBE_TIMEOUT = 10.0
 ROUTABLE_TRUST = frozenset({"builtin", "trusted", "local"})
+MAX_ERROR_DETAIL = 500  # provider-supplied detail of a refused describe, after redaction
+MAX_ECHOED_VALUE = 64  # provider-supplied short values (version, error code) echoed back
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -189,8 +200,8 @@ class Registry:
             return RegistryRecord(entry=entry, state="unreachable",
                                   error=f"{exc.code}: {exc.detail}")
         if response.status != "ok":
-            code = response.error.code if response.error else response.status
-            return RegistryRecord(entry=entry, state="invalid", error=f"describe {code}")
+            return RegistryRecord(entry=entry, state="invalid",
+                                  error=_describe_failure(response.status, response.error))
         try:
             manifest = from_dict(ForgeManifest, response.payload, "$.payload")
         except ContractError as exc:
@@ -205,7 +216,13 @@ class Registry:
         if violation is not None:
             return RegistryRecord(entry=entry, state="invalid",
                                   error=f"{violation.code}: {violation.detail}")
-        limited = self._apply_limits(manifest)
+        if parse_semver(manifest.version) is None:
+            return RegistryRecord(
+                entry=entry, state="invalid",
+                error=f"{Codes.MANIFEST_VERSION}: version "
+                      f"{redact_text(manifest.version)[:MAX_ECHOED_VALUE]!r} is not SemVer 2.0.0 "
+                      "(MAJOR.MINOR.PATCH)")
+        limited = self._apply_manifest_rules(manifest)
         if isinstance(limited, str):
             return RegistryRecord(entry=entry, state="invalid", error=limited)
         manifest = limited
@@ -219,32 +236,34 @@ class Registry:
         return RegistryRecord(entry=entry, state="ready", manifest=manifest,
                               manifest_sha256=digest, protocol=protocol)
 
-    def _apply_limits(self, manifest: ForgeManifest) -> ForgeManifest | str:
-        """Exclude capabilities over the manifest limits, with a warning (1.9).
+    def _apply_manifest_rules(self, manifest: ForgeManifest) -> ForgeManifest | str:
+        """Exclude capabilities over the limits or off the taxonomy, with a warning (1.9, 5.2).
 
-        Returns the (possibly filtered) manifest, or an error string when the manifest
-        itself is over the limits or no capability remains after the exclusion.
+        Limits come first, then taxonomy; a capability with several violations is excluded
+        once, reported with its first one. Returns the (possibly filtered) manifest, or an
+        error string when the manifest itself is over the limits or no capability remains.
         """
-        violations = validate_manifest_limits(manifest)
-        if not violations:
-            return manifest
-        manifest_level = [v for v in violations if v.field == "capabilities"]
+        limits = validate_manifest_limits(manifest)
+        manifest_level = [v for v in limits if v.field == "capabilities"]
         if manifest_level:
             return f"{Codes.MANIFEST_LIMITS}: {manifest_level[0].detail}"
-        excluded: dict[int, str] = {}
+        violations = (*limits, *validate_taxonomy(manifest))
+        if not violations:
+            return manifest
+        excluded: dict[int, tuple[str, str]] = {}
         for v in violations:
             index = _capability_index(v.field)
             if index is not None:
-                excluded.setdefault(index, v.detail)
+                excluded.setdefault(index, (v.code, v.detail))
         kept = [c for i, c in enumerate(manifest.capabilities) if i not in excluded]
         if not kept:
-            first = next(iter(excluded.values()))
-            return (f"{Codes.MANIFEST_LIMITS}: every capability of {manifest.id} exceeds "
-                    f"the manifest limits ({first})")
-        for index, detail in sorted(excluded.items()):
+            code, first = next(iter(excluded.values()))
+            return (f"{code}: every capability of {manifest.id} was excluded by the "
+                    f"manifest rules ({first})")
+        for index, (code, detail) in sorted(excluded.items()):
             self._warn(
                 f"{manifest.id}: capability {manifest.capabilities[index].id!r} excluded "
-                f"({Codes.MANIFEST_LIMITS}: {detail})")
+                f"({code}: {detail})")
         return replace(manifest, capabilities=kept)
 
     def cached_ids(self) -> list[str]:
@@ -330,6 +349,15 @@ class Registry:
 
 def _unknown(provider_id: str) -> UsageError:
     return UsageError(f"unknown provider {provider_id!r} (see `theforge registry list`)")
+
+
+def _describe_failure(status: str, error: ErrorInfo | None) -> str:
+    """``describe <status> <code>: <detail>``; provider text redacted and truncated (1.8)."""
+    if error is None:
+        return f"describe {status}"
+    code = redact_text(error.code)[:MAX_ECHOED_VALUE]
+    detail = redact_text(error.detail)[:MAX_ERROR_DETAIL]
+    return f"describe {status} {code}: {detail}"
 
 
 def _capability_index(field: str | None) -> int | None:
