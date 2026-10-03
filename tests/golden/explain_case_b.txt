@@ -1,6 +1,6 @@
 Run:         <RUN>  status: ok
 Task:        "avalie esse contrato OpenAPI" (targets: api; profile: balanced)
-Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[contrato,openapi]  rank=[2]
+Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[contrato,openapi]  rank=[2]  state=supported
 Selected:    fixture-api api.contract:review (primary)   pattern: route
 Reason:      fixture-api api.contract matched 2 signal types (file_globs:openapi.yaml; keywords:contrato,openapi)
 Confidence:  high   measured: ['file_globs:openapi.yaml', 'keywords:contrato,openapi']   unresolved: []

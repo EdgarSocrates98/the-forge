@@ -42,7 +42,7 @@ Antes de executar, `ask` avalia a policy do `operation_class` declarado pela cap
 `--approve` é repetível e vale só para a capability nomeada. As regras padrão e os arquivos `policy.toml` estão em [security.md](security.md#policy-e-risco).
 
 ## `explain`
-Além de task, candidatos, seleção, confiança e fallbacks, `explain` mostra o artefato `risk`:
+Além de task, candidatos (cada um com sinais, `rank` e `state`: `supported`, `heuristic` ou `unresolved`), seleção, confiança e fallbacks, `explain` mostra o artefato `risk`:
 
 ```
 Risk:        local_mutation (source: provider_declaration)

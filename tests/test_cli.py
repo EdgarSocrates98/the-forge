@@ -191,6 +191,20 @@ def test_explain_shows_refused_policy_decision(
     assert "default.local_mutation.local" in out and "Risk:" in out
 
 
+def test_explain_text_shows_each_candidate_state() -> None:
+    """3.8: the capability state of every candidate is visible in the text explain."""
+    out = render.explain({"run_id": "x", "receipt": {"status": "ok"}, "routing": {
+        "candidates": [
+            {"provider": "a", "capability": "a.run", "state": "heuristic", "rank_key": [2]},
+            {"provider": "b", "capability": "b.run", "state": "unresolved", "rank_key": [2]},
+            {"provider": "c", "capability": "c.run", "rank_key": [1]},  # cycle-1 artifact
+        ],
+        "selected": [], "reason": "r", "confidence": {"level": "low"}}})
+    lines = [line for line in out.splitlines() if "rank=" in line]
+    assert "state=heuristic" in lines[0] and "state=unresolved" in lines[1]
+    assert "state=supported" in lines[2]  # Candidate.state defaults to supported
+
+
 def test_explain_without_risk_artifact_is_graceful() -> None:
     out = render.explain({"run_id": "x", "task": {"intent": "i"}, "risk": None,
                           "receipt": {"status": "ok"}})

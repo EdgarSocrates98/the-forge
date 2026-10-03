@@ -167,7 +167,8 @@ def explain(data: dict[str, Any]) -> str:
             lines.append(f"{label:<13}{_clean(cand.get('provider', '?'))}/"
                          f"{_clean(cand.get('capability', '?'))}  "
                          f"{_signals(cand.get('matched') or {})}  "
-                         f"rank={_clean(cand.get('rank_key', '?'))}")
+                         f"rank={_clean(cand.get('rank_key', '?'))}  "
+                         f"state={_clean(cand.get('state', 'supported'))}")
         selected = ", ".join(
             f"{_clean(s.get('provider', '?'))} {_clean(s.get('capability', '?'))}:"
             f"{_clean(s.get('action', '?'))} ({_clean(s.get('role', '?'))})"
