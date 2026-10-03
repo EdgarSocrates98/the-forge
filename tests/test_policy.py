@@ -330,7 +330,7 @@ def test_unknown_top_level_key_warns(tmp_path: Path) -> None:
     assert "read_only" in warnings[0]
 
 
-@pytest.mark.parametrize("method", ["is_file", "stat"])
+@pytest.mark.parametrize("method", ["is_file", "open"])
 def test_unreadable_policy_path_never_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, method: str
 ) -> None:
