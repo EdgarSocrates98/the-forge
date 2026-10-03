@@ -20,6 +20,37 @@ RESULT = {
 OPERATION_CLASSES = {"mutating": "local_mutation", "destructive": "destructive"}
 
 
+GOOD_HASH = "0" * 64
+
+
+def _evidence(eid, producer, **extra):
+    return dict({"id": eid, "epistemic": "observed", "subject": "s", "claim": "c",
+                 "producer": producer}, **extra)
+
+
+def _finding(fid, *evidence_ids):
+    return {"id": fid, "title": "t", "evidence_ids": list(evidence_ids)}
+
+
+# Execute modes whose result is structurally valid but breaks a relational invariant
+# (or, for bad-hash, the SHA-256 format): extra ExecutionResult fields per mode.
+INTEGRITY_MODES = {
+    "dup-evidence": lambda p: {"evidence": [_evidence("e1", p), _evidence("e1", p)]},
+    "dup-finding": lambda p: {"evidence": [_evidence("e1", p)],
+                              "findings": [_finding("f1", "e1"), _finding("f1", "e1")]},
+    "dangling-ref": lambda p: {"evidence": [_evidence("e1", p)],
+                               "findings": [_finding("f1", "e1", "e-missing")]},
+    "artifact-absolute": lambda p: {"artifacts": [{"path": "/etc/passwd",
+                                                   "sha256": GOOD_HASH}]},
+    "artifact-traversal": lambda p: {"artifacts": [{"path": "out/../../escape.txt",
+                                                    "sha256": GOOD_HASH}]},
+    "bad-hash": lambda p: {"evidence": [_evidence("e1", p, hash="ABC123")]},
+    "bad-artifact-hash": lambda p: {"artifacts": [{"path": "out/report.txt",
+                                                   "sha256": "F" * 64}]},
+    "bad-timestamp": lambda p: {"created_at": "yesterday"},
+}
+
+
 def capability(cap_id, file_globs=(), operation_class="read_only"):
     return {
         "id": cap_id, "actions": ["run"], "default_action": "run",
@@ -137,6 +168,10 @@ def main() -> int:
             return reply("ok", {"cwd": os.getcwd()})
         if mode == "wrong-producer":
             return reply("ok", dict(RESULT, producer={"id": "someone-else", "version": "0.0.1"}))
+        if mode == "wrong-version-producer":  # right id, version differs from the manifest
+            return reply("ok", dict(RESULT, producer={"id": pid, "version": "9.9.9"}))
+        if mode in INTEGRITY_MODES:
+            return reply("ok", dict(RESULT, producer=producer, **INTEGRITY_MODES[mode](producer)))
         return reply("ok", dict(RESULT, producer=producer))
     return reply("refused", error={"code": "BAD-OP", "detail": op, "field": "op",
                                    "unlock": None})

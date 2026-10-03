@@ -21,6 +21,7 @@ from theforge.contracts import (
     ExecuteRequest,
     ExecutionReceipt,
     ExecutionResult,
+    IntegrityError,
     Metric,
     Metrics,
     ReceiptInputs,
@@ -33,7 +34,8 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import Codes
-from theforge.contracts.types import BudgetProfile, Outcome
+from theforge.contracts.integrity import validate_context_pack, validate_result
+from theforge.contracts.types import BudgetProfile, Outcome, Producer
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
@@ -188,6 +190,11 @@ class Forger:
 
         globs = list(capability.signals.file_globs)
         pack = build_context_pack(task, record.entry.id, globs, scan)
+        try:
+            validate_context_pack(pack)
+        except IntegrityError as exc:  # the core built it: an internal error, never sent (1.7)
+            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
+                code=Codes.INTERNAL, detail=f"inconsistent context pack: {exc}"))
         trace.context_sha = self.store.write(run_id, "context", pack)
 
         payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
@@ -212,10 +219,12 @@ class Forger:
         except ContractError as exc:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
                 code=Codes.PROTO_SCHEMA, detail=f"execute: {exc}"))
-        if result.producer.id != record.entry.id:
+        try:  # relational invariants and producer id+version; invalid results are not persisted
+            validate_result(result, expected=Producer(id=record.entry.id,
+                                                      version=record.manifest.version))
+        except IntegrityError as exc:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code=Codes.PROTO_PRODUCER,
-                detail=f"result producer {result.producer.id!r} != provider {record.entry.id!r}"))
+                code=exc.code, detail=f"execute: {exc}", field=exc.field))
         result_status: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
         result = replace(result, status=result_status, metrics=Metrics(
             duration_ms=Metric(value=round(duration_ms, 3), kind="measured"),
