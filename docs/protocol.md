@@ -16,7 +16,7 @@
 | `execute` | não | `ExecuteRequest{task, capability, action, context}` | `ExecutionResult` |
 | `plan`, `verify`, `estimate` | reservadas | — | — |
 
-O provider declara as ops que suporta em `describe.ops`. As capabilities de um provider que não declara `execute` não são roteáveis; se mesmo assim uma execução chegar a ser pedida, ela é recusada antes de iniciar o processo (`FORGE-PROTO-OP-UNSUPPORTED`).
+O provider declara as ops que suporta em `describe.ops`. As capabilities de um provider que não declara `execute` não são roteáveis. A decisão de routing registra em `limitations` os providers excluídos por isso quando são relevantes: declaram a capability pedida com `--capability`, ou, no routing por sinais, nada foi roteado. Um pedido com `--capability` é recusado com `FORGE-PROTO-OP-UNSUPPORTED` (sem iniciar o processo de `execute`) quando um provider roteável declara a capability sem `execute` e nenhum outro poderia executá-la: nenhum declarante com `execute`, qualquer que seja o trust ou o estado, e nenhum provider não bloqueado de manifest desconhecido. Caso contrário fica o `no_route` comum: o provider que executaria está fora do routing por outro motivo (por exemplo `unverified` sem `--allow-unverified`, ou indisponível), e `theforge registry list` mostra trust e estado de cada um.
 
 ## Envelopes
 ```json
@@ -33,7 +33,7 @@ O provider declara as ops que suporta em `describe.ops`. As capabilities de um p
 - `kind` precisa ser `Response`.
 - `op` é opcional (compatível com providers do ciclo 1), mas, quando presente, precisa ser igual à op pedida. Os providers de referência sempre o emitem; novos providers devem emiti-lo.
 - `error` é obrigatório quando o status é `refused` ou `error`.
-- `producer.id` precisa ser o id registrado do provider e `producer.version` a `version` do manifest. O core confere o `producer` do envelope em `describe` (contra o manifest retornado) e em `health` (contra o manifest em uso). Em `execute`, o core confere o `ExecutionResult.producer` (id e versão); o `producer` do envelope de `execute` não é verificado, mas deve seguir a mesma regra.
+- `producer.id` precisa ser o id registrado do provider e `producer.version` a `version` do manifest. O core confere o `producer` do envelope nas três ops: em `describe` contra o manifest retornado, em `health` e em `execute` contra o manifest em uso. Em `execute`, o `ExecutionResult.producer` (id e versão) também é conferido.
 
 O core valida a response em duas etapas.
 
@@ -46,7 +46,7 @@ O core valida a response em duas etapas.
 2. Por quem chamou:
    - `describe`: status, schema do manifest, id do manifest igual à entrada e `producer` (`FORGE-PROTO-PRODUCER`). Qualquer falha deixa o provider `invalid` (o schema do manifest não gera código `FORGE-PROTO-*`). Depois vêm os [limites de manifest](#manifest) e a negociação.
    - `health`: `producer` (`FORGE-PROTO-PRODUCER`), status (o `error` do provider ou, sem ele, `FORGE-HEALTH-FAILED`) e schema do `HealthReport` (`FORGE-PROTO-SCHEMA`).
-   - `execute`: status (`refused`/`error` repassam o `error` do provider), schema do `ExecutionResult` (`FORGE-PROTO-SCHEMA`) e [integridade](#integridade-do-resultado), começando pelo `producer` do resultado.
+   - `execute`: `producer` do envelope (`FORGE-PROTO-PRODUCER`), status (`refused`/`error` repassam o `error` do provider), schema do `ExecutionResult` (`FORGE-PROTO-SCHEMA`) e [integridade](#integridade-do-resultado), começando pelo `producer` do resultado.
 
 ## Versionamento
 - `describe.protocols` lista as versões suportadas; o core escolhe o maior major em comum.
@@ -108,9 +108,9 @@ Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de pu
 | `FORGE-PROTO-SCHEMA` | envelope ou payload inválido, `kind` errado, status desconhecido, timestamp malformado ou fora de UTC |
 | `FORGE-PROTO-MISMATCH` | `request_id` divergente |
 | `FORGE-PROTO-OP-MISMATCH` | `op` da response diferente da op pedida |
-| `FORGE-PROTO-OP-UNSUPPORTED` | manifest não declara `execute` (`refused`, sem iniciar o processo) |
+| `FORGE-PROTO-OP-UNSUPPORTED` | a capability pedida é declarada por um provider roteável sem `execute` e nenhum outro provider poderia executá-la (`refused`, sem iniciar o processo) |
 | `FORGE-PROTO-VERSION` | protocolo da response ≠ negociado |
-| `FORGE-PROTO-PRODUCER` | `producer.id` ou `producer.version` diferente do provider invocado (envelope de describe ou health, ou `ExecutionResult.producer`) |
+| `FORGE-PROTO-PRODUCER` | `producer.id` ou `producer.version` diferente do provider invocado (envelope de describe, health ou execute, ou `ExecutionResult.producer`) |
 | `FORGE-RESULT-DUP-EVIDENCE` | evidence com ID repetido |
 | `FORGE-RESULT-DUP-FINDING` | finding com ID repetido |
 | `FORGE-RESULT-DANGLING-EVIDENCE` | finding referencia evidence inexistente |

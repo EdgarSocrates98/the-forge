@@ -20,7 +20,7 @@ Exemplo completo e standalone: `tests/fixtures/providers/fixture_forge.py`.
 - Respeite os [limites de manifest](protocol.md#manifest) (256 capabilities; por capability, 16 actions, 64 keywords, 32 globs, 32 dependências). Uma capability acima do limite ou com glob catch-all (`*`, `**/*`, `?*`, …) é excluída com aviso `FORGE-MANIFEST-LIMITS`. Globs por extensão (`*.md`) são permitidos.
 - `state`: `heuristic` ou `unresolved` nunca resultam em confiança `high`.
 - `operation_class` declara o efeito colateral (`read_only` … `destructive`) e alimenta a [policy](security.md#policy-e-risco). `execution.requires_network = true` conta como leitura externa. É uma **declaração**, não enforcement: o core não verifica o que o provider faz. Declarar menos do que faz é quebra de contrato com o usuário.
-- Sem `execute` em `ops`, as capabilities não são roteáveis.
+- Sem `execute` em `ops`, as capabilities não são roteáveis: o routing registra a exclusão em `limitations` quando ela é relevante, e um pedido explícito de uma capability que nenhum outro provider poderia executar é recusado com `FORGE-PROTO-OP-UNSUPPORTED` ([protocol.md](protocol.md)).
 
 ## Resultado
 O core rejeita o resultado inteiro se alguma regra de [integridade](protocol.md#integridade-do-resultado) falhar:
@@ -34,7 +34,7 @@ O core rejeita o resultado inteiro se alguma regra de [integridade](protocol.md#
 - Não espere credenciais no ambiente: o core repassa só uma [allowlist de variáveis](security.md#ambiente-do-provider) e remove nomes com cara de credencial.
 - Não dependa do cwd. Em `execute` ele é o diretório de trabalho do run (`.forge/runs/<id>/work`), e efeitos colaterais devem ficar ali. Em `describe` e `health` é um diretório temporário apagado depois da chamada. O cwd não é sandbox.
 - Não deixe processos em segundo plano: em timeout o core encerra a árvore inteira do provider.
-- O `producer` das responses e do resultado deve ser o do provider (id e versão). O core rejeita (`FORGE-PROTO-PRODUCER`) um valor diferente no envelope de `describe` e de `health` e no `ExecutionResult.producer`.
+- O `producer` das responses e do resultado deve ser o do provider (id e versão). O core rejeita (`FORGE-PROTO-PRODUCER`) um valor diferente no envelope de `describe`, `health` e `execute` e no `ExecutionResult.producer`.
 
 ## Registro e trust
 Registre o provider no `providers.toml` do **usuário** para receber trust (`trusted`/`local`). Entradas em `.forge/config/providers.toml` do projeto entram sempre como `unverified` (um `trust` maior é rebaixado com aviso) e só rodam com `--allow-unverified`. O que cada nível permite está em [security.md](security.md#níveis-de-trust). Veja o [README](../README.md#registrar-um-provider).

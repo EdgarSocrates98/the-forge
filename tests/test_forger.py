@@ -107,6 +107,35 @@ def test_refused_is_reported(tmp_path: Path) -> None:
     assert out.error.unlock == "try another capability"
 
 
+def test_requested_capability_without_execute_op_is_refused_with_code(tmp_path: Path) -> None:
+    """2.1: the only provider of the requested capability lacks execute -> specific code."""
+    make_workspace(tmp_path, [bad_entry("no-execute-op", "bad-a")])
+    out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "refused" and out.result is None
+    assert out.error is not None and out.error.code == Codes.PROTO_OP_UNSUPPORTED
+    assert "bad-a" in out.error.detail and "execute" in out.error.detail
+    store = RunStore(tmp_path / ".forge")
+    assert store.read(out.run_id, "receipt")["status"] == "refused"
+    for artifact in ("context", "risk", "result"):  # refused before policy and execute
+        assert store.read_optional(out.run_id, artifact) is None
+    assert any("bad-a" in note and "execute" in note
+               for note in store.read(out.run_id, "routing")["limitations"])
+
+
+@pytest.mark.parametrize(("executing", "trust"), [
+    ("ok", "unverified"),   # an executing declarer exists, unlockable by --allow-unverified
+    ("describe-crash", "local"),  # an executing provider that is not ready (unreachable)
+])
+def test_op_unsupported_is_not_blamed_when_another_provider_may_execute(
+    tmp_path: Path, executing: str, trust: str
+) -> None:
+    """2.1 refusal fires only when no other provider can be the one that executes."""
+    make_workspace(tmp_path, [bad_entry(executing, "bad-exec", trust=trust),
+                              bad_entry("no-execute-op", "bad-noexec")])
+    out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "no_route" and out.error is None
+
+
 @pytest.mark.parametrize(
     ("mode", "code"),
     [("crash", "FORGE-PROTO-EXIT"), ("garbage", "FORGE-PROTO-NOT-JSON"),

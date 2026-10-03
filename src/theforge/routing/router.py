@@ -14,7 +14,7 @@ that copies another's signals and adds generic extras would win by deflating it.
 """
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from theforge.contracts import (
     Candidate,
@@ -44,13 +44,22 @@ def route(
     dependencies: set[str], *, allow_unverified: bool = False,
 ) -> RoutingDecision:
     # Sort inputs so the decision depends only on content, never on discovery/fs order (3.1).
-    routable = sorted(
-        (r for r in records if r.routable(allow_unverified) and _executes(r)),
+    allowed = sorted(
+        (r for r in records if r.routable(allow_unverified)),
         key=lambda r: (r.entry.id, r.manifest_sha256 or ""),
     )
+    routable = [r for r in allowed if _executes(r)]
     if task.requested_capability:
-        return _route_explicit(task, routable, task.requested_capability)
-    return _route_by_signals(task, routable, sorted(set(files)), dependencies)
+        decision = _route_explicit(task, routable, task.requested_capability)
+    else:
+        decision = _route_by_signals(task, routable, sorted(set(files)), dependencies)
+    excluded = sorted({r.entry.id for r in allowed
+                       if not _executes(r) and _relevant(r, task, decision)})
+    if not excluded:
+        return decision
+    notes = [f"{pid}: not routable, manifest does not declare op {EXECUTE_OP!r}"
+             for pid in excluded]
+    return replace(decision, limitations=[*decision.limitations, *notes])
 
 
 def resolve_action(task: TaskSpec, capability: Capability) -> str:
@@ -59,6 +68,15 @@ def resolve_action(task: TaskSpec, capability: Capability) -> str:
         raise UsageError(f"action {action!r} is not offered by {capability.id} "
                          f"(actions: {', '.join(capability.actions)})")
     return action
+
+
+def _relevant(record: RegistryRecord, task: TaskSpec, decision: RoutingDecision) -> bool:
+    """Whether a provider excluded for lacking ``execute`` is worth a note: it declares the
+    requested capability, or (signal path) nothing was routed and it might have matched."""
+    if task.requested_capability:
+        manifest = record.manifest
+        return manifest is not None and manifest.capability(task.requested_capability) is not None
+    return decision.status != "routed"
 
 
 def _executes(record: RegistryRecord) -> bool:

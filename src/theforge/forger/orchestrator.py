@@ -34,7 +34,11 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import Codes
-from theforge.contracts.integrity import validate_context_pack, validate_result
+from theforge.contracts.integrity import (
+    check_producer,
+    validate_context_pack,
+    validate_result,
+)
 from theforge.contracts.types import BudgetProfile, Outcome, Producer
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
@@ -99,12 +103,41 @@ def _offers(record: RegistryRecord, capability_id: str, action: str) -> bool:
 
 
 def _require_op(record: RegistryRecord, op: str) -> ErrorInfo | None:
-    """Defensive assertion: the router already excludes providers without ``op`` (2.1)."""
+    """``None`` when the provider declares ``op``, else the unsupported-op error (2.1)."""
     if record.manifest is not None and op in record.manifest.ops:
         return None
     declared = ", ".join(record.manifest.ops) if record.manifest else "none"
     return ErrorInfo(code=Codes.PROTO_OP_UNSUPPORTED,
                      detail=f"{record.entry.id} does not declare op {op!r} (ops: {declared})")
+
+
+def _unexecutable_request(
+    task: TaskSpec, records: dict[str, RegistryRecord], allow_unverified: bool
+) -> ErrorInfo | None:
+    """2.1: an explicitly requested capability is refused with the unsupported-op code only
+    when a routable provider declares it without ``execute`` and no other provider could be
+    the one to run it: no declarer with ``execute`` (whatever its trust or state) and no
+    non-blocked provider whose manifest is unknown. Otherwise the plain ``no_route`` (and its
+    reason) stands. Nothing is spawned.
+    """
+    cap_id = task.requested_capability
+    if not cap_id:
+        return None
+    blamed: ErrorInfo | None = None
+    for record in sorted(records.values(), key=lambda r: r.entry.id):
+        if record.entry.trust == "blocked":
+            continue
+        if record.manifest is None:
+            return None  # unknown (not described, unreachable): it might be the executor
+        capability = record.manifest.capability(cap_id)
+        if capability is None or capability.state == "unsupported":
+            continue
+        error = _require_op(record, EXECUTE_OP)
+        if error is None:
+            return None  # an executing declarer exists; it was excluded for another reason
+        if blamed is None and record.routable(allow_unverified):
+            blamed = error
+    return blamed
 
 
 @dataclass(frozen=True)
@@ -167,6 +200,9 @@ class Forger:
             return self._finish(trace, decision, "provider_failure", error=routed.error)
         if decision.status != "routed":
             trace.routing_sha = self.store.write(run_id, "routing", decision)
+            op_error = _unexecutable_request(task, records, request.allow_unverified)
+            if op_error is not None:
+                return self._finish(trace, decision, "refused", error=op_error)
             return self._finish(trace, decision, decision.status)
 
         decision, record, health_error = self._select_healthy(task, decision, records)
@@ -209,6 +245,12 @@ class Forger:
                                 error=ErrorInfo(code=exc.code, detail=exc.detail))
         duration_ms = (time.perf_counter() - started_exec) * 1000
 
+        expected = Producer(id=record.entry.id, version=record.manifest.version)
+        # The envelope is checked like describe/health (1.6) before its status is trusted.
+        envelope = check_producer(response.producer, expected=expected, field="$.producer")
+        if envelope is not None:
+            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
+                code=envelope.code, detail=f"execute: {envelope.detail}", field=envelope.field))
         if response.status in ("refused", "error"):
             status: Outcome = "refused" if response.status == "refused" else "provider_failure"
             error = response.error or ErrorInfo(code=Codes.PROTO_SCHEMA,
@@ -220,8 +262,7 @@ class Forger:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
                 code=Codes.PROTO_SCHEMA, detail=f"execute: {exc}"))
         try:  # relational invariants and producer id+version; invalid results are not persisted
-            validate_result(result, expected=Producer(id=record.entry.id,
-                                                      version=record.manifest.version))
+            validate_result(result, expected=expected)
         except IntegrityError as exc:
             return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
                 code=exc.code, detail=f"execute: {exc}", field=exc.field))

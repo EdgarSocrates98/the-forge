@@ -207,6 +207,8 @@ def main() -> int:
             return reply("ok", {"cwd": os.getcwd()})
         if mode == "wrong-producer":
             return reply("ok", dict(RESULT, producer={"id": "someone-else", "version": "0.0.1"}))
+        if mode == "execute-wrong-envelope-producer":  # valid result, impostor envelope
+            return reply("ok", dict(RESULT, producer=producer), who=impostor)
         if mode == "wrong-version-producer":  # right id, version differs from the manifest
             return reply("ok", dict(RESULT, producer={"id": pid, "version": "9.9.9"}))
         if mode in INTEGRITY_MODES:

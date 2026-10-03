@@ -47,6 +47,7 @@ def _forger(root: Path) -> Forger:
     ("bad-timestamp", Codes.PROTO_SCHEMA, "yesterday"),
     ("wrong-producer", Codes.PROTO_PRODUCER, "someone-else"),
     ("wrong-version-producer", Codes.PROTO_PRODUCER, "9.9.9"),
+    ("execute-wrong-envelope-producer", Codes.PROTO_PRODUCER, "someone-else"),
 ])
 def test_invalid_result_is_provider_failure_without_result_artifact(
     tmp_path: Path, mode: str, code: str, needle: str
@@ -138,7 +139,7 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "capability-spam": ("no_route", None),
     "keyword-spam": ("no_route", None),
     "wide-glob": ("no_route", None),
-    "no-execute-op": ("no_route", None),
+    "no-execute-op": ("refused", Codes.PROTO_OP_UNSUPPORTED),
     # the manifest embeds the per-call temporary cwd, so it differs on every describe: the
     # revalidation before routing sees it change twice and refuses an unstable registry
     "describe-cwd-probe": ("provider_failure", Codes.REGISTRY_MANIFEST_CHANGED),
@@ -171,6 +172,7 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "bad-artifact-hash": ("provider_failure", Codes.PROTO_SCHEMA),
     "wrong-producer": ("provider_failure", Codes.PROTO_PRODUCER),
     "wrong-version-producer": ("provider_failure", Codes.PROTO_PRODUCER),
+    "execute-wrong-envelope-producer": ("provider_failure", Codes.PROTO_PRODUCER),
     "dup-evidence": ("provider_failure", Codes.RESULT_DUP_EVIDENCE),
     "dup-finding": ("provider_failure", Codes.RESULT_DUP_FINDING),
     "dangling-ref": ("provider_failure", Codes.RESULT_DANGLING_EVIDENCE),
@@ -178,8 +180,8 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "artifact-traversal": ("provider_failure", Codes.RESULT_ARTIFACT_PATH),
 }
 
-# Registry state that keeps each describe-level attacker out of routing. no-execute-op stays
-# ``ready`` (describe and health are valid); the router excludes it for lacking execute (2.1).
+# Registry state that keeps each describe-level attacker out of routing. no-execute-op is not
+# here: it stays ``ready`` and the explicit request is refused with PROTO_OP_UNSUPPORTED (2.1).
 NO_ROUTE_STATE = {
     "describe-crash": "unreachable",
     "invalid-manifest": "invalid",
@@ -191,7 +193,6 @@ NO_ROUTE_STATE = {
     "capability-spam": "invalid",
     "keyword-spam": "invalid",
     "wide-glob": "invalid",
-    "no-execute-op": "ready",
 }
 GRANDCHILD_MODES = ("spawn-grandchild-timeout", "exit-leave-grandchild")
 MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS")

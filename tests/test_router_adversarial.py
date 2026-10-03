@@ -249,8 +249,17 @@ def test_unresolved_capability_lowers_confidence_on_explicit_path() -> None:
 def test_provider_without_execute_op_is_not_routed() -> None:
     rec = make("noexec", kw=("glue",), globs=("*glue*.py",), ops=("describe", "health"))
     assert route(task("glue"), [rec], ["orders_glue.py"], set()).status == "no_route"
-    assert route(task("x", requested_capability="x.run"), [rec], [], set()).status == \
-        "no_route"
+    explicit = route(task("x", requested_capability="x.run"), [rec], [], set())
+    assert explicit.status == "no_route"
+    for decision in (route(task("glue"), [rec], ["orders_glue.py"], set()), explicit):
+        assert any("noexec" in note and "'execute'" in note for note in decision.limitations)
+    # Irrelevant non-executing providers add no noise: another capability, or a routed task.
+    other = route(task("x", requested_capability="y.run"), [rec], [], set())
+    routed = route(task("glue"), [rec, make("exec", kw=("glue",), globs=("*glue*.py",))],
+                   ["orders_glue.py"], set())
+    assert routed.status == "routed"
+    for decision in (other, routed):
+        assert not any("noexec" in note for note in decision.limitations)
 
 
 # Order independence.
