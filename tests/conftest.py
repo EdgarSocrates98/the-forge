@@ -48,6 +48,16 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_policy.py": ("unit", "security"),
     "test_ci_gates.py": ("integration",),
     "test_ci_workflows.py": ("unit",),
+    # planned by design (real-provider-integration)
+    "test_manifest_rules.py": ("unit", "contract"),
+    "test_adapter_shell.py": ("integration", "contract"),
+    "test_adapter_sparkforge.py": ("integration", "contract"),
+    "test_adapter_apiforge.py": ("integration", "contract"),
+    "test_adapters_core.py": ("integration",),
+    "test_real_providers_env.py": ("unit",),
+    "test_capability_catalog_doc.py": ("unit",),
+    "test_real_providers.py": ("real_provider", "integration"),
+    "test_compat_matrix.py": ("unit",),
 }
 
 
