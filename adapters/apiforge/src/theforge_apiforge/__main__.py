@@ -1,55 +1,47 @@
-"""Entry point: ``python -m theforge_apiforge <op>``: request on stdin, response on stdout.
+"""Entry point: ``python -m theforge_apiforge [options] <op>``, request on stdin, reply on stdout.
 
-Installable skeleton: every op is refused with a valid Forge Protocol v1 response and exit 0
-until the adapter shell and the API Forge integration are in place.
+The common shell (``_shell.py``) owns the Forge Protocol v1 envelope, the adapter options and
+the protocol, capability and action gates. Until the API Forge integration lands, the
+describe/health/execute handlers refuse with a well-formed response (exit 0); with no
+capability declared, every execute is refused by the shell as an undeclared capability.
 """
 
-import json
-import sys
+from __future__ import annotations
+
+from pathlib import Path
 
 from theforge_apiforge import PROVIDER_ID, VERSION
-
-PROTOCOL = "forge/v1"
-NOT_IMPLEMENTED = "ADAPTER-OP-UNSUPPORTED"
-
-
-def _request_id(raw: bytes) -> str:
-    try:
-        data = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return "unknown"
-    request_id = data.get("request_id") if isinstance(data, dict) else None
-    return request_id if isinstance(request_id, str) and request_id else "unknown"
+from theforge_apiforge._shell import (
+    OP_UNSUPPORTED,
+    AdapterOptions,
+    HandlerFactory,
+    OpHandler,
+    Reply,
+    Request,
+    refuse,
+    serve,
+)
 
 
-def refusal(op: str, raw: bytes) -> dict[str, object]:
-    """The skeleton answer for any op: a well-formed ``refused`` response."""
-    return {
-        "protocol": PROTOCOL,
-        "kind": "Response",
-        "request_id": _request_id(raw),
-        "op": op,
-        "producer": {"id": PROVIDER_ID, "version": VERSION},
-        "status": "refused",
-        "payload": {},
-        "error": {
-            "code": NOT_IMPLEMENTED,
-            "detail": f"op {op!r} is not implemented by {PROVIDER_ID} {VERSION} yet",
-            "field": "op",
-        },
-        "limitations": ["adapter skeleton: no op is implemented yet"],
-        "unknowns": [],
-    }
+def _not_implemented(options: AdapterOptions) -> OpHandler:
+    def handle(request: Request, cwd: Path) -> Reply:
+        reply = refuse(OP_UNSUPPORTED,
+                       f"op {request.op!r} is not implemented by {PROVIDER_ID} {VERSION} yet",
+                       field="op")
+        return Reply(status=reply.status, error=reply.error,
+                     limitations=["adapter skeleton: no op is implemented yet"])
+    return handle
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    op = args[-1] if args else ""
-    response = refusal(op, sys.stdin.buffer.read())
-    text = json.dumps(response, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    sys.stdout.buffer.write(text.encode("utf-8"))
-    sys.stdout.flush()
-    return 0
+HANDLERS: dict[str, HandlerFactory] = {
+    "describe": _not_implemented,
+    "health": _not_implemented,
+    "execute": _not_implemented,
+}
+
+
+def main() -> int:
+    return serve(provider_id=PROVIDER_ID, version=VERSION, handlers=HANDLERS)
 
 
 if __name__ == "__main__":

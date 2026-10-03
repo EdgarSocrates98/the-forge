@@ -2,3 +2,5 @@
 # keep them LF on every checkout, including Windows runners with core.autocrlf=true.
 schemas/*.json text eol=lf
 tests/golden/* text eol=lf
+# The adapter shell is copied byte for byte between adapters (identity test asserts LF).
+adapters/**/_shell.py text eol=lf
