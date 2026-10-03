@@ -11,7 +11,7 @@ Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defei
 | Injeção de shell | `argv` em lista, `shell=False` | — |
 | Path traversal / symlink | `resolve_inside` no scan e no echo-forge; `..` e symlinks para fora viram `excluded`; caminhos de ContextPack e de artifact checados lexicamente | — |
 | Leitura de secrets do workspace | `.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa*`, `id_ed25519*`, `*.pfx`, `*.p12`, `credentials*`, `.npmrc`, `.netrc`, `.pgpass`, `*.token`, `secrets.*` excluídos do ContextPack | detecção por conteúdo; o provider ainda lê o filesystem diretamente (ver limitações) |
-| Vazamento de credencial em artefatos | redaction de padrões e chaves sensíveis antes de persistir; stderr do provider truncado e redigido, nunca persistido bruto | — |
+| Vazamento de credencial em artefatos | redaction de padrões e chaves sensíveis antes de persistir; stderr do provider truncado e redigido, nunca persistido bruto; o cache do registry não é gravado quando a redação alteraria a entrada ou o manifest ([ADR 0009](adr/0009-registry-cache-location.md)) | — |
 | Exaustão de recursos | timeout por op (describe e health 10 s; execute 60 s / 180 s / 600 s em economy / balanced / max); stdout limitado a 8 MB; stderr a 64 KB; kill da árvore de processos em timeout, oversize ou interrupção | limite de CPU/memória |
 | Prompt injection via workspace | core não usa LLM | relevante no ciclo com LLM |
 | Supply chain do core | zero dependências de runtime (gate de CI); build reprodutível via hatchling | lockfile do dev, assinatura |

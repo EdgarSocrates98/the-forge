@@ -502,3 +502,52 @@ def test_concurrent_writer_processes_leave_a_valid_entry(tmp_path: Path) -> None
     reread = Registry(forge, transport_factory=_boom)
     assert reread.get("fixture-spark").state == "ready"
     assert not any("fixture-spark" in w for w in reread.warnings)
+
+
+# Secret-shaped values never reach the cache (CLAUDE.md: everything persisted is redacted).
+
+_SECRET = "-".join(("hunter2", "cache", "leak", "probe"))
+
+
+def _secret_provider(tmp_path: Path, *, in_argv: bool, in_manifest: bool) -> dict[str, Any]:
+    manifest = json.loads((PROVIDERS / "fixture-spark.json").read_text(encoding="utf-8"))
+    manifest["id"] = "secret-forge"
+    if in_manifest:
+        manifest["capabilities"][0]["description"] = f"connects with password={_SECRET}"
+    folder = tmp_path / (f"token={_SECRET}" if in_argv else "plain")
+    folder.mkdir()
+    path = folder / "manifest.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    return {"id": "secret-forge", "trust": "local",
+            "argv": [sys.executable, str(PROVIDERS / "fixture_forge.py"), str(path)]}
+
+
+@pytest.mark.parametrize(("in_argv", "in_manifest"), [(True, False), (False, True)],
+                         ids=["argv", "manifest"])
+def test_secret_shaped_values_are_never_written_to_the_cache(
+    tmp_path: Path, in_argv: bool, in_manifest: bool
+) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY,
+                              _secret_provider(tmp_path, in_argv=in_argv,
+                                               in_manifest=in_manifest)])
+    registry = Registry(forge)
+    records = {r.entry.id: r for r in registry.refresh()}
+    assert records["secret-forge"].state == "ready"  # still usable, just not cached
+    assert _cache_files("secret-forge") == []
+    assert _cache_files("fixture-spark")  # ordinary providers keep their cache
+    leaked = [p.name for p in user_cache_dir().rglob("*")
+              if p.is_file() and _SECRET.encode() in p.read_bytes()]
+    assert leaked == []
+    assert any("secret-forge" in w and "not cached" in w for w in registry.warnings)
+
+
+def test_stale_cache_with_secret_is_removed(tmp_path: Path) -> None:
+    entry = _secret_provider(tmp_path, in_argv=False, in_manifest=True)
+    forge = _forge(tmp_path, [entry])
+    registry = Registry(forge)
+    resolved = next(e for e in registry.entries() if e.id == "secret-forge")
+    stale = registry._cache_path(resolved)
+    stale.parent.mkdir(parents=True, exist_ok=True)
+    stale.write_text(f'{{"left": "{_SECRET}"}}', encoding="utf-8")
+    registry.refresh()
+    assert not stale.exists()

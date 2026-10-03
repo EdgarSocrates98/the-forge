@@ -23,6 +23,7 @@ from theforge.protocol import (
 )
 from theforge.registry.config import ProviderEntry, resolve_entries, user_cache_dir
 from theforge.registry.identity import fingerprint
+from theforge.security.redact import redact
 from theforge.state import LEGACY_REGISTRY_DIR, remove_legacy_cache
 
 RecordState = Literal[
@@ -276,11 +277,20 @@ class Registry:
                 fingerprint=fingerprint(record.entry).digest, state="ready",
                 manifest=record.manifest, manifest_sha256=record.manifest_sha256,
                 protocol=record.protocol, written_at=utc_now())
+            document = to_dict(cached)
+            if redact(document) != document:
+                # Persisted data must pass through redaction, but the cache is re-read
+                # strictly against the live entry and manifest hash: a redacted copy would
+                # never match. Secret-shaped values therefore disable caching instead.
+                path.unlink(missing_ok=True)
+                self._warn(f"registry cache for {record.entry.id} not cached: its entry or "
+                           "manifest contains secret-shaped values (described on every use)")
+                return
             path.parent.mkdir(parents=True, exist_ok=True)
             fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}-", suffix=".tmp")
             try:
                 with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                    handle.write(json.dumps(to_dict(cached), indent=2, sort_keys=True))
+                    handle.write(json.dumps(document, indent=2, sort_keys=True))
                 os.replace(tmp, path)
             except BaseException:
                 with contextlib.suppress(OSError):

@@ -11,6 +11,7 @@ No ciclo 1, o cache ficava em `.forge/registry/<id>.json`, dentro do workspace a
 - Só manifests `ready` de providers não `unverified` são gravados (ADR 0006). Divergência de entrada, digest ou fingerprint é um miss silencioso (o provider é descrito de novo). Hash do manifest, id ou protocolo negociado divergentes, ou documento inválido, descartam o cache com aviso.
 - Antes da decisão final de routing, todo candidato pontuado passa por describe de novo. Divergência invalida a entrada e refaz o routing uma única vez; uma segunda divergência é falha do provider (`REGISTRY_MANIFEST_CHANGED`).
 - Escrita atômica (`mkstemp` + `os.replace`); falha de escrita vira aviso, nunca erro.
+- O documento passa por `security.redact` antes de gravar. Se a redação alterar algo (entrada ou manifest com valor em formato de segredo), o cache desse provider não é gravado e uma cópia antiga é apagada, com aviso: uma cópia redigida nunca bateria com a entrada e o hash do manifest na releitura estrita. O provider é descrito a cada uso.
 - Não há migração: o cache é regenerado. `init` e `refresh` removem o legado `.forge/registry` com aviso; se for symlink, só o link é removido, nunca o alvo.
 
 ## Alternativas
