@@ -9,6 +9,8 @@ declares a capability and its actions only for these tests.
 """
 
 import ast
+import hashlib
+import importlib.util
 import json
 import subprocess
 import sys
@@ -18,7 +20,8 @@ from typing import Any
 
 import pytest
 
-from theforge.contracts import PROTOCOL_V1, Response, from_dict
+from theforge.contracts import PROTOCOL_V1, ExecutionResult, Producer, Response, from_dict
+from theforge.contracts.integrity import check_timestamp, validate_result
 from theforge.contracts.semver import parse_semver
 
 REPO = Path(__file__).parents[1]
@@ -355,3 +358,313 @@ def test_adapter_sources_parse_as_python_310(name: str) -> None:
 
 def test_shell_test_handlers_parse_as_python_310() -> None:
     ast.parse(SHELL_FORGE.read_text(encoding="utf-8"), feature_version=(3, 10))
+
+
+# --- result builder, staging and missing input (3.2) --------------------------------------
+
+SHELL_SOURCE = _package_dir("sparkforge") / "_shell.py"
+LINE_RANGE_REASON = "line-range items not supported by this adapter"
+
+
+def _load_shell() -> Any:
+    spec = importlib.util.spec_from_file_location("adapter_shell_unit", SHELL_SOURCE)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+shell = _load_shell()
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _workspace(root: Path, files: dict[str, bytes]) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
+    for rel, data in files.items():
+        target = root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return root
+
+
+def _item(path: str, data: bytes, **extra: Any) -> dict[str, Any]:
+    return {"path": path, "sha256": _sha(data), "bytes": len(data), "reason": "", **extra}
+
+
+def _pack(root: Path, items: list[dict[str, Any]]) -> dict[str, Any]:
+    used = sum(item["bytes"] for item in items)
+    return {"schema": "theforge/ContextPack/v1",
+            "producer": {"id": "theforge", "version": "0.1.0"},
+            "created_at": "2026-10-03T00:00:00Z", "status": "complete", "task_id": "t",
+            "provider_id": TEST_PRODUCER[0], "root": str(root), "files": items,
+            "excluded": [], "budget_bytes": max(used, 1), "used_bytes": used,
+            "truncated": False}
+
+
+def _skip(path: str, reason: str) -> str:
+    return f"context file '{path}' skipped: {reason}"
+
+
+def _tree(root: Path) -> dict[str, bytes]:
+    return {p.relative_to(root).as_posix(): p.read_bytes()
+            for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def _work(tmp_path: Path) -> Path:
+    cwd = tmp_path / "work"
+    cwd.mkdir()
+    return cwd
+
+
+JOB = b"df.collect()\n"
+OTHER = b"print('other')\n"
+
+
+def test_stage_context_copies_verified_files_and_keeps_their_sha256(tmp_path: Path) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "b.txt": OTHER})
+    cwd = _work(tmp_path)
+    staged = shell.stage_context(
+        {"context": _pack(ws, [_item("jobs/a.py", JOB), _item("b.txt", OTHER)])}, cwd)
+    assert staged.root == cwd / "stage"
+    assert dict(staged.files) == {"jobs/a.py": _sha(JOB), "b.txt": _sha(OTHER)}
+    assert list(staged.limitations) == []
+    assert _tree(cwd) == {"stage/jobs/a.py": JOB, "stage/b.txt": OTHER}
+
+
+@pytest.mark.parametrize("payload", [{}, {"context": None}, {"context": {"files": []}}])
+def test_stage_context_without_files_stages_nothing(tmp_path: Path, payload: Any) -> None:
+    cwd = _work(tmp_path)
+    staged = shell.stage_context(payload, cwd)
+    assert dict(staged.files) == {}
+    assert list(staged.limitations) == []
+    assert _tree(cwd) == {}
+
+
+@pytest.mark.parametrize(("item", "reason"), [
+    (_item("gone.py", JOB), "file not found"),
+    (_item("../outside.py", JOB), "outside workspace root"),
+    (_item("jobs/../../outside.py", JOB), "outside workspace root"),
+    (_item("/etc/outside.py", JOB), "outside workspace root"),
+    (_item("C:/outside.py", JOB), "outside workspace root"),
+    (_item("jobs\\a.py", JOB), "outside workspace root"),
+    ({**_item("jobs/a.py", JOB), "sha256": _sha(OTHER)}, "sha256 mismatch"),
+    ({**_item("jobs/a.py", JOB), "sha256": "NOT-A-HASH"}, "sha256 mismatch"),
+    # A line-range item is never compared with the whole-file hash: neither a range hash
+    # (which differs from the file's) nor a hash equal to the whole file stages it.
+    (_item("jobs/a.py", b"df.collect()", tier="excerpt", lines={"start": 1, "end": 1}),
+     LINE_RANGE_REASON),
+    (_item("jobs/a.py", JOB, tier="requested", lines={"start": 1, "end": 1}),
+     LINE_RANGE_REASON),
+])
+def test_stage_context_omits_each_reason_as_a_limitation(
+    tmp_path: Path, item: dict[str, Any], reason: str
+) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "c.py": OTHER})
+    _workspace(tmp_path, {"outside.py": JOB})
+    cwd = _work(tmp_path)
+    staged = shell.stage_context({"context": _pack(ws, [item, _item("c.py", OTHER)])}, cwd)
+    assert list(staged.limitations) == [_skip(item["path"], reason)]
+    assert dict(staged.files) == {"c.py": _sha(OTHER)}
+    assert _tree(cwd) == {"stage/c.py": OTHER}
+
+
+def test_stage_context_omits_a_file_that_grew_after_the_pack_was_built(tmp_path: Path) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "c.py": OTHER})
+    pack = _pack(ws, [_item("jobs/a.py", JOB), _item("c.py", OTHER)])
+    (ws / "jobs" / "a.py").write_bytes(JOB + b"x" * 1024)
+    cwd = _work(tmp_path)
+    staged = shell.stage_context({"context": pack}, cwd)
+    assert list(staged.limitations) == [_skip("jobs/a.py", "size mismatch")]
+    assert dict(staged.files) == {"c.py": _sha(OTHER)}
+    assert _tree(cwd) == {"stage/c.py": OTHER}
+
+
+@pytest.mark.parametrize("size", [None, "13", True, -1])
+def test_stage_context_bounds_an_item_without_a_valid_size(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: Any
+) -> None:
+    ws = _workspace(tmp_path / "ws", {"small.py": b"ok\n", "big.py": JOB})
+    monkeypatch.setattr(shell, "MAX_UNSIZED_BYTES", len(JOB) - 1)
+    items = [{**_item(p, d), "bytes": size} for p, d in (("big.py", JOB), ("small.py", b"ok\n"))]
+    if size is None:
+        for item in items:
+            del item["bytes"]
+    cwd = _work(tmp_path)
+    staged = shell.stage_context({"context": {"root": str(ws), "files": items}}, cwd)
+    assert list(staged.limitations) == [
+        _skip("big.py", f"no declared size and file exceeds {len(JOB) - 1} bytes")]
+    assert dict(staged.files) == {"small.py": _sha(b"ok\n")}
+
+
+def _symlink_or_skip(link: Path, target: Path) -> None:
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symlinks are not supported here: {exc}")
+
+
+def test_stage_context_omits_a_symlink_escaping_the_root(tmp_path: Path) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
+    secret = _workspace(tmp_path, {"secret.py": OTHER}) / "secret.py"
+    _symlink_or_skip(ws / "link.py", secret)
+    cwd = _work(tmp_path)
+    staged = shell.stage_context(
+        {"context": _pack(ws, [_item("link.py", OTHER), _item("jobs/a.py", JOB)])}, cwd)
+    assert list(staged.limitations) == [
+        _skip("link.py", "symlink resolves outside workspace root")]
+    assert dict(staged.files) == {"jobs/a.py": _sha(JOB)}
+    assert _tree(cwd) == {"stage/jobs/a.py": JOB}
+
+
+@pytest.fixture
+def staged_job(tmp_path: Path) -> Any:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "b.py": OTHER})
+    pack = _pack(ws, [_item("jobs/a.py", JOB), {**_item("b.py", OTHER), "sha256": _sha(JOB)}])
+    return shell.stage_context({"context": pack}, _work(tmp_path))
+
+
+def test_evidence_hash_returns_the_verified_sha256_for_an_equal_native_hash(
+    staged_job: Any
+) -> None:
+    verified = _sha(JOB)
+    assert shell.evidence_hash("jobs/a.py", verified, staged_job) == verified
+    # Spark Forge prefixes its artifact hashes; the prefix is dropped before comparing.
+    assert shell.evidence_hash("jobs/a.py", f"sha256:{verified}", staged_job) == verified
+
+
+@pytest.mark.parametrize(("path", "native"), [
+    ("jobs/a.py", None),                       # native hash missing
+    ("jobs/a.py", ""),                         # malformed
+    ("jobs/a.py", "abc123"),                   # malformed
+    ("jobs/a.py", 42),                         # malformed (not a string)
+    ("jobs/a.py", _sha(JOB).upper()),          # malformed (not lowercase hex)
+    ("jobs/a.py", f"md5:{_sha(JOB)}"),         # malformed (unknown prefix)
+    ("jobs/a.py", _sha(OTHER)),                # different from the verified sha256
+    ("jobs/a.py", _sha(JOB.strip())),          # hash of other content (normalized text)
+    ("b.py", _sha(JOB)),                       # path skipped (mismatch), never copied
+    ("b.py", _sha(OTHER)),                     # path skipped even with its real hash
+    ("missing.py", _sha(JOB)),                 # path not in the pack
+    (None, _sha(JOB)),                         # evidence without location
+])
+def test_evidence_hash_is_null_in_every_other_case(
+    staged_job: Any, path: str | None, native: Any
+) -> None:
+    assert shell.evidence_hash(path, native, staged_job) is None
+
+
+def test_finalize_builds_a_result_the_core_accepts(tmp_path: Path) -> None:
+    producer = Producer(id=TEST_PRODUCER[0], version=TEST_PRODUCER[1])
+    draft = shell.ResultDraft(
+        provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1],
+        findings=[{"id": "R1#1", "title": "R1: t", "severity": "low", "evidence_ids": ["e1"]}],
+        evidence=[{"id": "e1", "epistemic": "observed", "subject": "s", "claim": "c",
+                   "location": {"path": "jobs/a.py", "line": 1}, "hash": None}],
+        limitations=["l1"], unknowns=["u1"])
+    reply = shell.finalize(draft, tmp_path)
+    assert reply.status == "ok"
+    result = from_dict(ExecutionResult, reply.payload)
+    validate_result(result, expected=producer)
+    assert result.schema == "theforge/ExecutionResult/v1"
+    assert result.status == "ok"
+    assert result.created_at.endswith("Z")
+    assert check_timestamp(result.created_at, field="created_at") is None
+    assert result.evidence[0].producer == producer
+    assert result.limitations == ["l1"] and result.unknowns == ["u1"]
+    partial = shell.finalize(shell.ResultDraft(provider_id=TEST_PRODUCER[0],
+                                               version=TEST_PRODUCER[1], partial=True),
+                             tmp_path)
+    assert partial.status == "partial" and partial.payload["status"] == "partial"
+    assert _tree(tmp_path) == {}
+
+
+def _stage_request(pack: dict[str, Any]) -> bytes:
+    return _request("execute", {"task": {"intent": "x"}, "capability": "test.stage",
+                                "action": "analyze", "context": pack})
+
+
+def _call_in(cwd: Path, stdin: bytes, options: tuple[str, ...] = ()) -> Response:
+    argv = [*SHELL_PROVIDERS["test-handlers"][0], *options, "execute"]
+    out = subprocess.run(argv, input=stdin, capture_output=True, timeout=60, cwd=cwd)
+    assert out.returncode == 0, out.stderr
+    response = from_dict(Response, json.loads(out.stdout))
+    assert (response.producer.id, response.producer.version) == TEST_PRODUCER
+    return response
+
+
+def _valid_result(response: Response) -> ExecutionResult:
+    result = from_dict(ExecutionResult, response.payload)
+    validate_result(result, expected=Producer(id=TEST_PRODUCER[0], version=TEST_PRODUCER[1]))
+    assert result.schema == "theforge/ExecutionResult/v1"
+    assert check_timestamp(result.created_at, field="created_at") is None
+    return result
+
+
+@pytest.mark.parametrize("files", [{}, {"README.md": b"# docs\n"}])
+@pytest.mark.parametrize("replay", ["absent", "empty"])
+def test_missing_input_is_partial_without_calling_the_specialist(
+    tmp_path: Path, files: dict[str, bytes], replay: str
+) -> None:
+    ws = _workspace(tmp_path / "ws", files)
+    cwd = _work(tmp_path)
+    replay_dir = tmp_path / "replay"
+    if replay == "empty":
+        replay_dir.mkdir()
+    pack = _pack(ws, [_item(path, data) for path, data in files.items()])
+    response = _call_in(cwd, _stage_request(pack), ("--replay", str(replay_dir)))
+    assert response.status == "partial", response.error
+    result = _valid_result(response)
+    assert result.status == "partial"
+    assert result.findings == [] and result.evidence == []
+    assert result.limitations == ["no input: expected *.py"]
+    assert result.unknowns == ["input:script"]
+    assert response.limitations == result.limitations
+    assert response.unknowns == result.unknowns
+
+
+def test_present_input_reaches_the_specialist(tmp_path: Path) -> None:
+    # Control for the test above: with a matching file the replay recording is consulted.
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
+    (tmp_path / "replay").mkdir()
+    response = _call_in(_work(tmp_path), _stage_request(_pack(ws, [_item("jobs/a.py", JOB)])),
+                        ("--replay", str(tmp_path / "replay")))
+    assert response.status == "error"
+    assert response.error is not None and response.error.code == "ADAPTER-REPLAY-MISSING"
+
+
+def test_staged_execute_applies_the_hash_rule_and_writes_only_inside_cwd(
+    tmp_path: Path
+) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "b.py": OTHER, "notes.md": b"n\n"})
+    replay = tmp_path / "replay"
+    replay.mkdir()
+    verified = _sha(JOB)
+    facts = [
+        {"id": "f_equal", "path": "jobs/a.py", "sha256": verified},
+        {"id": "f_prefixed", "path": "jobs/a.py", "sha256": f"sha256:{verified}"},
+        {"id": "f_missing", "path": "jobs/a.py"},
+        {"id": "f_malformed", "path": "jobs/a.py", "sha256": "zz"},
+        {"id": "f_different", "path": "jobs/a.py", "sha256": _sha(OTHER)},
+        {"id": "f_not_copied", "path": "b.py", "sha256": _sha(OTHER)},
+    ]
+    (replay / "test.stage.analyze.json").write_text(json.dumps({"facts": facts}),
+                                                    encoding="utf-8")
+    cwd = _work(tmp_path)
+    pack = _pack(ws, [_item("jobs/a.py", JOB), {**_item("b.py", OTHER), "sha256": verified},
+                      _item("notes.md", b"n\n", tier="excerpt", lines={"start": 1, "end": 1})])
+    before = _tree(tmp_path)
+    response = _call_in(cwd, _stage_request(pack), ("--replay", str(replay)))
+    assert response.status == "ok", response.error
+    result = _valid_result(response)
+    hashes = {e.id: e.hash for e in result.evidence}
+    assert hashes == {"f_equal": verified, "f_prefixed": verified, "f_missing": None,
+                      "f_malformed": None, "f_different": None, "f_not_copied": None}
+    assert [f.evidence_ids for f in result.findings] == [list(hashes)]
+    assert result.limitations == [_skip("b.py", "sha256 mismatch"),
+                                  _skip("notes.md", LINE_RANGE_REASON)]
+    after = _tree(tmp_path)
+    assert {p: d for p, d in after.items() if not p.startswith("work/")} == before
+    assert {p for p in after if p.startswith("work/")} == {"work/stage/jobs/a.py"}

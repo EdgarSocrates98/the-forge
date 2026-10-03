@@ -4,12 +4,15 @@ argv: shell_forge.py [adapter options] OP. Loads ``_shell.py`` straight from the
 adapter sources (both copies are byte-identical, checked by the tests), so it runs on any
 Python >= 3.10 without installing anything. ``test.echo``/``test.boom`` and their actions are
 declared only here, for the shell tests. ``--assume-specialist-version describe-refuses`` makes
-describe refuse; ``boom`` makes health raise.
+describe refuse; ``boom`` makes health raise. ``test.stage``/``analyze`` stages the context, needs
+a ``*.py`` input and stands in for a specialist by reading the replay recording
+``<replay>/test.stage.analyze.json`` (``{"facts": [{"id", "path", "sha256"?}]}``).
 """
 
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -31,6 +34,7 @@ MANIFEST = {
     "capabilities": [
         {"id": "test.echo", "actions": ["run", "unserializable"]},
         {"id": "test.boom", "actions": ["run", "exit", "interrupt"]},
+        {"id": "test.stage", "actions": ["analyze"]},
     ],
 }
 
@@ -56,10 +60,35 @@ def health(options):
     return handle
 
 
+STAGE_INPUTS = {"script": ["*.py"]}
+
+
+def analyze(options, request, cwd):
+    stage = shell.stage_context(request.payload, cwd)
+    draft = shell.no_input(stage, STAGE_INPUTS, provider_id=PROVIDER_ID, version=VERSION)
+    if draft is not None:
+        return shell.finalize(draft, cwd)
+    recording = None if options.replay is None else options.replay / "test.stage.analyze.json"
+    if recording is None or not recording.is_file():
+        return shell.fail("ADAPTER-REPLAY-MISSING", "test.stage.analyze.json")
+    facts = json.loads(recording.read_text(encoding="utf-8"))["facts"]
+    evidence = [{"id": fact["id"], "epistemic": "observed", "subject": "test.fact",
+                 "claim": f"fact {fact['id']}", "location": {"path": fact["path"], "line": 1},
+                 "hash": shell.evidence_hash(fact["path"], fact.get("sha256"), stage)}
+                for fact in facts]
+    findings = [{"id": "TEST-1#1", "title": "TEST-1: facts", "severity": "info",
+                 "evidence_ids": [item["id"] for item in evidence]}]
+    return shell.finalize(shell.ResultDraft(
+        provider_id=PROVIDER_ID, version=VERSION, findings=findings, evidence=evidence,
+        limitations=list(stage.limitations)), cwd)
+
+
 def execute(options):
     def handle(request, cwd):
         capability = request.payload["capability"]
         action = request.payload["action"]
+        if capability == "test.stage":
+            return analyze(options, request, cwd)
         if capability == "test.boom" and action == "exit":
             raise SystemExit(2)
         if capability == "test.boom" and action == "interrupt":
