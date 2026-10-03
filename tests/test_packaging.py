@@ -8,6 +8,7 @@ import importlib.util
 import shutil
 import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -120,7 +121,10 @@ def test_fresh_install_metadata_check_rejects_bad_installs(
     tmp_path: Path, change: dict[str, Any], needle: str
 ) -> None:
     gate = _fresh_install_module()
-    venv = tmp_path / "venv"
+    # The real gate builds its venv outside the repository; tmp_path may live inside it
+    # (addopts --basetemp=.pytest_tmp), which the gate rightly treats as "not fresh". The
+    # path is only compared, never created.
+    venv = Path(tempfile.gettempdir()) / f"theforge-probe-{tmp_path.name}" / "venv"
     probe: dict[str, Any] = {
         "name": "theforge", "version": "1.2.3", "requires_python": ">=3.11",
         "requires": ["pytest; extra == 'dev'", "ruff; extra=='dev'"],
