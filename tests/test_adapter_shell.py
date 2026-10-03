@@ -12,8 +12,11 @@ import ast
 import hashlib
 import importlib.util
 import json
+import os
+import signal
 import subprocess
 import sys
+import time
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -23,6 +26,8 @@ import pytest
 from theforge.contracts import PROTOCOL_V1, ExecutionResult, Producer, Response, from_dict
 from theforge.contracts.integrity import check_timestamp, validate_result
 from theforge.contracts.semver import parse_semver
+from theforge.forger.orchestrator import EXECUTE_TIMEOUTS as CORE_EXECUTE_TIMEOUTS
+from theforge.security import env as core_env
 
 REPO = Path(__file__).parents[1]
 ADAPTERS = {
@@ -871,3 +876,259 @@ def test_staged_execute_above_the_limit_is_partial_with_an_intact_artifact(
     spilled = (cwd / SPILL_PATH).read_bytes()
     assert [(a.path, a.sha256) for a in result.artifacts] == [(SPILL_PATH, _sha(spilled))]
     assert json.loads(spilled) == recording
+
+
+# --- native processes: no shell, controlled env, capped outputs, timeout (3.4) ------------
+
+NATIVE_TIMEOUT_CODE = "ADAPTER-NATIVE-TIMEOUT"
+# The native process starts a grandchild that appends to a heartbeat file (bounded to 15 s
+# even if it escaped), waits for it, then sleeps (``sleep``) or exits at once (``exit``).
+HEARTBEAT = (
+    "import sys, time\n"
+    "end = time.monotonic() + 15\n"
+    "while time.monotonic() < end:\n"
+    "    with open(sys.argv[1], 'ab') as fh:\n"
+    "        fh.write(b'.')\n"
+    "    time.sleep(0.05)\n"
+)
+PARENT = (
+    "import os, subprocess, sys, time\n"
+    "beat, mode, code = sys.argv[1], sys.argv[2], sys.argv[3]\n"
+    "subprocess.Popen([sys.executable, '-c', code, beat])\n"
+    "end = time.monotonic() + 20\n"
+    "while not os.path.exists(beat) and time.monotonic() < end:\n"
+    "    time.sleep(0.02)\n"
+    "if mode == 'sleep':\n"
+    "    time.sleep(30)\n"
+)
+CREDENTIAL_ENV = {
+    "AWS_SECRET_ACCESS_KEY": "s3cr3t-aws",
+    "GITHUB_TOKEN": "s3cr3t-gh",
+    "MY_SERVICE_PASSWORD": "s3cr3t-pw",
+    "DB_API_KEY": "s3cr3t-key",
+    "HTTPS_PROXY": "http://user:s3cr3t@proxy:8080",
+    "SOME_URL": "https://user:s3cr3t@example.com/x",
+}
+DUMP_ENV = "import json, os; print(json.dumps(dict(os.environ)))"
+
+
+def _py(code: str, *args: str) -> list[str]:
+    return [sys.executable, "-c", code, *args]
+
+
+def _assert_stopped(beat: Path) -> None:
+    """The heartbeat grandchild is gone: the file stops growing."""
+    assert beat.exists(), "the grandchild never started"
+    time.sleep(0.3)
+    before = beat.stat().st_size
+    time.sleep(0.6)
+    assert beat.stat().st_size == before, "a child of the native process is still running"
+
+
+def _native_payload(action: str, **extra: Any) -> dict[str, Any]:
+    return {"task": {"intent": "x", "budget_profile": "economy"}, "capability": "test.native",
+            "action": action, "context": {}, **extra}
+
+
+SHORTEST = min(CORE_EXECUTE_TIMEOUTS.values())
+
+
+def test_shell_execute_timeouts_match_the_core() -> None:
+    assert shell.EXECUTE_TIMEOUTS == CORE_EXECUTE_TIMEOUTS
+
+
+def test_shell_credential_rules_match_the_core() -> None:
+    def rules(patterns: Any) -> list[tuple[str, int]]:
+        return [(p.pattern, p.flags) for p in patterns]
+    assert rules(shell.CREDENTIAL_PATTERNS) == rules(core_env.CREDENTIAL_PATTERNS)
+    assert rules([shell._URL_USERINFO]) == rules([core_env._URL_USERINFO])
+
+
+@pytest.mark.parametrize("profile", [*sorted(CORE_EXECUTE_TIMEOUTS), None, "bogus"])
+def test_native_timeout_is_85_percent_of_the_profile_execute_timeout(
+    profile: str | None
+) -> None:
+    task: dict[str, Any] = {"intent": "x"}
+    if profile is not None:
+        task["budget_profile"] = profile
+    expected = CORE_EXECUTE_TIMEOUTS.get(profile or "", SHORTEST) * 0.85
+    assert shell.native_timeout({"task": task}) == pytest.approx(expected)
+    # Without a valid task the shortest profile is used: never outlive the core's timeout.
+    assert shell.native_timeout({}) == pytest.approx(SHORTEST * 0.85)
+    assert shell.native_timeout({"task": "x"}) == pytest.approx(SHORTEST * 0.85)
+
+
+@pytest.mark.parametrize(("argv", "error"), [
+    ("python -c pass", TypeError), (b"python", TypeError), ([], ValueError), ((), ValueError),
+    ([sys.executable, 1], TypeError), (None, TypeError), (iter([sys.executable]), TypeError),
+])
+def test_run_native_rejects_an_argv_that_is_not_a_list_of_strings(
+    tmp_path: Path, argv: Any, error: type[Exception]
+) -> None:
+    with pytest.raises(error):
+        shell.run_native(argv, cwd=tmp_path, env={}, timeout=5)
+
+
+def test_capped_reader_closes_its_pipe_even_after_finish_gave_up(tmp_path: Path) -> None:
+    read_fd, write_fd = os.pipe()
+    stream = os.fdopen(read_fd, "rb")
+    reader = shell._CappedReader(stream, 10)
+    try:
+        os.write(write_fd, b"abc")
+        reader.finish(0.2)  # a writer outside the tree still holds the pipe open
+        assert not stream.closed
+    finally:
+        os.close(write_fd)
+    deadline = time.monotonic() + 10
+    while not stream.closed and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert stream.closed  # closed by the reader itself once the writer is gone
+    assert bytes(reader.data) == b"abc"
+    done = shell._CappedReader(open(os.devnull, "rb"), 10)  # noqa: SIM115 - closed by reader
+    done.finish(5)
+    assert done.stream.closed
+
+
+_ADAPTER_UNDER_SIGTERM = (
+    "import importlib.util, pathlib, sys\n"
+    "spec = importlib.util.spec_from_file_location('shell_sigterm', sys.argv[1])\n"
+    "shell = importlib.util.module_from_spec(spec)\n"
+    "sys.modules[spec.name] = shell\n"
+    "spec.loader.exec_module(shell)\n"
+    "shell.run_native([sys.executable, '-c', sys.argv[2], sys.argv[3], 'sleep', sys.argv[4]],\n"
+    "                 cwd=pathlib.Path(sys.argv[5]), env={}, timeout=60)\n"
+)
+
+
+@pytest.mark.skipif(sys.platform == "win32",
+                    reason="POSIX only: on Windows the native job is nested in the core's job")
+def test_sigterm_to_the_adapter_group_also_kills_the_native_tree(tmp_path: Path) -> None:
+    beat = tmp_path / "beat"
+    cwd = _work(tmp_path)
+    # Like the core: the adapter leads its own group, which the core signals on timeout.
+    adapter = subprocess.Popen(
+        [sys.executable, "-c", _ADAPTER_UNDER_SIGTERM, str(SHELL_SOURCE), PARENT, str(beat),
+         HEARTBEAT, str(cwd)], start_new_session=True)
+    try:
+        deadline = time.monotonic() + 20
+        while not beat.exists() and time.monotonic() < deadline:
+            time.sleep(0.02)
+        os.killpg(adapter.pid, signal.SIGTERM)
+        assert adapter.wait(timeout=20) == -signal.SIGTERM
+        _assert_stopped(beat)
+    finally:
+        if adapter.poll() is None:
+            adapter.kill()
+            adapter.wait()
+
+
+def test_run_native_runs_without_a_shell_in_the_given_cwd(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    code = "import json, os, sys; print(json.dumps([os.getcwd(), sys.argv[1:]]))"
+    literal = "a && echo injected | more $HOME %PATH% > out.txt"
+    outcome = shell.run_native(_py(code, literal), cwd=cwd, env={}, timeout=30)
+    assert outcome.returncode == 0, outcome.stderr
+    seen_cwd, seen_args = json.loads(outcome.stdout)
+    assert Path(seen_cwd).resolve() == cwd.resolve()
+    assert seen_args == [literal]  # one argument, never interpreted by a shell
+    assert not outcome.stdout_truncated and not outcome.stderr_truncated
+    assert _tree(cwd) == {}
+
+
+def test_run_native_env_never_carries_credentials(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name, value in CREDENTIAL_ENV.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setenv("FORGE_PLAIN", "kept")
+    adjustments = {"APIFORGE_CACHE": "off", "EXTRA_SECRET": "s3cr3t-adj",
+                   "aws_session_token": "s3cr3t-adj2", "MY_TOKEN": "s3cr3t-adj3",
+                   "MIRROR": "https://u:s3cr3t@mirror.example/"}
+    outcome = shell.run_native(_py(DUMP_ENV), cwd=_work(tmp_path), env=adjustments,
+                               timeout=30)
+    assert outcome.returncode == 0, outcome.stderr
+    env = json.loads(outcome.stdout)
+    upper = {name.upper() for name in env}
+    assert env.get("APIFORGE_CACHE") == "off"  # explicit adjustment
+    assert env.get("FORGE_PLAIN") == "kept"  # received from the core
+    rejected = {*CREDENTIAL_ENV, *adjustments} - {"APIFORGE_CACHE"}
+    assert upper.isdisjoint(name.upper() for name in rejected)
+    assert "s3cr3t" not in outcome.stdout.decode("utf-8")
+    for name in [*CREDENTIAL_ENV, "EXTRA_SECRET", "MY_TOKEN"]:
+        if name != "SOME_URL":  # dropped for its value (URL userinfo), not its name
+            assert shell.is_credential_name(name), name
+    assert not shell.is_credential_name("FORGE_PLAIN")
+    assert not shell.is_credential_name("APIFORGE_CACHE")
+
+
+def test_run_native_adjustment_overrides_the_received_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("APIFORGE_CACHE", "on")
+    outcome = shell.run_native(_py(DUMP_ENV), cwd=_work(tmp_path),
+                               env={"apiforge_cache": "off"}, timeout=30)
+    env = json.loads(outcome.stdout)
+    assert [v for k, v in env.items() if k.upper() == "APIFORGE_CACHE"] == ["off"]
+
+
+def test_run_native_caps_both_outputs_without_blocking(tmp_path: Path) -> None:
+    code = ("import sys; sys.stdout.write('o' * 200000); sys.stdout.flush(); "
+            "sys.stderr.write('e' * 200000); sys.stderr.flush()")
+    outcome = shell.run_native(_py(code), cwd=_work(tmp_path), env={}, timeout=30,
+                               stdout_cap=1000, stderr_cap=500)
+    assert outcome.returncode == 0
+    assert outcome.stdout == b"o" * 1000 and outcome.stdout_truncated
+    assert outcome.stderr == b"e" * 500 and outcome.stderr_truncated
+    small = shell.run_native(_py("print('hi')"), cwd=tmp_path, env={},
+                             timeout=30, stdout_cap=1000)
+    assert small.stdout.strip() == b"hi" and not small.stdout_truncated
+    assert shell.NATIVE_STDOUT_CAP >= 8 * 1024 * 1024
+    assert 0 < shell.NATIVE_STDERR_CAP <= shell.NATIVE_STDOUT_CAP
+
+
+def test_run_native_timeout_is_structured_and_kills_the_whole_tree(tmp_path: Path) -> None:
+    beat = tmp_path / "beat"
+    started = time.monotonic()
+    with pytest.raises(shell.NativeTimeout) as caught:
+        shell.run_native(_py(PARENT, str(beat), "sleep", HEARTBEAT), cwd=_work(tmp_path),
+                         env={}, timeout=3.0)
+    assert time.monotonic() - started < 15
+    reply = caught.value.reply()
+    assert reply.status == "error"
+    assert reply.error is not None and reply.error["code"] == NATIVE_TIMEOUT_CODE
+    assert "3 s" in reply.error["detail"]
+    _assert_stopped(beat)
+
+
+def test_run_native_kills_children_left_behind_by_a_finished_process(tmp_path: Path) -> None:
+    beat = tmp_path / "beat"
+    outcome = shell.run_native(_py(PARENT, str(beat), "exit", HEARTBEAT), cwd=_work(tmp_path),
+                               env={}, timeout=30)
+    assert outcome.returncode == 0, outcome.stderr
+    _assert_stopped(beat)
+
+
+def test_execute_native_timeout_is_a_structured_error_with_exit_zero(tmp_path: Path) -> None:
+    response = _call_in(_work(tmp_path),
+                        _request("execute", _native_payload("sleep", native_timeout=1.5)))
+    assert response.status == "error"
+    assert response.error is not None and response.error.code == NATIVE_TIMEOUT_CODE
+    assert response.payload == {}
+
+
+def test_execute_native_env_from_the_core_never_reaches_credentials(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    core_env = {**os.environ, **CREDENTIAL_ENV, "FORGE_PLAIN": "kept"}
+    argv = [*SHELL_PROVIDERS["test-handlers"][0], "execute"]
+    out = subprocess.run(argv, input=_request("execute", _native_payload("env")),
+                         capture_output=True, timeout=60, cwd=cwd, env=core_env)
+    assert out.returncode == 0, out.stderr
+    response = from_dict(Response, json.loads(out.stdout))
+    assert response.status == "ok", response.error
+    native = response.payload["native"]
+    upper = {name.upper() for name in native["env"]}
+    assert native["env"].get("APIFORGE_CACHE") == "off"
+    assert native["env"].get("FORGE_PLAIN") == "kept"
+    assert upper.isdisjoint({*CREDENTIAL_ENV, "FIXTURE_API_KEY"})
+    assert "s3cr3t" not in json.dumps(native)
+    assert Path(native["cwd"]).resolve() == cwd.resolve()

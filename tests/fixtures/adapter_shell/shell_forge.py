@@ -9,6 +9,9 @@ a ``*.py`` input and stands in for a specialist by reading the replay recording
 ``<replay>/test.stage.analyze.json`` (``{"facts": [{"id", "path", "sha256"?, "pad"?}]}``):
 ``pad`` grows the fact's claim by that many bytes; ``"split": true`` makes one finding per fact
 (otherwise a single finding references every fact). The recording is the native output.
+``test.native`` runs real native processes through ``run_native``: ``sleep`` outlives the
+timeout (``payload.native_timeout`` seconds, else the profile's share), ``env`` reports the
+environment and cwd the native process saw, with an adapter adjustment that adds a credential.
 """
 
 from __future__ import annotations
@@ -37,6 +40,7 @@ MANIFEST = {
         {"id": "test.echo", "actions": ["run", "unserializable"]},
         {"id": "test.boom", "actions": ["run", "exit", "interrupt"]},
         {"id": "test.stage", "actions": ["analyze"]},
+        {"id": "test.native", "actions": ["sleep", "env"]},
     ],
 }
 
@@ -91,12 +95,32 @@ def analyze(options, request, cwd):
         limitations=list(stage.limitations), native_output=native), cwd)
 
 
+NATIVE_SLEEP = "import time; time.sleep(30)"
+NATIVE_ENV = "import json, os; print(json.dumps({'env': dict(os.environ), 'cwd': os.getcwd()}))"
+NATIVE_ADJUSTMENTS = {"APIFORGE_CACHE": "off", "FIXTURE_API_KEY": "s3cr3t-adjustment"}
+
+
+def native(request, cwd):
+    timeout = request.payload.get("native_timeout")
+    timeout = shell.native_timeout(request.payload) if timeout is None else float(timeout)
+    if request.payload["action"] == "sleep":
+        shell.run_native([sys.executable, "-c", NATIVE_SLEEP], cwd=cwd, env={},
+                         timeout=timeout)
+        return shell.Reply(status="ok", payload={"slept": True})
+    outcome = shell.run_native([sys.executable, "-c", NATIVE_ENV], cwd=cwd,
+                               env=NATIVE_ADJUSTMENTS, timeout=timeout)
+    return shell.Reply(status="ok", payload={"native": json.loads(outcome.stdout),
+                                             "returncode": outcome.returncode})
+
+
 def execute(options):
     def handle(request, cwd):
         capability = request.payload["capability"]
         action = request.payload["action"]
         if capability == "test.stage":
             return analyze(options, request, cwd)
+        if capability == "test.native":
+            return native(request, cwd)
         if capability == "test.boom" and action == "exit":
             raise SystemExit(2)
         if capability == "test.boom" and action == "interrupt":

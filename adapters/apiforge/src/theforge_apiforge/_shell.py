@@ -17,20 +17,31 @@ required input is absent without calling the specialist; ``finalize`` builds the
 ``ExecutionResult`` (schema, producer, UTC ``created_at``) and, above ``INLINE_LIMIT``, keeps
 the findings that fit and spills the complete native output to the artifact
 ``native/full-output.json`` in the execute cwd (the result becomes ``partial``).
+
+Native processes: ``run_native`` runs the specialist without a shell, in the given cwd, with
+the environment received from the core plus the adapter's explicit adjustments (credential-
+shaped names are always dropped), capped stdout/stderr and a timeout (``native_timeout``: 85%
+of the profile's execute timeout). The whole process tree is killed when the run ends (Job
+Object on Windows, process group on POSIX); an overrun raises ``NativeTimeout``, answered as
+the structured error ``ADAPTER-NATIVE-TIMEOUT``.
 """
 
 from __future__ import annotations
 
+import contextlib
 import fnmatch
 import hashlib
 import json
+import os
 import re
+import subprocess
 import sys
-from collections.abc import Callable, Mapping, Sequence
+import threading
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from typing import Any, BinaryIO
+from typing import IO, Any, BinaryIO
 
 PROTOCOL = "forge/v1"
 UNKNOWN_REQUEST_ID = "unknown"
@@ -44,6 +55,25 @@ CAPABILITY_UNSUPPORTED = "ADAPTER-CAPABILITY-UNSUPPORTED"
 ACTION_UNSUPPORTED = "ADAPTER-ACTION-UNSUPPORTED"
 INTERNAL = "ADAPTER-INTERNAL"
 OUTPUT_TOO_LARGE = "ADAPTER-OUTPUT-TOO-LARGE"
+NATIVE_TIMEOUT = "ADAPTER-NATIVE-TIMEOUT"
+
+# The core's execute timeout per budget profile (task.budget_profile); a native call gets
+# NATIVE_TIMEOUT_SHARE of it so the adapter still answers before the core gives up.
+EXECUTE_TIMEOUTS = {"economy": 60.0, "balanced": 180.0, "max": 600.0}
+NATIVE_TIMEOUT_SHARE = 0.85
+# Bytes kept from a native process's stdout/stderr (the rest is read and discarded).
+NATIVE_STDOUT_CAP = 64 * 1024 * 1024
+NATIVE_STDERR_CAP = 1024 * 1024
+_READ_CHUNK = 64 * 1024
+_REAP_SECONDS = 5.0
+# Credential-shaped names never reach a native process (same rules as the core's provider
+# environment, applied again here to what the core sent and to the adapter's adjustments).
+CREDENTIAL_PATTERNS = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
+    r"^AWS_", r"(^|_)TOKEN(_|$)", r"SECRET", r"PASS(WORD|WD)", r"API_?KEY", r"ACCESS_?KEY",
+    r"CREDENTIAL", r"^SSH_AUTH_SOCK$", r"^(AZURE|ARM|GH|CLOUDSDK|ACTIONS)_",
+    r"^(KUBECONFIG|DOCKER_CONFIG|NETRC)$", r"_PROXY$",
+))
+_URL_USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[^/?#\s@]+@")
 
 # Serialized ExecutionResult bytes returned inline: half the core transport's 8 MiB stdout cap.
 INLINE_LIMIT = 4 * 1024 * 1024
@@ -398,6 +428,324 @@ def finalize(result: ResultDraft, cwd: Path) -> Reply:
                  unknowns=list(result.unknowns))
 
 
+def native_timeout(payload: Mapping[str, Any]) -> float:
+    """Seconds a native call may run: ``NATIVE_TIMEOUT_SHARE`` of the execute timeout of
+    ``task.budget_profile``. A missing or unknown profile gets the shortest one, so a native
+    call never outlives the core's own timeout."""
+    task = payload.get("task")
+    profile = task.get("budget_profile") if isinstance(task, Mapping) else None
+    seconds = EXECUTE_TIMEOUTS.get(profile) if isinstance(profile, str) else None
+    if seconds is None:
+        seconds = min(EXECUTE_TIMEOUTS.values())
+    return seconds * NATIVE_TIMEOUT_SHARE
+
+
+def is_credential_name(name: str) -> bool:
+    """True for a credential-shaped environment variable name (case-insensitive)."""
+    return any(pattern.search(name) for pattern in CREDENTIAL_PATTERNS)
+
+
+def _env_allowed(name: str, value: str) -> bool:
+    return not is_credential_name(name) and _URL_USERINFO.search(value) is None
+
+
+def native_env(adjustments: Mapping[str, str], base: Mapping[str, str] | None = None
+               ) -> dict[str, str]:
+    """The environment of a native process: ``base`` (the environment received from the
+    core, ``os.environ`` by default) with the adapter's ``adjustments`` applied (names
+    compared case-insensitively). Credential-shaped names and values carrying URL userinfo
+    are dropped from both, so an adjustment can never add a credential."""
+    source = os.environ if base is None else base
+    adjusted = {name.upper() for name in adjustments}
+    env = {name: value for name, value in source.items()
+           if name.upper() not in adjusted and _env_allowed(name, value)}
+    env.update({name: value for name, value in adjustments.items()
+                if _env_allowed(name, value)})
+    return env
+
+
+@dataclass(frozen=True)
+class NativeOutcome:
+    """A finished native process: exit code and capped outputs."""
+
+    returncode: int
+    stdout: bytes
+    stderr: bytes
+    stdout_truncated: bool = False
+    stderr_truncated: bool = False
+
+
+class NativeTimeout(Exception):
+    """A native process outlived its timeout (it was stopped with all its children)."""
+
+    def __init__(self, timeout: float):
+        super().__init__(f"native process exceeded {timeout:g} s")
+        self.timeout = timeout
+
+    def reply(self) -> Reply:
+        """The structured ``ADAPTER-NATIVE-TIMEOUT`` error."""
+        return fail(NATIVE_TIMEOUT,
+                    f"native process exceeded {self.timeout:g} s and was stopped with its "
+                    "child processes",
+                    unlock="retry with a larger budget profile (economy < balanced < max)")
+
+
+class _CappedReader:
+    """Drains a pipe in a thread, keeping at most ``cap`` bytes (the rest is discarded)."""
+
+    def __init__(self, stream: IO[bytes], cap: int):
+        self.stream = stream
+        self.data = bytearray()
+        self.truncated = False
+        self._cap = max(cap, 0)
+        self._thread = threading.Thread(target=self._drain, daemon=True)
+        self._thread.start()
+
+    def _drain(self) -> None:
+        # The thread is the only user of the pipe, so it closes it itself on EOF: closing it
+        # from another thread while a read is blocked could deadlock on the buffer lock or
+        # hand a reused descriptor to the next read.
+        try:
+            with contextlib.suppress(OSError, ValueError):
+                while True:
+                    chunk = self.stream.read(_READ_CHUNK)
+                    if not chunk:
+                        return
+                    room = self._cap - len(self.data)
+                    if len(chunk) > room:
+                        self.truncated = True
+                    if room > 0:
+                        self.data += chunk[:room]
+        finally:
+            with contextlib.suppress(OSError):
+                self.stream.close()
+
+    def finish(self, timeout: float) -> None:
+        """Wait up to ``timeout`` for EOF. A reader still blocked (a process outside the
+        killed tree holds the pipe) closes the pipe itself when that process lets go."""
+        self._thread.join(timeout)
+
+
+def _reap(proc: subprocess.Popen[bytes]) -> None:
+    with contextlib.suppress(subprocess.TimeoutExpired):
+        proc.wait(timeout=_REAP_SECONDS)
+
+
+if sys.platform == "win32":
+    import ctypes
+    from ctypes import wintypes
+
+    _CREATE_SUSPENDED = 0x00000004
+    _JOB_EXTENDED_LIMIT_INFORMATION = 9
+    _JOB_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
+    _PROCESS_ACCESS = 0x0001 | 0x0100 | 0x0800  # terminate, set quota, suspend/resume
+
+    class _BasicLimit(ctypes.Structure):
+        _fields_ = [
+            ("PerProcessUserTimeLimit", ctypes.c_int64),
+            ("PerJobUserTimeLimit", ctypes.c_int64),
+            ("LimitFlags", wintypes.DWORD),
+            ("MinimumWorkingSetSize", ctypes.c_size_t),
+            ("MaximumWorkingSetSize", ctypes.c_size_t),
+            ("ActiveProcessLimit", wintypes.DWORD),
+            ("Affinity", ctypes.c_size_t),
+            ("PriorityClass", wintypes.DWORD),
+            ("SchedulingClass", wintypes.DWORD),
+        ]
+
+    class _IoCounters(ctypes.Structure):
+        _fields_ = [(name, ctypes.c_uint64) for name in (
+            "ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
+            "ReadTransferCount", "WriteTransferCount", "OtherTransferCount")]
+
+    class _ExtendedLimit(ctypes.Structure):
+        _fields_ = [
+            ("BasicLimitInformation", _BasicLimit),
+            ("IoInfo", _IoCounters),
+            ("ProcessMemoryLimit", ctypes.c_size_t),
+            ("JobMemoryLimit", ctypes.c_size_t),
+            ("PeakProcessMemoryUsed", ctypes.c_size_t),
+            ("PeakJobMemoryUsed", ctypes.c_size_t),
+        ]
+
+    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _ntdll = ctypes.WinDLL("ntdll")
+    _kernel32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+    _kernel32.CreateJobObjectW.restype = wintypes.HANDLE
+    _kernel32.SetInformationJobObject.argtypes = [
+        wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+    _kernel32.SetInformationJobObject.restype = wintypes.BOOL
+    _kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+    _kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
+    _kernel32.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
+    _kernel32.TerminateJobObject.restype = wintypes.BOOL
+    _kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    _kernel32.OpenProcess.restype = wintypes.HANDLE
+    _kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    _kernel32.CloseHandle.restype = wintypes.BOOL
+    _ntdll.NtResumeProcess.argtypes = [wintypes.HANDLE]
+    _ntdll.NtResumeProcess.restype = ctypes.c_long
+
+    def _create_job() -> int | None:
+        job: int | None = _kernel32.CreateJobObjectW(None, None)
+        if not job:
+            return None
+        info = _ExtendedLimit()
+        info.BasicLimitInformation.LimitFlags = _JOB_LIMIT_KILL_ON_JOB_CLOSE
+        if not _kernel32.SetInformationJobObject(job, _JOB_EXTENDED_LIMIT_INFORMATION,
+                                                 ctypes.byref(info), ctypes.sizeof(info)):
+            _kernel32.CloseHandle(job)
+            return None
+        return job
+
+    def _release(job: int | None) -> None:
+        if job:
+            _kernel32.CloseHandle(job)  # KILL_ON_JOB_CLOSE ends anything still in the job
+
+    def _spawn(argv: Sequence[str], cwd: Path, env: Mapping[str, str]
+               ) -> tuple[subprocess.Popen[bytes], int | None]:
+        """Start suspended, join a kill-on-close Job Object, then resume: children the
+        native process starts are in the job before it runs any code."""
+        job = _create_job()
+        try:
+            proc = subprocess.Popen(
+                list(argv), cwd=cwd, env=dict(env), shell=False, stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=_CREATE_SUSPENDED)
+        except BaseException:
+            _release(job)
+            raise
+        handle: int | None = _kernel32.OpenProcess(_PROCESS_ACCESS, False, proc.pid)
+        if not handle:
+            proc.kill()
+            _reap(proc)
+            _release(job)
+            raise OSError("cannot open the native process")
+        try:
+            if job and not _kernel32.AssignProcessToJobObject(job, handle):
+                _release(job)
+                job = None
+            if _ntdll.NtResumeProcess(handle) < 0:
+                proc.kill()
+                _reap(proc)
+                _release(job)
+                raise OSError("cannot resume the native process")
+        finally:
+            _kernel32.CloseHandle(handle)
+        return proc, job
+
+    def _kill_tree(proc: subprocess.Popen[bytes], job: int | None) -> None:
+        terminated = bool(job) and bool(_kernel32.TerminateJobObject(job, 1))
+        if not terminated and proc.poll() is None:
+            # Fallback without a job: recursive kill by PID while the root still exists.
+            with contextlib.suppress(OSError, subprocess.SubprocessError):
+                subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                               stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, timeout=_REAP_SECONDS, check=False)
+        if proc.poll() is None:
+            with contextlib.suppress(OSError):
+                proc.kill()
+        _reap(proc)
+
+    def _terminate_guard(active: list[subprocess.Popen[bytes]]
+                         ) -> contextlib.AbstractContextManager[None]:
+        # The native job is nested in the core's job: when the core ends the adapter's job,
+        # the native tree goes with it.
+        return contextlib.nullcontext()
+
+else:
+    import signal
+
+    def _release(job: int | None) -> None:
+        return None
+
+    def _spawn(argv: Sequence[str], cwd: Path, env: Mapping[str, str]
+               ) -> tuple[subprocess.Popen[bytes], int | None]:
+        """The native process leads a new session: its children share its process group."""
+        proc = subprocess.Popen(
+            list(argv), cwd=cwd, env=dict(env), shell=False, stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        return proc, None
+
+    def _kill_tree(proc: subprocess.Popen[bytes], job: int | None) -> None:
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.killpg(proc.pid, signal.SIGKILL)  # session leader: pgid == pid
+        if proc.poll() is None:
+            with contextlib.suppress(OSError):
+                proc.kill()
+        _reap(proc)
+
+    @contextlib.contextmanager
+    def _terminate_guard(active: list[subprocess.Popen[bytes]]) -> Iterator[None]:
+        """While a native process runs, SIGTERM to the adapter (the core signals the
+        adapter's process group, which the native session left) first kills the native
+        tree, then gets the previous disposition (default: the adapter dies of SIGTERM)."""
+        if threading.current_thread() is not threading.main_thread():
+            yield  # signal handlers can only be installed from the main thread
+            return
+        previous = signal.getsignal(signal.SIGTERM)
+        if previous == signal.SIG_IGN:
+            yield
+            return
+        restore = signal.SIG_DFL if previous is None else previous
+
+        def on_sigterm(signum: int, frame: Any) -> None:
+            for proc in active:
+                _kill_tree(proc, None)
+            signal.signal(signal.SIGTERM, restore)
+            if callable(restore):
+                restore(signum, frame)
+            else:
+                os.kill(os.getpid(), signal.SIGTERM)
+
+        signal.signal(signal.SIGTERM, on_sigterm)
+        try:
+            yield
+        finally:
+            signal.signal(signal.SIGTERM, restore)
+
+
+def run_native(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str], timeout: float,
+               stdout_cap: int = NATIVE_STDOUT_CAP, stderr_cap: int = NATIVE_STDERR_CAP
+               ) -> NativeOutcome:
+    """Run a native process without a shell in ``cwd``.
+
+    ``env`` holds the adapter's explicit adjustments to the environment received from the
+    core (``native_env``: credential-shaped names never pass). stdout/stderr are drained
+    concurrently and kept up to their caps. When the process ends, or after ``timeout``
+    seconds, its whole tree is killed, so no child outlives the call; an overrun raises
+    ``NativeTimeout``. ``argv`` must be a non-empty list or tuple of strings (a bare string
+    is a ``TypeError``, never split).
+    """
+    if not isinstance(argv, (list, tuple)) or not all(isinstance(a, str) for a in argv):
+        raise TypeError("argv must be a list or tuple of strings")
+    if not argv:
+        raise ValueError("argv must not be empty")
+    active: list[subprocess.Popen[bytes]] = []
+    with _terminate_guard(active):
+        proc, job = _spawn(argv, cwd, native_env(env))
+        active.append(proc)
+        if proc.stdout is None or proc.stderr is None:  # pragma: no cover - pipes requested
+            raise RuntimeError("native process pipes are missing")
+        out = _CappedReader(proc.stdout, stdout_cap)
+        err = _CappedReader(proc.stderr, stderr_cap)
+        timed_out = False
+        try:
+            try:
+                proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+        finally:
+            _kill_tree(proc, job)  # also ends children a finished process left behind
+            _release(job)
+            out.finish(_REAP_SECONDS)
+            err.finish(_REAP_SECONDS)
+    if timed_out:
+        raise NativeTimeout(timeout)
+    return NativeOutcome(returncode=proc.returncode, stdout=bytes(out.data),
+                         stderr=bytes(err.data), stdout_truncated=out.truncated,
+                         stderr_truncated=err.truncated)
+
+
 def parse_options(args: Sequence[str]) -> AdapterOptions:
     """Parse the adapter flags that precede the op (each at most once, each with a value)."""
     values: dict[str, str] = {}
@@ -546,7 +894,10 @@ def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
             request_id = exc.request_id if request_id == UNKNOWN_REQUEST_ID else request_id
             reply = fail(REQUEST_INVALID, exc.detail, field=exc.field_name)
         else:
-            reply = dispatch(op, options, request, handlers, cwd)
+            try:
+                reply = dispatch(op, options, request, handlers, cwd)
+            except NativeTimeout as exc:
+                reply = exc.reply()
         return _encode(envelope(op=op, request_id=request_id, provider_id=provider_id,
                                 version=version, reply=reply))
     # Every failure must become a response with exit 0, including a handler that calls
