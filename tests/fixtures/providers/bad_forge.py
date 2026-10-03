@@ -142,9 +142,10 @@ def main() -> int:
         if mode == "health-cwd-probe":
             return reply("ok", {"status": "ok",
                                 "checks": [{"name": "cwd", "ok": True, "detail": os.getcwd()}]})
-        if mode == "env-probe-full":
+        if mode == "env-probe-full":  # received variable names + the cwd it was started in
             return reply("ok", {"status": "ok",
-                                "checks": [{"name": line, "ok": True} for line in env_lines()]})
+                                "checks": [{"name": line, "ok": True} for line in env_lines()]
+                                + [{"name": "cwd", "ok": True, "detail": os.getcwd()}]})
         if mode == "unhealthy":
             return reply("ok", {"status": "unavailable",
                                 "checks": [{"name": "backend", "ok": False,
@@ -197,8 +198,9 @@ def main() -> int:
             return reply("ok", {"status": "weird"})
         if mode == "env-probe":
             return reply("ok", {"env": sorted(os.environ)})
-        if mode == "env-probe-full":  # valid result; received variable names as limitations
-            return reply("ok", dict(RESULT, producer=producer, limitations=env_lines()))
+        if mode == "env-probe-full":  # valid result; received variable names and cwd as limitations
+            return reply("ok", dict(RESULT, producer=producer,
+                                    limitations=[*env_lines(), f"cwd={os.getcwd()}"]))
         if mode == "unknown-status":  # Response.status outside ok|partial|refused|error
             return reply("done", dict(RESULT, producer=producer))
         if mode == "cwd-probe":
