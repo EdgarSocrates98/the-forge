@@ -28,6 +28,11 @@ class Capability:
     operation_class: OperationClass
     description: str = ""
     signals: Signals = field(default_factory=Signals)
+    # Alternative names that resolve to this capability (format rules live in the taxonomy).
+    aliases: list[str] = field(default_factory=list)
+    deprecated: bool = False
+    # Suggested replacement capability id; may belong to another provider.
+    replaced_by: str | None = None
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):
@@ -38,6 +43,8 @@ class Capability:
             raise ContractError(
                 f"capability {self.id}: default_action {self.default_action!r} not in actions"
             )
+        if self.replaced_by == self.id:
+            raise ContractError(f"capability {self.id}: replaced_by equal to its own id")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -74,6 +81,21 @@ class ForgeManifest:
         dups = sorted({i for i in ids if ids.count(i) > 1})
         if dups:
             raise ContractError(f"manifest {self.id}: duplicate capability ids {dups}")
+        aliases = [a for c in self.capabilities for a in c.aliases]
+        dup_aliases = sorted({a for a in aliases if aliases.count(a) > 1})
+        if dup_aliases:
+            raise ContractError(f"manifest {self.id}: duplicate capability aliases {dup_aliases}")
+        clashes = sorted(set(aliases) & set(ids))
+        if clashes:
+            raise ContractError(f"manifest {self.id}: alias equal to capability id {clashes}")
 
     def capability(self, capability_id: str) -> Capability | None:
         return next((c for c in self.capabilities if c.id == capability_id), None)
+
+    def resolve(self, name: str) -> tuple[Capability, bool] | None:
+        """(capability, via_alias): the canonical id wins over an alias; None if unknown."""
+        canonical = self.capability(name)
+        if canonical is not None:
+            return canonical, False
+        aliased = next((c for c in self.capabilities if name in c.aliases), None)
+        return (aliased, True) if aliased is not None else None

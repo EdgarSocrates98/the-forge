@@ -10,8 +10,17 @@
             },
             "type": "array"
           },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "default_action": {
             "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
           },
           "description": {
             "type": "string"
@@ -27,6 +36,16 @@
               "external_read",
               "external_mutation",
               "destructive"
+            ]
+          },
+          "replaced_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "signals": {

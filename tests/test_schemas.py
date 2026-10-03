@@ -155,3 +155,21 @@ def test_new_optional_fields_published_in_schemas() -> None:
     assert candidate["properties"]["state"]["enum"] == [
         "supported", "heuristic", "unresolved", "unsupported"]
     assert "state" not in candidate["required"]
+
+
+def test_capability_alias_and_deprecation_fields_published_as_optional() -> None:
+    published = json.loads((SCHEMAS_DIR / "ForgeManifest.schema.json").read_text("utf-8"))
+    capability = published["properties"]["capabilities"]["items"]
+    assert capability["properties"]["aliases"] == {"type": "array", "items": {"type": "string"}}
+    assert capability["properties"]["deprecated"] == {"type": "boolean"}
+    assert capability["properties"]["replaced_by"] == {
+        "anyOf": [{"type": "string"}, {"type": "null"}]}
+    assert not {"aliases", "deprecated", "replaced_by"} & set(capability["required"])
+    validator = Draft202012Validator(published)
+    data = to_dict(MANIFEST)
+    validator.validate(data)
+    data["capabilities"][0].update(
+        aliases=["demo.say"], deprecated=True, replaced_by="demo.shout")
+    validator.validate(data)
+    data["capabilities"][0]["deprecated"] = "yes"
+    assert len(list(validator.iter_errors(data))) == 1
