@@ -1,7 +1,9 @@
-"""The Forger: task -> route -> health -> context -> execute -> receipt.
+"""The Forger: task -> route -> revalidate -> health -> context -> execute -> receipt.
 
 Every artifact is persisted as soon as it exists, so a run that fails midway is
-still explainable. No path reports success without a valid ExecutionResult.
+still explainable. The routing artifact is the exception: it is written once, with the
+final decision (after registry revalidation and fallback). No path reports success
+without a valid ExecutionResult.
 """
 
 import time
@@ -34,8 +36,9 @@ from theforge.contracts.types import BudgetProfile, Outcome
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
-from theforge.registry import Registry, RegistryRecord, check_health
+from theforge.registry import Registry, RegistryRecord, RevalidationOutcome, check_health
 from theforge.routing import MIN_SIGNAL_TYPES, route
+from theforge.routing.router import EXECUTE_OP
 from theforge.routing.signals import workspace_dependencies
 from theforge.runs import RunStore, new_run_id
 
@@ -77,6 +80,22 @@ class _Trace:
 def _offers(record: RegistryRecord, capability_id: str, action: str) -> bool:
     capability = record.manifest.capability(capability_id) if record.manifest else None
     return capability is not None and action in capability.actions
+
+
+def _require_op(record: RegistryRecord, op: str) -> ErrorInfo | None:
+    """Defensive assertion: the router already excludes providers without ``op`` (2.1)."""
+    if record.manifest is not None and op in record.manifest.ops:
+        return None
+    declared = ", ".join(record.manifest.ops) if record.manifest else "none"
+    return ErrorInfo(code=Codes.PROTO_OP_UNSUPPORTED,
+                     detail=f"{record.entry.id} does not declare op {op!r} (ops: {declared})")
+
+
+@dataclass(frozen=True)
+class _Routed:
+    decision: RoutingDecision
+    records: dict[str, RegistryRecord]
+    error: ErrorInfo | None = None
 
 
 class Forger:
@@ -124,12 +143,12 @@ class Forger:
 
     def _run(self, trace: _Trace, task: TaskSpec, request: AskRequest) -> AskOutcome:
         run_id = trace.run_id
-        records = {r.entry.id: r for r in self.registry.records()}
         scan = scan_workspace(self.root, task.targets)
-        decision = route(task, list(records.values()), scan.files,
-                         workspace_dependencies(self.root),
-                         allow_unverified=request.allow_unverified)
-        trace.decision = decision
+        routed = self._final_route(trace, task, request, scan.files)
+        decision, records = routed.decision, routed.records
+        if routed.error is not None:
+            trace.routing_sha = self.store.write(run_id, "routing", decision)
+            return self._finish(trace, decision, "provider_failure", error=routed.error)
         if decision.status != "routed":
             trace.routing_sha = self.store.write(run_id, "routing", decision)
             return self._finish(trace, decision, decision.status)
@@ -140,6 +159,9 @@ class Forger:
         if record is None or record.manifest is None:
             return self._finish(trace, decision, "provider_failure", error=health_error)
         trace.record = record
+        op_error = _require_op(record, EXECUTE_OP)
+        if op_error is not None:
+            return self._finish(trace, decision, "refused", error=op_error)
 
         selection = decision.selected[0]
         capability = record.manifest.capability(selection.capability)
@@ -182,6 +204,60 @@ class Forger:
         trace.result_sha = self.store.write(run_id, "result", result)
         return self._finish(trace, decision, result_status, result=result)
 
+    def _final_route(
+        self, trace: _Trace, task: TaskSpec, request: AskRequest, files: list[str]
+    ) -> _Routed:
+        """Route, revalidate every scored candidate and route again at most once (4.3).
+
+        ``changed`` providers are invalidated and rediscovered; ``unreachable`` ones are
+        excluded from the redone decision. A ``changed`` on the redone decision is a second
+        divergence and fails the run. ``no_route`` is final and never revalidated.
+        """
+        dependencies = workspace_dependencies(self.root)
+
+        def do_route(records: dict[str, RegistryRecord]) -> RoutingDecision:
+            decision = route(task, list(records.values()), files, dependencies,
+                             allow_unverified=request.allow_unverified)
+            trace.decision = decision
+            return decision
+
+        records = {r.entry.id: r for r in self.registry.records()}
+        decision = do_route(records)
+        if decision.status == "no_route":
+            return _Routed(decision, records)
+        outcomes = self._revalidate(decision)
+        changed = sorted(o.record.entry.id for o in outcomes if o.status == "changed")
+        unreachable = sorted(o.record.entry.id for o in outcomes if o.status == "unreachable")
+        if not changed and not unreachable:
+            return _Routed(decision, records)
+
+        for provider_id in changed:
+            self.registry.invalidate(provider_id)
+        records = {r.entry.id: r for r in self.registry.records()}
+        for outcome in outcomes:
+            if outcome.status == "unreachable":
+                records[outcome.record.entry.id] = outcome.record
+        decision = do_route(records)
+        notes = [f"registry-revalidated: {', '.join(changed)}"] if changed else []
+        if unreachable:
+            notes.append(f"registry-unreachable: {', '.join(unreachable)}")
+        decision = replace(decision, limitations=[*decision.limitations, *notes])
+        trace.decision = decision
+        if decision.status == "no_route":
+            return _Routed(decision, records)
+        again = sorted(o.record.entry.id for o in self._revalidate(decision)
+                       if o.status == "changed")
+        if again:
+            return _Routed(decision, records, ErrorInfo(
+                code=Codes.REGISTRY_MANIFEST_CHANGED,
+                detail=f"manifest of {', '.join(again)} changed again after the registry "
+                       "was rediscovered; refusing to route on an unstable registry"))
+        return _Routed(decision, records)
+
+    def _revalidate(self, decision: RoutingDecision) -> list[RevalidationOutcome]:
+        provider_ids = sorted({c.provider for c in decision.candidates})
+        return self.registry.revalidate(provider_ids) if provider_ids else []
+
     def _timeout(self, task: TaskSpec) -> float:
         if self.execute_timeout is not None:
             return self.execute_timeout
@@ -193,25 +269,17 @@ class Forger:
         primary = decision.selected[0]
         tried: list[str] = []
         last_error: ErrorInfo | None = None
-        for candidate in self._fallback_order(decision):
+        for candidate in self._fallback_order(task, decision, records):
             record = records[candidate.provider]
-            if tried and task.requested_action and not _offers(
-                    record, candidate.capability, task.requested_action):
-                continue
             health = check_health(record, transport_factory=self.transport_factory,
                                   allow_unverified=self.registry.allow_unverified)
             if health.error is None:
                 if not tried:
                     return decision, record, None
-                capability = (record.manifest.capability(candidate.capability)
-                              if record.manifest else None)
-                action = primary.action
-                if capability is not None and action not in capability.actions:
-                    action = capability.default_action
                 switched = replace(
                     decision,
                     selected=[Selection(provider=candidate.provider,
-                                        capability=candidate.capability, action=action)],
+                                        capability=candidate.capability, action=primary.action)],
                     fallbacks_used=tried,
                     reason=f"{decision.reason}; fallback to {candidate.provider} after "
                            f"unhealthy {', '.join(tried)}",
@@ -219,16 +287,35 @@ class Forger:
                 return switched, record, None
             tried.append(f"{candidate.provider}:{health.error.code}")
             last_error = health.error
-        return replace(decision, fallbacks_used=tried), None, last_error
+        failed = replace(
+            decision, fallbacks_used=tried,
+            reason=f"{decision.reason}; no healthy provider offers "
+                   f"{primary.capability}/{primary.action} (tried {', '.join(tried) or 'none'})")
+        return failed, None, last_error
 
-    @staticmethod
-    def _fallback_order(decision: RoutingDecision) -> list[Candidate]:
+    def _fallback_order(
+        self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord]
+    ) -> list[Candidate]:
+        """Primary first, then compatible fallbacks only (3.9).
+
+        A fallback declares the same capability, offers the resolved action, is routable
+        and, on the signal path, has strong evidence (``types >= MIN_SIGNAL_TYPES``). On the
+        explicit path ``rank_key`` is ``[trust_rank]``, so signal strength does not apply.
+        """
         primary = decision.selected[0]
-        key = (primary.provider, primary.capability)
-        first = [c for c in decision.candidates if (c.provider, c.capability) == key]
-        rest = [c for c in decision.candidates
-                if (c.provider, c.capability) != key
-                and (len(c.rank_key) == 1 or c.rank_key[0] >= MIN_SIGNAL_TYPES)]
+        explicit = bool(task.requested_capability)  # same truthiness as router.route
+        first = [c for c in decision.candidates
+                 if (c.provider, c.capability) == (primary.provider, primary.capability)]
+        rest: list[Candidate] = []
+        for c in decision.candidates:
+            record = records.get(c.provider)
+            if (c.provider == primary.provider or c.capability != primary.capability
+                    or record is None
+                    or not record.routable(self.registry.allow_unverified)
+                    or not _offers(record, c.capability, primary.action)):
+                continue
+            if explicit or (c.rank_key and c.rank_key[0] >= MIN_SIGNAL_TYPES):
+                rest.append(c)
         return first + rest
 
     def _finish(

@@ -1,5 +1,6 @@
 import json
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -7,20 +8,30 @@ import pytest
 
 from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_a, case_b, make_workspace, write_file
 from theforge.contracts import (
+    Candidate,
     Capability,
+    Confidence,
     ErrorInfo,
     ForgeManifest,
     Response,
     RoutingDecision,
+    Selection,
     Signals,
     TaskSpec,
 )
 from theforge.contracts.canonical import sha256_of, utc_now
+from theforge.contracts.codes import Codes
 from theforge.errors import UsageError
 from theforge.forger import AskRequest, Forger
 from theforge.meta import PRODUCER
 from theforge.protocol import ProviderTransport, SubprocessTransport
-from theforge.registry import HealthOutcome, ProviderEntry, Registry, RegistryRecord
+from theforge.registry import (
+    HealthOutcome,
+    ProviderEntry,
+    Registry,
+    RegistryRecord,
+    RevalidationOutcome,
+)
 from theforge.routing import route
 from theforge.runs import ARTIFACTS, RunStore
 
@@ -215,8 +226,9 @@ def test_wrong_producer_is_rejected(tmp_path: Path) -> None:
     assert store.read(out.run_id, "receipt")["status"] == "provider_failure"
 
 
-def _rec(pid: str, actions: tuple[str, ...], trust: str) -> RegistryRecord:
-    cap = Capability(id="bad.thing", actions=list(actions), default_action=actions[0],
+def _rec(pid: str, actions: tuple[str, ...], trust: str,
+         cap_id: str = "bad.thing") -> RegistryRecord:
+    cap = Capability(id=cap_id, actions=list(actions), default_action=actions[0],
                      state="supported", operation_class="read_only",
                      signals=Signals(keywords=["bad"]))
     manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"],
@@ -261,3 +273,235 @@ def test_fallback_substitutes_default_action_when_none_requested(
     switched, record, _ = forge_._select_healthy(task, decision, records)
     assert record is not None and record.entry.id == "b"
     assert switched.selected[0].action == "run"
+
+
+# --- revalidation, final routing and same-capability fallback (task 3.6) ---------------------
+
+class _ScriptedRegistry(Registry):
+    """Registry whose revalidation answers from a script instead of describing again."""
+
+    def __init__(self, forge_dir: Path, statuses: dict[str, str]) -> None:
+        super().__init__(forge_dir)
+        self.statuses = statuses
+        self.revalidated: list[list[str]] = []
+        self.invalidated: list[str] = []
+
+    def revalidate(self, provider_ids: Sequence[str]) -> list[RevalidationOutcome]:
+        self.revalidated.append(list(provider_ids))
+        outcomes: list[RevalidationOutcome] = []
+        for pid in provider_ids:
+            status = self.statuses.get(pid, "fresh")
+            record = self._in_use[pid]
+            if status == "unreachable":
+                record = replace(record, state="unreachable", manifest=None,
+                                 manifest_sha256=None, protocol=None, error="gone")
+            outcomes.append(RevalidationOutcome(status=status, record=record))  # type: ignore[arg-type]
+        return outcomes
+
+    def invalidate(self, provider_id: str) -> None:
+        self.invalidated.append(provider_id)
+        super().invalidate(provider_id)
+
+
+class _CountingStore(RunStore):
+    def __init__(self, forge_dir: Path) -> None:
+        super().__init__(forge_dir)
+        self.writes: list[str] = []
+
+    def write(self, run_id: str, name: str, contract: Any) -> str:
+        self.writes.append(name)
+        return super().write(run_id, name, contract)
+
+
+CASE_A_INTENT = "analise esse Glue Job porque está lento"
+
+
+def test_revalidates_every_candidate_before_final_decision(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    case_a(tmp_path)
+    forge = tmp_path / ".forge"
+    registry = _ScriptedRegistry(forge, {})
+    store = _CountingStore(forge)
+    out = Forger(tmp_path, registry, store).ask(AskRequest(intent=CASE_A_INTENT))
+    assert out.status == "ok"
+    assert registry.revalidated == [sorted({c.provider for c in out.decision.candidates})]
+    assert registry.invalidated == []
+    assert not any(lim.startswith("registry-") for lim in out.decision.limitations)
+    assert store.writes.count("routing") == 1
+
+
+def test_ambiguous_decision_is_revalidated(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    registry = _ScriptedRegistry(tmp_path / ".forge", {})
+    out = Forger(tmp_path, registry, RunStore(tmp_path / ".forge")).ask(
+        AskRequest(intent="performance da api"))
+    assert out.status == "ambiguous"
+    assert registry.revalidated == [["fixture-api", "fixture-spark"]]
+
+
+def test_second_divergence_is_manifest_changed(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    case_a(tmp_path)
+    forge = tmp_path / ".forge"
+    registry = _ScriptedRegistry(forge, {"fixture-spark": "changed"})
+    store = _CountingStore(forge)
+    out = Forger(tmp_path, registry, store).ask(AskRequest(intent=CASE_A_INTENT))
+    assert out.status == "provider_failure" and out.result is None
+    assert out.error is not None and out.error.code == Codes.REGISTRY_MANIFEST_CHANGED
+    assert "fixture-spark" in out.error.detail
+    assert len(registry.revalidated) == 2  # route redone exactly once
+    assert registry.invalidated == ["fixture-spark"]
+    assert "registry-revalidated: fixture-spark" in out.decision.limitations
+    assert store.writes.count("routing") == 1
+    assert store.read_optional(out.run_id, "context") is None
+    assert out.receipt.inputs.routing_sha256 == sha256_of(store.read(out.run_id, "routing"))
+    assert store.read(out.run_id, "receipt")["status"] == "provider_failure"
+
+
+def test_unreachable_candidate_is_removed_from_redone_decision(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    write_file(tmp_path, "api/openapi.yaml", "openapi: 3.0.0\n")
+    write_file(tmp_path, "jobs/orders_glue_job.py", "x = 1\n")
+    forge = tmp_path / ".forge"
+    # spark: *_job.py glob + glue/job keywords; api: openapi.yaml glob + api keyword.
+    # 2 vs 2 types is a tie until fixture-api turns out unreachable.
+    intent = "glue job da api"
+    first = Forger(tmp_path, _ScriptedRegistry(forge, {}), RunStore(forge)).ask(
+        AskRequest(intent=intent))
+    assert first.status == "ambiguous"
+    registry = _ScriptedRegistry(forge, {"fixture-api": "unreachable"})
+    out = Forger(tmp_path, registry, RunStore(forge)).ask(AskRequest(intent=intent))
+    assert "fixture-api" not in {c.provider for c in out.decision.candidates}
+    assert "registry-unreachable: fixture-api" in out.decision.limitations
+    assert out.status == "ok" and out.decision.selected[0].provider == "fixture-spark"
+    assert registry.invalidated == []
+
+
+def test_no_route_skips_revalidation(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [])
+    registry = _ScriptedRegistry(tmp_path / ".forge", {})
+    out = Forger(tmp_path, registry, RunStore(tmp_path / ".forge")).ask(
+        AskRequest(intent="bom dia"))
+    assert out.status == "no_route"
+    assert registry.revalidated == []
+
+
+def test_fallback_routing_written_once_with_fallbacks(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
+                              bad_entry("ok", "bad-b", trust="local")])
+    forge = tmp_path / ".forge"
+    store = _CountingStore(forge)
+    out = Forger(tmp_path, Registry(forge), store).ask(
+        AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "ok"
+    assert store.writes.count("routing") == 1
+    assert store.read(out.run_id, "routing")["fallbacks_used"] == [
+        "bad-a:FORGE-HEALTH-UNAVAILABLE"]
+
+
+def _cand(pid: str, cap: str, types: int) -> Candidate:
+    return Candidate(provider=pid, capability=cap, rank_key=[types])
+
+
+def _signal_decision(candidates: list[Candidate], action: str = "run") -> RoutingDecision:
+    return RoutingDecision(
+        producer=PRODUCER, created_at=utc_now(), status="routed", task_id="t1",
+        candidates=candidates, reason="r", confidence=Confidence(level="high"),
+        selected=[Selection(provider=candidates[0].provider,
+                            capability=candidates[0].capability, action=action)])
+
+
+def _signal_forger(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, down: set[str]
+) -> tuple[Forger, TaskSpec]:
+    def fake_health(record: RegistryRecord, **_: object) -> HealthOutcome:
+        if record.entry.id in down:
+            return HealthOutcome(status="unavailable", error=ErrorInfo(code="X-DOWN", detail="d"))
+        return HealthOutcome(status="ok")
+
+    monkeypatch.setattr("theforge.forger.orchestrator.check_health", fake_health)
+    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="x",
+                    workspace_root=str(tmp_path))
+    forge = tmp_path / ".forge"
+    return Forger(tmp_path, Registry(forge), RunStore(forge)), task
+
+
+def test_fallback_never_crosses_capability_or_takes_weak_candidates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    records = {"a": _rec("a", ("run",), "trusted"),
+               "b": _rec("b", ("run",), "local", cap_id="other.cap"),
+               "c": _rec("c", ("run",), "local")}
+    decision = _signal_decision([_cand("a", "bad.thing", 3), _cand("b", "other.cap", 2),
+                                 _cand("c", "bad.thing", 1)])
+    forge_, task = _signal_forger(tmp_path, monkeypatch, {"a"})
+    final, record, error = forge_._select_healthy(task, decision, records)
+    assert record is None
+    assert error is not None and error.code == "X-DOWN"
+    assert final.fallbacks_used == ["a:X-DOWN"]
+    assert final.selected[0].provider == "a"
+
+
+def test_fallback_takes_strong_same_capability_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    records = {"a": _rec("a", ("run",), "trusted"),
+               "b": _rec("b", ("run",), "local", cap_id="other.cap"),
+               "d": _rec("d", ("run",), "local")}
+    decision = _signal_decision([_cand("a", "bad.thing", 3), _cand("b", "other.cap", 2),
+                                 _cand("d", "bad.thing", 2)])
+    forge_, task = _signal_forger(tmp_path, monkeypatch, {"a"})
+    final, record, _ = forge_._select_healthy(task, decision, records)
+    assert record is not None and record.entry.id == "d"
+    assert final.selected[0] == Selection(provider="d", capability="bad.thing", action="run")
+    assert final.fallbacks_used == ["a:X-DOWN"]
+
+
+def test_fallback_requires_the_resolved_action(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    records = {"a": _rec("a", ("other", "run"), "trusted"), "b": _rec("b", ("run",), "local")}
+    decision = _signal_decision([_cand("a", "bad.thing", 3), _cand("b", "bad.thing", 2)],
+                                action="other")
+    forge_, task = _signal_forger(tmp_path, monkeypatch, {"a"})
+    final, record, _ = forge_._select_healthy(task, decision, records)
+    assert record is None
+    assert final.fallbacks_used == ["a:X-DOWN"]
+
+
+def test_selected_provider_without_execute_op_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    make_workspace(tmp_path, [])
+    base = _rec("n", ("run",), "trusted")
+    assert base.manifest is not None
+    no_exec = replace(base, manifest=replace(base.manifest, ops=["describe", "health"]))
+
+    class _Fixed(Registry):
+        def records(self, *, persist: bool = True) -> list[RegistryRecord]:
+            self._in_use = {"n": no_exec}
+            return [no_exec]
+
+        def revalidate(self, provider_ids: Sequence[str]) -> list[RevalidationOutcome]:
+            return [RevalidationOutcome(status="fresh", record=no_exec) for _ in provider_ids]
+
+    def fake_route(task: TaskSpec, *_: object, **__: object) -> RoutingDecision:
+        return RoutingDecision(
+            producer=PRODUCER, created_at=utc_now(), status="routed", task_id=task.id,
+            candidates=[_cand("n", "bad.thing", 1)], reason="forced",
+            confidence=Confidence(level="high"),
+            selected=[Selection(provider="n", capability="bad.thing", action="run")])
+
+    def boom_factory(argv: Sequence[str]) -> ProviderTransport:
+        raise AssertionError("no process may start")
+
+    monkeypatch.setattr("theforge.forger.orchestrator.route", fake_route)
+    monkeypatch.setattr("theforge.forger.orchestrator.check_health",
+                        lambda record, **_: HealthOutcome(status="ok"))
+    forge = tmp_path / ".forge"
+    out = Forger(tmp_path, _Fixed(forge), RunStore(forge),
+                 transport_factory=boom_factory).ask(
+        AskRequest(intent="x", capability="bad.thing"))
+    assert out.status == "refused" and out.result is None
+    assert out.error is not None and out.error.code == Codes.PROTO_OP_UNSUPPORTED
+    assert RunStore(forge).read_optional(out.run_id, "context") is None

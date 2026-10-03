@@ -9,9 +9,12 @@ from typing import Any
 
 import pytest
 
-from helpers import PROVIDERS, SPARK_ENTRY, write_providers
+from helpers import API_ENTRY, PROVIDERS, SPARK_ENTRY, case_a, make_workspace, write_providers
+from theforge.contracts.canonical import sha256_of
+from theforge.forger import AskRequest, Forger
 from theforge.protocol import SubprocessTransport
 from theforge.registry import Registry, user_cache_dir
+from theforge.runs import RunStore
 from theforge.state import init_workspace
 
 
@@ -222,3 +225,55 @@ def test_cache_without_schema_or_v1_is_discarded(tmp_path: Path) -> None:
         registry = Registry(forge, transport_factory=_Counting())
         assert registry.get("fixture-spark").state == "ready"
         assert any("fixture-spark" in w for w in registry.warnings)
+
+
+# --- revalidation before the final routing decision (4.3, task 3.6) -------------------------
+
+class _CountingStore(RunStore):
+    def __init__(self, forge_dir: Path) -> None:
+        super().__init__(forge_dir)
+        self.writes: list[str] = []
+
+    def write(self, run_id: str, name: str, contract: Any) -> str:
+        self.writes.append(name)
+        return super().write(run_id, name, contract)
+
+
+def _tamper_api_with_spark_signals() -> Path:
+    """Copy fixture-spark's signals into fixture-api's cached manifest, hash kept consistent."""
+    spark = json.loads(_cache_files("fixture-spark")[0].read_text(encoding="utf-8"))
+    path = _cache_files("fixture-api")[0]
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["manifest"]["capabilities"][0]["signals"] = spark["manifest"]["capabilities"][0]["signals"]
+    doc["manifest_sha256"] = sha256_of(doc["manifest"])
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    return path
+
+
+def test_tampered_cache_of_non_selected_provider_is_detected_before_decision(
+    tmp_path: Path,
+) -> None:
+    forge = make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
+    case_a(tmp_path)
+    Registry(forge).refresh()
+    path = _tamper_api_with_spark_signals()
+    # the tampered cache is accepted as-is by records(): it would force a tie
+    tampered = {r.entry.id: r for r in Registry(forge, transport_factory=_boom).records()}
+    assert tampered["fixture-api"].manifest is not None
+    assert tampered["fixture-api"].manifest.capabilities[0].signals.dependencies == [
+        "pyspark", "awsglue"]
+
+    store = _CountingStore(forge)
+    out = Forger(tmp_path, Registry(forge), store).ask(
+        AskRequest(intent="analise esse Glue Job porque está lento"))
+    assert out.status == "ok"
+    assert out.decision.selected[0].provider == "fixture-spark"
+    assert "registry-revalidated: fixture-api" in out.decision.limitations
+    assert "fixture-api" not in {c.provider for c in out.decision.candidates}
+    assert store.writes.count("routing") == 1
+    routing = store.read(out.run_id, "routing")
+    assert routing["limitations"] == out.decision.limitations
+    assert out.receipt.inputs.routing_sha256 == sha256_of(routing)
+    # the cache was rediscovered from the real provider
+    fresh = json.loads(path.read_text(encoding="utf-8"))
+    assert fresh["manifest"]["capabilities"][0]["signals"]["dependencies"] == ["fastapi", "flask"]
