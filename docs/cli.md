@@ -10,8 +10,8 @@
 | `registry list` | providers (usa o cache do usuário) | 0 |
 | `registry refresh` | re-`describe` de todos os providers; remove o cache legado `.forge/registry` com aviso | 0 |
 | `registry show <id>` | manifest, argv e hash | 0 / 2 se desconhecido |
-| `capabilities list [--provider id]` | capabilities declaradas | 0 |
-| `capabilities search <q>` | busca em id, descrição e keywords | 0 |
+| `capabilities list [--provider id]` | capabilities declaradas, com aliases, depreciação (`replaced_by`) e `declared_by`; aviso em stderr para cada depreciada | 0 |
+| `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
 | `ask "<texto>" [--capability id] [--action a] [--profile economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa | 0 / 2 / 3 / 4 / 5 |
 | `explain <run_id>` | reconstrói a decisão, o risco e o resultado de um run | 0 / 2 |

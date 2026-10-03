@@ -72,6 +72,13 @@ def capabilities(data: dict[str, Any]) -> str:
     for c in rows:
         line = f"{_clean(c['id']):<28} {_clean(c['provider']):<20} " \
                f"actions={_clean(','.join(c['actions']))} state={_clean(c['state'])}"
+        if c.get("aliases"):
+            line += f" aliases={_clean(','.join(c['aliases']))}"
+        if c.get("deprecated"):
+            line += (f" deprecated (replaced_by {_clean(c['replaced_by'])})"
+                     if c.get("replaced_by") else " deprecated (no replacement)")
+        if len(c.get("declared_by", [])) > 1:
+            line += f" declared_by={_clean(','.join(c['declared_by']))}"
         if c["description"]:
             line += f"  - {_clean(c['description'])}"
         lines.append(line)

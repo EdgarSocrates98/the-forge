@@ -53,6 +53,10 @@ def _summary(record: RegistryRecord) -> dict[str, Any]:
 
 def _capability_rows(records: list[RegistryRecord],
                      provider: str | None = None) -> list[dict[str, Any]]:
+    declared_by: dict[str, set[str]] = {}
+    for record in records:
+        for cap in record.manifest.capabilities if record.manifest else []:
+            declared_by.setdefault(cap.id, set()).add(record.entry.id)
     rows: list[dict[str, Any]] = []
     for record in records:
         if record.manifest is None or (provider and record.entry.id != provider):
@@ -63,8 +67,20 @@ def _capability_rows(records: list[RegistryRecord],
                 "actions": list(cap.actions), "default_action": cap.default_action,
                 "state": cap.state, "operation_class": cap.operation_class,
                 "description": cap.description, "keywords": list(cap.signals.keywords),
+                "aliases": list(cap.aliases), "deprecated": cap.deprecated,
+                "replaced_by": cap.replaced_by, "declared_by": sorted(declared_by[cap.id]),
             })
     return sorted(rows, key=lambda row: (row["id"], row["provider"]))
+
+
+def _warn_deprecated(rows: list[dict[str, Any]]) -> None:
+    for row in rows:
+        if not row["deprecated"]:
+            continue
+        replacement = (f"replaced_by '{row['replaced_by']}'" if row["replaced_by"]
+                       else "no replacement declared")
+        print(f"theforge: warning: capability '{row['id']}' ({row['provider']}) "
+              f"is deprecated; {replacement}", file=sys.stderr)
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -128,6 +144,7 @@ def cmd_capabilities_list(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     rows = _capability_rows(registry.records(), args.provider)
     _warn(registry)
+    _warn_deprecated(rows)
     _emit(args, {"capabilities": rows}, render.capabilities)
     return 0
 
@@ -140,9 +157,10 @@ def cmd_capabilities_search(args: argparse.Namespace) -> int:
     rows = [
         row for row in _capability_rows(registry.records())
         if query <= set(normalize_tokens(" ".join([row["id"], row["description"],
-                                                    *row["keywords"]])))
+                                                    *row["keywords"], *row["aliases"]])))
     ]
     _warn(registry)
+    _warn_deprecated(rows)
     _emit(args, {"query": args.query, "capabilities": rows}, render.capabilities)
     return 0
 

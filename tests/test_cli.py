@@ -3,7 +3,15 @@ from pathlib import Path
 
 import pytest
 
-from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, case_b, make_workspace
+from helpers import (
+    API_ENTRY,
+    PROVIDERS,
+    SPARK_ENTRY,
+    bad_entry,
+    case_b,
+    fixture_argv,
+    make_workspace,
+)
 from theforge.cli import render
 from theforge.cli.main import main
 
@@ -226,3 +234,84 @@ def test_ask_policy_deny_exits_4_even_with_approve(
     assert run_data["receipt"]["status"] == "refused" and run_data.get("result") is None
     code, out, _ = run(capsys, "explain", data["run_id"], "--root", root)
     assert code == 0 and "Policy:      deny" in out
+
+
+def _alias_entry(tmp_path: Path) -> dict[str, object]:
+    """A provider overlapping fixture-api on api.contract, with aliases and deprecations."""
+    manifest = json.loads((PROVIDERS / "fixture-api.json").read_text(encoding="utf-8"))
+    manifest["id"] = "alias-api"
+    base = manifest["capabilities"][0]
+    manifest["capabilities"] = [
+        base,
+        {**base, "id": "api.legacy", "aliases": ["api.blueprint"], "deprecated": True,
+         "replaced_by": "api.contract", "description": "Old contract review",
+         "signals": {"keywords": ["legacy"]}},
+        {**base, "id": "api.old", "deprecated": True, "description": "Older review",
+         "signals": {"keywords": ["older"]}},
+    ]
+    path = tmp_path / "alias-api.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    return {"id": "alias-api", "argv": fixture_argv("fixture_forge.py", str(path)),
+            "trust": "local"}
+
+
+def test_capabilities_list_shows_aliases_deprecation_and_overlap(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """5.4/5.5: JSON rows carry aliases, deprecated, replaced_by and declared_by."""
+    make_workspace(tmp_path, [API_ENTRY, _alias_entry(tmp_path)])
+    root = str(tmp_path)
+    code, out, err = run(capsys, "capabilities", "list", "--root", root, "--json")
+    assert code == 0
+    rows = {(c["id"], c["provider"]): c for c in json.loads(out)["capabilities"]}
+    legacy = rows[("api.legacy", "alias-api")]
+    assert legacy["aliases"] == ["api.blueprint"]
+    assert legacy["deprecated"] is True and legacy["replaced_by"] == "api.contract"
+    assert legacy["declared_by"] == ["alias-api"]
+    for provider in ("alias-api", "fixture-api"):
+        contract = rows[("api.contract", provider)]
+        assert contract["declared_by"] == ["alias-api", "fixture-api"]
+        assert contract["aliases"] == [] and contract["deprecated"] is False
+        assert contract["replaced_by"] is None
+    assert err.splitlines() == [
+        "theforge: warning: capability 'api.legacy' (alias-api) is deprecated; "
+        "replaced_by 'api.contract'",
+        "theforge: warning: capability 'api.old' (alias-api) is deprecated; "
+        "no replacement declared",
+    ]
+    # declared_by spans every provider even when the listing is filtered.
+    _, out, err = run(capsys, "capabilities", "list", "--provider", "fixture-api",
+                      "--root", root, "--json")
+    [only] = json.loads(out)["capabilities"]
+    assert only["declared_by"] == ["alias-api", "fixture-api"] and err == ""
+
+
+def test_capabilities_list_text_shows_aliases_deprecation_and_overlap(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_workspace(tmp_path, [API_ENTRY, _alias_entry(tmp_path)])
+    code, out, err = run(capsys, "capabilities", "list", "--root", str(tmp_path))
+    assert code == 0 and "is deprecated" in err
+    lines = {line.split()[0] + "@" + line.split()[1]: line for line in out.splitlines()}
+    assert "aliases=api.blueprint" in lines["api.legacy@alias-api"]
+    assert "deprecated (replaced_by api.contract)" in lines["api.legacy@alias-api"]
+    assert "deprecated (no replacement)" in lines["api.old@alias-api"]
+    assert "declared_by=alias-api,fixture-api" in lines["api.contract@fixture-api"]
+    assert "declared_by" not in lines["api.legacy@alias-api"]
+
+
+def test_capabilities_search_matches_alias(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_workspace(tmp_path, [API_ENTRY, _alias_entry(tmp_path)])
+    code, out, err = run(capsys, "capabilities", "search", "blueprint",
+                         "--root", str(tmp_path), "--json")
+    assert code == 0
+    [row] = json.loads(out)["capabilities"]
+    assert (row["id"], row["provider"], row["aliases"]) == ("api.legacy", "alias-api",
+                                                           ["api.blueprint"])
+    assert row["deprecated"] is True and row["declared_by"] == ["alias-api"]
+    assert err.splitlines() == [
+        "theforge: warning: capability 'api.legacy' (alias-api) is deprecated; "
+        "replaced_by 'api.contract'",
+    ]
