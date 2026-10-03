@@ -16,6 +16,7 @@ import os
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import tomllib
 from pathlib import Path
@@ -50,10 +51,12 @@ def _package_dir(name: str) -> Path:
 
 
 def _run(name: str, op: str, stdin: bytes) -> subprocess.CompletedProcess[bytes]:
-    return subprocess.run(
-        [sys.executable, "-m", ADAPTERS[name][1], op],
-        input=stdin, capture_output=True, timeout=60, cwd=REPO,
-    )
+    # Never the repo as cwd: an execute reduces its cwd to the declared artifacts (3.5).
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:
+        return subprocess.run(
+            [sys.executable, "-m", ADAPTERS[name][1], op],
+            input=stdin, capture_output=True, timeout=60, cwd=cwd,
+        )
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
@@ -155,7 +158,8 @@ def _request(op: str, payload: dict[str, Any] | None = None, *, rid: str | None 
 def _call(provider: str, op: str, stdin: bytes, options: tuple[str, ...] = ()
           ) -> tuple[Response, subprocess.CompletedProcess[bytes]]:
     argv = [*SHELL_PROVIDERS[provider][0], *options, op]
-    out = subprocess.run(argv, input=stdin, capture_output=True, timeout=60, cwd=REPO)
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:  # never the repo
+        out = subprocess.run(argv, input=stdin, capture_output=True, timeout=60, cwd=cwd)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
     assert response.protocol == PROTOCOL_V1
@@ -672,7 +676,7 @@ def test_staged_execute_applies_the_hash_rule_and_writes_only_inside_cwd(
                                   _skip("notes.md", LINE_RANGE_REASON)]
     after = _tree(tmp_path)
     assert {p: d for p, d in after.items() if not p.startswith("work/")} == before
-    assert {p for p in after if p.startswith("work/")} == {"work/stage/jobs/a.py"}
+    assert {p for p in after if p.startswith("work/")} == set()  # stage/ cleaned up (3.5)
 
 
 # --- inline limit and spill to artifact (3.3) ---------------------------------------------
@@ -1132,3 +1136,400 @@ def test_execute_native_env_from_the_core_never_reaches_credentials(tmp_path: Pa
     assert upper.isdisjoint({*CREDENTIAL_ENV, "FIXTURE_API_KEY"})
     assert "s3cr3t" not in json.dumps(native)
     assert Path(native["cwd"]).resolve() == cwd.resolve()
+
+
+# --- execute cwd reduced to the declared artifacts (3.5) ----------------------------------
+
+CLEANUP_ARTIFACT = "case/findings.json"
+CLEANUP_CASE = b'{"findings": []}\n'
+CLEANUP_PREFIX = "workdir cleanup incomplete: "
+REMOVED_PREFIX = "workdir cleanup removed artifact: "
+# action -> response status
+CLEANUP_OUTCOMES = {"ok": "ok", "partial": "partial", "spill": "partial", "refused": "refused",
+                    "error": "error", "raise": "error", "exit": "error", "timeout": "error"}
+
+
+def _entries(root: Path) -> set[str]:
+    """Every file, directory and link under ``root`` (links are never followed)."""
+    found: set[str] = set()
+    for base, dirs, files in os.walk(root, followlinks=False):
+        for name in [*dirs, *files]:
+            found.add((Path(base) / name).relative_to(root).as_posix())
+    return found
+
+
+def _parents(paths: set[str]) -> set[str]:
+    return {parent.as_posix() for path in paths for parent in Path(path).parents
+            if parent != Path(".")}
+
+
+def _cleanup_payload(ws: Path, action: str) -> dict[str, Any]:
+    return {"task": {"intent": "x", "budget_profile": "economy"}, "capability": "test.cleanup",
+            "action": action, "context": _pack(ws, [_item("jobs/a.py", JOB)]),
+            "native_timeout": 1.5}
+
+
+@pytest.mark.parametrize("action", sorted(CLEANUP_OUTCOMES))
+def test_execute_reduces_the_cwd_to_the_declared_artifacts(tmp_path: Path, action: str) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
+    cwd = _work(tmp_path)
+    before = _tree(tmp_path)
+    response = _call_in(cwd, _request("execute", _cleanup_payload(ws, action)))
+    assert response.status == CLEANUP_OUTCOMES[action], response.error
+    after = _tree(tmp_path)
+    assert {p: d for p, d in after.items() if not p.startswith("work/")} == before
+    assert not any(note.startswith(CLEANUP_PREFIX) for note in response.limitations)
+    if response.status in ("refused", "error"):
+        assert _entries(cwd) == set()
+        return
+    result = _valid_result(response)
+    declared = {artifact.path for artifact in result.artifacts}
+    assert CLEANUP_ARTIFACT in declared
+    assert (SPILL_PATH in declared) == (action == "spill")
+    assert _entries(cwd) == declared | _parents(declared)
+    for artifact in result.artifacts:
+        assert _sha((cwd / artifact.path).read_bytes()) == artifact.sha256
+    assert (cwd / CLEANUP_ARTIFACT).read_bytes() == CLEANUP_CASE
+    if action == "spill":
+        assert json.loads((cwd / SPILL_PATH).read_bytes()) == {"native": "spill"}
+    assert not any(note.startswith(CLEANUP_PREFIX) for note in result.limitations)
+
+
+@pytest.mark.parametrize("op", ["describe", "health"])
+def test_describe_and_health_never_clean_their_cwd(tmp_path: Path, op: str) -> None:
+    cwd = _work(tmp_path)
+    (cwd / "stage").mkdir()
+    argv = [*SHELL_PROVIDERS["test-handlers"][0], "--assume-specialist-version", "writes", op]
+    out = subprocess.run(argv, input=_request(op), capture_output=True, timeout=60, cwd=cwd)
+    assert out.returncode == 0, out.stderr
+    assert json.loads(out.stdout)["status"] == "ok"
+    assert _entries(cwd) == {"stage", f"{op}.out"}
+
+
+def test_execute_cleanup_never_touches_entries_that_predate_it(tmp_path: Path) -> None:
+    # The core always hands a fresh empty work dir; an operator running the adapter by hand
+    # in a populated directory must not lose anything that was already there.
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
+    cwd = _work(tmp_path)
+    (cwd / "mine.txt").write_bytes(b"mine")
+    (cwd / "mydir").mkdir()
+    (cwd / "mydir" / "x.txt").write_bytes(b"x")
+    response = _call_in(cwd, _request("execute", _cleanup_payload(ws, "error")))
+    assert response.status == "error"
+    assert _entries(cwd) == {"mine.txt", "mydir", "mydir/x.txt"}
+
+
+def _populate(cwd: Path) -> None:
+    for rel, data in {"stage/jobs/a.py": JOB, "traces.db": b"db",
+                      ".apiforge/economy.jsonl": b"{}\n", "case/facts.json": b"[]",
+                      CLEANUP_ARTIFACT: CLEANUP_CASE, SPILL_PATH: b"{}",
+                      "native/scratch.txt": b"s", "deep/a/b/c.txt": b"c"}.items():
+        target = cwd / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+
+
+def test_cleanup_workdir_keeps_only_artifacts_and_their_parent_directories(
+    tmp_path: Path
+) -> None:
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    notes = shell.cleanup_workdir(cwd, [CLEANUP_ARTIFACT, SPILL_PATH, "missing/never.json"])
+    assert notes == ()
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT, "native", SPILL_PATH}
+    assert (cwd / CLEANUP_ARTIFACT).read_bytes() == CLEANUP_CASE
+
+
+def test_cleanup_workdir_always_removes_stage(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    assert shell.cleanup_workdir(cwd, ["stage/jobs/a.py", "stage"]) == (
+        f"{REMOVED_PREFIX}stage", f"{REMOVED_PREFIX}stage/jobs/a.py")
+    assert _entries(cwd) == set()
+
+
+@pytest.mark.parametrize("keep", [
+    "../outside.txt", "native/../../outside.txt", "OUTSIDE_ABS", "C:/outside.txt",
+    "case\\findings.json", "", ".", "./", "/case/findings.json",
+])
+def test_cleanup_workdir_never_keeps_or_deletes_through_an_escaping_artifact_path(
+    tmp_path: Path, keep: str
+) -> None:
+    outside = tmp_path / "outside.txt"
+    outside.write_bytes(b"outside")
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    path = str(outside) if keep == "OUTSIDE_ABS" else keep
+    assert shell.cleanup_workdir(cwd, [path]) == ()
+    assert _entries(cwd) == set()
+    assert outside.read_bytes() == b"outside"
+
+
+def _outside_target(tmp_path: Path) -> tuple[Path, Path]:
+    target = tmp_path / "outside"
+    target.mkdir()
+    (target / "secret.txt").write_bytes(b"secret")
+    (target / "nested").mkdir()
+    (target / "nested" / "deep.txt").write_bytes(b"deep")
+    loose = tmp_path / "loose.txt"
+    loose.write_bytes(b"loose")
+    return target, loose
+
+
+def _assert_outside_intact(target: Path, loose: Path) -> None:
+    assert loose.read_bytes() == b"loose"
+    assert (target / "secret.txt").read_bytes() == b"secret"
+    assert (target / "nested" / "deep.txt").read_bytes() == b"deep"
+
+
+def _symlink(link: Path, target: Path) -> None:
+    try:
+        link.symlink_to(target, target_is_directory=target.is_dir())
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symlink creation unsupported here: {exc}")
+
+
+def test_cleanup_workdir_removes_symlinks_without_touching_their_targets(
+    tmp_path: Path
+) -> None:
+    target, loose = _outside_target(tmp_path)
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    _symlink(cwd / "dirlink", target)
+    _symlink(cwd / "filelink.txt", loose)
+    _symlink(cwd / "case" / "nestedlink", target)
+    _symlink(cwd / "keptlink.json", loose)
+    keep = [CLEANUP_ARTIFACT, "dirlink/secret.txt", "keptlink.json"]
+    # A link is never kept: a declared artifact behind one is removed and reported.
+    assert shell.cleanup_workdir(cwd, keep) == (f"{REMOVED_PREFIX}dirlink/secret.txt",
+                                                f"{REMOVED_PREFIX}keptlink.json")
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT}
+    _assert_outside_intact(target, loose)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="directory junctions are Windows-only")
+def test_cleanup_workdir_removes_junctions_without_touching_their_targets(
+    tmp_path: Path
+) -> None:
+    target, loose = _outside_target(tmp_path)
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    for link in (cwd / "junction", cwd / "case" / "junction", cwd / "native-link"):
+        made = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                              capture_output=True, timeout=30)
+        if made.returncode != 0:
+            pytest.skip(f"mklink /J failed: {made.stdout!r} {made.stderr!r}")
+    keep = [CLEANUP_ARTIFACT, "junction/secret.txt", "native-link/nested/deep.txt"]
+    assert shell.cleanup_workdir(cwd, keep) == (
+        f"{REMOVED_PREFIX}junction/secret.txt", f"{REMOVED_PREFIX}native-link/nested/deep.txt")
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT}
+    _assert_outside_intact(target, loose)
+
+
+def test_cleanup_workdir_removes_read_only_files_and_directories(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    readonly = cwd / "case" / "readonly.txt"
+    readonly.write_bytes(b"r")
+    os.chmod(readonly, 0o444)
+    locked_dir = cwd / "rodir"
+    locked_dir.mkdir()
+    (locked_dir / "inner.txt").write_bytes(b"i")
+    os.chmod(locked_dir / "inner.txt", 0o444)
+    os.chmod(locked_dir, 0o555)
+    try:
+        assert shell.cleanup_workdir(cwd, [CLEANUP_ARTIFACT]) == ()
+    finally:
+        if locked_dir.exists():
+            os.chmod(locked_dir, 0o755)
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT}
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="case-insensitive names on Windows only")
+def test_cleanup_workdir_matches_artifact_names_case_insensitively_on_windows(
+    tmp_path: Path
+) -> None:
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    notes = shell.cleanup_workdir(cwd, ["CASE/Findings.JSON", "Native/Full-Output.json"])
+    assert notes == ()
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT, "native", SPILL_PATH}
+
+
+def test_cleanup_workdir_never_clears_read_only_through_a_hard_link(tmp_path: Path) -> None:
+    outside = tmp_path / "outside-ro.txt"
+    outside.write_bytes(b"ro")
+    os.chmod(outside, 0o444)
+    cwd = _work(tmp_path)
+    try:
+        os.link(outside, cwd / "hard.txt")
+    except (OSError, NotImplementedError) as exc:
+        os.chmod(outside, 0o644)
+        pytest.skip(f"hard link creation unsupported here: {exc}")
+    mode = os.stat(outside).st_mode
+    try:
+        notes = shell.cleanup_workdir(cwd, [])
+        assert os.stat(outside).st_mode == mode
+        assert outside.read_bytes() == b"ro"
+        if sys.platform == "win32":  # read-only blocks the unlink; never cleared via a link
+            assert notes == (f"{CLEANUP_PREFIX}hard.txt",)
+            assert _entries(cwd) == {"hard.txt"}
+        else:
+            assert notes == ()
+            assert _entries(cwd) == set()
+    finally:
+        os.chmod(outside, 0o644)
+
+
+def _failing_removal(monkeypatch: pytest.MonkeyPatch, names: set[str]) -> None:
+    real = shell._remove_file
+
+    def remove(path: str) -> None:
+        if Path(path).name in names:
+            raise PermissionError("locked (test)")
+        real(path)
+
+    monkeypatch.setattr(shell, "_remove_file", remove)
+
+
+def test_cleanup_workdir_failure_is_a_limitation_and_the_rest_is_removed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    _failing_removal(monkeypatch, {"traces.db", "c.txt"})
+    notes = shell.cleanup_workdir(cwd, [CLEANUP_ARTIFACT])
+    assert notes == (f"{CLEANUP_PREFIX}deep/a/b/c.txt", f"{CLEANUP_PREFIX}traces.db")
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT, "traces.db", "deep", "deep/a",
+                             "deep/a/b", "deep/a/b/c.txt"}
+
+
+def test_cleanup_workdir_bounds_the_failure_limitations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cwd = _work(tmp_path)
+    names = {f"f{k:02d}.bin" for k in range(shell.CLEANUP_REPORT_LIMIT + 5)}
+    for name in names:
+        (cwd / name).write_bytes(b"x")
+    _failing_removal(monkeypatch, names)
+    notes = shell.cleanup_workdir(cwd, [])
+    assert len(notes) == shell.CLEANUP_REPORT_LIMIT + 1
+    assert notes[:-1] == tuple(f"{CLEANUP_PREFIX}{name}"
+                               for name in sorted(names)[:shell.CLEANUP_REPORT_LIMIT])
+    assert notes[-1] == f"{CLEANUP_PREFIX}5 more entries"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="open files block deletion on Windows only")
+def test_cleanup_workdir_reports_a_file_locked_by_an_open_handle(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    _populate(cwd)
+    with (cwd / "traces.db").open("rb"):
+        notes = shell.cleanup_workdir(cwd, [CLEANUP_ARTIFACT])
+    assert notes == (f"{CLEANUP_PREFIX}traces.db",)
+    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT, "traces.db"}
+
+
+def test_cleanup_workdir_on_a_missing_cwd_is_a_limitation(tmp_path: Path) -> None:
+    assert shell.cleanup_workdir(tmp_path / "absent", []) == (f"{CLEANUP_PREFIX}.",)
+
+
+def _inproc_handlers(outcome: str) -> dict[str, Any]:
+    case = b"case"
+
+    def describe(options: Any) -> Any:
+        return lambda request, cwd: shell.Reply(status="ok", payload={
+            "capabilities": [{"id": "t.c", "actions": ["run"]}]})
+
+    def execute(options: Any) -> Any:
+        def handle(request: Any, cwd: Path) -> Any:
+            (cwd / "traces.db").write_bytes(b"ledger")
+            (cwd / "case").mkdir()
+            (cwd / "case" / "a.json").write_bytes(case)
+            artifacts = [{"path": "case/a.json", "sha256": _sha(case)}]
+            if outcome == "error":
+                return shell.fail("T-NATIVE", "native error (test)")
+            if outcome == "linked":  # the artifact's directory is a link out of the cwd
+                outside = cwd.parent / "outside-case"
+                outside.mkdir()
+                (cwd / "case" / "a.json").replace(outside / "a.json")
+                (cwd / "case").rmdir()
+                _symlink(cwd / "case", outside)
+            if outcome == "unserializable":
+                return shell.Reply(status="ok", payload={"artifacts": artifacts, "x": object()})
+            return shell.finalize(shell.ResultDraft(
+                provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1], artifacts=artifacts,
+                limitations=["l1"]), cwd)
+        return handle
+
+    return {"describe": describe, "execute": execute}
+
+
+def _respond_in(cwd: Path, outcome: str) -> dict[str, Any]:
+    raw = shell.respond(["execute"], _request("execute", {"capability": "t.c", "action": "run"}),
+                        provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1],
+                        handlers=_inproc_handlers(outcome), cwd=cwd)
+    data: dict[str, Any] = json.loads(raw)
+    from_dict(Response, data)
+    return data
+
+
+def test_respond_reports_a_cleanup_failure_in_the_result_limitations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cwd = _work(tmp_path)
+    _failing_removal(monkeypatch, {"traces.db"})
+    data = _respond_in(cwd, "ok")
+    assert data["status"] == "ok"
+    note = f"{CLEANUP_PREFIX}traces.db"
+    assert data["payload"]["limitations"] == ["l1", note]
+    assert data["limitations"] == ["l1", note]
+    result = from_dict(ExecutionResult, data["payload"])
+    validate_result(result, expected=Producer(id=TEST_PRODUCER[0], version=TEST_PRODUCER[1]))
+    assert _entries(cwd) == {"case", "case/a.json", "traces.db"}
+
+
+def test_respond_reports_a_cleanup_failure_of_an_error_reply_in_the_envelope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cwd = _work(tmp_path)
+    _failing_removal(monkeypatch, {"traces.db"})
+    data = _respond_in(cwd, "error")
+    assert data["status"] == "error"
+    assert data["error"]["code"] == "T-NATIVE"
+    assert data["payload"] == {}
+    assert data["limitations"] == [f"{CLEANUP_PREFIX}traces.db"]
+    assert _entries(cwd) == {"traces.db"}
+
+
+def test_respond_survives_a_crashing_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def crash(cwd: Path, keep: Any, **kwargs: Any) -> tuple[str, ...]:
+        raise RuntimeError("cleanup crashed (test)")
+
+    monkeypatch.setattr(shell, "cleanup_workdir", crash)
+    data = _respond_in(_work(tmp_path), "ok")
+    assert data["status"] == "ok"
+    assert data["payload"]["limitations"] == ["l1", f"{CLEANUP_PREFIX}."]
+
+
+def test_respond_keeps_nothing_when_the_reply_cannot_be_encoded(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    data = _respond_in(cwd, "unserializable")
+    assert data["status"] == "error"
+    assert data["error"]["code"] == "ADAPTER-INTERNAL"
+    assert _entries(cwd) == set()
+
+
+def test_respond_downgrades_ok_when_cleanup_removes_a_declared_artifact(tmp_path: Path) -> None:
+    cwd = _work(tmp_path)
+    data = _respond_in(cwd, "linked")
+    note = f"{REMOVED_PREFIX}case/a.json"
+    assert data["status"] == "partial"
+    assert data["payload"]["status"] == "partial"
+    assert data["payload"]["limitations"] == ["l1", note]
+    assert data["limitations"] == ["l1", note]
+    result = from_dict(ExecutionResult, data["payload"])
+    validate_result(result, expected=Producer(id=TEST_PRODUCER[0], version=TEST_PRODUCER[1]))
+    assert _entries(cwd) == set()
+    assert (tmp_path / "outside-case" / "a.json").read_bytes() == b"case"

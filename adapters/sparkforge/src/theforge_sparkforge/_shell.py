@@ -24,6 +24,18 @@ shaped names are always dropped), capped stdout/stderr and a timeout (``native_t
 of the profile's execute timeout). The whole process tree is killed when the run ends (Job
 Object on Windows, process group on POSIX); an overrun raises ``NativeTimeout``, answered as
 the structured error ``ADAPTER-NATIVE-TIMEOUT``.
+
+Workdir cleanup: after the response of an ``execute`` is built, whatever its outcome (``ok``,
+``partial``, ``refused``, ``error``, a timeout, an unexpected exception), ``respond`` reduces
+the cwd to the result's ``artifacts[]`` paths with ``cleanup_workdir``: ``stage/`` and every
+other file or directory the execute left there are removed. Links (symlinks, junctions) are
+removed, never followed; artifact paths that are not contained relative POSIX paths keep
+nothing. Entries that existed before the execute started are never touched (the core always
+hands a fresh, empty work dir). A removal failure is the limitation
+``workdir cleanup incomplete: <path>``, never an error; a declared artifact the cleanup had
+to remove (behind a link) is ``workdir cleanup removed artifact: <path>`` and an ``ok``
+result becomes ``partial``. ``describe`` and ``health`` are not
+cleaned (the core removes their temporary cwd).
 """
 
 from __future__ import annotations
@@ -34,11 +46,12 @@ import hashlib
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 import threading
-from collections.abc import Callable, Iterator, Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import IO, Any, BinaryIO
@@ -93,6 +106,12 @@ MAX_UNSIZED_BYTES = 64 * 1024 * 1024
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _NATIVE_HASH_PREFIX = "sha256:"
+
+CLEANUP_INCOMPLETE = "workdir cleanup incomplete: "
+CLEANUP_REMOVED = "workdir cleanup removed artifact: "
+# Failed removals reported one by one; the rest are counted in a single limitation.
+CLEANUP_REPORT_LIMIT = 20
+_FILE_ATTRIBUTE_REPARSE_POINT = 0x400  # Windows: symlinks, junctions and other links
 
 
 @dataclass(frozen=True)
@@ -746,6 +765,208 @@ def run_native(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str], timeou
                          stderr_truncated=err.truncated)
 
 
+def _is_link(st: os.stat_result) -> bool:
+    """A symlink or, on Windows, any reparse point (junctions included): never followed."""
+    attributes = getattr(st, "st_file_attributes", 0)
+    return stat.S_ISLNK(st.st_mode) or bool(attributes & _FILE_ATTRIBUTE_REPARSE_POINT)
+
+
+def _remove_link(path: str) -> None:
+    """Remove a link itself (its target is never touched, nor its mode changed)."""
+    try:
+        os.unlink(path)
+    except OSError:
+        os.rmdir(path)  # a directory symlink or junction on Windows: removes the link only
+
+
+def _remove_file(path: str) -> None:
+    """Remove a regular file, clearing a read-only flag (Windows) once if needed.
+
+    The flag is only cleared on a file with a single link: a hard link shares its mode with
+    a file that may live outside the cwd, so that removal fails (and is reported) instead.
+    """
+    try:
+        os.unlink(path)
+    except PermissionError:
+        st = os.lstat(path)
+        if st.st_nlink != 1 or _is_link(st):
+            raise
+        os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+        os.unlink(path)
+
+
+def _purge_dir(path: str, rel: str, st: os.stat_result, failures: list[str]) -> bool:
+    mode = stat.S_IMODE(st.st_mode)
+    if mode & stat.S_IRWXU != stat.S_IRWXU:  # read-only directory: its entries must go
+        os.chmod(path, mode | stat.S_IRWXU)
+    gone = True
+    for name in sorted(os.listdir(path)):
+        gone = _purge(os.path.join(path, name), f"{rel}/{name}", failures) and gone
+    if not gone:
+        return False  # the entry that stayed is reported, not its directory
+    os.rmdir(path)
+    return True
+
+
+def _purge(path: str, rel: str, failures: list[str]) -> bool:
+    """Remove ``path`` without following links; False (and ``rel`` reported) if it stays."""
+    try:
+        st = os.lstat(path)
+        if _is_link(st):
+            _remove_link(path)
+        elif stat.S_ISDIR(st.st_mode):
+            return _purge_dir(path, rel, st, failures)
+        else:
+            _remove_file(path)
+    except FileNotFoundError:
+        return True
+    except OSError:
+        failures.append(rel)
+        return False
+    return True
+
+
+def _name_key(parts: Sequence[str]) -> tuple[str, ...]:
+    """Path parts compared as the filesystem does (case-insensitively on Windows)."""
+    return tuple(os.path.normcase(part) for part in parts)
+
+
+def _contained_parts(keep: Collection[str]) -> dict[str, tuple[str, ...]]:
+    """Declared path -> its parts, for contained relative POSIX paths only."""
+    contained: dict[str, tuple[str, ...]] = {}
+    for path in keep:
+        if not isinstance(path, str) or not _lexically_contained(path):
+            continue
+        parts = tuple(part for part in path.split("/") if part not in ("", "."))
+        if parts:
+            contained[path] = parts
+    return contained
+
+
+def _kept_parts(contained: Mapping[str, tuple[str, ...]]) -> set[tuple[str, ...]]:
+    """Name keys of the artifact paths that are kept (never under ``stage/``)."""
+    stage = os.path.normcase(STAGE_DIR)
+    keys = (_name_key(parts) for parts in contained.values())
+    return {key for key in keys if key[0] != stage}
+
+
+def _is_regular_artifact(cwd: str, parts: tuple[str, ...]) -> bool:
+    """``parts`` is a regular file under real directories, with no link on the way."""
+    path = cwd
+    for index, part in enumerate(parts):
+        path = os.path.join(path, part)
+        try:
+            st = os.lstat(path)
+        except OSError:
+            return False
+        if _is_link(st):
+            return False
+        last = index == len(parts) - 1
+        if not (stat.S_ISREG(st.st_mode) if last else stat.S_ISDIR(st.st_mode)):
+            return False
+    return True
+
+
+def _reduce(directory: str, prefix: tuple[str, ...], kept: set[tuple[str, ...]],
+            parents: set[tuple[str, ...]], preserve: Collection[str],
+            failures: list[str]) -> None:
+    try:
+        names = sorted(os.listdir(directory))
+    except OSError:
+        failures.append("/".join(prefix) or ".")
+        return
+    for name in names:
+        rel = (*prefix, name)
+        if not prefix and name in preserve:
+            continue
+        path = os.path.join(directory, name)
+        key = _name_key(rel)
+        if key in kept or key in parents:
+            try:
+                st = os.lstat(path)
+            except FileNotFoundError:
+                continue
+            except OSError:
+                failures.append("/".join(rel))
+                continue
+            if not _is_link(st):  # a link is never kept nor traversed, even at a kept path
+                if key in kept:
+                    continue
+                if stat.S_ISDIR(st.st_mode):
+                    _reduce(path, rel, kept, parents, preserve, failures)
+                    continue
+        _purge(path, "/".join(rel), failures)
+
+
+def cleanup_workdir(cwd: Path, keep: Collection[str], *, preserve: Collection[str] = ()
+                    ) -> tuple[str, ...]:
+    """Reduce ``cwd`` to the artifact paths in ``keep`` (and their parent directories).
+
+    ``stage/`` and every other file, directory or link are removed; links are removed, never
+    followed, and a link is never kept. A path in ``keep`` that is not a contained relative
+    POSIX path keeps nothing. Top-level names in ``preserve`` are left alone. Returns the
+    limitations for what could not be removed (sorted, at most ``CLEANUP_REPORT_LIMIT`` paths
+    plus a count of the rest), then ``workdir cleanup removed artifact: <path>`` for each
+    declared artifact that existed but is not a regular file reached without links afterwards
+    (it was behind a link or under ``stage/``); never raises for a removal failure. Names are
+    matched as the filesystem does (case-insensitively on Windows).
+    """
+    root = os.fspath(cwd)
+    contained = _contained_parts(keep)
+    # Declared artifacts present before the reduction (possibly through a link) must still
+    # be regular files afterwards; one behind a link (or under stage/) is gone.
+    present = sorted(path for path, parts in contained.items()
+                     if os.path.lexists(os.path.join(root, *parts)))
+    kept = _kept_parts(contained)
+    parents = {parts[:index] for parts in kept for index in range(1, len(parts))}
+    failures: list[str] = []
+    _reduce(root, (), kept, parents, preserve, failures)
+    failures.sort()
+    notes = [f"{CLEANUP_INCOMPLETE}{path}" for path in failures[:CLEANUP_REPORT_LIMIT]]
+    if len(failures) > CLEANUP_REPORT_LIMIT:
+        notes.append(f"{CLEANUP_INCOMPLETE}{len(failures) - CLEANUP_REPORT_LIMIT} more entries")
+    notes.extend(f"{CLEANUP_REMOVED}{path}" for path in present
+                 if not _is_regular_artifact(root, contained[path]))
+    return tuple(notes)
+
+
+def _listing(cwd: Path) -> frozenset[str]:
+    try:
+        return frozenset(os.listdir(cwd))
+    except OSError:
+        return frozenset()
+
+
+def _declared_artifacts(reply: Reply) -> list[str]:
+    if reply.status not in ("ok", "partial"):
+        return []
+    artifacts = reply.payload.get("artifacts")
+    if not isinstance(artifacts, list):
+        return []
+    return [item["path"] for item in artifacts
+            if isinstance(item, Mapping) and isinstance(item.get("path"), str)]
+
+
+def _after_execute(reply: Reply, cwd: Path, preexisting: frozenset[str]) -> Reply:
+    """``reply`` once the cwd is reduced to its artifacts; a removal failure (or a cleanup
+    that crashed) is a limitation of the result and of the envelope, never an error."""
+    try:
+        notes = cleanup_workdir(cwd, _declared_artifacts(reply), preserve=preexisting)
+    except Exception:
+        notes = (f"{CLEANUP_INCOMPLETE}.",)
+    if not notes:
+        return reply
+    payload = reply.payload
+    status = reply.status
+    if status in ("ok", "partial") and isinstance(payload.get("limitations"), list):
+        payload = {**payload, "limitations": [*payload["limitations"], *notes]}
+        if any(note.startswith(CLEANUP_REMOVED) for note in notes):
+            status = "partial"  # a result never claims ok with a declared artifact missing
+            payload["status"] = status
+    return replace(reply, status=status, payload=payload,
+                   limitations=[*reply.limitations, *notes])
+
+
 def parse_options(args: Sequence[str]) -> AdapterOptions:
     """Parse the adapter flags that precede the op (each at most once, each with a value)."""
     values: dict[str, str] = {}
@@ -880,10 +1101,9 @@ def _internal(exc: BaseException) -> Reply:
     return fail(INTERNAL, type(exc).__name__)
 
 
-def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
-            handlers: Mapping[str, HandlerFactory], cwd: Path) -> bytes:
-    """The encoded response for one invocation (never raises for handler failures)."""
-    op = argv[-1] if argv else ""
+def _reply_for(argv: Sequence[str], raw: bytes, op: str,
+               handlers: Mapping[str, HandlerFactory], cwd: Path) -> tuple[str, Reply]:
+    """(request id, reply) for one invocation; never raises for handler failures."""
     request_id = UNKNOWN_REQUEST_ID
     try:
         try:
@@ -892,20 +1112,43 @@ def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
             options = parse_options(argv[:-1])
         except _Invalid as exc:
             request_id = exc.request_id if request_id == UNKNOWN_REQUEST_ID else request_id
-            reply = fail(REQUEST_INVALID, exc.detail, field=exc.field_name)
-        else:
-            try:
-                reply = dispatch(op, options, request, handlers, cwd)
-            except NativeTimeout as exc:
-                reply = exc.reply()
-        return _encode(envelope(op=op, request_id=request_id, provider_id=provider_id,
-                                version=version, reply=reply))
+            return request_id, fail(REQUEST_INVALID, exc.detail, field=exc.field_name)
+        try:
+            return request_id, dispatch(op, options, request, handlers, cwd)
+        except NativeTimeout as exc:
+            return request_id, exc.reply()
     # Every failure must become a response with exit 0, including a handler that calls
     # sys.exit() or raises KeyboardInterrupt; GeneratorExit and other BaseException
     # subclasses are interpreter machinery, not handler failures, and are not caught.
     except (Exception, SystemExit, KeyboardInterrupt) as exc:
+        return request_id, _internal(exc)
+
+
+def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
+            handlers: Mapping[str, HandlerFactory], cwd: Path) -> bytes:
+    """The encoded response for one invocation (never raises for handler failures).
+
+    After an ``execute``, whatever its outcome, the cwd is reduced to the artifacts of the
+    reply actually sent (entries that predate the call are left alone).
+    """
+    op = argv[-1] if argv else ""
+    preexisting = _listing(cwd) if op == "execute" else None
+    request_id, reply = _reply_for(argv, raw, op, handlers, cwd)
+
+    def encode(answer: Reply) -> bytes:
         return _encode(envelope(op=op, request_id=request_id, provider_id=provider_id,
-                                version=version, reply=_internal(exc)))
+                                version=version, reply=answer))
+
+    body: bytes | None
+    try:
+        body = encode(reply)
+    except (Exception, SystemExit, KeyboardInterrupt) as exc:
+        reply, body = _internal(exc), None  # an unencodable reply keeps no artifact
+    if preexisting is not None:
+        cleaned = _after_execute(reply, cwd, preexisting)
+        if cleaned is not reply:
+            reply, body = cleaned, None
+    return encode(reply) if body is None else body
 
 
 def serve(*, provider_id: str, version: str, handlers: Mapping[str, HandlerFactory],
