@@ -37,8 +37,7 @@ def _emit(args: argparse.Namespace, data: dict[str, Any],
 
 
 def _warn(registry: Registry) -> None:
-    # The registry re-reads config on each lookup, so the same warning can repeat.
-    for warning in dict.fromkeys(registry.warnings):
+    for warning in registry.warnings:
         print(f"theforge: warning: {warning}", file=sys.stderr)
 
 

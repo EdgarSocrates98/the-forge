@@ -94,7 +94,15 @@ class Registry:
         self._in_use: dict[str, RegistryRecord] = {}
 
     def entries(self) -> list[ProviderEntry]:
-        return resolve_entries(self.forge_dir, self.user_dir, self.warnings)
+        found: list[str] = []
+        entries = resolve_entries(self.forge_dir, self.user_dir, found)
+        for warning in found:  # config is re-read on every lookup: record each warning once
+            self._warn(warning)
+        return entries
+
+    def _warn(self, warning: str) -> None:
+        if warning not in self.warnings:
+            self.warnings.append(warning)
 
     def refresh(self) -> list[RegistryRecord]:
         self._remove_legacy_cache()
@@ -161,7 +169,7 @@ class Registry:
             try:
                 path.unlink(missing_ok=True)
             except OSError as exc:
-                self.warnings.append(
+                self._warn(
                     f"registry cache for {provider_id} not removed ({path}): {exc}")
 
     def _describe(self, entry: ProviderEntry) -> RegistryRecord:
@@ -233,7 +241,7 @@ class Registry:
             return (f"{Codes.MANIFEST_LIMITS}: every capability of {manifest.id} exceeds "
                     f"the manifest limits ({first})")
         for index, detail in sorted(excluded.items()):
-            self.warnings.append(
+            self._warn(
                 f"{manifest.id}: capability {manifest.capabilities[index].id!r} excluded "
                 f"({Codes.MANIFEST_LIMITS}: {detail})")
         return replace(manifest, capabilities=kept)
@@ -252,7 +260,7 @@ class Registry:
         legacy = self.forge_dir / LEGACY_REGISTRY_DIR
         warning = remove_legacy_cache(legacy)
         if warning:
-            self.warnings.append(warning)
+            self._warn(warning)
 
     def _write_cache(self, record: RegistryRecord) -> None:
         path = self._cache_path(record.entry)
@@ -279,7 +287,7 @@ class Registry:
                     os.unlink(tmp)
                 raise
         except OSError as exc:
-            self.warnings.append(
+            self._warn(
                 f"registry cache for {record.entry.id} not written ({path}): {exc}")
 
     def _read_cache(self, entry: ProviderEntry) -> RegistryRecord | None:
@@ -305,7 +313,7 @@ class Registry:
             return RegistryRecord(entry=entry, state="ready", manifest=cached.manifest,
                                   manifest_sha256=cached.manifest_sha256, protocol=protocol)
         except (OSError, ValueError) as exc:
-            self.warnings.append(f"registry cache for {entry.id} discarded: {exc}")
+            self._warn(f"registry cache for {entry.id} discarded: {exc}")
             return None
 
 

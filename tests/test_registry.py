@@ -127,6 +127,19 @@ def test_project_file_cannot_grant_trust(tmp_path: Path) -> None:
     assert any("bad-a" in w for w in registry.warnings)
 
 
+def test_repeated_lookups_do_not_duplicate_config_warnings(tmp_path: Path) -> None:
+    forge = tmp_path / ".forge"
+    write_providers(forge, [bad_entry("ok", "bad-a", trust="trusted")], scope="project")
+    registry = Registry(forge)
+    for _ in range(3):
+        registry.entries()
+        registry.records()
+        registry.get("bad-a")
+    demoted = [w for w in registry.warnings if "bad-a" in w and "ignored" in w]
+    assert len(demoted) == 1, registry.warnings
+    assert len(registry.warnings) == len(set(registry.warnings))
+
+
 def test_unknown_provider(tmp_path: Path) -> None:
     with pytest.raises(UsageError, match="unknown provider"):
         Registry(make_forge(tmp_path, [])).get("nope")
