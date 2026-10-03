@@ -8,7 +8,7 @@
 
 The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
 
-**Status:** ciclo 1 (protocolo + core local). Os adapters reais de Spark Forge e API Forge chegam no ciclo 2. Hoje o core é provado com o provider nativo `echo-forge` e com providers de teste.
+**Status:** ciclo 2, Wave A (endurecimento). Contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace com identidade de provider no receipt, ambiente mínimo para providers, policy de risco (`--approve`) e CI em Linux e Windows. Os adapters reais de Spark Forge e API Forge chegam na Wave B. Hoje o core é provado com o provider nativo `echo-forge` e com providers de teste.
 
 ## Instalação (desenvolvimento)
 
@@ -74,7 +74,8 @@ Depois rode `theforge registry refresh`.
 
 ```bash
 .venv/bin/python -m pytest            # suite offline
-.venv/bin/python -m pytest -m slow    # gate de instalação limpa (baixa hatchling)
+.venv/bin/python -m pytest -m slow    # gates de zero deps e instalação limpa (baixa hatchling)
+.venv/bin/python -m pytest -m security   # categoria: unit, contract, integration, e2e, slow, security
 .venv/bin/ruff check .
 .venv/bin/mypy
 .venv/bin/python -m theforge.contracts.schema schemas   # regenerar schemas

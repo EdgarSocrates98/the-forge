@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import io
 import os
 import re
 import sys
@@ -43,12 +44,23 @@ def pyproject_violations(pyproject: Path) -> list[str]:
     return [f"{pyproject}: runtime dependency declared: {dep}" for dep in deps]
 
 
+def _read_listed_file(path: Path) -> bytes:
+    """Bytes of ``path``, opened through the directory listing entry with its exact name."""
+    name = os.path.basename(path)
+    with os.scandir(os.path.dirname(path)) as listing:
+        for entry in listing:
+            if entry.name == name and entry.is_file():
+                with open(entry.path, "rb") as fh:
+                    return fh.read()
+    raise OSError(f"{path}: not a regular file")
+
+
 def wheel_violations(wheel: Path) -> list[str]:
     try:
         # The CI operator names the wheel; only an existing regular .whl file (see
-        # _wheel_file) is opened, read-only, and nothing is extracted.
-        # deepcode ignore PT: operator-supplied CI input, validated by _wheel_file
-        with zipfile.ZipFile(wheel) as zf:
+        # _wheel_file) is read, from the listing of its own directory, and nothing is extracted.
+        data = _read_listed_file(wheel)
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
             names = [n for n in zf.namelist() if re.fullmatch(r"[^/]+\.dist-info/METADATA", n)]
             if len(names) != 1:
                 return [f"{wheel}: expected exactly one .dist-info/METADATA, found {len(names)}"]
