@@ -128,3 +128,131 @@ def test_package_job_builds_and_runs_both_gates_on_the_wheel() -> None:
     fresh = _index_of(lines, "python scripts/ci/fresh_install.py dist/*.whl")
     assert build < zero and build < fresh
     assert not any("pip install -e" in line for line in lines)
+
+
+# --- compat.yml (7.8) and real-providers.yml (7.7) --------------------------------------------
+
+WORKFLOWS = REPO / ".github" / "workflows"
+COMPAT_WORKFLOW = WORKFLOWS / "compat.yml"
+REAL_PROVIDERS_WORKFLOW = WORKFLOWS / "real-providers.yml"
+SIBLING_REPOS = {"EdgarSocrates98/spark-forge-aws", "EdgarSocrates98/api-forge"}
+OFF_GATE_TRIGGERS = {"schedule", "workflow_dispatch"}
+
+
+def _load_path(path: Path) -> dict[str, Any]:
+    assert path.is_file(), path
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert isinstance(data, dict)
+    return data
+
+
+def _assert_scheduled_and_manual_only(data: dict[str, Any]) -> None:
+    on = _triggers(data)
+    assert set(on) == OFF_GATE_TRIGGERS, on
+    crons = [entry["cron"] for entry in on["schedule"]]
+    assert len(crons) == 1
+    fields = crons[0].split()
+    # weekly: fixed minute/hour, any day of month and month, one fixed weekday
+    assert len(fields) == 5 and fields[2] == "*" and fields[3] == "*"
+    assert fields[0].isdigit() and fields[1].isdigit() and fields[4].isdigit(), crons[0]
+
+
+def _assert_hardened(data: dict[str, Any]) -> None:
+    assert data["permissions"] == {"contents": "read"}
+    assert data["defaults"]["run"]["shell"] == "bash"
+    assert "concurrency" in data
+    for name, job in data["jobs"].items():
+        assert job.get("permissions", data["permissions"]) == {"contents": "read"}, name
+        assert isinstance(job.get("timeout-minutes"), int), name
+        for step in _steps(job):
+            uses = str(step.get("uses", ""))
+            if uses:
+                ref = uses.partition("@")[2]
+                assert ref and ref not in ("main", "master", "latest"), uses
+            if uses.startswith("actions/checkout@"):
+                assert step.get("with", {}).get("persist-credentials") is False, (name, step)
+
+
+def _real_job() -> dict[str, Any]:
+    jobs = _load_path(REAL_PROVIDERS_WORKFLOW)["jobs"]
+    assert len(jobs) == 1
+    job = next(iter(jobs.values()))
+    assert isinstance(job, dict)
+    return job
+
+
+def test_compat_workflow_runs_weekly_and_manually_never_on_pr() -> None:
+    data = _load_path(COMPAT_WORKFLOW)
+    _assert_scheduled_and_manual_only(data)
+    _assert_hardened(data)
+
+
+def test_compat_workflow_runs_offline_suite_on_macos_for_311_and_314() -> None:
+    jobs = _load_path(COMPAT_WORKFLOW)["jobs"]
+    assert jobs
+    for job in jobs.values():
+        strategy = job["strategy"]
+        assert strategy["fail-fast"] is False
+        assert strategy["matrix"]["os"] == ["macos-latest"]
+        assert [str(v) for v in strategy["matrix"]["python"]] == ["3.11", "3.14"]
+        assert job["runs-on"] == "${{ matrix.os }}"
+        setup = [
+            s for s in _steps(job) if str(s.get("uses", "")).startswith("actions/setup-python@")
+        ]
+        assert setup and setup[0]["with"]["python-version"] == "${{ matrix.python }}"
+        lines = _run_lines(job)
+        install = _index_of(lines, "pip install -e .[dev]")
+        suite = _index_of(lines, 'python -m pytest -m "not slow and not real_provider"')
+        assert install < suite
+
+
+def test_real_providers_workflow_is_manual_weekly_and_non_blocking() -> None:
+    data = _load_path(REAL_PROVIDERS_WORKFLOW)
+    _assert_scheduled_and_manual_only(data)
+    _assert_hardened(data)
+    # no pull_request/push trigger means it can never be a required PR check; a red run
+    # must also not fail the workflow as a whole
+    assert _real_job()["continue-on-error"] is True
+
+
+def test_real_providers_checks_out_both_siblings_in_separate_paths_with_token() -> None:
+    steps = _steps(_real_job())
+    siblings = [s for s in steps if s.get("with", {}).get("repository")]
+    assert {s["with"]["repository"] for s in siblings} == SIBLING_REPOS
+    paths = [s["with"]["path"] for s in siblings]
+    assert len(set(paths)) == len(paths) == 2
+    assert all(p and not p.startswith(("/", "..")) and p != "." for p in paths)
+    for step in siblings:
+        assert str(step["uses"]).startswith("actions/checkout@")
+        assert "secrets." in str(step["with"]["token"])
+
+
+def test_real_providers_secrets_appear_only_in_sibling_checkout_tokens() -> None:
+    data = _load_path(REAL_PROVIDERS_WORKFLOW)
+    assert "secrets." not in yaml.safe_dump(data.get("env", {}))
+    job = _real_job()
+    assert "secrets." not in yaml.safe_dump(job.get("env", {}))
+    for step in _steps(job):
+        sibling_checkout = str(step.get("uses", "")).startswith("actions/checkout@") and bool(
+            step.get("with", {}).get("repository")
+        )
+        rest = {k: v for k, v in step.items() if k != "with"}
+        with_rest = {k: v for k, v in step.get("with", {}).items() if k != "token"}
+        assert "secrets." not in yaml.safe_dump(rest), step
+        assert "secrets." not in yaml.safe_dump(with_rest), step
+        if not sibling_checkout:
+            assert "secrets." not in yaml.safe_dump(step.get("with", {})), step
+
+
+def test_real_providers_runs_only_real_provider_tests_and_accepts_empty_selection() -> None:
+    lines = _run_lines(_real_job())
+    install = _index_of(lines, "pip install -e .[dev]")
+    pytest_lines = [line for line in lines if "-m pytest" in line]
+    assert len(pytest_lines) == 1, pytest_lines
+    suite = lines.index(pytest_lines[0])
+    assert install < suite
+    assert "python -m pytest -m real_provider" in pytest_lines[0]
+    assert "not real_provider" not in pytest_lines[0] and " -k " not in pytest_lines[0]
+    # pytest exits 5 when nothing is collected; the Wave A skeleton selects zero tests
+    tail = " ".join(lines[suite:])
+    assert '"$code" -eq 5' in tail and 'exit "$code"' in tail
