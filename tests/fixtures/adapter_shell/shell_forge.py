@@ -6,7 +6,9 @@ Python >= 3.10 without installing anything. ``test.echo``/``test.boom`` and thei
 declared only here, for the shell tests. ``--assume-specialist-version describe-refuses`` makes
 describe refuse; ``boom`` makes health raise. ``test.stage``/``analyze`` stages the context, needs
 a ``*.py`` input and stands in for a specialist by reading the replay recording
-``<replay>/test.stage.analyze.json`` (``{"facts": [{"id", "path", "sha256"?}]}``).
+``<replay>/test.stage.analyze.json`` (``{"facts": [{"id", "path", "sha256"?, "pad"?}]}``):
+``pad`` grows the fact's claim by that many bytes; ``"split": true`` makes one finding per fact
+(otherwise a single finding references every fact). The recording is the native output.
 """
 
 from __future__ import annotations
@@ -71,16 +73,22 @@ def analyze(options, request, cwd):
     recording = None if options.replay is None else options.replay / "test.stage.analyze.json"
     if recording is None or not recording.is_file():
         return shell.fail("ADAPTER-REPLAY-MISSING", "test.stage.analyze.json")
-    facts = json.loads(recording.read_text(encoding="utf-8"))["facts"]
+    native = json.loads(recording.read_text(encoding="utf-8"))
+    facts = native["facts"]
     evidence = [{"id": fact["id"], "epistemic": "observed", "subject": "test.fact",
-                 "claim": f"fact {fact['id']}", "location": {"path": fact["path"], "line": 1},
+                 "claim": f"fact {fact['id']}" + "x" * fact.get("pad", 0),
+                 "location": {"path": fact["path"], "line": 1},
                  "hash": shell.evidence_hash(fact["path"], fact.get("sha256"), stage)}
                 for fact in facts]
-    findings = [{"id": "TEST-1#1", "title": "TEST-1: facts", "severity": "info",
-                 "evidence_ids": [item["id"] for item in evidence]}]
+    if native.get("split"):
+        findings = [{"id": f"TEST-{item['id']}#1", "title": f"TEST-{item['id']}: fact",
+                     "severity": "info", "evidence_ids": [item["id"]]} for item in evidence]
+    else:
+        findings = [{"id": "TEST-1#1", "title": "TEST-1: facts", "severity": "info",
+                     "evidence_ids": [item["id"] for item in evidence]}]
     return shell.finalize(shell.ResultDraft(
         provider_id=PROVIDER_ID, version=VERSION, findings=findings, evidence=evidence,
-        limitations=list(stage.limitations)), cwd)
+        limitations=list(stage.limitations), native_output=native), cwd)
 
 
 def execute(options):

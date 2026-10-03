@@ -14,7 +14,9 @@ Execute helpers: ``stage_context`` copies to ``<cwd>/stage/`` only the ContextPa
 are inside the workspace root and match their sha256 (anything else is a limitation);
 ``evidence_hash`` applies the common ``Evidence.hash`` rule; ``no_input`` answers an action whose
 required input is absent without calling the specialist; ``finalize`` builds the
-``ExecutionResult`` (schema, producer, UTC ``created_at``).
+``ExecutionResult`` (schema, producer, UTC ``created_at``) and, above ``INLINE_LIMIT``, keeps
+the findings that fit and spills the complete native output to the artifact
+``native/full-output.json`` in the execute cwd (the result becomes ``partial``).
 """
 
 from __future__ import annotations
@@ -41,6 +43,11 @@ REQUEST_INVALID = "ADAPTER-REQUEST-INVALID"
 CAPABILITY_UNSUPPORTED = "ADAPTER-CAPABILITY-UNSUPPORTED"
 ACTION_UNSUPPORTED = "ADAPTER-ACTION-UNSUPPORTED"
 INTERNAL = "ADAPTER-INTERNAL"
+OUTPUT_TOO_LARGE = "ADAPTER-OUTPUT-TOO-LARGE"
+
+# Serialized ExecutionResult bytes returned inline: half the core transport's 8 MiB stdout cap.
+INLINE_LIMIT = 4 * 1024 * 1024
+SPILL_PATH = "native/full-output.json"
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
 STAGE_DIR = "stage"
@@ -142,6 +149,9 @@ class ResultDraft:
     limitations: Sequence[str] = ()
     unknowns: Sequence[str] = ()
     partial: bool = False
+    # The complete native output, written to the spill artifact when the result is above
+    # INLINE_LIMIT: bytes as is, anything else as JSON; None spills the complete result.
+    native_output: object = None
 
 
 def _skipped(path: str, reason: str) -> str:
@@ -291,10 +301,78 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
+def _dumps(value: object) -> bytes:
+    """``value`` as the response serializes it (compact, sorted keys, UTF-8)."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                      allow_nan=False).encode("utf-8")
+
+
+def inline_size(payload: Mapping[str, Any]) -> int:
+    """Bytes of a result payload once serialized in the response."""
+    return len(_dumps(payload))
+
+
+def _truncation(kept: int, total: int) -> str:
+    return (f"output truncated: {kept} of {total} findings inline; "
+            f"full native output in artifact {SPILL_PATH}")
+
+
+def _truncated(payload: Mapping[str, Any], kept: int, spill: Mapping[str, str]
+               ) -> dict[str, Any]:
+    """``payload`` with its first ``kept`` findings, the evidence they reference (native
+    order), the spill artifact, ``partial`` status and the truncation limitation."""
+    findings = payload["findings"][:kept]
+    referenced = {ref for finding in findings for ref in finding.get("evidence_ids") or ()}
+    return {
+        **payload,
+        "status": "partial",
+        "findings": findings,
+        "evidence": [item for item in payload["evidence"] if item.get("id") in referenced],
+        "artifacts": [*payload["artifacts"], dict(spill)],
+        "limitations": [*payload["limitations"],
+                        _truncation(kept, len(payload["findings"]))],
+    }
+
+
+def _spill(result: ResultDraft, payload: Mapping[str, Any], cwd: Path) -> Reply:
+    """Keep the most findings (native order) that fit in INLINE_LIMIT and write the complete
+    native output to ``<cwd>/native/full-output.json``, declared as an artifact."""
+    native = result.native_output
+    data = (bytes(native) if isinstance(native, (bytes, bytearray))
+            else _dumps(payload if native is None else native))
+    # The artifact entry has a fixed size (path and a 64-hex sha256), so the hash is
+    # computed before deciding what fits and the file is written only once it does.
+    spill = {"path": SPILL_PATH, "sha256": hashlib.sha256(data).hexdigest()}
+    total = len(payload["findings"])
+    if inline_size(_truncated(payload, 0, spill)) > INLINE_LIMIT:
+        return fail(OUTPUT_TOO_LARGE,
+                    f"result exceeds {INLINE_LIMIT} bytes even without findings")
+    low, high = 0, total  # the size grows with the findings kept: largest prefix that fits
+    while low < high:
+        middle = (low + high + 1) // 2
+        if inline_size(_truncated(payload, middle, spill)) <= INLINE_LIMIT:
+            low = middle
+        else:
+            high = middle - 1
+    target = (cwd / SPILL_PATH).resolve()
+    if not target.is_relative_to(cwd.resolve()):
+        raise RuntimeError("spill path escapes the working directory")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+    truncated = _truncated(payload, low, spill)
+    return Reply(status="partial", payload=truncated,
+                 limitations=list(truncated["limitations"]),
+                 unknowns=list(truncated["unknowns"]))
+
+
 def finalize(result: ResultDraft, cwd: Path) -> Reply:
     """The ``ExecutionResult`` reply for ``result`` (schema, producer, UTC ``created_at``).
 
-    ``cwd`` is the execute working directory, where output above the inline limit spills.
+    Up to ``INLINE_LIMIT`` serialized bytes the result is returned as built. Above it, the
+    findings that fit are kept in native order with the evidence they reference, the complete
+    native output is written to ``<cwd>/native/full-output.json`` (an artifact with its
+    sha256) and the result is ``partial`` with the truncation limitation. A result that does
+    not fit even without findings is a structured error, never an oversized response.
     """
     producer = {"id": result.provider_id, "version": result.version}
     status = "partial" if result.partial else "ok"
@@ -314,6 +392,8 @@ def finalize(result: ResultDraft, cwd: Path) -> Reply:
         "limitations": list(result.limitations),
         "unknowns": list(result.unknowns),
     }
+    if inline_size(payload) > INLINE_LIMIT:
+        return _spill(result, payload, cwd)
     return Reply(status=status, payload=payload, limitations=list(result.limitations),
                  unknowns=list(result.unknowns))
 
@@ -444,9 +524,7 @@ def envelope(*, op: str, request_id: str, provider_id: str, version: str,
 
 
 def _encode(response: dict[str, Any]) -> bytes:
-    text = json.dumps(response, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
-                      allow_nan=False)
-    return text.encode("utf-8")
+    return _dumps(response)
 
 
 def _internal(exc: BaseException) -> Reply:

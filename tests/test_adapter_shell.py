@@ -668,3 +668,206 @@ def test_staged_execute_applies_the_hash_rule_and_writes_only_inside_cwd(
     after = _tree(tmp_path)
     assert {p: d for p, d in after.items() if not p.startswith("work/")} == before
     assert {p for p in after if p.startswith("work/")} == {"work/stage/jobs/a.py"}
+
+
+# --- inline limit and spill to artifact (3.3) ---------------------------------------------
+
+SPILL_PATH = "native/full-output.json"
+REAL_LIMIT = 4 * 1024 * 1024
+MIB = 1024 * 1024
+
+
+def _size(payload: dict[str, Any]) -> int:
+    """Bytes of ``payload`` as the shell serializes it."""
+    return len(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                          allow_nan=False).encode("utf-8"))
+
+
+def _evidence(eid: str, claim: str = "c") -> dict[str, Any]:
+    return {"id": eid, "epistemic": "observed", "subject": "s", "claim": claim,
+            "location": {"path": "jobs/a.py", "line": 1}, "hash": None}
+
+
+def _big_draft(pads: list[int], **extra: Any) -> Any:
+    """One finding per pad, each referencing its own evidence (a claim of ``pad`` bytes) and
+    the evidence ``shared``; plus one evidence no finding references."""
+    evidence = [_evidence("shared")]
+    findings = []
+    for k, pad in enumerate(pads):
+        evidence.append(_evidence(f"e{k}", "x" * pad))
+        findings.append({"id": f"R{k}#1", "title": f"R{k}: t", "severity": "low",
+                         "evidence_ids": [f"e{k}", "shared"]})
+    evidence.append(_evidence("orphan", "o" * 10))
+    fields: dict[str, Any] = {"limitations": ["l1"], "unknowns": ["u1"],
+                              "native_output": {"native": "complete", "pads": pads}}
+    fields.update(extra)
+    return shell.ResultDraft(provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1],
+                             findings=findings, evidence=evidence, **fields)
+
+
+def _truncation(n: int, m: int) -> str:
+    return (f"output truncated: {n} of {m} findings inline; "
+            f"full native output in artifact {SPILL_PATH}")
+
+
+def _strip_time(payload: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in payload.items() if k != "created_at"}
+
+
+def _core_partial(payload: dict[str, Any]) -> ExecutionResult:
+    result = from_dict(ExecutionResult, payload)
+    validate_result(result, expected=Producer(id=TEST_PRODUCER[0], version=TEST_PRODUCER[1]))
+    assert result.status == "partial"
+    return result
+
+
+def test_inline_limit_is_four_mib() -> None:
+    assert shell.INLINE_LIMIT == REAL_LIMIT
+    assert shell.SPILL_PATH == SPILL_PATH
+
+
+def test_finalize_spills_a_result_above_four_mib(tmp_path: Path) -> None:
+    pads = [MIB + MIB // 2] * 4  # ~6 MiB inline
+    reply = shell.finalize(_big_draft(pads), tmp_path)
+    assert reply.status == "partial"
+    assert _size(reply.payload) <= REAL_LIMIT
+    result = _core_partial(reply.payload)
+    # Findings in native order, with exactly the evidence they reference (in native order).
+    assert [f.id for f in result.findings] == ["R0#1", "R1#1"]
+    assert [e.id for e in result.evidence] == ["shared", "e0", "e1"]
+    spilled = (tmp_path / SPILL_PATH).read_bytes()
+    assert [(a.path, a.sha256) for a in result.artifacts] == [(SPILL_PATH, _sha(spilled))]
+    assert result.limitations == ["l1", _truncation(2, 4)]
+    assert result.unknowns == ["u1"]
+    assert reply.limitations == result.limitations and reply.unknowns == result.unknowns
+    assert json.loads(spilled) == {"native": "complete", "pads": pads}
+    assert set(_tree(tmp_path)) == {SPILL_PATH}
+
+
+@pytest.fixture
+def small_limit(monkeypatch: pytest.MonkeyPatch) -> Any:
+    def set_limit(value: int) -> None:
+        monkeypatch.setattr(shell, "INLINE_LIMIT", value)
+    return set_limit
+
+
+def test_finalize_at_the_limit_is_unchanged_and_one_byte_over_spills(
+    tmp_path: Path, small_limit: Any
+) -> None:
+    draft = _big_draft([100, 100, 100])
+    plain = shell.finalize(draft, tmp_path)
+    exact = _size(plain.payload)
+    small_limit(exact)
+    reply = shell.finalize(draft, tmp_path)
+    assert reply.status == "ok"
+    assert _strip_time(reply.payload) == _strip_time(plain.payload)
+    assert [f["id"] for f in reply.payload["findings"]] == ["R0#1", "R1#1", "R2#1"]
+    assert [e["id"] for e in reply.payload["evidence"]] == ["shared", "e0", "e1", "e2",
+                                                           "orphan"]
+    assert reply.payload["artifacts"] == [] and reply.payload["limitations"] == ["l1"]
+    assert _tree(tmp_path) == {}
+    small_limit(exact - 1)
+    over = shell.finalize(draft, tmp_path / "over")
+    assert over.status == "partial"
+    assert _size(over.payload) <= exact - 1
+    kept = len(over.payload["findings"])
+    assert kept < 3
+    result = _core_partial(over.payload)
+    assert result.limitations == ["l1", _truncation(kept, 3)]
+    assert [a.path for a in result.artifacts] == [SPILL_PATH]
+
+
+def test_finalize_keeps_the_most_findings_that_fit(tmp_path: Path, small_limit: Any) -> None:
+    draft = _big_draft([1000, 1000, 1000, 1000])
+    small_limit(3500)
+    reply = shell.finalize(draft, tmp_path)
+    kept = len(reply.payload["findings"])
+    assert 0 < kept < 4
+    assert _size(reply.payload) <= 3500
+    # One more finding (with its evidence) would not fit.
+    grown = dict(reply.payload)
+    grown["findings"] = [*reply.payload["findings"], dict(draft.findings[kept])]
+    grown["evidence"] = [*reply.payload["evidence"],
+                         {**draft.evidence[kept + 1], "producer": reply.payload["producer"]}]
+    assert _size(grown) > 3500
+
+
+def test_finalize_spill_with_a_huge_single_finding_keeps_zero_findings(
+    tmp_path: Path, small_limit: Any
+) -> None:
+    draft = _big_draft([5000], artifacts=[{"path": "case/report.json", "sha256": "a" * 64}])
+    small_limit(2000)
+    reply = shell.finalize(draft, tmp_path)
+    assert reply.status == "partial"
+    result = _core_partial(reply.payload)
+    assert result.findings == [] and result.evidence == []
+    assert result.limitations == ["l1", _truncation(0, 1)]
+    # Artifacts declared by the adapter are kept; the spill is appended.
+    assert [a.path for a in result.artifacts] == ["case/report.json", SPILL_PATH]
+    assert result.artifacts[1].sha256 == _sha((tmp_path / SPILL_PATH).read_bytes())
+
+
+def test_finalize_spill_without_native_output_writes_the_complete_result(
+    tmp_path: Path, small_limit: Any
+) -> None:
+    small_limit(4000)
+    reply = shell.finalize(_big_draft([3000, 3000], native_output=None), tmp_path)
+    assert reply.status == "partial"
+    full = json.loads((tmp_path / SPILL_PATH).read_bytes())
+    assert [f["id"] for f in full["findings"]] == ["R0#1", "R1#1"]
+    assert [e["id"] for e in full["evidence"]] == ["shared", "e0", "e1", "orphan"]
+    assert full["limitations"] == ["l1"] and full["status"] == "ok"
+
+
+def test_finalize_spill_writes_raw_native_bytes_as_is(tmp_path: Path, small_limit: Any) -> None:
+    raw = b'{"native": "raw bytes"}\n'
+    small_limit(1500)
+    reply = shell.finalize(_big_draft([3000], native_output=raw), tmp_path)
+    assert (tmp_path / SPILL_PATH).read_bytes() == raw
+    assert reply.payload["artifacts"][-1] == {"path": SPILL_PATH, "sha256": _sha(raw)}
+
+
+def test_finalize_spill_is_deterministic(tmp_path: Path, small_limit: Any) -> None:
+    draft = _big_draft([800, 800, 800, 800])
+    small_limit(2500)
+    first = shell.finalize(draft, tmp_path / "a")
+    second = shell.finalize(draft, tmp_path / "b")
+    assert first.status == second.status == "partial"
+    assert _strip_time(first.payload) == _strip_time(second.payload)
+    assert _tree(tmp_path / "a") == _tree(tmp_path / "b")
+
+
+def test_finalize_never_reports_a_result_that_cannot_fit(
+    tmp_path: Path, small_limit: Any
+) -> None:
+    # Even without findings the result exceeds the limit (huge limitations): a structured
+    # error, never an oversized response nor a stray spill file.
+    small_limit(1000)
+    reply = shell.finalize(_big_draft([10], limitations=["L" * 5000]), tmp_path)
+    assert reply.status == "error"
+    assert reply.error is not None and reply.error["code"] == "ADAPTER-OUTPUT-TOO-LARGE"
+    assert _tree(tmp_path) == {}
+
+
+def test_staged_execute_above_the_limit_is_partial_with_an_intact_artifact(
+    tmp_path: Path
+) -> None:
+    ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
+    replay = tmp_path / "replay"
+    replay.mkdir()
+    recording = {"split": True,
+                 "facts": [{"id": f"f{k}", "path": "jobs/a.py", "pad": MIB + MIB // 2}
+                           for k in range(4)]}
+    (replay / "test.stage.analyze.json").write_text(json.dumps(recording), encoding="utf-8")
+    cwd = _work(tmp_path)
+    response = _call_in(cwd, _stage_request(_pack(ws, [_item("jobs/a.py", JOB)])),
+                        ("--replay", str(replay)))
+    assert response.status == "partial", response.error
+    result = _valid_result(response)
+    assert result.status == "partial"
+    assert [f.id for f in result.findings] == ["TEST-f0#1", "TEST-f1#1"]
+    assert [e.id for e in result.evidence] == ["f0", "f1"]
+    assert result.limitations == [_truncation(2, 4)]
+    spilled = (cwd / SPILL_PATH).read_bytes()
+    assert [(a.path, a.sha256) for a in result.artifacts] == [(SPILL_PATH, _sha(spilled))]
+    assert json.loads(spilled) == recording
