@@ -195,3 +195,20 @@ def test_explain_without_risk_artifact_is_graceful() -> None:
     out = render.explain({"run_id": "x", "task": {"intent": "i"}, "risk": None,
                           "receipt": {"status": "ok"}})
     assert "Risk:        not recorded" in out and "Policy:" not in out
+
+
+def test_ask_policy_deny_exits_4_even_with_approve(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    make_workspace(tmp_path, [bad_entry("destructive", "bad-d", trust="trusted")])
+    root = str(tmp_path)
+    code, out, err = run(capsys, "ask", "run it", "--capability", "bad.thing",
+                         "--approve", "bad.thing", "--root", root, "--json")
+    data = json.loads(out)
+    assert code == 4 and data["status"] == "refused" and data["result"] is None
+    assert data["error"]["code"] == "FORGE-POLICY-DENIED" and "Traceback" not in err
+    code, out, _ = run(capsys, "explain", data["run_id"], "--root", root, "--json")
+    run_data = json.loads(out)
+    assert code == 0 and run_data["risk"]["policy"]["decision"] == "deny"
+    assert run_data["receipt"]["status"] == "refused" and run_data.get("result") is None
+    code, out, _ = run(capsys, "explain", data["run_id"], "--root", root)
+    assert code == 0 and "Policy:      deny" in out

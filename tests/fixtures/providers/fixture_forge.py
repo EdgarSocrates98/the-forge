@@ -1,6 +1,8 @@
 """Minimal standalone Forge Protocol v1 provider driven by a manifest file (stdlib only).
 
-argv: fixture_forge.py MANIFEST_JSON OP
+argv: fixture_forge.py [--unhealthy] MANIFEST_JSON OP
+
+``--unhealthy`` makes the health op report ``unavailable`` (fallback scenarios).
 """
 
 import json
@@ -9,8 +11,12 @@ from pathlib import Path
 
 
 def main() -> int:
-    manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-    op = sys.argv[2]
+    args = sys.argv[1:]
+    unhealthy = args[0] == "--unhealthy"
+    if unhealthy:
+        args = args[1:]
+    manifest = json.loads(Path(args[0]).read_text(encoding="utf-8"))
+    op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
 
@@ -36,6 +42,10 @@ def main() -> int:
     if op == "describe":
         return reply("ok", manifest)
     if op == "health":
+        if unhealthy:
+            return reply("ok", {"status": "unavailable",
+                                "checks": [{"name": "fixture", "ok": False,
+                                            "detail": "backend down"}]})
         return reply("ok", {"status": "ok", "checks": [{"name": "fixture", "ok": True}]})
     if op == "execute":
         payload = req.get("payload") or {}
