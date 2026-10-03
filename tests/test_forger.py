@@ -31,6 +31,7 @@ from theforge.registry import (
     Registry,
     RegistryRecord,
     RevalidationOutcome,
+    fingerprint,
 )
 from theforge.routing import route
 from theforge.runs import ARTIFACTS, RunStore
@@ -52,14 +53,13 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert out.result.metrics.tokens.kind == "unknown"
     store = RunStore(tmp_path / ".forge")
     for name in ARTIFACTS:
-        if name == "risk":  # written by the orchestrator once policy is wired (task 3.7)
-            continue
         assert store.read_optional(out.run_id, name) is not None
     receipt = out.receipt
     assert receipt.inputs.task_sha256 == sha256_of(store.read(out.run_id, "task"))
     assert receipt.inputs.routing_sha256 == sha256_of(store.read(out.run_id, "routing"))
     assert receipt.inputs.context_sha256 == sha256_of(store.read(out.run_id, "context"))
     assert receipt.result_sha256 == sha256_of(store.read(out.run_id, "result"))
+    assert receipt.inputs.risk_sha256 == sha256_of(store.read(out.run_id, "risk"))
     assert receipt.provider is not None and receipt.provider.id == "fixture-spark"
     assert receipt.provider.trust == "local" and receipt.provider.manifest_sha256
     files = [f["path"] for f in store.read(out.run_id, "context")["files"]]
@@ -505,3 +505,158 @@ def test_selected_provider_without_execute_op_is_refused(
     assert out.status == "refused" and out.result is None
     assert out.error is not None and out.error.code == Codes.PROTO_OP_UNSUPPORTED
     assert RunStore(forge).read_optional(out.run_id, "context") is None
+
+
+# --- policy, risk and provider identity (task 3.7) --------------------------------------------
+
+class _OpRecorder:
+    """Transport factory that records every op started, so tests can prove no execute ran."""
+
+    def __init__(self) -> None:
+        self.ops: list[str] = []
+
+    def __call__(self, argv: Sequence[str]) -> ProviderTransport:
+        return _RecordingTransport(self.ops, argv)
+
+
+class _RecordingTransport:
+    def __init__(self, ops: list[str], argv: Sequence[str]) -> None:
+        self.ops = ops
+        self.inner = SubprocessTransport(argv)
+
+    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
+             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+        self.ops.append(op)
+        return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
+                               check_protocol=check_protocol)
+
+
+def _policy_forger(tmp_path: Path) -> tuple[Forger, _OpRecorder, RunStore]:
+    forge = tmp_path / ".forge"
+    recorder = _OpRecorder()
+    store = RunStore(forge)
+    return Forger(tmp_path, Registry(forge), store, transport_factory=recorder), recorder, store
+
+
+def test_local_mutation_with_local_trust_is_refused_without_approval(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
+    forger_, recorder, store = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "refused" and out.result is None
+    assert out.error is not None and out.error.code == Codes.POLICY_APPROVAL_REQUIRED
+    assert out.error.unlock == "--approve bad.thing"
+    assert "execute" not in recorder.ops
+    risk = store.read(out.run_id, "risk")
+    assert risk["policy"]["decision"] == "ask" and risk["policy"]["approved"] is False
+    assert risk["operation_class"] == "local_mutation"
+    assert risk["dimensions"]["local_mutation"] == "yes"
+    assert store.read_optional(out.run_id, "context") is None
+    assert store.read_optional(out.run_id, "result") is None
+    assert out.receipt.status == "refused"
+    assert out.receipt.inputs.risk_sha256 == sha256_of(risk)
+    assert store.read(out.run_id, "receipt")["error"]["unlock"] == "--approve bad.thing"
+
+
+def test_local_mutation_with_local_trust_runs_with_approval(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
+    forger_, recorder, store = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing",
+                                 approvals=frozenset({"bad.thing"})))
+    assert out.status == "ok" and out.result is not None
+    assert "execute" in recorder.ops
+    risk = store.read(out.run_id, "risk")
+    assert risk["policy"]["decision"] == "allow" and risk["policy"]["approved"] is True
+    assert out.receipt.inputs.risk_sha256 == sha256_of(risk)
+
+
+def test_approval_for_another_capability_does_not_unlock(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
+    forger_, recorder, _ = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing",
+                                 approvals=frozenset({"demo.echo"})))
+    assert out.status == "refused"
+    assert out.error is not None and out.error.code == Codes.POLICY_APPROVAL_REQUIRED
+    assert "execute" not in recorder.ops
+
+
+def test_local_mutation_with_trusted_provider_is_allowed(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="trusted")])
+    forger_, _, store = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "ok"
+    policy = store.read(out.run_id, "risk")["policy"]
+    assert policy["decision"] == "allow" and policy["approved"] is False
+    assert policy["rule"] == "default.local_mutation.trusted"
+
+
+def test_destructive_is_denied_even_with_approval(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [bad_entry("destructive", "bad-d", trust="trusted")])
+    forger_, recorder, store = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing",
+                                 approvals=frozenset({"bad.thing"})))
+    assert out.status == "refused" and out.result is None
+    assert out.error is not None and out.error.code == Codes.POLICY_DENIED
+    assert "destructive" in out.error.detail
+    assert "execute" not in recorder.ops
+    risk = store.read(out.run_id, "risk")
+    assert risk["policy"]["decision"] == "deny"
+    assert store.read_optional(out.run_id, "context") is None
+    assert out.receipt.inputs.risk_sha256 == sha256_of(risk)
+
+
+def test_read_only_echo_receipt_records_identity_and_risk(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [])
+    write_file(tmp_path, "notes.txt", "hello\n")
+    forge = tmp_path / ".forge"
+    registry = Registry(forge)
+    out = Forger(tmp_path, registry, RunStore(forge)).ask(
+        AskRequest(intent="eco", capability="demo.echo"))
+    assert out.status == "ok"
+    store = RunStore(forge)
+    risk = store.read(out.run_id, "risk")
+    assert risk["policy"]["decision"] == "allow"
+    assert risk["policy"]["rule"] == "default.read_only"
+    provider = out.receipt.provider
+    assert provider is not None
+    expected = fingerprint(registry.get(provider.id).entry)
+    assert provider.fingerprint == expected.digest
+    assert provider.executable == expected.executable
+    assert provider.observed_version == provider.version
+    assert out.receipt.inputs.risk_sha256 == sha256_of(risk)
+    persisted = store.read(out.run_id, "receipt")
+    assert persisted["inputs"]["risk_sha256"] == sha256_of(risk)
+    assert persisted["provider"]["fingerprint"] == expected.digest
+
+
+def test_project_policy_can_tighten_read_only(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [])
+    write_file(tmp_path, ".forge/config/policy.toml", '[rules]\nread_only = "deny"\n')
+    forger_, recorder, store = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="eco", capability="demo.echo"))
+    assert out.status == "refused"
+    assert out.error is not None and out.error.code == Codes.POLICY_DENIED
+    assert store.read(out.run_id, "risk")["policy"]["rule"] == "project.read_only"
+    assert "execute" not in recorder.ops
+
+
+def test_user_policy_can_loosen_local_mutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    user_dir = tmp_path / "user"
+    write_file(user_dir, "policy.toml", '[rules]\n"local_mutation.local" = "allow"\n')
+    monkeypatch.setenv("THEFORGE_CONFIG_DIR", str(user_dir))
+    ws = tmp_path / "ws"
+    make_workspace(ws, [bad_entry("mutating", "bad-m", trust="local")])
+    forger_, _, store = _policy_forger(ws)
+    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "ok"
+    assert store.read(out.run_id, "risk")["policy"]["rule"] == "user.local_mutation.local"
+
+
+def test_policy_warnings_become_receipt_limitations(tmp_path: Path) -> None:
+    make_workspace(tmp_path, [])
+    write_file(tmp_path, ".forge/config/policy.toml", '[rules]\nread_only = "bogus"\n')
+    forger_, _, _ = _policy_forger(tmp_path)
+    out = forger_.ask(AskRequest(intent="eco", capability="demo.echo"))
+    assert out.status == "ok"
+    assert any("policy" in lim and "bogus" in lim for lim in out.receipt.limitations)

@@ -7,4 +7,4 @@ Confidence:  high   measured: ['file_globs:openapi.yaml', 'keywords:contrato,ope
 Fallbacks:   none
 Context:     1 files, 64/262144 bytes (complete); excluded 0
 Result:      ok: 1 findings, 1 evidence
-Receipt:     context=<HASH> risk=- routing=<HASH> task=<HASH> result=<HASH>
+Receipt:     context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>

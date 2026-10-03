@@ -16,10 +16,14 @@ RESULT = {
 }
 
 
-def capability(cap_id, file_globs=()):
+# Modes whose capability declares a non-read_only operation class (execute answers normally).
+OPERATION_CLASSES = {"mutating": "local_mutation", "destructive": "destructive"}
+
+
+def capability(cap_id, file_globs=(), operation_class="read_only"):
     return {
         "id": cap_id, "actions": ["run"], "default_action": "run",
-        "state": "supported", "operation_class": "read_only",
+        "state": "supported", "operation_class": operation_class,
         "signals": {"keywords": ["bad"], "file_globs": list(file_globs), "dependencies": []},
     }
 
@@ -56,7 +60,8 @@ def main() -> int:
             sys.stderr.write("describe failed\n")
             return 3
         cap_id = "Bad Id" if mode == "invalid-manifest" else "bad.thing"
-        capabilities = [capability(cap_id)]
+        capabilities = [capability(cap_id,
+                                   operation_class=OPERATION_CLASSES.get(mode, "read_only"))]
         if mode == "describe-catch-all-glob":
             capabilities.append(capability("bad.greedy", ["**/*"]))
         if mode == "describe-only-catch-all-glob":

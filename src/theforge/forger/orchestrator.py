@@ -1,4 +1,4 @@
-"""The Forger: task -> route -> revalidate -> health -> context -> execute -> receipt.
+"""The Forger: task -> route -> revalidate -> health -> policy -> context -> execute -> receipt.
 
 Every artifact is persisted as soon as it exists, so a run that fails midway is
 still explainable. The routing artifact is the exception: it is written once, with the
@@ -14,6 +14,7 @@ from typing import Literal
 from theforge.context import build_context_pack, scan_workspace
 from theforge.contracts import (
     Candidate,
+    Capability,
     Confidence,
     ContractError,
     ErrorInfo,
@@ -35,8 +36,17 @@ from theforge.contracts.codes import Codes
 from theforge.contracts.types import BudgetProfile, Outcome
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
+from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
-from theforge.registry import Registry, RegistryRecord, RevalidationOutcome, check_health
+from theforge.registry import (
+    ProviderFingerprint,
+    Registry,
+    RegistryRecord,
+    RevalidationOutcome,
+    check_health,
+    fingerprint,
+    user_config_dir,
+)
 from theforge.routing import MIN_SIGNAL_TYPES, route
 from theforge.routing.router import EXECUTE_OP
 from theforge.routing.signals import workspace_dependencies
@@ -53,6 +63,7 @@ class AskRequest:
     action: str | None = None
     profile: BudgetProfile = "balanced"
     allow_unverified: bool = False
+    approvals: frozenset[str] = frozenset()  # capability ids explicitly approved (--approve)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -73,8 +84,11 @@ class _Trace:
     routing_sha: str | None = None
     context_sha: str | None = None
     result_sha: str | None = None
+    risk_sha: str | None = None
     record: RegistryRecord | None = None
+    identity: ProviderFingerprint | None = None
     decision: RoutingDecision | None = None
+    limitations: list[str] = field(default_factory=list)
 
 
 def _offers(record: RegistryRecord, capability_id: str, action: str) -> bool:
@@ -159,13 +173,20 @@ class Forger:
         if record is None or record.manifest is None:
             return self._finish(trace, decision, "provider_failure", error=health_error)
         trace.record = record
+        trace.identity = fingerprint(record.entry)
         op_error = _require_op(record, EXECUTE_OP)
         if op_error is not None:
             return self._finish(trace, decision, "refused", error=op_error)
 
         selection = decision.selected[0]
         capability = record.manifest.capability(selection.capability)
-        globs = list(capability.signals.file_globs) if capability else []
+        if capability is None:  # the router only selects declared capabilities
+            raise RuntimeError(f"{record.entry.id} does not declare {selection.capability!r}")
+        policy_error = self._apply_policy(trace, request, record, capability, selection)
+        if policy_error is not None:
+            return self._finish(trace, decision, "refused", error=policy_error)
+
+        globs = list(capability.signals.file_globs)
         pack = build_context_pack(task, record.entry.id, globs, scan)
         trace.context_sha = self.store.write(run_id, "context", pack)
 
@@ -203,6 +224,34 @@ class Forger:
         ))
         trace.result_sha = self.store.write(run_id, "result", result)
         return self._finish(trace, decision, result_status, result=result)
+
+    def _apply_policy(
+        self, trace: _Trace, request: AskRequest, record: RegistryRecord,
+        capability: Capability, selection: Selection,
+    ) -> ErrorInfo | None:
+        """Decide allow/ask/deny and persist the risk before any execute process (6.1-6.4).
+
+        Only routable providers reach this point: ``blocked`` ones are excluded by the router.
+        """
+        assert record.manifest is not None
+        warnings: list[str] = []
+        config = load_policy(user_dir=self.registry.user_dir or user_config_dir(),
+                             forge_dir=self.root / ".forge", warnings=warnings)
+        trace.limitations.extend(f"policy: {w}" for w in warnings)
+        dimensions = assess_dimensions(operation_class=capability.operation_class,
+                                       execution=record.manifest.execution)
+        policy = evaluate(dimensions=dimensions, trust=record.entry.trust, config=config,
+                          approved=capability.id in request.approvals, capability=capability.id)
+        risk = build_risk_assessment(run_id=trace.run_id, provider_id=record.entry.id,
+                                     capability=capability, action=selection.action,
+                                     dimensions=dimensions, decision=policy)
+        trace.risk_sha = self.store.write(trace.run_id, "risk", risk)
+        if policy.decision == "ask":
+            return ErrorInfo(code=Codes.POLICY_APPROVAL_REQUIRED, detail=policy.reason,
+                             unlock=policy.unlock)
+        if policy.decision == "deny":
+            return ErrorInfo(code=Codes.POLICY_DENIED, detail=policy.reason)
+        return None
 
     def _final_route(
         self, trace: _Trace, task: TaskSpec, request: AskRequest, files: list[str]
@@ -325,16 +374,22 @@ class Forger:
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:
+            identity = trace.identity
+            # observed_version: the version the provider itself reported when (re)described
+            # right before this run; the manifest hash alone does not prove identity (4.6).
             provider = ReceiptProvider(id=record.entry.id, version=record.manifest.version,
                                        trust=record.entry.trust,
-                                       manifest_sha256=record.manifest_sha256)
+                                       manifest_sha256=record.manifest_sha256,
+                                       executable=identity.executable if identity else None,
+                                       fingerprint=identity.digest if identity else None,
+                                       observed_version=record.manifest.version)
         receipt = ExecutionReceipt(
             producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
             forge_version=VERSION,
             inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
-                                 context_sha256=trace.context_sha),
+                                 context_sha256=trace.context_sha, risk_sha256=trace.risk_sha),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
-            finished_at=utc_now(), error=error,
+            finished_at=utc_now(), error=error, limitations=list(trace.limitations),
         )
         self.store.write(trace.run_id, "receipt", receipt)
         return AskOutcome(run_id=trace.run_id, status=status, decision=decision,
