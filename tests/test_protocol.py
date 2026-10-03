@@ -8,6 +8,7 @@ from hypothesis import strategies as st
 
 from helpers import bad_argv, force_kill, pid_alive, wait_gone
 from theforge.contracts import ExecutionResult, ForgeManifest, Producer, from_dict
+from theforge.contracts.codes import Codes
 from theforge.contracts.integrity import check_producer, validate_result
 from theforge.protocol import SubprocessTransport, TransportError, choose_protocol
 from theforge.protocol.negotiate import major
@@ -297,3 +298,21 @@ def test_without_job_object_lingering_grandchild_never_blocks_past_the_bound(
     finally:
         if grandchild and pid_alive(grandchild):
             force_kill(grandchild)
+
+
+@pytest.mark.parametrize(
+    "stdout",
+    [b"1" * 5000, b"[" * 100000, b'{"request_id": ' + b"9" * 5000 + b"}",
+     b'{"payload": ' + b"[" * 100000 + b"]" * 100000 + b"}"],
+    ids=["huge-int", "deep-open", "huge-int-in-envelope", "deep-in-envelope"],
+)
+def test_undecodable_stdout_is_proto_not_json(
+    stdout: bytes, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Req 2.9: json.loads ValueError/RecursionError must not escape the transport."""
+    t = SubprocessTransport(["unused"])
+    monkeypatch.setattr(t, "_run", lambda *_a, **_k: stdout)
+    with pytest.raises(TransportError) as info:
+        t.call("describe", {}, timeout=1.0)
+    assert info.value.code == Codes.PROTO_NOT_JSON
+    assert len(info.value.detail) < 300  # the payload is not echoed back

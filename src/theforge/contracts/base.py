@@ -67,7 +67,7 @@ def _coerce(tp: Any, value: Any, path: str, strict: bool) -> Any:
         raise ContractError(f"{path}: no union member matched ({'; '.join(errors)})")
     if origin is Literal:
         if not any(type(value) is type(a) and value == a for a in args):
-            raise ContractError(f"{path}: expected one of {list(args)}, got {value!r}")
+            raise ContractError(f"{path}: expected one of {list(args)}, got {_brief(value)}")
         return value
     if origin is list:
         if not isinstance(value, list):
@@ -82,6 +82,15 @@ def _coerce(tp: Any, value: Any, path: str, strict: bool) -> Any:
     return _coerce_scalar(tp, value, path)
 
 
+def _brief(value: Any, limit: int = 80) -> str:
+    """Bounded repr of untrusted data for error messages (deep nesting must not escape)."""
+    try:
+        text = repr(value)
+    except (RecursionError, ValueError):
+        return f"<{type(value).__name__}>"
+    return text if len(text) <= limit else f"{text[:limit]}..."
+
+
 def _coerce_scalar(tp: Any, value: Any, path: str) -> Any:
     if tp is bool:
         if not isinstance(value, bool):
@@ -94,7 +103,10 @@ def _coerce_scalar(tp: Any, value: Any, path: str) -> Any:
     if tp is float:
         if isinstance(value, bool) or not isinstance(value, int | float):
             raise ContractError(f"{path}: expected number, got {type(value).__name__}")
-        return float(value)
+        try:
+            return float(value)
+        except OverflowError as exc:
+            raise ContractError(f"{path}: number out of range") from exc
     if tp is str:
         if not isinstance(value, str):
             raise ContractError(f"{path}: expected string, got {type(value).__name__}")

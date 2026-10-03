@@ -74,6 +74,14 @@ class SubprocessTransport:
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise TransportError(Codes.PROTO_NOT_JSON, f"{op}: stdout is not JSON ({exc})") \
                 from exc
+        except (ValueError, RecursionError) as exc:
+            # Integer literals past the int-digit limit or nesting past the recursion limit:
+            # valid-looking JSON that cannot be decoded safely. The payload is not echoed.
+            raise TransportError(
+                Codes.PROTO_NOT_JSON,
+                f"{op}: stdout JSON cannot be decoded ({type(exc).__name__}: "
+                "integer too long or nesting too deep)",
+            ) from exc
         try:
             response = from_dict(Response, data)
         except ContractError as exc:
