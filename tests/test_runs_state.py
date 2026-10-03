@@ -87,6 +87,7 @@ def test_init_workspace(tmp_path: Path) -> None:
     created = init_workspace(tmp_path)
     assert ".forge/config/providers.toml" in created
     assert ".forge/.gitignore" in created
+    assert ".forge/registry" not in created
     assert "!config/" in (tmp_path / ".forge" / ".gitignore").read_text(encoding="utf-8")
     assert init_workspace(tmp_path) == []
     assert find_forge_dir(tmp_path) == tmp_path / ".forge"

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from helpers import SPARK_ENTRY, make_workspace, write_providers
 from theforge.environment import detect_host, run_doctor
-from theforge.registry import Registry
+from theforge.registry import Registry, user_cache_dir
 
 
 def test_detect_host() -> None:
@@ -40,7 +40,8 @@ def test_doctor_is_read_only(tmp_path: Path) -> None:
     report = run_doctor(tmp_path, Registry(forge), env={})
     checks = {c["name"]: c for c in report["checks"]}
     assert checks["provider:fixture-spark"]["status"] == "ok"
-    assert not list((forge / "registry").glob("*.json"))
+    assert not (forge / "registry").exists()
+    assert not list((user_cache_dir() / "registry").glob("*.json"))
 
 
 def test_doctor_reports_registry_errors(tmp_path: Path) -> None:

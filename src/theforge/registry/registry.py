@@ -1,13 +1,16 @@
 """Registry: describe providers, negotiate protocol, cache ready manifests, apply trust."""
 
+import contextlib
 import json
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Final, Literal
 
 from theforge.contracts import ContractError, ForgeManifest, from_dict, to_dict
-from theforge.contracts.canonical import sha256_of
-from theforge.errors import PersistenceError, UsageError
+from theforge.contracts.canonical import sha256_of, utc_now
+from theforge.errors import UsageError
 from theforge.protocol import (
     SUPPORTED_PROTOCOLS,
     SubprocessTransport,
@@ -15,12 +18,14 @@ from theforge.protocol import (
     TransportFactory,
     choose_protocol,
 )
-from theforge.registry.config import ProviderEntry, resolve_entries
+from theforge.registry.config import ProviderEntry, resolve_entries, user_cache_dir
+from theforge.registry.identity import fingerprint
+from theforge.state import LEGACY_REGISTRY_DIR, remove_legacy_cache
 
 RecordState = Literal[
     "ready", "incompatible", "invalid", "unreachable", "blocked", "untrusted"
 ]
-CACHE_SCHEMA = "theforge/RegistryCache/v1"
+CACHE_SCHEMA: Final = "theforge/RegistryCache/v2"
 DESCRIBE_TIMEOUT = 10.0
 ROUTABLE_TRUST = frozenset({"builtin", "trusted", "local"})
 
@@ -42,14 +47,30 @@ class RegistryRecord:
         return allow_unverified and self.entry.trust == "unverified"
 
 
+@dataclass(frozen=True, kw_only=True)
+class RegistryCacheEntry:
+    """On-disk registry cache document (user cache dir), re-read with ``strict=True``."""
+
+    schema: Literal["theforge/RegistryCache/v2"]
+    entry: ProviderEntry
+    entry_digest: str
+    fingerprint: str
+    state: Literal["ready"]
+    manifest: ForgeManifest
+    manifest_sha256: str
+    protocol: str
+    written_at: str
+
+
 class Registry:
     def __init__(
         self, forge_dir: Path | None, *, user_dir: Path | None = None,
-        transport_factory: TransportFactory = SubprocessTransport,
+        cache_dir: Path | None = None, transport_factory: TransportFactory = SubprocessTransport,
         timeout: float = DESCRIBE_TIMEOUT, allow_unverified: bool = False,
     ) -> None:
         self.forge_dir = forge_dir
         self.user_dir = user_dir
+        self.cache_dir = cache_dir if cache_dir is not None else user_cache_dir()
         self.transport_factory = transport_factory
         self.timeout = timeout
         self.allow_unverified = allow_unverified
@@ -59,6 +80,7 @@ class Registry:
         return resolve_entries(self.forge_dir, self.user_dir, self.warnings)
 
     def refresh(self) -> list[RegistryRecord]:
+        self._remove_legacy_cache()
         records = [self._describe(entry) for entry in self.entries()]
         for record in records:
             self._write_cache(record)
@@ -116,50 +138,73 @@ class Registry:
         return RegistryRecord(entry=entry, state="ready", manifest=manifest,
                               manifest_sha256=digest, protocol=protocol)
 
-    def _cache_path(self, provider_id: str) -> Path | None:
+    def cached_ids(self) -> list[str]:
+        """Ids of configured providers that currently have a cache file (no describe)."""
+        return sorted(e.id for e in self.entries() if self._cache_path(e).is_file())
+
+    def _cache_path(self, entry: ProviderEntry) -> Path:
+        digest = sha256_of(to_dict(entry))
+        return self.cache_dir / "registry" / f"{entry.id}-{digest[:12]}.json"
+
+    def _remove_legacy_cache(self) -> None:
         if self.forge_dir is None:
-            return None
-        return self.forge_dir / "registry" / f"{provider_id}.json"
+            return
+        legacy = self.forge_dir / LEGACY_REGISTRY_DIR
+        warning = remove_legacy_cache(legacy)
+        if warning:
+            self.warnings.append(warning)
 
     def _write_cache(self, record: RegistryRecord) -> None:
-        path = self._cache_path(record.entry.id)
-        if path is None:
-            return
+        path = self._cache_path(record.entry)
         try:
-            if record.state != "ready" or record.entry.trust == "unverified":
+            if (record.state != "ready" or record.entry.trust == "unverified"
+                    or record.manifest is None or record.manifest_sha256 is None
+                    or record.protocol is None):
                 path.unlink(missing_ok=True)
                 return
-            doc = {"schema": CACHE_SCHEMA, **to_dict(record)}
+            cached = RegistryCacheEntry(
+                schema=CACHE_SCHEMA, entry=record.entry,
+                entry_digest=sha256_of(to_dict(record.entry)),
+                fingerprint=fingerprint(record.entry).digest, state="ready",
+                manifest=record.manifest, manifest_sha256=record.manifest_sha256,
+                protocol=record.protocol, written_at=utc_now())
             path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(path.name + ".tmp")
-            tmp.write_text(json.dumps(doc, indent=2, sort_keys=True), encoding="utf-8")
-            tmp.replace(path)
+            fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}-", suffix=".tmp")
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(json.dumps(to_dict(cached), indent=2, sort_keys=True))
+                os.replace(tmp, path)
+            except BaseException:
+                with contextlib.suppress(OSError):
+                    os.unlink(tmp)
+                raise
         except OSError as exc:
-            raise PersistenceError(f"cannot write registry cache {path}: {exc}") from exc
+            self.warnings.append(
+                f"registry cache for {record.entry.id} not written ({path}): {exc}")
 
     def _read_cache(self, entry: ProviderEntry) -> RegistryRecord | None:
-        path = self._cache_path(entry.id)
-        if path is None or not path.is_file():
-            return None
         if entry.trust == "unverified":
             return None
+        path = self._cache_path(entry)
         try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(doc, dict) or doc.get("schema") != CACHE_SCHEMA:
-                raise ValueError("unexpected cache schema")
-            record = from_dict(RegistryRecord, doc)
-            if record.entry != entry:
+            if not path.is_file():
                 return None
-            if record.manifest is None or record.state != "ready":
-                raise ValueError("cache entry is not a ready manifest")
-            if sha256_of(to_dict(record.manifest)) != record.manifest_sha256:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            cached = from_dict(RegistryCacheEntry, doc, "$", strict=True)
+            if cached.entry != entry or cached.entry_digest != sha256_of(to_dict(entry)):
+                return None
+            if cached.fingerprint != fingerprint(entry).digest:
+                return None
+            if sha256_of(to_dict(cached.manifest)) != cached.manifest_sha256:
                 raise ValueError("manifest hash mismatch")
-            if record.manifest.id != entry.id:
+            if cached.manifest.id != entry.id:
                 raise ValueError("manifest id does not match registry entry")
-            protocol = choose_protocol(record.manifest.protocols)
-            if protocol is None or protocol != record.protocol:
+            protocol = choose_protocol(cached.manifest.protocols)
+            if protocol is None or protocol != cached.protocol:
                 raise ValueError("cached protocol does not match negotiated protocol")
-            return record
+            return RegistryRecord(entry=entry, state="ready", manifest=cached.manifest,
+                                  manifest_sha256=cached.manifest_sha256, protocol=protocol)
         except (OSError, ValueError) as exc:
             self.warnings.append(f"registry cache for {entry.id} discarded: {exc}")
             return None
+

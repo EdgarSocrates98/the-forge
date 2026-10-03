@@ -8,7 +8,17 @@ from helpers import SPARK_ENTRY, bad_argv, bad_entry, write_providers
 from theforge.contracts import to_dict
 from theforge.contracts.canonical import sha256_of
 from theforge.errors import UsageError
-from theforge.registry import Registry, check_health
+from theforge.registry import Registry, check_health, user_cache_dir
+
+
+def cache_files(provider_id: str) -> list[Path]:
+    return sorted((user_cache_dir() / "registry").glob(f"{provider_id}-*.json"))
+
+
+def cache_file(provider_id: str) -> Path:
+    files = cache_files(provider_id)
+    assert len(files) == 1, files
+    return files[0]
 
 
 def make_forge(tmp_path: Path, entries: list[dict[str, Any]]) -> Path:
@@ -23,7 +33,8 @@ def test_refresh_describes_and_caches(tmp_path: Path) -> None:
     assert records["echo-forge"].state == "ready"
     assert records["fixture-spark"].state == "ready"
     assert records["fixture-spark"].protocol == "forge/v1"
-    assert (forge / "registry" / "fixture-spark.json").is_file()
+    assert cache_file("fixture-spark").is_file()
+    assert not (forge / "registry").exists()
 
 
 def test_records_use_cache_without_spawning(tmp_path: Path) -> None:
@@ -39,7 +50,7 @@ def test_records_use_cache_without_spawning(tmp_path: Path) -> None:
 def test_tampered_cache_is_discarded(tmp_path: Path) -> None:
     forge = make_forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
-    path = forge / "registry" / "fixture-spark.json"
+    path = cache_file("fixture-spark")
     doc = json.loads(path.read_text(encoding="utf-8"))
     doc["manifest"]["version"] = "6.6.6"
     path.write_text(json.dumps(doc), encoding="utf-8")
@@ -52,7 +63,7 @@ def test_tampered_cache_is_discarded(tmp_path: Path) -> None:
 def test_corrupt_cache_is_discarded(tmp_path: Path) -> None:
     forge = make_forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
-    (forge / "registry" / "fixture-spark.json").write_text("{nope", encoding="utf-8")
+    cache_file("fixture-spark").write_text("{nope", encoding="utf-8")
     registry = Registry(forge)
     assert registry.get("fixture-spark").state == "ready"
     assert registry.warnings
@@ -135,14 +146,14 @@ def test_unverified_is_never_cached(tmp_path: Path) -> None:
     forge = make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified")])
     record = Registry(forge, allow_unverified=True).refresh()
     assert any(r.entry.id == "bad-a" and r.state == "ready" for r in record)
-    assert not (forge / "registry" / "bad-a.json").exists()
+    assert not cache_files("bad-a")
     assert Registry(forge).get("bad-a").state == "untrusted"
 
 
 def test_forged_cache_cannot_launder_unverified(tmp_path: Path) -> None:
     forge = make_forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
-    path = forge / "registry" / "fixture-spark.json"
+    path = cache_file("fixture-spark")
     doc = json.loads(path.read_text(encoding="utf-8"))
     unverified = {"id": "fixture-spark", "argv": ["definitely-not-a-real-forge-binary"],
                   "trust": "unverified"}
@@ -170,7 +181,7 @@ def test_health_refuses_unverified_and_blocked(tmp_path: Path) -> None:
 def _tampered(tmp_path: Path, mutate: Any) -> Registry:
     forge = make_forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
-    path = forge / "registry" / "fixture-spark.json"
+    path = cache_file("fixture-spark")
     doc = json.loads(path.read_text(encoding="utf-8"))
     mutate(doc)
     path.write_text(json.dumps(doc), encoding="utf-8")
@@ -200,17 +211,20 @@ def test_cache_with_wrong_manifest_id_is_discarded(tmp_path: Path) -> None:
 def test_refresh_removes_stale_cache(tmp_path: Path) -> None:
     forge = make_forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
-    cache = forge / "registry" / "fixture-spark.json"
+    cache = cache_file("fixture-spark")
     assert cache.is_file()
     broken = {**SPARK_ENTRY, "argv": ["definitely-not-a-real-forge-binary"]}
     write_providers(forge, [broken])
     records = {r.entry.id: r for r in Registry(forge).refresh()}
     assert records["fixture-spark"].state == "unreachable"
-    assert not cache.exists()
+    # cache files are keyed by entry digest: the changed entry never sees the old manifest
+    # and its unreachable record is not cached
+    assert cache_files("fixture-spark") == [cache]
+    assert Registry(forge).get("fixture-spark").state == "unreachable"
 
 
 def test_records_persist_false_leaves_no_cache(tmp_path: Path) -> None:
     forge = make_forge(tmp_path, [SPARK_ENTRY])
     records = Registry(forge).records(persist=False)
     assert all(r.state == "ready" for r in records)
-    assert not list((forge / "registry").glob("*.json"))
+    assert not cache_files("fixture-spark") and not (forge / "registry").exists()

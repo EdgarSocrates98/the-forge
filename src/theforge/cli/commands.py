@@ -69,7 +69,10 @@ def _capability_rows(records: list[RegistryRecord],
 
 def cmd_init(args: argparse.Namespace) -> int:
     root = _root(args)
-    created = init_workspace(root)
+    warnings: list[str] = []
+    created = init_workspace(root, warnings)
+    for warning in warnings:
+        print(f"theforge: warning: {warning}", file=sys.stderr)
     _emit(args, {"forge_dir": str(root / ".forge"), "created": created}, render.init)
     return 0
 
@@ -87,7 +90,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = find_forge_dir(root)
     runs = RunStore(forge_dir).list_runs() if forge_dir else []
-    cached = sorted(p.stem for p in (forge_dir / "registry").glob("*.json")) if forge_dir else []
+    cached = Registry(forge_dir).cached_ids() if forge_dir else []
     data = {"root": str(root), "initialized": forge_dir is not None, "cached_providers": cached,
             "runs": len(runs), "last_run": runs[-1] if runs else None}
     _emit(args, data, render.status)
