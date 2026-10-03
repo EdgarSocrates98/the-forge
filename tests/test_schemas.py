@@ -3,9 +3,26 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from theforge.contracts import ExecutionResult, ForgeManifest, TaskSpec, to_dict
+from theforge.contracts import (
+    ContextPack,
+    Evidence,
+    ExecuteRequest,
+    ExecutionReceipt,
+    ExecutionResult,
+    ForgeManifest,
+    HealthReport,
+    Request,
+    Response,
+    RiskAssessment,
+    RoutingDecision,
+    TaskSpec,
+    from_dict,
+    to_dict,
+)
 from theforge.contracts.canonical import utc_now
-from theforge.contracts.schema import EXPORTED, json_schema
+from theforge.contracts.risk import OPERATION_CLASS_LIMITATION
+from theforge.contracts.schema import CLOSED_SCHEMAS, EXPORTED, json_schema
+from theforge.contracts.types import SHA256_RE
 from theforge.meta import PRODUCER
 from theforge.providers.echo.provider import MANIFEST
 
@@ -40,3 +57,101 @@ def test_schema_rejects_what_contracts_reject() -> None:
     data["capabilities"][1]["id"] = "Bad Id"
     errors = list(Draft202012Validator(json_schema(ForgeManifest)).iter_errors(data))
     assert len(errors) == 2
+
+
+def _object_nodes(node: object) -> list[dict[str, object]]:
+    found: list[dict[str, object]] = []
+    if isinstance(node, dict):
+        if node.get("type") == "object" and "properties" in node:
+            found.append(node)
+        for value in node.values():
+            found.extend(_object_nodes(value))
+    elif isinstance(node, list):
+        for value in node:
+            found.extend(_object_nodes(value))
+    return found
+
+
+def test_closed_schemas_are_core_only_artifacts() -> None:
+    assert RoutingDecision in CLOSED_SCHEMAS and ExecutionReceipt in CLOSED_SCHEMAS
+    for open_cls in (ForgeManifest, ExecutionResult, Evidence, Response, HealthReport,
+                     TaskSpec, ContextPack, ExecuteRequest, Request):
+        assert open_cls not in CLOSED_SCHEMAS
+
+
+def test_closed_schemas_reject_additional_properties_recursively() -> None:
+    for cls in EXPORTED:
+        nodes = _object_nodes(json_schema(cls))
+        assert nodes
+        closed = [n.get("additionalProperties") is False for n in nodes]
+        if cls in CLOSED_SCHEMAS:
+            assert all(closed), cls.__name__
+        else:
+            assert not any(closed), cls.__name__
+
+
+def test_closed_schema_validation_rejects_unknown_key() -> None:
+    receipt = from_dict(ExecutionReceipt, {
+        "producer": {"id": "p", "version": "1"}, "created_at": "t", "status": "ok",
+        "run_id": "r", "forge_version": "1", "inputs": {"task_sha256": "a" * 64},
+        "started_at": "t", "finished_at": "t"})
+    data = to_dict(receipt)
+    validator = Draft202012Validator(json_schema(ExecutionReceipt))
+    validator.validate(data)
+    data["inputs"]["extra"] = 1
+    assert len(list(validator.iter_errors(data))) == 1
+
+
+def test_hash_fields_carry_sha256_pattern() -> None:
+    result = to_dict(ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok"))
+    result["artifacts"] = [{"path": "a", "sha256": "ABC"}]
+    result["evidence"] = [{"id": "e", "epistemic": "observed", "subject": "s", "claim": "c",
+                           "producer": {"id": "p", "version": "1"}, "hash": "xyz"}]
+    errors = list(Draft202012Validator(json_schema(ExecutionResult)).iter_errors(result))
+    assert len(errors) == 2
+    pack = json_schema(ContextPack)
+    file_schema = pack["properties"]["files"]["items"]["properties"]["sha256"]
+    assert file_schema["pattern"] == SHA256_RE.pattern
+
+
+def _risk_assessment() -> RiskAssessment:
+    return from_dict(RiskAssessment, {
+        "producer": {"id": "p", "version": "1"}, "created_at": utc_now(), "run_id": "r",
+        "provider_id": "p", "capability": "demo.echo", "action": "echo",
+        "operation_class": "local_mutation", "source": "provider_declaration",
+        "dimensions": {"read_only": "no", "local_mutation": "yes", "external_read": "no",
+                       "external_mutation": "no", "destructive": "no",
+                       "credentials": "unknown", "cross_account": "unknown"},
+        "policy": {"decision": "ask", "rule": "default.local_mutation.trusted",
+                   "reason": "local mutation", "approved": True, "unlock": "--approve"},
+        "limitations": [OPERATION_CLASS_LIMITATION], "unknowns": ["credentials"]})
+
+
+def test_risk_assessment_is_exported_and_closed() -> None:
+    assert RiskAssessment in EXPORTED and RiskAssessment in CLOSED_SCHEMAS
+    schema = json_schema(RiskAssessment)
+    assert schema["properties"]["schema"] == {"enum": ["theforge/RiskAssessment/v1"]}
+    assert schema["properties"]["source"] == {"enum": ["provider_declaration"]}
+
+
+def test_risk_assessment_real_instance_validates_against_published_schema() -> None:
+    published = json.loads((SCHEMAS_DIR / "RiskAssessment.schema.json").read_text("utf-8"))
+    validator = Draft202012Validator(published)
+    data = to_dict(_risk_assessment())
+    validator.validate(data)
+    data["policy"]["extra"] = 1
+    data["surprise"] = True
+    assert len(list(validator.iter_errors(data))) == 2
+
+
+def test_new_optional_fields_published_in_schemas() -> None:
+    receipt = json_schema(ExecutionReceipt)["properties"]
+    assert "risk_sha256" in receipt["inputs"]["properties"]
+    provider = receipt["provider"]["anyOf"][0]["properties"]
+    assert {"executable", "fingerprint", "observed_version"} <= set(provider)
+    assert "op" in json_schema(Response)["properties"]
+    assert "op" not in json_schema(Response)["required"]
+    candidate = json_schema(RoutingDecision)["properties"]["candidates"]["items"]
+    assert candidate["properties"]["state"]["enum"] == [
+        "supported", "heuristic", "unresolved", "unsupported"]
+    assert "state" not in candidate["required"]

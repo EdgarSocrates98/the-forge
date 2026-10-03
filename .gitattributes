@@ -1,0 +1,4 @@
+# Generated and golden files are compared byte for byte (schema parity, explain goldens):
+# keep them LF on every checkout, including Windows runners with core.autocrlf=true.
+schemas/*.json text eol=lf
+tests/golden/* text eol=lf

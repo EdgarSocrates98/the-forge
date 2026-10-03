@@ -12,7 +12,15 @@ license = { text = "MIT" }
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "hypothesis>=6.100", "jsonschema>=4.21", "ruff>=0.6", "mypy>=1.10"]
+dev = [
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "jsonschema>=4.21",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "build>=1.2",
+    "pyyaml>=6.0",
+]
 
 [project.scripts]
 theforge = "theforge.cli.main:main"
@@ -23,8 +31,18 @@ packages = ["src/theforge"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q -m 'not slow' --basetemp=.pytest_tmp"
-markers = ["slow: builds packages or needs network (fresh install gate)"]
+addopts = "-q -m 'not slow and not real_provider' --basetemp=.pytest_tmp"
+# Categories are applied per file by tests/conftest.py FILE_MARKERS (unmapped file = error).
+markers = [
+    "unit: pure in-process logic, no subprocess",
+    "contract: contract/schema/protocol shape tests",
+    "integration: multiple components, subprocess providers or filesystem workspaces",
+    "e2e: real CLI end to end in a subprocess",
+    "slow: builds packages or needs network (fresh install gate)",
+    "security: hostile inputs, secrets, isolation and trust boundaries",
+    "real_provider: needs real external Forges (separate CI workflow)",
+    "allow_network: releases the session-level network block for one test",
+]
 
 [tool.ruff]
 line-length = 100
@@ -38,4 +56,4 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 python_version = "3.11"
 strict = true
 mypy_path = "src"
-files = ["src"]
+files = ["src", "scripts"]

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "dimensions": {
+      "additionalProperties": false,
+      "properties": {
+        "credentials": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "cross_account": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "destructive": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "external_mutation": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "external_read": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "local_mutation": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "read_only": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "read_only",
+        "local_mutation",
+        "external_read",
+        "external_mutation",
+        "destructive",
+        "credentials",
+        "cross_account"
+      ],
+      "type": "object"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "operation_class": {
+      "enum": [
+        "read_only",
+        "local_mutation",
+        "external_read",
+        "external_mutation",
+        "destructive"
+      ]
+    },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "approved": {
+          "type": "boolean"
+        },
+        "decision": {
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "unlock": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "decision",
+        "rule",
+        "reason",
+        "approved"
+      ],
+      "type": "object"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "enum": [
+        "theforge/RiskAssessment/v1"
+      ]
+    },
+    "source": {
+      "enum": [
+        "provider_declaration"
+      ]
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "run_id",
+    "provider_id",
+    "capability",
+    "action",
+    "operation_class",
+    "source",
+    "dimensions",
+    "policy",
+    "limitations"
+  ],
+  "title": "RiskAssessment",
+  "type": "object"
+}

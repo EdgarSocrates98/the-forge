@@ -1,5 +1,9 @@
 """User-facing error types mapped to CLI exit codes."""
 
+from theforge.contracts.codes import Codes
+
+__all__ = ["Codes", "ForgeError", "PersistenceError", "UsageError"]
+
 
 class ForgeError(Exception):
     """Base class for expected, user-facing failures."""

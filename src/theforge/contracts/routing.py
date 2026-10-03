@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import Producer
+from theforge.contracts.types import CapabilityState, Producer
 
 ROUTING_SCHEMA = "theforge/RoutingDecision/v1"
 
@@ -22,6 +22,7 @@ class Candidate:
     capability: str
     matched: MatchedSignals = field(default_factory=MatchedSignals)
     rank_key: list[int] = field(default_factory=list)
+    state: CapabilityState = "supported"
 
 
 @dataclass(frozen=True, kw_only=True)

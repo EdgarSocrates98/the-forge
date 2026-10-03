@@ -48,6 +48,51 @@ def user_config_dir() -> Path:
     return (Path(xdg) if xdg else Path.home() / ".config") / "theforge"
 
 
+def user_cache_dir() -> Path:
+    """Per-user cache root, outside any project (registry cache lives here)."""
+    override = os.environ.get("THEFORGE_CACHE_DIR")
+    if override:
+        return Path(override)
+    if sys.platform == "win32":
+        local = os.environ.get("LOCALAPPDATA")
+        base = Path(local) if local else Path.home() / "AppData" / "Local"
+        return base / "theforge" / "Cache"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Caches" / "theforge"
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    if xdg and Path(xdg).is_absolute():
+        return Path(xdg) / "theforge"
+    return Path.home() / ".cache" / "theforge"
+
+
+def _looks_like_path(arg: str) -> bool:
+    return "/" in arg or "\\" in arg
+
+
+def _resolve_argv(argv: list[object], base: Path, where: str) -> list[object]:
+    """Make relative file arguments absolute against the config file's directory.
+
+    Bare names (``python``, ``-m``, module names) stay untouched; a relative argument that
+    looks like a path but does not exist is a configuration error.
+    """
+    resolved: list[object] = []
+    for position, arg in enumerate(argv):
+        if not isinstance(arg, str) or not arg or Path(arg).anchor or arg.startswith("-"):
+            resolved.append(arg)
+            continue
+        candidate = base / arg
+        is_path = _looks_like_path(arg)
+        if (is_path or position > 0) and candidate.is_file():
+            resolved.append(str(candidate.resolve()))
+        elif is_path:
+            raise UsageError(
+                f"{where}: argv entry {arg!r} is not a file "
+                f"(relative paths are resolved against {base})")
+        else:
+            resolved.append(arg)
+    return resolved
+
+
 def load_entries(
     path: Path, source: Source, warnings: list[str] | None = None
 ) -> list[ProviderEntry]:
@@ -68,7 +113,9 @@ def load_entries(
             raise UsageError(f"{path}: providers[{index}]: trust 'builtin' is reserved")
         raw = {**item, "source": source}
         if isinstance(raw.get("argv"), list):
-            raw["argv"] = [sys.executable if a == PYTHON_PLACEHOLDER else a for a in raw["argv"]]
+            raw["argv"] = _resolve_argv(
+                [sys.executable if a == PYTHON_PLACEHOLDER else a for a in raw["argv"]],
+                path.parent, f"{path}: providers[{index}]")
         try:
             entry = from_dict(ProviderEntry, raw, f"{path.name}.providers[{index}]")
         except ContractError as exc:

@@ -30,6 +30,7 @@ class Response:
     protocol: str = PROTOCOL_V1
     kind: Literal["Response"] = "Response"
     request_id: str
+    op: str | None = None
     producer: Producer
     status: ResponseStatus
     payload: dict[str, Any] = field(default_factory=dict)

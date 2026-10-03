@@ -10,10 +10,16 @@ from theforge.contracts import (
     ContextFile,
     ContextPack,
     ExecuteRequest,
+    ExecutionResult,
+    Producer,
+    Response,
     TaskSpec,
+    from_dict,
     to_dict,
 )
 from theforge.contracts.canonical import sha256_hex, utc_now
+from theforge.contracts.integrity import check_producer, validate_result
+from theforge.contracts.types import SHA256_RE
 from theforge.meta import PRODUCER
 from theforge.providers.echo import provider
 
@@ -92,3 +98,38 @@ def test_internal_failure_returns_error_response(
     assert resp["request_id"] == "r_echo"
     assert resp["error"]["code"] == "ECHO-INTERNAL"
     assert "RuntimeError: kaboom" in resp["error"]["detail"]
+
+
+MANIFEST_PRODUCER = Producer(id=provider.MANIFEST.id, version=provider.MANIFEST.version)
+
+
+def envelope(op: str) -> bytes:
+    return json.dumps({"protocol": "forge/v1", "kind": "Request", "op": op,
+                       "request_id": "r_echo", "payload": {}}).encode()
+
+
+@pytest.mark.parametrize("op", ["describe", "health", "teleport"])
+def test_response_carries_op_and_manifest_producer(op: str) -> None:
+    resp = from_dict(Response, provider.handle(op, envelope(op)))
+    assert resp.op == op
+    assert check_producer(resp.producer, expected=MANIFEST_PRODUCER, field="producer") is None
+
+
+def test_error_responses_carry_invoked_op() -> None:
+    assert provider.handle("execute", b"{not json")["op"] == "execute"
+    assert provider.handle("health", envelope("describe"))["op"] == "health"
+
+
+@pytest.mark.parametrize("capability", ["demo.echo", "demo.inspect"])
+def test_execute_result_passes_integrity(tmp_path: Path, capability: str) -> None:
+    (tmp_path / "notes.txt").write_bytes(b"hello")
+    entry = ContextFile(path="notes.txt", sha256=sha256_hex(b"hello"), bytes=5)
+    action = provider.MANIFEST.capability(capability).default_action  # type: ignore[union-attr]
+    resp = from_dict(Response, provider.handle(
+        "execute", execute_body(tmp_path, [entry], action=action, capability=capability)))
+    assert resp.op == "execute" and resp.status == "ok"
+    assert check_producer(resp.producer, expected=MANIFEST_PRODUCER, field="producer") is None
+    result = from_dict(ExecutionResult, resp.payload)
+    validate_result(result, expected=MANIFEST_PRODUCER)
+    assert [e.hash for e in result.evidence] == [sha256_hex(b"hello")]
+    assert all(SHA256_RE.fullmatch(e.hash or "") for e in result.evidence)

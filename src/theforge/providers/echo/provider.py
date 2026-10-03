@@ -60,10 +60,10 @@ MANIFEST = ForgeManifest(
 
 
 def _respond(
-    request_id: str, status: ResponseStatus, *, payload: dict[str, Any] | None = None,
-    error: ErrorInfo | None = None,
+    request_id: str, op: str, status: ResponseStatus, *,
+    payload: dict[str, Any] | None = None, error: ErrorInfo | None = None,
 ) -> dict[str, Any]:
-    return to_dict(Response(request_id=request_id, producer=PRODUCER, status=status,
+    return to_dict(Response(request_id=request_id, op=op, producer=PRODUCER, status=status,
                             payload=payload or {}, error=error))
 
 
@@ -71,47 +71,47 @@ def handle(op: str, raw: bytes) -> dict[str, Any]:
     try:
         data = json.loads(raw.decode("utf-8") or "{}")
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        return _respond("unknown", "error", error=ErrorInfo(
+        return _respond("unknown", op, "error", error=ErrorInfo(
             code="ECHO-REQ-INVALID", detail=f"request is not JSON: {exc}"))
     request_id = str(data.get("request_id", "unknown")) if isinstance(data, dict) else "unknown"
     try:
         request = from_dict(Request, data)
     except ContractError as exc:
-        return _respond(request_id, "error",
+        return _respond(request_id, op, "error",
                         error=ErrorInfo(code="ECHO-REQ-INVALID", detail=str(exc)))
     if op != "describe" and request.protocol != PROTOCOL_V1:
-        return _respond(request_id, "refused", error=ErrorInfo(
+        return _respond(request_id, op, "refused", error=ErrorInfo(
             code="ECHO-PROTO-UNSUPPORTED", detail=f"protocol {request.protocol!r} not supported",
             field="protocol", unlock=f"use {PROTOCOL_V1}"))
     if request.op != op:
-        return _respond(request_id, "error", error=ErrorInfo(
+        return _respond(request_id, op, "error", error=ErrorInfo(
             code="ECHO-REQ-INVALID", detail=f"envelope op {request.op!r} != invoked op {op!r}",
             field="op"))
     if op == "describe":
-        return _respond(request_id, "ok", payload=to_dict(MANIFEST))
+        return _respond(request_id, op, "ok", payload=to_dict(MANIFEST))
     if op == "health":
         report = HealthReport(status="ok", checks=[HealthCheck(name="echo", ok=True)])
-        return _respond(request_id, "ok", payload=to_dict(report))
+        return _respond(request_id, op, "ok", payload=to_dict(report))
     if op == "execute":
         try:
-            return _execute(request_id, request.payload)
+            return _execute(request_id, op, request.payload)
         except Exception as exc:  # noqa: BLE001 - handle() must never crash
-            return _respond(request_id, "error", error=ErrorInfo(
+            return _respond(request_id, op, "error", error=ErrorInfo(
                 code="ECHO-INTERNAL", detail=f"{type(exc).__name__}: {exc}"))
-    return _respond(request_id, "refused", error=ErrorInfo(
+    return _respond(request_id, op, "refused", error=ErrorInfo(
         code="ECHO-OP-UNSUPPORTED", detail=f"op {op!r} not supported", field="op",
         unlock="ops: describe, health, execute"))
 
 
-def _execute(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _execute(request_id: str, op: str, payload: dict[str, Any]) -> dict[str, Any]:
     try:
         req = from_dict(ExecuteRequest, payload, "$.payload")
     except ContractError as exc:
-        return _respond(request_id, "error", error=ErrorInfo(
+        return _respond(request_id, op, "error", error=ErrorInfo(
             code="ECHO-REQ-INVALID", detail=str(exc), field="payload"))
     capability = MANIFEST.capability(req.capability)
     if capability is None or req.action not in capability.actions:
-        return _respond(request_id, "refused", error=ErrorInfo(
+        return _respond(request_id, op, "refused", error=ErrorInfo(
             code="ECHO-CAP-UNSUPPORTED",
             detail=f"{req.capability}:{req.action} not offered by echo-forge",
             field="capability", unlock=UNLOCK_CAPABILITIES))
@@ -153,4 +153,4 @@ def _execute(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         findings=[Finding(id="f1", title=title, evidence_ids=[e.id for e in evidence])],
         evidence=evidence, limitations=list(MANIFEST.limitations),
     )
-    return _respond(request_id, "ok", payload=to_dict(result))
+    return _respond(request_id, op, "ok", payload=to_dict(result))

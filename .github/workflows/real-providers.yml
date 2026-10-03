@@ -1,0 +1,70 @@
+# Tests against the real sibling Forges (requirement 7.7). Never part of the PR gate: no
+# pull_request/push trigger, and the job is continue-on-error. The real_provider tests land in
+# Wave B; until then the selection is empty and the run succeeds with zero tests.
+#
+# Secret hygiene: SIBLING_REPOS_TOKEN (read access to the sibling repos) is referenced only by
+# the two sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
+name: real-providers
+
+on:
+  schedule:
+    - cron: "41 4 * * 1" # Mondays 04:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  real-providers:
+    name: real providers (ubuntu-latest, py3.11)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout spark-forge-aws
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/spark-forge-aws
+          path: siblings/spark-forge-aws
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout api-forge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/api-forge
+          path: siblings/api-forge
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install (editable, dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+
+      - name: Real provider tests
+        run: |
+          code=0
+          python -m pytest -m real_provider || code=$?
+          # pytest exits 5 when no test is collected: an empty selection is not a failure.
+          if [ "$code" -eq 5 ]; then
+            echo "no real_provider tests selected"
+            exit 0
+          fi
+          exit "$code"

@@ -54,6 +54,16 @@
       },
       "type": "array"
     },
+    "op": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "payload": {
       "additionalProperties": {},
       "type": "object"

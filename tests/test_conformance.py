@@ -18,12 +18,15 @@ from theforge.contracts import (
     ExecutionResult,
     ForgeManifest,
     HealthReport,
+    Producer,
     Response,
     TaskSpec,
     from_dict,
     to_dict,
 )
-from theforge.contracts.canonical import utc_now
+from theforge.contracts.canonical import sha256_hex, utc_now
+from theforge.contracts.integrity import check_producer, check_timestamp, validate_result
+from theforge.contracts.types import SHA256_RE
 from theforge.meta import PRODUCER
 
 PROVIDER_ARGVS = {
@@ -151,3 +154,51 @@ def test_echo_confirms_context_hashes(argv: list[str], tmp_path: Path) -> None:
     _, data = raw(argv, "execute", request("execute", payload))
     result = from_dict(ExecutionResult, data["payload"])
     assert [e.epistemic for e in result.evidence] == ["confirmed"]
+
+
+def _expected(argv: list[str]) -> Producer:
+    manifest = manifest_of(argv)
+    return Producer(id=manifest.id, version=manifest.version)
+
+
+def test_every_response_echoes_requested_op(argv: list[str], tmp_path: Path) -> None:
+    cap = manifest_of(argv).capabilities[0]
+    calls = [
+        ("describe", request("describe")),
+        ("health", request("health")),
+        ("execute", request("execute", execute_payload(tmp_path, cap.id, cap.default_action))),
+        ("execute", request("execute", execute_payload(tmp_path, "zzz.unknown", "run"))),
+        ("health", request("health", protocol="forge/v9")),
+        ("teleport", request("teleport")),
+    ]
+    for op, body in calls:
+        _, data = raw(argv, op, body)
+        assert from_dict(Response, data).op == op, (op, data)
+
+
+def test_describe_and_health_producer_matches_manifest(argv: list[str]) -> None:
+    expected = _expected(argv)
+    for op in ("describe", "health"):
+        _, data = raw(argv, op, request(op))
+        resp = from_dict(Response, data)
+        assert check_producer(resp.producer, expected=expected, field="producer") is None
+
+
+def test_execute_result_passes_integrity(argv: list[str], tmp_path: Path) -> None:
+    from theforge.contracts import ContextFile
+
+    expected = _expected(argv)
+    (tmp_path / "notes.md").write_bytes(b"hello")
+    for cap in manifest_of(argv).capabilities:
+        payload = execute_payload(tmp_path, cap.id, cap.default_action)
+        payload["context"]["files"] = [to_dict(ContextFile(
+            path="notes.md", sha256=sha256_hex(b"hello"), bytes=5))]
+        _, data = raw(argv, "execute", request("execute", payload))
+        resp = from_dict(Response, data)
+        assert check_producer(resp.producer, expected=expected, field="producer") is None
+        result = from_dict(ExecutionResult, resp.payload)
+        validate_result(result, expected=expected)
+        assert check_timestamp(result.created_at, field="created_at") is None
+        for evidence in result.evidence:
+            assert check_producer(evidence.producer, expected=expected, field="e") is None
+            assert evidence.hash is None or SHA256_RE.fullmatch(evidence.hash)

@@ -11,6 +11,7 @@ from theforge.contracts.envelope import (
     Response,
     new_request_id,
 )
+from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.manifest import Capability, ExecutionInfo, ForgeManifest, Signals
 from theforge.contracts.receipt import ExecutionReceipt, ReceiptInputs, ReceiptProvider
 from theforge.contracts.result import (
@@ -21,6 +22,12 @@ from theforge.contracts.result import (
     Location,
     Metric,
     Metrics,
+)
+from theforge.contracts.risk import (
+    OPERATION_CLASS_LIMITATION,
+    PolicyDecision,
+    RiskAssessment,
+    RiskDimensions,
 )
 from theforge.contracts.routing import (
     Candidate,
@@ -33,10 +40,11 @@ from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, Producer
 
 __all__ = [
-    "PROTOCOL_V1", "Artifact", "Candidate", "Capability", "Confidence", "ContextFile",
-    "ContextPack", "ContractError", "ErrorInfo", "Evidence", "ExcludedFile", "ExecuteRequest",
-    "ExecutionInfo", "ExecutionReceipt", "ExecutionResult", "Finding", "ForgeManifest",
-    "HealthCheck", "HealthReport", "Location", "MatchedSignals", "Metric", "Metrics",
-    "Producer", "ReceiptInputs", "ReceiptProvider", "Request", "Response", "RoutingDecision",
-    "Selection", "Signals", "TaskSpec", "from_dict", "new_request_id", "to_dict",
+    "OPERATION_CLASS_LIMITATION", "PROTOCOL_V1", "Artifact", "Candidate", "Capability",
+    "Confidence", "ContextFile", "ContextPack", "ContractError", "ErrorInfo", "Evidence",
+    "ExcludedFile", "ExecuteRequest", "ExecutionInfo", "ExecutionReceipt", "ExecutionResult",
+    "Finding", "ForgeManifest", "HealthCheck", "HealthReport", "IntegrityError", "Location",
+    "MatchedSignals", "Metric", "Metrics", "PolicyDecision", "Producer", "ReceiptInputs",
+    "ReceiptProvider", "Request", "Response", "RiskAssessment", "RiskDimensions", "RoutingDecision",
+    "Selection", "Signals", "TaskSpec", "Violation", "from_dict", "new_request_id", "to_dict",
 ]

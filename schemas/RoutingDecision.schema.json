@@ -1,13 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
   "properties": {
     "candidates": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "capability": {
             "type": "string"
           },
           "matched": {
+            "additionalProperties": false,
             "properties": {
               "dependencies": {
                 "items": {
@@ -39,6 +42,14 @@
               "type": "integer"
             },
             "type": "array"
+          },
+          "state": {
+            "enum": [
+              "supported",
+              "heuristic",
+              "unresolved",
+              "unsupported"
+            ]
           }
         },
         "required": [
@@ -50,6 +61,7 @@
       "type": "array"
     },
     "confidence": {
+      "additionalProperties": false,
       "properties": {
         "level": {
           "enum": [
@@ -96,6 +108,7 @@
       ]
     },
     "producer": {
+      "additionalProperties": false,
       "properties": {
         "id": {
           "type": "string"
@@ -118,6 +131,7 @@
     },
     "selected": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "action": {
             "type": "string"

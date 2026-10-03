@@ -13,6 +13,7 @@ class ReceiptInputs:
     task_sha256: str
     routing_sha256: str | None = None
     context_sha256: str | None = None
+    risk_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -21,6 +22,9 @@ class ReceiptProvider:
     version: str
     trust: TrustLevel
     manifest_sha256: str | None = None
+    executable: str | None = None
+    fingerprint: str | None = None
+    observed_version: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

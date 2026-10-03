@@ -58,6 +58,8 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("--profile", choices=["economy", "balanced", "max"], default="balanced")
     ask.add_argument("--target", dest="targets", action="append")
     ask.add_argument("--allow-unverified", action="store_true")
+    ask.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
+                     help="approve a capability the policy would ask about (repeatable)")
     ask.set_defaults(handler=commands.cmd_ask)
 
     explain = sub.add_parser("explain", parents=[common], help="explain a past run")
