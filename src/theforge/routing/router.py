@@ -75,7 +75,7 @@ def _relevant(record: RegistryRecord, task: TaskSpec, decision: RoutingDecision)
     requested capability, or (signal path) nothing was routed and it might have matched."""
     if task.requested_capability:
         manifest = record.manifest
-        return manifest is not None and manifest.capability(task.requested_capability) is not None
+        return manifest is not None and manifest.resolve(task.requested_capability) is not None
     return decision.status != "routed"
 
 
@@ -106,31 +106,63 @@ def _state_confidence(capability: Capability) -> tuple[str, list[str]]:
     return "high", []
 
 
+def _deprecation_notes(declared: Sequence[tuple[str, Capability]]) -> list[str]:
+    """``capability-deprecated`` notes for (provider, capability) pairs (5.5); no weight."""
+    notes = []
+    for provider, capability in declared:
+        if capability.deprecated:
+            successor = (f"replaced_by {capability.replaced_by!r}" if capability.replaced_by
+                         else "no replacement declared")
+            notes.append(f"capability-deprecated: {capability.id!r} ({provider}) is "
+                         f"deprecated; {successor}")
+    return notes
+
+
+def _overlap_notes(declared: Sequence[tuple[str, Capability]], suffix: str = "") -> list[str]:
+    """``capability-overlap`` notes: a capability id declared by 2+ providers (5.4)."""
+    by_id: dict[str, set[str]] = {}
+    for provider, capability in declared:
+        by_id.setdefault(capability.id, set()).add(provider)
+    return [f"capability-overlap: {cid!r} declared by {', '.join(sorted(providers))}{suffix}"
+            for cid, providers in by_id.items() if len(providers) > 1]
+
+
 def _route_explicit(
-    task: TaskSpec, routable: list[RegistryRecord], cap_id: str
+    task: TaskSpec, routable: list[RegistryRecord], requested: str
 ) -> RoutingDecision:
-    matches: list[tuple[RegistryRecord, Capability]] = []
+    """Canonical declarers first; only when none exists, alias declarers (5.5). Within the
+    group the tie-break is trust then id. Selections and candidates carry the canonical id."""
+    canonical: list[tuple[RegistryRecord, Capability]] = []
+    aliased: list[tuple[RegistryRecord, Capability]] = []
     for record in routable:
-        capability = record.manifest.capability(cap_id) if record.manifest else None
-        if capability is not None and capability.state != "unsupported":
-            matches.append((record, capability))
+        resolved = record.manifest.resolve(requested) if record.manifest else None
+        if resolved is None or resolved[0].state == "unsupported":
+            continue
+        (aliased if resolved[1] else canonical).append((record, resolved[0]))
+    matches = canonical or aliased
     if not matches:
         return _decision(task, status="no_route", level="low",
-                         reason=f"no routable provider declares capability {cap_id}",
-                         unresolved=[f"capability:{cap_id}"])
+                         reason=f"no routable provider declares capability {requested}",
+                         unresolved=[f"capability:{requested}"])
     matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust], m[0].entry.id))
     record, capability = matches[0]
     action = resolve_action(task, capability)
-    candidates = [Candidate(provider=r.entry.id, capability=cap_id, state=c.state,
+    candidates = [Candidate(provider=r.entry.id, capability=c.id, state=c.state,
                             rank_key=[TRUST_RANK[r.entry.trust]]) for r, c in matches]
-    reason = f"requested capability {cap_id}"
+    reason = f"requested capability {requested}"
     if len(matches) > 1:
         reason += f"; {len(matches)} providers declare it, tie-break by trust then id"
+    declared = [(r.entry.id, c) for r, c in matches]
+    notes = [f"capability-alias: {requested!r} resolved to {c.id!r} ({provider})"
+             for provider, c in declared if not canonical]
+    notes += _deprecation_notes(declared)
+    notes += _overlap_notes(declared, "; tie-break trust then id")
     level, unresolved = _state_confidence(capability)
     return _decision(task, status="routed", level=level, reason=reason, candidates=candidates,
-                     selected=[Selection(provider=record.entry.id, capability=cap_id,
+                     selected=[Selection(provider=record.entry.id, capability=capability.id,
                                          action=action)],
-                     measured=["requested_capability"], unresolved=unresolved)
+                     measured=["requested_capability"], unresolved=unresolved,
+                     limitations=sorted(set(notes)))
 
 
 @dataclass(frozen=True)
@@ -195,8 +227,10 @@ def _route_by_signals(
                          reason="no capability matched any signal", unresolved=["intent"])
 
     shared = _shared_signals(scoring)
+    declared = [(item.record.entry.id, item.capability) for item in scoring]
     limitations = sorted({f"non-discriminating signal '{signal}' shared by all candidates"
-                          for group in shared for signal in group})
+                          for group in shared for signal in group}
+                         | set(_deprecation_notes(declared)) | set(_overlap_notes(declared)))
     ranked: list[tuple[Candidate, _Scored]] = []
     for item in scoring:
         kept = [[s for s in group if s not in shared[i]] for i, group in enumerate(item.hits)]

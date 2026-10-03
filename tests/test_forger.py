@@ -24,7 +24,7 @@ from theforge.contracts.codes import Codes
 from theforge.errors import UsageError
 from theforge.forger import AskRequest, Forger
 from theforge.meta import PRODUCER
-from theforge.protocol import ProviderTransport, SubprocessTransport
+from theforge.protocol import ProviderTransport, SubprocessTransport, TransportError
 from theforge.registry import (
     HealthOutcome,
     ProviderEntry,
@@ -689,3 +689,111 @@ def test_policy_warnings_become_receipt_limitations(tmp_path: Path) -> None:
     out = forger_.ask(AskRequest(intent="eco", capability="demo.echo"))
     assert out.status == "ok"
     assert any("policy" in lim and "bogus" in lim for lim in out.receipt.limitations)
+
+
+# --- aliases, deprecation and overlap in persisted decisions (task 2.2) -----------------------
+
+def _alias_rec(pid: str, cap_id: str, trust: str, *, aliases: Sequence[str] = (),
+               deprecated: bool = False, replaced_by: str | None = None,
+               execute: bool = True) -> RegistryRecord:
+    base = _rec(pid, ("run",), trust, cap_id=cap_id)
+    assert base.manifest is not None
+    capability = replace(base.manifest.capabilities[0], aliases=list(aliases),
+                         deprecated=deprecated, replaced_by=replaced_by)
+    ops = ["describe", "health", "execute"] if execute else ["describe", "health"]
+    return replace(base, manifest=replace(base.manifest, capabilities=[capability], ops=ops))
+
+
+def _fixed_forger(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fixed: list[RegistryRecord]
+) -> Forger:
+    """A Forger over a fixed registry whose execute always fails at the transport, so the
+    routing decision is persisted without any provider process."""
+    make_workspace(tmp_path, [])
+
+    class _Fixed(Registry):
+        def records(self, *, persist: bool = True) -> list[RegistryRecord]:
+            self._in_use = {r.entry.id: r for r in fixed}
+            return list(fixed)
+
+        def revalidate(self, provider_ids: Sequence[str]) -> list[RevalidationOutcome]:
+            by_id = {r.entry.id: r for r in fixed}
+            return [RevalidationOutcome(status="fresh", record=by_id[p]) for p in provider_ids]
+
+    class _Down:
+        def call(self, op: str, payload: dict[str, Any], **_: object) -> Response:
+            raise TransportError(Codes.PROTO_EXIT, "down")
+
+    monkeypatch.setattr("theforge.forger.orchestrator.check_health",
+                        lambda record, **_: HealthOutcome(status="ok"))
+    forge = tmp_path / ".forge"
+    return Forger(tmp_path, _Fixed(forge), RunStore(forge),
+                  transport_factory=lambda argv: _Down())  # type: ignore[arg-type,return-value]
+
+
+def _persisted(tmp_path: Path, run_id: str) -> dict[str, Any]:
+    routing: dict[str, Any] = RunStore(tmp_path / ".forge").read(run_id, "routing")
+    return routing
+
+
+def test_persisted_explicit_decision_resolves_alias_and_prefers_canonical(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    canon = _alias_rec("canon", "data.quality", "local")
+    aliased = _alias_rec("aliased", "data.checks", "trusted", aliases=["data.quality"])
+    out = _fixed_forger(tmp_path, monkeypatch, [aliased, canon]).ask(
+        AskRequest(intent="x", capability="data.quality"))
+    routing = _persisted(tmp_path, out.run_id)
+    assert routing["selected"][0]["provider"] == "canon"
+    assert routing["selected"][0]["capability"] == "data.quality"
+
+    alias_only = _fixed_forger(tmp_path / "w2", monkeypatch, [aliased]).ask(
+        AskRequest(intent="x", capability="data.quality"))
+    routing = _persisted(tmp_path / "w2", alias_only.run_id)
+    selected = routing["selected"][0]
+    assert (selected["provider"], selected["capability"]) == ("aliased", "data.checks")
+    assert "capability-alias: 'data.quality' resolved to 'data.checks' (aliased)" \
+        in routing["limitations"]
+    task = RunStore(tmp_path / "w2" / ".forge").read(alias_only.run_id, "task")
+    assert task["requested_capability"] == "data.quality"
+
+
+def test_persisted_explicit_decision_notes_deprecation_and_overlap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    a = _alias_rec("a", "data.quality", "trusted", deprecated=True, replaced_by="data.q2")
+    b = _alias_rec("b", "data.quality", "local")
+    out = _fixed_forger(tmp_path, monkeypatch, [a, b]).ask(
+        AskRequest(intent="x", capability="data.quality"))
+    routing = _persisted(tmp_path, out.run_id)
+    assert routing["confidence"]["level"] == "high"
+    assert "capability-deprecated: 'data.quality' (a) is deprecated; replaced_by 'data.q2'" \
+        in routing["limitations"]
+    assert "capability-overlap: 'data.quality' declared by a, b; tie-break trust then id" \
+        in routing["limitations"]
+
+
+def test_persisted_signal_decision_notes_overlap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    a = _alias_rec("a", "bad.thing", "trusted")
+    b = _alias_rec("b", "bad.thing", "local", deprecated=True)
+    out = _fixed_forger(tmp_path, monkeypatch, [a, b]).ask(AskRequest(intent="bad"))
+    routing = _persisted(tmp_path, out.run_id)
+    assert out.status == "ambiguous"
+    assert "capability-overlap: 'bad.thing' declared by a, b" in routing["limitations"]
+    assert "capability-deprecated: 'bad.thing' (b) is deprecated; no replacement declared" \
+        in routing["limitations"]
+
+
+def test_alias_requested_without_execute_is_refused_with_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """2.1 refusal also covers a capability requested by its alias."""
+    no_exec = _alias_rec("aliased", "data.checks", "local", aliases=["data.quality"],
+                         execute=False)
+    out = _fixed_forger(tmp_path, monkeypatch, [no_exec]).ask(
+        AskRequest(intent="x", capability="data.quality"))
+    assert out.status == "refused" and out.result is None
+    assert out.error is not None and out.error.code == Codes.PROTO_OP_UNSUPPORTED
+    assert "aliased" in out.error.detail

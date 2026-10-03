@@ -129,8 +129,8 @@ def _unexecutable_request(
             continue
         if record.manifest is None:
             return None  # unknown (not described, unreachable): it might be the executor
-        capability = record.manifest.capability(cap_id)
-        if capability is None or capability.state == "unsupported":
+        resolved = record.manifest.resolve(cap_id)  # an alias counts like the canonical id
+        if resolved is None or resolved[0].state == "unsupported":
             continue
         error = _require_op(record, EXECUTE_OP)
         if error is None:
