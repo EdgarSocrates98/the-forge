@@ -39,13 +39,35 @@ MAX_ACTIONS: Final = 16
 # "*.md" are legitimate signals and are NOT catch-all.
 CATCH_ALL_GLOBS: Final = frozenset({"*", "**", "**/*", "*.*", "**/*.*"})
 
+_BRACKET_CLASS: Final = re.compile(r"\[([^\]]*)\]")
+
+
+def _literal_class(match: re.Match[str]) -> str:
+    """A positive class of literal members (``[ch]``) names characters; keep its content.
+
+    Negated (``[!...]``/``[^...]``) or range (``[a-z]``) classes name no specific
+    character and are dropped.
+    """
+    body = match.group(1)
+    if body.startswith(("!", "^")) or "-" in body:
+        return ""
+    return body
+
 
 def is_catch_all_glob(glob: str) -> bool:
-    """True if ``glob`` (ignoring surrounding whitespace and leading ``./``) matches any file."""
+    """True if ``glob`` (ignoring surrounding whitespace and leading ``./``) matches any file.
+
+    Besides the literal forms in ``CATCH_ALL_GLOBS``, any glob without a literal
+    alphanumeric character is catch-all (``?*``, ``**/?*``, ``[!.]*``, ``[a-z]*``): it
+    names no file or extension, so it is not a signal. Positive classes of literal
+    members (``*.[ch]``) count as literal.
+    """
     g = glob.strip()
     while g.startswith("./"):
         g = g[2:]
-    return g in CATCH_ALL_GLOBS
+    if g in CATCH_ALL_GLOBS:
+        return True
+    return not any(ch.isalnum() for ch in _BRACKET_CLASS.sub(_literal_class, g))
 
 
 TRUST_RANK: dict[str, int] = {

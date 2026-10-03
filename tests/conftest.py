@@ -130,11 +130,24 @@ def _guarded_getaddrinfo(host: Any, *args: Any, **kwargs: Any) -> Any:
     return REAL_SOCKET_API["getaddrinfo"](host, *args, **kwargs)
 
 
+def _resolver_guard(name: str) -> Callable[..., Any]:
+    """Guard for the legacy single-host resolvers (gethostbyname*, gethostbyaddr)."""
+
+    def guarded(host: Any, *args: Any, **kwargs: Any) -> Any:
+        _check(host)
+        return REAL_SOCKET_API[name](host, *args, **kwargs)
+
+    guarded.__name__ = f"_guarded_{name}"
+    return guarded
+
+
 _GUARDS: dict[str, tuple[Any, Callable[..., Any]]] = {
     "connect": (socket.socket, _guarded_connect),
     "connect_ex": (socket.socket, _guarded_connect_ex),
     "create_connection": (socket, _guarded_create_connection),
     "getaddrinfo": (socket, _guarded_getaddrinfo),
+    **{name: (socket, _resolver_guard(name))
+       for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr")},
 }
 
 

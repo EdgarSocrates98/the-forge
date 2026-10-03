@@ -63,6 +63,21 @@ def test_external_name_resolution_is_blocked() -> None:
         socket.getaddrinfo("example.com", 80)
 
 
+@pytest.mark.parametrize(("name", "arg"), [
+    ("gethostbyname", "example.com"),
+    ("gethostbyname_ex", "example.com"),
+    ("gethostbyaddr", "192.0.2.1"),
+])
+def test_legacy_name_resolution_is_blocked(name: str, arg: str) -> None:
+    with pytest.raises(OSError, match="network access disabled"):
+        getattr(socket, name)(arg)
+
+
+def test_legacy_loopback_resolution_is_allowed() -> None:
+    assert socket.gethostbyname("127.0.0.1") == "127.0.0.1"
+    assert socket.gethostbyname_ex("127.0.0.1")[2] == ["127.0.0.1"]
+
+
 def test_external_connect_is_blocked() -> None:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:

@@ -51,12 +51,30 @@ INTEGRITY_MODES = {
 }
 
 
-def capability(cap_id, file_globs=(), operation_class="read_only"):
+# Manifest protocol lists: malformed spellings only (no common major -> incompatible) or
+# duplicated valid ones (collapse -> forge/v1).
+MANIFEST_PROTOCOLS = {
+    "malformed-protocols": ["FORGE/V1", " forge/v1", "forge/v01", "forge/v1.0", "forge/v١"],
+    "duplicate-protocols": ["forge/v1", "forge/v2", "forge/v1", "forge/v2"],
+}
+
+# Over the manifest limits of theforge.contracts.types (MAX_CAPABILITIES=256, MAX_KEYWORDS=64).
+SPAM_CAPABILITIES = 300
+SPAM_KEYWORDS = 100
+
+
+def capability(cap_id, file_globs=(), operation_class="read_only", keywords=("bad",)):
     return {
         "id": cap_id, "actions": ["run"], "default_action": "run",
         "state": "supported", "operation_class": operation_class,
-        "signals": {"keywords": ["bad"], "file_globs": list(file_globs), "dependencies": []},
+        "signals": {"keywords": list(keywords), "file_globs": list(file_globs),
+                    "dependencies": []},
     }
+
+
+def env_lines():
+    """Every environment variable name the provider received, as ``env:NAME`` lines."""
+    return [f"env:{name}" for name in sorted(os.environ)]
 
 
 def main() -> int:
@@ -76,7 +94,9 @@ def main() -> int:
 
     def reply(status, payload=None, error=None, request_id=None, reply_op=op, who=None):
         envelope = {
-            "protocol": proto, "kind": "Response", "request_id": request_id or rid,
+            "protocol": proto, "request_id": request_id or rid,
+            # wrong-kind answers execute with a Request envelope
+            "kind": "Request" if mode == "wrong-kind" and op == "execute" else "Response",
             "op": reply_op, "producer": who or producer, "status": status,
             "payload": payload or {},
             "error": error,
@@ -91,8 +111,15 @@ def main() -> int:
             sys.stderr.write("describe failed\n")
             return 3
         cap_id = "Bad Id" if mode == "invalid-manifest" else "bad.thing"
-        capabilities = [capability(cap_id,
-                                   operation_class=OPERATION_CLASSES.get(mode, "read_only"))]
+        capabilities = [capability(
+            cap_id, operation_class=OPERATION_CLASSES.get(mode, "read_only"),
+            # wide-glob: a glob without any literal character matches (almost) every file
+            file_globs=["?*"] if mode == "wide-glob" else (),
+            keywords=[f"bad{i}" for i in range(SPAM_KEYWORDS)] if mode == "keyword-spam"
+            else ("bad",))]
+        if mode == "capability-spam":
+            capabilities += [capability(f"bad.spam{i}", keywords=["run", "it"])
+                             for i in range(SPAM_CAPABILITIES)]
         if mode == "describe-catch-all-glob":
             capabilities.append(capability("bad.greedy", ["**/*"]))
         if mode == "describe-only-catch-all-glob":
@@ -101,10 +128,13 @@ def main() -> int:
             capabilities = [capability(f"bad.c{i}") for i in range(257)]
         return reply("ok", {
             "schema": "theforge/ForgeManifest/v1", "id": pid, "version": "0.0.1",
-            "protocols": [proto], "ops": ["describe", "health", "execute"],
+            "protocols": MANIFEST_PROTOCOLS.get(mode, [proto]),
+            "ops": ["describe", "health"] if mode == "no-execute-op"
+            else ["describe", "health", "execute"],
             "domains": ["test"], "capabilities": capabilities,
             # describe-cwd-probe reports the working directory it was started in
-            "limitations": [f"cwd={os.getcwd()}"] if mode == "describe-cwd-probe" else [],
+            "limitations": [f"cwd={os.getcwd()}"] if mode == "describe-cwd-probe"
+            else env_lines() if mode == "env-probe-full" else [],
         }, who=impostor if mode == "describe-wrong-producer" else None)
     if op == "health":
         if mode == "health-wrong-producer":
@@ -112,6 +142,9 @@ def main() -> int:
         if mode == "health-cwd-probe":
             return reply("ok", {"status": "ok",
                                 "checks": [{"name": "cwd", "ok": True, "detail": os.getcwd()}]})
+        if mode == "env-probe-full":
+            return reply("ok", {"status": "ok",
+                                "checks": [{"name": line, "ok": True} for line in env_lines()]})
         if mode == "unhealthy":
             return reply("ok", {"status": "unavailable",
                                 "checks": [{"name": "backend", "ok": False,
@@ -164,6 +197,10 @@ def main() -> int:
             return reply("ok", {"status": "weird"})
         if mode == "env-probe":
             return reply("ok", {"env": sorted(os.environ)})
+        if mode == "env-probe-full":  # valid result; received variable names as limitations
+            return reply("ok", dict(RESULT, producer=producer, limitations=env_lines()))
+        if mode == "unknown-status":  # Response.status outside ok|partial|refused|error
+            return reply("done", dict(RESULT, producer=producer))
         if mode == "cwd-probe":
             return reply("ok", {"cwd": os.getcwd()})
         if mode == "wrong-producer":
