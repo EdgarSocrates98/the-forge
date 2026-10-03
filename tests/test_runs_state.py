@@ -1,12 +1,28 @@
+import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from theforge.contracts import TaskSpec
+from theforge.contracts import (
+    ContractError,
+    ErrorInfo,
+    ExecutionReceipt,
+    ExecutionResult,
+    IntegrityError,
+    PolicyDecision,
+    Producer,
+    ReceiptInputs,
+    RiskAssessment,
+    RiskDimensions,
+    TaskSpec,
+)
 from theforge.contracts.canonical import sha256_of, utc_now
+from theforge.contracts.codes import Codes
+from theforge.contracts.risk import OPERATION_CLASS_LIMITATION
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER
-from theforge.runs import RUN_ID, RunStore, new_run_id
+from theforge.runs import ARTIFACT_TYPES, ARTIFACTS, RUN_ID, RunStore, new_run_id
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
 
 
@@ -96,3 +112,162 @@ def test_init_workspace(tmp_path: Path) -> None:
     assert find_forge_dir(other) is None
     with pytest.raises(UsageError, match="theforge init"):
         require_forge_dir(other)
+
+
+# --- 3.5: risk artifact, strict typed reads, receipt validation on write ---------------
+
+H_OTHER = "b" * 64
+TS = "2025-01-01T00:00:00.000000Z"
+
+
+def _store_with_run(tmp_path: Path) -> tuple[RunStore, str]:
+    store = RunStore(tmp_path / ".forge")
+    run_id = new_run_id()
+    store.create(run_id)
+    return store, run_id
+
+
+def make_result() -> ExecutionResult:
+    return ExecutionResult(producer=Producer(id="echo", version="1.0.0"), created_at=utc_now(),
+                           status="ok")
+
+
+def make_receipt(run_id: str, **overrides: Any) -> ExecutionReceipt:
+    base: dict[str, Any] = {
+        "producer": PRODUCER, "created_at": utc_now(), "status": "ok", "run_id": run_id,
+        "forge_version": "0.1.0", "inputs": ReceiptInputs(task_sha256="a" * 64),
+        "result_sha256": None, "started_at": utc_now(), "finished_at": utc_now(),
+    }
+    base.update(overrides)
+    return ExecutionReceipt(**base)
+
+
+def make_risk(run_id: str) -> RiskAssessment:
+    levels: dict[str, Any] = dict.fromkeys(
+        ("read_only", "local_mutation", "external_read", "external_mutation", "destructive",
+         "credentials", "cross_account"), "no")
+    return RiskAssessment(
+        producer=PRODUCER, created_at=utc_now(), run_id=run_id, provider_id="echo",
+        capability="echo.reflect", action="analyze", operation_class="read_only",
+        source="provider_declaration", dimensions=RiskDimensions(**levels),
+        policy=PolicyDecision(decision="allow", rule="default", reason="read only",
+                              approved=False),
+        limitations=[OPERATION_CLASS_LIMITATION],
+    )
+
+
+def test_risk_is_a_known_artifact_in_run_order() -> None:
+    assert ARTIFACTS == ("task", "routing", "risk", "context", "result", "receipt")
+    assert set(ARTIFACT_TYPES) == set(ARTIFACTS)
+    assert ARTIFACT_TYPES["risk"] is RiskAssessment
+    assert ARTIFACT_TYPES["receipt"] is ExecutionReceipt
+
+
+def test_risk_round_trips_through_strict_read(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    risk = make_risk(run_id)
+    digest = store.write(run_id, "risk", risk)
+    assert digest == sha256_of(store.read(run_id, "risk"))
+    assert store.read_contract(run_id, "risk", RiskAssessment) == risk
+
+
+def test_absent_risk_reads_as_not_recorded(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    assert store.read_optional(run_id, "risk") is None
+    with pytest.raises(LookupError):
+        store.read_contract(run_id, "risk", RiskAssessment)
+
+
+def test_read_contract_rejects_unknown_keys(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    store.write(run_id, "task", make_task())
+    path = store.run_dir(run_id) / "task.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["injected"] = True
+    path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(ContractError, match=r"injected: unknown field"):
+        store.read_contract(run_id, "task", TaskSpec)
+    assert store.read(run_id, "task")["injected"] is True  # dict read stays tolerant
+
+
+def test_read_contract_rejects_mismatched_type(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    store.write(run_id, "task", make_task())
+    with pytest.raises(ValueError, match="artifact 'task' is TaskSpec"):
+        store.read_contract(run_id, "task", RiskAssessment)
+
+
+def test_cycle1_run_remains_readable(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    run = store.run_dir(run_id)
+    producer = {"id": "theforge", "version": "0.1.0"}
+    task = {"schema": "theforge/TaskSpec/v1", "producer": producer, "created_at": TS,
+            "status": "created", "id": "t1", "intent": "eco", "workspace_root": "/ws"}
+    receipt = {"schema": "theforge/ExecutionReceipt/v1", "producer": producer,
+               "created_at": TS, "status": "provider_failure", "run_id": run_id,
+               "forge_version": "0.1.0",
+               "inputs": {"task_sha256": "a" * 64, "routing_sha256": None,
+                          "context_sha256": None},
+               "provider": None, "result_sha256": None, "started_at": TS, "finished_at": TS,
+               "error": {"code": "FORGE-PROTO-EXIT", "detail": "exit 1"},
+               "limitations": [], "unknowns": []}
+    (run / "task.json").write_text(json.dumps(task), encoding="utf-8")
+    (run / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+    assert store.read(run_id, "receipt")["status"] == "provider_failure"
+    loaded = store.read_contract(run_id, "receipt", ExecutionReceipt)
+    assert loaded.inputs.risk_sha256 is None
+    assert store.read_contract(run_id, "task", TaskSpec).intent == "eco"
+    assert store.read_optional(run_id, "risk") is None
+
+
+def test_success_receipt_matching_persisted_result_is_written(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    result_sha = store.write(run_id, "result", make_result())
+    receipt = make_receipt(run_id, result_sha256=result_sha)
+    store.write(run_id, "receipt", receipt)
+    assert store.read_contract(run_id, "receipt", ExecutionReceipt) == receipt
+    assert store.read_contract(run_id, "result", ExecutionResult).status == "ok"
+
+
+def test_success_receipt_without_result_hash_is_refused(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    store.write(run_id, "result", make_result())
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt", make_receipt(run_id, result_sha256=None))
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert store.read_optional(run_id, "receipt") is None
+
+
+def test_success_receipt_with_mismatching_hash_is_refused(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    store.write(run_id, "result", make_result())
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt",
+                    make_receipt(run_id, status="partial", result_sha256=H_OTHER))
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert store.read_optional(run_id, "receipt") is None
+
+
+def test_success_receipt_without_persisted_result_is_refused(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt", make_receipt(run_id, result_sha256=H_OTHER))
+    assert exc.value.code == Codes.RECEIPT_INVALID
+
+
+def test_failure_receipt_without_result_is_written(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    receipt = make_receipt(run_id, status="refused",
+                           error=ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x"))
+    store.write(run_id, "receipt", receipt)
+    assert store.read(run_id, "receipt")["status"] == "refused"
+
+
+def test_receipt_with_malformed_hash_is_refused(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    bad = make_receipt(run_id, status="refused", inputs=ReceiptInputs(task_sha256="h"),
+                       error=ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x"))
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt", bad)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert store.read_optional(run_id, "receipt") is None
