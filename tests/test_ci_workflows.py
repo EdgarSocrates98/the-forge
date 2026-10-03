@@ -16,6 +16,10 @@ CI_WORKFLOW = REPO / ".github" / "workflows" / "ci.yml"
 
 PYTHONS = ["3.11", "3.12", "3.13", "3.14"]
 OSES = ["ubuntu-latest", "windows-latest"]
+# Offline suite installs the core and both real-provider adapters editable (real-provider 3.1).
+INSTALL_WITH_ADAPTERS = (
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge"
+)
 
 
 def _load() -> dict[str, Any]:
@@ -118,7 +122,7 @@ def test_test_job_matrix_covers_linux_windows_and_all_pythons() -> None:
 
 def test_test_job_runs_lint_types_schema_parity_and_offline_suite() -> None:
     lines = _run_lines(_load()["jobs"]["test"])
-    install = _index_of(lines, "pip install -e .[dev]")
+    install = _index_of(lines, INSTALL_WITH_ADAPTERS)
     lint = _index_of(lines, "ruff check .")
     types = _index_of(lines, "mypy")
     regen = _index_of(lines, "python -m theforge.contracts.schema schemas")
@@ -216,7 +220,7 @@ def test_compat_workflow_runs_offline_suite_on_macos_for_311_and_314() -> None:
         ]
         assert setup and setup[0]["with"]["python-version"] == "${{ matrix.python }}"
         lines = _run_lines(job)
-        install = _index_of(lines, "pip install -e .[dev]")
+        install = _index_of(lines, INSTALL_WITH_ADAPTERS)
         suite = _index_of(lines, 'python -m pytest -m "not slow and not real_provider"')
         assert install < suite
 

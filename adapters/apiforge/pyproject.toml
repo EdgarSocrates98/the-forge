@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "theforge-apiforge-adapter"
+version = "0.1.0"
+description = "Forge Protocol v1 provider adapter that exposes the API Forge to The Forge."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/theforge_apiforge"]
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+target-version = "py310"

@@ -38,10 +38,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install (editable, dev extras)
+      - name: Install (editable, dev extras, adapters)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .[dev]
+          python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge
 
       - name: Lint
         run: ruff check .
