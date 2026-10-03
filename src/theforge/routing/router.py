@@ -145,16 +145,25 @@ def _route_explicit(
                          reason=f"no routable provider declares capability {requested}",
                          unresolved=[f"capability:{requested}"])
     matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust], m[0].entry.id))
-    record, capability = matches[0]
-    action = resolve_action(task, capability)
     candidates = [Candidate(provider=r.entry.id, capability=c.id, state=c.state,
                             rank_key=[TRUST_RANK[r.entry.trust]]) for r, c in matches]
-    reason = f"requested capability {requested}"
-    if len(matches) > 1:
-        reason += f"; {len(matches)} providers declare it, tie-break by trust then id"
     declared = [(r.entry.id, c) for r, c in matches]
     notes = [f"capability-alias: {requested!r} resolved to {c.id!r} ({provider})"
              for provider, c in declared if not canonical]
+    targets = sorted({c.id for _, c in matches})
+    if len(targets) > 1:
+        # Only alias groups can diverge: providers naming different capabilities by one
+        # alias is ambiguity, never a trust tie-break between unrelated capabilities.
+        issue = (f"capability-alias: {requested!r} resolves to different capabilities: "
+                 f"{', '.join(targets)}")
+        return _decision(task, status="ambiguous", level="low", reason=f"ambiguous: {issue}",
+                         candidates=candidates, measured=["requested_capability"],
+                         unresolved=[issue], limitations=sorted(set(notes)))
+    record, capability = matches[0]
+    action = resolve_action(task, capability)
+    reason = f"requested capability {requested}"
+    if len(matches) > 1:
+        reason += f"; {len(matches)} providers declare it, tie-break by trust then id"
     notes += _deprecation_notes(declared)
     notes += _overlap_notes(declared, "; tie-break trust then id")
     level, unresolved = _state_confidence(capability)

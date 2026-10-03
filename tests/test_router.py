@@ -162,6 +162,23 @@ def test_explicit_alias_group_keeps_trust_then_id_tie_break() -> None:
     ]
 
 
+def test_explicit_alias_to_divergent_canonicals_is_ambiguous() -> None:
+    """An alias naming different capabilities across providers is ambiguity, never a guess."""
+    a = record("aaa-forge", [_with(cap("data.checks"), aliases=["dq"])], trust="trusted")
+    z = record("zzz-forge", [_with(cap("data.rules"), aliases=["dq"])], trust="local")
+    d = route(task("x", requested_capability="dq"), [z, a], [], set())
+    assert d.status == "ambiguous" and d.confidence.level == "low"
+    assert d.selected == []
+    assert [(c.provider, c.capability) for c in d.candidates] == [
+        ("aaa-forge", "data.checks"), ("zzz-forge", "data.rules")]
+    assert d.confidence.unresolved == [
+        "capability-alias: 'dq' resolves to different capabilities: data.checks, data.rules"]
+    assert d.limitations == [
+        "capability-alias: 'dq' resolved to 'data.checks' (aaa-forge)",
+        "capability-alias: 'dq' resolved to 'data.rules' (zzz-forge)",
+    ]
+
+
 @pytest.mark.parametrize(("replaced_by", "suffix"), [
     ("data.quality2", "replaced_by 'data.quality2'"),
     (None, "no replacement declared"),
