@@ -5,6 +5,7 @@ spec requires are asserted on the parsed structure, so a refactor of the workflo
 silently drop a gate, a platform or a Python version.
 """
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -78,6 +79,20 @@ def test_every_checkout_does_not_persist_credentials() -> None:
                 checkouts += 1
                 assert step.get("with", {}).get("persist-credentials") is False, name
     assert checkouts >= 2
+
+
+def test_every_workflow_pins_actions_to_a_full_commit_sha() -> None:
+    """Tags are mutable: every ``uses`` names a 40-hex commit, with the tag as a comment."""
+    workflows = sorted((REPO / ".github" / "workflows").glob("*.yml"))
+    assert workflows
+    for path in workflows:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for name, job in data["jobs"].items():
+            for step in _steps(job):
+                uses = step.get("uses")
+                if uses:
+                    ref = str(uses).partition("@")[2]
+                    assert re.fullmatch(r"[0-9a-f]{40}", ref), f"{path.name}:{name}: {uses}"
 
 
 def test_actions_are_pinned_to_a_version() -> None:
