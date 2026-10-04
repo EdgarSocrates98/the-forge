@@ -101,7 +101,7 @@ Os testes `real_provider` (`python -m pytest -m real_provider`) rodam contra os 
 | `THEFORGE_REAL_PROVIDERS_REQUIRED` | `1` | pré-requisito ausente vira falha em vez de skip |
 
 - Só o harness de teste lê essas variáveis, para montar o `argv` do `providers.toml` de usuário isolado de cada teste. Elas nunca chegam ao ambiente do provider, porque a allowlist de ambiente do core não muda.
-- Os pré-requisitos de cada Forge são verificados nesta ordem, cada um com motivo explícito: a variável está definida, o arquivo existe, e `<python> -c "import <adapter>, <especialista>"` sai 0 em até 60 s. Exemplo de motivo: `THEFORGE_REAL_APIFORGE_PYTHON not set (API Forge needs Python 3.12; see docs/real-providers.md)`.
+- Os pré-requisitos de cada Forge são verificados nesta ordem, cada um com motivo explícito: a variável está definida; o valor é um caminho absoluto de um interpretador (`python`, `python3` ou `python3.x`, com `.exe` opcional) e o arquivo existe; e `<python> -c "import <adapter>, <especialista>"` sai 0 em até 60 s. Exemplo de motivo: `THEFORGE_REAL_APIFORGE_PYTHON not set (API Forge needs Python 3.12; see docs/real-providers.md)`.
 - Sem `THEFORGE_REAL_PROVIDERS_REQUIRED=1`, um pré-requisito ausente **pula** a integração daquele Forge com o motivo, e a suíte não falha. Com a variável, o mesmo caso **falha**.
 - No CI, o workflow agendado `real-providers.yml` cria um venv 3.11 (Spark) e um 3.12 (API) a partir dos irmãos em `siblings/` e exporta as três variáveis, com `THEFORGE_REAL_PROVIDERS_REQUIRED=1`. Uma seleção vazia é regressão. O workflow não roda em pull requests e nunca bloqueia merge.
 

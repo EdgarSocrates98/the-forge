@@ -193,8 +193,16 @@ def _network_policy(request: pytest.FixtureRequest) -> Iterator[None]:
 @pytest.fixture(autouse=True)
 def _isolated_user_config(
     tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("THEFORGE_CONFIG_DIR", str(tmp_path_factory.mktemp("user-config")))
+) -> Path:
+    path = tmp_path_factory.mktemp("user-config")
+    monkeypatch.setenv("THEFORGE_CONFIG_DIR", str(path))
+    return path
+
+
+@pytest.fixture
+def user_config_dir(_isolated_user_config: Path) -> Path:
+    """The test's isolated user config dir (the one ``THEFORGE_CONFIG_DIR`` points to)."""
+    return _isolated_user_config
 
 
 @pytest.fixture(autouse=True)
