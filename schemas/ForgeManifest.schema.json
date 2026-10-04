@@ -4,6 +4,9 @@
     "capabilities": {
       "items": {
         "properties": {
+          "accepts_handoff": {
+            "type": "boolean"
+          },
           "actions": {
             "items": {
               "type": "string"
@@ -126,6 +129,16 @@
     },
     "execution": {
       "properties": {
+        "deterministic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "local": {
           "type": "boolean"
         },

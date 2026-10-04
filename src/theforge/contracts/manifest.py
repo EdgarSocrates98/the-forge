@@ -42,6 +42,8 @@ class Capability:
     # Suggested replacement capability id; may belong to another provider.
     replaced_by: str | None = None
     context: CapabilityContext = field(default_factory=CapabilityContext)
+    # Whether the capability declares it consumes the handoff of an ExecuteRequest.
+    accepts_handoff: bool = False
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):
@@ -61,6 +63,8 @@ class ExecutionInfo:
     local: bool = True
     offline: bool = True
     requires_network: bool = False
+    # Same inputs give the same result; None = undeclared (never "reproducible").
+    deterministic: bool | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

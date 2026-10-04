@@ -223,7 +223,8 @@
         "refused",
         "provider_failure",
         "ambiguous",
-        "no_route"
+        "no_route",
+        "planned"
       ]
     },
     "telemetry_sha256": {

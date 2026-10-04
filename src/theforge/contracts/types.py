@@ -15,7 +15,9 @@ BudgetProfile = Literal["economy", "balanced", "max"]
 Epistemic = Literal["confirmed", "observed", "inferred", "proposed", "unresolved"]
 MetricKind = Literal["measured", "estimated", "unknown"]
 ResponseStatus = Literal["ok", "partial", "refused", "error"]
-Outcome = Literal["ok", "partial", "refused", "provider_failure", "ambiguous", "no_route"]
+# "planned" is the outcome of a plan run that was only planned (receipts of kind "plan").
+Outcome = Literal["ok", "partial", "refused", "provider_failure", "ambiguous", "no_route",
+                  "planned"]
 Severity = Literal["info", "low", "medium", "high", "critical"]
 HealthStatus = Literal["ok", "degraded", "unavailable"]
 Tier = Literal["metadata", "reference", "excerpt", "requested"]
@@ -32,6 +34,24 @@ DEPENDENCY_MANIFESTS: Final = ("pyproject.toml", "requirements*.txt", "package.j
 
 # Items a provider may ask for in one context request (validate_context_request).
 MAX_CONTEXT_REQUEST_ITEMS: Final = 64
+
+# --- Multi-provider execution (cross-forge-foundation) --------------------------------
+# Single definition of the shared types and limits: plan, handoff, workspace, graph and
+# verification contracts import them and never redeclare them.
+# Multi-provider patterns: all are representable; only EXECUTABLE_PATTERNS run.
+PlanPattern = Literal["route", "delegate", "parallel", "pipeline", "debate"]
+EXECUTABLE_PATTERNS: Final = frozenset({"route", "pipeline"})
+# Epistemic status of a graph edge or plan dependency (inferred always names its rule).
+EdgeEpistemic = Literal["explicit", "observed", "inferred"]
+Reproducibility = Literal["reproducible", "partially_reproducible", "non_reproducible",
+                          "unknown"]
+MAX_PLAN_NODES: Final = 8
+MAX_HANDOFF_ITEMS: Final = 256
+MAX_HANDOFF_BYTES: Final = 262_144  # canonical JSON of the handoff
+MAX_CLAIM_CHARS: Final = 500
+MAX_REPO_DEPTH: Final = 3
+MAX_REPOSITORIES: Final = 64
+MAX_GRAPH_NODES: Final = 2_000
 
 SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 

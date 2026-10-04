@@ -104,7 +104,11 @@
     },
     "pattern": {
       "enum": [
-        "route"
+        "route",
+        "delegate",
+        "parallel",
+        "pipeline",
+        "debate"
       ]
     },
     "producer": {

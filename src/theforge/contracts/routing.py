@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import CapabilityState, Producer
+from theforge.contracts.types import CapabilityState, PlanPattern, Producer
 
 ROUTING_SCHEMA = "theforge/RoutingDecision/v1"
 
@@ -49,7 +49,7 @@ class RoutingDecision:
     task_id: str
     candidates: list[Candidate] = field(default_factory=list)
     selected: list[Selection] = field(default_factory=list)
-    pattern: Literal["route"] = "route"
+    pattern: PlanPattern = "route"  # additive: decisions recorded without it are "route"
     reason: str
     confidence: Confidence
     fallbacks_used: list[str] = field(default_factory=list)
