@@ -67,6 +67,7 @@ Depois rode `theforge registry refresh`.
 - [Escrevendo um provider](docs/provider-authoring.md)
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
+- [Performance](docs/performance.md)
 - [ADRs](docs/adr/)
 - [Spec do ciclo 1](docs/superpowers/specs/2026-10-02-the-forge-protocol-core-design.md)
 
