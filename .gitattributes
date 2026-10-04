@@ -7,3 +7,5 @@ adapters/**/_shell.py text eol=lf
 # Packaged native snapshots and replay recordings are compared byte for byte (canonical form).
 adapters/**/native_*.json text eol=lf
 tests/fixtures/native/** text eol=lf
+# The cross proof workspace is hashed by its replay recordings (scenarios/cross).
+tests/fixtures/workspaces/cross/** text eol=lf
