@@ -194,6 +194,14 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "context-request-loop": ("provider_failure", Codes.CONTEXT_REQUEST_LIMIT),
     "context-request-undeclared": ("provider_failure", Codes.CONTEXT_REQUEST_UNSUPPORTED),
     "context-request-invalid": ("provider_failure", Codes.CONTEXT_REQUEST_INVALID),
+    # cross-forge-foundation fixtures: a single ``ask`` never calls the ``plan`` op nor sends
+    # a handoff, so these answer as a valid run. artifact-tamper stays ``ok`` until artifact
+    # re-verification (cross-forge-foundation 3.x/4.x) makes it ``partial``.
+    "plan-error": ("ok", None),
+    "plan-estimate-stricter": ("ok", None),
+    "handoff-accept": ("ok", None),
+    "artifact-tamper": ("ok", None),
+    "internal-crash": ("provider_failure", Codes.PROTO_EXIT),  # unhandled exception, exit 1
 }
 
 # Registry state that keeps each describe-level attacker out of routing. no-execute-op is not

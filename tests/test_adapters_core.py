@@ -499,6 +499,17 @@ def _proof_workspace(tmp_path: Path) -> Path:
     return root
 
 
+def _proof_dependencies(root: Path) -> set[str]:
+    """Decomposition input of cross-forge-foundation: the root's declared dependencies plus
+    those of each repository directory directly under it (``cross`` is a non-repo root with
+    one repository per subdirectory, each with its own dependency manifest)."""
+    dependencies = workspace_dependencies(root)
+    for child in sorted(root.iterdir()):
+        if child.is_dir() and not child.name.startswith("."):
+            dependencies |= workspace_dependencies(child)
+    return dependencies
+
+
 @pytest.mark.parametrize("scope", ["adapters", "registry"])
 def test_proof_task_routes_one_best_capability_per_provider(tmp_path: Path, scope: str) -> None:
     """``adapters``: only the two adapter manifests (signals both declare, such as ``*.py``,
@@ -510,8 +521,7 @@ def test_proof_task_routes_one_best_capability_per_provider(tmp_path: Path, scop
     assert {r.entry.id for r in records if r.routable()} >= set(PROOF_BEST), records
     task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="proof-task",
                     intent=PROOF_TASK, workspace_root=str(root))
-    decision = route(task, records, scan_workspace(root, []).files,
-                     workspace_dependencies(root))
+    decision = route(task, records, scan_workspace(root, []).files, _proof_dependencies(root))
     by_provider: dict[str, list[Candidate]] = {}
     for candidate in decision.candidates:
         by_provider.setdefault(candidate.provider, []).append(candidate)

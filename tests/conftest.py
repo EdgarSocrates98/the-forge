@@ -72,6 +72,20 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_plan_contracts.py": ("unit", "contract"),
     "test_cross_forge_contracts.py": ("unit", "contract"),
     "test_plan_validation.py": ("unit",),
+    "test_decompose.py": ("unit", "integration"),
+    "test_handoff.py": ("unit", "security"),
+    "test_synthesis.py": ("unit",),
+    "test_workspace_descriptor.py": ("integration", "security"),
+    "test_graph.py": ("unit",),
+    "test_verification.py": ("unit",),
+    "test_reproducibility.py": ("unit",),
+    "test_plan_flow.py": ("integration",),
+    "test_cross_forge_replay.py": ("integration",),
+    "test_cross_forge_real.py": ("real_provider", "integration"),
+    "test_explain_report.py": ("integration",),
+    "test_cli_governed.py": ("e2e",),
+    "test_replay.py": ("integration",),
+    "test_cross_fixtures.py": ("integration",),
 }
 
 

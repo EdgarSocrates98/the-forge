@@ -3,6 +3,7 @@
 argv: bad_forge.py MODE [PROVIDER_ID] OP
 """
 
+import hashlib
 import json
 import os
 import subprocess
@@ -40,6 +41,20 @@ MUTATION = b"changed during execution\n"
 REPORTED_METRICS = {"tokens": {"value": 1234, "kind": "measured"},
                     "duration_ms": {"value": 999999, "kind": "measured"},
                     "context_bytes": {"value": 1, "kind": "measured"}}
+
+
+# Cross-forge-foundation modes. artifact-tamper writes ARTIFACT_PATH in its work dir with
+# TAMPERED content but declares the hash of the ORIGINAL content; plan-error and
+# plan-estimate-stricter declare the ``plan`` op (failing / estimating a class stricter than
+# the declared read_only); handoff-accept declares ``accepts_handoff`` and reports the
+# number of handoff items it received; internal-crash dies with an unhandled exception
+# (a raw traceback carrying a secret on stderr).
+ARTIFACT_PATH = "out/report.txt"
+ORIGINAL = b"original report\n"
+TAMPERED = b"tampered report\n"
+STRICTER_ESTIMATE = {"context_needed": ["*.txt"], "operation_class": "local_mutation",
+                     "expected_artifacts": [ARTIFACT_PATH], "unknowns": [],
+                     "limitations": []}
 
 
 def _evidence(eid, producer, **extra):
@@ -167,6 +182,8 @@ def main() -> int:
             capabilities.append(capability("theforge.all"))
         if mode == "describe-only-off-taxonomy":
             capabilities = [capability("forge.misc")]
+        if mode == "handoff-accept":
+            capabilities[0]["accepts_handoff"] = True
         if mode == "describe-colliding-alias":
             other = capability("bad.other")
             other["aliases"] = ["bad.thing"]  # alias equal to another capability's id
@@ -175,6 +192,8 @@ def main() -> int:
             "schema": "theforge/ForgeManifest/v1", "id": pid, "version": version,
             "protocols": MANIFEST_PROTOCOLS.get(mode, [proto]),
             "ops": ["describe", "health"] if mode == "no-execute-op"
+            else ["describe", "health", "execute", "plan"]
+            if mode in ("plan-error", "plan-estimate-stricter")
             else ["describe", "health", "execute"],
             "domains": ["test"], "capabilities": capabilities,
             # describe-cwd-probe reports the working directory it was started in
@@ -196,7 +215,24 @@ def main() -> int:
                                 "checks": [{"name": "backend", "ok": False,
                                             "detail": "backend down"}]})
         return reply("ok", {"status": "ok", "checks": []})
+    if op == "plan" and mode == "plan-error":
+        return reply("error", error={"code": "BAD-PLAN-FAILED", "detail": "cannot estimate",
+                                     "field": None, "unlock": None})
+    if op == "plan" and mode == "plan-estimate-stricter":
+        return reply("ok", STRICTER_ESTIMATE)
     if op == "execute":
+        if mode == "internal-crash":
+            raise RuntimeError("internal failure token=supersecretvalue123")
+        if mode == "artifact-tamper":
+            os.makedirs(os.path.dirname(ARTIFACT_PATH), exist_ok=True)
+            with open(ARTIFACT_PATH, "wb") as fh:
+                fh.write(TAMPERED)
+            return reply("ok", dict(RESULT, producer=producer, artifacts=[
+                {"path": ARTIFACT_PATH, "sha256": hashlib.sha256(ORIGINAL).hexdigest()}]))
+        if mode == "handoff-accept":
+            handoff = (request.get("payload") or {}).get("handoff") or {}
+            return reply("ok", dict(RESULT, producer=producer, limitations=[
+                f"handoff-items={len(handoff.get('items') or [])}"]))
         if mode == "timeout":
             time.sleep(30)
         if mode == "crash":
