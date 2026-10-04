@@ -23,10 +23,12 @@ from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
 from theforge.contracts.installation import InstallationPlan
 from theforge.contracts.plan import ExecutionPlan, PlanResult
+from theforge.contracts.verification import VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.errors import UsageError
 from theforge.forger import Forger, PlanCommand, PlanExecutor, PlanOutcome
 from theforge.forger import plan_executor as plan_executor_module
+from theforge.planning import handoff as handoff_module
 from theforge.protocol import ProviderTransport, SubprocessTransport
 from theforge.registry import Registry
 from theforge.runs import RunStore
@@ -272,6 +274,15 @@ def test_proof_task_runs_two_nodes_with_the_first_handoff_in_the_second(
         assert outcome.status == "ok"
         assert outcome.receipt_sha256 == store.persisted_sha256(outcome.run_id, "receipt")
         assert outcome.result_sha256 == store.persisted_sha256(outcome.run_id, "result")
+        # Every node run is verified and its reproducibility recorded (3.2, 9.1, 14.1).
+        node_receipt = store.read_contract(outcome.run_id, "receipt", ExecutionReceipt)
+        verification = store.read_contract(outcome.run_id, "verification",
+                                           VerificationResult)
+        assert node_receipt.verification_sha256 == store.persisted_sha256(
+            outcome.run_id, "verification")
+        assert verification.forge.status == "passed"
+        assert node_receipt.reproducibility is not None
+        assert node_receipt.reproducibility == outcome.reproducibility
     # The handoff of n1 reached n2: persisted in n2's run and echoed by the fixture.
     handoff = store.read(n2.run_id, "handoff")
     assert {item["origin"]["node"] for item in handoff["items"]} == {"n1"}
@@ -293,6 +304,30 @@ def test_proof_task_runs_two_nodes_with_the_first_handoff_in_the_second(
     assert receipt.reproducibility == result.reproducibility
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     assert telemetry.providers_executed.value == 2
+
+
+def test_truncated_handoff_is_a_limitation_of_the_dependent_node_run(
+        cross: CrossWorkspace, monkeypatch: pytest.MonkeyPatch) -> None:
+    # n1's result yields more items than the (lowered) limit: the handoff is cut (4.4).
+    monkeypatch.setattr(handoff_module, "MAX_HANDOFF_ITEMS", 1)
+    executor, store, spy = _executor(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
+    out = executor.run(PlanCommand(intent=PROOF_TASK, profile="max", execute=True))
+    assert out.status == "ok", out.error
+    assert out.result is not None
+    n1, n2 = out.result.nodes
+    assert n1.run_id is not None and n2.run_id is not None
+    handoff = store.read(n2.run_id, "handoff")
+    assert handoff["truncated"] is True and len(handoff["items"]) == 1
+    assert handoff["dropped"] >= 1
+    assert handoff["items"][0]["kind"] == "decision"  # the priority prefix is kept
+    note = f"handoff-truncated: dropped {handoff['dropped']} items"
+    assert note in handoff["limitations"]
+    assert spy.calls[-1][4]["handoff"] == handoff  # delivered == persisted
+    child = store.read_contract(n2.run_id, "receipt", ExecutionReceipt)
+    assert (child.parent_run, child.plan_node) == (out.run_id, "n2")
+    assert note in child.limitations  # the dependent node's run records the truncation
+    first = store.read_contract(n1.run_id, "receipt", ExecutionReceipt)
+    assert not [n for n in first.limitations if n.startswith("handoff-truncated")]
 
 
 def test_policy_refusal_of_the_first_node_blocks_the_second(tmp_path: Path) -> None:
@@ -337,6 +372,30 @@ def test_independent_node_still_runs_after_another_fails(tmp_path: Path) -> None
     _assert_closed(store, out)
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     assert telemetry.providers_executed.value == 2
+
+
+def test_failure_at_the_root_of_a_chain_blocks_every_descendant_by_the_root(
+        tmp_path: Path) -> None:
+    executor, store, spy = _executor(tmp_path, [bad_entry("refuse", "bad-r"), SPARK_ENTRY])
+    plan_file = _plan_file(tmp_path / "plan.json", [
+        _node("n1", "bad-r", "bad.thing", "run"),
+        _node("n2", "fixture-spark", "spark.performance", "diagnose", after="n1"),
+        _node("n3", "fixture-spark", "spark.performance", "review", after="n2")])
+    out = executor.run(PlanCommand(intent="three in a chain", profile="max",
+                                   plan_file=plan_file, execute=True))
+    assert out.status == "refused"
+    assert out.result is not None and out.result.order == ["n1", "n2", "n3"]
+    statuses = {n.node: (n.status, n.blocked_by, n.run_id is None)
+                for n in out.result.nodes}
+    # The grandchild names the root that failed, not its skipped parent (3.4).
+    assert statuses == {"n1": ("refused", None, False), "n2": ("skipped", "n1", True),
+                        "n3": ("skipped", "n1", True)}
+    for skipped in out.result.nodes[1:]:
+        assert skipped.error is not None
+        assert skipped.error.code == Codes.PLAN_DEPENDENCY_FAILED
+    assert spy.ops("execute") == ["bad-r"]
+    assert _child_runs(store, out.run_id) == [out.result.nodes[0].run_id]
+    _assert_closed(store, out)
 
 
 @pytest.mark.parametrize(("approvals", "bad_status"), [

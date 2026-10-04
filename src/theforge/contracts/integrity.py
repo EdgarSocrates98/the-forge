@@ -546,8 +546,8 @@ def validate_plan_result(result: PlanResult) -> None:
     """Order: status, per node (``ok`` coherence, ``skipped`` blocker), ``order`` (3.6).
 
     ``status`` is an execution outcome (ok, partial, refused, provider_failure); an ``ok``
-    plan has every node ``ok`` with a result hash; a ``skipped`` node names a blocking node
-    of the result; ``order`` is a permutation of the node ids. Every violation is
+    plan has every node ``ok`` with a result hash; a ``skipped`` node names another node of
+    the result as its blocker; ``order`` is a permutation of the node ids. Every violation is
     ``Codes.PLAN_INVALID``.
     """
     violations: list[Violation] = []
@@ -573,10 +573,11 @@ def validate_plan_result(result: PlanResult) -> None:
                 f"plan result is 'ok' but node {node.node!r} has no result_sha256",
                 f"{where}.result_sha256",
             ))
-        if node.status == "skipped" and node.blocked_by not in node_ids:
+        if node.status == "skipped" and (node.blocked_by not in node_ids
+                                         or node.blocked_by == node.node):
             violations.append(Violation(
                 Codes.PLAN_INVALID,
-                f"skipped node {node.node!r} needs a blocking node of the plan, "
+                f"skipped node {node.node!r} needs another node of the plan as blocker, "
                 f"got {node.blocked_by!r}",
                 f"{where}.blocked_by",
             ))

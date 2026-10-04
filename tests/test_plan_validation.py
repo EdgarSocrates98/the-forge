@@ -98,6 +98,15 @@ def test_duplicate_node_id() -> None:
         (Codes.PLAN_INVALID, "a")]
 
 
+def test_duplicate_dependency() -> None:
+    twice = PlanNode(id="b", role="consumer", provider="demo", capability="demo.echo",
+                     action="echo", depends_on=[dep("a"), dep("a", "inferred", "rule-x")],
+                     inputs=["a"])
+    violations = validate_plan_structure(plan(pnode("a"), twice))
+    assert codes(violations) == [(Codes.PLAN_INVALID, "b")]
+    assert "twice" in violations[0].detail and "'a'" in violations[0].detail
+
+
 def test_dependency_on_missing_node() -> None:
     violations = validate_plan_structure(plan(pnode("a"), pnode("b", "zz")))
     assert codes(violations) == [(Codes.PLAN_INVALID, "b")]
@@ -306,6 +315,9 @@ def test_skipped_node_requires_a_blocking_node() -> None:
     unknown = presult("partial", [outcome("a", "partial"),
                                   outcome("b", "skipped", blocked_by="ghost")])
     assert result_codes(unknown) == [(Codes.PLAN_INVALID, "nodes[1].blocked_by")]
+    itself = presult("partial", [outcome("a", "partial"),
+                                 outcome("b", "skipped", blocked_by="b")])
+    assert result_codes(itself) == [(Codes.PLAN_INVALID, "nodes[1].blocked_by")]
 
 
 @pytest.mark.parametrize("order", [["a"], ["a", "b", "c"], ["a", "a"], ["b", "c"]])
