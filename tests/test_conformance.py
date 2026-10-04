@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from helpers import PROVIDERS, fixture_argv
+from helpers import FIXTURES, PROVIDERS, fixture_argv
 from theforge.contracts import (
     ContextPack,
     ExecuteRequest,
@@ -33,6 +33,12 @@ PROVIDER_ARGVS = {
     "echo-forge": [sys.executable, "-m", "theforge.providers.echo"],
     "fixture-spark": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark.json")),
     "fixture-api": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api.json")),
+    # Real adapters in replay mode (healthy `default` scenario): no network, no credentials and
+    # no sibling repos; execute with an empty or non-matching context takes the "no input" path.
+    "spark-forge-replay": [sys.executable, "-m", "theforge_sparkforge", "--replay",
+                           str(FIXTURES / "native" / "sparkforge" / "default")],
+    "api-forge-replay": [sys.executable, "-m", "theforge_apiforge", "--replay",
+                         str(FIXTURES / "native" / "apiforge" / "default")],
 }
 pytestmark = pytest.mark.parametrize(
     "argv", list(PROVIDER_ARGVS.values()), ids=list(PROVIDER_ARGVS))

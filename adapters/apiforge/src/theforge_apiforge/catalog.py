@@ -79,7 +79,9 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         actions=("analyze",),
         signals=SignalsSpec(
             keywords=("api", "openapi", "rest api", "endpoint", "api contract"),
-            file_globs=OPENAPI_GLOBS,
+            # The core sends only files matching file_globs: the project sources must be
+            # declared too, or --project can never be staged through the core.
+            file_globs=OPENAPI_GLOBS + PROJECT_GLOBS,
             dependencies=("fastapi",),
         ),
         output_dir="case",
@@ -92,7 +94,9 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         actions=("run",),
         signals=SignalsSpec(
             keywords=("change control", "change bundle", "api change", "breaking change"),
-            file_globs=CHANGE_BUNDLE_GLOBS,
+            # The bundle names a contract and a project that the verb reads: both must reach
+            # the ContextPack (the core sends only files matching file_globs).
+            file_globs=CHANGE_BUNDLE_GLOBS + OPENAPI_GLOBS + PROJECT_GLOBS,
         ),
         output_dir="change-control",
         description="Governed review of an API change bundle (af-change-bundle/1) from "

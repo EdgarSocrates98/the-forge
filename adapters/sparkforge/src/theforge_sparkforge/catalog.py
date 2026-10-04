@@ -256,7 +256,10 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
                      "costs and whether it has a consequence."),
         actions=_actions(_analyze("data_quality"), _analyze("dq_ai"), _tool("dq_ai_assess"),
                          _analyze("data_observability")),
+        # *.py: the data-quality action reads PySpark sources, and the core sends only files
+        # matching file_globs (one signal type, below the pyspark.static-analysis evidence).
         signals=SignalsSpec(keywords=("data quality", "deequ", "great expectations", "dqdl"),
+                            file_globs=PYSPARK_GLOBS,
                             dependencies=("pydeequ", "great-expectations")),
         bindings={_analyze("data_quality"): _path(PYSPARK_GLOBS)},
         unbound={_analyze("dq_ai"): NO_CONVENTION,

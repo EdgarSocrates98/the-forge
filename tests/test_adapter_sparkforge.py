@@ -233,14 +233,17 @@ def test_capability_signals_have_no_catch_all_glob() -> None:
             assert not glob.lower().endswith(".md"), (spec.id, glob)
 
 
-def test_only_pyspark_static_analysis_claims_python_sources() -> None:
+def test_python_sources_are_claimed_only_where_an_action_reads_them() -> None:
     # The cross-forge proof task must route to exactly one best Spark capability.
     for spec in catalog.CAPABILITIES:
         if spec.id == "pyspark.static-analysis":
             assert spec.signals.file_globs == ("*.py",)
             assert spec.signals.dependencies == ("pyspark",)
             continue
-        assert "*.py" not in spec.signals.file_globs, spec.id
+        # *.py only where an action reads Python sources (the core stages only files matching
+        # file_globs); a lone file signal stays below the router minimum.
+        if "*.py" in spec.signals.file_globs:
+            assert any("*.py" in binding.globs for binding in spec.bindings.values()), spec.id
         assert "pyspark" not in spec.signals.dependencies, spec.id
         assert not {"spark", "pyspark", "pipeline", "api", "dados"} & set(spec.signals.keywords)
 
