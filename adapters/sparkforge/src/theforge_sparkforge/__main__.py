@@ -11,8 +11,12 @@ the protocol, capability and action gates.
 ``health`` (``health.py``) checks the interpreter, the dispatcher (``find_spec``, never
 imported), the Spark Forge version against ``SUPPORTED_SPECIALIST`` (or the version given with
 ``--assume-specialist-version``) and the snapshot, without network, credentials or the native
-``doctor``; with ``--replay`` it reads ``environment.json`` and ``health.json``. Execute is not
-implemented yet and refuses with a well-formed response (exit 0).
+``doctor``; with ``--replay`` it reads ``environment.json`` and ``health.json``.
+
+``execute`` (``execute.py``) stages the ContextPack, fills the action's file argument from the
+staged files and calls the tool (live: ``native_call`` in a child process whose cwd is the
+execute cwd; ``--replay``: the action's recording), then translates (``translate.py``); the
+shell reduces the cwd to the declared artifacts afterwards.
 """
 
 from __future__ import annotations
@@ -27,10 +31,10 @@ from theforge_sparkforge import (
     VERSION,
     backend,
     catalog,
+    execute,
     health,
 )
 from theforge_sparkforge._shell import (
-    OP_UNSUPPORTED,
     PROTOCOL,
     AdapterOptions,
     HandlerFactory,
@@ -129,20 +133,10 @@ def _health(options: AdapterOptions) -> OpHandler:
     return handle
 
 
-def _not_implemented(options: AdapterOptions) -> OpHandler:
-    def handle(request: Request, cwd: Path) -> Reply:
-        reply = refuse(OP_UNSUPPORTED,
-                       f"op {request.op!r} is not implemented by {PROVIDER_ID} {VERSION} yet",
-                       field="op")
-        return Reply(status=reply.status, error=reply.error,
-                     limitations=[f"adapter op {request.op!r} is not implemented yet"])
-    return handle
-
-
 HANDLERS: dict[str, HandlerFactory] = {
     "describe": _describe,
     "health": _health,
-    "execute": _not_implemented,
+    "execute": execute.handler,
 }
 
 

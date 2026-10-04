@@ -1,7 +1,8 @@
-"""Spark Forge adapter (real-provider-integration 4.1-4.3): manifest derived from the recorded
+"""Spark Forge adapter (real-provider-integration 4.1-4.4): manifest derived from the recorded
 native tool surface, the capability table, describe and health with and without ``--replay``,
 the replay layout, the snapshot re-recording, and the translation of real recorded execute
-outputs and native errors (plus the execute recording helper).
+outputs and native errors (plus the execute recording helper), and execute with the replay
+backend and the live backend (over a stand-in ``sparkforge`` package).
 
 The dev interpreter does not have the Spark Forge installed: describe there must be refused
 with an actionable reason, and every manifest check runs in replay (``environment.json`` stands
@@ -12,12 +13,13 @@ import hashlib
 import importlib.metadata
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import pytest
@@ -749,7 +751,8 @@ def test_default_recording_holds_tool_output_and_chained_judge() -> None:
     assert recorded["arguments"]["path"] == "jobs"
 
 
-@pytest.mark.parametrize("path", [OUTPUT_RECORDING, ERROR_RECORDING])
+@pytest.mark.parametrize("path", [*sorted(DEFAULT.glob(f"{CAPABILITY}.*.json")),
+                                  ERROR_RECORDING], ids=lambda path: path.name)
 def test_execute_recordings_are_canonical_lf_and_portable(path: Path) -> None:
     text = path.read_bytes().decode("utf-8")
     assert "\r" not in text
@@ -1132,3 +1135,354 @@ def test_recording_helper_never_copies_nor_follows_links(tmp_path: Path) -> None
     assert seen == [False]
     with pytest.raises(record_execute.RecordingError, match="not a link"):
         record_execute.check_workspace(workspace / "linked")
+
+
+# --- execute with the replay and live backends (4.4) --------------------------------------
+
+WORKSPACE_FILES = ["jobs/orders_job.py", "requirements.txt"]
+SPILL = "native/full-output.json"
+RECORDED_ACTIONS = sorted(path.name[:-len(".json")].rsplit(".", 1)
+                          for path in DEFAULT.glob("*.json")
+                          if path.name not in (backend.ENVIRONMENT_FILE, backend.HEALTH_FILE))
+
+
+def _execute(cwd: Path, *options: str, capability: str = CAPABILITY, action: str = ACTION,
+             files: list[str] | None = None, root: Path = WORKSPACE,
+             env: dict[str, str] | None = None) -> Response:
+    payload = {"task": {"intent": "analyze the spark job", "budget_profile": "balanced"},
+               "capability": capability, "action": action,
+               **_context(root, WORKSPACE_FILES if files is None else files)}
+    argv = [sys.executable, "-m", "theforge_sparkforge", *options, "execute"]
+    out = subprocess.run(argv, input=_request("execute", payload), capture_output=True,
+                         timeout=180, cwd=cwd, env=env)
+    assert out.returncode == 0, out.stderr
+    response = from_dict(Response, json.loads(out.stdout))
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.1.0")
+    return response
+
+
+def _result(response: Response) -> ExecutionResult:
+    assert response.status in ("ok", "partial"), response.error
+    result = from_dict(ExecutionResult, response.payload, "$.payload")
+    validate_result(result, expected=Producer(**PRODUCER))
+    return result
+
+
+def _left_in(cwd: Path) -> set[str]:
+    """Every file and directory left in ``cwd`` (relative POSIX paths)."""
+    return {path.relative_to(cwd).as_posix() for path in cwd.rglob("*")}
+
+
+def _assert_only_artifacts(cwd: Path, response: Response) -> None:
+    artifacts = ({item["path"] for item in response.payload.get("artifacts") or []}
+                 if response.status in ("ok", "partial") else set())
+    parents = {parent.as_posix() for path in artifacts
+               for parent in PurePosixPath(path).parents if parent.as_posix() != "."}
+    assert _left_in(cwd) == artifacts | parents
+
+
+def _replay_scenario(tmp_path: Path, *recordings: Path) -> Path:
+    """A replay directory with the default environment and health and only ``recordings``."""
+    scenario = tmp_path / "scenario"
+    scenario.mkdir()
+    for name in (backend.ENVIRONMENT_FILE, backend.HEALTH_FILE):
+        shutil.copyfile(DEFAULT / name, scenario / name)
+    for path in recordings:
+        shutil.copyfile(path, scenario / path.name)
+    return scenario
+
+
+def _run_dir(tmp_path: Path) -> Path:
+    cwd = tmp_path / "work"
+    cwd.mkdir()
+    return cwd
+
+
+def test_the_default_scenario_records_the_actions_exercised_over_the_spark_workspace() -> None:
+    assert [CAPABILITY, ACTION] in RECORDED_ACTIONS
+    assert [CAPABILITY, "graph"] in RECORDED_ACTIONS
+
+
+@pytest.mark.parametrize(("capability", "action"), RECORDED_ACTIONS)
+def test_every_recorded_action_replays_to_a_result_that_passes_core_integrity(
+        tmp_path: Path, capability: str, action: str) -> None:
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, "--replay", str(DEFAULT), capability=capability, action=action)
+    result = _result(response)
+    recorded = json.loads((DEFAULT / f"{capability}.{action}.json").read_text("utf-8"))
+    assert [e.id for e in result.evidence] == [item["id"] for item in _items(recorded)]
+    assert len(result.findings) == len(recorded["judge"]["output"]["items"])
+    _assert_only_artifacts(cwd, response)
+    assert _left_in(cwd) == set()
+
+
+def test_replay_of_an_unrecorded_action_is_replay_missing_naming_the_file(
+        tmp_path: Path) -> None:
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, "--replay", str(_replay_scenario(tmp_path)))
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "ADAPTER-REPLAY-MISSING"
+    assert f"{CAPABILITY}.{ACTION}.json" in response.error.detail
+    assert _left_in(cwd) == set()
+
+
+def test_execute_without_compatible_input_is_partial_without_reading_recordings(
+        tmp_path: Path) -> None:
+    scenario = _replay_scenario(tmp_path)
+    # A recording that would be an error if it were read.
+    (scenario / f"{CAPABILITY}.{ACTION}.json").write_text("not json", encoding="utf-8")
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, "--replay", str(scenario), files=["requirements.txt"])
+    result = _result(response)
+    assert result.status == "partial"
+    assert not result.findings and not result.evidence
+    assert any(note.startswith("no input: expected *.py") for note in result.limitations)
+    assert result.unknowns == ["input:path"]
+    assert _left_in(cwd) == set()
+
+
+def test_replayed_native_error_is_a_sparkforge_refusal_with_workspace_paths(
+        tmp_path: Path) -> None:
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, "--replay", str(ERROR_SCENARIO))
+    assert response.status == "refused" and response.error is not None
+    assert response.error.code == "SPARKFORGE-TOOL-ERROR"
+    assert "jobs/missing_job.py" in response.error.detail
+    assert "stage/" not in response.error.detail
+    assert _left_in(cwd) == set()
+
+
+@pytest.mark.parametrize("content", ["not json", "[]", '{"tool": "sparkforge_analyze_graph", '
+                                     '"arguments": {}, "output": {"items": []}, "judge": null}'])
+def test_unusable_replay_recording_is_replay_invalid(tmp_path: Path, content: str) -> None:
+    scenario = _replay_scenario(tmp_path)
+    (scenario / f"{CAPABILITY}.{ACTION}.json").write_text(content, encoding="utf-8")
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, "--replay", str(scenario))
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "ADAPTER-REPLAY-INVALID"
+    assert _left_in(cwd) == set()
+
+
+COPIES = 1000
+
+
+def _large_recording() -> dict[str, Any]:
+    """The real recording widened past the inline limit (derived in the test, never
+    versioned): every fact and finding repeated with fresh ids."""
+    recorded = _recorded()
+    facts, judged = _items(recorded), recorded["judge"]["output"]["items"]
+    many_facts: list[dict[str, Any]] = []
+    many_findings: list[dict[str, Any]] = []
+    for copy in range(COPIES):
+        renamed = {item["id"]: f"{item['id']}_{copy}" for item in facts}
+        many_facts.extend({**item, "id": renamed[item["id"]]} for item in facts)
+        many_findings.extend({**item, "evidence": [renamed[ref] for ref in item["evidence"]]}
+                             for item in judged)
+    recorded["output"]["items"] = many_facts
+    recorded["output"]["returned_count"] = recorded["output"]["total_count"] = len(many_facts)
+    recorded["judge"]["output"]["items"] = many_findings
+    recorded["provenance"] = (f"derived in the test from the default recording, "
+                              f"widened {COPIES}x")
+    return recorded
+
+
+def test_large_replayed_output_is_partial_with_the_spill_artifact(tmp_path: Path) -> None:
+    scenario = _replay_scenario(tmp_path)
+    (scenario / f"{CAPABILITY}.{ACTION}.json").write_text(
+        record.render(_large_recording()), encoding="utf-8")
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, "--replay", str(scenario))
+    result = _result(response)
+    assert result.status == "partial"
+    assert [a.path for a in result.artifacts] == [SPILL]
+    spilled = (cwd / SPILL).read_bytes()
+    assert hashlib.sha256(spilled).hexdigest() == result.artifacts[0].sha256
+    assert any(note.startswith("output truncated:") for note in result.limitations)
+    _assert_only_artifacts(cwd, response)
+
+
+# Live backend over a stand-in ``sparkforge`` package (the real one runs in 7.2 and in the
+# manual smoke): it records where and with what it was called, writes its ledger into the
+# process cwd during the call and at exit, and answers with the real recording.
+FAKE_TOOLS = '''\
+import atexit
+import json
+import os
+from pathlib import Path, PurePosixPath
+
+RECORDING = json.loads(Path(os.environ["FAKE_SPARKFORGE_RECORDING"]).read_text("utf-8"))
+MODE = os.environ.get("FAKE_SPARKFORGE_MODE", "ok")
+TOOLS = {
+    "sparkforge_analyze_pyspark": {"inputSchema": {"properties": {
+        "path": {}, "kind": {}, "limit": {}, "cursor": {}, "detail_level": {}}}},
+    "sparkforge_analyze_graph": {"inputSchema": {"properties": {"path": {}, "limit": {}}}},
+    "sparkforge_judge": {"inputSchema": {"properties": {"facts": {}, "limit": {}}}},
+}
+
+
+def _ledger():
+    db = Path.cwd() / ".sparkforge" / "traces.db"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    db.write_text("ledger", encoding="utf-8")
+
+
+atexit.register(_ledger)
+
+
+def call_tool(name, arguments):
+    probe = {"tool": name, "cwd": os.getcwd(), "facts": len(arguments.get("facts") or []),
+             "arguments": {k: v for k, v in arguments.items() if k != "facts"}}
+    with open(os.environ["FAKE_SPARKFORGE_PROBE"], "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(probe) + "\\n")
+    if MODE == "unknown" or name not in TOOLS:
+        raise KeyError(name)
+    if MODE == "crash":
+        raise RuntimeError("native crash")
+    print("native chatter on stdout")
+    if MODE == "noisy":
+        import sys
+        os.write(1, b"raw fd noise\\n")
+        sys.__stdout__.write("dunder stdout noise\\n")
+        sys.__stdout__.flush()
+        atexit.register(print, "atexit noise on stdout")
+    _ledger()
+    if "path" in arguments:
+        (Path(arguments["path"]) / ".sparkforge" / "cache").mkdir(parents=True, exist_ok=True)
+    if MODE == "error":
+        return {"error": "Caminho nao encontrado para analise: stage/jobs/x.py", "exit_code": 2}
+    if name == "sparkforge_judge":
+        return RECORDING["judge"]["output"]
+    return RECORDING["output"]
+'''
+
+
+def _fake_sparkforge(tmp_path: Path, mode: str = "ok") -> tuple[dict[str, str], Path]:
+    fake = tmp_path / "fake"
+    (fake / "sparkforge" / "adapters").mkdir(parents=True)
+    (fake / "sparkforge" / "__init__.py").write_text('__version__ = "0.5.0"\n', "utf-8")
+    (fake / "sparkforge" / "adapters" / "__init__.py").write_text("", "utf-8")
+    (fake / "sparkforge" / "adapters" / "tools.py").write_text(FAKE_TOOLS, "utf-8")
+    probe = tmp_path / "probe.jsonl"
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(fake), env.get("PYTHONPATH")]))
+    env.update(FAKE_SPARKFORGE_RECORDING=str(OUTPUT_RECORDING),
+               FAKE_SPARKFORGE_PROBE=str(probe), FAKE_SPARKFORGE_MODE=mode)
+    return env, probe
+
+
+def _probes(probe: Path) -> list[dict[str, Any]]:
+    if not probe.exists():
+        return []
+    return [json.loads(line) for line in probe.read_text("utf-8").splitlines()]
+
+
+def test_live_execute_calls_the_tool_and_judge_with_repository_and_state_under_the_cwd(
+        tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, env=env)
+    result = _result(response)
+    recorded = _recorded()
+    assert result.status == "ok"
+    assert [e.id for e in result.evidence] == [item["id"] for item in _items(recorded)]
+    assert len(result.findings) == len(recorded["judge"]["output"]["items"])
+    tool_call, judge_call = _probes(probe)
+    assert tool_call["tool"] == ANALYZE_TOOL
+    assert tool_call["arguments"] == {"path": "stage/jobs", "detail_level": "normal",
+                                      "limit": 200}
+    assert judge_call["tool"] == JUDGE_TOOL
+    assert judge_call["arguments"] == {"limit": 200}
+    assert judge_call["facts"] == len(_items(recorded))
+    for call in (tool_call, judge_call):
+        # The native state (.sparkforge/ ledger, cache) goes to the process cwd: the run cwd.
+        assert Path(call["cwd"]).resolve() == cwd.resolve()
+    repository = (cwd / tool_call["arguments"]["path"]).resolve()
+    assert repository.is_relative_to((cwd / "stage").resolve())
+    # stage/, the native ledger written at exit and the repository cache are gone.
+    assert _left_in(cwd) == set()
+    assert not (WORKSPACE / ".sparkforge").exists()
+
+
+def test_live_execute_without_compatible_input_never_calls_the_specialist(
+        tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, files=["requirements.txt"]))
+    assert result.status == "partial" and result.unknowns == ["input:path"]
+    assert _probes(probe) == []
+    assert _left_in(cwd) == set()
+
+
+@pytest.mark.parametrize(("mode", "status", "code"), [
+    ("error", "refused", "SPARKFORGE-TOOL-ERROR"),
+    ("unknown", "refused", "SPARKFORGE-TOOL-UNKNOWN"),
+    ("crash", "error", "SPARKFORGE-ADAPTER-NATIVE-FAILED"),
+])
+def test_live_native_failures_are_structured_and_leave_nothing(
+        tmp_path: Path, mode: str, status: str, code: str) -> None:
+    env, _ = _fake_sparkforge(tmp_path, mode)
+    cwd = _run_dir(tmp_path)
+    response = _execute(cwd, env=env)
+    assert response.status == status and response.error is not None
+    assert response.error.code == code
+    assert "stage/" not in response.error.detail
+    assert _left_in(cwd) == set()
+
+
+@pytest.mark.parametrize("path", ["../x.py", "/etc/x.py", "C:/x.py", r"jobs\x.py", "",
+                                  "a/../../x"])
+def test_native_call_refuses_file_arguments_outside_the_stage(tmp_path: Path,
+                                                              path: str) -> None:
+    from theforge_sparkforge import native_call
+
+    with pytest.raises(native_call.CallError):
+        native_call.staged_path(path, tmp_path)
+
+
+def test_native_call_maps_stage_relative_paths(tmp_path: Path) -> None:
+    from theforge_sparkforge import native_call
+
+    assert native_call.staged_path(".", tmp_path) == "stage"
+    assert native_call.staged_path("jobs", tmp_path) == "stage/jobs"
+    assert native_call.staged_path("./jobs/x.py", tmp_path) == "stage/jobs/x.py"
+
+
+def test_native_call_cli_refuses_an_escaping_file_before_importing_the_specialist(
+        tmp_path: Path) -> None:
+    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.native_call",
+                          "--tool", ANALYZE_TOOL, "--file", "path=../outside"],
+                         capture_output=True, timeout=60, cwd=tmp_path)
+    assert out.returncode == 2
+    assert b"must be a path relative to stage/" in out.stderr
+    assert out.stdout == b""
+
+
+@pytest.mark.parametrize(("matches", "expected"), [
+    (["jobs/a.py"], "jobs"), (["jobs/a.py", "jobs/sub/b.py"], "jobs"),
+    (["a.py", "jobs/b.py"], "."), (["x/a.py", "y/b.py"], "."),
+])
+def test_directory_binding_takes_the_deepest_common_staged_directory(
+        matches: list[str], expected: str) -> None:
+    from theforge_sparkforge import execute
+
+    binding = catalog.ArgBinding(arg="path", globs=("*.py",), directory=True)
+    assert execute.bound_files(binding, matches) == ({"path": expected}, [])
+
+
+def test_file_binding_takes_the_first_match_and_notes_the_rest() -> None:
+    from theforge_sparkforge import execute
+
+    binding = catalog.ArgBinding(arg="path", globs=("*.jsonl",))
+    files, notes = execute.bound_files(binding, ["a.jsonl", "b.jsonl"])
+    assert files == {"path": "a.jsonl"}
+    assert notes == ["path: 2 staged files match; analyzed a.jsonl only"]
+
+
+def test_live_native_writes_to_the_stdout_fd_never_corrupt_the_answer(tmp_path: Path) -> None:
+    env, _ = _fake_sparkforge(tmp_path, "noisy")
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env))
+    assert result.status == "ok"
+    assert [e.id for e in result.evidence] == [item["id"] for item in _items(_recorded())]
+    assert _left_in(cwd) == set()
