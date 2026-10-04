@@ -4,6 +4,7 @@ import ast
 import json
 import os
 import re
+import secrets
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,8 @@ from theforge.errors import ForgeError, PersistenceError, ReplayRefused, UsageEr
 from theforge.forger import Forger
 from theforge.runs import RunStore
 
-SECRET = "supersecretvalue123"
+# Random per run: a redaction fixture, not a credential.
+REDACTION_PROBE = secrets.token_hex(12)
 CLI_DIR = Path(commands.__file__).parent
 TIMEOUT = 120
 
@@ -37,7 +39,7 @@ _CORE_CRASH = (
     "import sys\n"
     "import theforge.registry.registry as registry\n"
     "def boom(self, *args, **kwargs):\n"
-    f"    raise RuntimeError('registry exploded token={SECRET}')\n"
+    f"    raise RuntimeError('registry exploded token={REDACTION_PROBE}')\n"
     "registry.Registry.records = boom\n"
     "from theforge.cli.main import main\n"
     "sys.exit(main(sys.argv[1:]))\n"
@@ -111,18 +113,18 @@ def test_forge_error_message_is_redacted(
         monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
         capsys: pytest.CaptureFixture[str]) -> None:
     def raiser(args: object) -> int:
-        raise UsageError(f"bad value password={SECRET}")
+        raise UsageError(f"bad value password={REDACTION_PROBE}")
 
     monkeypatch.setattr("theforge.cli.main.commands.cmd_status", raiser)
     code, _, err = run(capsys, "status", "--root", str(tmp_path))
-    assert code == 2 and SECRET not in err and "[REDACTED]" in err
+    assert code == 2 and REDACTION_PROBE not in err and "[REDACTED]" in err
 
 
 def test_unexpected_error_in_process_is_governed(
         monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
         capsys: pytest.CaptureFixture[str]) -> None:
     def boom(args: object) -> int:
-        raise ValueError(f"boom secret={SECRET}")
+        raise ValueError(f"boom secret={REDACTION_PROBE}")
 
     monkeypatch.setattr("theforge.cli.main.commands.cmd_status", boom)
     code, _, err = run(capsys, "status", "--root", str(tmp_path))
@@ -149,7 +151,7 @@ def test_core_internal_failure_exits_70_without_traceback(tmp_path: Path) -> Non
     proc = _core_crash(tmp_path)
     assert proc.returncode == 70
     assert "Traceback" not in proc.stderr + proc.stdout
-    assert SECRET not in proc.stderr + proc.stdout
+    assert REDACTION_PROBE not in proc.stderr + proc.stdout
     assert proc.stderr == ("theforge: internal error: RuntimeError: registry exploded "
                            "token=[REDACTED] [FORGE-INTERNAL · internal]\n")
     assert "theforge: debug:" not in proc.stderr
@@ -159,7 +161,7 @@ def test_core_internal_failure_with_debug_prints_redacted_diagnostic(tmp_path: P
     make_workspace(tmp_path, [])
     proc = _core_crash(tmp_path, "--debug")
     assert proc.returncode == 70
-    assert "Traceback" not in proc.stderr and SECRET not in proc.stderr
+    assert "Traceback" not in proc.stderr and REDACTION_PROBE not in proc.stderr
     lines = proc.stderr.splitlines()
     assert lines[0].startswith("theforge: internal error: RuntimeError:")
     debug = [line for line in lines if line.startswith("theforge: debug: ")]
@@ -183,14 +185,14 @@ def test_provider_internal_crash_is_a_provider_failure_without_traceback(
         capture_output=True, text=True, encoding="utf-8", timeout=TIMEOUT, env=_env())
     assert proc.returncode == 4  # provider_failure: existing exit code
     assert "Traceback" not in proc.stdout + proc.stderr  # provider stderr tail collapsed
-    assert SECRET not in proc.stdout + proc.stderr
+    assert REDACTION_PROBE not in proc.stdout + proc.stderr
     assert "[traceback omitted] RuntimeError: internal failure token=[REDACTED]" in proc.stdout
     assert "[FORGE-PROTO-EXIT · protocol]" in proc.stdout
 
 
 def _crash_inside_forger(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(self: Forger, trace: object) -> None:
-        raise RuntimeError(f"handoff exploded token={SECRET}")
+        raise RuntimeError(f"handoff exploded token={REDACTION_PROBE}")
 
     monkeypatch.setattr(Forger, "_record_handoff", boom)
 
@@ -203,7 +205,7 @@ def test_orchestrator_internal_error_detail_is_printed_redacted(
     code, out, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
                          "--root", str(tmp_path))
     assert code == 4
-    assert SECRET not in out + err and "Traceback" not in out + err
+    assert REDACTION_PROBE not in out + err and "Traceback" not in out + err
     assert "[FORGE-INTERNAL · internal]" in out
     assert "theforge: debug:" not in err
     run_id = re.search(r"Run (\S+):", out).group(1)  # type: ignore[union-attr]
@@ -212,7 +214,7 @@ def test_orchestrator_internal_error_detail_is_printed_redacted(
     code, out, _ = run(capsys, "ask", "eco", "--capability", "demo.echo",
                        "--root", str(tmp_path), "--json")
     data = json.loads(out)
-    assert code == 4 and SECRET not in out
+    assert code == 4 and REDACTION_PROBE not in out
     assert data["error"]["code"] == "FORGE-INTERNAL" and data["error_family"] == "internal"
 
 
@@ -223,13 +225,13 @@ def test_orchestrator_internal_error_with_debug_prints_and_persists_diagnostic(
     _crash_inside_forger(monkeypatch)
     code, out, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
                          "--root", str(tmp_path), "--debug")
-    assert code == 4 and SECRET not in out + err and "Traceback" not in out + err
+    assert code == 4 and REDACTION_PROBE not in out + err and "Traceback" not in out + err
     assert "theforge: debug: stage=task code=FORGE-INTERNAL family=internal" in err
     assert "theforge: debug: error: RuntimeError: handoff exploded token=[REDACTED]" in err
     assert "theforge: debug: frame: theforge.forger.orchestrator:ask:" in err
     run_id = re.search(r"Run (\S+):", out).group(1)  # type: ignore[union-attr]
     persisted = RunStore(tmp_path / ".forge").read_optional(run_id, "diagnostic")
-    assert persisted is not None and SECRET not in json.dumps(persisted)
+    assert persisted is not None and REDACTION_PROBE not in json.dumps(persisted)
 
 
 def test_debug_is_a_common_option(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
