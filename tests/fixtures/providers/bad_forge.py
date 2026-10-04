@@ -29,6 +29,18 @@ REQUESTED_PATH = "req.txt"
 REQUEST_MODES = ("context-request", "context-request-loop", "context-request-undeclared",
                  "context-request-invalid")
 
+# Context drift (TOCTOU). Both cover the *.txt files and answer one ``confirmed`` evidence per
+# ContextPack item: drift-report sets an Evidence.hash that is not the delivered content's;
+# mutate-context appends to the file it read and leaves ``hash`` null (only re-verification
+# by the core can find it).
+DRIFT_HASH = "f" * 64
+MUTATION = b"changed during execution\n"
+# tokens-measured reports its own token count (kept) and duration/context bytes (overwritten
+# by the core's measurements).
+REPORTED_METRICS = {"tokens": {"value": 1234, "kind": "measured"},
+                    "duration_ms": {"value": 999999, "kind": "measured"},
+                    "context_bytes": {"value": 1, "kind": "measured"}}
+
 
 def _evidence(eid, producer, **extra):
     return dict({"id": eid, "epistemic": "observed", "subject": "s", "claim": "c",
@@ -137,6 +149,8 @@ def main() -> int:
         if mode == "excerpts":  # the capability accepts excerpts of the *.txt files
             capabilities[0]["signals"]["file_globs"] = ["*.txt"]
             capabilities[0]["context"] = {"excerpts": True, "requests": False}
+        if mode in ("drift-report", "mutate-context"):
+            capabilities[0]["signals"]["file_globs"] = ["*.txt"]
         if mode in ("context-request", "context-request-loop", "context-request-invalid"):
             capabilities[0]["context"] = {"excerpts": False, "requests": True}
         if mode == "capability-spam":
@@ -254,6 +268,21 @@ def main() -> int:
                                         context_request={"items": items}))
             return reply("ok", dict(RESULT, producer=producer,
                                     limitations=[f"round={context_round}"]))
+        if mode in ("drift-report", "mutate-context"):
+            payload = request["payload"]
+            evidence = []
+            for index, item in enumerate(payload["context"]["files"], start=1):
+                path = item["path"]
+                extra = {"epistemic": "confirmed", "subject": path, "location": {"path": path}}
+                if mode == "drift-report":
+                    extra["hash"] = DRIFT_HASH
+                else:
+                    with open(os.path.join(payload["task"]["workspace_root"], path), "ab") as fh:
+                        fh.write(MUTATION)
+                evidence.append(_evidence(f"e{index}", producer, **extra))
+            return reply("ok", dict(RESULT, producer=producer, evidence=evidence))
+        if mode == "tokens-measured":
+            return reply("ok", dict(RESULT, producer=producer, metrics=REPORTED_METRICS))
         if mode in INTEGRITY_MODES:
             return reply("ok", dict(RESULT, producer=producer, **INTEGRITY_MODES[mode](producer)))
         return reply("ok", dict(RESULT, producer=producer))

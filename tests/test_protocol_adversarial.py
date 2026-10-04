@@ -132,6 +132,10 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "excerpts": ("ok", None),  # the capability declares excerpt support (context v2)
     # context negotiation (default profile balanced: at most 1 round)
     "context-request": ("ok", None),  # one round; the requested file is simply missing
+    "tokens-measured": ("ok", None),  # the provider's token count is kept as reported
+    # context drift (default profile balanced: conditional re-verification) -> partial
+    "drift-report": ("partial", None),  # Evidence.hash differs from the pack item
+    "mutate-context": ("partial", None),  # the provider changes the file it confirmed
     # describe-level: provider or capability is not routable
     "describe-crash": ("no_route", None),
     "invalid-manifest": ("no_route", None),
@@ -211,6 +215,8 @@ NO_ROUTE_STATE = {
     "describe-refused": "invalid",
 }
 GRANDCHILD_MODES = ("spawn-grandchild-timeout", "exit-leave-grandchild")
+# Modes that act on the ContextPack items: their workspace gets one *.txt file to cover.
+CONTEXT_FILE_MODES = ("drift-report", "mutate-context")
 MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS", "REQUEST_MODES")
 
 
@@ -246,6 +252,8 @@ def test_every_mode_through_the_full_forger(
 ) -> None:
     status, code = expected
     make_workspace(tmp_path, [bad_entry(mode, "bad-a")])
+    if mode in CONTEXT_FILE_MODES:
+        (tmp_path / "notes.txt").write_text("hello\n", encoding="utf-8")
     forge = tmp_path / ".forge"
     store = RunStore(forge)
     grandchild = 0
@@ -262,7 +270,7 @@ def test_every_mode_through_the_full_forger(
         receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
         validate_receipt(receipt, result_sha256=store.persisted_sha256(out.run_id, "result"))
         assert receipt.status == status
-        if status == "ok":
+        if status in ("ok", "partial"):
             assert out.result is not None and receipt.result_sha256 is not None
         else:
             assert out.result is None and receipt.result_sha256 is None

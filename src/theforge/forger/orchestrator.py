@@ -2,7 +2,9 @@
 
 Execute may be negotiated: a result carrying a context request is never the final result;
 it extends the ContextPack (``context-rN``) and the provider runs again, within the rounds
-of the task's profile (8.3-8.6).
+of the task's profile (8.3-8.6). The final result is then checked for context drift at the
+profile's verification level: drift demotes its evidence and ends the run ``partial``
+(6.1-6.3, 6.7). Tokens are the provider's own count or ``unknown``, never bytes (7.2-7.4).
 
 Every artifact is persisted as soon as it exists, so a run that fails midway is
 still explainable. The routing artifact is the exception: it is written once, with the
@@ -21,6 +23,7 @@ from theforge.context import build_context_pack, extend_context_pack, scan_works
 from theforge.context.fingerprints import FingerprintStore
 from theforge.context.git import read_git_state
 from theforge.context.scan import WorkspaceScan
+from theforge.context.verify import DRIFT_LIMITATION_PREFIX, DriftReport, apply_drift, check_drift
 from theforge.contracts import (
     Candidate,
     Capability,
@@ -108,10 +111,23 @@ class _Trace:
     result_sha: str | None = None
     risk_sha: str | None = None
     context_round_shas: list[str] = field(default_factory=list)  # context-r1, context-r2
+    drift: DriftReport | None = None  # post-execution check of the final result (6.x, 9.1-9.3)
     record: RegistryRecord | None = None
     identity: ProviderFingerprint | None = None
     decision: RoutingDecision | None = None
     limitations: list[str] = field(default_factory=list)
+
+
+def honest_tokens(reported: Metric) -> Metric:
+    """The provider's token count as reported when it is one, else ``unknown`` (7.2-7.4).
+
+    Only a non-negative value with kind ``measured`` or ``estimated`` is kept, value and
+    kind unchanged; the core never estimates tokens itself (bytes are not tokens).
+    """
+    if (reported.kind in ("measured", "estimated") and reported.value is not None
+            and reported.value >= 0):
+        return Metric(value=reported.value, kind=reported.kind)
+    return Metric(value=None, kind="unknown")
 
 
 def _offers(record: RegistryRecord, capability_id: str, action: str) -> bool:
@@ -271,13 +287,30 @@ class Forger:
         if executed.result is None:
             return self._finish(trace, decision, executed.status, error=executed.error)
         assert executed.pack is not None
-        result = replace(executed.result, metrics=Metrics(
+        result = self._verify_context(trace, executed.result, executed.pack, profile)
+        result = replace(result, metrics=Metrics(
             duration_ms=Metric(value=round(executed.duration_ms, 3), kind="measured"),
             context_bytes=Metric(value=float(executed.pack.used_bytes), kind="measured"),
-            tokens=Metric(value=None, kind="unknown"),
+            tokens=honest_tokens(executed.result.metrics.tokens),
         ))
         trace.result_sha = self.store.write(run_id, "result", result)
-        return self._finish(trace, decision, executed.status, result=result)
+        return self._finish(trace, decision, result.status, result=result)
+
+    def _verify_context(
+        self, trace: _Trace, result: ExecutionResult, pack: ContextPack,
+        profile: ContextProfile,
+    ) -> ExecutionResult:
+        """Post-execution drift check on the final result and the last round's pack.
+
+        Drift reported by the provider is always applied; re-verification follows the
+        profile's level (``minimal`` records ``context-not-reverified`` instead). Drifted
+        paths go to the result and to the receipt; drift ends the run ``partial`` (6.7).
+        """
+        report = check_drift(self.root, pack, result, profile.verification)
+        trace.drift = report
+        trace.limitations.extend(report.limitations)
+        trace.limitations.extend(f"{DRIFT_LIMITATION_PREFIX} {path}" for path in report.drifted)
+        return apply_drift(result, report)
 
     def _context_and_execute(
         self, trace: _Trace, task: TaskSpec, record: RegistryRecord, capability: Capability,

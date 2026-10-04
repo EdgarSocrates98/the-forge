@@ -11,7 +11,7 @@ import pytest
 from helpers import bad_entry, make_workspace, write_file
 from theforge.context.fingerprints import FingerprintStore
 from theforge.context.git import GitState
-from theforge.contracts import ExecutionReceipt, Response
+from theforge.contracts import ExecutionReceipt, Metric, Response
 from theforge.contracts.codes import Codes
 from theforge.contracts.context import GitSummary
 from theforge.contracts.integrity import validate_receipt
@@ -341,3 +341,96 @@ def test_negotiation_saves_the_fingerprint_cache_once(
     out = _negotiate(tmp_path, "context-request", "max", recorder)
     assert out.status == "ok"
     assert saves == [1]
+
+
+# --- post-execution drift and honest tokens (6.1-6.3, 6.7, 7.2-7.4, 9.1-9.3; task 4.3) -------
+
+DRIFTED = "notes.txt"  # the *.txt file bad_forge's drift-report/mutate-context modes cover
+
+
+def _run_mode(root: Path, mode: str, profile: BudgetProfile) -> Any:
+    make_workspace(root, [bad_entry(mode, "bad-a")])
+    write_file(root, DRIFTED, LINES10)
+    return _forger(root).ask(AskRequest(intent="run it", capability="bad.thing",
+                                        profile=profile))
+
+
+@pytest.mark.parametrize("profile", ["economy", "balanced", "max"])
+def test_reported_drift_ends_partial_with_demoted_evidence(
+        tmp_path: Path, no_git: None, profile: BudgetProfile) -> None:
+    out = _run_mode(tmp_path, "drift-report", profile)
+    assert out.status == "partial", out.error
+    assert out.result is not None and out.result.status == "partial"
+    [evidence] = out.result.evidence
+    assert evidence.epistemic == "unresolved"
+    assert "context-drift: was confirmed" in evidence.limitations
+    assert f"context-drift: {DRIFTED}" in out.result.limitations
+    store = RunStore(tmp_path / ".forge")
+    persisted = store.read(out.run_id, "result")
+    assert persisted["status"] == "partial"
+    assert persisted["evidence"][0]["epistemic"] == "unresolved"
+    assert f"context-drift: {DRIFTED}" in persisted["limitations"]
+    receipt = _assert_receipt_consistent(tmp_path, out.run_id)
+    assert receipt.status == "partial" and receipt.result_sha256 is not None
+    assert f"context-drift: {DRIFTED}" in receipt.limitations
+
+
+@pytest.mark.parametrize(("profile", "detected"), [
+    ("economy", False), ("balanced", True), ("max", True)])
+def test_change_during_execution_is_detected_by_reverification(
+        tmp_path: Path, no_git: None, profile: BudgetProfile, detected: bool) -> None:
+    out = _run_mode(tmp_path, "mutate-context", profile)
+    assert (tmp_path / DRIFTED).read_text(encoding="utf-8") != LINES10  # it did change
+    assert out.result is not None
+    receipt = _assert_receipt_consistent(tmp_path, out.run_id)
+    drift_note = f"context-drift: {DRIFTED}"
+    if detected:
+        assert out.status == "partial" and receipt.status == "partial"
+        assert out.result.evidence[0].epistemic == "unresolved"
+        assert drift_note in out.result.limitations and drift_note in receipt.limitations
+        assert "context-not-reverified" not in receipt.limitations
+    else:  # economy: minimal verification, recorded as a limitation (9.1)
+        assert out.status == "ok" and receipt.status == "ok"
+        assert out.result.evidence[0].epistemic == "confirmed"
+        assert drift_note not in receipt.limitations
+        assert "context-not-reverified" in receipt.limitations
+
+
+@pytest.mark.parametrize("profile", ["balanced", "max"])
+def test_unchanged_context_is_reverified_without_drift(
+        tmp_path: Path, no_git: None, profile: BudgetProfile) -> None:
+    out = _run_mode(tmp_path, "ok", profile)
+    assert out.status == "ok"
+    assert not any(n.startswith("context-") for n in out.receipt.limitations)
+
+
+def test_provider_measured_tokens_are_persisted_unchanged(
+        tmp_path: Path, no_git: None) -> None:
+    out = _run_mode(tmp_path, "tokens-measured", "balanced")
+    assert out.status == "ok", out.error
+    store = RunStore(tmp_path / ".forge")
+    metrics = store.read(out.run_id, "result")["metrics"]
+    assert metrics["tokens"] == {"value": 1234, "kind": "measured"}
+    # duration and context bytes stay the core's own measurements, never the provider's
+    pack = store.read(out.run_id, "context")
+    assert metrics["context_bytes"] == {"value": pack["used_bytes"], "kind": "measured"}
+    assert metrics["duration_ms"]["kind"] == "measured"
+    assert metrics["duration_ms"]["value"] != 999999
+
+
+@pytest.mark.parametrize(("reported", "kept"), [
+    (Metric(value=1234.0, kind="measured"), Metric(value=1234.0, kind="measured")),
+    (Metric(value=88.0, kind="estimated"), Metric(value=88.0, kind="estimated")),
+    (Metric(value=None, kind="unknown"), Metric()),
+    (Metric(value=5.0, kind="unknown"), Metric()),       # a value without a kind is not kept
+    (Metric(value=None, kind="measured"), Metric()),     # a kind without a value is not kept
+    (Metric(value=-1.0, kind="measured"), Metric()),     # a negative count is not a count
+])
+def test_honest_tokens_keeps_only_reported_counts(reported: Metric, kept: Metric) -> None:
+    assert orchestrator.honest_tokens(reported) == kept
+
+
+def test_tokens_without_a_provider_count_are_unknown(tmp_path: Path, no_git: None) -> None:
+    out = _run_mode(tmp_path, "ok", "balanced")
+    tokens = RunStore(tmp_path / ".forge").read(out.run_id, "result")["metrics"]["tokens"]
+    assert tokens == {"value": None, "kind": "unknown"}  # never derived from bytes (7.3)
