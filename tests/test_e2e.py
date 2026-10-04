@@ -39,6 +39,9 @@ def cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 def normalize(text: str) -> str:
     text = re.sub(r"\d{8}T\d{6}Z-[0-9a-f]{8}", "<RUN>", text)
+    # Environment-dependent explain values: phase durations and the enclosing git state.
+    text = re.sub(r"=~?\d+ms\b", "=<MS>", text)
+    text = re.sub(r"(?m)^Git:( +).*$", r"Git:\1<GIT>", text)
     return re.sub(r"\b[0-9a-f]{12}\b", "<HASH>", text)
 
 

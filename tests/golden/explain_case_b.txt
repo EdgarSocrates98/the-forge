@@ -9,5 +9,13 @@ Risk:        read_only (source: provider_declaration)
 Policy:      allow   rule: default.read_only   approved: no
 Dimensions:  read_only=yes local_mutation=no external_read=no external_mutation=no destructive=no credentials=unknown cross_account=unknown
 Context:     1 files, 64/262144 bytes (complete); excluded 0
+Tiers:       effective: metadata, reference   bytes: metadata=0 reference=64
+Items:       reference api/openapi.yaml  signals: target:api, glob:openapi.yaml
+Excluded:    none
+Unmatched:   unmatched (no_signal): 0
+Git:         <GIT>
+Rounds:      none
+Drift:       none
+Telemetry:   profile=balanced scan=<MS> routing=<MS> context=<MS> provider=<MS> files=1/1 cache=0/1 context_bytes=64 providers=1 fallbacks=0 rounds=0 verification=conditional
 Result:      ok: 1 findings, 1 evidence
 Receipt:     context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>

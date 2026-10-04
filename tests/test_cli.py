@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -11,6 +12,7 @@ from helpers import (
     case_b,
     fixture_argv,
     make_workspace,
+    write_file,
 )
 from theforge.cli import render
 from theforge.cli.main import main
@@ -350,3 +352,136 @@ def test_capabilities_search_matches_alias(
         "theforge: warning: capability 'api.legacy' (alias-api) is deprecated; "
         "replaced_by 'api.contract'",
     ]
+
+
+# --- explain text output contract: context + telemetry (context-intelligence-v2 4.5) -------
+# CONTRACT (seam with cross-forge-foundation): Wave D rewrites ``explain`` over ExplainReport
+# and MUST keep these section headings (render.EXPLAIN_CONTEXT_SECTIONS) and these tests,
+# reading the sections from ``artifacts.context``, ``artifacts.context-r*`` and
+# ``artifacts.telemetry``.
+
+def _metric(value: float | None, kind: str = "measured") -> dict[str, Any]:
+    return {"value": value, "kind": kind if value is not None else "unknown"}
+
+
+def _v2_pack(round_: int = 0) -> dict[str, Any]:
+    files: list[dict[str, Any]] = [
+        {"path": "pyproject.toml", "sha256": "a" * 64, "bytes": 10, "tier": "reference",
+         "signals": ["dependency_manifest"]},
+        {"path": "notes.txt", "sha256": "b" * 64, "bytes": 16, "tier": "excerpt",
+         "lines": {"start": 2, "end": 3}, "signals": ["glob:*.txt", "intent_path"]},
+    ]
+    if round_:
+        files.append({"path": "req.txt", "sha256": "c" * 64, "bytes": 30,
+                      "tier": "requested", "signals": []})
+    return {"status": "complete", "files": files, "budget_bytes": 1000,
+            "used_bytes": 26 + (30 if round_ else 0), "round": round_,
+            "excluded": [{"path": ".env", "reason": "secret", "signals": []},
+                         {"path": "big.txt", "reason": "budget", "signals": ["glob:*.txt"]}],
+            "tier_bytes": {"metadata": 0, "reference": 10, "excerpt": 16},
+            "limitations": [],
+            "workspace": {"files_scanned": 20, "unmatched_files": 17, "git": {
+                "available": True, "branch": "main", "head": "d" * 40, "dirty": True,
+                "changed_files": 2, "state": []}}}
+
+
+def _telemetry(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "profile": {"name": "max", "effective_tiers": ["metadata", "reference", "excerpt"]},
+        "scan_ms": _metric(12.4), "routing_ms": _metric(3), "context_ms": _metric(4),
+        "provider_ms": _metric(120), "files_scanned": _metric(20),
+        "files_selected": _metric(2), "cache_hits": _metric(1), "cache_misses": _metric(2),
+        "context_bytes": _metric(56), "providers_executed": _metric(1),
+        "fallbacks_used": _metric(0), "negotiation_rounds": _metric(1),
+        "verification_performed": "core", "context_drift": ["notes.txt"],
+        "unknowns": []}
+    data.update(overrides)
+    return data
+
+
+def test_explain_context_and_telemetry_sections_text_contract() -> None:
+    """Text output contract (4.4): every context/telemetry section and its content."""
+    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "context": _v2_pack(),
+                          "context-r1": _v2_pack(1), "telemetry": _telemetry(),
+                          "receipt": {"status": "partial"}})
+    for heading in render.EXPLAIN_CONTEXT_SECTIONS:
+        assert any(line.startswith(heading) for line in out.splitlines()), heading
+    assert "effective: metadata, reference, excerpt" in out
+    assert "metadata=0 reference=10 excerpt=16" in out
+    assert "reference pyproject.toml  signals: dependency_manifest" in out
+    assert "excerpt notes.txt:2-3  signals: glob:*.txt, intent_path" in out
+    assert ".env (secret)" in out and "big.txt (budget)" in out
+    assert "unmatched (no_signal): 17" in out
+    assert f"main@{'d' * 12} dirty changed=2" in out
+    assert "r1: 3 files, 56/1000 bytes (complete)" in out
+    assert "requested req.txt" in out
+    assert "Drift:       notes.txt" in out
+    [telemetry] = [line for line in out.splitlines() if line.startswith("Telemetry:")]
+    assert "scan=12ms" in telemetry and "provider=120ms" in telemetry
+    assert "cache=1/2" in telemetry and "providers=1" in telemetry
+    assert "fallbacks=0" in telemetry and "rounds=1" in telemetry
+
+
+def test_explain_telemetry_shows_unknown_metrics_as_unknown() -> None:
+    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "receipt": {"status": "ok"},
+                          "telemetry": _telemetry(provider_ms=_metric(None),
+                                                  cache_hits=_metric(None),
+                                                  unknowns=["provider_ms", "cache_hits"])})
+    [telemetry] = [line for line in out.splitlines() if line.startswith("Telemetry:")]
+    assert "provider=unknown" in telemetry and "cache=unknown/2" in telemetry
+
+
+def test_explain_git_limitation_and_drift_from_receipt() -> None:
+    pack = _v2_pack()
+    pack["workspace"]["git"] = {"available": False}
+    pack["limitations"] = ["git: not a repository"]
+    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "context": pack,
+                          "receipt": {"status": "partial",
+                                      "limitations": ["context-drift: notes.txt"]}})
+    assert "Git:         unavailable (git: not a repository)" in out
+    assert "Drift:       notes.txt" in out
+    assert "Rounds:      none" in out and "Telemetry:   not recorded" in out
+
+
+def test_explain_v1_context_pack_without_v2_fields_still_renders() -> None:
+    """10.5: an old pack (no tiers, workspace or signals) and no telemetry still render."""
+    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "receipt": {"status": "ok"},
+                          "context": {"status": "complete", "budget_bytes": 10, "used_bytes": 5,
+                                      "files": [{"path": "a.py", "sha256": "a" * 64,
+                                                 "bytes": 5, "reason": "glob"}],
+                                      "excluded": []}})
+    assert "Tiers:       not recorded" in out
+    assert "reference a.py  signals: glob" in out
+    assert "Excluded:    none" in out and "unmatched (no_signal): unknown" in out
+    assert "Git:         not recorded" in out and "Drift:       none" in out
+    assert "Telemetry:   not recorded" in out
+
+
+def test_ask_then_explain_shows_context_and_telemetry_sections(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Done-when of 4.5 (text output contract): ``ask`` then ``explain`` show every
+    context/telemetry section in the text, and ``explain --json`` carries the telemetry."""
+    make_workspace(tmp_path, [bad_entry("context-request", "bad-a")])
+    write_file(tmp_path, "req.txt", "".join(f"line {n}\n" for n in range(1, 11)))
+    write_file(tmp_path, "pyproject.toml", "[project]\n")
+    write_file(tmp_path, ".env", "TOKEN=x\n")
+    root = str(tmp_path)
+    code, out, err = run(capsys, "ask", "run it ghost.txt", "--capability", "bad.thing",
+                         "--profile", "max", "--root", root, "--json")
+    assert code == 0, err
+    run_id = json.loads(out)["run_id"]
+    code, out, _ = run(capsys, "explain", run_id, "--root", root)
+    assert code == 0
+    lines = out.splitlines()
+    for heading in render.EXPLAIN_CONTEXT_SECTIONS:
+        assert any(line.startswith(heading) for line in lines), heading
+    assert "reference pyproject.toml  signals: dependency_manifest" in out
+    assert "ghost.txt (missing)" in out
+    assert "unmatched (no_signal): " in out
+    assert "r1: " in out and "requested req.txt" in out
+    [telemetry] = [line for line in lines if line.startswith("Telemetry:")]
+    assert "rounds=1" in telemetry and "providers=1" in telemetry
+    code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
+    data = json.loads(out)
+    assert code == 0 and data["telemetry"]["schema"] == "theforge/RunTelemetry/v1"
+    assert data["telemetry"]["negotiation_rounds"]["value"] == 1

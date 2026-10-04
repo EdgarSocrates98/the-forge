@@ -160,6 +160,134 @@ def _risk(risk: dict[str, Any] | None) -> list[str]:
     return lines
 
 
+# Text output contract of ``explain`` for context and telemetry (context-intelligence-v2
+# 4.5). cross-forge-foundation rewrites ``explain`` over ExplainReport and MUST keep these
+# headings (in this order) and the tests in test_cli.py that check them, reading the
+# sections from ``artifacts.context``, ``artifacts.context-r*`` and ``artifacts.telemetry``.
+EXPLAIN_CONTEXT_SECTIONS = ("Context:", "Tiers:", "Items:", "Excluded:", "Unmatched:", "Git:",
+                            "Rounds:", "Drift:", "Telemetry:")
+_ROUNDS = ("context-r1", "context-r2")
+_DRIFT_PREFIX = "context-drift:"
+
+
+def _labelled(label: str, rows: list[str]) -> list[str]:
+    """One row per line: the label on the first, the others aligned under it."""
+    return [f"{label if i == 0 else '':<13}{row}" for i, row in enumerate(rows or ["none"])]
+
+
+def _item(item: dict[str, Any]) -> str:
+    lines = item.get("lines") or {}
+    span = f":{_clean(lines.get('start', '?'))}-{_clean(lines.get('end', '?'))}" if lines else ""
+    signals = (", ".join(_clean(s) for s in item.get("signals") or [])
+               or _clean(item.get("reason") or "-"))
+    return (f"{_clean(item.get('tier') or 'reference')} {_clean(item.get('path', '?'))}{span}"
+            f"  signals: {signals}")
+
+
+def _excluded(entry: dict[str, Any]) -> str:
+    return f"{_clean(entry.get('path', '?'))} ({_clean(entry.get('reason', '?'))})"
+
+
+def _pack_summary(pack: dict[str, Any]) -> str:
+    return (f"{len(pack.get('files') or [])} files, {_clean(pack.get('used_bytes', '?'))}/"
+            f"{_clean(pack.get('budget_bytes', '?'))} bytes ({_clean(pack.get('status', '?'))});"
+            f" excluded {len(pack.get('excluded') or [])}")
+
+
+def _git(pack: dict[str, Any]) -> str:
+    """``branch@head dirty changed=N`` or why git could not be read (its limitation)."""
+    limits = [_clean(x) for x in pack.get("limitations") or []
+              if isinstance(x, str) and x.startswith("git:")]
+    note = f" ({'; '.join(limits)})" if limits else ""
+    git = (pack.get("workspace") or {}).get("git")
+    if not git:
+        return f"not read{note}" if limits else "not recorded"
+    if not git.get("available"):
+        return f"unavailable{note}"
+    where = _clean(git.get("branch") or ("detached" if git.get("detached") else "?"))
+    dirty = {True: "dirty", False: "clean"}.get(git.get("dirty"), "dirty=unknown")
+    changed = git.get("changed_files")
+    states = "".join(f" {_clean(s)}" for s in git.get("state") or [])
+    return (f"{where}@{_clean(git.get('head') or 'none')[:12]} {dirty} "
+            f"changed={_clean(changed) if changed is not None else 'unknown'}{states}{note}")
+
+
+def _rounds(data: dict[str, Any], initial: dict[str, Any]) -> list[str]:
+    """Negotiation rounds: summary, requested items and the new exclusions of each round."""
+    rows: list[str] = []
+    seen = {e.get("path") for e in initial.get("excluded") or []}
+    for name in _ROUNDS:
+        pack = data.get(name)
+        if not pack:
+            continue
+        rows.append(f"{name.removeprefix('context-')}: {_pack_summary(pack)}")
+        rows.extend(f"    {_item(f)}" for f in pack.get("files") or []
+                    if f.get("tier") == "requested")
+        for entry in pack.get("excluded") or []:
+            if entry.get("path") not in seen:
+                seen.add(entry.get("path"))
+                rows.append(f"    excluded {_excluded(entry)}")
+    return rows
+
+
+def _context_sections(data: dict[str, Any], context: dict[str, Any]) -> list[str]:
+    telemetry = data.get("telemetry") or {}
+    tier_bytes = context.get("tier_bytes") or {}
+    effective = list((telemetry.get("profile") or {}).get("effective_tiers") or tier_bytes)
+    if effective:
+        sizes = " ".join(f"{_clean(k)}={_clean(v)}" for k, v in tier_bytes.items()) or "unknown"
+        tiers = f"effective: {', '.join(_clean(t) for t in effective)}   bytes: {sizes}"
+    else:
+        tiers = "not recorded"
+    unmatched = (context.get("workspace") or {}).get("unmatched_files")
+    return [f"Context:     {_pack_summary(context)}", f"Tiers:       {tiers}",
+            *_labelled("Items:", [_item(f) for f in context.get("files") or []]),
+            *_labelled("Excluded:", [_excluded(e) for e in context.get("excluded") or []]),
+            "Unmatched:   unmatched (no_signal): "
+            f"{_clean(unmatched) if unmatched is not None else 'unknown'}",
+            f"Git:         {_git(context)}",
+            *_labelled("Rounds:", _rounds(data, context))]
+
+
+def _drift(data: dict[str, Any]) -> str:
+    telemetry = data.get("telemetry")
+    if telemetry:
+        paths = list(telemetry.get("context_drift") or [])
+    else:  # run without telemetry: the receipt limitations carry the drifted paths
+        paths = [x.removeprefix(_DRIFT_PREFIX).strip()
+                 for x in (data.get("receipt") or {}).get("limitations") or []
+                 if isinstance(x, str) and x.startswith(_DRIFT_PREFIX)]
+    return ", ".join(_clean(p) for p in paths) or "none"
+
+
+def _metric(telemetry: dict[str, Any], name: str, unit: str = "") -> str:
+    """A telemetry Metric: ``unknown`` unless measured/estimated with a numeric value."""
+    metric = telemetry.get(name) or {}
+    value = metric.get("value")
+    kind = metric.get("kind", "unknown")
+    if kind == "unknown" or isinstance(value, bool) or not isinstance(value, int | float):
+        return "unknown"
+    return f"{'~' if kind == 'estimated' else ''}{round(value)}{unit}"
+
+
+def _telemetry(telemetry: dict[str, Any] | None) -> str:
+    if not telemetry:
+        return "Telemetry:   not recorded"
+    m = telemetry
+    return ("Telemetry:   "
+            f"profile={_clean((m.get('profile') or {}).get('name', '?'))} "
+            f"scan={_metric(m, 'scan_ms', 'ms')} routing={_metric(m, 'routing_ms', 'ms')} "
+            f"context={_metric(m, 'context_ms', 'ms')} "
+            f"provider={_metric(m, 'provider_ms', 'ms')} "
+            f"files={_metric(m, 'files_selected')}/{_metric(m, 'files_scanned')} "
+            f"cache={_metric(m, 'cache_hits')}/{_metric(m, 'cache_misses')} "
+            f"context_bytes={_metric(m, 'context_bytes')} "
+            f"providers={_metric(m, 'providers_executed')} "
+            f"fallbacks={_metric(m, 'fallbacks_used')} "
+            f"rounds={_metric(m, 'negotiation_rounds')} "
+            f"verification={_clean(m.get('verification_performed') or 'none')}")
+
+
 def explain(data: dict[str, Any]) -> str:
     task = data.get("task") or {}
     routing = data.get("routing") or {}
@@ -197,12 +325,13 @@ def explain(data: dict[str, Any]) -> str:
         lines.append(f"Fallbacks:   {fallbacks}")
     if task:
         lines.extend(_risk(data.get("risk")))
+    telemetry = data.get("telemetry")
     if context:
-        lines.append(f"Context:     {len(context.get('files') or [])} files, "
-                     f"{_clean(context.get('used_bytes', '?'))}/"
-                     f"{_clean(context.get('budget_bytes', '?'))} bytes "
-                     f"({_clean(context.get('status', '?'))}); "
-                     f"excluded {len(context.get('excluded') or [])}")
+        lines.extend(_context_sections(data, context))
+    if context or telemetry:
+        lines.append(f"Drift:       {_drift(data)}")
+    if task or telemetry:
+        lines.append(_telemetry(telemetry))
     if result:
         lines.append(f"Result:      {_clean(result.get('status', '?'))}: "
                      f"{len(result.get('findings') or [])} findings, "

@@ -14,7 +14,7 @@
 | `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
 | `ask "<texto>" [--capability id] [--action a] [--profile economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa | 0 / 2 / 3 / 4 / 5 |
-| `explain <run_id>` | reconstrói a decisão, o risco e o resultado de um run | 0 / 2 |
+| `explain <run_id>` | reconstrói a decisão, o risco, o contexto, a telemetria e o resultado de um run | 0 / 2 |
 
 ## Exit codes gerais
 
@@ -51,6 +51,34 @@ Dimensions:  read_only=no local_mutation=yes external_read=no external_mutation=
 ```
 
 Quando a decisão foi `ask` sem aprovação, a linha `Policy` termina com `unlock: --approve <capability>`. Runs sem artefato `risk` (anteriores ao ciclo 2, ou que pararam antes de selecionar um provider) mostram `Risk:        not recorded`.
+
+### Contexto e telemetria
+Quando o run tem `ContextPack`, `explain` mostra as seções abaixo, nesta ordem (exemplo de um run `--profile max` com uma rodada de negociação):
+
+```
+Context:     1 files, 10/1048576 bytes (complete); excluded 2
+Tiers:       effective: metadata, reference, requested   bytes: metadata=0 reference=10 requested=0
+Items:       reference pyproject.toml  signals: dependency_manifest
+Excluded:    .env (secret)
+             ghost.txt (missing)
+Unmatched:   unmatched (no_signal): 1
+Git:         main@22abb691044e dirty changed=2
+Rounds:      r1: 2 files, 81/1048576 bytes (complete); excluded 2
+                 requested req.txt  signals: requested
+Drift:       none
+Telemetry:   profile=max scan=4ms routing=9ms context=27ms provider=223ms files=2/2 cache=0/2 context_bytes=81 providers=1 fallbacks=0 rounds=1 verification=strong
+```
+
+- `Tiers`: tiers efetivos (perfil ∩ declaração da capability, lidos da telemetria; sem telemetria, as chaves de `tier_bytes`) e bytes por tier.
+- `Items`: um item por linha, `tier path[:início-fim]  signals: ...`. `Excluded`: `path (motivo)`. `Unmatched`: agregado de arquivos sem sinal.
+- `Git`: `branch@head dirty|clean changed=N` (+ estados como `merge`), ou `unavailable (<limitação>)` quando o git não pôde ser lido.
+- `Rounds`: um bloco por artefato `context-r1`/`context-r2` com os itens `requested` e as exclusões novas; `none` sem negociação.
+- `Drift`: caminhos com divergência de contexto (da telemetria; em runs sem telemetria, das limitações `context-drift:` do receipt).
+- `Telemetry`: uma linha com durações por fase, arquivos selecionados/varridos, cache hits/misses, providers executados, fallbacks, rodadas e o nível de verificação. Métrica não medida aparece como `unknown` (e `~N` quando estimada).
+
+Runs anteriores a esses artefatos continuam legíveis: campos ausentes aparecem como `not recorded`/`unknown`, e `Telemetry:   not recorded` quando não há telemetria. `explain --json` inclui sempre as chaves `context-r1`, `context-r2` e `telemetry` (`null` quando ausentes).
+
+Estas seções são um contrato de saída de texto: `cross-forge-foundation` reescreve `explain` sobre `ExplainReport` e deve preservá-las (`render.EXPLAIN_CONTEXT_SECTIONS` e os testes de `tests/test_cli.py` que as verificam).
 
 ## Variáveis de ambiente
 | Variável | Efeito |
