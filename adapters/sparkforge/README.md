@@ -6,7 +6,17 @@ Provider [Forge Protocol v1](../../docs/protocol.md) que expõe o Spark Forge (`
 - versão: `0.1.0`
 - especialista suportado: `sparkforge-aws >=0.5.0,<0.6.0`
 
-> Estado: esqueleto instalável. Toda op (`describe`, `health`, `execute`) responde `refused` com exit 0 até o shell comum e a integração com o Spark Forge entrarem.
+> Estado: `describe` implementado; `health` e `execute` ainda respondem `refused` (exit 0).
+
+`describe` não importa a superfície de tools do Spark Forge: confere só que `sparkforge` é importável (senão `refused` `SPARKFORGE-ADAPTER-UNAVAILABLE` com o motivo) e deriva o manifest da tabela de capabilities (`catalog.py`) cruzada com o snapshot gravado (`native_catalog.json`). Só são declaradas ações de tools `readOnlyHint = true`, `openWorldHint = false` e com argumentos obrigatórios preenchíveis a partir de arquivos do workspace; o resto vai para `limitations` com o motivo. O manifest declara `context_revalidation = "hash"`. Snapshot ausente ou corrompido → `error` `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` (reinstale o adapter).
+
+Regravar o snapshot (no interpretador do Spark Forge; saída determinística):
+
+```bash
+<python-do-spark-forge> -m theforge_sparkforge.record [--environment <dir-de-replay>]
+```
+
+Replay (`--replay <dir>`, antes da op): o `environment.json` do diretório (`{python, specialist_version}`) substitui a checagem de importabilidade. Cenário saudável em `tests/fixtures/native/sparkforge/default/`; cada outro desfecho em `tests/fixtures/native/sparkforge/scenarios/<nome>/`.
 
 ## Instalação
 

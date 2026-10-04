@@ -4,3 +4,6 @@ schemas/*.json text eol=lf
 tests/golden/* text eol=lf
 # The adapter shell is copied byte for byte between adapters (identity test asserts LF).
 adapters/**/_shell.py text eol=lf
+# Packaged native snapshots and replay recordings are compared byte for byte (canonical form).
+adapters/**/native_*.json text eol=lf
+tests/fixtures/native/** text eol=lf

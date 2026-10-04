@@ -1,26 +1,91 @@
 """Entry point: ``python -m theforge_sparkforge [options] <op>``, request on stdin, reply on stdout.
 
 The common shell (``_shell.py``) owns the Forge Protocol v1 envelope, the adapter options and
-the protocol, capability and action gates. Until the Spark Forge integration lands, the
-describe/health/execute handlers refuse with a well-formed response (exit 0); with no
-capability declared, every execute is refused by the shell as an undeclared capability.
+the protocol, capability and action gates.
+
+``describe`` never imports the Spark Forge tool surface (seconds to load): it checks that
+``sparkforge`` is importable (``find_spec``) and derives the manifest from the capability table
+(``catalog.py``) crossed with the recorded snapshot (``native_catalog.json``). With
+``--replay <dir>`` the import check is replaced by the scenario's ``environment.json``. Health
+and execute are not implemented yet and refuse with a well-formed response (exit 0).
 """
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+from typing import Any
 
-from theforge_sparkforge import PROVIDER_ID, VERSION
+from theforge_sparkforge import PROVIDER_ID, VERSION, backend, catalog
 from theforge_sparkforge._shell import (
     OP_UNSUPPORTED,
+    PROTOCOL,
     AdapterOptions,
     HandlerFactory,
     OpHandler,
     Reply,
     Request,
+    fail,
     refuse,
     serve,
 )
+
+MANIFEST_SCHEMA = "theforge/ForgeManifest/v1"
+OPS = ["describe", "health", "execute"]
+DOMAINS = ["data-engineering"]
+# The adapter verifies the sha256 of every ContextPack file it stages and the specialist reads
+# only those copies (context-intelligence-v2 optional field; cores without it ignore it).
+CONTEXT_REVALIDATION = "hash"
+UNAVAILABLE = "SPARKFORGE-ADAPTER-UNAVAILABLE"
+SNAPSHOT_INVALID = "SPARKFORGE-ADAPTER-SNAPSHOT-INVALID"
+
+
+def manifest(exposure: catalog.Exposure) -> dict[str, Any]:
+    """The ForgeManifest payload of the exposed catalog."""
+    return {
+        "schema": MANIFEST_SCHEMA,
+        "id": PROVIDER_ID,
+        "version": VERSION,
+        "protocols": [PROTOCOL],
+        "ops": list(OPS),
+        "domains": list(DOMAINS),
+        "capabilities": exposure.capabilities,
+        "execution": {"local": True, "offline": True, "requires_network": False},
+        "limitations": exposure.limitations,
+        "unknowns": [],
+        "context_revalidation": CONTEXT_REVALIDATION,
+    }
+
+
+def _availability(options: AdapterOptions) -> Reply | None:
+    """A refusal (or replay error) when the Spark Forge cannot be used, else None."""
+    if options.replay is None:
+        reason = backend.live_unavailable_reason()
+        unlock = (f"install sparkforge-aws >=0.5,<0.6 with {sys.executable} -m pip, or "
+                  "register the adapter with the Spark Forge's own interpreter")
+    else:
+        environment = backend.load_environment(options.replay)
+        if isinstance(environment, backend.ReplayProblem):
+            return fail(environment.code, environment.detail, field="replay")
+        reason = environment.unavailable_reason()
+        unlock = ("record the scenario with an interpreter that has sparkforge-aws: "
+                  "python -m theforge_sparkforge.record --environment <dir>")
+    if reason is None:
+        return None
+    return refuse(UNAVAILABLE, reason, unlock=unlock)
+
+
+def _describe(options: AdapterOptions) -> OpHandler:
+    def handle(request: Request, cwd: Path) -> Reply:
+        unavailable = _availability(options)
+        if unavailable is not None:
+            return unavailable
+        snapshot = catalog.load_snapshot()
+        if isinstance(snapshot, str):
+            return fail(SNAPSHOT_INVALID, snapshot,
+                        unlock="reinstall theforge-sparkforge-adapter")
+        return Reply(status="ok", payload=manifest(catalog.derive(snapshot)))
+    return handle
 
 
 def _not_implemented(options: AdapterOptions) -> OpHandler:
@@ -29,12 +94,12 @@ def _not_implemented(options: AdapterOptions) -> OpHandler:
                        f"op {request.op!r} is not implemented by {PROVIDER_ID} {VERSION} yet",
                        field="op")
         return Reply(status=reply.status, error=reply.error,
-                     limitations=["adapter skeleton: no op is implemented yet"])
+                     limitations=[f"adapter op {request.op!r} is not implemented yet"])
     return handle
 
 
 HANDLERS: dict[str, HandlerFactory] = {
-    "describe": _not_implemented,
+    "describe": _describe,
     "health": _not_implemented,
     "execute": _not_implemented,
 }
