@@ -11,6 +11,7 @@ import pytest
 
 from cross_workspace import CrossWorkspace, mounted_cross_workspace
 from helpers import API_PLAN_ENTRY, SPARK_PLAN_ENTRY, make_workspace, write_file
+from theforge.context.verify import current_file_sha256
 from theforge.contracts import ExecutionReceipt, ExecutionResult
 from theforge.contracts.codes import Codes
 from theforge.contracts.explain import Divergence
@@ -216,6 +217,40 @@ def test_changed_context_is_refused(tmp_path: Path) -> None:
     assert refused.code == Codes.REPLAY_NOT_REPRODUCIBLE
     assert refused.reasons == ("context changed: notes.txt",)
     assert spy.calls == [] and _snapshot(store, run) == before
+
+
+def _edit_artifact(store: RunStore, run_id: str, name: str, edit: Any) -> None:
+    """Edit an artifact on disk behind the receipt's back (its recorded hash stays)."""
+    path = store.run_dir(run_id) / f"{name}.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    edit(data)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_edited_task_is_refused_by_integrity(tmp_path: Path) -> None:
+    forger, store, run, spy = _echo(tmp_path)
+    _edit_artifact(store, run, "task", lambda data: data.update(intent="outra coisa"))
+    before = _snapshot(store, run)
+    refused = _refused(forger, store, run)
+    assert refused.code == Codes.REPLAY_NOT_REPRODUCIBLE
+    assert refused.reasons == ("integrity: task modified",)
+    assert spy.calls == [] and _snapshot(store, run) == before
+
+
+def test_edited_context_cannot_hide_a_changed_workspace(tmp_path: Path) -> None:
+    forger, store, run, spy = _echo(tmp_path)
+    write_file(tmp_path, "notes.txt", "changed\n")
+    current = current_file_sha256(tmp_path, "notes.txt")
+
+    def match_workspace(data: dict[str, Any]) -> None:
+        for item in data["files"]:
+            item["sha256"] = current
+
+    _edit_artifact(store, run, "context", match_workspace)
+    refused = _refused(forger, store, run)
+    assert refused.code == Codes.REPLAY_NOT_REPRODUCIBLE
+    assert refused.reasons == ("integrity: context modified",)
+    assert spy.calls == []
 
 
 def test_changed_provider_version_or_identity_is_refused(tmp_path: Path) -> None:

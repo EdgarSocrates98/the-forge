@@ -17,6 +17,13 @@
   executable fingerprint) or version with ``Codes.REPLAY_NOT_REPRODUCIBLE``, listing every
   reason. The current provider version comes from the registry cache only (never a
   describe): a provider without a cached description is refused as version unknown.
+  The replay inputs are first checked against the hashes the receipt recorded
+  (``explain.hashcheck``): a ``task``, ``routing``, ``handoff`` or context artifact
+  (``context``, ``context-r*``) edited, missing or unreadable, or an unreadable receipt,
+  is refused with ``Codes.REPLAY_NOT_REPRODUCIBLE`` (``integrity: <artifact> <kind>``),
+  so an edited task cannot run other parameters and an edited context cannot hide a
+  changed workspace. Divergences of outputs (result, telemetry, verification) are not
+  inputs and do not refuse: the comparison reports them.
 """
 
 from dataclasses import dataclass, field
@@ -51,6 +58,9 @@ MODES: Final = get_args(ReplayMode)
 REEXECUTABLE: Final[frozenset[Reproducibility]] = frozenset(
     {"reproducible", "partially_reproducible"})
 _CONTEXT_ARTIFACTS: Final = ("context", "context-r1", "context-r2")
+# Artifacts a re-execute reads or depends on: an integrity divergence refuses it (14.9).
+_REPLAY_INPUTS: Final = frozenset({"receipt", "task", "routing", "handoff",
+                                   *_CONTEXT_ARTIFACTS})
 # Result fields compared by ``execute``; created_at and metrics are volatile (14.8).
 _COMPARED: Final = ("status", "findings", "evidence", "artifacts", "limitations", "unknowns")
 
@@ -143,7 +153,9 @@ def _context_divergences(store: RunStore, run_id: str, root: Path,
 def _refusal(forger: Forger, store: RunStore, run_id: str,
              receipt: ExecutionReceipt) -> list[str]:
     """Every reason the run cannot be re-executed (empty: eligible). Starts nothing."""
-    reasons: list[str] = []
+    reasons = [f"integrity: {d.artifact} {d.kind}"
+               for d in verify_run_hashes(store, run_id).divergences
+               if d.artifact in _REPLAY_INPUTS or d.artifact.startswith("context-r")]
     info = receipt.reproducibility
     level = info.level if info is not None else "unknown"
     if level not in REEXECUTABLE:
