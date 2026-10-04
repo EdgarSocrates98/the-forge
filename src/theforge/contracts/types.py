@@ -30,6 +30,9 @@ ExclusionReason = Literal["budget", "max_files", "tier_not_allowed", "secret", "
 # Dependency manifests read at the workspace root: single source for routing and context.
 DEPENDENCY_MANIFESTS: Final = ("pyproject.toml", "requirements*.txt", "package.json")
 
+# Items a provider may ask for in one context request (validate_context_request).
+MAX_CONTEXT_REQUEST_ITEMS: Final = 64
+
 SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 
 
