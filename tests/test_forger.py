@@ -52,9 +52,9 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert out.result.metrics.duration_ms.kind == "measured"
     assert out.result.metrics.tokens.kind == "unknown"
     store = RunStore(tmp_path / ".forge")
-    # Negotiation rounds are optional; telemetry is written once the ask flow records it.
+    # Negotiation rounds are optional; telemetry is written in every run.
     for name in ARTIFACTS:
-        if name.startswith("context-r") or name == "telemetry":
+        if name.startswith("context-r"):
             continue
         assert store.read_optional(out.run_id, name) is not None
     receipt = out.receipt
@@ -63,6 +63,7 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert receipt.inputs.context_sha256 == sha256_of(store.read(out.run_id, "context"))
     assert receipt.result_sha256 == sha256_of(store.read(out.run_id, "result"))
     assert receipt.inputs.risk_sha256 == sha256_of(store.read(out.run_id, "risk"))
+    assert receipt.telemetry_sha256 == sha256_of(store.read(out.run_id, "telemetry"))
     assert receipt.provider is not None and receipt.provider.id == "fixture-spark"
     assert receipt.provider.trust == "local" and receipt.provider.manifest_sha256
     files = [f["path"] for f in store.read(out.run_id, "context")["files"]]

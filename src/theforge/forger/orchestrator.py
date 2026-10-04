@@ -19,7 +19,12 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Literal
 
-from theforge.context import build_context_pack, extend_context_pack, scan_workspace
+from theforge.context import (
+    build_context_pack,
+    effective_tiers,
+    extend_context_pack,
+    scan_workspace,
+)
 from theforge.context.fingerprints import FingerprintStore
 from theforge.context.git import read_git_state
 from theforge.context.scan import WorkspaceScan
@@ -56,6 +61,7 @@ from theforge.contracts.integrity import (
 )
 from theforge.contracts.types import BudgetProfile, Outcome, Producer
 from theforge.errors import PersistenceError, UsageError
+from theforge.forger.telemetry import TelemetryRecorder
 from theforge.meta import PRODUCER, VERSION
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
 from theforge.profiles import MAX_NEGOTIATION_ROUNDS, PROFILES, ContextProfile, profile_for
@@ -78,6 +84,8 @@ from theforge.runs import RunStore, new_run_id
 EXECUTE_TIMEOUTS: Final[Mapping[str, float]] = MappingProxyType(
     {name: profile.execute_timeout_s for name, profile in PROFILES.items()}
 )
+# Receipt limitation when the run telemetry could not be built (the receipt still goes).
+TELEMETRY_UNAVAILABLE_LIMITATION: Final = "telemetry-unavailable"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -106,12 +114,14 @@ class _Trace:
     run_id: str
     started_at: str
     task_sha: str
+    telemetry: TelemetryRecorder  # phases and counters of this run, written by _finish (10.x)
     routing_sha: str | None = None
     context_sha: str | None = None
     result_sha: str | None = None
     risk_sha: str | None = None
     context_round_shas: list[str] = field(default_factory=list)  # context-r1, context-r2
     drift: DriftReport | None = None  # post-execution check of the final result (6.x, 9.1-9.3)
+    last_pack: ContextPack | None = None  # the last persisted pack (context or context-rN)
     record: RegistryRecord | None = None
     identity: ProviderFingerprint | None = None
     decision: RoutingDecision | None = None
@@ -217,7 +227,11 @@ class Forger:
             budget_profile=request.profile, requested_capability=request.capability,
             requested_action=request.action,
         )
-        trace = _Trace(run_id=run_id, started_at=started,
+        telemetry = TelemetryRecorder(run_id, profile_for(task.budget_profile))
+        # Always measured, so a run that never gets there records an explicit zero.
+        for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):
+            telemetry.count(counter, 0)
+        trace = _Trace(run_id=run_id, started_at=started, telemetry=telemetry,
                        task_sha=self.store.write(run_id, "task", task))
         try:
             return self._run(trace, task, request)
@@ -240,8 +254,12 @@ class Forger:
 
     def _run(self, trace: _Trace, task: TaskSpec, request: AskRequest) -> AskOutcome:
         run_id = trace.run_id
-        scan = scan_workspace(self.root, task.targets)
-        routed = self._final_route(trace, task, request, scan.files)
+        telemetry = trace.telemetry
+        with telemetry.phase("scan"):
+            scan = scan_workspace(self.root, task.targets)
+        telemetry.count("files_scanned", len(scan.files))
+        with telemetry.phase("routing"):
+            routed = self._final_route(trace, task, request, scan.files)
         decision, records = routed.decision, routed.records
         if routed.error is not None:
             trace.routing_sha = self.store.write(run_id, "routing", decision)
@@ -254,7 +272,10 @@ class Forger:
             return self._finish(trace, decision, decision.status)
 
         profile = profile_for(task.budget_profile)
-        decision, record, health_error = self._select_healthy(task, decision, records, profile)
+        with telemetry.phase("routing"):  # health (and fallback) completes the routing
+            decision, record, health_error = self._select_healthy(task, decision, records,
+                                                                  profile)
+        telemetry.count("fallbacks_used", len(decision.fallbacks_used))
         if record is None and not profile.fallback:
             trace.limitations.append(f"profile {profile.name}: fallback disabled")
         trace.decision = decision
@@ -263,6 +284,7 @@ class Forger:
             return self._finish(trace, decision, "provider_failure", error=health_error)
         trace.record = record
         trace.identity = fingerprint(record.entry)
+        telemetry.set_revalidation(record.manifest.context_revalidation)  # 6.5, 6.6
         op_error = _require_op(record, EXECUTE_OP)
         if op_error is not None:
             return self._finish(trace, decision, "refused", error=op_error)
@@ -284,6 +306,7 @@ class Forger:
         finally:
             fingerprints.save()
             trace.limitations.extend(fingerprints.warnings)
+            self._record_context(trace, fingerprints)
         if executed.result is None:
             return self._finish(trace, decision, executed.status, error=executed.error)
         assert executed.pack is not None
@@ -308,6 +331,7 @@ class Forger:
         """
         report = check_drift(self.root, pack, result, profile.verification)
         trace.drift = report
+        trace.telemetry.set_drift(report)
         trace.limitations.extend(report.limitations)
         trace.limitations.extend(f"{DRIFT_LIMITATION_PREFIX} {path}" for path in report.drifted)
         return apply_drift(result, report)
@@ -317,13 +341,16 @@ class Forger:
         selection: Selection, scan: WorkspaceScan, profile: ContextProfile,
         fingerprints: FingerprintStore,
     ) -> _Executed:
-        pack = self._build_context(trace, task, record, capability, scan, profile, fingerprints)
-        try:
-            validate_context_pack(pack)
-        except IntegrityError as exc:  # the core built it: an internal error, never sent (1.7)
-            return _Executed("provider_failure", error=ErrorInfo(
-                code=Codes.INTERNAL, detail=f"inconsistent context pack: {exc}"))
-        trace.context_sha = self.store.write(trace.run_id, "context", pack)
+        with trace.telemetry.phase("context"):
+            pack = self._build_context(trace, task, record, capability, scan, profile,
+                                       fingerprints)
+            try:
+                validate_context_pack(pack)
+            except IntegrityError as exc:  # the core built it: internal, never sent (1.7)
+                return _Executed("provider_failure", error=ErrorInfo(
+                    code=Codes.INTERNAL, detail=f"inconsistent context pack: {exc}"))
+            trace.context_sha = self.store.write(trace.run_id, "context", pack)
+            trace.last_pack = pack
         return self._execute_negotiated(trace, task, record, capability, selection, pack,
                                         scan, profile, fingerprints)
 
@@ -341,15 +368,18 @@ class Forger:
         """
         assert record.manifest is not None
         expected = Producer(id=record.entry.id, version=record.manifest.version)
+        telemetry = trace.telemetry
+        telemetry.count("providers_executed", 1)  # one provider per ask run, every round
         total_ms = 0.0
         while True:
             payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
                                              action=selection.action, context=pack))
             started_exec = time.perf_counter()
             try:
-                response = self.transport_factory(record.entry.argv).call(
-                    "execute", payload, timeout=self._timeout(task),
-                    cwd=self.store.work_dir(trace.run_id))
+                with telemetry.phase("provider"):  # sums every round's execute (4.2)
+                    response = self.transport_factory(record.entry.argv).call(
+                        "execute", payload, timeout=self._timeout(task),
+                        cwd=self.store.work_dir(trace.run_id))
             except TransportError as exc:
                 return _Executed("provider_failure",
                                  error=ErrorInfo(code=exc.code, detail=exc.detail))
@@ -385,16 +415,18 @@ class Forger:
                                            pack, profile)
             if refusal is not None:
                 return _Executed("provider_failure", error=refusal)
-            pack = extend_context_pack(pack, result.context_request, scan, profile=profile,
-                                       fingerprints=fingerprints)
-            try:
-                validate_context_pack(pack)
-            except IntegrityError as exc:  # the core extended it: internal, never sent
-                return _Executed("provider_failure", error=ErrorInfo(
-                    code=Codes.INTERNAL,
-                    detail=f"inconsistent context pack (round {pack.round}): {exc}"))
-            trace.context_round_shas.append(
-                self.store.write(trace.run_id, f"context-r{pack.round}", pack))
+            with telemetry.phase("context"):
+                pack = extend_context_pack(pack, result.context_request, scan,
+                                           profile=profile, fingerprints=fingerprints)
+                try:
+                    validate_context_pack(pack)
+                except IntegrityError as exc:  # the core extended it: internal, never sent
+                    return _Executed("provider_failure", error=ErrorInfo(
+                        code=Codes.INTERNAL,
+                        detail=f"inconsistent context pack (round {pack.round}): {exc}"))
+                trace.context_round_shas.append(
+                    self.store.write(trace.run_id, f"context-r{pack.round}", pack))
+                trace.last_pack = pack
 
     @staticmethod
     def _refuse_request(
@@ -431,10 +463,23 @@ class Forger:
         """
         git = read_git_state(self.root)
         trace.limitations.extend(git.limitations)
+        trace.telemetry.set_effective_tiers(effective_tiers(profile, capability.context))
         return build_context_pack(
             task, record.entry.id, list(capability.signals.file_globs), scan,
             profile=profile, capability_context=capability.context, git=git,
             fingerprints=fingerprints)
+
+    @staticmethod
+    def _record_context(trace: _Trace, fingerprints: FingerprintStore) -> None:
+        """Context counters once the context phase ran: hashing work and the last pack."""
+        telemetry, stats = trace.telemetry, fingerprints.stats
+        telemetry.count("files_hashed", stats.files_hashed)
+        telemetry.count("bytes_hashed", stats.bytes_hashed)
+        telemetry.count("cache_hits", stats.hits)
+        telemetry.count("cache_misses", stats.misses)
+        if trace.last_pack is not None:
+            telemetry.count("files_selected", len(trace.last_pack.files))
+            telemetry.count("context_bytes", trace.last_pack.used_bytes)
 
     def _apply_policy(
         self, trace: _Trace, request: AskRequest, record: RegistryRecord,
@@ -587,6 +632,23 @@ class Forger:
                 rest.append(c)
         return first + rest
 
+    def _write_telemetry(self, trace: _Trace) -> tuple[str | None, list[str]]:
+        """Persist the run telemetry; return its hash and the limitations for the receipt.
+
+        Idempotent if ``_finish`` is re-entered by the internal-error path (rounds are set,
+        not added). A failure to build it never costs the run its receipt nor changes its
+        status: the receipt goes without ``telemetry_sha256`` and with a limitation. Only a
+        persistence failure propagates, as for every other artifact.
+        """
+        try:
+            telemetry = replace(trace.telemetry.build(), negotiation_rounds=Metric(
+                value=float(len(trace.context_round_shas)), kind="measured"))
+            return self.store.write(trace.run_id, "telemetry", telemetry), telemetry.limitations
+        except PersistenceError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - telemetry must never block the receipt
+            return None, [f"{TELEMETRY_UNAVAILABLE_LIMITATION}: {type(exc).__name__}: {exc}"]
+
     def _finish(
         self, trace: _Trace, decision: RoutingDecision, status: Outcome, *,
         result: ExecutionResult | None = None, error: ErrorInfo | None = None,
@@ -603,6 +665,10 @@ class Forger:
                                        executable=identity.executable if identity else None,
                                        fingerprint=identity.digest if identity else None,
                                        observed_version=record.manifest.version)
+        # Telemetry before the receipt, on every outcome (10.4).
+        telemetry_sha, telemetry_notes = self._write_telemetry(trace)
+        limitations = list(trace.limitations)
+        limitations.extend(n for n in telemetry_notes if n not in limitations)
         receipt = ExecutionReceipt(
             producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
             forge_version=VERSION,
@@ -610,7 +676,8 @@ class Forger:
                                  context_sha256=trace.context_sha, risk_sha256=trace.risk_sha,
                                  context_round_sha256=list(trace.context_round_shas)),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
-            finished_at=utc_now(), error=error, limitations=list(trace.limitations),
+            finished_at=utc_now(), error=error, limitations=limitations,
+            telemetry_sha256=telemetry_sha,
         )
         self.store.write(trace.run_id, "receipt", receipt)
         return AskOutcome(run_id=trace.run_id, status=status, decision=decision,

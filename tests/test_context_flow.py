@@ -3,20 +3,23 @@ cache wired into ``ask``; one provider executed per run in every profile."""
 
 import os
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from helpers import bad_entry, make_workspace, write_file
+from helpers import API_ENTRY, SPARK_ENTRY, bad_entry, make_workspace, write_file
 from theforge.context.fingerprints import FingerprintStore
 from theforge.context.git import GitState
-from theforge.contracts import ExecutionReceipt, Metric, Response
+from theforge.contracts import ExecutionReceipt, Metric, Response, RunTelemetry
 from theforge.contracts.codes import Codes
 from theforge.contracts.context import GitSummary
 from theforge.contracts.integrity import validate_receipt
 from theforge.contracts.types import BudgetProfile
+from theforge.errors import UsageError
 from theforge.forger import AskRequest, Forger, orchestrator
+from theforge.forger.telemetry import REVALIDATION_UNDECLARED_LIMITATION
 from theforge.protocol import SubprocessTransport
 from theforge.registry import Registry
 from theforge.runs import RunStore
@@ -434,3 +437,181 @@ def test_tokens_without_a_provider_count_are_unknown(tmp_path: Path, no_git: Non
     out = _run_mode(tmp_path, "ok", "balanced")
     tokens = RunStore(tmp_path / ".forge").read(out.run_id, "result")["metrics"]["tokens"]
     assert tokens == {"value": None, "kind": "unknown"}  # never derived from bytes (7.3)
+
+
+# --- run telemetry on every outcome (6.5, 6.6, 9.4, 10.1-10.5; task 4.4) ---------------------
+
+def _telemetry(root: Path, run_id: str) -> RunTelemetry:
+    """Strictly re-read telemetry, proven bound to the receipt by the on-disk hash (10.3)."""
+    store = RunStore(root / ".forge")
+    telemetry = store.read_contract(run_id, "telemetry", RunTelemetry)
+    receipt = store.read_contract(run_id, "receipt", ExecutionReceipt)
+    assert receipt.telemetry_sha256 is not None
+    assert receipt.telemetry_sha256 == store.persisted_sha256(run_id, "telemetry")
+    assert telemetry.run_id == run_id
+    return telemetry
+
+
+def _setup_outcome(root: Path, outcome: str) -> AskRequest:
+    if outcome == "no_route":
+        make_workspace(root, [bad_entry("ok", "bad-a")])
+        return AskRequest(intent="bom dia")
+    if outcome == "ambiguous":
+        make_workspace(root, [SPARK_ENTRY, API_ENTRY])
+        return AskRequest(intent="performance da api")
+    mode = {"ok": "ok", "partial": "drift-report", "refused-provider": "refuse",
+            "refused-op": "no-execute-op", "failure-execute": "crash",
+            "failure-health": "unhealthy"}[outcome]
+    make_workspace(root, [bad_entry(mode, "bad-a")])
+    write_file(root, DRIFTED, LINES10)
+    return AskRequest(intent="run it", capability="bad.thing")
+
+
+@pytest.mark.parametrize(("outcome", "status", "executed"), [
+    ("ok", "ok", 1),
+    ("partial", "partial", 1),
+    ("refused-provider", "refused", 1),
+    ("refused-op", "refused", 0),
+    ("no_route", "no_route", 0),
+    ("ambiguous", "ambiguous", 0),
+    ("failure-execute", "provider_failure", 1),
+    ("failure-health", "provider_failure", 0),
+])
+def test_every_outcome_writes_telemetry_bound_to_the_receipt(
+        tmp_path: Path, no_git: None, outcome: str, status: str, executed: int) -> None:
+    out = _forger(tmp_path).ask(_setup_outcome(tmp_path, outcome))
+    assert out.status == status, out.error
+    telemetry = _telemetry(tmp_path, out.run_id)
+    assert out.receipt.telemetry_sha256 is not None
+    assert telemetry.providers_executed == Metric(value=float(executed), kind="measured")
+    assert telemetry.scan_ms.kind == "measured" and telemetry.routing_ms.kind == "measured"
+    assert telemetry.files_scanned.kind == "measured"
+    assert telemetry.profile.name == "balanced"
+    reached_provider = executed == 1
+    assert (telemetry.provider_ms.kind == "measured") == reached_provider
+    assert (telemetry.context_ms.kind == "measured") == reached_provider
+    assert ("provider_ms" in telemetry.unknowns) != reached_provider
+
+
+@pytest.mark.parametrize("profile", ["economy", "balanced", "max"])
+def test_at_most_one_provider_executed_is_recorded_in_every_profile(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None,
+        profile: BudgetProfile) -> None:
+    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
+                              bad_entry("ok", "bad-b", trust="local")])
+    out = _forger(tmp_path, recorder).ask(
+        AskRequest(intent="run it", capability="bad.thing", profile=profile))
+    telemetry = _telemetry(tmp_path, out.run_id)
+    assert telemetry.providers_executed.value == float(len(_executed(recorder)))
+    assert telemetry.providers_executed.value is not None
+    assert telemetry.providers_executed.value <= 1
+    assert telemetry.profile.name == profile
+    # the unhealthy primary counts as a fallback used; economy (no fallback) executes none
+    assert telemetry.fallbacks_used == Metric(value=1.0, kind="measured")
+    assert telemetry.providers_executed.value == (0.0 if profile == "economy" else 1.0)
+
+
+def test_negotiated_run_records_rounds_counters_and_tiers(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None) -> None:
+    out = _negotiate(tmp_path, "context-request", "balanced", recorder)
+    assert out.status == "ok", out.error
+    telemetry = _telemetry(tmp_path, out.run_id)
+    last = RunStore(tmp_path / ".forge").read(out.run_id, "context-r1")
+    assert telemetry.negotiation_rounds == Metric(value=1.0, kind="measured")
+    assert telemetry.providers_executed == Metric(value=1.0, kind="measured")
+    assert telemetry.context_bytes == Metric(value=float(last["used_bytes"]), kind="measured")
+    assert telemetry.files_selected == Metric(value=float(len(last["files"])), kind="measured")
+    for name in ("files_hashed", "bytes_hashed", "cache_hits", "cache_misses"):
+        assert getattr(telemetry, name).kind == "measured", name
+    assert "requested" in telemetry.profile.effective_tiers
+    assert telemetry.verification_performed is not None
+    assert telemetry.unknowns == []
+
+
+def test_drift_is_recorded_in_the_telemetry(tmp_path: Path, no_git: None) -> None:
+    out = _run_mode(tmp_path, "drift-report", "balanced")
+    assert out.status == "partial"
+    assert _telemetry(tmp_path, out.run_id).context_drift == [DRIFTED]
+
+
+def test_provider_without_revalidation_is_undeclared_with_a_receipt_limitation(
+        tmp_path: Path, no_git: None) -> None:
+    out = _run_mode(tmp_path, "ok", "balanced")
+    assert out.status == "ok"
+    telemetry = _telemetry(tmp_path, out.run_id)
+    assert telemetry.provider_revalidation == "undeclared"
+    assert REVALIDATION_UNDECLARED_LIMITATION in telemetry.limitations
+    assert out.receipt.limitations.count(REVALIDATION_UNDECLARED_LIMITATION) == 1
+
+
+def test_echo_declares_hash_revalidation(tmp_path: Path, no_git: None) -> None:
+    make_workspace(tmp_path, [])
+    write_file(tmp_path, "notes.txt", "hello\n")
+    out = _forger(tmp_path).ask(AskRequest(intent="eco", capability="demo.echo"))
+    assert out.status == "ok", out.error
+    assert _telemetry(tmp_path, out.run_id).provider_revalidation == "hash"
+    assert REVALIDATION_UNDECLARED_LIMITATION not in out.receipt.limitations
+
+
+def test_receipt_does_not_duplicate_limitations_shared_with_telemetry(
+        tmp_path: Path, no_git: None) -> None:
+    out = _run_mode(tmp_path, "mutate-context", "economy")  # minimal: context-not-reverified
+    telemetry = _telemetry(tmp_path, out.run_id)
+    assert "context-not-reverified" in telemetry.limitations
+    assert out.receipt.limitations.count("context-not-reverified") == 1
+    assert len(out.receipt.limitations) == len(set(out.receipt.limitations))
+
+
+def test_persisted_telemetry_is_redacted(
+        tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    real_build = orchestrator.TelemetryRecorder.build
+
+    def leaky(self: orchestrator.TelemetryRecorder) -> RunTelemetry:
+        built = real_build(self)
+        return replace(built, limitations=[*built.limitations, "said password=hunter2xyz"])
+
+    monkeypatch.setattr(orchestrator.TelemetryRecorder, "build", leaky)
+    out = _run_mode(tmp_path, "ok", "balanced")
+    run_dir = RunStore(tmp_path / ".forge").run_dir(out.run_id)
+    assert "hunter2xyz" not in (run_dir / "telemetry.json").read_text(encoding="utf-8")
+    assert "said password=[REDACTED]" in _telemetry(tmp_path, out.run_id).limitations
+
+
+def test_usage_error_still_writes_telemetry(tmp_path: Path, no_git: None) -> None:
+    make_workspace(tmp_path, [])
+    with pytest.raises(UsageError):
+        _forger(tmp_path).ask(AskRequest(intent="eco", capability="demo.echo", action="nope"))
+    [run_id] = RunStore(tmp_path / ".forge").list_runs()
+    assert _telemetry(tmp_path, run_id).providers_executed.value == 0.0
+
+
+def test_internal_error_still_writes_telemetry(
+        tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
+
+    def boom(*_: Any, **__: Any) -> Any:
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(orchestrator, "build_context_pack", boom)
+    out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
+    assert out.status == "provider_failure"
+    assert out.error is not None and out.error.code == Codes.INTERNAL
+    telemetry = _telemetry(tmp_path, out.run_id)
+    assert telemetry.providers_executed.value == 0.0
+    assert telemetry.context_ms.kind == "measured"  # the failing phase is still timed
+
+
+def test_a_telemetry_failure_never_costs_the_receipt_nor_fakes_the_status(
+        tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(self: orchestrator.TelemetryRecorder) -> RunTelemetry:
+        raise RuntimeError("telemetry kaboom")
+
+    monkeypatch.setattr(orchestrator.TelemetryRecorder, "build", broken)
+    out = _run_mode(tmp_path, "crash", "balanced")
+    assert out.status == "provider_failure"  # unchanged by the telemetry failure
+    store = RunStore(tmp_path / ".forge")
+    receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
+    assert receipt.status == "provider_failure" and receipt.telemetry_sha256 is None
+    assert store.read_optional(out.run_id, "telemetry") is None
+    assert any(n.startswith(orchestrator.TELEMETRY_UNAVAILABLE_LIMITATION)
+               for n in receipt.limitations)
