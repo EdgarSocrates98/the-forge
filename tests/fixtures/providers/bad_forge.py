@@ -126,6 +126,9 @@ def main() -> int:
             file_globs=["?*"] if mode == "wide-glob" else (),
             keywords=[f"bad{i}" for i in range(SPAM_KEYWORDS)] if mode == "keyword-spam"
             else ("bad",))]
+        if mode == "excerpts":  # the capability accepts excerpts of the *.txt files
+            capabilities[0]["signals"]["file_globs"] = ["*.txt"]
+            capabilities[0]["context"] = {"excerpts": True, "requests": False}
         if mode == "capability-spam":
             capabilities += [capability(f"bad.spam{i}", keywords=["run", "it"])
                              for i in range(SPAM_CAPABILITIES)]

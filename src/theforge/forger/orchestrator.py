@@ -14,10 +14,14 @@ from types import MappingProxyType
 from typing import Final, Literal
 
 from theforge.context import build_context_pack, scan_workspace
+from theforge.context.fingerprints import FingerprintStore
+from theforge.context.git import read_git_state
+from theforge.context.scan import WorkspaceScan
 from theforge.contracts import (
     Candidate,
     Capability,
     Confidence,
+    ContextPack,
     ContractError,
     ErrorInfo,
     ExecuteRequest,
@@ -45,7 +49,7 @@ from theforge.contracts.types import BudgetProfile, Outcome, Producer
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
-from theforge.profiles import PROFILES, profile_for
+from theforge.profiles import PROFILES, ContextProfile, profile_for
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
 from theforge.registry import (
     ProviderFingerprint,
@@ -211,7 +215,10 @@ class Forger:
                 return self._finish(trace, decision, "refused", error=op_error)
             return self._finish(trace, decision, decision.status)
 
-        decision, record, health_error = self._select_healthy(task, decision, records)
+        profile = profile_for(task.budget_profile)
+        decision, record, health_error = self._select_healthy(task, decision, records, profile)
+        if record is None and not profile.fallback:
+            trace.limitations.append(f"profile {profile.name}: fallback disabled")
         trace.decision = decision
         trace.routing_sha = self.store.write(run_id, "routing", decision)
         if record is None or record.manifest is None:
@@ -230,8 +237,7 @@ class Forger:
         if policy_error is not None:
             return self._finish(trace, decision, "refused", error=policy_error)
 
-        globs = list(capability.signals.file_globs)
-        pack = build_context_pack(task, record.entry.id, globs, scan)
+        pack = self._build_context(trace, task, record, capability, scan, profile)
         try:
             validate_context_pack(pack)
         except IntegrityError as exc:  # the core built it: an internal error, never sent (1.7)
@@ -280,6 +286,27 @@ class Forger:
         ))
         trace.result_sha = self.store.write(run_id, "result", result)
         return self._finish(trace, decision, result_status, result=result)
+
+    def _build_context(
+        self, trace: _Trace, task: TaskSpec, record: RegistryRecord, capability: Capability,
+        scan: WorkspaceScan, profile: ContextProfile,
+    ) -> ContextPack:
+        """Context phase (after policy): git signals, fingerprint cache, ContextPack round 0.
+
+        Git and cache problems never fail the run: they become run limitations (3.4, 5.5).
+        The cache is written once per run, after the pack is built.
+        """
+        git = read_git_state(self.root)
+        trace.limitations.extend(git.limitations)
+        fingerprints = FingerprintStore(self.root)
+        try:
+            return build_context_pack(
+                task, record.entry.id, list(capability.signals.file_globs), scan,
+                profile=profile, capability_context=capability.context, git=git,
+                fingerprints=fingerprints)
+        finally:
+            fingerprints.save()
+            trace.limitations.extend(fingerprints.warnings)
 
     def _apply_policy(
         self, trace: _Trace, request: AskRequest, record: RegistryRecord,
@@ -369,12 +396,21 @@ class Forger:
         return profile_for(task.budget_profile).execute_timeout_s
 
     def _select_healthy(
-        self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord]
+        self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord],
+        profile: ContextProfile | None = None,
     ) -> tuple[RoutingDecision, RegistryRecord | None, ErrorInfo | None]:
+        """Health of the primary, then of compatible fallbacks when the profile allows (9.1).
+
+        ``profile`` defaults to the task's profile.
+        """
+        profile = profile if profile is not None else profile_for(task.budget_profile)
         primary = decision.selected[0]
         tried: list[str] = []
         last_error: ErrorInfo | None = None
-        for candidate in self._fallback_order(task, decision, records):
+        order = self._fallback_order(task, decision, records)
+        if not profile.fallback:
+            order = order[:1]
+        for candidate in order:
             record = records[candidate.provider]
             health = check_health(record, transport_factory=self.transport_factory,
                                   allow_unverified=self.registry.allow_unverified)

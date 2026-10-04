@@ -129,6 +129,7 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "stderr-flood": ("ok", None),
     "exit-leave-grandchild": ("ok", None),
     "env-probe-full": ("ok", None),
+    "excerpts": ("ok", None),  # the capability declares excerpt support (context v2)
     # describe-level: provider or capability is not routable
     "describe-crash": ("no_route", None),
     "invalid-manifest": ("no_route", None),
