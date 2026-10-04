@@ -15,10 +15,13 @@ from typing import Any
 
 import pytest
 
+from cross_workspace import mounted_cross_workspace
 from helpers import (
     API_ENTRY,
+    API_PLAN_ENTRY,
     PROVIDERS,
     SPARK_ENTRY,
+    SPARK_PLAN_ENTRY,
     case_a,
     case_b,
     fixture_argv,
@@ -27,6 +30,7 @@ from helpers import (
 )
 from theforge.cli.main import main
 from theforge.contracts import to_dict
+from theforge.contracts.codes import Codes
 from theforge.forger import AskOutcome, AskRequest, Forger
 from theforge.registry import Registry
 from theforge.runs import RunStore
@@ -295,3 +299,57 @@ def test_ask_through_the_cli_leaves_a_real_git_dir_intact(outside_dir: Path) -> 
     git = pack["workspace"]["git"]
     assert git["available"] is True and git["branch"] == "main" and git["head"] == head
     assert git["dirty"] is True
+
+
+# --- cross-forge plan executed and explained in separate CLI processes (gate 9.3, G1) --------
+
+PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
+
+
+def test_plan_execute_then_explain_in_separate_processes(
+        user_config_dir: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
+    """``plan --execute`` and every ``explain`` run as their own ``python -m theforge``
+    process, with isolated user config/cache dirs and the cross proof workspace."""
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8",
+           "THEFORGE_CONFIG_DIR": str(user_config_dir),
+           "THEFORGE_CACHE_DIR": str(tmp_path_factory.mktemp("e2e-cache"))}
+
+    def run_cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run([sys.executable, "-m", "theforge", *args, "--root", str(root)],
+                              capture_output=True, text=True, encoding="utf-8", timeout=300,
+                              env=env)
+
+    def explain(root: Path, run_id: str) -> dict[str, Any]:
+        r = run_cli(root, "explain", run_id, "--json")
+        assert (r.returncode, r.stderr) == (0, ""), r.stderr
+        report: dict[str, Any] = json.loads(r.stdout)
+        assert report["run_id"] == run_id and report["integrity"]["divergences"] == []
+        return report
+
+    with mounted_cross_workspace(git=True) as cross:
+        make_workspace(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
+        r = run_cli(cross.root, "plan", PROOF_TASK, "--profile", "max", "--execute", "--json")
+        assert r.returncode == 0, r.stderr
+        data = json.loads(r.stdout)
+        assert data["status"] == "ok"
+        nodes = data["result"]["nodes"]
+        assert [(n["node"], n["status"]) for n in nodes] == [("n1", "ok"), ("n2", "ok")]
+
+        plan_report = explain(cross.root, data["run_id"])
+        assert plan_report["kind"] == "plan" and plan_report["status"] == "ok"
+        for node in nodes:
+            assert explain(cross.root, node["run_id"])["parent_run"] == data["run_id"]
+
+        # A tampered node result is caught by a fresh process: exit 6, one governed line.
+        node_run = nodes[0]["run_id"]
+        path = RunStore(cross.root / ".forge").run_dir(node_run) / "result.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["limitations"] = [*result.get("limitations", []), "tampered"]
+        path.write_text(json.dumps(result), encoding="utf-8")
+        r = run_cli(cross.root, "explain", node_run, "--json")
+        assert r.returncode == 6
+        assert r.stderr.splitlines() == [
+            "theforge: integrity divergence: 1 artifact(s) diverge "
+            f"[{Codes.PERSIST_DIVERGENCE} · persistence]"]
+        assert [(d["artifact"], d["kind"]) for d in
+                json.loads(r.stdout)["integrity"]["divergences"]] == [("result", "modified")]

@@ -46,7 +46,6 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_registry_cache.py": ("integration", "security"),
     "test_env_isolation.py": ("integration", "security"),
     "test_policy.py": ("unit", "security"),
-    "test_ci_gates.py": ("integration",),
     "test_ci_workflows.py": ("unit",),
     # planned by design (real-provider-integration)
     "test_manifest_rules.py": ("unit", "contract"),
@@ -93,6 +92,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_installation.py": ("unit", "security"),
     "test_diagnostics.py": ("unit", "security"),
     "test_forger_binding.py": ("integration",),
+    "test_explain_evolution.py": ("contract",),
 }
 
 
