@@ -204,44 +204,16 @@ Limites (`contracts/types.py`, valores iniciais):
 - **Glob catch-all** também exclui a capability. É catch-all um glob (sem espaços nas pontas e sem `./` inicial) que seja `*`, `**`, `**/*`, `*.*` ou `**/*.*`, ou que não tenha nenhum caractere alfanumérico literal depois de descartar classes negadas (`[!…]`, `[^…]`) e classes com intervalo (`[a-z]`). Exemplos: `?*`, `**/?*`, `[!.]*`. Classes positivas de literais contam como literais (`*.[ch]` é válido). Globs por extensão (`*.md`, `*.scala`) são sinais legítimos e são permitidos.
 
 ## Códigos de erro do core
-Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados. A lista canônica e testada de códigos `FORGE-*` passa a ser `docs/errors.md`, criado pela spec `cross-forge-foundation`; quando ele existir, esta tabela aponta para lá (os `FORGE-MANIFEST-*` e `FORGE-CONTEXT-REQUEST-*` inclusive).
+Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados. A lista canônica e testada de códigos `FORGE-*`, com a família de cada um, é [errors.md](errors.md). Esta seção só resume os códigos de manifest e de pedido de contexto citados acima:
 
-| Código | Causa |
-|---|---|
-| `FORGE-PROTO-SPAWN` | executável não encontrado ou sem permissão |
-| `FORGE-PROTO-TIMEOUT` | sem resposta no tempo limite (árvore de processos encerrada) |
-| `FORGE-PROTO-EXIT` | exit ≠ 0 (stderr redigido no detalhe) |
-| `FORGE-PROTO-NOT-JSON` | stdout não é JSON |
-| `FORGE-PROTO-OVERSIZE` | stdout > 8 MB |
-| `FORGE-PROTO-SCHEMA` | envelope ou payload inválido, `kind` errado, status desconhecido, timestamp malformado ou fora de UTC |
-| `FORGE-PROTO-MISMATCH` | `request_id` divergente |
-| `FORGE-PROTO-OP-MISMATCH` | `op` da response diferente da op pedida |
-| `FORGE-PROTO-OP-UNSUPPORTED` | a capability pedida é declarada por um provider roteável sem `execute` e nenhum outro provider poderia executá-la (`refused`, sem iniciar o processo) |
-| `FORGE-PROTO-VERSION` | protocolo da response ≠ negociado |
-| `FORGE-PROTO-PRODUCER` | `producer.id` ou `producer.version` diferente do provider invocado (envelope de describe, health ou execute, ou `ExecutionResult.producer`) |
-| `FORGE-RESULT-DUP-EVIDENCE` | evidence com ID repetido |
-| `FORGE-RESULT-DUP-FINDING` | finding com ID repetido |
-| `FORGE-RESULT-DANGLING-EVIDENCE` | finding referencia evidence inexistente |
-| `FORGE-RESULT-ARTIFACT-PATH` | `artifacts[].path` fora das regras de caminho |
-| `FORGE-CONTEXT-BYTES` | ContextPack com `used_bytes` > `budget_bytes` ou ≠ soma dos arquivos (erro do core: o run sai com `FORGE-INTERNAL` e este código no detalhe) |
-| `FORGE-CONTEXT-PATH` | arquivo do ContextPack fora das regras de caminho (erro do core, como acima) |
-| `FORGE-CONTEXT-REQUEST-UNSUPPORTED` | `context_request` de uma capability que não declara `context.requests` ([pedido de contexto](#pedido-de-contexto); `provider_failure`) |
-| `FORGE-CONTEXT-REQUEST-LIMIT` | `context_request` além das rodadas do perfil, inclusive qualquer pedido em `economy` (`provider_failure`) |
-| `FORGE-CONTEXT-REQUEST-INVALID` | `context_request` com 0 itens ou mais de 64 (`provider_failure`) |
-| `FORGE-RECEIPT-INVALID` | receipt inconsistente: hash fora do formato, timestamp inválido ou status `ok`/`partial` sem `result_sha256` igual ao hash do `result` gravado |
-| `FORGE-REGISTRY-MANIFEST-CHANGED` | o manifest mudou de novo na revalidação feita depois de um re-routing |
-| `FORGE-MANIFEST-LIMITS` | manifest ou capability acima dos limites, ou glob catch-all (aviso; capability ou provider excluído) |
-| `FORGE-MANIFEST-VERSION` | `version` do manifest não é SemVer 2.0.0 (provider `invalid`) |
-| `FORGE-MANIFEST-TAXONOMY` | capability, ação, alias ou `replaced_by` fora das regras mecânicas da taxonomia (aviso; capability excluída, provider `invalid` se nenhuma restar) |
-| `FORGE-POLICY-APPROVAL-REQUIRED` | policy `ask` sem `--approve <capability>` (`refused`) |
-| `FORGE-POLICY-DENIED` | policy `deny` (`refused`; aprovação não desbloqueia) |
-| `FORGE-PROVIDER-NOT-READY` | provider não está `ready` no registry |
-| `FORGE-PROVIDER-UNTRUSTED` | provider `unverified` não executado sem `--allow-unverified` |
-| `FORGE-PROVIDER-BLOCKED` | provider com trust `blocked` nunca é executado |
-| `FORGE-HEALTH-UNAVAILABLE` | health reporta `unavailable` |
-| `FORGE-HEALTH-FAILED` | health respondeu com status ≠ ok |
-| `FORGE-USAGE` | receipt de run que falhou por uso inválido |
-| `FORGE-INTERNAL` | receipt de run que falhou por erro interno inesperado |
+| Código | Família | Causa |
+|---|---|---|
+| `FORGE-MANIFEST-LIMITS` | registry | manifest ou capability acima dos [limites](#limites), ou glob catch-all (aviso; capability ou provider excluído) |
+| `FORGE-MANIFEST-VERSION` | registry | `version` do manifest não é SemVer 2.0.0 (provider `invalid`) |
+| `FORGE-MANIFEST-TAXONOMY` | registry | capability, ação, alias ou `replaced_by` fora das regras mecânicas da taxonomia (aviso; capability excluída, provider `invalid` se nenhuma restar) |
+| `FORGE-CONTEXT-REQUEST-UNSUPPORTED` | context | `context_request` de uma capability que não declara `context.requests` ([pedido de contexto](#pedido-de-contexto); `provider_failure`) |
+| `FORGE-CONTEXT-REQUEST-LIMIT` | context | `context_request` além das rodadas do perfil, inclusive qualquer pedido em `economy` (`provider_failure`) |
+| `FORGE-CONTEXT-REQUEST-INVALID` | context | `context_request` com 0 itens ou mais de 64 (`provider_failure`) |
 
 ## Códigos dos adapters reais
 Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-location.md)) respondem com códigos próprios, que não são `FORGE-*` e não ficam em `codes.py`. Convenção: `ADAPTER-<X>` para a mecânica comum (`_shell.py`, igual nos dois), `<FORGE>-ADAPTER-<X>` para falhas originadas no adapter e `<FORGE>-<X>` (sem `ADAPTER`) só para erros nativos mapeados. Códigos `AF-*` do API Forge passam intactos, com `field` e `unlock`.

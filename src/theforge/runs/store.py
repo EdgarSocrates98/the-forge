@@ -19,6 +19,7 @@ from theforge.contracts import (
     to_dict,
 )
 from theforge.contracts.canonical import sha256_of
+from theforge.contracts.codes import Codes
 from theforge.contracts.integrity import validate_receipt
 from theforge.errors import PersistenceError
 from theforge.security.redact import redact
@@ -114,9 +115,11 @@ class RunStore:
         try:
             loaded = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:  # JSON/Unicode decode errors are ValueErrors
-            raise PersistenceError(f"cannot read {path}: {exc}") from exc
+            raise PersistenceError(f"cannot read {path}: {exc}",
+                                   code=Codes.PERSIST_READ) from exc
         if not isinstance(loaded, dict):
-            raise PersistenceError(f"cannot read {path}: expected a JSON object")
+            raise PersistenceError(f"cannot read {path}: expected a JSON object",
+                                   code=Codes.PERSIST_READ)
         return loaded
 
     def read_contract(self, run_id: str, name: str, cls: type[T]) -> T:
