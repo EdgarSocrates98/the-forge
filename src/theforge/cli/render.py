@@ -11,6 +11,39 @@ def _clean(value: object) -> str:
     return _UNSAFE.sub("?", str(value))
 
 
+clean = _clean
+
+_TRACEBACK = "Traceback (most recent call last):"
+
+
+def _detail(value: object) -> str:
+    """An error detail with any raw traceback (e.g. a provider's stderr tail) collapsed to
+    its final exception line: a raw traceback is never displayed (13.4)."""
+    text = str(value)
+    if _TRACEBACK in text:
+        head, _, tail = text.partition(_TRACEBACK)
+        lines = [line.strip() for line in tail.splitlines() if line.strip()]
+        text = f"{head}[traceback omitted] {lines[-1] if lines else ''}".rstrip()
+    return _clean(text)
+
+
+def code_suffix(code: object, family: object) -> str:
+    """The governed `[<code> · <family>]` suffix of an error (13.4)."""
+    return f"[{_clean(code)} · {_clean(family)}]"
+
+
+def diagnostic(data: dict[str, Any]) -> list[str]:
+    """Lines of a redacted ``Diagnostic`` (already redacted by ``build_diagnostic``)."""
+    lines = [f"stage={_clean(data['stage'])} code={_clean(data['code'])} "
+             f"family={_clean(data['family'] or 'provider code')}",
+             f"error: {_clean(data['error_type'])}: {_clean(data['message'])}"]
+    lines.extend(f"cause: {_clean(c['type'])}: {_clean(c['message'])}"
+                 for c in data.get("causes", []))
+    lines.extend(f"frame: {_clean(f['module'])}:{_clean(f['function'])}:{_clean(f['line'])}"
+                 for f in data.get("frames", []))
+    return lines
+
+
 def _short_hashes(value: object) -> str:
     """A hash (or a list of hashes, e.g. negotiation rounds) shortened to 12 chars each."""
     if isinstance(value, list):
@@ -97,7 +130,7 @@ def health(data: dict[str, Any]) -> str:
     for p in data["providers"]:
         line = f"{_clean(p['id']):<20} {_clean(p['status'])}"
         if p["error"]:
-            line += f"  {_clean(p['error']['code'])}: {_clean(p['error']['detail'])}"
+            line += f"  {_clean(p['error']['code'])}: {_detail(p['error']['detail'])}"
         lines.append(line)
     return "\n".join(lines) or "no providers"
 
@@ -125,7 +158,9 @@ def ask(data: dict[str, Any]) -> str:
                      for f in result["findings"])
     error = data["error"]
     if error:
-        lines.append(f"Error:      {_clean(error['code'])}: {_clean(error['detail'])}")
+        family = data.get("error_family")
+        suffix = f" {code_suffix(error['code'], family)}" if family else ""
+        lines.append(f"Error:      {_clean(error['code'])}: {_detail(error['detail'])}{suffix}")
         if error.get("unlock"):
             lines.append(f"Unlock:     {_clean(error['unlock'])}")
     lines.append(f"Explain:    theforge explain {run_id}")
@@ -340,7 +375,7 @@ def explain(data: dict[str, Any]) -> str:
     if error:
         unlock = f" (unlock: {_clean(error['unlock'])})" if error.get("unlock") else ""
         lines.append(f"Error:       {_clean(error.get('code', '?'))}: "
-                     f"{_clean(error.get('detail', '?'))}{unlock}")
+                     f"{_detail(error.get('detail', '?'))}{unlock}")
     if receipt:
         inputs = receipt.get("inputs") or {}
         hashes = " ".join(

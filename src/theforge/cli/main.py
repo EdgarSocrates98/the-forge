@@ -1,19 +1,43 @@
-"""Argument parsing and exit-code mapping for `theforge` / `forge`."""
+"""Argument parsing, governed error messages and exit-code mapping for `theforge` / `forge`.
+
+Every error line keeps its historical prefix (`theforge: error:`, `theforge: persistence
+error:`, `theforge: internal error:`, `theforge: interrupted`) and, except for the
+interruption, ends with `[<code> · <family>]` (13.4). A traceback is never printed: with
+`--debug` the redacted ``Diagnostic`` is printed as `theforge: debug:` lines instead (13.5,
+13.6). The exits are the per-outcome values of ``EXIT_BY_STATUS`` plus ``FIXED_EXITS`` (13.7).
+"""
 
 import argparse
 import contextlib
 import sys
 from collections.abc import Sequence
+from typing import Final
 
 from theforge import __version__
-from theforge.cli import commands
-from theforge.errors import PersistenceError, UsageError
+from theforge.cli import commands, render
+from theforge.contracts import to_dict
+from theforge.contracts.codes import Codes
+from theforge.diagnostics import build_diagnostic
+from theforge.errors import ForgeError, PersistenceError, ReplayRefused
+from theforge.security.redact import redact_text
+
+EXIT_FAILURE: Final = 1  # unhealthy doctor/health, broken pipe
+EXIT_USAGE: Final = 2
+EXIT_REFUSED: Final = 4  # a refused replay, same exit as a refused outcome
+EXIT_PERSISTENCE: Final = 5
+EXIT_INTEGRITY: Final = 6  # integrity divergence (explain, replay --mode verify|render)
+EXIT_INTERNAL: Final = 70
+EXIT_INTERRUPTED: Final = 130
+FIXED_EXITS: Final = frozenset({EXIT_FAILURE, EXIT_USAGE, EXIT_PERSISTENCE, EXIT_INTEGRITY,
+                                EXIT_INTERNAL, EXIT_INTERRUPTED})
 
 
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--root", default=".", help="workspace root (default: current dir)")
     common.add_argument("--json", action="store_true", help="machine-readable JSON output")
+    common.add_argument("--debug", action="store_true",
+                        help="on error, print the redacted diagnostic (never a traceback)")
 
     parser = argparse.ArgumentParser(
         prog="theforge", description="The Forge: one entry point, many specialists.")
@@ -74,22 +98,48 @@ def _tolerate_unencodable_output() -> None:
             stream.reconfigure(errors="replace")  # type: ignore[union-attr]
 
 
+def _stage(args: argparse.Namespace) -> str:
+    sub = next((getattr(args, name) for name in vars(args)
+                if name.endswith("_command") and isinstance(getattr(args, name), str)), None)
+    return f"cli:{args.command}" + (f":{sub}" if sub else "")
+
+
+def _text(exc: BaseException) -> str:
+    try:
+        return str(exc)
+    except Exception:  # noqa: BLE001 - a broken __str__ must not escape as a traceback
+        return "<unprintable message>"
+
+
+def _fail(args: argparse.Namespace, prefix: str, message: str, exc: BaseException,
+          code: str) -> None:
+    print(f"theforge: {prefix}: {redact_text(render.clean(message))} "
+          f"{render.code_suffix(code, commands.error_family(code))}", file=sys.stderr)
+    if getattr(args, "debug", False):
+        diagnostic = build_diagnostic(exc, stage=_stage(args), code=code)
+        commands.print_debug(to_dict(diagnostic))
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     _tolerate_unencodable_output()
     args = build_parser().parse_args(argv)
     try:
         return int(args.handler(args))
-    except UsageError as exc:
-        print(f"theforge: error: {exc}", file=sys.stderr)
-        return 2
     except PersistenceError as exc:
-        print(f"theforge: persistence error: {exc}", file=sys.stderr)
-        return 5
+        _fail(args, "persistence error", _text(exc), exc, exc.code)
+        return EXIT_PERSISTENCE
+    except ReplayRefused as exc:
+        _fail(args, "error", _text(exc), exc, exc.code)
+        return EXIT_REFUSED
+    except ForgeError as exc:
+        _fail(args, "error", _text(exc), exc, exc.code)
+        return EXIT_USAGE
     except KeyboardInterrupt:
         print("theforge: interrupted", file=sys.stderr)
-        return 130
+        return EXIT_INTERRUPTED
     except BrokenPipeError:
-        return 1
-    except Exception as exc:
-        print(f"theforge: internal error: {type(exc).__name__}: {exc}", file=sys.stderr)
-        return 70
+        return EXIT_FAILURE
+    except Exception as exc:  # noqa: BLE001 - never a traceback: governed message, exit 70
+        _fail(args, "internal error", f"{type(exc).__name__}: {_text(exc)}", exc,
+              Codes.INTERNAL)
+        return EXIT_INTERNAL

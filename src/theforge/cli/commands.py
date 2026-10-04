@@ -9,16 +9,31 @@ from typing import Any
 
 from theforge.cli import render
 from theforge.contracts import to_dict
+from theforge.contracts.codes import family_of
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
 from theforge.forger import AskRequest, Forger
 from theforge.registry import Registry, RegistryRecord, check_health
 from theforge.routing.signals import normalize_tokens
 from theforge.runs import ARTIFACTS, RunStore
+from theforge.security.redact import redact
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
 
-EXIT_BY_STATUS = {"ok": 0, "partial": 0, "ambiguous": 3, "no_route": 3, "refused": 4,
-                  "provider_failure": 4}
+EXIT_BY_STATUS = {"ok": 0, "partial": 0, "planned": 0, "ambiguous": 3, "no_route": 3,
+                  "refused": 4, "provider_failure": 4}
+
+PROVIDER_CODE = "provider code"  # family label of a native provider code (13.3)
+
+
+def error_family(code: str) -> str:
+    """Family of a taxonomy code, or ``PROVIDER_CODE`` for a native provider code."""
+    return family_of(code) or PROVIDER_CODE
+
+
+def print_debug(diagnostic: dict[str, Any]) -> None:
+    """The redacted diagnostic as ``theforge: debug:`` lines on stderr (13.5)."""
+    for line in render.diagnostic(diagnostic):
+        print(f"theforge: debug: {line}", file=sys.stderr)
 
 
 def _root(args: argparse.Namespace) -> Path:
@@ -185,16 +200,20 @@ def cmd_ask(args: argparse.Namespace) -> int:
     outcome = Forger(root, registry, RunStore(forge_dir)).ask(AskRequest(
         intent=args.intent, targets=args.targets or ["."], capability=args.capability,
         action=args.action, profile=args.profile, allow_unverified=args.allow_unverified,
-        approvals=frozenset(args.approvals or ()),
+        approvals=frozenset(args.approvals or ()), debug=args.debug,
     ))
     _warn(registry)
-    data = {
+    # Redacted for display: an internal error's text is raw in memory (decision reason too).
+    data: dict[str, Any] = redact({
         "run_id": outcome.run_id, "status": outcome.status,
         "decision": to_dict(outcome.decision),
         "result": to_dict(outcome.result) if outcome.result else None,
         "error": to_dict(outcome.error) if outcome.error else None,
-    }
+        "error_family": error_family(outcome.error.code) if outcome.error else None,
+    })
     _emit(args, data, render.ask)
+    if args.debug and outcome.diagnostic is not None:
+        print_debug(to_dict(outcome.diagnostic))
     return EXIT_BY_STATUS.get(outcome.status, 4)
 
 
