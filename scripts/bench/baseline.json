@@ -1,0 +1,69 @@
+{
+  "schema": "theforge-bench/v1",
+  "origin": {
+    "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "os": "Windows-10-10.0.26300-SP0",
+    "python": "CPython 3.11.15",
+    "date": "2026-10-04T10:54:15Z",
+    "forge_version": "0.1.0",
+    "git_head": "d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b",
+    "git_dirty": false
+  },
+  "results": {
+    "cli_startup": {
+      "median_ms": 1317.417,
+      "p90_ms": 1807.333,
+      "runs": 10
+    },
+    "registry_cold": {
+      "median_ms": 962.393,
+      "p90_ms": 1674.901,
+      "runs": 10
+    },
+    "registry_warm": {
+      "median_ms": 10.118,
+      "p90_ms": 16.142,
+      "runs": 10
+    },
+    "scan_1k": {
+      "median_ms": 898.238,
+      "p90_ms": 1578.824,
+      "runs": 10
+    },
+    "scan_10k": {
+      "median_ms": 12897.393,
+      "p90_ms": 22243.237,
+      "runs": 10
+    },
+    "routing_10k": {
+      "median_ms": 594.259,
+      "p90_ms": 668.43,
+      "runs": 10
+    },
+    "context_1k_cold": {
+      "median_ms": 478.228,
+      "p90_ms": 984.354,
+      "runs": 10
+    },
+    "context_1k_warm": {
+      "median_ms": 411.964,
+      "p90_ms": 493.704,
+      "runs": 10
+    },
+    "context_10k_cold": {
+      "median_ms": 3348.102,
+      "p90_ms": 4065.909,
+      "runs": 10
+    },
+    "context_10k_warm": {
+      "median_ms": 3817.534,
+      "p90_ms": 6696.873,
+      "runs": 10
+    },
+    "persist_run": {
+      "median_ms": 14.741,
+      "p90_ms": 33.107,
+      "runs": 10
+    }
+  }
+}
