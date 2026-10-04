@@ -85,14 +85,25 @@ def _whole_file_sha256(resolved: Path) -> str | None:
     return digest.hexdigest()
 
 
+def current_file_sha256(root: Path, path: str) -> str | None:
+    """Uncached whole-file sha256 of ``root/path``; None if missing, unreadable or outside.
+
+    Shared with the forge verification of provider artifacts (``forger.verification``).
+    """
+    resolved = resolve_inside(root, root / path)
+    if resolved is None or not resolved.is_file():
+        return None
+    return _whole_file_sha256(resolved)
+
+
 def _current_sha256(root: Path, item: ContextFile) -> str | None:
+    if item.lines is None:
+        return current_file_sha256(root, item.path)
     resolved = resolve_inside(root, root / item.path)
     if resolved is None or not resolved.is_file():
         return None
-    if item.lines is not None:
-        got = hash_lines(resolved, item.lines)
-        return got[0] if got is not None else None
-    return _whole_file_sha256(resolved)
+    got = hash_lines(resolved, item.lines)
+    return got[0] if got is not None else None
 
 
 def reverify(root: Path, items: Sequence[ContextFile]) -> frozenset[str]:
