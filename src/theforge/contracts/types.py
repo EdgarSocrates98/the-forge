@@ -20,6 +20,15 @@ Severity = Literal["info", "low", "medium", "high", "critical"]
 HealthStatus = Literal["ok", "degraded", "unavailable"]
 Tier = Literal["metadata", "reference", "excerpt", "requested"]
 VerificationLevel = Literal["minimal", "conditional", "strong"]
+# Tier of a single ContextPack item ("metadata" is the pack-level workspace summary).
+ItemTier = Literal["reference", "excerpt", "requested"]
+# How a provider revalidates the content it read against the ContextPack hashes.
+RevalidationStrategy = Literal["hash", "core", "none"]
+ExclusionReason = Literal["budget", "max_files", "tier_not_allowed", "secret", "outside_root",
+                          "unreadable", "missing", "symlinked_dir", "max_files_reached"]
+
+# Dependency manifests read at the workspace root: single source for routing and context.
+DEPENDENCY_MANIFESTS: Final = ("pyproject.toml", "requirements*.txt", "package.json")
 
 SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 
@@ -81,6 +90,12 @@ TRUST_RANK: dict[str, int] = {
 class Producer:
     id: str
     version: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Metric:
+    value: float | None = None
+    kind: MetricKind = "unknown"
 
 
 @dataclass(frozen=True, kw_only=True)

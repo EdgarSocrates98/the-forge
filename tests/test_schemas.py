@@ -173,3 +173,23 @@ def test_capability_alias_and_deprecation_fields_published_as_optional() -> None
     validator.validate(data)
     data["capabilities"][0]["deprecated"] = "yes"
     assert len(list(validator.iter_errors(data))) == 1
+
+
+def test_context_v2_instances_validate_against_published_schemas() -> None:
+    v2_pack = {
+        "producer": {"id": "p", "version": "1"}, "created_at": "t", "status": "complete",
+        "task_id": "t", "provider_id": "p", "root": ".", "budget_bytes": 10, "used_bytes": 3,
+        "files": [{"path": "a.py", "sha256": "a" * 64, "bytes": 3, "tier": "excerpt",
+                   "lines": {"start": 1, "end": 2}, "signals": ["intent_path"]}],
+        "workspace": {"files_scanned": 1, "unmatched_files": 0},
+        "tier_bytes": {"metadata": 0, "excerpt": 3}, "round": 0,
+    }
+    pack = from_dict(ContextPack, v2_pack, strict=True)
+    Draft202012Validator(json_schema(ContextPack)).validate(to_dict(pack))
+    manifest = to_dict(MANIFEST)
+    manifest["context_revalidation"] = "hash"
+    manifest["capabilities"][0]["context"] = {"excerpts": True, "requests": False}
+    Draft202012Validator(json_schema(ForgeManifest)).validate(
+        to_dict(from_dict(ForgeManifest, manifest, strict=True)))
+    bad = {**manifest, "context_revalidation": "sometimes"}
+    assert list(Draft202012Validator(json_schema(ForgeManifest)).iter_errors(bad))

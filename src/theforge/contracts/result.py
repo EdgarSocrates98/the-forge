@@ -7,11 +7,14 @@ from theforge.contracts.base import ContractError
 from theforge.contracts.types import (
     SHA256_RE,
     Epistemic,
-    MetricKind,
+    Metric,
     Producer,
     Severity,
     check_sha256,
 )
+
+__all__ = ["RESULT_SCHEMA", "Artifact", "Evidence", "ExecutionResult", "Finding", "Location",
+           "Metric", "Metrics"]
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
 
@@ -53,12 +56,6 @@ class Artifact:
 
     def __post_init__(self) -> None:
         check_sha256(self.sha256, field="sha256")
-
-
-@dataclass(frozen=True, kw_only=True)
-class Metric:
-    value: float | None = None
-    kind: MetricKind = "unknown"
 
 
 @dataclass(frozen=True, kw_only=True)

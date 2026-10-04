@@ -1,3 +1,5 @@
+from typing import get_args
+
 import pytest
 
 from theforge.contracts import (
@@ -16,6 +18,7 @@ from theforge.contracts import (
     RoutingDecision,
     TaskSpec,
     from_dict,
+    to_dict,
 )
 from theforge.contracts.risk import OPERATION_CLASS_LIMITATION
 from theforge.contracts.types import SHA256_RE, check_sha256
@@ -332,3 +335,132 @@ def test_risk_assessment_direct_construction_enforces_invariants() -> None:
         RiskAssessment(**{**risk.__dict__, "schema": "other/v1"})
     with pytest.raises(ContractError, match="source"):
         RiskAssessment(**{**risk.__dict__, "source": "sandbox"})
+
+
+# --- context-intelligence-v2: additive context and manifest fields (task 1.2) ---------------
+
+H = "a" * 64
+V1_CONTEXT_PACK: dict[str, object] = {
+    "schema": "theforge/ContextPack/v1", "producer": P, "created_at": "t",
+    "status": "complete", "task_id": "t", "provider_id": "p", "root": ".",
+    "files": [{"path": "src/app.py", "sha256": H, "bytes": 3, "reason": "glob:*.py"}],
+    "excluded": [{"path": ".env", "reason": "budget"}],
+    "budget_bytes": 10, "used_bytes": 3, "truncated": False, "limitations": [], "unknowns": [],
+}
+
+
+def test_metric_moved_to_shared_types_keeps_old_import() -> None:
+    from theforge.contracts import Metric as Exported
+    from theforge.contracts.result import Metric as Legacy
+    from theforge.contracts.types import Metric
+
+    assert Metric is Legacy is Exported
+    assert Metric() == Metric(value=None, kind="unknown")
+
+
+def test_context_literal_types_match_design() -> None:
+    from theforge.contracts import types
+
+    assert get_args(types.Tier) == ("metadata", "reference", "excerpt", "requested")
+    assert get_args(types.ItemTier) == ("reference", "excerpt", "requested")
+    assert get_args(types.VerificationLevel) == ("minimal", "conditional", "strong")
+    assert get_args(types.RevalidationStrategy) == ("hash", "core", "none")
+    assert get_args(types.ExclusionReason) == (
+        "budget", "max_files", "tier_not_allowed", "secret", "outside_root",
+        "unreadable", "missing", "symlinked_dir", "max_files_reached")
+    assert types.DEPENDENCY_MANIFESTS == ("pyproject.toml", "requirements*.txt", "package.json")
+
+
+def test_routing_uses_the_shared_dependency_manifest_list() -> None:
+    from theforge.contracts import types
+    from theforge.routing import signals
+
+    assert signals.DEPENDENCY_MANIFESTS is types.DEPENDENCY_MANIFESTS
+
+
+def test_v1_context_pack_rereads_strictly_with_v1_defaults() -> None:
+    from theforge.contracts.types import Metric
+
+    pack = from_dict(ContextPack, V1_CONTEXT_PACK, strict=True)
+    item = pack.files[0]
+    assert (item.tier, item.lines, item.signals) == ("reference", None, [])
+    assert pack.excluded[0].signals == []
+    assert pack.workspace is None and pack.tier_bytes == {} and pack.round == 0
+    assert pack.tokens == Metric()
+
+
+def test_v2_context_pack_round_trips_strictly() -> None:
+    from theforge.contracts.context import GitSummary, LineRange, WorkspaceSummary
+
+    data = {
+        **V1_CONTEXT_PACK,
+        "files": [
+            {"path": "src/app.py", "sha256": H, "bytes": 3, "tier": "reference",
+             "signals": ["capability_glob"]},
+            {"path": "src/big.py", "sha256": H, "bytes": 2, "tier": "excerpt",
+             "lines": {"start": 1, "end": 2}, "signals": ["intent_range"]},
+            {"path": "src/req.py", "sha256": H, "bytes": 0, "tier": "requested"},
+        ],
+        "excluded": [{"path": "x.py", "reason": "max_files", "signals": ["git_changed"]}],
+        "workspace": {"files_scanned": 4, "unmatched_files": 1,
+                      "dependency_files": ["pyproject.toml"],
+                      "git": {"available": True, "branch": "main", "head": "abc",
+                              "dirty": False, "changed_files": 0, "state": ["merge"]}},
+        "tier_bytes": {"metadata": 0, "reference": 3, "excerpt": 2},
+        "tokens": {"value": None, "kind": "unknown"},
+        "round": 1,
+    }
+    pack = from_dict(ContextPack, data, strict=True)
+    assert pack.files[1].lines == LineRange(start=1, end=2)
+    assert isinstance(pack.workspace, WorkspaceSummary)
+    assert isinstance(pack.workspace.git, GitSummary) and pack.workspace.git.state == ["merge"]
+    assert from_dict(ContextPack, to_dict(pack), strict=True) == pack
+
+
+@pytest.mark.parametrize(("start", "end"), [(0, 1), (-1, 3), (5, 4)])
+def test_invalid_line_range_rejected(start: int, end: int) -> None:
+    from theforge.contracts.context import LineRange
+
+    with pytest.raises(ContractError, match="line range"):
+        LineRange(start=start, end=end)
+    item = {"path": "a.py", "sha256": H, "bytes": 1, "tier": "excerpt",
+            "lines": {"start": start, "end": end}}
+    with pytest.raises(ContractError, match="line range"):
+        from_dict(ContextFile, item)
+
+
+def test_excerpt_requires_lines_and_reference_forbids_them() -> None:
+    from theforge.contracts.context import LineRange
+
+    with pytest.raises(ContractError, match="excerpt.*requires lines"):
+        ContextFile(path="a.py", sha256=H, bytes=1, tier="excerpt")
+    with pytest.raises(ContractError, match="reference.*must not have lines"):
+        ContextFile(path="a.py", sha256=H, bytes=1, tier="reference",
+                    lines=LineRange(start=1, end=1))
+    ContextFile(path="a.py", sha256=H, bytes=1, tier="requested")
+    ContextFile(path="a.py", sha256=H, bytes=1, tier="requested", lines=LineRange(start=2, end=2))
+    with pytest.raises(ContractError, match="expected one of"):
+        from_dict(ContextFile, {"path": "a.py", "sha256": H, "bytes": 1, "tier": "metadata"})
+
+
+def test_v1_manifest_rereads_strictly_with_context_defaults() -> None:
+    from theforge.contracts.manifest import CapabilityContext
+
+    m = from_dict(ForgeManifest, manifest_dict(), strict=True)
+    assert m.context_revalidation is None
+    assert m.capabilities[0].context == CapabilityContext()
+    assert (m.capabilities[0].context.excerpts, m.capabilities[0].context.requests) == (
+        False, False)
+
+
+def test_manifest_declares_revalidation_and_capability_context() -> None:
+    cap = {**CAP, "context": {"excerpts": True, "requests": True}}
+    m = from_dict(ForgeManifest, manifest_dict(capabilities=[cap], context_revalidation="hash"),
+                  strict=True)
+    assert m.context_revalidation == "hash"
+    assert m.capabilities[0].context.excerpts and m.capabilities[0].context.requests
+    for strategy in ("core", "none"):
+        assert from_dict(ForgeManifest, manifest_dict(context_revalidation=strategy),
+                         strict=True).context_revalidation == strategy
+    with pytest.raises(ContractError, match="expected one of"):
+        from_dict(ForgeManifest, manifest_dict(context_revalidation="sometimes"))
