@@ -1,0 +1,4 @@
+{
+  "error": "Caminho nao encontrado para analise: stage/jobs/missing_job.py\n  Aponte para o diretorio da biblioteca ou para um arquivo .py:\n    sparkforge analyze pyspark --path <dir-ou-arquivo> --out .sparkforge/facts.json",
+  "exit_code": 2
+}

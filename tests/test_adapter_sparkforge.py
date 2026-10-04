@@ -1,15 +1,19 @@
-"""Spark Forge adapter (real-provider-integration 4.1, 4.2): manifest derived from the recorded
+"""Spark Forge adapter (real-provider-integration 4.1-4.3): manifest derived from the recorded
 native tool surface, the capability table, describe and health with and without ``--replay``,
-the replay layout and the snapshot re-recording.
+the replay layout, the snapshot re-recording, and the translation of real recorded execute
+outputs and native errors (plus the execute recording helper).
 
 The dev interpreter does not have the Spark Forge installed: describe there must be refused
 with an actionable reason, and every manifest check runs in replay (``environment.json`` stands
 in for the import check, the packaged ``native_catalog.json`` is the tool surface).
 """
 
+import hashlib
 import importlib.metadata
 import importlib.util
 import json
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,16 +22,25 @@ from typing import Any
 
 import pytest
 from theforge_sparkforge import SUPPORTED_SPECIALIST, backend, catalog, record
-from theforge_sparkforge._shell import StagedInput, select_inputs
+from theforge_sparkforge._shell import (
+    Reply,
+    ResultDraft,
+    StagedInput,
+    finalize,
+    select_inputs,
+    stage_context,
+)
 
 from theforge.contracts import (
     PROTOCOL_V1,
+    ExecutionResult,
     ForgeManifest,
     HealthReport,
+    Producer,
     Response,
     from_dict,
 )
-from theforge.contracts.integrity import validate_manifest_limits
+from theforge.contracts.integrity import validate_manifest_limits, validate_result
 from theforge.contracts.taxonomy import validate_taxonomy
 from theforge.contracts.types import is_catch_all_glob
 
@@ -668,3 +681,454 @@ def test_broken_sparkforge_version_falls_back_to_metadata(
     assert version.ok is (expected is not None)
     if expected is None:
         assert report.status == "degraded" and "no sparkforge version" in version.detail
+
+
+# --- execute translation over real recordings (4.3) ---------------------------------------
+
+WORKSPACE = REPO / "tests" / "fixtures" / "workspaces" / "spark"
+CAPABILITY, ACTION = "pyspark.static-analysis", "pyspark"
+ANALYZE_TOOL, JUDGE_TOOL = "sparkforge_analyze_pyspark", "sparkforge_judge"
+OUTPUT_RECORDING = DEFAULT / f"{CAPABILITY}.{ACTION}.json"
+ERROR_SCENARIO = SCENARIOS / "native-error"
+ERROR_RECORDING = ERROR_SCENARIO / f"{CAPABILITY}.{ACTION}.error.json"
+PRODUCER = {"id": "spark-forge", "version": "0.1.0"}
+# Machine-specific fragments a portable recording never contains: a drive path (raw or JSON-
+# escaped; a URL scheme is followed by a second slash), a user directory, a temp directory.
+MACHINE_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:(?:\\|/(?!/))|/Users/|/home/|AppData|/tmp/",
+                          re.IGNORECASE)
+
+
+def _recorded() -> dict[str, Any]:
+    data: dict[str, Any] = json.loads(OUTPUT_RECORDING.read_text(encoding="utf-8"))
+    return data
+
+
+def _context(root: Path, paths: list[str]) -> dict[str, Any]:
+    files = []
+    for rel in paths:
+        data = (root / rel).read_bytes()
+        files.append({"path": rel, "sha256": hashlib.sha256(data).hexdigest(),
+                      "bytes": len(data)})
+    return {"context": {"root": str(root.resolve()), "files": files}}
+
+
+def _staged(tmp_path: Path) -> StagedInput:
+    payload = _context(WORKSPACE, ["jobs/orders_job.py", "requirements.txt"])
+    return stage_context(payload, tmp_path)
+
+
+def _translate(recorded: dict[str, Any], stage: StagedInput) -> Any:
+    from theforge_sparkforge import translate
+
+    return translate.translate_recording(recorded, stage)
+
+
+def _validated(draft: Any, cwd: Path) -> ExecutionResult:
+    assert isinstance(draft, ResultDraft), draft
+    reply = finalize(draft, cwd)
+    assert reply.status in ("ok", "partial"), reply.error
+    result = from_dict(ExecutionResult, reply.payload, "$.payload")
+    validate_result(result, expected=Producer(**PRODUCER))
+    return result
+
+
+def _items(recorded: dict[str, Any]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = recorded["output"]["items"]
+    return items
+
+
+def test_default_recording_holds_tool_output_and_chained_judge() -> None:
+    recorded = _recorded()
+    assert set(recorded) == {"tool", "arguments", "output", "judge"}
+    assert recorded["tool"] == ANALYZE_TOOL
+    assert recorded["judge"]["tool"] == JUDGE_TOOL
+    assert _items(recorded) and recorded["judge"]["output"]["items"]
+    assert recorded["output"]["next_cursor"] is None
+    assert recorded["judge"]["output"]["next_cursor"] is None
+    # File arguments are relative to the staged workspace, never machine paths.
+    assert recorded["arguments"]["path"] == "jobs"
+
+
+@pytest.mark.parametrize("path", [OUTPUT_RECORDING, ERROR_RECORDING])
+def test_execute_recordings_are_canonical_lf_and_portable(path: Path) -> None:
+    text = path.read_bytes().decode("utf-8")
+    assert "\r" not in text
+    assert record.render(json.loads(text)) == text
+    assert MACHINE_PATH.search(text) is None, (path.name, MACHINE_PATH.search(text))
+
+
+def test_recorded_output_translates_to_a_result_that_passes_core_integrity(
+        tmp_path: Path) -> None:
+    recorded = _recorded()
+    result = _validated(_translate(recorded, _staged(tmp_path)), tmp_path)
+    assert result.status == "ok"
+    assert [e.id for e in result.evidence] == [item["id"] for item in _items(recorded)]
+    assert all(e.epistemic == "observed" for e in result.evidence)
+    assert {e.subject for e in result.evidence} == {item["kind"] for item in _items(recorded)}
+    assert all(len(e.claim) <= 500 for e in result.evidence)
+    located = [e.location for e in result.evidence if e.location is not None]
+    assert located and {loc.path for loc in located} == {"jobs/orders_job.py"}
+    judged = recorded["judge"]["output"]["items"]
+    assert [f.id for f in result.findings] == [f"{item['rule_id']}#1" for item in judged]
+    assert [f.title for f in result.findings] == [f"{item['rule_id']}: {item['title']}"
+                                                  for item in judged]
+    severity = {"P0": "critical", "P1": "high", "P2": "medium", "P3": "low", "P4": "info"}
+    assert [f.severity for f in result.findings] == [severity[item["severity"]]
+                                                     for item in judged]
+    assert [f.evidence_ids for f in result.findings] == [item["evidence"] for item in judged]
+
+
+def test_every_evidence_hash_is_null_or_the_verified_sha256(tmp_path: Path) -> None:
+    stage = _staged(tmp_path)
+    result = _validated(_translate(_recorded(), stage), tmp_path)
+    for evidence in result.evidence:
+        path = evidence.location.path if evidence.location is not None else None
+        assert evidence.hash is None or evidence.hash == stage.files[str(path)]
+
+
+def test_native_hash_equal_to_the_staged_file_is_kept(tmp_path: Path) -> None:
+    recorded = _recorded()
+    native = next(iter(recorded["output"]["provenance"].values()))["artifact_sha256"]
+    stage = StagedInput(root=tmp_path, files={"jobs/orders_job.py": native})
+    result = _validated(_translate(recorded, stage), tmp_path)
+    assert result.evidence and all(e.hash == native for e in result.evidence)
+
+
+def test_divergent_artifact_sha256_becomes_null(tmp_path: Path) -> None:
+    recorded = _recorded()
+    verified = next(iter(recorded["output"]["provenance"].values()))["artifact_sha256"]
+    for provenance in recorded["output"]["provenance"].values():
+        provenance["artifact_sha256"] = "0" * 64
+    stage = StagedInput(root=tmp_path, files={"jobs/orders_job.py": verified})
+    result = _validated(_translate(recorded, stage), tmp_path)
+    assert result.evidence and all(e.hash is None for e in result.evidence)
+
+
+def test_file_not_staged_has_null_hash(tmp_path: Path) -> None:
+    result = _validated(_translate(_recorded(), StagedInput(root=tmp_path)), tmp_path)
+    assert result.evidence and all(e.hash is None for e in result.evidence)
+
+
+def test_full_and_summary_fact_shapes_translate_alike(tmp_path: Path) -> None:
+    recorded = _recorded()
+    provenance = recorded["output"]["provenance"]
+    native = next(iter(provenance.values()))["artifact_sha256"]
+    stage = StagedInput(root=tmp_path, files={"jobs/orders_job.py": native})
+    expected = _validated(_translate(recorded, stage), tmp_path).evidence
+    full = json.loads(json.dumps(recorded))
+    for item in _items(full):
+        item["provenance"] = provenance[item.pop("provenance_ref")]
+    del full["output"]["provenance"]
+    summary = json.loads(json.dumps(recorded))
+    for item in _items(summary):
+        subject = item.pop("subject")
+        item["at"] = f"{subject['file']}:{subject['line']}"
+        if subject.get("symbol"):
+            item["symbol"] = subject["symbol"]
+    for variant in (full, summary):
+        evidence = _validated(_translate(variant, stage), tmp_path).evidence
+        assert [(e.id, e.location, e.hash, e.claim) for e in evidence] == [
+            (e.id, e.location, e.hash, e.claim) for e in expected]
+
+
+def test_location_is_remapped_to_the_workspace(tmp_path: Path) -> None:
+    from theforge_sparkforge import translate
+
+    stage = StagedInput(root=tmp_path, files={"jobs/orders_job.py": "a" * 64})
+    assert translate.workspace_path("orders_job.py", "jobs", stage) == "jobs/orders_job.py"
+    assert translate.workspace_path("jobs/orders_job.py", "", stage) == "jobs/orders_job.py"
+    assert translate.workspace_path("../secret.py", "", stage) is None
+    assert translate.workspace_path("", "", stage) is None
+    inside = (tmp_path / "jobs" / "orders_job.py").resolve()
+    assert translate.workspace_path(str(inside), "", stage) == "jobs/orders_job.py"
+    assert translate.workspace_path(str(tmp_path.parent.resolve() / "x.py"), "", stage) is None
+
+
+def test_unmappable_location_has_no_location_nor_hash(tmp_path: Path) -> None:
+    recorded = _recorded()
+    _items(recorded)[0]["subject"]["file"] = "../../outside.py"
+    result = _validated(_translate(recorded, _staged(tmp_path)), tmp_path)
+    first = result.evidence[0]
+    assert first.location is None and first.hash is None
+    assert any(first.id in note and "outside the workspace" in note
+               for note in result.limitations)
+
+
+@pytest.mark.parametrize("which", ["output", "judge"])
+def test_remaining_pagination_becomes_a_partial_limitation(tmp_path: Path, which: str) -> None:
+    recorded = _recorded()
+    page = recorded["output"] if which == "output" else recorded["judge"]["output"]
+    tool = ANALYZE_TOOL if which == "output" else JUDGE_TOOL
+    total = page["total_count"]
+    page["next_cursor"] = str(page["returned_count"])
+    page["total_count"] = total + 7
+    result = _validated(_translate(recorded, _staged(tmp_path)), tmp_path)
+    assert result.status == "partial"
+    assert (f"paginated: {tool} returned {page['returned_count']} of {total + 7} items"
+            in result.limitations)
+
+
+def test_reference_to_an_absent_fact_is_dropped_with_a_limitation(tmp_path: Path) -> None:
+    recorded = _recorded()
+    first = recorded["judge"]["output"]["items"][0]
+    first["evidence"] = [*first["evidence"], "f_absent"]
+    result = _validated(_translate(recorded, _staged(tmp_path)), tmp_path)
+    assert "f_absent" not in result.findings[0].evidence_ids
+    assert any("f_absent" in note for note in result.limitations)
+
+
+def test_repeated_rule_ids_are_numbered_in_native_order(tmp_path: Path) -> None:
+    recorded = _recorded()
+    judged = recorded["judge"]["output"]["items"]
+    judged.append(json.loads(json.dumps(judged[0])))
+    result = _validated(_translate(recorded, _staged(tmp_path)), tmp_path)
+    rule = judged[0]["rule_id"]
+    assert [f.id for f in result.findings if f.id.startswith(rule)] == [f"{rule}#1",
+                                                                       f"{rule}#2"]
+
+
+@pytest.mark.parametrize(("native", "expected"), [("P0", "critical"), ("P1", "high"),
+                                                  ("P2", "medium"), ("P3", "low"),
+                                                  ("P4", "info")])
+def test_native_severity_map(native: str, expected: str) -> None:
+    from theforge_sparkforge import translate
+
+    assert translate.SEVERITY[native] == expected
+
+
+def test_stage_limitations_are_carried_into_the_result(tmp_path: Path) -> None:
+    stage = StagedInput(root=tmp_path,
+                        limitations=("context file 'x.py' skipped: file not found",))
+    result = _validated(_translate(_recorded(), stage), tmp_path)
+    assert stage.limitations[0] in result.limitations
+
+
+def _refusal(reply: Any) -> Response:
+    assert isinstance(reply, Reply), reply
+    return from_dict(Response, {"request_id": "r", "op": "execute", "producer": PRODUCER,
+                                "status": reply.status, "error": reply.error,
+                                "limitations": reply.limitations})
+
+
+def test_recorded_native_error_becomes_a_sparkforge_refusal() -> None:
+    from theforge_sparkforge import translate
+
+    native = json.loads(ERROR_RECORDING.read_text(encoding="utf-8"))
+    assert set(native) >= {"error", "exit_code"}
+    response = _refusal(translate.spark_error(native))
+    assert response.status == "refused" and response.error is not None
+    assert response.error.code.startswith("SPARKFORGE-")
+    assert response.error.code == "SPARKFORGE-TOOL-ERROR"
+    assert response.error.detail == native["error"]
+
+
+def test_native_error_recording_is_replayed_through_translation(tmp_path: Path) -> None:
+    from theforge_sparkforge import translate
+
+    native = json.loads(ERROR_RECORDING.read_text(encoding="utf-8"))
+    response = _refusal(translate.translate_spark(native, None, StagedInput(root=tmp_path),
+                                                  tool=ANALYZE_TOOL))
+    assert response.error is not None and response.error.code == "SPARKFORGE-TOOL-ERROR"
+
+
+def test_typed_native_error_keeps_its_code_and_unlock() -> None:
+    from theforge_sparkforge import translate
+
+    native = {"error": "chamada recusada pela cadeia de autorizacao: approval",
+              "exit_code": 2, "error_code": "UNAUTHORIZED", "required_approval": "write"}
+    response = _refusal(translate.spark_error(native))
+    assert response.status == "refused" and response.error is not None
+    assert response.error.code == "SPARKFORGE-UNAUTHORIZED"
+    assert response.error.detail == native["error"]
+    assert response.error.unlock is not None and "write" in response.error.unlock
+
+
+def test_untyped_native_failure_outside_the_refusal_exit_is_an_error() -> None:
+    from theforge_sparkforge import translate
+
+    response = _refusal(translate.spark_error({"error": "boom", "exit_code": 1}))
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "SPARKFORGE-TOOL-ERROR"
+
+
+def test_judge_error_is_a_sparkforge_refusal(tmp_path: Path) -> None:
+    from theforge_sparkforge import translate
+
+    recorded = _recorded()
+    judged = {"error": "facts[0] esta sem o campo obrigatorio 'subject'.", "exit_code": 2}
+    response = _refusal(translate.translate_spark(recorded["output"], judged,
+                                                  StagedInput(root=tmp_path),
+                                                  tool=ANALYZE_TOOL))
+    assert response.error is not None and response.error.code == "SPARKFORGE-TOOL-ERROR"
+    assert response.error.detail == judged["error"]
+
+
+def test_unknown_tool_is_a_structured_refusal() -> None:
+    from theforge_sparkforge import translate
+
+    response = _refusal(translate.unknown_tool("sparkforge_nope"))
+    assert response.status == "refused" and response.error is not None
+    assert response.error.code == "SPARKFORGE-TOOL-UNKNOWN"
+    assert "sparkforge_nope" in response.error.detail
+
+
+@pytest.mark.parametrize("native", [[], {"items": "x"}, {"total_count": 1}])
+def test_malformed_native_output_is_a_structured_adapter_error(tmp_path: Path,
+                                                               native: Any) -> None:
+    from theforge_sparkforge import translate
+
+    response = _refusal(translate.translate_spark(native, None, StagedInput(root=tmp_path),
+                                                  tool=ANALYZE_TOOL))
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "SPARKFORGE-ADAPTER-NATIVE-INVALID"
+
+
+def test_native_error_scenario_is_a_complete_replay_directory() -> None:
+    assert (ERROR_SCENARIO / backend.ENVIRONMENT_FILE).is_file()
+    assert (ERROR_SCENARIO / backend.HEALTH_FILE).is_file()
+    found = backend.recording(ERROR_SCENARIO, CAPABILITY, ACTION)
+    assert found == backend.Recording(kind="error", path=ERROR_RECORDING)
+
+
+# --- execute recording helper (4.3, reused by 4.4) ----------------------------------------
+
+Calls = list[tuple[str, dict[str, Any], Path]]
+
+
+def _fake_call(responses: dict[str, Any], calls: Calls) -> Any:
+    def call(name: str, arguments: dict[str, Any]) -> Any:
+        cwd = Path.cwd()
+        calls.append((name, dict(arguments), cwd))
+        assert (cwd / "stage" / "jobs" / "orders_job.py").is_file()
+        response = responses[name]
+        return response(cwd) if callable(response) else response
+    return call
+
+
+_ACCEPTED = frozenset({"path", "kind", "limit", "cursor", "detail_level"})
+
+
+def test_recording_helper_records_the_tool_output_and_the_chained_judge() -> None:
+    from theforge_sparkforge import record_execute
+
+    output = {"items": [{"id": "f_1", "kind": "pyspark.udf"}], "next_cursor": None}
+    judged = {"items": [], "next_cursor": None}
+    calls: Calls = []
+    before = Path.cwd()
+    name, data = record_execute.record_action(
+        _fake_call({ANALYZE_TOOL: output, JUDGE_TOOL: judged}, calls),
+        workspace=WORKSPACE, capability=CAPABILITY, action=ACTION,
+        arguments={"path": "jobs"}, accepted=_ACCEPTED)
+    assert Path.cwd() == before
+    assert name == f"{CAPABILITY}.{ACTION}.json"
+    assert data == {"tool": ANALYZE_TOOL,
+                    "arguments": {"path": "jobs", "detail_level": "normal", "limit": 200},
+                    "output": output,
+                    "judge": {"tool": JUDGE_TOOL, "arguments": {"limit": 200},
+                              "output": judged}}
+    (tool, args, cwd), (judge, judge_args, _) = calls
+    assert tool == ANALYZE_TOOL and args["path"] == "stage/jobs"
+    assert judge == JUDGE_TOOL and judge_args == {"facts": output["items"], "limit": 200}
+    assert not cwd.exists()  # the temporary copy is gone
+    assert not (WORKSPACE / "stage").exists()
+
+
+def test_recording_helper_writes_a_native_error_as_the_error_recording() -> None:
+    from theforge_sparkforge import record_execute
+
+    error = {"error": "Caminho nao encontrado para analise: stage/jobs/missing_job.py",
+             "exit_code": 2}
+    calls: Calls = []
+    name, data = record_execute.record_action(
+        _fake_call({ANALYZE_TOOL: error}, calls), workspace=WORKSPACE,
+        capability=CAPABILITY, action=ACTION, arguments={"path": "jobs/missing_job.py"},
+        accepted=_ACCEPTED)
+    assert name == f"{CAPABILITY}.{ACTION}.error.json"
+    assert data == error
+    assert [call[0] for call in calls] == [ANALYZE_TOOL]  # no judge without facts
+
+
+def test_recording_helper_refuses_a_recording_with_machine_paths() -> None:
+    from theforge_sparkforge import record_execute
+
+    def leaky(cwd: Path) -> dict[str, Any]:
+        return {"items": [], "next_cursor": None, "root": str(cwd)}
+
+    with pytest.raises(record_execute.RecordingError, match="machine path"):
+        record_execute.record_action(
+            _fake_call({ANALYZE_TOOL: leaky}, []), workspace=WORKSPACE,
+            capability=CAPABILITY, action=ACTION, arguments={"path": "jobs"},
+            accepted=_ACCEPTED)
+
+
+def test_recording_helper_rejects_an_undeclared_action_or_escaping_argument() -> None:
+    from theforge_sparkforge import record_execute
+
+    call = _fake_call({}, [])
+    with pytest.raises(record_execute.RecordingError, match="action"):
+        record_execute.record_action(call, workspace=WORKSPACE, capability=CAPABILITY,
+                                     action="nope", arguments={}, accepted=_ACCEPTED)
+    with pytest.raises(record_execute.RecordingError, match="workspace-relative"):
+        record_execute.record_action(call, workspace=WORKSPACE, capability=CAPABILITY,
+                                     action=ACTION, arguments={"path": "../x"},
+                                     accepted=_ACCEPTED)
+
+
+def test_recording_helper_without_sparkforge_fails_and_writes_nothing(tmp_path: Path) -> None:
+    if importlib.util.find_spec("sparkforge") is not None:
+        pytest.skip("the Spark Forge is importable in this interpreter")
+    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record_execute",
+                          "--workspace", str(WORKSPACE), "--capability", CAPABILITY,
+                          "--action", ACTION, "--arg", "path=jobs", "--out", str(tmp_path)],
+                         capture_output=True, timeout=60, cwd=tmp_path)
+    assert out.returncode != 0
+    assert b"sparkforge is not importable" in out.stderr
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_recording_helper_rejects_a_missing_file_or_overlapping_workspace(
+        tmp_path: Path) -> None:
+    from theforge_sparkforge import record_execute
+
+    check = record_execute.check_workspace
+    with pytest.raises(record_execute.RecordingError, match="does not exist"):
+        check(tmp_path / "missing")
+    (tmp_path / "file.py").write_text("x = 1\n", encoding="utf-8")
+    with pytest.raises(record_execute.RecordingError, match="existing directory"):
+        check(tmp_path / "file.py")
+    workspace = tmp_path / "ws"
+    (workspace / "out").mkdir(parents=True)
+    for out in (workspace, workspace / "out", tmp_path):
+        with pytest.raises(record_execute.RecordingError, match="overlap"):
+            check(workspace, out)
+    assert check(workspace, tmp_path / "elsewhere") == workspace.resolve()
+    with pytest.raises(record_execute.RecordingError, match="does not exist"):
+        record_execute.record_action(_fake_call({}, []), workspace=tmp_path / "missing",
+                                     capability=CAPABILITY, action=ACTION,
+                                     arguments={"path": "jobs"}, accepted=_ACCEPTED)
+
+
+def test_recording_helper_never_copies_nor_follows_links(tmp_path: Path) -> None:
+    from theforge_sparkforge import record_execute
+
+    workspace = tmp_path / "ws"
+    shutil.copytree(WORKSPACE, workspace)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.py").write_text("token = 1\n", encoding="utf-8")
+    try:
+        (workspace / "linked").symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks are not available to this user")
+    seen: list[bool] = []
+
+    def call(name: str, arguments: dict[str, Any]) -> Any:
+        seen.append((Path.cwd() / "stage" / "linked").exists())
+        return {"items": [], "next_cursor": None}
+
+    record_execute.record_action(call, workspace=workspace, capability=CAPABILITY,
+                                 action=ACTION, arguments={"path": "jobs"},
+                                 accepted=_ACCEPTED)
+    assert seen == [False]
+    with pytest.raises(record_execute.RecordingError, match="not a link"):
+        record_execute.check_workspace(workspace / "linked")
