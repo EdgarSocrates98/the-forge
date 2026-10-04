@@ -19,3 +19,11 @@ Drift:       none
 Telemetry:   profile=balanced scan=<MS> routing=<MS> context=<MS> provider=<MS> files=1/1 cache=0/1 context_bytes=64 providers=1 fallbacks=0 rounds=0 verification=conditional
 Result:      ok: 1 findings, 1 evidence
 Receipt:     context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>
+Provider:    fixture-api 0.0.1 (trust: local)
+Evidence:    1 (observed=1)   duration=<MS>
+Verification: self_report=reported provider_evidence=reported forge=passed independent=not_performed
+Reproducibility: partially_reproducible (provider does not declare deterministic execution)
+Limitations: provider-revalidation-undeclared
+Unknowns:    none
+Integrity:   ok (7 checked)
+Not recorded: none

@@ -25,11 +25,21 @@ EXIT_FAILURE: Final = 1  # unhealthy doctor/health, broken pipe
 EXIT_USAGE: Final = 2
 EXIT_REFUSED: Final = 4  # a refused replay, same exit as a refused outcome
 EXIT_PERSISTENCE: Final = 5
-EXIT_INTEGRITY: Final = 6  # integrity divergence (explain, replay --mode verify|render)
+EXIT_INTEGRITY: Final = commands.EXIT_INTEGRITY  # explain, replay --mode verify|render
 EXIT_INTERNAL: Final = 70
 EXIT_INTERRUPTED: Final = 130
 FIXED_EXITS: Final = frozenset({EXIT_FAILURE, EXIT_USAGE, EXIT_PERSISTENCE, EXIT_INTEGRITY,
                                 EXIT_INTERNAL, EXIT_INTERRUPTED})
+
+
+PLAN_DESCRIPTION = """\
+Plan a task across providers, one node per specialist, executed locally in sequence.
+
+Without --from FILE the nodes are ordered by the textual order of their keywords in the
+intent (rule `intent-order`): a proxy of the data flow that can infer a wrong dependency
+(e.g. "an API that consumes the Spark pipeline data" puts the API first). Review the plan
+without --execute; --from FILE fixes the order explicitly.
+"""
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -86,9 +96,40 @@ def build_parser() -> argparse.ArgumentParser:
                      help="approve a capability the policy would ask about (repeatable)")
     ask.set_defaults(handler=commands.cmd_ask)
 
+    plan = sub.add_parser(
+        "plan", parents=[common], help="plan (and optionally execute) a multi-provider task",
+        description=PLAN_DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
+    plan.add_argument("intent")
+    plan.add_argument("--profile", choices=["economy", "balanced", "max"], default="balanced")
+    plan.add_argument("--target", dest="targets", action="append")
+    plan.add_argument("--from", dest="plan_file", metavar="FILE",
+                      help="explicit plan file (fixes the node order); default: decompose "
+                           "the intent")
+    plan.add_argument("--execute", action="store_true",
+                      help="execute the nodes (default: plan only, outcome `planned`)")
+    plan.add_argument("--allow-unverified", action="store_true")
+    plan.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
+                      help="approve a capability for the nodes that use it (repeatable)")
+    plan.set_defaults(handler=commands.cmd_plan)
+
+    workspace = sub.add_parser("workspace", help="workspace description") \
+        .add_subparsers(dest="workspace_command", required=True)
+    workspace.add_parser("show", parents=[common],
+                         help="describe the workspace (cached manifests only, no provider)") \
+        .set_defaults(handler=commands.cmd_workspace_show)
+
     explain = sub.add_parser("explain", parents=[common], help="explain a past run")
     explain.add_argument("run_id")
     explain.set_defaults(handler=commands.cmd_explain)
+
+    replay = sub.add_parser("replay", parents=[common],
+                            help="re-render, re-verify or re-execute a past run")
+    replay.add_argument("run_id")
+    replay.add_argument("--mode", choices=["render", "verify", "execute"], required=True)
+    replay.add_argument("--allow-unverified", action="store_true")
+    replay.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
+                        help="approve a capability for the re-execution (repeatable)")
+    replay.set_defaults(handler=commands.cmd_replay)
     return parser
 
 

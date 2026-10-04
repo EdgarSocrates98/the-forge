@@ -16,6 +16,7 @@ from helpers import (
 )
 from theforge.cli import render
 from theforge.cli.main import main
+from theforge.runs import RunStore
 
 
 def run(capsys: pytest.CaptureFixture[str], *argv: str) -> tuple[int, str, str]:
@@ -104,17 +105,20 @@ def test_explain_reads_run_without_round_or_telemetry_artifacts(
         "schema": "theforge/TaskSpec/v1", "producer": producer, "created_at": ts,
         "status": "created", "id": "t1", "intent": "eco", "workspace_root": "/ws"}),
         encoding="utf-8")
+    task_sha256 = RunStore(tmp_path / ".forge").persisted_sha256(run_id, "task")
     (run_dir / "receipt.json").write_text(json.dumps({
         "schema": "theforge/ExecutionReceipt/v1", "producer": producer, "created_at": ts,
         "status": "no_route", "run_id": run_id, "forge_version": "0.1.0",
-        "inputs": {"task_sha256": "a" * 64}, "started_at": ts, "finished_at": ts}),
+        "inputs": {"task_sha256": task_sha256}, "started_at": ts, "finished_at": ts}),
         encoding="utf-8")
     root = str(tmp_path)
     code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
     data = json.loads(out)
-    assert code == 0 and data["receipt"]["status"] == "no_route"
-    assert data["context-r1"] is None and data["context-r2"] is None
-    assert data["telemetry"] is None
+    # cross-forge-foundation 7.3: the versioned report keeps the raw artifacts by name.
+    artifacts = data["artifacts"]
+    assert code == 0 and artifacts["receipt"]["status"] == "no_route"
+    assert artifacts.get("context-r1") is None and artifacts.get("context-r2") is None
+    assert artifacts.get("telemetry") is None
     code, out, _ = run(capsys, "explain", run_id, "--root", root)
     assert code == 0 and "no_route" in out
     assert "context_round" not in out
@@ -214,7 +218,7 @@ def test_ask_approve_is_repeatable_and_unlocks(
     assert code == 0, err
     run_id = json.loads(out)["run_id"]
     code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
-    risk = json.loads(out)["risk"]
+    risk = json.loads(out)["artifacts"]["risk"]
     assert code == 0 and risk["policy"]["approved"] is True
     assert risk["policy"]["decision"] == "allow"
     code, out, _ = run(capsys, "explain", run_id, "--root", root)
@@ -266,7 +270,7 @@ def test_ask_policy_deny_exits_4_even_with_approve(
     assert code == 4 and data["status"] == "refused" and data["result"] is None
     assert data["error"]["code"] == "FORGE-POLICY-DENIED" and "Traceback" not in err
     code, out, _ = run(capsys, "explain", data["run_id"], "--root", root, "--json")
-    run_data = json.loads(out)
+    run_data = json.loads(out)["artifacts"]
     assert code == 0 and run_data["risk"]["policy"]["decision"] == "deny"
     assert run_data["receipt"]["status"] == "refused" and run_data.get("result") is None
     code, out, _ = run(capsys, "explain", data["run_id"], "--root", root)
@@ -482,6 +486,6 @@ def test_ask_then_explain_shows_context_and_telemetry_sections(
     [telemetry] = [line for line in lines if line.startswith("Telemetry:")]
     assert "rounds=1" in telemetry and "providers=1" in telemetry
     code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
-    data = json.loads(out)
+    data = json.loads(out)["artifacts"]
     assert code == 0 and data["telemetry"]["schema"] == "theforge/RunTelemetry/v1"
     assert data["telemetry"]["negotiation_rounds"]["value"] == 1
