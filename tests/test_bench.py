@@ -223,3 +223,94 @@ def test_origin_records_a_dirty_worktree(bench: ModuleType,
     assert bench.collect_origin()["git_dirty"] is None
     monkeypatch.setattr(bench, "_git", lambda *args: None)
     assert bench.collect_origin()["git_dirty"] is None
+
+
+# --- context cold/warm and hash stats --------------------------------------------------------
+
+def test_report_carries_hashing_and_round_trips(bench: ModuleType, tmp_path: Path) -> None:
+    hashing = {"files_hashed": 0, "bytes_hashed": 0, "cache_hits": 7, "cache_misses": 0}
+    results = {"context_1k_warm": bench.Measurement(name="context_1k_warm", median_ms=2.0,
+                                                    p90_ms=3.0, runs=3, hashing=hashing),
+               "scan_1k": bench.Measurement(name="scan_1k", median_ms=1.0, p90_ms=1.0, runs=3)}
+    report = bench.build_report(results, bench.collect_origin())
+    assert report["results"]["context_1k_warm"]["hashing"] == hashing
+    assert "hashing" not in report["results"]["scan_1k"]
+    path = tmp_path / "bench.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    assert bench.load_results(path) == results
+
+
+def test_warm_context_reuses_every_whole_file_and_matches_cold(
+        bench: ModuleType, workspace: ModuleType, tmp_path: Path) -> None:
+    root = tmp_path / "ws"
+    workspace.generate_workspace(root, 50)
+    bench._backdate(root)  # past the racy window, as the procedure does
+    scan = scan_workspace(root, ["."])
+    task = bench._task(root, bench.ROUTING_INTENT)
+    cache = tmp_path / "fingerprints"
+    cold = bench.context_step(task, scan, cache, enabled=False)
+    bench.context_step(task, scan, cache, enabled=True)  # prime
+    warm = bench.context_step(task, scan, cache, enabled=True)
+    references = sum(1 for f in warm[0].files if f.tier == "reference")
+    assert references > 0
+    assert bench.hashing_of(cold[1])["cache_hits"] == 0
+    assert cold[1].files_hashed == len(cold[0].files)
+    assert bench.hashing_of(warm[1]) == {"files_hashed": len(warm[0].files) - references,
+                                         "bytes_hashed": warm[1].bytes_hashed,
+                                         "cache_hits": references, "cache_misses": 0}
+    bench.check_context_cache("50", cold, warm)  # does not raise
+
+
+def test_check_context_cache_rejects_a_warm_re_read(bench: ModuleType) -> None:
+    from types import SimpleNamespace
+
+    from theforge.context.fingerprints import HashStats
+
+    pack = SimpleNamespace(files=[SimpleNamespace(tier="reference")] * 2, excluded=[],
+                           used_bytes=10)
+    cold = (pack, HashStats(files_hashed=2, bytes_hashed=10, misses=2))
+    bench.check_context_cache("x", cold, (pack, HashStats(hits=2)))
+    with pytest.raises(RuntimeError, match="re-read 1 whole file"):
+        bench.check_context_cache("x", cold, (pack, HashStats(files_hashed=1, bytes_hashed=5,
+                                                                 hits=1, misses=1)))
+    other = SimpleNamespace(files=pack.files, excluded=[], used_bytes=11)
+    with pytest.raises(RuntimeError, match="differs from the cold pack"):
+        bench.check_context_cache("x", cold, (other, HashStats(hits=2)))
+
+
+# --- budgets derived from the baseline -------------------------------------------------------
+
+def _baseline(bench: ModuleType, path: Path, medians: dict[str, float]) -> Path:
+    results = {n: bench.Measurement(name=n, median_ms=v, p90_ms=v, runs=10)
+               for n, v in medians.items()}
+    origin = {**bench.collect_origin(), "git_head": "abc123"}
+    path.write_text(json.dumps(bench.build_report(results, origin)), encoding="utf-8")
+    return path
+
+
+def test_derive_budgets_records_value_baseline_factor_and_origin(bench: ModuleType,
+                                                                 tmp_path: Path) -> None:
+    baseline = _baseline(bench, tmp_path / "baseline.json", {"scan_1k": 10.0, "x": 1.2345})
+    budgets = bench.derive_budgets(baseline)
+    origin = f"{baseline.as_posix()} @ abc123"
+    assert budgets == {
+        "scan_1k": bench.Budget(budget_ms=15.0, baseline_ms=10.0, factor=1.5, origin=origin),
+        "x": bench.Budget(budget_ms=1.852, baseline_ms=1.2345, factor=1.5, origin=origin)}
+    assert bench.derive_budgets(baseline, 2.0)["scan_1k"].budget_ms == 20.0
+    with pytest.raises(ValueError, match="factor"):
+        bench.derive_budgets(baseline, 0.5)
+
+
+def test_budgets_from_cli_writes_a_file_check_accepts(bench: ModuleType, tmp_path: Path,
+                                                      capsys: pytest.CaptureFixture[str]) -> None:
+    baseline = _baseline(bench, tmp_path / "baseline.json", {"scan_1k": 10.0})
+    out = tmp_path / "budgets.json"
+    assert bench.main(["--budgets-from", str(baseline), "--out", str(out)]) == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert set(doc["scan_1k"]) == {"budget_ms", "baseline_ms", "factor", "origin"}
+    assert bench.load_budgets(out) == bench.derive_budgets(baseline)
+    results = _results_file(bench, tmp_path / "r.json", {"scan_1k": 15.5})
+    assert bench.main(["--results", str(results), "--check", str(out)]) == 1
+    assert "REGRESSION scan_1k: median 15.5 ms > budget 15.0 ms" in capsys.readouterr().out
+    with pytest.raises(SystemExit):
+        bench.main(["--budgets-from", str(baseline), "--check", str(out)])

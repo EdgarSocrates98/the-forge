@@ -5,15 +5,24 @@ Usage::
 
     python scripts/bench/run_bench.py [--quick] [--runs N] [--out PATH] [--check BUDGETS]
     python scripts/bench/run_bench.py --results PATH --check BUDGETS
+    python scripts/bench/run_bench.py --budgets-from BASELINE [--factor F] [--out PATH]
 
 Each measurement is the median and p90 (nearest rank) of N repetitions timed with
 ``time.perf_counter_ns``; ``setup`` work (fresh cache directories, priming) is never timed.
 Measurements: ``cli_startup`` (``python -m theforge --help`` in a subprocess),
 ``registry_cold``/``registry_warm`` (echo + the test fixture providers, empty then populated
-cache), ``scan_1k``/``scan_10k``, ``routing_10k``, ``context_{1k,10k}_{cold,warm}``
-(``build_context_pack`` with the ``balanced`` profile; until the fingerprint cache exists
-``warm`` only differs from ``cold`` by an untimed priming call) and ``persist_run`` (writing
-``task``, ``routing``, ``context``, ``result``, ``telemetry`` and ``receipt`` of a real echo run).
+cache), ``scan_1k``/``scan_10k``, ``routing_10k``, ``context_{1k,10k}_{cold,warm}`` and
+``persist_run`` (writing ``task``, ``routing``, ``context``, ``result``, ``telemetry`` and
+``receipt`` of a real echo run).
+
+``context_*`` times the context step of a run without git (the synthetic workspaces are not
+repositories): open a ``FingerprintStore``, ``build_context_pack`` with the ``balanced``
+profile, save the store. ``cold`` has the fingerprint cache disabled (every selected file is
+read and hashed); ``warm`` reuses a cache populated by an untimed priming run. Their output
+carries ``hashing`` (``files_hashed``, ``bytes_hashed``, ``cache_hits``, ``cache_misses`` of
+one repetition), and the procedure fails unless the warm pack re-read no whole file (no cache
+miss, one hit per ``reference`` item) and equals the cold pack. Generated files are back-dated
+past the cache's racy window so the priming run can record them.
 
 Everything is written under a temporary directory: the synthetic workspaces
 (``workspace.py``, fixed seed), the provider config and every cache. ``THEFORGE_CONFIG_DIR``
@@ -25,12 +34,14 @@ Output (stdout or ``--out``)::
     {"schema": "theforge-bench/v1",
      "origin": {"machine", "os", "python", "date", "forge_version", "git_head",
                 "git_dirty"},
-     "results": {name: {"median_ms", "p90_ms", "runs"}}}
+     "results": {name: {"median_ms", "p90_ms", "runs", "hashing"?}}}
 
 ``--check BUDGETS`` compares every median with ``{name: {budget_ms, baseline_ms, factor,
 origin}}``, prints each regression (and each measurement without a budget as ``no budget``)
 and exits 1 when any median is above its budget. ``--results PATH`` checks an existing
-results file instead of measuring.
+results file instead of measuring. ``--budgets-from BASELINE`` derives that budgets file from
+a results file: ``budget_ms = factor x median`` (``--factor``, default 1.5), recording the
+baseline median, the factor and the baseline's origin (file and HEAD).
 """
 
 from __future__ import annotations
@@ -47,7 +58,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable, Iterator, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
@@ -55,6 +66,7 @@ from typing import Any, Final
 from workspace import generate_workspace
 
 from theforge.context import WorkspaceScan, build_context_pack, scan_workspace
+from theforge.context.fingerprints import RACY_WINDOW_NS, FingerprintStore, HashStats
 from theforge.contracts import (
     ContextPack,
     ExecutionReceipt,
@@ -90,6 +102,8 @@ SEED: Final = 0
 PROFILE: Final[BudgetProfile] = "balanced"
 ROUTING_INTENT: Final = "inspect the notes and documents"
 PERSISTED: Final = ("task", "routing", "context", "result", "telemetry", "receipt")
+DEFAULT_FACTOR: Final = 1.5
+HASHING_KEYS: Final = ("files_hashed", "bytes_hashed", "cache_hits", "cache_misses")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -98,6 +112,7 @@ class Measurement:
     median_ms: float
     p90_ms: float
     runs: int
+    hashing: Mapping[str, int] | None = None  # context_* only: hash stats of one repetition
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -183,13 +198,19 @@ def collect_origin() -> dict[str, str | bool | None]:
     }
 
 
+def _result_entry(m: Measurement) -> dict[str, Any]:
+    entry: dict[str, Any] = {"median_ms": m.median_ms, "p90_ms": m.p90_ms, "runs": m.runs}
+    if m.hashing is not None:
+        entry["hashing"] = dict(m.hashing)
+    return entry
+
+
 def build_report(results: Mapping[str, Measurement],
                  origin: Mapping[str, str | bool | None]) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
         "origin": dict(origin),
-        "results": {name: {"median_ms": m.median_ms, "p90_ms": m.p90_ms, "runs": m.runs}
-                    for name, m in results.items()},
+        "results": {name: _result_entry(m) for name, m in results.items()},
     }
 
 
@@ -200,14 +221,38 @@ def _load_object(path: Path) -> dict[str, Any]:
     return data
 
 
-def load_results(path: Path) -> dict[str, Measurement]:
+def _load_report(path: Path) -> dict[str, Any]:
     data = _load_object(path)
     if data.get("schema") != SCHEMA:
         raise ValueError(f"{path}: unsupported schema {data.get('schema')!r}, "
                          f"expected {SCHEMA!r}")
-    return {name: Measurement(name=name, median_ms=float(r["median_ms"]),
-                              p90_ms=float(r["p90_ms"]), runs=int(r["runs"]))
-            for name, r in data["results"].items()}
+    return data
+
+
+def load_results(path: Path) -> dict[str, Measurement]:
+    return {name: Measurement(
+                name=name, median_ms=float(r["median_ms"]), p90_ms=float(r["p90_ms"]),
+                runs=int(r["runs"]),
+                hashing=({k: int(v) for k, v in r["hashing"].items()}
+                         if r.get("hashing") is not None else None))
+            for name, r in _load_report(path)["results"].items()}
+
+
+def derive_budgets(baseline: Path, factor: float = DEFAULT_FACTOR) -> dict[str, Budget]:
+    """One budget per baseline measurement: ``factor`` x its median, with the origin."""
+    if not factor >= 1.0:
+        raise ValueError(f"factor must be >= 1.0, got {factor}")
+    head = _load_report(baseline).get("origin", {}).get("git_head") or "unknown HEAD"
+    origin = f"{baseline.as_posix()} @ {head}"
+    return {name: Budget(budget_ms=round(m.median_ms * factor, 3), baseline_ms=m.median_ms,
+                         factor=factor, origin=origin)
+            for name, m in load_results(baseline).items()}
+
+
+def budgets_document(budgets: Mapping[str, Budget]) -> dict[str, Any]:
+    return {name: {"budget_ms": b.budget_ms, "baseline_ms": b.baseline_ms,
+                   "factor": b.factor, "origin": b.origin}
+            for name, b in budgets.items()}
 
 
 def load_budgets(path: Path) -> dict[str, Budget]:
@@ -312,6 +357,55 @@ def _recorded_run(root: Path, registry: Registry) -> tuple[RunStore, dict[str, o
     return store, artifacts
 
 
+def _backdate(root: Path) -> None:
+    """Move every file's mtime past the fingerprint cache's racy window (untimed setup)."""
+    past = time.time_ns() - 10 * RACY_WINDOW_NS
+    for path in root.rglob("*"):
+        if path.is_file():
+            os.utime(path, ns=(past, past))
+
+
+def context_step(task: TaskSpec, scan: WorkspaceScan, cache_dir: Path, *,
+                 enabled: bool) -> tuple[ContextPack, HashStats]:
+    """The context step of a run without git: open the store, build the pack, save."""
+    store = FingerprintStore(scan.root, cache_dir=cache_dir, enabled=enabled)
+    pack = build_context_pack(task, "echo-forge", list(DOC_GLOBS), scan, fingerprints=store)
+    store.save()
+    if store.warnings:
+        raise RuntimeError("fingerprint cache: " + "; ".join(store.warnings))
+    return pack, store.stats
+
+
+def hashing_of(stats: HashStats) -> dict[str, int]:
+    return {"files_hashed": stats.files_hashed, "bytes_hashed": stats.bytes_hashed,
+            "cache_hits": stats.hits, "cache_misses": stats.misses}
+
+
+def check_context_cache(label: str, cold: tuple[ContextPack, HashStats],
+                        warm: tuple[ContextPack, HashStats]) -> None:
+    """The warm pack equals the cold one and re-read no whole file (11.x, 5.1)."""
+    (cold_pack, cold_stats), (warm_pack, warm_stats) = cold, warm
+    references = sum(1 for f in warm_pack.files if f.tier == "reference")
+    problems: list[str] = []
+    if cold_stats.hits:
+        problems.append(f"cold run reused {cold_stats.hits} fingerprint(s)")
+    if references == 0:
+        problems.append("the pack has no reference item: nothing to reuse")
+    if warm_stats.misses:
+        problems.append(f"warm run re-read {warm_stats.misses} whole file(s)")
+    if warm_stats.hits != references:
+        problems.append(f"warm run hit {warm_stats.hits} for {references} reference item(s)")
+    excerpts = len(warm_pack.files) - references  # line ranges are never cached
+    if warm_stats.files_hashed != excerpts:
+        problems.append(f"warm run hashed {warm_stats.files_hashed} file(s) for "
+                        f"{excerpts} excerpt(s)")
+    if (warm_pack.files, warm_pack.excluded, warm_pack.used_bytes) != (
+            cold_pack.files, cold_pack.excluded, cold_pack.used_bytes):
+        problems.append("warm pack differs from the cold pack")
+    if problems:
+        raise RuntimeError(f"context_{label}: " + "; ".join(problems))
+
+
 def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str, Measurement]:
     config_dir, cache_root = tmp / "config", tmp / "cache"
     _write_providers(config_dir)
@@ -346,6 +440,7 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
         for label, count in (("1k", 1_000), ("10k", 10_000)):
             ws[label] = tmp / f"ws-{label}"
             generate_workspace(ws[label], count, seed=SEED)
+            _backdate(ws[label])
 
             def scan_once(root: Path = ws[label]) -> WorkspaceScan:
                 return scan_workspace(root, ["."])
@@ -360,13 +455,22 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
         for label in ("1k", "10k"):
             task = _task(ws[label], ROUTING_INTENT)
             scan = scans[label]
+            fp_dir = tmp / f"fingerprints-{label}"  # outside the workspace, per root
+            last: dict[str, tuple[ContextPack, HashStats]] = {}
+            for mode, enabled in (("cold", False), ("warm", True)):
+                if enabled:
+                    context_step(task, scan, fp_dir, enabled=True)  # prime the cache, untimed
 
-            def pack(task: TaskSpec = task, scan: WorkspaceScan = scan) -> ContextPack:
-                return build_context_pack(task, "echo-forge", list(DOC_GLOBS), scan)
+                def step(task: TaskSpec = task, scan: WorkspaceScan = scan,
+                         fp_dir: Path = fp_dir, enabled: bool = enabled, mode: str = mode,
+                         last: dict[str, tuple[ContextPack, HashStats]] = last) -> None:
+                    last[mode] = context_step(task, scan, fp_dir, enabled=enabled)
 
-            record(f"context_{label}_cold", pack)
-            pack()  # prime: with the fingerprint cache this populates it (untimed)
-            record(f"context_{label}_warm", pack)
+                name = f"context_{label}_{mode}"
+                record(name, step)
+                results[name] = replace(results[name], hashing=hashing_of(last[mode][1]))
+                log(f"{name}: {results[name].hashing}")
+            check_context_cache(label, last["cold"], last["warm"])
 
         store, artifacts = _recorded_run(tmp / "ws-run", warm)
 
@@ -382,6 +486,15 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
 
 # --- command line ----------------------------------------------------------------------------
 
+def _emit(document: Mapping[str, Any], out: Path | None) -> None:
+    text = json.dumps(document, indent=2) + "\n"
+    if out is not None:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8", newline="\n")
+    else:
+        sys.stdout.write(text)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="The Forge benchmark (baseline and budgets).")
     parser.add_argument("--quick", action="store_true",
@@ -392,7 +505,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--check", type=Path, help="budgets JSON; exit 1 on any regression")
     parser.add_argument("--results", type=Path,
                         help="check this results JSON instead of measuring (needs --check)")
+    parser.add_argument("--budgets-from", type=Path, metavar="BASELINE",
+                        help="write budgets derived from this results JSON instead of measuring")
+    parser.add_argument("--factor", type=float, default=DEFAULT_FACTOR,
+                        help=f"budget = factor x baseline median (default {DEFAULT_FACTOR})")
     args = parser.parse_args(argv)
+    if args.budgets_from is not None:
+        if args.results is not None or args.check is not None:
+            parser.error("--budgets-from cannot be combined with --results or --check")
+        try:
+            budgets = derive_budgets(args.budgets_from, args.factor)
+        except ValueError as exc:
+            parser.error(str(exc))
+        _emit(budgets_document(budgets), args.out)
+        return 0
     if args.results is not None:
         if args.check is None:
             parser.error("--results requires --check")
@@ -404,12 +530,7 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="theforge-bench-",
                                      ignore_cleanup_errors=True) as tmp:
         results = run_procedure(Path(tmp), runs, lambda line: print(line, file=sys.stderr))
-    text = json.dumps(build_report(results, collect_origin()), indent=2) + "\n"
-    if args.out is not None:
-        args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(text, encoding="utf-8", newline="\n")
-    else:
-        sys.stdout.write(text)
+    _emit(build_report(results, collect_origin()), args.out)
     return _check(results, load_budgets(args.check)) if args.check is not None else 0
 
 
