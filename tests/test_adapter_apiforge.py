@@ -9,6 +9,7 @@ the scenario's ``environment.json`` instead. The core's own contract code valida
 adapter answers (``from_dict``, ``validate_taxonomy``, ``validate_manifest_limits``).
 """
 
+import hashlib
 import importlib
 import json
 import re
@@ -23,13 +24,16 @@ from theforge_apiforge import _shell, backend, catalog, health, record
 
 from theforge.contracts import (
     PROTOCOL_V1,
+    ErrorInfo,
+    ExecutionResult,
     ForgeManifest,
     HealthCheck,
     HealthReport,
+    Producer,
     Response,
     from_dict,
 )
-from theforge.contracts.integrity import validate_manifest_limits
+from theforge.contracts.integrity import validate_manifest_limits, validate_result
 from theforge.contracts.taxonomy import validate_taxonomy
 from theforge.contracts.types import is_catch_all_glob
 
@@ -693,3 +697,311 @@ def test_live_doctor_failures_become_recordings() -> None:
     assert health.doctor_check(garbled)[0] == "degraded"
     timed = health.run_doctor(run=slow)
     assert health.doctor_check(timed)[0] == "degraded" and "timeout" in timed
+
+
+# --- translation of cases and native errors (5.3) -------------------------------------------
+
+PRODUCER = Producer(id="api-forge", version="0.1.0")
+ANALYZE_RECORDING = DEFAULT / "api.analyze.analyze.json"
+WORKSPACE_FILES = ["openapi.yaml", "app/__init__.py", "app/main.py", "requirements.txt",
+                   "change-bundle.json"]
+# Machine-specific fragments a portable recording never contains: a drive path (raw or JSON-
+# escaped), a user directory, a temp directory.
+MACHINE_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:(?:\\|/(?!/))|/Users/|/home/|AppData|/tmp/",
+                          re.IGNORECASE)
+
+
+def _translate_module() -> Any:
+    return importlib.import_module("theforge_apiforge.translate")
+
+
+def _analyze_recording() -> dict[str, Any]:
+    data: dict[str, Any] = json.loads(ANALYZE_RECORDING.read_text(encoding="utf-8"))
+    return data
+
+
+def _stage(cwd: Path, paths: list[str] | None = None) -> _shell.StagedInput:
+    files = []
+    for rel in WORKSPACE_FILES if paths is None else paths:
+        data = (WORKSPACE / rel).read_bytes()
+        files.append({"path": rel, "sha256": hashlib.sha256(data).hexdigest(),
+                      "bytes": len(data)})
+    payload = {"context": {"root": str(WORKSPACE.resolve()), "files": files}}
+    return _shell.stage_context(payload, cwd)
+
+
+def _write_case(cwd: Path, recording: dict[str, Any]) -> None:
+    """Materialize the recorded case files as the API Forge writes them (sorted, indent 2)."""
+    case = cwd / recording["case_dir"]
+    case.mkdir(parents=True, exist_ok=True)
+    for name, document in recording["case_files"].items():
+        text = json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        (case / name).write_bytes(text.encode("utf-8"))
+
+
+def _translated(cwd: Path, recording: dict[str, Any] | None = None,
+                state: str = "supported") -> tuple[Any, _shell.StagedInput]:
+    recording = _analyze_recording() if recording is None else recording
+    stage = _stage(cwd)
+    _write_case(cwd, recording)
+    translate = _translate_module()
+    case = translate.read_case(cwd, recording["case_dir"])
+    return translate.translate_case(case, stage, state=state), stage
+
+
+def _validated(draft: Any, cwd: Path) -> ExecutionResult:
+    assert isinstance(draft, _shell.ResultDraft), draft
+    reply = _shell.finalize(draft, cwd)
+    assert reply.status in ("ok", "partial"), reply.error
+    result = from_dict(ExecutionResult, reply.payload, "$.payload")
+    validate_result(result, expected=PRODUCER)
+    return result
+
+
+def test_analyze_recording_is_a_provisional_case_of_the_example_workspace() -> None:
+    recording = _analyze_recording()
+    assert recording["provenance"] == "hand-built" and recording["assembled_from"]
+    assert recording["exit_code"] == 0
+    assert recording["argv"][:1] == ["analyze"] and "--fail-on" not in recording["argv"]
+    assert recording["case_dir"] == catalog.VERB_MAP["api.analyze"].output_dir
+    assert {"case.json", "findings.json", "facts.json"} <= set(recording["case_files"])
+    raw = ANALYZE_RECORDING.read_bytes()
+    assert b"\r" not in raw and MACHINE_PATH.search(raw.decode("utf-8")) is None
+    # Deterministic: the file is its own canonical serialization.
+    assert raw.decode("utf-8") == json.dumps(recording, indent=2, sort_keys=True,
+                                             ensure_ascii=False) + "\n"
+
+
+def test_translated_case_passes_core_integrity_with_native_ids(tmp_path: Path) -> None:
+    draft, _ = _translated(tmp_path)
+    result = _validated(draft, tmp_path)
+    recording = _analyze_recording()
+    native_facts = [fact["fact_id"] for fact in recording["case_files"]["facts.json"]["facts"]]
+    native_findings = recording["case_files"]["findings.json"]["findings"]
+    assert [item.id for item in result.evidence] == native_facts
+    assert [item.id for item in result.findings] == [f["finding_id"] for f in native_findings]
+    finding = result.findings[0]
+    assert finding.title == "AF-CODE-002: Code route missing from contract"
+    assert finding.severity == "medium"
+    assert finding.evidence_ids == native_findings[0]["evidence"]
+    assert all(item.epistemic == "observed" for item in result.evidence)
+    route = next(item for item in result.evidence if item.id == finding.evidence_ids[0])
+    assert route.subject == "code.route"
+    assert route.claim == 'code.route: method="delete", path="/orders/{order_id}"'
+    assert route.location is not None
+    assert (route.location.path, route.location.line) == ("app/main.py", 18)
+
+
+def test_evidence_hash_is_null_or_the_verified_sha256_of_the_located_file(
+        tmp_path: Path) -> None:
+    draft, stage = _translated(tmp_path)
+    result = _validated(draft, tmp_path)
+    paths = set()
+    for item in result.evidence:
+        assert item.location is not None
+        paths.add(item.location.path)
+        if item.hash is not None:
+            expected = hashlib.sha256((WORKSPACE / item.location.path).read_bytes()).hexdigest()
+            assert item.hash == expected == stage.files[item.location.path]
+    # Code facts are relative to --project, the contract fact to the native cwd (stage/...):
+    # both land on the workspace path with their verified hash.
+    assert paths == {"app/main.py", "openapi.yaml"}
+    assert all(item.hash is not None for item in result.evidence)
+
+
+def test_divergent_native_sha256_becomes_null(tmp_path: Path) -> None:
+    recording = _analyze_recording()
+    facts = recording["case_files"]["facts.json"]["facts"]
+    facts[0]["source"]["sha256"] = "0" * 64                                  # other content
+    facts[1]["source"]["sha256"] = "sha256:" + facts[1]["source"]["sha256"]  # prefixed, equal
+    facts[2]["source"]["sha256"] = facts[2]["source"]["sha256"].upper()      # malformed
+    draft, stage = _translated(tmp_path, recording)
+    result = _validated(draft, tmp_path)
+    by_id = {item.id: item for item in result.evidence}
+    assert by_id[facts[0]["fact_id"]].hash is None
+    assert by_id[facts[1]["fact_id"]].hash == stage.files["app/main.py"]
+    assert by_id[facts[2]["fact_id"]].hash is None
+
+
+def test_unstaged_or_outside_locations_have_no_hash(tmp_path: Path) -> None:
+    recording = _analyze_recording()
+    facts = recording["case_files"]["facts.json"]["facts"]
+    facts[0]["source"]["path"] = "../../etc/passwd"
+    stage = _stage(tmp_path, ["openapi.yaml"])                  # app/main.py not staged
+    _write_case(tmp_path, recording)
+    translate = _translate_module()
+    draft = translate.translate_case(translate.read_case(tmp_path, "case"), stage)
+    result = _validated(draft, tmp_path)
+    by_id = {item.id: item for item in result.evidence}
+    outside = by_id[facts[0]["fact_id"]]
+    assert outside.location is None and outside.hash is None
+    assert any(facts[0]["fact_id"] in note and "outside the workspace" in note
+               for note in result.limitations)
+    unstaged = by_id[facts[1]["fact_id"]]
+    assert unstaged.location is not None and unstaged.location.path == "app/main.py"
+    assert unstaged.hash is None
+
+
+def test_not_applicable_findings_are_omitted_and_counted(tmp_path: Path) -> None:
+    recording = _analyze_recording()
+    findings = recording["case_files"]["findings.json"]["findings"]
+    base = findings[0]
+    findings.extend([{**base, "finding_id": f"finding:na{n}", "status": "not_applicable"}
+                     for n in range(2)])
+    findings.append({**base, "finding_id": "finding:unresolved", "status": "unresolved",
+                     "severity": "high"})
+    draft, _ = _translated(tmp_path, recording)
+    result = _validated(draft, tmp_path)
+    assert [item.id for item in result.findings] == [base["finding_id"], "finding:unresolved"]
+    assert "2 native finding(s) with status not_applicable omitted" in result.limitations
+
+
+def test_dangling_fact_reference_is_dropped_not_invented(tmp_path: Path) -> None:
+    recording = _analyze_recording()
+    finding = recording["case_files"]["findings.json"]["findings"][0]
+    finding["evidence"] = [*finding["evidence"], "fact:missing"]
+    finding["severity"] = "urgent"
+    draft, _ = _translated(tmp_path, recording)
+    result = _validated(draft, tmp_path)
+    assert result.findings[0].evidence_ids == finding["evidence"][:1]
+    assert "fact:missing" not in {item.id for item in result.evidence}
+    assert result.findings[0].severity == "info"
+    assert any("fact:missing" in note and "dropped" in note for note in result.limitations)
+    assert any("unknown native severity" in note for note in result.limitations)
+
+
+def test_heuristic_capability_evidence_is_inferred(tmp_path: Path) -> None:
+    draft, _ = _translated(tmp_path, state="heuristic")
+    result = _validated(draft, tmp_path)
+    assert {item.epistemic for item in result.evidence} == {"inferred"}
+
+
+def test_case_files_are_artifacts_with_their_sha256(tmp_path: Path) -> None:
+    draft, _ = _translated(tmp_path)
+    result = _validated(draft, tmp_path)
+    names = sorted(_analyze_recording()["case_files"])
+    assert [item.path for item in result.artifacts] == [f"case/{name}" for name in names]
+    for item in result.artifacts:
+        assert item.sha256 == hashlib.sha256((tmp_path / item.path).read_bytes()).hexdigest()
+    # The case files are written byte for byte as the API Forge writes them: the native
+    # manifest's hashes match the attached files (case.json cannot hash itself).
+    manifest = _analyze_recording()["case_files"]["case.json"]["artifacts"]
+    attached = {item.path: item.sha256 for item in result.artifacts}
+    assert all(attached[f"case/{entry['path']}"] == entry["sha256"]
+               for entry in manifest.values())
+
+
+def test_case_links_are_never_followed_or_attached(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    _write_case(tmp_path, _analyze_recording())
+    try:
+        (tmp_path / "case" / "linked.json").symlink_to(outside)
+    except OSError:
+        pytest.skip("symlinks are not available to this user")
+    case = _translate_module().read_case(tmp_path, "case")
+    assert "case/linked.json" not in [item["path"] for item in case.artifacts]
+    assert "linked.json" not in case.documents
+    assert any("case/linked.json" in note for note in case.limitations)
+
+
+@pytest.mark.parametrize("missing", ["findings.json", "facts.json"])
+def test_case_without_findings_or_facts_is_a_native_invalid_error(tmp_path: Path,
+                                                                  missing: str) -> None:
+    recording = _analyze_recording()
+    del recording["case_files"][missing]
+    draft, _ = _translated(tmp_path, recording)
+    assert isinstance(draft, _shell.Reply) and draft.status == "error"
+    assert draft.error is not None and draft.error["code"] == "APIFORGE-ADAPTER-NATIVE-INVALID"
+    assert missing in draft.error["detail"]
+
+
+def test_missing_case_directory_is_a_native_invalid_error(tmp_path: Path) -> None:
+    translate = _translate_module()
+    draft = translate.translate_case(translate.read_case(tmp_path, "case"), _stage(tmp_path))
+    assert isinstance(draft, _shell.Reply) and draft.error is not None
+    assert draft.error["code"] == "APIFORGE-ADAPTER-NATIVE-INVALID"
+
+
+def _error_recording(scenario: str) -> dict[str, Any]:
+    path = SCENARIOS / scenario / "api.analyze.analyze.error.json"
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    assert data["provenance"] == "hand-built" and data["assembled_from"]
+    assert b"\r" not in path.read_bytes()
+    assert MACHINE_PATH.search(path.read_text(encoding="utf-8")) is None
+    return data
+
+
+def test_recorded_refusal_keeps_the_af_code_field_and_unlock() -> None:
+    recording = _error_recording("analyze-refused")
+    assert recording["exit_code"] == 2
+    reply = _translate_module().native_failure(recording["exit_code"], recording["stderr"])
+    assert reply.status == "refused"
+    error = from_dict(ErrorInfo, reply.error, "$.error")
+    assert error.code == "AF-OPENAPI-UNSUPPORTED-VERSION"
+    assert error.detail == "openapi.yaml: openapi must be 3.1.x, got None"
+    assert error.field == "unknown"
+    assert error.unlock == "inspect the documented contract and rerun the verifier"
+
+
+def test_recorded_exit_3_is_an_error_with_the_af_code_intact() -> None:
+    recording = _error_recording("analyze-error")
+    assert recording["exit_code"] == 3
+    reply = _translate_module().native_failure(recording["exit_code"], recording["stderr"])
+    assert reply.status == "error"
+    error = from_dict(ErrorInfo, reply.error, "$.error")
+    assert (error.code, error.detail) == ("AF-CASE-INVALID", "case/case.json")
+    assert (error.field, error.unlock) == (
+        "unknown", "inspect the documented contract and rerun the verifier")
+
+
+def test_error_scenarios_are_complete() -> None:
+    for scenario in ("analyze-refused", "analyze-error"):
+        directory = SCENARIOS / scenario
+        assert (directory / "environment.json").is_file()
+        assert (directory / "health.json").is_file()
+        assert not (directory / "api.analyze.analyze.json").exists()
+
+
+@pytest.mark.parametrize(("exit_code", "stderr", "status", "code", "field", "unlock"), [
+    (2, "AF-INPUT-NOT-FOUND: stage/x.yaml (field=analysis input; unlock=correct the input)",
+     "refused", "AF-INPUT-NOT-FOUND", "analysis input", "correct the input"),
+    (2, "AF-CLI-INTERNAL: boom (field=unknown; unlock=report it)",
+     "error", "AF-CLI-INTERNAL", "unknown", "report it"),
+    (3, "AF-CASE-MANIFEST-MISSING: case/case.json (field=unknown; unlock=rerun)",
+     "error", "AF-CASE-MANIFEST-MISSING", "unknown", "rerun"),
+    (1, "AF-CHANGE-X: odd exit (field=f; unlock=u)", "error", "AF-CHANGE-X", "f", "u"),
+    # Other output before the AF-* line and an unlock with parentheses.
+    (2, "warning: something\nAF-ROUTING-NO-FINDINGS: nothing to review (field=bundle; "
+        "unlock=add findings (see docs))\n", "refused", "AF-ROUTING-NO-FINDINGS", "bundle",
+     "add findings (see docs)"),
+    (2, "AF-BARE-CODE: only a detail", "refused", "AF-BARE-CODE", None, None),
+])
+def test_af_lines_map_to_refusal_or_error(exit_code: int, stderr: str, status: str, code: str,
+                                          field: str | None, unlock: str | None) -> None:
+    reply = _translate_module().native_failure(exit_code, stderr)
+    assert reply.status == status
+    assert reply.error is not None
+    assert (reply.error["code"], reply.error["field"], reply.error["unlock"]) == (
+        code, field, unlock)
+
+
+def test_af_detail_with_parentheses_is_kept_whole() -> None:
+    reply = _translate_module().native_failure(
+        2, "AF-ROUTING-NO-FINDINGS: nothing (yet) to review (field=bundle; unlock=u)")
+    assert reply.error is not None and reply.error["detail"] == "nothing (yet) to review"
+
+
+@pytest.mark.parametrize("stderr", [
+    "", "Traceback (most recent call last):\n  boom\n", "af-lowercase: not a code",
+    pytest.param("x" * 2000, id="long-stderr")])
+def test_unrecognized_failure_is_a_structured_error_with_the_stderr_tail(stderr: str) -> None:
+    reply = _translate_module().native_failure(3, stderr)
+    assert reply.status == "error" and reply.error is not None
+    error = from_dict(ErrorInfo, reply.error, "$.error")
+    assert error.code == "APIFORGE-ADAPTER-NATIVE-FAILURE"
+    assert "exited with code 3" in error.detail
+    tail = stderr.strip()
+    if tail:
+        assert tail[-100:] in error.detail
+    assert len(error.detail) <= 600
