@@ -22,9 +22,11 @@ and ``findings.json``/``facts.json`` are parsed.
   case is dropped with a limitation (never an invented evidence).
 
 ``native_failure`` maps a failed verb: the last ``AF-CODE: detail (field=...; unlock=...)``
-line of stderr becomes a refusal (exit 2) or an error (exit 3, ``AF-CLI-INTERNAL`` or any other
-exit code) with the ``AF-*`` code, field and unlock kept intact. Without a recognizable line
-the failure is the adapter error ``APIFORGE-ADAPTER-NATIVE-FAILURE`` with the stderr tail.
+message of stderr becomes a refusal (exit 2) or an error (exit 3, ``AF-CLI-INTERNAL`` or any
+other exit code) with the ``AF-*`` code, field and unlock kept intact (its detail may span
+lines; detail, field and unlock are capped at ``DETAIL_LIMIT`` characters). Without a
+recognizable message the failure is the adapter error ``APIFORGE-ADAPTER-NATIVE-FAILURE``
+with the stderr tail.
 """
 
 from __future__ import annotations
@@ -61,10 +63,14 @@ NOT_APPLICABLE = "not_applicable"
 SEVERITIES = ("info", "low", "medium", "high", "critical")
 CLAIM_LIMIT = 500
 STDERR_TAIL = 500
+DETAIL_LIMIT = 500  # detail, field and unlock of a recognized AF-* message
 # ``AF-CODE: detail (field=<field>; unlock=<unlock>)``, as printed by the API Forge CLI; the
 # detail may itself contain parentheses, so the field/unlock suffix is matched at the end.
-_AF_LINE = re.compile(r"^(?P<code>AF-[A-Z0-9][A-Z0-9_-]*): (?P<detail>.*?)"
-                      r"(?: \(field=(?P<field>.*?); unlock=(?P<unlock>.*)\))?$")
+# A message may span lines: its detail then runs up to the line that ends with the suffix.
+_AF_LINE = re.compile(r"(?P<code>AF-[A-Z0-9][A-Z0-9_-]*): (?P<detail>.*?)"
+                      r"(?: \(field=(?P<field>[^\n]*?); unlock=(?P<unlock>[^\n]*)\))?",
+                      re.DOTALL)
+_AF_START = re.compile(r"AF-[A-Z0-9][A-Z0-9_-]*: ")
 _DRIVE = re.compile(r"^[A-Za-z]:")
 _FILE_ATTRIBUTE_REPARSE_POINT = 0x400  # Windows: symlinks, junctions and other links
 
@@ -81,17 +87,33 @@ class NativeCase:
 # --- native errors --------------------------------------------------------------------------
 
 def _af_line(stderr: str) -> re.Match[str] | None:
-    """The last ``AF-*`` line of stderr (the CLI prints it last, after any other output)."""
-    for line in reversed(stderr.splitlines()):
-        match = _AF_LINE.fullmatch(line.strip())
-        if match is not None:
-            return match
+    """The last ``AF-*`` message of stderr (the CLI prints it last, after any other output).
+
+    When its first line has no ``(field=...; unlock=...)`` suffix, the following lines are
+    joined up to the first one that completes the suffix (a detail with line breaks); without
+    such a line the first line alone is the message.
+    """
+    lines = [line.strip() for line in stderr.splitlines()]
+    for start in reversed(range(len(lines))):
+        if _AF_START.match(lines[start]) is None:
+            continue
+        for end in range(start, len(lines)):
+            match = _AF_LINE.fullmatch("\n".join(lines[start:end + 1]))
+            if match is not None and match["field"] is not None:
+                return match
+        return _AF_LINE.fullmatch(lines[start])
     return None
 
 
 def stderr_tail(stderr: str, limit: int = STDERR_TAIL) -> str:
     text = stderr.strip()
     return text if len(text) <= limit else "..." + text[-(limit - 3):]
+
+
+def _bounded(text: str | None, limit: int = DETAIL_LIMIT) -> str | None:
+    if text is None or len(text) <= limit:
+        return text
+    return text[:limit - 3] + "..."
 
 
 def native_failure(exit_code: int, stderr: str) -> Reply:
@@ -105,10 +127,11 @@ def native_failure(exit_code: int, stderr: str) -> Reply:
         return fail(NATIVE_FAILURE, detail,
                     unlock="inspect the API Forge installation (apiforge doctor) and rerun")
     code = match["code"]
-    detail = match["detail"] or code
+    detail = _bounded(match["detail"]) or code
+    field_name, unlock = _bounded(match["field"]), _bounded(match["unlock"])
     if exit_code == REFUSAL_EXIT_CODE and code != INTERNAL_CODE:
-        return refuse(code, detail, field=match["field"], unlock=match["unlock"])
-    return fail(code, detail, field=match["field"], unlock=match["unlock"])
+        return refuse(code, detail, field=field_name, unlock=unlock)
+    return fail(code, detail, field=field_name, unlock=unlock)
 
 
 # --- case files -----------------------------------------------------------------------------
@@ -196,9 +219,10 @@ def workspace_path(raw: object, stage: StagedInput, project: str = "") -> str | 
     """The workspace path of a native source path, or None when it cannot be one.
 
     Native paths are relative to ``--project`` (``project``: workspace-relative, ``""`` for
-    the stage root) or to the native process cwd (``stage/<path>``); an absolute path must be
-    inside the stage directory. The interpretation naming a staged file wins; otherwise the
-    first well-formed one is kept (its evidence hash is then ``null``).
+    the stage root) or to the native process cwd (``stage/<path>`` from the execute cwd, the
+    path itself from the stage root); an absolute path must be inside the stage directory.
+    The interpretation naming a staged file wins; otherwise the first well-formed one is kept
+    (its evidence hash is then ``null``).
     """
     if not isinstance(raw, str) or not raw:
         return None
@@ -215,6 +239,8 @@ def workspace_path(raw: object, stage: StagedInput, project: str = "") -> str | 
         if value.startswith(prefix):
             candidates.append(value[len(prefix):])
         candidates.append(posixpath.join(project, value) if project else value)
+        if project:
+            candidates.append(value)  # relative to a native cwd at the stage root
     cleaned = [path for path in (_clean(candidate) for candidate in candidates) if path]
     return next((path for path in cleaned if path in stage.files),
                 cleaned[0] if cleaned else None)

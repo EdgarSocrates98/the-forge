@@ -7,17 +7,17 @@ Python 3.12 with ``apiforge`` importable; with ``--replay <dir>`` the scenario's
 ``environment.json`` answers instead (``backend``). ``health`` checks the interpreter, the
 importability and version window of ``apiforge`` and maps the native ``apiforge doctor``
 (run in a temporary directory, or replayed from ``health.json``) to ok/degraded/unavailable
-(``health``). ``execute`` is not implemented yet and refuses with a well-formed response
-(exit 0).
+(``health``). ``execute`` runs the mapped verb through the public CLI over the staged
+context (live) or replays its recording (``--replay``), then translates the case
+(``execute``); the shell reduces the cwd to the declared artifacts afterwards.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from theforge_apiforge import PROVIDER_ID, VERSION
+from theforge_apiforge import PROVIDER_ID, VERSION, execute
 from theforge_apiforge._shell import (
-    OP_UNSUPPORTED,
     AdapterOptions,
     HandlerFactory,
     OpHandler,
@@ -78,20 +78,14 @@ def health(options: AdapterOptions) -> OpHandler:
     return handle
 
 
-def _not_implemented(options: AdapterOptions) -> OpHandler:
-    def handle(request: Request, cwd: Path) -> Reply:
-        reply = refuse(OP_UNSUPPORTED,
-                       f"op {request.op!r} is not implemented by {PROVIDER_ID} {VERSION} yet",
-                       field="op")
-        return Reply(status=reply.status, error=reply.error,
-                     limitations=[f"op {request.op!r} is not implemented yet"])
-    return handle
+def _execute(options: AdapterOptions) -> OpHandler:
+    return execute.handler(options)
 
 
 HANDLERS: dict[str, HandlerFactory] = {
     "describe": describe,
     "health": health,
-    "execute": _not_implemented,
+    "execute": _execute,
 }
 
 

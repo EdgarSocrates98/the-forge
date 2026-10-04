@@ -1005,3 +1005,430 @@ def test_unrecognized_failure_is_a_structured_error_with_the_stderr_tail(stderr:
     if tail:
         assert tail[-100:] in error.detail
     assert len(error.detail) <= 600
+
+
+def test_multi_line_af_message_keeps_field_and_unlock() -> None:
+    reply = _translate_module().native_failure(
+        2, "warning: x\nAF-X: line1\ncontinued (field=f; unlock=u)\n")
+    assert reply.status == "refused" and reply.error is not None
+    assert (reply.error["code"], reply.error["field"], reply.error["unlock"]) == (
+        "AF-X", "f", "u")
+    assert reply.error["detail"] == "line1\ncontinued"
+
+
+def test_recognized_af_detail_is_bounded() -> None:
+    reply = _translate_module().native_failure(
+        2, "AF-LONG: " + "d" * 5000 + " (field=f; unlock=" + "u" * 5000 + ")")
+    assert reply.error is not None and reply.error["code"] == "AF-LONG"
+    assert len(reply.error["detail"]) <= 500 and reply.error["detail"].startswith("ddd")
+    assert len(reply.error["unlock"]) <= 500 and reply.error["field"] == "f"
+
+
+# --- execute (5.4) --------------------------------------------------------------------------
+
+CHANGE_RECORDING = DEFAULT / "api.change-control.run.json"
+ACTIONS = {"api.analyze": "analyze", "api.change-control": "run"}
+
+
+def _context(paths: list[str] | None = None, root: Path = WORKSPACE) -> dict[str, Any]:
+    files = []
+    for rel in WORKSPACE_FILES if paths is None else paths:
+        data = (root / rel).read_bytes()
+        files.append({"path": rel, "sha256": hashlib.sha256(data).hexdigest(),
+                      "bytes": len(data)})
+    return {"root": str(root.resolve()), "files": files}
+
+
+def _execute_payload(capability: str, paths: list[str] | None = None,
+                     root: Path = WORKSPACE) -> dict[str, Any]:
+    return {"task": {"intent": "review the orders API", "budget_profile": "economy"},
+            "capability": capability, "action": ACTIONS[capability],
+            "context": _context(paths, root)}
+
+
+def _execute(cwd: Path, payload: dict[str, Any], replay: Path | None = DEFAULT
+             ) -> tuple[Response, dict[str, Any]]:
+    """Run ``execute`` as the core does, in ``cwd`` (never the repository)."""
+    cwd.mkdir(parents=True, exist_ok=True)
+    request = json.dumps({"protocol": PROTOCOL_V1, "kind": "Request", "op": "execute",
+                          "request_id": "req-execute", "payload": payload}).encode()
+    options = () if replay is None else ("--replay", str(replay))
+    out = subprocess.run([sys.executable, "-m", "theforge_apiforge", *options, "execute"],
+                         input=request, capture_output=True, timeout=120, cwd=cwd)
+    assert out.returncode == 0, out.stderr
+    data = json.loads(out.stdout)
+    response = from_dict(Response, data)
+    assert response.op == "execute" and response.request_id == "req-execute"
+    return response, data
+
+
+def _listing(cwd: Path) -> list[str]:
+    return sorted(p.relative_to(cwd).as_posix() for p in cwd.rglob("*") if p.is_file())
+
+
+def _result(response: Response, data: dict[str, Any], cwd: Path) -> ExecutionResult:
+    assert response.status in ("ok", "partial"), response.error
+    result = from_dict(ExecutionResult, data["payload"], "$.payload")
+    validate_result(result, expected=PRODUCER)
+    # The cwd ends with exactly the declared artifacts, each with its sha256.
+    assert _listing(cwd) == sorted(item.path for item in result.artifacts)
+    assert sorted(p.name for p in cwd.iterdir() if p.is_dir()) == sorted(
+        {item.path.split("/")[0] for item in result.artifacts if "/" in item.path})
+    for item in result.artifacts:
+        assert item.sha256 == hashlib.sha256((cwd / item.path).read_bytes()).hexdigest()
+    return result
+
+
+def _change_recording() -> dict[str, Any]:
+    data: dict[str, Any] = json.loads(CHANGE_RECORDING.read_text(encoding="utf-8"))
+    return data
+
+
+def test_change_control_recording_is_a_provisional_live_shaped_case() -> None:
+    recording = _change_recording()
+    assert recording["provenance"] == "hand-built" and recording["assembled_from"]
+    assert recording["exit_code"] == 0 and recording["native_cwd"] == "stage"
+    assert recording["argv"][:2] == ["change-control", "run"]
+    assert "--fail-on" not in recording["argv"]
+    assert recording["case_dir"] == catalog.VERB_MAP["api.change-control"].output_dir
+    assert {"case/case.json", "case/findings.json", "case/facts.json"} <= set(
+        recording["case_files"])
+    raw = CHANGE_RECORDING.read_bytes()
+    assert b"\r" not in raw and MACHINE_PATH.search(raw.decode("utf-8")) is None
+    assert raw.decode("utf-8") == json.dumps(recording, indent=2, sort_keys=True,
+                                             ensure_ascii=False) + "\n"
+
+
+def test_internal_error_scenario_has_no_af_line() -> None:
+    recording = _error_recording("analyze-internal")
+    assert recording["exit_code"] not in (0, 2)
+    assert re.search(r"^AF-", recording["stderr"], re.MULTILINE) is None
+    directory = SCENARIOS / "analyze-internal"
+    assert (directory / "environment.json").is_file() and (directory / "health.json").is_file()
+
+
+def test_replay_execute_analyze_is_ok_with_native_ids(tmp_path: Path) -> None:
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload("api.analyze"))
+    assert response.status == "ok"
+    result = _result(response, data, cwd)
+    recording = _analyze_recording()
+    assert [item.id for item in result.evidence] == [
+        fact["fact_id"] for fact in recording["case_files"]["facts.json"]["facts"]]
+    assert [item.id for item in result.findings] == [
+        f["finding_id"] for f in recording["case_files"]["findings.json"]["findings"]]
+    assert [item.path for item in result.artifacts] == sorted(
+        f"case/{name}" for name in recording["case_files"])
+    assert all(item.hash is not None for item in result.evidence)
+    # Replay writes the case files with the native serializer: the case manifest hashes hold.
+    manifest = recording["case_files"]["case.json"]["artifacts"]
+    attached = {item.path: item.sha256 for item in result.artifacts}
+    assert all(attached[f"case/{entry['path']}"] == entry["sha256"]
+               for entry in manifest.values())
+
+
+def test_replay_execute_change_control_is_ok_with_native_ids(tmp_path: Path) -> None:
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload("api.change-control"))
+    assert response.status == "ok"
+    result = _result(response, data, cwd)
+    files = _change_recording()["case_files"]
+    native_facts = [fact["fact_id"] for fact in files["case/facts.json"]["facts"]]
+    assert [item.id for item in result.evidence] == native_facts
+    assert [item.id for item in result.findings] == [
+        f["finding_id"] for f in files["case/findings.json"]["findings"]]
+    assert result.findings[0].title.startswith("AF-CODE-002: ")
+    # Code facts are relative to the bundle's project (app), the contract fact to the staged
+    # workspace root (the native cwd): both land on workspace paths with verified hashes.
+    assert {item.location.path for item in result.evidence if item.location} == {
+        "app/main.py", "openapi.yaml"}
+    for item in result.evidence:
+        assert item.location is not None
+        assert item.hash == hashlib.sha256(
+            (WORKSPACE / item.location.path).read_bytes()).hexdigest()
+    assert [item.path for item in result.artifacts] == sorted(
+        f"change-control/{name}" for name in files)
+    assert (cwd / "change-control" / "graph" / "nodes.jsonl").read_text(
+        encoding="utf-8") == files["graph/nodes.jsonl"]
+
+
+@pytest.mark.parametrize(("scenario", "status", "code"), [
+    ("analyze-refused", "refused", "AF-OPENAPI-UNSUPPORTED-VERSION"),
+    ("analyze-error", "error", "AF-CASE-INVALID"),
+    ("analyze-internal", "error", "APIFORGE-ADAPTER-NATIVE-FAILURE"),
+])
+def test_replay_execute_native_failures(tmp_path: Path, scenario: str, status: str,
+                                        code: str) -> None:
+    cwd = tmp_path / "work"
+    response, _ = _execute(cwd, _execute_payload("api.analyze"), SCENARIOS / scenario)
+    assert response.status == status
+    assert response.error is not None and response.error.code == code
+    if scenario == "analyze-internal":
+        assert "RuntimeError: unexpected extractor state" in response.error.detail
+    assert _listing(cwd) == [] and list(cwd.iterdir()) == []
+
+
+def test_replay_execute_unrecorded_action_is_missing(tmp_path: Path) -> None:
+    cwd = tmp_path / "work"
+    response, _ = _execute(cwd, _execute_payload("api.change-control"),
+                           SCENARIOS / "analyze-refused")
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "ADAPTER-REPLAY-MISSING"
+    assert "api.change-control.run.json" in response.error.detail
+    assert list(cwd.iterdir()) == []
+
+
+@pytest.mark.parametrize("capability", EXPOSED)
+def test_execute_without_compatible_input_is_partial_without_recording(
+        tmp_path: Path, capability: str) -> None:
+    replay = tmp_path / "replay"  # environment only: no recording is consulted
+    replay.mkdir()
+    (replay / "environment.json").write_bytes((DEFAULT / "environment.json").read_bytes())
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload(capability, ["requirements.txt"]), replay)
+    assert response.status == "partial"
+    result = _result(response, data, cwd)
+    assert list(result.findings) == []
+    assert any(note.startswith("no input: expected") for note in result.limitations)
+
+
+def _large_scenario(directory: Path) -> int:
+    """A large-output scenario derived from the default analyze recording (never versioned:
+    it is above the 4 MiB inline limit)."""
+    directory.mkdir()
+    for name in ("environment.json", "health.json"):
+        (directory / name).write_bytes((DEFAULT / name).read_bytes())
+    recording = _analyze_recording()
+    recording["provenance"] = "derived"
+    findings = recording["case_files"]["findings.json"]["findings"]
+    base = findings[0]
+    count = 3000
+    findings[:] = [{**base, "finding_id": f"finding:{n:06d}", "title": f"{n} " + "t" * 1500}
+                   for n in range(count)]
+    (directory / "api.analyze.analyze.json").write_text(json.dumps(recording),
+                                                        encoding="utf-8")
+    return count
+
+
+def test_replay_execute_large_output_is_partial_with_artifact(tmp_path: Path) -> None:
+    total = _large_scenario(tmp_path / "large")
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload("api.analyze"), tmp_path / "large")
+    assert response.status == "partial"
+    result = _result(response, data, cwd)
+    assert 0 < len(result.findings) < total
+    assert _shell.SPILL_PATH in [item.path for item in result.artifacts]
+    assert any(note.startswith("output truncated:") for note in result.limitations)
+    assert _shell.inline_size(data["payload"]) <= _shell.INLINE_LIMIT
+
+
+def test_bundle_paths_outside_the_workspace_are_refused(tmp_path: Path) -> None:
+    root = tmp_path / "ws"
+    for rel in WORKSPACE_FILES:
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_bytes((WORKSPACE / rel).read_bytes())
+    bundle = json.loads((WORKSPACE / "change-bundle.json").read_text(encoding="utf-8"))
+    bundle["contract"] = "../outside/openapi.yaml"
+    (root / "change-bundle.json").write_text(json.dumps(bundle), encoding="utf-8")
+    cwd = tmp_path / "work"
+    response, _ = _execute(cwd, _execute_payload("api.change-control", root=root))
+    assert response.status == "refused" and response.error is not None
+    assert response.error.code == "APIFORGE-ADAPTER-INPUT-OUTSIDE"
+    assert response.error.field == "bundle.contract"
+    assert list(cwd.iterdir()) == []
+
+
+# --- live backend, offline: the native process executor is a fake --------------------------
+
+class _FakeNative:
+    """Stands in for ``run_native``: records the call and leaves what the verb would."""
+
+    def __init__(self, recording: dict[str, Any] | None, returncode: int = 0,
+                 stderr: bytes = b""):
+        self.recording = recording
+        self.returncode = returncode
+        self.stderr = stderr
+        self.calls: list[dict[str, Any]] = []
+
+    def __call__(self, argv: list[str], *, cwd: Path, env: dict[str, str],
+                 timeout: float) -> _shell.NativeOutcome:
+        self.calls.append({"argv": list(argv), "cwd": Path(cwd), "env": dict(env),
+                           "timeout": timeout})
+        # What the API Forge leaves in its cwd whatever the verb: economy ledger and cache.
+        (Path(cwd) / ".apiforge" / "cache").mkdir(parents=True, exist_ok=True)
+        (Path(cwd) / ".apiforge" / "economy.jsonl").write_text("{}\n", encoding="utf-8")
+        if self.recording is not None and self.returncode == 0:
+            out = Path(argv[argv.index("--out-dir") + 1])
+            out = out if out.is_absolute() else Path(cwd) / out
+            for name, document in self.recording["case_files"].items():
+                target = out / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                text = (document if isinstance(document, str) else
+                        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False)
+                        + "\n")
+                target.write_bytes(text.encode("utf-8"))
+        return _shell.NativeOutcome(returncode=self.returncode, stdout=b"{}",
+                                    stderr=self.stderr)
+
+
+def _live_respond(cwd: Path, payload: dict[str, Any], fake: _FakeNative
+                  ) -> tuple[Response, dict[str, Any]]:
+    """``respond`` in process with the live execute backend and the fake executor; describe
+    answers from the default replay environment (this interpreter has no API Forge)."""
+    main = importlib.import_module("theforge_apiforge.__main__")
+    execute = importlib.import_module("theforge_apiforge.execute")
+    handlers = {
+        "describe": lambda options: main.describe(_shell.AdapterOptions(replay=DEFAULT)),
+        "health": main.health,
+        "execute": lambda options: execute.handler(options, run=fake),
+    }
+    cwd.mkdir(parents=True, exist_ok=True)
+    raw = json.dumps({"protocol": PROTOCOL_V1, "kind": "Request", "op": "execute",
+                      "request_id": "req-live", "payload": payload}).encode()
+    body = _shell.respond(["execute"], raw, provider_id="api-forge", version="0.1.0",
+                          handlers=handlers, cwd=cwd)
+    data = json.loads(body)
+    return from_dict(Response, data), data
+
+
+def _inside(path: Path, root: Path) -> bool:
+    return path.resolve().is_relative_to(root.resolve())
+
+
+@pytest.mark.parametrize(("capability", "recording"), [
+    ("api.analyze", ANALYZE_RECORDING), ("api.change-control", CHANGE_RECORDING)])
+def test_live_verb_keeps_every_output_under_the_run_cwd(tmp_path: Path, capability: str,
+                                                        recording: Path) -> None:
+    cwd = tmp_path / "work"
+    fake = _FakeNative(json.loads(recording.read_text(encoding="utf-8")))
+    response, data = _live_respond(cwd, _execute_payload(capability), fake)
+    assert response.status == "ok", response.error
+    result = _result(response, data, cwd)
+    assert len(fake.calls) == 1
+    call = fake.calls[0]
+    argv, native_cwd = call["argv"], call["cwd"]
+    spec = catalog.VERB_MAP[capability]
+    # Same interpreter, public CLI, mapped verb, no failure threshold.
+    assert argv[:3] == [sys.executable, "-c", "from apiforge.cli import app; app()"]
+    flags = [index for index, token in enumerate(spec.argv) if token.startswith("--")]
+    verb = list(spec.argv[:flags[0] if flags else len(spec.argv)])
+    assert argv[3:3 + len(verb)] == verb
+    for index in flags:  # the verb's fixed flags are kept with their values
+        position = argv.index(spec.argv[index])
+        assert argv[position + 1] == spec.argv[index + 1]
+    assert not any(token.startswith("--fail-on") for token in argv)
+    # Native cwd under the run cwd, cache off, nothing else added to the environment.
+    assert _inside(native_cwd, cwd)
+    assert call["env"] == {"APIFORGE_CACHE": "off"}
+    assert call["timeout"] == pytest.approx(60.0 * 0.85)
+    # Output dir under the run cwd and outside every input; inputs come from stage/.
+    out = Path(argv[argv.index("--out-dir") + 1])
+    out = out if out.is_absolute() else native_cwd / out
+    assert _inside(out, cwd) and not _inside(out, cwd / "stage")
+    assert ".." not in Path(argv[argv.index("--out-dir") + 1]).parts
+    for flag in ("--contract", "--project", "--bundle"):
+        if flag in argv:
+            value = Path(argv[argv.index(flag) + 1])
+            value = value if value.is_absolute() else native_cwd / value
+            assert _inside(value, cwd / "stage"), (flag, value)
+            assert not _inside(out, value) and not _inside(value, out)
+    # .apiforge/ (ledger, cache) and stage/ are gone: only the case files remain.
+    assert not (cwd / ".apiforge").exists() and not (cwd / "stage").exists()
+    assert result.artifacts and all(item.path.startswith(spec.output_dir + "/")
+                                    for item in result.artifacts)
+
+
+def test_live_native_failure_decodes_stderr_leniently(tmp_path: Path) -> None:
+    cwd = tmp_path / "work"
+    fake = _FakeNative(None, returncode=2,
+                       stderr=b"\xff\xfe noise\nAF-INPUT-NOT-FOUND: stage/x (field=f; unlock=u)\n")
+    response, _ = _live_respond(cwd, _execute_payload("api.analyze"), fake)
+    assert response.status == "refused" and response.error is not None
+    assert response.error.code == "AF-INPUT-NOT-FOUND"
+    assert list(cwd.iterdir()) == []
+
+
+def test_live_verb_is_not_called_without_input(tmp_path: Path) -> None:
+    fake = _FakeNative(None)
+    response, _ = _live_respond(tmp_path / "work",
+                                _execute_payload("api.analyze", ["requirements.txt"]), fake)
+    assert response.status == "partial" and fake.calls == []
+
+
+class _AbsolutePaths(_FakeNative):
+    """Like the API Forge change-control run: some outputs embed absolute run-dir paths."""
+
+    def __call__(self, argv: list[str], *, cwd: Path, env: dict[str, str],
+                 timeout: float) -> _shell.NativeOutcome:
+        outcome = super().__call__(argv, cwd=cwd, env=env, timeout=timeout)
+        out = Path(argv[argv.index("--out-dir") + 1])
+        case = out / "case" / "case.json"
+        brief = {"proof": [str(case), case.as_posix(), str(out)],
+                 "cwd": str(Path(cwd)), "verifier": f"apiforge verify --run-dir {out}"}
+        (out / "brief.json").write_text(json.dumps(brief, indent=2, sort_keys=True) + "\n",
+                                        encoding="utf-8")
+        (out / "notes.txt").write_text(f"run dir {out}\n", encoding="utf-8")
+        # A file a native manifest hashes is never rewritten.
+        hashed = out / "hashed.txt"
+        hashed.write_text(f"pinned {out}\n", encoding="utf-8")
+        digest = hashlib.sha256(hashed.read_bytes()).hexdigest()
+        (out / "manifest.json").write_text(json.dumps({"hashed.txt": digest}) + "\n",
+                                           encoding="utf-8")
+        return outcome
+
+
+def test_live_absolute_run_paths_become_relative_in_artifacts(tmp_path: Path) -> None:
+    cwd = tmp_path / "work"
+    fake = _AbsolutePaths(_change_recording())
+    response, data = _live_respond(cwd, _execute_payload("api.change-control"), fake)
+    assert response.status == "ok", response.error
+    result = _result(response, data, cwd)  # sha256 of every artifact == bytes on disk
+    run = str(cwd.resolve())
+    for item in result.artifacts:
+        if item.path == "change-control/hashed.txt":
+            continue
+        text = (cwd / item.path).read_text(encoding="utf-8")
+        for form in (run, run.replace("\\", "\\\\"), cwd.resolve().as_posix()):
+            assert form not in text, item.path
+    brief = json.loads((cwd / "change-control" / "brief.json").read_text(encoding="utf-8"))
+    assert brief["proof"] == ["change-control/case/case.json"] * 2 + ["change-control"]
+    assert brief["cwd"] == "stage"
+    assert brief["verifier"] == "apiforge verify --run-dir change-control"
+    assert (cwd / "change-control" / "notes.txt").read_text(
+        encoding="utf-8") == "run dir change-control\n"
+    assert run in (cwd / "change-control" / "hashed.txt").read_text(encoding="utf-8")
+    assert any("change-control/hashed.txt" in note and "absolute" in note
+               for note in result.limitations)
+
+
+def _replay_with_case_files(directory: Path, files: dict[str, Any]) -> None:
+    directory.mkdir()
+    (directory / "environment.json").write_bytes((DEFAULT / "environment.json").read_bytes())
+    recording = _analyze_recording()
+    recording["case_files"] = {**recording["case_files"], **files}
+    (directory / "api.analyze.analyze.json").write_text(json.dumps(recording),
+                                                        encoding="utf-8")
+
+
+@pytest.mark.parametrize("key", ["../x.json", "case/../../x.json", "/abs.json", "C:/x.json",
+                                 "C:x.json", "a\\..\\..\\x.json", "\\\\srv\\s\\x.json"])
+def test_replay_rejects_case_file_keys_outside_the_case(tmp_path: Path, key: str) -> None:
+    _replay_with_case_files(tmp_path / "replay", {key: {"x": 1}})
+    cwd = tmp_path / "work"
+    response, _ = _execute(cwd, _execute_payload("api.analyze"), tmp_path / "replay")
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "ADAPTER-REPLAY-INVALID"
+    assert list(cwd.iterdir()) == []
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["replay", "work"]
+
+
+@pytest.mark.parametrize("files", [{"a": "x", "a/b.json": {}}, {"x.json": {}, "./x.json": {}},
+                                   {"D/b.json": {}, "d": "x"}])
+def test_replay_rejects_conflicting_case_file_keys(tmp_path: Path,
+                                                   files: dict[str, Any]) -> None:
+    _replay_with_case_files(tmp_path / "replay", files)
+    cwd = tmp_path / "work"
+    response, _ = _execute(cwd, _execute_payload("api.analyze"), tmp_path / "replay")
+    assert response.status == "error" and response.error is not None
+    assert response.error.code == "ADAPTER-REPLAY-INVALID"
+    assert list(cwd.iterdir()) == []

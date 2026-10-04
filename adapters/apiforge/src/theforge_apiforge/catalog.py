@@ -34,6 +34,9 @@ class InputSpec:
     flag: str
     globs: tuple[str, ...]
     required: bool = True
+    # The flag receives the staged workspace root (``stage/``), not the selected file: the
+    # globs only decide whether the workspace has the input at all.
+    stage_root: bool = False
 
 
 @dataclass(frozen=True)
@@ -53,6 +56,14 @@ class VerbSpec:
     signals: SignalsSpec
     output_dir: str                # relative to the execute cwd
     description: str
+    # Native process cwd relative to the execute cwd: ``.`` (inputs given as ``stage/<path>``)
+    # or ``stage`` (the staged workspace root, for verbs whose input file names further
+    # workspace-relative paths that the API Forge resolves against its cwd).
+    native_cwd: str = "."
+    # Directory of the case (``findings.json``/``facts.json``) inside ``output_dir``.
+    case_subdir: str = ""
+    # Input holding an af-change-bundle/1 whose path fields must stay in the workspace.
+    bundle_input: str | None = None
 
 
 OPENAPI_GLOBS = ("openapi.yaml", "openapi.json", "*.openapi.yaml", "*.openapi.json")
@@ -64,7 +75,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
     "api.analyze": VerbSpec(
         argv=("analyze", "--detail-level", "summary"),
         inputs=(InputSpec("contract", "--contract", OPENAPI_GLOBS),
-                InputSpec("project", "--project", PROJECT_GLOBS)),
+                InputSpec("project", "--project", PROJECT_GLOBS, stage_root=True)),
         actions=("analyze",),
         signals=SignalsSpec(
             keywords=("api", "openapi", "rest api", "endpoint", "api contract"),
@@ -86,6 +97,9 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         output_dir="change-control",
         description="Governed review of an API change bundle (af-change-bundle/1) from "
                     "replayed Git/CI evidence (API Forge `change-control run`).",
+        native_cwd="stage",
+        case_subdir="case",
+        bundle_input="bundle",
     ),
 }
 
