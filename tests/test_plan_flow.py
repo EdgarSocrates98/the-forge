@@ -1,5 +1,10 @@
-"""Plan executor: planning and persistence of the plan run (cross-forge-foundation 5.1) and
-sequential execution, partial failure and plan closing (5.2), with the fixture providers."""
+"""Plan executor: planning and persistence of the plan run (cross-forge-foundation 5.1),
+sequential execution, partial failure and plan closing (5.2), and the offline end-to-end
+scenario matrix of the cross-forge proof (8.1), with the fixture providers.
+
+Every end-to-end scenario of the matrix ends with the ``explain`` report of its plan run
+pointing no divergence (the plan run's artifacts and its child runs' receipts re-verified).
+No network, credentials nor sibling repositories are involved."""
 
 import json
 import time
@@ -26,8 +31,10 @@ from theforge.contracts.plan import ExecutionPlan, PlanResult
 from theforge.contracts.verification import VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.errors import UsageError
+from theforge.explain import build_explain_report
 from theforge.forger import Forger, PlanCommand, PlanExecutor, PlanOutcome
 from theforge.forger import plan_executor as plan_executor_module
+from theforge.forger.orchestrator import HANDOFF_UNDECLARED_LIMITATION
 from theforge.planning import handoff as handoff_module
 from theforge.protocol import ProviderTransport, SubprocessTransport
 from theforge.registry import Registry
@@ -106,7 +113,8 @@ def _node(nid: str, provider: str, capability: str, action: str,
 
 
 def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
-    """Every plan outcome: receipt of kind plan bound to its telemetry and graph by hash."""
+    """Every plan outcome: receipt of kind plan bound to its telemetry and graph by hash, and
+    an ``explain`` report of the plan run without divergence."""
     receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
     assert receipt.kind == "plan" and receipt.status == out.status
     assert receipt.provider is None and receipt.plan is not None
@@ -125,7 +133,16 @@ def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
     assert {"context_ms", "provider_ms"} <= set(telemetry.unknowns)
     assert plan_executor_module.PLAN_TELEMETRY_LIMITATION in telemetry.limitations
     assert telemetry.profile.name == store.read(out.run_id, "task")["budget_profile"]
+    _assert_explained(store, out)  # every closed plan run explains without divergence (8.1)
     return receipt
+
+
+def _assert_explained(store: RunStore, out: PlanOutcome) -> None:
+    """The ``explain`` report of the plan run: a plan report without any divergence."""
+    report = build_explain_report(store, out.run_id)
+    assert report.kind == "plan" and report.status == out.status
+    assert report.integrity.divergences == [], report.integrity.divergences
+    assert "task" in report.integrity.checked  # the receipt anchors the re-verified hashes
 
 
 def _child_runs(store: RunStore, plan_run: str) -> list[str]:
@@ -291,6 +308,8 @@ def test_proof_task_runs_two_nodes_with_the_first_handoff_in_the_second(
     assert (child.parent_run, child.plan_node) == (out.run_id, "n2")
     claims = [e["claim"] for e in store.read(n2.run_id, "result")["evidence"]]
     assert f"received {len(handoff['items'])} handoff items" in claims
+    # fixture-api does not declare accepts_handoff: a limitation, never a failure (4.7, 4.8).
+    assert f"{HANDOFF_UNDECLARED_LIMITATION}: fixture-api/api.contract" in child.limitations
     assert store.read_optional(n1.run_id, "handoff") is None  # n1 has no input
 
     assert [h.source for h in result.synthesis.handoffs] == ["n1"]
@@ -441,3 +460,109 @@ def test_plan_status_rules() -> None:
                          node("b", "provider_failure", Codes.PROTO_SCHEMA)])
     assert failure[0] == "provider_failure" and failure[1] is not None
     assert failure[1].code == Codes.POLICY_DENIED  # the first failed node
+
+
+# --- 8.1 offline end-to-end scenario matrix ---------------------------------------------------
+# Covered above, each closed by ``_assert_closed`` (explain without divergence): the proof task
+# in ``max`` (with estimates), the rejected plan file, the stricter estimate (policy ``ask``
+# refuses the node), the ``balanced`` profile (``ambiguous``) and plan-only (``planned``).
+
+def test_valid_plan_file_runs_its_nodes_with_the_handoff(cross: CrossWorkspace) -> None:
+    executor, store, spy = _executor(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
+    plan_file = _plan_file(cross.root.parent / "plan.json", [
+        _node("data", "fixture-spark", "spark.performance", "review"),
+        _node("api", "fixture-api", "api.contract", "lint", after="data")])
+    out = executor.run(PlanCommand(intent="explicit spark then api", profile="max",
+                                   plan_file=plan_file, execute=True))
+    assert out.status == "ok", out.error
+    plan = store.read_contract(out.run_id, "plan", ExecutionPlan)
+    assert plan.status == "validated" and plan.source == "file"
+    assert plan.task_id == out.run_id  # the file's task_id is replaced by the run's
+    assert [(n.id, n.provider, n.action) for n in plan.nodes] == [
+        ("data", "fixture-spark", "review"), ("api", "fixture-api", "lint")]
+    assert all(n.estimate is not None for n in plan.nodes)
+    assert [pid for pid, op, *_ in spy.calls if op == "execute"] == ["fixture-spark",
+                                                                      "fixture-api"]
+    assert out.result is not None and out.result.order == ["data", "api"]
+    data, api = out.result.nodes
+    assert api.run_id is not None
+    handoff = store.read(api.run_id, "handoff")
+    assert {item["origin"]["node"] for item in handoff["items"]} == {"data"}
+    assert [h.source for h in out.result.synthesis.handoffs] == ["data"]
+    _assert_closed(store, out)
+
+
+def test_plan_op_error_is_a_limitation_and_the_plan_still_runs(tmp_path: Path) -> None:
+    executor, store, spy = _executor(tmp_path, [bad_entry("plan-error", "bad-p"), SPARK_ENTRY])
+    plan_file = _plan_file(tmp_path / "plan.json", [
+        _node("n1", "bad-p", "bad.thing", "run"),
+        _node("n2", "fixture-spark", "spark.performance", "diagnose", after="n1")])
+    out = executor.run(PlanCommand(intent="bad then spark", profile="max",
+                                   plan_file=plan_file, execute=True))
+    assert out.status == "ok", out.error
+    assert spy.ops("plan") == ["bad-p"]  # fixture-spark (base manifest) does not declare it
+    plan = store.read_contract(out.run_id, "plan", ExecutionPlan)
+    n1 = plan.nodes[0]
+    assert n1.estimate is None
+    (note,) = [n for n in n1.limitations if n.startswith("estimate: ")]
+    assert Codes.PLAN_ESTIMATE in note and "BAD-PLAN-FAILED" in note
+    assert out.result is not None
+    assert f"n1: {note}" in out.result.synthesis.limitations
+    assert spy.ops("execute") == ["bad-p", "fixture-spark"]
+    _assert_closed(store, out)
+
+
+def test_invalid_provider_yields_an_installation_plan_with_the_registry_detail(
+        tmp_path: Path) -> None:
+    executor, store, spy = _executor(tmp_path, [bad_entry("invalid-manifest", "bad-i"),
+                                                SPARK_ENTRY])
+    record = Registry(tmp_path / ".forge").get("bad-i")
+    assert record.state == "invalid" and record.error
+    plan_file = _plan_file(tmp_path / "plan.json", [
+        _node("n1", "fixture-spark", "spark.performance", "diagnose"),
+        _node("n2", "bad-i", "bad.thing", "run", after="n1")])
+    out = executor.run(PlanCommand(intent="spark then invalid", profile="max",
+                                   plan_file=plan_file, execute=True))
+    assert out.status == "refused" and out.error is not None
+    assert spy.ops("execute") == []
+    installation = store.read_contract(out.run_id, "installation", InstallationPlan)
+    assert installation.planning_only is True
+    (item,) = installation.items
+    assert (item.provider, item.state, item.source, item.nodes) == (
+        "bad-i", "invalid", "registry", ["n2"])
+    assert item.reason == record.error
+    receipt = _assert_closed(store, out)
+    assert receipt.plan is not None
+    assert receipt.plan.installation_sha256 == store.persisted_sha256(out.run_id,
+                                                                      "installation")
+
+
+@pytest.mark.parametrize(("target", "declared"), [
+    (API_PLAN_ENTRY, False),  # a v1 provider that knows nothing of handoffs
+    (bad_entry("handoff-accept", "bad-h"), True),
+])
+def test_handoff_to_a_provider_with_or_without_handoff_knowledge_ends_ok(
+        cross: CrossWorkspace, target: dict[str, Any], declared: bool) -> None:
+    executor, store, _ = _executor(cross.root, [SPARK_PLAN_ENTRY, target])
+    capability = "api.contract" if not declared else "bad.thing"
+    action = "review" if not declared else "run"
+    plan_file = _plan_file(cross.root.parent / "plan.json", [
+        _node("n1", "fixture-spark", "spark.performance", "diagnose"),
+        _node("n2", target["id"], capability, action, after="n1")])
+    out = executor.run(PlanCommand(intent="spark then consumer", profile="max",
+                                   plan_file=plan_file, execute=True))
+    assert out.status == "ok", out.error
+    assert out.result is not None
+    n2 = out.result.nodes[1]
+    assert n2.status == "ok" and n2.run_id is not None
+    handoff = store.read(n2.run_id, "handoff")
+    receipt = store.read_contract(n2.run_id, "receipt", ExecutionReceipt)
+    undeclared = [n for n in receipt.limitations
+                  if n.startswith(HANDOFF_UNDECLARED_LIMITATION)]
+    if declared:
+        assert undeclared == []
+        result = store.read(n2.run_id, "result")
+        assert f"handoff-items={len(handoff['items'])}" in result["limitations"]
+    else:
+        assert undeclared == [f"{HANDOFF_UNDECLARED_LIMITATION}: fixture-api/api.contract"]
+    _assert_closed(store, out)
