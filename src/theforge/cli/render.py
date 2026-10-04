@@ -11,6 +11,13 @@ def _clean(value: object) -> str:
     return _UNSAFE.sub("?", str(value))
 
 
+def _short_hashes(value: object) -> str:
+    """A hash (or a list of hashes, e.g. negotiation rounds) shortened to 12 chars each."""
+    if isinstance(value, list):
+        return ",".join(_clean(item or "-")[:12] for item in value)
+    return _clean(value or "-")[:12]
+
+
 def init(data: dict[str, Any]) -> str:
     forge_dir = _clean(data["forge_dir"])
     if not data["created"]:
@@ -207,8 +214,10 @@ def explain(data: dict[str, Any]) -> str:
                      f"{_clean(error.get('detail', '?'))}{unlock}")
     if receipt:
         inputs = receipt.get("inputs") or {}
-        hashes = " ".join(f"{_clean(key).removesuffix('_sha256')}={_clean(value or '-')[:12]}"
-                          for key, value in sorted(inputs.items()))
+        hashes = " ".join(
+            f"{_clean(key).removesuffix('_sha256')}={_short_hashes(value)}"
+            for key, value in sorted(inputs.items())
+            if not (isinstance(value, list) and not value))  # no negotiation rounds: omit
         lines.append(f"Receipt:     {hashes} "
                      f"result={_clean(receipt.get('result_sha256') or '-')[:12]}")
     return "\n".join(lines)

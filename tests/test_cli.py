@@ -89,6 +89,41 @@ def test_explain_errors(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
     assert run(capsys, "explain", "../escape", "--root", root)[0] == 2
 
 
+def test_explain_reads_run_without_round_or_telemetry_artifacts(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """10.5: a run written before context-r*/telemetry existed stays readable."""
+    make_workspace(tmp_path, [])
+    run_id = "20260101T000000Z-deadbeef"
+    run_dir = tmp_path / ".forge" / "runs" / run_id
+    run_dir.mkdir(parents=True)
+    producer = {"id": "theforge", "version": "0.1.0"}
+    ts = "2026-01-01T00:00:00.000000Z"
+    (run_dir / "task.json").write_text(json.dumps({
+        "schema": "theforge/TaskSpec/v1", "producer": producer, "created_at": ts,
+        "status": "created", "id": "t1", "intent": "eco", "workspace_root": "/ws"}),
+        encoding="utf-8")
+    (run_dir / "receipt.json").write_text(json.dumps({
+        "schema": "theforge/ExecutionReceipt/v1", "producer": producer, "created_at": ts,
+        "status": "no_route", "run_id": run_id, "forge_version": "0.1.0",
+        "inputs": {"task_sha256": "a" * 64}, "started_at": ts, "finished_at": ts}),
+        encoding="utf-8")
+    root = str(tmp_path)
+    code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
+    data = json.loads(out)
+    assert code == 0 and data["receipt"]["status"] == "no_route"
+    assert data["context-r1"] is None and data["context-r2"] is None
+    assert data["telemetry"] is None
+    code, out, _ = run(capsys, "explain", run_id, "--root", root)
+    assert code == 0 and "no_route" in out
+    assert "context_round" not in out
+
+
+def test_explain_receipt_line_lists_negotiation_round_hashes() -> None:
+    out = render.explain({"run_id": "x", "receipt": {"status": "ok", "inputs": {
+        "task_sha256": "a" * 64, "context_round_sha256": ["b" * 64, "c" * 64]}}})
+    assert f"context_round={'b' * 12},{'c' * 12}" in out
+
+
 def test_persistence_failure_exit_5(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     make_workspace(tmp_path, [])
     runs = tmp_path / ".forge" / "runs"

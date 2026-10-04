@@ -13,6 +13,7 @@ from theforge.contracts import (
     ExecutionResult,
     RiskAssessment,
     RoutingDecision,
+    RunTelemetry,
     TaskSpec,
     from_dict,
     to_dict,
@@ -25,13 +26,19 @@ from theforge.security.redact import redact
 T = TypeVar("T")
 
 RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
-ARTIFACTS = ("task", "routing", "risk", "context", "result", "receipt")
+# Run order. context-r1/context-r2 (negotiation rounds) and telemetry are optional: runs
+# written before they existed stay readable (read_optional returns None).
+ARTIFACTS = ("task", "routing", "risk", "context", "context-r1", "context-r2", "result",
+             "telemetry", "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
     "task": TaskSpec,
     "routing": RoutingDecision,
     "risk": RiskAssessment,
     "context": ContextPack,
+    "context-r1": ContextPack,
+    "context-r2": ContextPack,
     "result": ExecutionResult,
+    "telemetry": RunTelemetry,
     "receipt": ExecutionReceipt,
 }
 

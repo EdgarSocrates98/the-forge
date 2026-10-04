@@ -20,6 +20,60 @@
       },
       "type": "array"
     },
+    "context_request": {
+      "anyOf": [
+        {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "lines": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "end": {
+                            "type": "integer"
+                          },
+                          "start": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "start",
+                          "end"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "created_at": {
       "type": "string"
     },

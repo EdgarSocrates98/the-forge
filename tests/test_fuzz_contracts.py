@@ -65,15 +65,18 @@ SEEDS: dict[str, dict[str, Any]] = {
         "evidence": [EVIDENCE], "artifacts": [{"path": "out.md", "sha256": SHA}],
         "metrics": {"duration_ms": {"value": 1.5, "kind": "measured"},
                     "tokens": {"value": None, "kind": "unknown"}},
+        "context_request": {"items": [{"path": "b.md", "lines": {"start": 1, "end": 2},
+                                       "reason": "r"}]},
     },
     "Evidence": EVIDENCE,
     "ExecutionReceipt": {
         "producer": P, "created_at": "t", "status": "refused", "run_id": "run-1",
         "forge_version": "0.1", "started_at": "t0", "finished_at": "t1", "error": ERROR,
-        "inputs": {"task_sha256": SHA, "routing_sha256": SHA, "context_sha256": None},
+        "inputs": {"task_sha256": SHA, "routing_sha256": SHA, "context_sha256": None,
+                   "context_round_sha256": [SHA]},
         "provider": {"id": "demo-forge", "version": "1", "trust": "local",
                      "manifest_sha256": SHA, "executable": "x", "fingerprint": SHA},
-        "result_sha256": SHA,
+        "result_sha256": SHA, "telemetry_sha256": SHA,
     },
     "Request": {"op": "describe", "request_id": "r_1", "payload": {"a": {"b": [1]}}},
     "Response": {
@@ -92,6 +95,17 @@ SEEDS: dict[str, dict[str, Any]] = {
                        "credentials": "unknown", "cross_account": "no"},
         "policy": {"decision": "allow", "rule": "r", "reason": "r", "approved": False},
         "limitations": [OPERATION_CLASS_LIMITATION],
+    },
+    "RunTelemetry": {
+        "producer": P, "created_at": "t", "run_id": "run-1",
+        "profile": {"name": "balanced", "budget_bytes": 10, "max_files": 2,
+                    "tiers": ["metadata", "reference"], "effective_tiers": ["reference"],
+                    "negotiation_rounds": 1, "max_providers": 1, "fallback": True,
+                    "verification": "conditional", "execute_timeout_s": 180.0},
+        "scan_ms": {"value": 1.5, "kind": "measured"},
+        "providers_executed": {"value": 2, "kind": "measured"},
+        "provider_revalidation": "undeclared", "verification_performed": "minimal",
+        "context_drift": ["a.md"], "limitations": ["l"], "unknowns": ["u"],
     },
 }
 

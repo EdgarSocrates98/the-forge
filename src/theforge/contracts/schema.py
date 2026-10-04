@@ -22,16 +22,20 @@ from theforge.contracts import (
     Response,
     RiskAssessment,
     RoutingDecision,
+    RunTelemetry,
     TaskSpec,
 )
 
 EXPORTED: tuple[type[Any], ...] = (
     ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
     ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, RiskAssessment,
+    RunTelemetry,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open.
-CLOSED_SCHEMAS: tuple[type[Any], ...] = (RoutingDecision, ExecutionReceipt, RiskAssessment)
+CLOSED_SCHEMAS: tuple[type[Any], ...] = (
+    RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
+)
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 

@@ -52,7 +52,10 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert out.result.metrics.duration_ms.kind == "measured"
     assert out.result.metrics.tokens.kind == "unknown"
     store = RunStore(tmp_path / ".forge")
+    # Negotiation rounds are optional; telemetry is written once the ask flow records it.
     for name in ARTIFACTS:
+        if name.startswith("context-r") or name == "telemetry":
+            continue
         assert store.read_optional(out.run_id, name) is not None
     receipt = out.receipt
     assert receipt.inputs.task_sha256 == sha256_of(store.read(out.run_id, "task"))

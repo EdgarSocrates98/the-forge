@@ -57,6 +57,12 @@
     "inputs": {
       "additionalProperties": false,
       "properties": {
+        "context_round_sha256": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "context_sha256": {
           "anyOf": [
             {
@@ -218,6 +224,16 @@
         "provider_failure",
         "ambiguous",
         "no_route"
+      ]
+    },
+    "telemetry_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
     "unknowns": {

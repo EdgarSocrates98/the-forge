@@ -193,3 +193,46 @@ def test_context_v2_instances_validate_against_published_schemas() -> None:
         to_dict(from_dict(ForgeManifest, manifest, strict=True)))
     bad = {**manifest, "context_revalidation": "sometimes"}
     assert list(Draft202012Validator(json_schema(ForgeManifest)).iter_errors(bad))
+
+
+def _telemetry() -> dict[str, object]:
+    return {
+        "producer": {"id": "theforge", "version": "1"}, "created_at": "t",
+        "run_id": "20260101T000000Z-deadbeef",
+        "profile": {"name": "max", "budget_bytes": 1, "max_files": 1, "tiers": ["metadata"],
+                    "effective_tiers": [], "negotiation_rounds": 2, "max_providers": 4,
+                    "fallback": True, "verification": "strong", "execute_timeout_s": 600.0},
+        "scan_ms": {"value": 1.0, "kind": "measured"},
+        "providers_executed": {"value": 2, "kind": "measured"},
+    }
+
+
+def test_run_telemetry_is_exported_and_closed() -> None:
+    from theforge.contracts import RunTelemetry
+
+    assert RunTelemetry in EXPORTED and RunTelemetry in CLOSED_SCHEMAS
+    published = json.loads((SCHEMAS_DIR / "RunTelemetry.schema.json").read_text("utf-8"))
+    assert published["properties"]["schema"] == {"type": "string"}
+    assert set(published["required"]) == {"producer", "created_at", "run_id", "profile"}
+    validator = Draft202012Validator(published)
+    data = to_dict(from_dict(RunTelemetry, _telemetry(), strict=True))
+    validator.validate(data)
+    data["profile"]["extra"] = 1
+    data["surprise"] = True
+    assert len(list(validator.iter_errors(data))) == 2
+
+
+def test_context_request_and_receipt_hashes_published_as_optional() -> None:
+    result = json.loads((SCHEMAS_DIR / "ExecutionResult.schema.json").read_text("utf-8"))
+    assert "context_request" in result["properties"]
+    assert "context_request" not in result["required"]
+    validator = Draft202012Validator(result)
+    data = to_dict(ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok"))
+    data["context_request"] = {"items": [{"path": "a.py", "lines": {"start": 1, "end": 2}}]}
+    validator.validate(data)
+    receipt = json.loads((SCHEMAS_DIR / "ExecutionReceipt.schema.json").read_text("utf-8"))
+    assert "telemetry_sha256" in receipt["properties"]
+    assert "telemetry_sha256" not in receipt["required"]
+    inputs = receipt["properties"]["inputs"]
+    assert inputs["properties"]["context_round_sha256"]["type"] == "array"
+    assert "context_round_sha256" not in inputs["required"]

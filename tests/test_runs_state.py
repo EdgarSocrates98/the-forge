@@ -5,16 +5,20 @@ from typing import Any
 import pytest
 
 from theforge.contracts import (
+    ContextPack,
     ContractError,
     ErrorInfo,
     ExecutionReceipt,
     ExecutionResult,
     IntegrityError,
+    Metric,
     PolicyDecision,
     Producer,
+    ProfileSnapshot,
     ReceiptInputs,
     RiskAssessment,
     RiskDimensions,
+    RunTelemetry,
     TaskSpec,
 )
 from theforge.contracts.canonical import sha256_of, utc_now
@@ -157,10 +161,62 @@ def make_risk(run_id: str) -> RiskAssessment:
 
 
 def test_risk_is_a_known_artifact_in_run_order() -> None:
-    assert ARTIFACTS == ("task", "routing", "risk", "context", "result", "receipt")
+    assert ARTIFACTS == ("task", "routing", "risk", "context", "context-r1", "context-r2",
+                         "result", "telemetry", "receipt")
     assert set(ARTIFACT_TYPES) == set(ARTIFACTS)
     assert ARTIFACT_TYPES["risk"] is RiskAssessment
     assert ARTIFACT_TYPES["receipt"] is ExecutionReceipt
+
+
+def test_negotiation_round_and_telemetry_artifacts_are_typed() -> None:
+    assert ARTIFACT_TYPES["context-r1"] is ContextPack
+    assert ARTIFACT_TYPES["context-r2"] is ContextPack
+    assert ARTIFACT_TYPES["telemetry"] is RunTelemetry
+
+
+def make_telemetry(run_id: str) -> RunTelemetry:
+    snapshot = ProfileSnapshot(
+        name="balanced", budget_bytes=262144, max_files=64,
+        tiers=["excerpt", "metadata", "reference", "requested"],
+        effective_tiers=["metadata", "reference"], negotiation_rounds=1, max_providers=1,
+        fallback=True, verification="conditional", execute_timeout_s=180.0)
+    return RunTelemetry(producer=PRODUCER, created_at=utc_now(), run_id=run_id,
+                        profile=snapshot, scan_ms=Metric(value=1.5, kind="measured"),
+                        limitations=["provider said password=hunter2xyz"])
+
+
+def test_telemetry_is_redacted_hashed_on_disk_and_reread_strictly(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    digest = store.write(run_id, "telemetry", make_telemetry(run_id))
+    on_disk = store.read(run_id, "telemetry")
+    assert on_disk["limitations"] == ["provider said password=[REDACTED]"]
+    assert "hunter2xyz" not in (store.run_dir(run_id) / "telemetry.json").read_text("utf-8")
+    assert digest == sha256_of(on_disk) == store.persisted_sha256(run_id, "telemetry")
+    loaded = store.read_contract(run_id, "telemetry", RunTelemetry)
+    assert loaded.limitations == ["provider said password=[REDACTED]"]
+    assert loaded.scan_ms == Metric(value=1.5, kind="measured")
+    assert loaded.routing_ms == Metric()
+
+
+def test_negotiation_round_pack_round_trips_through_strict_read(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
+                       task_id="t1", provider_id="echo", root=".", budget_bytes=10, round=1)
+    for name in ("context-r1", "context-r2"):
+        digest = store.write(run_id, name, pack)
+        assert digest == sha256_of(store.read(run_id, name))
+        assert store.read_contract(run_id, name, ContextPack) == pack
+    assert (store.run_dir(run_id) / "context-r1.json").is_file()
+
+
+def test_run_without_new_artifacts_reads_them_as_absent(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    store.write(run_id, "task", make_task())
+    for name in ("context-r1", "context-r2", "telemetry"):
+        assert store.read_optional(run_id, name) is None
+        assert store.persisted_sha256(run_id, name) is None
+    with pytest.raises(LookupError):
+        store.read_contract(run_id, "telemetry", RunTelemetry)
 
 
 def test_risk_round_trips_through_strict_read(tmp_path: Path) -> None:
