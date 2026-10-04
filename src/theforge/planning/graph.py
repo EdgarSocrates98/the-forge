@@ -15,7 +15,7 @@ Nodes: ``workspace:.``, ``repository:<path>``, ``provider:<id>``,
   ``evidence`` item of the handoff the node received.
 
 An edge without evidence, with a missing endpoint or inferred without a rule is dropped
-and recorded as a ``FORGE-WORKSPACE-GRAPH-EDGE`` limitation (8.3, 8.4). Nodes are sorted by
+and recorded as a ``Codes.WORKSPACE_GRAPH_EDGE`` limitation (8.3, 8.4). Nodes are sorted by
 id and edges by (source, kind, target) (8.5). Above the node limit, evidence and artifact
 nodes are cut in id order and the graph is marked ``truncated``. The graph is a plain run
 artifact: nothing here touches the disk (8.6).

@@ -8,7 +8,7 @@ The file is optional and committable (like ``providers.toml``)::
     kind = "depends_on"
 
 Only ``depends_on`` between two discovered repositories is accepted. An invalid entry or one
-naming a repository that does not exist is ignored with a ``FORGE-WORKSPACE-CONFIG`` warning;
+naming a repository that does not exist is ignored with a ``Codes.WORKSPACE_CONFIG`` warning;
 a malformed file ignores every entry with one warning. Loading never fails the run.
 """
 
