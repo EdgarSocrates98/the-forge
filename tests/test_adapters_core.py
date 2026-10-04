@@ -1,4 +1,4 @@
-"""Real-provider adapters in replay seen through the core (real-provider-integration 6.2).
+"""Real-provider adapters in replay seen through the core (real-provider-integration 6.2-6.4).
 
 Both adapters are registered in the isolated user ``providers.toml`` with ``--replay`` pointing,
 per case, to the recorded ``default`` scenario or to a recorded error / health scenario of
@@ -8,11 +8,15 @@ core: ``Registry``, ``check_health`` and ``Forger.ask`` with the ``RunStore`` an
 The specialists themselves are not installed in the dev interpreter, so an adapter registered
 without ``--replay`` is the "specialist missing" case.
 
-Sections 6.3 (no context drift) and 6.4 (cross-forge proof task) extend this file.
+Section 6.3 proves the adapters cause no context drift on the example workspaces (every
+non-null ``Evidence.hash`` equals the ``ContextFile.sha256`` of the item with the same path);
+section 6.4 is side B of the cross-forge-foundation proof-task seam (routing by signals only).
 """
 
 import copy
 import hashlib
+import importlib
+import importlib.util
 import json
 import shutil
 import sys
@@ -23,12 +27,24 @@ from typing import Any
 import pytest
 
 from helpers import make_workspace
-from theforge.contracts import HealthReport, from_dict
+from theforge.context.scan import scan_workspace
+from theforge.contracts import (
+    Candidate,
+    ContextPack,
+    ExecutionResult,
+    HealthReport,
+    TaskSpec,
+    from_dict,
+)
+from theforge.contracts.canonical import utc_now
 from theforge.contracts.semver import parse_semver
 from theforge.forger import AskOutcome, AskRequest, Forger
+from theforge.meta import PRODUCER
 from theforge.protocol import SubprocessTransport
 from theforge.registry import Registry, check_health
 from theforge.registry.registry import provider_cwd
+from theforge.routing import MIN_SIGNAL_TYPES, route
+from theforge.routing.signals import normalize_tokens, workspace_dependencies
 from theforge.runs import RunStore
 
 REPO = Path(__file__).parents[1]
@@ -338,3 +354,179 @@ def test_degraded_provider_still_runs_and_records_the_run(tmp_path: Path) -> Non
     assert outcome.status in ("ok", "partial"), outcome.error
     _assert_receipt(store, outcome, outcome.status)
     _assert_work_holds_only_artifacts(store, outcome)
+
+
+# --- no context drift on the example workspaces (6.3) -------------------------------------
+
+# context-intelligence-v2 (provider-reported drift, revalidation telemetry) is a separate wave;
+# its checks below run only once ``theforge.context.verify`` exists in the core.
+CONTEXT_V2 = importlib.util.find_spec("theforge.context.verify") is not None
+
+
+def _hashed_evidence_drift(pack: dict[str, Any], result: ExecutionResult) -> list[str]:
+    """Evidence whose non-null ``hash`` has no ContextPack item with the same ``location.path``
+    and ``ContextFile.sha256`` equal to it (what context-intelligence-v2 reports as drift)."""
+    items: dict[str, set[str]] = {}
+    for item in pack["files"]:
+        items.setdefault(item["path"], set()).add(item["sha256"])
+    return sorted(f"{e.id}: {e.location.path if e.location else None} hash {e.hash}"
+                  for e in result.evidence
+                  if e.hash is not None
+                  and (e.location is None or e.hash not in items.get(e.location.path, set())))
+
+
+def _assert_no_reported_drift(store: RunStore, outcome: AskOutcome) -> None:
+    """The context-intelligence-v2 view of the same run: no drift, strategy ``hash``."""
+    verify = importlib.import_module("theforge.context.verify")
+    result = outcome.result
+    assert result is not None
+    pack = from_dict(ContextPack, store.read(outcome.run_id, "context"), "$")
+    assert not verify.provider_reported_drift(pack, result)
+    receipt = store.read(outcome.run_id, "receipt")
+    for notes in (result.limitations, receipt.get("limitations", [])):
+        assert not [note for note in notes if note.startswith("context-drift:")], notes
+    telemetry = store.read(outcome.run_id, "telemetry")
+    assert telemetry["provider_revalidation"] == "hash"
+
+
+@pytest.mark.parametrize(("adapter", "capability", "action", "inputs"), DEFAULT_RUNS,
+                         ids=[f"{c}.{a}" for _, c, a, _ in DEFAULT_RUNS])
+def test_hashed_evidence_equals_the_context_pack_item_of_its_path(
+        tmp_path: Path, adapter: Adapter, capability: str, action: str,
+        inputs: set[str]) -> None:
+    root = _workspace(tmp_path, adapter, [adapter.entry(adapter.default)])
+    outcome, store = _ask(root, adapter, capability, action)
+    assert outcome.status in ("ok", "partial"), outcome.error
+    result = outcome.result
+    assert result is not None
+    # Not vacuous: the recordings carry native hashes of the staged inputs.
+    assert [e for e in result.evidence if e.hash is not None], result.evidence
+    assert _hashed_evidence_drift(store.read(outcome.run_id, "context"), result) == []
+    if CONTEXT_V2:
+        _assert_no_reported_drift(store, outcome)
+
+
+@pytest.mark.parametrize("name", sorted(ADAPTERS))
+def test_raw_describe_declares_hash_revalidation(name: str) -> None:
+    """Read from the raw describe payload: a parsed ForgeManifest drops the field on cores
+    without context-intelligence-v2."""
+    adapter = ADAPTERS[name]
+    with provider_cwd() as cwd:
+        response = SubprocessTransport(adapter.entry(adapter.default)["argv"]).call(
+            "describe", {}, timeout=60, cwd=Path(cwd))
+    assert response.status == "ok", response.error
+    assert response.payload["context_revalidation"] == "hash"
+
+
+# The recorded native hash fields, rewritten to a divergent value in a tampered recording.
+_DIVERGENT = hashlib.sha256(b"tampered native hash").hexdigest()
+# An adapter that copies every native hash into Evidence.hash (breaks the common rule).
+_PASS_THROUGH = ("import sys, runpy, {module}.translate as t; "
+                 "t.evidence_hash = lambda path, native, stage: native "
+                 "if path in stage.files else None; "
+                 "sys.argv[0] = {module!r}; runpy.run_module({module!r}, run_name='__main__')")
+
+
+def _tampered_scenario(adapter: Adapter, directory: Path) -> set[str]:
+    """The default scenario with every native hash of a workspace input made divergent;
+    returns the workspace paths whose recorded hash was rewritten."""
+    shutil.copytree(adapter.default, directory)
+    hashes = {hashlib.sha256(path.read_bytes()).hexdigest(): path.relative_to(
+        adapter.workspace).as_posix() for path in adapter.workspace.rglob("*") if path.is_file()}
+    name = f"{adapter.capability}.{adapter.action}.json"
+    text = (directory / name).read_text(encoding="utf-8")
+    tampered = {path for digest, path in hashes.items() if digest in text}
+    for digest in hashes:
+        text = text.replace(digest, _DIVERGENT)
+    (directory / name).write_text(text, encoding="utf-8", newline="\n")
+    assert tampered, f"{name} records no native hash of a workspace input"
+    return tampered
+
+
+@pytest.mark.parametrize("name", sorted(ADAPTERS))
+def test_divergent_native_hash_is_never_copied_into_evidence(
+        tmp_path: Path, name: str) -> None:
+    adapter = ADAPTERS[name]
+    _tampered_scenario(adapter, tmp_path / "tampered")
+    root = _workspace(tmp_path, adapter, [adapter.entry(tmp_path / "tampered")])
+    outcome, store = _ask(root, adapter)
+    assert outcome.status in ("ok", "partial"), outcome.error
+    result = outcome.result
+    assert result is not None and result.evidence
+    assert all(e.hash is None for e in result.evidence), result.evidence
+    assert _hashed_evidence_drift(store.read(outcome.run_id, "context"), result) == []
+
+
+@pytest.mark.parametrize("name", sorted(ADAPTERS))
+def test_drift_check_fails_when_a_divergent_native_hash_is_copied(
+        tmp_path: Path, name: str) -> None:
+    """Negative control: an adapter that copied the tampered native hash would be caught."""
+    adapter = ADAPTERS[name]
+    tampered = _tampered_scenario(adapter, tmp_path / "tampered")
+    entry = {"id": adapter.provider_id, "trust": "local",
+             "argv": [sys.executable, "-c", _PASS_THROUGH.format(module=adapter.module),
+                      "--replay", str(tmp_path / "tampered")]}
+    root = _workspace(tmp_path, adapter, [entry])
+    outcome, store = _ask(root, adapter)
+    assert outcome.status in ("ok", "partial"), outcome.error
+    assert outcome.result is not None
+    drift = _hashed_evidence_drift(store.read(outcome.run_id, "context"), outcome.result)
+    assert drift and all(_DIVERGENT in line for line in drift), drift
+    assert {line.split(": ", 1)[1].split(" hash ")[0] for line in drift} <= tampered
+
+
+# --- cross-forge-foundation proof task, side B of the seam (6.4) ---------------------------
+
+PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
+CROSS = FIXTURES / "workspaces" / "cross"
+PROOF_BEST = {SPARK.provider_id: SPARK.capability, API.provider_id: API.capability}
+
+
+def _proof_workspace(tmp_path: Path) -> Path:
+    """The cross-forge-foundation ``cross`` workspace (mandatory once it exists); before it,
+    the spark + api example workspaces merged into one root (same composition: a PySpark job
+    with ``pyspark`` requirements, an OpenAPI contract with a FastAPI app and ``fastapi``)."""
+    root = tmp_path / "proof"
+    if CROSS.is_dir():
+        shutil.copytree(CROSS, root)
+        return root
+    requirements: list[str] = []
+    for source in (SPARK.workspace, API.workspace):
+        shutil.copytree(source, root, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("requirements*.txt"))
+        requirements += (source / "requirements.txt").read_text(encoding="utf-8").splitlines()
+    (root / "requirements.txt").write_text("\n".join(requirements) + "\n", encoding="utf-8")
+    return root
+
+
+@pytest.mark.parametrize("scope", ["adapters", "registry"])
+def test_proof_task_routes_one_best_capability_per_provider(tmp_path: Path, scope: str) -> None:
+    """``adapters``: only the two adapter manifests (signals both declare, such as ``*.py``,
+    are then non-discriminating); ``registry``: every routable record, built-ins included."""
+    root = _proof_workspace(tmp_path)
+    make_workspace(root, [SPARK.entry(SPARK.default), API.entry(API.default)])
+    records = [r for r in Registry(root / ".forge").records()
+               if scope == "registry" or r.entry.id in PROOF_BEST]
+    assert {r.entry.id for r in records if r.routable()} >= set(PROOF_BEST), records
+    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="proof-task",
+                    intent=PROOF_TASK, workspace_root=str(root))
+    decision = route(task, records, scan_workspace(root, []).files,
+                     workspace_dependencies(root))
+    by_provider: dict[str, list[Candidate]] = {}
+    for candidate in decision.candidates:
+        by_provider.setdefault(candidate.provider, []).append(candidate)
+    tokens = normalize_tokens(PROOF_TASK)
+    first_keyword: dict[str, int] = {}
+    for provider, capability in PROOF_BEST.items():
+        candidates = by_provider.get(provider, [])
+        assert candidates, (provider, decision.reason, decision.candidates)
+        top = max(c.rank_key[0] for c in candidates)
+        best = [c for c in candidates if c.rank_key[0] == top]
+        # A tie or another capability is fixed in the adapter catalog signals, never in core.
+        assert [c.capability for c in best] == [capability], (provider, candidates)
+        assert top >= MIN_SIGNAL_TYPES, (provider, best[0].matched)
+        assert best[0].matched.keywords, (provider, best[0].matched)
+        first_keyword[provider] = min(tokens.index(keyword.split(" ")[0])
+                                      for keyword in best[0].matched.keywords)
+    # The intent names Spark before the API: the plan's node order relies on it.
+    assert first_keyword[SPARK.provider_id] < first_keyword[API.provider_id], first_keyword
