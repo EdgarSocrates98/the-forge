@@ -106,16 +106,26 @@ def _state_confidence(capability: Capability) -> tuple[str, list[str]]:
     return "high", []
 
 
+def alias_note(requested: str, capability: Capability, provider: str) -> str:
+    """The ``capability-alias`` note of an alias resolved to its canonical id (5.5).
+
+    Single source of the text, shared with plan files (``planning.validate``)."""
+    return f"capability-alias: {requested!r} resolved to {capability.id!r} ({provider})"
+
+
+def deprecation_note(capability: Capability, provider: str) -> str | None:
+    """The ``capability-deprecated`` note of ``capability`` (5.5); None if not deprecated."""
+    if not capability.deprecated:
+        return None
+    successor = (f"replaced_by {capability.replaced_by!r}" if capability.replaced_by
+                 else "no replacement declared")
+    return f"capability-deprecated: {capability.id!r} ({provider}) is deprecated; {successor}"
+
+
 def _deprecation_notes(declared: Sequence[tuple[str, Capability]]) -> list[str]:
     """``capability-deprecated`` notes for (provider, capability) pairs (5.5); no weight."""
-    notes = []
-    for provider, capability in declared:
-        if capability.deprecated:
-            successor = (f"replaced_by {capability.replaced_by!r}" if capability.replaced_by
-                         else "no replacement declared")
-            notes.append(f"capability-deprecated: {capability.id!r} ({provider}) is "
-                         f"deprecated; {successor}")
-    return notes
+    return [note for provider, capability in declared
+            if (note := deprecation_note(capability, provider)) is not None]
 
 
 def _overlap_notes(declared: Sequence[tuple[str, Capability]], suffix: str = "") -> list[str]:
@@ -148,8 +158,7 @@ def _route_explicit(
     candidates = [Candidate(provider=r.entry.id, capability=c.id, state=c.state,
                             rank_key=[TRUST_RANK[r.entry.trust]]) for r, c in matches]
     declared = [(r.entry.id, c) for r, c in matches]
-    notes = [f"capability-alias: {requested!r} resolved to {c.id!r} ({provider})"
-             for provider, c in declared if not canonical]
+    notes = [alias_note(requested, c, provider) for provider, c in declared if not canonical]
     targets = sorted({c.id for _, c in matches})
     if len(targets) > 1:
         # Only alias groups can diverge: providers naming different capabilities by one
