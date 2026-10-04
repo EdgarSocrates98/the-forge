@@ -102,7 +102,11 @@ def test_adapter_sources_never_import_theforge(name: str) -> None:
 
 @pytest.mark.parametrize("op", OPS)
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
-def test_adapter_skeleton_refuses_every_op(name: str, op: str) -> None:
+def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
+    specialist = {"sparkforge": "sparkforge", "apiforge": "apiforge"}[name]
+    if importlib.util.find_spec(specialist) is not None or (
+            name == "apiforge" and sys.version_info[:2] == (3, 12)):
+        pytest.skip(f"{specialist} may be usable in this interpreter")
     request = {"protocol": PROTOCOL_V1, "kind": "Request", "op": op,
                "request_id": f"req-{op}", "payload": {}}
     out = _run(name, op, json.dumps(request).encode("utf-8"))
@@ -115,7 +119,11 @@ def test_adapter_skeleton_refuses_every_op(name: str, op: str) -> None:
     assert response.request_id == f"req-{op}"
     assert response.producer.id == ADAPTERS[name][2]
     assert response.producer.version == "0.1.0"
-    assert response.error is not None and response.error.code.startswith("ADAPTER-")
+    assert response.error is not None
+    # Without the specialist in this interpreter, describe (and so execute, gated by it)
+    # refuses with the adapter's own unavailability code (4.1/5.1).
+    assert (response.error.code.startswith("ADAPTER-")
+            or response.error.code == f"{name.upper()}-ADAPTER-UNAVAILABLE")
 
 
 @pytest.mark.parametrize("stdin", [b"", b"not json", b"[1, 2]", b'{"request_id": 7}'])
