@@ -52,9 +52,11 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert out.result.metrics.duration_ms.kind == "measured"
     assert out.result.metrics.tokens.kind == "unknown"
     store = RunStore(tmp_path / ".forge")
-    # Negotiation rounds are optional; telemetry is written in every run. Plan-run, handoff,
-    # verification and diagnostic artifacts (Wave D) are not written by this ask run.
-    ask_artifacts = ("task", "routing", "risk", "context", "result", "telemetry", "receipt")
+    # Negotiation rounds are optional; telemetry is written in every run and verification in
+    # every run that executed a provider. Plan-run, handoff and diagnostic artifacts (Wave D)
+    # are not written by this ask run.
+    ask_artifacts = ("task", "routing", "risk", "context", "result", "verification",
+                     "telemetry", "receipt")
     assert set(ask_artifacts) <= set(ARTIFACTS)
     for name in ask_artifacts:
         assert store.read_optional(out.run_id, name) is not None

@@ -195,12 +195,12 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "context-request-undeclared": ("provider_failure", Codes.CONTEXT_REQUEST_UNSUPPORTED),
     "context-request-invalid": ("provider_failure", Codes.CONTEXT_REQUEST_INVALID),
     # cross-forge-foundation fixtures: a single ``ask`` never calls the ``plan`` op nor sends
-    # a handoff, so these answer as a valid run. artifact-tamper stays ``ok`` until artifact
-    # re-verification (cross-forge-foundation 3.x/4.x) makes it ``partial``.
+    # a handoff, so these answer as a valid run. artifact-tamper declares an artifact whose
+    # hash diverges from the file in work/: the forge verification ends it ``partial`` (9.5).
     "plan-error": ("ok", None),
     "plan-estimate-stricter": ("ok", None),
     "handoff-accept": ("ok", None),
-    "artifact-tamper": ("ok", None),
+    "artifact-tamper": ("partial", None),
     "internal-crash": ("provider_failure", Codes.PROTO_EXIT),  # unhandled exception, exit 1
 }
 
@@ -278,6 +278,8 @@ def test_every_mode_through_the_full_forger(
         receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
         validate_receipt(receipt, result_sha256=store.persisted_sha256(out.run_id, "result"))
         assert receipt.status == status
+        if mode == "artifact-tamper":  # the divergence is named in the receipt (9.5)
+            assert (f"{Codes.RESULT_ARTIFACT_HASH}: out/report.txt") in receipt.limitations
         if status in ("ok", "partial"):
             assert out.result is not None and receipt.result_sha256 is not None
         else:

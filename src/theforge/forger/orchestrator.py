@@ -10,6 +10,15 @@ Every artifact is persisted as soon as it exists, so a run that fails midway is
 still explainable. The routing artifact is the exception: it is written once, with the
 final decision (after registry revalidation and fallback). No path reports success
 without a valid ExecutionResult.
+
+A run may pin its provider (no health fallback is ever tried for it), be bound to a plan
+node (plan and node in the task, the plan's pattern in the routing decision, the handoff
+persisted before execute and delivered in the request) and point at the run it replays.
+A node's estimated operation class can only make the policy stricter (10.2). Every run
+that executed a provider records its ``VerificationResult``; a declared artifact whose
+hash diverges ends the run ``partial`` (9.5, 9.6). Every outcome records its
+reproducibility level (14.1, 14.2), and an unexpected internal error its redacted
+diagnostic, persisted as an artifact only when debug is asked for (13.5).
 """
 
 import time
@@ -43,8 +52,10 @@ from theforge.contracts import (
     IntegrityError,
     Metric,
     Metrics,
+    PolicyDecision,
     ReceiptInputs,
     ReceiptProvider,
+    RiskDimensions,
     RoutingDecision,
     Selection,
     TaskSpec,
@@ -53,16 +64,30 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import Codes
+from theforge.contracts.diagnostic import Diagnostic
+from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import (
     check_producer,
     validate_context_pack,
     validate_context_request,
     validate_result,
 )
-from theforge.contracts.types import BudgetProfile, Outcome, Producer
+from theforge.contracts.types import (
+    BudgetProfile,
+    OperationClass,
+    Outcome,
+    PlanPattern,
+    Producer,
+    Reproducibility,
+)
+from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
+from theforge.diagnostics import build_diagnostic
 from theforge.errors import PersistenceError, UsageError
+from theforge.forger.reproducibility import assess_run
 from theforge.forger.telemetry import TelemetryRecorder
+from theforge.forger.verification import ARTIFACT_HASH_LIMITATION, build_verification
 from theforge.meta import PRODUCER, VERSION
+from theforge.planning.estimate import stricter_decision
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
 from theforge.profiles import MAX_NEGOTIATION_ROUNDS, PROFILES, ContextProfile, profile_for
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
@@ -86,6 +111,26 @@ EXECUTE_TIMEOUTS: Final[Mapping[str, float]] = MappingProxyType(
 )
 # Receipt limitation when the run telemetry could not be built (the receipt still goes).
 TELEMETRY_UNAVAILABLE_LIMITATION: Final = "telemetry-unavailable"
+# Receipt limitation when a handoff reaches a capability that does not declare
+# ``accepts_handoff`` (4.7): "<prefix>: <provider>/<capability>".
+HANDOFF_UNDECLARED_LIMITATION: Final = "handoff-use-undeclared"
+
+
+@dataclass(frozen=True, kw_only=True)
+class NodeBinding:
+    """The plan node a run executes (4.6), set by the plan executor.
+
+    ``handoff`` comes already redacted from ``planning.handoff``; ``estimate_class`` is the
+    node's estimated operation class (10.2); ``upstream`` holds the reproducibility levels
+    of the nodes the handoff came from (14.2).
+    """
+
+    plan_run: str
+    node: str
+    pattern: PlanPattern
+    handoff: Handoff | None = None
+    estimate_class: OperationClass | None = None
+    upstream: tuple[Reproducibility, ...] = ()
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -97,6 +142,10 @@ class AskRequest:
     profile: BudgetProfile = "balanced"
     allow_unverified: bool = False
     approvals: frozenset[str] = frozenset()  # capability ids explicitly approved (--approve)
+    provider: str | None = None  # pinned provider: replaces the selection, never falls back
+    node: NodeBinding | None = None  # plan node this run executes
+    replay_of: str | None = None  # original run of a re-execute replay
+    debug: bool = False  # also persist the diagnostic of an internal error as an artifact
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -107,6 +156,8 @@ class AskOutcome:
     receipt: ExecutionReceipt
     result: ExecutionResult | None = None
     error: ErrorInfo | None = None
+    verification: VerificationResult | None = None
+    diagnostic: Diagnostic | None = None
 
 
 @dataclass
@@ -115,6 +166,8 @@ class _Trace:
     started_at: str
     task_sha: str
     telemetry: TelemetryRecorder  # phases and counters of this run, written by _finish (10.x)
+    request: AskRequest
+    stage: str = "task"  # last stage entered, for the diagnostic of an internal error
     routing_sha: str | None = None
     context_sha: str | None = None
     result_sha: str | None = None
@@ -125,6 +178,12 @@ class _Trace:
     record: RegistryRecord | None = None
     identity: ProviderFingerprint | None = None
     decision: RoutingDecision | None = None
+    capability: Capability | None = None
+    handoff: Handoff | None = None  # as persisted: exactly what the provider receives
+    handoff_sha: str | None = None
+    executed: bool = False  # an execute call was attempted (reproducibility, 14.1)
+    verification: VerificationResult | None = None
+    verification_sha: str | None = None
     limitations: list[str] = field(default_factory=list)
 
 
@@ -196,6 +255,8 @@ class _Executed:
     pack: ContextPack | None = None
     error: ErrorInfo | None = None
     duration_ms: float = 0.0
+    response_status: str | None = None  # the provider's own status, when it answered
+    exception: BaseException | None = None  # cause of an internal error, for its diagnostic
 
 
 @dataclass(frozen=True)
@@ -221,19 +282,22 @@ class Forger:
         run_id = new_run_id()
         started = utc_now()
         self.store.create(run_id)
+        node = request.node
         task = TaskSpec(
             producer=PRODUCER, created_at=started, id=run_id, intent=request.intent,
             workspace_root=str(self.root), targets=list(request.targets),
             budget_profile=request.profile, requested_capability=request.capability,
             requested_action=request.action,
+            constraints={"plan": {"run": node.plan_run, "node": node.node}} if node else {},
         )
         telemetry = TelemetryRecorder(run_id, profile_for(task.budget_profile))
         # Always measured, so a run that never gets there records an explicit zero.
         for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):
             telemetry.count(counter, 0)
         trace = _Trace(run_id=run_id, started_at=started, telemetry=telemetry,
-                       task_sha=self.store.write(run_id, "task", task))
+                       task_sha=self.store.write(run_id, "task", task), request=request)
         try:
+            self._record_handoff(trace)
             return self._run(trace, task, request)
         except UsageError as exc:
             self._finish(trace, self._placeholder(run_id, f"usage error: {exc}"), "no_route",
@@ -245,7 +309,22 @@ class Forger:
             error = ErrorInfo(code=Codes.INTERNAL, detail=f"{type(exc).__name__}: {exc}")
             decision = trace.decision or self._placeholder(
                 run_id, f"internal error: {error.detail}")
-            return self._finish(trace, decision, "provider_failure", error=error)
+            return self._finish(trace, decision, "provider_failure", error=error,
+                                exception=exc)
+
+    def _record_handoff(self, trace: _Trace) -> None:
+        """Persist a plan node's handoff before anything runs (4.6).
+
+        The provider receives the handoff exactly as persisted (re-read from disk); its own
+        limitations (truncation, missing inputs) become run limitations.
+        """
+        node = trace.request.node
+        if node is None or node.handoff is None:
+            return
+        trace.stage = "handoff"
+        trace.handoff_sha = self.store.write(trace.run_id, "handoff", node.handoff)
+        trace.handoff = self.store.read_contract(trace.run_id, "handoff", Handoff)
+        trace.limitations.extend(node.handoff.limitations)
 
     @staticmethod
     def _placeholder(run_id: str, reason: str) -> RoutingDecision:
@@ -255,11 +334,19 @@ class Forger:
     def _run(self, trace: _Trace, task: TaskSpec, request: AskRequest) -> AskOutcome:
         run_id = trace.run_id
         telemetry = trace.telemetry
+        trace.stage = "scan"
         with telemetry.phase("scan"):
             scan = scan_workspace(self.root, task.targets)
         telemetry.count("files_scanned", len(scan.files))
+        trace.stage = "routing"
         with telemetry.phase("routing"):
             routed = self._final_route(trace, task, request, scan.files)
+        if routed.error is None:
+            routed = self._pin(trace, task, request, routed)
+        if request.node is not None:  # the plan's pattern, whatever the outcome (4.6)
+            routed = replace(routed, decision=replace(routed.decision,
+                                                      pattern=request.node.pattern))
+            trace.decision = routed.decision
         decision, records = routed.decision, routed.records
         if routed.error is not None:
             trace.routing_sha = self.store.write(run_id, "routing", decision)
@@ -272,11 +359,16 @@ class Forger:
             return self._finish(trace, decision, decision.status)
 
         profile = profile_for(task.budget_profile)
+        pinned = request.provider is not None
+        trace.stage = "health"
         with telemetry.phase("routing"):  # health (and fallback) completes the routing
-            decision, record, health_error = self._select_healthy(task, decision, records,
-                                                                  profile)
+            decision, record, health_error = self._select_healthy(
+                task, decision, records, profile, fallback=not pinned)
         telemetry.count("fallbacks_used", len(decision.fallbacks_used))
-        if record is None and not profile.fallback:
+        if record is None and pinned:
+            trace.limitations.append(f"pinned provider {request.provider}: "
+                                     "fallback not attempted")
+        elif record is None and not profile.fallback:
             trace.limitations.append(f"profile {profile.name}: fallback disabled")
         trace.decision = decision
         trace.routing_sha = self.store.write(run_id, "routing", decision)
@@ -293,6 +385,11 @@ class Forger:
         capability = record.manifest.capability(selection.capability)
         if capability is None:  # the router only selects declared capabilities
             raise RuntimeError(f"{record.entry.id} does not declare {selection.capability!r}")
+        trace.capability = capability
+        if trace.handoff is not None and not capability.accepts_handoff:  # 4.7
+            trace.limitations.append(
+                f"{HANDOFF_UNDECLARED_LIMITATION}: {record.entry.id}/{capability.id}")
+        trace.stage = "policy"
         policy_error = self._apply_policy(trace, request, record, capability, selection)
         if policy_error is not None:
             return self._finish(trace, decision, "refused", error=policy_error)
@@ -308,9 +405,20 @@ class Forger:
             trace.limitations.extend(fingerprints.warnings)
             self._record_context(trace, fingerprints)
         if executed.result is None:
-            return self._finish(trace, decision, executed.status, error=executed.error)
+            if trace.executed:
+                self._record_verification(trace, record, executed.response_status, None)
+            return self._finish(trace, decision, executed.status, error=executed.error,
+                                exception=executed.exception)
         assert executed.pack is not None
+        trace.stage = "verification"
         result = self._verify_context(trace, executed.result, executed.pack, profile)
+        # The verification judges what the provider returned (before drift demotion).
+        diverged = self._record_verification(trace, record, executed.response_status,
+                                             executed.result)
+        if diverged:  # a declared artifact is not what the provider said it wrote (9.5)
+            trace.limitations.extend(diverged)
+            result = replace(result, status="partial",
+                             limitations=[*result.limitations, *diverged])
         result = replace(result, metrics=Metrics(
             duration_ms=Metric(value=round(executed.duration_ms, 3), kind="measured"),
             context_bytes=Metric(value=float(executed.pack.used_bytes), kind="measured"),
@@ -318,6 +426,25 @@ class Forger:
         ))
         trace.result_sha = self.store.write(run_id, "result", result)
         return self._finish(trace, decision, result.status, result=result)
+
+    def _record_verification(
+        self, trace: _Trace, record: RegistryRecord, response_status: str | None,
+        result: ExecutionResult | None,
+    ) -> list[str]:
+        """Build and persist the run's ``VerificationResult`` (9.1-9.6).
+
+        ``result`` is the validated result as the provider returned it (``None`` without
+        one). Returns the artifact-hash limitations, one per diverging declared artifact.
+        """
+        assert record.manifest is not None
+        verification = build_verification(
+            trace.run_id, response_status, result, trace.drift,
+            self.store.work_dir(trace.run_id),
+            expected=Producer(id=record.entry.id, version=record.manifest.version))
+        trace.verification = verification
+        trace.verification_sha = self.store.write(trace.run_id, "verification", verification)
+        prefix = f"{ARTIFACT_HASH_LIMITATION}:"
+        return [note for note in verification.limitations if note.startswith(prefix)]
 
     def _verify_context(
         self, trace: _Trace, result: ExecutionResult, pack: ContextPack,
@@ -341,13 +468,14 @@ class Forger:
         selection: Selection, scan: WorkspaceScan, profile: ContextProfile,
         fingerprints: FingerprintStore,
     ) -> _Executed:
+        trace.stage = "context"
         with trace.telemetry.phase("context"):
             pack = self._build_context(trace, task, record, capability, scan, profile,
                                        fingerprints)
             try:
                 validate_context_pack(pack)
             except IntegrityError as exc:  # the core built it: internal, never sent (1.7)
-                return _Executed("provider_failure", error=ErrorInfo(
+                return _Executed("provider_failure", exception=exc, error=ErrorInfo(
                     code=Codes.INTERNAL, detail=f"inconsistent context pack: {exc}"))
             trace.context_sha = self.store.write(trace.run_id, "context", pack)
             trace.last_pack = pack
@@ -370,10 +498,13 @@ class Forger:
         expected = Producer(id=record.entry.id, version=record.manifest.version)
         telemetry = trace.telemetry
         telemetry.count("providers_executed", 1)  # one provider per ask run, every round
+        trace.executed = True
+        trace.stage = "execute"
         total_ms = 0.0
         while True:
             payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
-                                             action=selection.action, context=pack))
+                                             action=selection.action, context=pack,
+                                             handoff=trace.handoff))
             started_exec = time.perf_counter()
             try:
                 with telemetry.phase("provider"):  # sums every round's execute (4.2)
@@ -391,37 +522,40 @@ class Forger:
                 return _Executed("provider_failure", error=ErrorInfo(
                     code=envelope.code, detail=f"execute: {envelope.detail}",
                     field=envelope.field))
+            answered = response.status  # the provider's own word (verification self-report)
             if response.status in ("refused", "error"):
                 status: Outcome = ("refused" if response.status == "refused"
                                    else "provider_failure")
-                return _Executed(status, error=response.error or ErrorInfo(
-                    code=Codes.PROTO_SCHEMA, detail="error response without error body"))
+                return _Executed(status, response_status=answered, error=response.error
+                                 or ErrorInfo(code=Codes.PROTO_SCHEMA,
+                                              detail="error response without error body"))
             try:
                 result = from_dict(ExecutionResult, response.payload, "$.payload")
             except ContractError as exc:
-                return _Executed("provider_failure", error=ErrorInfo(
+                return _Executed("provider_failure", response_status=answered, error=ErrorInfo(
                     code=Codes.PROTO_SCHEMA, detail=f"execute: {exc}"))
             try:  # relational invariants and producer id+version; invalid results are dropped
                 validate_result(result, expected=expected)
             except IntegrityError as exc:
-                return _Executed("provider_failure", error=ErrorInfo(
+                return _Executed("provider_failure", response_status=answered, error=ErrorInfo(
                     code=exc.code, detail=f"execute: {exc}", field=exc.field))
 
             if result.context_request is None:
                 final: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
                 return _Executed(final, result=replace(result, status=final), pack=pack,
-                                 duration_ms=total_ms)
+                                 duration_ms=total_ms, response_status=answered)
             refusal = self._refuse_request(record, capability, result.context_request,
                                            pack, profile)
             if refusal is not None:
-                return _Executed("provider_failure", error=refusal)
+                return _Executed("provider_failure", response_status=answered, error=refusal)
             with telemetry.phase("context"):
                 pack = extend_context_pack(pack, result.context_request, scan,
                                            profile=profile, fingerprints=fingerprints)
                 try:
                     validate_context_pack(pack)
                 except IntegrityError as exc:  # the core extended it: internal, never sent
-                    return _Executed("provider_failure", error=ErrorInfo(
+                    return _Executed("provider_failure", response_status=answered,
+                                     exception=exc, error=ErrorInfo(
                         code=Codes.INTERNAL,
                         detail=f"inconsistent context pack (round {pack.round}): {exc}"))
                 trace.context_round_shas.append(
@@ -488,19 +622,40 @@ class Forger:
         """Decide allow/ask/deny and persist the risk before any execute process (6.1-6.4).
 
         Only routable providers reach this point: ``blocked`` ones are excluded by the router.
+        A plan node's estimated operation class is evaluated too and the stricter decision
+        applies (10.2); the risk then records the estimated class as the effective one.
         """
-        assert record.manifest is not None
+        manifest = record.manifest
+        assert manifest is not None
         warnings: list[str] = []
         config = load_policy(user_dir=self.registry.user_dir or user_config_dir(),
                              forge_dir=self.root / ".forge", warnings=warnings)
         trace.limitations.extend(f"policy: {w}" for w in warnings)
-        dimensions = assess_dimensions(operation_class=capability.operation_class,
-                                       execution=record.manifest.execution)
-        policy = evaluate(dimensions=dimensions, trust=record.entry.trust, config=config,
-                          approved=capability.id in request.approvals, capability=capability.id)
+
+        def decide(operation_class: OperationClass) -> tuple[RiskDimensions, PolicyDecision]:
+            dimensions = assess_dimensions(operation_class=operation_class,
+                                           execution=manifest.execution)
+            return dimensions, evaluate(
+                dimensions=dimensions, trust=record.entry.trust, config=config,
+                approved=capability.id in request.approvals, capability=capability.id)
+
+        declared = capability.operation_class
+        dimensions, policy = decide(declared)
+        estimated = request.node.estimate_class if request.node is not None else None
+        stricter_note: str | None = None
+        if estimated is not None and estimated != declared:
+            estimated_dimensions, estimated_policy = decide(estimated)
+            if stricter_decision(policy, estimated_policy) is estimated_policy:
+                dimensions, policy = estimated_dimensions, estimated_policy
+                stricter_note = (f"operation-class: estimate {estimated} stricter than "
+                                 f"declared {declared}")
         risk = build_risk_assessment(run_id=trace.run_id, provider_id=record.entry.id,
                                      capability=capability, action=selection.action,
                                      dimensions=dimensions, decision=policy)
+        if stricter_note is not None and estimated is not None:
+            risk = replace(risk, operation_class=estimated,
+                           limitations=[*risk.limitations, stricter_note])
+            trace.limitations.append(stricter_note)
         trace.risk_sha = self.store.write(trace.run_id, "risk", risk)
         if policy.decision == "ask":
             return ErrorInfo(code=Codes.POLICY_APPROVAL_REQUIRED, detail=policy.reason,
@@ -559,6 +714,40 @@ class Forger:
                        "was rediscovered; refusing to route on an unstable registry"))
         return _Routed(decision, records)
 
+    @staticmethod
+    def _pin(trace: _Trace, task: TaskSpec, request: AskRequest, routed: _Routed) -> _Routed:
+        """Replace the selection by the pinned provider (3.3), or ``no_route`` with a reason.
+
+        The pinned provider must be a candidate of the final decision, still routable, with
+        a capability offering the resolved action. Health fallback is never tried for it.
+        """
+        pinned = request.provider
+        if pinned is None:
+            return routed
+        decision = routed.decision
+        record = routed.records.get(pinned)
+        candidate = next((c for c in decision.candidates if c.provider == pinned), None)
+        action: str | None = None
+        if (candidate is not None and record is not None and record.manifest is not None
+                and record.routable(request.allow_unverified)):
+            capability = record.manifest.capability(candidate.capability)
+            if capability is not None:
+                wanted = task.requested_action or capability.default_action
+                action = wanted if wanted in capability.actions else None
+        if candidate is None or action is None:
+            target = task.requested_capability or "this task"
+            pinned_decision = replace(
+                decision, status="no_route", selected=[],
+                reason=f"pinned provider {pinned} is not routable for {target}")
+        else:
+            pinned_decision = replace(
+                decision, status="routed",
+                selected=[Selection(provider=pinned, capability=candidate.capability,
+                                    action=action)],
+                reason=f"{decision.reason}; pinned provider {pinned}")
+        trace.decision = pinned_decision
+        return replace(routed, decision=pinned_decision)
+
     def _revalidate(self, decision: RoutingDecision) -> list[RevalidationOutcome]:
         provider_ids = sorted({c.provider for c in decision.candidates})
         return self.registry.revalidate(provider_ids) if provider_ids else []
@@ -570,18 +759,19 @@ class Forger:
 
     def _select_healthy(
         self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord],
-        profile: ContextProfile | None = None,
+        profile: ContextProfile | None = None, *, fallback: bool = True,
     ) -> tuple[RoutingDecision, RegistryRecord | None, ErrorInfo | None]:
         """Health of the primary, then of compatible fallbacks when the profile allows (9.1).
 
-        ``profile`` defaults to the task's profile.
+        ``profile`` defaults to the task's profile; ``fallback=False`` (pinned provider)
+        checks the primary only.
         """
         profile = profile if profile is not None else profile_for(task.budget_profile)
         primary = decision.selected[0]
         tried: list[str] = []
         last_error: ErrorInfo | None = None
         order = self._fallback_order(task, decision, records)
-        if not profile.fallback:
+        if not profile.fallback or not fallback:
             order = order[:1]
         for candidate in order:
             record = records[candidate.provider]
@@ -649,10 +839,33 @@ class Forger:
         except Exception as exc:  # noqa: BLE001 - telemetry must never block the receipt
             return None, [f"{TELEMETRY_UNAVAILABLE_LIMITATION}: {type(exc).__name__}: {exc}"]
 
+    @staticmethod
+    def _reproducibility(trace: _Trace, status: Outcome) -> ReproducibilityInfo:
+        record, node = trace.record, trace.request.node
+        return assess_run(
+            executed=trace.executed, manifest=record.manifest if record else None,
+            capability=trace.capability,
+            fingerprint=trace.identity.digest if trace.identity else None,
+            context_sha256=trace.context_sha, drift=trace.drift,
+            verification=trace.verification, status=status,
+            upstream=node.upstream if node is not None else ())
+
+    def _diagnostic(self, trace: _Trace, exception: BaseException | None,
+                    error: ErrorInfo | None) -> Diagnostic | None:
+        """The redacted diagnostic of an internal error (13.5), persisted only with debug."""
+        if exception is None or error is None or error.code != Codes.INTERNAL:
+            return None
+        diagnostic = build_diagnostic(exception, stage=trace.stage, code=Codes.INTERNAL)
+        if trace.request.debug:
+            self.store.write(trace.run_id, "diagnostic", diagnostic)
+        return diagnostic
+
     def _finish(
         self, trace: _Trace, decision: RoutingDecision, status: Outcome, *,
         result: ExecutionResult | None = None, error: ErrorInfo | None = None,
+        exception: BaseException | None = None,
     ) -> AskOutcome:
+        diagnostic = self._diagnostic(trace, exception, error)
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:
@@ -669,16 +882,24 @@ class Forger:
         telemetry_sha, telemetry_notes = self._write_telemetry(trace)
         limitations = list(trace.limitations)
         limitations.extend(n for n in telemetry_notes if n not in limitations)
+        node = trace.request.node
         receipt = ExecutionReceipt(
             producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
             forge_version=VERSION,
             inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
                                  context_sha256=trace.context_sha, risk_sha256=trace.risk_sha,
-                                 context_round_sha256=list(trace.context_round_shas)),
+                                 context_round_sha256=list(trace.context_round_shas),
+                                 handoff_sha256=trace.handoff_sha),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
             finished_at=utc_now(), error=error, limitations=limitations,
             telemetry_sha256=telemetry_sha,
+            parent_run=node.plan_run if node is not None else None,
+            plan_node=node.node if node is not None else None,
+            replay_of=trace.request.replay_of,
+            verification_sha256=trace.verification_sha,
+            reproducibility=self._reproducibility(trace, status),
         )
         self.store.write(trace.run_id, "receipt", receipt)
         return AskOutcome(run_id=trace.run_id, status=status, decision=decision,
-                          receipt=receipt, result=result, error=error)
+                          receipt=receipt, result=result, error=error,
+                          verification=trace.verification, diagnostic=diagnostic)
