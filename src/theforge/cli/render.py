@@ -346,7 +346,9 @@ def explain(data: dict[str, Any]) -> str:
         hashes = " ".join(
             f"{_clean(key).removesuffix('_sha256')}={_short_hashes(value)}"
             for key, value in sorted(inputs.items())
-            if not (isinstance(value, list) and not value))  # no negotiation rounds: omit
+            # no negotiation rounds, or no handoff (not a plan node run): omit
+            if not (isinstance(value, list) and not value)
+            and not (key == "handoff_sha256" and value is None))
         lines.append(f"Receipt:     {hashes} "
                      f"result={_clean(receipt.get('result_sha256') or '-')[:12]}")
     return "\n".join(lines)

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "causes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "code": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "error_type": {
+      "type": "string"
+    },
+    "family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "frames": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer"
+          },
+          "module": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "module",
+          "function",
+          "line"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "message": {
+      "type": "string"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "stage",
+    "code",
+    "family",
+    "error_type",
+    "message"
+  ],
+  "title": "Diagnostic",
+  "type": "object"
+}

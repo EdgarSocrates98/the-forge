@@ -52,10 +52,11 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert out.result.metrics.duration_ms.kind == "measured"
     assert out.result.metrics.tokens.kind == "unknown"
     store = RunStore(tmp_path / ".forge")
-    # Negotiation rounds are optional; telemetry is written in every run.
-    for name in ARTIFACTS:
-        if name.startswith("context-r"):
-            continue
+    # Negotiation rounds are optional; telemetry is written in every run. Plan-run, handoff,
+    # verification and diagnostic artifacts (Wave D) are not written by this ask run.
+    ask_artifacts = ("task", "routing", "risk", "context", "result", "telemetry", "receipt")
+    assert set(ask_artifacts) <= set(ARTIFACTS)
+    for name in ask_artifacts:
         assert store.read_optional(out.run_id, name) is not None
     receipt = out.receipt
     assert receipt.inputs.task_sha256 == sha256_of(store.read(out.run_id, "task"))

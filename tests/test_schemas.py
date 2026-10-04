@@ -236,3 +236,39 @@ def test_context_request_and_receipt_hashes_published_as_optional() -> None:
     inputs = receipt["properties"]["inputs"]
     assert inputs["properties"]["context_round_sha256"]["type"] == "array"
     assert "context_round_sha256" not in inputs["required"]
+
+
+def test_wave_d_contracts_are_exported_open_only_when_they_cross_the_protocol() -> None:
+    from theforge.contracts import (
+        Diagnostic,
+        ExecutionPlan,
+        ExplainReport,
+        Handoff,
+        InstallationPlan,
+        PlanEstimate,
+        PlanRequest,
+        PlanResult,
+        VerificationResult,
+        WorkspaceDescriptor,
+        WorkspaceGraph,
+    )
+    for open_cls in (Handoff, PlanRequest, PlanEstimate):
+        assert open_cls in EXPORTED and open_cls not in CLOSED_SCHEMAS
+    for closed_cls in (ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph,
+                       VerificationResult, InstallationPlan, ExplainReport, Diagnostic):
+        assert closed_cls in EXPORTED and closed_cls in CLOSED_SCHEMAS
+    receipt = json_schema(ExecutionReceipt)["properties"]
+    assert receipt["kind"] == {"enum": ["run", "plan"]}
+    assert {"parent_run", "plan_node", "replay_of", "verification_sha256", "reproducibility",
+            "plan"} <= set(receipt)
+
+
+def test_plan_receipt_validates_against_published_schema() -> None:
+    published = json.loads((SCHEMAS_DIR / "ExecutionReceipt.schema.json").read_text("utf-8"))
+    receipt = from_dict(ExecutionReceipt, {
+        "producer": {"id": "p", "version": "1"}, "created_at": "t", "status": "planned",
+        "run_id": "r", "forge_version": "1", "inputs": {"task_sha256": "a" * 64},
+        "started_at": "t", "finished_at": "t", "kind": "plan",
+        "plan": {"plan_sha256": "a" * 64},
+        "reproducibility": {"level": "unknown", "reasons": ["planned only"]}})
+    Draft202012Validator(published).validate(to_dict(receipt))

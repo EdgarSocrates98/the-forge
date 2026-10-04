@@ -20,26 +20,46 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import sha256_of
 from theforge.contracts.codes import Codes
+from theforge.contracts.diagnostic import Diagnostic
+from theforge.contracts.graph import WorkspaceGraph
+from theforge.contracts.handoff import Handoff
+from theforge.contracts.installation import InstallationPlan
 from theforge.contracts.integrity import validate_receipt
+from theforge.contracts.plan import ExecutionPlan, PlanResult
+from theforge.contracts.verification import VerificationResult
+from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.errors import PersistenceError
 from theforge.security.redact import redact
 
 T = TypeVar("T")
 
 RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
-# Run order. context-r1/context-r2 (negotiation rounds) and telemetry are optional: runs
-# written before they existed stay readable (read_optional returns None).
-ARTIFACTS = ("task", "routing", "risk", "context", "context-r1", "context-r2", "result",
-             "telemetry", "receipt")
+# Run order. Every artifact but task/receipt is optional: a run only writes the ones of its
+# kind, and runs written before an artifact existed stay readable (read_optional returns
+# None). context-r1/context-r2 are negotiation rounds; workspace-descriptor, plan,
+# installation, plan-result and graph belong to plan runs; handoff to plan node runs;
+# verification and diagnostic (--debug) to any run. ``workspace-descriptor`` is the
+# multi-repo WorkspaceDescriptor, distinct from the ContextPack workspace summary.
+ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
+             "handoff", "context", "context-r1", "context-r2", "result", "plan-result",
+             "graph", "verification", "telemetry", "diagnostic", "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
     "task": TaskSpec,
+    "workspace-descriptor": WorkspaceDescriptor,
     "routing": RoutingDecision,
+    "plan": ExecutionPlan,
+    "installation": InstallationPlan,
     "risk": RiskAssessment,
+    "handoff": Handoff,
     "context": ContextPack,
     "context-r1": ContextPack,
     "context-r2": ContextPack,
     "result": ExecutionResult,
+    "plan-result": PlanResult,
+    "graph": WorkspaceGraph,
+    "verification": VerificationResult,
     "telemetry": RunTelemetry,
+    "diagnostic": Diagnostic,
     "receipt": ExecutionReceipt,
 }
 
@@ -78,15 +98,22 @@ class RunStore:
 
         A receipt is validated before it is written (1.8): its ``result_sha256`` must equal
         the hash of the result already persisted in this run, recomputed from disk exactly
-        as this method computes it. An invalid receipt raises ``IntegrityError`` and nothing
-        is written.
+        as this method computes it; a plan receipt's plan-result and telemetry hashes must
+        equal those of the persisted ``plan-result`` and ``telemetry``. An invalid receipt
+        raises ``IntegrityError`` and nothing is written.
         """
         path = self._artifact_path(run_id, name)
         if name == "receipt":
             if not isinstance(contract, ExecutionReceipt):
                 raise TypeError(f"receipt artifact must be an ExecutionReceipt, "
                                 f"got {type(contract).__name__}")
-            validate_receipt(contract, result_sha256=self.persisted_sha256(run_id, "result"))
+            plan_kind = contract.kind == "plan"
+            validate_receipt(
+                contract, result_sha256=self.persisted_sha256(run_id, "result"),
+                plan_result_sha256=(self.persisted_sha256(run_id, "plan-result")
+                                    if plan_kind else None),
+                telemetry_sha256=(self.persisted_sha256(run_id, "telemetry")
+                                  if plan_kind else None))
         data = redact(to_dict(contract))
         text = json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False)
         tmp = path.with_suffix(".json.tmp")

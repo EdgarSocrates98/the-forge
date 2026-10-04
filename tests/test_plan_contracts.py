@@ -343,3 +343,64 @@ def test_execution_values_hold_plan_contracts() -> None:
                           status="ok", capability="demo.echo", action="echo", result=result)
     assert source.result.status == "ok"
     assert Synthesis(nodes=[]).failures == []
+
+
+# --- receipt extensions (task 1.5) ------------------------------------------------------
+
+
+def receipt_dict(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "producer": P, "created_at": "2026-01-01T00:00:00Z", "status": "ok", "run_id": "r1",
+        "forge_version": "1", "inputs": {"task_sha256": SHA}, "started_at": "t",
+        "finished_at": "t"}
+    data.update(overrides)
+    return data
+
+
+def test_receipt_written_before_wave_d_rereads_as_run_with_nothing_recorded() -> None:
+    from theforge.contracts import ExecutionReceipt
+    receipt = roundtrip(ExecutionReceipt, receipt_dict())
+    assert receipt.kind == "run" and receipt.plan is None
+    assert receipt.verification_sha256 is None and receipt.reproducibility is None
+    assert receipt.parent_run is None and receipt.replay_of is None
+    assert receipt.inputs.handoff_sha256 is None
+
+
+def test_node_and_replay_receipts_reread_strictly() -> None:
+    from theforge.contracts import ExecutionReceipt
+    receipt = roundtrip(ExecutionReceipt, receipt_dict(
+        parent_run="p1", plan_node="a", replay_of="r0", verification_sha256=SHA,
+        reproducibility={"level": "reproducible", "reasons": []},
+        inputs={"task_sha256": SHA, "handoff_sha256": SHA}))
+    assert receipt.plan_node == "a" and receipt.inputs.handoff_sha256 == SHA
+    assert receipt.reproducibility == ReproducibilityInfo(level="reproducible")
+
+
+def test_plan_receipt_requires_plan_refs_and_no_provider() -> None:
+    from theforge.contracts import ExecutionReceipt
+    refs = {"plan_sha256": SHA, "plan_result_sha256": SHA}
+    planned = roundtrip(ExecutionReceipt, receipt_dict(
+        kind="plan", status="planned", plan={"plan_sha256": SHA}))
+    assert planned.plan is not None and planned.plan.plan_result_sha256 is None
+    assert roundtrip(ExecutionReceipt, receipt_dict(kind="plan", plan=refs)).kind == "plan"
+    with pytest.raises(ContractError, match="plan references are required"):
+        from_dict(ExecutionReceipt, receipt_dict(kind="plan"), strict=True)
+    provider = {"id": "demo", "version": "1", "trust": "local"}
+    with pytest.raises(ContractError, match="provider must be absent"):
+        from_dict(ExecutionReceipt, receipt_dict(kind="plan", plan=refs, provider=provider),
+                  strict=True)
+    with pytest.raises(ContractError, match="only for plan receipts"):
+        from_dict(ExecutionReceipt, receipt_dict(plan=refs), strict=True)
+
+
+def test_planned_status_only_on_plan_receipts() -> None:
+    from theforge.contracts import ExecutionReceipt
+    with pytest.raises(ContractError, match="'planned' is only valid for plan receipts"):
+        from_dict(ExecutionReceipt, receipt_dict(status="planned"), strict=True)
+
+
+def test_parent_run_and_plan_node_go_together() -> None:
+    from theforge.contracts import ExecutionReceipt
+    for extra in ({"parent_run": "p1"}, {"plan_node": "a"}):
+        with pytest.raises(ContractError, match="go together"):
+            from_dict(ExecutionReceipt, receipt_dict(**extra), strict=True)

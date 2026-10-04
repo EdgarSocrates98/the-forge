@@ -246,22 +246,40 @@ def validate_context_request(request: ContextRequest) -> None:
         )])
 
 
-def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None) -> None:
-    """Order: hash formats, timestamps, success-vs-persisted-result consistency.
+def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
+                     plan_result_sha256: str | None = None,
+                     telemetry_sha256: str | None = None) -> None:
+    """Order: hash formats, timestamps, then consistency with what is on disk.
 
     ``result_sha256`` is the hash of the persisted result (None when none was persisted).
+    For ``kind == "run"`` only the result is checked (unchanged behaviour). For
+    ``kind == "plan"`` the receipt has no result: ``plan.plan_result_sha256`` must equal
+    ``plan_result_sha256`` and ``telemetry_sha256`` the receipt's, both the hashes of the
+    persisted ``plan-result`` and ``telemetry`` (None when absent); an ``ok``/``partial``
+    plan requires its plan result.
     """
     violations: list[Violation] = []
+    plan = receipt.plan
     hashes: list[tuple[str, str | None]] = [
         ("inputs.task_sha256", receipt.inputs.task_sha256),
         ("inputs.routing_sha256", receipt.inputs.routing_sha256),
         ("inputs.context_sha256", receipt.inputs.context_sha256),
         ("inputs.risk_sha256", receipt.inputs.risk_sha256),
+        ("inputs.handoff_sha256", receipt.inputs.handoff_sha256),
         ("provider.manifest_sha256",
          receipt.provider.manifest_sha256 if receipt.provider is not None else None),
         ("result_sha256", receipt.result_sha256),
         ("telemetry_sha256", receipt.telemetry_sha256),
+        ("verification_sha256", receipt.verification_sha256),
     ]
+    if plan is not None:
+        hashes.extend([
+            ("plan.plan_sha256", plan.plan_sha256),
+            ("plan.workspace_descriptor_sha256", plan.workspace_descriptor_sha256),
+            ("plan.graph_sha256", plan.graph_sha256),
+            ("plan.installation_sha256", plan.installation_sha256),
+            ("plan.plan_result_sha256", plan.plan_result_sha256),
+        ])
     hashes.extend(
         (f"inputs.context_round_sha256[{i}]", value)
         for i, value in enumerate(receipt.inputs.context_round_sha256)
@@ -280,7 +298,11 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None) ->
     ):
         if (v := check_timestamp(ts, field=name)) is not None:
             violations.append(replace(v, code=Codes.RECEIPT_INVALID))
-    if receipt.status in _SUCCESS:
+    if plan is not None:
+        violations.extend(_plan_receipt_violations(
+            receipt, plan.plan_result_sha256, plan_result_sha256=plan_result_sha256,
+            telemetry_sha256=telemetry_sha256))
+    elif receipt.status in _SUCCESS:
         if receipt.result_sha256 is None:
             violations.append(Violation(
                 Codes.RECEIPT_INVALID,
@@ -300,6 +322,32 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None) ->
                 "result_sha256",
             ))
     _raise_if_any(violations)
+
+
+def _plan_receipt_violations(receipt: ExecutionReceipt, recorded: str | None, *,
+                             plan_result_sha256: str | None,
+                             telemetry_sha256: str | None) -> list[Violation]:
+    """Plan receipt vs disk: required plan result, plan-result and telemetry hashes."""
+    violations: list[Violation] = []
+    if receipt.status in _SUCCESS and recorded is None:
+        violations.append(Violation(
+            Codes.RECEIPT_INVALID,
+            f"plan receipt status {receipt.status!r} requires plan.plan_result_sha256",
+            "plan.plan_result_sha256",
+        ))
+    elif recorded != plan_result_sha256:
+        violations.append(Violation(
+            Codes.RECEIPT_INVALID,
+            "plan.plan_result_sha256 does not match the persisted plan-result hash",
+            "plan.plan_result_sha256",
+        ))
+    if receipt.telemetry_sha256 != telemetry_sha256:
+        violations.append(Violation(
+            Codes.RECEIPT_INVALID,
+            "telemetry_sha256 does not match the persisted telemetry hash",
+            "telemetry_sha256",
+        ))
+    return violations
 
 
 def _over_limit(cap_id: str, field: str, items: list[str], limit: int) -> Violation | None:
