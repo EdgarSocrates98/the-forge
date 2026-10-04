@@ -615,3 +615,43 @@ def test_a_telemetry_failure_never_costs_the_receipt_nor_fakes_the_status(
     assert store.read_optional(out.run_id, "telemetry") is None
     assert any(n.startswith(orchestrator.TELEMETRY_UNAVAILABLE_LIMITATION)
                for n in receipt.limitations)
+
+
+# --- observable difference between profiles on one workspace and task (9.4, 9.5; task 5.1) --
+
+def test_profiles_differ_observably_on_the_same_workspace_and_task(
+        tmp_path: Path, no_git: None) -> None:
+    """Same workspace, same task, three profiles: the telemetry ProfileSnapshot and the
+    persisted ContextPack show pairwise distinct context budgets and executed verification
+    levels, and only ``max`` raises the providers limit (9.5)."""
+    make_workspace(tmp_path, [bad_entry("excerpts", "bad-a")])  # covers the *.txt files
+    write_file(tmp_path, DRIFTED, LINES10)
+    forger = _forger(tmp_path)
+    store = RunStore(tmp_path / ".forge")
+    profiles: tuple[BudgetProfile, ...] = ("economy", "balanced", "max")
+    budget: dict[str, int] = {}
+    verification: dict[str, str] = {}
+    providers_limit: dict[str, int] = {}
+    for profile in profiles:
+        out = forger.ask(AskRequest(intent="run it", capability="bad.thing", profile=profile))
+        assert out.status == "ok", out.error
+        telemetry = _telemetry(tmp_path, out.run_id)
+        snapshot = telemetry.profile
+        pack = store.read(out.run_id, "context")
+        assert snapshot.name == profile
+        assert pack["budget_bytes"] == snapshot.budget_bytes  # the pack obeys the snapshot
+        assert pack["used_bytes"] <= pack["budget_bytes"]
+        assert [f["path"] for f in pack["files"]] == [DRIFTED]  # same selected context
+        # the level actually executed after the provider, not just the declared one
+        assert telemetry.verification_performed == snapshot.verification
+        assert telemetry.providers_executed == Metric(value=1.0, kind="measured")
+        budget[profile] = pack["budget_bytes"]
+        assert telemetry.verification_performed is not None
+        verification[profile] = telemetry.verification_performed
+        providers_limit[profile] = snapshot.max_providers
+    assert len(set(budget.values())) == len(profiles), budget
+    assert budget["economy"] < budget["balanced"] < budget["max"]
+    assert len(set(verification.values())) == len(profiles), verification
+    assert verification == {"economy": "minimal", "balanced": "conditional", "max": "strong"}
+    assert providers_limit["max"] > providers_limit["economy"]
+    assert providers_limit["max"] > providers_limit["balanced"]
