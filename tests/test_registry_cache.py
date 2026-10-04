@@ -577,3 +577,20 @@ def test_cache_entry_with_pre_context_v2_manifest_hash_is_discarded_and_regenera
     regenerated = json.loads(_cache_files("fixture-spark")[0].read_text(encoding="utf-8"))
     assert "context_revalidation" in regenerated["manifest"]
     assert regenerated["manifest_sha256"] == sha256_of(regenerated["manifest"])
+
+
+def test_cached_records_never_start_a_provider(tmp_path: Path) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    write_providers(forge, [SPARK_ENTRY, API_ENTRY])  # fixture-api has no cache entry
+    counting = _Counting()
+    registry = Registry(forge, transport_factory=counting)
+    records = registry.cached_records()
+    assert counting.calls == 0
+    # echo-forge (builtin) and fixture-spark were cached by refresh; fixture-api never was.
+    assert [(r.entry.id, r.state) for r in records] == [
+        ("echo-forge", "ready"), ("fixture-spark", "ready")]
+    assert all(r.manifest is not None for r in records)
+    assert not _cache_files("fixture-api")  # nothing described, nothing written
+    again = Registry(forge, transport_factory=_boom).cached_records()
+    assert [r.entry.id for r in again] == ["echo-forge", "fixture-spark"]

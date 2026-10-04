@@ -266,6 +266,20 @@ class Registry:
                 f"({code}: {detail})")
         return replace(manifest, capabilities=kept)
 
+    def cached_records(self) -> list[RegistryRecord]:
+        """Records read only from the user cache: never describes, never starts a provider.
+
+        Providers without a valid cache entry (never described, invalidated, unverified) are
+        absent. The in-use records are not touched (this is a read-only view, e.g. for
+        ``workspace show``).
+        """
+        out: list[RegistryRecord] = []
+        for entry in self.entries():
+            record = self._read_cache(entry)
+            if record is not None:
+                out.append(record)
+        return out
+
     def cached_ids(self) -> list[str]:
         """Ids of configured providers that currently have a cache file (no describe)."""
         return sorted(e.id for e in self.entries() if self._cache_path(e).is_file())

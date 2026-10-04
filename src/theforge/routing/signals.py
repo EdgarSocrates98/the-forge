@@ -42,12 +42,26 @@ def glob_matches(files: list[str], globs: list[str]) -> list[str]:
 
 def workspace_dependencies(root: Path) -> set[str]:
     names: set[str] = set()
+    for declared in dependencies_by_file(root).values():
+        names |= declared
+    return names
+
+
+def dependencies_by_file(root: Path) -> dict[Path, set[str]]:
+    """Normalized dependency names per generic dependency file directly under ``root``.
+
+    Only files that exist inside ``root`` are keys (a file declaring nothing maps to an
+    empty set); keys follow ``DEPENDENCY_MANIFESTS`` order, then path order.
+    """
+    found: dict[Path, set[str]] = {}
     for pattern in DEPENDENCY_MANIFESTS:
         parse = _PARSERS[pattern]
         paths = sorted(root.glob(pattern)) if _MAGIC & set(pattern) else [root / pattern]
         for path in paths:
-            names |= parse(root, path)
-    return {normalize_dep(n) for n in names}
+            if path in found or _read(root, path) is None:
+                continue
+            found[path] = {normalize_dep(n) for n in parse(root, path)}
+    return found
 
 
 def _read(root: Path, path: Path) -> str | None:
