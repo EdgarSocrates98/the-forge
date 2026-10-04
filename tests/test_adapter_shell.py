@@ -24,7 +24,14 @@ from typing import Any
 
 import pytest
 
-from theforge.contracts import PROTOCOL_V1, ExecutionResult, Producer, Response, from_dict
+from theforge.contracts import (
+    PROTOCOL_V1,
+    ExecutionResult,
+    HealthReport,
+    Producer,
+    Response,
+    from_dict,
+)
 from theforge.contracts.integrity import check_timestamp, validate_result
 from theforge.contracts.semver import parse_semver
 from theforge.forger.orchestrator import EXECUTE_TIMEOUTS as CORE_EXECUTE_TIMEOUTS
@@ -114,11 +121,16 @@ def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
     data = json.loads(out.stdout)
     response = from_dict(Response, data)
     assert response.protocol == PROTOCOL_V1
-    assert response.status == "refused"
     assert response.op == op
     assert response.request_id == f"req-{op}"
     assert response.producer.id == ADAPTERS[name][2]
     assert response.producer.version == "0.1.0"
+    if op == "health":
+        # Health always answers; a missing specialist is a HealthReport status (4.2/5.2).
+        assert response.status == "ok" and response.error is None
+        assert from_dict(HealthReport, response.payload).status == "unavailable"
+        return
+    assert response.status == "refused"
     assert response.error is not None
     # Without the specialist in this interpreter, describe (and so execute, gated by it)
     # refuses with the adapter's own unavailability code (4.1/5.1).

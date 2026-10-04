@@ -2,7 +2,8 @@
 
 A replay directory is one complete scenario: ``environment.json`` (``{python,
 specialist_version}``, which replaces the interpreter and import checks of describe and
-health), ``health.json`` and the execute recordings ``<capability>.<action>.json`` (native
+health), ``health.json`` (``{dispatcher, specialist_version}``: the native probes of health)
+and the execute recordings ``<capability>.<action>.json`` (native
 output) or ``<capability>.<action>.error.json`` (native error). When both recordings exist for
 an action, the error recording wins. ``tests/fixtures/native/sparkforge/default/`` is the
 healthy scenario used by the offline conformance; every other outcome lives in
@@ -93,6 +94,47 @@ def load_environment(replay: Path) -> Environment | ReplayProblem:
                              f"{ENVIRONMENT_FILE}: python must be a string and "
                              "specialist_version a string or null")
     return Environment(python=python, specialist_version=version)
+
+
+@dataclass(frozen=True)
+class HealthRecording:
+    """The native probes of health recorded in ``health.json``: whether the dispatcher
+    (``sparkforge.adapters.tools``) was found and the Spark Forge version read (None: none).
+
+    An optional ``provenance`` string marks a recording derived by hand from a real one.
+    """
+
+    dispatcher: bool
+    specialist_version: str | None
+
+
+_HEALTH_KEYS = {"dispatcher", "specialist_version"}
+
+
+def load_health(replay: Path) -> HealthRecording | ReplayProblem:
+    """The ``health.json`` of a replay directory, or why it cannot be used."""
+    path = replay / HEALTH_FILE
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return ReplayProblem(REPLAY_MISSING,
+                             f"replay recording {HEALTH_FILE} not found in {replay}")
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return ReplayProblem(REPLAY_INVALID, f"{HEALTH_FILE} is not valid JSON")
+    if (not isinstance(data, dict) or not set(data) >= _HEALTH_KEYS
+            or not set(data) <= _HEALTH_KEYS | {"provenance"}):
+        return ReplayProblem(REPLAY_INVALID,
+                             f"{HEALTH_FILE} must hold dispatcher and specialist_version "
+                             "(and optionally provenance)")
+    dispatcher, version = data["dispatcher"], data["specialist_version"]
+    if (not isinstance(dispatcher, bool) or not (version is None or isinstance(version, str))
+            or not isinstance(data.get("provenance", ""), str)):
+        return ReplayProblem(REPLAY_INVALID,
+                             f"{HEALTH_FILE}: dispatcher must be a boolean, specialist_version "
+                             "a string or null and provenance a string")
+    return HealthRecording(dispatcher=dispatcher, specialist_version=version)
 
 
 @dataclass(frozen=True)

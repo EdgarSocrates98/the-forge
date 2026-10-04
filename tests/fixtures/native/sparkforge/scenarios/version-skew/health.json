@@ -1,0 +1,5 @@
+{
+  "dispatcher": true,
+  "provenance": "derived: default (recorded from sparkforge-aws 0.5.0) with specialist_version moved outside the supported window",
+  "specialist_version": "0.6.1"
+}

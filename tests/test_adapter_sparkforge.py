@@ -1,12 +1,13 @@
-"""Spark Forge adapter (real-provider-integration 4.1): manifest derived from the recorded
-native tool surface, the capability table, describe with and without ``--replay``, the replay
-layout and the snapshot re-recording.
+"""Spark Forge adapter (real-provider-integration 4.1, 4.2): manifest derived from the recorded
+native tool surface, the capability table, describe and health with and without ``--replay``,
+the replay layout and the snapshot re-recording.
 
 The dev interpreter does not have the Spark Forge installed: describe there must be refused
 with an actionable reason, and every manifest check runs in replay (``environment.json`` stands
 in for the import check, the packaged ``native_catalog.json`` is the tool surface).
 """
 
+import importlib.metadata
 import importlib.util
 import json
 import subprocess
@@ -19,7 +20,13 @@ import pytest
 from theforge_sparkforge import SUPPORTED_SPECIALIST, backend, catalog, record
 from theforge_sparkforge._shell import StagedInput, select_inputs
 
-from theforge.contracts import PROTOCOL_V1, ForgeManifest, Response, from_dict
+from theforge.contracts import (
+    PROTOCOL_V1,
+    ForgeManifest,
+    HealthReport,
+    Response,
+    from_dict,
+)
 from theforge.contracts.integrity import validate_manifest_limits
 from theforge.contracts.taxonomy import validate_taxonomy
 from theforge.contracts.types import is_catch_all_glob
@@ -333,6 +340,7 @@ def test_every_scenario_is_a_complete_directory() -> None:
     for scenario in sorted(SCENARIOS.iterdir()):
         assert scenario.is_dir(), scenario
         assert (scenario / backend.ENVIRONMENT_FILE).is_file(), scenario
+        assert (scenario / backend.HEALTH_FILE).is_file(), scenario
 
 
 def test_replay_recording_prefers_the_error_recording(tmp_path: Path) -> None:
@@ -438,3 +446,225 @@ def test_benchmark_is_excluded_for_needing_two_states(snapshot: dict[str, Any]) 
              if "(sparkforge_benchmark)" in line]
     assert len(lines) == 1
     assert "two" in lines[0] and "before" in lines[0] and "after" in lines[0]
+
+
+# --- health -------------------------------------------------------------------------------
+
+HEALTH_CHECKS = {"interpreter", "dispatcher", "specialist-version", "snapshot"}
+
+
+def _health(*options: str) -> HealthReport:
+    response = _call("health", *options)
+    assert response.status == "ok", response.error
+    return from_dict(HealthReport, response.payload, "$.payload")
+
+
+def _check(report: HealthReport, name: str) -> Any:
+    found = [check for check in report.checks if check.name == name]
+    assert len(found) == 1, report
+    return found[0]
+
+
+def _failing(report: HealthReport) -> str:
+    return "; ".join(check.detail for check in report.checks if not check.ok)
+
+
+def _scenario(tmp_path: Path, *, python: str = "3.11.15", version: str | None = "0.5.0",
+              dispatcher: bool = True) -> Path:
+    (tmp_path / "environment.json").write_text(
+        json.dumps({"python": python, "specialist_version": version}), encoding="utf-8")
+    (tmp_path / "health.json").write_text(
+        json.dumps({"dispatcher": dispatcher, "specialist_version": version}), encoding="utf-8")
+    return tmp_path
+
+
+def test_replay_health_of_the_default_scenario_is_ok() -> None:
+    report = _health("--replay", str(DEFAULT))
+    assert report.status == "ok"
+    assert {check.name for check in report.checks} == HEALTH_CHECKS
+    assert all(check.ok for check in report.checks), report
+    version = _check(report, "specialist-version")
+    assert "0.5.0" in version.detail and SUPPORTED_SPECIALIST in version.detail
+
+
+def test_replay_health_without_the_specialist_is_unavailable_with_reason() -> None:
+    report = _health("--replay", str(SCENARIOS / "specialist-missing"))
+    assert report.status == "unavailable"
+    reason = _failing(report)
+    assert "not importable" in reason and "3.11" in reason
+    assert _check(report, "snapshot").ok
+
+
+def test_replay_health_out_of_window_is_degraded_with_version_and_window() -> None:
+    report = _health("--replay", str(SCENARIOS / "version-skew"))
+    assert report.status == "degraded"
+    version = _check(report, "specialist-version")
+    assert not version.ok
+    assert f"found 0.6.1, supported {SUPPORTED_SPECIALIST}" in version.detail
+    assert all(check.ok for check in report.checks if check.name != "specialist-version")
+
+
+def test_assumed_version_overrides_the_found_one_in_replay() -> None:
+    skewed = _health("--replay", str(DEFAULT), "--assume-specialist-version", "9.9.9")
+    assert skewed.status == "degraded"
+    detail = _check(skewed, "specialist-version").detail
+    assert f"found 9.9.9, supported {SUPPORTED_SPECIALIST}" in detail
+    assert "assumed" in detail and "0.5.0" in detail
+    fixed = _health("--replay", str(SCENARIOS / "version-skew"),
+                    "--assume-specialist-version", "0.5.3")
+    assert fixed.status == "ok", fixed
+
+
+def test_assumed_version_does_not_hide_an_unavailable_specialist() -> None:
+    report = _health("--replay", str(SCENARIOS / "specialist-missing"),
+                     "--assume-specialist-version", "0.5.0")
+    assert report.status == "unavailable"
+
+
+def test_replay_health_with_an_old_interpreter_is_unavailable(tmp_path: Path) -> None:
+    report = _health("--replay", str(_scenario(tmp_path, python="3.9.18")))
+    assert report.status == "unavailable"
+    assert not _check(report, "interpreter").ok
+    assert "3.9.18" in _failing(report) and "3.10" in _failing(report)
+
+
+def test_replay_health_without_the_dispatcher_is_unavailable(tmp_path: Path) -> None:
+    report = _health("--replay", str(_scenario(tmp_path, dispatcher=False)))
+    assert report.status == "unavailable"
+    assert not _check(report, "dispatcher").ok
+    assert "sparkforge.adapters.tools" in _failing(report)
+
+
+def test_replay_health_without_health_recording_is_a_structured_error(tmp_path: Path) -> None:
+    _scenario(tmp_path)
+    (tmp_path / "health.json").unlink()
+    response = _call("health", "--replay", str(tmp_path))
+    assert response.status == "error"
+    assert response.error is not None and response.error.code == "ADAPTER-REPLAY-MISSING"
+    assert "health.json" in response.error.detail
+
+
+@pytest.mark.parametrize("content", ["not json", "[]", '{"dispatcher": true}',
+                                     '{"dispatcher": "yes", "specialist_version": "0.5.0"}',
+                                     '{"dispatcher": true, "specialist_version": 5}'])
+def test_replay_health_with_malformed_recording_is_a_structured_error(tmp_path: Path,
+                                                                      content: str) -> None:
+    _scenario(tmp_path)
+    (tmp_path / "health.json").write_text(content, encoding="utf-8")
+    response = _call("health", "--replay", str(tmp_path))
+    assert response.status == "error"
+    assert response.error is not None and response.error.code == "ADAPTER-REPLAY-INVALID"
+
+
+def test_health_with_an_unreadable_snapshot_is_unavailable(tmp_path: Path,
+                                                           monkeypatch: pytest.MonkeyPatch
+                                                           ) -> None:
+    from theforge_sparkforge import __main__ as entry
+    from theforge_sparkforge._shell import AdapterOptions, Request
+
+    monkeypatch.setattr(catalog, "load_snapshot", lambda: "native_catalog.json is unreadable")
+    request = Request(op="health", request_id="r", protocol=PROTOCOL_V1, payload={})
+    reply = entry.HANDLERS["health"](AdapterOptions(replay=DEFAULT))(request, tmp_path)
+    assert reply.status == "ok"
+    report = from_dict(HealthReport, reply.payload, "$.payload")
+    assert report.status == "unavailable"
+    assert not _check(report, "snapshot").ok
+    assert "native_catalog.json" in _failing(report)
+
+
+def test_live_health_without_sparkforge_is_unavailable_with_reason() -> None:
+    if importlib.util.find_spec("sparkforge") is not None:
+        pytest.skip("the Spark Forge is importable in this interpreter")
+    report = _health()
+    assert report.status == "unavailable"
+    reason = _failing(report)
+    assert "sparkforge" in reason and "not importable" in reason
+    assert f"Python {sys.version_info.major}.{sys.version_info.minor}" in reason
+    assert _check(report, "interpreter").ok and _check(report, "snapshot").ok
+
+
+def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import health
+
+    seen: list[str] = []
+
+    def fake_find_spec(name: str) -> object:
+        seen.append(name)
+        return object()
+
+    monkeypatch.setattr(health.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(health, "_installed_version", lambda: "0.5.0")
+    observation = health.observe_live()
+    assert observation.dispatcher and observation.specialist_version == "0.5.0"
+    assert "sparkforge.adapters.tools" in seen
+    assert "sparkforge.adapters.tools" not in sys.modules
+
+
+@pytest.mark.parametrize(("version", "inside"), [
+    ("0.5.0", True), ("0.5.10", True), ("0.5.9", True), ("0.6.0", False), ("0.4.99", False),
+    ("1.0.0", False), ("0.5", False), ("v0.5.0", False), ("0.5.0-rc1", False), ("", False)])
+def test_supported_window_is_a_semver_range(version: str, inside: bool) -> None:
+    from theforge_sparkforge import health
+
+    assert health.in_window(version, SUPPORTED_SPECIALIST) is inside
+
+
+def test_recorded_health_scenarios_are_in_canonical_form() -> None:
+    for path in [DEFAULT / "health.json", *sorted(SCENARIOS.glob("*/health.json"))]:
+        text = path.read_bytes().decode("utf-8")
+        assert "\r" not in text, path
+        assert record.render(json.loads(text)) == text, path
+    default = json.loads((DEFAULT / "health.json").read_text(encoding="utf-8"))
+    assert default == {"dispatcher": True, "specialist_version": "0.5.0"}
+
+
+def test_record_writes_the_health_probes_of_this_interpreter() -> None:
+    probes = record.health_probes()
+    assert set(probes) == {"dispatcher", "specialist_version"}
+    if importlib.util.find_spec("sparkforge") is None:
+        assert probes == {"dispatcher": False, "specialist_version": None}
+
+
+def test_live_interpreter_version_ignores_a_prerelease_suffix(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    import platform
+
+    from theforge_sparkforge import health
+
+    monkeypatch.setattr(platform, "python_version", lambda: "3.13.0rc1")
+    observation = health.observe_live()
+    assert observation.python == ".".join(str(part) for part in sys.version_info[:3])
+    payload = health.report(observation, window=SUPPORTED_SPECIALIST, assumed=None,
+                            snapshot_problem=None)
+    report = from_dict(HealthReport, payload, "$.payload")
+    assert _check(report, "interpreter").ok
+
+
+class _BrokenSparkforge:
+    @property
+    def __version__(self) -> str:
+        raise RuntimeError("broken __init__")
+
+
+@pytest.mark.parametrize(("metadata", "expected"), [("0.5.2", "0.5.2"), (None, None)])
+def test_broken_sparkforge_version_falls_back_to_metadata(
+        monkeypatch: pytest.MonkeyPatch, metadata: str | None, expected: str | None) -> None:
+    from theforge_sparkforge import health
+
+    def fake_metadata(name: str) -> str:
+        assert name == "sparkforge-aws"
+        if metadata is None:
+            raise importlib.metadata.PackageNotFoundError(name)
+        return metadata
+
+    monkeypatch.setitem(sys.modules, "sparkforge", _BrokenSparkforge())
+    monkeypatch.setattr(health, "metadata_version", fake_metadata)
+    assert health._installed_version() == expected
+    observation = health.Observation(interpreter="x", python="3.11.15", dispatcher=True,
+                                     specialist_version=health._installed_version())
+    report = from_dict(HealthReport, health.report(
+        observation, window=SUPPORTED_SPECIALIST, assumed=None, snapshot_problem=None))
+    version = _check(report, "specialist-version")
+    assert version.ok is (expected is not None)
+    if expected is None:
+        assert report.status == "degraded" and "no sparkforge version" in version.detail

@@ -6,8 +6,13 @@ the protocol, capability and action gates.
 ``describe`` never imports the Spark Forge tool surface (seconds to load): it checks that
 ``sparkforge`` is importable (``find_spec``) and derives the manifest from the capability table
 (``catalog.py``) crossed with the recorded snapshot (``native_catalog.json``). With
-``--replay <dir>`` the import check is replaced by the scenario's ``environment.json``. Health
-and execute are not implemented yet and refuse with a well-formed response (exit 0).
+``--replay <dir>`` the import check is replaced by the scenario's ``environment.json``.
+
+``health`` (``health.py``) checks the interpreter, the dispatcher (``find_spec``, never
+imported), the Spark Forge version against ``SUPPORTED_SPECIALIST`` (or the version given with
+``--assume-specialist-version``) and the snapshot, without network, credentials or the native
+``doctor``; with ``--replay`` it reads ``environment.json`` and ``health.json``. Execute is not
+implemented yet and refuses with a well-formed response (exit 0).
 """
 
 from __future__ import annotations
@@ -16,7 +21,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from theforge_sparkforge import PROVIDER_ID, VERSION, backend, catalog
+from theforge_sparkforge import (
+    PROVIDER_ID,
+    SUPPORTED_SPECIALIST,
+    VERSION,
+    backend,
+    catalog,
+    health,
+)
 from theforge_sparkforge._shell import (
     OP_UNSUPPORTED,
     PROTOCOL,
@@ -88,6 +100,35 @@ def _describe(options: AdapterOptions) -> OpHandler:
     return handle
 
 
+def _observation(options: AdapterOptions) -> health.Observation | Reply:
+    """What health sees of the native side (live, or the replay recordings)."""
+    if options.replay is None:
+        return health.observe_live()
+    environment = backend.load_environment(options.replay)
+    if isinstance(environment, backend.ReplayProblem):
+        return fail(environment.code, environment.detail, field="replay")
+    recorded = backend.load_health(options.replay)
+    if isinstance(recorded, backend.ReplayProblem):
+        return fail(recorded.code, recorded.detail, field="replay")
+    return health.Observation(
+        interpreter="the recorded interpreter", python=environment.python,
+        dispatcher=recorded.dispatcher and environment.specialist_version is not None,
+        specialist_version=recorded.specialist_version)
+
+
+def _health(options: AdapterOptions) -> OpHandler:
+    def handle(request: Request, cwd: Path) -> Reply:
+        observation = _observation(options)
+        if isinstance(observation, Reply):
+            return observation
+        snapshot = catalog.load_snapshot()
+        payload = health.report(observation, window=SUPPORTED_SPECIALIST,
+                                assumed=options.assume_specialist_version,
+                                snapshot_problem=snapshot if isinstance(snapshot, str) else None)
+        return Reply(status="ok", payload=payload)
+    return handle
+
+
 def _not_implemented(options: AdapterOptions) -> OpHandler:
     def handle(request: Request, cwd: Path) -> Reply:
         reply = refuse(OP_UNSUPPORTED,
@@ -100,7 +141,7 @@ def _not_implemented(options: AdapterOptions) -> OpHandler:
 
 HANDLERS: dict[str, HandlerFactory] = {
     "describe": _describe,
-    "health": _not_implemented,
+    "health": _health,
     "execute": _not_implemented,
 }
 

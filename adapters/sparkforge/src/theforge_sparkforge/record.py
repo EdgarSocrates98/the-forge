@@ -1,5 +1,6 @@
-"""Re-record ``native_catalog.json`` (and a replay ``environment.json``) from the installed
-Spark Forge: ``python -m theforge_sparkforge.record [--output PATH] [--environment DIR]``.
+"""Re-record ``native_catalog.json`` (and a replay ``environment.json`` + ``health.json``) from
+the installed Spark Forge: ``python -m theforge_sparkforge.record [--output PATH]
+[--environment DIR]``.
 
 Run it in the Spark Forge's own interpreter. It is the only module that imports
 ``sparkforge.adapters.tools.TOOLS``: describe reads the recorded snapshot instead (importing the
@@ -19,10 +20,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from theforge_sparkforge import health
 from theforge_sparkforge.backend import live_unavailable_reason
 
 SNAPSHOT_PATH = Path(__file__).with_name("native_catalog.json")
 ENVIRONMENT_FILE = "environment.json"
+HEALTH_FILE = "health.json"
 
 
 def _today() -> str:
@@ -67,6 +70,14 @@ def environment() -> dict[str, Any]:
             "specialist_version": str(sparkforge.__version__)}
 
 
+def health_probes() -> dict[str, Any]:
+    """The replay ``health.json`` of this interpreter: the native probes health makes
+    (``{dispatcher, specialist_version}``), with the dispatcher found but never imported."""
+    observation = health.observe_live()
+    return {"dispatcher": observation.dispatcher,
+            "specialist_version": observation.specialist_version}
+
+
 def _read(path: Path) -> dict[str, Any] | None:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -88,7 +99,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=SNAPSHOT_PATH,
                         help="snapshot file to write (default: the packaged native_catalog.json)")
     parser.add_argument("--environment", type=Path, default=None, metavar="DIR",
-                        help="also write DIR/environment.json for a replay scenario")
+                        help="also write DIR/environment.json and DIR/health.json for a "
+                             "replay scenario")
     args = parser.parse_args(argv)
     reason = live_unavailable_reason()
     if reason is not None:
@@ -105,6 +117,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         target = args.environment / ENVIRONMENT_FILE
         _write(target, environment())
         print(f"record: environment -> {target}")
+        probes = args.environment / HEALTH_FILE
+        _write(probes, health_probes())
+        print(f"record: health -> {probes}")
     return 0
 
 
