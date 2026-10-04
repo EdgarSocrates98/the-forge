@@ -1,5 +1,9 @@
 """The Forger: task -> route -> revalidate -> health -> policy -> context -> execute -> receipt.
 
+Execute may be negotiated: a result carrying a context request is never the final result;
+it extends the ContextPack (``context-rN``) and the provider runs again, within the rounds
+of the task's profile (8.3-8.6).
+
 Every artifact is persisted as soon as it exists, so a run that fails midway is
 still explainable. The routing artifact is the exception: it is written once, with the
 final decision (after registry revalidation and fallback). No path reports success
@@ -13,7 +17,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Literal
 
-from theforge.context import build_context_pack, scan_workspace
+from theforge.context import build_context_pack, extend_context_pack, scan_workspace
 from theforge.context.fingerprints import FingerprintStore
 from theforge.context.git import read_git_state
 from theforge.context.scan import WorkspaceScan
@@ -22,6 +26,7 @@ from theforge.contracts import (
     Capability,
     Confidence,
     ContextPack,
+    ContextRequest,
     ContractError,
     ErrorInfo,
     ExecuteRequest,
@@ -43,13 +48,14 @@ from theforge.contracts.codes import Codes
 from theforge.contracts.integrity import (
     check_producer,
     validate_context_pack,
+    validate_context_request,
     validate_result,
 )
 from theforge.contracts.types import BudgetProfile, Outcome, Producer
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
-from theforge.profiles import PROFILES, ContextProfile, profile_for
+from theforge.profiles import MAX_NEGOTIATION_ROUNDS, PROFILES, ContextProfile, profile_for
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
 from theforge.registry import (
     ProviderFingerprint,
@@ -101,6 +107,7 @@ class _Trace:
     context_sha: str | None = None
     result_sha: str | None = None
     risk_sha: str | None = None
+    context_round_shas: list[str] = field(default_factory=list)  # context-r1, context-r2
     record: RegistryRecord | None = None
     identity: ProviderFingerprint | None = None
     decision: RoutingDecision | None = None
@@ -148,6 +155,21 @@ def _unexecutable_request(
         if blamed is None and record.routable(allow_unverified):
             blamed = error
     return blamed
+
+
+@dataclass(frozen=True)
+class _Executed:
+    """Outcome of the context phase plus the (possibly negotiated) execute calls.
+
+    ``result`` is set only for the final, valid, request-free ExecutionResult; ``pack`` is
+    the ContextPack of the last round and ``duration_ms`` sums every execute call.
+    """
+
+    status: Outcome
+    result: ExecutionResult | None = None
+    pack: ContextPack | None = None
+    error: ErrorInfo | None = None
+    duration_ms: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -237,76 +259,149 @@ class Forger:
         if policy_error is not None:
             return self._finish(trace, decision, "refused", error=policy_error)
 
-        pack = self._build_context(trace, task, record, capability, scan, profile)
-        try:
-            validate_context_pack(pack)
-        except IntegrityError as exc:  # the core built it: an internal error, never sent (1.7)
-            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code=Codes.INTERNAL, detail=f"inconsistent context pack: {exc}"))
-        trace.context_sha = self.store.write(run_id, "context", pack)
-
-        payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
-                                         action=selection.action, context=pack))
-        started_exec = time.perf_counter()
-        try:
-            response = self.transport_factory(record.entry.argv).call(
-                "execute", payload, timeout=self._timeout(task),
-                cwd=self.store.work_dir(run_id))
-        except TransportError as exc:
-            return self._finish(trace, decision, "provider_failure",
-                                error=ErrorInfo(code=exc.code, detail=exc.detail))
-        duration_ms = (time.perf_counter() - started_exec) * 1000
-
-        expected = Producer(id=record.entry.id, version=record.manifest.version)
-        # The envelope is checked like describe/health (1.6) before its status is trusted.
-        envelope = check_producer(response.producer, expected=expected, field="$.producer")
-        if envelope is not None:
-            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code=envelope.code, detail=f"execute: {envelope.detail}", field=envelope.field))
-        if response.status in ("refused", "error"):
-            status: Outcome = "refused" if response.status == "refused" else "provider_failure"
-            error = response.error or ErrorInfo(code=Codes.PROTO_SCHEMA,
-                                                detail="error response without error body")
-            return self._finish(trace, decision, status, error=error)
-        try:
-            result = from_dict(ExecutionResult, response.payload, "$.payload")
-        except ContractError as exc:
-            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code=Codes.PROTO_SCHEMA, detail=f"execute: {exc}"))
-        try:  # relational invariants and producer id+version; invalid results are not persisted
-            validate_result(result, expected=expected)
-        except IntegrityError as exc:
-            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code=exc.code, detail=f"execute: {exc}", field=exc.field))
-        result_status: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
-        result = replace(result, status=result_status, metrics=Metrics(
-            duration_ms=Metric(value=round(duration_ms, 3), kind="measured"),
-            context_bytes=Metric(value=float(pack.used_bytes), kind="measured"),
-            tokens=Metric(value=None, kind="unknown"),
-        ))
-        trace.result_sha = self.store.write(run_id, "result", result)
-        return self._finish(trace, decision, result_status, result=result)
-
-    def _build_context(
-        self, trace: _Trace, task: TaskSpec, record: RegistryRecord, capability: Capability,
-        scan: WorkspaceScan, profile: ContextProfile,
-    ) -> ContextPack:
-        """Context phase (after policy): git signals, fingerprint cache, ContextPack round 0.
-
-        Git and cache problems never fail the run: they become run limitations (3.4, 5.5).
-        The cache is written once per run, after the pack is built.
-        """
-        git = read_git_state(self.root)
-        trace.limitations.extend(git.limitations)
+        # One fingerprint store per run: the initial pack and every negotiated extension
+        # share it, and it is written once, after the last round (5.5).
         fingerprints = FingerprintStore(self.root)
         try:
-            return build_context_pack(
-                task, record.entry.id, list(capability.signals.file_globs), scan,
-                profile=profile, capability_context=capability.context, git=git,
-                fingerprints=fingerprints)
+            executed = self._context_and_execute(trace, task, record, capability, selection,
+                                                 scan, profile, fingerprints)
         finally:
             fingerprints.save()
             trace.limitations.extend(fingerprints.warnings)
+        if executed.result is None:
+            return self._finish(trace, decision, executed.status, error=executed.error)
+        assert executed.pack is not None
+        result = replace(executed.result, metrics=Metrics(
+            duration_ms=Metric(value=round(executed.duration_ms, 3), kind="measured"),
+            context_bytes=Metric(value=float(executed.pack.used_bytes), kind="measured"),
+            tokens=Metric(value=None, kind="unknown"),
+        ))
+        trace.result_sha = self.store.write(run_id, "result", result)
+        return self._finish(trace, decision, executed.status, result=result)
+
+    def _context_and_execute(
+        self, trace: _Trace, task: TaskSpec, record: RegistryRecord, capability: Capability,
+        selection: Selection, scan: WorkspaceScan, profile: ContextProfile,
+        fingerprints: FingerprintStore,
+    ) -> _Executed:
+        pack = self._build_context(trace, task, record, capability, scan, profile, fingerprints)
+        try:
+            validate_context_pack(pack)
+        except IntegrityError as exc:  # the core built it: an internal error, never sent (1.7)
+            return _Executed("provider_failure", error=ErrorInfo(
+                code=Codes.INTERNAL, detail=f"inconsistent context pack: {exc}"))
+        trace.context_sha = self.store.write(trace.run_id, "context", pack)
+        return self._execute_negotiated(trace, task, record, capability, selection, pack,
+                                        scan, profile, fingerprints)
+
+    def _execute_negotiated(
+        self, trace: _Trace, task: TaskSpec, record: RegistryRecord, capability: Capability,
+        selection: Selection, pack: ContextPack, scan: WorkspaceScan,
+        profile: ContextProfile, fingerprints: FingerprintStore,
+    ) -> _Executed:
+        """At most ``negotiation_rounds + 1`` execute calls (8.3-8.6).
+
+        Every response passes the same envelope, status, schema and integrity checks. One
+        carrying a context request is never the result: it is refused with its specific code
+        (undeclared, over the profile's rounds, malformed) or extends the pack, which is
+        validated and persisted as ``context-rN`` before the provider runs again.
+        """
+        assert record.manifest is not None
+        expected = Producer(id=record.entry.id, version=record.manifest.version)
+        total_ms = 0.0
+        while True:
+            payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
+                                             action=selection.action, context=pack))
+            started_exec = time.perf_counter()
+            try:
+                response = self.transport_factory(record.entry.argv).call(
+                    "execute", payload, timeout=self._timeout(task),
+                    cwd=self.store.work_dir(trace.run_id))
+            except TransportError as exc:
+                return _Executed("provider_failure",
+                                 error=ErrorInfo(code=exc.code, detail=exc.detail))
+            total_ms += (time.perf_counter() - started_exec) * 1000
+
+            # The envelope is checked like describe/health (1.6) before its status is trusted.
+            envelope = check_producer(response.producer, expected=expected, field="$.producer")
+            if envelope is not None:
+                return _Executed("provider_failure", error=ErrorInfo(
+                    code=envelope.code, detail=f"execute: {envelope.detail}",
+                    field=envelope.field))
+            if response.status in ("refused", "error"):
+                status: Outcome = ("refused" if response.status == "refused"
+                                   else "provider_failure")
+                return _Executed(status, error=response.error or ErrorInfo(
+                    code=Codes.PROTO_SCHEMA, detail="error response without error body"))
+            try:
+                result = from_dict(ExecutionResult, response.payload, "$.payload")
+            except ContractError as exc:
+                return _Executed("provider_failure", error=ErrorInfo(
+                    code=Codes.PROTO_SCHEMA, detail=f"execute: {exc}"))
+            try:  # relational invariants and producer id+version; invalid results are dropped
+                validate_result(result, expected=expected)
+            except IntegrityError as exc:
+                return _Executed("provider_failure", error=ErrorInfo(
+                    code=exc.code, detail=f"execute: {exc}", field=exc.field))
+
+            if result.context_request is None:
+                final: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
+                return _Executed(final, result=replace(result, status=final), pack=pack,
+                                 duration_ms=total_ms)
+            refusal = self._refuse_request(record, capability, result.context_request,
+                                           pack, profile)
+            if refusal is not None:
+                return _Executed("provider_failure", error=refusal)
+            pack = extend_context_pack(pack, result.context_request, scan, profile=profile,
+                                       fingerprints=fingerprints)
+            try:
+                validate_context_pack(pack)
+            except IntegrityError as exc:  # the core extended it: internal, never sent
+                return _Executed("provider_failure", error=ErrorInfo(
+                    code=Codes.INTERNAL,
+                    detail=f"inconsistent context pack (round {pack.round}): {exc}"))
+            trace.context_round_shas.append(
+                self.store.write(trace.run_id, f"context-r{pack.round}", pack))
+
+    @staticmethod
+    def _refuse_request(
+        record: RegistryRecord, capability: Capability, request: ContextRequest,
+        pack: ContextPack, profile: ContextProfile,
+    ) -> ErrorInfo | None:
+        """The negotiation failure, checked in order: undeclared, rounds, shape (8.4)."""
+        if not capability.context.requests:
+            return ErrorInfo(
+                code=Codes.CONTEXT_REQUEST_UNSUPPORTED,
+                detail=f"{record.entry.id} sent a context request but capability "
+                       f"{capability.id} does not declare context.requests")
+        rounds = min(profile.negotiation_rounds, MAX_NEGOTIATION_ROUNDS)
+        if pack.round >= rounds:
+            return ErrorInfo(
+                code=Codes.CONTEXT_REQUEST_LIMIT,
+                detail=f"{record.entry.id} asked for more context after {pack.round} "
+                       f"round(s); profile {profile.name} allows {rounds}")
+        try:
+            validate_context_request(request)
+        except IntegrityError as exc:
+            return ErrorInfo(code=exc.code, detail=f"execute: {exc}",
+                             field="$.payload.context_request")
+        return None
+
+    def _build_context(
+        self, trace: _Trace, task: TaskSpec, record: RegistryRecord, capability: Capability,
+        scan: WorkspaceScan, profile: ContextProfile, fingerprints: FingerprintStore,
+    ) -> ContextPack:
+        """Context phase (after policy): git signals and ContextPack round 0.
+
+        Git problems never fail the run: they become run limitations (3.4). The fingerprint
+        cache is owned by ``_run`` (written once, after the last negotiation round).
+        """
+        git = read_git_state(self.root)
+        trace.limitations.extend(git.limitations)
+        return build_context_pack(
+            task, record.entry.id, list(capability.signals.file_globs), scan,
+            profile=profile, capability_context=capability.context, git=git,
+            fingerprints=fingerprints)
 
     def _apply_policy(
         self, trace: _Trace, request: AskRequest, record: RegistryRecord,
@@ -479,7 +574,8 @@ class Forger:
             producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
             forge_version=VERSION,
             inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
-                                 context_sha256=trace.context_sha, risk_sha256=trace.risk_sha),
+                                 context_sha256=trace.context_sha, risk_sha256=trace.risk_sha,
+                                 context_round_sha256=list(trace.context_round_shas)),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
             finished_at=utc_now(), error=error, limitations=list(trace.limitations),
         )

@@ -9,9 +9,12 @@ from typing import Any
 import pytest
 
 from helpers import bad_entry, make_workspace, write_file
+from theforge.context.fingerprints import FingerprintStore
 from theforge.context.git import GitState
-from theforge.contracts import Response
+from theforge.contracts import ExecutionReceipt, Response
+from theforge.contracts.codes import Codes
 from theforge.contracts.context import GitSummary
+from theforge.contracts.integrity import validate_receipt
 from theforge.contracts.types import BudgetProfile
 from theforge.forger import AskRequest, Forger, orchestrator
 from theforge.protocol import SubprocessTransport
@@ -223,3 +226,118 @@ def test_fingerprint_cache_warnings_become_run_limitations(
     assert any(note.startswith("fingerprint cache disabled")
                for note in out.receipt.limitations)
     assert not (tmp_path / "cache" / "context").exists()  # nothing written inside it
+
+
+# --- context negotiation (8.1, 8.3-8.6; task 4.2) --------------------------------------------
+
+REQUESTED = "req.txt"  # the file bad_forge's context-request modes ask for
+
+
+@pytest.fixture
+def no_git(monkeypatch: pytest.MonkeyPatch) -> None:
+    def stub(root: Path, **_: Any) -> GitState:
+        return GitState(summary=GitSummary(available=False), changed=frozenset(),
+                        limitations=())
+
+    monkeypatch.setattr(orchestrator, "read_git_state", stub)
+
+
+def _negotiate(root: Path, mode: str, profile: BudgetProfile,
+               recorder: type[_Recorder]) -> Any:
+    make_workspace(root, [bad_entry(mode, "bad-a")])
+    write_file(root, REQUESTED, LINES10)
+    return _forger(root, recorder).ask(
+        AskRequest(intent="run it", capability="bad.thing", profile=profile))
+
+
+def _assert_receipt_consistent(root: Path, run_id: str) -> ExecutionReceipt:
+    store = RunStore(root / ".forge")
+    receipt = store.read_contract(run_id, "receipt", ExecutionReceipt)
+    validate_receipt(receipt, result_sha256=store.persisted_sha256(run_id, "result"))
+    rounds = [sha for name in ("context-r1", "context-r2")
+              if (sha := store.persisted_sha256(run_id, name)) is not None]
+    assert receipt.inputs.context_round_sha256 == rounds
+    return receipt
+
+
+def test_valid_request_in_balanced_extends_the_pack_and_ends_ok(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None) -> None:
+    out = _negotiate(tmp_path, "context-request", "balanced", recorder)
+    assert out.status == "ok", out.error
+    assert out.result is not None and out.result.context_request is None
+    assert _executed(recorder) == ["bad-a", "bad-a"]
+    store = RunStore(tmp_path / ".forge")
+    initial = store.read(out.run_id, "context")
+    round1 = store.read(out.run_id, "context-r1")
+    assert initial["round"] == 0 and round1["round"] == 1
+    requested = [f for f in round1["files"] if f["tier"] == "requested"]
+    assert [f["path"] for f in requested] == [REQUESTED]
+    assert store.read_optional(out.run_id, "context-r2") is None
+    persisted = store.read(out.run_id, "result")
+    assert persisted.get("context_request") is None
+    assert persisted["metrics"]["context_bytes"]["value"] == round1["used_bytes"]
+    receipt = _assert_receipt_consistent(tmp_path, out.run_id)
+    assert len(receipt.inputs.context_round_sha256) == 1
+
+
+def test_valid_request_in_economy_fails_by_limit(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None) -> None:
+    out = _negotiate(tmp_path, "context-request", "economy", recorder)
+    assert out.status == "provider_failure" and out.result is None
+    assert out.error is not None and out.error.code == Codes.CONTEXT_REQUEST_LIMIT
+    assert _executed(recorder) == ["bad-a"]
+    store = RunStore(tmp_path / ".forge")
+    assert store.read_optional(out.run_id, "result") is None
+    assert store.read_optional(out.run_id, "context-r1") is None
+    assert _assert_receipt_consistent(tmp_path, out.run_id).result_sha256 is None
+
+
+@pytest.mark.parametrize(("profile", "rounds"), [("balanced", 1), ("max", 2)])
+def test_request_loop_fails_by_limit_after_the_profile_rounds(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None,
+        profile: BudgetProfile, rounds: int) -> None:
+    out = _negotiate(tmp_path, "context-request-loop", profile, recorder)
+    assert out.status == "provider_failure" and out.result is None
+    assert out.error is not None and out.error.code == Codes.CONTEXT_REQUEST_LIMIT
+    assert _executed(recorder) == ["bad-a"] * (rounds + 1)
+    store = RunStore(tmp_path / ".forge")
+    assert store.read_optional(out.run_id, "result") is None
+    for n in (1, 2):
+        assert (store.read_optional(out.run_id, f"context-r{n}") is not None) == (n <= rounds)
+    receipt = _assert_receipt_consistent(tmp_path, out.run_id)
+    assert len(receipt.inputs.context_round_sha256) == rounds
+    assert receipt.status == "provider_failure" and receipt.result_sha256 is None
+
+
+@pytest.mark.parametrize(("mode", "code"), [
+    ("context-request-undeclared", Codes.CONTEXT_REQUEST_UNSUPPORTED),
+    ("context-request-invalid", Codes.CONTEXT_REQUEST_INVALID),
+])
+@pytest.mark.parametrize("profile", ["balanced", "max"])
+def test_undeclared_or_invalid_request_fails_with_its_code(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None,
+        mode: str, code: str, profile: BudgetProfile) -> None:
+    out = _negotiate(tmp_path, mode, profile, recorder)
+    assert out.status == "provider_failure" and out.result is None
+    assert out.error is not None and out.error.code == code
+    assert _executed(recorder) == ["bad-a"]
+    store = RunStore(tmp_path / ".forge")
+    assert store.read_optional(out.run_id, "result") is None
+    assert store.read_optional(out.run_id, "context-r1") is None
+    assert _assert_receipt_consistent(tmp_path, out.run_id).inputs.context_round_sha256 == []
+
+
+def test_negotiation_saves_the_fingerprint_cache_once(
+        tmp_path: Path, recorder: type[_Recorder], no_git: None,
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    saves: list[int] = []
+    real_save = FingerprintStore.save
+
+    def counting(self: FingerprintStore) -> None:
+        saves.append(1)
+        real_save(self)
+
+    monkeypatch.setattr(FingerprintStore, "save", counting)
+    out = _negotiate(tmp_path, "context-request", "max", recorder)
+    assert out.status == "ok"
+    assert saves == [1]
