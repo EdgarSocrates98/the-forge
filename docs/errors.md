@@ -72,7 +72,7 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-RECEIPT-INVALID` | persistence | receipt inconsistente: hash fora do formato, timestamp inválido ou status `ok`/`partial` sem `result_sha256` igual ao hash do `result` gravado |
 | `FORGE-PERSIST-WRITE` | persistence | falha ao gravar um run ou o estado do workspace (`theforge: persistence error:`, exit 5) |
 | `FORGE-PERSIST-READ` | persistence | falha ao ler um artefato de run (ilegível ou não é objeto JSON; exit 5) |
-| `FORGE-PERSIST-DIVERGENCE` | persistence | `explain` ou `replay --mode verify`/`render` encontrou hash persistido divergente (exit 6; a saída lista as divergências, sem linha de erro) |
+| `FORGE-PERSIST-DIVERGENCE` | persistence | `explain` ou `replay --mode verify`/`render` encontrou hash persistido divergente (exit 6; a saída lista as divergências e o stderr traz a linha `theforge: integrity divergence: <n> artifact(s) diverge [FORGE-PERSIST-DIVERGENCE · persistence]`) |
 | `FORGE-PROVIDER-UNTRUSTED` | security | provider `unverified` não executado sem `--allow-unverified` |
 | `FORGE-PROVIDER-BLOCKED` | security | provider com trust `blocked` nunca é executado |
 | `FORGE-WORKSPACE-CONFIG` | workspace | entrada inválida em `.forge/config/workspace.toml` (aviso; entrada ignorada, o run segue) |

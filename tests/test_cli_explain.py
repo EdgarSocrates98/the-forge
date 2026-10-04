@@ -165,6 +165,33 @@ def test_explain_exits_6_after_an_artifact_is_tampered(
         ("result", "modified")]
 
 
+def test_integrity_divergence_prints_one_governed_line_and_leaves_stdout_unchanged(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    run_id = _echo(capsys, tmp_path)
+    root = str(tmp_path)
+    clean_out = {argv: run(capsys, *argv)[1] for argv in (
+        ("explain", run_id, "--root", root, "--json"),
+        ("replay", run_id, "--mode", "render", "--root", root, "--json"))}
+    for argv in clean_out:
+        code, _, err = run(capsys, *argv)
+        assert code == 0 and "integrity divergence" not in err
+    _tamper_result(tmp_path, run_id)
+    line = (f"theforge: integrity divergence: 1 artifact(s) diverge "
+            f"[{Codes.PERSIST_DIVERGENCE} · persistence]")
+    for argv in (("explain", run_id, "--root", root),
+                 ("explain", run_id, "--root", root, "--json"),
+                 ("replay", run_id, "--mode", "render", "--root", root),
+                 ("replay", run_id, "--mode", "verify", "--root", root)):
+        code, out, err = run(capsys, *argv)
+        assert code == EXIT_INTEGRITY
+        assert err.splitlines() == [line]
+        assert line not in out and "theforge:" not in out
+    code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
+    assert json.loads(out)["integrity"]["divergences"][0]["artifact"] == "result"
+    assert json.loads(out)["run_id"] == json.loads(
+        clean_out[("explain", run_id, "--root", root, "--json")])["run_id"]
+
+
 def test_explain_unknown_or_malformed_run_is_a_usage_error(
         tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     make_workspace(tmp_path, [])

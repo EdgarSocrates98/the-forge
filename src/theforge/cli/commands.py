@@ -12,7 +12,7 @@ from typing import Any, Final
 from theforge.cli import render
 from theforge.context import scan_workspace
 from theforge.contracts import to_dict
-from theforge.contracts.codes import family_of
+from theforge.contracts.codes import Codes, family_of
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
 from theforge.explain import build_explain_report
@@ -41,6 +41,17 @@ def print_debug(diagnostic: dict[str, Any]) -> None:
     """The redacted diagnostic as ``theforge: debug:`` lines on stderr (13.5)."""
     for line in render.diagnostic(diagnostic):
         print(f"theforge: debug: {line}", file=sys.stderr)
+
+
+def _integrity_exit(divergences: int) -> int:
+    """Exit 6 with one governed stderr line when artifacts diverge (``PERSIST_DIVERGENCE``
+    classifies the divergence, 13.4); 0 otherwise. Stdout is left untouched."""
+    if not divergences:
+        return 0
+    code = Codes.PERSIST_DIVERGENCE
+    print(f"theforge: integrity divergence: {divergences} artifact(s) diverge "
+          f"{render.code_suffix(code, error_family(code))}", file=sys.stderr)
+    return EXIT_INTEGRITY
 
 
 def _root(args: argparse.Namespace) -> Path:
@@ -250,7 +261,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
     with _run_lookup():
         report = build_explain_report(store, args.run_id)
     _emit(args, to_dict(report), render.explain_report)
-    return EXIT_INTEGRITY if report.integrity.divergences else 0
+    return _integrity_exit(len(report.integrity.divergences))
 
 
 def cmd_plan(args: argparse.Namespace) -> int:
@@ -316,4 +327,4 @@ def cmd_replay(args: argparse.Namespace) -> int:
         _emit(args, redact(data), render.replay)
         return EXIT_BY_STATUS.get(status, 4) if isinstance(status, str) else 4
     _emit(args, redact(data), render.replay)
-    return EXIT_INTEGRITY if report.divergences else 0
+    return _integrity_exit(len(report.divergences))

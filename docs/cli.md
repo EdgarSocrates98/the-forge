@@ -43,9 +43,10 @@ theforge: error: unknown run 20261004T120000Z-0a1b2c3d [FORGE-USAGE · usage]
 theforge: persistence error: <detalhe> [FORGE-PERSIST-WRITE · persistence]
 theforge: internal error: <TipoDaExceção>: <mensagem> [FORGE-INTERNAL · internal]
 theforge: interrupted
+theforge: integrity divergence: 1 artifact(s) diverge [FORGE-PERSIST-DIVERGENCE · persistence]
 ```
 
-- Prefixos: `theforge: error:` (uso inválido, exit 2; recusa de `replay`, exit 4), `theforge: persistence error:` (exit 5), `theforge: internal error:` (exit 70) e `theforge: interrupted` (exit 130, sem sufixo).
+- Prefixos: `theforge: error:` (uso inválido, exit 2; recusa de `replay`, exit 4), `theforge: persistence error:` (exit 5), `theforge: internal error:` (exit 70), `theforge: interrupted` (exit 130, sem sufixo) e `theforge: integrity divergence: <n> artifact(s) diverge` (exit 6, em `explain` e `replay --mode render`/`verify`; a saída em stdout, texto ou `--json`, continua listando cada divergência e não muda).
 - Nas saídas de `ask` e `plan`, a linha `Error:` traz o mesmo sufixo; `--json` traz `error` e `error_family`. Um código nativo de provider (`AF-*`, `SPARKFORGE-*`, …) não tem família e aparece como `[<código> · provider code]`.
 - Nunca há traceback, nem em erro interno: em texto e em `--json`, um traceback dentro de um detalhe (por exemplo, o fim do stderr de um provider) vira `[traceback omitted] <última linha>`.
 - `--debug` (aceito por todo subcomando) imprime, depois da mensagem de um erro de uso, de persistência ou interno, e depois da saída de um run de `ask` ou `plan` que terminou em erro interno, o diagnóstico redigido em linhas `theforge: debug:` (`stage=… code=… family=…`, `error: <tipo>: <mensagem>`, `cause: …`, `frame: <módulo>:<função>:<linha>`, só módulos `theforge.*`). Em `ask` e `plan`, um erro interno do run também grava o artefato `diagnostic` do run, só com `--debug`. Detalhes em [security.md](security.md#diagnóstico-de-debug).
@@ -117,7 +118,7 @@ Not recorded: none
 - `Plan run: <id> (node <nó>)` num run de nó e `Replay of: <id>` num run criado por `replay --mode execute`.
 - Num run de plano: `Plan` (status, padrão, origem e perfil), `Nodes` (um por linha: provider, capability e ação, dependências com status epistêmico, regra e evidência, desfecho, run e `blocked_by`), `Violations`, `Handoffs` (origem → destino, itens, truncado), `Synthesis`, `Failures`, `Plan result` (status, ordem efetiva, reprodutibilidade combinada), `Workspace` (repositórios, tecnologias, relações) e `Install` (itens do plano de instalação).
 - `Error family` quando o run tem erro, `Limitations`, `Unknowns`, `Integrity` e `Not recorded` (seções esperadas sem dado gravado).
-- `Integrity`: `ok (N checked[, M unrecorded])` ou `N divergence(s)` seguido de uma linha `<tipo> <artefato>` por divergência (`modified`, `missing` ou `unreadable`; `work/<path>` para um artifact do provider, `<run>/<artefato>` para um run de nó). Com divergência o exit é 6; o que é conferido está em [security.md](security.md#integridade-de-runs-e-âncora-de-confiança).
+- `Integrity`: `ok (N checked[, M unrecorded])` ou `N divergence(s)` seguido de uma linha `<tipo> <artefato>` por divergência (`modified`, `missing` ou `unreadable`; `work/<path>` para um artifact do provider, `<run>/<artefato>` para um run de nó). Com divergência o exit é 6 e o stderr traz uma linha `theforge: integrity divergence: <n> artifact(s) diverge [FORGE-PERSIST-DIVERGENCE · persistence]`; o que é conferido está em [security.md](security.md#integridade-de-runs-e-âncora-de-confiança).
 
 Exits: 0 sem divergência, 2 para run id malformado ou desconhecido, 6 com divergência. `explain` só lê o run: nunca escreve nele nem inicia providers.
 
@@ -191,7 +192,7 @@ Só `depends_on` entre dois repositórios descobertos é aceito; uma entrada inv
 | Modo | Faz | Exit |
 |---|---|---|
 | `render` | reapresenta o relatório do `explain` só a partir dos artefatos gravados, sem iniciar providers e sem ler o workspace | 0, ou 6 com divergência de integridade |
-| `verify` | recalcula os hashes do run e compara os itens de contexto registrados (inclusive dos runs de nó de um plano) com o workspace atual, sem iniciar providers nem escrever; mostra `Replay verify of <id>: N divergence(s)` e uma linha `<tipo> <artefato>` por divergência (`workspace/<path>` para um arquivo de contexto alterado) | 0 sem divergência, 6 com divergência |
+| `verify` | recalcula os hashes do run e compara os itens de contexto registrados (inclusive dos runs de nó de um plano) com o workspace atual, sem iniciar providers nem escrever; mostra `Replay verify of <id>: N divergence(s)` e uma linha `<tipo> <artefato>` por divergência (`workspace/<path>` para um arquivo de contexto alterado) | 0 sem divergência, 6 com divergência (mais a linha `theforge: integrity divergence:` em stderr) |
 | `execute` | executa um novo run com os parâmetros originais, o provider fixado e `replay_of` apontando o original (que não é alterado), e compara os resultados sem campos voláteis: `Comparison: same`, `different` ou `no-result` | o do desfecho do novo run (0 / 3 / 4); 4 se recusado |
 
 `execute` é recusado antes de iniciar qualquer provider, com todos os motivos na mensagem (`theforge: error: replay refused: <motivo>; … [<código> · replay]`, exit 4):
