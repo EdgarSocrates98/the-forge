@@ -53,6 +53,18 @@ Detalhes normativos em [protocol.md](protocol.md#contexto-v2). Tudo é opcional:
 ### Adapters reais
 Os dois adapters reais declaram `"context_revalidation": "hash"`: copiam para `<cwd>/stage/` só os arquivos dentro de `workspace_root` cujo sha256 bate com o do pack, e o especialista lê só essas cópias; o resto vira a limitação `context file '<p>' skipped: <motivo>`. Eles não declaram `excerpts` nem `requests`, então recebem só itens `reference`.
 
+## Planos multi-provider: `plan`, handoff e determinismo
+Detalhes normativos em [protocol.md](protocol.md#execução-multi-provider) e decisão no [ADR 0018](adr/0018-multi-provider-execution.md). Tudo é opcional: um provider que não declara nada continua executando nós de plano como qualquer `execute`.
+
+- **Op `plan` (opcional).** Declare `plan` em `ops` só se souber estimar um pedido sem executá-lo. Responda com `PlanEstimate` (`context_needed`, `operation_class`, `expected_artifacts`, `unknowns`, `limitations`), sem efeitos colaterais, sem rede e sem credenciais, dentro de 10 s, com cwd temporário, como em `describe` e `health`. Uma `operation_class` estimada mais severa que a declarada endurece a policy do nó; uma mais branda é ignorada. Falha ou timeout nunca quebra o plano: vira a limitação `FORGE-PLAN-ESTIMATE` no nó.
+- **Ops reservadas.** Não declare `verify` nem `estimate`: continuam reservadas e o core nunca as chama.
+- **Handoff (opcional).** Num nó de plano, `payload.handoff` traz itens dos nós de que ele depende (decisão, findings, evidências com o status epistêmico original e referências de artifact com hash), cada um com a origem. Não há conteúdo de arquivo: para ler um arquivo, use o `ContextPack` do próprio nó. O handoff já vem redigido e limitado (256 itens, 256 KiB) e pode vir truncado (`truncated`, `dropped`). Se a capability usa o handoff, declare `capabilities[].accepts_handoff: true`; sem a declaração o handoff chega do mesmo jeito e o run registra `handoff-use-undeclared: <provider>/<capability>`.
+- **Não eleve status epistêmico.** Uma evidência recebida como `inferred` continua `inferred` se o provider a repetir; confirme-a de novo a partir do próprio contexto se quiser declará-la `confirmed`.
+- **Determinismo.** Declare `execution.deterministic: true` só se as mesmas entradas (task, ContextPack, handoff) sempre produzem o mesmo resultado. Sem a declaração, nenhum run do provider é `reproducible` (no máximo `partially_reproducible`), e `replay --mode execute` continua possível. Declarar `requires_network`, `offline: false`, `local: false` ou uma classe `external_*`/`destructive` torna o run `non_reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
+- **Artifacts.** Desde esta versão o core recalcula o sha256 de cada `artifacts[].path` em `work/`: um hash declarado diferente do arquivo gravado deixa o run `partial` com `FORGE-RESULT-ARTIFACT-HASH`.
+
+Os adapters reais de Spark Forge e API Forge não declaram `plan`, `accepts_handoff` nem `deterministic`: num plano eles recebem e ignoram o handoff (limitação `handoff-use-undeclared`), e seus runs ficam `partially_reproducible` ou menos.
+
 ## Regras de segurança
 - Leia apenas os arquivos listados no ContextPack e confira se continuam dentro de `workspace_root`.
 - Não espere credenciais no ambiente: o core repassa só uma [allowlist de variáveis](security.md#ambiente-do-provider) e remove nomes com cara de credencial.

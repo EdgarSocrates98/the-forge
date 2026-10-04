@@ -117,6 +117,12 @@ No PowerShell: `$env:THEFORGE_REAL_SPARKFORGE_PYTHON = "<spark-python>"`.
 
 A integração cobre, por Forge, `describe` (manifest `ready` e snapshot igual à superfície viva), `health`, `execute` de uma capability sobre `tests/fixtures/workspaces/{spark,api}/`, provider ausente e version skew (`--assume-specialist-version 9.9.9`).
 
+### Prova cross-forge (Spark Forge → API Forge)
+`tests/test_cross_forge_real.py` (marker `real_provider`, mesmo contrato de ambiente) registra os dois adapters e roda `theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max --execute` no workspace de prova `tests/fixtures/workspaces/cross/` (montado em diretório temporário, um repositório git por subdiretório). Confere o plano `spark-forge/pyspark.static-analysis` → `api-forge/api.analyze`, ao menos um item de handoff com origem no Spark Forge e o status epistêmico original recebido pelo nó de API, a síntese com os dois runs e `theforge explain` do plano sem divergência ([ADR 0018](adr/0018-multi-provider-execution.md)).
+
+- Os adapters não declaram `accepts_handoff`: o nó de API recebe o handoff, ignora o campo e registra `handoff-use-undeclared: api-forge/api.analyze`. Isso é esperado.
+- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. A gravação do Spark vem do gravador; a do API Forge foi montada à mão a partir de um run real e leva `"provenance": "hand-built"`. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
+
 ## Regravar snapshots e gravações de replay
 
 Os arquivos gravados são comparados byte a byte. A escrita é canônica: chaves ordenadas, indentação de 2 espaços e LF final. O `.gitattributes` fixa LF para `adapters/**/native_*.json` e `tests/fixtures/native/**`. Uma gravação nunca pode conter caminho da máquina: o gravador de execute do Spark recusa gravar quando encontra um.

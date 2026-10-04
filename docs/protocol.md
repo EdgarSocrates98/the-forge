@@ -13,10 +13,11 @@
 |---|---|---|---|
 | `describe` | sim | `{}` | `ForgeManifest` |
 | `health` | sim | `{}` | `HealthReport` (`ok\|degraded\|unavailable`) |
-| `execute` | não | `ExecuteRequest{task, capability, action, context}` | `ExecutionResult` |
-| `plan`, `verify`, `estimate` | reservadas | — | — |
+| `execute` | não | `ExecuteRequest{task, capability, action, context, handoff?}` | `ExecutionResult` |
+| `plan` | não | `PlanRequest{task, capability, action}` | `PlanEstimate` |
+| `verify`, `estimate` | reservadas | — | — |
 
-O provider declara as ops que suporta em `describe.ops`. As capabilities de um provider que não declara `execute` não são roteáveis. A decisão de routing registra em `limitations` os providers excluídos por isso quando são relevantes: declaram a capability pedida com `--capability`, ou, no routing por sinais, nada foi roteado. Um pedido com `--capability` é recusado com `FORGE-PROTO-OP-UNSUPPORTED` (sem iniciar o processo de `execute`) quando um provider roteável declara a capability sem `execute` e nenhum outro poderia executá-la: nenhum declarante com `execute`, qualquer que seja o trust ou o estado, e nenhum provider não bloqueado de manifest desconhecido. Caso contrário fica o `no_route` comum: o provider que executaria está fora do routing por outro motivo (por exemplo `unverified` sem `--allow-unverified`, ou indisponível), e `theforge registry list` mostra trust e estado de cada um.
+O provider declara as ops que suporta em `describe.ops`. `plan` é chamada só em providers que a declaram ([Operação `plan`](#operação-plan)); `verify` e `estimate` continuam reservadas e o core nunca as envia ([ADR 0018](adr/0018-multi-provider-execution.md)). As capabilities de um provider que não declara `execute` não são roteáveis. A decisão de routing registra em `limitations` os providers excluídos por isso quando são relevantes: declaram a capability pedida com `--capability`, ou, no routing por sinais, nada foi roteado. Um pedido com `--capability` é recusado com `FORGE-PROTO-OP-UNSUPPORTED` (sem iniciar o processo de `execute`) quando um provider roteável declara a capability sem `execute` e nenhum outro poderia executá-la: nenhum declarante com `execute`, qualquer que seja o trust ou o estado, e nenhum provider não bloqueado de manifest desconhecido. Caso contrário fica o `no_route` comum: o provider que executaria está fora do routing por outro motivo (por exemplo `unverified` sem `--allow-unverified`, ou indisponível), e `theforge registry list` mostra trust e estado de cada um.
 
 ## Envelopes
 ```json
@@ -33,7 +34,7 @@ O provider declara as ops que suporta em `describe.ops`. As capabilities de um p
 - `kind` precisa ser `Response`.
 - `op` é opcional (compatível com providers do ciclo 1), mas, quando presente, precisa ser igual à op pedida. Os providers de referência sempre o emitem; novos providers devem emiti-lo.
 - `error` é obrigatório quando o status é `refused` ou `error`.
-- `producer.id` precisa ser o id registrado do provider e `producer.version` a `version` do manifest. O core confere o `producer` do envelope nas três ops: em `describe` contra o manifest retornado, em `health` e em `execute` contra o manifest em uso. Em `execute`, o `ExecutionResult.producer` (id e versão) também é conferido.
+- `producer.id` precisa ser o id registrado do provider e `producer.version` a `version` do manifest. O core confere o `producer` do envelope em toda op: em `describe` contra o manifest retornado, em `health`, `plan` e `execute` contra o manifest em uso. Em `execute`, o `ExecutionResult.producer` (id e versão) também é conferido.
 
 O core valida a response em duas etapas.
 
@@ -47,6 +48,7 @@ O core valida a response em duas etapas.
    - `describe`: status, schema do manifest, id do manifest igual à entrada e `producer` (`FORGE-PROTO-PRODUCER`). Qualquer falha deixa o provider `invalid` (o schema do manifest não gera código `FORGE-PROTO-*`). Depois vêm os [limites de manifest](#manifest) e a negociação.
    - `health`: `producer` (`FORGE-PROTO-PRODUCER`), status (o `error` do provider ou, sem ele, `FORGE-HEALTH-FAILED`) e schema do `HealthReport` (`FORGE-PROTO-SCHEMA`).
    - `execute`: `producer` do envelope (`FORGE-PROTO-PRODUCER`), status (`refused`/`error` repassam o `error` do provider), schema do `ExecutionResult` (`FORGE-PROTO-SCHEMA`) e [integridade](#integridade-do-resultado), começando pelo `producer` do resultado.
+   - `plan`: `producer` (`FORGE-PROTO-PRODUCER`), status e schema do `PlanEstimate` (`FORGE-PROTO-SCHEMA`); qualquer falha vira limitação `FORGE-PLAN-ESTIMATE` no nó, nunca erro ([Operação `plan`](#operação-plan)).
 
 ## Versionamento
 - `describe.protocols` lista as versões suportadas; o core escolhe o maior major em comum.
@@ -62,10 +64,11 @@ A tolerância depende de quem produziu o contrato:
 | Origem | Contratos | Campo desconhecido |
 |---|---|---|
 | Provider | `Response`, `ForgeManifest`, `HealthReport`, `ExecutionResult`, `Evidence` | ignorado (forward-compat dentro do major) |
-| Core, ao reler o que gravou | artefatos do run (`task`, `routing`, `risk`, `context`, `context-r1`, `context-r2`, `result`, `telemetry`, `receipt`), o cache do registry e o cache de fingerprints de contexto | rejeitado em qualquer profundidade (`$.<caminho>: unknown field`) |
+| Provider | `PlanEstimate` (payload da op `plan`) | ignorado |
+| Core, ao reler o que gravou | artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-result`, `graph`, `verification`, `telemetry`, `diagnostic`, `receipt`), o cache do registry e o cache de fingerprints de contexto | rejeitado em qualquer profundidade (`$.<caminho>: unknown field`) |
 
 - O core persiste só os campos que conhece, então um `result` vindo de provider com campos extras é relido sem eles.
-- Nos JSON Schemas de `schemas/`, `additionalProperties: false` aparece só em `RoutingDecision`, `ExecutionReceipt`, `RiskAssessment` e `RunTelemetry`, que nunca cruzam o protocolo. `TaskSpec` e `ContextPack` vão ao provider dentro de `ExecuteRequest` e continuam com schema aberto; a rigidez deles vem da releitura estrita.
+- Nos JSON Schemas de `schemas/`, `additionalProperties: false` aparece só nos contratos que nunca cruzam o protocolo: `RoutingDecision`, `ExecutionReceipt`, `RiskAssessment`, `RunTelemetry`, `ExecutionPlan`, `PlanResult`, `WorkspaceDescriptor`, `WorkspaceGraph`, `VerificationResult`, `InstallationPlan`, `ExplainReport` e `Diagnostic`. `TaskSpec`, `ContextPack` e `Handoff` vão ao provider dentro de `ExecuteRequest` (e `TaskSpec` dentro de `PlanRequest`) e continuam com schema aberto, assim como `PlanRequest` e `PlanEstimate`; a rigidez deles vem da releitura estrita.
 
 ## Integridade do resultado
 Um `ExecutionResult` só é persistido se passar por todas as regras abaixo. Caso contrário, o run termina em `provider_failure` com o código da primeira violação, nenhum artefato `result` é gravado e o receipt é gravado mesmo assim.
@@ -73,12 +76,24 @@ Um `ExecutionResult` só é persistido se passar por todas as regras abaixo. Cas
 - IDs de `evidence` únicos (`FORGE-RESULT-DUP-EVIDENCE`) e IDs de `findings` únicos (`FORGE-RESULT-DUP-FINDING`).
 - Todo `finding.evidence_ids` aponta para uma evidence do mesmo resultado (`FORGE-RESULT-DANGLING-EVIDENCE`).
 - `artifacts[].path` (`FORGE-RESULT-ARTIFACT-PATH`): caminho relativo POSIX, não vazio, sem `\`, sem `/` inicial, sem letra de drive (`C:`), sem segmento `..`, sem byte NUL e que nomeie algo abaixo da raiz (não só `.`). A checagem é léxica: o core nunca abre o caminho.
-- A raiz de `artifacts[].path` é o cwd do `execute` (`.forge/runs/<id>/work/`): `native/full-output.json` nomeia `.forge/runs/<id>/work/native/full-output.json`. O `sha256` é calculado pelo provider sobre os bytes do arquivo; o core não o recalcula.
+- A raiz de `artifacts[].path` é o cwd do `execute` (`.forge/runs/<id>/work/`): `native/full-output.json` nomeia `.forge/runs/<id>/work/native/full-output.json`. O `sha256` é calculado pelo provider sobre os bytes do arquivo. A integridade não abre o arquivo; depois dela, a [verificação](#verificação-do-resultado) recalcula o hash de cada artifact em `work/`.
 - `created_at` em ISO-8601 UTC, com sufixo `Z` ou `+00:00` (`FORGE-PROTO-SCHEMA`).
 - `producer` igual ao provider invocado, id e versão (`FORGE-PROTO-PRODUCER`).
 
 ### Formato de hash
 Todo campo SHA-256 é exatamente 64 caracteres hexadecimais **minúsculos** (`^[0-9a-f]{64}$`): `Artifact.sha256`, `ContextFile.sha256`, `Evidence.hash` (quando presente) e os `*_sha256` do receipt. Hash maiúsculo, curto ou não hexadecimal invalida o contrato que o contém. O que `Evidence.hash` cobre está em [Revalidação de contexto](#revalidação-de-contexto-toctou).
+
+### Verificação do resultado
+Todo run que recebe um resultado válido grava o artefato `verification` (`theforge/VerificationResult/v1`), ligado ao receipt por `verification_sha256`. Ele separa quatro níveis, e o próprio contrato impede que o que o provider diz de si apareça como verificação aprovada:
+
+| Nível | Status possíveis | Conteúdo |
+|---|---|---|
+| `self_report` | `reported`, `not_performed` | o status que o provider declarou na response |
+| `provider_evidence` | `reported`, `not_performed` | as evidências do provider, contadas por status epistêmico |
+| `forge` | `passed`, `failed`, `not_performed` | checagens que The Forge executa: integridade do resultado, `producer`, reverificação de contexto no nível do perfil (`minimal` não reverifica) e o sha256 de cada `artifacts[].path` recalculado em `work/` |
+| `independent` | `not_performed` | sempre não executada: a op `verify` continua reservada |
+
+`forge` é `passed` só se todas as checagens executadas passarem. Um artifact ausente, fora da raiz ou com hash diferente do declarado reprova `forge`, gera a limitação `FORGE-RESULT-ARTIFACT-HASH: <path>` e o run termina `partial`, nunca `ok`.
 
 ## Contexto v2
 O `ContextPack` continua por referência ([ADR 0007](adr/0007-context-pack-by-reference.md)): caminho, sha256 e tamanho, nunca conteúdo. Todos os campos abaixo são aditivos e opcionais dentro de `theforge/ContextPack/v1`; um provider que os ignora continua válido e recebe só itens `reference`. Decisões em [ADR 0015](adr/0015-context-intelligence.md).
@@ -203,6 +218,61 @@ Limites (`contracts/types.py`, valores iniciais):
 - Capability excluída gera aviso `FORGE-MANIFEST-LIMITS` no registry; as demais continuam roteáveis. Se nenhuma sobrar, o provider fica `invalid`.
 - **Glob catch-all** também exclui a capability. É catch-all um glob (sem espaços nas pontas e sem `./` inicial) que seja `*`, `**`, `**/*`, `*.*` ou `**/*.*`, ou que não tenha nenhum caractere alfanumérico literal depois de descartar classes negadas (`[!…]`, `[^…]`) e classes com intervalo (`[a-z]`). Exemplos: `?*`, `**/?*`, `[!.]*`. Classes positivas de literais contam como literais (`*.[ch]` é válido). Globs por extensão (`*.md`, `*.scala`) são sinais legítimos e são permitidos.
 
+## Execução multi-provider
+`theforge plan` divide uma tarefa em nós, cada um executado por um único provider, um de cada vez ([ADR 0018](adr/0018-multi-provider-execution.md), [architecture.md](architecture.md#fluxo-de-plan)). Para o provider, cada nó é um `execute` comum. Tudo nesta seção é aditivo e opcional dentro de `forge/v1`: um provider que não conhece nenhum destes campos continua válido, e um nó com ele termina `ok` normalmente.
+
+### Operação `plan`
+- **Quando.** Só durante `theforge plan`, depois de o plano ser validado e antes de executar qualquer nó (inclusive sem `--execute`): uma chamada por nó cujo provider declara `plan` em `describe.ops`. `ask` nunca chama `plan`.
+- **Superfície.** A mesma de `describe` e `health`: cwd temporário apagado depois da chamada, [ambiente mínimo](security.md#ambiente-do-provider), timeout de 10 s e `producer` (id e versão) conferido. Provider que não está `ready`, `blocked` ou `unverified` sem `--allow-unverified` não é chamado.
+- **Request.** `PlanRequest` (`theforge/PlanRequest/v1`, schema aberto): `{task, capability, action}`, com a `TaskSpec` do nó (alvos do nó, capability e ação pedidas).
+- **Response.** Status `ok` com payload `PlanEstimate` (`theforge/PlanEstimate/v1`, schema aberto). Todos os campos são opcionais:
+
+  | Campo | Conteúdo |
+  |---|---|
+  | `context_needed` | caminhos relativos ou globs que o provider espera ler |
+  | `operation_class` | classe de operação estimada para este pedido (`read_only` … `destructive`) |
+  | `expected_artifacts` | artifacts que o provider espera gravar |
+  | `unknowns`, `limitations` | o que o provider ainda não sabe e o que não fará |
+
+- **Uso.** A estimativa vai para `nodes[].estimate` do plano. Uma `operation_class` estimada só pode **endurecer** a policy: o nó é avaliado para a classe declarada no manifest e para a estimada, e vale a decisão mais restritiva (`deny` > `ask` > `allow`). Quando a estimada vence, o `risk` do run do nó registra a classe estimada e a limitação `operation-class: estimate <estimada> stricter than declared <declarada>`.
+- **Falhas.** Nada aqui falha o planejamento. Provider sem `plan` gera a limitação `estimate: provider does not declare op plan` no nó; qualquer outra falha (estado, trust, transporte, `refused`/`error`, `producer`, schema) gera `estimate: FORGE-PLAN-ESTIMATE: <detalhe>`. Nos dois casos a estimativa fica desconhecida e o nó segue com a classe declarada.
+
+### Handoff
+Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequest`, um `Handoff` (`theforge/Handoff/v1`, schema aberto) montado só a partir dos nós listados em `inputs` do nó. Fora de planos o campo é `null`.
+
+```json
+{"handoff": {"schema": "theforge/Handoff/v1", "producer": {"id": "theforge", "version": "…"},
+  "created_at": "…", "plan_run": "…", "target_node": "n2",
+  "items": [{"kind": "evidence", "id": "e1", "epistemic": "observed",
+             "origin": {"plan_run": "…", "node": "n1", "run_id": "…",
+                        "provider": {"id": "spark-forge", "version": "0.5.0"}},
+             "subject": "…", "claim": "…", "location": {"path": "jobs/x.py", "line": 3},
+             "hash": null}],
+  "truncated": false, "dropped": 0, "limitations": []}}
+```
+
+- **Itens.** `decision` (`id` = `outcome`, o status, a capability e a ação do nó de origem, `epistemic` = `observed`), `finding` (id original, severidade, `evidence_ids`), `evidence` (id original e **status epistêmico original**, nunca elevado) e `artifact` (caminho relativo ao `work/` do nó de origem e `hash` sha256). Cada item traz `origin`: run do plano, nó, run e provider (id e versão) de onde veio.
+- **Sem conteúdo.** Nenhum item carrega conteúdo de arquivo nem a saída integral do provider: só ids, `claim` (no máximo 500 caracteres), localização e hashes. Um nó de origem sem resultado válido não contribui (limitação `handoff-input-missing: <nó>`).
+- **Limites.** 256 itens e 262 144 bytes de JSON canônico. Acima disso o core corta de forma determinística, nesta prioridade por nó de origem: decisão, findings (por severidade), evidências (as referenciadas por findings primeiro, depois por status epistêmico) e artifacts; `truncated` vira `true`, `dropped` conta os descartados e a limitação `handoff-truncated: dropped <N> items` é registrada.
+- **Redação.** O handoff passa por `security.redact` antes de ser medido; o que o provider recebe é exatamente o artefato `handoff` gravado no run do nó, cujo hash fica em `inputs.handoff_sha256` do receipt.
+- **Consumo opcional.** O provider pode ignorar o campo. Se a capability selecionada não declara `accepts_handoff: true` e recebe um handoff, o run do nó registra a limitação `handoff-use-undeclared: <provider>/<capability>` e segue normalmente.
+
+### Declarações no manifest
+```json
+{"capabilities": [{"id": "…", "accepts_handoff": true}],
+ "execution": {"local": true, "offline": true, "requires_network": false,
+               "deterministic": true},
+ "ops": ["describe", "health", "execute", "plan"]}
+```
+- `capabilities[].accepts_handoff` (padrão `false`): a capability lê o `handoff` do `ExecuteRequest`. Só muda a limitação acima; o handoff é enviado de qualquer forma.
+- `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
+- `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
+
+Os adapters reais de Spark Forge e API Forge não declaram nenhum dos três nesta versão: recebem o handoff, ignoram o campo e o run do nó registra `handoff-use-undeclared`.
+
+### Padrões
+`RoutingDecision.pattern` (padrão `route`; decisões gravadas sem o campo são relidas como `route`) e `ExecutionPlan.pattern` aceitam `route`, `delegate`, `parallel`, `pipeline` e `debate`. Só `route` (um nó) e `pipeline` (nós em sequência) executam; um plano com `delegate`, `parallel` ou `debate` é recusado com `FORGE-PLAN-PATTERN-RESERVED`. Os demais códigos de plano estão em [errors.md](errors.md#códigos).
+
 ## Códigos de erro do core
 Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados. A lista canônica e testada de códigos `FORGE-*`, com a família de cada um, é [errors.md](errors.md). Esta seção só resume os códigos de manifest e de pedido de contexto citados acima:
 
@@ -239,4 +309,23 @@ Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-loc
 | `AF-*` | `refused` ou `error` | erro nativo do API Forge: exit 2 → `refused`; exit 3, `AF-CLI-INTERNAL` ou outro → `error` |
 
 ## Contratos
-Os JSON Schemas ficam em `schemas/`. `RiskAssessment` v1 é o artefato `risk` do run (ver [security.md](security.md#policy-e-risco)). `RunTelemetry` v1 é o artefato `telemetry`, gravado em todo run e ligado ao receipt por `telemetry_sha256` (ver [architecture.md](architecture.md#telemetria)). Nomes reservados (sem implementação): ExecutionPlan, VerificationResult, Budget, GraphNode, GraphEdge, InstallationPlan, DecisionRecord, WorkspaceDescriptor, EnvironmentReport (v0 não estável em `doctor`).
+Os JSON Schemas ficam em `schemas/` (regenerados com `python -m theforge.contracts.schema schemas`; um teste confere a paridade). Todo contrato tem `schema = "theforge/<Name>/v1"` e só evolui por campos aditivos e opcionais dentro de v1. `RiskAssessment` v1 é o artefato `risk` do run (ver [security.md](security.md#policy-e-risco)). `RunTelemetry` v1 é o artefato `telemetry`, gravado em todo run e ligado ao receipt por `telemetry_sha256` (ver [architecture.md](architecture.md#telemetria)).
+
+Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execution.md), [ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)):
+
+| Contrato | Onde aparece | Cruza o protocolo |
+|---|---|---|
+| `theforge/PlanRequest/v1`, `theforge/PlanEstimate/v1` | request e response da [op `plan`](#operação-plan); a estimativa fica em `nodes[].estimate` | sim (schema aberto) |
+| `theforge/Handoff/v1` | `ExecuteRequest.handoff` e artefato `handoff` do run do nó | sim (schema aberto) |
+| `theforge/ExecutionPlan/v1` | artefato `plan` do run do plano | não |
+| `theforge/PlanResult/v1` | artefato `plan-result`: desfecho por nó, ordem efetiva, síntese, reprodutibilidade combinada | não |
+| `theforge/WorkspaceDescriptor/v1` | artefato `workspace-descriptor` e `theforge workspace show --json` | não |
+| `theforge/WorkspaceGraph/v1` | artefato `graph` (nós e arestas com evidência) | não |
+| `theforge/VerificationResult/v1` | artefato `verification` de todo run de um provider | não |
+| `theforge/InstallationPlan/v1` | artefato `installation`, só de planejamento | não |
+| `theforge/ExplainReport/v1` | `theforge explain --json` ([cli.md](cli.md#explain)) | não |
+| `theforge/Diagnostic/v1` | artefato `diagnostic` e linhas `theforge: debug:` com `--debug` | não |
+
+Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.accepts_handoff`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.handoff_sha256` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+
+Nomes reservados (sem implementação): `Budget`, `DecisionRecord` e `EnvironmentReport` (v0 não estável em `doctor`); as ops `verify` e `estimate`; os padrões `delegate`, `parallel` e `debate`.

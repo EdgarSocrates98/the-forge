@@ -72,7 +72,7 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-RECEIPT-INVALID` | persistence | receipt inconsistente: hash fora do formato, timestamp inválido ou status `ok`/`partial` sem `result_sha256` igual ao hash do `result` gravado |
 | `FORGE-PERSIST-WRITE` | persistence | falha ao gravar um run ou o estado do workspace (`theforge: persistence error:`, exit 5) |
 | `FORGE-PERSIST-READ` | persistence | falha ao ler um artefato de run (ilegível ou não é objeto JSON; exit 5) |
-| `FORGE-PERSIST-DIVERGENCE` | persistence | `explain` ou `replay --mode verify` encontrou hash persistido divergente (exit 6) |
+| `FORGE-PERSIST-DIVERGENCE` | persistence | `explain` ou `replay --mode verify`/`render` encontrou hash persistido divergente (exit 6; a saída lista as divergências, sem linha de erro) |
 | `FORGE-PROVIDER-UNTRUSTED` | security | provider `unverified` não executado sem `--allow-unverified` |
 | `FORGE-PROVIDER-BLOCKED` | security | provider com trust `blocked` nunca é executado |
 | `FORGE-WORKSPACE-CONFIG` | workspace | entrada inválida em `.forge/config/workspace.toml` (aviso; entrada ignorada, o run segue) |
@@ -85,3 +85,6 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 ## Códigos nativos de providers
 
 Códigos que não começam com `FORGE-` pertencem ao provider e passam intactos: `AF-*` (API Forge), `SPARKFORGE-*`, `APIFORGE-*` e `ADAPTER-*` (adapters reais). Eles **não têm família** (`family_of` devolve `None`) e são apresentados como código do provider, separados desta taxonomia. A convenção dos adapters está em [protocol.md](protocol.md#códigos-dos-adapters-reais).
+
+## Apresentação na CLI
+Toda mensagem de erro termina com `[<código> · <família>]` (código nativo: `[<código> · provider code]`), mantendo os prefixos `theforge: error:`, `theforge: persistence error:` e `theforge: internal error:`; nunca há traceback, e `--debug` mostra o diagnóstico redigido. Exit codes e exemplos em [cli.md](cli.md#mensagens-de-erro-e---debug); decisão em [ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md).

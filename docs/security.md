@@ -1,4 +1,4 @@
-# Segurança — threat model resumido (ciclos 1 e 2, Waves A–C)
+# Segurança — threat model resumido (ciclos 1 e 2, Waves A–D)
 
 Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defeituoso e tentativa de escalar trust. Fora do modelo: usuário local mal-intencionado com escrita no próprio home.
 
@@ -22,6 +22,12 @@ Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defei
 | Cache de fingerprints adulterado | [cache fora do projeto](#cache-de-fingerprints-de-contexto), releitura estrita, reuso só sem nenhuma evidência de mudança, redação antes de gravar ([ADR 0015](adr/0015-context-intelligence.md)) | — (quem escreve no próprio home está fora do modelo) |
 | Conteúdo mudando depois do hash (TOCTOU) | `Evidence.hash` com semântica definida, reverificação pelo nível do perfil; divergência nunca vira `confirmed` nem run `ok` ([protocol.md](protocol.md#revalidação-de-contexto-toctou)) | `economy` não reverifica (`context-not-reverified`) |
 | Pedido de contexto abusivo | mesmas regras de caminho e segredo da varredura; nunca amplia budget nem limite de arquivos; no máximo 2 rodadas e 64 itens; caminhos recusados gravados redigidos | — |
+| Vazamento entre nós de um plano | [handoff](#handoff-e-op-plan) só a partir dos nós declarados em `inputs`, sem conteúdo de arquivo nem saída integral, redigido antes de ser entregue e gravado, limitado a 256 itens e 256 KiB | o provider de destino ainda lê o filesystem diretamente |
+| Estimativa (`plan`) afrouxando a policy | a classe estimada só pode endurecer a decisão; `plan` roda com a superfície de `describe`/`health` (cwd temporário, ambiente mínimo, timeout, `producer` conferido) e nunca falha o planejamento | — |
+| Repositório injetando relações ou repositórios | `.forge/config/workspace.toml` lido com `tomllib` (até 64 KiB, symlink recusado), só `depends_on` entre repositórios descobertos, entradas inválidas ignoradas com aviso `FORGE-WORKSPACE-CONFIG`; descoberta sem seguir symlinks, até 3 níveis e 64 repositórios; git só pela consulta endurecida, com orçamento total de 20 s | relações são declarações do repositório, não verificadas |
+| Vazamento por diagnóstico de erro | sem traceback na CLI; `--debug` mostra um [diagnóstico redigido](#diagnóstico-de-debug) só com quadros `theforge.*`, sem variáveis locais nem caminhos absolutos | — |
+| Run adulterado depois de gravado | `explain` e `replay --mode verify` recalculam os hashes registrados no receipt e saem com exit 6 em divergência ([âncora de confiança](#integridade-de-runs-e-âncora-de-confiança)) | adulteração coordenada de receipt e artefatos não é detectável sem âncora externa |
+| Plano de instalação executando código | `InstallationPlan` é só de planejamento: texto informativo, nenhum download, instalação ou comando | — |
 
 ## Ambiente do provider
 O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`), quando existem no ambiente do pai. Nenhuma outra variável passa.
@@ -50,7 +56,7 @@ O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`),
 - Os adapters reais repassam ao especialista o ambiente recebido do core, sem nomes com cara de credencial, e só acrescentam `APIFORGE_CACHE=off` (API Forge) e `PYTHONIOENCODING=utf-8` (processo filho do Spark Forge). As variáveis `THEFORGE_REAL_*` são lidas só pelo harness de teste ([real-providers.md](real-providers.md)).
 
 ## Exceção: `.forge/runs/<id>/work/`
-A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `routing`, `risk`, `context`, `context-r1`, `context-r2`, `result`, `telemetry`, `receipt`) e para os caches do registry e de fingerprints de contexto. **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
+A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-result`, `graph`, `verification`, `telemetry`, `diagnostic`, `receipt`) e para os caches do registry e de fingerprints de contexto. **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
 
 - Os adapters reais deixam em `work/` **só os artifacts declarados** em `artifacts[]` (por exemplo a saída nativa completa `native/full-output.json` quando o resultado passa de 4 MiB, e os arquivos de caso do API Forge). Em todo desfecho (`ok`, `partial`, `refused`, `error`, timeout), `cleanup_workdir` apaga `stage/`, o estado nativo (`.sparkforge/`, `traces.db`, `.apiforge/`, caches) e todo o resto. Uma remoção que falha vira a limitação `workdir cleanup incomplete: <path>`.
 - Esses artifacts podem conter trechos do código analisado. Trate `work/` com a mesma sensibilidade do workspace e não o publique.
@@ -86,6 +92,30 @@ O sha256 de arquivos inteiros pode ser reutilizado entre runs (`context/fingerpr
 - **Releitura estrita**: documento `theforge/FingerprintCache/v1` relido com `strict=True`; ilegível, malformado, de outra versão ou de outra raiz é descartado com aviso.
 - **Redação**: antes de gravar, cada entrada cujo caminho relativo ou resolvido tem formato de segredo é descartada, com aviso; se a redação ainda alterar o documento, ele não é gravado e uma cópia anterior é removida. Gravação atômica, uma vez por run; falha de escrita vira aviso, nunca erro.
 - **Limitações**: não protege contra quem escreve no próprio home (mesmo modelo do ADR 0009). No Windows, `ctime` é o horário de criação, não de mudança de metadados, então é uma evidência mais fraca do que no POSIX; os demais campos e a janela racy continuam valendo.
+
+## Handoff e op `plan`
+Um plano multi-provider ([ADR 0018](adr/0018-multi-provider-execution.md)) não abre canal novo entre providers além do handoff e da estimativa.
+
+- **Handoff.** Montado só a partir dos resultados válidos dos nós listados em `inputs` do nó de destino: um provider nunca recebe dados de um nó que não o alimenta. Os itens trazem ids, `claim` (no máximo 500 caracteres), localização, severidade e hashes; nunca conteúdo de arquivo nem a saída integral do provider. Cada item passa por `security.redact` antes de ser medido e cortado, e o que o provider recebe é o artefato `handoff` relido do disco, com o hash no receipt do nó. Limites: 256 itens e 256 KiB de JSON canônico ([protocol.md](protocol.md#handoff)).
+- **Op `plan`.** Mesma superfície de `describe` e `health`: cwd temporário, ambiente mínimo, timeout de 10 s e `producer` conferido; providers `blocked` nunca são chamados e `unverified` só com `--allow-unverified`. A estimativa só endurece a policy (vale a decisão mais restritiva entre a classe declarada e a estimada). Nenhuma falha de `plan` falha o planejamento. `verify` e `estimate` continuam reservadas e nunca são chamadas.
+- **Provider fixado.** Cada nó executa exatamente o provider do plano: se ele não for roteável o nó termina `no_route`, e se estiver indisponível termina `provider_failure` sem tentar fallback, para que um nó nunca troque de especialista em silêncio.
+- **Relações de workspace.** `.forge/config/workspace.toml` é configuração do repositório, portanto não confiável: só declara relações `depends_on` entre repositórios já descobertos, nunca concede trust nem altera policy, e entradas inválidas são ignoradas com aviso.
+
+## Diagnóstico de debug
+Nenhum erro mostra traceback na CLI, nem em erro interno inesperado (exit 70). Com `--debug`, a CLI imprime em stderr, como linhas `theforge: debug:`, um `Diagnostic` (`theforge/Diagnostic/v1`): estágio, código, família, tipo e mensagem do erro, cadeia de causas e quadros como `módulo:função:linha`.
+
+- Mensagem e causas passam por `security.redact`.
+- Só entram quadros de módulos do pacote `theforge`; quadros de outras bibliotecas, de providers ou de adapters são omitidos. Não há caminhos absolutos nem variáveis locais, e o texto bruto do traceback nunca é guardado.
+- Num run de `ask` ou `plan` que termina em erro interno, o diagnóstico só é gravado como artefato `diagnostic` do run quando `--debug` é pedido.
+- Nas saídas de texto e JSON, um traceback que apareça dentro de um detalhe (por exemplo, o fim do stderr de um provider) é reduzido a `[traceback omitted] <última linha>`.
+
+## Integridade de runs e âncora de confiança
+`theforge explain` e `theforge replay --mode verify` recalculam, sem escrever nada e sem iniciar providers, cada hash que o receipt registrou (entradas, rodadas de contexto, resultado, telemetria, verificação, handoff e, em runs de plano, as referências do plano e o receipt de cada nó contra o hash gravado no `plan-result`), mais o sha256 de cada artifact declarado em `work/`. Divergência (`modified`, `missing`, `unreadable`) sai com exit 6.
+
+- **O receipt é a âncora de confiança.** Quem consegue reescrever o run inteiro (receipt e artefatos, de forma coordenada) produz um run sem divergência: isso não é detectável sem uma âncora externa (assinatura ou registro fora do workspace), fora do escopo desta versão.
+- Num plano, o receipt de cada nó é ancorado pelo `plan-result`, que é ancorado pelo receipt do plano.
+- O artefato `diagnostic` e o próprio receipt não têm hash registrado. Artefatos presentes sem hash registrado (runs gravados antes de o hash existir) aparecem como `unrecorded`, nunca como divergência.
+- `replay --mode execute` recusa reexecutar quando as entradas registradas (`task`, `routing`, `handoff`, contexto, receipt) divergem dos hashes, para que uma tarefa editada não rode com outros parâmetros.
 
 ## Níveis de trust
 Trust só é concedido no `providers.toml` do usuário. Detalhes e justificativa em [ADR 0010](adr/0010-policy-model.md).

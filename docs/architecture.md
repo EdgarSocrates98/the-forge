@@ -1,4 +1,4 @@
-# Arquitetura (ciclos 1 e 2, Waves A–C)
+# Arquitetura (ciclos 1 e 2, Waves A–D)
 
 ```mermaid
 flowchart TD
@@ -9,6 +9,15 @@ flowchart TD
     F --> P[policy: allow / ask / deny + RiskAssessment]
     F --> C[context: scan + Context Broker]
     F --> RS[runs: run store + receipts]
+    CLI --> PE[forger.plan_executor: plano multi-provider]
+    PE --> W[workspace: descritor multi-repo + relações]
+    PE --> PL[planning: decomposição, validação, op plan, handoff, síntese, grafo, instalação]
+    PE --> F
+    CLI --> X[explain: ExplainReport + verificação de hashes]
+    CLI --> RP[forger.replay: render / verify / execute]
+    RP --> X
+    RP --> F
+    PL --> T
     R --> T[protocol: SubprocessTransport + ProcTree]
     F --> T
     T -->|"argv op, JSON stdin/stdout"| E[echo-forge]
@@ -46,6 +55,7 @@ sequenceDiagram
     Forger->>Provider: execute (rodada final)
     Provider-->>Forger: Response(ExecutionResult)
     Forger->>Forger: integridade + producer; drift (reportado e reverificado); ExecutionResult (persistido)
+    Forger->>Forger: VerificationResult (persistido) + nível de reprodutibilidade
     Forger->>Forger: RunTelemetry + ExecutionReceipt (persistidos, em todo desfecho)
     Forger-->>CLI: AskOutcome
 ```
@@ -54,6 +64,69 @@ sequenceDiagram
 - O artefato `routing` só é gravado depois da decisão final, com fallbacks e limitações consolidados.
 - Fallback de health aceita só candidatos com a mesma capability e a ação resolvida. Sem candidato saudável, o resultado é `provider_failure` explícito com as tentativas em `fallbacks_used`.
 - Um `result` só existe no run se passou pela [integridade](protocol.md#integridade-do-resultado). O receipt sempre é gravado e é validado (`FORGE-RECEIPT-INVALID`) contra o hash real do `result` gravado. Ele registra a identidade observada do provider: `executable`, `fingerprint` e `observed_version` ([ADR 0013](adr/0013-provider-identity.md)).
+
+## Fluxo de `plan`
+`theforge plan` (Wave D, [ADR 0018](adr/0018-multi-provider-execution.md)) coordena vários especialistas numa tarefa sem mudar o `ask`: cada nó do plano é um run completo de um único provider, com todas as garantias acima.
+
+```mermaid
+sequenceDiagram
+    participant CLI
+    participant Executor as PlanExecutor
+    participant Planning
+    participant Workspace
+    participant Forger
+    participant Provider
+    CLI->>Executor: PlanCommand (intent, perfil, --from, --execute, approvals)
+    Executor->>Executor: run do plano + task (persistido)
+    Executor->>Workspace: describe_workspace (git somente leitura)
+    Executor->>Executor: workspace-descriptor (persistido)
+    Executor->>Planning: decompose(intent) ou load_plan_file(--from)
+    Planning-->>Executor: ExecutionPlan + RoutingDecision
+    Executor->>Planning: check_plan (estrutura + registry + perfil)
+    Executor->>Provider: plan (só quem declara; cwd temporário)
+    Executor->>Provider: health dos providers do plano
+    Executor->>Executor: routing, plan, installation (persistidos antes de qualquer nó)
+    alt rejeitado, ambiguous/no_route ou sem --execute
+        Executor->>Executor: graph, telemetry, receipt de plano
+    else --execute
+        loop nós em ordem topológica (um por vez)
+            Executor->>Planning: build_handoff(inputs do nó)
+            Executor->>Forger: ask(provider fixado, nó, handoff, estimativa, approvals)
+            Forger->>Provider: execute(ExecuteRequest com handoff)
+            Forger-->>Executor: AskOutcome do run do nó
+        end
+        Executor->>Planning: synthesize + build_graph
+        Executor->>Executor: plan-result, graph, telemetry, receipt de plano (persistidos)
+    end
+    Executor-->>CLI: PlanOutcome
+```
+
+- **Workspace.** `describe_workspace` descobre repositórios na raiz e em subdiretórios até 3 níveis (no máximo 64), sem seguir symlinks e ignorando `.git`, `.forge` e os diretórios excluídos da varredura; repositórios aninhados são independentes e a raiz não precisa ser um repositório. Cada repositório recebe o `GitSummary` da [consulta git da Wave C](security.md#consulta-git-somente-leitura), com orçamento total de 20 s de git por descrição (os repositórios que não cabem ficam sem resumo, com limitação). Tecnologias vêm só de arquivos de dependência e de globs declarados por providers, sempre com o caminho de evidência; relações vêm de `.forge/config/workspace.toml` (`depends_on`, explícitas) e da contenção observada no disco. Nada é inferido, e a descrição nunca inicia um processo de provider; `theforge workspace show` usa só os manifests do cache do registry.
+- **Decomposição** (`planning.decompose`, sem LLM e sem domínio). Lê só `RoutingDecision.candidates` do routing por sinais. Por provider, a melhor capability é a de mais tipos de sinal discriminantes; um provider qualifica com pelo menos 2 tipos. Com perfil de um provider, `--capability` ou até um qualificado, a própria decisão vira um nó `route` (ou fica `ambiguous`/`no_route`). Senão os qualificados viram um `pipeline` ordenado pela regra `intent-order`: a posição, na intenção, da primeira keyword casada de cada provider; cada nó depende do anterior (dependência `inferred`, com a regra e as keywords como evidência) e o declara em `inputs`, recebendo o handoff dele. Empate de posição, provider sem keyword casada, empate de capabilities no mesmo provider ou mais qualificados que `max_providers` resultam em `ambiguous`. A regra é um proxy do fluxo de dados e pode inferir a dependência errada; `--from FILE` fixa a ordem explicitamente.
+- **Validação** (`planning.validate.check_plan`). Reúne todas as violações de uma vez: ids únicos (`^[a-z][a-z0-9-]{0,31}$`), dependências existentes, ciclo, `inputs` fora de `depends_on`, no máximo 8 nós, padrão reservado, `route` com mais de um nó, provider pronto que declara a capability (aliases resolvidos) e a ação, e providers distintos dentro de `max_providers`. Um plano de arquivo passa pela mesma validação; os campos controlados pelo run (`plan_run`, `producer`, `created_at`, `status`, `violations`, `source`, `task_id`) são substituídos e o perfil da linha de comando prevalece. Plano rejeitado termina `refused` com o primeiro código `FORGE-PLAN-*`, sem iniciar nenhum `execute`.
+- **Estimativa e instalação.** A [op `plan`](protocol.md#operação-plan) é pedida a cada provider que a declara; a estimativa só endurece a policy do nó. Providers referenciados ausentes, inválidos, inacessíveis, incompatíveis ou com health indisponível entram em no máximo um `InstallationPlan` por run, marcado como somente de planejamento: o core nunca baixa, instala ou executa nada a partir dele.
+- **Execução.** Sem `--execute` o plano termina `planned` (exit 0). Com `--execute`, os nós rodam em sequência, na ordem topológica com desempate por id. Cada nó é um `Forger.ask` com o provider **fixado** (roteável ou `no_route`, nunca fallback de health), o vínculo com o plano e o nó (`parent_run`, `plan_node` no receipt), o handoff das dependências (gravado antes do `execute` e enviado como foi gravado), a classe estimada e as aprovações (`--approve` libera só os nós daquela capability). Um nó cujo ancestral não tem resultado válido fica `skipped` com `blocked_by` e `FORGE-PLAN-DEPENDENCY-FAILED`; nós independentes continuam.
+- **Desfecho.** `ok` se todos os nós são `ok`; `partial` se algum tem resultado válido e algum não é `ok`; senão `refused` se todos os nós tentados foram recusados, e `provider_failure` nos demais casos, com o erro do primeiro nó que falhou. A síntese (`PlanResult.synthesis`) lista por nó provider, capability, ação, status, run, findings com os ids originais e evidências por status epistêmico, mais handoffs, falhas, limitações e incógnitas com o prefixo do nó; ela nunca cria findings nem eleva status epistêmico.
+- **Grafo.** `WorkspaceGraph` liga workspace, repositórios, providers, capabilities, nós, evidências e artifacts por arestas de contenção, dependência, declaração, uso, alvo, produção e handoff. Toda aresta tem evidência; inferida exige regra. Aresta inválida é descartada com a limitação `FORGE-WORKSPACE-GRAPH-EDGE`; acima de 2 000 nós, evidências e artifacts são truncados.
+- **Persistência.** O run do plano grava `task`, `workspace-descriptor`, `routing`, `plan`, `installation` (quando há itens), `plan-result`, `graph`, `telemetry` e o receipt de `kind = "plan"`, que liga tudo por hash (`PlanRefs` e `telemetry_sha256`). Cada nó é um run próprio em `.forge/runs/<run_id>/`. Erro inesperado vira `provider_failure` com `FORGE-INTERNAL`, diagnóstico redigido (gravado como artefato só com `--debug`) e telemetria.
+
+### Verificação, reprodutibilidade, `explain` e `replay`
+- **Verificação.** Todo run de um provider (de `ask` ou de nó) grava `verification` com os quatro níveis ([protocol.md](protocol.md#verificação-do-resultado)). Artifact divergente deixa o run `partial`.
+- **Reprodutibilidade** (`forger.reproducibility`, [ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)). Todo receipt registra um nível com motivos: `unknown` sem execução de provider (`no_route`, `ambiguous`, recusa antes do `execute`, `planned`); `non_reproducible` com rede, execução não local ou não offline, classe `external_*`/`destructive`, divergência de contexto ou handoff de nó `non_reproducible`; `reproducible` só com execução determinística declarada, classe `read_only`, fingerprint e hash de contexto registrados, reverificação de contexto executada (não `minimal`), verificação `forge` aprovada, status `ok` e handoff só de nós `reproducible`; os demais casos são `partially_reproducible`. O plano recebe o nível menos reprodutível dos nós, na ordem `non_reproducible` < `unknown` < `partially_reproducible` < `reproducible` (um nó `skipped` tem nível `unknown` e puxa o plano para `unknown`). Runs anteriores a esta versão contam como `unknown`.
+- **`explain`** (`explain.report`, `explain.hashcheck`). Monta o `ExplainReport` só lendo o run: cada artefato é lido uma vez, redigido de novo e guardado cru em `artifacts`, e as seções tipadas saem dele; seção sem dado vai para `not_recorded`. A verificação de hashes compara cada hash registrado no receipt (entradas, rodadas de contexto, resultado, telemetria, verificação, handoff e, em runs de plano, `PlanRefs`) com o arquivo em disco, recalcula cada artifact declarado em `work/` e, num plano, confere o receipt de cada nó contra o hash registrado no `plan-result` e verifica esse run (profundidade máxima 1). Nada é escrito e nenhum provider é iniciado; divergência sai com exit 6.
+- **`replay`** (`forger.replay`). `render` reconstrói o relatório sem ler o workspace; `verify` soma à verificação de hashes a reverificação, contra o workspace atual, dos itens de contexto registrados (inclusive dos runs de nó); `execute` repete um run de um provider com os parâmetros originais, o provider fixado e `replay_of` apontando o original, e compara os resultados sem campos voláteis. A reexecução é recusada antes de iniciar qualquer provider para runs de plano e de nó (`FORGE-REPLAY-UNSUPPORTED`) e para runs `non_reproducible`/`unknown`, com contexto alterado, com entradas registradas divergentes ou com provider de identidade ou versão diferente (`FORGE-REPLAY-NOT-REPRODUCIBLE`).
+
+## Direção de imports
+Obrigatória; estende a das Waves A–C:
+
+`contracts.codes → contracts → errors / security / diagnostics → profiles → protocol → registry → routing / context → workspace → planning → policy → runs → explain → forger → cli`
+
+- `meta` (identidade `PRODUCER`, depende só de `contracts.types`) e `state` (constante `FORGE_DIR_NAME` e localização de `.forge`, depende só de `errors`) são módulos-base no nível de `contracts`/`errors`: qualquer pacote à direita pode importá-los.
+- `workspace` importa `contracts`, `security`, `context` (só a consulta git e o `WorkspaceScan`), `routing.signals`, `registry`, `meta` e `state`.
+- `planning` importa `contracts`, `errors`, `security`, `profiles`, `protocol`, `registry`, `routing`, `workspace` e `meta`; nunca `policy`, `runs`, `forger` ou `cli` (a comparação de decisões de policy usa só o contrato `PolicyDecision`).
+- `explain` importa `contracts`, `errors`, `security`, `context.verify` (hash sem cache), `meta` e `runs`.
+- `forger` importa os pacotes à esquerda; `cli` importa `forger`, `explain` e os demais.
+- Nenhum módulo importa adapters ou especialistas.
 
 ## Routing
 - Explícito (`--capability`): escolhe entre os providers roteáveis que declaram a capability, desempatando por trust e depois por id.
@@ -85,7 +158,7 @@ Fonte única: `src/theforge/profiles.py`. Nenhum outro módulo define budgets, t
 | timeout de `execute` (por chamada) | 60 s | 180 s | 600 s |
 
 - **`economy` sem fallback**: só o primário passa pelo health. Se ele falhar, o run é `provider_failure` com a limitação `profile economy: fallback disabled`, mesmo havendo um fallback compatível (antes da Wave C, todo perfil fazia fallback).
-- `max_providers` só é registrado: um `ask` executa um único provider em qualquer perfil (o executor de plano é de `cross-forge-foundation`).
+- `max_providers`: um `ask` executa um único provider em qualquer perfil. Em `theforge plan`, é o limite de providers distintos de um plano: só `max` (4) permite decompor uma tarefa em mais de um provider; em `economy` e `balanced` a decomposição usa a própria decisão de routing de um provider (um nó `route` quando ela seleciona um provider, senão o `ambiguous`/`no_route` dela) e, havendo dois ou mais providers qualificados, registra `multi-provider decomposition not allowed by profile` ([fluxo de `plan`](#fluxo-de-plan)).
 - Timeout de pior caso: cada rodada tem o timeout inteiro, então `max` pode chegar a 3 × 600 s ≈ 30 min em `execute`.
 - Custo do git: quando o workspace está dentro de um repositório, a consulta faz 5 processos `git` (orçamento total de 5 s); observado em ~0,7–1,3 s por run nos testes, na máquina Windows do [baseline](performance.md) (não é uma medição do benchmark).
 
@@ -94,6 +167,7 @@ Todo run grava o artefato `telemetry` (`RunTelemetry` v1, schema fechado) antes 
 
 - Fases (`scan_ms`, `routing_ms`, `context_ms`, `provider_ms`): o health entra em `routing`; `provider` soma todas as rodadas; as extensões de pack entram em `context`.
 - `providers_executed` é no máximo 1 num `ask`. `negotiation_rounds` = número de packs `context-rN` gravados.
+- O run de um plano também grava `telemetry` (mesmo contrato), em todo desfecho: `scan_ms` (varredura e descrição do workspace), `routing_ms` (routing, decomposição e validação), `providers_executed` = nós cujo run chegou ao `execute`, `fallbacks_used = 0`, `negotiation_rounds = 0` e o perfil do plano; as métricas por nó ficam `unknown` com a limitação `plan run: per-node metrics are in each node run telemetry`, porque estão na telemetria de cada run de nó.
 - `fallbacks_used` = quantidade de providers **unhealthy** tentados (o tamanho de `RoutingDecision.fallbacks_used`), contando o primário. Não é "fallbacks que assumiram": em `economy` com o primário unhealthy o valor é 1, e em `balanced` com fallback bem-sucedido também é 1 (o primário que falhou).
 - `profile` registra os parâmetros efetivos e `effective_tiers`; `provider_revalidation` registra `hash`/`core`/`none` ou `undeclared`; `verification_performed` e `context_drift` registram a reverificação.
 - Limitação conhecida: se montar a telemetria falhar, o receipt é gravado assim mesmo, sem `telemetry_sha256` e com a limitação `telemetry-unavailable: <Tipo>: <mensagem>`; o status do run não muda. Falha de persistência continua sendo erro, como em qualquer artefato.
@@ -111,16 +185,21 @@ Todo run grava o artefato `telemetry` (`RunTelemetry` v1, schema fechado) antes 
 | `security` | ambiente mínimo do provider, redaction, caminhos seguros | sandbox |
 | `profiles` | tabela única de `economy`/`balanced`/`max` | I/O |
 | `context` | listar arquivos com segurança; sinais de relevância; ContextPack por referência e tiers; extensão por pedido; git somente leitura; cache de fingerprints; reverificação de drift | enviar conteúdo de arquivos ao provider (lê os bytes só para calcular sha256 e tamanho); importar `routing`, `policy`, `runs`, `forger` ou `cli` |
-| `forger` | orquestrar um run, revalidação, policy, fallback de health, integridade, receipts | lógica de domínio |
+| `workspace` | descritor multi-repo: repositórios, git somente leitura por repositório, tecnologias com evidência, relações de `workspace.toml` | iniciar providers; escrever em repositórios; inferir relações |
+| `planning` | decomposição determinística, ordem topológica, validação de plano, arquivo de plano, op `plan`, handoff, síntese, grafo, plano de instalação | executar nós; importar `policy`, `runs`, `forger` ou `cli` |
+| `diagnostics` | diagnóstico redigido de uma exceção (estágio, código, família, causas, quadros `theforge.*`) | exibir traceback; guardar variáveis locais |
+| `forger` | orquestrar um run (provider fixado, vínculo de nó, handoff, verificação, reprodutibilidade), revalidação, policy, fallback de health, integridade, receipts; executor de plano; replay | lógica de domínio |
+| `explain` | `ExplainReport` e verificação de hashes de um run | escrever no run; iniciar providers |
 | `runs` | persistir artefatos redigidos, hashes, releitura estrita, validação de receipt | interpretar resultados |
-| `cli` | parsing, render, exit codes | lógica de negócio |
+| `cli` | parsing, render, mensagens governadas, `--debug`, exit codes | lógica de negócio |
 
 ## Estado
 
 | Local | Classe | Git |
 |---|---|---|
 | `.forge/config/` | persistent | committable |
-| `.forge/runs/<run_id>/` (`task`, `routing`, `risk`, `context`, `context-r1`, `context-r2`, `result`, `telemetry`, `receipt`) | persistent local, redigido | ignorado |
+| `.forge/runs/<run_id>/` (`task`, `routing`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `verification`, `telemetry`, `diagnostic`, `receipt`; em runs de plano também `workspace-descriptor`, `plan`, `installation`, `plan-result` e `graph`) | persistent local, redigido | ignorado |
+| `.forge/config/workspace.toml` (relações explícitas entre repositórios) | persistent | committable |
 | `.forge/runs/<run_id>/work/` (cwd do execute; raiz de `artifacts[].path`) | persistent local, escrito pelo provider, **não redigido** ([security.md](security.md#exceção-forgerunsidwork)) | ignorado |
 | `.forge/cache/` | ephemeral (reservado, sem uso) | ignorado |
 | `<cache do usuário>/registry/<id>-<digest12>.json` | cacheable, fora do projeto ([ADR 0009](adr/0009-registry-cache-location.md)) | — |
@@ -154,4 +233,4 @@ Decisões em [ADR 0011](adr/0011-ci-support-matrix.md).
 - Os testes são classificados pelos markers `unit`, `contract`, `integration`, `e2e`, `slow`, `security` e `real_provider`; um arquivo de teste sem categoria falha a coleta. A suíte offline bloqueia rede (exceto loopback) dentro do processo do pytest; o marker `allow_network` libera um teste.
 
 ## Fora desta wave
-Entrada Forge Protocol nativa em cada Forge (gatilho de migração no [ADR 0014](adr/0014-provider-adapter-location.md#gatilho-de-migração-para-entrada-nativa-b)), LLM/semantic routing, multi-provider (parallel/pipeline/debate), economy avançada, installer, workspace graph, sandbox de SO.
+Entrada Forge Protocol nativa em cada Forge (gatilho de migração no [ADR 0014](adr/0014-provider-adapter-location.md#gatilho-de-migração-para-entrada-nativa-b)), LLM/semantic routing, execução dos padrões `delegate`/`parallel`/`debate` e execução concorrente de nós, scheduler ou retomada de plano, re-execute de planos, ops `verify` e `estimate`, economy avançada, installer (o `InstallationPlan` só planeja), banco de grafos, sandbox de SO.
