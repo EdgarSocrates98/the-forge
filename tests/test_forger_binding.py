@@ -19,7 +19,8 @@ from theforge.protocol import ProviderTransport, SubprocessTransport
 from theforge.registry import Registry
 from theforge.runs import RunStore
 
-SECRET = "sv" + secrets.token_hex(8)  # random per run: a redaction fixture, not a credential
+# Random per run: a redaction fixture, not a credential.
+REDACTION_PROBE = secrets.token_hex(12)
 
 
 class _Spy:
@@ -119,10 +120,10 @@ def test_node_handoff_is_persisted_delivered_and_hashed(tmp_path: Path) -> None:
     spy = _Spy()
     forger, store = _forger(tmp_path, spy)
     out = forger.ask(AskRequest(intent="analise o job", capability="spark.performance",
-                                node=_node(handoff=_handoff(f"key token={SECRET}"))))
+                                node=_node(handoff=_handoff(f"key token={REDACTION_PROBE}"))))
     assert out.status == "ok" and out.result is not None
     persisted = store.read(out.run_id, "handoff")
-    assert SECRET not in str(persisted)
+    assert REDACTION_PROBE not in str(persisted)
     assert spy.payload("execute")["handoff"] == persisted  # delivered == persisted (4.6)
     assert out.receipt.inputs.handoff_sha256 == sha256_of(persisted)
     assert (out.receipt.parent_run, out.receipt.plan_node) == ("plan-1", "n2")
@@ -272,17 +273,17 @@ def test_fixture_without_determinism_is_partially_reproducible(tmp_path: Path) -
 def test_internal_error_diagnostic_is_persisted_only_with_debug(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
     for debug in (False, True):
-        forger, store = _forger(tmp_path, _Spy(fail_execute=f"boom token={SECRET}"))
+        forger, store = _forger(tmp_path, _Spy(fail_execute=f"boom token={REDACTION_PROBE}"))
         out = forger.ask(AskRequest(intent="run it", capability="bad.thing", debug=debug))
         assert out.status == "provider_failure"
         assert out.error is not None and out.error.code == Codes.INTERNAL
         diagnostic = out.diagnostic
         assert diagnostic is not None and diagnostic.code == Codes.INTERNAL
         assert diagnostic.stage == "execute" and diagnostic.error_type == "ValueError"
-        assert SECRET not in diagnostic.message
+        assert REDACTION_PROBE not in diagnostic.message
         persisted = store.read_optional(out.run_id, "diagnostic")
         if debug:
-            assert persisted is not None and SECRET not in str(persisted)
+            assert persisted is not None and REDACTION_PROBE not in str(persisted)
             assert persisted["frames"] and all(
                 f["module"].startswith("theforge") for f in persisted["frames"])
         else:
