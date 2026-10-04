@@ -8,7 +8,7 @@
 
 The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
 
-**Status:** ciclo 2, Wave A (endurecimento). Contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace com identidade de provider no receipt, ambiente mínimo para providers, policy de risco (`--approve`) e CI em Linux e Windows. Os adapters reais de Spark Forge e API Forge chegam na Wave B. Hoje o core é provado com o provider nativo `echo-forge` e com providers de teste.
+**Status:** ciclo 2, Wave B (providers reais). Sobre o endurecimento da Wave A (contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace, ambiente mínimo para providers, policy de risco com `--approve` e CI em Linux e Windows), a Wave B traz os adapters reais de Spark Forge e API Forge, versão de provider em SemVer, taxonomia de capabilities com aliases e depreciação e uma matriz de compatibilidade testada. O core continua provado também com o provider nativo `echo-forge` e com providers de teste.
 
 ## Instalação (desenvolvimento)
 
@@ -47,6 +47,12 @@ O `providers.toml` de projeto (`.forge/config/providers.toml`) pode declarar pro
 
 Depois rode `theforge registry refresh`.
 
+O `version` do manifest precisa ser SemVer 2.0.0 (senão o provider fica `invalid`, `FORGE-MANIFEST-VERSION`), e cada capability segue a [taxonomia](docs/capabilities.md) (fora dela, a capability é excluída com aviso `FORGE-MANIFEST-TAXONOMY`). Para quem já tem um provider: [nota de migração](docs/provider-authoring.md#nota-de-migração-ciclo-2-wave-b).
+
+## Spark Forge e API Forge
+
+Os Forges reais entram por dois adapters em `adapters/`, instalados no interpretador de cada especialista (o API Forge exige Python 3.12) e registrados como qualquer provider ([ADR 0014](docs/adr/0014-provider-adapter-location.md)). Só capabilities read-only e offline são expostas; o resto aparece em `limitations` do manifest com o motivo ([catálogo](docs/capabilities.md), [ADR 0017](docs/adr/0017-capability-taxonomy.md)). O estado nativo de cada execute fica em `.forge/runs/<id>/work/` e é reduzido aos artifacts declarados; esse diretório não passa por redaction ([segurança](docs/security.md#exceção-forgerunsidwork)). Instalação, registro, testes de integração e troubleshooting: [docs/real-providers.md](docs/real-providers.md).
+
 ## Exit codes
 
 | Código | Significado |
@@ -65,6 +71,9 @@ Depois rode `theforge registry refresh`.
 - [Arquitetura](docs/architecture.md)
 - [Forge Protocol v1](docs/protocol.md)
 - [Escrevendo um provider](docs/provider-authoring.md)
+- [Providers reais: Spark Forge e API Forge](docs/real-providers.md)
+- [Capabilities: taxonomia e catálogo](docs/capabilities.md)
+- [Versionamento e compatibilidade](docs/versioning.md)
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
 - [ADRs](docs/adr/)
@@ -76,6 +85,7 @@ Depois rode `theforge registry refresh`.
 .venv/bin/python -m pytest            # suite offline
 .venv/bin/python -m pytest -m slow    # gates de zero deps e instalação limpa (baixa hatchling)
 .venv/bin/python -m pytest -m security   # categoria: unit, contract, integration, e2e, slow, security
+.venv/bin/python -m pytest -m real_provider   # Forges reais; ver docs/real-providers.md
 .venv/bin/ruff check .
 .venv/bin/mypy
 .venv/bin/python -m theforge.contracts.schema schemas   # regenerar schemas

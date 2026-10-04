@@ -1,17 +1,18 @@
-# Segurança — threat model resumido (ciclos 1 e 2, Wave A)
+# Segurança — threat model resumido (ciclos 1 e 2, Waves A e B)
 
 Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defeituoso e tentativa de escalar trust. Fora do modelo: usuário local mal-intencionado com escrita no próprio home.
 
 | Ameaça | Mitigação | Pendente |
 |---|---|---|
 | Provider malicioso ou desconhecido | trust (`unverified` fora do routing por padrão, `blocked` nunca executa); repositório não pode se autoconceder trust; providers `unverified` não são executados; subprocess isolado; env por allowlist com filtro de credenciais; policy antes de executar | sandbox de SO ([ADR 0012](adr/0012-os-sandbox-research.md)), assinatura |
-| Manifest adulterado ou trocado | id do manifest precisa bater com a entrada; `producer` (id e versão) verificado em describe, health e execute; limites de manifest e rejeição de glob catch-all; todo candidato é descrito de novo antes da decisão final de routing | assinatura de manifest ([ADR 0013](adr/0013-provider-identity.md)) |
+| Manifest adulterado ou trocado | id do manifest precisa bater com a entrada; `producer` (id e versão) verificado em describe, health e execute; versão SemVer obrigatória (`FORGE-MANIFEST-VERSION`); limites de manifest, regras mecânicas de taxonomia (`FORGE-MANIFEST-TAXONOMY`, [ADR 0017](adr/0017-capability-taxonomy.md)) e rejeição de glob catch-all; alias que colide no mesmo manifest deixa o provider `invalid`; todo candidato é descrito de novo antes da decisão final de routing | assinatura de manifest ([ADR 0013](adr/0013-provider-identity.md)) |
 | Cache de registry adulterado | cache fora do projeto, no diretório de cache do usuário ([ADR 0009](adr/0009-registry-cache-location.md)); relido com leitura estrita; invalidado se a entrada ou o fingerprint local mudar; providers `unverified` nunca são cacheados; `init` e `registry refresh` removem o legado `.forge/registry` | — (quem escreve no próprio home está fora do modelo) |
 | Resultado malicioso ou inconsistente | [integridade do resultado](protocol.md#integridade-do-resultado): IDs únicos, referências resolvidas, caminho de artifact checado sem ser aberto, hashes em hex minúsculo; resultado inválido não é persistido | — |
 | Injeção de shell | `argv` em lista, `shell=False` | — |
 | Path traversal / symlink | `resolve_inside` no scan e no echo-forge; `..` e symlinks para fora viram `excluded`; caminhos de ContextPack e de artifact checados lexicamente | — |
 | Leitura de secrets do workspace | `.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa*`, `id_ed25519*`, `*.pfx`, `*.p12`, `credentials*`, `.npmrc`, `.netrc`, `.pgpass`, `*.token`, `secrets.*` excluídos do ContextPack | detecção por conteúdo; o provider ainda lê o filesystem diretamente (ver limitações) |
-| Vazamento de credencial em artefatos | redaction de padrões e chaves sensíveis antes de persistir; stderr do provider truncado e redigido, nunca persistido bruto; o cache do registry não é gravado quando a redação alteraria a entrada ou o manifest ([ADR 0009](adr/0009-registry-cache-location.md)) | — |
+| Vazamento de credencial em artefatos | redaction de padrões e chaves sensíveis antes de persistir; stderr do provider truncado e redigido, nunca persistido bruto; o cache do registry não é gravado quando a redação alteraria a entrada ou o manifest ([ADR 0009](adr/0009-registry-cache-location.md)) | `.forge/runs/<id>/work/` não é redigido ([exceção](#exceção-forgerunsidwork)) |
+| Forge especialista real (Spark Forge, API Forge) | adapter fora do core, em processo separado e no interpretador do especialista ([ADR 0014](adr/0014-provider-adapter-location.md)); só capabilities read-only e offline expostas, o resto em `limitations` do manifest; o especialista lê só cópias com sha256 conferido do ContextPack; estado nativo contido no cwd do run e reduzido aos artifacts declarados; health sem rede e sem credenciais | sandbox de SO; drift da superfície nativa é detectado só no workflow agendado |
 | Exaustão de recursos | timeout por op (describe e health 10 s; execute 60 s / 180 s / 600 s em economy / balanced / max); stdout limitado a 8 MB; stderr a 64 KB; kill da árvore de processos em timeout, oversize ou interrupção | limite de CPU/memória |
 | Prompt injection via workspace | core não usa LLM | relevante no ciclo com LLM |
 | Supply chain do core | zero dependências de runtime (gate de CI); build reprodutível via hatchling | lockfile do dev, assinatura |
@@ -41,6 +42,16 @@ O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`),
 
 - `HOME` e `USERPROFILE` continuam porque o Python filho precisa deles (`Path.home()`). Isso não abre acesso novo: o provider já lê o home pelo filesystem (ver limitações).
 - Defesa em profundidade: uma segunda passada remove qualquer nome com cara de credencial (`AWS_*`, `TOKEN` como segmento do nome — `GITHUB_TOKEN`, `TF_TOKEN_*` —, `*SECRET*`, `*PASSWORD*`/`*PASSWD*`, `*API_KEY*`/`*APIKEY*`, `*ACCESS_KEY*`/`*ACCESSKEY*`, `*CREDENTIAL*`, `SSH_AUTH_SOCK`, `AZURE_*`, `ARM_*`, `GH_*`, `CLOUDSDK_*`, `ACTIONS_*`, `KUBECONFIG`, `DOCKER_CONFIG`, `NETRC`, `*_PROXY`), mesmo que um dia entre na allowlist por engano, e qualquer valor que contenha uma URL com credenciais (`esquema://usuário@…`). A comparação de nomes ignora maiúsculas.
+
+- Os adapters reais repassam ao especialista o ambiente recebido do core, sem nomes com cara de credencial, e só acrescentam `APIFORGE_CACHE=off` (API Forge) e `PYTHONIOENCODING=utf-8` (processo filho do Spark Forge). As variáveis `THEFORGE_REAL_*` são lidas só pelo harness de teste ([real-providers.md](real-providers.md)).
+
+## Exceção: `.forge/runs/<id>/work/`
+A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `routing`, `risk`, `context`, `result`, `receipt`) e para o cache do registry. **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
+
+- Os adapters reais deixam em `work/` **só os artifacts declarados** em `artifacts[]` (por exemplo a saída nativa completa `native/full-output.json` quando o resultado passa de 4 MiB, e os arquivos de caso do API Forge). Em todo desfecho (`ok`, `partial`, `refused`, `error`, timeout), `cleanup_workdir` apaga `stage/`, o estado nativo (`.sparkforge/`, `traces.db`, `.apiforge/`, caches) e todo o resto. Uma remoção que falha vira a limitação `workdir cleanup incomplete: <path>`.
+- Esses artifacts podem conter trechos do código analisado. Trate `work/` com a mesma sensibilidade do workspace e não o publique.
+- Um provider de terceiros não tem essa garantia: ele pode deixar em `work/` o que quiser ([provider-authoring.md](provider-authoring.md#regras-de-segurança)).
+- Decisão e alternativas em [ADR 0014](adr/0014-provider-adapter-location.md#segurança-e-contenção).
 
 ## Níveis de trust
 Trust só é concedido no `providers.toml` do usuário. Detalhes e justificativa em [ADR 0010](adr/0010-policy-model.md).
@@ -75,4 +86,5 @@ Não há sandbox. Detalhes e pesquisa por plataforma em [ADR 0012](adr/0012-os-s
 - **O bloqueio de rede dos testes não cobre processos filhos.** Ele atua dentro do processo do pytest; um provider iniciado pelos testes pode acessar a rede.
 - **POSIX:** um descendente que sai do grupo de processos (`setsid`, daemonização) escapa do kill da árvore.
 - **Windows, modo degradado:** se o Job Object não puder ser criado ou atribuído, o kill usa `taskkill /T /F`, que não alcança um neto órfão cujo pai já terminou. O neto sobrevive, mas a chamada continua limitada (timeout + 2 s de graça + até 5 s de join das pipes).
+- **Adapters reais:** a contenção do estado nativo é feita pelo adapter, não pelo core, e o especialista continua com acesso ao filesystem inteiro. No Spark Forge, cada execute roda num processo filho para que o journal nativo (`.sparkforge/traces.db`, gravado também no `atexit`) seja fechado antes da limpeza. Depurar uma falha nativa exige reexecutar, porque o estado nativo é apagado.
 - **Routing por sinais genéricos:** uma dependência ou keywords genéricas declaradas por **um único** provider confiável ainda podem vencer um provider mais específico, porque distinguir sinal genérico de específico exigiria conhecimento de domínio no core. A mitigação é o trust: só providers configurados pelo usuário roteiam.

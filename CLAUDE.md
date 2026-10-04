@@ -15,7 +15,7 @@ The Forge = control plane (WHO/WHEN/HOW). Forges especialistas = WHAT. Nunca col
 - Lint/tipos: `ruff check .` · `mypy`
 
 ## Mais contexto
-`docs/architecture.md`, `docs/protocol.md`, `docs/adr/`, spec em `docs/superpowers/specs/`.
+`docs/architecture.md`, `docs/protocol.md`, `docs/adr/`, spec em `docs/superpowers/specs/`. Adapters reais (`adapters/`, fora do pacote `theforge`; `_shell.py` idêntico nos dois): `docs/real-providers.md`.
 
 ---
 

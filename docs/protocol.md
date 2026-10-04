@@ -73,6 +73,7 @@ Um `ExecutionResult` só é persistido se passar por todas as regras abaixo. Cas
 - IDs de `evidence` únicos (`FORGE-RESULT-DUP-EVIDENCE`) e IDs de `findings` únicos (`FORGE-RESULT-DUP-FINDING`).
 - Todo `finding.evidence_ids` aponta para uma evidence do mesmo resultado (`FORGE-RESULT-DANGLING-EVIDENCE`).
 - `artifacts[].path` (`FORGE-RESULT-ARTIFACT-PATH`): caminho relativo POSIX, não vazio, sem `\`, sem `/` inicial, sem letra de drive (`C:`), sem segmento `..`, sem byte NUL e que nomeie algo abaixo da raiz (não só `.`). A checagem é léxica: o core nunca abre o caminho.
+- A raiz de `artifacts[].path` é o cwd do `execute` (`.forge/runs/<id>/work/`): `native/full-output.json` nomeia `.forge/runs/<id>/work/native/full-output.json`. O `sha256` é calculado pelo provider sobre os bytes do arquivo; o core não o recalcula.
 - `created_at` em ISO-8601 UTC, com sufixo `Z` ou `+00:00` (`FORGE-PROTO-SCHEMA`).
 - `producer` igual ao provider invocado, id e versão (`FORGE-PROTO-PRODUCER`).
 
@@ -80,7 +81,27 @@ Um `ExecutionResult` só é persistido se passar por todas as regras abaixo. Cas
 Todo campo SHA-256 é exatamente 64 caracteres hexadecimais **minúsculos** (`^[0-9a-f]{64}$`): `Artifact.sha256`, `ContextFile.sha256`, `Evidence.hash` (quando presente) e os `*_sha256` do receipt. Hash maiúsculo, curto ou não hexadecimal invalida o contrato que o contém.
 
 ## Manifest
-Além do schema, o manifest é recusado (provider `invalid`, fora do routing) se tiver IDs de capability duplicados, capability sem `actions`, `default_action` fora de `actions` ou `ops` sem `describe` e `health`.
+Além do schema, o manifest é recusado (provider `invalid`, fora do routing) se tiver IDs de capability duplicados, capability sem `actions`, `default_action` fora de `actions`, `ops` sem `describe` e `health`, alias repetido ou alias igual ao ID de uma capability do mesmo manifest, ou `replaced_by` igual ao próprio ID.
+
+### Versão (SemVer)
+`version` precisa ser [SemVer 2.0.0](https://semver.org/) (`MAJOR.MINOR.PATCH`, pré-release e build opcionais, sem `v` inicial nem zeros à esquerda). Versão malformada (`1.0`, `v1.2.3`, `01.2.3`) deixa o provider `invalid`, fora do routing, com `FORGE-MANIFEST-VERSION` e a versão recebida no erro. As demais regras de versão estão em [versioning.md](versioning.md).
+
+### Taxonomia, aliases e depreciação
+Campos opcionais de cada capability, com default que preserva o comportamento anterior (o schema continua `theforge/ForgeManifest/v1`):
+
+| Campo | Default | Efeito |
+|---|---|---|
+| `aliases` | `[]` | IDs antigos que continuam atendendo `--capability`; o pedido resolve para o ID canônico e a decisão registra `capability-alias`. Um alias que resolve para IDs canônicos diferentes em providers diferentes vira `ambiguous` |
+| `deprecated` | `false` | a capability continua roteável; a decisão registra `capability-deprecated` e `capabilities list` avisa em stderr |
+| `replaced_by` | `null` | ID da capability substituta, mostrado junto da depreciação |
+
+O ID, as ações, os aliases e o formato de `replaced_by` passam pelas regras mecânicas da taxonomia ([capabilities.md](capabilities.md#regras-mecânicas), [ADR 0017](adr/0017-capability-taxonomy.md)). Uma violação exclui só aquela capability, com aviso `FORGE-MANIFEST-TAXONOMY`; se nenhuma sobrar, o provider fica `invalid`.
+
+O manifest pode declarar `context_revalidation` (opcional; os adapters reais declaram `"hash"`: conferem o sha256 de cada arquivo do ContextPack antes de usá-lo). Um core que não conhece o campo o ignora, como qualquer campo desconhecido de provider.
+
+Atualizar o core para esta versão muda o `manifest_sha256` de todo provider (os defaults acima entram no hash). Cada entrada do cache do registry é descartada uma vez, com o aviso `registry cache for <id> discarded: …`, e o provider é descrito de novo. Não há ação a tomar.
+
+### Limites
 
 Limites (`contracts/types.py`, valores iniciais):
 
@@ -96,7 +117,7 @@ Limites (`contracts/types.py`, valores iniciais):
 - **Glob catch-all** também exclui a capability. É catch-all um glob (sem espaços nas pontas e sem `./` inicial) que seja `*`, `**`, `**/*`, `*.*` ou `**/*.*`, ou que não tenha nenhum caractere alfanumérico literal depois de descartar classes negadas (`[!…]`, `[^…]`) e classes com intervalo (`[a-z]`). Exemplos: `?*`, `**/?*`, `[!.]*`. Classes positivas de literais contam como literais (`*.[ch]` é válido). Globs por extensão (`*.md`, `*.scala`) são sinais legítimos e são permitidos.
 
 ## Códigos de erro do core
-Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados.
+Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados. A lista canônica e testada de códigos `FORGE-*` passa a ser `docs/errors.md`, criado pela spec `cross-forge-foundation`; quando ele existir, esta seção fica só com os códigos de manifest e um link para lá.
 
 | Código | Causa |
 |---|---|
@@ -120,6 +141,8 @@ Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de pu
 | `FORGE-RECEIPT-INVALID` | receipt inconsistente: hash fora do formato, timestamp inválido ou status `ok`/`partial` sem `result_sha256` igual ao hash do `result` gravado |
 | `FORGE-REGISTRY-MANIFEST-CHANGED` | o manifest mudou de novo na revalidação feita depois de um re-routing |
 | `FORGE-MANIFEST-LIMITS` | manifest ou capability acima dos limites, ou glob catch-all (aviso; capability ou provider excluído) |
+| `FORGE-MANIFEST-VERSION` | `version` do manifest não é SemVer 2.0.0 (provider `invalid`) |
+| `FORGE-MANIFEST-TAXONOMY` | capability, ação, alias ou `replaced_by` fora das regras mecânicas da taxonomia (aviso; capability excluída, provider `invalid` se nenhuma restar) |
 | `FORGE-POLICY-APPROVAL-REQUIRED` | policy `ask` sem `--approve <capability>` (`refused`) |
 | `FORGE-POLICY-DENIED` | policy `deny` (`refused`; aprovação não desbloqueia) |
 | `FORGE-PROVIDER-NOT-READY` | provider não está `ready` no registry |
@@ -129,6 +152,29 @@ Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de pu
 | `FORGE-HEALTH-FAILED` | health respondeu com status ≠ ok |
 | `FORGE-USAGE` | receipt de run que falhou por uso inválido |
 | `FORGE-INTERNAL` | receipt de run que falhou por erro interno inesperado |
+
+## Códigos dos adapters reais
+Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-location.md)) respondem com códigos próprios, que não são `FORGE-*` e não ficam em `codes.py`. Convenção: `ADAPTER-<X>` para a mecânica comum (`_shell.py`, igual nos dois), `<FORGE>-ADAPTER-<X>` para falhas originadas no adapter e `<FORGE>-<X>` (sem `ADAPTER`) só para erros nativos mapeados. Códigos `AF-*` do API Forge passam intactos, com `field` e `unlock`.
+
+| Código | Status | Causa |
+|---|---|---|
+| `ADAPTER-OP-UNSUPPORTED` | `refused` | op desconhecida |
+| `ADAPTER-PROTOCOL-UNSUPPORTED` | `refused` | protocolo do request não suportado (fora de `describe`) |
+| `ADAPTER-REQUEST-INVALID` | `error` | request malformado |
+| `ADAPTER-CAPABILITY-UNSUPPORTED` / `ADAPTER-ACTION-UNSUPPORTED` | `refused` | capability ou ação não declarada no manifest |
+| `ADAPTER-INTERNAL` | `error` | exceção inesperada (só o tipo, nunca traceback) |
+| `ADAPTER-NATIVE-TIMEOUT` | `error` | a chamada nativa passou de 85% do timeout de execute do perfil; a árvore nativa é encerrada |
+| `ADAPTER-OUTPUT-TOO-LARGE` | `error` | o resultado passa de 4 MiB mesmo sem nenhum finding inline; nada é gravado |
+| `ADAPTER-REPLAY-MISSING` / `ADAPTER-REPLAY-INVALID` | `error` | em `--replay`, um arquivo do cenário (gravação da ação, `environment.json` ou `health.json`) não existe ou é inválido |
+| `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12) |
+| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
+| `SPARKFORGE-ADAPTER-NATIVE-FAILED` | `error` | o processo filho nativo saiu com código ≠ 0 ou com stdout truncado |
+| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
+| `APIFORGE-ADAPTER-NATIVE-FAILURE` | `error` | a CLI saiu com erro sem uma linha `AF-*` reconhecível |
+| `APIFORGE-ADAPTER-INPUT-OUTSIDE` | `refused` | caminho do bundle de `change-control` fora do workspace |
+| `SPARKFORGE-TOOL-UNKNOWN` | `refused` | tool nativa inexistente |
+| `SPARKFORGE-<código nativo>` / `SPARKFORGE-TOOL-ERROR` | `refused` ou `error` | erro nativo: tipado ou exit 2 → `refused`, senão `error` |
+| `AF-*` | `refused` ou `error` | erro nativo do API Forge: exit 2 → `refused`; exit 3, `AF-CLI-INTERNAL` ou outro → `error` |
 
 ## Contratos
 Os JSON Schemas ficam em `schemas/`. `RiskAssessment` v1 é o artefato `risk` do run (ver [security.md](security.md#policy-e-risco)). Nomes reservados (sem implementação): ExecutionPlan, VerificationResult, Budget, GraphNode, GraphEdge, InstallationPlan, DecisionRecord, WorkspaceDescriptor, EnvironmentReport (v0 não estável em `doctor`).
