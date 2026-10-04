@@ -225,13 +225,17 @@ def test_compat_workflow_runs_offline_suite_on_macos_for_311_and_314() -> None:
         assert install < suite
 
 
-def test_real_providers_workflow_is_manual_weekly_and_non_blocking() -> None:
+def test_real_providers_workflow_is_manual_weekly_and_fails_visibly() -> None:
     data = _load_path(REAL_PROVIDERS_WORKFLOW)
     _assert_scheduled_and_manual_only(data)
     _assert_hardened(data)
-    # no pull_request/push trigger means it can never be a required PR check; a red run
-    # must also not fail the workflow as a whole
-    assert _real_job()["continue-on-error"] is True
+    # no pull_request/push trigger means it can never be a required PR check (never blocks a
+    # merge); a failure must still turn the run red (real-provider 3.7)
+    job = _real_job()
+    assert "continue-on-error" not in job
+    assert job["runs-on"] == "ubuntu-latest"
+    for step in _steps(job):
+        assert "continue-on-error" not in step, step
 
 
 def test_real_providers_checks_out_both_siblings_in_separate_paths_with_token() -> None:
@@ -263,15 +267,75 @@ def test_real_providers_secrets_appear_only_in_sibling_checkout_tokens() -> None
             assert "secrets." not in yaml.safe_dump(step.get("with", {})), step
 
 
-def test_real_providers_runs_only_real_provider_tests_and_accepts_empty_selection() -> None:
+def test_real_providers_runs_only_real_provider_tests_and_propagates_exit_code() -> None:
     lines = _run_lines(_real_job())
     install = _index_of(lines, "pip install -e .[dev]")
     pytest_lines = [line for line in lines if "-m pytest" in line]
     assert len(pytest_lines) == 1, pytest_lines
     suite = lines.index(pytest_lines[0])
     assert install < suite
-    assert "python -m pytest -m real_provider" in pytest_lines[0]
-    assert "not real_provider" not in pytest_lines[0] and " -k " not in pytest_lines[0]
-    # pytest exits 5 when nothing is collected; the Wave A skeleton selects zero tests
-    tail = " ".join(lines[suite:])
-    assert '"$code" -eq 5' in tail and 'exit "$code"' in tail
+    assert pytest_lines[0] == "python -m pytest -m real_provider"
+    # the exit code is propagated as is: an empty selection (pytest exit 5) is a regression
+    tail = lines[suite:]
+    assert len(tail) == 1, tail
+    run = " ".join(lines)
+    for tolerance in ("-eq 5", "|| true", "|| code", "exit 0", "set +e"):
+        assert tolerance not in run, tolerance
+
+
+def _setup_python_steps(job: dict[str, Any]) -> list[dict[str, Any]]:
+    return [s for s in _steps(job) if str(s.get("uses", "")).startswith("actions/setup-python@")]
+
+
+def test_real_providers_sets_up_312_then_311_as_the_default_interpreter() -> None:
+    setups = _setup_python_steps(_real_job())
+    assert [str(s["with"]["python-version"]) for s in setups] == ["3.12", "3.11"]
+    assert {s.get("id") for s in setups} == {"py312", "py311"}
+
+
+def _step_running(job: dict[str, Any], fragment: str) -> dict[str, Any]:
+    matches = [s for s in _steps(job) if fragment in str(s.get("run", ""))]
+    assert len(matches) == 1, (fragment, matches)
+    return matches[0]
+
+
+def test_real_providers_builds_one_venv_per_specialist_with_its_adapter() -> None:
+    job = _real_job()
+    for venv, python_id, sibling, adapter, probe in (
+        (".venv-spark", "py311", "./siblings/spark-forge-aws", "./adapters/sparkforge",
+         "import sparkforge.adapters.tools, theforge_sparkforge"),
+        (".venv-api", "py312", "./siblings/api-forge", "./adapters/apiforge",
+         "import apiforge, theforge_apiforge"),
+    ):
+        step = _step_running(job, f"-m venv {venv}")
+        env_values = " ".join(str(v) for v in step.get("env", {}).values())
+        assert f"steps.{python_id}.outputs.python-path" in env_values, step
+        lines = [" ".join(line.split()) for line in str(step["run"]).splitlines() if line.strip()]
+        install = _index_of(lines, f"{venv}/bin/python -m pip install {sibling} {adapter}")
+        check = _index_of(lines, probe)
+        assert install < check
+        assert "-e " not in lines[install]
+
+
+def test_real_providers_exports_the_env_contract_with_required_on() -> None:
+    job = _real_job()
+    lines = _run_lines(job)
+    exports = {
+        "THEFORGE_REAL_SPARKFORGE_PYTHON=$PWD/.venv-spark/bin/python",
+        "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python",
+        "THEFORGE_REAL_PROVIDERS_REQUIRED=1",
+    }
+    export_lines = [line for line in lines if "$GITHUB_ENV" in line]
+    assert len(export_lines) == len(exports)
+    for expected in exports:
+        index = _index_of(export_lines, f'echo "{expected}" >> "$GITHUB_ENV"')
+        assert index >= 0
+    # the contract is exported after both venvs exist and before the real tests run
+    assert _index_of(lines, "-m venv .venv-api") < _index_of(lines, "$GITHUB_ENV")
+    assert _index_of(lines, "-m venv .venv-spark") < _index_of(lines, "$GITHUB_ENV")
+    assert _index_of(lines, "$GITHUB_ENV") < _index_of(lines, "-m pytest")
+    # the variables match the committed contract of tests/real_providers.py
+    contract = (REPO / "tests" / "real_providers.py").read_text(encoding="utf-8")
+    for name in ("THEFORGE_REAL_SPARKFORGE_PYTHON", "THEFORGE_REAL_APIFORGE_PYTHON",
+                 "THEFORGE_REAL_PROVIDERS_REQUIRED"):
+        assert f'"{name}"' in contract, name
