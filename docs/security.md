@@ -1,4 +1,4 @@
-# Segurança — threat model resumido (ciclos 1 e 2, Waves A e B)
+# Segurança — threat model resumido (ciclos 1 e 2, Waves A–C)
 
 Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defeituoso e tentativa de escalar trust. Fora do modelo: usuário local mal-intencionado com escrita no próprio home.
 
@@ -18,6 +18,10 @@ Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defei
 | Supply chain do core | zero dependências de runtime (gate de CI); build reprodutível via hatchling | lockfile do dev, assinatura |
 | Mutação inesperada | policy `allow/ask/deny` sobre o `operation_class` declarado; artefato `risk` em todo run que chega a um provider; cwd controlado | enforcement real (sandbox) |
 | Repositório afrouxando a policy | `.forge/config/policy.toml` só endurece; tentativas de afrouxar são ignoradas com aviso | — |
+| Repositório executando código via `git` | [consulta git somente leitura](#consulta-git-somente-leitura): ambiente sem credenciais e sem transporte, `core.fsmonitor=false`, `status` recusado quando a configuração local define chaves executáveis, `safe.directory` intocado, timeout com kill da árvore ([ADR 0016](adr/0016-git-read-only-signals.md)) | filtros e hooks da configuração global/sistema do usuário (por exemplo `git-lfs`) |
+| Cache de fingerprints adulterado | [cache fora do projeto](#cache-de-fingerprints-de-contexto), releitura estrita, reuso só sem nenhuma evidência de mudança, redação antes de gravar ([ADR 0015](adr/0015-context-intelligence.md)) | — (quem escreve no próprio home está fora do modelo) |
+| Conteúdo mudando depois do hash (TOCTOU) | `Evidence.hash` com semântica definida, reverificação pelo nível do perfil; divergência nunca vira `confirmed` nem run `ok` ([protocol.md](protocol.md#revalidação-de-contexto-toctou)) | `economy` não reverifica (`context-not-reverified`) |
+| Pedido de contexto abusivo | mesmas regras de caminho e segredo da varredura; nunca amplia budget nem limite de arquivos; no máximo 2 rodadas e 64 itens; caminhos recusados gravados redigidos | — |
 
 ## Ambiente do provider
 O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`), quando existem no ambiente do pai. Nenhuma outra variável passa.
@@ -46,12 +50,42 @@ O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`),
 - Os adapters reais repassam ao especialista o ambiente recebido do core, sem nomes com cara de credencial, e só acrescentam `APIFORGE_CACHE=off` (API Forge) e `PYTHONIOENCODING=utf-8` (processo filho do Spark Forge). As variáveis `THEFORGE_REAL_*` são lidas só pelo harness de teste ([real-providers.md](real-providers.md)).
 
 ## Exceção: `.forge/runs/<id>/work/`
-A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `routing`, `risk`, `context`, `result`, `receipt`) e para o cache do registry. **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
+A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `routing`, `risk`, `context`, `context-r1`, `context-r2`, `result`, `telemetry`, `receipt`) e para os caches do registry e de fingerprints de contexto. **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
 
 - Os adapters reais deixam em `work/` **só os artifacts declarados** em `artifacts[]` (por exemplo a saída nativa completa `native/full-output.json` quando o resultado passa de 4 MiB, e os arquivos de caso do API Forge). Em todo desfecho (`ok`, `partial`, `refused`, `error`, timeout), `cleanup_workdir` apaga `stage/`, o estado nativo (`.sparkforge/`, `traces.db`, `.apiforge/`, caches) e todo o resto. Uma remoção que falha vira a limitação `workdir cleanup incomplete: <path>`.
 - Esses artifacts podem conter trechos do código analisado. Trate `work/` com a mesma sensibilidade do workspace e não o publique.
 - Um provider de terceiros não tem essa garantia: ele pode deixar em `work/` o que quiser ([provider-authoring.md](provider-authoring.md#regras-de-segurança)).
 - Decisão e alternativas em [ADR 0014](adr/0014-provider-adapter-location.md#segurança-e-contenção).
+
+## Consulta git somente leitura
+O contexto lê branch, HEAD e arquivos alterados do repositório do workspace (`context/git.py`, [ADR 0016](adr/0016-git-read-only-signals.md)). A consulta só roda depois da policy, nunca escreve no repositório e trata o repositório como não confiável. Toda falha vira limitação `git: …` no ContextPack e no receipt; o run nunca falha por causa do git.
+
+- **Chamadas** (5 processos, sempre como `git -c core.fsmonitor=false …`, `cwd` = raiz do workspace, um orçamento **total** de 5 s com kill da árvore via `protocol.proctree`):
+  1. `rev-parse --show-toplevel --absolute-git-dir`;
+  2. `symbolic-ref -q --short HEAD` (branch; falha = HEAD destacado);
+  3. `rev-parse --verify -q HEAD` (falha = `no_commits`);
+  4. `config --list --show-scope --includes -z` (inspeção da configuração);
+  5. `status --porcelain=v1 -z --untracked-files=all --ignore-submodules=all --no-renames`, só se a inspeção não recusou.
+- **Ambiente**: `safe_env()` (a mesma allowlist do provider, sem credenciais e sem `GIT_*` herdado) mais `GIT_OPTIONAL_LOCKS=0` (sem refresh oportunista do índice, sem `index.lock`), `GIT_TERMINAL_PROMPT=0`, `GIT_PAGER=cat`, `LC_ALL=C` e **nenhum transporte**: `GIT_NO_LAZY_FETCH=1` e `GIT_ALLOW_PROTOCOL=none`. Sem isso, num clone parcial (partial clone) o `status` pode buscar objetos ausentes sob demanda pelo remoto configurado no repositório, executando o transporte que o repositório escolher (`ext::<comando>`, `core.sshCommand`). `GIT_ALLOW_PROTOCOL=none` vale em qualquer versão e sobrepõe `protocol.*.allow` do repositório; `GIT_NO_LAZY_FETCH` exige git ≥ 2.44.
+- **Recusa do `status`**: se a configuração de escopo `local` ou `worktree` define `core.fsmonitor` (qualquer valor, inclusive `false`) ou `filter.<driver>.clean|smudge|process`, o `status` não roda (limitação `git: status skipped: repository config defines <chave>`). Também é recusado quando o git não sabe reportar escopos (< 2.26: `git: version too old for safe status`), quando a configuração não pode ser inspecionada ou é grande demais (> 64 KB).
+- **Ownership**: `safe.directory` nunca é alterado; um repositório que o git recusa vira `git: repository not trusted by git (safe.directory)`.
+- **Saídas limitadas**: 64 KB por chamada, 8 MB para o `status`; a lista de alterados é truncada em 20 000 caminhos, com limitação. Caminhos alterados fora da raiz do workspace são descartados.
+- **Estados** (`merge`, `rebase`, `cherry_pick`, `bisect`) vêm da existência léxica de arquivos no git dir, sem executar nada.
+
+Limitações:
+- Filtros, hooks e `fsmonitor` definidos na configuração **global** ou de **sistema** do usuário (por exemplo `git-lfs`) não são detectados e podem rodar durante o `status`: são configuração do próprio usuário.
+- `GIT_NO_LAZY_FETCH` não existe antes do git 2.44; nessas versões a proteção contra lazy fetch depende só de `GIT_ALLOW_PROTOCOL=none`.
+- A consulta confia no executável `git` encontrado no `PATH`.
+- Quando o workspace está dentro de um repositório, cada run paga 5 processos `git` (ver [architecture.md](architecture.md#perfis)).
+
+## Cache de fingerprints de contexto
+O sha256 de arquivos inteiros pode ser reutilizado entre runs (`context/fingerprints.py`, [ADR 0015](adr/0015-context-intelligence.md)).
+
+- **Local**: `<cache do usuário>/context/<digest12>.json` (mesmo diretório base do [ADR 0009](adr/0009-registry-cache-location.md)), nunca dentro do workspace: o repositório não consegue pré-popular hashes. Se o diretório de cache cair dentro do workspace (por exemplo `THEFORGE_CACHE_DIR` apontando para ele), o cache é desligado no run, com aviso.
+- **Reuso conservador**: só quando `size`, `mtime_ns`, `ctime_ns`, `ino`, `dev` e o caminho resolvido batem com o `stat` atual **e** a entrada foi registrada mais de 2 s depois do `mtime` (janela racy). Qualquer outra situação lê e hasheia. Uma entrada só é registrada quando o `stat` antes e depois da leitura é igual. Intervalos de linha nunca usam o cache. Com ou sem cache, os hashes são os mesmos.
+- **Releitura estrita**: documento `theforge/FingerprintCache/v1` relido com `strict=True`; ilegível, malformado, de outra versão ou de outra raiz é descartado com aviso.
+- **Redação**: antes de gravar, cada entrada cujo caminho relativo ou resolvido tem formato de segredo é descartada, com aviso; se a redação ainda alterar o documento, ele não é gravado e uma cópia anterior é removida. Gravação atômica, uma vez por run; falha de escrita vira aviso, nunca erro.
+- **Limitações**: não protege contra quem escreve no próprio home (mesmo modelo do ADR 0009). No Windows, `ctime` é o horário de criação, não de mudança de metadados, então é uma evidência mais fraca do que no POSIX; os demais campos e a janela racy continuam valendo.
 
 ## Níveis de trust
 Trust só é concedido no `providers.toml` do usuário. Detalhes e justificativa em [ADR 0010](adr/0010-policy-model.md).

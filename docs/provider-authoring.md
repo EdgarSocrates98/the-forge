@@ -34,11 +34,24 @@ O core rejeita o resultado inteiro se alguma regra de [integridade](protocol.md#
 - Hashes SHA-256 em 64 hex minúsculos.
 - `created_at` em ISO-8601 UTC (`Z` ou `+00:00`).
 
-### `Evidence.hash`
-`Evidence.hash` é o sha256 **exatamente** do conteúdo coberto pelo item do ContextPack em `location.path`: os bytes do arquivo inteiro (ou do intervalo, quando o item tem `lines`) que o provider conferiu contra o `sha256` do pack. Em qualquer outro caso é `null`: hash ausente, calculado sobre outra coisa (texto decodificado, payload parseado, outro arquivo) ou que não dá para provar igual. Nunca copie um hash nativo sem conferir. Os adapters reais usam `evidence_hash` de `_shell.py`: o hash nativo (com prefixo `sha256:` opcional) só é mantido quando é igual ao sha256 verificado do arquivo copiado para `stage/`.
+## Contexto: tiers, pedidos e revalidação
+Detalhes normativos em [protocol.md](protocol.md#contexto-v2). Tudo é opcional: um provider que não declara nada recebe só itens `reference` e nunca deve enviar `context_request`.
 
-### `context_revalidation`
-Um provider que confere o sha256 de cada arquivo do ContextPack antes de usá-lo pode declarar `"context_revalidation": "hash"` no manifest. Os dois adapters reais declaram: copiam para `<cwd>/stage/` só os arquivos dentro de `workspace_root` cujo sha256 bate com o do pack, e o especialista lê só essas cópias; o resto vira a limitação `context file '<p>' skipped: <motivo>`. O campo é opcional, e um core que não o conhece o ignora.
+- **Leitura por item.** Cada `payload.context.files[]` tem `tier`. `reference` (e `requested` sem `lines`): leia o arquivo inteiro. `excerpt` (e `requested` com `lines`): leia só as linhas `lines.start..lines.end` (1-based, inclusivo, linhas delimitadas por `\n`, cada uma com o seu `\n`). O `sha256` e os `bytes` do item são do que deve ser lido, não do arquivo inteiro.
+- **Declarar excerpts.** Só declare `capabilities[].context.excerpts: true` se a capability lê por intervalo. Sem a declaração, o core nunca envia `excerpt`; um arquivo grande demais para o budget é excluído (`budget`) em vez de recortado.
+- **Declarar pedidos.** `capabilities[].context.requests: true` permite responder `execute` com `context_request: {items: [{path, lines?, reason}]}` (1 a 64 itens). O core estende o pack e chama `execute` de novo, até 0 (`economy`), 1 (`balanced`) ou 2 (`max`) rodadas. Pedido sem a declaração, além das rodadas ou com quantidade inválida de itens termina o run em `provider_failure` (`FORGE-CONTEXT-REQUEST-UNSUPPORTED`, `-LIMIT`, `-INVALID`). Itens fora da raiz, de segredo, inexistentes ou sem budget voltam em `excluded` com o motivo; não peça de novo o que foi recusado. Cada rodada tem o timeout inteiro do perfil.
+- **Revalidar o que leu (obrigatório).** Escolha uma estratégia e declare-a em `context_revalidation` no manifest:
+  - `hash`: recalcule o sha256 do conteúdo que leu e informe-o em `Evidence.hash` (estratégia recomendada; o eco embutido e os dois adapters reais a usam);
+  - `core`: não revalida e conta com a reverificação do core (que depende do perfil: `economy` não reverifica);
+  - `none`: não revalida.
+
+  Sem a declaração, o run registra `provider-revalidation-undeclared`.
+- **Semântica de `Evidence.hash`.** É o sha256 de **exatamente** o conteúdo entregue em `location.path`: o arquivo inteiro para `reference` e `requested` sem `lines`; os bytes do intervalo `lines` para `excerpt` e `requested` com `lines`. `location.line` não muda o escopo. Deixe `hash` nulo quando a evidência não tem `location`, quando o caminho não está no ContextPack ou quando a leitura não cobre exatamente o conteúdo do item (por exemplo, só parte de um arquivo entregue como `reference`). Nunca copie um hash nativo sem conferir: os adapters reais usam `evidence_hash` de `_shell.py`, que só mantém o hash nativo (com prefixo `sha256:` opcional) quando ele é igual ao sha256 verificado do arquivo copiado para `stage/`.
+- **Divergência.** Um `hash` diferente do `sha256` de todos os itens com o mesmo caminho é divergência: as evidências `confirmed`/`observed` sobre o item viram `unresolved`, o resultado recebe `context-drift: <path>` e o run termina `partial`. Um `hash` com escopo errado (o do arquivo inteiro para um `excerpt`) também conta como divergência.
+- **Tokens.** Informe `metrics.tokens` só com `kind` `measured` ou `estimated` e `value` não negativo; o core preserva esse valor e nunca converte bytes em tokens. Sem isso, fica `unknown`.
+
+### Adapters reais
+Os dois adapters reais declaram `"context_revalidation": "hash"`: copiam para `<cwd>/stage/` só os arquivos dentro de `workspace_root` cujo sha256 bate com o do pack, e o especialista lê só essas cópias; o resto vira a limitação `context file '<p>' skipped: <motivo>`. Eles não declaram `excerpts` nem `requests`, então recebem só itens `reference`.
 
 ## Regras de segurança
 - Leia apenas os arquivos listados no ContextPack e confira se continuam dentro de `workspace_root`.

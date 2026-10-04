@@ -1,4 +1,4 @@
-# Arquitetura (ciclos 1 e 2, Waves A e B)
+# Arquitetura (ciclos 1 e 2, Waves A–C)
 
 ```mermaid
 flowchart TD
@@ -36,10 +36,17 @@ sequenceDiagram
     Forger->>Provider: health (cwd temporário), fallback se preciso
     Forger->>Forger: RoutingDecision final (persistido)
     Forger->>Forger: policy -> RiskAssessment (persistido); ask/deny -> refused
-    Forger->>Forger: ContextPack validado (persistido)
-    Forger->>Provider: execute(task, capability, action, context) (cwd do run)
+    Forger->>Forger: git somente leitura + cache de fingerprints
+    Forger->>Forger: ContextPack por tiers validado (persistido)
+    loop até negotiation_rounds do perfil
+        Forger->>Provider: execute(task, capability, action, context) (cwd do run)
+        Provider-->>Forger: ExecutionResult com context_request
+        Forger->>Forger: pack estendido validado (context-rN persistido)
+    end
+    Forger->>Provider: execute (rodada final)
     Provider-->>Forger: Response(ExecutionResult)
-    Forger->>Forger: integridade + producer; ExecutionResult + ExecutionReceipt (persistidos)
+    Forger->>Forger: integridade + producer; drift (reportado e reverificado); ExecutionResult (persistido)
+    Forger->>Forger: RunTelemetry + ExecutionReceipt (persistidos, em todo desfecho)
     Forger-->>CLI: AskOutcome
 ```
 
@@ -56,6 +63,42 @@ sequenceDiagram
 - Capabilities `heuristic` ou `unresolved` resultam em confiança `low`. Providers sem `execute` em `ops` não são roteáveis; a decisão registra a exclusão relevante em `limitations`, e um `--capability` que nenhum outro provider poderia executar é recusado com `FORGE-PROTO-OP-UNSUPPORTED` ([protocol.md](protocol.md)). Versão SemVer (`FORGE-MANIFEST-VERSION`), limites de manifest, taxonomia (`FORGE-MANIFEST-TAXONOMY`) e globs catch-all são aplicados no registry ([protocol.md](protocol.md#manifest)).
 - Limitação conhecida: sinais genéricos declarados por um único provider confiável ainda podem vencer um provider mais específico (ver [security.md](security.md#limitações-de-isolamento)).
 
+## Contexto e perfis (Wave C)
+Decisões em [ADR 0015](adr/0015-context-intelligence.md) e [ADR 0016](adr/0016-git-read-only-signals.md); contrato em [protocol.md](protocol.md#contexto-v2).
+
+- **Fase de contexto** (só depois da policy: runs `no_route`, `ambiguous` e `refused` nunca executam git nem leem o cache): `read_git_state` → `FingerprintStore` da raiz → `build_context_pack` (relevância por sinais, tiers, budget, `max_files`) → `validate_context_pack` → artefato `context`. O mesmo `FingerprintStore` atende as rodadas de negociação e é gravado uma vez, depois da última rodada; seus avisos vão para as limitações do receipt.
+- **Negociação**: no máximo `negotiation_rounds + 1` chamadas `execute`; cada pack estendido vira `context-r1`/`context-r2`. Resposta com `context_request` nunca vira `result` ([pedido de contexto](protocol.md#pedido-de-contexto)).
+- **Pós-execução**: divergência reportada pelo provider sempre se aplica; a reverificação segue o nível do perfil ([regra de divergência](protocol.md#regra-de-divergência)). `metrics.duration_ms` soma todas as rodadas; `context_bytes` é o `used_bytes` do último pack; `tokens` é o do provider quando `measured`/`estimated`, senão `unknown`.
+
+### Perfis
+Fonte única: `src/theforge/profiles.py`. Nenhum outro módulo define budgets, timeouts ou rodadas.
+
+| Parâmetro | `economy` | `balanced` | `max` |
+|---|---|---|---|
+| `budget_bytes` | 65 536 | 262 144 | 1 048 576 |
+| `max_files` | 16 | 64 | 256 |
+| tiers | metadata, reference | metadata, reference, excerpt, requested | metadata, reference, excerpt, requested |
+| `negotiation_rounds` | 0 | 1 | 2 |
+| `max_providers` | 1 | 1 | 4 |
+| fallback de health | não | sim | sim |
+| verificação | `minimal` | `conditional` | `strong` |
+| timeout de `execute` (por chamada) | 60 s | 180 s | 600 s |
+
+- **`economy` sem fallback**: só o primário passa pelo health. Se ele falhar, o run é `provider_failure` com a limitação `profile economy: fallback disabled`, mesmo havendo um fallback compatível (antes da Wave C, todo perfil fazia fallback).
+- `max_providers` só é registrado: um `ask` executa um único provider em qualquer perfil (o executor de plano é de `cross-forge-foundation`).
+- Timeout de pior caso: cada rodada tem o timeout inteiro, então `max` pode chegar a 3 × 600 s ≈ 30 min em `execute`.
+- Custo do git: quando o workspace está dentro de um repositório, a consulta faz 5 processos `git` (orçamento total de 5 s); observado em ~0,7–1,3 s por run nos testes, na máquina Windows do [baseline](performance.md) (não é uma medição do benchmark).
+
+### Telemetria
+Todo run grava o artefato `telemetry` (`RunTelemetry` v1, schema fechado) antes do receipt, em qualquer desfecho, e o receipt o referencia por `telemetry_sha256`. Métrica não medida sai `unknown` e é listada em `unknowns`.
+
+- Fases (`scan_ms`, `routing_ms`, `context_ms`, `provider_ms`): o health entra em `routing`; `provider` soma todas as rodadas; as extensões de pack entram em `context`.
+- `providers_executed` é no máximo 1 num `ask`. `negotiation_rounds` = número de packs `context-rN` gravados.
+- `fallbacks_used` = quantidade de providers **unhealthy** tentados (o tamanho de `RoutingDecision.fallbacks_used`), contando o primário. Não é "fallbacks que assumiram": em `economy` com o primário unhealthy o valor é 1, e em `balanced` com fallback bem-sucedido também é 1 (o primário que falhou).
+- `profile` registra os parâmetros efetivos e `effective_tiers`; `provider_revalidation` registra `hash`/`core`/`none` ou `undeclared`; `verification_performed` e `context_drift` registram a reverificação.
+- Limitação conhecida: se montar a telemetria falhar, o receipt é gravado assim mesmo, sem `telemetry_sha256` e com a limitação `telemetry-unavailable: <Tipo>: <mensagem>`; o status do run não muda. Falha de persistência continua sendo erro, como em qualquer artefato.
+- `explain` mostra contexto e telemetria; as seções de texto estão em [cli.md](cli.md#explain).
+
 ## Responsabilidades
 
 | Módulo | Faz | Não faz |
@@ -66,7 +109,8 @@ sequenceDiagram
 | `routing` | ranquear capabilities por presença de sinais declarados | conhecer domínios |
 | `policy` | decidir `allow/ask/deny` e montar o `RiskAssessment` a partir da declaração do provider | verificar o que o provider faz |
 | `security` | ambiente mínimo do provider, redaction, caminhos seguros | sandbox |
-| `context` | listar arquivos com segurança, montar ContextPack por referência | enviar conteúdo de arquivos ao provider (lê os bytes só para calcular sha256 e tamanho) |
+| `profiles` | tabela única de `economy`/`balanced`/`max` | I/O |
+| `context` | listar arquivos com segurança; sinais de relevância; ContextPack por referência e tiers; extensão por pedido; git somente leitura; cache de fingerprints; reverificação de drift | enviar conteúdo de arquivos ao provider (lê os bytes só para calcular sha256 e tamanho); importar `routing`, `policy`, `runs`, `forger` ou `cli` |
 | `forger` | orquestrar um run, revalidação, policy, fallback de health, integridade, receipts | lógica de domínio |
 | `runs` | persistir artefatos redigidos, hashes, releitura estrita, validação de receipt | interpretar resultados |
 | `cli` | parsing, render, exit codes | lógica de negócio |
@@ -76,10 +120,11 @@ sequenceDiagram
 | Local | Classe | Git |
 |---|---|---|
 | `.forge/config/` | persistent | committable |
-| `.forge/runs/<run_id>/` (`task`, `routing`, `risk`, `context`, `result`, `receipt`) | persistent local, redigido | ignorado |
+| `.forge/runs/<run_id>/` (`task`, `routing`, `risk`, `context`, `context-r1`, `context-r2`, `result`, `telemetry`, `receipt`) | persistent local, redigido | ignorado |
 | `.forge/runs/<run_id>/work/` (cwd do execute; raiz de `artifacts[].path`) | persistent local, escrito pelo provider, **não redigido** ([security.md](security.md#exceção-forgerunsidwork)) | ignorado |
-| `.forge/cache/` | ephemeral | ignorado |
+| `.forge/cache/` | ephemeral (reservado, sem uso) | ignorado |
 | `<cache do usuário>/registry/<id>-<digest12>.json` | cacheable, fora do projeto ([ADR 0009](adr/0009-registry-cache-location.md)) | — |
+| `<cache do usuário>/context/<digest12>.json` (fingerprints de contexto; `digest12` = 12 hex do sha256 da raiz resolvida) | cacheable, fora do projeto ([ADR 0015](adr/0015-context-intelligence.md)); perder o cache só custa tempo | — |
 
 O legado `.forge/registry/` não é mais criado; `init` e `registry refresh` o removem com aviso.
 

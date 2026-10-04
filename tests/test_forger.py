@@ -52,7 +52,10 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert out.result.metrics.duration_ms.kind == "measured"
     assert out.result.metrics.tokens.kind == "unknown"
     store = RunStore(tmp_path / ".forge")
+    # Negotiation rounds are optional; telemetry is written in every run.
     for name in ARTIFACTS:
+        if name.startswith("context-r"):
+            continue
         assert store.read_optional(out.run_id, name) is not None
     receipt = out.receipt
     assert receipt.inputs.task_sha256 == sha256_of(store.read(out.run_id, "task"))
@@ -60,10 +63,12 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert receipt.inputs.context_sha256 == sha256_of(store.read(out.run_id, "context"))
     assert receipt.result_sha256 == sha256_of(store.read(out.run_id, "result"))
     assert receipt.inputs.risk_sha256 == sha256_of(store.read(out.run_id, "risk"))
+    assert receipt.telemetry_sha256 == sha256_of(store.read(out.run_id, "telemetry"))
     assert receipt.provider is not None and receipt.provider.id == "fixture-spark"
     assert receipt.provider.trust == "local" and receipt.provider.manifest_sha256
     files = [f["path"] for f in store.read(out.run_id, "context")["files"]]
-    assert files == ["jobs/orders_glue_job.py"]
+    # Context v2: the root dependency manifest is a relevance signal too (ranked after globs).
+    assert files == ["jobs/orders_glue_job.py", "requirements.txt"]
 
 
 def test_case_b_routes_to_api(tmp_path: Path) -> None:

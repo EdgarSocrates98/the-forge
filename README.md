@@ -8,7 +8,7 @@
 
 The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
 
-**Status:** ciclo 2, Wave B (providers reais). Sobre o endurecimento da Wave A (contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace, ambiente mínimo para providers, policy de risco com `--approve` e CI em Linux e Windows), a Wave B traz os adapters reais de Spark Forge e API Forge, versão de provider em SemVer, taxonomia de capabilities com aliases e depreciação e uma matriz de compatibilidade testada. O core continua provado também com o provider nativo `echo-forge` e com providers de teste.
+**Status:** ciclo 2, Waves A–C. Sobre o endurecimento da Wave A (contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace, ambiente mínimo para providers, policy de risco com `--approve` e CI em Linux e Windows), a Wave B traz os adapters reais de Spark Forge e API Forge, versão de provider em SemVer, taxonomia de capabilities com aliases e depreciação e uma matriz de compatibilidade testada, e a Wave C traz o contexto v2: tiers (`reference`, `excerpt`, `requested`), negociação de contexto com o provider, revalidação declarada (`context_revalidation`), sinais git somente leitura, cache de fingerprints, perfis (`economy`, `balanced`, `max`) e telemetria por run ([performance](docs/performance.md)). O core continua provado também com o provider nativo `echo-forge` e com providers de teste.
 
 ## Instalação (desenvolvimento)
 
@@ -76,6 +76,7 @@ Os Forges reais entram por dois adapters em `adapters/`, instalados no interpret
 - [Versionamento e compatibilidade](docs/versioning.md)
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
+- [Performance](docs/performance.md)
 - [ADRs](docs/adr/)
 - [Spec do ciclo 1](docs/superpowers/specs/2026-10-02-the-forge-protocol-core-design.md)
 

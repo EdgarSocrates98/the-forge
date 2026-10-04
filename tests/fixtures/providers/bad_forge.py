@@ -22,6 +22,25 @@ OPERATION_CLASSES = {"mutating": "local_mutation", "destructive": "destructive"}
 
 GOOD_HASH = "0" * 64
 
+# Context negotiation (ExecutionResult.context_request). context-request asks once (round 0)
+# for REQUESTED_PATH; -loop asks on every round; -undeclared asks without declaring
+# ``context.requests``; -invalid declares it but asks for zero items.
+REQUESTED_PATH = "req.txt"
+REQUEST_MODES = ("context-request", "context-request-loop", "context-request-undeclared",
+                 "context-request-invalid")
+
+# Context drift (TOCTOU). Both cover the *.txt files and answer one ``confirmed`` evidence per
+# ContextPack item: drift-report sets an Evidence.hash that is not the delivered content's;
+# mutate-context appends to the file it read and leaves ``hash`` null (only re-verification
+# by the core can find it).
+DRIFT_HASH = "f" * 64
+MUTATION = b"changed during execution\n"
+# tokens-measured reports its own token count (kept) and duration/context bytes (overwritten
+# by the core's measurements).
+REPORTED_METRICS = {"tokens": {"value": 1234, "kind": "measured"},
+                    "duration_ms": {"value": 999999, "kind": "measured"},
+                    "context_bytes": {"value": 1, "kind": "measured"}}
+
 
 def _evidence(eid, producer, **extra):
     return dict({"id": eid, "epistemic": "observed", "subject": "s", "claim": "c",
@@ -93,9 +112,10 @@ def main() -> int:
         return 0
     raw = sys.stdin.read()
     try:
-        rid = json.loads(raw).get("request_id", "unknown")
+        request = json.loads(raw)
+        rid = request.get("request_id", "unknown")
     except (json.JSONDecodeError, AttributeError):
-        rid = "unknown"
+        request, rid = {}, "unknown"
     proto = "forge/v9" if mode == "wrong-major" else "forge/v1"
 
     def reply(status, payload=None, error=None, request_id=None, reply_op=op, who=None):
@@ -126,6 +146,13 @@ def main() -> int:
             file_globs=["?*"] if mode == "wide-glob" else (),
             keywords=[f"bad{i}" for i in range(SPAM_KEYWORDS)] if mode == "keyword-spam"
             else ("bad",))]
+        if mode == "excerpts":  # the capability accepts excerpts of the *.txt files
+            capabilities[0]["signals"]["file_globs"] = ["*.txt"]
+            capabilities[0]["context"] = {"excerpts": True, "requests": False}
+        if mode in ("drift-report", "mutate-context"):
+            capabilities[0]["signals"]["file_globs"] = ["*.txt"]
+        if mode in ("context-request", "context-request-loop", "context-request-invalid"):
+            capabilities[0]["context"] = {"excerpts": False, "requests": True}
         if mode == "capability-spam":
             capabilities += [capability(f"bad.spam{i}", keywords=["run", "it"])
                              for i in range(SPAM_CAPABILITIES)]
@@ -229,6 +256,33 @@ def main() -> int:
             return reply("ok", dict(RESULT, producer=producer), who=impostor)
         if mode == "wrong-version-producer":  # right id, version differs from the manifest
             return reply("ok", dict(RESULT, producer={"id": pid, "version": "9.9.9"}))
+        if mode in REQUEST_MODES:
+            try:
+                context_round = request["payload"]["context"]["round"]
+            except (KeyError, TypeError):
+                context_round = 0
+            if mode != "context-request" or context_round == 0:
+                items = [] if mode == "context-request-invalid" else [
+                    {"path": REQUESTED_PATH, "reason": "need the file"}]
+                return reply("ok", dict(RESULT, producer=producer,
+                                        context_request={"items": items}))
+            return reply("ok", dict(RESULT, producer=producer,
+                                    limitations=[f"round={context_round}"]))
+        if mode in ("drift-report", "mutate-context"):
+            payload = request["payload"]
+            evidence = []
+            for index, item in enumerate(payload["context"]["files"], start=1):
+                path = item["path"]
+                extra = {"epistemic": "confirmed", "subject": path, "location": {"path": path}}
+                if mode == "drift-report":
+                    extra["hash"] = DRIFT_HASH
+                else:
+                    with open(os.path.join(payload["task"]["workspace_root"], path), "ab") as fh:
+                        fh.write(MUTATION)
+                evidence.append(_evidence(f"e{index}", producer, **extra))
+            return reply("ok", dict(RESULT, producer=producer, evidence=evidence))
+        if mode == "tokens-measured":
+            return reply("ok", dict(RESULT, producer=producer, metrics=REPORTED_METRICS))
         if mode in INTEGRITY_MODES:
             return reply("ok", dict(RESULT, producer=producer, **INTEGRITY_MODES[mode](producer)))
         return reply("ok", dict(RESULT, producer=producer))

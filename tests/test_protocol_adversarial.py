@@ -129,6 +129,13 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "stderr-flood": ("ok", None),
     "exit-leave-grandchild": ("ok", None),
     "env-probe-full": ("ok", None),
+    "excerpts": ("ok", None),  # the capability declares excerpt support (context v2)
+    # context negotiation (default profile balanced: at most 1 round)
+    "context-request": ("ok", None),  # one round; the requested file is simply missing
+    "tokens-measured": ("ok", None),  # the provider's token count is kept as reported
+    # context drift (default profile balanced: conditional re-verification) -> partial
+    "drift-report": ("partial", None),  # Evidence.hash differs from the pack item
+    "mutate-context": ("partial", None),  # the provider changes the file it confirmed
     # describe-level: provider or capability is not routable
     "describe-crash": ("no_route", None),
     "invalid-manifest": ("no_route", None),
@@ -183,6 +190,10 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "dangling-ref": ("provider_failure", Codes.RESULT_DANGLING_EVIDENCE),
     "artifact-absolute": ("provider_failure", Codes.RESULT_ARTIFACT_PATH),
     "artifact-traversal": ("provider_failure", Codes.RESULT_ARTIFACT_PATH),
+    # execute: context negotiation (8.4)
+    "context-request-loop": ("provider_failure", Codes.CONTEXT_REQUEST_LIMIT),
+    "context-request-undeclared": ("provider_failure", Codes.CONTEXT_REQUEST_UNSUPPORTED),
+    "context-request-invalid": ("provider_failure", Codes.CONTEXT_REQUEST_INVALID),
 }
 
 # Registry state that keeps each describe-level attacker out of routing. no-execute-op is not
@@ -204,11 +215,14 @@ NO_ROUTE_STATE = {
     "describe-refused": "invalid",
 }
 GRANDCHILD_MODES = ("spawn-grandchild-timeout", "exit-leave-grandchild")
-MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS")
+# Modes that act on the ContextPack items: their workspace gets one *.txt file to cover.
+CONTEXT_FILE_MODES = ("drift-report", "mutate-context")
+MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS", "REQUEST_MODES")
 
 
 def _bad_forge_modes() -> set[str]:
-    """Every mode string bad_forge.py compares against, plus the keys of its mode tables."""
+    """Every mode string bad_forge.py compares against, plus the keys (or items) of its
+    mode tables."""
     tree = ast.parse((PROVIDERS / "bad_forge.py").read_text(encoding="utf-8"))
     modes: set[str] = set()
     for node in ast.walk(tree):
@@ -216,9 +230,11 @@ def _bad_forge_modes() -> set[str]:
                 and node.left.id == "mode"):
             modes |= {c.value for comp in node.comparators for c in ast.walk(comp)
                       if isinstance(c, ast.Constant) and isinstance(c.value, str)}
-        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
+        if (isinstance(node, ast.Assign) and isinstance(node.value, (ast.Dict, ast.Tuple))
                 and any(isinstance(t, ast.Name) and t.id in MODE_TABLES for t in node.targets)):
-            modes |= {k.value for k in node.value.keys
+            keys = (node.value.keys if isinstance(node.value, ast.Dict)
+                    else node.value.elts)  # a tuple table lists the modes themselves
+            modes |= {k.value for k in keys
                       if isinstance(k, ast.Constant) and isinstance(k.value, str)}
     return modes
 
@@ -236,6 +252,8 @@ def test_every_mode_through_the_full_forger(
 ) -> None:
     status, code = expected
     make_workspace(tmp_path, [bad_entry(mode, "bad-a")])
+    if mode in CONTEXT_FILE_MODES:
+        (tmp_path / "notes.txt").write_text("hello\n", encoding="utf-8")
     forge = tmp_path / ".forge"
     store = RunStore(forge)
     grandchild = 0
@@ -252,7 +270,7 @@ def test_every_mode_through_the_full_forger(
         receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
         validate_receipt(receipt, result_sha256=store.persisted_sha256(out.run_id, "result"))
         assert receipt.status == status
-        if status == "ok":
+        if status in ("ok", "partial"):
             assert out.result is not None and receipt.result_sha256 is not None
         else:
             assert out.result is None and receipt.result_sha256 is None

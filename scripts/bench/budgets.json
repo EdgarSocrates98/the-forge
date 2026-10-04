@@ -1,0 +1,68 @@
+{
+  "cli_startup": {
+    "budget_ms": 1976.125,
+    "baseline_ms": 1317.417,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "registry_cold": {
+    "budget_ms": 1443.59,
+    "baseline_ms": 962.393,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "registry_warm": {
+    "budget_ms": 15.177,
+    "baseline_ms": 10.118,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "scan_1k": {
+    "budget_ms": 1347.357,
+    "baseline_ms": 898.238,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "scan_10k": {
+    "budget_ms": 19346.09,
+    "baseline_ms": 12897.393,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "routing_10k": {
+    "budget_ms": 891.389,
+    "baseline_ms": 594.259,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_1k_cold": {
+    "budget_ms": 717.342,
+    "baseline_ms": 478.228,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_1k_warm": {
+    "budget_ms": 617.946,
+    "baseline_ms": 411.964,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_10k_cold": {
+    "budget_ms": 5022.153,
+    "baseline_ms": 3348.102,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_10k_warm": {
+    "budget_ms": 5726.301,
+    "baseline_ms": 3817.534,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "persist_run": {
+    "budget_ms": 22.111,
+    "baseline_ms": 14.741,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  }
+}

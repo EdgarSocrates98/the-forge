@@ -4,9 +4,11 @@ import json
 import re
 import tomllib
 import unicodedata
+from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Final
 
+from theforge.contracts.types import DEPENDENCY_MANIFESTS
 from theforge.security.paths import resolve_inside
 
 _TOKEN = re.compile(r"\w+")
@@ -40,10 +42,11 @@ def glob_matches(files: list[str], globs: list[str]) -> list[str]:
 
 def workspace_dependencies(root: Path) -> set[str]:
     names: set[str] = set()
-    names |= _pyproject_deps(root, root / "pyproject.toml")
-    for req in sorted(root.glob("requirements*.txt")):
-        names |= _requirements_deps(root, req)
-    names |= _package_json_deps(root, root / "package.json")
+    for pattern in DEPENDENCY_MANIFESTS:
+        parse = _PARSERS[pattern]
+        paths = sorted(root.glob(pattern)) if _MAGIC & set(pattern) else [root / pattern]
+        for path in paths:
+            names |= parse(root, path)
     return {normalize_dep(n) for n in names}
 
 
@@ -107,3 +110,11 @@ def _package_json_deps(root: Path, path: Path) -> set[str]:
             if isinstance(section, dict):
                 names |= {str(k) for k in section}
     return names
+
+
+_MAGIC: Final = frozenset("*?[")
+_PARSERS: Final[dict[str, Callable[[Path, Path], set[str]]]] = {
+    "pyproject.toml": _pyproject_deps,
+    "requirements*.txt": _requirements_deps,
+    "package.json": _package_json_deps,
+}

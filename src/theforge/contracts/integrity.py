@@ -9,26 +9,30 @@ Preconditions: inputs already passed ``from_dict`` (structurally valid).
 import re
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
+from typing import get_args
 
 from theforge.contracts.base import ContractError
 from theforge.contracts.codes import Codes
 from theforge.contracts.context import ContextPack
 from theforge.contracts.manifest import ForgeManifest
 from theforge.contracts.receipt import ExecutionReceipt
-from theforge.contracts.result import ExecutionResult
+from theforge.contracts.result import ContextRequest, ExecutionResult
 from theforge.contracts.types import (
     MAX_ACTIONS,
     MAX_CAPABILITIES,
+    MAX_CONTEXT_REQUEST_ITEMS,
     MAX_DEPENDENCIES,
     MAX_GLOBS,
     MAX_KEYWORDS,
     SHA256_RE,
     Producer,
+    Tier,
     is_catch_all_glob,
 )
 
 _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _SUCCESS = ("ok", "partial")
+_TIERS: frozenset[str] = frozenset(get_args(Tier))
 
 
 @dataclass(frozen=True)
@@ -152,7 +156,7 @@ def validate_result(result: ExecutionResult, *, expected: Producer) -> None:
 
 
 def validate_context_pack(pack: ContextPack) -> None:
-    """Order: used vs budget, used vs sum of files, file paths."""
+    """Order: used vs budget, used vs sum of files, tier bytes, file paths, round."""
     violations: list[Violation] = []
     if pack.used_bytes > pack.budget_bytes:
         violations.append(Violation(
@@ -167,12 +171,66 @@ def validate_context_pack(pack: ContextPack) -> None:
             f"used_bytes {pack.used_bytes} differs from sum of file bytes {total}",
             "used_bytes",
         ))
+    violations.extend(_tier_bytes_violations(pack))
     for i, file in enumerate(pack.files):
         if (problem := _path_problem(file.path)) is not None:
             violations.append(
                 Violation(Codes.CONTEXT_PATH, f"{problem}: {file.path!r}", f"files[{i}].path")
             )
+    if pack.round < 0:
+        violations.append(Violation(
+            Codes.PROTO_SCHEMA, f"round {pack.round} is negative", "round"
+        ))
     _raise_if_any(violations)
+
+
+def _tier_bytes_violations(pack: ContextPack) -> list[Violation]:
+    """Order: per-tier key/value (declaration order), metadata at zero, sum vs used_bytes.
+
+    An empty ``tier_bytes`` (packs written before tiers existed) is not checked.
+    """
+    if not pack.tier_bytes:
+        return []
+    violations: list[Violation] = []
+    for tier, count in pack.tier_bytes.items():
+        if tier not in _TIERS:
+            violations.append(Violation(
+                Codes.CONTEXT_BYTES, f"unknown tier {tier!r}", f"tier_bytes.{tier}"
+            ))
+        elif count < 0:
+            violations.append(Violation(
+                Codes.CONTEXT_BYTES, f"tier {tier!r} has negative bytes {count}",
+                f"tier_bytes.{tier}",
+            ))
+    metadata = pack.tier_bytes.get("metadata", 0)
+    if metadata != 0:
+        violations.append(Violation(
+            Codes.CONTEXT_BYTES,
+            f"metadata tier must carry 0 bytes, got {metadata}",
+            "tier_bytes.metadata",
+        ))
+    total = sum(pack.tier_bytes.values())
+    if not violations and total != pack.used_bytes:
+        violations.append(Violation(
+            Codes.CONTEXT_BYTES,
+            f"sum of tier_bytes {total} differs from used_bytes {pack.used_bytes}",
+            "tier_bytes",
+        ))
+    return violations
+
+
+def validate_context_request(request: ContextRequest) -> None:
+    """Item count must be within 1..MAX_CONTEXT_REQUEST_ITEMS.
+
+    Item paths are NOT checked here: the broker refuses an invalid item individually.
+    """
+    count = len(request.items)
+    if not 1 <= count <= MAX_CONTEXT_REQUEST_ITEMS:
+        _raise_if_any([Violation(
+            Codes.CONTEXT_REQUEST_INVALID,
+            f"context request has {count} items, expected 1..{MAX_CONTEXT_REQUEST_ITEMS}",
+            "items",
+        )])
 
 
 def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None) -> None:
@@ -189,7 +247,12 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None) ->
         ("provider.manifest_sha256",
          receipt.provider.manifest_sha256 if receipt.provider is not None else None),
         ("result_sha256", receipt.result_sha256),
+        ("telemetry_sha256", receipt.telemetry_sha256),
     ]
+    hashes.extend(
+        (f"inputs.context_round_sha256[{i}]", value)
+        for i, value in enumerate(receipt.inputs.context_round_sha256)
+    )
     for name, value in hashes:
         if value is not None and SHA256_RE.fullmatch(value) is None:
             violations.append(Violation(

@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import CapabilityState, OperationClass
+from theforge.contracts.types import CapabilityState, OperationClass, RevalidationStrategy
 
 MANIFEST_SCHEMA = "theforge/ForgeManifest/v1"
 CAPABILITY_ID = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
@@ -17,6 +17,14 @@ class Signals:
     keywords: list[str] = field(default_factory=list)
     file_globs: list[str] = field(default_factory=list)
     dependencies: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
+class CapabilityContext:
+    """Context tiers a capability accepts beyond references (defaults reproduce v1)."""
+
+    excerpts: bool = False
+    requests: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -33,6 +41,7 @@ class Capability:
     deprecated: bool = False
     # Suggested replacement capability id; may belong to another provider.
     replaced_by: str | None = None
+    context: CapabilityContext = field(default_factory=CapabilityContext)
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):
@@ -66,6 +75,8 @@ class ForgeManifest:
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
+    # How the provider revalidates the content it read; None = undeclared (v1).
+    context_revalidation: RevalidationStrategy | None = None
 
     def __post_init__(self) -> None:
         if self.schema != MANIFEST_SCHEMA:

@@ -14,6 +14,8 @@ class ReceiptInputs:
     routing_sha256: str | None = None
     context_sha256: str | None = None
     risk_sha256: str | None = None
+    # On-disk hashes of the negotiation-round packs, in order (context-r1, context-r2).
+    context_round_sha256: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -38,6 +40,7 @@ class ExecutionReceipt:
     inputs: ReceiptInputs
     provider: ReceiptProvider | None = None
     result_sha256: str | None = None
+    telemetry_sha256: str | None = None  # on-disk hash of the run's RunTelemetry
     started_at: str
     finished_at: str
     error: ErrorInfo | None = None

@@ -3,9 +3,13 @@
 import json
 import os
 import re
+import shutil
+import stat
 import subprocess
 import sys
-from collections.abc import Callable
+import tempfile
+import time
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +43,9 @@ def cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 def normalize(text: str) -> str:
     text = re.sub(r"\d{8}T\d{6}Z-[0-9a-f]{8}", "<RUN>", text)
+    # Environment-dependent explain values: phase durations and the enclosing git state.
+    text = re.sub(r"=~?\d+ms\b", "=<MS>", text)
+    text = re.sub(r"(?m)^Git:( +).*$", r"Git:\1<GIT>", text)
     return re.sub(r"\b[0-9a-f]{12}\b", "<HASH>", text)
 
 
@@ -199,3 +206,92 @@ def test_project_trust_is_demoted_and_needs_explicit_authorization(
     assert code == 0 and data["status"] == "ok"
     assert [s["provider"] for s in data["decision"]["selected"]] == ["fixture-spark"]
     assert store.read(data["run_id"], "receipt")["provider"]["trust"] == "unverified"
+
+
+# --- read-only git signals end to end (context-intelligence-v2 3.2; task 5.1) ---------------
+
+GIT = shutil.which("git")
+
+
+def _git(repo: Path, *args: str) -> str:
+    assert GIT is not None
+    out = subprocess.run(
+        [GIT, "-c", "core.fsmonitor=false", "-c", "user.name=t", "-c", "user.email=t@t",
+         "-c", "commit.gpgsign=false", *args],
+        cwd=repo, capture_output=True, check=True, env={**os.environ, "LC_ALL": "C"},
+    )
+    return out.stdout.decode("utf-8", "replace")
+
+
+def _git_dir_snapshot(d: Path) -> dict[str, tuple[bool, int, bytes]]:
+    """Every entry of the git dir: kind, mtime and content (the dir itself included)."""
+    snap: dict[str, tuple[bool, int, bytes]] = {".": (True, d.lstat().st_mtime_ns, b"")}
+    for p in sorted(d.rglob("*")):
+        st = p.lstat()
+        is_dir = p.is_dir()
+        snap[p.relative_to(d).as_posix()] = (
+            is_dir, st.st_mtime_ns, b"" if is_dir else p.read_bytes())
+    return snap
+
+
+def _force_rmtree(path: Path) -> None:
+    for p in path.rglob("*"):  # git object files are read-only on Windows
+        if not p.is_symlink():
+            p.chmod(p.stat().st_mode | stat.S_IWRITE)
+    shutil.rmtree(path, ignore_errors=True)
+
+
+@pytest.fixture
+def outside_dir() -> Iterator[Path]:
+    """A fresh dir outside any enclosing repository (pytest's basetemp lives inside this
+    repo's work tree), so the repo created in it is its own git toplevel."""
+    d = Path(tempfile.mkdtemp(prefix="theforge-e2e-git-")).resolve()
+    try:
+        yield d
+    finally:
+        _force_rmtree(d)
+
+
+@pytest.mark.skipif(GIT is None, reason="git executable not found on PATH")
+def test_ask_through_the_cli_leaves_a_real_git_dir_intact(outside_dir: Path) -> None:
+    home = outside_dir / "home"  # isolated global git config for the test and the CLI
+    home.mkdir()
+    repo = outside_dir / "repo"
+    repo.mkdir()
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "HOME": str(home),
+           "USERPROFILE": str(home)}
+
+    def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run([sys.executable, "-m", "theforge", *args, "--root", str(repo)],
+                              capture_output=True, text=True, encoding="utf-8",
+                              timeout=120, env=env)
+
+    _git(repo, "init", "-q", "-b", "main", ".")
+    assert Path(_git(repo, "rev-parse", "--show-toplevel").strip()).resolve() == repo
+    (repo / "a.txt").write_text("a\n", encoding="utf-8")
+    (repo / "b.txt").write_text("b\n", encoding="utf-8")
+    _git(repo, "add", "a.txt", "b.txt")
+    _git(repo, "commit", "-qm", "init")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    assert run_cli("init").returncode == 0
+    # Dirty work tree: a modified file, an untracked one, and a tracked file whose content is
+    # unchanged but whose mtime is newer -- a plain `git status` would refresh the index.
+    (repo / "a.txt").write_text("changed\n", encoding="utf-8")
+    (repo / "notes.txt").write_text("hello\n", encoding="utf-8")
+    future = time.time() + 5
+    os.utime(repo / "b.txt", (future, future))
+    time.sleep(0.05)
+    before = _git_dir_snapshot(repo / ".git")
+
+    r = run_cli("ask", "eco", "--capability", "demo.echo", "--json")
+    assert r.returncode == 0, r.stderr
+    out = json.loads(r.stdout)
+    assert out["status"] == "ok"
+
+    assert not (repo / ".git" / "index.lock").exists()
+    assert _git_dir_snapshot(repo / ".git") == before
+    # the run really queried this repository (not a stub, not an enclosing repo)
+    pack = RunStore(repo / ".forge").read(out["run_id"], "context")
+    git = pack["workspace"]["git"]
+    assert git["available"] is True and git["branch"] == "main" and git["head"] == head
+    assert git["dirty"] is True

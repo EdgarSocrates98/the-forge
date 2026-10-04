@@ -56,6 +56,7 @@ MANIFEST = ForgeManifest(
         ),
     ],
     limitations=["demonstration provider; performs no domain analysis"],
+    context_revalidation="hash",  # re-hashes what it reads into Evidence.hash (6.4)
 )
 
 
