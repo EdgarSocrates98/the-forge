@@ -1,0 +1,214 @@
+{
+  "provenance": "derived",
+  "derived_from": "default/health.json",
+  "derivation": "every capability made ready (the real offline doctor always reports network unavailable, so it never says ready)",
+  "exit_code": 0,
+  "doctor": {
+    "assets": [
+      {
+        "asset": "__init__.py",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [
+            "__init__.py"
+          ],
+          "source": "importlib.resources",
+          "version": 1
+        },
+        "limitations": [],
+        "path": "<site-packages>/apiforge/host_assets/__init__.py",
+        "sha256": "e862d20b37c9a875a9981562164e7e17dddde50c5216a9d88e2aee7a407ad0ef",
+        "state": "present",
+        "version": 1
+      },
+      {
+        "asset": "loader.py",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [
+            "loader.py"
+          ],
+          "source": "importlib.resources",
+          "version": 1
+        },
+        "limitations": [],
+        "path": "<site-packages>/apiforge/host_assets/loader.py",
+        "sha256": "b3b7d5c10ba1c19dd1470536834f0e4459ca41f531daa0132f4cd51cc38186e6",
+        "state": "present",
+        "version": 1
+      },
+      {
+        "asset": "manifest.yaml",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [
+            "manifest.yaml"
+          ],
+          "source": "importlib.resources",
+          "version": 1
+        },
+        "limitations": [],
+        "path": "<site-packages>/apiforge/host_assets/manifest.yaml",
+        "sha256": "28689add7ff595f45070d3be001b01ce3980ab5ab2220da2f4b75e6cc71c9c46",
+        "state": "present",
+        "version": 1
+      },
+      {
+        "asset": "templates/AGENTS.md.tmpl",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [
+            "templates/AGENTS.md.tmpl"
+          ],
+          "source": "importlib.resources",
+          "version": 1
+        },
+        "limitations": [],
+        "path": "<site-packages>/apiforge/host_assets/templates/AGENTS.md.tmpl",
+        "sha256": "3da85cb40151bc164c40aac9ca801ec4e5b5414fdea67056c871522cfc9e81ed",
+        "state": "present",
+        "version": 1
+      },
+      {
+        "asset": "templates/CLAUDE.md.tmpl",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [
+            "templates/CLAUDE.md.tmpl"
+          ],
+          "source": "importlib.resources",
+          "version": 1
+        },
+        "limitations": [],
+        "path": "<site-packages>/apiforge/host_assets/templates/CLAUDE.md.tmpl",
+        "sha256": "bac3dd793616b7876b02bb8970e238b43785df129f0b79643efbc8d95d1f3d39",
+        "state": "present",
+        "version": 1
+      },
+      {
+        "asset": "templates/mcp_config.json.tmpl",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [
+            "templates/mcp_config.json.tmpl"
+          ],
+          "source": "importlib.resources",
+          "version": 1
+        },
+        "limitations": [],
+        "path": "<site-packages>/apiforge/host_assets/templates/mcp_config.json.tmpl",
+        "sha256": "ec135551664d3e91a5f4043d790b2423f395a1ab983d003a877d25ffe2abcb01",
+        "state": "present",
+        "version": 1
+      }
+    ],
+    "capabilities": [
+      {
+        "capability": "user-state",
+        "detail": "resolved state root is writable or can be created by the user",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [],
+          "source": "filesystem",
+          "version": 1
+        },
+        "field": "capability",
+        "state": "ready",
+        "unlock": "inspect the detail and rerun doctor",
+        "version": 1
+      },
+      {
+        "capability": "git-read",
+        "detail": "<PATH>/git",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [],
+          "source": "PATH",
+          "version": 1
+        },
+        "field": "PATH",
+        "state": "ready",
+        "unlock": "install or expose git only if this optional capability is needed",
+        "version": 1
+      },
+      {
+        "capability": "mcp-stdio",
+        "detail": "<PATH>/apiforge-mcp",
+        "evidence": {
+          "confidence": null,
+          "level": "observed",
+          "limitations": [],
+          "refs": [],
+          "source": "PATH",
+          "version": 1
+        },
+        "field": "PATH",
+        "state": "ready",
+        "unlock": "install or expose apiforge-mcp only if this optional capability is needed",
+        "version": 1
+      },
+      {
+        "capability": "network",
+        "detail": "network is not required for local API Forge operation",
+        "evidence": {
+          "confidence": null,
+          "level": "declared",
+          "limitations": [],
+          "refs": [],
+          "source": "APIFORGE_NETWORK",
+          "version": 1
+        },
+        "field": "network.mode",
+        "state": "ready",
+        "unlock": "enable network only for explicitly requested external adapters",
+        "version": 1
+      }
+    ],
+    "evidence_level": "observed",
+    "gaps": [],
+    "paths": {
+      "cache_root": "<doctor-tmp>/.apiforge/cache",
+      "config_path": null,
+      "executable": "<python>",
+      "package_root": "<site-packages>/apiforge",
+      "project_root": null,
+      "schema": "apiforge/distribution/v1",
+      "sources": [
+        [
+          "package_root",
+          "default"
+        ],
+        [
+          "state_root",
+          "environment"
+        ],
+        [
+          "cache_root",
+          "default"
+        ]
+      ],
+      "state_root": "<doctor-tmp>/.apiforge",
+      "version": 1,
+      "workspace_root": null
+    },
+    "schema": "apiforge/doctor/v1",
+    "status": "ready",
+    "version": 1
+  }
+}

@@ -19,9 +19,16 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from theforge_apiforge import _shell, backend, catalog, record
+from theforge_apiforge import _shell, backend, catalog, health, record
 
-from theforge.contracts import PROTOCOL_V1, ForgeManifest, Response, from_dict
+from theforge.contracts import (
+    PROTOCOL_V1,
+    ForgeManifest,
+    HealthCheck,
+    HealthReport,
+    Response,
+    from_dict,
+)
 from theforge.contracts.integrity import validate_manifest_limits
 from theforge.contracts.taxonomy import validate_taxonomy
 from theforge.contracts.types import is_catch_all_glob
@@ -409,3 +416,280 @@ def test_corrupt_snapshot_makes_describe_an_error(tmp_path: Path,
     assert reply.error["code"] == "APIFORGE-ADAPTER-SNAPSHOT-INVALID"
     assert "duplicate capability_id" in reply.error["detail"]
     assert reply.error["unlock"]
+
+
+# --- health ---------------------------------------------------------------------------------
+
+IGNORED = {"network", "mcp-stdio"}
+IGNORED_NOTE = "ignored: network (adapter is offline), mcp-stdio (adapter uses the CLI)"
+DOCTOR_SCENARIOS = {"doctor-ready": "ok", "doctor-degraded": "degraded",
+                    "doctor-unresolved": "degraded", "doctor-blocked": "unavailable"}
+
+
+def _health(options: tuple[str, ...] = ("--replay", str(DEFAULT))
+            ) -> tuple[Response, HealthReport]:
+    response, _ = _call("health", options)
+    assert response.status == "ok", response.error
+    return response, from_dict(HealthReport, response.payload, "$.payload")
+
+
+def _checks(report: HealthReport) -> dict[str, HealthCheck]:
+    return {check.name: check for check in report.checks}
+
+
+def test_replay_default_health_maps_the_recorded_doctor() -> None:
+    recording = json.loads((DEFAULT / "health.json").read_text("utf-8"))
+    assert recording["provenance"] == "recorded"  # captured from the real API Forge doctor
+    native = recording["doctor"]["status"]
+    _, report = _health()
+    checks = _checks(report)
+    assert list(checks) == ["python", "import", "version", "doctor"]
+    assert checks["python"].ok and "3.12" in checks["python"].detail
+    assert checks["import"].ok
+    assert checks["version"].ok and "0.1.0" in checks["version"].detail
+    # The real offline doctor only reports gaps of capabilities the adapter never uses
+    # (network, mcp-stdio): they are informational and the API Forge is healthy.
+    assert native == "degraded"
+    assert {gap.split(":", 1)[0] for gap in recording["doctor"]["gaps"]} == IGNORED
+    assert report.status == "ok"
+    assert checks["doctor"].ok
+    assert f"doctor status {native}" in checks["doctor"].detail
+    assert IGNORED_NOTE in checks["doctor"].detail
+
+
+@pytest.mark.parametrize(("scenario", "expected"), sorted(DOCTOR_SCENARIOS.items()))
+def test_replay_health_maps_each_doctor_state(scenario: str, expected: str) -> None:
+    directory = SCENARIOS / scenario
+    recording = json.loads((directory / "health.json").read_text("utf-8"))
+    state = scenario[len("doctor-"):]
+    assert recording["doctor"]["status"] == state
+    _, report = _health(("--replay", str(directory)))
+    assert report.status == expected
+    doctor = _checks(report)["doctor"]
+    assert doctor.ok is (expected == "ok")
+    assert f"doctor status {state}" in doctor.detail
+    relevant = [g for g in recording["doctor"]["gaps"] if g.split(":", 1)[0] not in IGNORED]
+    assert bool(relevant) is (state != "ready")  # non-ready states come from relevant gaps
+    for gap in relevant:
+        assert gap in doctor.detail
+    assert all(check.ok for check in report.checks if check.name != "doctor")
+
+
+@pytest.mark.parametrize(("scenario", "name", "expected"), [
+    ("python-3.11", "python", "API Forge requires Python 3.12"),
+    ("apiforge-missing", "import", "apiforge is not importable"),
+])
+def test_replay_health_unavailable_with_the_interpreter_or_import_reason(
+        scenario: str, name: str, expected: str) -> None:
+    _, report = _health(("--replay", str(SCENARIOS / scenario)))
+    assert report.status == "unavailable"
+    failing = [check for check in report.checks if not check.ok]
+    assert [check.name for check in failing] == [name]
+    assert expected in failing[0].detail
+    assert "doctor" not in _checks(report)  # the doctor never runs without the API Forge
+
+
+@pytest.mark.parametrize(("assumed", "expected"), [("9.9.9", "degraded"),
+                                                    ("0.0.9", "degraded"),
+                                                    ("0.2.0", "degraded"),
+                                                    ("0.1.7", "ok")])
+def test_health_accepts_the_assumed_specialist_version(assumed: str, expected: str) -> None:
+    _, report = _health(("--assume-specialist-version", assumed,
+                         "--replay", str(SCENARIOS / "doctor-ready")))
+    assert report.status == expected
+    version = _checks(report)["version"]
+    assert version.ok is (expected == "ok")
+    assert assumed in version.detail and "--assume-specialist-version" in version.detail
+    if expected == "degraded":
+        assert f"found {assumed}, supported >=0.1.0,<0.2.0" in version.detail
+
+
+def test_unparseable_specialist_version_is_degraded() -> None:
+    _, report = _health(("--assume-specialist-version", "banana",
+                         "--replay", str(SCENARIOS / "doctor-ready")))
+    assert report.status == "degraded"
+    assert "found banana, supported >=0.1.0,<0.2.0" in _checks(report)["version"].detail
+
+
+def test_out_of_window_version_keeps_an_unavailable_doctor_unavailable() -> None:
+    _, report = _health(("--assume-specialist-version", "9.9.9",
+                         "--replay", str(SCENARIOS / "doctor-blocked")))
+    assert report.status == "unavailable"
+    assert not _checks(report)["version"].ok and not _checks(report)["doctor"].ok
+
+
+def test_unavailable_health_reaches_the_core_with_its_reason() -> None:
+    # The core reports an unavailable provider with the details of its failing checks.
+    _, report = _health(("--replay", str(SCENARIOS / "doctor-blocked")))
+    failing = "; ".join(c.detail or c.name for c in report.checks if not c.ok)
+    assert "doctor status blocked" in failing and "user-state" in failing
+
+
+def test_replay_health_without_recording_is_missing(tmp_path: Path) -> None:
+    (tmp_path / "environment.json").write_text(
+        '{"python": "3.12.13", "specialist_version": "0.1.0"}', encoding="utf-8")
+    response, _ = _call("health", ("--replay", str(tmp_path)))
+    assert response.status == "error"
+    assert response.error is not None
+    assert response.error.code == "ADAPTER-REPLAY-MISSING"
+    assert "health.json" in response.error.detail
+
+
+@pytest.mark.parametrize("content", ['["ready"]', '{"exit_code": "0"}',
+                                     '{"exit_code": 0}', '{"exit_code": 1, "stderr": 3}',
+                                     '{"exit_code": true, "doctor": {}}', "not json"])
+def test_replay_health_rejects_malformed_recordings(tmp_path: Path, content: str) -> None:
+    (tmp_path / "environment.json").write_text(
+        '{"python": "3.12.13", "specialist_version": "0.1.0"}', encoding="utf-8")
+    (tmp_path / "health.json").write_text(content, encoding="utf-8")
+    response, _ = _call("health", ("--replay", str(tmp_path)))
+    assert response.status == "error"
+    assert response.error is not None and response.error.code == "ADAPTER-REPLAY-INVALID"
+    assert "health.json" in response.error.detail
+
+
+def test_health_scenarios_are_complete() -> None:
+    assert (DEFAULT / "health.json").is_file()
+    for scenario in DOCTOR_SCENARIOS:
+        directory = SCENARIOS / scenario
+        assert (directory / "environment.json").is_file(), scenario
+        assert (directory / "health.json").is_file(), scenario
+        environment = json.loads((directory / "environment.json").read_text("utf-8"))
+        assert environment["python"].startswith("3.12") and environment["specialist_version"]
+        recording = json.loads((directory / "health.json").read_text("utf-8"))
+        assert recording["provenance"] in {"recorded", "derived"}
+        if recording["provenance"] == "derived":
+            assert recording["derived_from"] == "default/health.json"
+            assert recording["derivation"]
+    for path in NATIVE.rglob("health.json"):
+        text = path.read_text("utf-8")
+        # Recordings never carry the recording machine's paths.
+        assert "edgar" not in text.lower() and ".venvs" not in text, path
+
+
+@pytest.mark.skipif(ON_312, reason="this environment runs Python 3.12")
+def test_live_health_outside_python_312_is_unavailable() -> None:
+    _, report = _health(())
+    assert report.status == "unavailable"
+    python = _checks(report)["python"]
+    assert not python.ok and "API Forge requires Python 3.12" in python.detail
+
+
+# --- health units ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(("version", "expected"), [
+    ("0.1.0", True), ("0.1.99", True), ("0.2.0", False), ("0.0.9", False), ("1.0.0", False),
+    ("0.1", None), ("v0.1.0", None), ("0.1.0rc1", None), ("", None), ("x.y.z", None),
+])
+def test_version_window(version: str, expected: bool | None) -> None:
+    assert health.in_window(version, ">=0.1.0,<0.2.0") is expected
+
+
+def test_version_window_operators() -> None:
+    assert health.in_window("1.2.3", "==1.2.3") is True
+    assert health.in_window("1.2.3", ">1.2.3") is False
+    assert health.in_window("1.2.3", "<=1.2.3") is True
+    with pytest.raises(ValueError):
+        health.in_window("1.2.3", "~=1.2")
+
+
+@pytest.mark.parametrize(("recording", "status", "ok", "fragment"), [
+    ({"exit_code": 0, "doctor": {"status": "ready", "gaps": []}}, "ok", True,
+     "doctor status ready"),
+    ({"exit_code": 0, "doctor": {"status": "degraded", "gaps": ["a: b"]}}, "degraded", False,
+     "a: b"),
+    ({"exit_code": 0, "doctor": {"status": "unresolved", "gaps": []}}, "degraded", False,
+     "doctor status unresolved"),
+    ({"exit_code": 0, "doctor": {"status": "blocked", "gaps": ["x"]}}, "unavailable", False,
+     "doctor status blocked"),
+    ({"exit_code": 0, "doctor": {"status": "degraded", "gaps": [
+        "mcp-stdio: apiforge-mcp is not on PATH", "network: not required"]}}, "ok", True,
+     IGNORED_NOTE),
+    ({"exit_code": 0, "doctor": {"status": "degraded", "gaps": ["network: not required"]}},
+     "ok", True, "ignored: network (adapter is offline)"),
+    ({"exit_code": 0, "doctor": {"status": "degraded", "gaps": [
+        "network: not required", "asset manifest.yaml: missing"]}}, "degraded", False,
+     "asset manifest.yaml: missing"),
+    ({"exit_code": 0, "doctor": {"status": "unresolved", "gaps": ["network: not probed"]}},
+     "ok", True, "ignored: network"),
+    ({"exit_code": 0, "doctor": {"status": "blocked", "gaps": ["network: x"],
+                                  "capabilities": [{"capability": "network",
+                                                    "state": "blocked"}]}},
+     "ok", True, "ignored: network"),
+    ({"exit_code": 0, "doctor": {"status": "blocked", "gaps": ["user-state: /x",
+                                                               "network: x"],
+                                  "capabilities": [{"capability": "user-state",
+                                                    "state": "blocked"}]}},
+     "unavailable", False, "user-state: /x"),
+    ({"exit_code": 0, "doctor": {"status": "weird"}}, "degraded", False,
+     "unrecognized doctor status 'weird'"),
+    ({"exit_code": 0, "doctor": {"gaps": []}}, "degraded", False, "unrecognized"),
+    ({"exit_code": 0, "doctor": None}, "degraded", False, "not understood"),
+    ({"exit_code": 3, "stderr": "boom\nAF-CLI-INTERNAL: kaput"}, "unavailable", False,
+     "AF-CLI-INTERNAL: kaput"),
+    ({"timeout": 7.0}, "degraded", False, "did not finish within 7 s"),
+])
+def test_doctor_state_mapping(recording: dict[str, Any], status: str, ok: bool,
+                              fragment: str) -> None:
+    mapped, check = health.doctor_check(recording)
+    assert mapped == status
+    assert check["name"] == "doctor" and check["ok"] is ok
+    assert fragment in check["detail"]
+
+
+def test_doctor_detail_and_stderr_are_bounded() -> None:
+    _, check = health.doctor_check({"exit_code": 0, "doctor": {
+        "status": "degraded", "gaps": ["g" * 2000]}})
+    assert len(check["detail"]) <= 600
+    _, check = health.doctor_check({"exit_code": 1, "stderr": "s" * 5000 + "TAIL"})
+    assert check["detail"].endswith("TAIL") and len(check["detail"]) <= 600
+
+
+def test_live_doctor_runs_in_a_fresh_temporary_directory_that_is_removed() -> None:
+    seen: dict[str, Any] = {}
+
+    def fake_run(argv: Any, *, cwd: Path, env: Any, timeout: float) -> _shell.NativeOutcome:
+        seen.update(argv=list(argv), cwd=Path(cwd), env=dict(env), timeout=timeout)
+        assert Path(cwd).is_dir() and not any(Path(cwd).iterdir())  # fresh and empty
+        (Path(cwd) / ".apiforge").mkdir()
+        (Path(cwd) / ".apiforge" / "economy.jsonl").write_text("{}\n", encoding="utf-8")
+        doctor = {"schema": "apiforge/doctor/v1", "status": "ready", "gaps": []}
+        return _shell.NativeOutcome(returncode=0, stdout=json.dumps(doctor).encode(),
+                                    stderr=b"")
+
+    recording = health.run_doctor(run=fake_run)
+    assert recording == {"exit_code": 0,
+                         "doctor": {"schema": "apiforge/doctor/v1", "status": "ready",
+                                    "gaps": []}}
+    cwd = seen["cwd"]
+    assert not cwd.exists()  # cleaned up, with what the doctor wrote
+    assert REPO.resolve() not in [cwd.resolve(), *cwd.resolve().parents]
+    assert cwd.resolve() != Path.cwd().resolve()
+    assert Path(tempfile.gettempdir()).resolve() in cwd.resolve().parents
+    argv = seen["argv"]
+    assert argv[0] == sys.executable and argv[-1] == "doctor"
+    assert argv[1:3] == ["-c", "from apiforge.cli import app; app()"]
+    assert argv[3:5] == ["--output", "json"]
+    env = seen["env"]
+    assert env["APIFORGE_CACHE"] == "off" and env["APIFORGE_NETWORK"] == "offline"
+    assert Path(env["APIFORGE_HOME"]).parent == cwd  # user state stays in the temp dir
+    assert not any(_shell.is_credential_name(name) for name in env)
+    assert 0 < seen["timeout"] < 10  # within the core's health timeout
+
+
+def test_live_doctor_failures_become_recordings() -> None:
+    def failing(argv: Any, *, cwd: Path, env: Any, timeout: float) -> _shell.NativeOutcome:
+        return _shell.NativeOutcome(returncode=3, stdout=b"", stderr=b"AF-CLI-INTERNAL: x")
+
+    def garbage(argv: Any, *, cwd: Path, env: Any, timeout: float) -> _shell.NativeOutcome:
+        return _shell.NativeOutcome(returncode=0, stdout=b"not json", stderr=b"")
+
+    def slow(argv: Any, *, cwd: Path, env: Any, timeout: float) -> _shell.NativeOutcome:
+        raise _shell.NativeTimeout(timeout)
+
+    assert health.run_doctor(run=failing) == {"exit_code": 3, "stderr": "AF-CLI-INTERNAL: x"}
+    garbled = health.run_doctor(run=garbage)
+    assert garbled["exit_code"] == 0 and garbled["doctor"] is None
+    assert health.doctor_check(garbled)[0] == "degraded"
+    timed = health.run_doctor(run=slow)
+    assert health.doctor_check(timed)[0] == "degraded" and "timeout" in timed

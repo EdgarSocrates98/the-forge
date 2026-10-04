@@ -28,6 +28,7 @@ UNAVAILABLE = "APIFORGE-ADAPTER-UNAVAILABLE"
 REPLAY_MISSING = "ADAPTER-REPLAY-MISSING"
 REPLAY_INVALID = "ADAPTER-REPLAY-INVALID"
 ENVIRONMENT_FILE = "environment.json"
+HEALTH_FILE = "health.json"
 REQUIRED = f"{REQUIRED_PYTHON[0]}.{REQUIRED_PYTHON[1]}"
 UNLOCK = (f"run the adapter with a Python {REQUIRED} interpreter that has apiforge "
           f"{SUPPORTED_SPECIALIST} installed (see docs/real-providers.md)")
@@ -83,6 +84,31 @@ def read_environment(directory: Path) -> dict[str, Any]:
                           f"replay recording {ENVIRONMENT_FILE} in {directory} must be an "
                           "object with a string 'python' and a string or null "
                           "'specialist_version'")
+    return data
+
+
+def read_health(directory: Path) -> dict[str, Any]:
+    """The scenario's ``health.json``: the recorded ``apiforge doctor`` outcome,
+    ``{exit_code: 0, doctor: {...}}`` or ``{exit_code: <n>, stderr: "..."}`` (plus
+    ``provenance``); ``ReplayError`` when absent or malformed."""
+    path = directory / HEALTH_FILE
+    if not path.is_file():
+        raise ReplayError(REPLAY_MISSING,
+                          f"replay recording {HEALTH_FILE} not found in {directory}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError):
+        data = None
+    exit_code = data.get("exit_code") if isinstance(data, dict) else None
+    valid = isinstance(data, dict) and type(exit_code) is int and (
+        isinstance(data.get("doctor"), dict) if exit_code == 0
+        else isinstance(data.get("stderr", ""), str))
+    if not valid:
+        raise ReplayError(REPLAY_INVALID,
+                          f"replay recording {HEALTH_FILE} in {directory} must be an object "
+                          "with an integer 'exit_code' and, for exit code 0, the doctor "
+                          "output object in 'doctor' (otherwise a string 'stderr')")
+    assert isinstance(data, dict)
     return data
 
 

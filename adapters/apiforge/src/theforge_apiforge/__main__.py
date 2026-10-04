@@ -4,8 +4,11 @@ The common shell (``_shell.py``) owns the Forge Protocol v1 envelope, the adapte
 the protocol, capability and action gates. ``describe`` derives the manifest from the recorded
 public matrix (``catalog``) once the environment check passes: live, this interpreter must be
 Python 3.12 with ``apiforge`` importable; with ``--replay <dir>`` the scenario's
-``environment.json`` answers instead (``backend``). ``health`` and ``execute`` are not
-implemented yet and refuse with a well-formed response (exit 0).
+``environment.json`` answers instead (``backend``). ``health`` checks the interpreter, the
+importability and version window of ``apiforge`` and maps the native ``apiforge doctor``
+(run in a temporary directory, or replayed from ``health.json``) to ok/degraded/unavailable
+(``health``). ``execute`` is not implemented yet and refuses with a well-formed response
+(exit 0).
 """
 
 from __future__ import annotations
@@ -33,6 +36,7 @@ from theforge_apiforge.backend import (
     replay_environment_problem,
 )
 from theforge_apiforge.catalog import SnapshotError, load_snapshot, manifest_payload
+from theforge_apiforge.health import health_reply
 
 SNAPSHOT_INVALID = "APIFORGE-ADAPTER-SNAPSHOT-INVALID"
 
@@ -68,6 +72,12 @@ def describe(options: AdapterOptions) -> OpHandler:
     return handle
 
 
+def health(options: AdapterOptions) -> OpHandler:
+    def handle(request: Request, cwd: Path) -> Reply:
+        return health_reply(options)
+    return handle
+
+
 def _not_implemented(options: AdapterOptions) -> OpHandler:
     def handle(request: Request, cwd: Path) -> Reply:
         reply = refuse(OP_UNSUPPORTED,
@@ -80,7 +90,7 @@ def _not_implemented(options: AdapterOptions) -> OpHandler:
 
 HANDLERS: dict[str, HandlerFactory] = {
     "describe": describe,
-    "health": _not_implemented,
+    "health": health,
     "execute": _not_implemented,
 }
 
