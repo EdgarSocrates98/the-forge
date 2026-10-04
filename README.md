@@ -8,7 +8,7 @@
 
 The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
 
-**Status:** ciclo 2, Waves A–C. Sobre o endurecimento da Wave A (contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace, ambiente mínimo para providers, policy de risco com `--approve` e CI em Linux e Windows), a Wave B traz os adapters reais de Spark Forge e API Forge, versão de provider em SemVer, taxonomia de capabilities com aliases e depreciação e uma matriz de compatibilidade testada, e a Wave C traz o contexto v2: tiers (`reference`, `excerpt`, `requested`), negociação de contexto com o provider, revalidação declarada (`context_revalidation`), sinais git somente leitura, cache de fingerprints, perfis (`economy`, `balanced`, `max`) e telemetria por run ([performance](docs/performance.md)). O core continua provado também com o provider nativo `echo-forge` e com providers de teste.
+**Status:** ciclo 2, Waves A–D. Sobre o endurecimento da Wave A (contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace, ambiente mínimo para providers, policy de risco com `--approve` e CI em Linux e Windows), a Wave B traz os adapters reais de Spark Forge e API Forge, versão de provider em SemVer, taxonomia de capabilities com aliases e depreciação e uma matriz de compatibilidade testada, e a Wave C traz o contexto v2: tiers (`reference`, `excerpt`, `requested`), negociação de contexto com o provider, revalidação declarada (`context_revalidation`), sinais git somente leitura, cache de fingerprints, perfis (`economy`, `balanced`, `max`) e telemetria por run ([performance](docs/performance.md)). A Wave D traz a execução multi-provider: `theforge plan` decompõe uma tarefa em nós (um especialista por nó, executados em sequência, com handoff estruturado entre eles), descritor de workspace multi-repo, verificação em quatro níveis, nível de reprodutibilidade, `explain --json` versionado com verificação de hashes, `replay`, taxonomia de erros por família e `--debug` ([ADR 0018](docs/adr/0018-multi-provider-execution.md), [ADR 0019](docs/adr/0019-error-taxonomy-and-reproducibility.md)). O core continua provado também com o provider nativo `echo-forge` e com providers de teste.
 
 ## Instalação (desenvolvimento)
 
@@ -30,6 +30,8 @@ theforge init
 theforge capabilities list
 theforge ask "eco olá" --capability demo.echo
 theforge explain <run_id>   # o run_id é impresso por `ask`
+theforge plan "<tarefa>" --profile max            # só planeja (desfecho planned)
+theforge plan "<tarefa>" --profile max --execute  # executa os nós em sequência
 ```
 
 ## Registrar um provider
@@ -57,12 +59,13 @@ Os Forges reais entram por dois adapters em `adapters/`, instalados no interpret
 
 | Código | Significado |
 |---|---|
-| 0 | ok / partial |
+| 0 | ok / partial / planned; `explain` e `replay` sem divergência |
 | 1 | `doctor` / `providers health` com falha |
 | 2 | uso inválido ou workspace não inicializado |
 | 3 | no_route / ambiguous |
-| 4 | provider_failure / refused |
-| 5 | falha ao persistir o run |
+| 4 | provider_failure / refused (inclusive `replay --mode execute` recusado) |
+| 5 | falha ao gravar ou ler o run |
+| 6 | divergência de integridade em `explain` ou `replay` |
 | 70 | erro interno inesperado (sem traceback) |
 | 130 | interrompido (Ctrl+C) |
 
@@ -76,6 +79,7 @@ Os Forges reais entram por dois adapters em `adapters/`, instalados no interpret
 - [Versionamento e compatibilidade](docs/versioning.md)
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
+- [Códigos de erro](docs/errors.md)
 - [Performance](docs/performance.md)
 - [ADRs](docs/adr/)
 - [Spec do ciclo 1](docs/superpowers/specs/2026-10-02-the-forge-protocol-core-design.md)
