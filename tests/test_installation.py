@@ -161,7 +161,7 @@ def test_reason_and_action_are_redacted() -> None:
                    health)
     assert result is not None
     dumped = repr(to_dict(result))
-    assert "hunter2" not in dumped
+    assert secret.split("=", 1)[1] not in dumped
 
 
 def test_plan_round_trips_strictly_and_is_deterministic() -> None:
