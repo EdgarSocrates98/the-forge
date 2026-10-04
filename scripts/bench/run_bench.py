@@ -23,7 +23,8 @@ caches are never read or touched. The only other output is ``--out``.
 Output (stdout or ``--out``)::
 
     {"schema": "theforge-bench/v1",
-     "origin": {"machine", "os", "python", "date", "forge_version", "git_head"},
+     "origin": {"machine", "os", "python", "date", "forge_version", "git_head",
+                "git_dirty"},
      "results": {name: {"median_ms", "p90_ms", "runs"}}}
 
 ``--check BUDGETS`` compares every median with ``{name: {budget_ms, baseline_ms, factor,
@@ -143,17 +144,32 @@ def measure(name: str, fn: Callable[[], object], runs: int, *,
 
 # --- output, budgets -------------------------------------------------------------------------
 
-def _git_head() -> str | None:
+def _git(*args: str) -> subprocess.CompletedProcess[str] | None:
+    """Run a read-only git command in the repository; ``None`` when git is unavailable."""
     try:
-        done = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True,
-                              text=True, timeout=10, check=False)
+        return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True,
+                              timeout=10, check=False)
     except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _git_head() -> str | None:
+    done = _git("rev-parse", "HEAD")
+    if done is None:
         return None
     head = done.stdout.strip()
     return head if done.returncode == 0 and head else None
 
 
-def collect_origin() -> dict[str, str | None]:
+def _git_dirty() -> bool | None:
+    """Whether the worktree has uncommitted changes (``None`` when git cannot tell)."""
+    done = _git("status", "--porcelain")
+    if done is None or done.returncode != 0:
+        return None
+    return bool(done.stdout.strip())
+
+
+def collect_origin() -> dict[str, str | bool | None]:
     """Where and when the measurement was taken (no host name or user data)."""
     return {
         "machine": f"{platform.machine() or 'unknown'}; {os.cpu_count() or '?'} cpus; "
@@ -163,11 +179,12 @@ def collect_origin() -> dict[str, str | None]:
         "date": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "forge_version": VERSION,
         "git_head": _git_head(),
+        "git_dirty": _git_dirty(),
     }
 
 
 def build_report(results: Mapping[str, Measurement],
-                 origin: Mapping[str, str | None]) -> dict[str, Any]:
+                 origin: Mapping[str, str | bool | None]) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
         "origin": dict(origin),

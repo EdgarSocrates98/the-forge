@@ -4,6 +4,8 @@ comparison. Nothing here measures time; the benchmark itself never runs in the o
 
 import importlib
 import json
+import subprocess
+from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
 
@@ -118,7 +120,8 @@ def test_report_format(bench: ModuleType) -> None:
     report = bench.build_report(results, bench.collect_origin())
     assert report["schema"] == "theforge-bench/v1"
     assert set(report["origin"]) == {"machine", "os", "python", "date", "forge_version",
-                                     "git_head"}
+                                     "git_head", "git_dirty"}
+    assert report["origin"]["git_dirty"] in (True, False, None)
     assert all(isinstance(report["origin"][k], str)
                for k in ("machine", "os", "python", "date", "forge_version"))
     assert report["results"] == {"scan_1k": {"median_ms": 1.5, "p90_ms": 2.0, "runs": 5}}
@@ -205,3 +208,18 @@ def test_results_without_check_is_a_usage_error(bench: ModuleType, tmp_path: Pat
     with pytest.raises(SystemExit) as excinfo:
         bench.main(["--results", str(results)])
     assert excinfo.value.code == 2
+
+
+def test_origin_records_a_dirty_worktree(bench: ModuleType,
+                                         monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_git(stdout: str, code: int = 0) -> Callable[..., object]:
+        return lambda *args: subprocess.CompletedProcess(["git", *args], code, stdout, "")
+
+    monkeypatch.setattr(bench, "_git", fake_git(" M scripts/bench/run_bench.py\n"))
+    assert bench.collect_origin()["git_dirty"] is True
+    monkeypatch.setattr(bench, "_git", fake_git(""))
+    assert bench.collect_origin()["git_dirty"] is False
+    monkeypatch.setattr(bench, "_git", fake_git("", code=128))
+    assert bench.collect_origin()["git_dirty"] is None
+    monkeypatch.setattr(bench, "_git", lambda *args: None)
+    assert bench.collect_origin()["git_dirty"] is None
