@@ -1,14 +1,21 @@
 """Context Broker: provider-specific ContextPack by reference + hash, within budget."""
 
+from collections.abc import Mapping
 from pathlib import PurePosixPath
+from types import MappingProxyType
+from typing import Final
 
 from theforge.context.scan import WorkspaceScan
 from theforge.contracts import ContextFile, ContextPack, ExcludedFile, TaskSpec
 from theforge.contracts.canonical import sha256_hex, utc_now
 from theforge.meta import PRODUCER
+from theforge.profiles import PROFILES
 from theforge.security.paths import resolve_inside
 
-BUDGETS: dict[str, int] = {"economy": 64 * 1024, "balanced": 256 * 1024, "max": 1024 * 1024}
+# Derived from the profiles table (compat name used by callers and tests).
+BUDGETS: Final[Mapping[str, int]] = MappingProxyType(
+    {name: profile.budget_bytes for name, profile in PROFILES.items()}
+)
 
 
 def build_context_pack(

@@ -7,9 +7,11 @@ without a valid ExecutionResult.
 """
 
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Literal
+from types import MappingProxyType
+from typing import Final, Literal
 
 from theforge.context import build_context_pack, scan_workspace
 from theforge.contracts import (
@@ -43,6 +45,7 @@ from theforge.contracts.types import BudgetProfile, Outcome, Producer
 from theforge.errors import PersistenceError, UsageError
 from theforge.meta import PRODUCER, VERSION
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
+from theforge.profiles import PROFILES, profile_for
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
 from theforge.registry import (
     ProviderFingerprint,
@@ -58,7 +61,10 @@ from theforge.routing.router import EXECUTE_OP
 from theforge.routing.signals import workspace_dependencies
 from theforge.runs import RunStore, new_run_id
 
-EXECUTE_TIMEOUTS: dict[str, float] = {"economy": 60.0, "balanced": 180.0, "max": 600.0}
+# Derived from the profiles table (compat name; adapters mirror these values).
+EXECUTE_TIMEOUTS: Final[Mapping[str, float]] = MappingProxyType(
+    {name: profile.execute_timeout_s for name, profile in PROFILES.items()}
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -360,7 +366,7 @@ class Forger:
     def _timeout(self, task: TaskSpec) -> float:
         if self.execute_timeout is not None:
             return self.execute_timeout
-        return EXECUTE_TIMEOUTS[task.budget_profile]
+        return profile_for(task.budget_profile).execute_timeout_s
 
     def _select_healthy(
         self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord]

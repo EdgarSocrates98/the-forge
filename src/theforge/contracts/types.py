@@ -18,6 +18,8 @@ ResponseStatus = Literal["ok", "partial", "refused", "error"]
 Outcome = Literal["ok", "partial", "refused", "provider_failure", "ambiguous", "no_route"]
 Severity = Literal["info", "low", "medium", "high", "critical"]
 HealthStatus = Literal["ok", "degraded", "unavailable"]
+Tier = Literal["metadata", "reference", "excerpt", "requested"]
+VerificationLevel = Literal["minimal", "conditional", "strong"]
 
 SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 

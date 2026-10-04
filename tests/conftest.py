@@ -58,6 +58,14 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_capability_catalog_doc.py": ("unit",),
     "test_real_providers.py": ("real_provider", "integration"),
     "test_compat_matrix.py": ("unit",),
+    # planned by design (context-intelligence-v2)
+    "test_profiles.py": ("unit",),
+    "test_context_relevance.py": ("unit",),
+    "test_context_git.py": ("integration", "security"),
+    "test_fingerprints.py": ("unit", "security"),
+    "test_context_verify.py": ("unit",),
+    "test_context_flow.py": ("integration",),
+    "test_bench.py": ("unit",),
 }
 
 
