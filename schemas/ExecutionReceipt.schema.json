@@ -170,7 +170,14 @@
               ]
             },
             "plan_sha256": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "workspace_descriptor_sha256": {
               "anyOf": [
@@ -183,9 +190,7 @@
               ]
             }
           },
-          "required": [
-            "plan_sha256"
-          ],
+          "required": [],
           "type": "object"
         },
         {

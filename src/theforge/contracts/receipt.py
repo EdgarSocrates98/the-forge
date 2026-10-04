@@ -41,9 +41,13 @@ class ReceiptProvider:
 
 @dataclass(frozen=True, kw_only=True)
 class PlanRefs:
-    """On-disk hashes of a plan run's artifacts (receipts of kind ``plan``)."""
+    """On-disk hashes of a plan run's artifacts (receipts of kind ``plan``).
 
-    plan_sha256: str
+    ``plan_sha256`` is None only when the run produced no plan (an ``ambiguous`` or
+    ``no_route`` decomposition, an unreadable plan file, an internal error before the plan).
+    """
+
+    plan_sha256: str | None = None
     workspace_descriptor_sha256: str | None = None
     graph_sha256: str | None = None
     installation_sha256: str | None = None
@@ -85,6 +89,9 @@ class ExecutionReceipt:
                 raise ContractError("plan receipt: plan references are required")
             if self.provider is not None:
                 raise ContractError("plan receipt: provider must be absent")
+            if self.status in ("planned", "ok", "partial") and self.plan.plan_sha256 is None:
+                raise ContractError(f"plan receipt status {self.status!r}: "
+                                    "plan.plan_sha256 is required")
         elif self.plan is not None:
             raise ContractError("run receipt: plan references are only for plan receipts")
         if self.status == "planned" and self.kind != "plan":

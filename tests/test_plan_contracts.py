@@ -15,6 +15,7 @@ from theforge.contracts import (
     to_dict,
 )
 from theforge.contracts import types as T
+from theforge.contracts.codes import Codes
 from theforge.contracts.handoff import HANDOFF_SCHEMA, Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.plan import (
     PLAN_RESULT_SCHEMA,
@@ -391,6 +392,20 @@ def test_plan_receipt_requires_plan_refs_and_no_provider() -> None:
                   strict=True)
     with pytest.raises(ContractError, match="only for plan receipts"):
         from_dict(ExecutionReceipt, receipt_dict(plan=refs), strict=True)
+
+
+def test_plan_receipt_without_a_plan_only_for_runs_that_produced_none() -> None:
+    from theforge.contracts import ExecutionReceipt
+    error = {"code": Codes.PLAN_FILE, "detail": "unreadable"}
+    for status, extra in (("ambiguous", {}), ("no_route", {}),
+                          ("refused", {"error": error})):
+        receipt = roundtrip(ExecutionReceipt, receipt_dict(
+            kind="plan", status=status, plan={}, **extra))
+        assert receipt.plan is not None and receipt.plan.plan_sha256 is None
+    for status in ("planned", "ok", "partial"):
+        with pytest.raises(ContractError, match="plan.plan_sha256 is required"):
+            from_dict(ExecutionReceipt, receipt_dict(kind="plan", status=status, plan={}),
+                      strict=True)
 
 
 def test_planned_status_only_on_plan_receipts() -> None:

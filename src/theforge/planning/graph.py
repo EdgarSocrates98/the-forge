@@ -114,14 +114,19 @@ def _edge_key(edge: GraphEdge) -> tuple[str, str, str, str, str, str]:
 
 
 def build_graph(plan_run: str, descriptor: WorkspaceDescriptor,
-                records: Sequence[RegistryRecord], plan: ExecutionPlan, plan_sha256: str,
-                outcomes: Sequence[NodeExecution], *, created_at: str | None = None,
+                records: Sequence[RegistryRecord], plan: ExecutionPlan | None,
+                plan_sha256: str | None, outcomes: Sequence[NodeExecution], *,
+                created_at: str | None = None,
                 max_nodes: int = MAX_GRAPH_NODES) -> WorkspaceGraph:
-    """Graph of an (executed) plan; inputs are visited in sorted order (8.5)."""
+    """Graph of an (executed) plan; inputs are visited in sorted order (8.5).
+
+    Without a plan (an ``ambiguous``/``no_route`` decomposition) the graph holds only the
+    workspace, its repositories and the providers with their capabilities.
+    """
     builder = GraphBuilder(plan_run, max_nodes=max_nodes)
     repos = sorted(r.path for r in descriptor.repositories)
     recs = sorted(records, key=lambda r: r.entry.id)
-    plan_nodes = sorted(plan.nodes, key=lambda n: n.id)
+    plan_nodes = sorted(plan.nodes, key=lambda n: n.id) if plan is not None else []
     executions = sorted(outcomes, key=lambda e: e.node.id)
 
     # Nodes first: an edge is only accepted between nodes already present.
