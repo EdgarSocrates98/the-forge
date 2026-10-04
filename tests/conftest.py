@@ -15,7 +15,7 @@ import pytest
 # Files planned by the cycle-2 design are pre-registered; new unplanned files must be added.
 FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # existing
-    "test_broker.py": ("unit",),
+    "test_broker.py": ("unit", "security"),
     "test_canonical.py": ("unit",),
     "test_cli.py": ("integration",),
     "test_codes.py": ("unit",),

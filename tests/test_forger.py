@@ -66,7 +66,8 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     assert receipt.provider is not None and receipt.provider.id == "fixture-spark"
     assert receipt.provider.trust == "local" and receipt.provider.manifest_sha256
     files = [f["path"] for f in store.read(out.run_id, "context")["files"]]
-    assert files == ["jobs/orders_glue_job.py"]
+    # Context v2: the root dependency manifest is a relevance signal too (ranked after globs).
+    assert files == ["jobs/orders_glue_job.py", "requirements.txt"]
 
 
 def test_case_b_routes_to_api(tmp_path: Path) -> None:
