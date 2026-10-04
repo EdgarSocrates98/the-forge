@@ -41,6 +41,8 @@ def load_relations(
         return [], []
     path = forge_dir / WORKSPACE_CONFIG
     try:
+        if path.is_symlink() or path.parent.is_symlink():  # never followed, like ``.forge``
+            return [], [_warning("is a symlink, all relations ignored")]
         if not path.is_file():
             return [], []
         with path.open("rb") as handle:  # bounded read: never loads more than the cap + 1

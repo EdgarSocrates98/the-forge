@@ -420,3 +420,19 @@ def test_load_relations_edge_cases(tmp_path: Path) -> None:
     _workspace_toml(tmp_path, 'relations = ["not a table"]\n')
     relations, warnings = load_relations(forge, ["a"])
     assert relations == [] and "relations[0] ignored: not a table" in warnings[0]
+
+
+def test_symlinked_workspace_toml_is_never_followed(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.toml"
+    outside.write_text(
+        '[[relations]]\nsource = "a"\ntarget = "b"\nkind = "depends_on"\n', encoding="utf-8")
+    config = tmp_path / ".forge" / "config"
+    config.mkdir(parents=True)
+    try:
+        os.symlink(outside, config / "workspace.toml")
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"cannot create a file symlink here: {exc}")
+    relations, warnings = load_relations(tmp_path / ".forge", ["a", "b"])
+    assert relations == []
+    assert len(warnings) == 1 and "is a symlink, all relations ignored" in warnings[0]
+    assert warnings[0].startswith(Codes.WORKSPACE_CONFIG)
