@@ -5,8 +5,8 @@ the protocol, capability and action gates. ``describe`` derives the manifest fro
 public matrix (``catalog``) once the environment check passes: live, this interpreter must be
 Python 3.12 with ``apiforge`` importable; with ``--replay <dir>`` the scenario's
 ``environment.json`` answers instead (``backend``). ``health`` checks the interpreter, the
-importability and version window of ``apiforge`` and maps the native ``apiforge doctor``
-(run in a temporary directory, or replayed from ``health.json``) to ok/degraded/unavailable
+importability and version window of ``apiforge`` and finds the CLI entry point without
+importing it (or replays it from ``health.json``), never running the API Forge
 (``health``). ``execute`` runs the mapped verb through the public CLI over the staged
 context (live) or replays its recording (``--replay``), then translates the case
 (``execute``); the shell reduces the cwd to the declared artifacts afterwards.

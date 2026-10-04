@@ -316,7 +316,7 @@ def test_health_is_ok_or_degraded_with_reason_and_without_credentials(
     outcome = check_health(record, timeout=HEALTH_TIMEOUT)
     assert outcome.status in ("ok", "degraded"), outcome.error
     # A second, independent probe (for the reason the core drops): its status may differ
-    # from the first one (e.g. the API Forge doctor finishing on one side of its time cap).
+    # from the first one (e.g. a specialist on the edge of a version or install check).
     report, raw = _raw_health(forge.argv())
     assert report.status in ("ok", "degraded"), report
     if report.status == "degraded":

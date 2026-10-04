@@ -1,64 +1,51 @@
-"""``health`` without network and without credentials.
+"""``health`` without network, without credentials and without running the API Forge.
 
-Four checks, in order: (1) the interpreter is Python 3.12; (2) ``apiforge`` is importable;
-(3) the API Forge version (``apiforge.__version__``, or ``--assume-specialist-version``) is
-inside ``SUPPORTED_SPECIALIST``; (4) the native ``apiforge doctor`` run in a fresh temporary
-directory. (1)/(2) failing make the report ``unavailable`` and stop there; (3) out of the
-window makes it ``degraded`` with the version and the window; the doctor state maps as
-``ready -> ok``, ``degraded|unresolved -> degraded``, ``blocked -> unavailable``, except that
-gaps of doctor capabilities the adapter never uses (``network``: the adapter is offline;
-``mcp-stdio``: it runs the CLI) are listed as ignored and never degrade health. The worst
+Four local checks, in order: (1) the interpreter is Python 3.12; (2) ``apiforge`` is
+importable; (3) the API Forge version (``apiforge.__version__``, or
+``--assume-specialist-version``) is inside ``SUPPORTED_SPECIALIST``; (4) ``cli``: the CLI entry
+point the adapter runs (``apiforge.cli``) is found with ``find_spec``, never imported.
+(1)/(2) failing make the report ``unavailable`` and stop there; (3) out of the window makes it
+``degraded`` with the version and the window; (4) missing makes it ``unavailable``. The worst
 outcome wins.
 
+The native ``apiforge doctor`` is deliberately not run: it sits behind the full CLI import
+(about 440 modules and 270 pydantic models, 3 to 17 s measured, against the core's 10 s health
+budget), while its own probes (writable state root, packaged assets, ``git``/``apiforge-mcp`` on
+PATH, network mode) answer nothing the adapter depends on in a fresh temporary directory. A
+broken CLI dependency therefore surfaces in ``execute`` (native error, with the doctor as the
+unlock), not in ``health``.
+
 With ``--replay <dir>`` the specialist is never consulted: (1)-(3) read ``environment.json``
-and the doctor outcome is the scenario's ``health.json`` (``{provenance, exit_code, doctor}``
-or ``{provenance, exit_code, stderr}``), the same shape ``run_doctor`` produces live.
+and (4) the scenario's ``health.json`` (``{provenance, cli}``).
 """
 
 from __future__ import annotations
 
 import importlib
 import importlib.util
-import json
 import re
-import shutil
 import sys
-import tempfile
-from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from theforge_apiforge import REQUIRED_PYTHON, SUPPORTED_SPECIALIST
-from theforge_apiforge._shell import (
-    AdapterOptions,
-    NativeOutcome,
-    NativeTimeout,
-    Reply,
-    fail,
-    run_native,
-)
+from theforge_apiforge._shell import AdapterOptions, Reply, fail
 from theforge_apiforge.backend import (
     ENVIRONMENT_FILE,
+    HEALTH_FILE,
     REQUIRED,
     ReplayError,
     read_environment,
     read_health,
 )
 
-DOCTOR_STATES = {"ready": "ok", "degraded": "degraded", "unresolved": "degraded",
-                 "blocked": "unavailable"}
-# Doctor capabilities this adapter never uses: their gaps are informational, never degrade.
-IGNORED_CAPABILITIES = {"network": "adapter is offline", "mcp-stdio": "adapter uses the CLI"}
-# The core gives health 10 s in all; the doctor (about 3 s cold) gets most of it.
-DOCTOR_TIMEOUT = 7.0
-DETAIL_LIMIT = 500
-CLI = "from apiforge.cli import app; app()"
-_SEVERITY = {"ok": 0, "degraded": 1, "unavailable": 2}
+# The CLI entry point the adapter runs in a child process (``execute``).
+CLI_MODULE = "apiforge.cli"
+CLI = f"from {CLI_MODULE} import app; app()"
 _VERSION = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", re.ASCII)
 _CLAUSE = re.compile(r"(>=|<=|==|>|<)\s*(\S+)")
 
 Check = dict[str, Any]
-Run = Callable[..., NativeOutcome]
 
 
 def _check(name: str, ok: bool, detail: str) -> Check:
@@ -91,84 +78,22 @@ def in_window(version: str, window: str) -> bool | None:
     return all(compare[op](bound) for op, bound in clauses)
 
 
-def _clip(text: str, *, tail: bool = False) -> str:
-    if len(text) <= DETAIL_LIMIT:
-        return text
-    return "..." + text[-DETAIL_LIMIT:] if tail else text[:DETAIL_LIMIT] + "..."
-
-
-def doctor_check(recording: Mapping[str, Any]) -> tuple[str, Check]:
-    """(health status, ``doctor`` check) for a live or replayed doctor outcome."""
-    if "timeout" in recording:
-        return "degraded", _check("doctor", False,
-                                  f"apiforge doctor did not finish within "
-                                  f"{recording['timeout']:g} s")
-    if recording.get("exit_code") != 0:
-        stderr = str(recording.get("stderr") or "").strip()
-        return "unavailable", _check(
-            "doctor", False,
-            _clip(f"apiforge doctor exited {recording.get('exit_code')}: {stderr}", tail=True))
-    doctor = recording.get("doctor")
-    if not isinstance(doctor, Mapping):
-        return "degraded", _check("doctor", False, "apiforge doctor output not understood")
-    state = doctor.get("status")
-    if state not in DOCTOR_STATES:
-        return "degraded", _check("doctor", False,
-                                  f"unrecognized doctor status {state!r}")
-    gaps = [str(gap) for gap in doctor.get("gaps") or () if str(gap)]
-    relevant = [gap for gap in gaps if _gap_capability(gap) not in IGNORED_CAPABILITIES]
-    ignored = [name for name in IGNORED_CAPABILITIES
-               if any(_gap_capability(gap) == name for gap in gaps)]
-    effective = state
-    if state == "blocked" and not _blocks(doctor):
-        effective = "degraded"  # only ignored capabilities are blocked
-    if effective in ("degraded", "unresolved") and ignored and not relevant:
-        effective = "ready"  # every gap is about a capability the adapter never uses
-    detail = f"doctor status {state}" + (f": {'; '.join(relevant)}" if relevant else "")
-    if ignored:
-        detail += "; ignored: " + ", ".join(
-            f"{name} ({IGNORED_CAPABILITIES[name]})" for name in ignored)
-    return DOCTOR_STATES[effective], _check("doctor", effective == "ready", _clip(detail))
-
-
-def _gap_capability(gap: str) -> str:
-    return gap.split(":", 1)[0].strip()
-
-
-def _blocks(doctor: Mapping[str, Any]) -> bool:
-    """Whether a capability the adapter uses is blocked (no capability list: trust the
-    doctor's own status)."""
-    capabilities = doctor.get("capabilities")
-    if not isinstance(capabilities, (list, tuple)):
-        return True
-    return any(isinstance(item, Mapping) and item.get("state") == "blocked"
-               and item.get("capability") not in IGNORED_CAPABILITIES
-               for item in capabilities)
-
-
-def run_doctor(*, run: Run = run_native, timeout: float = DOCTOR_TIMEOUT) -> dict[str, Any]:
-    """Run ``apiforge doctor`` in this interpreter, in a fresh temporary directory that is
-    removed afterwards, offline, with the cache off and the API Forge user state inside that
-    directory. The outcome has the replay ``health.json`` shape."""
-    workdir = Path(tempfile.mkdtemp(prefix="theforge-apiforge-doctor-"))
+def cli_found() -> bool:
+    """Whether ``apiforge.cli`` is found in this interpreter, without importing it (its import
+    pulls in the whole API Forge and costs seconds)."""
     try:
-        env = {"APIFORGE_CACHE": "off", "APIFORGE_NETWORK": "offline",
-               "APIFORGE_HOME": str(workdir / ".apiforge")}
-        argv = [sys.executable, "-c", CLI, "--output", "json", "doctor"]
-        try:
-            outcome = run(argv, cwd=workdir, env=env, timeout=timeout)
-        except NativeTimeout as exc:
-            return {"timeout": exc.timeout}
-    finally:
-        shutil.rmtree(workdir, ignore_errors=True)
-    if outcome.returncode != 0:
-        return {"exit_code": outcome.returncode,
-                "stderr": outcome.stderr.decode("utf-8", "replace")}
-    try:
-        doctor = json.loads(outcome.stdout.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError, RecursionError):
-        doctor = None
-    return {"exit_code": 0, "doctor": doctor if isinstance(doctor, dict) else None}
+        return importlib.util.find_spec(CLI_MODULE) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _cli_check(found: bool, where: str) -> Check:
+    if found:
+        return _check("cli", True, f"{CLI_MODULE} found with {where} (not imported; the native "
+                                   "doctor is not run)")
+    return _check("cli", False, f"{CLI_MODULE}, the CLI entry point the adapter runs, is not "
+                                f"importable with {where}; reinstall apiforge "
+                                f"{SUPPORTED_SPECIALIST} in this interpreter")
 
 
 def _live_environment() -> tuple[list[Check], str | None]:
@@ -223,8 +148,9 @@ def _report(status: str, checks: Sequence[Check]) -> Reply:
     return Reply(status="ok", payload={"status": status, "checks": list(checks)})
 
 
-def health_reply(options: AdapterOptions, *, run: Run = run_native) -> Reply:
-    """The ``health`` reply: a ``HealthReport`` payload, or an error for a bad replay."""
+def health_reply(options: AdapterOptions) -> Reply:
+    """The ``health`` reply: a ``HealthReport`` payload, or an error for a bad replay. Never
+    runs a native process."""
     try:
         if options.replay is None:
             checks, version = _live_environment()
@@ -232,14 +158,16 @@ def health_reply(options: AdapterOptions, *, run: Run = run_native) -> Reply:
             checks, version = _replay_environment(read_environment(options.replay))
         if version is None:
             return _report("unavailable", checks)
-        assumed = options.assume_specialist_version
-        version_check = _version_check(assumed or version, assumed is not None)
-        recording = (run_doctor(run=run) if options.replay is None
-                     else read_health(options.replay))
+        if options.replay is None:
+            cli = _cli_check(cli_found(), f"{sys.executable}")
+        else:
+            cli = _cli_check(bool(read_health(options.replay)["cli"]),
+                             f"the replay interpreter ({HEALTH_FILE})")
     except ReplayError as exc:
         return fail(exc.code, exc.detail, field="replay")
-    doctor_status, doctor = doctor_check(recording)
+    assumed = options.assume_specialist_version
+    version_check = _version_check(assumed or version, assumed is not None)
     status = "ok" if version_check["ok"] else "degraded"
-    if _SEVERITY[doctor_status] > _SEVERITY[status]:
-        status = doctor_status
-    return _report(status, [*checks, version_check, doctor])
+    if not cli["ok"]:
+        status = "unavailable"
+    return _report(status, [*checks, version_check, cli])

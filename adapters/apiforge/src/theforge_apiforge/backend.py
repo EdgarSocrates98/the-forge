@@ -88,9 +88,9 @@ def read_environment(directory: Path) -> dict[str, Any]:
 
 
 def read_health(directory: Path) -> dict[str, Any]:
-    """The scenario's ``health.json``: the recorded ``apiforge doctor`` outcome,
-    ``{exit_code: 0, doctor: {...}}`` or ``{exit_code: <n>, stderr: "..."}`` (plus
-    ``provenance``); ``ReplayError`` when absent or malformed."""
+    """The scenario's ``health.json``: ``{cli: <bool>}`` (plus ``provenance``), whether the
+    CLI entry point ``apiforge.cli`` was found in the recorded interpreter; ``ReplayError``
+    when absent or malformed."""
     path = directory / HEALTH_FILE
     if not path.is_file():
         raise ReplayError(REPLAY_MISSING,
@@ -99,16 +99,10 @@ def read_health(directory: Path) -> dict[str, Any]:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, ValueError, RecursionError):
         data = None
-    exit_code = data.get("exit_code") if isinstance(data, dict) else None
-    valid = isinstance(data, dict) and type(exit_code) is int and (
-        isinstance(data.get("doctor"), dict) if exit_code == 0
-        else isinstance(data.get("stderr", ""), str))
-    if not valid:
+    if not isinstance(data, dict) or type(data.get("cli")) is not bool:
         raise ReplayError(REPLAY_INVALID,
                           f"replay recording {HEALTH_FILE} in {directory} must be an object "
-                          "with an integer 'exit_code' and, for exit code 0, the doctor "
-                          "output object in 'doctor' (otherwise a string 'stderr')")
-    assert isinstance(data, dict)
+                          "with a boolean 'cli' (whether apiforge.cli was found)")
     return data
 
 
