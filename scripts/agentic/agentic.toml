@@ -1,0 +1,23 @@
+# Declarative configuration of the agentic asset audit (scripts/agentic/audit_assets.py).
+#
+# Every key is validated: unknown keys, wrong types and empty reasons are configuration errors.
+# Optional sections: [reference], [[install_placeholders]], [[host_only]], [[accepted]],
+# [invariants], [budgets], [pointers] and [[moved_rules]]; an instruction check runs only when
+# its section is declared. Every [[host_only]] and [[accepted]] entry needs a non-empty reason.
+
+# Hosts with a Kiro skills directory and the instruction files each one reads.
+[hosts.claude]
+skills_dir = ".claude/skills"
+instructions = ["CLAUDE.md"]
+
+[hosts.codex]
+skills_dir = ".agents/skills"
+instructions = ["AGENTS.md"]
+
+[hosts.devin]
+skills_dir = ".devin/skills"
+instructions = ["AGENTS.md"]
+
+# Versioned reference copies of the skill rules (installed by the Kiro installer).
+[reference]
+rules_dir = ".kiro/settings/rules"
