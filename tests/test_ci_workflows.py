@@ -269,7 +269,9 @@ def test_real_providers_secrets_appear_only_in_sibling_checkout_tokens() -> None
 
 def test_real_providers_runs_only_real_provider_tests_and_propagates_exit_code() -> None:
     lines = _run_lines(_real_job())
-    install = _index_of(lines, "pip install -e .[dev]")
+    # the adapters must be importable by the pytest interpreter itself: test modules import
+    # them at collection time, so an install without them breaks the run before any test
+    install = _index_of(lines, INSTALL_WITH_ADAPTERS)
     pytest_lines = [line for line in lines if "-m pytest" in line]
     assert len(pytest_lines) == 1, pytest_lines
     suite = lines.index(pytest_lines[0])
