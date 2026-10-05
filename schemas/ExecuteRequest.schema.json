@@ -492,10 +492,19 @@
     "task": {
       "properties": {
         "budget_profile": {
-          "enum": [
-            "economy",
-            "balanced",
-            "max"
+          "anyOf": [
+            {
+              "enum": [
+                "economy",
+                "balanced",
+                "max"
+              ]
+            },
+            {
+              "enum": [
+                "auto"
+              ]
+            }
           ]
         },
         "constraints": {

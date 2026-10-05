@@ -170,7 +170,10 @@ def test_timeout(tmp_path: Path) -> None:
 def test_unhealthy_primary_falls_back(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
                               bad_entry("ok", "bad-b", trust="local")])
-    out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
+    # fallback is a profile mechanic: auto resolves this trivial run to economy
+    # (fallback disabled), so the test pins balanced.
+    out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing",
+                                          profile="balanced"))
     assert out.status == "ok"
     assert out.decision.selected[0].provider == "bad-b"
     assert out.decision.fallbacks_used == ["bad-a:FORGE-HEALTH-UNAVAILABLE"]
@@ -429,7 +432,7 @@ def test_fallback_routing_written_once_with_fallbacks(tmp_path: Path) -> None:
     forge = tmp_path / ".forge"
     store = _CountingStore(forge)
     out = Forger(tmp_path, Registry(forge), store).ask(
-        AskRequest(intent="run it", capability="bad.thing"))
+        AskRequest(intent="run it", capability="bad.thing", profile="balanced"))
     assert out.status == "ok"
     assert store.writes.count("routing") == 1
     assert store.read(out.run_id, "routing")["fallbacks_used"] == [

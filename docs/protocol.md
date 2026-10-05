@@ -65,7 +65,7 @@ A tolerância depende de quem produziu o contrato:
 |---|---|---|
 | Provider | `Response`, `ForgeManifest`, `HealthReport`, `ExecutionResult`, `Evidence` | ignorado (forward-compat dentro do major) |
 | Provider | `PlanEstimate` (payload da op `plan`) | ignorado |
-| Core, ao reler o que gravou | artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-result`, `graph`, `verification`, `telemetry`, `diagnostic`, `receipt`), o cache do registry e o cache de fingerprints de contexto | rejeitado em qualquer profundidade (`$.<caminho>: unknown field`) |
+| Core, ao reler o que gravou | artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-result`, `graph`, `verification`, `telemetry`, `diagnostic`, `complexity`, `receipt`), o cache do registry e o cache de fingerprints de contexto | rejeitado em qualquer profundidade (`$.<caminho>: unknown field`) |
 
 - O core persiste só os campos que conhece, então um `result` vindo de provider com campos extras é relido sem eles.
 - Nos JSON Schemas de `schemas/`, `additionalProperties: false` aparece só nos contratos que nunca cruzam o protocolo: `RoutingDecision`, `ExecutionReceipt`, `RiskAssessment`, `RunTelemetry`, `ExecutionPlan`, `PlanResult`, `WorkspaceDescriptor`, `WorkspaceGraph`, `VerificationResult`, `InstallationPlan`, `ExplainReport` e `Diagnostic`. `TaskSpec`, `ContextPack` e `Handoff` vão ao provider dentro de `ExecuteRequest` (e `TaskSpec` dentro de `PlanRequest`) e continuam com schema aberto, assim como `PlanRequest` e `PlanEstimate`; a rigidez deles vem da releitura estrita.

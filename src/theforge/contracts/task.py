@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import BudgetProfile, Producer
+from theforge.contracts.types import Producer, ProfileRequest
 
 TASK_SCHEMA = "theforge/TaskSpec/v1"
 
@@ -19,7 +19,9 @@ class TaskSpec:
     intent: str
     workspace_root: str
     targets: list[str] = field(default_factory=lambda: ["."])
-    budget_profile: BudgetProfile = "balanced"
+    # ``auto`` records the request as made; the run's ComplexityAssessment (if the run
+    # reaches routing) carries the profile it resolved to.
+    budget_profile: ProfileRequest = "balanced"
     requested_capability: str | None = None
     requested_action: str | None = None
     constraints: dict[str, Any] = field(default_factory=dict)

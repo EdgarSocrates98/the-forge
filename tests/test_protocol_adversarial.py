@@ -267,7 +267,9 @@ def test_every_mode_through_the_full_forger(
     grandchild = 0
     try:
         out = Forger(tmp_path, Registry(forge), store, execute_timeout=3).ask(
-            AskRequest(intent="run it", capability="bad.thing"))
+            # balanced: modes include context-request negotiation and conditional
+            # verification, which the auto->economy resolution would disable.
+            AskRequest(intent="run it", capability="bad.thing", profile="balanced"))
         if mode in GRANDCHILD_MODES:
             marker = store.work_dir(out.run_id) / "grandchild.pid"
             assert marker.is_file(), "provider did not publish its grandchild PID"

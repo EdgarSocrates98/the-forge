@@ -22,6 +22,7 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import sha256_of
 from theforge.contracts.codes import Codes
+from theforge.contracts.complexity import ComplexityAssessment
 from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
 from theforge.contracts.handoff import Handoff
@@ -44,12 +45,13 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 # multi-repo WorkspaceDescriptor, distinct from the ContextPack workspace summary.
 ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
              "handoff", "context", "context-r1", "context-r2", "result", "plan-result",
-             "graph", "verification", "telemetry", "diagnostic", "receipt")
+             "graph", "verification", "telemetry", "diagnostic", "complexity", "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
     "task": TaskSpec,
     "workspace-descriptor": WorkspaceDescriptor,
     "routing": RoutingDecision,
     "plan": ExecutionPlan,
+    "complexity": ComplexityAssessment,
     "installation": InstallationPlan,
     "risk": RiskAssessment,
     "handoff": Handoff,

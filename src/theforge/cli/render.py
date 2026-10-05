@@ -339,8 +339,12 @@ def explain(data: dict[str, Any]) -> str:
              f"status: {_clean(receipt.get('status', 'incomplete'))}"]
     if task:
         targets = ", ".join(_clean(t) for t in task.get("targets") or [])
+        profile = _clean(task.get('budget_profile', '?'))
+        complexity = data.get("complexity") or {}
+        if task.get("budget_profile") == "auto" and complexity.get("selected_profile"):
+            profile = f"auto->{_clean(complexity.get('selected_profile'))}"
         lines.append(f"Task:        \"{_clean(task.get('intent', '?'))}\" "
-                     f"(targets: {targets}; profile: {_clean(task.get('budget_profile', '?'))})")
+                     f"(targets: {targets}; profile: {profile})")
     if routing:
         candidates = routing.get("candidates") or []
         if not candidates:

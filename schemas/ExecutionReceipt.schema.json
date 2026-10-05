@@ -57,6 +57,16 @@
     "inputs": {
       "additionalProperties": false,
       "properties": {
+        "complexity_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "context_round_sha256": {
           "items": {
             "type": "string"

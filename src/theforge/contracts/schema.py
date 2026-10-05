@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hints
 
 from theforge.contracts import (
+    ComplexityAssessment,
     ContextPack,
     Diagnostic,
     Evidence,
@@ -44,6 +45,7 @@ EXPORTED: tuple[type[Any], ...] = (
     # cross-forge-foundation (Wave D)
     ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, Handoff, WorkspaceDescriptor,
     WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
+    ComplexityAssessment,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -52,7 +54,7 @@ EXPORTED: tuple[type[Any], ...] = (
 CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
     ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,
-    InstallationPlan, ExplainReport, Diagnostic,
+    InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

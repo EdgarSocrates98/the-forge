@@ -206,6 +206,18 @@ SEEDS: dict[str, dict[str, Any]] = {
         "causes": [{"type": "OSError", "message": "c"}],
         "frames": [{"module": "theforge.cli.main", "function": "main", "line": 1}],
     },
+    "ComplexityAssessment": {
+        "producer": P, "created_at": "t", "task_id": "task-1", "level": "medium",
+        "score": 0.42, "confidence": 0.9,
+        "dimensions": [{"name": "mutation_level", "score": 0.7, "weight": 2.0,
+                        "value": "external_mutation"},
+                       {"name": "repositories", "score": None, "weight": 1.0,
+                        "value": "unknown: no workspace descriptor"}],
+        "signals": ["mutation_level=external_mutation"],
+        "requested_profile": "auto", "selected_profile": "balanced",
+        "profile_reason": "level medium -> balanced", "config_source": "user+project",
+        "limitations": ["repositories: unknown"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

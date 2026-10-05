@@ -20,11 +20,13 @@ Nothing here knows a provider domain: plans come from the decomposer or from a f
 every provider is reached through the ``Forger`` or the protocol helpers of ``planning``.
 """
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Final
 
+from theforge.complexity import ComplexityConfig, assess, load_complexity_config, task_inputs
 from theforge.context import scan_workspace
 from theforge.context.scan import WorkspaceScan
 from theforge.contracts import (
@@ -45,7 +47,13 @@ from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import validate_plan_result
 from theforge.contracts.plan import ExecutionPlan, NodeOutcome, NodeStatus, PlanNode, PlanResult
 from theforge.contracts.receipt import PlanRefs
-from theforge.contracts.types import BudgetProfile, Outcome, Producer, Reproducibility
+from theforge.contracts.types import (
+    BudgetProfile,
+    Outcome,
+    Producer,
+    ProfileRequest,
+    Reproducibility,
+)
 from theforge.contracts.verification import ReproducibilityInfo
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.diagnostics import build_diagnostic
@@ -69,8 +77,8 @@ from theforge.planning.installation import build_installation_plan
 from theforge.planning.order import blocked_by, topological_order
 from theforge.planning.synthesis import synthesize
 from theforge.planning.validate import checked_plan, load_plan_file
-from theforge.profiles import ContextProfile, profile_for
-from theforge.registry import RegistryRecord, check_health
+from theforge.profiles import ContextProfile, assumed_profile, profile_for
+from theforge.registry import RegistryRecord, check_health, user_config_dir
 from theforge.registry.health import HealthOutcome
 from theforge.routing import route
 from theforge.runs import new_run_id
@@ -98,7 +106,9 @@ _NODE_STATUS: Final[Mapping[Outcome, NodeStatus]] = {
 class PlanCommand:
     intent: str
     targets: list[str] = field(default_factory=lambda: ["."])
-    profile: BudgetProfile = "balanced"
+    # ``auto``: assessed after routing, with the workspace descriptor available (node
+    # runs then re-assess against their own routing — a node's run keeps ``auto``).
+    profile: ProfileRequest = "auto"
     plan_file: Path | None = None  # plan --from FILE; None: decompose the intent
     execute: bool = False  # False: plan only (outcome ``planned``)
     approvals: frozenset[str] = frozenset()  # capability ids approved for every node (3.7)
@@ -134,6 +144,8 @@ class _PlanTrace:
     installation_sha: str | None = None
     executions: list[NodeExecution] = field(default_factory=list)
     plan_result_sha: str | None = None
+    complexity_config: ComplexityConfig | None = None  # loaded when profile is ``auto``
+    complexity_sha: str | None = None  # the run's ComplexityAssessment, when auto
     terminal: TerminalState = "open"  # one terminalization path per run
     limitations: list[str] = field(default_factory=list)
 
@@ -179,14 +191,24 @@ class PlanExecutor:
             producer=PRODUCER, created_at=started, id=run_id, intent=command.intent,
             workspace_root=str(self.forger.root), targets=list(command.targets),
             budget_profile=command.profile)
-        telemetry = TelemetryRecorder(run_id, profile_for(command.profile))
+        # The complexity policy of an auto run: loaded once, never raises.
+        config = None
+        config_warnings: list[str] = []
+        if command.profile == "auto":
+            config = load_complexity_config(
+                user_dir=self.forger.registry.user_dir or user_config_dir(),
+                forge_dir=self.forger.root / ".forge", warnings=config_warnings)
+        telemetry = TelemetryRecorder(
+            run_id, profile_for(config.fallback_profile) if config is not None
+            else assumed_profile(command.profile))
         # Measured on every outcome: a plan that never executes records explicit zeros.
         for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):
             telemetry.count(counter, 0)
         telemetry.note(PLAN_TELEMETRY_LIMITATION)
         trace = _PlanTrace(run_id=run_id, started_at=started, task=task,
                            task_sha=store.write(run_id, "task", task), command=command,
-                           telemetry=telemetry)
+                           telemetry=telemetry, complexity_config=config)
+        trace.limitations.extend(config_warnings)
         try:
             return self._run(trace)
         except UsageError as exc:  # e.g. an unreadable plan file (Codes.PLAN_FILE)
@@ -206,7 +228,7 @@ class PlanExecutor:
 
     def _run(self, trace: _PlanTrace) -> PlanOutcome:
         store, command = self.forger.store, trace.command
-        profile = profile_for(command.profile)
+        profile = assumed_profile(command.profile)  # refined by the assessment in _plan
         trace.stage = "plan:registry"
         trace.records = {r.entry.id: r for r in self.forger.registry.records()}
         trace.stage = "plan:workspace"
@@ -248,13 +270,31 @@ class PlanExecutor:
         """The plan of the run: from the plan file, or decomposed from the intent."""
         command, task, records = trace.command, trace.task, trace.records
         if command.plan_file is not None:
+            profile_name = command.profile
+            if profile_name == "auto":  # a file plan fixes its structure: its profile wins
+                profile_name = _file_profile(command.plan_file)
+                trace.limitations.append(
+                    f"auto profile: plan file declares {profile_name!r}; used as-is")
             loaded = load_plan_file(command.plan_file, records, plan_run=trace.run_id,
-                                    profile=command.profile)
+                                    profile=profile_name)
+            profile = profile_for(profile_name)
+            trace.telemetry.set_profile(profile)
             plan = checked_plan(replace(loaded, task_id=task.id), records, profile)
             return _Planned(_file_decision(task, plan), plan, "refused")
         decision = route(task, list(records.values()), scan.files,
                          decomposition_dependencies(self.forger.root, descriptor),
                          allow_unverified=command.allow_unverified)
+        if trace.complexity_config is not None:  # --profile auto: measured, then resolved
+            assessment = assess(
+                task_inputs(task, scan, decision, records, descriptor=descriptor,
+                            decomposable=True),
+                trace.complexity_config)
+            trace.complexity_sha = self.forger.store.write(
+                trace.run_id, "complexity", assessment)
+            trace.limitations.extend(
+                f"complexity: {item}" for item in assessment.limitations)
+            profile = profile_for(assessment.selected_profile)
+            trace.telemetry.set_profile(profile)
         decomposition = decompose(task, decision, records, descriptor, scan, profile)
         if decomposition.status != "planned":
             trace.limitations.extend(decomposition.limitations)
@@ -422,7 +462,8 @@ class PlanExecutor:
         receipt = ExecutionReceipt(
             producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
             forge_version=VERSION, kind="plan",
-            inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha),
+            inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
+                                 complexity_sha256=trace.complexity_sha),
             started_at=trace.started_at, finished_at=utc_now(), error=error,
             limitations=limitations, telemetry_sha256=telemetry_sha,
             reproducibility=reproducibility,
@@ -434,6 +475,17 @@ class PlanExecutor:
         trace.terminal = "finalized"
         return PlanOutcome(run_id=trace.run_id, status=status, plan=trace.plan, result=result,
                            error=error, diagnostic=diagnostic)
+
+
+def _file_profile(path: Path) -> BudgetProfile:
+    """The profile a plan file declares, for ``--profile auto --from FILE``; invalid
+    or missing values read as ``balanced`` (``load_plan_file`` reports the real error)."""
+    try:
+        data = json.loads(path.read_bytes().decode("utf-8"))
+    except (OSError, ValueError):
+        return "balanced"
+    value = data.get("profile") if isinstance(data, dict) else None
+    return value if value in ("economy", "balanced", "max") else "balanced"
 
 
 def _file_decision(task: TaskSpec, plan: ExecutionPlan) -> RoutingDecision:

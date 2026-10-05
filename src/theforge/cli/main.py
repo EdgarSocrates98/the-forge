@@ -89,7 +89,9 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("intent")
     ask.add_argument("--capability")
     ask.add_argument("--action")
-    ask.add_argument("--profile", choices=["economy", "balanced", "max"], default="balanced")
+    ask.add_argument("--profile", choices=["auto", "economy", "balanced", "max"],
+                     default="auto",
+                     help="budget profile; auto lets the complexity engine decide")
     ask.add_argument("--target", dest="targets", action="append")
     ask.add_argument("--allow-unverified", action="store_true")
     ask.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
@@ -100,7 +102,9 @@ def build_parser() -> argparse.ArgumentParser:
         "plan", parents=[common], help="plan (and optionally execute) a multi-provider task",
         description=PLAN_DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
     plan.add_argument("intent")
-    plan.add_argument("--profile", choices=["economy", "balanced", "max"], default="balanced")
+    plan.add_argument("--profile", choices=["auto", "economy", "balanced", "max"],
+                      default="auto",
+                      help="budget profile; auto lets the complexity engine decide")
     plan.add_argument("--target", dest="targets", action="append")
     plan.add_argument("--from", dest="plan_file", metavar="FILE",
                       help="explicit plan file (fixes the node order); default: decompose "

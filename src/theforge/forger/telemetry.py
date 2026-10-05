@@ -94,6 +94,11 @@ class TelemetryRecorder:
         else:
             self._revalidation = strategy
 
+    def set_profile(self, profile: ContextProfile) -> None:
+        """Replace the assumed profile when ``auto`` resolves (the snapshot is taken at
+        ``build``, so a run that ends before the assessment records the assumed one)."""
+        self._profile = profile
+
     def set_drift(self, report: DriftReport) -> None:
         self._verification = report.level
         self._drift = list(report.drifted)

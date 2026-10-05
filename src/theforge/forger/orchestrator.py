@@ -28,6 +28,12 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Literal
 
+from theforge.complexity import (
+    ComplexityConfig,
+    assess,
+    load_complexity_config,
+    task_inputs,
+)
 from theforge.context import (
     build_context_pack,
     effective_tiers,
@@ -73,11 +79,11 @@ from theforge.contracts.integrity import (
     validate_result,
 )
 from theforge.contracts.types import (
-    BudgetProfile,
     OperationClass,
     Outcome,
     PlanPattern,
     Producer,
+    ProfileRequest,
     Reproducibility,
 )
 from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
@@ -89,7 +95,13 @@ from theforge.forger.verification import ARTIFACT_HASH_LIMITATION, build_verific
 from theforge.meta import PRODUCER, VERSION
 from theforge.planning.estimate import stricter_decision
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
-from theforge.profiles import MAX_NEGOTIATION_ROUNDS, PROFILES, ContextProfile, profile_for
+from theforge.profiles import (
+    MAX_NEGOTIATION_ROUNDS,
+    PROFILES,
+    ContextProfile,
+    assumed_profile,
+    profile_for,
+)
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
 from theforge.registry import (
     ProviderFingerprint,
@@ -144,7 +156,9 @@ class AskRequest:
     targets: list[str] = field(default_factory=lambda: ["."])
     capability: str | None = None
     action: str | None = None
-    profile: BudgetProfile = "balanced"
+    # ``auto``: the complexity engine picks the effective profile after routing and
+    # records the decision as the run's ComplexityAssessment artifact.
+    profile: ProfileRequest = "auto"
     allow_unverified: bool = False
     approvals: frozenset[str] = frozenset()  # capability ids explicitly approved (--approve)
     provider: str | None = None  # pinned provider: replaces the selection, never falls back
@@ -186,6 +200,8 @@ class _Trace:
     capability: Capability | None = None
     handoff: Handoff | None = None  # as persisted: exactly what the provider receives
     handoff_sha: str | None = None
+    complexity_sha: str | None = None  # ComplexityAssessment, only for --profile auto
+    complexity_config: ComplexityConfig | None = None  # the loaded policy of an auto run
     executed: bool = False  # an execute call was attempted (reproducibility, 14.1)
     response_status: str | None = None  # the provider's own status, when it answered
     result_seen: ExecutionResult | None = None  # validated result, before drift demotion
@@ -298,12 +314,25 @@ class Forger:
             requested_action=request.action,
             constraints={"plan": {"run": node.plan_run, "node": node.node}} if node else {},
         )
-        telemetry = TelemetryRecorder(run_id, profile_for(task.budget_profile))
+        # The complexity policy is loaded once per auto run (never raises; problems
+        # surface as run limitations). Its fallback profile is also the provisional
+        # telemetry profile until the assessment resolves the real one.
+        config = None
+        config_warnings: list[str] = []
+        if task.budget_profile == "auto":
+            config = load_complexity_config(
+                user_dir=self.registry.user_dir or user_config_dir(),
+                forge_dir=self.root / ".forge", warnings=config_warnings)
+        telemetry = TelemetryRecorder(
+            run_id, profile_for(config.fallback_profile) if config is not None
+            else assumed_profile(task.budget_profile))
         # Always measured, so a run that never gets there records an explicit zero.
         for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):
             telemetry.count(counter, 0)
         trace = _Trace(run_id=run_id, started_at=started, telemetry=telemetry,
-                       task_sha=self.store.write(run_id, "task", task), request=request)
+                       task_sha=self.store.write(run_id, "task", task), request=request,
+                       complexity_config=config)
+        trace.limitations.extend(config_warnings)
         try:
             self._record_handoff(trace)
             return self._run(trace, task, request)
@@ -372,7 +401,17 @@ class Forger:
                 return self._finish(trace, decision, "refused", error=op_error)
             return self._finish(trace, decision, decision.status)
 
-        profile = profile_for(task.budget_profile)
+        if trace.complexity_config is not None:  # --profile auto: measure, then resolve
+            assessment = assess(
+                task_inputs(task, scan, decision, records, handoff=trace.handoff),
+                trace.complexity_config)
+            trace.complexity_sha = self.store.write(run_id, "complexity", assessment)
+            trace.limitations.extend(
+                f"complexity: {item}" for item in assessment.limitations)
+            profile = profile_for(assessment.selected_profile)
+            trace.telemetry.set_profile(profile)
+        else:
+            profile = assumed_profile(task.budget_profile)
         pinned = request.provider is not None
         trace.stage = "health"
         with telemetry.phase("routing"):  # health (and fallback) completes the routing
@@ -527,7 +566,7 @@ class Forger:
             try:
                 with telemetry.phase("provider"):  # sums every round's execute (4.2)
                     response = self.transport_factory(record.entry.argv).call(
-                        "execute", payload, timeout=self._timeout(task),
+                        "execute", payload, timeout=self._timeout(profile),
                         cwd=self.store.work_dir(trace.run_id))
             except TransportError as exc:
                 return _Executed("provider_failure",
@@ -771,10 +810,10 @@ class Forger:
         provider_ids = sorted({c.provider for c in decision.candidates})
         return self.registry.revalidate(provider_ids) if provider_ids else []
 
-    def _timeout(self, task: TaskSpec) -> float:
+    def _timeout(self, profile: ContextProfile) -> float:
         if self.execute_timeout is not None:
             return self.execute_timeout
-        return profile_for(task.budget_profile).execute_timeout_s
+        return profile.execute_timeout_s
 
     def _select_healthy(
         self, task: TaskSpec, decision: RoutingDecision, records: dict[str, RegistryRecord],
@@ -785,7 +824,7 @@ class Forger:
         ``profile`` defaults to the task's profile; ``fallback=False`` (pinned provider)
         checks the primary only.
         """
-        profile = profile if profile is not None else profile_for(task.budget_profile)
+        profile = profile if profile is not None else assumed_profile(task.budget_profile)
         primary = decision.selected[0]
         tried: list[str] = []
         last_error: ErrorInfo | None = None
@@ -944,7 +983,8 @@ class Forger:
             inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
                                  context_sha256=trace.context_sha, risk_sha256=trace.risk_sha,
                                  context_round_sha256=list(trace.context_round_shas),
-                                 handoff_sha256=trace.handoff_sha),
+                                 handoff_sha256=trace.handoff_sha,
+                                 complexity_sha256=trace.complexity_sha),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
             finished_at=utc_now(), error=error, limitations=limitations,
             telemetry_sha256=telemetry_sha,

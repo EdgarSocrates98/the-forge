@@ -1,5 +1,5 @@
 Run:         <RUN>  status: ok
-Task:        "avalie esse contrato OpenAPI" (targets: api; profile: balanced)
+Task:        "avalie esse contrato OpenAPI" (targets: api; profile: auto->economy)
 Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[contrato,openapi]  rank=[2]  state=supported
 Selected:    fixture-api api.contract:review (primary)   pattern: route
 Reason:      fixture-api api.contract matched 2 signal types (file_globs:openapi.yaml; keywords:contrato,openapi)
@@ -8,7 +8,7 @@ Fallbacks:   none
 Risk:        read_only (source: provider_declaration)
 Policy:      allow   rule: default.read_only   approved: no
 Dimensions:  read_only=yes local_mutation=no external_read=no external_mutation=no destructive=no credentials=unknown cross_account=unknown
-Context:     1 files, 64/262144 bytes (complete); excluded 0
+Context:     1 files, 64/65536 bytes (complete); excluded 0
 Tiers:       effective: metadata, reference   bytes: metadata=0 reference=64
 Items:       reference api/openapi.yaml  signals: target:api, glob:openapi.yaml
 Excluded:    none
@@ -16,14 +16,18 @@ Unmatched:   unmatched (no_signal): 0
 Git:         <GIT>
 Rounds:      none
 Drift:       none
-Telemetry:   profile=balanced scan=<MS> routing=<MS> context=<MS> provider=<MS> files=1/1 cache=0/1 context_bytes=64 providers=1 fallbacks=0 rounds=0 verification=conditional
+Telemetry:   profile=economy scan=<MS> routing=<MS> context=<MS> provider=<MS> files=1/1 cache=0/1 context_bytes=64 providers=1 fallbacks=0 rounds=0 verification=minimal
 Result:      ok: 1 findings, 1 evidence
-Receipt:     context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>
+Receipt:     complexity=<HASH> context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>
 Provider:    fixture-api 0.0.1 (trust: local)
 Evidence:    1 (observed=1)   duration=<MS>
 Verification: self_report=reported provider_evidence=reported forge=passed independent=not_performed
-Reproducibility: partially_reproducible (provider does not declare deterministic execution)
-Limitations: provider-revalidation-undeclared
+Reproducibility: partially_reproducible (provider does not declare deterministic execution; context verification not performed at level minimal)
+Limitations: complexity: repositories: unknown: no workspace descriptor
+             complexity: technologies: unknown: no workspace descriptor
+             complexity: estimated_context: unknown: context bytes not estimated pre-broker
+             context-not-reverified
+             provider-revalidation-undeclared
 Unknowns:    none
-Integrity:   ok (7 checked)
+Integrity:   ok (8 checked)
 Not recorded: none

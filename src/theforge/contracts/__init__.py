@@ -1,6 +1,12 @@
 """Versioned Forge contracts (v1)."""
 
 from theforge.contracts.base import ContractError, from_dict, to_dict
+from theforge.contracts.complexity import (
+    COMPLEXITY_SCHEMA,
+    ComplexityAssessment,
+    ComplexityDimension,
+    ComplexityLevel,
+)
 from theforge.contracts.context import (
     ContextFile,
     ContextPack,
@@ -84,8 +90,9 @@ from theforge.contracts.workspace import (
 )
 
 __all__ = [
-    "OPERATION_CLASS_LIMITATION", "PROTOCOL_V1", "Artifact", "Candidate", "Capability",
-    "CapabilityContext", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
+    "COMPLEXITY_SCHEMA", "OPERATION_CLASS_LIMITATION", "PROTOCOL_V1", "Artifact", "Candidate",
+    "Capability", "CapabilityContext", "ComplexityAssessment", "ComplexityDimension",
+    "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
     "ContextRequestItem", "ContractError", "Diagnostic", "DiagnosticCause", "DiagnosticFrame",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",
     "ExecutionInfo", "ExecutionPlan",

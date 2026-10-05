@@ -12,6 +12,9 @@ OperationClass = Literal[
     "read_only", "local_mutation", "external_read", "external_mutation", "destructive"
 ]
 BudgetProfile = Literal["economy", "balanced", "max"]
+# What a caller may request: a fixed profile, or ``auto`` to let the complexity
+# engine pick one (theforge/ComplexityAssessment/v1 records the decision).
+ProfileRequest = BudgetProfile | Literal["auto"]
 Epistemic = Literal["confirmed", "observed", "inferred", "proposed", "unresolved"]
 MetricKind = Literal["measured", "estimated", "unknown"]
 ResponseStatus = Literal["ok", "partial", "refused", "error"]

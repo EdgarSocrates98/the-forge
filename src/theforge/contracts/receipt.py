@@ -26,6 +26,9 @@ class ReceiptInputs:
     # On-disk hashes of the negotiation-round packs, in order (context-r1, context-r2).
     context_round_sha256: list[str] = field(default_factory=list)
     handoff_sha256: str | None = None  # on-disk hash of the handoff delivered to a plan node
+    # On-disk hash of the ComplexityAssessment; present exactly when the requested
+    # profile was ``auto`` and the run reached routing (older runs: absent).
+    complexity_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

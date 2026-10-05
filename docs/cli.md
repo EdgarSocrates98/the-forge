@@ -13,8 +13,10 @@
 | `capabilities list [--provider id]` | capabilities declaradas, com aliases, depreciação (`replaced_by`) e `declared_by`; aviso em stderr para cada depreciada | 0 |
 | `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
-| `ask "<texto>" [--capability id] [--action a] [--profile economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa | 0 / 2 / 3 / 4 / 5 |
-| `plan "<texto>" [--profile economy\|balanced\|max] [--target path]... [--from FILE] [--execute] [--allow-unverified] [--approve CAPABILITY]...` | monta (e, com `--execute`, executa) um plano multi-provider ([`plan`](#plan)) | 0 / 2 / 3 / 4 / 5 |
+| `ask "<texto>" [--capability id] [--action a] [--profile auto\|economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa | 0 / 2 / 3 / 4 / 5 |
+| `plan "<texto>" [--profile auto\|economy\|balanced\|max] [--target path]... [--from FILE] [--execute] [--allow-unverified] [--approve CAPABILITY]...` | monta (e, com `--execute`, executa) um plano multi-provider ([`plan`](#plan)) | 0 / 2 / 3 / 4 / 5 |
+
+`--profile` default `auto`: depois do routing, o complexity engine mede a tarefa (repositórios, risco declarado, ambiguidade, impacto) e escolhe o perfil efetivo — gravado no artefato `complexity` (`ComplexityAssessment/v1`) e linkado no receipt por `complexity_sha256`; `explain` mostra `auto-><resolvido>`. O prompt nunca é entrada. Perfis explícitos mantêm a semântica de sempre e não gravam `complexity`.
 | `workspace show` | descreve repositórios, git, tecnologias e relações usando só o cache do registry ([`workspace show`](#workspace-show)) | 0 |
 | `explain <run_id>` | relatório versionado de um run ou plano, com verificação de hashes ([`explain`](#explain)) | 0 / 2 / 6 |
 | `replay <run_id> --mode render\|verify\|execute [--allow-unverified] [--approve CAPABILITY]...` | reapresenta, reverifica ou reexecuta um run ([`replay`](#replay)) | render/verify: 0 / 2 / 6; execute: 0 / 2 / 3 / 4 / 5 |

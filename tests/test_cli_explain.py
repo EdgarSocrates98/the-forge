@@ -50,6 +50,7 @@ def _echo(capsys: pytest.CaptureFixture[str], root: Path) -> str:
     make_workspace(root, [])
     write_file(root, "notes.txt", "hello\n")
     code, out, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
+                         "--profile", "balanced",  # reproducible needs >=conditional verify
                          "--root", str(root), "--json")
     assert code == 0, err
     return str(json.loads(out)["run_id"])
