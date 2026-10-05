@@ -33,6 +33,7 @@ def main() -> int:
     proposal = manifest.pop("proposal", None)  # test-only SemanticPlanProposal
     decision = manifest.pop("decision", None)  # test-only referee decision evidence
     flaky = manifest.pop("flaky", 0)  # test-only: exit 3 on the first N executes
+    cite = bool(manifest.pop("cite", False))  # test-only: e1 cites context file 1
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
     op = args[1]
@@ -86,8 +87,11 @@ def main() -> int:
                 return reply("ok", proposal if proposal is not None else {})
             return reply("ok", estimate)
         files = [f["path"] for f in (payload.get("context") or {}).get("files") or []]
-        evidence = [{"id": "e1", "epistemic": "observed", "subject": cap,
-                     "claim": f"received {len(files)} context files", "producer": producer}]
+        first = {"id": "e1", "epistemic": "observed", "subject": cap,
+                 "claim": f"received {len(files)} context files", "producer": producer}
+        if cite and files:  # test-only: the evidence cites a sent file (context ROI)
+            first["location"] = {"path": files[0]}
+        evidence = [first]
         handoff = payload.get("handoff")
         if isinstance(handoff, dict):
             evidence.append({"id": "e2", "epistemic": "observed", "subject": "handoff",

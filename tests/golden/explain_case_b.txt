@@ -1,5 +1,6 @@
 Run:         <RUN>  status: ok
 Task:        "avalie esse contrato OpenAPI" (targets: api; profile: auto->economy)
+Budget:      economy  context 65536B/16 files  providers≤1  60.0s
 Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[contrato,openapi]  rank=[2]  state=supported
 Selected:    fixture-api api.contract:review (primary)   pattern: route
 Reason:      fixture-api api.contract matched 2 signal types (file_globs:openapi.yaml; keywords:contrato,openapi)
@@ -18,7 +19,7 @@ Rounds:      none
 Drift:       none
 Telemetry:   profile=economy scan=<MS> routing=<MS> context=<MS> provider=<MS> files=1/1 cache=0/1 context_bytes=64 providers=1 fallbacks=0 rounds=0 verification=minimal
 Result:      ok: 1 findings, 1 evidence
-Receipt:     complexity=<HASH> context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>
+Receipt:     budget=<HASH> complexity=<HASH> context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>
 Provider:    fixture-api 0.0.1 (trust: local)
 Evidence:    1 (observed=1)   duration=<MS>
 Verification: self_report=reported provider_evidence=reported forge=passed independent=not_performed
@@ -29,5 +30,5 @@ Limitations: complexity: repositories: unknown: no workspace descriptor
              context-not-reverified
              provider-revalidation-undeclared
 Unknowns:    none
-Integrity:   ok (8 checked)
+Integrity:   ok (9 checked)
 Not recorded: none

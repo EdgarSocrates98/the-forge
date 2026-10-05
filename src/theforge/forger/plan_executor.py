@@ -55,6 +55,7 @@ from theforge.contracts.codes import Codes
 from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import validate_plan_result
+from theforge.contracts.performance import ProviderPerformance
 from theforge.contracts.plan import (
     ExecutionPlan,
     NodeOutcome,
@@ -80,6 +81,7 @@ from theforge.contracts.types import (
 from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.diagnostics import build_diagnostic
+from theforge.economy import resolve_budget
 from theforge.errors import PersistenceError, UsageError
 from theforge.forger.orchestrator import (
     AskOutcome,
@@ -92,6 +94,7 @@ from theforge.forger.reproducibility import NO_EXECUTION, combine_levels
 from theforge.forger.resume import prior_outcomes, reuse_execution
 from theforge.forger.telemetry import TelemetryRecorder
 from theforge.meta import PRODUCER, VERSION
+from theforge.metrics import load_performance
 from theforge.planning.decision import compose_decision
 from theforge.planning.decompose import (
     Decomposition,
@@ -192,6 +195,9 @@ class _PlanTrace:
     plan_state_sha: str | None = None  # the last PlanState snapshot written
     complexity_config: ComplexityConfig | None = None  # loaded when profile is ``auto``
     complexity_sha: str | None = None  # the run's ComplexityAssessment, when auto
+    profile: ContextProfile | None = None  # the effective profile, once resolved in _plan
+    performance: ProviderPerformance | None = None  # measured history, tie-break only (H5)
+    budget_sha: str | None = None  # RunBudget, written once the profile resolves
     resumed_from: str | None = None  # the plan run being resumed, when any
     prior: dict[str, NodeOutcome] | None = None  # its recorded node outcomes
     # Resume invalidation reasons by node — written from worker threads, emitted
@@ -309,6 +315,10 @@ class PlanExecutor:
     def _run(self, trace: _PlanTrace) -> PlanOutcome:
         store, command = self.forger.store, trace.command
         profile = assumed_profile(command.profile)  # refined by the assessment in _plan
+        trace.profile = profile
+        trace.performance, warning = load_performance(self.forger.root)
+        if warning is not None:
+            trace.limitations.append(warning)
         trace.stage = "plan:registry"
         trace.records = {r.entry.id: r for r in self.forger.registry.records()}
         trace.stage = "plan:workspace"
@@ -332,6 +342,12 @@ class PlanExecutor:
             planned = self._plan(trace, scan, descriptor, profile)
         trace.routing_sha = store.write(trace.run_id, "routing", planned.decision)
         plan = planned.plan
+        # RunBudget (H1): what the resolved profile allowed this plan run to spend.
+        # The plan's structure is already fixed — no promotion here; each node run
+        # records and promotes its own budget inside ``ask``.
+        _, budget = resolve_budget(trace.profile or profile, run_id=trace.run_id,
+                                   plan_nodes=len(plan.nodes) if plan is not None else 0)
+        trace.budget_sha = store.write(trace.run_id, "budget", budget)
         if plan is not None and plan.status == "validated":
             trace.stage = "plan:estimate"
             plan = self._with_estimates(trace, plan)
@@ -369,6 +385,7 @@ class PlanExecutor:
             stored = self.forger.store.read_contract(
                 command.resume_run, "plan", ExecutionPlan)
             profile = profile_for(stored.profile)
+            trace.profile = profile
             trace.telemetry.set_profile(profile)
             trace.prior = prior_outcomes(self.forger.store, command.resume_run)
             plan = checked_plan(stored, records, profile)
@@ -383,12 +400,14 @@ class PlanExecutor:
             loaded = load_plan_file(command.plan_file, records, plan_run=trace.run_id,
                                     profile=profile_name)
             profile = profile_for(profile_name)
+            trace.profile = profile
             trace.telemetry.set_profile(profile)
             plan = checked_plan(replace(loaded, task_id=task.id), records, profile)
             return _Planned(_file_decision(task, plan), plan, "refused")
         decision = route(task, list(records.values()), scan.files,
                          decomposition_dependencies(self.forger.root, descriptor),
-                         allow_unverified=command.allow_unverified)
+                         allow_unverified=command.allow_unverified,
+                         performance=trace.performance)
         if trace.complexity_config is not None:  # --profile auto: measured, then resolved
             assessment = assess(
                 task_inputs(task, scan, decision, records, descriptor=descriptor,
@@ -399,6 +418,7 @@ class PlanExecutor:
             trace.limitations.extend(
                 f"complexity: {item}" for item in assessment.limitations)
             profile = profile_for(assessment.selected_profile)
+            trace.profile = profile
             trace.telemetry.set_profile(profile)
         decomposition = decompose(task, decision, records, descriptor, scan, profile,
                                   graph=trace.capability_graph)
@@ -771,7 +791,8 @@ class PlanExecutor:
             producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
             forge_version=VERSION, kind="plan",
             inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
-                                 complexity_sha256=trace.complexity_sha),
+                                 complexity_sha256=trace.complexity_sha,
+                                 budget_sha256=trace.budget_sha),
             started_at=trace.started_at, finished_at=utc_now(), error=error,
             limitations=limitations, telemetry_sha256=telemetry_sha,
             reproducibility=reproducibility,

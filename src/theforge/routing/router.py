@@ -21,6 +21,7 @@ from theforge.contracts import (
     Capability,
     Confidence,
     MatchedSignals,
+    ProviderPerformance,
     RoutingDecision,
     Selection,
     TaskSpec,
@@ -42,6 +43,7 @@ _Groups = tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]  # deps, glob
 def route(
     task: TaskSpec, records: Sequence[RegistryRecord], files: Sequence[str],
     dependencies: set[str], *, allow_unverified: bool = False,
+    performance: ProviderPerformance | None = None,
 ) -> RoutingDecision:
     # Sort inputs so the decision depends only on content, never on discovery/fs order (3.1).
     allowed = sorted(
@@ -50,9 +52,11 @@ def route(
     )
     routable = [r for r in allowed if _executes(r)]
     if task.requested_capability:
-        decision = _route_explicit(task, routable, task.requested_capability)
+        decision = _route_explicit(task, routable, task.requested_capability,
+                                   performance=performance)
     else:
-        decision = _route_by_signals(task, routable, sorted(set(files)), dependencies)
+        decision = _route_by_signals(task, routable, sorted(set(files)), dependencies,
+                                     performance=performance)
     excluded = sorted({r.entry.id for r in allowed
                        if not _executes(r) and _relevant(r, task, decision)})
     if not excluded:
@@ -137,11 +141,20 @@ def _overlap_notes(declared: Sequence[tuple[str, Capability]], suffix: str = "")
             for cid, providers in by_id.items() if len(providers) > 1]
 
 
+def _perf_desc(performance: ProviderPerformance | None, provider: str,
+               capability: str) -> tuple[float, ...]:
+    """Negated measured-history key: sorts ascending within a larger sort key (H5)."""
+    return tuple(-v for v in performance.score(provider, capability)) \
+        if performance is not None else (0.0,)
+
+
 def _route_explicit(
-    task: TaskSpec, routable: list[RegistryRecord], requested: str
+    task: TaskSpec, routable: list[RegistryRecord], requested: str, *,
+    performance: ProviderPerformance | None = None,
 ) -> RoutingDecision:
     """Canonical declarers first; only when none exists, alias declarers (5.5). Within the
-    group the tie-break is trust then id. Selections and candidates carry the canonical id."""
+    group the tie-break is trust, then measured history, then id. Selections and candidates
+    carry the canonical id."""
     canonical: list[tuple[RegistryRecord, Capability]] = []
     aliased: list[tuple[RegistryRecord, Capability]] = []
     for record in routable:
@@ -154,7 +167,10 @@ def _route_explicit(
         return _decision(task, status="no_route", level="low",
                          reason=f"no routable provider declares capability {requested}",
                          unresolved=[f"capability:{requested}"])
-    matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust], m[0].entry.id))
+    # Trust dominates; measured history only orders equals, then id (H5).
+    matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust],
+                                _perf_desc(performance, m[0].entry.id, m[1].id),
+                                m[0].entry.id))
     candidates = [Candidate(provider=r.entry.id, capability=c.id, state=c.state,
                             rank_key=[TRUST_RANK[r.entry.trust]]) for r, c in matches]
     declared = [(r.entry.id, c) for r, c in matches]
@@ -172,9 +188,10 @@ def _route_explicit(
     action = resolve_action(task, capability)
     reason = f"requested capability {requested}"
     if len(matches) > 1:
-        reason += f"; {len(matches)} providers declare it, tie-break by trust then id"
+        reason += (f"; {len(matches)} providers declare it, tie-break by trust, "
+                   "measured history, then id")
     notes += _deprecation_notes(declared)
-    notes += _overlap_notes(declared, "; tie-break trust then id")
+    notes += _overlap_notes(declared, "; tie-break trust, history, id")
     level, unresolved = _state_confidence(capability)
     return _decision(task, status="routed", level=level, reason=reason, candidates=candidates,
                      selected=[Selection(provider=record.entry.id, capability=capability.id,
@@ -228,7 +245,8 @@ def _shared_signals(scoring: list[_Scored]) -> list[set[str]]:
 
 
 def _route_by_signals(
-    task: TaskSpec, routable: list[RegistryRecord], files: list[str], dependencies: set[str],
+    task: TaskSpec, routable: list[RegistryRecord], files: list[str],
+    dependencies: set[str], *, performance: ProviderPerformance | None = None,
 ) -> RoutingDecision:
     intent = set(normalize_tokens(task.intent))
     scoring: list[_Scored] = []
@@ -259,10 +277,30 @@ def _route_by_signals(
         )
         ranked.append((candidate, item))
     ranked.sort(key=lambda r: (-r[0].rank_key[0], r[0].provider, r[0].capability))
+    tied = [r for r in ranked if r[0].rank_key == ranked[0][0].rank_key]
+    decided: set[tuple[str, str]] = set()
+    if len(tied) > 1 and performance is not None:
+        # A signal tie is the only place measured history may speak (H5): one
+        # candidate strictly ahead resolves it — including the raw-presence
+        # equality, which is the *same* ambiguity signals could not decide. Equal
+        # or absent history stays ambiguous; the floor and any non-tied rival
+        # with equal raw presence still block.
+        best = max(performance.score(r[0].provider, r[0].capability) for r in tied)
+        winners = [r for r in tied
+                   if performance.score(r[0].provider, r[0].capability) == best]
+        if best > (0.0, 0.0, 0.0, 0) and len(winners) == 1:
+            winner = winners[0]
+            ranked = [winner, *[r for r in ranked if r is not winner]]
+            loser = next(r for r in tied if r is not winner)
+            limitations.append(
+                f"performance-tie-break: {winner[0].provider}/"
+                f"{winner[0].capability} preferred over {loser[0].provider}/"
+                f"{loser[0].capability} on measured history")
+            decided = {(r[0].provider, r[0].capability) for r in tied}
     candidates = [c for c, _ in ranked]
     top, top_scored = ranked[0]
     measured = _measured(top.matched)
-    issue = _ambiguity(ranked)
+    issue = _ambiguity(ranked, decided=decided)
     if issue is not None:
         return _decision(task, status="ambiguous", level="low", reason=f"ambiguous: {issue}",
                          candidates=candidates, measured=measured, unresolved=[issue],
@@ -277,9 +315,13 @@ def _route_by_signals(
                      measured=measured, unresolved=unresolved, limitations=limitations)
 
 
-def _ambiguity(ranked: list[tuple[Candidate, _Scored]]) -> str | None:
+def _ambiguity(ranked: list[tuple[Candidate, _Scored]], *,
+               decided: set[tuple[str, str]] | None = None) -> str | None:
+    """``decided``: (provider, capability) pairs whose rank/raw tie was resolved by
+    measured history — they no longer flag the tie or the raw-presence clause."""
+    decided = decided or set()
     top, top_scored = ranked[0]
-    if len(ranked) > 1 and ranked[1][0].rank_key == top.rank_key:
+    if not decided and len(ranked) > 1 and ranked[1][0].rank_key == top.rank_key:
         other = ranked[1][0]
         return (f"tie between {top.provider}/{top.capability} and "
                 f"{other.provider}/{other.capability} at rank {top.rank_key}")
@@ -287,7 +329,9 @@ def _ambiguity(ranked: list[tuple[Candidate, _Scored]]) -> str | None:
         noun = "type" if top.rank_key[0] == 1 else "types"
         return (f"only {top.rank_key[0]} signal {noun} matched for "
                 f"{top.provider}/{top.capability} (need {MIN_SIGNAL_TYPES})")
-    rival = next((c for c, s in ranked[1:] if s.raw_types >= top_scored.raw_types), None)
+    rival = next((c for c, s in ranked[1:]
+                  if s.raw_types >= top_scored.raw_types
+                  and (c.provider, c.capability) not in decided), None)
     if rival is not None:
         return (f"tie between {top.provider}/{top.capability} and "
                 f"{rival.provider}/{rival.capability} at raw presence "

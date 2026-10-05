@@ -23,6 +23,7 @@ ALL_METRICS = (
     "cache_hits", "cache_misses", "context_bytes",
     "providers_executed", "fallbacks_used", "negotiation_rounds",
     "semantic_planner_calls",
+    "files_cited", "evidence_returned", "findings_returned",
 )
 
 
@@ -97,7 +98,8 @@ def test_complete_run_has_every_metric_measured() -> None:
                         ("bytes_hashed", 900), ("cache_hits", 1), ("cache_misses", 2),
                         ("context_bytes", 1200), ("providers_executed", 1),
                         ("fallbacks_used", 0), ("negotiation_rounds", 1),
-                        ("semantic_planner_calls", 0)):
+                        ("semantic_planner_calls", 0), ("files_cited", 2),
+                        ("evidence_returned", 4), ("findings_returned", 2)):
         rec.count(name, value)
     rec.set_effective_tiers(["requested", "metadata", "reference"])
     rec.set_revalidation("hash")

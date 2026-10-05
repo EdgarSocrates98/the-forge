@@ -273,6 +273,24 @@ SEEDS: dict[str, dict[str, Any]] = {
         "profile_reason": "level medium -> balanced", "config_source": "user+project",
         "limitations": ["repositories: unknown"],
     },
+    "RunBudget": {
+        "producer": P, "created_at": "t", "run_id": "run-1", "profile": "balanced",
+        "context_bytes": 262144, "max_files": 64, "provider_calls": 2,
+        "semantic_calls": 1, "verification_calls": 1, "wall_time_s": 180.0,
+        "max_parallelism": 1, "negotiation_rounds": 1,
+        "adjustments": ["promotion economy→balanced: budget_bytes 65536→262144"],
+    },
+    "ProviderPerformance": {
+        "producer": P, "created_at": "t",
+        "entries": [{"provider": "p1", "capability": "x.y", "runs": 3, "ok": 2,
+                     "partial": 1, "failed": 0, "verified_runs": 2, "evidence": 5,
+                     "artifacts": 1, "context_bytes": 4096, "files_sent": 4,
+                     "files_cited": 3, "duration_ms": 150.5, "updated_at": "t"},
+                    {"provider": "p2", "capability": "x.z", "runs": 1, "ok": 0,
+                     "partial": 0, "failed": 1, "verified_runs": 0, "evidence": 0,
+                     "artifacts": 0, "context_bytes": 0, "files_sent": 0,
+                     "files_cited": 0, "duration_ms": 10.0, "updated_at": "t"}],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

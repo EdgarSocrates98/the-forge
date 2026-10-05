@@ -1,6 +1,7 @@
 """Versioned Forge contracts (v1)."""
 
 from theforge.contracts.base import ContractError, from_dict, to_dict
+from theforge.contracts.budget import BUDGET_SCHEMA, RunBudget
 from theforge.contracts.capability_graph import (
     CAPABILITY_GRAPH_SCHEMA,
     CapabilityGraph,
@@ -46,6 +47,11 @@ from theforge.contracts.manifest import (
     ExecutionInfo,
     ForgeManifest,
     Signals,
+)
+from theforge.contracts.performance import (
+    PERFORMANCE_SCHEMA,
+    ProviderCapabilityPerformance,
+    ProviderPerformance,
 )
 from theforge.contracts.plan import (
     DECISION_SCHEMA,
@@ -111,8 +117,8 @@ from theforge.contracts.workspace import (
 )
 
 __all__ = [
-    "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
-    "OPERATION_CLASS_LIMITATION", "PLAN_STATE_SCHEMA",
+    "BUDGET_SCHEMA", "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
+    "OPERATION_CLASS_LIMITATION", "PERFORMANCE_SCHEMA", "PLAN_STATE_SCHEMA",
     "PROTOCOL_V1", "Artifact", "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
     "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
@@ -129,9 +135,11 @@ __all__ = [
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "NodeOutcome",
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",
-    "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ReceiptInputs",
+    "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot",
+    "ProviderCapabilityPerformance", "ProviderPerformance", "ReceiptInputs",
     "ReceiptProvider", "RepositoryInfo", "ReproducibilityInfo", "Request", "Response",
-    "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunTelemetry", "Selection",
+    "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunBudget", "RunTelemetry",
+    "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals",
     "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult",

@@ -490,3 +490,71 @@ mypy+ruff limpos, schemas `VerifyRequest`/`VerifyVerdict` gerados.
 auditável; `static checks`/`test runner`/`specialist reviewer` entram sem mudança
 de contrato. Um único verificador por run (o menor `id` elegível): quorum e
 verificadores múltiplos ficam para uma wave futura.
+
+## Wave H — Economy Engine v2 (`RunBudget` + `ProviderPerformance`)
+
+**`RunBudget/v1`.** Novo contrato fechado do core — o orçamento efetivo do
+run: perfil resolvido, `context.budget_bytes`/`max_files`, `provider_calls`,
+`semantic_calls`, `verification_calls`, `execute_timeout_s`,
+`max_parallelism`, `negotiation_rounds` e `adjustments` aplicados. Persistido
+como artefato `budget` em todo run que resolve um perfil (`ask` e plano) e
+ligado ao receipt por `ReceiptInputs.budget_sha256`. O budget é o teto; o
+gasto medido continua na telemetria — separação intencional.
+
+**Promoção limitada.** `resolve_budget(task, profile, assessment, ...)` no
+novo `economy.py`: com `profile="auto"` o assessment já escolhe; com perfil
+explícito, se `selected_profile` supera o pedido, os campos elásticos
+(`budget_bytes`, `max_files`, `negotiation_rounds`) promovem um degrau
+(economy→balanced→max) — `max_providers`, `execute_timeout_s`, `verification`
+e `fallback` nunca. Comparar com `selected_profile` preserva o fallback de
+baixa confiança: complexidade alta sem confiança não promove. A promoção
+persiste o `ComplexityAssessment` como evidência e o `budget.adjustments`
+nomeia o que mudou.
+
+**Context ROI.** `record_run` recebe `context_files`/`context_bytes` (o pack
+enviado) e conta `files_cited` — arquivos do pack citados em
+`subject`/`location.path` da evidência — mais `evidence_returned` e
+`findings_returned`, tudo na telemetria do run. Estritamente medido: sem
+resultado, zeros explícitos; evidência sem path citável não conta.
+
+**`ProviderPerformance/v1`.** Histórico medido por provider+capability em
+`.forge/metrics/provider-performance.json` — desfechos (ok/partial/failed),
+runs verificados, evidências, artifacts, bytes/arquivos enviados e citados,
+latência total. Store atômico, redigido antes de gravar, fail-closed:
+malformado é ignorado com nota, falha de escrita é limitação.
+`ProviderPerformance.score` ordena por verificação → entrega → latência →
+volume — eficiência observável, nunca "qualidade de agente".
+
+**Desempate secundário.** No routing explícito o score ordena iguais em trust
+antes do id; no routing por sinais decide só o empate de `rank_key` com um
+único vencedor estrito — a cláusula de raw-presence reconhece a mesma
+ambiguidade (`decided`), enquanto um rival não-empatado com presença crua ≥
+continua bloqueando. Limitação transparente
+`performance-tie-break: <a> preferred over <b> on measured history` em todo
+empate decidido — a limitação já acusa o desempate. Trust/policy/capability
+filtram antes: o histórico nunca os consulta.
+
+**Orquestração.** O orchestrator persiste `budget`, escreve
+`budget_sha256`/`complexity_sha256` no trace do receipt, passa o histórico
+ao `route()` e, no `_finish`, grava telemetria (counters de ROI incluídos),
+atualiza o metrics store e só então o receipt — um único caminho de
+terminalização. O `plan_executor` faz o mesmo para o run de plano
+(`provider_calls` = nós) e propaga o histórico ao routing de cada nó.
+
+**Testes.** `tests/test_economy.py` (28): resolução de budget, promoção de
+um degrau com evidência persistida, não-promoção por baixa confiança e em
+`auto`, `provider_calls` nos planos, contrato e validação, store (roundtrip,
+malformado fail-closed, redação, timestamps), ROI (files_cited, sem path,
+sem resultado), score, tie-break explícito e por sinais (resolve / ambíguo /
+piso / rival raw / histórico ausente), e e2e (receipt com `budget_sha256`,
+métricas gravadas, plano com budget próprio). Fixture `fixture-cite` e chave
+test-only `cite` no `fixture_forge` para exercitar `files_cited` end-to-end.
+Seeds de fuzz `RunBudget`/`ProviderPerformance`.
+
+**Resultado.** 28 testes focados verdes; schemas `RunBudget`/`ProviderPerformance`
+gerados; ADR 0022 registra a decisão.
+
+**Limitações.** Um degrau é o teto da promoção — a complexidade pode pedir
+dois e o usuário só vê o limite, não o desejo (o assessment persistido cobre).
+`files_cited` só enxerga paths citáveis; latência é wall-clock local; o store
+não apaga histórico de providers removidos (a capability lê o que existe).

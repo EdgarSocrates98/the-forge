@@ -29,6 +29,7 @@ COUNTERS: Final[tuple[str, ...]] = (
     "cache_hits", "cache_misses", "context_bytes",
     "providers_executed", "fallbacks_used", "negotiation_rounds",
     "semantic_planner_calls",
+    "files_cited", "evidence_returned", "findings_returned",
 )
 REVALIDATION_UNDECLARED_LIMITATION: Final = "provider-revalidation-undeclared"
 
@@ -79,6 +80,12 @@ class TelemetryRecorder:
         if value < 0:
             raise ValueError(f"counter {name!r} cannot be negative: {value}")
         self._counters[name] = self._counters.get(name, 0) + value
+
+    def elapsed_ms(self, phase: Phase) -> float | None:
+        """Accumulated milliseconds of ``phase``; None when it never ran."""
+        if phase not in PHASES:
+            raise ValueError(f"unknown phase {phase!r}")
+        return self._phase_ms.get(phase)
 
     def note(self, limitation: str) -> None:
         if limitation not in self._limitations:
@@ -135,6 +142,9 @@ class TelemetryRecorder:
             fallbacks_used=metrics["fallbacks_used"],
             negotiation_rounds=metrics["negotiation_rounds"],
             semantic_planner_calls=metrics["semantic_planner_calls"],
+            files_cited=metrics["files_cited"],
+            evidence_returned=metrics["evidence_returned"],
+            findings_returned=metrics["findings_returned"],
             provider_revalidation=self._revalidation,
             verification_performed=self._verification,
             context_drift=list(self._drift),

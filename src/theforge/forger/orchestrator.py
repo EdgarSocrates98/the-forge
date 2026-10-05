@@ -92,6 +92,7 @@ from theforge.contracts.verification import (
     VerificationResult,
 )
 from theforge.diagnostics import build_diagnostic
+from theforge.economy import resolve_budget
 from theforge.errors import PersistenceError, UsageError
 from theforge.forger.reproducibility import assess_run
 from theforge.forger.telemetry import TelemetryRecorder
@@ -103,6 +104,7 @@ from theforge.forger.verification import (
     select_verifier,
 )
 from theforge.meta import PRODUCER, VERSION
+from theforge.metrics import load_performance, record_performance
 from theforge.planning.estimate import stricter_decision
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
 from theforge.profiles import (
@@ -213,8 +215,9 @@ class _Trace:
     action: str = ""  # the selected action, for the verify op payload
     handoff: Handoff | None = None  # as persisted: exactly what the provider receives
     handoff_sha: str | None = None
-    complexity_sha: str | None = None  # ComplexityAssessment, only for --profile auto
+    complexity_sha: str | None = None  # ComplexityAssessment: --profile auto, or a promotion
     complexity_config: ComplexityConfig | None = None  # the loaded policy of an auto run
+    budget_sha: str | None = None  # RunBudget, written once the profile resolves
     executed: bool = False  # an execute call was attempted (reproducibility, 14.1)
     response_status: str | None = None  # the provider's own status, when it answered
     result_seen: ExecutionResult | None = None  # validated result, before drift demotion
@@ -222,6 +225,11 @@ class _Trace:
     verification_sha: str | None = None
     terminal: TerminalState = "open"  # one terminalization path per run
     limitations: list[str] = field(default_factory=list)
+
+
+def _norm_path(path: str) -> str:
+    """Comparable form of a pack path vs. an evidence path (both provider-shaped)."""
+    return path.replace("\\", "/").lstrip("/").removeprefix("./")
 
 
 def honest_tokens(reported: Metric) -> Metric:
@@ -426,6 +434,28 @@ class Forger:
             trace.telemetry.set_profile(profile)
         else:
             profile = assumed_profile(task.budget_profile)
+            # Explicit profiles are still measured: an assessment whose selected
+            # profile outranks the requested one promotes the elastic bounds one
+            # step (H2). The assessment is persisted when — and only when — it
+            # actually promoted something (it is the adjustment's evidence).
+            promo_warnings: list[str] = []
+            assessment = assess(
+                task_inputs(task, scan, decision, records, handoff=trace.handoff),
+                load_complexity_config(
+                    user_dir=self.registry.user_dir or user_config_dir(),
+                    forge_dir=self.root / ".forge", warnings=promo_warnings))
+            trace.limitations.extend(promo_warnings)
+        effective, budget = resolve_budget(profile, run_id=run_id,
+                                           assessment=assessment)
+        if effective is not profile:
+            profile = effective
+            trace.telemetry.set_profile(profile)
+            if trace.complexity_sha is None:
+                trace.complexity_sha = self.store.write(run_id, "complexity", assessment)
+                trace.limitations.extend(
+                    f"complexity: {item}" for item in assessment.limitations)
+        trace.limitations.extend(f"budget: {note}" for note in budget.adjustments)
+        trace.budget_sha = self.store.write(run_id, "budget", budget)
         trace.profile = profile
         pinned = request.provider is not None
         trace.stage = "health"
@@ -776,10 +806,16 @@ class Forger:
         divergence and fails the run. ``no_route`` is final and never revalidated.
         """
         dependencies = workspace_dependencies(self.root)
+        # Measured provider history, loaded once so both passes of a revalidated
+        # routing see the same snapshot (a warning becomes a run limitation).
+        performance, perf_warning = load_performance(self.root)
+        if perf_warning is not None:
+            trace.limitations.append(perf_warning)
 
         def do_route(records: dict[str, RegistryRecord]) -> RoutingDecision:
             decision = route(task, list(records.values()), files, dependencies,
-                             allow_unverified=request.allow_unverified)
+                             allow_unverified=request.allow_unverified,
+                             performance=performance)
             trace.decision = decision
             return decision
 
@@ -987,6 +1023,45 @@ class Forger:
             return
         trace.limitations.extend(n for n in notes if n not in trace.limitations)
 
+    def _record_economy(
+        self, trace: _Trace, status: Outcome, result: ExecutionResult | None,
+    ) -> None:
+        """Context-ROI counters and the provider-performance store update (Wave H).
+
+        The counters are always measured — an explicit zero when nothing was
+        delivered. The metrics store updates only when ``execute`` was actually
+        attempted; a store failure degrades to a limitation, never a failed run.
+        """
+        pack = trace.last_pack
+        sent = {_norm_path(f.path) for f in pack.files} if pack is not None else set()
+        cited: set[str] = set()
+        if result is not None:
+            for evidence in result.evidence:
+                cited.add(_norm_path(evidence.subject))
+                if evidence.location is not None:
+                    cited.add(_norm_path(evidence.location.path))
+        files_cited = len(sent & cited)
+        trace.telemetry.count("files_cited", files_cited)
+        trace.telemetry.count("evidence_returned",
+                              len(result.evidence) if result is not None else 0)
+        trace.telemetry.count("findings_returned",
+                              len(result.findings) if result is not None else 0)
+        record, capability = trace.record, trace.capability
+        if not trace.executed or record is None or capability is None:
+            return
+        warning = record_performance(
+            self.root, record.entry.id, capability.id, status=status,
+            verified=(trace.verification is not None
+                      and trace.verification.forge.status == "passed"),
+            evidence=len(result.evidence) if result is not None else 0,
+            artifacts=len(result.artifacts) if result is not None else 0,
+            context_bytes=pack.used_bytes if pack is not None else 0,
+            files_sent=len(pack.files) if pack is not None else 0,
+            files_cited=files_cited,
+            duration_ms=trace.telemetry.elapsed_ms("provider") or 0.0)
+        if warning is not None:
+            trace.limitations.append(warning)
+
     def _finish(
         self, trace: _Trace, decision: RoutingDecision, status: Outcome, *,
         result: ExecutionResult | None = None, error: ErrorInfo | None = None,
@@ -1004,6 +1079,7 @@ class Forger:
         trace.terminal = "finalizing"
         diagnostic = self._diagnostic(trace, exception, error)
         self._late_verification(trace)
+        self._record_economy(trace, status, result)
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:
@@ -1028,7 +1104,8 @@ class Forger:
                                  context_sha256=trace.context_sha, risk_sha256=trace.risk_sha,
                                  context_round_sha256=list(trace.context_round_shas),
                                  handoff_sha256=trace.handoff_sha,
-                                 complexity_sha256=trace.complexity_sha),
+                                 complexity_sha256=trace.complexity_sha,
+                                 budget_sha256=trace.budget_sha),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
             finished_at=utc_now(), error=error, limitations=limitations,
             telemetry_sha256=telemetry_sha,

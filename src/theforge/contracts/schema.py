@@ -30,10 +30,12 @@ from theforge.contracts import (
     PlanRequest,
     PlanResult,
     PlanState,
+    ProviderPerformance,
     Request,
     Response,
     RiskAssessment,
     RoutingDecision,
+    RunBudget,
     RunTelemetry,
     SemanticPlanProposal,
     TaskSpec,
@@ -53,6 +55,8 @@ EXPORTED: tuple[type[Any], ...] = (
     WorkspaceDescriptor,
     WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
     ComplexityAssessment, CapabilityGraph, SemanticPlanProposal, DecisionRecord,
+    # economy-engine (Wave H)
+    RunBudget, ProviderPerformance,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -62,7 +66,7 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
     ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,
     InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
-    CapabilityGraph, DecisionRecord, PlanState,
+    CapabilityGraph, DecisionRecord, PlanState, RunBudget, ProviderPerformance,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

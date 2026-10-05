@@ -20,6 +20,7 @@ from theforge.contracts import (
     from_dict,
     to_dict,
 )
+from theforge.contracts.budget import RunBudget
 from theforge.contracts.canonical import sha256_of
 from theforge.contracts.capability_graph import CapabilityGraph
 from theforge.contracts.codes import Codes
@@ -53,13 +54,15 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
              "handoff", "context", "context-r1", "context-r2", "result", "plan-state",
              "plan-result", "graph", "capability-graph", "semantic-proposal", "decision",
-             "verification", "telemetry", "diagnostic", "complexity", "receipt")
+             "verification", "telemetry", "diagnostic", "complexity", "budget",
+             "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
     "task": TaskSpec,
     "workspace-descriptor": WorkspaceDescriptor,
     "routing": RoutingDecision,
     "plan": ExecutionPlan,
     "complexity": ComplexityAssessment,
+    "budget": RunBudget,
     "capability-graph": CapabilityGraph,
     "semantic-proposal": SemanticPlanProposal,
     "installation": InstallationPlan,

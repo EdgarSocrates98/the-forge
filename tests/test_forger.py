@@ -780,8 +780,8 @@ def test_persisted_explicit_decision_notes_deprecation_and_overlap(
     assert routing["confidence"]["level"] == "high"
     assert "capability-deprecated: 'data.quality' (a) is deprecated; replaced_by 'data.q2'" \
         in routing["limitations"]
-    assert "capability-overlap: 'data.quality' declared by a, b; tie-break trust then id" \
-        in routing["limitations"]
+    assert "capability-overlap: 'data.quality' declared by a, b; tie-break trust, " \
+        "history, id" in routing["limitations"]
 
 
 def test_persisted_signal_decision_notes_overlap(

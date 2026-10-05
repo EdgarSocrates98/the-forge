@@ -158,7 +158,7 @@ def test_explicit_alias_group_keeps_trust_then_id_tie_break() -> None:
         "capability-alias: 'dq' resolved to 'data.checks' (aaa-forge)",
         "capability-alias: 'dq' resolved to 'data.checks' (zzz-forge)",
         "capability-overlap: 'data.checks' declared by aaa-forge, zzz-forge; "
-        "tie-break trust then id",
+        "tie-break trust, history, id",
     ]
 
 
@@ -199,8 +199,8 @@ def test_explicit_overlap_is_noted() -> None:
     other = record("zzz-forge", caps, trust="trusted")
     d = route(task("x", requested_capability="spark.performance"), [SPARK, other], [], set())
     assert d.selected[0].provider == "zzz-forge"
-    assert d.limitations == ["capability-overlap: 'spark.performance' declared by spark-forge, "
-                             "zzz-forge; tie-break trust then id"]
+    assert d.limitations == ["capability-overlap: 'spark.performance' declared by "
+                             "spark-forge, zzz-forge; tie-break trust, history, id"]
 
 
 def test_signal_overlap_and_deprecation_are_noted_without_changing_ranking() -> None:

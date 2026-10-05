@@ -135,6 +135,7 @@ def _recorded(receipt: ExecutionReceipt) -> dict[str, str | None]:
         "risk": inputs.risk_sha256,
         "handoff": inputs.handoff_sha256,
         "complexity": inputs.complexity_sha256,
+        "budget": inputs.budget_sha256,
         "result": receipt.result_sha256,
         "telemetry": receipt.telemetry_sha256,
         "verification": receipt.verification_sha256,

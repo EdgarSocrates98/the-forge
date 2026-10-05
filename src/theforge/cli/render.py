@@ -345,6 +345,16 @@ def explain(data: dict[str, Any]) -> str:
             profile = f"auto->{_clean(complexity.get('selected_profile'))}"
         lines.append(f"Task:        \"{_clean(task.get('intent', '?'))}\" "
                      f"(targets: {targets}; profile: {profile})")
+    budget = data.get("budget")
+    if budget:
+        head = (f"Budget:      {_clean(budget.get('profile', '?'))}  "
+                f"context {_clean(budget.get('context_bytes', '?'))}B/"
+                f"{_clean(budget.get('max_files', '?'))} files  "
+                f"providers≤{_clean(budget.get('provider_calls', '?'))}  "
+                f"{_clean(budget.get('wall_time_s', '?'))}s")
+        adjustments = budget.get("adjustments") or []
+        lines.append(head if not adjustments
+                     else f"{head}  (+{_clean(adjustments[0])})")
     if routing:
         candidates = routing.get("candidates") or []
         if not candidates:

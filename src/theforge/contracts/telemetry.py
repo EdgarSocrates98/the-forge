@@ -55,6 +55,12 @@ class RunTelemetry:
     negotiation_rounds: Metric = field(default_factory=Metric)
     # Tier-2 planner calls this run (plan runs only; 0 on every other outcome).
     semantic_planner_calls: Metric = field(default_factory=Metric)
+    # Context ROI of an ask run (Wave H): pack files the returned evidence cited,
+    # and the evidence/finding counts the result carried. ``0`` on every outcome
+    # without a valid result; ``unknown`` on plan runs (each node run counts its own).
+    files_cited: Metric = field(default_factory=Metric)
+    evidence_returned: Metric = field(default_factory=Metric)
+    findings_returned: Metric = field(default_factory=Metric)
     provider_revalidation: Literal["hash", "core", "none", "undeclared"] | None = None
     verification_performed: VerificationLevel | None = None
     context_drift: list[str] = field(default_factory=list)

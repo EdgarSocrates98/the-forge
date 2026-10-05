@@ -27,8 +27,13 @@ class ReceiptInputs:
     context_round_sha256: list[str] = field(default_factory=list)
     handoff_sha256: str | None = None  # on-disk hash of the handoff delivered to a plan node
     # On-disk hash of the ComplexityAssessment; present exactly when the requested
-    # profile was ``auto`` and the run reached routing (older runs: absent).
+    # profile was ``auto`` and the run reached routing, or when measured complexity
+    # promoted an explicitly requested profile (the assessment is the promotion's
+    # evidence; older runs: absent).
     complexity_sha256: str | None = None
+    # On-disk hash of the RunBudget; present on every run that resolved a profile
+    # (older runs: absent).
+    budget_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

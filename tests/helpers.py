@@ -84,6 +84,13 @@ SELFVERIFY_ENTRY = {
                          str(PROVIDERS / "fixture-selfverify.json")),
     "trust": "local",
 }
+# A provider whose first evidence item cites a sent context file (``cite`` key):
+# exercises the files_cited/context-ROI measurement of the economy engine.
+CITE_ENTRY = {
+    "id": "fixture-cite",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-cite.json")),
+    "trust": "local",
+}
 
 
 def write_providers(
