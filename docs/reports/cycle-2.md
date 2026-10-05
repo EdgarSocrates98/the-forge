@@ -1,5 +1,8 @@
 # Relatório final do Cycle 2
 
+> Estado na geração: 2026-10-04. Para o estado validado depois do merge das Waves B–E, ver
+> [Post-Merge Validation Update](#post-merge-validation-update) ao final deste documento.
+
 - Data: 2026-10-04
 - Versões vigentes (matriz de [versionamento](../versioning.md)): The Forge 0.1.0, Forge Protocol `forge/v1`, `theforge-sparkforge-adapter` 0.1.0 com `sparkforge-aws` `>=0.5.0,<0.6.0`, `theforge-apiforge-adapter` 0.1.0 com `apiforge` `>=0.1.0,<0.2.0`.
 - Specs do ciclo, citadas só pelo nome: `cycle2-reality-hardening` (Wave A), `real-provider-integration` (Wave B), `context-intelligence-v2` (Wave C), `cross-forge-foundation` (Wave D) e `agentic-maintainability` (Wave E). As specs e os relatórios de gate ficam locais e fora do git ([ADR 0020](../adr/0020-agentic-assets-canonical-source.md)); este relatório resume o que eles registram.
@@ -154,3 +157,19 @@ Recomendações, em ordem:
 4. Decidir o consumo de handoff nos adapters reais (`accepts_handoff`) e um verificador independente para `verify`, se houver uso concreto.
 5. Medir o custo do `import apiforge.cli` no execute e decidir se ele justifica um processo residente ou outra estratégia; registrar latência real por provider, hoje não medida.
 6. Reavaliar no início do ciclo o gatilho do [ADR 0020](../adr/0020-agentic-assets-canonical-source.md) com o histórico de sincronizações dos mirrors.
+
+## Post-Merge Validation Update
+
+Seção adicionada em 2026-10-05, no Cycle 2.1 (Wave A). O corpo do relatório registra o **estado na geração** (2026-10-04); esta seção registra o **estado validado depois do merge**, sem apagar o histórico.
+
+| Item | Estado na geração (2026-10-04) | Estado validado (2026-10-05) |
+|---|---|---|
+| `main` remota | `b1d9ec7` (merge do PR #3, só Wave A) | `1eaa285` (merge do [PR #4](https://github.com/EdgarSocrates98/the-forger/pull/4), Waves B–E, 2026-10-05T02:23:59Z) |
+| Waves B–E | branches só locais, sem upstream e sem PR | mergeadas via `feat/cycle2-wave-e`; `feat/cycle2-wave-a` e `feat/cycle2-wave-e` existem no remoto |
+| CI do PR #4 | nenhum PR existia | run 37253785287 falhou (2026-10-05T02:02:28Z); run 37254645706 passou (02:14:59Z) sobre `feat/cycle2-wave-e` |
+| CI da `main` pós-merge | nenhum run das Waves B–E | run 37255244389, `success` em 2026-10-05T02:24:02Z sobre `1eaa285`: 10 jobs — `test` Ubuntu e Windows × Python 3.11–3.14 e `package` Ubuntu e Windows 3.11, com os adapters instalados (`pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge`) |
+| `compat.yml` (macOS) | nunca executado | despachado por `workflow_dispatch` sobre `main` em 2026-10-05 (run 37260503904); resultado registrado na Wave B do [relatório do Cycle 2.1](cycle-2.1.md) |
+| `real-providers.yml` | nunca executado | despachado por `workflow_dispatch` sobre `main` em 2026-10-05 (run 37260501716); resultado registrado na mesma Wave B |
+| Suíte offline local | 2719 passed + 5 skipped em 3 blocos (Wave D) | 2859 passed, 5 skipped, 0 failed em execução única (77 arquivos de teste, Python 3.14.6, Windows, 2026-10-05). Uma execução intercalada com uma segunda sessão pytest sobre o mesmo `--basetemp` falhou 1 teste de `test_packaging.py`; re-executado isoladamente, o arquivo passou inteiro (11 passed) |
+
+Sobre "Próximo ciclo recomendado": o item 1 (push/PR das Waves B–E) está superado por este update; os itens 2–6 são assumidos pelo Cycle 2.1 (Waves B–I) registrado em [cycle-2.1.md](cycle-2.1.md).
