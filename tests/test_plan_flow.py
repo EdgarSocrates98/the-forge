@@ -332,6 +332,9 @@ def test_proof_task_runs_two_nodes_with_the_first_handoff_in_the_second(
     handoff = store.read(n2.run_id, "handoff")
     assert {item["origin"]["node"] for item in handoff["items"]} == {"n1"}
     assert spy.calls[-1][4]["handoff"] == handoff
+    # Evidence bus (Wave D): n1's run verification crosses as a typed item.
+    [ver_item] = [i for i in handoff["items"] if i["kind"] == "verification"]
+    assert ver_item["epistemic"] == "observed" and "forge=passed" in ver_item["claim"]
     child = store.read_contract(n2.run_id, "receipt", ExecutionReceipt)
     assert (child.parent_run, child.plan_node) == (out.run_id, "n2")
     claims = [e["claim"] for e in store.read(n2.run_id, "result")["evidence"]]

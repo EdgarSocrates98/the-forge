@@ -63,7 +63,7 @@ from theforge.contracts.types import (
     ProfileRequest,
     Reproducibility,
 )
-from theforge.contracts.verification import ReproducibilityInfo
+from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.diagnostics import build_diagnostic
 from theforge.errors import PersistenceError, UsageError
@@ -434,7 +434,7 @@ class PlanExecutor:
             sources.append(SourceResult(
                 node=nid, run_id=outcome.run_id, provider=execution.provider,
                 status=outcome.status, capability=node.capability, action=node.action,
-                result=execution.result))
+                result=execution.result, verification=execution.verification))
             if outcome.reproducibility is not None:
                 levels[nid] = outcome.reproducibility.level
 
@@ -455,7 +455,7 @@ class PlanExecutor:
                   levels: Mapping[str, Reproducibility]) -> NodeExecution:
         """One child run of the Forger for ``node``, its valid result re-read from disk."""
         command, store = trace.command, self.forger.store
-        handoff = build_handoff(trace.run_id, node, sources)
+        handoff = build_handoff(trace.run_id, node, sources, records=trace.records)
         binding = NodeBinding(
             plan_run=trace.run_id, node=node.id, pattern=plan.pattern, handoff=handoff,
             estimate_class=node.estimate.operation_class if node.estimate else None,
@@ -472,6 +472,8 @@ class PlanExecutor:
                   if asked.status in _VALID else None)
         delivered = (store.read_contract(child, "handoff", Handoff)
                      if asked.receipt.inputs.handoff_sha256 is not None else None)
+        verification = (store.read_contract(child, "verification", VerificationResult)
+                        if asked.receipt.verification_sha256 is not None else None)
         provider = asked.receipt.provider
         outcome = NodeOutcome(
             node=node.id, status=_NODE_STATUS.get(asked.status, "no_route"), run_id=child,
@@ -480,6 +482,7 @@ class PlanExecutor:
             reproducibility=asked.receipt.reproducibility)
         return NodeExecution(
             node=node, outcome=outcome, result=result, handoff=delivered,
+            verification=verification,
             provider=Producer(id=provider.id, version=provider.version) if provider else None)
 
     def _reached_execute(self, asked: AskOutcome) -> bool:

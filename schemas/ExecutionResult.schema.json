@@ -20,6 +20,12 @@
       },
       "type": "array"
     },
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
     "context_request": {
       "anyOf": [
         {

@@ -303,8 +303,102 @@
             "items": {
               "items": {
                 "properties": {
+                  "also_from": {
+                    "items": {
+                      "properties": {
+                        "node": {
+                          "type": "string"
+                        },
+                        "plan_run": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "version"
+                          ],
+                          "type": "object"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "plan_run",
+                        "node",
+                        "run_id",
+                        "provider"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "artifact_type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "claim": {
                     "type": "string"
+                  },
+                  "derived_from": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "item": {
+                            "type": "string"
+                          },
+                          "node": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "plan_run": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "provider": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider",
+                          "run_id",
+                          "item"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "epistemic": {
                     "anyOf": [
@@ -347,7 +441,10 @@
                       "evidence",
                       "finding",
                       "artifact",
-                      "decision"
+                      "decision",
+                      "constraint",
+                      "assumption",
+                      "verification"
                     ]
                   },
                   "location": {

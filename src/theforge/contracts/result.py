@@ -109,6 +109,9 @@ class ExecutionResult:
     metrics: Metrics = field(default_factory=Metrics)
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
+    # Declared assumptions the result relies on (evidence bus: handed off as
+    # ``assumption`` items); additive — providers that declare none emit [].
+    assumptions: list[str] = field(default_factory=list)
     # Optional negotiation request: a response carrying it is never persisted as `result`.
     context_request: ContextRequest | None = None
 

@@ -12,21 +12,32 @@ from dataclasses import replace
 
 import pytest
 
-from theforge.contracts.base import from_dict, to_dict
+from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.canonical import canonical_json
-from theforge.contracts.handoff import Handoff
+from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.integrity import validate_handoff
+from theforge.contracts.manifest import Capability, CapabilityRelations, ForgeManifest
 from theforge.contracts.plan import PlanDependency, PlanNode
-from theforge.contracts.result import Artifact, Evidence, ExecutionResult, Finding, Location
+from theforge.contracts.result import (
+    Artifact,
+    Evidence,
+    EvidenceSource,
+    ExecutionResult,
+    Finding,
+    Location,
+)
 from theforge.contracts.types import (
     MAX_CLAIM_CHARS,
     MAX_HANDOFF_BYTES,
     MAX_HANDOFF_ITEMS,
     Producer,
 )
+from theforge.contracts.verification import VerificationCheck, VerificationResult
 from theforge.meta import PRODUCER
 from theforge.planning.execution import SourceResult
 from theforge.planning.handoff import TRUNCATION_MARKER, build_handoff
+from theforge.registry.config import ProviderEntry
+from theforge.registry.registry import RegistryRecord
 from theforge.security.redact import REDACTED, redact
 
 PLAN_RUN = "plan-run-1"
@@ -102,6 +113,7 @@ def test_items_from_declared_input_with_order_and_provenance() -> None:
         # referenced by kept findings (finding order), then the rest by epistemic and id
         ("evidence", "e3"), ("evidence", "e2"), ("evidence", "e1"), ("evidence", "e4"),
         ("artifact", "a.json"), ("artifact", "z.json"),
+        ("constraint", "constraint:0"),  # source limitation "full output never crosses"
     ]
     for item in h.items:
         assert item.origin.plan_run == PLAN_RUN
@@ -139,7 +151,10 @@ def test_source_order_follows_inputs_not_sequence() -> None:
     h1 = build(target("spark", "api"), a, s)
     h2 = build(target("spark", "api"), s, a)
     assert h1 == h2
-    assert [n for n, _, _ in keys(h1)] == ["spark", "spark", "api", "api"]
+    # identical constraints from both sources merge into one item (also_from)
+    assert [n for n, _, _ in keys(h1)] == ["spark"] * 3 + ["api"] * 2
+    constraint = [i for i in h1.items if i.kind == "constraint"][0]
+    assert constraint.origin.node == "spark" and [o.node for o in constraint.also_from] == ["api"]
 
 
 def test_missing_or_invalid_input_is_a_limitation() -> None:
@@ -159,13 +174,16 @@ def test_no_file_content_nor_full_output() -> None:
                  artifacts=[Artifact(path="report.json", sha256=H1)])
     h = build(target("spark"), source("spark", res))
     blob = canonical_json(to_dict(h))
-    # result-level free text (limitations/unknowns/metrics) never crosses
-    assert "full output never crosses" not in blob and "raw stdout" not in blob
-    assert "duration_ms" not in blob
-    artifact = h.items[-1]
-    assert artifact.kind == "artifact" and artifact.claim == "" and artifact.subject == ""
+    # limitations cross as redacted, capped constraint items (evidence bus);
+    # unknowns and metrics still never cross
+    assert "raw stdout" not in blob and "duration_ms" not in blob
+    constraint = [i for i in h.items if i.kind == "constraint"][0]
+    assert constraint.claim == "full output never crosses"
+    artifact = [i for i in h.items if i.kind == "artifact"][0]
+    assert artifact.claim == "" and artifact.subject == ""
     assert set(to_dict(artifact)) == {"kind", "id", "origin", "epistemic", "subject", "claim",
-                                      "location", "hash", "severity", "evidence_ids"}
+                                      "location", "hash", "severity", "evidence_ids",
+                                      "derived_from", "also_from", "artifact_type"}
 
 
 def test_long_claims_are_capped_with_marker() -> None:
@@ -184,7 +202,7 @@ def test_truncation_by_item_count_is_deterministic() -> None:
     res = result(evidence=evidence)
     h = build(target("spark"), source("spark", res))
     assert len(h.items) == MAX_HANDOFF_ITEMS
-    total = 1 + len(evidence)
+    total = 2 + len(evidence)  # decision + evidence + one constraint item
     assert h.truncated and h.dropped == total - MAX_HANDOFF_ITEMS
     assert h.limitations == [f"handoff-truncated: dropped {h.dropped} items"]
     # priority keeps the decision and the lowest ids
@@ -201,8 +219,9 @@ def test_truncation_priority_across_sources_and_epistemic() -> None:
     h = build(target("spark", "api"), source("spark", first),
               source("api", second, provider=API))
     # the first input fills the budget: the second source is dropped entirely
+    # (its identical constraint merges into the first source's, which is dropped too)
     assert {i.origin.node for i in h.items} == {"spark"}
-    assert h.dropped == (1 + MAX_HANDOFF_ITEMS) + 2 - MAX_HANDOFF_ITEMS
+    assert h.dropped == (2 + MAX_HANDOFF_ITEMS) + 3 - 1 - MAX_HANDOFF_ITEMS
 
 
 def test_truncation_by_bytes_stays_under_the_limit() -> None:
@@ -213,7 +232,7 @@ def test_truncation_by_bytes_stays_under_the_limit() -> None:
     size = len(canonical_json(to_dict(h)).encode("utf-8"))
     assert size <= MAX_HANDOFF_BYTES
     assert h.truncated and 0 < len(h.items) < MAX_HANDOFF_ITEMS
-    assert h.dropped == MAX_HANDOFF_ITEMS - len(h.items)
+    assert h.dropped == MAX_HANDOFF_ITEMS + 1 - len(h.items)  # +1 constraint item
     validate_handoff(h)
     assert build(target("spark"), source("spark", result(evidence=list(reversed(evidence))))) == h
 
@@ -272,3 +291,124 @@ def test_secret_in_subject_and_path_is_redacted() -> None:
     h = build(target("spark"), source("spark", res))
     blob = canonical_json(to_dict(h))
     assert password not in blob and "abcdef123" not in blob and "zyxw9876" not in blob
+
+
+# --- evidence bus (Cycle 3 Wave D) ---------------------------------------------------
+
+def _records(spark_produces: tuple[str, ...] = (), api_consumes: tuple[str, ...] = (),
+             ) -> dict[str, RegistryRecord]:
+    def rec(pid: str, cap_id: str, produces: list[str], consumes: list[str]) -> RegistryRecord:
+        cap = Capability(id=cap_id, actions=["run"], default_action="run",
+                         state="supported", operation_class="read_only",
+                         relations=CapabilityRelations(produces=produces, consumes=consumes))
+        manifest = ForgeManifest(id=pid, version="0.1", protocols=["forge/v1"],
+                                 ops=["describe", "health", "execute"], capabilities=[cap])
+        return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
+                              state="ready", manifest=manifest)
+    return {"fixture-spark": rec("fixture-spark", "pyspark.static-analysis",
+                                 list(spark_produces), []),
+            "fixture-api": rec("fixture-api", "api.analyze", [], list(api_consumes))}
+
+
+def _verification() -> VerificationResult:
+    def check(status: str) -> VerificationCheck:
+        return VerificationCheck(status=status)  # type: ignore[arg-type]
+    return VerificationResult(producer=PRODUCER, created_at=CREATED, run_id="run-spark",
+                              self_report=check("reported"), provider_evidence=check("reported"),
+                              forge=check("passed"), independent=check("not_performed"))
+
+
+def test_evidence_provenance_chain_is_carried() -> None:
+    upstream = EvidenceSource(provider="fixture-spark", run_id="run-older", item="e0",
+                              node="n0", plan_run="plan-run-0")
+    res = result(evidence=[ev("e1", derived_from=upstream)])
+    h = build(target("spark"), source("spark", res))
+    item = [i for i in h.items if i.kind == "evidence"][0]
+    assert item.derived_from == upstream  # who/run/node/item of the original
+
+
+def test_identical_items_merge_keeping_every_origin() -> None:
+    same = Evidence(id="e", epistemic="observed", subject="s", claim="c", producer=SPARK,
+                    hash=H1)
+    a = source("spark", result(evidence=[same]))
+    b = source("api", result(API, evidence=[same]), provider=API)
+    h = build(target("spark", "api"), a, b)
+    matches = [i for i in h.items if i.kind == "evidence" and i.id == "e"]
+    assert len(matches) == 1
+    assert matches[0].origin.node == "spark"
+    assert [o.node for o in matches[0].also_from] == ["api"]
+    # different content never merges
+    other = source("api", result(API, evidence=[ev("e", claim="different")]), provider=API)
+    h2 = build(target("spark", "api"), a, other)
+    assert len([i for i in h2.items if i.kind == "evidence" and i.id == "e"]) == 2
+
+
+def test_verification_item_reports_how_the_source_was_verified() -> None:
+    src = source("spark", result())
+    src = replace(src, verification=_verification())
+    h = build(target("spark"), src)
+    item = [i for i in h.items if i.kind == "verification"][0]
+    assert item.epistemic == "observed" and item.origin.node == "spark"
+    assert item.claim == ("forge=passed independent=not_performed self_report=reported "
+                          "provider_evidence=reported")
+    # no verification artifact -> no item at all
+    h2 = build(target("spark"), source("spark", result()))
+    assert not [i for i in h2.items if i.kind == "verification"]
+
+
+def test_constraints_and_declared_assumptions_cross() -> None:
+    res = replace(result(), assumptions=["the input schema is stable"])
+    h = build(target("spark"), source("spark", res))
+    constraints = [i for i in h.items if i.kind == "constraint"]
+    assumptions = [i for i in h.items if i.kind == "assumption"]
+    assert [i.claim for i in constraints] == ["full output never crosses"]
+    assert [i.claim for i in assumptions] == ["the input schema is stable"]
+    assert constraints[0].id == "constraint:0" and assumptions[0].id == "assumption:0"
+    assert constraints[0].epistemic is None and assumptions[0].epistemic is None
+
+
+def test_new_kinds_require_a_claim() -> None:
+    origin = HandoffOrigin(plan_run="p", node="n", run_id="r", provider=SPARK)
+    for kind in ("constraint", "assumption", "verification"):
+        with pytest.raises(ContractError):
+            HandoffItem(kind=kind, id="x", origin=origin)  # type: ignore[arg-type]
+    HandoffItem(kind="constraint", id="x", origin=origin, claim="bounded")
+
+
+def test_consumer_needs_filter_declaredly_irrelevant_artifacts() -> None:
+    records = _records(spark_produces=("report.summary",), api_consumes=("report.full",))
+    res = result(artifacts=[Artifact(path="out/summary.json", sha256=H1)])
+    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
+                      created_at=CREATED, records=records)
+    assert h is not None
+    assert not [i for i in h.items if i.kind == "artifact"]
+    assert h.limitations == ["handoff-filtered: spark:out/summary.json (artifact type "
+                             "report.summary not consumed by api.analyze)"]
+
+
+def test_consumer_needs_keep_matching_and_untyped_artifacts() -> None:
+    records = _records(spark_produces=("report.full",), api_consumes=("report.full",))
+    res = result(artifacts=[Artifact(path="out/full.json", sha256=H1)])
+    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
+                      created_at=CREATED, records=records)
+    assert h is not None
+    artifact = [i for i in h.items if i.kind == "artifact"][0]
+    assert artifact.artifact_type == "report.full"
+    assert h.limitations == []
+    # unambiguous typing: two produces -> type unknown -> kept (never guess)
+    records2 = _records(spark_produces=("report.full", "report.summary"),
+                        api_consumes=("other.type",))
+    h2 = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
+                       created_at=CREATED, records=records2)
+    assert h2 is not None
+    artifact2 = [i for i in h2.items if i.kind == "artifact"][0]
+    assert artifact2.artifact_type is None and h2.limitations == []
+
+
+def test_without_records_no_filtering_no_typing() -> None:
+    res = result(artifacts=[Artifact(path="out/x.json", sha256=H1)])
+    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
+                      created_at=CREATED)
+    assert h is not None
+    artifact = [i for i in h.items if i.kind == "artifact"][0]
+    assert artifact.artifact_type is None and h.limitations == []

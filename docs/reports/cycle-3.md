@@ -214,3 +214,58 @@ o planner real (LLM) vive do lado do especialista; o core nunca gera proposta
 própria. `alternatives` fica só no artefato (não polui `plan.limitations`). O
 grafo do run de `ask` ainda não é construído (sem consumidor lá — registrado na
 Wave B como dívida consciente).
+
+## Wave D — Evidence Bus v2
+
+**Objetivo.** O handoff entre nós evolui para um barramento de evidência real:
+objetos de conhecimento tipados com proveniência completa, reuse por conteúdo e
+filtro pela necessidade declarada do consumidor — sem quebrar o contrato (D1-D4).
+
+**Tipos harmonizados (D1).** `HandoffKind` ganha `constraint`, `assumption` e
+`verification`, aditivos e validados (constraint/assumption/verification exigem
+`claim`; epistemic continua proibido em finding/artifact/constraint/assumption e
+obrigatório em evidence). Fontes honestas: `constraint` ← `limitations` do
+resultado de origem (redigidas, capadas), `assumption` ← novo campo aditivo
+`ExecutionResult.assumptions` (providers que declaram suposições as propagam),
+`verification` ← o `VerificationResult` do run do nó, resumido
+`forge=… independent=… self_report=… provider_evidence=…` (só quando o run
+persistiu verificação).
+
+**Provenance (D2).** `origin` já respondia quem/qual run/qual nó/qual provider;
+`HandoffItem.derived_from` agora carrega a cadeia upstream verbatim (o
+`EvidenceSource` da evidência), e o item `verification` responde "foi
+verificado?" por origem.
+
+**Reuse content-addressed (D3).** `_dedup` mescla itens idênticos em conteúdo
+(kind, id, subject, claim, hash, epistemic, severity, evidence_ids, location,
+artifact_type, derived_from — tudo menos `origin`): a primeira ocorrência fica e
+as demais origens vão para `also_from`. Evidência repassada verbatim por um
+intermediário (diamante) não se duplica; conteúdo divergente nunca mescla.
+
+**Filtro do consumidor (D4).** `build_handoff` recebe `records`: o `consumes`
+declarado da capability consumidora é a necessidade; o `produces` declarado da
+capability produtora tipa os artifacts (`artifact_type`, só quando há exatamente
+um produces — ambiguidade deixa o tipo `unknown` e conserva o item). Artifact de
+tipo conhecido e não consumido é descartado com limitação `handoff-filtered:
+<nó>:<path> (artifact type <t> not consumed by <cap>)`; necessidades vazias ou
+registry ausente desligam o filtro. Ordem de truncamento por origem: decisão,
+verificação, findings, evidências, artifacts (consumidos primeiro), constraints,
+assumptions.
+
+**Testes.** `test_handoff.py` +9 casos: proveniência `derived_from`, merge com
+todas as origens (e não-merge de conteúdo divergente), item de verificação,
+constraints/assumptions cruzando, claim obrigatório nos novos kinds, filtro por
+`consumes` (drop + limitação, keep por match, keep por tipo desconhecido,
+desligado sem records). Fuzz seed de `Handoff` cobre os kinds e campos novos.
+E2E: `test_plan_flow` agora prova o item `verification` (`forge=passed`) no
+handoff persistido do nó dependente.
+
+**Resultado.** Foco verde; ruff+mypy limpos; schemas `Handoff`,
+`ExecutionResult`, `ExecuteRequest` regenerados.
+
+**Limitações.** `unknowns` de origem continuam fora do handoff (não são
+constraints — a síntese do plano já os carrega com prefixo do nó). `artifact_type`
+só é inferível quando a capability declara exatamente um `produces`; um mapping
+path→tipo mais fino exigiria declaração por artifact, fora do escopo. O filtro
+opera sobre kinds tipados; findings/evidências não têm tipo de artefato e seguem
+prioridade+budget.
