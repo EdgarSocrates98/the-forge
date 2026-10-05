@@ -117,7 +117,7 @@ sequenceDiagram
 - **`replay`** (`forger.replay`). `render` reconstrói o relatório sem ler o workspace; `verify` soma à verificação de hashes a reverificação, contra o workspace atual, dos itens de contexto registrados (inclusive dos runs de nó); `execute` repete um run de um provider com os parâmetros originais, o provider fixado e `replay_of` apontando o original, e compara os resultados sem campos voláteis. A reexecução é recusada antes de iniciar qualquer provider para runs de plano e de nó (`FORGE-REPLAY-UNSUPPORTED`) e para runs `non_reproducible`/`unknown`, com contexto alterado, com entradas registradas divergentes ou com provider de identidade ou versão diferente (`FORGE-REPLAY-NOT-REPRODUCIBLE`).
 
 ## Direção de imports
-Obrigatória; estende a das Waves A–C:
+Obrigatória; vale para os ciclos 1 e 2 (Waves A–D):
 
 `contracts.codes → contracts → errors / security / diagnostics → profiles → protocol → registry → routing / context → workspace → planning → policy → runs → explain → forger → cli`
 

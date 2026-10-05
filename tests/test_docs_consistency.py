@@ -471,8 +471,11 @@ def test_link_check_flags_kiro_even_in_historical_records(docs_copy: Path) -> No
 def test_readme_index_detects_unindexed_doc(docs_copy: Path) -> None:
     def mutate() -> None:
         (docs_copy / "docs" / "new-doc.md").write_text("# Novo\n", encoding="utf-8")
-        (docs_copy / "docs" / "reports").mkdir()
+        (docs_copy / "docs" / "reports").mkdir(exist_ok=True)
         (docs_copy / REPORT).write_text(VALID_REPORT, encoding="utf-8")
+        readme = docs_copy / "README.md"  # the real README already links the real report
+        readme.write_text(re.sub(rf"\[[^\]]*\]\({re.escape(REPORT)}\)", "relatório",
+                                 read_md(readme)), encoding="utf-8")
 
     found = _new_problems(docs_copy, readme_index_problems, mutate)
     assert found == ["README.md does not link docs/new-doc.md", f"README.md does not link {REPORT}"]
@@ -584,7 +587,7 @@ def test_report_check_detects_empty_origin(tmp_path: Path) -> None:
 
 def test_report_links_into_kiro_are_flagged(docs_copy: Path) -> None:
     def mutate() -> None:
-        (docs_copy / "docs" / "reports").mkdir()
+        (docs_copy / "docs" / "reports").mkdir(exist_ok=True)
         (docs_copy / REPORT).write_text(
             VALID_REPORT + "\n[spec](../../.kiro/specs/agentic-maintainability/tasks.md)\n",
             encoding="utf-8")

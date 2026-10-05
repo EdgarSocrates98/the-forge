@@ -8,7 +8,7 @@
 
 The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
 
-**Status:** Cycle 2 concluído. Uma linha por wave:
+**Status:** Cycle 2 concluído ([relatório final do Cycle 2](docs/reports/cycle-2.md)). Uma linha por wave:
 
 - **Wave A — endurecimento:** contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace ([ADR 0009](docs/adr/0009-registry-cache-location.md)), ambiente mínimo para providers, policy de risco com `--approve` ([ADR 0010](docs/adr/0010-policy-model.md)) e CI em Linux e Windows, com macOS semanal ([ADR 0011](docs/adr/0011-ci-support-matrix.md)).
 - **Wave B — providers reais:** adapters de Spark Forge e API Forge ([providers reais](docs/real-providers.md)), versão de provider em SemVer e matriz de compatibilidade ([versionamento](docs/versioning.md)), taxonomia de capabilities com aliases e depreciação ([capabilities](docs/capabilities.md)).
@@ -93,6 +93,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Performance: benchmark, baseline e budgets](docs/performance.md)
 - [Desenvolvimento com agentes](docs/agentic.md)
 - [Índice de ADRs](docs/adr/README.md)
+- [Relatório final do Cycle 2](docs/reports/cycle-2.md)
 - [Spec do ciclo 1](docs/superpowers/specs/2026-10-02-the-forge-protocol-core-design.md)
 
 ## Desenvolvimento
