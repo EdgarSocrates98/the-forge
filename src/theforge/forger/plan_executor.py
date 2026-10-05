@@ -57,6 +57,7 @@ from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import validate_plan_result
 from theforge.contracts.performance import ProviderPerformance
 from theforge.contracts.plan import (
+    DecisionRecord,
     ExecutionPlan,
     NodeOutcome,
     NodePlanState,
@@ -93,6 +94,7 @@ from theforge.forger.orchestrator import (
 from theforge.forger.reproducibility import NO_EXECUTION, combine_levels
 from theforge.forger.resume import prior_outcomes, reuse_execution
 from theforge.forger.telemetry import TelemetryRecorder
+from theforge.intel import record_decision, refresh_intel, save_intel
 from theforge.meta import PRODUCER, VERSION
 from theforge.metrics import load_performance
 from theforge.planning.decision import compose_decision
@@ -122,7 +124,6 @@ from theforge.registry import RegistryRecord, check_health, user_config_dir
 from theforge.registry.health import HealthOutcome
 from theforge.routing import route
 from theforge.runs import new_run_id
-from theforge.workspace.describe import describe_workspace
 
 __all__ = ["PLAN_TELEMETRY_LIMITATION", "PlanCommand", "PlanExecutor", "PlanOutcome",
            "plan_status"]
@@ -186,6 +187,7 @@ class _PlanTrace:
     capability_graph: CapabilityGraph | None = None  # the persisted graph object
     semantic_proposal_sha: str | None = None  # tier-2 SemanticPlanProposal, when asked
     decision_sha: str | None = None  # DecisionRecord of a debate plan, when produced
+    decision_record: DecisionRecord | None = None  # the object, for decision memory (I3)
     routing_sha: str | None = None
     plan: ExecutionPlan | None = None
     plan_sha: str | None = None
@@ -324,8 +326,18 @@ class PlanExecutor:
         trace.stage = "plan:workspace"
         with trace.telemetry.phase("scan"):
             scan = scan_workspace(self.forger.root, command.targets)
-            descriptor = describe_workspace(self.forger.root, list(trace.records.values()),
-                                            scan)
+            # Project intelligence (I1/I2): the fingerprinted snapshot decides
+            # which descriptor sections are still accurate; only stale ones are
+            # recomputed (git state is always re-read live). The fresh descriptor
+            # is persisted per run exactly as before — the memory informs, the
+            # run artifact records what this run actually saw.
+            intel, intel_notes = refresh_intel(
+                self.forger.root, scan, list(trace.records.values()))
+            descriptor = intel.descriptor
+        trace.limitations.extend(intel_notes)
+        if intel.reused:
+            trace.limitations.append(
+                f"intel: reused still-fresh sections: {', '.join(intel.reused)}")
         trace.descriptor = descriptor
         trace.descriptor_sha = store.write(trace.run_id, "workspace-descriptor", descriptor)
         # The capability graph of this registry+workspace is plan evidence: persisted
@@ -335,6 +347,10 @@ class PlanExecutor:
         trace.capability_graph = capability_graph
         trace.capability_graph_sha = store.write(
             trace.run_id, "capability-graph", capability_graph)
+        graph_note = save_intel(self.forger.root, replace(
+            intel, capability_graph_sha=trace.capability_graph_sha))
+        if graph_note is not None:
+            trace.limitations.append(graph_note)
         trace.limitations.extend(f"capability-graph: {item}"
                                  for item in capability_graph.limitations)
         trace.stage = "plan:routing"
@@ -554,6 +570,7 @@ class PlanExecutor:
             decision = compose_decision(trace.task, plan, trace.executions)
             decision_sha = self.forger.store.write(trace.run_id, "decision", decision)
             trace.decision_sha = decision_sha
+            trace.decision_record = decision
             decision_notes = decision.limitations
             decision_unknowns = decision.unknowns
         result = PlanResult(
@@ -761,6 +778,32 @@ class PlanExecutor:
         except Exception as exc:  # noqa: BLE001 - telemetry must never block the receipt
             return None, [f"{TELEMETRY_UNAVAILABLE_LIMITATION}: {type(exc).__name__}: {exc}"]
 
+    def _record_decisions(self, trace: _PlanTrace, status: Outcome) -> None:
+        """The plan's reusable decisions into the project memory (I3): the
+        pattern the task decomposed into and, on a debate, the verdict it
+        reached — each with its recorded basis. Best-effort: a memory write
+        failure is a limitation, never a failed run."""
+        plan, decision = trace.plan, trace.decision_record
+        verdict = None
+        if decision is not None:
+            chosen = next((o for o in decision.options if o.node == decision.chosen),
+                          None)
+            verdict = record_decision(
+                self.forger.root, "verdict",
+                f"debate: {decision.question}"[:120],
+                f"{chosen.provider}/{chosen.capability}" if chosen is not None
+                else "unresolved",
+                decision.rationale or f"confidence {decision.confidence}",
+                trace.run_id)
+        warnings = [
+            record_decision(self.forger.root, "pattern", "plan", plan.pattern,
+                            f"{len(plan.nodes)} nodes, outcome {status}",
+                            trace.run_id)
+            if plan is not None else None,
+            verdict,
+        ]
+        trace.limitations.extend(w for w in warnings if w is not None)
+
     def _finish(self, trace: _PlanTrace, status: Outcome, *, error: ErrorInfo | None = None,
                 result: PlanResult | None = None,
                 exception: BaseException | None = None) -> PlanOutcome:
@@ -776,6 +819,7 @@ class PlanExecutor:
             diagnostic = build_diagnostic(exception, stage=trace.stage, code=Codes.INTERNAL)
             if trace.command.debug:
                 store.write(trace.run_id, "diagnostic", diagnostic)
+        self._record_decisions(trace, status)
         graph_sha, graph_notes = self._write_graph(trace)
         telemetry_sha, telemetry_notes = self._write_telemetry(trace)
         limitations = list(trace.limitations)

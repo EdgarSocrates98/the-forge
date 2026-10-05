@@ -147,6 +147,11 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
                         help="approve a capability for the nodes that use it (repeatable)")
     resume.set_defaults(handler=commands.cmd_resume)
+
+    decisions = sub.add_parser("decisions", parents=[common],
+                             help="the project's reusable-decision memory "
+                                  "(.forge/intel/decisions.json)")
+    decisions.set_defaults(handler=commands.cmd_decisions)
     return parser
 
 

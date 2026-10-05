@@ -103,6 +103,7 @@ from theforge.forger.verification import (
     request_verdict,
     select_verifier,
 )
+from theforge.intel import record_decision
 from theforge.meta import PRODUCER, VERSION
 from theforge.metrics import load_performance, record_performance
 from theforge.planning.estimate import stricter_decision
@@ -218,6 +219,7 @@ class _Trace:
     complexity_sha: str | None = None  # ComplexityAssessment: --profile auto, or a promotion
     complexity_config: ComplexityConfig | None = None  # the loaded policy of an auto run
     budget_sha: str | None = None  # RunBudget, written once the profile resolves
+    profile_basis: str | None = None  # evidence-backed reason the effective profile was chosen
     executed: bool = False  # an execute call was attempted (reproducibility, 14.1)
     response_status: str | None = None  # the provider's own status, when it answered
     result_seen: ExecutionResult | None = None  # validated result, before drift demotion
@@ -432,6 +434,7 @@ class Forger:
                 f"complexity: {item}" for item in assessment.limitations)
             profile = profile_for(assessment.selected_profile)
             trace.telemetry.set_profile(profile)
+            trace.profile_basis = f"auto: {assessment.profile_reason}"
         else:
             profile = assumed_profile(task.budget_profile)
             # Explicit profiles are still measured: an assessment whose selected
@@ -450,6 +453,7 @@ class Forger:
         if effective is not profile:
             profile = effective
             trace.telemetry.set_profile(profile)
+            trace.profile_basis = f"promoted: {budget.adjustments[0]}"
             if trace.complexity_sha is None:
                 trace.complexity_sha = self.store.write(run_id, "complexity", assessment)
                 trace.limitations.extend(
@@ -1062,6 +1066,26 @@ class Forger:
         if warning is not None:
             trace.limitations.append(warning)
 
+    def _record_decisions(self, trace: _Trace, decision: RoutingDecision) -> None:
+        """The reusable decisions of this run into the project memory (I3).
+
+        Only decisions the system itself made are remembered — a user-pinned
+        provider or explicit profile is the user's choice, not evidence to reuse.
+        Best-effort: a memory write failure is a limitation, never a failed run.
+        """
+        record, capability = trace.record, trace.capability
+        for warning in (
+            record_decision(self.root, "routing", capability.id, record.entry.id,
+                            decision.reason, trace.run_id)
+            if decision.status == "routed" and record is not None
+            and capability is not None else None,
+            record_decision(self.root, "profile", "task-profile", trace.profile.name,
+                            trace.profile_basis, trace.run_id)
+            if trace.profile is not None and trace.profile_basis is not None else None,
+        ):
+            if warning is not None:
+                trace.limitations.append(warning)
+
     def _finish(
         self, trace: _Trace, decision: RoutingDecision, status: Outcome, *,
         result: ExecutionResult | None = None, error: ErrorInfo | None = None,
@@ -1080,6 +1104,7 @@ class Forger:
         diagnostic = self._diagnostic(trace, exception, error)
         self._late_verification(trace)
         self._record_economy(trace, status, result)
+        self._record_decisions(trace, decision)
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:

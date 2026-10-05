@@ -26,6 +26,7 @@ Decisões de arquitetura de The Forge, uma por arquivo `NNNN-<slug>.md`. Cada AD
 | 0020 | [Fonte canônica de assets agentic e política de hooks](0020-agentic-assets-canonical-source.md) | aceito (2026-10-04) |
 | 0021 | [Verificação independente (`can_verify` + op `verify`)](0021-independent-verification.md) | aceito (2026-10-05) |
 | 0022 | [Economia: RunBudget, promoção limitada e histórico medido](0022-economy-engine.md) | aceito (2026-10-05) |
+| 0023 | [Inteligência de projeto: freshness computada, reuso por seção](0023-project-intelligence.md) | aceito (2026-10-05) |
 
 ## Decisões exigidas pelo Cycle 2
 
@@ -42,6 +43,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | fonte canônica de assets agentic | [0020](0020-agentic-assets-canonical-source.md) | `agentic-maintainability` |
 | verificação independente (`can_verify`, op `verify`) | [0021](0021-independent-verification.md) | `cycle-3` |
 | orçamento auditável e desempate por histórico medido | [0022](0022-economy-engine.md) | `cycle-3` |
+| inteligência de projeto e staleness explícito | [0023](0023-project-intelligence.md) | `cycle-3` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

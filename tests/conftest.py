@@ -109,6 +109,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_independent_verification.py": ("unit", "integration"),
     # planned by design (cycle-3 economy engine)
     "test_economy.py": ("unit", "integration"),
+    # planned by design (cycle-3 project intelligence)
+    "test_intel.py": ("unit", "integration"),
     # planned by design (agentic-maintainability)
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),

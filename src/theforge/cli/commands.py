@@ -18,6 +18,7 @@ from theforge.errors import UsageError
 from theforge.explain import build_explain_report
 from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
 from theforge.forger.replay import replay
+from theforge.intel import load_decisions
 from theforge.registry import Registry, RegistryRecord, check_health
 from theforge.routing.signals import normalize_tokens
 from theforge.runs import RunStore
@@ -347,6 +348,20 @@ def cmd_workspace_show(args: argparse.Namespace) -> int:
         descriptor, limitations=[*descriptor.limitations, *missing])
     _warn(registry)
     _emit(args, redact(to_dict(descriptor)), render.workspace)
+    return 0
+
+
+def cmd_decisions(args: argparse.Namespace) -> int:
+    """The project's reusable-decision memory (Wave I): reads
+    ``.forge/intel/decisions.json`` only — no provider process starts. A missing
+    memory is an empty memory, not an error; a malformed one is reported."""
+    root = _root(args)
+    memory, warning = load_decisions(root)
+    data: dict[str, Any] = (to_dict(memory) if memory is not None
+                            else {"entries": []})
+    if warning is not None:
+        data["limitations"] = [warning]
+    _emit(args, redact(data), render.decisions)
     return 0
 
 

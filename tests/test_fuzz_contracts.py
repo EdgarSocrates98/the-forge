@@ -280,6 +280,23 @@ SEEDS: dict[str, dict[str, Any]] = {
         "max_parallelism": 1, "negotiation_rounds": 1,
         "adjustments": ["promotion economy→balanced: budget_bytes 65536→262144"],
     },
+    "ProjectIntel": {
+        "producer": P, "created_at": "t", "updated_at": "t", "root": "/ws",
+        "fingerprints": {"files_sha": "a" * 64, "repos_sha": "b" * 64,
+                         "depfiles_sha": "c" * 64, "manifests_sha": "d" * 64,
+                         "relations_sha": "e" * 64},
+        "descriptor": {"producer": P, "created_at": "t", "root": "/ws",
+                       "repositories": [], "paths": ["."], "technologies": [],
+                       "relations": [], "limitations": [], "unknowns": []},
+        "capability_graph_sha": None, "reused": ["technologies"],
+        "source": "scan+git+manifests",
+    },
+    "DecisionMemory": {
+        "producer": P, "created_at": "t",
+        "entries": [{"id": "a" * 64, "kind": "routing", "subject": "cap.x",
+                     "choice": "p1", "basis": "matched signals", "created_at": "t",
+                     "updated_at": "t", "corroborations": 2, "runs": ["r1", "r2"]}],
+    },
     "ProviderPerformance": {
         "producer": P, "created_at": "t",
         "entries": [{"provider": "p1", "capability": "x.y", "runs": 3, "ok": 2,

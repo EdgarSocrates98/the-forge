@@ -24,6 +24,12 @@ from theforge.contracts.context import (
     LineRange,
     WorkspaceSummary,
 )
+from theforge.contracts.decisions import (
+    DECISIONS_SCHEMA,
+    DecisionKind,
+    DecisionMemory,
+    RememberedDecision,
+)
 from theforge.contracts.diagnostic import Diagnostic, DiagnosticCause, DiagnosticFrame
 from theforge.contracts.envelope import (
     PROTOCOL_V1,
@@ -40,6 +46,7 @@ from theforge.contracts.graph import GraphEdge, GraphNode, WorkspaceGraph
 from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.installation import InstallationItem, InstallationPlan
 from theforge.contracts.integrity import IntegrityError, Violation
+from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
 from theforge.contracts.manifest import (
     Capability,
     CapabilityContext,
@@ -118,6 +125,7 @@ from theforge.contracts.workspace import (
 
 __all__ = [
     "BUDGET_SCHEMA", "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
+    "DECISIONS_SCHEMA", "INTEL_SCHEMA",
     "OPERATION_CLASS_LIMITATION", "PERFORMANCE_SCHEMA", "PLAN_STATE_SCHEMA",
     "PROTOCOL_V1", "Artifact", "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
@@ -125,19 +133,22 @@ __all__ = [
     "ComplexityAssessment",
     "ComplexityDimension",
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
-    "ContextRequestItem", "ContractError", "DecisionOption", "DecisionRecord", "Diagnostic",
+    "ContextRequestItem", "ContractError", "DecisionKind", "DecisionMemory",
+    "DecisionOption", "DecisionRecord", "Diagnostic",
     "DiagnosticCause", "DiagnosticFrame",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",
     "ExecutionInfo", "ExecutionPlan",
     "ExecutionReceipt", "ExecutionResult", "ExplainReport", "Finding", "ForgeManifest",
     "GitSummary", "GraphEdge", "GraphNode", "Handoff", "HandoffItem", "HandoffOrigin",
-    "HealthCheck", "HealthReport", "InstallationItem", "InstallationPlan", "IntegrityError",
+    "HealthCheck", "HealthReport", "InstallationItem", "InstallationPlan",
+    "IntegrityError", "IntelFingerprints",
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "NodeOutcome",
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",
-    "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot",
+    "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ProjectIntel",
     "ProviderCapabilityPerformance", "ProviderPerformance", "ReceiptInputs",
-    "ReceiptProvider", "RepositoryInfo", "ReproducibilityInfo", "Request", "Response",
+    "ReceiptProvider", "RememberedDecision", "RepositoryInfo", "ReproducibilityInfo",
+    "Request", "Response",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunBudget", "RunTelemetry",
     "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",

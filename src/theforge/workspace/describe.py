@@ -56,19 +56,41 @@ def describe_workspace(
     git_reader: GitReader = read_git_state,
     clock: Callable[[], float] = time.monotonic,
     git_budget_s: float = WORKSPACE_GIT_BUDGET_S,
+    prior: WorkspaceDescriptor | None = None,
+    reusable: frozenset[str] = frozenset(),
 ) -> WorkspaceDescriptor:
-    """Describe the workspace under ``root``; ``scan`` lists its files (relative to root)."""
+    """Describe the workspace under ``root``; ``scan`` lists its files (relative to root).
+
+    ``prior`` + ``reusable`` make the incremental refresh (Wave I): the caller
+    verified by fingerprint which sections of ``prior`` are still accurate and
+    names them in ``reusable`` — ``"technologies"`` (skips dependency parsing and
+    matching) and ``"dependency_files"`` (keeps the recorded paths per surviving
+    repository). Repository discovery, git state and relations are always
+    recomputed: discovery is cheap, git is live evidence never served stale, and
+    relations cost a bounded TOML read.
+    """
     root = root.resolve()
     limitations: list[str] = []
     unknowns: list[str] = []
     paths = discover_repositories(root, limitations)
     git = _read_git(root, paths, git_reader, clock, git_budget_s)
-    deps = {p: dependencies_by_file(_abs(root, p)) for p in paths}
+    reuse_tech = prior is not None and "technologies" in reusable
+    reuse_depfiles = prior is not None and "dependency_files" in reusable
+    prior_depfiles = ({r.path: r.dependency_files for r in prior.repositories}
+                      if reuse_depfiles and prior is not None else {})
+    # Parsed dependency names are needed to recompute technologies, and to derive
+    # dependency_files for any repository the snapshot did not cover.
+    need_deps = not reuse_tech or any(p not in prior_depfiles for p in paths)
+    deps = ({p: dependencies_by_file(_abs(root, p)) for p in paths}
+            if need_deps else {})
     repositories: list[RepositoryInfo] = []
     all_paths: set[str] = set(paths)
     for path in paths:
         summary, git_limitations = git[path]
-        dependency_files = [_rel(root, f) for f in deps[path]]
+        if reuse_depfiles and path in prior_depfiles:
+            dependency_files = list(prior_depfiles[path])
+        else:
+            dependency_files = [_rel(root, f) for f in deps[path]]
         all_paths.update(dependency_files)
         repositories.append(RepositoryInfo(
             path=path, git=summary, dependency_files=sorted(dependency_files),
@@ -79,11 +101,13 @@ def describe_workspace(
     explicit, warnings = load_relations(_forge_dir(root), paths)
     limitations.extend(warnings)
     relations.extend(explicit)
+    technologies = (list(prior.technologies) if reuse_tech  # type: ignore[union-attr]
+                    else _technologies(root, paths, deps, records, scan))
     return WorkspaceDescriptor(
         producer=PRODUCER, created_at=utc_now(), root=str(root),
         repositories=repositories,
         paths=sorted(all_paths, key=_path_key),
-        technologies=_technologies(root, paths, deps, records, scan),
+        technologies=technologies,
         relations=sorted(relations, key=lambda r: (r.source, r.kind, r.target)),
         limitations=limitations, unknowns=unknowns,
     )

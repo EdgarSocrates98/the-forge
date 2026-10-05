@@ -654,6 +654,24 @@ def workspace(data: dict[str, Any]) -> str:
                       *_labelled("Unknowns:", _list(data.get("unknowns")))])
 
 
+def decisions(data: dict[str, Any]) -> str:
+    """The reusable-decision memory: one line per remembered decision."""
+    entries = data.get("entries") or []
+    lines = []
+    for entry in sorted(entries, key=lambda e: (e.get("kind") or "",
+                                                e.get("subject") or "")):
+        runs = _list(entry.get("runs"))
+        lines.append(
+            f"{_clean(entry.get('kind', '?'))}: {_clean(entry.get('subject', '?'))} -> "
+            f"{_clean(entry.get('choice', '?'))}  "
+            f"({entry.get('corroborations', 1)}x, last {_clean(entry.get('updated_at', '?'))}"
+            f"{'; runs ' + ','.join(runs[-3:]) if runs else ''})\n"
+            f"    basis: {_clean(entry.get('basis', '?'))}")
+    return "\n".join([f"Decision memory: {len(entries)} entr"
+                      f"{'y' if len(entries) == 1 else 'ies'}", *lines,
+                      *_labelled("Limitations:", _list(data.get("limitations")))])
+
+
 def replay(data: dict[str, Any]) -> str:
     run_id = _clean(data["run_id"])
     if data["mode"] == "render":

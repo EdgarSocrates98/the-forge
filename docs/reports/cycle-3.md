@@ -558,3 +558,46 @@ gerados; ADR 0022 registra a decisão.
 dois e o usuário só vê o limite, não o desejo (o assessment persistido cobre).
 `files_cited` só enxerga paths citáveis; latência é wall-clock local; o store
 não apaga histórico de providers removidos (a capability lê o que existe).
+
+## Wave I — Project Intelligence (`.forge/intel/`)
+
+**`ProjectIntel/v1`.** Novo contrato fechado: o snapshot fingerprinted do
+workspace em `.forge/intel/project.json` — o último `WorkspaceDescriptor` +
+`IntelFingerprints` (digests de `files`, `repos`, `depfiles`, `manifests` do
+registry e `workspace.toml`) + `reused` (seções servidas do snapshot). Sem
+campo `validity`: freshness é veredito de leitura — `freshness()` re-computa os
+digests e responde `current`/`stale` (seções nomeadas)/`unknown`. I2 na forma
+estrutural: nada gravado pode mentir sobre atualidade.
+
+**Refresh incremental (I1).** `refresh_intel` recomputa fingerprints, marca as
+seções com inputs alterados e reusa só `technologies`/`dependency_files` (o
+custo real: parse de manifests + matching de sinais). Descoberta de repos, git
+e relações recomputam sempre — git é evidência viva. O run de plano passa a
+usar esse caminho: o artifact `workspace-descriptor` continua sendo o que o run
+viu; `intel.reused` e a limitação `intel: reused still-fresh sections` auditam
+o que veio do cache, e `capability_graph_sha` referencia o grafo do run.
+
+**`DecisionMemory/v1`.** `.forge/intel/decisions.json`: decisões reutilizáveis
+— `routing` (capability→provider), `profile` (auto/promoção), `pattern` do
+plano, `verdict` de debate — com `basis` registrada. Dedup por
+`sha256(kind|subject|choice)`: reafirmar aumenta `corroborations` e a trilha de
+runs (≤16), não duplica; 256 entradas no máximo. `theforge decisions` lê a
+memória — informa, nunca roteia.
+
+**Testes.** `tests/test_intel.py` (19): fingerprints determinísticos, freshness
+`current`→`stale` por mudança de depfile e de arquivo, malformed fail-closed,
+refresh primeiro/segundo (reused sections provadas e idênticas a um describe
+pleno), stale sections recomputadas, snapshot de outro root nunca reusado
+(workspace movido é first refresh), decisions create/dedup/cap/malformed,
+roundtrip estrito, e2e (plano grava intel + decisões de pattern e routing;
+o descriptor do run é o mesmo do snapshot).
+
+**Resultado.** 19 testes focados verdes; schemas `ProjectIntel`/`DecisionMemory`
+gerados; ADR 0023 registra a decisão; `theforge decisions` entrega a leitura.
+
+**Limitações.** O refresh acontece no caminho de `plan` (onde o descriptor
+existe); `ask` alimenta só a memória de decisões. O fingerprint de depfiles
+cobre manifests dentro de repositórios descobertos — dep files fora de repo
+não afetam o descriptor, então corretamente não afetam o digest. Reuso por
+seção é grosseiro (depfiles_sha agrega todos os manifests): um único manifest
+mudado re-parseia todos — honesto e simples, não máximo.
