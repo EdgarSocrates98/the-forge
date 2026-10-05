@@ -49,6 +49,10 @@ def _git(repo: Path, *args: str) -> str:
 def _init(repo: Path, *, commit: bool = True) -> Path:
     repo.mkdir(parents=True, exist_ok=True)
     _git(repo, "init", "-q", "-b", "main", ".")
+    # No background maintenance: a gc/maintenance lock appearing mid-test is churn the
+    # .git snapshot comparison must not race with (observed flaky on macOS CI).
+    _git(repo, "config", "--local", "gc.auto", "0")
+    _git(repo, "config", "--local", "maintenance.auto", "false")
     if commit:
         (repo / "a.txt").write_text("a\n", encoding="utf-8")
         (repo / "b.txt").write_text("b\n", encoding="utf-8")
@@ -60,10 +64,13 @@ def _init(repo: Path, *, commit: bool = True) -> Path:
 def _snapshot(d: Path) -> dict[str, tuple[bool, int, bytes]]:
     snap: dict[str, tuple[bool, int, bytes]] = {".": (True, d.lstat().st_mtime_ns, b"")}
     for p in sorted(d.rglob("*")):
-        st = p.lstat()
-        is_dir = p.is_dir()
-        snap[p.relative_to(d).as_posix()] = (
-            is_dir, st.st_mtime_ns, b"" if is_dir else p.read_bytes())
+        try:
+            st = p.lstat()
+            is_dir = p.is_dir()
+            snap[p.relative_to(d).as_posix()] = (
+                is_dir, st.st_mtime_ns, b"" if is_dir else p.read_bytes())
+        except OSError:
+            continue  # vanished mid-walk (a transient git lock file, for example)
     return snap
 
 

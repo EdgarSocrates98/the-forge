@@ -93,6 +93,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_diagnostics.py": ("unit", "security"),
     "test_forger_binding.py": ("integration",),
     "test_explain_evolution.py": ("contract",),
+    # planned by design (cycle-2.1 closure)
+    "test_finalize.py": ("integration", "security"),
     # planned by design (agentic-maintainability)
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),

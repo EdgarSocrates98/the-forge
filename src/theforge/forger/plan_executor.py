@@ -50,7 +50,13 @@ from theforge.contracts.verification import ReproducibilityInfo
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.diagnostics import build_diagnostic
 from theforge.errors import PersistenceError, UsageError
-from theforge.forger.orchestrator import AskOutcome, AskRequest, Forger, NodeBinding
+from theforge.forger.orchestrator import (
+    AskOutcome,
+    AskRequest,
+    Forger,
+    NodeBinding,
+    TerminalState,
+)
 from theforge.forger.reproducibility import NO_EXECUTION, combine_levels
 from theforge.forger.telemetry import TelemetryRecorder
 from theforge.meta import PRODUCER, VERSION
@@ -128,6 +134,7 @@ class _PlanTrace:
     installation_sha: str | None = None
     executions: list[NodeExecution] = field(default_factory=list)
     plan_result_sha: str | None = None
+    terminal: TerminalState = "open"  # one terminalization path per run
     limitations: list[str] = field(default_factory=list)
 
 
@@ -189,6 +196,10 @@ class PlanExecutor:
             raise
         except Exception as exc:  # noqa: BLE001 - invariant: a persisted task always gets a receipt
             error = ErrorInfo(code=Codes.INTERNAL, detail=f"{type(exc).__name__}: {exc}")
+            if trace.terminal != "open":
+                raise PersistenceError(
+                    f"run {run_id}: terminalization failed ({error.detail}); refusing a "
+                    f"second _finish", code=Codes.PERSIST_WRITE) from exc
             return self._finish(trace, "provider_failure", error=error, exception=exc)
 
     # --- planning ------------------------------------------------------------------------
@@ -385,6 +396,12 @@ class PlanExecutor:
     def _finish(self, trace: _PlanTrace, status: Outcome, *, error: ErrorInfo | None = None,
                 result: PlanResult | None = None,
                 exception: BaseException | None = None) -> PlanOutcome:
+        """The one terminalization path: open -> finalizing -> finalized, exactly once."""
+        if trace.terminal != "open":
+            raise PersistenceError(
+                f"run {trace.run_id}: _finish called on a {trace.terminal} run",
+                code=Codes.PERSIST_WRITE)
+        trace.terminal = "finalizing"
         store = self.forger.store
         diagnostic: Diagnostic | None = None
         if exception is not None and error is not None and error.code == Codes.INTERNAL:
@@ -414,6 +431,7 @@ class PlanExecutor:
                           graph_sha256=graph_sha, installation_sha256=trace.installation_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)
+        trace.terminal = "finalized"
         return PlanOutcome(run_id=trace.run_id, status=status, plan=trace.plan, result=result,
                            error=error, diagnostic=diagnostic)
 

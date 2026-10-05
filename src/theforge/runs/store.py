@@ -1,8 +1,10 @@
 """Run store: one directory per run, redacted JSON artifacts, hashes over what is on disk."""
 
 import json
+import os
 import re
 import secrets
+import stat
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, TypeVar
@@ -86,12 +88,70 @@ class RunStore:
             (directory / "work").mkdir(parents=True)
         except OSError as exc:
             raise PersistenceError(f"cannot create run directory {directory}: {exc}") from exc
+        self._contained(directory)
         return directory
 
     def _artifact_path(self, run_id: str, name: str) -> Path:
         if name not in ARTIFACTS:
             raise ValueError(f"unknown run artifact {name!r}")
         return self.run_dir(run_id) / f"{name}.json"
+
+    def _contained(self, path: Path) -> Path:
+        """``path`` when it resolves inside ``runs_dir``; ``PERSIST_READ`` otherwise.
+
+        ``realpath`` resolves every intermediate link, so a symlinked run directory whose
+        target leaves the runs directory is caught even though the artifact file itself is
+        a regular file.
+        """
+        base = Path(os.path.realpath(self.runs_dir))
+        real = Path(os.path.realpath(path))
+        if real != base and base not in real.parents:
+            raise PersistenceError(f"{path} resolves outside the runs directory",
+                                   code=Codes.PERSIST_READ)
+        return path
+
+    def _artifact_file(self, run_id: str, name: str) -> Path | None:
+        """The artifact path when it is a regular file physically inside the run dir.
+
+        ``None`` means absent. ``lstat`` never follows the last component, so a symbolic
+        artifact (valid, broken or pointing at another run) is never read: it raises a
+        controlled ``PERSIST_READ``, as does a directory or any non-regular entry.
+        """
+        path = self._artifact_path(run_id, name)
+        try:
+            st = path.lstat()
+        except OSError:
+            return None
+        if not stat.S_ISREG(st.st_mode):
+            raise PersistenceError(
+                f"cannot read {path}: artifact {name!r} is not a regular file",
+                code=Codes.PERSIST_READ)
+        return self._contained(path)
+
+    @staticmethod
+    def _read_bytes(path: Path) -> bytes:
+        """Bytes of a regular artifact file.
+
+        Where ``O_NOFOLLOW`` exists the open itself refuses a link swapped in after the
+        ``lstat`` check; on platforms without it (Windows) the pre-checks stand and the
+        residual race is a documented limitation (no OS sandbox).
+        """
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+        try:
+            fd = os.open(path, flags)
+        except OSError as exc:
+            raise PersistenceError(f"cannot read {path}: {exc}",
+                                   code=Codes.PERSIST_READ) from exc
+        try:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                raise PersistenceError(f"cannot read {path}: not a regular file",
+                                       code=Codes.PERSIST_READ)
+            with os.fdopen(fd, "rb") as fh:
+                fd = -1
+                return fh.read()
+        finally:
+            if fd != -1:
+                os.close(fd)
 
     def write(self, run_id: str, name: str, contract: Any) -> str:
         """Redact, persist atomically and return the sha256 of the on-disk content.
@@ -118,6 +178,15 @@ class RunStore:
         text = json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False)
         tmp = path.with_suffix(".json.tmp")
         try:
+            st = path.lstat()
+        except OSError:
+            pass  # absent is fine; the write creates it
+        else:
+            if not stat.S_ISREG(st.st_mode):
+                raise PersistenceError(f"cannot write {path}: artifact {name!r} exists and "
+                                       f"is not a regular file", code=Codes.PERSIST_WRITE)
+        self._contained(path)
+        try:
             tmp.write_text(text, encoding="utf-8")
             tmp.replace(path)
         except OSError as exc:
@@ -136,12 +205,14 @@ class RunStore:
         return data
 
     def read_optional(self, run_id: str, name: str) -> dict[str, Any] | None:
-        path = self._artifact_path(run_id, name)
-        if not path.is_file():
+        path = self._artifact_file(run_id, name)
+        if path is None:
             return None
         try:
-            loaded = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:  # JSON/Unicode decode errors are ValueErrors
+            loaded = json.loads(self._read_bytes(path).decode("utf-8"))
+        except PersistenceError:
+            raise
+        except ValueError as exc:  # JSON/Unicode decode errors are ValueErrors
             raise PersistenceError(f"cannot read {path}: {exc}",
                                    code=Codes.PERSIST_READ) from exc
         if not isinstance(loaded, dict):

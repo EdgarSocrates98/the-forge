@@ -1,5 +1,7 @@
 import json
+import os
 import secrets
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -521,3 +523,105 @@ def test_run_written_in_previous_format_rereads_with_nothing_new_recorded(
     for name in ("verification", "handoff", "plan", "plan-result", "graph",
                  "workspace-descriptor", "installation", "diagnostic"):
         assert store.read_optional(run_id, name) is None
+
+
+# --- cycle-2.1 wave C: hostile artifact entries are never followed -------------------------
+# A run artifact must be a regular file physically inside the run directory: a link (to
+# anything, inside or outside the store), a directory or a broken link is a controlled
+# PERSIST_READ on every read path — never content from outside the runs directory.
+
+
+def _link(link: Path, target: Path, *, directory: bool = False) -> None:
+    """Link ``link`` to ``target``; skip when the host allows neither links nor junctions."""
+    try:
+        link.symlink_to(target, target_is_directory=directory)
+        return
+    except OSError:
+        pass
+    if os.name == "nt" and directory:
+        made = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                              capture_output=True, check=False)
+        if made.returncode == 0 and os.path.lexists(link):
+            return
+    pytest.skip("symlinks not permitted on this platform")
+
+
+def _assert_unreadable(store: RunStore, run_id: str, name: str = "task") -> None:
+    """Every read path of the artifact is a controlled PERSIST_READ, never content."""
+    reads = (lambda: store.read_optional(run_id, name),
+             lambda: store.read(run_id, name),
+             lambda: store.persisted_sha256(run_id, name),
+             lambda: store.read_contract(run_id, name, ARTIFACT_TYPES[name]))
+    for read in reads:
+        with pytest.raises(PersistenceError) as exc:
+            read()
+        assert exc.value.code == Codes.PERSIST_READ
+
+
+def test_artifact_symlink_to_external_secret_is_unreadable(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    secret = outside / "task.json"
+    secret.write_text(json.dumps({"intent": "leak hunter2"}), encoding="utf-8")
+    _link(store.run_dir(run_id) / "task.json", secret)
+    _assert_unreadable(store, run_id)
+    # The link itself still exists and no external bytes were read into the run.
+    assert os.path.islink(store.run_dir(run_id) / "task.json")
+
+
+def test_artifact_symlink_to_another_run_is_unreadable(tmp_path: Path) -> None:
+    """A link whose target stays inside the store is still a link: never followed."""
+    store, run_id = _store_with_run(tmp_path)
+    other = new_run_id()
+    store.create(other)
+    store.write(other, "task", make_task())
+    _link(store.run_dir(run_id) / "task.json", store.run_dir(other) / "task.json")
+    _assert_unreadable(store, run_id)
+    # The honest artifact of the other run is unaffected.
+    assert store.read(other, "task")["intent"] == "eco password=[REDACTED]"
+
+
+def test_artifact_that_is_a_directory_is_unreadable(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    (store.run_dir(run_id) / "task.json").mkdir()
+    _assert_unreadable(store, run_id)
+
+
+def test_artifact_dir_symlink_is_unreadable(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    _link(store.run_dir(run_id) / "task.json", outside, directory=True)
+    _assert_unreadable(store, run_id)
+
+
+def test_broken_artifact_symlink_is_unreadable_not_absent(tmp_path: Path) -> None:
+    """A dangling link is present-but-hostile, not "absent" (it must not read as None)."""
+    store, run_id = _store_with_run(tmp_path)
+    _link(store.run_dir(run_id) / "task.json", tmp_path / "nowhere" / "task.json")
+    _assert_unreadable(store, run_id)
+
+
+def test_run_dir_link_escaping_the_store_is_unreadable(tmp_path: Path) -> None:
+    """A symlinked run directory pointing outside makes its artifacts unreadable."""
+    store = RunStore(tmp_path / ".forge")
+    run_id = new_run_id()
+    store.runs_dir.mkdir(parents=True)
+    outside = tmp_path / "outside" / run_id
+    outside.mkdir(parents=True)
+    (outside / "task.json").write_text(json.dumps({"intent": "leak"}), encoding="utf-8")
+    _link(store.runs_dir / run_id, outside, directory=True)
+    _assert_unreadable(store, run_id)
+
+
+def test_write_over_a_linked_artifact_is_refused(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    secret = tmp_path / "secret.json"
+    secret.write_text("{}", encoding="utf-8")
+    artifact = store.run_dir(run_id) / "task.json"
+    _link(artifact, secret)
+    with pytest.raises(PersistenceError) as exc:
+        store.write(run_id, "task", make_task())
+    assert exc.value.code == Codes.PERSIST_WRITE
+    assert os.path.islink(artifact)  # the link survives; nothing was written through it

@@ -114,6 +114,11 @@ TELEMETRY_UNAVAILABLE_LIMITATION: Final = "telemetry-unavailable"
 # Receipt limitation when a handoff reaches a capability that does not declare
 # ``accepts_handoff`` (4.7): "<prefix>: <provider>/<capability>".
 HANDOFF_UNDECLARED_LIMITATION: Final = "handoff-use-undeclared"
+# Receipt limitation when the VerificationResult of an executed run could not be
+# persisted during terminalization (the receipt still goes, without its hash).
+VERIFICATION_UNAVAILABLE_LIMITATION: Final = "verification-unavailable"
+# Terminalization state machine: one run, at most one _finish, one receipt.
+TerminalState = Literal["open", "finalizing", "finalized"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -182,8 +187,11 @@ class _Trace:
     handoff: Handoff | None = None  # as persisted: exactly what the provider receives
     handoff_sha: str | None = None
     executed: bool = False  # an execute call was attempted (reproducibility, 14.1)
+    response_status: str | None = None  # the provider's own status, when it answered
+    result_seen: ExecutionResult | None = None  # validated result, before drift demotion
     verification: VerificationResult | None = None
     verification_sha: str | None = None
+    terminal: TerminalState = "open"  # one terminalization path per run
     limitations: list[str] = field(default_factory=list)
 
 
@@ -307,6 +315,12 @@ class Forger:
             raise
         except Exception as exc:  # noqa: BLE001 - invariant: a persisted task always gets a receipt
             error = ErrorInfo(code=Codes.INTERNAL, detail=f"{type(exc).__name__}: {exc}")
+            if trace.terminal != "open":
+                # _finish itself failed midway: a second attempt cannot produce a
+                # trustworthy receipt — report the terminalization failure, once.
+                raise PersistenceError(
+                    f"run {run_id}: terminalization failed ({error.detail}); refusing a "
+                    f"second _finish", code=Codes.PERSIST_WRITE) from exc
             decision = trace.decision or self._placeholder(
                 run_id, f"internal error: {error.detail}")
             return self._finish(trace, decision, "provider_failure", error=error,
@@ -404,6 +418,9 @@ class Forger:
             fingerprints.save()
             trace.limitations.extend(fingerprints.warnings)
             self._record_context(trace, fingerprints)
+        # What the provider said survives an internal error past this point (9.x).
+        trace.response_status = executed.response_status
+        trace.result_seen = executed.result
         if executed.result is None:
             if trace.executed:
                 self._record_verification(trace, record, executed.response_status, None)
@@ -523,6 +540,7 @@ class Forger:
                     code=envelope.code, detail=f"execute: {envelope.detail}",
                     field=envelope.field))
             answered = response.status  # the provider's own word (verification self-report)
+            trace.response_status = answered  # survives a core failure before the verdict
             if response.status in ("refused", "error"):
                 status: Outcome = ("refused" if response.status == "refused"
                                    else "provider_failure")
@@ -860,12 +878,48 @@ class Forger:
             self.store.write(trace.run_id, "diagnostic", diagnostic)
         return diagnostic
 
+    def _late_verification(self, trace: _Trace) -> None:
+        """Verification for a run that executed a provider but died before recording it.
+
+        Reached only through the internal-error path (``_finish`` after an exception):
+        on the normal path ``_record_verification`` already ran and
+        ``verification_sha`` is set. Checks that never ran stay ``not_performed`` — the
+        artifact never invents a verification that did not happen. A contract-level
+        failure to persist it becomes a receipt limitation; a persistence failure
+        propagates, like every other artifact write.
+        """
+        record = trace.record
+        if (trace.verification_sha is not None or not trace.executed
+                or record is None or record.manifest is None):
+            return
+        try:
+            notes = self._record_verification(trace, record, trace.response_status,
+                                              trace.result_seen)
+        except PersistenceError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - the run keeps its terminal receipt
+            trace.limitations.append(f"{VERIFICATION_UNAVAILABLE_LIMITATION}: "
+                                     f"{type(exc).__name__}: {exc}")
+            return
+        trace.limitations.extend(n for n in notes if n not in trace.limitations)
+
     def _finish(
         self, trace: _Trace, decision: RoutingDecision, status: Outcome, *,
         result: ExecutionResult | None = None, error: ErrorInfo | None = None,
         exception: BaseException | None = None,
     ) -> AskOutcome:
+        """The one terminalization path: open -> finalizing -> finalized, exactly once.
+
+        Re-entering on a ``finalizing`` or ``finalized`` run is a controlled
+        ``PERSIST_WRITE`` error — never a second, silently different receipt.
+        """
+        if trace.terminal != "open":
+            raise PersistenceError(
+                f"run {trace.run_id}: _finish called on a {trace.terminal} run",
+                code=Codes.PERSIST_WRITE)
+        trace.terminal = "finalizing"
         diagnostic = self._diagnostic(trace, exception, error)
+        self._late_verification(trace)
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:
@@ -900,6 +954,7 @@ class Forger:
             reproducibility=self._reproducibility(trace, status),
         )
         self.store.write(trace.run_id, "receipt", receipt)
+        trace.terminal = "finalized"
         return AskOutcome(run_id=trace.run_id, status=status, decision=decision,
                           receipt=receipt, result=result, error=error,
                           verification=trace.verification, diagnostic=diagnostic)
