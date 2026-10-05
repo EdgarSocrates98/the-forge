@@ -55,6 +55,14 @@ REFEREE_ENTRY = {
     "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-referee.json")),
     "trust": "local",
 }
+# A provider whose first ``execute`` exits 3 (FORGE-PROTO-EXIT — retryable): the
+# manifest's test-only ``flaky`` key drives it; the count lives in the workspace
+# .forge so a retry attempt sees the marker.
+FLAKY_ENTRY = {
+    "id": "fixture-flaky",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-flaky.json")),
+    "trust": "local",
+}
 
 
 def write_providers(

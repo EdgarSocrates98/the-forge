@@ -8,19 +8,25 @@ receipt are written on every outcome, the receipt last (it binds everything by h
 
 Outcomes: a rejected plan ends ``refused`` with its first violation; an ``ambiguous`` or
 ``no_route`` decomposition keeps that outcome; planning only ends ``planned`` (2.8). An
-executed plan runs its nodes sequentially in topological order (3.1, 3.8): each node is a
-complete child run of the ``Forger`` (provider pinned, plan binding, handoff, estimated
-operation class and the ``--approve`` capabilities); a node whose ancestor has no valid
-result is ``skipped`` with that ancestor, independent nodes still run (3.4, 3.5). The plan
-status follows the design rules (3.6) and its reproducibility combines the nodes' (14.3).
-An unexpected error becomes a ``provider_failure`` receipt with ``Codes.INTERNAL`` and a
-redacted diagnostic, persisted as an artifact only with debug (13.5).
+executed plan runs its nodes in topological order (3.1, 3.8) — sequential patterns level by
+level, concurrent ones (``delegate``, ``parallel``, ``debate``) in dependency levels bounded
+by ``MAX_PARALLEL_NODES``: each node is a complete child run of the ``Forger`` (provider
+pinned, plan binding, handoff, estimated operation class and the ``--approve``
+capabilities); a node whose ancestor has no valid result is ``skipped`` with that ancestor,
+independent nodes still run (3.4, 3.5). A ``PlanState`` snapshot is persisted as the nodes
+record (``plan-state``, F1) so ``theforge resume`` can continue an interrupted run, reusing
+the nodes whose recorded inputs still verify and re-executing the rest; a ``retry.toml``
+policy may retry transient node failures (F3). The plan status follows the design rules
+(3.6) and its reproducibility combines the nodes' (14.3). An unexpected error becomes a
+``provider_failure`` receipt with ``Codes.INTERNAL`` and a redacted diagnostic, persisted
+as an artifact only with debug (13.5).
 
 Nothing here knows a provider domain: plans come from the decomposer or from a file, and
 every provider is reached through the ``Forger`` or the protocol helpers of ``planning``.
 """
 
 import json
+import time
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, replace
@@ -33,6 +39,7 @@ from theforge.context import scan_workspace
 from theforge.context.scan import WorkspaceScan
 from theforge.contracts import (
     Confidence,
+    ContractError,
     ErrorInfo,
     ExecutionReceipt,
     ExecutionResult,
@@ -51,9 +58,13 @@ from theforge.contracts.integrity import validate_plan_result
 from theforge.contracts.plan import (
     ExecutionPlan,
     NodeOutcome,
+    NodePlanState,
     NodeStatus,
     PlanNode,
+    PlanNodeState,
     PlanResult,
+    PlanRunState,
+    PlanState,
     SemanticPlanProposal,
 )
 from theforge.contracts.receipt import PlanRefs
@@ -78,6 +89,7 @@ from theforge.forger.orchestrator import (
     TerminalState,
 )
 from theforge.forger.reproducibility import NO_EXECUTION, combine_levels
+from theforge.forger.resume import prior_outcomes, reuse_execution
 from theforge.forger.telemetry import TelemetryRecorder
 from theforge.meta import PRODUCER, VERSION
 from theforge.planning.decision import compose_decision
@@ -99,6 +111,7 @@ from theforge.planning.propose import (
     proposal_plan,
     request_proposal,
 )
+from theforge.planning.retry import RetryPolicy, load_retry_config, retry_backoff, retryable
 from theforge.planning.synthesis import synthesize
 from theforge.planning.validate import checked_plan, load_plan_file
 from theforge.profiles import ContextProfile, assumed_profile, profile_for
@@ -135,6 +148,10 @@ class PlanCommand:
     profile: ProfileRequest = "auto"
     plan_file: Path | None = None  # plan --from FILE; None: decompose the intent
     execute: bool = False  # False: plan only (outcome ``planned``)
+    # ``theforge resume``: the plan run to continue — its task and plan are reused
+    # verbatim (byte-identical hashes) and intact prior nodes are re-hydrated
+    # instead of re-executed (forger.resume).
+    resume_run: str | None = None
     approvals: frozenset[str] = frozenset()  # capability ids approved for every node (3.7)
     allow_unverified: bool = False
     debug: bool = False  # also persist the diagnostic of an internal error
@@ -172,8 +189,17 @@ class _PlanTrace:
     installation_sha: str | None = None
     executions: list[NodeExecution] = field(default_factory=list)
     plan_result_sha: str | None = None
+    plan_state_sha: str | None = None  # the last PlanState snapshot written
     complexity_config: ComplexityConfig | None = None  # loaded when profile is ``auto``
     complexity_sha: str | None = None  # the run's ComplexityAssessment, when auto
+    resumed_from: str | None = None  # the plan run being resumed, when any
+    prior: dict[str, NodeOutcome] | None = None  # its recorded node outcomes
+    # Resume invalidation reasons by node — written from worker threads, emitted
+    # in plan order at synthesis (never completion order).
+    resume_notes: dict[str, str] = field(default_factory=dict)
+    # Retry audit by node — the run ids of failed attempts, same discipline.
+    retry_notes: dict[str, list[str]] = field(default_factory=dict)
+    retry_policy: RetryPolicy = field(default_factory=RetryPolicy)
     terminal: TerminalState = "open"  # one terminalization path per run
     limitations: list[str] = field(default_factory=list)
 
@@ -212,10 +238,30 @@ class PlanExecutor:
 
     def run(self, command: PlanCommand) -> PlanOutcome:
         store = self.forger.store
+        resumed_from = command.resume_run
+        prior_task: TaskSpec | None = None
+        if resumed_from is not None:
+            # Validate the resume target before the new run dir exists (F1/F2):
+            # an unknown run, a non-plan run or one without a persisted plan is a
+            # usage error, not a refused run with a receipt.
+            try:
+                known = store.run_dir(resumed_from).is_dir()
+            except ValueError as exc:
+                raise UsageError(f"unknown run {resumed_from}") from exc
+            if not known:
+                raise UsageError(f"unknown run {resumed_from}")
+            try:
+                prior_task = store.read_contract(resumed_from, "task", TaskSpec)
+                store.read_contract(resumed_from, "plan", ExecutionPlan)
+            except (LookupError, PersistenceError, ContractError) as exc:
+                raise UsageError(f"run {resumed_from} has no resumable plan: {exc}") \
+                    from exc
         run_id = new_run_id()
         started = utc_now()
         store.create(run_id)
-        task = TaskSpec(
+        # F2 task integrity: the resumed run persists the prior task verbatim —
+        # an identical canonical hash is the proof the task did not change.
+        task = prior_task if prior_task is not None else TaskSpec(
             producer=PRODUCER, created_at=started, id=run_id, intent=command.intent,
             workspace_root=str(self.forger.root), targets=list(command.targets),
             budget_profile=command.profile)
@@ -236,7 +282,12 @@ class PlanExecutor:
         telemetry.note(PLAN_TELEMETRY_LIMITATION)
         trace = _PlanTrace(run_id=run_id, started_at=started, task=task,
                            task_sha=store.write(run_id, "task", task), command=command,
-                           telemetry=telemetry, complexity_config=config)
+                           telemetry=telemetry, complexity_config=config,
+                           resumed_from=resumed_from,
+                           retry_policy=load_retry_config(
+                               user_dir=self.forger.registry.user_dir or user_config_dir(),
+                               forge_dir=self.forger.root / ".forge",
+                               warnings=config_warnings))
         trace.limitations.extend(config_warnings)
         try:
             return self._run(trace)
@@ -290,6 +341,10 @@ class PlanExecutor:
         if plan is not None:
             trace.plan = plan
             trace.plan_sha = store.write(trace.run_id, "plan", plan)  # before any node (1.7)
+            if plan.status == "validated":
+                # The durable scheduler state (F1): first snapshot while planned,
+                # one write per recorded node, a final one before plan-result.
+                self._write_state(trace, plan, "planned")
         if installation is not None:
             trace.installation_sha = store.write(trace.run_id, "installation", installation)
 
@@ -305,8 +360,20 @@ class PlanExecutor:
 
     def _plan(self, trace: _PlanTrace, scan: WorkspaceScan, descriptor: WorkspaceDescriptor,
               profile: ContextProfile) -> _Planned:
-        """The plan of the run: from the plan file, or decomposed from the intent."""
+        """The plan of the run: resumed, read from a file, or decomposed from the intent."""
         command, task, records = trace.command, trace.task, trace.records
+        if command.resume_run is not None:
+            # F1/F2: the persisted plan is reused verbatim (its hash is the proof it
+            # is unchanged) and revalidated against the registry as it is today —
+            # a provider that vanished or lost the capability rejects the plan.
+            stored = self.forger.store.read_contract(
+                command.resume_run, "plan", ExecutionPlan)
+            profile = profile_for(stored.profile)
+            trace.telemetry.set_profile(profile)
+            trace.prior = prior_outcomes(self.forger.store, command.resume_run)
+            plan = checked_plan(stored, records, profile)
+            return _Planned(_resume_decision(task, plan, command.resume_run), plan,
+                            "refused")
         if command.plan_file is not None:
             profile_name = command.profile
             if profile_name == "auto":  # a file plan fixes its structure: its profile wins
@@ -432,12 +499,32 @@ class PlanExecutor:
                 if blocker is not None:
                     execution = _skipped(node, blocker)
                 else:
-                    execution = self._run_node(trace, plan, node, sources, levels)
+                    execution = self._run_or_reuse(trace, plan, node, sources, levels)
                 self._record(trace, execution, failed, sources, levels)
+                self._write_state(trace, plan, "running")
 
         trace.stage = "plan:synthesis"
+        if trace.prior is not None:
+            # Resume accounting, in plan order (deterministic), then the summary.
+            for node in plan.nodes:
+                why = trace.resume_notes.get(node.id)
+                if why is not None:
+                    trace.limitations.append(
+                        f"resume: node {node.id} re-executed ({why})")
+            reused = sum(1 for e in trace.executions if e.outcome.reused)
+            trace.limitations.append(
+                f"resume {trace.resumed_from}: reused {reused} of "
+                f"{len(trace.prior)} recorded node runs")
+        for node in plan.nodes:
+            retried = trace.retry_notes.get(node.id)
+            if retried:
+                trace.limitations.append(
+                    f"node {node.id}: retried {len(retried)}x "
+                    f"(attempt runs: {', '.join(retried)})")
         outcomes = [e.outcome for e in trace.executions]
         status, error = plan_status(outcomes)
+        # Terminal scheduler snapshot before the plan-result (receipt binds its hash).
+        self._write_state(trace, plan, _terminal_state(status))
         # A debate composes its DecisionRecord before the PlanResult so the result
         # points at the decision artifact (and surfaces its limitations/unknowns).
         decision_sha = None
@@ -489,9 +576,13 @@ class PlanExecutor:
                     runnable.append(nodes[nid])
             if runnable:
                 workers = min(len(runnable), MAX_PARALLEL_NODES)
+                # A snapshot with the level's nodes in-flight: a crash mid-level
+                # keeps them honest as ``running`` (never silently succeeded).
+                self._write_state(trace, plan, "running",
+                                  in_flight=frozenset(n.id for n in runnable))
                 with ThreadPoolExecutor(max_workers=workers,
                                         thread_name_prefix="forge-node") as pool:
-                    futures = {pool.submit(self._run_node, trace, plan, node,
+                    futures = {pool.submit(self._run_or_reuse, trace, plan, node,
                                            list(sources), dict(levels)): node.id
                                for node in runnable}
                     for future in as_completed(futures):
@@ -499,6 +590,8 @@ class PlanExecutor:
                         done[execution.node.id] = execution
             for nid in ready:  # deterministic order: topological, not completion
                 self._record(trace, done[nid], failed, sources, levels)
+            if runnable:
+                self._write_state(trace, plan, "running")
 
     def _record(self, trace: _PlanTrace, execution: NodeExecution,
                 failed: dict[str, str], sources: list[SourceResult],
@@ -521,21 +614,80 @@ class PlanExecutor:
         if outcome.reproducibility is not None:
             levels[outcome.node] = outcome.reproducibility.level
 
+    def _write_state(self, trace: _PlanTrace, plan: ExecutionPlan,
+                     run_state: PlanRunState,
+                     in_flight: frozenset[str] = frozenset()) -> None:
+        """The ``plan-state`` snapshot (F1): every node mapped from the recorded
+        executions — unrecorded nodes are ``running`` when in flight, ``ready``
+        once their dependencies recorded, else ``pending``. The last write stands;
+        the receipt binds it."""
+        done = {e.node.id: e for e in trace.executions}
+        deps = {n.id: tuple(d.node for d in n.depends_on) for n in plan.nodes}
+        nodes = [
+            PlanNodeState(
+                node=node.id, run_id=(execution.outcome.run_id
+                                      if execution else None),
+                result_sha256=(execution.outcome.result_sha256 if execution else None),
+                blocked_by=(execution.outcome.blocked_by if execution else None),
+                attempts=execution.outcome.attempts if execution else 0,
+                reused=execution.outcome.reused if execution else False,
+                state=(_node_state(execution) if execution is not None
+                       else "running" if node.id in in_flight
+                       else "ready" if all(d in done for d in deps[node.id])
+                       else "pending"))
+            for node in plan.nodes
+            for execution in (done.get(node.id),)]
+        trace.plan_state_sha = self.forger.store.write(
+            trace.run_id, "plan-state", PlanState(
+                producer=PRODUCER, created_at=utc_now(), plan_run=trace.run_id,
+                run_state=run_state, nodes=nodes, resumed_from=trace.resumed_from))
+
+    def _run_or_reuse(self, trace: _PlanTrace, plan: ExecutionPlan, node: PlanNode,
+                      sources: Sequence[SourceResult],
+                      levels: Mapping[str, Reproducibility]) -> NodeExecution:
+        """``resume`` path: reuse the prior node when its inputs still verify (F2),
+        else execute it fresh. Invalidation reasons land in the plan limitations."""
+        if trace.prior is None:
+            return self._run_node(trace, plan, node, sources, levels)
+        execution, why = reuse_execution(
+            self.forger.store, plan, node, trace.prior.get(node.id), sources,
+            trace.records)
+        if execution is None:
+            if node.id in trace.prior:
+                trace.resume_notes[node.id] = why or "not reusable"
+            return self._run_node(trace, plan, node, sources, levels)
+        return execution
+
     def _run_node(self, trace: _PlanTrace, plan: ExecutionPlan, node: PlanNode,
                   sources: Sequence[SourceResult],
                   levels: Mapping[str, Reproducibility]) -> NodeExecution:
         """One child run of the Forger for ``node``, its valid result re-read from disk."""
         command, store = trace.command, self.forger.store
-        handoff = build_handoff(trace.run_id, node, sources, records=trace.records)
+        # The handoff belongs to the plan document's run: a resume rebuilds the
+        # same bytes the original children consumed (F2 compares their hashes).
+        handoff = build_handoff(plan.plan_run, node, sources, records=trace.records)
         binding = NodeBinding(
             plan_run=trace.run_id, node=node.id, pattern=plan.pattern, handoff=handoff,
             estimate_class=node.estimate.operation_class if node.estimate else None,
             upstream=tuple(levels[i] for i in node.inputs if i in levels))
-        asked = self.forger.ask(AskRequest(
-            intent=command.intent, targets=list(node.targets), capability=node.capability,
-            action=node.action, profile=command.profile,
-            allow_unverified=command.allow_unverified, approvals=command.approvals,
-            provider=node.provider, node=binding, debug=command.debug))
+        # F3 retry: policy-driven — only transient protocol failures retry, bounded
+        # by retry.toml; every attempt is a real child run with its own receipt.
+        policy = trace.retry_policy
+        attempt = 0
+        while True:
+            attempt += 1
+            asked = self.forger.ask(AskRequest(
+                intent=trace.task.intent, targets=list(node.targets),
+                capability=node.capability, action=node.action, profile=command.profile,
+                allow_unverified=command.allow_unverified, approvals=command.approvals,
+                provider=node.provider, node=binding, debug=command.debug))
+            if asked.status != "provider_failure" or attempt >= policy.max_attempts \
+                    or not retryable(policy, asked.error.code if asked.error else None):
+                break
+            # Every failed attempt stays a receipted child run; its id is audit
+            # (emitted in plan order at synthesis).
+            trace.retry_notes.setdefault(node.id, []).append(asked.run_id)
+            time.sleep(retry_backoff(policy, attempt))
         reached = self._reached_execute(asked)
         child = asked.run_id
         result = (store.read_contract(child, "result", ExecutionResult)
@@ -549,7 +701,7 @@ class PlanExecutor:
             node=node.id, status=_NODE_STATUS.get(asked.status, "no_route"), run_id=child,
             receipt_sha256=store.persisted_sha256(child, "receipt"),
             result_sha256=asked.receipt.result_sha256, error=_node_error(asked),
-            reproducibility=asked.receipt.reproducibility)
+            reproducibility=asked.receipt.reproducibility, attempts=attempt)
         return NodeExecution(
             node=node, outcome=outcome, result=result, handoff=delivered,
             verification=verification, reached_execute=reached,
@@ -623,12 +775,14 @@ class PlanExecutor:
             started_at=trace.started_at, finished_at=utc_now(), error=error,
             limitations=limitations, telemetry_sha256=telemetry_sha,
             reproducibility=reproducibility,
+            resumed_from=trace.resumed_from,
             plan=PlanRefs(plan_sha256=trace.plan_sha,
                           workspace_descriptor_sha256=trace.descriptor_sha,
                           graph_sha256=graph_sha, installation_sha256=trace.installation_sha,
                           capability_graph_sha256=trace.capability_graph_sha,
                           semantic_proposal_sha256=trace.semantic_proposal_sha,
                           decision_sha256=trace.decision_sha,
+                          plan_state_sha256=trace.plan_state_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)
         trace.terminal = "finalized"
@@ -670,6 +824,17 @@ def _semantic_decision(
             unresolved=list(proposal.unknowns)))
 
 
+def _resume_decision(task: TaskSpec, plan: ExecutionPlan, resumed_from: str
+                     ) -> RoutingDecision:
+    """Routing artifact of a resumed plan: the same selections, reasoned as resume."""
+    decision = _file_decision(task, plan)
+    return replace(
+        decision,
+        reason=f"resume of {resumed_from} ({plan.status}): "
+               f"{len(plan.nodes)} nodes "
+               f"({' -> '.join(f'{n.provider}/{n.capability}' for n in plan.nodes)})")
+
+
 def _file_decision(task: TaskSpec, plan: ExecutionPlan) -> RoutingDecision:
     """Routing artifact of a plan read from a file: its nodes, in declaration order."""
     chain = " -> ".join(f"{n.provider}/{n.capability}" for n in plan.nodes)
@@ -686,6 +851,23 @@ def _file_decision(task: TaskSpec, plan: ExecutionPlan) -> RoutingDecision:
                   for i, n in enumerate(plan.nodes)],
         reason=f"plan file ({plan.status}): {len(plan.nodes)} nodes: {chain}",
         confidence=Confidence(level="high" if plan.status == "validated" else "low"))
+
+
+def _node_state(execution: NodeExecution) -> NodePlanState:
+    """The scheduler state of a recorded node (F1): ok/partial succeed, a skipped
+    node stays skipped, everything else failed."""
+    status = execution.outcome.status
+    if status in _VALID:
+        return "succeeded"
+    return "skipped" if status == "skipped" else "failed"
+
+
+def _terminal_state(status: Outcome) -> PlanRunState:
+    """The plan's terminal scheduler state from its outcome (``paused`` and
+    ``cancelled`` are declared but unreachable today)."""
+    if status == "ok":
+        return "completed"
+    return "partial" if status == "partial" else "failed"
 
 
 def _skipped(node: PlanNode, blocker: str) -> NodeExecution:

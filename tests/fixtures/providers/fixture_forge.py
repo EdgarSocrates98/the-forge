@@ -10,7 +10,9 @@ op, that op answers ``estimate`` normally and ``proposal`` when the request carr
 ``purpose="proposal"``. ``execute`` echoes the number of handoff items it received as
 one extra evidence (only when the request carries a handoff), and a ``decision``
 key ``{"claim": ..., "subject": ...}`` adds a referee-style evidence with
-``id="decision"`` (the debate convention).
+``id="decision"`` (the debate convention). A ``flaky: <int>`` key makes the
+first N ``execute`` calls exit 3 (a retryable FORGE-PROTO-EXIT): the count lives
+in ``<workspace_root>/.forge/flaky-<id>.count`` so it survives across attempts.
 """
 
 import json
@@ -27,6 +29,7 @@ def main() -> int:
     estimate = manifest.pop("estimate", {})  # test-only key, not part of the manifest
     proposal = manifest.pop("proposal", None)  # test-only SemanticPlanProposal
     decision = manifest.pop("decision", None)  # test-only referee decision evidence
+    flaky = manifest.pop("flaky", 0)  # test-only: exit 3 on the first N executes
     op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
@@ -86,6 +89,13 @@ def main() -> int:
                              "subject": str(decision.get("subject") or "fixture decision"),
                              "claim": str(decision.get("claim") or ""),
                              "producer": producer})
+        if op == "execute" and flaky:
+            root = Path((payload.get("task") or {}).get("workspace_root") or ".")
+            marker = Path(root) / ".forge" / f"flaky-{manifest['id']}.count"
+            seen = int(marker.read_text(encoding="utf-8")) if marker.exists() else 0
+            if seen < int(flaky):  # transient failure: retryable exit, no reply
+                marker.write_text(str(seen + 1), encoding="utf-8")
+                return 3
         return reply("ok", {
             "schema": "theforge/ExecutionResult/v1", "producer": producer,
             "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",

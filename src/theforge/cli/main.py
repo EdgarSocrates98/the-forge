@@ -137,6 +137,16 @@ def build_parser() -> argparse.ArgumentParser:
     replay.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
                         help="approve a capability for the re-execution (repeatable)")
     replay.set_defaults(handler=commands.cmd_replay)
+
+    resume = sub.add_parser(
+        "resume", parents=[common],
+        help="resume a plan run: nodes whose recorded inputs still verify are "
+             "reused, the rest re-execute")
+    resume.add_argument("run_id", help="the plan run to resume")
+    resume.add_argument("--allow-unverified", action="store_true")
+    resume.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
+                        help="approve a capability for the nodes that use it (repeatable)")
+    resume.set_defaults(handler=commands.cmd_resume)
     return parser
 
 

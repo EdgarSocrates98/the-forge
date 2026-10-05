@@ -292,6 +292,46 @@ def cmd_plan(args: argparse.Namespace) -> int:
     return EXIT_BY_STATUS.get(outcome.status, 4)
 
 
+def cmd_resume(args: argparse.Namespace) -> int:
+    """``theforge resume RUN``: continue a plan run, reusing the nodes whose
+    recorded inputs still verify (F1/F2). The prior task and plan persist
+    verbatim — identical hashes are the integrity proof."""
+    root = _root(args)
+    forge_dir = require_forge_dir(root)
+    registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
+    store = RunStore(forge_dir)
+    with _run_lookup():
+        if not store.run_dir(args.run_id).is_dir():
+            raise LookupError(f"unknown run {args.run_id}")
+        task = store.read_optional(args.run_id, "task")
+        if task is None or store.read_optional(args.run_id, "plan") is None:
+            raise UsageError(f"run {args.run_id} has no resumable plan")
+    profile = task.get("budget_profile")
+    outcome = PlanExecutor(Forger(root, registry, store)).run(PlanCommand(
+        intent=str(task.get("intent") or ""),
+        targets=list(task.get("targets") or ["."]),
+        profile=profile if profile in ("auto", "economy", "balanced", "max") else "auto",
+        execute=True, resume_run=args.run_id,
+        approvals=frozenset(args.approvals or ()), allow_unverified=args.allow_unverified,
+        debug=args.debug,
+    ))
+    _warn(registry)
+    data: dict[str, Any] = redact({
+        "run_id": outcome.run_id, "status": outcome.status,
+        "resumed_from": args.run_id,
+        "plan": to_dict(outcome.plan) if outcome.plan else None,
+        "result": to_dict(outcome.result) if outcome.result else None,
+        "installation": store.read_optional(outcome.run_id, "installation"),
+        "decision": store.read_optional(outcome.run_id, "decision"),
+        "error": to_dict(outcome.error) if outcome.error else None,
+        "error_family": error_family(outcome.error.code) if outcome.error else None,
+    })
+    _emit(args, data, render.plan)
+    if args.debug and outcome.diagnostic is not None:
+        print_debug(to_dict(outcome.diagnostic))
+    return EXIT_BY_STATUS.get(outcome.status, 4)
+
+
 def cmd_workspace_show(args: argparse.Namespace) -> int:
     """The workspace descriptor from the registry cache only: no provider process starts
     (7.8). A configured provider without a cached manifest is a limitation."""

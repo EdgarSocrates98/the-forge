@@ -33,6 +33,7 @@ from theforge.contracts.plan import (
     DecisionRecord,
     ExecutionPlan,
     PlanResult,
+    PlanState,
     SemanticPlanProposal,
 )
 from theforge.contracts.verification import VerificationResult
@@ -50,8 +51,8 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 # verification and diagnostic (--debug) to any run. ``workspace-descriptor`` is the
 # multi-repo WorkspaceDescriptor, distinct from the ContextPack workspace summary.
 ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
-             "handoff", "context", "context-r1", "context-r2", "result", "plan-result",
-             "graph", "capability-graph", "semantic-proposal", "decision",
+             "handoff", "context", "context-r1", "context-r2", "result", "plan-state",
+             "plan-result", "graph", "capability-graph", "semantic-proposal", "decision",
              "verification", "telemetry", "diagnostic", "complexity", "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
     "task": TaskSpec,
@@ -68,6 +69,7 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
     "context-r1": ContextPack,
     "context-r2": ContextPack,
     "result": ExecutionResult,
+    "plan-state": PlanState,
     "plan-result": PlanResult,
     "decision": DecisionRecord,
     "graph": WorkspaceGraph,

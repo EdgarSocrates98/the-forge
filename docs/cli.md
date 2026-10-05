@@ -20,6 +20,7 @@
 | `workspace show` | descreve repositórios, git, tecnologias e relações usando só o cache do registry ([`workspace show`](#workspace-show)) | 0 |
 | `explain <run_id>` | relatório versionado de um run ou plano, com verificação de hashes ([`explain`](#explain)) | 0 / 2 / 6 |
 | `replay <run_id> --mode render\|verify\|execute [--allow-unverified] [--approve CAPABILITY]...` | reapresenta, reverifica ou reexecuta um run ([`replay`](#replay)) | render/verify: 0 / 2 / 6; execute: 0 / 2 / 3 / 4 / 5 |
+| `resume <run_id> [--allow-unverified] [--approve CAPABILITY]...` | continua um run de plano reutilizando os nós provadamente intactos ([`resume`](#resume)) | 0 / 2 / 3 / 4 / 5 |
 
 ## Exit codes gerais
 
@@ -117,7 +118,7 @@ Not recorded: none
 ```
 
 - `Provider` (com a versão observada quando difere da declarada), `Evidence` (contagem por status epistêmico e duração), `Verification` (os quatro níveis; detalhes de uma checagem `failed` em linhas abaixo) e `Reproducibility` (nível e motivos; `unknown` com `not recorded` em runs anteriores a esta versão).
-- `Plan run: <id> (node <nó>)` num run de nó e `Replay of: <id>` num run criado por `replay --mode execute`.
+- `Plan run: <id> (node <nó>)` num run de nó, `Replay of: <id>` num run criado por `replay --mode execute` e `Resumed from: <id>` num run criado por `resume`; nós reutilizados pelo resume aparecem como `(reused)` e retentativas como `xN attempts`.
 - Num run de plano: `Plan` (status, padrão, origem e perfil), `Nodes` (um por linha: provider, capability e ação, dependências com status epistêmico, regra e evidência, desfecho, run e `blocked_by`), `Violations`, `Handoffs` (origem → destino, itens, truncado), `Synthesis`, `Failures`, `Plan result` (status, ordem efetiva, reprodutibilidade combinada), `Workspace` (repositórios, tecnologias, relações) e `Install` (itens do plano de instalação).
 - `Error family` quando o run tem erro, `Limitations`, `Unknowns`, `Integrity` e `Not recorded` (seções esperadas sem dado gravado).
 - `Integrity`: `ok (N checked[, M unrecorded])` ou `N divergence(s)` seguido de uma linha `<tipo> <artefato>` por divergência (`modified`, `missing` ou `unreadable`; `work/<path>` para um artifact do provider, `<run>/<artefato>` para um run de nó). Com divergência o exit é 6 e o stderr traz uma linha `theforge: integrity divergence: <n> artifact(s) diverge [FORGE-PERSIST-DIVERGENCE · persistence]`; o que é conferido está em [security.md](security.md#integridade-de-runs-e-âncora-de-confiança).
@@ -206,8 +207,20 @@ Só `depends_on` entre dois repositórios descobertos é aceito; uma entrada inv
 
 `--json` emite `mode`, `run_id`, `report` (render), `divergences`, `new_run`, `comparison` e, em `execute`, `new_status`. `--approve` e `--allow-unverified` valem para a reexecução.
 
+## `resume`
+
+`theforge resume <run_id>` continua um run de plano sem repetir o que já está provado. O run original não é alterado: um run novo é criado com a mesma `task` e o mesmo `plan` (hashes byte-idênticos — a prova de que nada mudou) e `resumed_from` aponta o original no receipt, no `plan-state` e no `explain`.
+
+- **Reuso (o nó inteiro é re-hidratado, marcado `reused`, `attempts=0`, mesmo run filho)**: só quando o `NodeOutcome` gravado era válido (`ok`/`partial`), a cadeia de hashes do run filho ainda verifica de ponta a ponta, a identidade do provider (fingerprint e hash do manifesto) é a mesma e o handoff que seria reconstruído hoje é byte-idêntico ao registrado (`inputs.handoff_sha256`) — o que também prova que os resultados de upstream são os mesmos artefatos.
+- **Reexecução**: qualquer dúvida reexecuta o nó — outcome sem resultado válido, artefato divergente, provider alterado/ausente, handoff irreprodutível. O motivo vira limitação `resume: node <nó> re-executed (<motivo>)` e o plano um resumo `resume <id>: reused X of Y recorded node runs`.
+- **Ponto de partida**: `plan-result` quando existe; num run interrompido no meio do plano, o último snapshot `plan-state` (os nós `succeeded` viram candidatos a reuso). Sem nenhum dos dois, todo nó reexecuta.
+- **Revalidação**: o plano gravado é rechecado contra o registry atual — um provider que sumiu ou perdeu a capability recusa o resume (`FORGE-PLAN-*`, exit 4). Um run desconhecido ou sem `plan` é erro de uso (exit 2).
+- **Retry**: `retry.toml` (usuário em `THEFORGE_CONFIG_DIR`, projeto em `.forge/config/`; o projeto vence por chave) habilita retentativa de falhas transitórias de protocolo: `[retry] max_attempts = 1..5`, `retryable_codes` (default `FORGE-PROTO-TIMEOUT`, `FORGE-PROTO-EXIT`), `backoff_seconds`/`backoff_cap_seconds` (exponencial determinístico, sem jitter). O default é `max_attempts = 1` — nunca retenta — e recusas/policy nunca retentam. `NodeOutcome.attempts` conta as tentativas; cada tentativa é um run filho com recibo próprio.
+
+`--json` emite `run_id`, `status`, `resumed_from`, `plan`, `result` (com `reused`/`attempts` por nó), `installation`, `decision` e `error`/`error_family`.
+
 ## Variáveis de ambiente
 | Variável | Efeito |
 |---|---|
-| `THEFORGE_CONFIG_DIR` | diretório de configuração do usuário (`providers.toml`, `policy.toml`) |
+| `THEFORGE_CONFIG_DIR` | diretório de configuração do usuário (`providers.toml`, `policy.toml`, `complexity.toml`, `retry.toml`) |
 | `THEFORGE_CACHE_DIR` | diretório de cache do usuário (cache do registry); ver [ADR 0009](adr/0009-registry-cache-location.md) |

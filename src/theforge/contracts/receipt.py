@@ -61,6 +61,9 @@ class PlanRefs:
     semantic_proposal_sha256: str | None = None
     # On-disk hash of the DecisionRecord a ``debate`` plan produced (None otherwise).
     decision_sha256: str | None = None
+    # On-disk hash of the run's final PlanState snapshot (None when the run never
+    # reached a validated plan, or in runs older than the scheduler states).
+    plan_state_sha256: str | None = None
     plan_result_sha256: str | None = None  # None when the plan was not executed
 
 
@@ -85,6 +88,9 @@ class ExecutionReceipt:
     parent_run: str | None = None  # plan run, on the receipt of a plan node run
     plan_node: str | None = None  # node id, together with parent_run
     replay_of: str | None = None  # original run of a re-execute replay
+    # The plan run a ``resume`` continues: nodes it could prove intact were reused,
+    # the rest re-executed (per-node ``reused`` on the plan result).
+    resumed_from: str | None = None
     verification_sha256: str | None = None  # on-disk hash of the VerificationResult
     reproducibility: ReproducibilityInfo | None = None  # None => unknown (older runs)
     plan: PlanRefs | None = None  # required exactly when kind == "plan"

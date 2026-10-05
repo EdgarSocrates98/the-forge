@@ -209,6 +209,16 @@
                 }
               ]
             },
+            "plan_state_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "semantic_proposal_sha256": {
               "anyOf": [
                 {
@@ -378,6 +388,16 @@
       ]
     },
     "result_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "resumed_from": {
       "anyOf": [
         {
           "type": "string"

@@ -459,6 +459,11 @@ def _node_row(node: dict[str, Any], outcome: dict[str, Any] | None) -> str:
         row += f"  -> {_clean(outcome.get('status', '?'))}"
         if outcome.get("run_id"):
             row += f" run={_clean(outcome['run_id'])}"
+        if outcome.get("reused"):
+            row += " (reused)"
+        attempts = outcome.get("attempts") or 0
+        if isinstance(attempts, int) and attempts > 1:
+            row += f" x{attempts} attempts"
         if outcome.get("blocked_by"):
             row += f" blocked_by={_clean(outcome['blocked_by'])}"
     return row
@@ -572,6 +577,8 @@ def report_sections(report: dict[str, Any]) -> list[str]:
                      + (f" (node {_clean(node)})" if node else ""))
     if report.get("replay_of"):
         lines.append(f"Replay of:   {_clean(report['replay_of'])}")
+    if report.get("resumed_from"):
+        lines.append(f"Resumed from: {_clean(report['resumed_from'])}")
     section = report.get("plan") or {}
     if section:
         lines += plan_sections(section.get("plan"), section.get("result"),
@@ -595,9 +602,11 @@ def explain_report(report: dict[str, Any]) -> str:
 
 def plan(data: dict[str, Any]) -> str:
     run_id = _clean(data["run_id"])
-    lines = [f"Run {run_id}: {_clean(data['status'])}",
-             *plan_sections(data.get("plan"), data.get("result"), None,
-                            data.get("installation"), data.get("decision"))]
+    lines = [f"Run {run_id}: {_clean(data['status'])}"]
+    if data.get("resumed_from"):
+        lines.append(f"Resumed from: {_clean(data['resumed_from'])}")
+    lines += plan_sections(data.get("plan"), data.get("result"), None,
+                           data.get("installation"), data.get("decision"))
     error = data.get("error")
     if error:
         lines.append(f"Error:       {_clean(error['code'])}: {_detail(error['detail'])} "

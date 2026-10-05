@@ -674,6 +674,9 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
+                          "attempts": {
+                            "type": "integer"
+                          },
                           "blocked_by": {
                             "anyOf": [
                               {
@@ -779,6 +782,9 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "reused": {
+                            "type": "boolean"
                           },
                           "run_id": {
                             "anyOf": [
@@ -1468,6 +1474,16 @@
             "duration_ms"
           ],
           "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "resumed_from": {
+      "anyOf": [
+        {
+          "type": "string"
         },
         {
           "type": "null"

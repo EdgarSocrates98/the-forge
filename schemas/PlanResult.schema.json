@@ -25,6 +25,9 @@
       "items": {
         "additionalProperties": false,
         "properties": {
+          "attempts": {
+            "type": "integer"
+          },
           "blocked_by": {
             "anyOf": [
               {
@@ -130,6 +133,9 @@
                 "type": "null"
               }
             ]
+          },
+          "reused": {
+            "type": "boolean"
           },
           "run_id": {
             "anyOf": [

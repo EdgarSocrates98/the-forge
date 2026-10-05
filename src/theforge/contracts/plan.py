@@ -198,6 +198,10 @@ class NodeOutcome:
     blocked_by: str | None = None  # required when skipped (validate_plan_result)
     error: ErrorInfo | None = None
     reproducibility: ReproducibilityInfo | None = None
+    # Child runs this plan run drove for the node (0 when skipped or resumed-reused).
+    attempts: int = 0
+    # ``resume`` marked this outcome: it reuses the recorded child run, unchanged.
+    reused: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -227,6 +231,60 @@ class Synthesis:
     failures: list[str] = field(default_factory=list)  # "<node>: <status> <code>: <detail>"
     limitations: list[str] = field(default_factory=list)  # aggregated, "<node>: " prefix
     unknowns: list[str] = field(default_factory=list)
+
+
+# Durable scheduler state of a plan run (F1): rewritten as nodes finish, so a
+# crashed plan is resumable from ``plan-state`` even without a ``plan-result``.
+PLAN_STATE_SCHEMA = "theforge/PlanState/v1"
+# Reachable run states: planned (never executed), running, completed, partial,
+# failed. ``paused``/``cancelled`` are declared for a future scheduler and are
+# never written today.
+PlanRunState = Literal["planned", "running", "paused", "partial", "failed",
+                       "completed", "cancelled"]
+# Reachable node states: pending (deps unmet), ready (deps met, not yet started —
+# a snapshot may catch it), running (child run in flight; a crash leaves this),
+# succeeded (valid result: ok/partial), failed, skipped (blocked_by), cancelled
+# (declared, never written today).
+NodePlanState = Literal["pending", "ready", "running", "succeeded", "failed",
+                        "skipped", "cancelled"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class PlanNodeState:
+    """One node's scheduling state inside a ``PlanState`` snapshot."""
+
+    node: str
+    state: NodePlanState
+    run_id: str | None = None  # the child run once the node reached execute
+    result_sha256: str | None = None  # the child's result artifact hash
+    blocked_by: str | None = None
+    attempts: int = 0
+    reused: bool = False  # a resume reused the recorded child run
+
+
+@dataclass(frozen=True, kw_only=True)
+class PlanState:
+    """Scheduler snapshot of a plan run (core-only artifact ``plan-state``, F1).
+
+    Written once when the plan is validated (nodes ``pending``), after every node
+    records, and once more with the terminal ``run_state`` before ``plan-result``.
+    Each write replaces the artifact; the receipt binds the final hash. A run
+    interrupted mid-plan keeps the last snapshot — that is what ``resume`` reads
+    when no ``plan-result`` exists.
+    """
+
+    schema: str = PLAN_STATE_SCHEMA
+    producer: Producer
+    created_at: str
+    plan_run: str
+    run_state: PlanRunState
+    nodes: list[PlanNodeState]
+    resumed_from: str | None = None  # the plan run this execution resumes
+
+    def __post_init__(self) -> None:
+        if self.schema != PLAN_STATE_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {PLAN_STATE_SCHEMA}")
 
 
 @dataclass(frozen=True, kw_only=True)

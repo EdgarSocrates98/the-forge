@@ -356,3 +356,82 @@ antes de propagar uma exceção). Em `debate`, um proposer falho **pula o refere
 (em vez de decidir entre os sobreviventes) — a escolha mais conservadora: o
 record registra `skipped` como limitação. `delegate` sem nós extras é apenas
 um `parallel` degenerado — útil como intenção, sem semântica adicional.
+
+## Wave F — Scheduler durável, resume e retry
+
+**Objetivo.** Um plano interrompido no meio volta a executar **sem repetir o que
+já está provado** (F1), com integridade de entradas verificada antes de qualquer
+reuso (F2) e retentativa política de falhas transitórias (F3) — `theforge
+resume <plan_run>`.
+
+**`PlanState/v1` (F1).** Contrato fechado do core (`contracts/plan.py`):
+snapshot do escalonador com `run_state` (`planned`/`running`/`completed`/
+`partial`/`failed`; `paused`/`cancelled` declarados, nunca escritos hoje) e um
+`PlanNodeState` por nó (`pending`/`ready`/`running`/`succeeded`/`failed`/
+`skipped`, mais `run_id`, `result_sha256`, `blocked_by`, `attempts`,
+`reused`). O artefato `plan-state` é regravado ao validar o plano, após cada
+nó registrado (em planos concorrentes, por nível — com os nós em voo marcados
+`running`, nunca `succeeded` silencioso) e uma última vez antes do
+`plan-result`; `PlanRefs.plan_state_sha256` liga o hash final no receipt e o
+`hashcheck` o cobre.
+
+**Resume (F2).** `theforge resume <id>` valida o alvo **antes** de criar o run
+novo (run desconhecido ou sem `plan` = erro de uso, exit 2 — nunca um run
+recusado fantasma) e depois reuso a `task` e o `plan` gravados *verbatim*: os
+hashes byte-idênticos são a prova de integridade das entradas, e o plano é
+revalidado contra o registry atual (provider ausente ou sem a capability →
+recusa `FORGE-PLAN-*`). Um nó anterior só é re-hidratado quando **tudo**
+verifica: outcome válido (`ok`/`partial`), o receipt do run filho ainda bate
+com o `receipt_sha256` gravado, a cadeia de hashes do filho verifica de ponta
+a ponta (`verify_run_hashes` — task, contexto, resultado, handoff,
+verificação), a identidade do provider é a mesma (fingerprint do entry e
+`manifest_sha256`) e o handoff reconstruído hoje — com o `plan_run` original
+e o `created_at` gravado — é byte-idêntico ao `inputs.handoff_sha256` do
+filho (o que também prova que os resultados de upstream são os mesmos
+artefatos). Qualquer dúvida reexecuta o nó e a razão vira limitação
+`resume: node <nó> re-executed (<motivo>)`, em ordem do plano
+(determinística, nunca ordem de conclusão). Nós reusados mantêm o `run_id`
+original — evidência não é re-carimbada — e marcam `reused`/`attempts=0` no
+`plan-result`. Sem `plan-result` (crash), o último `plan-state` é o ponto de
+partida: os nós `succeeded` viram candidatos a reuso — o snapshot é só a
+dica; a prova continua sendo a cadeia do run filho. `resumed_from` liga o
+run novo ao original no receipt, no `plan-state`, no `ExplainReport` e na
+renderização (`Resumed from:`, `(reused)`, `xN attempts`).
+
+**Retry (F3).** `planning/retry.py`: `retry.toml` ao lado de
+`policy.toml`/`complexity.toml` (usuário + `.forge/config/`, projeto vence
+por chave; valores malformados viram warnings, nunca abortam o run). Default
+`max_attempts=1` — **não retenta nada**; habilitado, só os códigos listados
+retentam (default `FORGE-PROTO-TIMEOUT`/`FORGE-PROTO-EXIT`), nunca recusas
+ou violações de plano, com backoff exponencial determinístico capado
+(`backoff_seconds * 2**n`, teto `backoff_cap_seconds`, máximo absoluto de 5
+tentativas). Cada tentativa é um run filho completo com recibo próprio;
+`NodeOutcome.attempts` conta quantas o plano dirigiu.
+
+**Testes.** `tests/test_plan_resume.py` (15): política (defaults, merge
+user→project, valores malformados → warnings, backoff capado, códigos
+filtrados), contrato `PlanState` (round-trip + guarda de schema),
+persistência do snapshot e binding no receipt, resume feliz (2/2 reused,
+hashes de task/plan idênticos, `resumed_from` no receipt e no estado),
+reexecução de nó adulterado (result removido → cadeia diverge → reexecuta,
+e o dependente também: o handoff gravado não se reproduz com run upstream
+novo — integridade acima de reuso), crash simulado via `_run_node` injetado
+(resume a partir de `plan-state`), erros de uso (run desconhecido, run sem
+plano), revalidação (provider removido do registry → recusa) e retry e2e
+com `fixture-flaky` (manifest `"flaky": 1` sai 3 no primeiro `execute`:
+default → 1 tentativa e `provider_failure`; `retry.toml` → segunda tentativa
+ok, `attempts=2`; recusa nunca retenta). Fuzz seed `PlanState`; golden de
+evolução atualizado só com campos aditivos (`resumed_from`,
+`attempts`, `reused`).
+
+**Resultado.** Foco verde (543 testes nas áreas tocadas), ruff+mypy limpos,
+schemas regenerados (`PlanState` novo; `PlanResult`/`ExecutionReceipt`/
+`ExplainReport` aditivos), e2e real `plan --execute` + `resume` mostrando
+`(reused)` nos dois nós com run_ids preservados.
+
+**Limitações.** `paused`/`cancelled` são declarados mas nunca escritos — não
+há sinal de pausa/cancelamento no CLI hoje. A identidade do provider no reuso
+é fingerprint + `manifest_sha256` (como no replay): uma mudança de versão que
+preserve ambos ainda reusa. Um plano `rejected` não é resumível (recusa antes
+de qualquer estado); um `planned` sem `--execute` gera o snapshot `planned`
+mas resumi-lo executa — resume é sempre um run de execução.

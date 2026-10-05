@@ -48,6 +48,7 @@ from theforge.contracts.manifest import (
 )
 from theforge.contracts.plan import (
     DECISION_SCHEMA,
+    PLAN_STATE_SCHEMA,
     DecisionOption,
     DecisionRecord,
     ExecutionPlan,
@@ -55,8 +56,10 @@ from theforge.contracts.plan import (
     PlanDependency,
     PlanEstimate,
     PlanNode,
+    PlanNodeState,
     PlanRequest,
     PlanResult,
+    PlanState,
     PlanViolation,
     SemanticPlanDependency,
     SemanticPlanNode,
@@ -107,7 +110,7 @@ from theforge.contracts.workspace import (
 
 __all__ = [
     "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
-    "OPERATION_CLASS_LIMITATION",
+    "OPERATION_CLASS_LIMITATION", "PLAN_STATE_SCHEMA",
     "PROTOCOL_V1", "Artifact", "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
     "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
@@ -122,7 +125,8 @@ __all__ = [
     "GitSummary", "GraphEdge", "GraphNode", "Handoff", "HandoffItem", "HandoffOrigin",
     "HealthCheck", "HealthReport", "InstallationItem", "InstallationPlan", "IntegrityError",
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "NodeOutcome",
-    "PlanDependency", "PlanEstimate", "PlanNode", "PlanRefs", "PlanRequest", "PlanResult",
+    "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
+    "PlanRequest", "PlanResult", "PlanState",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ReceiptInputs",
     "ReceiptProvider", "RepositoryInfo", "ReproducibilityInfo", "Request", "Response",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunTelemetry", "Selection",

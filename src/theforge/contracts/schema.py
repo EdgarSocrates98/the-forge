@@ -29,6 +29,7 @@ from theforge.contracts import (
     PlanEstimate,
     PlanRequest,
     PlanResult,
+    PlanState,
     Request,
     Response,
     RiskAssessment,
@@ -46,7 +47,8 @@ EXPORTED: tuple[type[Any], ...] = (
     ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, RiskAssessment,
     RunTelemetry,
     # cross-forge-foundation (Wave D)
-    ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, Handoff, WorkspaceDescriptor,
+    ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, PlanState, Handoff,
+    WorkspaceDescriptor,
     WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
     ComplexityAssessment, CapabilityGraph, SemanticPlanProposal, DecisionRecord,
 )
@@ -58,7 +60,7 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
     ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,
     InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
-    CapabilityGraph, DecisionRecord,
+    CapabilityGraph, DecisionRecord, PlanState,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

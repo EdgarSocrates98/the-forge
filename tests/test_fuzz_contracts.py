@@ -249,6 +249,13 @@ SEEDS: dict[str, dict[str, Any]] = {
         "chosen": "a", "rejected": ["b"], "rationale": "a has the evidence",
         "confidence": "high", "unknowns": ["u"], "limitations": ["l"],
     },
+    "PlanState": {
+        "producer": P, "created_at": "t", "plan_run": "plan-1", "run_state": "running",
+        "nodes": [{"node": "n1", "state": "succeeded", "run_id": "run-1",
+                   "result_sha256": SHA, "attempts": 2, "reused": False},
+                  {"node": "n2", "state": "pending"}],
+        "resumed_from": "plan-0",
+    },
     "ComplexityAssessment": {
         "producer": P, "created_at": "t", "task_id": "task-1", "level": "medium",
         "score": 0.42, "confidence": 0.9,
