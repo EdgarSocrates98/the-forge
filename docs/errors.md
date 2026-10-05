@@ -47,10 +47,10 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-MANIFEST-LIMITS` | registry | manifest ou capability acima dos limites, ou glob catch-all (aviso; capability ou provider excluído) |
 | `FORGE-MANIFEST-VERSION` | registry | `version` do manifest não é SemVer 2.0.0 (provider `invalid`) |
 | `FORGE-MANIFEST-TAXONOMY` | registry | capability, ação, alias ou `replaced_by` fora das regras mecânicas da taxonomia (aviso; capability excluída, provider `invalid` se nenhuma restar) |
-| `FORGE-PLAN-INVALID` | plan | plano com ciclo, dependência inexistente, id duplicado ou `inputs` fora de `depends_on` (`refused`, nenhum nó executado) |
+| `FORGE-PLAN-INVALID` | plan | plano com ciclo, dependência inexistente, id duplicado, `inputs` fora de `depends_on`, ou regra estrutural do padrão violada — `delegate` proíbe `depends_on`/`inputs`; `debate` exige ≥2 `proposer` independentes e 1 `referee` que depende de todos e os declara em `inputs` (`refused`, nenhum nó executado) |
 | `FORGE-PLAN-CAPABILITY` | plan | nó com provider que não está pronto ou que não declara a capability ou a ação (`refused`) |
 | `FORGE-PLAN-LIMIT` | plan | nós ou providers distintos acima do limite (`refused`) |
-| `FORGE-PLAN-PATTERN-RESERVED` | plan | padrão reservado (`delegate`, `parallel`, `debate`) (`refused`) |
+| `FORGE-PLAN-PATTERN-RESERVED` | plan | valor de `pattern` fora dos cinco executáveis (`route`, `delegate`, `parallel`, `pipeline`, `debate`) (`refused`) |
 | `FORGE-PLAN-FILE` | plan | arquivo de plano ilegível ou fora do contrato (erro de uso, exit 2) |
 | `FORGE-PLAN-DEPENDENCY-FAILED` | plan | nó `skipped` porque um ancestral não produziu resultado válido |
 | `FORGE-PLAN-ESTIMATE` | plan | a op `plan` do provider falhou (limitação no nó; o plano segue sem estimativa) |

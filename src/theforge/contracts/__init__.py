@@ -47,6 +47,9 @@ from theforge.contracts.manifest import (
     Signals,
 )
 from theforge.contracts.plan import (
+    DECISION_SCHEMA,
+    DecisionOption,
+    DecisionRecord,
     ExecutionPlan,
     NodeOutcome,
     PlanDependency,
@@ -103,14 +106,16 @@ from theforge.contracts.workspace import (
 )
 
 __all__ = [
-    "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "OPERATION_CLASS_LIMITATION",
+    "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
+    "OPERATION_CLASS_LIMITATION",
     "PROTOCOL_V1", "Artifact", "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
     "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
     "ComplexityAssessment",
     "ComplexityDimension",
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
-    "ContextRequestItem", "ContractError", "Diagnostic", "DiagnosticCause", "DiagnosticFrame",
+    "ContextRequestItem", "ContractError", "DecisionOption", "DecisionRecord", "Diagnostic",
+    "DiagnosticCause", "DiagnosticFrame",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",
     "ExecutionInfo", "ExecutionPlan",
     "ExecutionReceipt", "ExecutionResult", "ExplainReport", "Finding", "ForgeManifest",

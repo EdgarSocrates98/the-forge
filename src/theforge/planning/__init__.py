@@ -1,5 +1,6 @@
 """Multi-provider planning: decomposition, validation, order, handoff, synthesis, graph."""
 
+from theforge.planning.decision import DECISION_EVIDENCE_ID, compose_decision
 from theforge.planning.decompose import (
     INTENT_ORDER_RULE,
     Decomposition,
@@ -17,6 +18,7 @@ from theforge.planning.validate import (
 )
 
 __all__ = [
+    "DECISION_EVIDENCE_ID",
     "INTENT_ORDER_RULE",
     "MAX_PLAN_FILE_BYTES",
     "Decomposition",
@@ -25,6 +27,7 @@ __all__ = [
     "blocked_by",
     "check_plan",
     "checked_plan",
+    "compose_decision",
     "decompose",
     "decomposed_plan",
     "decomposition_dependencies",

@@ -4,11 +4,13 @@ argv: fixture_forge.py [--unhealthy] MANIFEST_JSON OP
 
 ``--unhealthy`` makes the health op report ``unavailable`` (fallback scenarios).
 
-The manifest file may carry test-only ``estimate`` and ``proposal`` keys (never part
-of the described manifest): when the manifest declares the ``plan`` op, that op
-answers ``estimate`` normally and ``proposal`` when the request carries
+The manifest file may carry test-only ``estimate``, ``proposal`` and ``decision``
+keys (never part of the described manifest): when the manifest declares the ``plan``
+op, that op answers ``estimate`` normally and ``proposal`` when the request carries
 ``purpose="proposal"``. ``execute`` echoes the number of handoff items it received as
-one extra evidence (only when the request carries a handoff).
+one extra evidence (only when the request carries a handoff), and a ``decision``
+key ``{"claim": ..., "subject": ...}`` adds a referee-style evidence with
+``id="decision"`` (the debate convention).
 """
 
 import json
@@ -24,6 +26,7 @@ def main() -> int:
     manifest = json.loads(Path(args[0]).read_text(encoding="utf-8"))
     estimate = manifest.pop("estimate", {})  # test-only key, not part of the manifest
     proposal = manifest.pop("proposal", None)  # test-only SemanticPlanProposal
+    decision = manifest.pop("decision", None)  # test-only referee decision evidence
     op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
@@ -77,6 +80,11 @@ def main() -> int:
             evidence.append({"id": "e2", "epistemic": "observed", "subject": "handoff",
                              "claim": f"received {len(handoff.get('items') or [])} "
                                       "handoff items",
+                             "producer": producer})
+        if isinstance(decision, dict):  # referee convention: id="decision", claim=node
+            evidence.append({"id": "decision", "epistemic": "confirmed",
+                             "subject": str(decision.get("subject") or "fixture decision"),
+                             "claim": str(decision.get("claim") or ""),
                              "producer": producer})
         return reply("ok", {
             "schema": "theforge/ExecutionResult/v1", "producer": producer,

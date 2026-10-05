@@ -269,3 +269,90 @@ só é inferível quando a capability declara exatamente um `produces`; um mappi
 path→tipo mais fino exigiria declaração por artifact, fora do escopo. O filtro
 opera sobre kinds tipados; findings/evidências não têm tipo de artefato e seguem
 prioridade+budget.
+
+## Wave E — Execution modes (delegate, parallel, debate) + DecisionRecord/v1
+
+**Objetivo.** `delegate`, `parallel` e `debate` deixam de ser nomes reservados e
+passam a executar — com concorrência limitada, ordem determinística e a mesma
+semântica de falha parcial do sequencial. `debate` é caro e raro por construção:
+o core nunca o emite (só `--from FILE` ou proposta semântica validada) e o
+desfecho é auditável pelo `DecisionRecord` (E1-E4).
+
+**Engine concorrente (E2).** `PlanExecutor._execute_concurrent` escalona por
+nível de dependência sobre a ordem topológica: os nós prontos de um nível rodam
+num `ThreadPoolExecutor` de no máximo `MAX_PARALLEL_NODES` = 4 workers
+(`types.py`), e cada `_run_node` recebe um *snapshot* dos `sources`/`levels` já
+registrados — deps de um nó só estão `done` depois de gravados, então o snapshot
+carrega tudo o que seus `inputs` podem declarar. O registro (`_record`) roda na
+thread principal **na ordem topológica**, nunca na de conclusão:
+`PlanResult.order`, síntese, handoffs e recibos são byte-determinísticos.
+Timeouts são os de sempre (o `Forger.ask` de cada nó cronometra suas chamadas);
+cancelamento é a semântica de `skipped`/`blocked_by`; uma exceção inesperada num
+worker drena o pool e termina o plano como `provider_failure` — o mesmo formato
+do caminho sequencial. `route`/`pipeline` continuam sequenciais (o pipeline é
+uma cadeia; `route` tem um nó).
+
+**`delegate` (E1).** O core é o manager: validação estrutural nova exige
+subtarefas independentes — um nó `delegate` não pode declarar `depends_on` nem
+`inputs` (não há handoff especialista↔especialista); todos rodam num nível só e
+a síntese é a retomada de ownership.
+
+**`parallel` (E2).** Sem restrição adicional de estrutura: `depends_on`/`inputs`
+formam níveis e cada nó dependente recebe o handoff normal dos seus inputs.
+
+**`debate` (E3).** Estrutura fechada: ≥2 nós `role="proposer"` (independentes —
+`depends_on` de proposer é violação) + exatamente 1 `role="referee"` que depende
+de **todos** os proposers e os declara em `inputs` (é assim que recebe o
+handoff com as propostas). Um referee com proposer que falhou fica `skipped` e o
+record registra isso.
+
+**`DecisionRecord/v1` (E4).** Contrato fechado do core
+(`contracts/plan.py`): `question` (o intent), `options` (um `DecisionOption` por
+proposer: node/provider/capability/status/run/claim), `evidence` (`<nó>:<item>` —
+os itens que o referee recebeu, por origem), `tradeoffs` (`<nó>: <finding id>:
+<title>`), `chosen`, `rejected`, `rationale`, `confidence`, `unknowns`,
+`limitations`. `planning/decision.py::compose_decision` extrai a escolha por
+convenção auditável: `Evidence(id="decision")` do referee, `claim` = id do nó
+escolhido (fora dos proposers → `unresolved` + limitação), `subject` =
+rationale. Sem a evidência, sem referee ou com referee `skipped`:
+`chosen="unresolved"`, razão em `limitations` e incógnita explícita — o core
+nunca inventa a decisão. `confidence`: `high` só com referee `ok` e escolha
+válida; `low` com escolha sob falha parcial; `unknown` sem escolha.
+
+**Persistência e binding.** O artefato `decision` entra em `ARTIFACTS` (entre
+`semantic-proposal` e `verification`) e é gravado **antes** do `plan-result` —
+`PlanResult.decision_sha256` (campo aditivo, validado por `check_sha256`)
+aponta para ele e o receipt o liga por `PlanRefs.decision_sha256`; `hashcheck`
+cobre o artefato e `report`/`explain` o expõem cru em `artifacts.decision`.
+As `limitations`/`unknowns` do record propagam para o `plan-result` (o desfecho
+`unresolved` é visível sem abrir o artefato). `NodeRole` ganhou `proposer` e
+`referee`; `EXECUTABLE_PATTERNS` passou a cobrir os 5 padrões e
+`CONCURRENT_PATTERNS` = `{delegate, parallel, debate}`. `FORGE-PLAN-PATTERN-RESERVED`
+permanece para valores fora do `PlanPattern` (construção bypassada).
+
+**Testes.** `tests/test_execution_modes.py` (13): `compose_decision` (escolha,
+rejeitados, evidence/tradeoffs por origem, convenção ausente, claim fora das
+opções, referee skipped, invariantes do contrato); engine concorrente com
+`_run_node` fake — 5 nós independentes provam `max_workers` ≤ 4 **e** paralelismo
+real (`max_seen` > 1 medido sob lock), gravação topológica apesar da ordem de
+conclusão, falha parcial (`provider_failure` de um nó só pula o dependente);
+e2e com fixtures — `delegate` (2 especialistas, sem handoff), `parallel` com
+falha parcial real (`refuse` → dependent skipped, independente ok), `debate` com
+`fixture-referee` novo (chave test-only `decision` no manifesto → evidence
+`id="decision"`): `decision.json` com `chosen="n1"`, `rejected=["n2"]`,
+`confidence="high"`, hash-bound por `plan-result` e receipt, referee recebeu o
+handoff dos dois proposers; e `debate` sem a convenção → `unresolved` honesto.
+`test_plan_validation` cobre as regras estruturais novas (delegate sem deps,
+debate: 1 referee / ≥2 proposers / referee dep+inputs / proposer independente /
+role fora do par). Fuzz seed `DecisionRecord` adicionado.
+
+**Resultado.** Foco e contratos verdes; ruff+mypy limpos; schemas regenerados
+(`DecisionRecord` novo; `ExecutionPlan`/`ExplainReport` com os roles novos;
+`PlanResult`/`ExecutionReceipt` com `decision_sha256`; `SemanticPlanProposal`).
+
+**Limitações.** Não há timeout **de nó** separado do timeout de provider — um nó
+não pode exceder os limites que o `Forger.ask` já impõe por chamada (o pool drena
+antes de propagar uma exceção). Em `debate`, um proposer falho **pula o referee**
+(em vez de decidir entre os sobreviventes) — a escolha mais conservadora: o
+record registra `skipped` como limitação. `delegate` sem nós extras é apenas
+um `parallel` degenerado — útil como intenção, sem semântica adicional.

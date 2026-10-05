@@ -59,6 +59,8 @@ class PlanRefs:
     # On-disk hash of the SemanticPlanProposal a tier-2 planner returned (None when
     # no proposal was asked or the planner failed — the limitation says which).
     semantic_proposal_sha256: str | None = None
+    # On-disk hash of the DecisionRecord a ``debate`` plan produced (None otherwise).
+    decision_sha256: str | None = None
     plan_result_sha256: str | None = None  # None when the plan was not executed
 
 

@@ -486,9 +486,26 @@ def _synthesis_lines(result: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _decision_lines(decision: dict[str, Any]) -> list[str]:
+    """The DecisionRecord of a debate plan: options, choice, rationale, confidence."""
+    lines = _labelled("Options:", [
+        f"{_clean(o.get('node', '?'))} {_clean(o.get('provider', '?'))}/"
+        f"{_clean(o.get('capability', '?'))} -> {_clean(o.get('status', '?'))}"
+        for o in decision.get("options") or []])
+    chosen = _clean(decision.get("chosen", "?"))
+    rejected = ", ".join(_clean(r) for r in _list(decision.get("rejected"))) or "none"
+    lines.append(f"Decision:    {chosen}  (rejected: {rejected}; "
+                 f"confidence: {_clean(decision.get('confidence', '?'))})")
+    rationale = _clean(decision.get("rationale") or "")
+    if rationale:
+        lines.append(f"Rationale:   {rationale}")
+    return lines
+
+
 def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | None,
                   descriptor: dict[str, Any] | None,
-                  installation: dict[str, Any] | None) -> list[str]:
+                  installation: dict[str, Any] | None,
+                  decision: dict[str, Any] | None = None) -> list[str]:
     """Plan, node states with their runs, handoffs, synthesis, workspace and installation."""
     lines: list[str] = []
     if plan_data:
@@ -506,6 +523,8 @@ def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | Non
             lines += _labelled("Violations:", violations)
     if result:
         lines += _synthesis_lines(result)
+    if decision:
+        lines += _decision_lines(decision)
     if descriptor:
         repositories = [_clean(r.get("path", "?")) for r in descriptor.get("repositories") or []]
         lines.append(f"Workspace:   {len(repositories)} repositories "
@@ -556,7 +575,8 @@ def report_sections(report: dict[str, Any]) -> list[str]:
     section = report.get("plan") or {}
     if section:
         lines += plan_sections(section.get("plan"), section.get("result"),
-                               section.get("workspace_descriptor"), section.get("installation"))
+                               section.get("workspace_descriptor"), section.get("installation"),
+                               (report.get("artifacts") or {}).get("decision"))
     if report.get("error"):
         lines.append(f"Error family: {_clean(report.get('error_family') or 'provider code')}")
     lines += _labelled("Limitations:", _list(report.get("limitations")))
@@ -577,7 +597,7 @@ def plan(data: dict[str, Any]) -> str:
     run_id = _clean(data["run_id"])
     lines = [f"Run {run_id}: {_clean(data['status'])}",
              *plan_sections(data.get("plan"), data.get("result"), None,
-                            data.get("installation"))]
+                            data.get("installation"), data.get("decision"))]
     error = data.get("error")
     if error:
         lines.append(f"Error:       {_clean(error['code'])}: {_detail(error['detail'])} "

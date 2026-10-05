@@ -22,6 +22,7 @@ every provider is reached through the ``Forger`` or the protocol helpers of ``pl
 
 import json
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Final
@@ -57,6 +58,8 @@ from theforge.contracts.plan import (
 )
 from theforge.contracts.receipt import PlanRefs
 from theforge.contracts.types import (
+    CONCURRENT_PATTERNS,
+    MAX_PARALLEL_NODES,
     BudgetProfile,
     Outcome,
     Producer,
@@ -77,6 +80,7 @@ from theforge.forger.orchestrator import (
 from theforge.forger.reproducibility import NO_EXECUTION, combine_levels
 from theforge.forger.telemetry import TelemetryRecorder
 from theforge.meta import PRODUCER, VERSION
+from theforge.planning.decision import compose_decision
 from theforge.planning.decompose import (
     Decomposition,
     decompose,
@@ -161,6 +165,7 @@ class _PlanTrace:
     capability_graph_sha: str | None = None  # CapabilityGraph of the registry+workspace
     capability_graph: CapabilityGraph | None = None  # the persisted graph object
     semantic_proposal_sha: str | None = None  # tier-2 SemanticPlanProposal, when asked
+    decision_sha: str | None = None  # DecisionRecord of a debate plan, when produced
     routing_sha: str | None = None
     plan: ExecutionPlan | None = None
     plan_sha: str | None = None
@@ -415,40 +420,106 @@ class PlanExecutor:
         trace.stage = "plan:execute"
         order = topological_order(plan)
         nodes = {node.id: node for node in plan.nodes}
-        failed: dict[str, str] = {}
-        sources: list[SourceResult] = []
-        levels: dict[str, Reproducibility] = {}
-        for nid in order:
-            node = nodes[nid]
-            blocker = blocked_by(nid, plan, failed)
-            if blocker is not None:
-                execution = _skipped(node, blocker)
-            else:
-                execution = self._run_node(trace, plan, node, sources, levels)
-            trace.executions.append(execution)
-            outcome = execution.outcome
-            if execution.result is None:
-                failed[nid] = outcome.status
-                continue
-            assert outcome.run_id is not None and execution.provider is not None
-            sources.append(SourceResult(
-                node=nid, run_id=outcome.run_id, provider=execution.provider,
-                status=outcome.status, capability=node.capability, action=node.action,
-                result=execution.result, verification=execution.verification))
-            if outcome.reproducibility is not None:
-                levels[nid] = outcome.reproducibility.level
+        if plan.pattern in CONCURRENT_PATTERNS:
+            self._execute_concurrent(trace, plan, order, nodes)
+        else:
+            failed: dict[str, str] = {}
+            sources: list[SourceResult] = []
+            levels: dict[str, Reproducibility] = {}
+            for nid in order:
+                node = nodes[nid]
+                blocker = blocked_by(nid, plan, failed)
+                if blocker is not None:
+                    execution = _skipped(node, blocker)
+                else:
+                    execution = self._run_node(trace, plan, node, sources, levels)
+                self._record(trace, execution, failed, sources, levels)
 
         trace.stage = "plan:synthesis"
         outcomes = [e.outcome for e in trace.executions]
         status, error = plan_status(outcomes)
+        # A debate composes its DecisionRecord before the PlanResult so the result
+        # points at the decision artifact (and surfaces its limitations/unknowns).
+        decision_sha = None
+        decision_notes: list[str] = []
+        decision_unknowns: list[str] = []
+        if plan.pattern == "debate":
+            decision = compose_decision(trace.task, plan, trace.executions)
+            decision_sha = self.forger.store.write(trace.run_id, "decision", decision)
+            trace.decision_sha = decision_sha
+            decision_notes = decision.limitations
+            decision_unknowns = decision.unknowns
         result = PlanResult(
             producer=PRODUCER, created_at=utc_now(), status=status, plan_run=trace.run_id,
             order=order, nodes=outcomes, synthesis=synthesize(plan, trace.executions),
             reproducibility=combine_levels([o.reproducibility for o in outcomes
-                                            if o.reproducibility is not None]))
+                                            if o.reproducibility is not None]),
+            decision_sha256=decision_sha,
+            limitations=decision_notes, unknowns=decision_unknowns)
         validate_plan_result(result)
         trace.plan_result_sha = self.forger.store.write(trace.run_id, "plan-result", result)
         return self._finish(trace, status, error=error, result=result)
+
+    def _execute_concurrent(
+        self, trace: _PlanTrace, plan: ExecutionPlan, order: list[str],
+        nodes: Mapping[str, PlanNode],
+    ) -> None:
+        """Level-scheduled execution for concurrent patterns (E2): nodes whose
+        dependencies are all done run in parallel, bounded by ``MAX_PARALLEL_NODES``;
+        results are recorded in the deterministic topological ``order``, never in
+        completion order. Blocking, receipts and failure semantics are the sequential
+        ones: a node whose ancestor failed is skipped, independent nodes continue."""
+        deps = {n.id: tuple(d.node for d in n.depends_on if d.node in nodes)
+                for n in plan.nodes}
+        done: dict[str, NodeExecution] = {}
+        failed: dict[str, str] = {}
+        sources: list[SourceResult] = []
+        levels: dict[str, Reproducibility] = {}
+        while len(done) < len(order):
+            ready = [nid for nid in order
+                     if nid not in done and all(d in done for d in deps[nid])]
+            if not ready:  # unreachable on a validated acyclic plan; never hang
+                break
+            runnable: list[PlanNode] = []
+            for nid in ready:
+                blocker = blocked_by(nid, plan, failed)
+                if blocker is not None:
+                    done[nid] = _skipped(nodes[nid], blocker)
+                else:
+                    runnable.append(nodes[nid])
+            if runnable:
+                workers = min(len(runnable), MAX_PARALLEL_NODES)
+                with ThreadPoolExecutor(max_workers=workers,
+                                        thread_name_prefix="forge-node") as pool:
+                    futures = {pool.submit(self._run_node, trace, plan, node,
+                                           list(sources), dict(levels)): node.id
+                               for node in runnable}
+                    for future in as_completed(futures):
+                        execution = future.result()
+                        done[execution.node.id] = execution
+            for nid in ready:  # deterministic order: topological, not completion
+                self._record(trace, done[nid], failed, sources, levels)
+
+    def _record(self, trace: _PlanTrace, execution: NodeExecution,
+                failed: dict[str, str], sources: list[SourceResult],
+                levels: dict[str, Reproducibility]) -> None:
+        """Bookkeeping of one finished node: order, failures, handoff sources and
+        reproducibility levels for downstream nodes, and the provider counter."""
+        trace.executions.append(execution)
+        outcome = execution.outcome
+        if execution.reached_execute:
+            trace.telemetry.count("providers_executed", 1)
+        if execution.result is None:
+            failed[outcome.node] = outcome.status
+            return
+        assert outcome.run_id is not None and execution.provider is not None
+        node = execution.node
+        sources.append(SourceResult(
+            node=outcome.node, run_id=outcome.run_id, provider=execution.provider,
+            status=outcome.status, capability=node.capability, action=node.action,
+            result=execution.result, verification=execution.verification))
+        if outcome.reproducibility is not None:
+            levels[outcome.node] = outcome.reproducibility.level
 
     def _run_node(self, trace: _PlanTrace, plan: ExecutionPlan, node: PlanNode,
                   sources: Sequence[SourceResult],
@@ -465,8 +536,7 @@ class PlanExecutor:
             action=node.action, profile=command.profile,
             allow_unverified=command.allow_unverified, approvals=command.approvals,
             provider=node.provider, node=binding, debug=command.debug))
-        if self._reached_execute(asked):
-            trace.telemetry.count("providers_executed", 1)
+        reached = self._reached_execute(asked)
         child = asked.run_id
         result = (store.read_contract(child, "result", ExecutionResult)
                   if asked.status in _VALID else None)
@@ -482,7 +552,7 @@ class PlanExecutor:
             reproducibility=asked.receipt.reproducibility)
         return NodeExecution(
             node=node, outcome=outcome, result=result, handoff=delivered,
-            verification=verification,
+            verification=verification, reached_execute=reached,
             provider=Producer(id=provider.id, version=provider.version) if provider else None)
 
     def _reached_execute(self, asked: AskOutcome) -> bool:
@@ -558,6 +628,7 @@ class PlanExecutor:
                           graph_sha256=graph_sha, installation_sha256=trace.installation_sha,
                           capability_graph_sha256=trace.capability_graph_sha,
                           semantic_proposal_sha256=trace.semantic_proposal_sha,
+                          decision_sha256=trace.decision_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)
         trace.terminal = "finalized"

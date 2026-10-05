@@ -21,6 +21,7 @@ class NodeExecution:
     handoff: Handoff | None  # handoff delivered to the node
     provider: Producer | None  # id and version of the provider that ran the node
     verification: VerificationResult | None = None  # the child run's verification
+    reached_execute: bool = False  # the child run called the provider's execute op
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -519,7 +519,9 @@
                         "enum": [
                           "producer",
                           "consumer",
-                          "standalone"
+                          "standalone",
+                          "proposer",
+                          "referee"
                         ]
                       },
                       "targets": {
@@ -651,6 +653,16 @@
                   "properties": {
                     "created_at": {
                       "type": "string"
+                    },
+                    "decision_sha256": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "limitations": {
                       "items": {

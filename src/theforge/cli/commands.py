@@ -282,6 +282,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         "plan": to_dict(outcome.plan) if outcome.plan else None,
         "result": to_dict(outcome.result) if outcome.result else None,
         "installation": store.read_optional(outcome.run_id, "installation"),
+        "decision": store.read_optional(outcome.run_id, "decision"),
         "error": to_dict(outcome.error) if outcome.error else None,
         "error_family": error_family(outcome.error.code) if outcome.error else None,
     })

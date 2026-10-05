@@ -237,6 +237,18 @@ SEEDS: dict[str, dict[str, Any]] = {
         "unknowns": ["volume"], "confidence": "medium",
         "alternatives": ["single node"], "limitations": ["draft"],
     },
+    "DecisionRecord": {
+        "producer": P, "created_at": "t", "plan_run": "plan-1", "referee": "ref",
+        "question": "which design",
+        "options": [{"node": "a", "provider": "p1", "capability": "x.y",
+                     "status": "ok", "run_id": "r-a", "claim": "status=ok"},
+                    {"node": "b", "provider": "p2", "capability": "x.z",
+                     "status": "partial", "run_id": "r-b", "claim": "status=partial"}],
+        "evidence": ["a:e1", "b:e1"],
+        "tradeoffs": ["a: f1: proposal A"],
+        "chosen": "a", "rejected": ["b"], "rationale": "a has the evidence",
+        "confidence": "high", "unknowns": ["u"], "limitations": ["l"],
+    },
     "ComplexityAssessment": {
         "producer": P, "created_at": "t", "task_id": "task-1", "level": "medium",
         "score": 0.42, "confidence": 0.9,

@@ -259,6 +259,7 @@
     "plan.result": {
       "properties": [
         "created_at",
+        "decision_sha256",
         "limitations",
         "nodes",
         "order",

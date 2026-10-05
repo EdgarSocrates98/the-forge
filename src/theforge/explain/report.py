@@ -165,7 +165,8 @@ def build_explain_report(store: RunStore, run_id: str, *,
     pack = found.typed("context", ContextPack)
     result = found.typed("result", ExecutionResult)
     verification = found.typed("verification", VerificationResult)
-    for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic"):
+    for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic",
+                 "decision"):
         found.typed(name, ARTIFACT_TYPES[name])  # drop the ones that do not parse
     plan = _plan(found)
     telemetry = found.raw.get("telemetry")

@@ -1,0 +1,47 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-referee",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+ "execute",
+ "plan"
+ ],
+ "domains": [
+  "meta"
+ ],
+ "capabilities": [
+  {
+   "id": "judge.decide",
+   "actions": [
+    "decide"
+   ],
+   "default_action": "decide",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Weigh the proposals in the handoff and declare the chosen option",
+   "signals": {
+    "keywords": [
+     "__referee_internal__"
+    ],
+    "file_globs": [],
+    "dependencies": []
+   }
+  }
+ ],
+ "estimate": {
+  "context_needed": [],
+  "operation_class": "read_only",
+  "expected_artifacts": [],
+  "unknowns": [],
+  "limitations": []
+ },
+ "decision": {
+  "claim": "n1",
+  "subject": "n1's proposal is the one with evidence-backed tradeoffs"
+ }
+}

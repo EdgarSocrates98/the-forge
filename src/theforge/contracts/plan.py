@@ -20,16 +20,18 @@ from theforge.contracts.types import (
     Outcome,
     PlanPattern,
     Producer,
+    check_sha256,
 )
 from theforge.contracts.verification import ReproducibilityInfo
 
 PLAN_SCHEMA = "theforge/ExecutionPlan/v1"
 PLAN_RESULT_SCHEMA = "theforge/PlanResult/v1"
 SEMANTIC_PLAN_SCHEMA = "theforge/SemanticPlanProposal/v1"
+DECISION_SCHEMA = "theforge/DecisionRecord/v1"
 # Format of a plan node id (checked relationally, so it is reported as a violation).
 PLAN_NODE_ID: Final = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 
-NodeRole = Literal["producer", "consumer", "standalone"]
+NodeRole = Literal["producer", "consumer", "standalone", "proposer", "referee"]
 NodeStatus = Literal["ok", "partial", "refused", "provider_failure", "no_route", "skipped"]
 
 
@@ -238,6 +240,7 @@ class PlanResult:
     nodes: list[NodeOutcome]
     synthesis: Synthesis
     reproducibility: ReproducibilityInfo
+    decision_sha256: str | None = None  # the debate's DecisionRecord artifact, when any
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
 
@@ -245,3 +248,56 @@ class PlanResult:
         if self.schema != PLAN_RESULT_SCHEMA:
             raise ContractError(
                 f"unsupported schema {self.schema!r}, expected {PLAN_RESULT_SCHEMA!r}")
+        if self.decision_sha256 is not None:
+            check_sha256(self.decision_sha256, field="decision_sha256")
+
+
+@dataclass(frozen=True, kw_only=True)
+class DecisionOption:
+    """One option weighed in a debate: a proposer node and its outcome claim."""
+
+    node: str
+    provider: str
+    capability: str
+    status: NodeStatus
+    run_id: str | None = None
+    claim: str = ""  # the proposer's outcome line ("status=… capability=… action=…")
+
+
+@dataclass(frozen=True, kw_only=True)
+class DecisionRecord:
+    """The auditable outcome of a ``debate`` plan (core-only artifact, E4).
+
+    The referee answers ``evidence id="decision"`` whose claim is the chosen
+    option's node id — a documented convention the core can verify: the claim
+    must name a proposer node, else the record is ``unresolved`` with the reason
+    in limitations. The core never invents the choice.
+    """
+
+    schema: str = DECISION_SCHEMA
+    producer: Producer
+    created_at: str
+    plan_run: str
+    referee: str  # the referee node id
+    question: str
+    options: list[DecisionOption]
+    evidence: list[str] = field(default_factory=list)  # "<node>:<item-id>" handed to the referee
+    tradeoffs: list[str] = field(default_factory=list)  # "<node>: <finding id>: <title>"
+    chosen: str = "unresolved"  # a proposer node id, or "unresolved"
+    rejected: list[str] = field(default_factory=list)  # proposer node ids not chosen
+    rationale: str = ""  # the referee decision finding's claim (verbatim)
+    confidence: Literal["high", "low", "unknown"] = "unknown"
+    unknowns: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != DECISION_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {DECISION_SCHEMA!r}")
+        option_ids = {o.node for o in self.options}
+        if self.chosen != "unresolved" and self.chosen not in option_ids:
+            raise ContractError(
+                f"decision chosen {self.chosen!r} is not a proposer node")
+        if self.chosen != "unresolved" and set(self.rejected) != option_ids - {self.chosen}:
+            raise ContractError(
+                "decision rejected must be exactly the options not chosen")

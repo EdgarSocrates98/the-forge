@@ -117,7 +117,9 @@ def roundtrip(cls: type[Any], data: dict[str, Any]) -> Any:
 
 def test_shared_types_and_limits() -> None:
     assert get_args(T.PlanPattern) == ("route", "delegate", "parallel", "pipeline", "debate")
-    assert frozenset({"route", "pipeline"}) == T.EXECUTABLE_PATTERNS
+    assert frozenset(get_args(T.PlanPattern)) == T.EXECUTABLE_PATTERNS
+    assert frozenset({"delegate", "parallel", "debate"}) == T.CONCURRENT_PATTERNS
+    assert T.MAX_PARALLEL_NODES > 0
     assert "planned" in get_args(T.Outcome)
     assert get_args(T.EdgeEpistemic) == ("explicit", "observed", "inferred")
     assert get_args(T.Reproducibility) == (

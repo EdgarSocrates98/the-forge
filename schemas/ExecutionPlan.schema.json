@@ -133,7 +133,9 @@
             "enum": [
               "producer",
               "consumer",
-              "standalone"
+              "standalone",
+              "proposer",
+              "referee"
             ]
           },
           "targets": {
