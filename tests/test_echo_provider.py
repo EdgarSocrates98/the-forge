@@ -133,3 +133,10 @@ def test_execute_result_passes_integrity(tmp_path: Path, capability: str) -> Non
     validate_result(result, expected=MANIFEST_PRODUCER)
     assert [e.hash for e in result.evidence] == [sha256_hex(b"hello")]
     assert all(SHA256_RE.fullmatch(e.hash or "") for e in result.evidence)
+
+
+def test_manifest_declares_hash_revalidation() -> None:
+    """echo re-hashes what it reads and reports it in Evidence.hash (6.4, 6.5)."""
+    assert provider.MANIFEST.context_revalidation == "hash"
+    described = provider.handle("describe", envelope("describe"))
+    assert described["payload"]["context_revalidation"] == "hash"

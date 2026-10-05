@@ -1,0 +1,161 @@
+# Declarative configuration of the agentic asset audit (scripts/agentic/audit_assets.py).
+#
+# Every key is validated: unknown keys, wrong types and empty reasons are configuration errors.
+# Per host: skills_dir and instructions (required), host_metadata and asset_dirs (optional; every
+# tracked file under asset_dirs must belong to an equivalent kiro-* skill or be declared in
+# [[host_only]]). Optional sections: [reference], [[install_placeholders]], [[host_only]], [[accepted]],
+# [invariants], [budgets], [pointers] and [[moved_rules]]; an instruction check runs only when
+# its section is declared. Every [[host_only]] and [[accepted]] entry needs a non-empty reason.
+
+# Hosts with a Kiro skills directory and the instruction files each one reads.
+[hosts.claude]
+skills_dir = ".claude/skills"
+instructions = ["CLAUDE.md"]
+
+[hosts.codex]
+skills_dir = ".agents/skills"
+instructions = ["AGENTS.md"]
+# Per-skill Codex UI metadata written by the Kiro installer; host syntax, not a support file.
+host_metadata = ["agents/openai.yaml"]
+# Codex reads skills from .agents/ and custom agents from .codex/ (default: top of skills_dir).
+asset_dirs = [".agents", ".codex"]
+
+[hosts.devin]
+skills_dir = ".devin/skills"
+instructions = ["AGENTS.md"]
+
+# Versioned reference copies of the skill rules (installed by the Kiro installer).
+[reference]
+rules_dir = ".kiro/settings/rules"
+
+# The installer writes the configured spec language into the installed rule copies
+# (`pt` here, `en` in .kiro/settings); both sides are normalized to the same token.
+[[install_placeholders]]
+pattern = '`spec\.json\.language` / `[a-z]{2}`'
+replacement = '`spec.json.language` / <lang>'
+
+[[host_only]]
+path = ".codex/agents/spec-reviewer.toml"
+host = "codex"
+reason = "agente customizado do Codex para a revisão cross-spec do kiro-spec-batch; Claude e Devin fazem essa revisão com um subagente genérico, sem arquivo de agente"
+
+# Phrasing divergences: the profile differs, the agent behaviour does not.
+[[accepted]]
+skill = "kiro-spec-quick"
+element = "paths"
+hosts = ["codex", "devin"]
+value = ".kiro/specs/{feature}/design.md"
+reason = "só o texto do resumo final exibido ao usuário; o Claude escreve specs/{feature}/design.md no mesmo resumo e todas as versões geram o arquivo no mesmo lugar"
+
+[[accepted]]
+skill = "kiro-spec-quick"
+element = "paths"
+hosts = ["codex", "devin"]
+value = ".kiro/specs/{feature}/tasks.md"
+reason = "só o texto do resumo final exibido ao usuário; o Claude escreve specs/{feature}/tasks.md no mesmo resumo e todas as versões geram o arquivo no mesmo lugar"
+
+[[accepted]]
+skill = "kiro-steering"
+element = "paths"
+hosts = ["codex", "devin"]
+value = ".kiro/specs"
+reason = "nota de estilo em Notes (referências leves a .kiro/specs/ e .kiro/steering/ são aceitáveis) que a versão do Claude não traz; não muda o que a skill lê nem escreve"
+
+# --- host instruction checks (task 4.7) -----------------------------------------------------
+# The invariants block is identical in CLAUDE.md and AGENTS.md; to change an invariant or a
+# setup/test/lint/type/schema command, edit the block in both files and these anchors together.
+[invariants]
+begin = "<!-- theforge:invariants:begin -->"
+end = "<!-- theforge:invariants:end -->"
+required = [
+    "src/theforge", "adapters/", "stdlib", "Python >= 3.11", "Python >= 3.10",
+    "Forge Protocol", "import sparkforge", "nunca importam `theforge`", "domínio",
+    "ambiguous", "sem LLM", "ExecutionResult",
+    "security.redact", ".forge/runs/<id>/work/", "Credenciais nunca chegam ao env dos providers",
+    "theforge/<Name>/v1", "python -m theforge.contracts.schema schemas",
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge",
+    "python -m pytest", "python -m pytest -m slow", "ruff check .", "mypy",
+]
+
+# Size budgets in UTF-8 bytes with LF line endings (docs/agentic.md, "Orçamentos de tamanho").
+[budgets]
+"CLAUDE.md" = 2500
+"AGENTS.md" = 6000
+
+# Mandatory pointers per instruction file: the agentic guide, the host skills directory and
+# the spec language rule (requirement 4.7).
+[pointers]
+"CLAUDE.md" = ["docs/agentic.md", ".claude/skills/", "spec.json.language", "/kiro-"]
+"AGENTS.md" = ["docs/agentic.md", ".agents/skills/", ".devin/skills/", "spec.json.language",
+               "$kiro-", "/kiro-"]
+
+# Rules that left CLAUDE.md / AGENTS.md (Kiro workflow detail) and where they live now.
+[[moved_rules]]
+anchor = "3-phase approval workflow"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = 'Discovery: `/kiro-discovery "ideia"`'
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "`/kiro-spec-batch` cria todas as specs do `roadmap.md` em paralelo"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Fase 2 (implementação): `/kiro-impl <feature> [tarefas] [--review required|inline|off]`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "`--review off` pula a revisão local da tarefa"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Progresso: `/kiro-spec-status <feature>`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Não pule uma skill relevante só porque a tarefa é pequena"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "carregue os arquivos de steering padrão de `.kiro/steering/`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Mantenha o steering atualizado e confira o alinhamento com `kiro-spec-status`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Arquivos `AGENTS.md` locais"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "`enabled = false` em `[agents]`"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Prefira workers em primeiro plano quando um comando puder pedir aprovação"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Subagentes nativos não delegam de novo por padrão"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "o Devin Desktop expõe a opção Subagents (Preview)"
+from = "AGENTS.md"
+to = "docs/agentic.md"

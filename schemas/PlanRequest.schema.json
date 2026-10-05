@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "task": {
+      "properties": {
+        "budget_profile": {
+          "enum": [
+            "economy",
+            "balanced",
+            "max"
+          ]
+        },
+        "constraints": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "producer": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "type": "object"
+        },
+        "requested_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requested_capability": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schema": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "created"
+          ]
+        },
+        "targets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "workspace_root": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "producer",
+        "created_at",
+        "id",
+        "intent",
+        "workspace_root"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "task",
+    "capability",
+    "action"
+  ],
+  "title": "PlanRequest",
+  "type": "object"
+}

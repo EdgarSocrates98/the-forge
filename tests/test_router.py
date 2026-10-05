@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from theforge.contracts import Capability, ForgeManifest, Signals, TaskSpec
@@ -114,3 +116,124 @@ def test_not_ready_records_skipped() -> None:
     rec = record("u-forge", [cap("demo.run")], state="incompatible")
     assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == \
         "no_route"
+
+
+# --- aliases, deprecation and overlap (task 2.2, 5.4, 5.5) -------------------------------------
+
+def _with(capability: Capability, **changes: object) -> Capability:
+    return replace(capability, **changes)  # type: ignore[arg-type]
+
+
+CANON = record("canon-forge", [cap("data.quality")], trust="local")
+ALIASED = record("alias-forge", [_with(cap("data.checks"), aliases=["data.quality"])],
+                 trust="trusted")
+
+
+def test_explicit_prefers_canonical_declarer_over_alias_declarer() -> None:
+    """A higher-trust alias declarer never beats a canonical declarer."""
+    d = route(task("x", requested_capability="data.quality"), [ALIASED, CANON], [], set())
+    assert d.status == "routed"
+    assert (d.selected[0].provider, d.selected[0].capability) == ("canon-forge", "data.quality")
+    assert [c.provider for c in d.candidates] == ["canon-forge"]
+    assert not any(n.startswith("capability-alias:") for n in d.limitations)
+
+
+def test_explicit_alias_resolves_to_canonical_id_with_note() -> None:
+    d = route(task("x", requested_capability="data.quality"), [ALIASED], [], set())
+    assert d.status == "routed" and d.confidence.level == "high"
+    assert (d.selected[0].provider, d.selected[0].capability) == ("alias-forge", "data.checks")
+    assert [c.capability for c in d.candidates] == ["data.checks"]
+    assert d.limitations == [
+        "capability-alias: 'data.quality' resolved to 'data.checks' (alias-forge)"]
+
+
+def test_explicit_alias_group_keeps_trust_then_id_tie_break() -> None:
+    aliased = _with(cap("data.checks"), aliases=["dq"])
+    a = record("aaa-forge", [aliased], trust="local")
+    z = record("zzz-forge", [aliased], trust="trusted")
+    d = route(task("x", requested_capability="dq"), [a, z], [], set())
+    assert d.selected[0].provider == "zzz-forge"
+    assert d.selected[0].capability == "data.checks"
+    assert d.limitations == [
+        "capability-alias: 'dq' resolved to 'data.checks' (aaa-forge)",
+        "capability-alias: 'dq' resolved to 'data.checks' (zzz-forge)",
+        "capability-overlap: 'data.checks' declared by aaa-forge, zzz-forge; "
+        "tie-break trust then id",
+    ]
+
+
+def test_explicit_alias_to_divergent_canonicals_is_ambiguous() -> None:
+    """An alias naming different capabilities across providers is ambiguity, never a guess."""
+    a = record("aaa-forge", [_with(cap("data.checks"), aliases=["dq"])], trust="trusted")
+    z = record("zzz-forge", [_with(cap("data.rules"), aliases=["dq"])], trust="local")
+    d = route(task("x", requested_capability="dq"), [z, a], [], set())
+    assert d.status == "ambiguous" and d.confidence.level == "low"
+    assert d.selected == []
+    assert [(c.provider, c.capability) for c in d.candidates] == [
+        ("aaa-forge", "data.checks"), ("zzz-forge", "data.rules")]
+    assert d.confidence.unresolved == [
+        "capability-alias: 'dq' resolves to different capabilities: data.checks, data.rules"]
+    assert d.limitations == [
+        "capability-alias: 'dq' resolved to 'data.checks' (aaa-forge)",
+        "capability-alias: 'dq' resolved to 'data.rules' (zzz-forge)",
+    ]
+
+
+@pytest.mark.parametrize(("replaced_by", "suffix"), [
+    ("data.quality2", "replaced_by 'data.quality2'"),
+    (None, "no replacement declared"),
+])
+def test_explicit_deprecated_capability_is_noted_without_changing_confidence(
+    replaced_by: str | None, suffix: str
+) -> None:
+    deprecated = record("old-forge", [_with(cap("data.quality"), deprecated=True,
+                                            replaced_by=replaced_by)])
+    d = route(task("x", requested_capability="data.quality"), [deprecated], [], set())
+    assert d.status == "routed" and d.confidence.level == "high"
+    assert d.limitations == [f"capability-deprecated: 'data.quality' (old-forge) is deprecated; "
+                             f"{suffix}"]
+
+
+def test_explicit_overlap_is_noted() -> None:
+    caps = SPARK.manifest.capabilities if SPARK.manifest else []
+    other = record("zzz-forge", caps, trust="trusted")
+    d = route(task("x", requested_capability="spark.performance"), [SPARK, other], [], set())
+    assert d.selected[0].provider == "zzz-forge"
+    assert d.limitations == ["capability-overlap: 'spark.performance' declared by spark-forge, "
+                             "zzz-forge; tie-break trust then id"]
+
+
+def test_signal_overlap_and_deprecation_are_noted_without_changing_ranking() -> None:
+    spark_caps = SPARK.manifest.capabilities if SPARK.manifest else []
+    deprecated = record("old-forge", [_with(c, deprecated=True) for c in spark_caps])
+    plain = route(task("analise esse Glue Job porque está lento"), [SPARK, API],
+                  ["jobs/orders_glue_job.py"], {"pyspark"})
+    assert not any(n.startswith("capability-") for n in plain.limitations)
+    d = route(task("analise esse Glue Job porque está lento"), [SPARK, deprecated, API],
+              ["jobs/orders_glue_job.py"], {"pyspark"})
+    assert d.status == "ambiguous"  # same signals: the overlap stays ambiguous, never a guess
+    assert "capability-overlap: 'spark.performance' declared by old-forge, spark-forge" \
+        in d.limitations
+    assert "capability-deprecated: 'spark.performance' (old-forge) is deprecated; " \
+        "no replacement declared" in d.limitations
+
+
+def test_signal_deprecated_selection_keeps_confidence() -> None:
+    spark_caps = SPARK.manifest.capabilities if SPARK.manifest else []
+    deprecated = record("spark-forge", [_with(c, deprecated=True, replaced_by="spark.perf")
+                                        for c in spark_caps])
+    d = route(task("analise esse Glue Job porque está lento"), [deprecated, API],
+              ["jobs/orders_glue_job.py"], {"pyspark"})
+    assert d.status == "routed" and d.confidence.level == "high"
+    assert d.candidates[0].rank_key == [3]
+    assert d.limitations == ["capability-deprecated: 'spark.performance' (spark-forge) is "
+                             "deprecated; replaced_by 'spark.perf'"]
+
+
+def test_alias_declarer_without_execute_is_noted() -> None:
+    aliased = ALIASED.manifest
+    assert aliased is not None
+    no_exec = replace(ALIASED, manifest=replace(aliased, ops=["describe", "health"]))
+    d = route(task("x", requested_capability="data.quality"), [no_exec], [], set())
+    assert d.status == "no_route"
+    assert any(n.startswith("alias-forge: not routable") for n in d.limitations)

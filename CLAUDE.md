@@ -1,86 +1,22 @@
 # The Forge — guia para agentes
 
-The Forge = control plane (WHO/WHEN/HOW). Forges especialistas = WHAT. Nunca coloque conhecimento de domínio (Spark, API, …) aqui: ele vem dos sinais declarados pelos providers.
+The Forge = control plane (WHO/WHEN/HOW). Forges especialistas = WHAT.
 
+<!-- theforge:invariants:begin -->
 ## Invariantes
-- Runtime stdlib-only (Python >= 3.11). Dependências só em `[dev]`.
-- Integração com providers só via Forge Protocol (subprocess + JSON). Nunca `import sparkforge`/`apiforge`.
-- Routing determinístico. Ambiguidade vira `ambiguous`, nunca um chute. Sem LLM no core.
+- Core (`src/theforge`): runtime stdlib-only, Python >= 3.11, dependências só em `[dev]`. Providers só via Forge Protocol (subprocess + JSON); nunca `import sparkforge`/`apiforge`. Nenhum conhecimento de domínio (Spark, API, …): ele vem dos sinais declarados pelos providers.
+- Adapters (`adapters/`): distribuições à parte, stdlib-only, instaladas no interpretador de cada especialista (Python >= 3.10). Únicos que importam `sparkforge`/`apiforge`; nunca importam `theforge`.
+- Routing determinístico, sem LLM no core: ambiguidade vira `ambiguous`, nunca um chute.
 - Nenhum caminho reporta sucesso sem um `ExecutionResult` válido.
-- Tudo que é persistido passa por `security.redact`. Credenciais nunca chegam ao env dos providers.
-- Contratos: `schema = "theforge/<Name>/v1"`. Mudança de contrato exige regenerar `schemas/` (`python -m theforge.contracts.schema schemas`).
+- Tudo que o core persiste passa por `security.redact`, exceto `.forge/runs/<id>/work/` (escrito pelo provider). Credenciais nunca chegam ao env dos providers.
+- Contratos `theforge/<Name>/v1`; mudou um contrato, regenere `schemas/`: `python -m theforge.contracts.schema schemas`.
+- Setup: `python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge`. Testes: `python -m pytest` (offline); gate: `python -m pytest -m slow`. Lint/tipos: `ruff check .` · `mypy`.
+<!-- theforge:invariants:end -->
 
-## Comandos
-- Testes: `python -m pytest` (offline); gate: `python -m pytest -m slow`
-- Lint/tipos: `ruff check .` · `mypy`
+## Regras persistentes
+- Idioma: pense em inglês, responda em português; Markdown de spec no idioma de `spec.json.language`.
+- Workflow Kiro: skills em `.claude/skills/kiro-*/SKILL.md` (`/kiro-<nome>`); specs em `.kiro/specs/`, steering em `.kiro/steering/` (locais, fora do git). Revisão humana em cada fase; `-y` só para fast-track intencional.
+- Mudou skill ou instrução de host: edite os três hosts e rode `python scripts/agentic/audit_assets.py`.
 
 ## Mais contexto
-`docs/architecture.md`, `docs/protocol.md`, `docs/adr/`, spec em `docs/superpowers/specs/`.
-
----
-
-# Agentic SDLC and Spec-Driven Development
-
-Kiro-style Spec-Driven Development on an agentic SDLC
-
-## Project Context
-
-### Paths
-- Steering: `.kiro/steering/`
-- Specs: `.kiro/specs/`
-
-### Steering vs Specification
-
-**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
-**Specs** (`.kiro/specs/`) - Formalize development process for individual features
-
-### Active Specifications
-- Check `.kiro/specs/` for active specifications
-- Use `/kiro-spec-status [feature-name]` to check progress
-
-## Development Guidelines
-- Think in English, generate responses in Portuguese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
-
-## Minimal Workflow
-- Phase 0 (optional): `/kiro-steering`, `/kiro-steering-custom`
-- Discovery: `/kiro-discovery "idea"` — determines action path, writes brief.md + roadmap.md for multi-spec projects
-- Phase 1 (Specification):
-  - Single spec: `/kiro-spec-quick {feature} [--auto]` or step by step:
-    - `/kiro-spec-init "description"`
-    - `/kiro-spec-requirements {feature}`
-    - `/kiro-validate-gap {feature}` (optional: for existing codebase)
-    - `/kiro-spec-design {feature} [-y]`
-    - `/kiro-validate-design {feature}` (optional: design review)
-    - `/kiro-spec-tasks {feature} [-y]`
-  - Multi-spec: `/kiro-spec-batch` — creates all specs from roadmap.md in parallel by dependency wave
-- Phase 2 (Implementation): `/kiro-impl {feature} [tasks] [--review required|inline|off]`
-  - Without task numbers: autonomous mode (subagent per task + independent review + final validation)
-  - With task numbers: manual mode (selected tasks in main context, still reviewer-gated before completion)
-  - `--review off` skips task-local review; use it intentionally and keep `/kiro-validate-impl {feature}` as the final quality gate
-  - `/kiro-validate-impl {feature}` (standalone re-validation)
-- Progress check: `/kiro-spec-status {feature}` (use anytime)
-
-## Skills Structure
-Skills are located in `.claude/skills/kiro-*/SKILL.md`
-- Each skill is a directory with a `SKILL.md` file
-- Skills run inline with access to conversation context
-- Skills may delegate parallel research to subagents for efficiency
-- Additional files (templates, examples) can be added to skill directories
-- `kiro-review` — task-local adversarial review protocol used by reviewer subagents
-- `kiro-debug` — root-cause-first debug protocol used by debugger subagents
-- `kiro-verify-completion` — fresh-evidence gate before success or completion claims
-- Use skills explicitly requested by the user and skills relevant to the task's domain, including design, accessibility, and UX.
-- Select skills from their descriptions or metadata first, then read only the selected skills and the references needed for the task.
-- Follow explicit host and project rules and retain required workflow checks. Do not skip relevant skills just because the task is small.
-
-## Development Rules
-- 3-phase approval workflow: Requirements → Design → Tasks → Implementation
-- Human review required each phase; use `-y` only for intentional fast-track
-- Keep steering current and verify alignment with `/kiro-spec-status`
-- Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
-
-## Steering Configuration
-- For spec and implementation work, load the core steering files below from `.kiro/steering/`. Reuse current context rather than rereading unchanged files.
-- Load additional steering only when required by project rules or relevant to the task.
-- Default files: `product.md`, `tech.md`, `structure.md`
-- Custom files are supported (managed via `/kiro-steering-custom`)
+`docs/agentic.md` (workflow Kiro, hosts, mirrors), `docs/architecture.md`, `docs/protocol.md`, `docs/real-providers.md` (adapters; `_shell.py` idêntico nos dois), `docs/adr/`; spec do ciclo 1 em `docs/superpowers/specs/`.

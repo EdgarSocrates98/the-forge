@@ -8,8 +8,11 @@ import importlib.util
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
+import tomllib
 import zipfile
+from email.parser import HeaderParser
 from pathlib import Path
 from typing import Any
 
@@ -186,3 +189,65 @@ def test_ci_gates_fail_on_artificial_runtime_dependency(built_wheel: Path, tmp_p
     shipped = _run_script(ZERO_DEPS, tainted)
     assert shipped.returncode != 0
     assert "requests" in shipped.stderr
+
+
+# --- adapters are separate distributions (real-provider-integration 1.4) -------------------
+
+
+AGENTIC_SDIST_EXCLUDES = (
+    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave",
+    "/CLAUDE.md", "/AGENTS.md",
+)
+
+
+def test_theforge_build_config_keeps_adapters_out_of_wheel_and_sdist() -> None:
+    with (REPO / "pyproject.toml").open("rb") as fh:
+        data = tomllib.load(fh)
+    assert data["project"]["dependencies"] == []
+    targets = data["tool"]["hatch"]["build"]["targets"]
+    assert targets["wheel"]["packages"] == ["src/theforge"]
+    assert "/adapters" in targets["sdist"]["exclude"]
+    # Agentic assets and local-only state never ship (agentic-maintainability, requirement 5.2).
+    assert set(AGENTIC_SDIST_EXCLUDES) <= set(targets["sdist"]["exclude"])
+
+
+def _runtime_requirements(metadata: str) -> list[str]:
+    requires = HeaderParser().parsestr(metadata).get_all("Requires-Dist") or []
+    return [req for req in requires if "extra" not in req.partition(";")[2]]
+
+
+@pytest.fixture(scope="module")
+def built_sdist(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    dist = tmp_path_factory.mktemp("sdist")
+    subprocess.run(
+        [sys.executable, "-m", "build", "--sdist", "--outdir", str(dist), str(REPO)],
+        check=True, timeout=600, capture_output=True,
+    )
+    sdists = sorted(dist.glob("theforge-*.tar.gz"))
+    assert len(sdists) == 1, sdists
+    return sdists[0]
+
+
+@pytest.mark.slow
+def test_built_wheel_excludes_adapters_and_has_no_runtime_dependency(built_wheel: Path) -> None:
+    with zipfile.ZipFile(built_wheel) as zf:
+        names = zf.namelist()
+        metadata = next(n for n in names if n.endswith(".dist-info/METADATA"))
+        assert _runtime_requirements(zf.read(metadata).decode("utf-8")) == []
+    assert names
+    assert not [n for n in names if n.startswith("adapters/") or "theforge_" in n.split("/")[0]]
+
+
+@pytest.mark.slow
+def test_built_sdist_excludes_adapters_and_has_no_runtime_dependency(built_sdist: Path) -> None:
+    with tarfile.open(built_sdist) as tf:
+        members = [m.name.partition("/")[2] for m in tf.getmembers()]
+        root = tf.getmembers()[0].name.partition("/")[0]
+        pkg_info = tf.extractfile(f"{root}/PKG-INFO")
+        assert pkg_info is not None
+        metadata = pkg_info.read().decode("utf-8")
+    assert "src/theforge/__init__.py" in members
+    assert not [m for m in members if m == "adapters" or m.startswith("adapters/")]
+    agentic = tuple(d.lstrip("/") for d in AGENTIC_SDIST_EXCLUDES)
+    assert not [m for m in members if m.split("/")[0] in agentic]
+    assert _runtime_requirements(metadata) == []

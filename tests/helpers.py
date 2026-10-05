@@ -35,6 +35,12 @@ API_ENTRY = {
     "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api.json")),
     "trust": "local",
 }
+# Same providers whose manifests also declare the ``plan`` op (answered with the manifest
+# fixture's ``estimate``), for cross-forge-foundation plan flows.
+SPARK_PLAN_ENTRY = dict(SPARK_ENTRY, argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-spark-plan.json")))
+API_PLAN_ENTRY = dict(API_ENTRY, argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-api-plan.json")))
 
 
 def write_providers(

@@ -4,9 +4,11 @@ import json
 import re
 import tomllib
 import unicodedata
+from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Final
 
+from theforge.contracts.types import DEPENDENCY_MANIFESTS
 from theforge.security.paths import resolve_inside
 
 _TOKEN = re.compile(r"\w+")
@@ -40,11 +42,26 @@ def glob_matches(files: list[str], globs: list[str]) -> list[str]:
 
 def workspace_dependencies(root: Path) -> set[str]:
     names: set[str] = set()
-    names |= _pyproject_deps(root, root / "pyproject.toml")
-    for req in sorted(root.glob("requirements*.txt")):
-        names |= _requirements_deps(root, req)
-    names |= _package_json_deps(root, root / "package.json")
-    return {normalize_dep(n) for n in names}
+    for declared in dependencies_by_file(root).values():
+        names |= declared
+    return names
+
+
+def dependencies_by_file(root: Path) -> dict[Path, set[str]]:
+    """Normalized dependency names per generic dependency file directly under ``root``.
+
+    Only files that exist inside ``root`` are keys (a file declaring nothing maps to an
+    empty set); keys follow ``DEPENDENCY_MANIFESTS`` order, then path order.
+    """
+    found: dict[Path, set[str]] = {}
+    for pattern in DEPENDENCY_MANIFESTS:
+        parse = _PARSERS[pattern]
+        paths = sorted(root.glob(pattern)) if _MAGIC & set(pattern) else [root / pattern]
+        for path in paths:
+            if path in found or _read(root, path) is None:
+                continue
+            found[path] = {normalize_dep(n) for n in parse(root, path)}
+    return found
 
 
 def _read(root: Path, path: Path) -> str | None:
@@ -107,3 +124,11 @@ def _package_json_deps(root: Path, path: Path) -> set[str]:
             if isinstance(section, dict):
                 names |= {str(k) for k in section}
     return names
+
+
+_MAGIC: Final = frozenset("*?[")
+_PARSERS: Final[dict[str, Callable[[Path, Path], set[str]]]] = {
+    "pyproject.toml": _pyproject_deps,
+    "requirements*.txt": _requirements_deps,
+    "package.json": _package_json_deps,
+}

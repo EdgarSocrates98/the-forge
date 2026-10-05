@@ -16,6 +16,8 @@ from theforge.contracts import (
     Capability,
     ContextFile,
     ContextPack,
+    ContextRequest,
+    ContextRequestItem,
     ContractError,
     Evidence,
     ExecutionReceipt,
@@ -37,6 +39,7 @@ from theforge.contracts.integrity import (
     check_producer,
     check_timestamp,
     validate_context_pack,
+    validate_context_request,
     validate_manifest_limits,
     validate_receipt,
     validate_result,
@@ -45,6 +48,7 @@ from theforge.contracts.types import (
     CATCH_ALL_GLOBS,
     MAX_ACTIONS,
     MAX_CAPABILITIES,
+    MAX_CONTEXT_REQUEST_ITEMS,
     MAX_DEPENDENCIES,
     MAX_GLOBS,
     MAX_KEYWORDS,
@@ -309,6 +313,73 @@ def test_context_pack_escaping_file_path_rejected(path: str) -> None:
     assert exc.value.violations[0].field == "files[0].path"
 
 
+# --- context-intelligence-v2 1.4: tier bytes, negotiation round, context request ---
+
+
+def test_context_pack_with_consistent_tier_bytes_passes() -> None:
+    validate_context_pack(pack(tier_bytes={"metadata": 0, "reference": 10, "excerpt": 5}))
+    validate_context_pack(pack(tier_bytes={"reference": 15}))
+    validate_context_pack(pack(round=2))
+
+
+def test_context_pack_tier_bytes_sum_mismatch_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(tier_bytes={"metadata": 0, "reference": 10, "excerpt": 4}))
+    assert exc.value.code == Codes.CONTEXT_BYTES
+    assert exc.value.violations[0].field == "tier_bytes"
+
+
+def test_context_pack_nonzero_metadata_tier_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(tier_bytes={"metadata": 5, "reference": 10}))
+    assert codes_of(exc) == [Codes.CONTEXT_BYTES]
+    assert exc.value.violations[0].field == "tier_bytes.metadata"
+
+
+@pytest.mark.parametrize(
+    "tier_bytes", [{"bogus": 0, "reference": 15}, {"reference": 20, "excerpt": -5}]
+)
+def test_context_pack_unknown_or_negative_tier_rejected(tier_bytes: dict[str, int]) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(tier_bytes=tier_bytes))
+    assert exc.value.code == Codes.CONTEXT_BYTES
+    assert exc.value.violations[0].field is not None
+    assert exc.value.violations[0].field.startswith("tier_bytes.")
+
+
+def test_context_pack_negative_round_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(round=-1))
+    assert exc.value.violations[0].field == "round"
+    assert codes_of(exc) == [Codes.PROTO_SCHEMA]
+
+
+def request_of(n: int) -> ContextRequest:
+    return ContextRequest(items=[ContextRequestItem(path=f"f{i}.py") for i in range(n)])
+
+
+def test_max_context_request_items_is_64() -> None:
+    assert MAX_CONTEXT_REQUEST_ITEMS == 64
+
+
+@pytest.mark.parametrize("n", [1, MAX_CONTEXT_REQUEST_ITEMS])
+def test_valid_context_request_passes(n: int) -> None:
+    validate_context_request(request_of(n))
+
+
+@pytest.mark.parametrize("n", [0, MAX_CONTEXT_REQUEST_ITEMS + 1])
+def test_context_request_item_count_out_of_range_rejected(n: int) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_request(request_of(n))
+    assert codes_of(exc) == [Codes.CONTEXT_REQUEST_INVALID]
+    assert exc.value.violations[0].field == "items"
+
+
+def test_context_request_item_paths_left_to_broker() -> None:
+    items = [ContextRequestItem(path=p) for p in ("../x", "/etc/passwd", "")]
+    validate_context_request(ContextRequest(items=items))
+
+
 # --- 1.8 / 1.5 receipt ----------------------------------------------------------------
 
 
@@ -398,6 +469,27 @@ def test_receipt_malformed_timestamp_rejected(field: str) -> None:
         validate_receipt(receipt(**{field: "t"}), result_sha256=H1)
     assert exc.value.code == Codes.RECEIPT_INVALID
     assert exc.value.violations[0].field == field
+
+
+def test_receipt_with_wellformed_telemetry_and_round_hashes_passes() -> None:
+    inputs = ReceiptInputs(task_sha256=H1, context_round_sha256=[H1, H2])
+    validate_receipt(receipt(inputs=inputs, telemetry_sha256=H2), result_sha256=H1)
+
+
+@pytest.mark.parametrize("bad", ["A" * 64, "abc", "g" * 64])
+def test_receipt_malformed_telemetry_hash_rejected(bad: str) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(telemetry_sha256=bad), result_sha256=H1)
+    assert codes_of(exc) == [Codes.RECEIPT_INVALID]
+    assert exc.value.violations[0].field == "telemetry_sha256"
+
+
+def test_receipt_malformed_round_hash_rejected() -> None:
+    inputs = ReceiptInputs(task_sha256=H1, context_round_sha256=[H1, "F" * 64])
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(inputs=inputs), result_sha256=H1)
+    assert codes_of(exc) == [Codes.RECEIPT_INVALID]
+    assert exc.value.violations[0].field == "inputs.context_round_sha256[1]"
 
 
 # --- manifest limits and catch-all globs (requirements 1.9, 3.2) ---

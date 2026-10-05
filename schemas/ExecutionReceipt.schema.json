@@ -57,7 +57,23 @@
     "inputs": {
       "additionalProperties": false,
       "properties": {
+        "context_round_sha256": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "context_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "handoff_sha256": {
           "anyOf": [
             {
               "type": "string"
@@ -96,11 +112,101 @@
       ],
       "type": "object"
     },
+    "kind": {
+      "enum": [
+        "run",
+        "plan"
+      ]
+    },
     "limitations": {
       "items": {
         "type": "string"
       },
       "type": "array"
+    },
+    "parent_run": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "plan": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "graph_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "installation_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "plan_result_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "plan_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "workspace_descriptor_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "plan_node": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "producer": {
       "additionalProperties": false,
@@ -191,6 +297,46 @@
         }
       ]
     },
+    "replay_of": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reproducibility": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "enum": [
+                "reproducible",
+                "partially_reproducible",
+                "non_reproducible",
+                "unknown"
+              ]
+            },
+            "reasons": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "level"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "result_sha256": {
       "anyOf": [
         {
@@ -217,7 +363,18 @@
         "refused",
         "provider_failure",
         "ambiguous",
-        "no_route"
+        "no_route",
+        "planned"
+      ]
+    },
+    "telemetry_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
     "unknowns": {
@@ -225,6 +382,16 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "verification_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [

@@ -1,24 +1,57 @@
 """Command handlers: gather data, render (text or JSON), return the exit code."""
 
 import argparse
+import dataclasses
 import json
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from theforge.cli import render
+from theforge.context import scan_workspace
 from theforge.contracts import to_dict
+from theforge.contracts.codes import Codes, family_of
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
-from theforge.forger import AskRequest, Forger
+from theforge.explain import build_explain_report
+from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
+from theforge.forger.replay import replay
 from theforge.registry import Registry, RegistryRecord, check_health
 from theforge.routing.signals import normalize_tokens
-from theforge.runs import ARTIFACTS, RunStore
+from theforge.runs import RunStore
+from theforge.security.redact import redact
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
+from theforge.workspace import describe_workspace
 
-EXIT_BY_STATUS = {"ok": 0, "partial": 0, "ambiguous": 3, "no_route": 3, "refused": 4,
-                  "provider_failure": 4}
+EXIT_BY_STATUS = {"ok": 0, "partial": 0, "planned": 0, "ambiguous": 3, "no_route": 3,
+                  "refused": 4, "provider_failure": 4}
+EXIT_INTEGRITY: Final = 6  # integrity divergence: explain, replay --mode render|verify
+
+PROVIDER_CODE = "provider code"  # family label of a native provider code (13.3)
+
+
+def error_family(code: str) -> str:
+    """Family of a taxonomy code, or ``PROVIDER_CODE`` for a native provider code."""
+    return family_of(code) or PROVIDER_CODE
+
+
+def print_debug(diagnostic: dict[str, Any]) -> None:
+    """The redacted diagnostic as ``theforge: debug:`` lines on stderr (13.5)."""
+    for line in render.diagnostic(diagnostic):
+        print(f"theforge: debug: {line}", file=sys.stderr)
+
+
+def _integrity_exit(divergences: int) -> int:
+    """Exit 6 with one governed stderr line when artifacts diverge (``PERSIST_DIVERGENCE``
+    classifies the divergence, 13.4); 0 otherwise. Stdout is left untouched."""
+    if not divergences:
+        return 0
+    code = Codes.PERSIST_DIVERGENCE
+    print(f"theforge: integrity divergence: {divergences} artifact(s) diverge "
+          f"{render.code_suffix(code, error_family(code))}", file=sys.stderr)
+    return EXIT_INTEGRITY
 
 
 def _root(args: argparse.Namespace) -> Path:
@@ -28,10 +61,22 @@ def _root(args: argparse.Namespace) -> Path:
     return root
 
 
+def _no_traceback(value: Any) -> Any:
+    """``value`` with every raw traceback in its strings collapsed (13.4): JSON output too
+    never shows one (e.g. a provider's stderr tail in an error detail)."""
+    if isinstance(value, str):
+        return render.collapse_traceback(value)
+    if isinstance(value, dict):
+        return {key: _no_traceback(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_no_traceback(item) for item in value]
+    return value
+
+
 def _emit(args: argparse.Namespace, data: dict[str, Any],
           text: Callable[[dict[str, Any]], str]) -> None:
     if args.json:
-        print(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False))
+        print(json.dumps(_no_traceback(data), indent=2, sort_keys=True, ensure_ascii=False))
     else:
         print(text(data))
 
@@ -53,6 +98,10 @@ def _summary(record: RegistryRecord) -> dict[str, Any]:
 
 def _capability_rows(records: list[RegistryRecord],
                      provider: str | None = None) -> list[dict[str, Any]]:
+    declared_by: dict[str, set[str]] = {}
+    for record in records:
+        for cap in record.manifest.capabilities if record.manifest else []:
+            declared_by.setdefault(cap.id, set()).add(record.entry.id)
     rows: list[dict[str, Any]] = []
     for record in records:
         if record.manifest is None or (provider and record.entry.id != provider):
@@ -63,8 +112,20 @@ def _capability_rows(records: list[RegistryRecord],
                 "actions": list(cap.actions), "default_action": cap.default_action,
                 "state": cap.state, "operation_class": cap.operation_class,
                 "description": cap.description, "keywords": list(cap.signals.keywords),
+                "aliases": list(cap.aliases), "deprecated": cap.deprecated,
+                "replaced_by": cap.replaced_by, "declared_by": sorted(declared_by[cap.id]),
             })
     return sorted(rows, key=lambda row: (row["id"], row["provider"]))
+
+
+def _warn_deprecated(rows: list[dict[str, Any]]) -> None:
+    for row in rows:
+        if not row["deprecated"]:
+            continue
+        replacement = (f"replaced_by '{row['replaced_by']}'" if row["replaced_by"]
+                       else "no replacement declared")
+        print(f"theforge: warning: capability '{row['id']}' ({row['provider']}) "
+              f"is deprecated; {replacement}", file=sys.stderr)
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -128,6 +189,7 @@ def cmd_capabilities_list(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     rows = _capability_rows(registry.records(), args.provider)
     _warn(registry)
+    _warn_deprecated(rows)
     _emit(args, {"capabilities": rows}, render.capabilities)
     return 0
 
@@ -140,9 +202,10 @@ def cmd_capabilities_search(args: argparse.Namespace) -> int:
     rows = [
         row for row in _capability_rows(registry.records())
         if query <= set(normalize_tokens(" ".join([row["id"], row["description"],
-                                                    *row["keywords"]])))
+                                                    *row["keywords"], *row["aliases"]])))
     ]
     _warn(registry)
+    _warn_deprecated(rows)
     _emit(args, {"query": args.query, "capabilities": rows}, render.capabilities)
     return 0
 
@@ -167,29 +230,101 @@ def cmd_ask(args: argparse.Namespace) -> int:
     outcome = Forger(root, registry, RunStore(forge_dir)).ask(AskRequest(
         intent=args.intent, targets=args.targets or ["."], capability=args.capability,
         action=args.action, profile=args.profile, allow_unverified=args.allow_unverified,
-        approvals=frozenset(args.approvals or ()),
+        approvals=frozenset(args.approvals or ()), debug=args.debug,
     ))
     _warn(registry)
-    data = {
+    # Redacted for display: an internal error's text is raw in memory (decision reason too).
+    data: dict[str, Any] = redact({
         "run_id": outcome.run_id, "status": outcome.status,
         "decision": to_dict(outcome.decision),
         "result": to_dict(outcome.result) if outcome.result else None,
         "error": to_dict(outcome.error) if outcome.error else None,
-    }
+        "error_family": error_family(outcome.error.code) if outcome.error else None,
+    })
     _emit(args, data, render.ask)
+    if args.debug and outcome.diagnostic is not None:
+        print_debug(to_dict(outcome.diagnostic))
     return EXIT_BY_STATUS.get(outcome.status, 4)
+
+
+@contextmanager
+def _run_lookup() -> Iterator[None]:
+    """A malformed (ValueError) or unknown (LookupError) run id is a usage error (exit 2)."""
+    try:
+        yield
+    except (ValueError, LookupError) as exc:
+        raise UsageError(str(exc)) from exc
 
 
 def cmd_explain(args: argparse.Namespace) -> int:
     store = RunStore(require_forge_dir(_root(args)))
-    try:
-        run_dir = store.run_dir(args.run_id)
-    except ValueError as exc:
-        raise UsageError(str(exc)) from exc
-    if not run_dir.is_dir():
-        raise UsageError(f"unknown run {args.run_id}")
-    data: dict[str, Any] = {"run_id": args.run_id}
-    for name in ARTIFACTS:
-        data[name] = store.read_optional(args.run_id, name)
-    _emit(args, data, render.explain)
+    with _run_lookup():
+        report = build_explain_report(store, args.run_id)
+    _emit(args, to_dict(report), render.explain_report)
+    return _integrity_exit(len(report.integrity.divergences))
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    root = _root(args)
+    forge_dir = require_forge_dir(root)
+    registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
+    store = RunStore(forge_dir)
+    outcome = PlanExecutor(Forger(root, registry, store)).run(PlanCommand(
+        intent=args.intent, targets=args.targets or ["."], profile=args.profile,
+        plan_file=Path(args.plan_file) if args.plan_file else None, execute=args.execute,
+        approvals=frozenset(args.approvals or ()), allow_unverified=args.allow_unverified,
+        debug=args.debug,
+    ))
+    _warn(registry)
+    # Redacted for display: an internal error's text is raw in memory.
+    data: dict[str, Any] = redact({
+        "run_id": outcome.run_id, "status": outcome.status,
+        "plan": to_dict(outcome.plan) if outcome.plan else None,
+        "result": to_dict(outcome.result) if outcome.result else None,
+        "installation": store.read_optional(outcome.run_id, "installation"),
+        "error": to_dict(outcome.error) if outcome.error else None,
+        "error_family": error_family(outcome.error.code) if outcome.error else None,
+    })
+    _emit(args, data, render.plan)
+    if args.debug and outcome.diagnostic is not None:
+        print_debug(to_dict(outcome.diagnostic))
+    return EXIT_BY_STATUS.get(outcome.status, 4)
+
+
+def cmd_workspace_show(args: argparse.Namespace) -> int:
+    """The workspace descriptor from the registry cache only: no provider process starts
+    (7.8). A configured provider without a cached manifest is a limitation."""
+    root = _root(args)
+    registry = Registry(find_forge_dir(root))
+    records = registry.cached_records()
+    cached = {record.entry.id for record in records}
+    descriptor = describe_workspace(root, records, scan_workspace(root, []))
+    missing = [f"provider {entry.id}: no cached manifest, its signals were not used "
+               "(run `theforge registry refresh`)"
+               for entry in registry.entries() if entry.id not in cached]
+    descriptor = dataclasses.replace(
+        descriptor, limitations=[*descriptor.limitations, *missing])
+    _warn(registry)
+    _emit(args, redact(to_dict(descriptor)), render.workspace)
     return 0
+
+
+def cmd_replay(args: argparse.Namespace) -> int:
+    root = _root(args)
+    forge_dir = require_forge_dir(root)
+    registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
+    store = RunStore(forge_dir)
+    with _run_lookup():
+        report = replay(Forger(root, registry, store), store, args.run_id, args.mode,
+                        approvals=frozenset(args.approvals or ()),
+                        allow_unverified=args.allow_unverified)
+    _warn(registry)
+    data: dict[str, Any] = to_dict(report)
+    if report.mode == "execute":
+        receipt = store.read_optional(report.new_run, "receipt") if report.new_run else None
+        status = receipt.get("status") if receipt else None
+        data["new_status"] = status
+        _emit(args, redact(data), render.replay)
+        return EXIT_BY_STATUS.get(status, 4) if isinstance(status, str) else 4
+    _emit(args, redact(data), render.replay)
+    return _integrity_exit(len(report.divergences))

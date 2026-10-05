@@ -23,6 +23,12 @@
               },
               "reason": {
                 "type": "string"
+              },
+              "signals": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               }
             },
             "required": [
@@ -39,6 +45,28 @@
               "bytes": {
                 "type": "integer"
               },
+              "lines": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "end": {
+                        "type": "integer"
+                      },
+                      "start": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "path": {
                 "type": "string"
               },
@@ -48,6 +76,19 @@
               "sha256": {
                 "pattern": "^[0-9a-f]{64}$",
                 "type": "string"
+              },
+              "signals": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "tier": {
+                "enum": [
+                  "reference",
+                  "excerpt",
+                  "requested"
+                ]
               }
             },
             "required": [
@@ -86,6 +127,9 @@
         "root": {
           "type": "string"
         },
+        "round": {
+          "type": "integer"
+        },
         "schema": {
           "type": "string"
         },
@@ -98,6 +142,35 @@
         "task_id": {
           "type": "string"
         },
+        "tier_bytes": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "tokens": {
+          "properties": {
+            "kind": {
+              "enum": [
+                "measured",
+                "estimated",
+                "unknown"
+              ]
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
         "truncated": {
           "type": "boolean"
         },
@@ -109,6 +182,101 @@
         },
         "used_bytes": {
           "type": "integer"
+        },
+        "workspace": {
+          "anyOf": [
+            {
+              "properties": {
+                "dependency_files": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "files_scanned": {
+                  "type": "integer"
+                },
+                "git": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "branch": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "changed_files": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "detached": {
+                          "type": "boolean"
+                        },
+                        "dirty": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "head": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "state": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "available"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "unmatched_files": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "files_scanned",
+                "unmatched_files"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -121,6 +289,205 @@
         "budget_bytes"
       ],
       "type": "object"
+    },
+    "handoff": {
+      "anyOf": [
+        {
+          "properties": {
+            "created_at": {
+              "type": "string"
+            },
+            "dropped": {
+              "type": "integer"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "claim": {
+                    "type": "string"
+                  },
+                  "epistemic": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "confirmed",
+                          "observed",
+                          "inferred",
+                          "proposed",
+                          "unresolved"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "evidence_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "hash": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "evidence",
+                      "finding",
+                      "artifact",
+                      "decision"
+                    ]
+                  },
+                  "location": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "line": {
+                            "anyOf": [
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "path"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "origin": {
+                    "properties": {
+                      "node": {
+                        "type": "string"
+                      },
+                      "plan_run": {
+                        "type": "string"
+                      },
+                      "provider": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "type": "object"
+                      },
+                      "run_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "plan_run",
+                      "node",
+                      "run_id",
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  "severity": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "info",
+                          "low",
+                          "medium",
+                          "high",
+                          "critical"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "subject": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "origin"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "limitations": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "plan_run": {
+              "type": "string"
+            },
+            "producer": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "version"
+              ],
+              "type": "object"
+            },
+            "schema": {
+              "type": "string"
+            },
+            "target_node": {
+              "type": "string"
+            },
+            "truncated": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "producer",
+            "created_at",
+            "plan_run",
+            "target_node"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "task": {
       "properties": {

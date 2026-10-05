@@ -12,26 +12,48 @@ from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hin
 
 from theforge.contracts import (
     ContextPack,
+    Diagnostic,
     Evidence,
     ExecuteRequest,
+    ExecutionPlan,
     ExecutionReceipt,
     ExecutionResult,
+    ExplainReport,
     ForgeManifest,
+    Handoff,
     HealthReport,
+    InstallationPlan,
+    PlanEstimate,
+    PlanRequest,
+    PlanResult,
     Request,
     Response,
     RiskAssessment,
     RoutingDecision,
+    RunTelemetry,
     TaskSpec,
+    VerificationResult,
+    WorkspaceDescriptor,
+    WorkspaceGraph,
 )
 
 EXPORTED: tuple[type[Any], ...] = (
     ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
     ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, RiskAssessment,
+    RunTelemetry,
+    # cross-forge-foundation (Wave D)
+    ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, Handoff, WorkspaceDescriptor,
+    WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
-# reject unknown properties at every level. Provider-facing contracts stay open.
-CLOSED_SCHEMAS: tuple[type[Any], ...] = (RoutingDecision, ExecutionReceipt, RiskAssessment)
+# reject unknown properties at every level. Provider-facing contracts stay open
+# (Handoff, PlanRequest and PlanEstimate cross the protocol in the ``plan`` op and in
+# ExecuteRequest.handoff).
+CLOSED_SCHEMAS: tuple[type[Any], ...] = (
+    RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
+    ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,
+    InstallationPlan, ExplainReport, Diagnostic,
+)
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 

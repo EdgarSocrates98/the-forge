@@ -125,9 +125,17 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "duplicate-protocols": ("ok", None),
     "health-cwd-probe": ("ok", None),
     "describe-catch-all-glob": ("ok", None),  # only the greedy capability is excluded
+    "describe-off-taxonomy": ("ok", None),  # only the off-taxonomy capability is excluded
     "stderr-flood": ("ok", None),
     "exit-leave-grandchild": ("ok", None),
     "env-probe-full": ("ok", None),
+    "excerpts": ("ok", None),  # the capability declares excerpt support (context v2)
+    # context negotiation (default profile balanced: at most 1 round)
+    "context-request": ("ok", None),  # one round; the requested file is simply missing
+    "tokens-measured": ("ok", None),  # the provider's token count is kept as reported
+    # context drift (default profile balanced: conditional re-verification) -> partial
+    "drift-report": ("partial", None),  # Evidence.hash differs from the pack item
+    "mutate-context": ("partial", None),  # the provider changes the file it confirmed
     # describe-level: provider or capability is not routable
     "describe-crash": ("no_route", None),
     "invalid-manifest": ("no_route", None),
@@ -139,6 +147,10 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "capability-spam": ("no_route", None),
     "keyword-spam": ("no_route", None),
     "wide-glob": ("no_route", None),
+    "describe-bad-version": ("no_route", None),
+    "describe-only-off-taxonomy": ("no_route", None),
+    "describe-colliding-alias": ("no_route", None),
+    "describe-refused": ("no_route", None),
     "no-execute-op": ("refused", Codes.PROTO_OP_UNSUPPORTED),
     # the manifest embeds the per-call temporary cwd, so it differs on every describe: the
     # revalidation before routing sees it change twice and refuses an unstable registry
@@ -178,6 +190,18 @@ SWEEP: dict[str, tuple[str, str | None]] = {
     "dangling-ref": ("provider_failure", Codes.RESULT_DANGLING_EVIDENCE),
     "artifact-absolute": ("provider_failure", Codes.RESULT_ARTIFACT_PATH),
     "artifact-traversal": ("provider_failure", Codes.RESULT_ARTIFACT_PATH),
+    # execute: context negotiation (8.4)
+    "context-request-loop": ("provider_failure", Codes.CONTEXT_REQUEST_LIMIT),
+    "context-request-undeclared": ("provider_failure", Codes.CONTEXT_REQUEST_UNSUPPORTED),
+    "context-request-invalid": ("provider_failure", Codes.CONTEXT_REQUEST_INVALID),
+    # cross-forge-foundation fixtures: a single ``ask`` never calls the ``plan`` op nor sends
+    # a handoff, so these answer as a valid run. artifact-tamper declares an artifact whose
+    # hash diverges from the file in work/: the forge verification ends it ``partial`` (9.5).
+    "plan-error": ("ok", None),
+    "plan-estimate-stricter": ("ok", None),
+    "handoff-accept": ("ok", None),
+    "artifact-tamper": ("partial", None),
+    "internal-crash": ("provider_failure", Codes.PROTO_EXIT),  # unhandled exception, exit 1
 }
 
 # Registry state that keeps each describe-level attacker out of routing. no-execute-op is not
@@ -193,13 +217,20 @@ NO_ROUTE_STATE = {
     "capability-spam": "invalid",
     "keyword-spam": "invalid",
     "wide-glob": "invalid",
+    "describe-bad-version": "invalid",
+    "describe-only-off-taxonomy": "invalid",
+    "describe-colliding-alias": "invalid",
+    "describe-refused": "invalid",
 }
 GRANDCHILD_MODES = ("spawn-grandchild-timeout", "exit-leave-grandchild")
-MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS")
+# Modes that act on the ContextPack items: their workspace gets one *.txt file to cover.
+CONTEXT_FILE_MODES = ("drift-report", "mutate-context")
+MODE_TABLES = ("INTEGRITY_MODES", "OPERATION_CLASSES", "MANIFEST_PROTOCOLS", "REQUEST_MODES")
 
 
 def _bad_forge_modes() -> set[str]:
-    """Every mode string bad_forge.py compares against, plus the keys of its mode tables."""
+    """Every mode string bad_forge.py compares against, plus the keys (or items) of its
+    mode tables."""
     tree = ast.parse((PROVIDERS / "bad_forge.py").read_text(encoding="utf-8"))
     modes: set[str] = set()
     for node in ast.walk(tree):
@@ -207,9 +238,11 @@ def _bad_forge_modes() -> set[str]:
                 and node.left.id == "mode"):
             modes |= {c.value for comp in node.comparators for c in ast.walk(comp)
                       if isinstance(c, ast.Constant) and isinstance(c.value, str)}
-        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
+        if (isinstance(node, ast.Assign) and isinstance(node.value, (ast.Dict, ast.Tuple))
                 and any(isinstance(t, ast.Name) and t.id in MODE_TABLES for t in node.targets)):
-            modes |= {k.value for k in node.value.keys
+            keys = (node.value.keys if isinstance(node.value, ast.Dict)
+                    else node.value.elts)  # a tuple table lists the modes themselves
+            modes |= {k.value for k in keys
                       if isinstance(k, ast.Constant) and isinstance(k.value, str)}
     return modes
 
@@ -227,6 +260,8 @@ def test_every_mode_through_the_full_forger(
 ) -> None:
     status, code = expected
     make_workspace(tmp_path, [bad_entry(mode, "bad-a")])
+    if mode in CONTEXT_FILE_MODES:
+        (tmp_path / "notes.txt").write_text("hello\n", encoding="utf-8")
     forge = tmp_path / ".forge"
     store = RunStore(forge)
     grandchild = 0
@@ -243,7 +278,9 @@ def test_every_mode_through_the_full_forger(
         receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
         validate_receipt(receipt, result_sha256=store.persisted_sha256(out.run_id, "result"))
         assert receipt.status == status
-        if status == "ok":
+        if mode == "artifact-tamper":  # the divergence is named in the receipt (9.5)
+            assert (f"{Codes.RESULT_ARTIFACT_HASH}: out/report.txt") in receipt.limitations
+        if status in ("ok", "partial"):
             assert out.result is not None and receipt.result_sha256 is not None
         else:
             assert out.result is None and receipt.result_sha256 is None

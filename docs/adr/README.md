@@ -1,0 +1,45 @@
+# Índice de ADRs
+
+Decisões de arquitetura de The Forge, uma por arquivo `NNNN-<slug>.md`. Cada ADR declara o status na linha `- Status:`. A numeração é única e não é reaproveitada; um ADR substituído continua no índice com o status atualizado.
+
+| Número | Título | Status |
+|---|---|---|
+| 0001 | [Exec-protocol via subprocess em vez de imports ou MCP](0001-exec-protocol.md) | aceito (2026-10-02) |
+| 0002 | [JSON e uma única convenção de schema](0002-json-single-schema-convention.md) | aceito (2026-10-02) |
+| 0003 | [Python >= 3.11, stdlib-only em runtime](0003-python-stdlib-only.md) | aceito (2026-10-02) |
+| 0004 | [Sem forge-kernel por enquanto](0004-no-forge-kernel-yet.md) | aceito (2026-10-02) |
+| 0005 | [Routing determinístico primeiro, sem LLM no ciclo 1](0005-deterministic-routing-first.md) | aceito (2026-10-02) |
+| 0006 | [Registry local e trust model](0006-local-registry-and-trust.md) | aceito (2026-10-02) |
+| 0007 | [ContextPack por referência](0007-context-pack-by-reference.md) | aceito (2026-10-02) |
+| 0008 | [Nome `theforge` com alias `forge`](0008-cli-name.md) | aceito (2026-10-02) |
+| 0009 | [Cache do registry no diretório de cache do usuário](0009-registry-cache-location.md) | aceito (2026-10-03) |
+| 0010 | [Modelo de policy e diferença concreta entre níveis de trust](0010-policy-model.md) | aceito (2026-10-03) |
+| 0011 | [Matriz de suporte de CI: macOS e Python 3.14](0011-ci-support-matrix.md) | aceito (2026-10-03) |
+| 0012 | [Sandbox de SO: pesquisa, sem dependência no ciclo](0012-os-sandbox-research.md) | aceito (2026-10-03) |
+| 0013 | [Identidade local de provider](0013-provider-identity.md) | aceito (2026-10-03) |
+| 0014 | [Local dos adapters dos Forges reais](0014-provider-adapter-location.md) | aceito (2026-10-04) |
+| 0015 | [Inteligência de contexto: tiers, perfis, fingerprints e TOCTOU](0015-context-intelligence.md) | aceito (2026-10-04) |
+| 0016 | [Sinais git somente leitura](0016-git-read-only-signals.md) | aceito (2026-10-04) |
+| 0017 | [Taxonomia de capabilities](0017-capability-taxonomy.md) | aceito (2026-10-04) |
+| 0018 | [Modelo de execução multi-provider](0018-multi-provider-execution.md) | aceito (2026-10-04) |
+| 0019 | [Taxonomia de erros, reprodutibilidade e replay](0019-error-taxonomy-and-reproducibility.md) | aceito (2026-10-04) |
+| 0020 | [Fonte canônica de assets agentic e política de hooks](0020-agentic-assets-canonical-source.md) | aceito (2026-10-04) |
+
+## Decisões exigidas pelo Cycle 2
+
+O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta para o ADR que a registra e para a spec dona da decisão; um ADR exigido ausente é bloqueio da spec dona, nunca um ADR redigido por outra spec.
+
+| Decisão | ADR | Spec dona |
+|---|---|---|
+| ownership dos adapters reais | [0014](0014-provider-adapter-location.md) | `real-provider-integration` |
+| taxonomia de capabilities | [0017](0017-capability-taxonomy.md) | `real-provider-integration` |
+| matriz de suporte de CI | [0011](0011-ci-support-matrix.md) | `cycle2-reality-hardening` |
+| integridade de contexto | [0015](0015-context-intelligence.md) | `context-intelligence-v2` |
+| local do cache do registry | [0009](0009-registry-cache-location.md) | `cycle2-reality-hardening` |
+| modelo de execução multi-provider | [0018](0018-multi-provider-execution.md) | `cross-forge-foundation` |
+| fonte canônica de assets agentic | [0020](0020-agentic-assets-canonical-source.md) | `agentic-maintainability` |
+| modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
+
+## Novo ADR
+
+Use o próximo número livre, declare `- Status:` logo abaixo do título e acrescente a linha nesta tabela e, se o documento for novo em `docs/`, no índice do [README](../../README.md#documentação) no mesmo commit.

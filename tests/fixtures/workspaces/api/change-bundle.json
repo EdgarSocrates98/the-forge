@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "schema_version": "af-change-bundle/1",
+  "repository": "example/orders-api",
+  "base_sha": "0000000000000000000000000000000000000001",
+  "head_sha": "0000000000000000000000000000000000000002",
+  "origin": "replay",
+  "provider": "artifact",
+  "contract": "openapi.yaml",
+  "project": "app",
+  "policy": {
+    "version": 1,
+    "read_only": true,
+    "mutation_allowed": false,
+    "untrusted_input": true,
+    "limitations": ["example workspace is local and provider-neutral"]
+  },
+  "limitations": ["live provider freshness is not proven by replay"]
+}

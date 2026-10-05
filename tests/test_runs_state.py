@@ -1,21 +1,36 @@
 import json
+import secrets
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from theforge.contracts import (
+    ContextPack,
     ContractError,
+    Diagnostic,
     ErrorInfo,
+    ExecutionPlan,
     ExecutionReceipt,
     ExecutionResult,
+    Handoff,
+    InstallationPlan,
     IntegrityError,
+    Metric,
+    PlanRefs,
+    PlanResult,
     PolicyDecision,
     Producer,
+    ProfileSnapshot,
     ReceiptInputs,
     RiskAssessment,
     RiskDimensions,
+    RunTelemetry,
     TaskSpec,
+    VerificationResult,
+    WorkspaceDescriptor,
+    WorkspaceGraph,
+    from_dict,
 )
 from theforge.contracts.canonical import sha256_of, utc_now
 from theforge.contracts.codes import Codes
@@ -157,10 +172,64 @@ def make_risk(run_id: str) -> RiskAssessment:
 
 
 def test_risk_is_a_known_artifact_in_run_order() -> None:
-    assert ARTIFACTS == ("task", "routing", "risk", "context", "result", "receipt")
+    assert ARTIFACTS == ("task", "workspace-descriptor", "routing", "plan", "installation",
+                         "risk", "handoff", "context", "context-r1", "context-r2", "result",
+                         "plan-result", "graph", "verification", "telemetry", "diagnostic",
+                         "receipt")
     assert set(ARTIFACT_TYPES) == set(ARTIFACTS)
     assert ARTIFACT_TYPES["risk"] is RiskAssessment
     assert ARTIFACT_TYPES["receipt"] is ExecutionReceipt
+
+
+def test_negotiation_round_and_telemetry_artifacts_are_typed() -> None:
+    assert ARTIFACT_TYPES["context-r1"] is ContextPack
+    assert ARTIFACT_TYPES["context-r2"] is ContextPack
+    assert ARTIFACT_TYPES["telemetry"] is RunTelemetry
+
+
+def make_telemetry(run_id: str) -> RunTelemetry:
+    snapshot = ProfileSnapshot(
+        name="balanced", budget_bytes=262144, max_files=64,
+        tiers=["excerpt", "metadata", "reference", "requested"],
+        effective_tiers=["metadata", "reference"], negotiation_rounds=1, max_providers=1,
+        fallback=True, verification="conditional", execute_timeout_s=180.0)
+    return RunTelemetry(producer=PRODUCER, created_at=utc_now(), run_id=run_id,
+                        profile=snapshot, scan_ms=Metric(value=1.5, kind="measured"),
+                        limitations=["provider said password=hunter2xyz"])
+
+
+def test_telemetry_is_redacted_hashed_on_disk_and_reread_strictly(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    digest = store.write(run_id, "telemetry", make_telemetry(run_id))
+    on_disk = store.read(run_id, "telemetry")
+    assert on_disk["limitations"] == ["provider said password=[REDACTED]"]
+    assert "hunter2xyz" not in (store.run_dir(run_id) / "telemetry.json").read_text("utf-8")
+    assert digest == sha256_of(on_disk) == store.persisted_sha256(run_id, "telemetry")
+    loaded = store.read_contract(run_id, "telemetry", RunTelemetry)
+    assert loaded.limitations == ["provider said password=[REDACTED]"]
+    assert loaded.scan_ms == Metric(value=1.5, kind="measured")
+    assert loaded.routing_ms == Metric()
+
+
+def test_negotiation_round_pack_round_trips_through_strict_read(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
+                       task_id="t1", provider_id="echo", root=".", budget_bytes=10, round=1)
+    for name in ("context-r1", "context-r2"):
+        digest = store.write(run_id, name, pack)
+        assert digest == sha256_of(store.read(run_id, name))
+        assert store.read_contract(run_id, name, ContextPack) == pack
+    assert (store.run_dir(run_id) / "context-r1.json").is_file()
+
+
+def test_run_without_new_artifacts_reads_them_as_absent(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    store.write(run_id, "task", make_task())
+    for name in ("context-r1", "context-r2", "telemetry"):
+        assert store.read_optional(run_id, name) is None
+        assert store.persisted_sha256(run_id, name) is None
+    with pytest.raises(LookupError):
+        store.read_contract(run_id, "telemetry", RunTelemetry)
 
 
 def test_risk_round_trips_through_strict_read(tmp_path: Path) -> None:
@@ -271,3 +340,184 @@ def test_receipt_with_malformed_hash_is_refused(tmp_path: Path) -> None:
         store.write(run_id, "receipt", bad)
     assert exc.value.code == Codes.RECEIPT_INVALID
     assert store.read_optional(run_id, "receipt") is None
+
+
+# --- cross-forge-foundation 1.5: plan artifacts, plan receipts, older runs ---------------
+
+# Random per session: a redaction fixture, not a credential.
+SECRET = "password=" + secrets.token_hex(8)
+WP = {"id": "theforge", "version": "1"}
+WTS = "2026-01-01T00:00:00Z"
+H_A = "a" * 64
+
+
+def _wave_d_artifacts() -> dict[str, tuple[type, dict[str, Any]]]:
+    origin = {"plan_run": "p1", "node": "a", "run_id": "r1",
+              "provider": {"id": "spark", "version": "2.0"}}
+    return {
+        "plan": (ExecutionPlan, {
+            "producer": WP, "created_at": WTS, "status": "validated", "plan_run": "p1",
+            "task_id": "t1", "pattern": "route", "source": "decomposed", "profile": "max",
+            "nodes": [{"id": "a", "role": "standalone", "provider": "demo",
+                       "capability": "demo.echo", "action": "echo"}],
+            "limitations": [SECRET]}),
+        "plan-result": (PlanResult, {
+            "producer": WP, "created_at": WTS, "status": "ok", "plan_run": "p1",
+            "order": ["a"], "nodes": [{"node": "a", "status": "ok", "run_id": "r1",
+                                       "result_sha256": H_A}],
+            "synthesis": {"nodes": []}, "reproducibility": {"level": "unknown"},
+            "limitations": [SECRET]}),
+        "workspace-descriptor": (WorkspaceDescriptor, {
+            "producer": WP, "created_at": WTS, "root": "/ws",
+            "repositories": [{"path": "."}], "limitations": [SECRET]}),
+        "graph": (WorkspaceGraph, {
+            "producer": WP, "created_at": WTS, "plan_run": "p1",
+            "nodes": [{"id": "workspace:.", "kind": "workspace"}], "limitations": [SECRET]}),
+        "installation": (InstallationPlan, {
+            "producer": WP, "created_at": WTS, "run_id": "p1",
+            "items": [{"provider": "spark", "state": "unavailable", "reason": SECRET,
+                       "suggested_action": "install java", "source": "health"}]}),
+        "handoff": (Handoff, {
+            "producer": WP, "created_at": WTS, "plan_run": "p1", "target_node": "b",
+            "items": [{"kind": "evidence", "id": "e1", "origin": origin,
+                       "epistemic": "inferred", "claim": SECRET}]}),
+        "verification": (VerificationResult, {
+            "producer": WP, "created_at": WTS, "run_id": "r1",
+            "self_report": {"status": "reported"}, "provider_evidence": {"status": "reported"},
+            "forge": {"status": "passed"}, "independent": {"status": "not_performed"},
+            "limitations": [SECRET]}),
+        "diagnostic": (Diagnostic, {
+            "producer": WP, "created_at": WTS, "stage": "cli:plan", "code": "FORGE-INTERNAL",
+            "family": "internal", "error_type": "RuntimeError", "message": SECRET}),
+    }
+
+
+def test_wave_d_artifacts_are_known_and_typed() -> None:
+    for name, (cls, _) in _wave_d_artifacts().items():
+        assert name in ARTIFACTS and ARTIFACT_TYPES[name] is cls
+    # The multi-repo descriptor is not the ContextPack workspace summary.
+    assert "workspace" not in ARTIFACTS
+
+
+@pytest.mark.parametrize("name", sorted(_wave_d_artifacts()))
+def test_wave_d_artifact_is_redacted_hashed_and_reread_strictly(
+        tmp_path: Path, name: str) -> None:
+    cls, data = _wave_d_artifacts()[name]
+    store, run_id = _store_with_run(tmp_path)
+    digest = store.write(run_id, name, from_dict(cls, data, strict=True))
+    text = (store.run_dir(run_id) / f"{name}.json").read_text("utf-8")
+    assert "hunter2xyz" not in text and "password=[REDACTED]" in text
+    assert digest == sha256_of(store.read(run_id, name)) == store.persisted_sha256(run_id, name)
+    loaded = store.read_contract(run_id, name, cls)
+    assert isinstance(loaded, cls)
+    raw = store.read(run_id, name)
+    raw["injected"] = True
+    (store.run_dir(run_id) / f"{name}.json").write_text(json.dumps(raw), encoding="utf-8")
+    with pytest.raises(ContractError, match="injected: unknown field"):
+        store.read_contract(run_id, name, cls)
+
+
+def _write_plan_run(store: RunStore, run_id: str) -> tuple[str, str, str]:
+    artifacts = _wave_d_artifacts()
+    plan_cls, plan_data = artifacts["plan"]
+    plan_sha = store.write(run_id, "plan", from_dict(plan_cls, plan_data, strict=True))
+    result_cls, result_data = artifacts["plan-result"]
+    result_sha = store.write(run_id, "plan-result",
+                             from_dict(result_cls, result_data, strict=True))
+    telemetry_sha = store.write(run_id, "telemetry", make_telemetry(run_id))
+    return plan_sha, result_sha, telemetry_sha
+
+
+def make_plan_receipt(run_id: str, plan_sha: str, plan_result: str | None,
+                      **overrides: Any) -> ExecutionReceipt:
+    refs = PlanRefs(plan_sha256=plan_sha, plan_result_sha256=plan_result)
+    return make_receipt(run_id, kind="plan", plan=refs, **overrides)
+
+
+def test_plan_receipt_matching_disk_is_written_and_reread(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    plan_sha, result_sha, telemetry_sha = _write_plan_run(store, run_id)
+    receipt = make_plan_receipt(run_id, plan_sha, result_sha, telemetry_sha256=telemetry_sha)
+    store.write(run_id, "receipt", receipt)
+    assert store.read_contract(run_id, "receipt", ExecutionReceipt) == receipt
+
+
+def test_planned_receipt_without_plan_result_is_written(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    plan_cls, plan_data = _wave_d_artifacts()["plan"]
+    plan_sha = store.write(run_id, "plan", from_dict(plan_cls, plan_data, strict=True))
+    telemetry_sha = store.write(run_id, "telemetry", make_telemetry(run_id))
+    receipt = make_plan_receipt(run_id, plan_sha, None, status="planned",
+                                telemetry_sha256=telemetry_sha)
+    store.write(run_id, "receipt", receipt)
+    assert store.read(run_id, "receipt")["status"] == "planned"
+
+
+@pytest.mark.parametrize("diverging", ["plan-result", "telemetry", "missing-plan-result"])
+def test_plan_receipt_with_diverging_hash_is_refused_without_writing(
+        tmp_path: Path, diverging: str) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    plan_sha, result_sha, telemetry_sha = _write_plan_run(store, run_id)
+    if diverging == "plan-result":
+        receipt = make_plan_receipt(run_id, plan_sha, H_OTHER, telemetry_sha256=telemetry_sha)
+        field = "plan.plan_result_sha256"
+    elif diverging == "telemetry":
+        receipt = make_plan_receipt(run_id, plan_sha, result_sha, telemetry_sha256=H_OTHER)
+        field = "telemetry_sha256"
+    else:
+        receipt = make_plan_receipt(run_id, plan_sha, None, telemetry_sha256=telemetry_sha)
+        field = "plan.plan_result_sha256"
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt", receipt)
+    assert exc.value.code == Codes.RECEIPT_INVALID and exc.value.field == field
+    assert store.read_optional(run_id, "receipt") is None
+
+
+def test_plan_receipt_with_malformed_plan_hash_is_refused(tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    receipt = make_plan_receipt(run_id, "nope", None, status="planned")
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt", receipt)
+    assert exc.value.field == "plan.plan_sha256"
+
+
+@pytest.mark.parametrize("field", ["verification_sha256", "inputs.handoff_sha256"])
+def test_run_receipt_with_malformed_new_hash_is_refused(tmp_path: Path, field: str) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    error = ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x")
+    if field == "verification_sha256":
+        bad = make_receipt(run_id, status="refused", error=error, verification_sha256="x")
+    else:
+        bad = make_receipt(run_id, status="refused", error=error,
+                           inputs=ReceiptInputs(task_sha256=H_A, handoff_sha256="x"))
+    with pytest.raises(IntegrityError) as exc:
+        store.write(run_id, "receipt", bad)
+    assert exc.value.field == field
+
+
+def test_run_receipt_ignores_plan_artifacts_and_telemetry(tmp_path: Path) -> None:
+    """kind=run validation is unchanged: telemetry/plan-result on disk are not compared."""
+    store, run_id = _store_with_run(tmp_path)
+    _write_plan_run(store, run_id)
+    result_sha = store.write(run_id, "result", make_result())
+    store.write(run_id, "receipt", make_receipt(run_id, result_sha256=result_sha,
+                                                telemetry_sha256=H_OTHER))
+
+
+def test_run_written_in_previous_format_rereads_with_nothing_new_recorded(
+        tmp_path: Path) -> None:
+    store, run_id = _store_with_run(tmp_path)
+    receipt = {"schema": "theforge/ExecutionReceipt/v1", "producer": WP, "created_at": TS,
+               "status": "ok", "run_id": run_id, "forge_version": "0.3.0",
+               "inputs": {"task_sha256": H_A, "context_round_sha256": []},
+               "provider": {"id": "echo", "version": "1.0.0", "trust": "builtin"},
+               "result_sha256": H_A, "telemetry_sha256": H_A, "started_at": TS,
+               "finished_at": TS, "error": None, "limitations": [], "unknowns": []}
+    (store.run_dir(run_id) / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+    loaded = store.read_contract(run_id, "receipt", ExecutionReceipt)
+    assert loaded.kind == "run" and loaded.plan is None
+    assert loaded.verification_sha256 is None and loaded.reproducibility is None
+    assert loaded.inputs.handoff_sha256 is None
+    for name in ("verification", "handoff", "plan", "plan-result", "graph",
+                 "workspace-descriptor", "installation", "diagnostic"):
+        assert store.read_optional(run_id, name) is None

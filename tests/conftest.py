@@ -15,7 +15,7 @@ import pytest
 # Files planned by the cycle-2 design are pre-registered; new unplanned files must be added.
 FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # existing
-    "test_broker.py": ("unit",),
+    "test_broker.py": ("unit", "security"),
     "test_canonical.py": ("unit",),
     "test_cli.py": ("integration",),
     "test_codes.py": ("unit",),
@@ -46,8 +46,57 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_registry_cache.py": ("integration", "security"),
     "test_env_isolation.py": ("integration", "security"),
     "test_policy.py": ("unit", "security"),
-    "test_ci_gates.py": ("integration",),
     "test_ci_workflows.py": ("unit",),
+    # planned by design (real-provider-integration)
+    "test_manifest_rules.py": ("unit", "contract"),
+    "test_adapter_shell.py": ("integration", "contract"),
+    "test_adapter_sparkforge.py": ("integration", "contract"),
+    "test_adapter_apiforge.py": ("integration", "contract"),
+    "test_adapters_core.py": ("integration",),
+    "test_real_providers_env.py": ("unit",),
+    "test_capability_catalog_doc.py": ("unit",),
+    "test_real_providers.py": ("real_provider", "integration"),
+    "test_compat_matrix.py": ("unit",),
+    # planned by design (context-intelligence-v2)
+    "test_profiles.py": ("unit",),
+    "test_context_relevance.py": ("unit",),
+    "test_context_git.py": ("integration", "security"),
+    "test_fingerprints.py": ("unit", "security"),
+    "test_context_verify.py": ("unit",),
+    "test_context_flow.py": ("integration",),
+    "test_bench.py": ("unit",),
+    "test_telemetry.py": ("unit",),
+    # planned by design (cross-forge-foundation)
+    "test_error_taxonomy.py": ("unit",),
+    "test_plan_contracts.py": ("unit", "contract"),
+    "test_cross_forge_contracts.py": ("unit", "contract"),
+    "test_plan_validation.py": ("unit",),
+    "test_decompose.py": ("unit", "integration"),
+    "test_handoff.py": ("unit", "security"),
+    "test_synthesis.py": ("unit",),
+    "test_workspace_descriptor.py": ("integration", "security"),
+    "test_graph.py": ("unit",),
+    "test_verification.py": ("unit",),
+    "test_reproducibility.py": ("unit",),
+    "test_plan_flow.py": ("integration",),
+    "test_cross_forge_replay.py": ("integration",),
+    "test_cross_forge_real.py": ("real_provider", "integration"),
+    "test_explain_report.py": ("integration",),
+    "test_hashcheck.py": ("integration",),
+    "test_cli_governed.py": ("e2e",),
+    "test_replay.py": ("integration",),
+    "test_cli_plan.py": ("integration",),
+    "test_cli_explain.py": ("integration",),
+    "test_cross_fixtures.py": ("integration",),
+    "test_estimate.py": ("integration", "security"),
+    "test_installation.py": ("unit", "security"),
+    "test_diagnostics.py": ("unit", "security"),
+    "test_forger_binding.py": ("integration",),
+    "test_explain_evolution.py": ("contract",),
+    # planned by design (agentic-maintainability)
+    "test_agentic_parity.py": ("integration",),
+    "test_docs_consistency.py": ("unit",),
+    "test_root_hygiene.py": ("unit",),
 }
 
 
@@ -183,8 +232,16 @@ def _network_policy(request: pytest.FixtureRequest) -> Iterator[None]:
 @pytest.fixture(autouse=True)
 def _isolated_user_config(
     tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("THEFORGE_CONFIG_DIR", str(tmp_path_factory.mktemp("user-config")))
+) -> Path:
+    path = tmp_path_factory.mktemp("user-config")
+    monkeypatch.setenv("THEFORGE_CONFIG_DIR", str(path))
+    return path
+
+
+@pytest.fixture
+def user_config_dir(_isolated_user_config: Path) -> Path:
+    """The test's isolated user config dir (the one ``THEFORGE_CONFIG_DIR`` points to)."""
+    return _isolated_user_config
 
 
 @pytest.fixture(autouse=True)

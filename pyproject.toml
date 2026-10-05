@@ -29,6 +29,14 @@ forge = "theforge.cli.main:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/theforge"]
 
+[tool.hatch.build.targets.sdist]
+# The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
+# Agentic assets (host instructions, skills) and local-only state never ship (ADR 0020).
+exclude = [
+    "/adapters",
+    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q -m 'not slow and not real_provider' --basetemp=.pytest_tmp"
@@ -55,5 +63,10 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-mypy_path = "src"
-files = ["src", "scripts"]
+mypy_path = "src:adapters/sparkforge/src:adapters/apiforge/src"
+files = ["src", "scripts", "adapters/sparkforge/src", "adapters/apiforge/src"]
+
+[[tool.mypy.overrides]]
+# The specialists are installed only in their own interpreters, never in the core env.
+module = ["sparkforge.*", "apiforge.*"]
+ignore_missing_imports = true

@@ -1,0 +1,287 @@
+{
+  "argv": [
+    "analyze",
+    "--contract",
+    "stage/orders-api/openapi.yaml",
+    "--project",
+    "stage",
+    "--out-dir",
+    "case",
+    "--detail-level",
+    "summary"
+  ],
+  "assembled_from": "API Forge 0.1.0 case files (case.json, api-ir.json, facts.json, findings.json) copied from the declared artifacts of a live apiforge 0.1.0 analyze run (Python 3.12.13, win32) through the adapter, as node n2 of the cross-forge-foundation proof plan over tests/fixtures/workspaces/cross staged under stage/; provisional until re-recorded by an execute recorder",
+  "case_dir": "case",
+  "case_files": {
+    "api-ir.json": {
+      "diagnostics": [],
+      "generator": "apiforge 0.1.0",
+      "input_hashes": {
+        "code:data-pipeline/jobs/daily_orders_job.py": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1",
+        "code:orders-api/app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "code:orders-api/app/main.py": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468",
+        "contract:stage/orders-api/openapi.yaml": "29449e08b565a8f13d9e372bb7409d4e1d9b9666e8099db79fbba12cc3d2a58f"
+      },
+      "operations": [
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "list_daily_orders",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:05a569e8618dbb08",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 9,
+                "path": "orders-api/app/main.py",
+                "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [
+            {
+              "detail": {
+                "operation_id": "listDailyOrders",
+                "raw": {
+                  "operationId": "listDailyOrders",
+                  "parameters": [
+                    {
+                      "in": "query",
+                      "name": "order_date",
+                      "required": true,
+                      "schema": {
+                        "format": "date",
+                        "type": "string"
+                      }
+                    }
+                  ],
+                  "responses": {
+                    "200": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "items": {
+                              "$ref": "#/components/schemas/DailyOrder"
+                            },
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "description": "Daily orders of one date"
+                    }
+                  }
+                }
+              },
+              "fact_id": "fact:69208cc6d5fa6c32",
+              "source": {
+                "column": null,
+                "extractor": "openapi",
+                "line": null,
+                "path": "stage/orders-api/openapi.yaml",
+                "sha256": "29449e08b565a8f13d9e372bb7409d4e1d9b9666e8099db79fbba12cc3d2a58f"
+              },
+              "source_kind": "contract"
+            }
+          ],
+          "method": "get",
+          "path": "/daily-orders"
+        },
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "get_daily_order",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:664d6265654f4ab1",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 14,
+                "path": "orders-api/app/main.py",
+                "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [
+            {
+              "detail": {
+                "operation_id": "getDailyOrder",
+                "raw": {
+                  "operationId": "getDailyOrder",
+                  "parameters": [
+                    {
+                      "in": "path",
+                      "name": "order_id",
+                      "required": true,
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  ],
+                  "responses": {
+                    "200": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "$ref": "#/components/schemas/DailyOrder"
+                          }
+                        }
+                      },
+                      "description": "One daily order"
+                    },
+                    "404": {
+                      "description": "Not found"
+                    }
+                  }
+                }
+              },
+              "fact_id": "fact:422b1cca78a5c233",
+              "source": {
+                "column": null,
+                "extractor": "openapi",
+                "line": null,
+                "path": "stage/orders-api/openapi.yaml",
+                "sha256": "29449e08b565a8f13d9e372bb7409d4e1d9b9666e8099db79fbba12cc3d2a58f"
+              },
+              "source_kind": "contract"
+            }
+          ],
+          "method": "get",
+          "path": "/daily-orders/{order_id}"
+        }
+      ],
+      "schema_version": "1"
+    },
+    "case.json": {
+      "artifacts": {
+        "api_ir": {
+          "path": "api-ir.json",
+          "sha256": "110aee8f6238d717b0d4e9678a1577ee71cef96da441c8046956437011a91a99"
+        },
+        "facts": {
+          "path": "facts.json",
+          "sha256": "1db5a83d5fc92cb4ba429adf2a2829efb4561511bc413900c6d6f23c55bb3910"
+        },
+        "findings": {
+          "path": "findings.json",
+          "sha256": "8aa973100a15bf817985395637131e838cf84e427be4792583def923f020f5fa"
+        }
+      },
+      "case_id": "case:5c64b8e3e67b0537",
+      "diagnostics_count": 0,
+      "finding_counts": {},
+      "generator": "apiforge 0.1.0",
+      "input_hashes": {
+        "code:data-pipeline/jobs/daily_orders_job.py": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1",
+        "code:orders-api/app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "code:orders-api/app/main.py": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468",
+        "contract:stage/orders-api/openapi.yaml": "29449e08b565a8f13d9e372bb7409d4e1d9b9666e8099db79fbba12cc3d2a58f"
+      },
+      "inputs": {
+        "contract": "stage\\orders-api\\openapi.yaml",
+        "project": "stage"
+      },
+      "schema_version": "1"
+    },
+    "facts.json": {
+      "facts": [
+        {
+          "attrs": {
+            "function": "list_daily_orders",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:05a569e8618dbb08",
+          "kind": "code.route",
+          "measures": {
+            "method": "get",
+            "path": "/daily-orders"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 9,
+            "path": "orders-api/app/main.py",
+            "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "function": "get_daily_order",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:664d6265654f4ab1",
+          "kind": "code.route",
+          "measures": {
+            "method": "get",
+            "path": "/daily-orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 14,
+            "path": "orders-api/app/main.py",
+            "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "operation_id": "listDailyOrders"
+          },
+          "fact_id": "fact:69208cc6d5fa6c32",
+          "kind": "contract.operation",
+          "measures": {
+            "method": "get",
+            "path": "/daily-orders"
+          },
+          "source": {
+            "column": null,
+            "extractor": "openapi",
+            "line": null,
+            "path": "stage/orders-api/openapi.yaml",
+            "sha256": "29449e08b565a8f13d9e372bb7409d4e1d9b9666e8099db79fbba12cc3d2a58f"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "operation_id": "getDailyOrder"
+          },
+          "fact_id": "fact:422b1cca78a5c233",
+          "kind": "contract.operation",
+          "measures": {
+            "method": "get",
+            "path": "/daily-orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "openapi",
+            "line": null,
+            "path": "stage/orders-api/openapi.yaml",
+            "sha256": "29449e08b565a8f13d9e372bb7409d4e1d9b9666e8099db79fbba12cc3d2a58f"
+          },
+          "version": 1
+        }
+      ]
+    },
+    "findings.json": {
+      "findings": []
+    }
+  },
+  "exit_code": 0,
+  "provenance": "hand-built"
+}

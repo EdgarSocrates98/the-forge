@@ -1,0 +1,5 @@
+{
+  "dispatcher": false,
+  "provenance": "derived: the probes health records on an interpreter without sparkforge-aws (find_spec finds no dispatcher, no version is read)",
+  "specialist_version": null
+}

@@ -1,0 +1,251 @@
+"""Record the native output of one Spark Forge action for replay:
+``python -m theforge_sparkforge.record_execute --workspace DIR --capability CAP --action ACT
+--out SCENARIO_DIR [--arg NAME=PATH ...]``.
+
+Run it in the Spark Forge's own interpreter. The workspace (an existing directory, not a link,
+that does not overlap ``--out``) is never touched: it is copied, without links (never
+followed), to ``stage/`` inside a fresh temporary directory, the process cwd during the native
+calls, and every ``--arg`` is a path relative to the workspace, passed to the tool as
+``stage/<path>`` (so the native output only carries workspace-relative paths). When the tool
+accepts them, ``detail_level = "normal"`` (the smallest form the chained judge accepts:
+``summary`` drops the fact ``subject``) and ``limit = 200`` are added. When the output has
+facts, ``sparkforge_judge`` is chained over them, as the native CLI does (``analyze --out`` ->
+``judge --facts``). The Spark Forge's own state (its ``.sparkforge/traces.db`` ledger, flushed at
+exit into the cwd) is kept in a temporary directory removed at exit.
+
+The recording is written in the replay layout (``backend.py``):
+
+- ``<capability>.<action>.json``: ``{tool, arguments, output, judge}``, where ``arguments`` are
+  the tool arguments with file paths relative to the workspace, ``output`` is the native
+  output as returned and ``judge`` is ``{tool, arguments, output}`` of the chained judge (its
+  ``facts`` argument, the output items, is not repeated) or ``null`` without facts;
+- ``<capability>.<action>.error.json``: the native error envelope (``{error, exit_code}``
+  plus ``error_code``/``required_approval`` when present) as returned.
+
+The text is canonical (sorted keys, 2-space indent, LF). A recording that would carry a machine
+path (the temporary directory, the workspace, the home directory) is refused, never written.
+"""
+
+from __future__ import annotations
+
+import argparse
+import atexit
+import gc
+import os
+import posixpath
+import re
+import shutil
+import stat
+import sys
+import tempfile
+from collections.abc import Callable, Collection, Mapping, Sequence
+from pathlib import Path
+from typing import Any
+
+from theforge_sparkforge import catalog
+from theforge_sparkforge._shell import STAGE_DIR
+from theforge_sparkforge.backend import expected_recording, live_unavailable_reason
+from theforge_sparkforge.record import render
+
+JUDGE_TOOL = "sparkforge_judge"
+DETAIL_LEVEL = "normal"
+PAGE_LIMIT = 200
+_DRIVE = re.compile(r"^[A-Za-z]:")
+_FILE_ATTRIBUTE_REPARSE_POINT = 0x400  # Windows: symlinks, junctions and other links
+
+NativeCall = Callable[[str, dict[str, Any]], Any]
+
+
+class RecordingError(Exception):
+    """The action cannot be recorded (the reason is the message)."""
+
+
+def tool_of(capability: str, action: str) -> str:
+    """The native tool of a catalogued ``capability``/``action``."""
+    for spec in catalog.CAPABILITIES:
+        if spec.id == capability:
+            for name, tool in spec.actions:
+                if name == action:
+                    return tool
+    raise RecordingError(f"action {capability}/{action} is not in the capability table")
+
+
+def _relative(path: str) -> str:
+    """A workspace-relative POSIX path, normalized, or RecordingError."""
+    value = path.replace("\\", "/")
+    normalized = posixpath.normpath(value) if value else ""
+    if (not value or value.startswith("/") or _DRIVE.match(value)
+            or normalized == ".." or normalized.startswith("../")):
+        raise RecordingError(f"argument path {path!r} must be workspace-relative")
+    return normalized
+
+
+def _staged(path: str) -> str:
+    return STAGE_DIR if path == "." else f"{STAGE_DIR}/{path}"
+
+
+def _machine_paths(roots: Sequence[Path]) -> list[str]:
+    found: list[str] = []
+    for root in roots:
+        for form in (str(root), root.as_posix()):
+            if form and form not in found:
+                found.append(form)
+    return found
+
+
+def _check_portable(data: Mapping[str, Any], roots: Sequence[Path]) -> None:
+    text = render(data)
+    for form in _machine_paths(roots):
+        # JSON escapes backslashes: look for both the raw and the escaped form.
+        if form in text or form.replace("\\", "\\\\") in text:
+            raise RecordingError(f"the recording would carry a machine path ({form}); "
+                                 "pass workspace-relative arguments")
+
+
+def _is_link(path: str) -> bool:
+    try:
+        st = os.lstat(path)
+    except OSError:
+        return True
+    return stat.S_ISLNK(st.st_mode) or bool(
+        getattr(st, "st_file_attributes", 0) & _FILE_ATTRIBUTE_REPARSE_POINT)
+
+
+def _skip_links(directory: str, names: list[str]) -> set[str]:
+    """``copytree`` ignore hook: links (symlinks, junctions) are never copied nor followed."""
+    return {name for name in names if _is_link(os.path.join(directory, name))}
+
+
+def check_workspace(workspace: Path, out: Path | None = None) -> Path:
+    """The resolved workspace to copy: an existing directory, not a link, that neither is,
+    contains nor sits inside the output directory ``out``. RecordingError otherwise."""
+    try:
+        resolved = workspace.resolve(strict=True)
+    except OSError as exc:
+        raise RecordingError(f"workspace {workspace} does not exist") from exc
+    if _is_link(str(workspace)):
+        raise RecordingError(f"workspace {workspace} must be an existing directory, not a link")
+    if not resolved.is_dir():
+        raise RecordingError(f"workspace {workspace} must be an existing directory")
+    if out is not None:
+        target = out.resolve()
+        if (target == resolved or target.is_relative_to(resolved)
+                or resolved.is_relative_to(target)):
+            raise RecordingError(f"workspace {workspace} and output {out} must not overlap")
+    return resolved
+
+
+def record_action(call: NativeCall, *, workspace: Path, capability: str, action: str,
+                  arguments: Mapping[str, str], accepted: Collection[str]
+                  ) -> tuple[str, dict[str, Any]]:
+    """Call the action's tool over a temporary copy of ``workspace`` (and the chained judge
+    when there are facts); return the recording ``(file name, data)``.
+
+    ``call`` is ``sparkforge.adapters.tools.call_tool``; ``arguments`` maps native argument ->
+    workspace-relative path; ``accepted`` are the tool's input properties.
+    """
+    tool = tool_of(capability, action)
+    workspace = check_workspace(workspace)
+    relative = {name: _relative(value) for name, value in arguments.items()}
+    recorded_args: dict[str, Any] = dict(relative)
+    if "detail_level" in accepted:
+        recorded_args["detail_level"] = DETAIL_LEVEL
+    if "limit" in accepted:
+        recorded_args["limit"] = PAGE_LIMIT
+    native_args = {**recorded_args, **{name: _staged(value) for name, value in relative.items()}}
+    previous = Path.cwd()
+    # A fresh temporary directory created here is the only copy destination.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        root = Path(tmp)
+        shutil.copytree(workspace, root / STAGE_DIR, symlinks=True, ignore=_skip_links)
+        os.chdir(root)
+        try:
+            output = call(tool, dict(native_args))
+            judge = None
+            items = output.get("items") if isinstance(output, Mapping) else None
+            if isinstance(output, Mapping) and "error" not in output and items:
+                judge_args = {"limit": PAGE_LIMIT}
+                judged = call(JUDGE_TOOL, {"facts": items, **judge_args})
+                judge = {"tool": JUDGE_TOOL, "arguments": judge_args, "output": judged}
+        finally:
+            os.chdir(previous)
+        roots = [root, root.resolve(), workspace, workspace.resolve(), Path.home()]
+        if isinstance(output, Mapping) and "error" in output:
+            data = dict(output)
+            name = f"{capability}.{action}.error.json"
+        else:
+            data = {"tool": tool, "arguments": recorded_args, "output": output, "judge": judge}
+            name = expected_recording(capability, action)
+        _check_portable(data, roots)
+    return name, data
+
+
+def _contain_native_state() -> None:
+    """Make a fresh temporary directory the process cwd until exit.
+
+    The Spark Forge flushes its ledger (``.sparkforge/traces.db``) into the cwd from an
+    ``atexit`` hook registered at the first native call; the cleanup registered here first runs
+    after it (``atexit`` is LIFO) and removes the directory, so nothing is left behind.
+    """
+    previous = Path.cwd()
+    state = Path(tempfile.mkdtemp(prefix="sparkforge-record-"))
+    os.chdir(state)
+
+    def cleanup() -> None:
+        os.chdir(previous)
+        gc.collect()  # the native store leaves its sqlite connections to the collector
+        shutil.rmtree(state, ignore_errors=True)
+
+    atexit.register(cleanup)
+
+
+def _parse_arg(value: str) -> tuple[str, str]:
+    name, sep, path = value.partition("=")
+    if not sep or not name:
+        raise argparse.ArgumentTypeError(f"expected NAME=PATH, got {value!r}")
+    return name, path
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python -m theforge_sparkforge.record_execute",
+        description="Record the native output of one Spark Forge action for replay.")
+    parser.add_argument("--workspace", type=Path, required=True,
+                        help="workspace to copy (never modified)")
+    parser.add_argument("--capability", required=True)
+    parser.add_argument("--action", required=True)
+    parser.add_argument("--arg", dest="args", type=_parse_arg, action="append", default=[],
+                        metavar="NAME=PATH", help="native file argument, workspace-relative")
+    parser.add_argument("--out", type=Path, required=True, metavar="SCENARIO_DIR",
+                        help="replay scenario directory to write the recording into")
+    args = parser.parse_args(argv)
+    reason = live_unavailable_reason()
+    if reason is not None:
+        print(f"record_execute: {reason}", file=sys.stderr)
+        return 2
+    out = args.out.resolve()
+    workspace_arg = args.workspace.absolute()
+    _contain_native_state()
+    from sparkforge.adapters.tools import TOOLS, call_tool
+
+    try:
+        tool = tool_of(args.capability, args.action)
+        schema = TOOLS[tool].get("inputSchema") or {}
+        accepted = set(schema.get("properties") or {})
+        workspace = check_workspace(workspace_arg, out)
+        name, data = record_action(call_tool, workspace=workspace,
+                                   capability=args.capability, action=args.action,
+                                   arguments=dict(args.args), accepted=accepted)
+    except RecordingError as exc:
+        print(f"record_execute: {exc}", file=sys.stderr)
+        return 2
+    target = out / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("w", encoding="utf-8", newline="\n") as fh:
+        fh.write(render(data))
+    print(f"record_execute: {args.capability}/{args.action} -> {target}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

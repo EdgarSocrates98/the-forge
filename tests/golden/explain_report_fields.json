@@ -1,0 +1,682 @@
+{
+  "objects": {
+    "": {
+      "properties": [
+        "artifacts",
+        "context",
+        "created_at",
+        "error",
+        "error_family",
+        "integrity",
+        "intent",
+        "kind",
+        "limitations",
+        "not_recorded",
+        "parent_run",
+        "plan",
+        "producer",
+        "profile",
+        "provider",
+        "replay_of",
+        "reproducibility",
+        "result",
+        "risk",
+        "routing",
+        "run_id",
+        "schema",
+        "status",
+        "targets",
+        "telemetry",
+        "unknowns",
+        "verification"
+      ],
+      "required": [
+        "created_at",
+        "integrity",
+        "kind",
+        "producer",
+        "reproducibility",
+        "run_id",
+        "status"
+      ]
+    },
+    "context": {
+      "properties": [
+        "budget_bytes",
+        "drift",
+        "excluded",
+        "files",
+        "git",
+        "rounds",
+        "tier_bytes",
+        "truncated",
+        "unmatched",
+        "used_bytes"
+      ],
+      "required": [
+        "budget_bytes",
+        "excluded",
+        "files",
+        "rounds",
+        "tier_bytes",
+        "truncated",
+        "used_bytes"
+      ]
+    },
+    "context.git": {
+      "properties": [
+        "available",
+        "branch",
+        "changed_files",
+        "detached",
+        "dirty",
+        "head",
+        "state"
+      ],
+      "required": [
+        "available"
+      ]
+    },
+    "error": {
+      "properties": [
+        "code",
+        "detail",
+        "field",
+        "unlock"
+      ],
+      "required": [
+        "code",
+        "detail"
+      ]
+    },
+    "integrity": {
+      "properties": [
+        "checked",
+        "divergences",
+        "unrecorded"
+      ],
+      "required": []
+    },
+    "integrity.divergences[]": {
+      "properties": [
+        "actual",
+        "artifact",
+        "expected",
+        "kind"
+      ],
+      "required": [
+        "artifact",
+        "kind"
+      ]
+    },
+    "plan": {
+      "properties": [
+        "installation",
+        "plan",
+        "result",
+        "workspace_descriptor"
+      ],
+      "required": [
+        "plan"
+      ]
+    },
+    "plan.installation": {
+      "properties": [
+        "created_at",
+        "items",
+        "planning_only",
+        "producer",
+        "run_id",
+        "schema"
+      ],
+      "required": [
+        "created_at",
+        "producer",
+        "run_id"
+      ]
+    },
+    "plan.installation.items[]": {
+      "properties": [
+        "nodes",
+        "provider",
+        "reason",
+        "source",
+        "state",
+        "suggested_action"
+      ],
+      "required": [
+        "provider",
+        "reason",
+        "source",
+        "state",
+        "suggested_action"
+      ]
+    },
+    "plan.installation.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "plan.plan": {
+      "properties": [
+        "created_at",
+        "limitations",
+        "nodes",
+        "pattern",
+        "plan_run",
+        "producer",
+        "profile",
+        "schema",
+        "source",
+        "status",
+        "task_id",
+        "unknowns",
+        "violations"
+      ],
+      "required": [
+        "created_at",
+        "nodes",
+        "pattern",
+        "plan_run",
+        "producer",
+        "profile",
+        "source",
+        "status",
+        "task_id"
+      ]
+    },
+    "plan.plan.nodes[]": {
+      "properties": [
+        "action",
+        "capability",
+        "depends_on",
+        "estimate",
+        "id",
+        "inputs",
+        "limitations",
+        "provider",
+        "role",
+        "targets"
+      ],
+      "required": [
+        "action",
+        "capability",
+        "id",
+        "provider",
+        "role"
+      ]
+    },
+    "plan.plan.nodes[].depends_on[]": {
+      "properties": [
+        "epistemic",
+        "evidence",
+        "node",
+        "rule"
+      ],
+      "required": [
+        "epistemic",
+        "evidence",
+        "node"
+      ]
+    },
+    "plan.plan.nodes[].estimate": {
+      "properties": [
+        "context_needed",
+        "expected_artifacts",
+        "limitations",
+        "operation_class",
+        "unknowns"
+      ],
+      "required": []
+    },
+    "plan.plan.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "plan.plan.violations[]": {
+      "properties": [
+        "code",
+        "detail",
+        "node"
+      ],
+      "required": [
+        "code",
+        "detail",
+        "node"
+      ]
+    },
+    "plan.result": {
+      "properties": [
+        "created_at",
+        "limitations",
+        "nodes",
+        "order",
+        "plan_run",
+        "producer",
+        "reproducibility",
+        "schema",
+        "status",
+        "synthesis",
+        "unknowns"
+      ],
+      "required": [
+        "created_at",
+        "nodes",
+        "order",
+        "plan_run",
+        "producer",
+        "reproducibility",
+        "status",
+        "synthesis"
+      ]
+    },
+    "plan.result.nodes[]": {
+      "properties": [
+        "blocked_by",
+        "error",
+        "node",
+        "receipt_sha256",
+        "reproducibility",
+        "result_sha256",
+        "run_id",
+        "status"
+      ],
+      "required": [
+        "node",
+        "status"
+      ]
+    },
+    "plan.result.nodes[].error": {
+      "properties": [
+        "code",
+        "detail",
+        "field",
+        "unlock"
+      ],
+      "required": [
+        "code",
+        "detail"
+      ]
+    },
+    "plan.result.nodes[].reproducibility": {
+      "properties": [
+        "level",
+        "reasons"
+      ],
+      "required": [
+        "level"
+      ]
+    },
+    "plan.result.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "plan.result.reproducibility": {
+      "properties": [
+        "level",
+        "reasons"
+      ],
+      "required": [
+        "level"
+      ]
+    },
+    "plan.result.synthesis": {
+      "properties": [
+        "failures",
+        "handoffs",
+        "limitations",
+        "nodes",
+        "unknowns"
+      ],
+      "required": [
+        "nodes"
+      ]
+    },
+    "plan.result.synthesis.handoffs[]": {
+      "properties": [
+        "items",
+        "source",
+        "target",
+        "truncated"
+      ],
+      "required": [
+        "items",
+        "source",
+        "target",
+        "truncated"
+      ]
+    },
+    "plan.result.synthesis.nodes[]": {
+      "properties": [
+        "action",
+        "capability",
+        "evidence_by_epistemic",
+        "findings",
+        "node",
+        "provider",
+        "run_id",
+        "status"
+      ],
+      "required": [
+        "action",
+        "capability",
+        "node",
+        "provider",
+        "run_id",
+        "status"
+      ]
+    },
+    "plan.result.synthesis.nodes[].findings[]": {
+      "properties": [
+        "evidence_ids",
+        "id",
+        "severity",
+        "title"
+      ],
+      "required": [
+        "id",
+        "title"
+      ]
+    },
+    "plan.workspace_descriptor": {
+      "properties": [
+        "created_at",
+        "limitations",
+        "paths",
+        "producer",
+        "relations",
+        "repositories",
+        "root",
+        "schema",
+        "technologies",
+        "unknowns"
+      ],
+      "required": [
+        "created_at",
+        "producer",
+        "root"
+      ]
+    },
+    "plan.workspace_descriptor.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "plan.workspace_descriptor.relations[]": {
+      "properties": [
+        "epistemic",
+        "evidence",
+        "kind",
+        "source",
+        "target"
+      ],
+      "required": [
+        "epistemic",
+        "evidence",
+        "kind",
+        "source",
+        "target"
+      ]
+    },
+    "plan.workspace_descriptor.repositories[]": {
+      "properties": [
+        "dependency_files",
+        "git",
+        "limitations",
+        "path"
+      ],
+      "required": [
+        "path"
+      ]
+    },
+    "plan.workspace_descriptor.repositories[].git": {
+      "properties": [
+        "available",
+        "branch",
+        "changed_files",
+        "detached",
+        "dirty",
+        "head",
+        "state"
+      ],
+      "required": [
+        "available"
+      ]
+    },
+    "plan.workspace_descriptor.technologies[]": {
+      "properties": [
+        "evidence",
+        "matched_by",
+        "name",
+        "repository",
+        "source"
+      ],
+      "required": [
+        "evidence",
+        "name",
+        "repository",
+        "source"
+      ]
+    },
+    "producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "provider": {
+      "properties": [
+        "fingerprint",
+        "id",
+        "observed_version",
+        "trust",
+        "version"
+      ],
+      "required": [
+        "id",
+        "trust",
+        "version"
+      ]
+    },
+    "reproducibility": {
+      "properties": [
+        "level",
+        "reasons"
+      ],
+      "required": [
+        "level"
+      ]
+    },
+    "result": {
+      "properties": [
+        "artifacts",
+        "duration_ms",
+        "evidence_by_epistemic",
+        "findings",
+        "status"
+      ],
+      "required": [
+        "artifacts",
+        "duration_ms",
+        "evidence_by_epistemic",
+        "findings",
+        "status"
+      ]
+    },
+    "result.duration_ms": {
+      "properties": [
+        "kind",
+        "value"
+      ],
+      "required": []
+    },
+    "result.findings[]": {
+      "properties": [
+        "evidence_ids",
+        "id",
+        "severity",
+        "title"
+      ],
+      "required": [
+        "id",
+        "title"
+      ]
+    },
+    "routing": {
+      "properties": [
+        "candidates",
+        "confidence",
+        "fallbacks",
+        "notes",
+        "pattern",
+        "reason",
+        "selected",
+        "signals",
+        "status"
+      ],
+      "required": [
+        "candidates",
+        "confidence",
+        "fallbacks",
+        "pattern",
+        "reason",
+        "selected",
+        "signals",
+        "status"
+      ]
+    },
+    "routing.candidates[]": {
+      "properties": [
+        "capability",
+        "matched",
+        "provider",
+        "rank_key",
+        "state"
+      ],
+      "required": [
+        "capability",
+        "provider"
+      ]
+    },
+    "routing.candidates[].matched": {
+      "properties": [
+        "dependencies",
+        "file_globs",
+        "keywords"
+      ],
+      "required": []
+    },
+    "routing.selected[]": {
+      "properties": [
+        "action",
+        "capability",
+        "provider",
+        "role"
+      ],
+      "required": [
+        "action",
+        "capability",
+        "provider"
+      ]
+    },
+    "verification": {
+      "properties": [
+        "created_at",
+        "forge",
+        "independent",
+        "limitations",
+        "producer",
+        "provider_evidence",
+        "run_id",
+        "schema",
+        "self_report"
+      ],
+      "required": [
+        "created_at",
+        "forge",
+        "independent",
+        "producer",
+        "provider_evidence",
+        "run_id",
+        "self_report"
+      ]
+    },
+    "verification.forge": {
+      "properties": [
+        "basis",
+        "details",
+        "status"
+      ],
+      "required": [
+        "status"
+      ]
+    },
+    "verification.independent": {
+      "properties": [
+        "basis",
+        "details",
+        "status"
+      ],
+      "required": [
+        "status"
+      ]
+    },
+    "verification.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "verification.provider_evidence": {
+      "properties": [
+        "basis",
+        "details",
+        "status"
+      ],
+      "required": [
+        "status"
+      ]
+    },
+    "verification.self_report": {
+      "properties": [
+        "basis",
+        "details",
+        "status"
+      ],
+      "required": [
+        "status"
+      ]
+    }
+  },
+  "schema": "theforge/ExplainReport/v1"
+}

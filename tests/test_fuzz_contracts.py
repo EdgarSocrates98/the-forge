@@ -36,6 +36,54 @@ EVIDENCE = {
 }
 ERROR = {"code": "FORGE-X", "detail": "d", "field": "f", "unlock": "u"}
 
+ESTIMATE = {"context_needed": ["*.py"], "operation_class": "read_only",
+            "expected_artifacts": ["out.md"], "unknowns": ["u"], "limitations": ["l"]}
+PLAN = {
+    "producer": P, "created_at": "t", "status": "validated", "plan_run": "plan-1",
+    "task_id": "task-1", "pattern": "pipeline", "source": "decomposed", "profile": "max",
+    "nodes": [
+        {"id": "n1", "role": "producer", "provider": "demo-forge", "capability": "demo.echo",
+         "action": "echo", "estimate": ESTIMATE},
+        {"id": "n2", "role": "consumer", "provider": "demo-forge", "capability": "demo.echo",
+         "action": "echo", "targets": ["api"], "inputs": ["n1"],
+         "depends_on": [{"node": "n1", "epistemic": "inferred", "rule": "intent-order",
+                         "evidence": "e"}]},
+    ],
+    "limitations": ["l"], "unknowns": ["u"],
+}
+ORIGIN = {"plan_run": "plan-1", "node": "n1", "run_id": "run-1", "provider": P}
+HANDOFF = {
+    "producer": P, "created_at": "t", "plan_run": "plan-1", "target_node": "n2",
+    "items": [{"kind": "evidence", "id": "e1", "origin": ORIGIN, "epistemic": "observed",
+               "subject": "s", "claim": "c", "location": {"path": "a.md", "line": 1},
+               "hash": SHA},
+              {"kind": "finding", "id": "f1", "origin": ORIGIN, "severity": "low",
+               "evidence_ids": ["e1"]}],
+    "truncated": True, "dropped": 1, "limitations": ["l"],
+}
+DESCRIPTOR = {
+    "producer": P, "created_at": "t", "root": ".",
+    "repositories": [{"path": "api", "git": {"available": True, "head": "c" * 40},
+                      "dependency_files": ["api/requirements.txt"]}],
+    "paths": ["api"],
+    "technologies": [{"name": "fastapi", "repository": "api", "source": "dependency_manifest",
+                      "evidence": "api/requirements.txt"}],
+    "relations": [{"source": ".", "target": "api", "kind": "contains",
+                   "epistemic": "observed", "evidence": "api/.git"}],
+}
+VERIFICATION = {
+    "producer": P, "created_at": "t", "run_id": "run-1",
+    "self_report": {"status": "reported", "details": ["d"]},
+    "provider_evidence": {"status": "reported", "basis": ["b"]},
+    "forge": {"status": "passed", "basis": ["result-integrity"]},
+    "independent": {"status": "not_performed"}, "limitations": ["l"],
+}
+INSTALLATION = {
+    "producer": P, "created_at": "t", "run_id": "plan-1",
+    "items": [{"provider": "spark", "state": "unavailable", "reason": "r",
+               "suggested_action": "a", "source": "health", "nodes": ["n1"]}],
+}
+
 # One fully populated valid instance per exported contract: seeds for mutation.
 SEEDS: dict[str, dict[str, Any]] = {
     "ForgeManifest": {
@@ -65,15 +113,21 @@ SEEDS: dict[str, dict[str, Any]] = {
         "evidence": [EVIDENCE], "artifacts": [{"path": "out.md", "sha256": SHA}],
         "metrics": {"duration_ms": {"value": 1.5, "kind": "measured"},
                     "tokens": {"value": None, "kind": "unknown"}},
+        "context_request": {"items": [{"path": "b.md", "lines": {"start": 1, "end": 2},
+                                       "reason": "r"}]},
     },
     "Evidence": EVIDENCE,
     "ExecutionReceipt": {
         "producer": P, "created_at": "t", "status": "refused", "run_id": "run-1",
         "forge_version": "0.1", "started_at": "t0", "finished_at": "t1", "error": ERROR,
-        "inputs": {"task_sha256": SHA, "routing_sha256": SHA, "context_sha256": None},
+        "inputs": {"task_sha256": SHA, "routing_sha256": SHA, "context_sha256": None,
+                   "context_round_sha256": [SHA], "handoff_sha256": SHA},
         "provider": {"id": "demo-forge", "version": "1", "trust": "local",
                      "manifest_sha256": SHA, "executable": "x", "fingerprint": SHA},
-        "result_sha256": SHA,
+        "result_sha256": SHA, "telemetry_sha256": SHA,
+        "kind": "run", "parent_run": "plan-1", "plan_node": "n1", "replay_of": "run-0",
+        "verification_sha256": SHA,
+        "reproducibility": {"level": "non_reproducible", "reasons": ["network"]},
     },
     "Request": {"op": "describe", "request_id": "r_1", "payload": {"a": {"b": [1]}}},
     "Response": {
@@ -92,6 +146,65 @@ SEEDS: dict[str, dict[str, Any]] = {
                        "credentials": "unknown", "cross_account": "no"},
         "policy": {"decision": "allow", "rule": "r", "reason": "r", "approved": False},
         "limitations": [OPERATION_CLASS_LIMITATION],
+    },
+    "RunTelemetry": {
+        "producer": P, "created_at": "t", "run_id": "run-1",
+        "profile": {"name": "balanced", "budget_bytes": 10, "max_files": 2,
+                    "tiers": ["metadata", "reference"], "effective_tiers": ["reference"],
+                    "negotiation_rounds": 1, "max_providers": 1, "fallback": True,
+                    "verification": "conditional", "execute_timeout_s": 180.0},
+        "scan_ms": {"value": 1.5, "kind": "measured"},
+        "providers_executed": {"value": 2, "kind": "measured"},
+        "provider_revalidation": "undeclared", "verification_performed": "minimal",
+        "context_drift": ["a.md"], "limitations": ["l"], "unknowns": ["u"],
+    },
+    # cross-forge-foundation (Wave D)
+    "ExecutionPlan": PLAN,
+    "PlanRequest": {"task": TASK, "capability": "demo.echo", "action": "echo"},
+    "PlanEstimate": ESTIMATE,
+    "PlanResult": {
+        "producer": P, "created_at": "t", "status": "partial", "plan_run": "plan-1",
+        "order": ["n1", "n2"],
+        "nodes": [{"node": "n1", "status": "ok", "run_id": "run-1", "receipt_sha256": SHA,
+                   "result_sha256": SHA, "reproducibility": {"level": "unknown"}},
+                  {"node": "n2", "status": "skipped", "blocked_by": "n1", "error": ERROR}],
+        "synthesis": {
+            "nodes": [{"node": "n1", "provider": "demo-forge", "capability": "demo.echo",
+                       "action": "echo", "status": "ok", "run_id": "run-1",
+                       "findings": [{"id": "f1", "title": "t"}],
+                       "evidence_by_epistemic": {"observed": 1}}],
+            "handoffs": [{"source": "n1", "target": "n2", "items": 1, "truncated": False}],
+            "failures": ["n2: skipped"], "limitations": ["l"], "unknowns": ["u"]},
+        "reproducibility": {"level": "unknown", "reasons": ["r"]},
+    },
+    "Handoff": HANDOFF,
+    "WorkspaceDescriptor": DESCRIPTOR,
+    "WorkspaceGraph": {
+        "producer": P, "created_at": "t", "plan_run": "plan-1",
+        "nodes": [{"id": "workspace:.", "kind": "workspace"},
+                  {"id": "plan_node:n1", "kind": "plan_node", "label": "n1"}],
+        "edges": [{"source": "plan_node:n1", "target": "workspace:.", "kind": "targets",
+                   "epistemic": "inferred", "evidence": "plan", "rule": "intent-order"}],
+        "limitations": ["l"],
+    },
+    "VerificationResult": VERIFICATION,
+    "InstallationPlan": INSTALLATION,
+    "ExplainReport": {
+        "producer": P, "created_at": "t", "run_id": "plan-1", "kind": "plan",
+        "status": "partial", "reproducibility": {"level": "unknown"},
+        "integrity": {"checked": ["plan"],
+                      "divergences": [{"artifact": "graph", "kind": "modified",
+                                       "expected": SHA, "actual": SHA}]},
+        "verification": VERIFICATION,
+        "plan": {"plan": PLAN, "installation": INSTALLATION,
+                 "workspace_descriptor": DESCRIPTOR},
+        "artifacts": {"task": {"id": "task-1"}},
+    },
+    "Diagnostic": {
+        "producer": P, "created_at": "t", "stage": "cli:plan", "code": "FORGE-INTERNAL",
+        "family": "internal", "error_type": "RuntimeError", "message": "m",
+        "causes": [{"type": "OSError", "message": "c"}],
+        "frames": [{"module": "theforge.cli.main", "function": "main", "line": 1}],
     },
 }
 

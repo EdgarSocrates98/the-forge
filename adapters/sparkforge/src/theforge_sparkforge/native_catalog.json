@@ -1,0 +1,1583 @@
+{
+  "recorded_at": "2026-10-04",
+  "specialist_version": "0.5.0",
+  "tools": {
+    "sparkforge_analyze_airflow_dag": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_athena_workgroup": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_call_graph": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path"
+      ]
+    },
+    "sparkforge_analyze_catalog_schema": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_cdc": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "artifact",
+        "path"
+      ]
+    },
+    "sparkforge_analyze_cloudwatch": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_cloudwatch_logs": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_consumers": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_controlm_jobs": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_data_observability": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_data_quality": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_dbt_artifacts": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_dq_ai": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_duckdb_microscope": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_emr_cluster": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_emr_eks": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_emr_serverless": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_error_signatures": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path"
+      ]
+    },
+    "sparkforge_analyze_event_driven": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_event_log": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_flink": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "artifact",
+        "path"
+      ]
+    },
+    "sparkforge_analyze_forge_lab": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_glue_job_runs": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "job_name",
+        "path"
+      ]
+    },
+    "sparkforge_analyze_glue_resource_link": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_glue_streaming": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_graph": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_iam_access": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_iceberg": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_lakeformation_grants": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_lakehouse_catalog": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_orchestration": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_parquet_footer": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_plan": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_platform_ecosystem": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_platform_graph": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_pyspark": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_s3_listing": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_schema_registry": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_sfn_history": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_sql": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_analyze_sql_metrics": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_step_functions": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_streaming": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "artifact",
+        "path"
+      ]
+    },
+    "sparkforge_analyze_streaming_composition": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_paths",
+        "mode"
+      ]
+    },
+    "sparkforge_analyze_streaming_integrations": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_streaming_ops": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_terraform": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_analyze_terraform_diff": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "after",
+        "before"
+      ]
+    },
+    "sparkforge_analyze_transport": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "artifact",
+        "path"
+      ]
+    },
+    "sparkforge_analyze_workload": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "sparkforge_arbitrate": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_benchmark": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "after_path",
+        "before_path"
+      ]
+    },
+    "sparkforge_capacity": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path",
+        "job_name",
+        "job_run_id"
+      ]
+    },
+    "sparkforge_case_get": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_case_open": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "case_id",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_case_update": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_change_plan": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path",
+        "repo"
+      ]
+    },
+    "sparkforge_change_propose": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "repo",
+        "sandbox_id"
+      ]
+    },
+    "sparkforge_change_sandbox": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_code_context": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo",
+        "task"
+      ]
+    },
+    "sparkforge_code_export": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_code_path": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "destino",
+        "origem",
+        "repo"
+      ]
+    },
+    "sparkforge_code_read": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_code_search": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "query",
+        "repo"
+      ]
+    },
+    "sparkforge_code_shape": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_code_status": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_code_symbol": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "node_id",
+        "repo"
+      ]
+    },
+    "sparkforge_code_sync": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_collect_athena_workgroup": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "repo",
+        "workgroup"
+      ]
+    },
+    "sparkforge_collect_cloudwatch": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "end",
+        "job_name",
+        "job_run_id",
+        "now",
+        "repo",
+        "start"
+      ]
+    },
+    "sparkforge_collect_cloudwatch_logs": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "end",
+        "job_name",
+        "job_run_id",
+        "log_group",
+        "now",
+        "repo",
+        "start"
+      ]
+    },
+    "sparkforge_collect_emr_cluster": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "cluster_id",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_emr_eks": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "job_run_id",
+        "now",
+        "repo",
+        "virtual_cluster_id"
+      ]
+    },
+    "sparkforge_collect_emr_serverless": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "application_id",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_event_log": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "bucket",
+        "job_run_id",
+        "now",
+        "prefix",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_glue_job": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "job_name",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_glue_job_runs": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "job_name",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_glue_resource_link": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "database",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_iam_access": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "repo",
+        "role_arn"
+      ]
+    },
+    "sparkforge_collect_iceberg_metadata": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "output_location",
+        "repo",
+        "table",
+        "workgroup"
+      ]
+    },
+    "sparkforge_collect_lakeformation": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "database",
+        "now",
+        "repo",
+        "table"
+      ]
+    },
+    "sparkforge_collect_managed_flink": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "application_name",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_parquet_footer": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "prefix",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_schema_registry": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_streaming_integrations": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "required": [
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_collect_verify": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_context_expand": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "ref"
+      ]
+    },
+    "sparkforge_context_start": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "intent",
+        "profile"
+      ]
+    },
+    "sparkforge_controlm_describe": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "sparkforge_debate_next": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "debate_id",
+        "repo"
+      ]
+    },
+    "sparkforge_debate_referee": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_debate_start": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo",
+        "rules"
+      ]
+    },
+    "sparkforge_debate_submit": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "debate_id",
+        "repo",
+        "submission"
+      ]
+    },
+    "sparkforge_decision_evaluate": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "contract",
+        "repo",
+        "state"
+      ]
+    },
+    "sparkforge_doctor": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_dq_ai_assess": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_paths"
+      ]
+    },
+    "sparkforge_economy_report": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "run_id"
+      ]
+    },
+    "sparkforge_finops": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path",
+        "job_name"
+      ]
+    },
+    "sparkforge_funcval_compare": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "after_path",
+        "before_path",
+        "plan_path"
+      ]
+    },
+    "sparkforge_funcval_plan": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "facts_paths",
+        "out_path"
+      ]
+    },
+    "sparkforge_fuse": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_paths"
+      ]
+    },
+    "sparkforge_gain": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "baseline_paths",
+        "candidate_paths"
+      ]
+    },
+    "sparkforge_glue_dependency_audit": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "glue",
+        "path"
+      ]
+    },
+    "sparkforge_iceberg_assess_upgrade": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path",
+        "source",
+        "target"
+      ]
+    },
+    "sparkforge_judge": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_knowledge_drift": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_knowledge_path": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_lakeformation_access_graph": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path"
+      ]
+    },
+    "sparkforge_lakeformation_architect": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "payload"
+      ]
+    },
+    "sparkforge_lakeformation_matrix": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_migration_assess": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "path",
+        "source",
+        "target"
+      ]
+    },
+    "sparkforge_next_step": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_pack_list": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_playbook": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "coordinator"
+      ]
+    },
+    "sparkforge_policy_explain": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_proof": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "after_facts_path",
+        "applied",
+        "facts_path",
+        "findings_path"
+      ]
+    },
+    "sparkforge_receipt_emit": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "facts_path",
+        "findings_path",
+        "now",
+        "repo"
+      ]
+    },
+    "sparkforge_receipt_verify": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "receipt_path",
+        "repo"
+      ]
+    },
+    "sparkforge_release_describe": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "platform",
+        "release"
+      ]
+    },
+    "sparkforge_release_diff": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "left_platform",
+        "left_release",
+        "right_platform",
+        "right_release"
+      ]
+    },
+    "sparkforge_report_github": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path",
+        "findings_path",
+        "repo"
+      ]
+    },
+    "sparkforge_report_sign": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "findings_path",
+        "report_path"
+      ]
+    },
+    "sparkforge_report_verify": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "findings_path",
+        "report_path"
+      ]
+    },
+    "sparkforge_resume": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_root_cause": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path"
+      ]
+    },
+    "sparkforge_rules_lookup": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_runtime_detect": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_scan": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_sdd_check": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_sdd_stamp": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "path",
+        "repo"
+      ]
+    },
+    "sparkforge_sdd_status": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "sparkforge_simulate": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path",
+        "sets"
+      ]
+    },
+    "sparkforge_telemetry_export": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "run_id"
+      ]
+    },
+    "sparkforge_tune": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path"
+      ]
+    },
+    "sparkforge_validate_output": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "finding"
+      ]
+    },
+    "sparkforge_workload": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "facts_path",
+        "job_name",
+        "job_run_id"
+      ]
+    }
+  }
+}

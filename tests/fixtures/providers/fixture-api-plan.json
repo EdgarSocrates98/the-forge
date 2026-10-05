@@ -1,0 +1,30 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-api",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "execute", "plan"],
+  "domains": ["api-engineering"],
+  "capabilities": [
+    {
+      "id": "api.contract",
+      "actions": ["review", "lint"],
+      "default_action": "review",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Review OpenAPI contracts",
+      "signals": {
+        "keywords": ["openapi", "contrato", "contract", "api", "swagger"],
+        "file_globs": ["openapi.yaml", "openapi.json", "*.openapi.yaml", "swagger.json"],
+        "dependencies": ["fastapi", "flask"]
+      }
+    }
+  ],
+  "estimate": {
+    "context_needed": ["openapi.yaml"],
+    "operation_class": "read_only",
+    "expected_artifacts": [],
+    "unknowns": [],
+    "limitations": []
+  }
+}

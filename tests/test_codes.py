@@ -61,3 +61,9 @@ def test_errors_module_reexports_codes() -> None:
     from theforge import errors
 
     assert errors.Codes is Codes
+
+
+def test_context_request_codes_declared() -> None:
+    assert Codes.CONTEXT_REQUEST_UNSUPPORTED == "FORGE-CONTEXT-REQUEST-UNSUPPORTED"
+    assert Codes.CONTEXT_REQUEST_LIMIT == "FORGE-CONTEXT-REQUEST-LIMIT"
+    assert Codes.CONTEXT_REQUEST_INVALID == "FORGE-CONTEXT-REQUEST-INVALID"

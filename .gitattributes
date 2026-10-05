@@ -2,3 +2,10 @@
 # keep them LF on every checkout, including Windows runners with core.autocrlf=true.
 schemas/*.json text eol=lf
 tests/golden/* text eol=lf
+# The adapter shell is copied byte for byte between adapters (identity test asserts LF).
+adapters/**/_shell.py text eol=lf
+# Packaged native snapshots and replay recordings are compared byte for byte (canonical form).
+adapters/**/native_*.json text eol=lf
+tests/fixtures/native/** text eol=lf
+# The cross proof workspace is hashed by its replay recordings (scenarios/cross).
+tests/fixtures/workspaces/** text eol=lf

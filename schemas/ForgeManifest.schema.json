@@ -4,14 +4,38 @@
     "capabilities": {
       "items": {
         "properties": {
+          "accepts_handoff": {
+            "type": "boolean"
+          },
           "actions": {
             "items": {
               "type": "string"
             },
             "type": "array"
           },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "context": {
+            "properties": {
+              "excerpts": {
+                "type": "boolean"
+              },
+              "requests": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
           "default_action": {
             "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
           },
           "description": {
             "type": "string"
@@ -27,6 +51,16 @@
               "external_read",
               "external_mutation",
               "destructive"
+            ]
+          },
+          "replaced_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "signals": {
@@ -73,6 +107,20 @@
       },
       "type": "array"
     },
+    "context_revalidation": {
+      "anyOf": [
+        {
+          "enum": [
+            "hash",
+            "core",
+            "none"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "domains": {
       "items": {
         "type": "string"
@@ -81,6 +129,16 @@
     },
     "execution": {
       "properties": {
+        "deterministic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "local": {
           "type": "boolean"
         },

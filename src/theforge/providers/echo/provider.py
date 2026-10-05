@@ -11,6 +11,7 @@ from theforge.contracts import (
     ErrorInfo,
     Evidence,
     ExecuteRequest,
+    ExecutionInfo,
     ExecutionResult,
     Finding,
     ForgeManifest,
@@ -55,7 +56,10 @@ MANIFEST = ForgeManifest(
                             file_globs=list(DOC_GLOBS)),
         ),
     ],
+    # Same request and context give the same findings and evidence (only timestamps vary).
+    execution=ExecutionInfo(deterministic=True),
     limitations=["demonstration provider; performs no domain analysis"],
+    context_revalidation="hash",  # re-hashes what it reads into Evidence.hash (6.4)
 )
 
 

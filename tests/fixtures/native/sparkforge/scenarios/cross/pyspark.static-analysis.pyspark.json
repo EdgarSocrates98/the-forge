@@ -1,0 +1,342 @@
+{
+  "arguments": {
+    "detail_level": "normal",
+    "limit": 200,
+    "path": "data-pipeline/jobs"
+  },
+  "judge": {
+    "arguments": {
+      "limit": 200
+    },
+    "output": {
+      "by_severity": {},
+      "filters_applied": {
+        "cursor": null,
+        "limit": 200,
+        "severity": null
+      },
+      "items": [],
+      "next_cursor": null,
+      "plan": {
+        "constraints": [],
+        "contradictions": [],
+        "note": "calculado, nao gravado. O registro auditavel e `sparkforge arbitrate`.",
+        "objections": [],
+        "order": [],
+        "order_unresolved": {},
+        "persisted": false,
+        "scope": "todos os 0 achados deste case, nao a pagina",
+        "unresolved": []
+      },
+      "returned_count": 0,
+      "runtime": {
+        "athena": "",
+        "databricks": "",
+        "detected_from": [],
+        "divergences": [],
+        "emr": "",
+        "glue": "",
+        "iceberg": "",
+        "photon": "",
+        "python": "",
+        "spark": ""
+      },
+      "total_count": 0
+    },
+    "tool": "sparkforge_judge"
+  },
+  "output": {
+    "by_kind": {
+      "pyspark.chain": 6,
+      "pyspark.join": 1,
+      "pyspark.module_analyzed": 1,
+      "pyspark.read": 2,
+      "pyspark.write": 1
+    },
+    "filters_applied": {
+      "cursor": null,
+      "kind": null,
+      "limit": 200
+    },
+    "items": [
+      {
+        "attrs": {
+          "methods": [
+            "write",
+            "mode",
+            "partitionBy",
+            "parquet"
+          ]
+        },
+        "id": "f_89821a",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 4
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 0,
+          "end_line": 20,
+          "file": "daily_orders_job.py",
+          "line": 18,
+          "snippet": "daily_orders.write.mode(\"overwrite\").partitionBy(\"order_date\").parquet(",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "join",
+            "groupBy",
+            "agg"
+          ]
+        },
+        "id": "f_c9e2e6",
+        "kind": "pyspark.chain",
+        "measures": {
+          "join_index": 0,
+          "length": 3
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 4,
+          "end_line": 15,
+          "file": "daily_orders_job.py",
+          "line": 13,
+          "snippet": "orders.join(items, \"order_id\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "read",
+            "parquet"
+          ]
+        },
+        "id": "f_b5aa4f",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 8,
+          "end_line": 10,
+          "file": "daily_orders_job.py",
+          "line": 10,
+          "snippet": "items = spark.read.parquet(\"s3://example-lake/raw/order_items/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "builder",
+            "appName",
+            "getOrCreate"
+          ]
+        },
+        "id": "f_567245",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 3
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 8,
+          "end_line": 7,
+          "file": "daily_orders_job.py",
+          "line": 7,
+          "snippet": "spark = SparkSession.builder.appName(\"daily-orders-export\").getOrCreate()",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "sum",
+            "alias"
+          ]
+        },
+        "id": "f_e05937",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 9,
+          "end_line": 15,
+          "file": "daily_orders_job.py",
+          "line": 15,
+          "snippet": ".agg(F.sum(F.col(\"quantity\") * F.col(\"unit_price\")).alias(\"total\"))",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "read",
+            "parquet"
+          ]
+        },
+        "id": "f_6ebd6a",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 9,
+          "end_line": 9,
+          "file": "daily_orders_job.py",
+          "line": 9,
+          "snippet": "orders = spark.read.parquet(\"s3://example-lake/raw/orders/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "has_broadcast_hint": false,
+          "how": "inner"
+        },
+        "id": "f_08a656",
+        "kind": "pyspark.join",
+        "measures": {
+          "on_arity": 1
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 4,
+          "end_line": 13,
+          "file": "daily_orders_job.py",
+          "line": 13,
+          "snippet": "orders.join(items, \"order_id\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "parsed": true,
+          "referenced_names": [
+            "F",
+            "SparkSession",
+            "agg",
+            "alias",
+            "appName",
+            "builder",
+            "col",
+            "daily_orders",
+            "getOrCreate",
+            "groupBy",
+            "items",
+            "join",
+            "mode",
+            "orders",
+            "parquet",
+            "partitionBy",
+            "read",
+            "spark",
+            "sum",
+            "write"
+          ]
+        },
+        "id": "f_1ba997",
+        "kind": "pyspark.module_analyzed",
+        "measures": {
+          "resolved_calls": 14,
+          "unresolved_count": 0
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 0,
+          "file": "daily_orders_job.py",
+          "line": 0,
+          "snippet": "",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "format": "parquet",
+          "target": "s3://example-lake/raw/order_items/"
+        },
+        "id": "f_1b87a6",
+        "kind": "pyspark.read",
+        "measures": {},
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 8,
+          "end_line": 10,
+          "file": "daily_orders_job.py",
+          "line": 10,
+          "snippet": "items = spark.read.parquet(\"s3://example-lake/raw/order_items/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "format": "parquet",
+          "target": "s3://example-lake/raw/orders/"
+        },
+        "id": "f_d1d403",
+        "kind": "pyspark.read",
+        "measures": {},
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 9,
+          "end_line": 9,
+          "file": "daily_orders_job.py",
+          "line": 9,
+          "snippet": "orders = spark.read.parquet(\"s3://example-lake/raw/orders/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "api": "dataframe_writer_v1",
+          "mode": "overwrite",
+          "target": "s3://example-lake/serving/daily_orders/"
+        },
+        "id": "f_c0ca5d",
+        "kind": "pyspark.write",
+        "measures": {},
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 0,
+          "end_line": 20,
+          "file": "daily_orders_job.py",
+          "line": 18,
+          "snippet": "daily_orders.write.mode(\"overwrite\").partitionBy(\"order_date\").parquet(",
+          "symbol": "",
+          "type": "source_location"
+        }
+      }
+    ],
+    "next_cursor": null,
+    "provenance": {
+      "1c705c0e027491bd": {
+        "artifact": "daily_orders_job.py",
+        "artifact_sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    "returned_count": 11,
+    "schema_version": 1,
+    "total_count": 11,
+    "unresolved": 0,
+    "unresolved_at": []
+  },
+  "tool": "sparkforge_analyze_pyspark"
+}

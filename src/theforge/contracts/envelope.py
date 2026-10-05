@@ -6,8 +6,13 @@ from typing import Any, Literal
 
 from theforge.contracts.base import ContractError
 from theforge.contracts.context import ContextPack
+from theforge.contracts.handoff import Handoff
+from theforge.contracts.plan import PlanEstimate, PlanRequest
 from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, HealthStatus, Producer, ResponseStatus
+
+__all__ = ["PROTOCOL_V1", "ExecuteRequest", "HealthCheck", "HealthReport", "PlanEstimate",
+           "PlanRequest", "Request", "Response", "new_request_id"]
 
 PROTOCOL_V1 = "forge/v1"
 
@@ -62,3 +67,6 @@ class ExecuteRequest:
     capability: str
     action: str
     context: ContextPack
+    # Additive: structured items from the nodes this plan node depends on (None outside
+    # plans). Providers that do not know the field keep ignoring it.
+    handoff: Handoff | None = None

@@ -3,6 +3,11 @@
 argv: fixture_forge.py [--unhealthy] MANIFEST_JSON OP
 
 ``--unhealthy`` makes the health op report ``unavailable`` (fallback scenarios).
+
+The manifest file may carry a test-only ``estimate`` key (never part of the described
+manifest): when the manifest declares the ``plan`` op, that op answers it as the
+``PlanEstimate`` payload. ``execute`` echoes the number of handoff items it received as one
+extra evidence (only when the request carries a handoff).
 """
 
 import json
@@ -16,6 +21,7 @@ def main() -> int:
     if unhealthy:
         args = args[1:]
     manifest = json.loads(Path(args[0]).read_text(encoding="utf-8"))
+    estimate = manifest.pop("estimate", {})  # test-only key, not part of the manifest
     op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
@@ -47,7 +53,7 @@ def main() -> int:
                                 "checks": [{"name": "fixture", "ok": False,
                                             "detail": "backend down"}]})
         return reply("ok", {"status": "ok", "checks": [{"name": "fixture", "ok": True}]})
-    if op == "execute":
+    if op == "execute" or (op == "plan" and "plan" in manifest["ops"]):
         payload = req.get("payload") or {}
         cap = payload.get("capability")
         if cap not in {c["id"] for c in manifest["capabilities"]}:
@@ -57,16 +63,24 @@ def main() -> int:
         if action not in capability.get("actions", []):
             return reply("refused", error=err("FIXTURE-ACTION-UNSUPPORTED", str(action),
                                               "action"))
+        if op == "plan":
+            return reply("ok", estimate)
         files = [f["path"] for f in (payload.get("context") or {}).get("files") or []]
+        evidence = [{"id": "e1", "epistemic": "observed", "subject": cap,
+                     "claim": f"received {len(files)} context files", "producer": producer}]
+        handoff = payload.get("handoff")
+        if isinstance(handoff, dict):
+            evidence.append({"id": "e2", "epistemic": "observed", "subject": "handoff",
+                             "claim": f"received {len(handoff.get('items') or [])} "
+                                      "handoff items",
+                             "producer": producer})
         return reply("ok", {
             "schema": "theforge/ExecutionResult/v1", "producer": producer,
             "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",
             "findings": [{"id": "f1", "title": f"{manifest['id']} handled "
                                                f"{cap}:{payload.get('action')}",
-                          "severity": "info", "evidence_ids": ["e1"]}],
-            "evidence": [{"id": "e1", "epistemic": "observed", "subject": cap,
-                          "claim": f"received {len(files)} context files",
-                          "producer": producer}],
+                          "severity": "info", "evidence_ids": [e["id"] for e in evidence]}],
+            "evidence": evidence,
         })
     return reply("refused", error=err("FIXTURE-OP-UNSUPPORTED", op, "op"))
 
