@@ -12,14 +12,13 @@ same path) or found by re-verification, which re-hashes the selected items witho
 and marks the result ``partial``; without drift it returns the result unchanged.
 """
 
-import hashlib
 import os
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final
 
-from theforge.context.fingerprints import hash_lines
+from theforge.context.fingerprints import hash_file, hash_lines
 from theforge.contracts.context import ContextFile, ContextPack
 from theforge.contracts.result import Evidence, ExecutionResult
 from theforge.contracts.types import VerificationLevel
@@ -28,7 +27,6 @@ from theforge.security.paths import resolve_inside
 DRIFT_LIMITATION_PREFIX: Final = "context-drift:"
 NOT_REVERIFIED_LIMITATION: Final = "context-not-reverified"
 _ASSERTIVE: Final = frozenset({"confirmed", "observed"})
-_CHUNK: Final = 1 << 16
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -76,14 +74,8 @@ def items_to_verify(pack: ContextPack, result: ExecutionResult,
 
 def _whole_file_sha256(resolved: Path) -> str | None:
     """Uncached whole-file hash (never through FingerprintStore). None = unreadable."""
-    digest = hashlib.sha256()
-    try:
-        with resolved.open("rb") as fh:
-            while chunk := fh.read(_CHUNK):
-                digest.update(chunk)
-    except OSError:
-        return None
-    return digest.hexdigest()
+    got = hash_file(resolved)
+    return None if got is None else got[0]
 
 
 def current_file_sha256(root: Path, path: str) -> str | None:

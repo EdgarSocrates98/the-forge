@@ -16,6 +16,7 @@ from theforge.context.fingerprints import (
     CACHE_SCHEMA,
     RACY_WINDOW_NS,
     FingerprintStore,
+    hash_file,
     hash_lines,
     prefix_lines,
 )
@@ -488,6 +489,17 @@ def test_property_prefix_agrees_with_hash_lines(
     assert size <= budget and lines.start == 1
     assert hash_lines(path, lines) == (sha, size)
     assert _sha(data[:size]) == sha
+
+
+def test_hash_file_whole_content_and_unreadable(tmp_path: Path) -> None:
+    path = tmp_path / "f.bin"
+    path.write_bytes(b"one\ntwo\r\nthree")
+    assert hash_file(path) == (_sha(b"one\ntwo\r\nthree"), 14)
+    empty = tmp_path / "empty.bin"
+    empty.write_bytes(b"")
+    assert hash_file(empty) == (_sha(b""), 0)
+    assert hash_file(tmp_path / "missing.bin") is None
+    assert hash_file(tmp_path) is None  # a directory is not a readable file
 
 
 def test_store_range_helpers_count_hashed_bytes(ws: Path) -> None:

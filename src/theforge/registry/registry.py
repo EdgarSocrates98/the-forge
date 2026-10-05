@@ -288,6 +288,23 @@ class Registry:
         digest = sha256_of(to_dict(entry))
         return self.cache_dir / "registry" / f"{entry.id}-{digest[:12]}.json"
 
+    def _prune_stale(self, entry: ProviderEntry, keep: Path | None) -> None:
+        """Drop cache files of ``entry.id`` written under an older entry digest."""
+        registry_dir = self.cache_dir / "registry"
+        prefix = f"{entry.id}-"
+        try:
+            names = [p for p in registry_dir.iterdir()
+                     if p.name.startswith(prefix) and p.name.endswith(".json")
+                     and p != keep]
+        except OSError:
+            return
+        for stale in names:
+            try:
+                stale.unlink()
+            except OSError as exc:
+                self._warn(
+                    f"stale registry cache for {entry.id} not removed ({stale}): {exc}")
+
     def _remove_legacy_cache(self) -> None:
         if self.forge_dir is None:
             return
@@ -303,6 +320,7 @@ class Registry:
                     or record.manifest is None or record.manifest_sha256 is None
                     or record.protocol is None):
                 path.unlink(missing_ok=True)
+                self._prune_stale(record.entry, keep=None)
                 return
             cached = RegistryCacheEntry(
                 schema=CACHE_SCHEMA, entry=record.entry,
@@ -316,6 +334,7 @@ class Registry:
                 # strictly against the live entry and manifest hash: a redacted copy would
                 # never match. Secret-shaped values therefore disable caching instead.
                 path.unlink(missing_ok=True)
+                self._prune_stale(record.entry, keep=None)
                 self._warn(f"registry cache for {record.entry.id} not cached: its entry or "
                            "manifest contains secret-shaped values (described on every use)")
                 return
@@ -329,6 +348,7 @@ class Registry:
                 with contextlib.suppress(OSError):
                     os.unlink(tmp)
                 raise
+            self._prune_stale(record.entry, keep=path)
         except OSError as exc:
             self._warn(
                 f"registry cache for {record.entry.id} not written ({path}): {exc}")

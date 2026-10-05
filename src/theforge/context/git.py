@@ -20,10 +20,9 @@ Every failure becomes a limitation; ``read_git_state`` never raises (3.4).
 import contextlib
 import os
 import shutil
-import subprocess
 import threading
 import time
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO
@@ -47,7 +46,6 @@ MAX_GIT_STDOUT = 64 * 1024  # rev-parse / symbolic-ref / config
 MAX_STATUS_STDOUT = 8 * 1024 * 1024  # status: enough for MAX_FILES paths, then truncated
 _STDERR_KEEP = 8 * 1024
 _STDERR_TAIL_CHARS = 2000
-_CHUNK = 65536
 _GRACE_SECONDS = 2.0
 _JOIN_SECONDS = 5.0
 _REFUSING_SCOPES = frozenset({"local", "worktree"})
@@ -118,8 +116,8 @@ def run_git(
             raise OSError("git pipes unavailable")
 
         def pump_out(stream: IO[bytes]) -> None:
-            with _owned(stream):
-                while chunk := _read_chunk(stream):
+            with proctree.owned(stream):
+                while chunk := proctree.read_chunk(stream):
                     room = max_stdout - len(out)
                     if len(chunk) > room:
                         out.extend(chunk[:room])
@@ -128,8 +126,8 @@ def run_git(
                     out.extend(chunk)
 
         def pump_err(stream: IO[bytes]) -> None:
-            with _owned(stream):
-                while chunk := _read_chunk(stream):
+            with proctree.owned(stream):
+                while chunk := proctree.read_chunk(stream):
                     err.extend(chunk)
                     if len(err) > _STDERR_KEEP:
                         del err[: len(err) - _STDERR_KEEP]
@@ -146,43 +144,17 @@ def run_git(
             if remaining <= 0:
                 timed_out = True
                 break
-            if _wait_slice(proc, min(remaining, 0.05)):
+            if proctree.wait_slice(proc, min(remaining, 0.05)):
                 break
     finally:
         # Every exit path: end the whole tree (git may spawn helpers) and release the job.
         proctree.kill_tree(sp, grace_seconds=_GRACE_SECONDS)
         proctree.close(sp)
-        deadline = time.monotonic() + _JOIN_SECONDS
-        for thread in threads:
-            thread.join(timeout=max(deadline - time.monotonic(), 0.0))
+        proctree.join_threads(threads, _JOIN_SECONDS)
     stderr = redact_text(bytes(err).decode("utf-8", "replace")).strip()[-_STDERR_TAIL_CHARS:]
     returncode = proc.returncode if proc.returncode is not None else -1
     return GitRun(returncode=returncode, stdout=bytes(out), stderr_tail=stderr,
                   timed_out=timed_out, truncated=oversize.is_set())
-
-
-def _wait_slice(proc: subprocess.Popen[bytes], seconds: float) -> bool:
-    try:
-        proc.wait(timeout=seconds)
-    except subprocess.TimeoutExpired:
-        return False
-    return True
-
-
-def _read_chunk(stream: IO[bytes]) -> bytes:
-    try:
-        return os.read(stream.fileno(), _CHUNK)
-    except (OSError, ValueError):
-        return b""
-
-
-@contextlib.contextmanager
-def _owned(stream: IO[bytes]) -> Iterator[None]:
-    try:
-        yield
-    finally:
-        with contextlib.suppress(OSError):
-            stream.close()
 
 
 def _default_runner(argv: Sequence[str], cwd: Path, timeout: float) -> GitRun:

@@ -45,11 +45,36 @@ def cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
                           env=env)
 
 
+def _drop_ambient_git(text: str) -> str:
+    """Remove ``git:`` items from the Limitations/Unknowns lists: the enclosing
+    repository state depends on where pytest's basetemp lives, not on the test
+    workspace. Each list renders one item per line, continuations indented 13."""
+    lines = text.split("\n")
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        i += 1
+        m = re.match(r"^(Limitations|Unknowns):( +)(.*)$", line)
+        if m is None:
+            out.append(line)
+            continue
+        items = [m.group(3)]
+        while i < len(lines) and (cm := re.match(r"^ {13}(\S.*)$", lines[i])):
+            items.append(cm.group(1))
+            i += 1
+        items = [item for item in items if item != "none" and not item.startswith("git:")]
+        out.append(f"{m.group(1)}:{m.group(2)}{items[0] if items else 'none'}")
+        out.extend(f"{'':<13}{item}" for item in items[1:])
+    return "\n".join(out)
+
+
 def normalize(text: str) -> str:
     text = re.sub(r"\d{8}T\d{6}Z-[0-9a-f]{8}", "<RUN>", text)
     # Environment-dependent explain values: phase durations and the enclosing git state.
     text = re.sub(r"=~?\d+ms\b", "=<MS>", text)
     text = re.sub(r"(?m)^Git:( +).*$", r"Git:\1<GIT>", text)
+    text = _drop_ambient_git(text)
     return re.sub(r"\b[0-9a-f]{12}\b", "<HASH>", text)
 
 

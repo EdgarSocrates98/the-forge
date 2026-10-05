@@ -238,13 +238,13 @@ def test_timeout_kills_the_whole_provider_tree(tmp_path: Path) -> None:
 def test_keyboard_interrupt_kills_the_whole_provider_tree(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from theforge.protocol import transport as transport_mod
+    from theforge.protocol import proctree as proctree_mod
 
     def interrupted(proc: object, seconds: float) -> bool:
         _grandchild_pid(tmp_path)
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(transport_mod, "_wait_slice", interrupted)
+    monkeypatch.setattr(proctree_mod, "wait_slice", interrupted)
     grandchild = 0
     try:
         with pytest.raises(KeyboardInterrupt):

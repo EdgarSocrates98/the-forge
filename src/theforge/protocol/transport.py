@@ -2,11 +2,9 @@
 
 import contextlib
 import json
-import os
-import subprocess
 import threading
 import time
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import IO, Any, Protocol
 
@@ -27,7 +25,6 @@ from theforge.security.redact import redact_text
 
 MAX_STDOUT_BYTES = 8 * 1024 * 1024
 MAX_STDERR_BYTES = 64 * 1024
-_CHUNK = 65536
 _STDERR_TAIL_CHARS = 500
 _POLL_SECONDS = 0.1
 _GRACE_SECONDS = 2.0
@@ -119,16 +116,16 @@ class SubprocessTransport:
                 raise TransportError(Codes.PROTO_SPAWN, "provider pipes unavailable")
 
             def pump_out(stream: IO[bytes]) -> None:
-                with _owned(stream):
-                    while chunk := _read_chunk(stream):
+                with proctree.owned(stream):
+                    while chunk := proctree.read_chunk(stream):
                         if len(out) + len(chunk) > self.max_stdout:
                             oversize.set()  # stop reading; the main thread kills the tree
                             return
                         out.extend(chunk)
 
             def pump_err(stream: IO[bytes]) -> None:
-                with _owned(stream):
-                    while chunk := _read_chunk(stream):
+                with proctree.owned(stream):
+                    while chunk := proctree.read_chunk(stream):
                         err.feed(chunk)
 
             def feed_in(stream: IO[bytes]) -> None:
@@ -156,14 +153,14 @@ class SubprocessTransport:
                 if remaining <= 0:
                     raise TransportError(
                         Codes.PROTO_TIMEOUT, f"{op}: no response within {timeout:g}s")
-                if _wait_slice(proc, min(remaining, _POLL_SECONDS)):
+                if proctree.wait_slice(proc, min(remaining, _POLL_SECONDS)):
                     break
             if oversize.is_set():
                 raise TransportError(
                     Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
             # The root exited: end descendants that may still hold the pipes, then drain.
             _end_tree(sp)
-            _join(pairs)
+            proctree.join_threads((t for _, t in pairs), _JOIN_SECONDS)
             if oversize.is_set():  # the last chunks may arrive after the root exited
                 raise TransportError(
                     Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
@@ -175,50 +172,17 @@ class SubprocessTransport:
         finally:
             # Any exit path (timeout, oversize, KeyboardInterrupt, errors): end the whole tree.
             _end_tree(sp)
-            _join(pairs)
+            proctree.join_threads((t for _, t in pairs), _JOIN_SECONDS)
             for pipe, thread in pairs:
                 if not thread.is_alive():
                     with contextlib.suppress(OSError):
                         pipe.close()
 
 
-def _read_chunk(stream: IO[bytes]) -> bytes:
-    """Return whatever is available (up to a chunk) without waiting for a full chunk."""
-    try:
-        return os.read(stream.fileno(), _CHUNK)
-    except (OSError, ValueError):
-        return b""
-
-
-@contextlib.contextmanager
-def _owned(stream: IO[bytes]) -> Iterator[None]:
-    try:
-        yield
-    finally:
-        with contextlib.suppress(OSError):
-            stream.close()
-
-
 def _end_tree(sp: proctree.SpawnedProcess) -> None:
     """Idempotent: kill the whole tree (even if the root already exited), release the job."""
     proctree.kill_tree(sp, grace_seconds=_GRACE_SECONDS)
     proctree.close(sp)
-
-
-def _wait_slice(proc: subprocess.Popen[bytes], seconds: float) -> bool:
-    """Wait up to ``seconds`` for the provider root; True when it has exited."""
-    try:
-        proc.wait(timeout=seconds)
-    except subprocess.TimeoutExpired:
-        return False
-    return True
-
-
-def _join(pairs: list[tuple[IO[bytes], threading.Thread]]) -> None:
-    """Join all pipe threads within one shared bound (never longer than ``_JOIN_SECONDS``)."""
-    deadline = time.monotonic() + _JOIN_SECONDS
-    for _, thread in pairs:
-        thread.join(timeout=max(deadline - time.monotonic(), 0.0))
 
 
 class _StderrTail:

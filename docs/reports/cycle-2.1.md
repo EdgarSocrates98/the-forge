@@ -31,7 +31,7 @@ Python 3.14.6, antes de qualquer alteração. Fontes: leitura do código, `git l
 | Drift live no cenário cross | follow-up aberto | `test_cross_forge_real` compara gravações parcialmente; sem check de drift live dedicado | — | — | Wave E2 | Wave E2 |
 | Consumo de handoff | "adapters não declaram `accepts_handoff`" | confirmado: `execute_reply` do `theforge_apiforge` ignora `payload["handoff"]` | `test_cross_forge_replay.py` (limitação esperada) | — | transporte sem consumo | Wave F |
 | `record_execute` do API Forge | "gravações montadas à mão" | `theforge_apiforge.record` só grava snapshot; cenários de execute são hand-built (`"provenance": "hand-built"`) | — | — | gravador ausente | Wave G |
-| Follow-ups listados | 15+ itens abertos | confirmados por leitura: taskkill fallback, `GetLastError` ordering, cache pruning, policy flatten warning, `gethostbyname*`, `lexists` de artifacts, normcase macOS, pipe helpers, `hash_file`, `#L2`, `and/or`, verification pós-erro, `_finish` duplo, explain de installation, drift cross, symlink de artifact | — | — | classificação pendente | Wave H |
+| Follow-ups listados | 15+ itens abertos | confirmados por leitura: taskkill fallback, `GetLastError` ordering, cache pruning, policy flatten warning, `gethostbyname*`, `lexists` de artifacts, normcase macOS, pipe helpers, `hash_file`, `#L2`, `and/or`, verification pós-erro, `_finish` duplo, explain de installation, drift cross, symlink de artifact | — | — | classificados na Wave H | Wave H |
 | Gate final do ciclo | STATUS CLOSED ausente | — | — | — | relatório final | Wave I |
 
 Itens fora do escopo do Cycle 2.1 (pertenecem ao Cycle 3): routing semântico, execução
@@ -353,3 +353,51 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   (o teste live já prova a equivalência de shape); `--handoff` só vale para
   capabilities com intake.
 - **Dívida criada:** nenhuma nova — remove a dívida "API recording hand-built".
+
+## Wave H — classificação e limpeza dos follow-ups
+
+**Status:** concluída — `c821814`.
+
+Cada follow-up documentado no Cycle 2 (notas de spec consolidadas em `cycle-2.md`,
+mais o descoberto durante este ciclo) recebeu uma classe: `FIX NOW`,
+`ACCEPTED LIMITATION`, `INTENTIONAL DEFER` ou `OBSOLETE`. Nenhum item ficou
+sem registro.
+
+### OBSOLETE — já corrigidos (a nota estava desatualizada)
+
+| Follow-up | Evidência da correção |
+|---|---|
+| `taskkill` fallback se `TerminateJobObject` falhar | `proctree.kill_tree` já cai para `taskkill /T /F` (commit `7de0235`, mergeado via PR #4) |
+| `GetLastError` antes de `CloseHandle` no erro de spawn | `proctree.spawn` captura `ctypes.get_last_error()` antes de `CloseHandle` (mesmo commit) |
+| guarda de rede dos testes não cobre `gethostbyname*` | `conftest.py` guarda `gethostbyname`, `gethostbyname_ex` e `gethostbyaddr` via `_resolver_guard` (commit `d94b798`) |
+| `lexists` dos artifacts declarados | Wave D: `declared_artifact_problem` classifica fisicamente (`lexists`, escape, não-regular, hash) |
+| `verification` perdida em erro interno pós-execute | Wave C3: `_record_verification` roda no `finally` |
+| `_finish` duplo | Wave C2: invariante terminal (`_terminal`) |
+| teste de `explain` com artifact `installation` | Wave E1 |
+| drift live do cenário cross | Wave E2 |
+| `RunStore.read_optional` segue symlink | Wave C1: leitura com `O_NOFOLLOW`/contenção |
+
+### FIX NOW — corrigidos nesta wave
+
+| Follow-up | Correção |
+|---|---|
+| `#L2` (linha única) não reconhecido | `relevance._REF` aceita `#LN` além de `#LN-LM` |
+| palavras com barra (`and/or`) viram citações `missing` | token com barra cujo último segmento não tem extensão e não existe no scan é ignorado (não é citação); `missing` só para paths com cara de arquivo |
+| aviso para chave de policy achatada duplicada | `_read_rules` avisa `rule <k> set more than once (flattened duplicate); the last value wins` |
+| cache do registry por digest antigo não é podado | `_write_cache` poda `registry/<id>-*.json` de digests antigos (sucesso, estado não-cacheável e recusa por redaction) |
+| `hash_file` público em fingerprints | `fingerprints.hash_file(resolved) -> (sha256, size) | None`, streaming; `verify._whole_file_sha256` delega |
+| helpers de pipe duplicados (`context/git.py` × `protocol/transport.py`) | `read_chunk`, `owned`, `wait_slice`, `join_threads` agora vivem em `protocol/proctree.py`; os dois consumidores delegam (deduplicação pura, sem mudança de comportamento) |
+| golden de explain falha com basetemp fora de um repo git (descoberto na Wave F) | `test_e2e.normalize` remove itens `git:*` das listas `Limitations:`/`Unknowns:` (estado do repo que hospeda o tmp do pytest é ambiental, não do workspace do teste); a linha `Git:` já era `<GIT>` |
+
+### ACCEPTED LIMITATION — documentado, sem correção
+
+| Item | reason | impact | mitigation | trigger for revisit | target cycle |
+|---|---|---|---|---|---|
+| `os.path.normcase` não dobra caixa no macOS (`context/git.py` `_root_prefix`/`_relative_to_root`) | `normcase` é identidade em POSIX; APFS é case-insensitive por padrão, mas pode ser case-sensitive — não há detecção barata e confiável por volume | se o cwd e o toplevel reportado pelo git divergirem só por caixa num volume case-insensitive, o resumo git pode cair em limitação ou perder `git:changed` | os dois lados passam por `resolve()`/`git --show-toplevel`, que retornam a caixa on-disk na prática comum — o gap residual exige divergência de caixa real | relatório real de usuário macOS com `git:changed` ausente ou limitação de toplevel | Cycle 3 (hardening cross-platform) |
+
+### INTENTIONAL DEFER — nenhum
+
+Nenhum follow-up do ciclo permanece adiado por decisão: os itens de produto maiores
+(sandbox de SO, installer, routing semântico, execução multi-provider) já são
+"adiamentos intencionais" com ADR própria em `cycle-2.md`, fora do escopo de
+follow-up.

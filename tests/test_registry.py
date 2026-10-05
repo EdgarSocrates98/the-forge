@@ -244,9 +244,10 @@ def test_refresh_removes_stale_cache(tmp_path: Path) -> None:
     write_providers(forge, [broken])
     records = {r.entry.id: r for r in Registry(forge).refresh()}
     assert records["fixture-spark"].state == "unreachable"
-    # cache files are keyed by entry digest: the changed entry never sees the old manifest
-    # and its unreachable record is not cached
-    assert cache_files("fixture-spark") == [cache]
+    # cache files are keyed by entry digest: the changed entry never sees the old
+    # manifest, its unreachable record is not cached, and the old-digest file is
+    # pruned rather than orphaned
+    assert cache_files("fixture-spark") == []
     assert Registry(forge).get("fixture-spark").state == "unreachable"
 
 

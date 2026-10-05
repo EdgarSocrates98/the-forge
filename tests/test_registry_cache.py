@@ -166,6 +166,31 @@ def test_entry_change_invalidates(tmp_path: Path) -> None:
     assert counting.calls == 1
 
 
+def test_entry_change_prunes_old_digest_file(tmp_path: Path) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    old_files = _cache_files("fixture-spark")
+    assert len(old_files) == 1
+    write_providers(forge, [{**SPARK_ENTRY, "trust": "trusted"}])
+    Registry(forge).refresh()
+    new_files = _cache_files("fixture-spark")
+    assert len(new_files) == 1 and new_files[0] != old_files[0]
+    assert not old_files[0].exists()  # the old-digest file is pruned, not orphaned
+
+
+def test_failed_provider_prunes_old_digest_file(tmp_path: Path) -> None:
+    forge = _forge(tmp_path, [SPARK_ENTRY])
+    Registry(forge).refresh()
+    old_files = _cache_files("fixture-spark")
+    # A stale file under an older digest is removed even when nothing new is cached.
+    stale = old_files[0].with_name("fixture-spark-000000000000.json")
+    shutil.copy(old_files[0], stale)
+    write_providers(forge, [{**SPARK_ENTRY, "argv": ["nonexistent-python-exe"]}])
+    record = Registry(forge).get("fixture-spark")
+    assert record.state == "unreachable"
+    assert not stale.exists()
+
+
 def test_fingerprint_mismatch_in_file_is_a_miss(tmp_path: Path) -> None:
     forge = _forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
