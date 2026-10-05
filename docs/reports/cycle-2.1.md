@@ -354,6 +354,20 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   capabilities com intake.
 - **Dívida criada:** nenhuma nova — remove a dívida "API recording hand-built".
 
+## Wave I — Cycle 2 Final Gate
+
+**Status:** concluída — ver [cycle-2-final.md](cycle-2-final.md) (STATUS: CLOSED).
+
+- Static: ruff, mypy (121 arquivos), schema parity, agentic audit, docs consistency — todos verdes.
+- Offline: 2920 passed, 5 skipped, 0 failed; `-m slow` 4 passed; `-m security` 454 passed.
+- Packaging: wheel+sdist, zero deps de runtime, fresh install verde no CI (Ubuntu+Windows).
+- CI remoto: `ci` 10/10 jobs (run 37277636248), `compat` macOS ✅ (37262668962),
+  `real-providers` ✅ (37277639715, com `api_forge_ref=feat/upstream-facts`).
+- Mudanças do gate: `ci.yml` ganhou `workflow_dispatch`; `real-providers.yml`
+  ganhou inputs `spark_forge_ref`/`api_forge_ref` para prova contra sibling ainda
+  não mergeado.
+- Pendência externa registrada: merge de `api-forge feat/upstream-facts` (ação humana).
+
 ## Wave H — classificação e limpeza dos follow-ups
 
 **Status:** concluída — `3fbfe08`.

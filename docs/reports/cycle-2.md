@@ -1,5 +1,8 @@
 # Relatório final do Cycle 2
 
+> **STATUS: CLOSED** — o gate de fechamento do Cycle 2.1 (Waves A–I) está em
+> [cycle-2-final](cycle-2-final.md).
+>
 > Estado na geração: 2026-10-04. Para o estado validado depois do merge das Waves B–E, ver
 > [Post-Merge Validation Update](#post-merge-validation-update) ao final deste documento.
 
