@@ -11,18 +11,25 @@ Both real adapters are registered in the test's isolated user ``providers.toml``
 ``argv``/``trust`` only) and the proof task runs through the CLI, ``theforge plan --profile max
 --execute``, on the mounted ``cross`` workspace (one git repository per directory): the plan is
 ``spark-forge/pyspark.static-analysis`` -> ``api-forge/api.analyze``, the API node receives at
-least one item that originates in the Spark Forge with its original epistemic status, the plan
-ends ``ok`` or ``partial`` with a synthesis referencing both node runs, and ``theforge explain``
-of the plan run reports no divergence (exit 0).
+least one item that originates in the Spark Forge with its original epistemic status and —
+because ``api.analyze`` declares ``accepts_handoff`` — consumes them through the specialist's
+upstream-facts intake, surfacing them as ``upstream:<id>`` evidence whose ``derived_from``
+names the Spark node run; the plan ends ``ok`` or ``partial`` with a synthesis referencing
+both node runs, and ``theforge explain`` of the plan run reports no divergence (exit 0).
 
-It also checks the replay scenarios owned by this spec against the live outputs (top-level keys
-and native id formats of the API Forge case files of the hand-built recording; the Spark Forge
-recording re-executed live on the same workspace), the live counterpart of the drift checks of
-``test_real_providers.py``.
+It also runs the mandatory handoff A/B proof: the persisted ``context`` and ``handoff`` of the
+API node's run feed the real adapter's ``execute`` twice — once with the handoff, once without —
+and the two results must differ observably (upstream-derived evidence only in the first).
+
+Finally it checks the replay scenarios owned by this spec against the live outputs (top-level
+keys and native id formats of the API Forge case files of the hand-built recording; the Spark
+Forge recording re-executed live on the same workspace), the live counterpart of the drift
+checks of ``test_real_providers.py``.
 """
 
 import json
 import re
+import subprocess
 from collections.abc import Iterator
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -32,7 +39,7 @@ import pytest
 import real_providers as rp
 from cross_workspace import CrossWorkspace, mounted_cross_workspace
 from theforge.cli.main import main
-from theforge.contracts import ExecutionReceipt, ExecutionResult
+from theforge.contracts import PROTOCOL_V1, ExecutionReceipt, ExecutionResult
 from theforge.contracts.plan import ExecutionPlan, PlanResult
 from theforge.runs import RunStore
 from theforge.state import init_workspace
@@ -45,7 +52,7 @@ API_RECORDING = NATIVE / "apiforge" / "scenarios" / "cross" / "api.analyze.analy
 SPARK_RECORDING = (NATIVE / "sparkforge" / "scenarios" / "cross"
                    / "pyspark.static-analysis.pyspark.json")
 NATIVE_ID = {"spark-forge": re.compile(r"f_[0-9a-f]{6}"),
-             "api-forge": re.compile(r"fact:[0-9a-f]{16}")}
+             "api-forge": re.compile(r"(?:fact|upstream):[0-9a-f]{16}")}
 
 
 @pytest.fixture
@@ -67,7 +74,8 @@ def _cli(capsys: pytest.CaptureFixture[str], *argv: str) -> tuple[int, Any, str]
 
 def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
         forges: tuple[rp.RealForge, rp.RealForge], cross: CrossWorkspace,
-        user_config_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        user_config_dir: Path, tmp_path: Path,
+        capsys: pytest.CaptureFixture[str]) -> None:
     spark, api = forges
     init_workspace(cross.root)
     rp.register(user_config_dir, spark.entry(), api.entry())
@@ -108,6 +116,27 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
     for item in evidence:
         assert item["id"] in source and item["epistemic"] == source[item["id"]].epistemic
 
+    # api.analyze declares accepts_handoff: the handoff is consumed, not only delivered.
+    receipt = store.read_contract(n2.run_id, "receipt", ExecutionReceipt)
+    assert not [n for n in receipt.limitations if n.startswith("handoff-use-undeclared")]
+    consumed = [e for e in store.read_contract(n2.run_id, "result", ExecutionResult).evidence
+                if e.derived_from is not None]
+    handed = {item["id"]: item for item in handoff["items"]}
+    assert consumed and {e.derived_from.item for e in consumed
+                         if e.derived_from is not None} == set(handed)
+    for entry in consumed:
+        origin = entry.derived_from
+        assert origin is not None
+        assert (origin.provider, origin.node, origin.run_id, origin.plan_run) == (
+            "spark-forge", "n1", n1.run_id, plan_run)
+        item = handed[origin.item]
+        if item.get("epistemic") is not None:  # the epistemic status survives verbatim
+            assert entry.epistemic == item["epistemic"]
+    verification = store.read(n2.run_id, "verification")
+    assert verification["forge"]["status"] == "passed"
+    assert [d for d in verification["forge"]["details"]
+            if d.startswith("handoff-provenance: passed")]
+
     # The synthesis references both node runs, with the specialists' native evidence ids.
     synthesis = result.synthesis
     assert [(s.node, s.provider, s.run_id) for s in synthesis.nodes] == [
@@ -141,6 +170,43 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
                 for name in recorded
                 if rp.id_shapes(recorded[name]) != rp.id_shapes(live[name])}
     assert id_drift == {}, f"{API_RECORDING.name}: id formats drifted {id_drift}"
+
+    # A/B (6.3): the very execute request of n2, replayed live against the real adapter
+    # once with its handoff and once without. The outputs must differ observably: only the
+    # first carries upstream-derived evidence and the persisted upstream facts.
+    context = store.read(n2.run_id, "context")
+    payload = {"task": {"intent": PROOF_TASK, "budget_profile": "max"},
+               "capability": "api.analyze", "action": "analyze", "context": context,
+               "handoff": handoff}
+    with_upstream = _adapter_execute(api, payload, tmp_path / "ab" / "with")
+    without = _adapter_execute(api, {k: v for k, v in payload.items() if k != "handoff"},
+                                 tmp_path / "ab" / "without")
+    assert with_upstream["status"] in ("ok", "partial"), with_upstream
+    assert without["status"] in ("ok", "partial"), without
+    derived = [e for e in with_upstream["payload"]["evidence"] if e.get("derived_from")]
+    assert derived and {e["derived_from"]["item"] for e in derived} == set(handed)
+    assert [e for e in without["payload"]["evidence"] if e.get("derived_from")] == []
+    assert len(with_upstream["payload"]["evidence"]) > len(without["payload"]["evidence"])
+    for expected in (True, False):
+        persisted = json.loads(
+            (tmp_path / "ab" / ("with" if expected else "without") / "case" / "facts.json")
+            .read_text(encoding="utf-8"))
+        upstream_facts = [f for f in persisted["facts"]
+                          if f["source"].get("extractor") == "theforge/handoff"]
+        assert bool(upstream_facts) is expected
+
+
+def _adapter_execute(forge: rp.RealForge, payload: dict[str, Any], cwd: Path
+                     ) -> dict[str, Any]:
+    """One ``execute`` request against the real API Forge adapter, as the core sends it."""
+    cwd.mkdir(parents=True, exist_ok=True)
+    request = json.dumps({"protocol": PROTOCOL_V1, "kind": "Request", "op": "execute",
+                          "request_id": "req-ab", "payload": payload})
+    proc = subprocess.run([*forge.argv(), "execute"], input=request, capture_output=True,
+                          text=True, encoding="utf-8", timeout=rp.NATIVE_TIMEOUT,
+                          cwd=cwd, env=rp.safe_env(), check=False)
+    assert proc.returncode == 0, proc.stderr
+    return json.loads(proc.stdout)
 
 
 def test_spark_cross_recording_matches_the_live_native_output(

@@ -15,7 +15,7 @@ from theforge.contracts.types import (
 )
 
 __all__ = ["RESULT_SCHEMA", "Artifact", "ContextRequest", "ContextRequestItem", "Evidence",
-           "ExecutionResult", "Finding", "Location", "Metric", "Metrics"]
+           "EvidenceSource", "ExecutionResult", "Finding", "Location", "Metric", "Metrics"]
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
 
@@ -24,6 +24,22 @@ RESULT_SCHEMA = "theforge/ExecutionResult/v1"
 class Location:
     path: str
     line: int | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class EvidenceSource:
+    """Upstream provenance of a derived evidence: the handoff item it builds on.
+
+    A provider that consumed a handoff may mark the evidence it carries forward
+    with the source node's identity — never stronger than the item it cites
+    (``handoff-provenance`` verification check).
+    """
+
+    provider: str  # id of the provider that produced the item
+    run_id: str    # the provider run the item came from
+    item: str      # handoff item id
+    node: str | None = None      # plan node of the item (plan context)
+    plan_run: str | None = None  # plan run the handoff belonged to
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -36,6 +52,7 @@ class Evidence:
     location: Location | None = None
     hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
     limitations: list[str] = field(default_factory=list)
+    derived_from: EvidenceSource | None = None
 
     def __post_init__(self) -> None:
         if self.hash is not None:

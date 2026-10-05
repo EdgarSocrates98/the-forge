@@ -1364,3 +1364,221 @@ def test_replay_rejects_conflicting_case_file_keys(tmp_path: Path,
     assert response.status == "error" and response.error is not None
     assert response.error.code == "ADAPTER-REPLAY-INVALID"
     assert list(cwd.iterdir()) == []
+
+
+# --- true semantic handoff (Cycle 2.1 Wave F) ----------------------------------------------
+
+from theforge_apiforge import execute as _exec_mod  # noqa: E402
+from theforge_apiforge import handoff as upstream  # noqa: E402
+
+HANDOFF_ITEMS = [
+    {"kind": "evidence", "id": "f_2d3af1",
+     "origin": {"plan_run": "plan-1", "node": "n1", "run_id": "run-n1",
+                "provider": {"id": "spark-forge", "version": "0.1.0"}},
+     "epistemic": "inferred", "subject": "pyspark.dataframe",
+     "claim": "etl.py reads orders.csv",
+     "location": {"path": "data-pipeline/jobs/etl.py", "line": 12}},
+    {"kind": "finding", "id": "f_99aa",
+     "origin": {"plan_run": "plan-1", "node": "n1", "run_id": "run-n1",
+                "provider": {"id": "spark-forge", "version": "0.1.0"}},
+     "severity": "medium", "claim": "no schema validation on the output frame"},
+    {"kind": "decision", "id": "outcome",
+     "origin": {"plan_run": "plan-1", "node": "n1", "run_id": "run-n1",
+                "provider": {"id": "spark-forge", "version": "0.1.0"}},
+     "epistemic": "observed", "claim": "n1 ok: 2 facts, 1 finding"},
+]
+
+
+def _handoff_payload(items: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    return {"schema": "theforge/Handoff/v1", "plan_run": "plan-1", "target_node": "n2",
+            "items": HANDOFF_ITEMS if items is None else items}
+
+
+def test_manifest_declares_accepts_handoff_only_where_consumption_exists() -> None:
+    manifest = from_dict(ForgeManifest, _describe()[0].payload)
+    analyze = manifest.capability("api.analyze")
+    change = manifest.capability("api.change-control")
+    assert analyze is not None and analyze.accepts_handoff
+    assert change is not None and not change.accepts_handoff
+
+
+def test_translate_handoff_maps_items_with_their_provenance() -> None:
+    document, notes = upstream.translate_handoff(_handoff_payload())
+    assert notes == []
+    assert document["schema"] == upstream.UPSTREAM_SCHEMA
+    facts = document["facts"]
+    assert [f["kind"] for f in facts] == ["upstream.evidence", "upstream.finding",
+                                        "upstream.decision"]
+    first = facts[0]
+    assert first["fact_id"].startswith("upstream:")
+    assert first["source"]["extractor"] == upstream.UPSTREAM_EXTRACTOR
+    provenance = first["attrs"]["upstream"]
+    assert (provenance["provider"], provenance["run_id"], provenance["node"],
+            provenance["item"], provenance["plan_run"]) == (
+                "spark-forge", "run-n1", "n1", "f_2d3af1", "plan-1")
+    assert provenance["epistemic"] == "inferred"  # verbatim, never upgraded
+    assert provenance["claim"] == "etl.py reads orders.csv"
+    assert provenance["location"] == {"path": "data-pipeline/jobs/etl.py", "line": 12}
+    assert facts[1]["measures"]["severity"] == "medium"
+    assert facts[2]["attrs"]["upstream"]["epistemic"] == "observed"
+
+
+def test_translate_handoff_is_deterministic() -> None:
+    assert upstream.translate_handoff(_handoff_payload())[0] == \
+        upstream.translate_handoff(_handoff_payload())[0]
+
+
+def test_translate_handoff_skips_malformed_items_with_a_limitation() -> None:
+    document, notes = upstream.translate_handoff(
+        _handoff_payload([*HANDOFF_ITEMS, {"kind": "evidence"}, "junk"]))
+    assert len(document["facts"]) == len(HANDOFF_ITEMS)
+    assert any("2 handoff item(s) malformed" in note for note in notes)
+
+
+def test_translate_handoff_bounds_items_and_bytes() -> None:
+    many = [dict(item, id=f"e{i}", claim=f"claim {i}") for i in range(50)
+            for item in HANDOFF_ITEMS[:1]]
+    document, notes = upstream.translate_handoff(_handoff_payload(many))
+    assert len(document["facts"]) == upstream.MAX_UPSTREAM_ITEMS
+    assert any("truncated to 32" in note for note in notes)
+    big = [dict(HANDOFF_ITEMS[0], id=f"e{i}", claim="c" * 4000) for i in range(20)]
+    document, notes = upstream.translate_handoff(_handoff_payload(big))
+    encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
+    assert len(encoded) <= upstream.MAX_UPSTREAM_BYTES
+    assert any("bytes" in note for note in notes)
+
+
+def _upstream_fact() -> dict[str, Any]:
+    """The fact the intake persists for the first handoff item (as the specialist wrote it)."""
+    document, _ = upstream.translate_handoff(_handoff_payload())
+    return document["facts"][0]
+
+
+def test_upstream_facts_translate_to_derived_evidence(tmp_path: Path) -> None:
+    from theforge_apiforge import translate
+    recording = _analyze_recording()
+    facts = recording["case_files"]["facts.json"]["facts"]
+    facts.append(_upstream_fact())
+    stage = _shell.StagedInput(root=tmp_path, files={})
+    cwd = tmp_path
+    out = cwd / "case"
+    out.mkdir()
+    for name, document in recording["case_files"].items():
+        (out / name).write_text(json.dumps(document, indent=2, sort_keys=True) + "\n",
+                                encoding="utf-8")
+    native_case = translate.read_case(cwd, "case")
+    draft = translate.translate_case(native_case, stage, state="supported")
+    assert not isinstance(draft, _shell.Reply)
+    derived = [e for e in draft.evidence if e.get("derived_from")]
+    assert len(derived) == 1
+    entry = derived[0]
+    assert entry["id"].startswith("upstream:")
+    assert entry["epistemic"] == "inferred"  # the handoff item's status, verbatim
+    assert entry["subject"] == "pyspark.dataframe"
+    assert entry["claim"] == "etl.py reads orders.csv"
+    assert entry["derived_from"] == {"provider": "spark-forge", "run_id": "run-n1",
+                                   "node": "n1", "plan_run": "plan-1", "item": "f_2d3af1"}
+    assert entry["location"] == {"path": "data-pipeline/jobs/etl.py", "line": 12}
+    native = [e for e in draft.evidence if not e.get("derived_from")]
+    assert native and all(e["epistemic"] == "observed" for e in native)
+
+
+def test_upstream_fact_without_provenance_is_skipped_not_invented(tmp_path: Path) -> None:
+    recording = _analyze_recording()
+    facts = recording["case_files"]["facts.json"]["facts"]
+    broken = _upstream_fact()
+    broken["attrs"] = {}  # no provenance: must not become an evidence orphan
+    facts.append(broken)
+    cwd = tmp_path
+    out = cwd / "case"
+    out.mkdir()
+    for name, document in recording["case_files"].items():
+        (out / name).write_text(json.dumps(document, indent=2, sort_keys=True) + "\n",
+                                encoding="utf-8")
+    from theforge_apiforge import translate
+    draft = translate.translate_case(translate.read_case(cwd, "case"),
+                                     _shell.StagedInput(root=cwd, files={}))
+    assert not isinstance(draft, _shell.Reply)
+    assert not [e for e in draft.evidence if str(e["id"]).startswith("upstream:")]
+    assert any("no provenance map" in note for note in draft.limitations)
+
+
+def test_live_execute_feeds_the_handoff_to_the_native_verb(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    recording = _analyze_recording()
+    recording["case_files"]["facts.json"]["facts"].append(_upstream_fact())
+    fake = _FakeNative(recording)
+    monkeypatch.setattr(_exec_mod, "_upstream_supported", lambda: True)
+    payload = {**_execute_payload("api.analyze"), "handoff": _handoff_payload()}
+    cwd = tmp_path / "work"
+    response, data = _live_respond(cwd, payload, fake)
+    assert response.status == "ok", response.error
+    (call,) = fake.calls
+    argv = call["argv"]
+    assert argv[-2:] == ["--upstream", upstream.UPSTREAM_FILE]
+    # The intake file was written under the native cwd and is gone after cleanup.
+    assert not (cwd / upstream.UPSTREAM_FILE).exists()
+    result = _result(response, data, cwd)
+    derived = [e for e in result.evidence if e.derived_from is not None]
+    assert len(derived) == 1 and derived[0].derived_from is not None
+    assert derived[0].derived_from.provider == "spark-forge"
+    assert derived[0].derived_from.run_id == "run-n1"
+    assert derived[0].derived_from.node == "n1"
+    assert derived[0].derived_from.item == "f_2d3af1"
+
+
+def test_live_execute_without_intake_records_the_limitation(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = _FakeNative(_analyze_recording())
+    monkeypatch.setattr(_exec_mod, "_upstream_supported", lambda: False)
+    payload = {**_execute_payload("api.analyze"), "handoff": _handoff_payload()}
+    response, data = _live_respond(tmp_path / "work", payload, fake)
+    assert response.status == "ok", response.error
+    (call,) = fake.calls
+    assert "--upstream" not in call["argv"]
+    result = _result(response, data, tmp_path / "work")
+    assert any("handoff delivered but not consumed" in note
+               for note in result.limitations)
+
+
+def test_live_execute_without_handoff_never_writes_the_intake(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = _FakeNative(_analyze_recording())
+    monkeypatch.setattr(_exec_mod, "_upstream_supported", lambda: True)
+    response, _ = _live_respond(tmp_path / "work", _execute_payload("api.analyze"), fake)
+    assert response.status == "ok", response.error
+    (call,) = fake.calls
+    assert "--upstream" not in call["argv"]
+
+
+def test_replay_execute_replays_the_current_handoff(tmp_path: Path) -> None:
+    """In replay the upstream facts come from THIS request's handoff (the translation is
+    adapter-deterministic): the recorded provenance never leaks into a new run."""
+    cwd = tmp_path / "work"
+    payload = {**_execute_payload("api.analyze"), "handoff": _handoff_payload()}
+    response, data = _execute(cwd, payload, SCENARIOS / "cross")
+    assert response.status == "ok", response.error
+    result = _result(response, data, cwd)
+    derived = [e for e in result.evidence if e.derived_from is not None]
+    assert {e.derived_from.item for e in derived if e.derived_from is not None} == \
+        {item["id"] for item in HANDOFF_ITEMS}
+    assert all(e.derived_from is not None and e.derived_from.run_id == "run-n1"
+               for e in derived)
+    facts = json.loads((cwd / "case" / "facts.json").read_text(encoding="utf-8"))
+    upstream_facts = [f for f in facts["facts"]
+                      if f["source"].get("extractor") == "theforge/handoff"]
+    assert [f["attrs"]["upstream"]["run_id"] for f in upstream_facts] == \
+        ["run-n1"] * len(HANDOFF_ITEMS)
+
+
+def test_replay_execute_without_handoff_drops_recorded_upstream(tmp_path: Path) -> None:
+    """The cross recording embeds upstream facts; replayed without a handoff they are
+    dropped — in that run the verb saw no ``--upstream`` intake."""
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload("api.analyze"), SCENARIOS / "cross")
+    assert response.status == "ok", response.error
+    result = _result(response, data, cwd)
+    assert [e for e in result.evidence if e.derived_from is not None] == []
+    facts = json.loads((cwd / "case" / "facts.json").read_text(encoding="utf-8"))
+    assert not [f for f in facts["facts"]
+                if f["source"].get("extractor") == "theforge/handoff"]

@@ -255,3 +255,65 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   remover ao final do ciclo ou documentar em `docs/real-providers.md` se ficarem
   permanentes.
 - **Próximos passos:** Wave F (consumo semântico de handoff no adapter do API Forge).
+
+## Wave F — True Semantic Handoff (consumo real, não só transporte)
+
+**Status:** implementado e provado live; commit pendente.
+
+- **Gap encontrado:** o core já persistia e entregava o `Handoff` em todo
+  `ExecuteRequest`, mas o adapter do API Forge ignorava o campo — `accepts_handoff`
+  não existia e o `analyze` nativo não tinha intake. Declarar a flag sem superfície
+  seria fingimento; a wave exigiu mudança real no especialista.
+- **Especialista (repo irmão `api-forge`, branch `feat/upstream-facts`, worktree
+  `E:/projetos/.sibling-f`, commit `a9ae606`):** `analyze` ganhou `--upstream
+  <arquivo>` com documento `apiforge/upstream-facts/v1` bounded (32 itens, 64 KiB);
+  `analyze_project` aceita `upstream=` e persiste as facts no `facts.json` do caso.
+  Recusas expõem `AF-ANALYZE-UPSTREAM-{INVALID,LIMIT,PROVENANCE}` (documentados em
+  `docs/catalog-contract.md`). `capabilities verify` + `sdd check` verdes.
+- **Contrato:** `Evidence.derived_from: EvidenceSource{provider, run_id, item,
+  node?, plan_run?}` — provenance estruturada da evidência derivada. Schemas
+  regerados (`python -m theforge.contracts.schema schemas`).
+- **Adapter:** `catalog.py` marca `accepts_handoff` só em `api.analyze`
+  (`VerbSpec.upstream`); novo `handoff.py` traduz `Handoff` → upstream-facts com
+  provenance completa (`provider`, `run_id`, `node`, `plan_run`, `item`,
+  `epistemic` **verbatim**, `claim`, `location`), bounds próprios e limitações
+  honestas; `execute.py` grava `upstream-facts.json` no cwd nativo, passa
+  `--upstream`, e remove o arquivo no cleanup. Probe `_upstream_supported()`
+  detecta o intake por assinatura — especialista antigo degrada a `ok`/`partial`
+  + limitação, nunca inventa evidência. `translate.py` emite `Evidence` com id
+  `upstream:<hash>` e `derived_from` para facts `extractor=theforge/handoff`;
+  facts sem provenance são puladas com limitação.
+- **Replay:** `_upstream_replay` re-deriva as upstream facts do handoff **da
+  requisição** — a tradução é determinística e vive no adapter, então o replay
+  não chama o especialista mas reproduz o comportamento: provenance sempre do
+  run atual; sem handoff, as facts upstream gravadas são descartadas (senão a
+  gravação vazaria provenance de outro run e o check `handoff-provenance`
+  falharia — detectado em teste).
+- **Verificação:** novo check `handoff-provenance` em `verification.py` — todo
+  `derived_from` deve nomear um item do handoff entregue (provider, run, item,
+  node/plan_run) e não pode elevar o status epistêmico do item de origem.
+- **Testes adicionados:** adapter — manifest declaração, tradução/bounds/
+  determinismo/malformado, evidência derivada, sem-provenance pulada, argv
+  `--upstream` + cleanup, limitação sem intake, 2 de replay (handoff atual /
+  drop sem handoff); core — 4 de `handoff-provenance` em `test_verification.py`;
+  replay cross — consumo real com provenance + `handoff-provenance: passed`;
+  live cross — provenance **exata** (run/plan ids do run corrente) + epistemic
+  verbatim + **A/B obrigatório**: o `execute` do n2 reconstruído do `context`+
+  `handoff` persistidos roda duas vezes no adapter real — com handoff produz
+  evidência `upstream:` derivada e facts upstream no caso; sem handoff, nenhuma.
+- **Live local provado:** plan cross real → n2 com 16 evidências derivadas,
+  `derived_from` → `spark-forge`/n1/run-n1/plan correto, `handoff-provenance:
+  passed (16 derived evidence)`, sem `handoff-use-undeclared`; A/B com diferença
+  observável (evidence count e `facts.json` persistido).
+- **Resultados:** o handoff deixou de ser envelope ignorado — é insumo semântico
+  do especialista com provenance verificável, epistemic preservado e replay
+  compatível.
+- **Limitações:** provenance em replay vive na requisição (a gravação não carrega
+  provenance do run original — decisão correta, registrada nos testes); intake
+  limitado a 32 itens/64 KiB por enquanto; só `api.analyze` consome.
+- **Dívida criada:** `test_onboarding_flow` e 2 testes de contexto dependem do
+  tmp do pytest estar dentro de um git toplevel limpo (o addopts já fixa
+  `--basetemp=.pytest_tmp` dentro do repo — fora dele `read_git_state` emite
+  `git: not a repository` e `git:changed` em sinais); fragilidade do harness,
+  classificar na Wave H. O intake do especialista vive na branch
+  `feat/upstream-facts` do irmão até merge — worktree `.sibling-f/api-forge`.

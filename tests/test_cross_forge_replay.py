@@ -6,14 +6,16 @@ scenarios: ``environment.json``, ``health.json`` and one recording per exercised
 ``cross`` proof workspace). They are registered as ``spark-forge`` and ``api-forge`` and the
 proof task runs through the ``PlanExecutor`` in ``max`` on the mounted workspace: the
 decomposition is ``pyspark.static-analysis`` -> ``api.analyze``, the handoff of the Spark node
-reaches the API node, which ignores it without error (it does not declare ``accepts_handoff``:
-a ``handoff-use-undeclared`` limitation), and the synthesis references both node runs, whose
-evidence carries the specialists' native ids.
+reaches the API node, which declares ``accepts_handoff`` and consumes it — the recording's
+``facts.json`` carries the upstream facts and the translated evidence exposes them as
+``upstream:<id>`` entries whose ``derived_from`` points back at the Spark node run — and the
+synthesis references both node runs, whose evidence carries the specialists' native ids.
 
 The Spark Forge recording was made with ``theforge_sparkforge.record_execute`` from the local
 real Spark Forge; the API Forge one is hand-built (``"provenance": "hand-built"``) from the case
-files of a live API Forge run until the first run of the real-provider workflow re-records it.
-Wave B's ``default`` scenarios are not used here.
+files of a live API Forge run (with the Spark handoff admitted through ``--upstream``) until the
+first run of the real-provider workflow re-records it. Wave B's ``default`` scenarios are not
+used here.
 """
 
 import json
@@ -42,9 +44,10 @@ SCENARIOS = {"spark-forge": ("theforge_sparkforge", NATIVE / "sparkforge" / "sce
 PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
 EXPECTED_NODES = [("n1", "spark-forge", "pyspark.static-analysis", "pyspark"),
                   ("n2", "api-forge", "api.analyze", "analyze")]
-# Native evidence ids of the specialists (Wave B): Spark Forge facts, API Forge facts.
+# Native evidence ids of the specialists: Spark Forge facts, API Forge facts, and the
+# upstream-derived ids the API Forge adapter mints for consumed handoff items.
 NATIVE_ID = {"spark-forge": re.compile(r"f_[0-9a-f]{6}"),
-             "api-forge": re.compile(r"fact:[0-9a-f]{16}")}
+             "api-forge": re.compile(r"(?:fact|upstream):[0-9a-f]{16}")}
 
 
 def _entries() -> list[dict[str, Any]]:
@@ -123,8 +126,7 @@ def test_proof_task_decomposes_into_spark_then_api(proof: tuple[Any, RunStore, _
                         ("api-forge", "api.analyze")]
 
 
-def test_handoff_is_delivered_and_ignored_without_error(
-        proof: tuple[Any, RunStore, _Spy]) -> None:
+def test_handoff_is_delivered_and_consumed(proof: tuple[Any, RunStore, _Spy]) -> None:
     out, store, spy = proof
     result = store.read_contract(out.run_id, "plan-result", PlanResult)
     n1, n2 = result.nodes
@@ -140,12 +142,35 @@ def test_handoff_is_delivered_and_ignored_without_error(
     (spark_execute,) = [payload for pid, op, payload in spy.calls
                         if op == "execute" and pid == "spark-forge"]
     assert spark_execute.get("handoff") is None  # n1 has no input
-    # The API Forge adapter answers ok ignoring the field; the core records the limitation.
+    # api.analyze declares accepts_handoff: no undeclared-use limitation, and the consumed
+    # items surface in the node's result as upstream-derived evidence with provenance.
     receipt = store.read_contract(n2.run_id, "receipt", ExecutionReceipt)
     assert receipt.status == "ok" and receipt.error is None
-    assert f"{HANDOFF_UNDECLARED_LIMITATION}: api-forge/api.analyze" in receipt.limitations
+    assert not [n for n in receipt.limitations if n.startswith(HANDOFF_UNDECLARED_LIMITATION)]
     first = store.read_contract(n1.run_id, "receipt", ExecutionReceipt)
     assert not [n for n in first.limitations if n.startswith(HANDOFF_UNDECLARED_LIMITATION)]
+    consumed = [e for e in store.read_contract(n2.run_id, "result", ExecutionResult).evidence
+                if e.derived_from is not None]
+    assert consumed
+    for entry in consumed:
+        source = entry.derived_from
+        assert source is not None
+        # The recording carries the provenance of the live run it was harvested from (item
+        # ids and run/plan ids of that run); the live cross-forge test asserts the current
+        # execution's identities.
+        assert source.provider == "spark-forge" and source.node == "n1"
+        assert source.run_id and source.plan_run and source.item
+
+
+def test_verification_passes_handoff_provenance(proof: tuple[Any, RunStore, _Spy]) -> None:
+    out, store, _ = proof
+    result = store.read_contract(out.run_id, "plan-result", PlanResult)
+    n2 = result.nodes[1]
+    assert n2.run_id is not None
+    verification = store.read(n2.run_id, "verification")
+    forge = verification["forge"]
+    assert forge["status"] == "passed"
+    assert [d for d in forge["details"] if d.startswith("handoff-provenance: passed")]
 
 
 def test_synthesis_references_both_runs_with_native_evidence_ids(

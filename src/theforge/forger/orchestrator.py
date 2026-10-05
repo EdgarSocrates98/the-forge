@@ -457,7 +457,8 @@ class Forger:
         verification = build_verification(
             trace.run_id, response_status, result, trace.drift,
             self.store.work_dir(trace.run_id),
-            expected=Producer(id=record.entry.id, version=record.manifest.version))
+            expected=Producer(id=record.entry.id, version=record.manifest.version),
+            handoff=trace.handoff)
         trace.verification = verification
         trace.verification_sha = self.store.write(trace.run_id, "verification", verification)
         prefix = f"{ARTIFACT_HASH_LIMITATION}:"

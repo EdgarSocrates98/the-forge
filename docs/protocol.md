@@ -268,7 +268,11 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
 
-Os adapters reais de Spark Forge e API Forge não declaram nenhum dos três nesta versão: recebem o handoff, ignoram o campo e o run do nó registra `handoff-use-undeclared`.
+Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 64 KiB — são truncados com limitação, itens malformados são pulados com limitação). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. O Spark Forge e o `api.change-control` ainda não declaram: recebem o handoff e o run do nó registra `handoff-use-undeclared`.
+
+#### Evidência derivada (`Evidence.derived_from`)
+
+Uma capability que consumiu o handoff pode marcar a evidência que carrega adiante com `derived_from: {provider, run_id, item, node?, plan_run?}` — a identidade do item de origem. O check de verificação `handoff-provenance` confere cada `derived_from` contra o handoff entregue àquele run: item que o provider não recebeu, `node`/`plan_run` divergentes ou status epistêmico **mais forte** que o do item de origem (um `inferred` virar `confirmed` sem evidência nova) falham a verificação.
 
 ### Padrões
 `RoutingDecision.pattern` (padrão `route`; decisões gravadas sem o campo são relidas como `route`) e `ExecutionPlan.pattern` aceitam `route`, `delegate`, `parallel`, `pipeline` e `debate`. Só `route` (um nó) e `pipeline` (nós em sequência) executam; um plano com `delegate`, `parallel` ou `debate` é recusado com `FORGE-PLAN-PATTERN-RESERVED`. Os demais códigos de plano estão em [errors.md](errors.md#códigos).
@@ -326,6 +330,6 @@ Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execu
 | `theforge/ExplainReport/v1` | `theforge explain --json` ([cli.md](cli.md#explain)) | não |
 | `theforge/Diagnostic/v1` | artefato `diagnostic` e linhas `theforge: debug:` com `--debug` | não |
 
-Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.accepts_handoff`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.handoff_sha256` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.accepts_handoff`, `Evidence.derived_from`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.handoff_sha256` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
 
 Nomes reservados (sem implementação): `Budget`, `DecisionRecord` e `EnvironmentReport` (v0 não estável em `doctor`); as ops `verify` e `estimate`; os padrões `delegate`, `parallel` e `debate`.
