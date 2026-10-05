@@ -356,7 +356,7 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
 
 ## Wave H — classificação e limpeza dos follow-ups
 
-**Status:** concluída — `c821814`.
+**Status:** concluída — `3fbfe08`.
 
 Cada follow-up documentado no Cycle 2 (notas de spec consolidadas em `cycle-2.md`,
 mais o descoberto durante este ciclo) recebeu uma classe: `FIX NOW`,
