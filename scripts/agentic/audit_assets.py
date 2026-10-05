@@ -206,12 +206,23 @@ def _parse_hosts(raw: object) -> tuple[HostConfig, ...]:
     return tuple(hosts)
 
 
+MAX_PLACEHOLDER_PATTERN = 200
+# A quantified group that itself contains a quantifier, e.g. "(a+)+" or "(?:x*)*".
+_NESTED_QUANTIFIER = re.compile(r"\((?:[^()\\]|\\.)*[*+}](?:[^()\\]|\\.)*\)\s*[*+{?]")
+
+
 def _parse_placeholders(raw: object) -> tuple[InstallPlaceholder, ...]:
     placeholders: list[InstallPlaceholder] = []
     for index, entry in enumerate(_entries(raw, "install_placeholders")):
         key = f"install_placeholders[{index}]"
         _check_keys(entry, key, required=frozenset({"pattern", "replacement"}))
         pattern = _text(entry["pattern"], f"{key}.pattern")
+        # The config is versioned, but --config may point anywhere: bound the pattern and refuse
+        # nested quantifiers, the shape behind catastrophic backtracking (ReDoS).
+        if len(pattern) > MAX_PLACEHOLDER_PATTERN:
+            raise _fail(f"{key}.pattern", f"longer than {MAX_PLACEHOLDER_PATTERN} characters")
+        if _NESTED_QUANTIFIER.search(pattern):
+            raise _fail(f"{key}.pattern", "nested quantifiers are not allowed")
         try:
             compiled = re.compile(pattern)
         except re.error as exc:

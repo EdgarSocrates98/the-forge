@@ -954,3 +954,16 @@ def test_changing_an_invariant_line_in_one_file_fails(tmp_path: Path, path: str)
     divergent = {f.subject for f in report.of_kind(audit.FindingKind.INVARIANTS)
                  if f.element == "divergent"}
     assert divergent == {"CLAUDE.md", "AGENTS.md"}
+
+
+@pytest.mark.parametrize("pattern, problem", [
+    ("(a+)+b", "nested quantifiers"),
+    ("(?:x*)*", "nested quantifiers"),
+    ("a" * 201, "longer than 200"),
+])
+def test_placeholder_pattern_that_could_backtrack_catastrophically_is_refused(
+        tmp_path: Path, pattern: str, problem: str) -> None:
+    text = MINIMAL_CONFIG + (
+        f"\n[[install_placeholders]]\npattern = '{pattern}'\nreplacement = 'x'\n")
+    with pytest.raises(audit.AgenticConfigError, match=problem):
+        audit.load_config(_write_config(tmp_path, text))
