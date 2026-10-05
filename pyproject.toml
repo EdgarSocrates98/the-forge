@@ -31,7 +31,11 @@ packages = ["src/theforge"]
 
 [tool.hatch.build.targets.sdist]
 # The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
-exclude = ["/adapters"]
+# Agentic assets (host instructions, skills) and local-only state never ship (ADR 0020).
+exclude = [
+    "/adapters",
+    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

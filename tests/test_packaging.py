@@ -194,6 +194,12 @@ def test_ci_gates_fail_on_artificial_runtime_dependency(built_wheel: Path, tmp_p
 # --- adapters are separate distributions (real-provider-integration 1.4) -------------------
 
 
+AGENTIC_SDIST_EXCLUDES = (
+    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave",
+    "/CLAUDE.md", "/AGENTS.md",
+)
+
+
 def test_theforge_build_config_keeps_adapters_out_of_wheel_and_sdist() -> None:
     with (REPO / "pyproject.toml").open("rb") as fh:
         data = tomllib.load(fh)
@@ -201,6 +207,8 @@ def test_theforge_build_config_keeps_adapters_out_of_wheel_and_sdist() -> None:
     targets = data["tool"]["hatch"]["build"]["targets"]
     assert targets["wheel"]["packages"] == ["src/theforge"]
     assert "/adapters" in targets["sdist"]["exclude"]
+    # Agentic assets and local-only state never ship (agentic-maintainability, requirement 5.2).
+    assert set(AGENTIC_SDIST_EXCLUDES) <= set(targets["sdist"]["exclude"])
 
 
 def _runtime_requirements(metadata: str) -> list[str]:
@@ -240,4 +248,6 @@ def test_built_sdist_excludes_adapters_and_has_no_runtime_dependency(built_sdist
         metadata = pkg_info.read().decode("utf-8")
     assert "src/theforge/__init__.py" in members
     assert not [m for m in members if m == "adapters" or m.startswith("adapters/")]
+    agentic = tuple(d.lstrip("/") for d in AGENTIC_SDIST_EXCLUDES)
+    assert not [m for m in members if m.split("/")[0] in agentic]
     assert _runtime_requirements(metadata) == []

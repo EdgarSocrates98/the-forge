@@ -164,6 +164,8 @@ API: ainda não há gravador de execute. As gravações em `tests/fixtures/nativ
 
 ## Troubleshooting
 
+Os códigos `FORGE-*` desta tabela estão, com a família de cada um, na lista canônica [errors.md](errors.md); os códigos dos adapters, em [protocol.md](protocol.md#códigos-dos-adapters-reais).
+
 | Sintoma | Causa | O que fazer |
 |---|---|---|
 | provider `unreachable`, `FORGE-PROTO-SPAWN` com o caminho | o `argv[0]` registrado não existe ou não é executável | corrija o caminho absoluto do interpretador no `providers.toml` e rode `theforge registry refresh` |

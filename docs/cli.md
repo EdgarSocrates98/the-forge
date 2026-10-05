@@ -1,6 +1,6 @@
 # CLI
 
-`theforge` (alias `forge`). Todo subcomando aceita `--root <dir>` (padrão: diretório atual), `--json` e `--debug` ([mensagens de erro](#mensagens-de-erro-e---debug)), sempre **depois** do subcomando final: `theforge registry list --json`, `theforge init --root X`. Colocá-los antes (`theforge --root X init`) não funciona.
+`theforge` é o nome canônico da CLI e o usado em todos os exemplos; `forge` é um alias de conveniência ([ADR 0008](adr/0008-cli-name.md)). Todo subcomando aceita `--root <dir>` (padrão: diretório atual), `--json` e `--debug` ([mensagens de erro](#mensagens-de-erro-e---debug)), sempre **depois** do subcomando final: `theforge registry list --json`, `theforge init --root X`. Colocá-los antes (`theforge --root X init`) não funciona.
 
 | Comando | Faz | Exit |
 |---|---|---|

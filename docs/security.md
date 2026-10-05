@@ -1,6 +1,6 @@
-# Segurança — threat model resumido (ciclos 1 e 2, Waves A–D)
+# Segurança — threat model resumido (ciclos 1 e 2)
 
-Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defeituoso e tentativa de escalar trust. Fora do modelo: usuário local mal-intencionado com escrita no próprio home.
+Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defeituoso e tentativa de escalar trust. Fora do modelo: usuário local mal-intencionado com escrita no próprio home. Os códigos `FORGE-*` citados aqui estão, com a família de cada um, na lista canônica [errors.md](errors.md).
 
 | Ameaça | Mitigação | Pendente |
 |---|---|---|
