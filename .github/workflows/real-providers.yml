@@ -17,6 +17,15 @@ on:
   schedule:
     - cron: "41 4 * * 1" # Mondays 04:41 UTC
   workflow_dispatch:
+    inputs:
+      spark_forge_ref:
+        description: "spark-forge-aws ref to test against (default: main)"
+        required: false
+        default: "main"
+      api_forge_ref:
+        description: "api-forge ref to test against (default: main)"
+        required: false
+        default: "main"
 
 permissions:
   contents: read
@@ -43,6 +52,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: EdgarSocrates98/spark-forge-aws
+          ref: ${{ inputs.spark_forge_ref || 'main' }}
           path: siblings/spark-forge-aws
           token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
           persist-credentials: false
@@ -51,6 +61,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: EdgarSocrates98/api-forge
+          ref: ${{ inputs.api_forge_ref || 'main' }}
           path: siblings/api-forge
           token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
           persist-credentials: false
