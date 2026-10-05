@@ -4,7 +4,8 @@ Requirements 1.1-1.6 (audit and deterministic report), 2.2-2.5 (host syntax tole
 skills, support files, stale accepted entries), 2.6 (same offline run, no new dependency),
 3.2-3.3 and 4.4-4.7 (invariants block, budgets, pointers, moved rules), 10.2 (deterministic,
 same result on Linux and Windows) and 10.3 (local untracked assets do not change the result).
-Behaviour is exercised on temporary trees; the real repository becomes a gate in task 4.7.
+Behaviour is exercised on temporary trees; the real repository is a gate (one test per failing
+category, task 4.7).
 
 The audit logic lives only in ``scripts/agentic/audit_assets.py``; these tests load that file
 by path (the ``scripts/ci`` pattern) instead of re-implementing it.
@@ -889,3 +890,67 @@ def test_cli_config_or_git_error_exits_two_without_traceback(tmp_path: Path) -> 
 def test_main_defaults_to_this_repository_and_the_versioned_config() -> None:
     assert audit.DEFAULT_ROOT == REPO
     assert audit.DEFAULT_CONFIG == CONFIG_FILE
+
+
+# --- 4.7 the real repository is a gate -----------------------------------------------------
+
+# Anchors the scoped invariants block must keep (req 3.1): core/adapters scope, the redaction
+# boundary of the provider work dir and the development setup with editable adapters.
+REQUIRED_ANCHORS = {
+    "src/theforge", "adapters/", "stdlib", "Forge Protocol", "ambiguous", "ExecutionResult",
+    "security.redact", ".forge/runs/<id>/work/", "domínio", "theforge/<Name>/v1",
+    "python -m theforge.contracts.schema schemas",
+    "-e ./adapters/sparkforge -e ./adapters/apiforge", "python -m pytest", "ruff check .", "mypy",
+}
+
+
+@pytest.fixture(scope="module")
+def real_report() -> Any:
+    if GIT is None:
+        pytest.skip("git executable not found on PATH: the audit inventory comes from git")
+    return audit.audit(REPO, audit.load_config(CONFIG_FILE))
+
+
+def test_versioned_config_declares_every_instruction_check() -> None:
+    config = audit.load_config(CONFIG_FILE)
+    assert config.invariants is not None
+    missing = {a for a in REQUIRED_ANCHORS
+               if not any(a in declared for declared in config.invariants.required)}
+    assert missing == set()
+    assert config.budgets == {"AGENTS.md": 6000, "CLAUDE.md": 2500}
+    assert config.pointers is not None
+    assert set(config.pointers) == {"AGENTS.md", "CLAUDE.md"}
+    assert {".claude/skills/", "docs/agentic.md", "spec.json.language"} <= set(
+        config.pointers["CLAUDE.md"])
+    assert {".agents/skills/", ".devin/skills/", "docs/agentic.md", "spec.json.language"} <= set(
+        config.pointers["AGENTS.md"])
+    assert config.moved_rules
+    assert "3-phase approval workflow" in {rule.anchor for rule in config.moved_rules}
+    assert {rule.target for rule in config.moved_rules} == {"docs/agentic.md"}
+
+
+@pytest.mark.parametrize("kind", sorted(audit.FAILING))
+def test_real_repository_has_no_failing_findings(real_report: Any, kind: Any) -> None:
+    found = real_report.of_kind(kind)
+    assert found == (), "\n".join(finding.format() for finding in found)
+
+
+def test_real_repository_lists_the_17_skills_in_the_three_hosts(real_report: Any) -> None:
+    skills = dict(real_report.skills)
+    assert len(skills) == 17 and all(name.startswith("kiro-") for name in skills)
+    assert all(tuple(hosts) == ("claude", "codex", "devin") for hosts in skills.values()), skills
+
+
+@pytest.mark.parametrize("path", ["CLAUDE.md", "AGENTS.md"])
+def test_changing_an_invariant_line_in_one_file_fails(tmp_path: Path, path: str) -> None:
+    config = audit.load_config(CONFIG_FILE)
+    assert config.invariants is not None
+    tree: dict[str, Any] = {p: (REPO / p).read_bytes() for p in ("CLAUDE.md", "AGENTS.md")}
+    lines = tree[path].decode("utf-8").splitlines(keepends=True)
+    begin = next(i for i, line in enumerate(lines) if config.invariants.begin in line)
+    lines[begin + 2] = lines[begin + 2].rstrip("\r\n") + " (alterado)\n"
+    tree[path] = "".join(lines).encode("utf-8")
+    report = audit.audit(tmp_path, config, _materialize(tmp_path, tree))
+    divergent = {f.subject for f in report.of_kind(audit.FindingKind.INVARIANTS)
+                 if f.element == "divergent"}
+    assert divergent == {"CLAUDE.md", "AGENTS.md"}

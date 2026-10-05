@@ -60,3 +60,102 @@ element = "paths"
 hosts = ["codex", "devin"]
 value = ".kiro/specs"
 reason = "nota de estilo em Notes (referências leves a .kiro/specs/ e .kiro/steering/ são aceitáveis) que a versão do Claude não traz; não muda o que a skill lê nem escreve"
+
+# --- host instruction checks (task 4.7) -----------------------------------------------------
+# The invariants block is identical in CLAUDE.md and AGENTS.md; to change an invariant or a
+# setup/test/lint/type/schema command, edit the block in both files and these anchors together.
+[invariants]
+begin = "<!-- theforge:invariants:begin -->"
+end = "<!-- theforge:invariants:end -->"
+required = [
+    "src/theforge", "adapters/", "stdlib", "Python >= 3.11", "Python >= 3.10",
+    "Forge Protocol", "import sparkforge", "nunca importam `theforge`", "domínio",
+    "ambiguous", "sem LLM", "ExecutionResult",
+    "security.redact", ".forge/runs/<id>/work/", "Credenciais nunca chegam ao env dos providers",
+    "theforge/<Name>/v1", "python -m theforge.contracts.schema schemas",
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge",
+    "python -m pytest", "python -m pytest -m slow", "ruff check .", "mypy",
+]
+
+# Size budgets in UTF-8 bytes with LF line endings (docs/agentic.md, "Orçamentos de tamanho").
+[budgets]
+"CLAUDE.md" = 2500
+"AGENTS.md" = 6000
+
+# Mandatory pointers per instruction file: the agentic guide, the host skills directory and
+# the spec language rule (requirement 4.7).
+[pointers]
+"CLAUDE.md" = ["docs/agentic.md", ".claude/skills/", "spec.json.language", "/kiro-"]
+"AGENTS.md" = ["docs/agentic.md", ".agents/skills/", ".devin/skills/", "spec.json.language",
+               "$kiro-", "/kiro-"]
+
+# Rules that left CLAUDE.md / AGENTS.md (Kiro workflow detail) and where they live now.
+[[moved_rules]]
+anchor = "3-phase approval workflow"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = 'Discovery: `/kiro-discovery "ideia"`'
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "`/kiro-spec-batch` cria todas as specs do `roadmap.md` em paralelo"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Fase 2 (implementação): `/kiro-impl <feature> [tarefas] [--review required|inline|off]`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "`--review off` pula a revisão local da tarefa"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Progresso: `/kiro-spec-status <feature>`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Não pule uma skill relevante só porque a tarefa é pequena"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "carregue os arquivos de steering padrão de `.kiro/steering/`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Mantenha o steering atualizado e confira o alinhamento com `kiro-spec-status`"
+from = "CLAUDE.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Arquivos `AGENTS.md` locais"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "`enabled = false` em `[agents]`"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Prefira workers em primeiro plano quando um comando puder pedir aprovação"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "Subagentes nativos não delegam de novo por padrão"
+from = "AGENTS.md"
+to = "docs/agentic.md"
+
+[[moved_rules]]
+anchor = "o Devin Desktop expõe a opção Subagents (Preview)"
+from = "AGENTS.md"
+to = "docs/agentic.md"
