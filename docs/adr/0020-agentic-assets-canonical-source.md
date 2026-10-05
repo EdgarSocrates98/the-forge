@@ -42,5 +42,5 @@ Esta wave não adiciona hooks. Se hooks de desenvolvimento forem adicionados (po
 ## Consequências
 - O drift entre hosts passa a ser detectado por teste offline, com o mesmo resultado em Linux e Windows, sem custo de migração.
 - **Limitação da paridade por perfil.** O perfil semântico compara nome, caminhos de repositório referenciados, skills referenciadas, fases de `spec.json` e arquivos de apoio. Prosa divergente que não muda nenhum desses elementos (por exemplo, uma instrução reescrita só num host) passa sem achado. É o custo de tolerar a sintaxe por host; (C) elimina essa lacuna na origem.
-- Editar uma skill exige mudar os três hosts na mesma mudança; reinstalar o instalador exige reaplicar as instruções curtas e rodar a auditoria.
+- Editar uma skill exige mudar os três hosts na mesma mudança; reinstalar o instalador exige reaplicar as instruções curtas e rodar a auditoria. O procedimento está em [docs/agentic.md](../agentic.md).
 - A decisão é revisitada quando o gatilho disparar ou no início do próximo ciclo, com o histórico de sincronizações como evidência.
