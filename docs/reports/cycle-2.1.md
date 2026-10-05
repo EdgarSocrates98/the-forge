@@ -65,8 +65,9 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   tabela "estado na geração × estado validado"; o README deixa de dizer "concluído" até a
   Wave I declarar CLOSED.
 - **Testes adicionados:** nenhum (mudança documental coberta pelos checkers existentes).
-- **Testes executados:** `python -m pytest tests/test_docs_consistency.py`.
-- **Resultados:** a preencher após a execução.
+- **Testes executados:** `python -m pytest tests/test_docs_consistency.py` — 30 passed.
+- **Resultados:** commit `022be38` na branch `feat/cycle2.1-cycle3`; push inicial criou
+  `origin/feat/cycle2.1-cycle3` (necessário para `workflow_dispatch --ref`).
 - **Benchmarks:** n/a.
 - **Security findings:** nenhum.
 - **Limitações:** os runs de `real-providers.yml`/`compat.yml` despachados sobre `main`
@@ -75,3 +76,94 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
 - **Dívida criada:** nenhuma.
 - **Próximos passos:** Wave B recolhe os resultados dos dispatches e reexecuta os workflows
   sobre a branch.
+
+## Wave B — Workflows remotos (`real-providers.yml`, `compat.yml`)
+
+- **Objetivo:** prova remota de integração real (Spark Forge + API Forge) e da matriz
+  macOS, via `workflow_dispatch`.
+- **Arquivos alterados:** `.github/workflows/real-providers.yml` (o interpretador do core
+  passa a instalar os adapters), `tests/test_ci_workflows.py` (regressão exige a linha de
+  instalação com adapters), `tests/test_context_git.py` (flake fix, abaixo).
+- **Contratos:** nenhum.
+- **Decisões arquiteturais:** os venvs dos especialistas continuam isolados; o interpretador
+  que roda `pytest -m real_provider` precisa dos pacotes `theforge_*` importáveis porque os
+  testes de adapter importam o adapter diretamente.
+- **Execuções:**
+  - `main`: `real-providers` run `37260501716` — **failure** na coleta
+    (`ModuleNotFoundError: theforge_apiforge`/`theforge_sparkforge`): o workflow instalava
+    os adapters só nos venvs dos especialistas. Fix: `python -m pip install -e .[dev]
+    -e ./adapters/sparkforge -e ./adapters/apiforge` (commit `d96eb3b`).
+  - `main`: `compat` run `37260503904` — **success** (macOS × py3.11 + py3.14).
+  - branch (commit `d96eb3b`): `real-providers` run `37261291846` — **success**:
+    17 passed, 2868 deselected; ubuntu-latest; core py3.11, Spark venv py3.11,
+    API venv py3.12; `theforge 0.1.0`, `theforge-sparkforge-adapter 0.1.0`,
+    `theforge-apiforge-adapter 0.1.0`; checkout real de `spark-forge-aws` e `api-forge`
+    (main de cada repo).
+  - branch (commit `d96eb3b`): `compat` run `37261294177` — **failure** apenas em
+    `macos-latest / py3.14`: `test_control_plain_status_would_have_written` falhou com
+    `FileNotFoundError` em `.git/objects/maintenance.lock` — race entre `rglob`/`lstat`
+    do helper `_snapshot` e a auto-maintenance do git. Flake do harness (não do produto),
+    presente também na `main`.
+  - **Fix do flake (commit seguinte):** `_init` desliga `gc.auto`/`maintenance.auto` no
+    repo de teste e `_snapshot` tolera entradas que somem entre o `rglob` e o `lstat`
+    (um arquivo removido continua detectável por diferença de chaves entre snapshots).
+  - Re-dispatch de `compat` após o fix: pendente (registrado aqui quando concluir).
+- **Testes adicionados/alterados:** `test_ci_workflows.py` passa a exigir a linha de
+  instalação com adapters antes de `pytest -m real_provider`.
+- **Testes executados:** `pytest tests/test_ci_workflows.py` — 18 passed;
+  `pytest tests/test_context_git.py` — 40 passed.
+- **Resultados:** prova remota real dos dois Forges alcançada; compat depende do
+  re-dispatch após o fix de flake.
+- **Benchmarks:** n/a.
+- **Security findings:** nenhum (o workflow expõe apenas repos públicos; sem secrets novos).
+- **Limitações:** a prova live usa os `main` dos repos irmãos no momento do run; versões
+  exatas ficam registradas no relatório final (Wave I).
+- **Dívida criada:** nenhuma.
+- **Próximos passos:** re-dispatch de `compat`; Wave C.
+
+## Wave C — RunStore symlink hardening + invariante de terminalização + verification pós-erro
+
+- **Objetivo:** (C1) artifact de run nunca é lido/escrito através de link;
+  (C2) um run tem no máximo um caminho de terminalização e um receipt;
+  (C3) um run que executou provider registra `VerificationResult` mesmo quando o core
+  falha depois.
+- **Arquivos alterados:** `src/theforge/runs/store.py`, `src/theforge/forger/orchestrator.py`,
+  `src/theforge/forger/plan_executor.py`, `tests/test_runs_state.py`,
+  `tests/test_finalize.py` (novo), `tests/conftest.py` (FILE_MARKERS).
+- **Contratos:** nenhum (mudança de enforcement, não de schema).
+- **Decisões arquiteturais:**
+  - `RunStore._artifact_file` usa `lstat` (nunca segue o último componente) +
+    `realpath` containment contra `runs_dir`: link simbólico (válido, quebrado ou
+    apontando a outro run), diretório e run-dir linkado para fora viram `PERSIST_READ`
+    controlado; ausente continua `None` (sem oráculo novo). `_read_bytes` abre com
+    `O_NOFOLLOW` onde existe (fecha a janela TOCTOU POSIX); no Windows a pré-checagem
+    permanece — limitação documentada, sem sandbox de OS.
+  - `write()` recusa sobrescrever um path existente que não é arquivo regular e confere
+    containment antes de `tmp.replace` (run-dir linkado para fora não recebe escrita).
+  - `_Trace.terminal`/`_PlanTrace.terminal`: `open -> finalizing -> finalized`; `_finish`
+    reentrante é `PERSIST_WRITE`; uma falha interna dentro do `_finish` (ex.:
+    `ContractError` do `validate_receipt`) vira `PersistenceError` de "terminalization
+    failed" — nunca um segundo `_finish` silencioso.
+  - `Forger._late_verification`: ao terminalizar, se o provider executou e ainda não há
+    `verification`, grava o que se sabe (`response_status`, `result_seen` capturados logo
+    após o execute/negociação); checks que não rodaram ficam `not_performed`; falha de
+    contrato na gravação vira limitação `verification-unavailable` (o receipt terminal
+    não se perde); falha de persistência propaga, como todo artifact.
+- **Testes adicionados:** 7 casos hostis de artifact em `test_runs_state.py` (link externo,
+  link para outro run, diretório, link de diretório, link quebrado, run-dir linkado para
+  fora, escrita sobre link) e `test_finalize.py` com 9 casos (double `_finish`, falha de
+  escrita de receipt, falha de persistência, erro interno pré/pós-execute, provider crash,
+  falha de telemetria, falha de graph, falha de receipt em plan).
+- **Testes executados:** `pytest tests/test_finalize.py tests/test_runs_state.py` —
+  61 passed; suíte relacionada (`test_forger`, `test_forger_binding`, `test_plan_flow`,
+  `test_hashcheck`, `test_replay`, `test_verification`, `test_security`) — 192 passed.
+- **Resultados:** os três follow-ups C1/C2/C3 fechados com evidência; `hashcheck` reporta
+  artifact linkado como divergência `unreadable` (compatível com a nova store).
+- **Benchmarks:** leitura de artifact agora faz `lstat` + `realpath` + `os.open`: custo
+  adicional desprezível por leitura (medido junto ao gate de performance, Wave I).
+- **Security findings:** fechado o escape de leitura de artifact via symlink (segredo fora
+  do runs dir nunca é servido como artifact); residual TOCTOU no Windows documentado.
+- **Limitações:** `O_NOFOLLOW` indisponível no Windows — a janela TOCTOU residual entre
+  `lstat` e `open` permanece lá; `realpath` containment ancora no runs dir físico.
+- **Dívida criada:** nenhuma nova.
+- **Próximos passos:** Wave D (integridade física de artifacts declarados).
