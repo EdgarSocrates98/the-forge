@@ -16,8 +16,9 @@ ends ``ok`` or ``partial`` with a synthesis referencing both node runs, and ``th
 of the plan run reports no divergence (exit 0).
 
 It also checks the replay scenarios owned by this spec against the live outputs (top-level keys
-of the API Forge case files of the hand-built recording, native id formats of both Forges), the
-live counterpart of the drift checks of ``test_real_providers.py``.
+and native id formats of the API Forge case files of the hand-built recording; the Spark Forge
+recording re-executed live on the same workspace), the live counterpart of the drift checks of
+``test_real_providers.py``.
 """
 
 import json
@@ -41,6 +42,8 @@ EXPECTED_NODES = [("n1", "spark-forge", "pyspark.static-analysis", "pyspark"),
                   ("n2", "api-forge", "api.analyze", "analyze")]
 NATIVE = Path(__file__).parent / "fixtures" / "native"
 API_RECORDING = NATIVE / "apiforge" / "scenarios" / "cross" / "api.analyze.analyze.json"
+SPARK_RECORDING = (NATIVE / "sparkforge" / "scenarios" / "cross"
+                   / "pyspark.static-analysis.pyspark.json")
 NATIVE_ID = {"spark-forge": re.compile(r"f_[0-9a-f]{6}"),
              "api-forge": re.compile(r"fact:[0-9a-f]{16}")}
 
@@ -131,6 +134,45 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
             live[path.relative_to("case").as_posix()] = json.loads(
                 (work / artifact.path).read_text(encoding="utf-8"))
     assert sorted(live) == sorted(recorded)
-    drift = {name: (sorted(recorded[name]), sorted(live[name])) for name in recorded
-             if sorted(recorded[name]) != sorted(live[name])}
+    drift = {name: (rp.top_keys(recorded[name]), rp.top_keys(live[name]))
+             for name in recorded if rp.top_keys(recorded[name]) != rp.top_keys(live[name])}
     assert drift == {}, f"{API_RECORDING.name}: top-level keys drifted {drift}"
+    id_drift = {name: (sorted(rp.id_shapes(recorded[name])), sorted(rp.id_shapes(live[name])))
+                for name in recorded
+                if rp.id_shapes(recorded[name]) != rp.id_shapes(live[name])}
+    assert id_drift == {}, f"{API_RECORDING.name}: id formats drifted {id_drift}"
+
+
+def test_spark_cross_recording_matches_the_live_native_output(
+        forges: tuple[rp.RealForge, rp.RealForge], cross: CrossWorkspace,
+        tmp_path: Path) -> None:
+    """The Spark Forge half of the cross recording, re-executed live on the mounted
+    workspace: same tool, same arguments, same output and judge shapes and id formats as
+    the replay recording (the ``spark`` counterpart of the API case-file check above)."""
+    spark, _api = forges
+    recorded = json.loads(SPARK_RECORDING.read_text(encoding="utf-8"))
+    out = tmp_path / "live"
+    argv = [str(spark.python), "-m", "theforge_sparkforge.record_execute",
+            "--workspace", str(cross.root), "--capability", "pyspark.static-analysis",
+            "--action", "pyspark", "--out", str(out)]
+    argv += [f"--arg={name}={value}" for name, value in recorded["arguments"].items()
+             if name not in ("detail_level", "limit")]
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    rp.run_native(argv, scratch)
+    live = json.loads((out / SPARK_RECORDING.name).read_text(encoding="utf-8"))
+    assert rp.left_in(scratch) == set()
+    assert live["tool"] == recorded["tool"] and live["arguments"] == recorded["arguments"]
+    pairs = {
+        "recording": (recorded, live),
+        "output": (recorded["output"], live["output"]),
+        "judge": (recorded["judge"], live["judge"]),
+        "judge.output": (recorded["judge"]["output"], live["judge"]["output"]),
+    }
+    drift = {name: (rp.top_keys(old), rp.top_keys(new)) for name, (old, new) in pairs.items()
+             if rp.top_keys(old) != rp.top_keys(new)}
+    assert drift == {}, f"{SPARK_RECORDING.name}: top-level keys drifted {drift}"
+    id_drift = {name: (sorted(rp.id_shapes(old)), sorted(rp.id_shapes(new)))
+                for name, (old, new) in pairs.items()
+                if rp.id_shapes(old) != rp.id_shapes(new)}
+    assert id_drift == {}, f"{SPARK_RECORDING.name}: id formats drifted {id_drift}"

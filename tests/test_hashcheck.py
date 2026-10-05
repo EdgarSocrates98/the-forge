@@ -236,3 +236,53 @@ def test_plan_run_reports_a_deleted_node_run(cross: CrossWorkspace) -> None:
     report = verify_run_hashes(store, plan_run)
     assert report.divergences == [Divergence(artifact=f"{child}/receipt", kind="missing",
                                              expected=result.nodes[1].receipt_sha256)]
+
+
+def _installation_run(root: Path) -> tuple[RunStore, str]:
+    """A plan run refused at planning: its receipt binds an ``installation`` artifact."""
+    forger, store = _forger(root, [bad_entry("invalid-manifest", "bad-i"),
+                                   SPARK_PLAN_ENTRY])
+    plan_file = root / "plan.json"
+    plan_file.write_text(json.dumps({
+        "task_id": "from-file", "pattern": "pipeline", "source": "file",
+        "profile": "max",
+        "nodes": [
+            {"id": "n1", "role": "standalone", "provider": "fixture-spark",
+             "capability": "spark.performance", "action": "diagnose"},
+            {"id": "n2", "role": "consumer", "provider": "bad-i",
+             "capability": "bad.thing", "action": "run",
+             "depends_on": [{"node": "n1", "epistemic": "explicit",
+                             "evidence": "plan file"}],
+             "inputs": ["n1"]}]}), encoding="utf-8")
+    out = PlanExecutor(forger).run(PlanCommand(intent="spark then invalid",
+                                               profile="max", plan_file=plan_file,
+                                               execute=True))
+    assert out.status == "refused"
+    return store, out.run_id
+
+
+def test_plan_run_checks_the_installation_artifact_its_receipt_records(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    store, run = _installation_run(tmp_path)
+    receipt = store.read_contract(run, "receipt", ExecutionReceipt)
+    assert receipt.plan is not None
+    expected = receipt.plan.installation_sha256
+    assert expected is not None and expected == store.persisted_sha256(run, "installation")
+    before = _snapshot(store.runs_dir)
+
+    def refuse(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("hash verification must never start a process")
+
+    monkeypatch.setattr(subprocess, "Popen", refuse)
+    report = verify_run_hashes(store, run)
+    assert report.divergences == [] and "installation" in report.checked
+    assert _snapshot(store.runs_dir) == before
+
+    _rewrite(store, run, "installation", lambda d: d.update(planning_only=False))
+    assert verify_run_hashes(store, run).divergences == [
+        Divergence(artifact="installation", kind="modified", expected=expected,
+                   actual=store.persisted_sha256(run, "installation"))]
+
+    (store.run_dir(run) / "installation.json").unlink()
+    assert verify_run_hashes(store, run).divergences == [
+        Divergence(artifact="installation", kind="missing", expected=expected)]

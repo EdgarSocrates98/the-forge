@@ -21,10 +21,8 @@ details are read from the adapter's own health reply (implementation note 4.2).
 
 import importlib.util
 import json
-import re
 import secrets
 import shutil
-import subprocess
 import sys
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -68,7 +66,6 @@ NATIVE_STATE = {".sparkforge", ".apiforge", "traces.db", "stage"}
 CREDENTIALS = {name: f"theforge-sentinel-{secrets.token_hex(8)}"
                for name in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "GITHUB_TOKEN",
                             "OPENAI_API_KEY")}
-NATIVE_TIMEOUT = 300.0
 HEALTH_TIMEOUT = 60.0
 
 
@@ -161,59 +158,14 @@ def _raw_health(argv: list[str]) -> tuple[HealthReport, str]:
     return report, json.dumps(response.payload)
 
 
-def _run_native(argv: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    """A command in a specialist interpreter with the core's credential-free environment."""
-    proc = subprocess.run(argv, cwd=cwd, env=safe_env(), capture_output=True, text=True,
-                          encoding="utf-8", errors="replace", timeout=NATIVE_TIMEOUT,
-                          stdin=subprocess.DEVNULL, check=False)
-    assert proc.returncode == 0, (argv, proc.stdout, proc.stderr)
-    return proc
-
-
-def _left_in(directory: Path) -> set[str]:
-    return {path.relative_to(directory).as_posix() for path in directory.rglob("*")}
-
-
-_HEX_TAIL = re.compile(r"(?P<prefix>.*?)(?P<hex>[0-9a-f]{6,})")
-
-
-def id_shape(value: str) -> str:
-    """The format of a native id: its prefix and the length of its hex tail
-    (``f_2d3af1`` -> ``f_<hex6>``, ``fact:4019d1fcb4d4726e`` -> ``fact:<hex16>``)."""
-    match = _HEX_TAIL.fullmatch(value)
-    if match is None:
-        return re.sub(r"\d", "9", value)
-    return f"{match['prefix']}<hex{len(match['hex'])}>"
-
-
-ID_KEYS = {"id", "fact_id", "finding_id", "case_id"}
-
-
-def id_shapes(document: Any) -> set[str]:
-    """``key=shape`` of every native id in ``document`` (id fields and evidence references)."""
-    shapes: set[str] = set()
-    if isinstance(document, dict):
-        for key, value in document.items():
-            if key in ID_KEYS and isinstance(value, str):
-                shapes.add(f"{key}={id_shape(value)}")
-            elif key == "evidence" and isinstance(value, list):
-                shapes |= {f"evidence={id_shape(v)}" for v in value if isinstance(v, str)}
-            else:
-                shapes |= id_shapes(value)
-    elif isinstance(document, list):
-        for item in document:
-            shapes |= id_shapes(item)
-    return shapes
-
-
 def _recorded_evidence_shapes(case: Case) -> set[str]:
     """The id format of the facts (the evidence) in the replay recording of the action."""
     recording = json.loads(case.recording.read_text(encoding="utf-8"))
     if case.name == "spark":
         facts = recording["output"]["items"]
-        return {id_shape(item["id"]) for item in facts}
+        return {rp.id_shape(item["id"]) for item in facts}
     facts = recording["case_files"]["facts.json"]["facts"]
-    return {id_shape(item["fact_id"]) for item in facts}
+    return {rp.id_shape(item["fact_id"]) for item in facts}
 
 
 def _hashed_evidence_drift(pack: dict[str, Any], result: ExecutionResult) -> list[str]:
@@ -263,7 +215,7 @@ def _live_snapshot(case: Case, forge: rp.RealForge, directory: Path) -> dict[str
     else:
         argv = [str(forge.python), "-m", "theforge_apiforge.record", "--out", str(target),
                 "--recorded-at", "live"]
-    _run_native(argv, directory)
+    rp.run_native(argv, directory)
     data: dict[str, Any] = json.loads(target.read_text(encoding="utf-8"))
     return data
 
@@ -354,7 +306,7 @@ def test_execute_through_the_core_ends_with_an_intact_contained_result(
 
     # Native ids: evidence ids keep the specialist's fact ids (same format as recorded).
     shapes = _recorded_evidence_shapes(case)
-    assert {id_shape(e.id) for e in result.evidence} <= shapes, (shapes, result.evidence)
+    assert {rp.id_shape(e.id) for e in result.evidence} <= shapes, (shapes, result.evidence)
     work = store.work_dir(outcome.run_id)
     if case.name == "api":
         facts = [a.path for a in result.artifacts if PurePosixPath(a.path).name == "facts.json"]
@@ -368,7 +320,7 @@ def test_execute_through_the_core_ends_with_an_intact_contained_result(
     paths = {a.path for a in result.artifacts}
     parents = {parent.as_posix() for path in paths for parent in PurePosixPath(path).parents
                if parent.as_posix() != "."}
-    assert _left_in(work) == paths | parents
+    assert rp.left_in(work) == paths | parents
 
     # Every non-null evidence hash is the sha256 of the ContextPack item of the same path.
     assert [e for e in result.evidence if e.hash is not None], result.evidence
@@ -395,9 +347,9 @@ def _live_spark_output(case: Case, forge: rp.RealForge, tmp_path: Path) -> dict[
              if name not in ("detail_level", "limit")]
     scratch = tmp_path / "scratch"
     scratch.mkdir()
-    _run_native(argv, scratch)
+    rp.run_native(argv, scratch)
     live: dict[str, Any] = json.loads((out / case.recording.name).read_text(encoding="utf-8"))
-    assert _left_in(scratch) == set()
+    assert rp.left_in(scratch) == set()
     return live
 
 
@@ -416,10 +368,6 @@ def _live_api_case(tmp_path: Path, user_config_dir: Path, case: Case,
             files[path.relative_to("case").as_posix()] = json.loads(
                 (work / artifact.path).read_text(encoding="utf-8"))
     return files
-
-
-def _top_keys(document: Any) -> list[str]:
-    return sorted(document) if isinstance(document, dict) else [type(document).__name__]
 
 
 def test_live_native_output_has_the_recorded_keys_and_id_formats(
@@ -442,11 +390,11 @@ def test_live_native_output_has_the_recorded_keys_and_id_formats(
         recorded_files = recording["case_files"]
         assert sorted(live_files) == sorted(recorded_files)
         pairs = {name: (recorded_files[name], live_files[name]) for name in recorded_files}
-    drift = {name: (_top_keys(old), _top_keys(new)) for name, (old, new) in pairs.items()
-             if _top_keys(old) != _top_keys(new)}
+    drift = {name: (rp.top_keys(old), rp.top_keys(new)) for name, (old, new) in pairs.items()
+             if rp.top_keys(old) != rp.top_keys(new)}
     assert drift == {}, f"{case.recording.name}: top-level keys drifted {drift}"
-    id_drift = {name: (sorted(id_shapes(old)), sorted(id_shapes(new)))
-                for name, (old, new) in pairs.items() if id_shapes(old) != id_shapes(new)}
+    id_drift = {name: (sorted(rp.id_shapes(old)), sorted(rp.id_shapes(new)))
+                for name, (old, new) in pairs.items() if rp.id_shapes(old) != rp.id_shapes(new)}
     assert id_drift == {}, f"{case.recording.name}: id formats drifted {id_drift}"
 
 

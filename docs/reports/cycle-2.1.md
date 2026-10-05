@@ -195,3 +195,63 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   resolver o prefixo pai; não vale o custo.
 - **Dívida criada:** nenhuma.
 - **Próximos passos:** Wave E (explain de `installation` + drift live cross-forge).
+
+## Wave E — Explain/hashcheck de `installation` + drift live do cenário cross
+
+- **Objetivo:** (E1) provar que um plan run com `installation.json` é integralmente
+  verificável e explicável — o receipt ancora `plan.installation_sha256`, o hashcheck o
+  confere e o explain expõe os itens; (E2) levar ao cenário cross a mesma checagem de
+  drift live que o cenário default já tinha.
+- **Arquivos alterados:** `tests/test_hashcheck.py` (helper `_installation_run` + teste),
+  `tests/test_explain_report.py` (teste do explain do run recusado),
+  `tests/real_providers.py` (helpers de drift promovidos a utilitários compartilhados:
+  `run_native`, `left_in`, `id_shape`, `id_shapes`, `top_keys`, `NATIVE_TIMEOUT`,
+  `ID_KEYS`), `tests/test_real_providers.py` (usa `rp.*`; helpers locais removidos),
+  `tests/test_cross_forge_real.py` (id formats nos case files da API + teste novo do
+  lado Spark Forge).
+- **Contratos:** nenhum.
+- **Decisões arquiteturais:**
+  - Nenhum follow-up de produção existia: `hashcheck` já mapeia `installation` via
+    `PlanRefs.installation_sha256` e `report.py` já digita `PlanSection.installation`.
+    O gap era de **evidência** — nenhum teste exercitava o caminho. Fechado com um plan
+    run `refused` real (provider `invalid-manifest`): hash verificado no estado limpo,
+    divergência `modified` ao alterar, `missing` ao apagar, leitura estritamente read-only
+    (snapshot idêntico + `Popen` interditado) e explain com os itens
+    (`provider`/`state`/`source`/`nodes`/`reason`, `planning_only`), válido contra o
+    schema publicado.
+  - Os helpers de drift saíram de `test_real_providers.py` para `real_providers.py` —
+    o módulo de harness já compartilhado pelos dois arquivos `real_provider` — em vez de
+    duplicar lógica ou importar módulo de teste de outro (sem precedente no repo).
+  - E2 cobre os dois lados do cenário cross: API compara `case_files` por top-level keys
+    **e** `id_shapes` (antes só keys); Spark ganha um drift próprio — `record_execute`
+    re-executa `pyspark.static-analysis/pyspark` ao vivo sobre o workspace cross montado
+    com os mesmos argumentos da gravação (`path=data-pipeline/jobs`) e compara `tool`,
+    `arguments`, top-level keys de `recording`/`output`/`judge`/`judge.output` e os
+    formatos de id nativos.
+- **Testes adicionados:** `test_plan_run_checks_the_installation_artifact_its_receipt_records`,
+  `test_refused_plan_run_surfaces_the_installation_items`,
+  `test_spark_cross_recording_matches_the_live_native_output`; extensões de asserção no
+  bloco de drift da API do teste de prova cross.
+- **Testes executados:** `pytest tests/test_hashcheck.py tests/test_explain_report.py` —
+  26 passed; `pytest tests/test_real_providers_env.py` — 38 passed;
+  `pytest tests/test_compat_matrix.py tests/test_docs_consistency.py
+  tests/test_ci_workflows.py` — 57 passed; ruff + mypy limpos nos arquivos tocados.
+  **Live local:** `.venv-spark` (py3.11) e `.venv-api` (py3.12) recriados a partir de
+  worktrees limpos das `main` dos irmãos (`spark-forge-aws` `5a46aa9` = `origin/main`;
+  `api-forge` `daae355` = `origin/main`, os mesmos refs do CI) —
+  `pytest -m real_provider tests/test_real_providers.py tests/test_cross_forge_real.py`
+  = **18 passed** (17 anteriores + o novo teste Spark).
+- **Resultados:** integridade do `installation` provada de ponta a ponta (receipt →
+  hashcheck → explain); o cenário cross agora detecta drift de execute dos dois Forges,
+  não só do API.
+- **Benchmarks:** n/a.
+- **Security findings:** nenhum; as leituras continuam read-only e contidas.
+- **Limitações:** a prova live depende dos refs dos irmãos no momento do run (o snapshot
+  drift test falhou localmente contra a branch de dev `codex/evo-agentic-economy` —
+  comportamento correto do detector; validado contra `origin/main`). Detalhes internos
+  abaixo das top-level keys dos outputs nativos continuam fora do escopo do drift check.
+- **Dívida criada:** worktrees locais `E:/projetos/.sibling-main/{spark-forge-aws,
+  api-forge}` e `.venv-spark`/`.venv-api` são ambiente de desenvolvimento (fora do git);
+  remover ao final do ciclo ou documentar em `docs/real-providers.md` se ficarem
+  permanentes.
+- **Próximos passos:** Wave F (consumo semântico de handoff no adapter do API Forge).
