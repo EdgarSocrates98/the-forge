@@ -108,7 +108,7 @@ from theforge.contracts.routing import (
     Selection,
 )
 from theforge.contracts.task import TaskSpec
-from theforge.contracts.telemetry import ProfileSnapshot, RunTelemetry
+from theforge.contracts.telemetry import ProfileSnapshot, RunTelemetry, Span
 from theforge.contracts.types import ErrorInfo, Producer
 from theforge.contracts.verification import (
     ReproducibilityInfo,
@@ -152,7 +152,7 @@ __all__ = [
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunBudget", "RunTelemetry",
     "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
-    "SemanticPlanProposal", "Signals",
+    "SemanticPlanProposal", "Signals", "Span",
     "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult",
     "VerifyRequest", "VerifyVerdict", "Violation",
     "WorkspaceDescriptor", "WorkspaceGraph", "WorkspaceRelation", "WorkspaceSummary", "from_dict",

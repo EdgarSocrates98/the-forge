@@ -672,6 +672,61 @@ def decisions(data: dict[str, Any]) -> str:
                       *_labelled("Limitations:", _list(data.get("limitations")))])
 
 
+_TRACE_ATTRS = ("node", "provider", "capability", "action", "role", "round",
+                "outcome", "attempts", "reused")
+
+
+def _span_line(span: dict[str, Any]) -> str:
+    """One span row: name, the interesting attributes, duration, error marker."""
+    attrs = span.get("attributes") or {}
+    shown = " ".join(f"{key}={_clean(attrs[key])}" for key in _TRACE_ATTRS
+                     if key in attrs)
+    name = _clean(span.get("name", "?"))
+    if shown:
+        name = f"{name} ({shown})"
+    try:
+        ms = float(span.get("duration_ms") or 0.0)
+    except (TypeError, ValueError):
+        ms = 0.0
+    marker = "  ERROR" if span.get("status") == "error" else ""
+    return f"{name}  {ms:.1f}ms{marker}"
+
+
+def trace(data: dict[str, Any]) -> str:
+    """The run's local trace (Wave J): *what happened* — spans in start order,
+    nested by parent. ``explain`` answers why; ``trace`` answers what."""
+    spans = [s for s in (data.get("spans") or []) if isinstance(s, dict)]
+    total = 0.0
+    for span in spans:
+        try:
+            total = max(total, float(span.get("start_ms") or 0.0)
+                        + float(span.get("duration_ms") or 0.0))
+        except (TypeError, ValueError):
+            continue
+    lines = [f"trace {_clean(data['run_id'])}  {_clean(data.get('status') or 'unknown')}  "
+             f"{total:.0f}ms"]
+    ids = {s.get("id") for s in spans}
+    children: dict[Any, list[dict[str, Any]]] = {}
+    for span in spans:
+        parent = span.get("parent")
+        children.setdefault(parent if parent in ids else None, []).append(span)
+    for group in children.values():
+        group.sort(key=lambda s: (float(s.get("start_ms") or 0.0),
+                                  str(s.get("id") or "")))
+
+    def _level(parent: Any, prefix: str) -> None:
+        group = children.get(parent) or []
+        for index, span in enumerate(group):
+            last = index == len(group) - 1
+            lines.append(f"{prefix}{'└─ ' if last else '├─ '}{_span_line(span)}")
+            _level(span.get("id"), prefix + ("   " if last else "│  "))
+
+    _level(None, "")
+    if not spans:
+        lines.append("  no spans recorded")
+    return "\n".join([*lines, *_labelled("Limitations:", _list(data.get("limitations")))])
+
+
 def replay(data: dict[str, Any]) -> str:
     run_id = _clean(data["run_id"])
     if data["mode"] == "render":

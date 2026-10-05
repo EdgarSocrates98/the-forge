@@ -229,11 +229,11 @@ def test_resume_after_crash_uses_the_plan_state_snapshot(tmp_path: Path) -> None
     real_run_node = PlanExecutor._run_node
 
     def crash_once(self: PlanExecutor, trace: Any, plan: Any, node: Any,
-                   sources: Any, levels: Any) -> Any:
+                   sources: Any, levels: Any, parent: Any = None) -> Any:
         if node.id == "n2" and armed["v"]:
             armed["v"] = False
             raise RuntimeError("simulated crash")
-        return real_run_node(self, trace, plan, node, sources, levels)
+        return real_run_node(self, trace, plan, node, sources, levels, parent=parent)
 
     executor._run_node = crash_once.__get__(executor)  # type: ignore[method-assign]
     first = executor.run(PlanCommand(intent="resume spec", profile="max",

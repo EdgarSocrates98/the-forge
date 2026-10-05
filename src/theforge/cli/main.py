@@ -152,6 +152,12 @@ def build_parser() -> argparse.ArgumentParser:
                              help="the project's reusable-decision memory "
                                   "(.forge/intel/decisions.json)")
     decisions.set_defaults(handler=commands.cmd_decisions)
+
+    trace = sub.add_parser("trace", parents=[common],
+                           help="the run's local trace: what happened, span by span "
+                                "(explain answers why)")
+    trace.add_argument("run_id")
+    trace.set_defaults(handler=commands.cmd_trace)
     return parser
 
 

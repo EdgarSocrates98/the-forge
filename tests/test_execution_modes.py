@@ -210,7 +210,7 @@ def concurrency() -> dict[str, Any]:
 
 def _sleepy(concurrency: dict[str, Any], delay: float = 0.05):
     def fake(self: PlanExecutor, trace: Any, plan: ExecutionPlan, node: PlanNode,
-             sources: Any, levels: Any) -> NodeExecution:
+             sources: Any, levels: Any, parent: Any = None) -> NodeExecution:
         with concurrency["lock"]:
             concurrency["active"] += 1
             concurrency["max"] = max(concurrency["max"], concurrency["active"])
@@ -245,7 +245,7 @@ def test_delegate_subtasks_have_no_handoffs_and_run_together(
     seen_sources: dict[str, list[str]] = {}
 
     def fake(self: PlanExecutor, trace: Any, plan: ExecutionPlan, node: PlanNode,
-             sources: Any, levels: Any) -> NodeExecution:
+             sources: Any, levels: Any, parent: Any = None) -> NodeExecution:
         seen_sources[node.id] = [s.node for s in sources]
         return _sleepy(concurrency)(self, trace, plan, node, sources, levels)
 
@@ -264,7 +264,7 @@ def test_parallel_partial_failure_skips_only_the_dependents(
     executor, _ = _executor(tmp_path, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
 
     def fake(self: PlanExecutor, trace: Any, plan: ExecutionPlan, node: PlanNode,
-             sources: Any, levels: Any) -> NodeExecution:
+             sources: Any, levels: Any, parent: Any = None) -> NodeExecution:
         if node.id == "bad":
             return NodeExecution(
                 node=node, provider=None, handoff=None, result=None, reached_execute=True,

@@ -172,6 +172,11 @@ SEEDS: dict[str, dict[str, Any]] = {
         "providers_executed": {"value": 2, "kind": "measured"},
         "provider_revalidation": "undeclared", "verification_performed": "minimal",
         "context_drift": ["a.md"], "limitations": ["l"], "unknowns": ["u"],
+        "spans": [{"id": "s1", "name": "scan", "start_ms": 0.0,
+                   "duration_ms": 12.5},
+                  {"id": "s2", "name": "provider:p1", "start_ms": 12.5,
+                   "duration_ms": 400.0, "parent": "s1", "status": "ok",
+                   "attributes": {"capability": "c.x", "action": "run"}}],
     },
     # cross-forge-foundation (Wave D)
     "ExecutionPlan": PLAN,

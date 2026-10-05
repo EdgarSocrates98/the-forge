@@ -601,3 +601,48 @@ cobre manifests dentro de repositórios descobertos — dep files fora de repo
 não afetam o descriptor, então corretamente não afetam o digest. Reuso por
 seção é grosseiro (depfiles_sha agrega todos os manifests): um único manifest
 mudado re-parseia todos — honesto e simples, não máximo.
+
+## Wave J — Observability / Tracing v2 (spans locais)
+
+**`Span` dentro de `RunTelemetry` (J1, sem segundo sistema).** `RunTelemetry`
+ganha `spans: list[Span]` — campo aditivo, artefatos antigos continuam válidos.
+Cada span: `id` `s<N>` em ordem de início, `start_ms`/`duration_ms` medidos no
+relógio monotônico (offsets — nunca parede), `parent`, `status` (`error` quando
+o bloco lançou) e `attributes` limitadas (≤16 pares, ≤120 chars). Limites no
+contrato: nome ≤80, ≤256 spans, ids únicos, `parent` resolve a um span anterior.
+
+**Um mecanismo de medição.** `phase()` agora é implementada sobre `span()` — a
+mesma leitura de relógio alimenta a métrica agregada (`routing_ms`…) e o span
+do trace; instrumentar não custa leituras extras e o tempo de uma fase que
+falha continua acumulando. `span()` cede um `SpanHandle` cujo `attrs` o corpo
+preenche na saída (`outcome`, `attempts`…) — o desfecho só existe no fim.
+Recorder é thread-safe por lock: nós concorrentes não colidem nos ids.
+
+**Spans gravados.** Run `ask`: `scan`, `routing`, `planning` (assessment +
+budget), `handoff` (nó de plano), `context`, `provider:<id>` por `execute`
+(capability/ação/rodada), `negotiation` por rodada de extensão, `verification`,
+`synthesis`. Run `plan`: `scan`, `planning`, `node:<id>` por nó
+(provider/capability/role + `outcome`, `attempts`, `reused`) com `handoff`
+aninhado, `synthesis`. O `synthesis` fecha antes de `build()` — o trace nunca
+contém a própria serialização.
+
+**`theforge trace <run>` (J3).** Renderiza a árvore — *o que aconteceu*, versus
+`explain` (*por quê*). Lê só o artefato persistido: nenhum provider inicia,
+offline por construção (J2 — um exporter futuro é opcional). Texto e `--json`;
+run sem `telemetry` reporta a limitação, não falha.
+
+**Testes.** `tests/test_trace.py` (16): contrato `Span` (nome/tempos/attrs/
+limites, ids únicos, parent anterior, cap), backward-compat de `spans` ausente,
+recorder (ordem, attrs tardios, `error` em exceção, fase→span+métrica com os
+mesmos dois ticks, override de nome, ids únicos sob 16 threads, nome inválido
+fail-fast), e2e (spans de `ask` e `node:`/`handoff` de plano, render da árvore,
+`--json`, run desconhecido → exit 2).
+
+**Resultado.** Schema `RunTelemetry` regenerado com `spans`; ADR 0024 registra
+por que o trace é um campo, não um sistema; a suite completa segue verde.
+
+**Limitações.** Spans são por run — um run de plano não inlinha os spans dos
+runs filhos (cada filho tem a própria telemetria, linkada pelo `trace` do pai
+via `node:<id>` + run id no outcome). `start_ms` mede a partir do primeiro
+estágio instrumentado, não do `started_at` do receipt. Não há tail-sampling nem
+exporter — por design nesta wave.

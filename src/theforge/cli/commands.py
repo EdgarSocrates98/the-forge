@@ -365,6 +365,28 @@ def cmd_decisions(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_trace(args: argparse.Namespace) -> int:
+    """``theforge trace RUN``: what happened — the run's span tree from its
+    ``telemetry`` artifact (Wave J). Distinct from ``explain``, which answers
+    *why* it happened. Read-only: no provider process starts; a run without a
+    telemetry artifact reports so instead of failing."""
+    store = RunStore(require_forge_dir(_root(args)))
+    with _run_lookup():
+        if not store.run_dir(args.run_id).is_dir():
+            raise LookupError(f"unknown run {args.run_id}")
+        telemetry = store.read_optional(args.run_id, "telemetry")
+        receipt = store.read_optional(args.run_id, "receipt")
+    data: dict[str, Any] = {
+        "run_id": args.run_id,
+        "status": (receipt or {}).get("status"),
+        "kind": (receipt or {}).get("kind"),
+        "spans": (telemetry or {}).get("spans") or [],
+        "limitations": [] if telemetry is not None else ["no telemetry recorded"],
+    }
+    _emit(args, redact(data), render.trace)
+    return 0
+
+
 def cmd_replay(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)

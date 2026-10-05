@@ -22,6 +22,7 @@
 | `replay <run_id> --mode render\|verify\|execute [--allow-unverified] [--approve CAPABILITY]...` | reapresenta, reverifica ou reexecuta um run ([`replay`](#replay)) | render/verify: 0 / 2 / 6; execute: 0 / 2 / 3 / 4 / 5 |
 | `resume <run_id> [--allow-unverified] [--approve CAPABILITY]...` | continua um run de plano reutilizando os nós provadamente intactos ([`resume`](#resume)) | 0 / 2 / 3 / 4 / 5 |
 | `decisions` | a memória de decisões reutilizáveis do projeto (`.forge/intel/decisions.json`): routing, profile, pattern e veredictos de debate com sua `basis` e trilha de runs | 0 |
+| `trace <run_id>` | *o que aconteceu*: a árvore de spans do run (fases, `provider:<id>`, `node:<id>`, durações, erros) lida do artefato `telemetry` ([`trace`](#trace)) | 0 / 2 |
 
 ## Exit codes gerais
 
@@ -219,6 +220,29 @@ Só `depends_on` entre dois repositórios descobertos é aceito; uma entrada inv
 - **Retry**: `retry.toml` (usuário em `THEFORGE_CONFIG_DIR`, projeto em `.forge/config/`; o projeto vence por chave) habilita retentativa de falhas transitórias de protocolo: `[retry] max_attempts = 1..5`, `retryable_codes` (default `FORGE-PROTO-TIMEOUT`, `FORGE-PROTO-EXIT`), `backoff_seconds`/`backoff_cap_seconds` (exponencial determinístico, sem jitter). O default é `max_attempts = 1` — nunca retenta — e recusas/policy nunca retentam. `NodeOutcome.attempts` conta as tentativas; cada tentativa é um run filho com recibo próprio.
 
 `--json` emite `run_id`, `status`, `resumed_from`, `plan`, `result` (com `reused`/`attempts` por nó), `installation`, `decision` e `error`/`error_family`.
+
+## `trace`
+
+`theforge trace <run_id>` mostra *o que aconteceu* — o trace local do run, lido do artefato `telemetry` (`RunTelemetry/v1.spans`) sem iniciar providers. `explain` responde *por que* aconteceu; são vistas complementares do mesmo run.
+
+O texto é a árvore de spans em ordem de início (`s<N>`), aninhada por `parent`, com atributos relevantes e durações:
+
+```text
+trace 20261005T214325Z-b885e792  ok  8412ms
+├─ scan  12.0ms
+├─ routing  44.8ms
+├─ planning  7.9ms
+├─ context  118.4ms
+├─ provider:fixture-spark (capability=spark.performance action=diagnose round=0)  8001.2ms
+├─ verification (provider=fixture-spark)  15.0ms
+└─ synthesis  3.9ms
+Limitations: none
+```
+
+- Spans de run `ask`: `scan`, `routing` (routing + health), `planning` (avaliação de complexidade e resolução de budget), `handoff` (quando o run é nó de plano), `context`, `provider:<id>` por chamada `execute` (atributos: capability/ação/rodada), `negotiation` por rodada de extensão de contexto, `verification`, `synthesis`.
+- Spans de run `plan`: `scan`, `planning` (routing + decomposição + validação), `node:<id>` por nó (atributos: provider/capability/ação/role + `outcome`, `attempts` > 1 e `reused` quando houver) com `handoff` aninhado, e `synthesis`.
+- Um span `ERROR` marca a etapa que lançou — o detalhe da falha está em `error`/`diagnostic` do run, não no span.
+- Run desconhecido é erro de uso (exit 2). Um run sem artefato `telemetry` reporta `no telemetry recorded` em `Limitations:` (exit 0). `--json` emite `run_id`, `status`, `kind`, `spans` e `limitations`.
 
 ## Variáveis de ambiente
 | Variável | Efeito |

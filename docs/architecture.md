@@ -191,8 +191,9 @@ Todo run grava o artefato `telemetry` (`RunTelemetry` v1, schema fechado) antes 
 - `fallbacks_used` = quantidade de providers **unhealthy** tentados (o tamanho de `RoutingDecision.fallbacks_used`), contando o primário. Não é "fallbacks que assumiram": em `economy` com o primário unhealthy o valor é 1, e em `balanced` com fallback bem-sucedido também é 1 (o primário que falhou).
 - ROI de contexto (counters medidos do `ask`): `files_cited` (arquivos do pack que a evidência devolvida citou por `subject`/`location.path`), `evidence_returned` e `findings_returned`. Runs sem resultado registram zero explícito; runs de plano deixam `unknown` (cada nó conta o seu).
 - `profile` registra os parâmetros efetivos e `effective_tiers`; `provider_revalidation` registra `hash`/`core`/`none` ou `undeclared`; `verification_performed` e `context_drift` registram a reverificação.
+- **Spans (Wave J).** O mesmo artefato `telemetry` carrega `spans: Span[]` — o trace local do run: cada fase e cada etapa explícita (`planning`, `provider:<id>`, `negotiation`, `handoff`, `verification`, `synthesis`; `node:<id>` + `handoff` por nó em runs de plano) com `id` em ordem de início, `start_ms`/`duration_ms` medidos no relógio monotônico, `parent` e `status` (`error` quando o bloco lançou). Um artefato só é a telemetria **e** o trace — não há segundo sistema (J1); um export futuro é opcional e o trace local funciona offline (J2). `theforge trace <run>` mostra *o que aconteceu*; `explain` mostra *por quê*.
 - Limitação conhecida: se montar a telemetria falhar, o receipt é gravado assim mesmo, sem `telemetry_sha256` e com a limitação `telemetry-unavailable: <Tipo>: <mensagem>`; o status do run não muda. Falha de persistência continua sendo erro, como em qualquer artefato.
-- `explain` mostra contexto e telemetria; as seções de texto estão em [cli.md](cli.md#explain).
+- `explain` mostra contexto e telemetria; `trace` mostra a árvore de spans; as seções de texto estão em [cli.md](cli.md#explain).
 
 ## Responsabilidades
 

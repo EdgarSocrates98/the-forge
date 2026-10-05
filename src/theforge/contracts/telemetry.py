@@ -15,6 +15,54 @@ from theforge.contracts.types import BudgetProfile, Metric, Producer, Verificati
 
 TELEMETRY_SCHEMA = "theforge/RunTelemetry/v1"
 
+MAX_SPANS = 256  # bounded local trace per run
+SPAN_NAME_MAX = 80  # span names are short labels: "routing", "provider:<id>"…
+SPAN_ATTRS_MAX = 16  # bounded attributes per span
+SPAN_ATTR_LEN = 120  # attribute keys/values are short strings
+
+
+@dataclass(frozen=True, kw_only=True)
+class Span:
+    """One timed unit inside a run — the local trace (Cycle 3 Wave J).
+
+    Spans answer *what happened*: which stage ran, for how long, in which order,
+    and whether it raised. ``explain`` still answers *why* it happened. Spans
+    are append-only per run: the recorder assigns ``id`` in start order and
+    ``start_ms`` as an offset from the recorder's creation (monotonic clock —
+    never wall time, so ordering survives clock adjustments). ``status`` is
+    ``"error"`` when the instrumented block raised; the failure detail lives in
+    the run's ``error``/``diagnostic``, the span only marks that it raised.
+    """
+
+    id: str  # "s<N>", in start order
+    name: str
+    start_ms: float
+    duration_ms: float
+    parent: str | None = None  # id of the enclosing span; None = child of the run
+    status: Literal["ok", "error"] = "ok"
+    attributes: dict[str, str] = field(default_factory=dict)  # provider, node, outcome…
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not 0 < len(self.name) <= SPAN_NAME_MAX:
+            raise ContractError(
+                f"span {self.id!r}: name must be a non-empty string of at most "
+                f"{SPAN_NAME_MAX} chars")
+        for name in ("start_ms", "duration_ms"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ContractError(f"span {self.id!r}: {name} must be a number")
+            if value < 0:
+                raise ContractError(f"span {self.id!r}: {name} cannot be negative")
+        if len(self.attributes) > SPAN_ATTRS_MAX:
+            raise ContractError(
+                f"span {self.id!r}: attributes exceed {SPAN_ATTRS_MAX}")
+        for key, value in self.attributes.items():
+            if not isinstance(key, str) or not isinstance(value, str) \
+                    or len(key) > SPAN_ATTR_LEN or len(value) > SPAN_ATTR_LEN:
+                raise ContractError(
+                    f"span {self.id!r}: attributes are bounded strings "
+                    f"(<= {SPAN_ATTR_LEN} chars)")
+
 
 @dataclass(frozen=True, kw_only=True)
 class ProfileSnapshot:
@@ -64,6 +112,10 @@ class RunTelemetry:
     provider_revalidation: Literal["hash", "core", "none", "undeclared"] | None = None
     verification_performed: VerificationLevel | None = None
     context_drift: list[str] = field(default_factory=list)
+    # The local trace (Wave J): the run's timed units in start order. The same
+    # artifact stays the one observability record — metrics aggregate, spans
+    # structure; no second tracing system (J1).
+    spans: list[Span] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
 
@@ -71,3 +123,14 @@ class RunTelemetry:
         if self.schema != TELEMETRY_SCHEMA:
             raise ContractError(
                 f"unsupported schema {self.schema!r}, expected {TELEMETRY_SCHEMA!r}")
+        if len(self.spans) > MAX_SPANS:
+            raise ContractError(f"telemetry: {len(self.spans)} spans exceed {MAX_SPANS}")
+        seen: set[str] = set()
+        for span in self.spans:
+            if span.id in seen:
+                raise ContractError(f"telemetry: duplicate span id {span.id!r}")
+            seen.add(span.id)
+            if span.parent is not None and span.parent not in seen:
+                raise ContractError(
+                    f"telemetry: span {span.id!r} parents unknown/forward span "
+                    f"{span.parent!r}")

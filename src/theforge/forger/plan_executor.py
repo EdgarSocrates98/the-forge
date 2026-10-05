@@ -354,7 +354,9 @@ class PlanExecutor:
         trace.limitations.extend(f"capability-graph: {item}"
                                  for item in capability_graph.limitations)
         trace.stage = "plan:routing"
-        with trace.telemetry.phase("routing"):
+        # The run's planning stage: route + decompose + validate. The routing_ms
+        # metric keeps its name; the trace shows the honest stage (J1).
+        with trace.telemetry.phase("routing", span_name="planning"):
             planned = self._plan(trace, scan, descriptor, profile)
         trace.routing_sha = store.write(trace.run_id, "routing", planned.decision)
         plan = planned.plan
@@ -683,26 +685,43 @@ class PlanExecutor:
                       sources: Sequence[SourceResult],
                       levels: Mapping[str, Reproducibility]) -> NodeExecution:
         """``resume`` path: reuse the prior node when its inputs still verify (F2),
-        else execute it fresh. Invalidation reasons land in the plan limitations."""
-        if trace.prior is None:
-            return self._run_node(trace, plan, node, sources, levels)
-        execution, why = reuse_execution(
-            self.forger.store, plan, node, trace.prior.get(node.id), sources,
-            trace.records)
-        if execution is None:
-            if node.id in trace.prior:
-                trace.resume_notes[node.id] = why or "not reusable"
-            return self._run_node(trace, plan, node, sources, levels)
-        return execution
+        else execute it fresh. Invalidation reasons land in the plan limitations.
+
+        One ``node:<id>`` trace span per node, reused or executed (J3): the trace
+        records that the node ran and how it ended, on the calling thread."""
+        with trace.telemetry.span(f"node:{node.id}", provider=node.provider or "?",
+                                  capability=node.capability, action=node.action,
+                                  role=node.role) as handle:
+            if trace.prior is None:
+                execution = self._run_node(trace, plan, node, sources, levels,
+                                           parent=handle.id)
+            else:
+                reused, why = reuse_execution(
+                    self.forger.store, plan, node, trace.prior.get(node.id), sources,
+                    trace.records)
+                if reused is None:
+                    if node.id in trace.prior:
+                        trace.resume_notes[node.id] = why or "not reusable"
+                    execution = self._run_node(trace, plan, node, sources, levels,
+                                               parent=handle.id)
+                else:
+                    execution = reused
+                    handle.attrs["reused"] = "true"
+            handle.attrs["outcome"] = execution.outcome.status
+            if execution.outcome.attempts > 1:
+                handle.attrs["attempts"] = str(execution.outcome.attempts)
+            return execution
 
     def _run_node(self, trace: _PlanTrace, plan: ExecutionPlan, node: PlanNode,
                   sources: Sequence[SourceResult],
-                  levels: Mapping[str, Reproducibility]) -> NodeExecution:
+                  levels: Mapping[str, Reproducibility],
+                  parent: str | None = None) -> NodeExecution:
         """One child run of the Forger for ``node``, its valid result re-read from disk."""
         command, store = trace.command, self.forger.store
         # The handoff belongs to the plan document's run: a resume rebuilds the
         # same bytes the original children consumed (F2 compares their hashes).
-        handoff = build_handoff(plan.plan_run, node, sources, records=trace.records)
+        with trace.telemetry.span("handoff", parent=parent, node=node.id):
+            handoff = build_handoff(plan.plan_run, node, sources, records=trace.records)
         binding = NodeBinding(
             plan_run=trace.run_id, node=node.id, pattern=plan.pattern, handoff=handoff,
             estimate_class=node.estimate.operation_class if node.estimate else None,
@@ -814,13 +833,17 @@ class PlanExecutor:
                 code=Codes.PERSIST_WRITE)
         trace.terminal = "finalizing"
         store = self.forger.store
-        diagnostic: Diagnostic | None = None
-        if exception is not None and error is not None and error.code == Codes.INTERNAL:
-            diagnostic = build_diagnostic(exception, stage=trace.stage, code=Codes.INTERNAL)
-            if trace.command.debug:
-                store.write(trace.run_id, "diagnostic", diagnostic)
-        self._record_decisions(trace, status)
-        graph_sha, graph_notes = self._write_graph(trace)
+        # Synthesis: diagnostic, decision memory and the workspace graph — the
+        # last stage before the receipt (the span closes before telemetry builds).
+        with trace.telemetry.span("synthesis"):
+            diagnostic: Diagnostic | None = None
+            if exception is not None and error is not None and error.code == Codes.INTERNAL:
+                diagnostic = build_diagnostic(exception, stage=trace.stage,
+                                              code=Codes.INTERNAL)
+                if trace.command.debug:
+                    store.write(trace.run_id, "diagnostic", diagnostic)
+            self._record_decisions(trace, status)
+            graph_sha, graph_notes = self._write_graph(trace)
         telemetry_sha, telemetry_notes = self._write_telemetry(trace)
         limitations = list(trace.limitations)
         if trace.plan is not None:

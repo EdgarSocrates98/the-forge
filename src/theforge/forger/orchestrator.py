@@ -389,9 +389,10 @@ class Forger:
         if node is None or node.handoff is None:
             return
         trace.stage = "handoff"
-        trace.handoff_sha = self.store.write(trace.run_id, "handoff", node.handoff)
-        trace.handoff = self.store.read_contract(trace.run_id, "handoff", Handoff)
-        trace.limitations.extend(node.handoff.limitations)
+        with trace.telemetry.span("handoff", node=node.node):
+            trace.handoff_sha = self.store.write(trace.run_id, "handoff", node.handoff)
+            trace.handoff = self.store.read_contract(trace.run_id, "handoff", Handoff)
+            trace.limitations.extend(node.handoff.limitations)
 
     @staticmethod
     def _placeholder(run_id: str, reason: str) -> RoutingDecision:
@@ -425,42 +426,45 @@ class Forger:
                 return self._finish(trace, decision, "refused", error=op_error)
             return self._finish(trace, decision, decision.status)
 
-        if trace.complexity_config is not None:  # --profile auto: measure, then resolve
-            assessment = assess(
-                task_inputs(task, scan, decision, records, handoff=trace.handoff),
-                trace.complexity_config)
-            trace.complexity_sha = self.store.write(run_id, "complexity", assessment)
-            trace.limitations.extend(
-                f"complexity: {item}" for item in assessment.limitations)
-            profile = profile_for(assessment.selected_profile)
-            trace.telemetry.set_profile(profile)
-            trace.profile_basis = f"auto: {assessment.profile_reason}"
-        else:
-            profile = assumed_profile(task.budget_profile)
-            # Explicit profiles are still measured: an assessment whose selected
-            # profile outranks the requested one promotes the elastic bounds one
-            # step (H2). The assessment is persisted when — and only when — it
-            # actually promoted something (it is the adjustment's evidence).
-            promo_warnings: list[str] = []
-            assessment = assess(
-                task_inputs(task, scan, decision, records, handoff=trace.handoff),
-                load_complexity_config(
-                    user_dir=self.registry.user_dir or user_config_dir(),
-                    forge_dir=self.root / ".forge", warnings=promo_warnings))
-            trace.limitations.extend(promo_warnings)
-        effective, budget = resolve_budget(profile, run_id=run_id,
-                                           assessment=assessment)
-        if effective is not profile:
-            profile = effective
-            trace.telemetry.set_profile(profile)
-            trace.profile_basis = f"promoted: {budget.adjustments[0]}"
-            if trace.complexity_sha is None:
+        # The run's planning stage: measure the task, resolve the effective
+        # profile, persist the budget evidence (Wave A/H; traced as one span).
+        with telemetry.span("planning"):
+            if trace.complexity_config is not None:  # --profile auto: measure, then resolve
+                assessment = assess(
+                    task_inputs(task, scan, decision, records, handoff=trace.handoff),
+                    trace.complexity_config)
                 trace.complexity_sha = self.store.write(run_id, "complexity", assessment)
                 trace.limitations.extend(
                     f"complexity: {item}" for item in assessment.limitations)
-        trace.limitations.extend(f"budget: {note}" for note in budget.adjustments)
-        trace.budget_sha = self.store.write(run_id, "budget", budget)
-        trace.profile = profile
+                profile = profile_for(assessment.selected_profile)
+                trace.telemetry.set_profile(profile)
+                trace.profile_basis = f"auto: {assessment.profile_reason}"
+            else:
+                profile = assumed_profile(task.budget_profile)
+                # Explicit profiles are still measured: an assessment whose selected
+                # profile outranks the requested one promotes the elastic bounds one
+                # step (H2). The assessment is persisted when — and only when — it
+                # actually promoted something (it is the adjustment's evidence).
+                promo_warnings: list[str] = []
+                assessment = assess(
+                    task_inputs(task, scan, decision, records, handoff=trace.handoff),
+                    load_complexity_config(
+                        user_dir=self.registry.user_dir or user_config_dir(),
+                        forge_dir=self.root / ".forge", warnings=promo_warnings))
+                trace.limitations.extend(promo_warnings)
+            effective, budget = resolve_budget(profile, run_id=run_id,
+                                               assessment=assessment)
+            if effective is not profile:
+                profile = effective
+                trace.telemetry.set_profile(profile)
+                trace.profile_basis = f"promoted: {budget.adjustments[0]}"
+                if trace.complexity_sha is None:
+                    trace.complexity_sha = self.store.write(run_id, "complexity", assessment)
+                    trace.limitations.extend(
+                        f"complexity: {item}" for item in assessment.limitations)
+            trace.limitations.extend(f"budget: {note}" for note in budget.adjustments)
+            trace.budget_sha = self.store.write(run_id, "budget", budget)
+            trace.profile = profile
         pinned = request.provider is not None
         trace.stage = "health"
         with telemetry.phase("routing"):  # health (and fallback) completes the routing
@@ -512,15 +516,18 @@ class Forger:
         trace.result_seen = executed.result
         if executed.result is None:
             if trace.executed:
-                self._record_verification(trace, record, executed.response_status, None)
+                with telemetry.span("verification", provider=record.entry.id):
+                    self._record_verification(trace, record, executed.response_status,
+                                              None)
             return self._finish(trace, decision, executed.status, error=executed.error,
                                 exception=executed.exception)
         assert executed.pack is not None
         trace.stage = "verification"
-        result = self._verify_context(trace, executed.result, executed.pack, profile)
-        # The verification judges what the provider returned (before drift demotion).
-        diverged = self._record_verification(trace, record, executed.response_status,
-                                             executed.result)
+        with telemetry.span("verification", provider=record.entry.id):
+            result = self._verify_context(trace, executed.result, executed.pack, profile)
+            # The verification judges what the provider returned (before drift demotion).
+            diverged = self._record_verification(trace, record, executed.response_status,
+                                                 executed.result)
         if diverged:  # a declared artifact is not what the provider said it wrote (9.5)
             trace.limitations.extend(diverged)
             result = replace(result, status="partial",
@@ -642,7 +649,10 @@ class Forger:
                                              handoff=trace.handoff))
             started_exec = time.perf_counter()
             try:
-                with telemetry.phase("provider"):  # sums every round's execute (4.2)
+                # provider:<id> span per execute call; the phase metric sums (4.2)
+                with telemetry.phase("provider", span_name=f"provider:{record.entry.id}",
+                                     capability=selection.capability,
+                                     action=selection.action, round=str(pack.round)):
                     response = self.transport_factory(record.entry.argv).call(
                         "execute", payload, timeout=self._timeout(profile),
                         cwd=self.store.work_dir(trace.run_id))
@@ -684,7 +694,8 @@ class Forger:
                                            pack, profile)
             if refusal is not None:
                 return _Executed("provider_failure", response_status=answered, error=refusal)
-            with telemetry.phase("context"):
+            with telemetry.phase("context", span_name="negotiation",
+                                 round=str(pack.round + 1)):
                 pack = extend_context_pack(pack, result.context_request, scan,
                                            profile=profile, fingerprints=fingerprints)
                 try:
@@ -1101,10 +1112,14 @@ class Forger:
                 f"run {trace.run_id}: _finish called on a {trace.terminal} run",
                 code=Codes.PERSIST_WRITE)
         trace.terminal = "finalizing"
-        diagnostic = self._diagnostic(trace, exception, error)
-        self._late_verification(trace)
-        self._record_economy(trace, status, result)
-        self._record_decisions(trace, decision)
+        # Synthesis: verdicts, economy and decision memory — the last stage before
+        # the receipt. The span closes before telemetry builds (the trace cannot
+        # contain itself).
+        with trace.telemetry.span("synthesis"):
+            diagnostic = self._diagnostic(trace, exception, error)
+            self._late_verification(trace)
+            self._record_economy(trace, status, result)
+            self._record_decisions(trace, decision)
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:

@@ -7,8 +7,17 @@ every negotiation round. Counters accumulate too. Anything never recorded comes 
 method assumes the context or provider phases were reached, so the plan run of
 ``cross-forge-foundation`` can record only ``scan``, ``routing`` and ``providers_executed``
 (no upper bound here: the ``ask`` limit of one provider belongs to the flow).
+
+Spans (Wave J): every ``phase`` and every explicit ``span`` also appends a ``Span``
+to the same artifact — the local trace of what ran, in which order, for how long and
+whether it raised. Span ids are assigned at start under a lock (``s<N>``), so workers
+of a concurrent plan cannot collide; ``start_ms`` is an offset from recorder creation.
+The yielded ``SpanHandle.attrs`` is filled by the body — the outcome is only known on
+the way out. The trace stays inside ``RunTelemetry``: one observability artifact, no
+second system (J1).
 """
 
+import threading
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from time import perf_counter
@@ -16,7 +25,12 @@ from typing import Final, Literal, get_args
 
 from theforge.context.verify import DriftReport
 from theforge.contracts.canonical import utc_now
-from theforge.contracts.telemetry import ProfileSnapshot, RunTelemetry
+from theforge.contracts.telemetry import (
+    SPAN_NAME_MAX,
+    ProfileSnapshot,
+    RunTelemetry,
+    Span,
+)
 from theforge.contracts.types import Metric, RevalidationStrategy, Tier, VerificationLevel
 from theforge.meta import PRODUCER
 from theforge.profiles import ContextProfile
@@ -45,6 +59,20 @@ def _ordered_tiers(tiers: Iterable[str]) -> list[str]:
     return [t for t in _TIER_ORDER if t in given]
 
 
+class SpanHandle:
+    """What ``TelemetryRecorder.span`` yields: the assigned id, the attribute bag
+    the body fills on the way out (``outcome``, ``attempts``…) and the measured
+    duration — ``phase`` accumulates it, so instrumenting a phase costs the same
+    two clock reads it always did."""
+
+    __slots__ = ("id", "attrs", "duration_ms")
+
+    def __init__(self, span_id: str) -> None:
+        self.id = span_id
+        self.attrs: dict[str, str] = {}
+        self.duration_ms = 0.0
+
+
 class TelemetryRecorder:
     def __init__(self, run_id: str, profile: ContextProfile, *,
                  clock: Callable[[], float] = perf_counter,
@@ -53,6 +81,7 @@ class TelemetryRecorder:
         self._profile = profile
         self._clock = clock
         self._now = now
+        self._t0: float | None = None  # first instrumented instant, lazily (J3)
         self._phase_ms: dict[str, float] = {}
         self._counters: dict[str, int] = {}
         self._limitations: list[str] = []
@@ -60,18 +89,56 @@ class TelemetryRecorder:
         self._revalidation: Literal["hash", "core", "none", "undeclared"] | None = None
         self._verification: VerificationLevel | None = None
         self._drift: list[str] = []
+        self._span_lock = threading.Lock()  # plan workers share this recorder
+        self._spans: list[Span] = []
+        self._span_seq = 0
 
     @contextmanager
-    def phase(self, name: Phase) -> Iterator[None]:
-        """Time the block (also when it raises) and add it to the phase total."""
+    def phase(self, name: Phase, *, span_name: str | None = None,
+              parent: str | None = None, **attrs: str) -> Iterator[None]:
+        """Time the block (also when it raises), add it to the phase total and
+        record it as a trace span — ``span_name`` overrides the displayed name
+        (``provider:<id>``, ``negotiation``…) while the metric keeps its name."""
         if name not in PHASES:
             raise ValueError(f"unknown phase {name!r}")
-        start = self._clock()
+        handle: SpanHandle | None = None
         try:
-            yield
+            with self.span(span_name or name, parent=parent, **attrs) as handle:
+                yield
         finally:
-            elapsed_ms = (self._clock() - start) * 1000.0
-            self._phase_ms[name] = self._phase_ms.get(name, 0.0) + elapsed_ms
+            if handle is not None:  # the span measured it; accumulate unrounded
+                self._phase_ms[name] = self._phase_ms.get(name, 0.0) + handle.duration_ms
+
+    @contextmanager
+    def span(self, name: str, *, parent: str | None = None,
+             **attrs: str) -> Iterator[SpanHandle]:
+        """Record one trace span around the block; the handle's ``attrs`` is the
+        late-bound attribute bag. A raising block leaves a ``status="error"``
+        span behind — the trace records that it happened and that it failed."""
+        if not 0 < len(name) <= SPAN_NAME_MAX:
+            raise ValueError(f"span name must be 1..{SPAN_NAME_MAX} chars: {name!r}")
+        with self._span_lock:
+            self._span_seq += 1
+            span_id = f"s{self._span_seq}"
+            start = self._clock()
+            if self._t0 is None:
+                self._t0 = start
+        t0 = self._t0
+        handle = SpanHandle(span_id)
+        status: Literal["ok", "error"] = "ok"
+        try:
+            yield handle
+        except BaseException:
+            status = "error"
+            raise
+        finally:
+            handle.duration_ms = (self._clock() - start) * 1000.0
+            attributes = {**{k: str(v) for k, v in attrs.items()}, **handle.attrs}
+            with self._span_lock:
+                self._spans.append(Span(
+                    id=span_id, name=name, start_ms=round((start - t0) * 1000.0, 3),
+                    duration_ms=round(handle.duration_ms, 3), parent=parent,
+                    status=status, attributes=attributes))
 
     def count(self, name: str, value: int) -> None:
         """Add ``value`` to the counter ``name`` (a counter field of RunTelemetry)."""
@@ -148,6 +215,9 @@ class TelemetryRecorder:
             provider_revalidation=self._revalidation,
             verification_performed=self._verification,
             context_drift=list(self._drift),
+            # Start order: ids are assigned at start, so id order is the trace order;
+            # start_ms breaks no ties (it can only be equal for concurrent spans).
+            spans=sorted(self._spans, key=lambda s: int(s.id[1:])),
             limitations=list(self._limitations),
             unknowns=sorted(name for name, m in metrics.items() if m.kind == "unknown"),
         )
