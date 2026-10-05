@@ -18,7 +18,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Final
 
-from theforge.context.verify import DriftReport, current_file_sha256
+from theforge.context.verify import DriftReport, declared_artifact_problem
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import Codes
 from theforge.contracts.integrity import check_producer
@@ -50,10 +50,16 @@ def _provider_evidence(result: ExecutionResult | None) -> VerificationCheck:
     return VerificationCheck(status="reported", basis=["provider-evidence"], details=details)
 
 
+def artifact_problems(result: ExecutionResult, work_dir: Path) -> list[tuple[str, str]]:
+    """Each declared artifact that does not verify, paired with the physical reason
+    (escape, missing, link, not a regular file or hash mismatch)."""
+    return [(a.path, reason) for a in result.artifacts
+            if (reason := declared_artifact_problem(work_dir, a.path, a.sha256)) is not None]
+
+
 def diverged_artifacts(result: ExecutionResult, work_dir: Path) -> list[str]:
     """Declared artifact paths whose current file under ``work_dir`` differs or is missing."""
-    return [a.path for a in result.artifacts
-            if current_file_sha256(work_dir, a.path) != a.sha256]
+    return [path for path, _ in artifact_problems(result, work_dir)]
 
 
 def _forge(result: ExecutionResult | None, drift: DriftReport | None, work_dir: Path,
@@ -91,12 +97,13 @@ def _forge(result: ExecutionResult | None, drift: DriftReport | None, work_dir: 
         details.append("artifact-hashes: not performed (no artifacts declared)")
     else:
         basis.append("artifact-hashes")
-        diverged = diverged_artifacts(result, work_dir)
-        if diverged:
+        problems = artifact_problems(result, work_dir)
+        if problems:
             failed = True
-            details.append(f"artifact-hashes: failed ({len(diverged)} of "
-                           f"{len(result.artifacts)} artifacts)")
-            limitations.extend(f"{ARTIFACT_HASH_LIMITATION}: {path}" for path in diverged)
+            why = "; ".join(f"{path}: {reason}" for path, reason in problems)
+            details.append(f"artifact-hashes: failed ({len(problems)} of "
+                           f"{len(result.artifacts)} artifacts: {why})")
+            limitations.extend(f"{ARTIFACT_HASH_LIMITATION}: {path}" for path, _ in problems)
         else:
             details.append(f"artifact-hashes: passed ({len(result.artifacts)} artifacts)")
 

@@ -214,3 +214,69 @@ def test_symlinked_artifact_escaping_work_dir_fails(work: Path, tmp_path: Path) 
                  drift=_drift())
     assert got.forge.status == "failed"
     assert got.limitations == [f"{Codes.RESULT_ARTIFACT_HASH}: out/link.txt"]
+
+
+# --- cycle-2.1 wave D: physical classification of declared artifacts ------------------------
+
+
+def test_broken_artifact_symlink_fails_with_its_reason(work: Path) -> None:
+    link = work / "out" / "broken.txt"
+    try:
+        link.symlink_to(work / "nowhere.txt")
+    except OSError:
+        pytest.skip("symlinks not permitted on this platform")
+    artifact = Artifact(path="out/broken.txt", sha256=_sha(DATA))
+    got = _build(work, _result(artifacts=[artifact]), drift=_drift())
+    assert got.forge.status == "failed"
+    assert any("out/broken.txt: unresolvable" in d for d in got.forge.details)
+
+
+def test_directory_declared_as_artifact_fails_with_its_reason(work: Path) -> None:
+    artifact = Artifact(path="out", sha256=_sha(DATA))
+    got = _build(work, _result(artifacts=[artifact]), drift=_drift())
+    assert got.forge.status == "failed"
+    assert any("out: not a regular file" in d for d in got.forge.details)
+
+
+def test_artifact_problems_classify_each_failure(work: Path, tmp_path: Path) -> None:
+    """Every failure kind reports its physical reason, in declaration order."""
+    from theforge.forger.verification import artifact_problems
+
+    outside = tmp_path / "outside.txt"
+    outside.write_bytes(DATA)
+    try:
+        (work / "out" / "link.txt").symlink_to(outside)
+        (work / "out" / "broken.txt").symlink_to(work / "gone.txt")
+    except OSError:
+        pytest.skip("symlinks not permitted on this platform")
+    (work / "out" / "tampered.txt").write_bytes(b"changed\n")
+    artifacts = [
+        Artifact(path="out/missing.txt", sha256=_sha(DATA)),
+        Artifact(path="out", sha256=_sha(DATA)),
+        Artifact(path="out/tampered.txt", sha256=_sha(DATA)),
+        Artifact(path="out/link.txt", sha256=_sha(DATA)),
+        Artifact(path="out/broken.txt", sha256=_sha(DATA)),
+        Artifact(path="../outside.txt", sha256=_sha(DATA)),
+        Artifact(path=str(outside), sha256=_sha(DATA)),
+        ARTIFACT,
+    ]
+    assert artifact_problems(_result(artifacts=artifacts), work) == [
+        ("out/missing.txt", "missing"),
+        ("out", "not a regular file"),
+        ("out/tampered.txt", "hash differs"),
+        ("out/link.txt", "unresolvable or a link resolving outside work/"),
+        ("out/broken.txt", "unresolvable or a link resolving outside work/"),
+        ("../outside.txt", "declared path escapes work/"),
+        (str(outside), "declared path escapes work/"),
+    ]
+
+
+def test_artifact_symlink_to_a_file_inside_work_verifies_by_content(work: Path) -> None:
+    """A link that stays inside work/ resolves to real content and can verify."""
+    try:
+        (work / "out" / "inside-link.txt").symlink_to(work / "out" / "report.json")
+    except OSError:
+        pytest.skip("symlinks not permitted on this platform")
+    artifact = Artifact(path="out/inside-link.txt", sha256=_sha(DATA))
+    got = _build(work, _result(artifacts=[artifact]), drift=_drift())
+    assert got.forge.status == "passed"

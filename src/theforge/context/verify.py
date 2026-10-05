@@ -13,6 +13,7 @@ and marks the result ``partial``; without drift it returns the result unchanged.
 """
 
 import hashlib
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -94,6 +95,31 @@ def current_file_sha256(root: Path, path: str) -> str | None:
     if resolved is None or not resolved.is_file():
         return None
     return _whole_file_sha256(resolved)
+
+
+def declared_artifact_problem(root: Path, path: str, sha256: str) -> str | None:
+    """Why a provider-declared artifact fails verification, or None when its hash matches.
+
+    Classification order, each stricter check gating the next: the declared path must be
+    lexically under ``root`` (an absolute or ``..`` path is refused without stat'ing
+    outside), must exist, must resolve physically inside ``root`` (a link that escapes
+    or cannot be resolved fails), must be a regular file, and its uncached content must
+    hash to ``sha256``. A link whose target stays inside ``root`` verifies by content.
+    """
+    base = Path(os.path.normpath(root))
+    lexical = Path(os.path.normpath(root / path))
+    if not lexical.is_relative_to(base):
+        return "declared path escapes work/"
+    resolved = resolve_inside(root, root / path)
+    if resolved is None:
+        if not os.path.lexists(lexical):
+            return "missing"
+        return "unresolvable or a link resolving outside work/"
+    if not resolved.is_file():
+        return "not a regular file"
+    if _whole_file_sha256(resolved) != sha256:
+        return "hash differs"
+    return None
 
 
 def _current_sha256(root: Path, item: ContextFile) -> str | None:

@@ -167,3 +167,31 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   `lstat` e `open` permanece lá; `realpath` containment ancora no runs dir físico.
 - **Dívida criada:** nenhuma nova.
 - **Próximos passos:** Wave D (integridade física de artifacts declarados).
+
+## Wave D — Integridade física de artifacts declarados
+
+- **Objetivo:** classificar fisicamente por que um `Artifact` declarado não verifica:
+  escape lexical, ausência, link (quebrado ou apontando fora), não-regular, hash divergente.
+- **Arquivos alterados:** `src/theforge/context/verify.py` (nova
+  `declared_artifact_problem`), `src/theforge/forger/verification.py` (nova
+  `artifact_problems`; `diverged_artifacts` delega; detalhe do check `artifact-hashes`
+  ganha a razão por artifact), `tests/test_verification.py`.
+- **Contratos:** nenhum — a limitação `FORGE-RESULT-ARTIFACT-HASH: <path>` não muda;
+  só os `details` do check ficam mais precisos.
+- **Decisões arquiteturais:** classificação em ordem estrita (lexical → existência →
+  resolução física → regular → hash), sem stat fora de `work/`; link cujo alvo permanece
+  dentro de `work/` verifica por conteúdo. `hashcheck` mantém sua semântica própria de
+  divergência (`missing`/`modified`/`unreadable`), já adequada ao explain.
+- **Testes adicionados:** broken symlink, diretório declarado como artifact, link interno
+  que verifica por conteúdo, e uma tabela de classificação cobrindo missing / not-regular /
+  hash-differs / link-outside / broken-link / `..` / absoluto — 4 testes novos.
+- **Testes executados:** `pytest tests/test_verification.py` — 19 passed; ruff e mypy limpos.
+- **Resultados:** a verificação de artifacts agora diz *por que* cada path falhou.
+- **Benchmarks:** n/a (mesma leitura de antes, mais dois `stat` por artifact divergente).
+- **Security findings:** nenhum novo; a ordem lexical→física garante que nenhum stat
+  acontece fora de `work/` (alinhado com `hashcheck`).
+- **Limitações:** razão de link-escape e broken-link compartilham a mesma string
+  ("unresolvable or a link resolving outside work/") — distinguir os dois exigiria
+  resolver o prefixo pai; não vale o custo.
+- **Dívida criada:** nenhuma.
+- **Próximos passos:** Wave E (explain de `installation` + drift live cross-forge).
