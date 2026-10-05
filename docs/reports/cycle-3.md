@@ -98,3 +98,53 @@ direção certa, nunca restritivo.
 `auto->max` na seção `Plan:` (mostra em `Task:`); `complexity.toml` não tem exemplo
 versionado; waves seguintes (capability graph, planner híbrido) devem consumir
 `signals` e `dimensions` do assessment em vez de re-derivar.
+
+## Wave B — CapabilityGraph/v1
+
+**Objetivo.** O registry conhecia providers/capabilities como lista plana; a Wave B
+constrói a estrutura relacional explícita (B1/B2) derivada **só** de contratos —
+manifestos e workspace descriptor — sem banco de grafos e sem `if spark_forge` (B3).
+
+**Contratos.** `theforge/CapabilityGraph/v1` (`contracts/capability_graph.py`, schema
+fechado, core-only): `CapNode` (`provider|capability|action|artifact_type|technology|
+repository|domain`, id `"<kind>:<key>"` com prefixo obrigatório) e `CapEdge`
+(epistemic + `evidence` obrigatória + `rule` obrigatória quando `inferred`, mesma
+disciplina do `WorkspaceGraph`). O contrato rejeita nós duplicados e arestas para nós
+ausentes. `Capability.relations` (aditivo, opcional) declara `produces`/`consumes`
+(tipos de artefato) e `requires`/`complements`/`conflicts`/`can_verify`/`can_review`
+(refs `cap.id` ou `provider/cap.id`), com validação de formato (B4).
+
+**Builder** (`src/theforge/capability_graph.py`):
+- Arestas explícitas derivadas do manifesto: `has_capability`, `has_action`,
+  `in_domain`; declaradas pelo provider: as 7 de `relations`.
+- Arestas observadas do descriptor: `uses_technology` (repositório→tecnologia) e
+  `relevant_to` (capability→tecnologia, via `Technology.matched_by`).
+- Provider sem manifesto não entra e é nomeado; alvo de relação ausente do registry
+  **mantém a aresta** (intenção declarada é evidência) e é nomeado em `limitations`;
+  bare refs resolvem no provider declarante; saída ordenada e determinística.
+
+**Queries (B5)** no mesmo módulo: `executors`, `producers`, `consumers`,
+`verifiers`, `reviewers`, `complements`, `conflicts` (bare ref casa todos os
+providers) e `produces_consumes_order` — topological determinístico sobre
+`requires` + cadeias produces→consumes; refs fora do grafo ficam ao final na ordem
+de entrada e membros de ciclo são nomeados, nunca descartados.
+
+**Wiring.** Runs de plano gravam o artefato `capability-graph` (entre `graph` e
+`verification` em `ARTIFACTS`), linkado por `PlanRefs.capability_graph_sha256` e
+coberto pelo hashcheck do `explain`. Runs de `ask` não gravam (ainda não há
+consumidor — a Wave C o introduz no planner).
+
+**Testes.** `tests/test_capability_graph.py` (24): contrato (kinds, evidência,
+dangling, duplicatas, round-trip), formato de relations, builder (estrutura,
+declaradas, alvo ausente nomeado, provider quebrado, descriptor observado,
+determinismo independente de ordem de entrada), queries e ordem (ciclo nomeado,
+faltantes preservados), e e2e — fixtures de plan ganharam `relations` reais e a
+prova verifica as arestas cross-provider no artefato persistido. Fuzz seed
+`CapabilityGraph` adicionado.
+
+**Resultado.** Foco verde; ruff+mypy limpos; schema parity regenerada.
+
+**Limitações.** Sem descriptor (runs de `ask`, quando a Wave C passar a construir o
+grafo lá) faltam os nós de workspace — limitação explícita no artefato.
+`relevant_to` só liga a capabilities presentes no registry. Arestas declaradas são
+intenção, não verificação — a Wave G (verificação independente) é quem prova.

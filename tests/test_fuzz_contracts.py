@@ -206,6 +206,14 @@ SEEDS: dict[str, dict[str, Any]] = {
         "causes": [{"type": "OSError", "message": "c"}],
         "frames": [{"module": "theforge.cli.main", "function": "main", "line": 1}],
     },
+    "CapabilityGraph": {
+        "producer": P, "created_at": "t", "run_id": "r",
+        "nodes": [{"id": "provider:p1", "kind": "provider", "label": "p1 0.1"},
+                  {"id": "capability:p1/a.b", "kind": "capability"}],
+        "edges": [{"source": "provider:p1", "target": "capability:p1/a.b",
+                   "kind": "has_capability", "epistemic": "explicit",
+                   "evidence": "manifest p1 capabilities"}],
+    },
     "ComplexityAssessment": {
         "producer": P, "created_at": "t", "task_id": "task-1", "level": "medium",
         "score": 0.42, "confidence": 0.9,

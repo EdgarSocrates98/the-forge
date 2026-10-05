@@ -186,6 +186,7 @@ Todo run grava o artefato `telemetry` (`RunTelemetry` v1, schema fechado) antes 
 | `security` | ambiente mínimo do provider, redaction, caminhos seguros | sandbox |
 | `profiles` | tabela única de `economy`/`balanced`/`max` | I/O |
 | `complexity` | mede a tarefa pós-routing e resolve `--profile auto`; política em `complexity.toml` | iniciar providers; ler o prompt |
+| `capability_graph` | monta o grafo provider/capability/action/artifact_type/technology/repository/domain a partir de manifestos (`relations` declaradas) e do descriptor (observado); responde quem executa/verifica/consome/produz/complementa/conflita e a ordem produces→consumes | inventar relações não declaradas; conhecer domínios |
 | `context` | listar arquivos com segurança; sinais de relevância; ContextPack por referência e tiers; extensão por pedido; git somente leitura; cache de fingerprints; reverificação de drift | enviar conteúdo de arquivos ao provider (lê os bytes só para calcular sha256 e tamanho); importar `routing`, `policy`, `runs`, `forger` ou `cli` |
 | `workspace` | descritor multi-repo: repositórios, git somente leitura por repositório, tecnologias com evidência, relações de `workspace.toml` | iniciar providers; escrever em repositórios; inferir relações |
 | `planning` | decomposição determinística, ordem topológica, validação de plano, arquivo de plano, op `plan`, handoff, síntese, grafo, plano de instalação | executar nós; importar `policy`, `runs`, `forger` ou `cli` |

@@ -1,6 +1,14 @@
 """Versioned Forge contracts (v1)."""
 
 from theforge.contracts.base import ContractError, from_dict, to_dict
+from theforge.contracts.capability_graph import (
+    CAPABILITY_GRAPH_SCHEMA,
+    CapabilityGraph,
+    CapEdge,
+    CapEdgeKind,
+    CapNode,
+    CapNodeKind,
+)
 from theforge.contracts.complexity import (
     COMPLEXITY_SCHEMA,
     ComplexityAssessment,
@@ -33,6 +41,7 @@ from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.manifest import (
     Capability,
     CapabilityContext,
+    CapabilityRelations,
     ExecutionInfo,
     ForgeManifest,
     Signals,
@@ -90,8 +99,12 @@ from theforge.contracts.workspace import (
 )
 
 __all__ = [
-    "COMPLEXITY_SCHEMA", "OPERATION_CLASS_LIMITATION", "PROTOCOL_V1", "Artifact", "Candidate",
-    "Capability", "CapabilityContext", "ComplexityAssessment", "ComplexityDimension",
+    "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "OPERATION_CLASS_LIMITATION",
+    "PROTOCOL_V1", "Artifact", "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
+    "CapNodeKind",
+    "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
+    "ComplexityAssessment",
+    "ComplexityDimension",
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
     "ContextRequestItem", "ContractError", "Diagnostic", "DiagnosticCause", "DiagnosticFrame",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",

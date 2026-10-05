@@ -141,6 +141,7 @@ def _recorded(receipt: ExecutionReceipt) -> dict[str, str | None]:
         "plan": refs.plan_sha256 if refs else None,
         "workspace-descriptor": refs.workspace_descriptor_sha256 if refs else None,
         "graph": refs.graph_sha256 if refs else None,
+        "capability-graph": refs.capability_graph_sha256 if refs else None,
         "installation": refs.installation_sha256 if refs else None,
         "plan-result": refs.plan_result_sha256 if refs else None,
     }

@@ -54,6 +54,8 @@ class PlanRefs:
     workspace_descriptor_sha256: str | None = None
     graph_sha256: str | None = None
     installation_sha256: str | None = None
+    # On-disk hash of the CapabilityGraph built for the plan run (None in older runs).
+    capability_graph_sha256: str | None = None
     plan_result_sha256: str | None = None  # None when the plan was not executed
 
 

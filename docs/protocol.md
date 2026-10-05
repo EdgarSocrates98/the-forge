@@ -65,7 +65,7 @@ A tolerância depende de quem produziu o contrato:
 |---|---|---|
 | Provider | `Response`, `ForgeManifest`, `HealthReport`, `ExecutionResult`, `Evidence` | ignorado (forward-compat dentro do major) |
 | Provider | `PlanEstimate` (payload da op `plan`) | ignorado |
-| Core, ao reler o que gravou | artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-result`, `graph`, `verification`, `telemetry`, `diagnostic`, `complexity`, `receipt`), o cache do registry e o cache de fingerprints de contexto | rejeitado em qualquer profundidade (`$.<caminho>: unknown field`) |
+| Core, ao reler o que gravou | artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-result`, `graph`, `capability-graph`, `verification`, `telemetry`, `diagnostic`, `complexity`, `receipt`), o cache do registry e o cache de fingerprints de contexto | rejeitado em qualquer profundidade (`$.<caminho>: unknown field`) |
 
 - O core persiste só os campos que conhece, então um `result` vindo de provider com campos extras é relido sem eles.
 - Nos JSON Schemas de `schemas/`, `additionalProperties: false` aparece só nos contratos que nunca cruzam o protocolo: `RoutingDecision`, `ExecutionReceipt`, `RiskAssessment`, `RunTelemetry`, `ExecutionPlan`, `PlanResult`, `WorkspaceDescriptor`, `WorkspaceGraph`, `VerificationResult`, `InstallationPlan`, `ExplainReport` e `Diagnostic`. `TaskSpec`, `ContextPack` e `Handoff` vão ao provider dentro de `ExecuteRequest` (e `TaskSpec` dentro de `PlanRequest`) e continuam com schema aberto, assim como `PlanRequest` e `PlanEstimate`; a rigidez deles vem da releitura estrita.
@@ -259,12 +259,18 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
 
 ### Declarações no manifest
 ```json
-{"capabilities": [{"id": "…", "accepts_handoff": true}],
+{"capabilities": [{"id": "…", "accepts_handoff": true,
+                   "relations": {"produces": ["orders.facts"],
+                                 "consumes": ["upstream.context"],
+                                 "requires": ["other-forge/x.y"],
+                                 "complements": [], "conflicts": [],
+                                 "can_verify": [], "can_review": []}}],
  "execution": {"local": true, "offline": true, "requires_network": false,
                "deterministic": true},
  "ops": ["describe", "health", "execute", "plan"]}
 ```
 - `capabilities[].accepts_handoff` (padrão `false`): a capability lê o `handoff` do `ExecuteRequest`. Só muda a limitação acima; o handoff é enviado de qualquer forma.
+- `capabilities[].relations` (padrão vazio): relações declaradas que alimentam o grafo de capabilities. `produces`/`consumes` nomeiam tipos de artefato (`^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$`); `requires`, `complements`, `conflicts`, `can_verify`, `can_review` nomeiam capabilities — `cap.id` para a do próprio provider, `provider/cap.id` entre providers. É declaração, não verificação: um alvo ausente do registry mantém a aresta e é nomeado nas limitações do grafo.
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
 
@@ -330,6 +336,6 @@ Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execu
 | `theforge/ExplainReport/v1` | `theforge explain --json` ([cli.md](cli.md#explain)) | não |
 | `theforge/Diagnostic/v1` | artefato `diagnostic` e linhas `theforge: debug:` com `--debug` | não |
 
-Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.accepts_handoff`, `Evidence.derived_from`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.handoff_sha256` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.{accepts_handoff, relations}`, `Evidence.derived_from`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256}`, `PlanRefs.capability_graph_sha256` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
 
 Nomes reservados (sem implementação): `Budget`, `DecisionRecord` e `EnvironmentReport` (v0 não estável em `doctor`); as ops `verify` e `estimate`; os padrões `delegate`, `parallel` e `debate`.

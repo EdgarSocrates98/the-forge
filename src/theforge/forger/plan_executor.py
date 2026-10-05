@@ -26,6 +26,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Final
 
+from theforge.capability_graph import build_capability_graph
 from theforge.complexity import ComplexityConfig, assess, load_complexity_config, task_inputs
 from theforge.context import scan_workspace
 from theforge.context.scan import WorkspaceScan
@@ -138,6 +139,7 @@ class _PlanTrace:
     records: dict[str, RegistryRecord] = field(default_factory=dict)
     descriptor: WorkspaceDescriptor | None = None
     descriptor_sha: str | None = None
+    capability_graph_sha: str | None = None  # CapabilityGraph of the registry+workspace
     routing_sha: str | None = None
     plan: ExecutionPlan | None = None
     plan_sha: str | None = None
@@ -238,6 +240,14 @@ class PlanExecutor:
                                             scan)
         trace.descriptor = descriptor
         trace.descriptor_sha = store.write(trace.run_id, "workspace-descriptor", descriptor)
+        # The capability graph of this registry+workspace is plan evidence: persisted
+        # before planning so explain/replay can audit what the planner could see.
+        capability_graph = build_capability_graph(
+            trace.records, descriptor, run_id=trace.run_id)
+        trace.capability_graph_sha = store.write(
+            trace.run_id, "capability-graph", capability_graph)
+        trace.limitations.extend(f"capability-graph: {item}"
+                                 for item in capability_graph.limitations)
         trace.stage = "plan:routing"
         with trace.telemetry.phase("routing"):
             planned = self._plan(trace, scan, descriptor, profile)
@@ -470,6 +480,7 @@ class PlanExecutor:
             plan=PlanRefs(plan_sha256=trace.plan_sha,
                           workspace_descriptor_sha256=trace.descriptor_sha,
                           graph_sha256=graph_sha, installation_sha256=trace.installation_sha,
+                          capability_graph_sha256=trace.capability_graph_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)
         trace.terminal = "finalized"
