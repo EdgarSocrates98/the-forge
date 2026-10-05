@@ -195,6 +195,31 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
                           if f["source"].get("extractor") == "theforge/handoff"]
         assert bool(upstream_facts) is expected
 
+    # The execute recorder produces the same fixture the live run produced: n2's own
+    # persisted handoff drives --upstream, and the recorded case matches the scenario's
+    # shapes (top-level keys and native id formats).
+    handoff_path = store.run_dir(n2.run_id) / "handoff.json"
+    out_dir = tmp_path / "recorded"
+    rp.run_native([str(api.python), "-m", "theforge_apiforge.record_execute",
+                   "--workspace", str(cross.root), "--capability", "api.analyze",
+                   "--action", "analyze", "--arg", "contract=orders-api/openapi.yaml",
+                   "--arg", "project=orders-api", "--handoff", str(handoff_path),
+                   "--out", str(out_dir)], tmp_path)
+    rerecorded = json.loads((out_dir / API_RECORDING.name).read_text(encoding="utf-8"))
+    assert rerecorded["provenance"] == "recorded"
+    assert rerecorded["argv"][-2:] == ["--upstream", "upstream-facts.json"]
+    assert sorted(rerecorded["case_files"]) == sorted(recorded)
+    drift = {name: (rp.top_keys(recorded[name]), rp.top_keys(rerecorded["case_files"][name]))
+             for name in recorded
+             if rp.top_keys(recorded[name]) != rp.top_keys(rerecorded["case_files"][name])}
+    assert drift == {}, f"re-recorded {API_RECORDING.name}: top-level keys drifted {drift}"
+    id_drift = {name: (sorted(rp.id_shapes(recorded[name])),
+                       sorted(rp.id_shapes(rerecorded["case_files"][name])))
+                for name in recorded
+                if rp.id_shapes(recorded[name])
+                != rp.id_shapes(rerecorded["case_files"][name])}
+    assert id_drift == {}, f"re-recorded {API_RECORDING.name}: id formats drifted {id_drift}"
+
 
 def _adapter_execute(forge: rp.RealForge, payload: dict[str, Any], cwd: Path
                      ) -> dict[str, Any]:

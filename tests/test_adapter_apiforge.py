@@ -1582,3 +1582,123 @@ def test_replay_execute_without_handoff_drops_recorded_upstream(tmp_path: Path) 
     facts = json.loads((cwd / "case" / "facts.json").read_text(encoding="utf-8"))
     assert not [f for f in facts["facts"]
                 if f["source"].get("extractor") == "theforge/handoff"]
+
+
+# --- execute recorder (Cycle 2.1 Wave G) --------------------------------------
+
+from theforge_apiforge import record_execute  # noqa: E402
+from theforge_apiforge._shell import NativeOutcome  # noqa: E402
+
+ANALYZE_ARGS = {"contract": "orders-api/openapi.yaml", "project": "orders-api"}
+
+
+def _fake_native(case_files: dict[str, Any], *, rc: int = 0,
+                 stderr: bytes = b""):
+    """A ``run`` stand-in: writes ``case_files`` under the verb's output dir, or fails."""
+    def run(argv: list[str], *, cwd: Path, env: dict[str, str],
+            timeout: float) -> NativeOutcome:
+        if rc != 0:
+            return NativeOutcome(returncode=rc, stdout=b"", stderr=stderr)
+        out = cwd / "case"
+        out.mkdir(parents=True, exist_ok=True)
+        for name, document in case_files.items():
+            path = out / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if name.endswith(".json"):
+                path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n",
+                                encoding="utf-8")
+            else:
+                path.write_text(str(document), encoding="utf-8")
+        return NativeOutcome(returncode=0, stdout=b'{"status": "ok"}', stderr=b"")
+    return run
+
+
+def _recorded(case_files: dict[str, Any], **kwargs: Any) -> tuple[str, dict[str, Any]]:
+    return record_execute.record_action(
+        workspace=WORKSPACE, capability="api.analyze", action="analyze",
+        arguments=ANALYZE_ARGS, run=_fake_native(case_files), **kwargs)
+
+
+def test_record_execute_produces_a_replayable_recording(tmp_path: Path) -> None:
+    """live -> record -> replay -> semantic equivalence (the recording's case replays
+    into the same evidence/findings as the live output it captured)."""
+    case_files = _analyze_recording()["case_files"]
+    name, data = _recorded(case_files)
+    assert name == "api.analyze.analyze.json"
+    assert data["exit_code"] == 0 and data["provenance"] == "recorded"
+    assert data["case_dir"] == "case" and data["native_cwd"] == "."
+    assert data["argv"] == ["analyze", "--contract", "stage/orders-api/openapi.yaml",
+                            "--project", "stage", "--out-dir", "case",
+                            "--detail-level", "summary"]
+    assert data["case_files"].keys() == case_files.keys()
+    scenario = tmp_path / "scenario"
+    scenario.mkdir()
+    (scenario / "environment.json").write_bytes(
+        (DEFAULT / "environment.json").read_bytes())
+    (scenario / "health.json").write_bytes((DEFAULT / "health.json").read_bytes())
+    (scenario / name).write_text(json.dumps(data), encoding="utf-8")
+    cwd_a, cwd_b = tmp_path / "a", tmp_path / "b"
+    live_like, data_a = _execute(cwd_a, _execute_payload("api.analyze"), scenario)
+    replayed, data_b = _execute(cwd_b, _execute_payload("api.analyze"), DEFAULT)
+    assert live_like.status == replayed.status == "ok"
+    result_a = from_dict(ExecutionResult, data_a["payload"], "$.payload")
+    result_b = from_dict(ExecutionResult, data_b["payload"], "$.payload")
+    assert result_a.evidence == result_b.evidence
+    assert result_a.findings == result_b.findings
+    assert {a.path for a in result_a.artifacts} == {a.path for a in result_b.artifacts}
+
+
+def test_record_execute_never_modifies_the_workspace(tmp_path: Path) -> None:
+    before = {p.relative_to(WORKSPACE).as_posix(): hashlib.sha256(p.read_bytes()).digest()
+              for p in sorted(WORKSPACE.rglob("*")) if p.is_file()}
+    _recorded(_analyze_recording()["case_files"])
+    after = {p.relative_to(WORKSPACE).as_posix(): hashlib.sha256(p.read_bytes()).digest()
+             for p in sorted(WORKSPACE.rglob("*")) if p.is_file()}
+    assert after == before
+
+
+def test_record_execute_refuses_a_recording_with_machine_paths(tmp_path: Path) -> None:
+    with pytest.raises(record_execute.RecordingError, match="machine path"):
+        _recorded({"facts.json": {"facts": []},
+                           "note.txt": f"workspace at {WORKSPACE}"})
+
+
+def test_record_execute_records_native_failures_as_error_files(tmp_path: Path) -> None:
+    name, data = record_execute.record_action(
+        workspace=WORKSPACE, capability="api.analyze", action="analyze",
+        arguments=ANALYZE_ARGS, run=_fake_native({}, rc=34, stderr=b"AF-X: broken"))
+    assert name == "api.analyze.analyze.error.json"
+    assert data == {"exit_code": 34, "stderr": "AF-X: broken"}
+
+
+def test_record_execute_feeds_the_handoff_through_the_intake(tmp_path: Path) -> None:
+    handoff_file = tmp_path / "handoff.json"
+    handoff_file.write_text(json.dumps(_handoff_payload()), encoding="utf-8")
+    name, data = _recorded(_analyze_recording()["case_files"],
+                         handoff=handoff_file)
+    assert name == "api.analyze.analyze.json"
+    assert data["argv"][-2:] == ["--upstream", "upstream-facts.json"]
+
+
+def test_record_execute_rejects_an_intake_less_capability(tmp_path: Path) -> None:
+    handoff_file = tmp_path / "handoff.json"
+    handoff_file.write_text(json.dumps(_handoff_payload()), encoding="utf-8")
+    with pytest.raises(record_execute.RecordingError, match="no upstream intake"):
+        record_execute.record_action(
+            workspace=WORKSPACE, capability="api.change-control", action="run",
+            arguments={"bundle": "change-bundle.json"}, handoff=handoff_file,
+            run=_fake_native({}))
+
+
+@pytest.mark.parametrize("kwargs, match", [
+    ({"arguments": {"bogus": "x"}}, "unknown input"),
+    ({"arguments": {"contract": "orders-api/openapi.yaml"}}, "missing input"),
+    ({"arguments": {**ANALYZE_ARGS, "project": "../outside"}}, "workspace-relative"),
+    ({"capability": "api.bogus"}, "not in the verb table"),
+])
+def test_record_execute_validates_its_inputs(tmp_path: Path, kwargs: dict[str, Any],
+                                             match: str) -> None:
+    base = {"workspace": WORKSPACE, "capability": "api.analyze", "action": "analyze",
+            "arguments": ANALYZE_ARGS, "run": _fake_native({})}
+    with pytest.raises(record_execute.RecordingError, match=match):
+        record_execute.record_action(**{**base, **kwargs})

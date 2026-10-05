@@ -160,7 +160,18 @@ Spark: grave uma ação a partir de um workspace. O workspace nunca é tocado: e
   --out tests/fixtures/native/sparkforge/default
 ```
 
-API: ainda não há gravador de execute. As gravações em `tests/fixtures/native/apiforge/` (`{argv, case_dir, case_files, ...}`) foram montadas a partir do formato de caso do API Forge 0.1.0, conferido contra um run real, e levam `"provenance": "hand-built"` até serem regravadas a partir do Forge real. Para atualizar uma, rode o verbo nativo no workspace de exemplo, com `--out-dir` sob o cwd e sem sobrepor `--project`, e transcreva os arquivos do caso no mesmo layout. Arquivos `.json` são reserializados (chaves ordenadas, indentação 2, LF final) para que os hashes do caso continuem valendo.
+API: `theforge_apiforge.record_execute` grava uma ação a partir de um workspace, como o gravador do Spark. O workspace nunca é tocado: é copiado sem links para `stage/` num diretório temporário, cada `--arg` é `<input>=<caminho relativo ao workspace>` (para `api.analyze`, `contract` e `project`), e o verbo roda pela CLI pública com o mesmo argv que o adapter constrói. `--handoff <arquivo>` alimenta a entrada `--upstream` com um documento `theforge/Handoff/v1`, como o adapter faz ao vivo. A gravação sai como `{argv, case_dir, case_files, exit_code, native_cwd, stdout, provenance: "recorded", assembled_from}` em `<capability>.<action>.json` — ou `{exit_code, stderr}` em `<capability>.<action>.error.json` quando o verbo falha — e é recusada quando carregaria um caminho da máquina:
+
+```bash
+<api-python> -m theforge_apiforge.record_execute \
+  --workspace tests/fixtures/workspaces/cross \
+  --capability api.analyze --action analyze \
+  --arg contract=orders-api/openapi.yaml --arg project=orders-api \
+  [--handoff <handoff.json>] \
+  --out tests/fixtures/native/apiforge/scenarios/cross
+```
+
+As gravações atuais de `tests/fixtures/native/apiforge/` ainda levam `"provenance": "hand-built"` (montadas a partir de runs reais, conferidas pelo teste cross) até a primeira regravação pelo gravador. Arquivos `.json` são reserializados (chaves ordenadas, indentação 2, LF final) para que os hashes do caso continuem valendo.
 
 ## Troubleshooting
 

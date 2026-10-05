@@ -258,7 +258,7 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
 
 ## Wave F — True Semantic Handoff (consumo real, não só transporte)
 
-**Status:** implementado e provado live; commit pendente.
+**Status:** concluída — `64b253e` (the-forge) + `a9ae606` (api-forge `feat/upstream-facts`).
 
 - **Gap encontrado:** o core já persistia e entregava o `Handoff` em todo
   `ExecuteRequest`, mas o adapter do API Forge ignorava o campo — `accepts_handoff`
@@ -317,3 +317,39 @@ economy avançada, `.forge/` project intelligence, tracing, provider SDK.
   `git: not a repository` e `git:changed` em sinais); fragilidade do harness,
   classificar na Wave H. O intake do especialista vive na branch
   `feat/upstream-facts` do irmão até merge — worktree `.sibling-f/api-forge`.
+
+## Wave G — API Forge execute recorder
+
+**Status:** implementado; commit pendente.
+
+- **Gap encontrado:** as gravações de execute do API Forge eram montadas à mão
+  (`"provenance": "hand-built"`) — frágeis a drift do formato de caso e sem
+  provenance mecânica.
+- **Implementado:** `theforge_apiforge.record_execute`
+  (`adapters/apiforge/src/theforge_apiforge/record_execute.py`), equivalente
+  conceitual ao do Spark: copia o workspace sem links para `stage/` num
+  temporário (o original nunca é escrito), valida `--arg NAME=PATH` contra os
+  inputs do verbo, monta o argv por `invocation()` — o mesmo do execute real —,
+  roda a CLI pública com `APIFORGE_CACHE=off`, normaliza `--out-dir` absoluto a
+  `<cwd>/...`, captura o `case_files` completo, recusa gravação com caminho de
+  máquina e serializa canonicamente. `--handoff FILE` alimenta o intake
+  `--upstream` pelo mesmo `translate_handoff` do adapter. Falha nativa grava
+  `{exit_code, stderr}` em `<cap>.<act>.error.json`. Roda no interpretador do
+  especialista (`live_environment_problem` primeiro).
+- **Testes adicionados (offline):** round-trip live→record→replay com equivalência
+  semântica (evidence/findings/artifacts iguais ao replay da gravação de origem),
+  workspace intacto (hash antes/depois), recusa de caminho de máquina, error
+  recording, intake `--upstream`, recusa de capability sem intake, validação de
+  inputs (unknown/missing/fora-do-workspace/ação inexistente).
+- **Teste live:** `test_cross_forge_real.py` regrava `api.analyze` no workspace
+  cross montado com o `handoff.json` persistido do n2 e compara top-level keys e
+  formatos de id com a gravação do cenário — a mesma disciplina de drift já usada
+  para o lado Spark.
+- **Resultados:** o ciclo live→record→replay do API Forge é fechado por máquina,
+  não por transcrição manual; `provenance: "recorded"` substitui `"hand-built"`
+  nas gravações futuras.
+- **Limitações:** o gravador roda no interpretador do especialista (Python 3.12 +
+  apiforge); gravações existentes seguem `hand-built` até a primeira regravação
+  (o teste live já prova a equivalência de shape); `--handoff` só vale para
+  capabilities com intake.
+- **Dívida criada:** nenhuma nova — remove a dívida "API recording hand-built".
