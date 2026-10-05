@@ -1,7 +1,9 @@
 # Declarative configuration of the agentic asset audit (scripts/agentic/audit_assets.py).
 #
 # Every key is validated: unknown keys, wrong types and empty reasons are configuration errors.
-# Optional sections: [reference], [[install_placeholders]], [[host_only]], [[accepted]],
+# Per host: skills_dir and instructions (required), host_metadata and asset_dirs (optional; every
+# tracked file under asset_dirs must belong to an equivalent kiro-* skill or be declared in
+# [[host_only]]). Optional sections: [reference], [[install_placeholders]], [[host_only]], [[accepted]],
 # [invariants], [budgets], [pointers] and [[moved_rules]]; an instruction check runs only when
 # its section is declared. Every [[host_only]] and [[accepted]] entry needs a non-empty reason.
 
@@ -13,6 +15,8 @@ instructions = ["CLAUDE.md"]
 [hosts.codex]
 skills_dir = ".agents/skills"
 instructions = ["AGENTS.md"]
+# Codex reads skills from .agents/ and custom agents from .codex/ (default: top of skills_dir).
+asset_dirs = [".agents", ".codex"]
 
 [hosts.devin]
 skills_dir = ".devin/skills"
