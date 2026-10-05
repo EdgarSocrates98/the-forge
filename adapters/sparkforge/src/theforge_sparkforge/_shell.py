@@ -986,12 +986,34 @@ def parse_options(args: Sequence[str]) -> AdapterOptions:
                           assume_specialist_version=values.get(OPTION_ASSUME_VERSION))
 
 
+MAX_REQUEST_DEPTH = 256
+
+
+def _nesting_exceeds(value: object, limit: int) -> bool:
+    """Iterative depth check, so a deeply nested request never relies on RecursionError."""
+    stack: list[tuple[object, int]] = [(value, 1)]
+    while stack:
+        item, depth = stack.pop()
+        if isinstance(item, dict):
+            children: list[object] = list(item.values())
+        elif isinstance(item, list):
+            children = item
+        else:
+            continue
+        if depth > limit:
+            return True
+        stack.extend((child, depth + 1) for child in children)
+    return False
+
+
 def parse_request(raw: bytes, op: str) -> Request:
     """Decode and validate the request envelope read from stdin."""
     try:
         data = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, ValueError, RecursionError):  # RecursionError: deep nesting
         raise _Invalid("request is not a UTF-8 JSON document", "request") from None
+    if _nesting_exceeds(data, MAX_REQUEST_DEPTH):  # Python >= 3.14 parses deep nesting fine
+        raise _Invalid(f"request nests deeper than {MAX_REQUEST_DEPTH} levels", "request")
     if not isinstance(data, dict):
         raise _Invalid("request must be a JSON object", "request")
     request_id = data.get("request_id")
