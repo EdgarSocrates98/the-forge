@@ -15,6 +15,8 @@ instructions = ["CLAUDE.md"]
 [hosts.codex]
 skills_dir = ".agents/skills"
 instructions = ["AGENTS.md"]
+# Per-skill Codex UI metadata written by the Kiro installer; host syntax, not a support file.
+host_metadata = ["agents/openai.yaml"]
 # Codex reads skills from .agents/ and custom agents from .codex/ (default: top of skills_dir).
 asset_dirs = [".agents", ".codex"]
 
@@ -25,3 +27,36 @@ instructions = ["AGENTS.md"]
 # Versioned reference copies of the skill rules (installed by the Kiro installer).
 [reference]
 rules_dir = ".kiro/settings/rules"
+
+# The installer writes the configured spec language into the installed rule copies
+# (`pt` here, `en` in .kiro/settings); both sides are normalized to the same token.
+[[install_placeholders]]
+pattern = '`spec\.json\.language` / `[a-z]{2}`'
+replacement = '`spec.json.language` / <lang>'
+
+[[host_only]]
+path = ".codex/agents/spec-reviewer.toml"
+host = "codex"
+reason = "agente customizado do Codex para a revisão cross-spec do kiro-spec-batch; Claude e Devin fazem essa revisão com um subagente genérico, sem arquivo de agente"
+
+# Phrasing divergences: the profile differs, the agent behaviour does not.
+[[accepted]]
+skill = "kiro-spec-quick"
+element = "paths"
+hosts = ["codex", "devin"]
+value = ".kiro/specs/{feature}/design.md"
+reason = "só o texto do resumo final exibido ao usuário; o Claude escreve specs/{feature}/design.md no mesmo resumo e todas as versões geram o arquivo no mesmo lugar"
+
+[[accepted]]
+skill = "kiro-spec-quick"
+element = "paths"
+hosts = ["codex", "devin"]
+value = ".kiro/specs/{feature}/tasks.md"
+reason = "só o texto do resumo final exibido ao usuário; o Claude escreve specs/{feature}/tasks.md no mesmo resumo e todas as versões geram o arquivo no mesmo lugar"
+
+[[accepted]]
+skill = "kiro-steering"
+element = "paths"
+hosts = ["codex", "devin"]
+value = ".kiro/specs"
+reason = "nota de estilo em Notes (referências leves a .kiro/specs/ e .kiro/steering/ são aceitáveis) que a versão do Claude não traz; não muda o que a skill lê nem escreve"
