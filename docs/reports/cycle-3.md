@@ -148,3 +148,69 @@ prova verifica as arestas cross-provider no artefato persistido. Fuzz seed
 grafo lá) faltam os nós de workspace — limitação explícita no artefato.
 `relevant_to` só liga a capabilities presentes no registry. Arestas declaradas são
 intenção, não verificação — a Wave G (verificação independente) é quem prova.
+
+## Wave C — Hybrid Planner (tiers 0/1/2 + SemanticPlanProposal)
+
+**Objetivo.** O planner é o coração do Cycle 3 — e não começa pelo LLM: tiers
+crescentes, cada uma chamada só quando a anterior não decide, e o validador
+determinístico soberano sobre qualquer proposta (C1-C5).
+
+**Tiers.**
+
+- **Tier 0 (determinístico).** O `decompose` de sempre: `--capability`, um provider
+  qualificado, limite do profile ou routing já decidido viram um nó `route`;
+  `ambiguous`/`no_route` do routing propagam. Nenhuma chamada semântica.
+- **Tier 1 (composição por regras).** Com o `CapabilityGraph` do run (Wave B),
+  `decompose` ordena o pipeline por relações **declaradas**: `requires` (o
+  requerido antes) e cadeias produces→consumes sobre tipos de artefato — aresta
+  `inferred` com regra `capability-graph` e a evidência da relação. O proxy
+  `intent-order` só desempata o que o grafo não ordena; `conflicts` declarados e
+  ciclos de relações viram `ambiguous` (gatilhos do tier-2), nunca uma escolha.
+  Resultado novo: candidatos sem keyword casada agora decompõem quando a relação
+  os ordena (antes: ambíguo); "a API antes do Spark" na intenção não inverte um
+  fluxo de dados declarado.
+- **Tier 2 (semântico).** Só com `ambiguous` e profile não-`economy`: o primeiro
+  provider `ready` (ordem de id) com capability `proposes_plans` responde o op
+  `plan` com `PlanRequest{purpose="proposal", options, ambiguity}` — `options` é
+  só o conjunto elegível do routing, com actions e relations declaradas; o
+  planner não pode inventar escolhas (C5) e o validador re-confere mesmo assim.
+  `SemanticPlanProposal/v1` (schema aberto, cruza o protocolo) traz `nodes`,
+  `dependencies` com razão por aresta, `rationale`, `evidence`, `assumptions`,
+  `unknowns`, `confidence`, `alternatives`, `limitations` (C3).
+
+**Validator soberano (C4).** `planning/propose.py::proposal_plan` materializa
+`ExecutionPlan(source="semantic")` — dependências `explicit` com a razão
+declarada como evidência, refs inválidos/duplicados/dangling viram violações
+`FORGE-PLAN-INVALID` — e `check_plan` reaplica registry, trust, actions e
+`max_providers`. Plano rejeitado termina `refused` com o primeiro `FORGE-PLAN-*`;
+sem planner ou proposta falha, o desfecho determinístico `ambiguous` fica com a
+limitação exata (provider ausente, refusal, schema, producer). Sob `economy` o
+planner nunca é chamado (limitação registrada).
+
+**Persistência e telemetria.** Artefato `semantic-proposal` no run de plano,
+linkado por `PlanRefs.semantic_proposal_sha256` e coberto pelo hashcheck;
+`RunTelemetry.semantic_planner_calls` (counter aditivo) conta as chamadas; o
+`routing` gravado marca `semantic plan proposed by <planner>` com a confiança e
+as incógnitas da proposta. `ExecutionPlan.source` ganhou o valor `semantic`
+(aditivo) e `Capability.proposes_plans` declara o suporte.
+
+**Testes.** `tests/test_hybrid_planner.py` (24): tier-1 (grafo vence a posição da
+keyword, `requires`, `conflicts`→ambíguo, ciclo→ambíguo, keywordless ordenado por
+relação), seleção do planner (primeiro `ready` por id, `blocked`/`unverified`
+gateados), transporte (payload `purpose="proposal"`, refusal/schema/producer
+viram limitações), materialização (provider/capability/ação inventados
+rejeitados, dup refs, dangling, limite de providers, alias, roles inferidos,
+assumptions/unknowns/confidence propagados) e e2e — `fixture-planner` novo
+(`proposes_plans`, `fixture_forge.py` aprendeu `purpose="proposal"`) resolve um
+plan `max` ambíguo: `planned`, `source=semantic`, proposta persistida e hash-bound,
+routing marcado. Fuzz seed `SemanticPlanProposal` adicionado.
+
+**Resultado.** Foco verde; ruff+mypy limpos; schemas regenerados
+(`SemanticPlanProposal`, `ForgeManifest`, `ExecutionReceipt`, `ExecutionPlan`,
+`PlanRequest`, `RunTelemetry`).
+
+**Limitações.** O tier-2 é uma chamada de provider com a superfície de `plan` —
+o planner real (LLM) vive do lado do especialista; o core nunca gera proposta
+própria. `alternatives` fica só no artefato (não polui `plan.limitations`). O
+grafo do run de `ask` ainda não é construído (sem consumidor lá — registrado na
+Wave B como dívida consciente).

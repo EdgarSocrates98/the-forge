@@ -11,11 +11,15 @@ descriptor). Only ``decision.candidates`` are read; nothing here knows any provi
   decision's ``ambiguous``/``no_route``; with two or more qualified providers and a profile
   limited to one, the plan records ``multi-provider decomposition not allowed by profile``.
 - Otherwise (``ambiguous`` on each failure): a tie between best capabilities of one provider,
-  more qualified providers than ``profile.max_providers``, a provider without a matched keyword
-  or two providers at the same position. Nodes are ordered by the ``intent-order`` rule: the
-  smallest index, in ``normalize_tokens(intent)``, of the first token of a matched keyword; a
-  linear pipeline where node *i* depends on (and takes the artifacts of) node *i-1*, the
-  dependency ``inferred`` with the rule and its keyword evidence.
+  more qualified providers than ``profile.max_providers``, declared ``conflicts`` between
+  qualified capabilities, a provider without a matched keyword nor a declared relation,
+  two providers at the same position without a declared order, or a cycle in the declared
+  relations. Nodes are ordered first by the ``capability-graph`` rule — declared
+  ``requires`` and produces→consumes relations among the qualified capabilities — and the
+  ``intent-order`` rule breaks the remaining ties: the smallest index, in
+  ``normalize_tokens(intent)``, of the first token of a matched keyword; a linear pipeline
+  where node *i* depends on (and takes the artifacts of) node *i-1*, the dependency
+  ``inferred`` with its rule and evidence.
 
 The rule is a proxy of the data flow (ADR 0018): ``plan --from FILE`` fixes the order
 explicitly. Output depends only on content, never on the order of records, candidates or files.
@@ -27,6 +31,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal
 
 from theforge.contracts.canonical import utc_now
+from theforge.contracts.capability_graph import CapabilityGraph
 from theforge.contracts.manifest import Capability
 from theforge.contracts.plan import ExecutionPlan, NodeRole, PlanDependency, PlanNode
 from theforge.contracts.routing import Candidate, Confidence, RoutingDecision, Selection
@@ -53,6 +58,9 @@ __all__ = [
 ]
 
 INTENT_ORDER_RULE: Final = "intent-order"
+# Ordering from declared capability-graph relations (requires / produces→consumes);
+# stronger evidence than the intent-order keyword proxy (wave C, tier 1).
+GRAPH_ORDER_RULE: Final = "capability-graph"
 
 DecompositionStatus = Literal["planned", "ambiguous", "no_route"]
 
@@ -84,9 +92,16 @@ def decomposition_dependencies(root: Path, descriptor: WorkspaceDescriptor) -> s
 
 def decompose(
     task: TaskSpec, decision: RoutingDecision, records: Mapping[str, RegistryRecord],
-    descriptor: WorkspaceDescriptor, scan: "WorkspaceScan", profile: ContextProfile,
+    descriptor: WorkspaceDescriptor, scan: "WorkspaceScan", profile: ContextProfile, *,
+    graph: CapabilityGraph | None = None,
 ) -> Decomposition:
-    """Turn ``decision`` (``route()`` over ``task``) into plan nodes (2.1-2.7)."""
+    """Turn ``decision`` (``route()`` over ``task``) into plan nodes (2.1-2.7).
+
+    ``graph`` is the plan run's ``CapabilityGraph``: declared ``requires`` and
+    produces→consumes relations order the pipeline ahead of the intent-order
+    keyword proxy (declared evidence beats heuristic); declared ``conflicts``
+    between qualified capabilities are an ambiguity, not a pick.
+    """
     decision = replace(decision, candidates=sorted(decision.candidates, key=_candidate_key))
     files = sorted(set(scan.files))
     best = _best_by_provider(decision.candidates)
@@ -100,11 +115,16 @@ def decompose(
         return _single(task, decision, records, descriptor, files, limitations)
 
     issue = _qualification_issue(qualified, profile)
+    constraints, conflicts = _graph_constraints(
+        [tops[0] for tops in qualified], graph)
+    if issue is None and conflicts:
+        issue = f"declared capability conflicts: {'; '.join(conflicts)}"
     if issue is None:
-        ordered, issue = _order(task, [tops[0] for tops in qualified])
+        ordered, issue = _order(task, [tops[0] for tops in qualified], constraints)
     if issue is not None:
         return _ambiguous(decision, issue)
-    nodes = _pipeline(task, ordered, records, descriptor, files)
+    nodes = _pipeline(task, ordered, records, descriptor, files,
+                      constraints, _reachability(constraints))
     return Decomposition(status="planned", decision=_pipeline_decision(decision, nodes, records),
                          nodes=nodes, pattern="pipeline", limitations=())
 
@@ -156,23 +176,141 @@ def _qualification_issue(qualified: list[list[Candidate]], profile: ContextProfi
     return None
 
 
-def _order(task: TaskSpec, best: list[Candidate]) -> tuple[list[_Ordered], str | None]:
-    """``intent-order``: by the position of the first token of the first matched keyword."""
+_CapKey = tuple[str, str]  # (provider, capability)
+
+
+def _cap_ref(node_id: str) -> _CapKey | None:
+    """``capability:<provider>/<capability>`` -> ``(provider, capability)``."""
+    kind, _, key = node_id.partition(":")
+    if kind != "capability" or "/" not in key:
+        return None
+    provider, _, capability = key.partition("/")
+    return (provider, capability)
+
+
+def _graph_constraints(
+    best: list[Candidate], graph: CapabilityGraph | None,
+) -> tuple[dict[tuple[_CapKey, _CapKey], str], list[str]]:
+    """Ordering evidence among the qualified capabilities: ``requires`` (the
+    required capability first) and produces→consumes chains over declared
+    artifact types; plus declared ``conflicts`` pairs (returned separately)."""
+    if graph is None:
+        return {}, []
+    caps = {(c.provider, c.capability) for c in best}
+    produces: dict[str, list[_CapKey]] = {}
+    consumes: dict[str, list[_CapKey]] = {}
+    order: dict[tuple[_CapKey, _CapKey], str] = {}
+    conflicts: list[str] = []
+    for edge in graph.edges:
+        if edge.kind == "produces" or edge.kind == "consumes":
+            src, _, artifact = edge.target.partition(":")
+            cap = _cap_ref(edge.source)
+            if src != "artifact_type" or cap is None or cap not in caps:
+                continue
+            (produces if edge.kind == "produces" else consumes).setdefault(
+                artifact, []).append(cap)
+        elif edge.kind in ("requires", "conflicts"):
+            src_cap, dst_cap = _cap_ref(edge.source), _cap_ref(edge.target)
+            if src_cap not in caps or dst_cap not in caps or src_cap == dst_cap:
+                continue
+            if edge.kind == "conflicts":
+                conflicts.append(
+                    f"{src_cap[0]}/{src_cap[1]} conflicts with "
+                    f"{dst_cap[0]}/{dst_cap[1]} ({edge.evidence})")
+            else:
+                order.setdefault((dst_cap, src_cap), edge.evidence)
+    for artifact, makers in produces.items():
+        for maker in makers:
+            for user in consumes.get(artifact, []):
+                if maker != user:
+                    order.setdefault((maker, user),
+                                     f"{maker[0]}/{maker[1]} produces {artifact} consumed "
+                                     f"by {user[0]}/{user[1]}")
+    return order, conflicts
+
+
+def _reachability(constraints: dict[tuple[_CapKey, _CapKey], str]) -> set[tuple[_CapKey, _CapKey]]:
+    """Transitive closure of the declared ordering pairs."""
+    reach = set(constraints)
+    changed = True
+    while changed:
+        changed = False
+        for a, b in list(reach):
+            for c, d in list(reach):
+                if b == c and (a, d) not in reach:
+                    reach.add((a, d))
+                    changed = True
+    return reach
+
+
+def _order(
+    task: TaskSpec, best: list[Candidate],
+    constraints: dict[tuple[_CapKey, _CapKey], str],
+) -> tuple[list[_Ordered], str | None]:
+    """Topological order over ``constraints`` (graph rule); unconstrained ties fall
+    back to ``intent-order``. A consecutive pair with no declared relation needs
+    both keywords at distinct intent positions, else the decomposition is
+    ambiguous (a tier-2 trigger)."""
     tokens = normalize_tokens(task.intent)
-    ordered: list[_Ordered] = []
+    positions: dict[_CapKey, tuple[int, str] | None] = {}
     for candidate in best:
-        located = sorted((tokens.index(k.split(" ")[0]), k) for k in candidate.matched.keywords
+        located = sorted((tokens.index(k.split(" ")[0]), k)
+                         for k in candidate.matched.keywords
                          if k.split(" ")[0] in tokens)
-        if not located:
+        positions[(candidate.provider, candidate.capability)] = (
+            located[0] if located else None)
+    constrained = {key for pair in constraints for key in pair}
+    for candidate in best:
+        key = (candidate.provider, candidate.capability)
+        if positions[key] is None and key not in constrained:
             return [], (f"cannot order {candidate.provider}: no keyword of "
                         f"{candidate.capability} matched the intent")
-        ordered.append(_Ordered(candidate, *located[0]))
-    ordered.sort(key=lambda o: (o.position, o.candidate.provider))
+    ordered, cycle = _topological(best, positions, constraints)
+    if cycle is not None:
+        return [], cycle
+    reach = _reachability(constraints)
     for first, second in zip(ordered, ordered[1:], strict=False):
+        a = (first.candidate.provider, first.candidate.capability)
+        b = (second.candidate.provider, second.candidate.capability)
+        if (a, b) in reach:
+            continue  # declared relations already fix a before b
+        if not first.keyword or not second.keyword:
+            return [], (f"cannot order {first.candidate.provider} and "
+                        f"{second.candidate.provider}: no declared relation and a "
+                        "matched keyword is missing")
         if first.position == second.position:
             return [], (f"cannot order {first.candidate.provider} and "
                         f"{second.candidate.provider}: keywords '{first.keyword}' and "
                         f"'{second.keyword}' start at the same position {first.position}")
+    return ordered, None
+
+
+def _topological(
+    best: list[Candidate], positions: dict[_CapKey, tuple[int, str] | None],
+    constraints: dict[tuple[_CapKey, _CapKey], str],
+) -> tuple[list[_Ordered], str | None]:
+    """Kahn over ``constraints``; the ready set ordered by (intent position, provider)."""
+    candidates = {(c.provider, c.capability): c for c in best}
+    incoming: dict[_CapKey, set[_CapKey]] = {key: set() for key in candidates}
+    for before, after in constraints:
+        incoming[after].add(before)
+
+    def _ready_key(k: _CapKey) -> tuple[int, str]:
+        located = positions[k]
+        return (located[0] if located is not None else 1 << 30, k[0])
+
+    ordered: list[_Ordered] = []
+    while incoming:
+        ready = sorted(k for k, deps in incoming.items() if not deps)
+        if not ready:
+            cycle = ", ".join(f"{p}/{c}" for p, c in sorted(incoming))
+            return [], f"conflicting dependency evidence: cycle involving {cycle}"
+        key = min(ready, key=_ready_key)
+        located = positions[key]
+        ordered.append(_Ordered(candidates[key], *(located or (0, ""))))
+        del incoming[key]
+        for deps in incoming.values():
+            deps.discard(key)
     return ordered, None
 
 
@@ -211,8 +349,12 @@ def _targets(task: TaskSpec, candidate: Candidate | None, descriptor: WorkspaceD
     return sorted(found, key=lambda p: () if p == "." else tuple(p.split("/")))
 
 
-def _pipeline(task: TaskSpec, ordered: list[_Ordered], records: Mapping[str, RegistryRecord],
-              descriptor: WorkspaceDescriptor, files: list[str]) -> tuple[PlanNode, ...]:
+def _pipeline(
+    task: TaskSpec, ordered: list[_Ordered], records: Mapping[str, RegistryRecord],
+    descriptor: WorkspaceDescriptor, files: list[str],
+    constraints: dict[tuple[_CapKey, _CapKey], str],
+    reach: set[tuple[_CapKey, _CapKey]],
+) -> tuple[PlanNode, ...]:
     nodes: list[PlanNode] = []
     for index, item in enumerate(ordered):
         candidate = item.candidate
@@ -223,10 +365,20 @@ def _pipeline(task: TaskSpec, ordered: list[_Ordered], records: Mapping[str, Reg
         if index:
             previous = ordered[index - 1]
             role = "consumer"
-            depends_on = [PlanDependency(
-                node=f"n{index}", epistemic="inferred", rule=INTENT_ORDER_RULE,
-                evidence=(f"keyword '{previous.keyword}'@{previous.position} < "
-                          f"keyword '{item.keyword}'@{item.position}"))]
+            before = (previous.candidate.provider, previous.candidate.capability)
+            after = (candidate.provider, candidate.capability)
+            if (before, after) in constraints:
+                rule, evidence = GRAPH_ORDER_RULE, constraints[(before, after)]
+            elif (before, after) in reach:
+                rule, evidence = (GRAPH_ORDER_RULE,
+                                  f"{before[0]}/{before[1]} precedes {after[0]}/{after[1]} "
+                                  "via declared relations")
+            else:
+                rule = INTENT_ORDER_RULE
+                evidence = (f"keyword '{previous.keyword}'@{previous.position} < "
+                            f"keyword '{item.keyword}'@{item.position}")
+            depends_on = [PlanDependency(node=f"n{index}", epistemic="inferred",
+                                         rule=rule, evidence=evidence)]
         nodes.append(PlanNode(
             id=f"n{index + 1}", role=role, provider=candidate.provider,
             capability=candidate.capability, action=action,

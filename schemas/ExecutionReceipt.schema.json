@@ -199,6 +199,16 @@
                 }
               ]
             },
+            "semantic_proposal_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "workspace_descriptor_sha256": {
               "anyOf": [
                 {

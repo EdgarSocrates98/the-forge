@@ -4,10 +4,11 @@ argv: fixture_forge.py [--unhealthy] MANIFEST_JSON OP
 
 ``--unhealthy`` makes the health op report ``unavailable`` (fallback scenarios).
 
-The manifest file may carry a test-only ``estimate`` key (never part of the described
-manifest): when the manifest declares the ``plan`` op, that op answers it as the
-``PlanEstimate`` payload. ``execute`` echoes the number of handoff items it received as one
-extra evidence (only when the request carries a handoff).
+The manifest file may carry test-only ``estimate`` and ``proposal`` keys (never part
+of the described manifest): when the manifest declares the ``plan`` op, that op
+answers ``estimate`` normally and ``proposal`` when the request carries
+``purpose="proposal"``. ``execute`` echoes the number of handoff items it received as
+one extra evidence (only when the request carries a handoff).
 """
 
 import json
@@ -22,6 +23,7 @@ def main() -> int:
         args = args[1:]
     manifest = json.loads(Path(args[0]).read_text(encoding="utf-8"))
     estimate = manifest.pop("estimate", {})  # test-only key, not part of the manifest
+    proposal = manifest.pop("proposal", None)  # test-only SemanticPlanProposal
     op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
@@ -64,6 +66,8 @@ def main() -> int:
             return reply("refused", error=err("FIXTURE-ACTION-UNSUPPORTED", str(action),
                                               "action"))
         if op == "plan":
+            if payload.get("purpose") == "proposal":
+                return reply("ok", proposal if proposal is not None else {})
             return reply("ok", estimate)
         files = [f["path"] for f in (payload.get("context") or {}).get("files") or []]
         evidence = [{"id": "e1", "epistemic": "observed", "subject": cap,

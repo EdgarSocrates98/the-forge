@@ -53,6 +53,9 @@
               "destructive"
             ]
           },
+          "proposes_plans": {
+            "type": "boolean"
+          },
           "relations": {
             "properties": {
               "can_review": {

@@ -84,6 +84,9 @@ class Capability:
     context: CapabilityContext = field(default_factory=CapabilityContext)
     # Whether the capability declares it consumes the handoff of an ExecuteRequest.
     accepts_handoff: bool = False
+    # Whether the capability answers ``plan`` requests of ``purpose="proposal"``
+    # with a SemanticPlanProposal (the tier-2 semantic planner, wave C).
+    proposes_plans: bool = False
     # Optional declared relationships feeding the capability graph (v1 additive).
     relations: CapabilityRelations = field(default_factory=CapabilityRelations)
 

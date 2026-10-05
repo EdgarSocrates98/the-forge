@@ -528,7 +528,8 @@ def test_negotiated_run_records_rounds_counters_and_tiers(
         assert getattr(telemetry, name).kind == "measured", name
     assert "requested" in telemetry.profile.effective_tiers
     assert telemetry.verification_performed is not None
-    assert telemetry.unknowns == []
+    # ask runs never reach the semantic planner: the counter is not applicable
+    assert telemetry.unknowns == ["semantic_planner_calls"]
 
 
 def test_drift_is_recorded_in_the_telemetry(tmp_path: Path, no_git: None) -> None:

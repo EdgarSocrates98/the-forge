@@ -41,6 +41,13 @@ SPARK_PLAN_ENTRY = dict(SPARK_ENTRY, argv=fixture_argv(
     "fixture_forge.py", str(PROVIDERS / "fixture-spark-plan.json")))
 API_PLAN_ENTRY = dict(API_ENTRY, argv=fixture_argv(
     "fixture_forge.py", str(PROVIDERS / "fixture-api-plan.json")))
+# A planner provider: capability ``planner.compose`` declares ``proposes_plans``
+# and its ``plan`` op answers the test-only ``proposal`` payload of its manifest.
+PLANNER_ENTRY = {
+    "id": "fixture-planner",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-planner.json")),
+    "trust": "local",
+}
 
 
 def write_providers(

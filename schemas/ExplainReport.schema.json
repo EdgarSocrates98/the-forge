@@ -581,7 +581,8 @@
                 "source": {
                   "enum": [
                     "decomposed",
-                    "file"
+                    "file",
+                    "semantic"
                   ]
                 },
                 "status": {

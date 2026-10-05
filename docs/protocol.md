@@ -222,10 +222,10 @@ Limites (`contracts/types.py`, valores iniciais):
 `theforge plan` divide uma tarefa em nós, cada um executado por um único provider, um de cada vez ([ADR 0018](adr/0018-multi-provider-execution.md), [architecture.md](architecture.md#fluxo-de-plan)). Para o provider, cada nó é um `execute` comum. Tudo nesta seção é aditivo e opcional dentro de `forge/v1`: um provider que não conhece nenhum destes campos continua válido, e um nó com ele termina `ok` normalmente.
 
 ### Operação `plan`
-- **Quando.** Só durante `theforge plan`, depois de o plano ser validado e antes de executar qualquer nó (inclusive sem `--execute`): uma chamada por nó cujo provider declara `plan` em `describe.ops`. `ask` nunca chama `plan`.
+- **Quando.** Só durante `theforge plan`, depois de o plano ser validado e antes de executar qualquer nó (inclusive sem `--execute`): uma chamada por nó cujo provider declara `plan` em `describe.ops`. `ask` nunca chama `plan`. Há um segundo momento opcional, anterior: quando a decomposição determinística termina `ambiguous` e o profile não é `economy`, o planner híbrido chama o tier-2 (abaixo).
 - **Superfície.** A mesma de `describe` e `health`: cwd temporário apagado depois da chamada, [ambiente mínimo](security.md#ambiente-do-provider), timeout de 10 s e `producer` (id e versão) conferido. Provider que não está `ready`, `blocked` ou `unverified` sem `--allow-unverified` não é chamado.
-- **Request.** `PlanRequest` (`theforge/PlanRequest/v1`, schema aberto): `{task, capability, action}`, com a `TaskSpec` do nó (alvos do nó, capability e ação pedidas).
-- **Response.** Status `ok` com payload `PlanEstimate` (`theforge/PlanEstimate/v1`, schema aberto). Todos os campos são opcionais:
+- **Request.** `PlanRequest` (`theforge/PlanRequest/v1`, schema aberto): `{task, capability, action}`, com a `TaskSpec` do nó (alvos do nó, capability e ação pedidas). Campos aditivos: `purpose` (`"estimate"`, padrão; `"proposal"` no tier-2), `options` (o conjunto elegível que um planner semântico pode escolher) e `ambiguity` (por que os tiers determinísticos não decidiram).
+- **Response.** Status `ok` com payload `PlanEstimate` (`theforge/PlanEstimate/v1`, schema aberto) para `purpose="estimate"`, ou `SemanticPlanProposal` (`theforge/SemanticPlanProposal/v1`, schema aberto) para `purpose="proposal"`. Campos de `PlanEstimate`, todos opcionais:
 
   | Campo | Conteúdo |
   |---|---|
@@ -236,6 +236,12 @@ Limites (`contracts/types.py`, valores iniciais):
 
 - **Uso.** A estimativa vai para `nodes[].estimate` do plano. Uma `operation_class` estimada só pode **endurecer** a policy: o nó é avaliado para a classe declarada no manifest e para a estimada, e vale a decisão mais restritiva (`deny` > `ask` > `allow`). Quando a estimada vence, o `risk` do run do nó registra a classe estimada e a limitação `operation-class: estimate <estimada> stricter than declared <declarada>`.
 - **Falhas.** Nada aqui falha o planejamento. Provider sem `plan` gera a limitação `estimate: provider does not declare op plan` no nó; qualquer outra falha (estado, trust, transporte, `refused`/`error`, `producer`, schema) gera `estimate: FORGE-PLAN-ESTIMATE: <detalhe>`. Nos dois casos a estimativa fica desconhecida e o nó segue com a classe declarada.
+
+#### Planner híbrido (`purpose="proposal"`, tier-2)
+
+O decompositor é determinístico e camadas: tier-0 cobre capability pedida, um provider qualificado ou o limite do profile; tier-1 ordena o pipeline pelas relações declaradas do grafo de capabilities (`requires`, produces→consumes; `conflicts` e ciclos viram ambiguidade) e só então pelo proxy `intent-order`. Só quando o resultado é `ambiguous` — e o profile não é `economy` — o core procura um provider `ready` com uma capability `proposes_plans` (escolha determinística por id) e chama o op `plan` com `purpose="proposal"`, `options` (só os candidatos elegíveis do routing) e `ambiguity`.
+
+A resposta é uma `SemanticPlanProposal` — `nodes` (com `ref`, provider/capability/action, `depends_on`, `inputs`, `role`, `rationale`), `dependencies` com razão por aresta, `rationale`, `evidence`, `assumptions`, `unknowns`, `confidence`, `alternatives` e `limitations`. Ela **nunca executa como veio**: o core materializa um `ExecutionPlan` (`source="semantic"`, dependências `explicit` com a razão declarada como evidência) e o `check_plan` de sempre revalida providers, capabilities, actions e limites do profile — nada inventado é aceito, refs quebrados e duplicatas viram violações `FORGE-PLAN-INVALID`. A proposta é persistida no artefato `semantic-proposal` do run de plano, linkada por `PlanRefs.semantic_proposal_sha256`; o routing gravado marca `semantic plan proposed by <planner>`. Sem planner declarado, ou falha/invalidade qualquer, o run fica no desfecho determinístico `ambiguous` com a limitação correspondente; `economy` nunca chama o planner.
 
 ### Handoff
 Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequest`, um `Handoff` (`theforge/Handoff/v1`, schema aberto) montado só a partir dos nós listados em `inputs` do nó. Fora de planos o campo é `null`.
@@ -270,6 +276,7 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
  "ops": ["describe", "health", "execute", "plan"]}
 ```
 - `capabilities[].accepts_handoff` (padrão `false`): a capability lê o `handoff` do `ExecuteRequest`. Só muda a limitação acima; o handoff é enviado de qualquer forma.
+- `capabilities[].proposes_plans` (padrão `false`): a capability responde pedidos `plan` com `purpose="proposal"` — é o planner semântico do tier-2 ([planner híbrido](#planner-híbrido-purposeproposal-tier-2)).
 - `capabilities[].relations` (padrão vazio): relações declaradas que alimentam o grafo de capabilities. `produces`/`consumes` nomeiam tipos de artefato (`^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$`); `requires`, `complements`, `conflicts`, `can_verify`, `can_review` nomeiam capabilities — `cap.id` para a do próprio provider, `provider/cap.id` entre providers. É declaração, não verificação: um alvo ausente do registry mantém a aresta e é nomeado nas limitações do grafo.
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
@@ -336,6 +343,6 @@ Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execu
 | `theforge/ExplainReport/v1` | `theforge explain --json` ([cli.md](cli.md#explain)) | não |
 | `theforge/Diagnostic/v1` | artefato `diagnostic` e linhas `theforge: debug:` com `--debug` | não |
 
-Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.{accepts_handoff, relations}`, `Evidence.derived_from`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256}`, `PlanRefs.capability_graph_sha256` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.{accepts_handoff, proposes_plans, relations}`, `PlanRequest.{purpose, options, ambiguity}`, `Evidence.derived_from`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256}`, `PlanRefs.{capability_graph_sha256, semantic_proposal_sha256}`, `RunTelemetry.semantic_planner_calls`, o valor `semantic` de `ExecutionPlan.source` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
 
 Nomes reservados (sem implementação): `Budget`, `DecisionRecord` e `EnvironmentReport` (v0 não estável em `doctor`); as ops `verify` e `estimate`; os padrões `delegate`, `parallel` e `debate`.

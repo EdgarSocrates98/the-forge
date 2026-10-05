@@ -28,6 +28,7 @@ COUNTERS: Final[tuple[str, ...]] = (
     "files_scanned", "files_selected", "files_hashed", "bytes_hashed",
     "cache_hits", "cache_misses", "context_bytes",
     "providers_executed", "fallbacks_used", "negotiation_rounds",
+    "semantic_planner_calls",
 )
 REVALIDATION_UNDECLARED_LIMITATION: Final = "provider-revalidation-undeclared"
 
@@ -133,6 +134,7 @@ class TelemetryRecorder:
             providers_executed=metrics["providers_executed"],
             fallbacks_used=metrics["fallbacks_used"],
             negotiation_rounds=metrics["negotiation_rounds"],
+            semantic_planner_calls=metrics["semantic_planner_calls"],
             provider_revalidation=self._revalidation,
             verification_performed=self._verification,
             context_drift=list(self._drift),

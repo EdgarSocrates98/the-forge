@@ -42,11 +42,19 @@ from theforge.contracts import (
     TaskSpec,
 )
 from theforge.contracts.canonical import utc_now
+from theforge.contracts.capability_graph import CapabilityGraph
 from theforge.contracts.codes import Codes
 from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import validate_plan_result
-from theforge.contracts.plan import ExecutionPlan, NodeOutcome, NodeStatus, PlanNode, PlanResult
+from theforge.contracts.plan import (
+    ExecutionPlan,
+    NodeOutcome,
+    NodeStatus,
+    PlanNode,
+    PlanResult,
+    SemanticPlanProposal,
+)
 from theforge.contracts.receipt import PlanRefs
 from theforge.contracts.types import (
     BudgetProfile,
@@ -69,13 +77,24 @@ from theforge.forger.orchestrator import (
 from theforge.forger.reproducibility import NO_EXECUTION, combine_levels
 from theforge.forger.telemetry import TelemetryRecorder
 from theforge.meta import PRODUCER, VERSION
-from theforge.planning.decompose import decompose, decomposed_plan, decomposition_dependencies
+from theforge.planning.decompose import (
+    Decomposition,
+    decompose,
+    decomposed_plan,
+    decomposition_dependencies,
+)
 from theforge.planning.estimate import request_estimate
 from theforge.planning.execution import NodeExecution, SourceResult
 from theforge.planning.graph import build_graph
 from theforge.planning.handoff import build_handoff
 from theforge.planning.installation import build_installation_plan
 from theforge.planning.order import blocked_by, topological_order
+from theforge.planning.propose import (
+    options_of,
+    planner_capability,
+    proposal_plan,
+    request_proposal,
+)
 from theforge.planning.synthesis import synthesize
 from theforge.planning.validate import checked_plan, load_plan_file
 from theforge.profiles import ContextProfile, assumed_profile, profile_for
@@ -140,6 +159,8 @@ class _PlanTrace:
     descriptor: WorkspaceDescriptor | None = None
     descriptor_sha: str | None = None
     capability_graph_sha: str | None = None  # CapabilityGraph of the registry+workspace
+    capability_graph: CapabilityGraph | None = None  # the persisted graph object
+    semantic_proposal_sha: str | None = None  # tier-2 SemanticPlanProposal, when asked
     routing_sha: str | None = None
     plan: ExecutionPlan | None = None
     plan_sha: str | None = None
@@ -204,7 +225,8 @@ class PlanExecutor:
             run_id, profile_for(config.fallback_profile) if config is not None
             else assumed_profile(command.profile))
         # Measured on every outcome: a plan that never executes records explicit zeros.
-        for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):
+        for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds",
+                        "semantic_planner_calls"):
             telemetry.count(counter, 0)
         telemetry.note(PLAN_TELEMETRY_LIMITATION)
         trace = _PlanTrace(run_id=run_id, started_at=started, task=task,
@@ -244,6 +266,7 @@ class PlanExecutor:
         # before planning so explain/replay can audit what the planner could see.
         capability_graph = build_capability_graph(
             trace.records, descriptor, run_id=trace.run_id)
+        trace.capability_graph = capability_graph
         trace.capability_graph_sha = store.write(
             trace.run_id, "capability-graph", capability_graph)
         trace.limitations.extend(f"capability-graph: {item}"
@@ -305,12 +328,62 @@ class PlanExecutor:
                 f"complexity: {item}" for item in assessment.limitations)
             profile = profile_for(assessment.selected_profile)
             trace.telemetry.set_profile(profile)
-        decomposition = decompose(task, decision, records, descriptor, scan, profile)
+        decomposition = decompose(task, decision, records, descriptor, scan, profile,
+                                  graph=trace.capability_graph)
         if decomposition.status != "planned":
             trace.limitations.extend(decomposition.limitations)
+            semantic = self._semantic(trace, decomposition, profile)
+            if semantic is not None:
+                return semantic
             return _Planned(decomposition.decision, None, decomposition.status)
         plan = decomposed_plan(decomposition, task, records, profile, plan_run=trace.run_id)
         return _Planned(decomposition.decision, plan, "refused")
+
+    def _semantic(self, trace: _PlanTrace, decomposition: "Decomposition",
+                  profile: ContextProfile) -> _Planned | None:
+        """Tier 2: a ``SemanticPlanProposal`` from a planner provider, validated by
+        ``proposal_plan`` + ``check_plan``. Only an ``ambiguous`` decomposition with
+        a non-``economy`` profile asks; every failure degrades to the deterministic
+        outcome with a limitation (the planner never gets to invent options: it
+        picks among the routing-eligible set, and the validator re-checks it)."""
+        if decomposition.status != "ambiguous":
+            return None
+        if profile.name == "economy":
+            trace.limitations.append(
+                "ambiguous decomposition: semantic planner disabled by profile 'economy'")
+            return None
+        picked = planner_capability(
+            trace.records, allow_unverified=trace.command.allow_unverified)
+        if picked is None:
+            trace.limitations.append(
+                "ambiguous decomposition: no provider declares a semantic-planning "
+                "capability (proposes_plans)")
+            return None
+        record, capability = picked
+        options = options_of(decomposition.decision, trace.records)
+        if not options:
+            trace.limitations.append(
+                "ambiguous decomposition: no eligible options for a proposal")
+            return None
+        proposal, note = request_proposal(
+            record, capability, trace.task, options, decomposition.decision.reason,
+            transport_factory=self.forger.transport_factory,
+            allow_unverified=trace.command.allow_unverified)
+        if note is not None:
+            trace.limitations.append(f"ambiguous decomposition: {note}")
+        if proposal is None:
+            return None
+        trace.semantic_proposal_sha = self.forger.store.write(
+            trace.run_id, "semantic-proposal", proposal)
+        trace.telemetry.count("semantic_planner_calls", 1)
+        plan = proposal_plan(proposal, trace.task, trace.records, profile,
+                             plan_run=trace.run_id, planner=record.entry.id)
+        decision = _semantic_decision(decomposition.decision, plan, proposal,
+                                      record.entry.id)
+        if plan.status == "rejected" and plan.violations:
+            trace.limitations.append(
+                f"semantic proposal rejected: {plan.violations[0].detail}")
+        return _Planned(decision, plan, "refused")
 
     def _with_estimates(self, trace: _PlanTrace, plan: ExecutionPlan) -> ExecutionPlan:
         """Each node with its provider's estimate, or the limitation saying why not (10.1)."""
@@ -481,6 +554,7 @@ class PlanExecutor:
                           workspace_descriptor_sha256=trace.descriptor_sha,
                           graph_sha256=graph_sha, installation_sha256=trace.installation_sha,
                           capability_graph_sha256=trace.capability_graph_sha,
+                          semantic_proposal_sha256=trace.semantic_proposal_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)
         trace.terminal = "finalized"
@@ -497,6 +571,29 @@ def _file_profile(path: Path) -> BudgetProfile:
         return "balanced"
     value = data.get("profile") if isinstance(data, dict) else None
     return value if value in ("economy", "balanced", "max") else "balanced"
+
+
+def _semantic_decision(
+    decision: RoutingDecision, plan: ExecutionPlan, proposal: SemanticPlanProposal,
+    planner: str,
+) -> RoutingDecision:
+    """Routing artifact of a tier-2 plan: the proposal's nodes, its rationale as the
+    reason, and its confidence/unknowns carried into the decision's confidence."""
+    chain = " -> ".join(f"{n.provider}/{n.capability}" for n in plan.nodes)
+    return replace(
+        decision, status="routed" if plan.nodes else decision.status,
+        pattern=plan.pattern,
+        selected=[Selection(provider=n.provider, capability=n.capability, action=n.action,
+                            role="primary" if i == 0 else "specialist")
+                  for i, n in enumerate(plan.nodes)],
+        reason=(f"semantic plan proposed by {planner} "
+                f"({plan.status}): {len(plan.nodes)} nodes: {chain or 'none'}; "
+                f"{proposal.rationale or 'no rationale stated'}"),
+        confidence=Confidence(
+            level="high" if proposal.confidence == "high" and plan.status == "validated"
+            else "low",
+            measured_signals=list(decision.confidence.measured_signals),
+            unresolved=list(proposal.unknowns)))
 
 
 def _file_decision(task: TaskSpec, plan: ExecutionPlan) -> RoutingDecision:

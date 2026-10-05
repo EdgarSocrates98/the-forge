@@ -22,6 +22,7 @@ ALL_METRICS = (
     "files_scanned", "files_selected", "files_hashed", "bytes_hashed",
     "cache_hits", "cache_misses", "context_bytes",
     "providers_executed", "fallbacks_used", "negotiation_rounds",
+    "semantic_planner_calls",
 )
 
 
@@ -65,7 +66,8 @@ def test_run_interrupted_before_context_has_later_phases_unknown() -> None:
     assert tel.files_scanned == Metric(value=42.0, kind="measured")
     for name in ("context_ms", "provider_ms", "files_selected", "files_hashed",
                  "bytes_hashed", "cache_hits", "cache_misses", "context_bytes",
-                 "providers_executed", "fallbacks_used", "negotiation_rounds"):
+                 "providers_executed", "fallbacks_used", "negotiation_rounds",
+                 "semantic_planner_calls"):
         assert getattr(tel, name) == Metric(kind="unknown"), name
     assert tel.unknowns == sorted(set(ALL_METRICS) - {"scan_ms", "routing_ms", "files_scanned"})
     assert tel.provider_revalidation is None
@@ -94,7 +96,8 @@ def test_complete_run_has_every_metric_measured() -> None:
     for name, value in (("files_scanned", 10), ("files_selected", 3), ("files_hashed", 2),
                         ("bytes_hashed", 900), ("cache_hits", 1), ("cache_misses", 2),
                         ("context_bytes", 1200), ("providers_executed", 1),
-                        ("fallbacks_used", 0), ("negotiation_rounds", 1)):
+                        ("fallbacks_used", 0), ("negotiation_rounds", 1),
+                        ("semantic_planner_calls", 0)):
         rec.count(name, value)
     rec.set_effective_tiers(["requested", "metadata", "reference"])
     rec.set_revalidation("hash")

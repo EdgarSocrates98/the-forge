@@ -4,8 +4,69 @@
     "action": {
       "type": "string"
     },
+    "ambiguity": {
+      "type": "string"
+    },
     "capability": {
       "type": "string"
+    },
+    "options": {
+      "items": {
+        "properties": {
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "conflicts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "consumes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "produces": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "requires": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "capability",
+          "actions"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "purpose": {
+      "enum": [
+        "estimate",
+        "proposal"
+      ]
     },
     "task": {
       "properties": {

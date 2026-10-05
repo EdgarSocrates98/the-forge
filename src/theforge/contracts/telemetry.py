@@ -53,6 +53,8 @@ class RunTelemetry:
     providers_executed: Metric = field(default_factory=Metric)
     fallbacks_used: Metric = field(default_factory=Metric)
     negotiation_rounds: Metric = field(default_factory=Metric)
+    # Tier-2 planner calls this run (plan runs only; 0 on every other outcome).
+    semantic_planner_calls: Metric = field(default_factory=Metric)
     provider_revalidation: Literal["hash", "core", "none", "undeclared"] | None = None
     verification_performed: VerificationLevel | None = None
     context_drift: list[str] = field(default_factory=list)

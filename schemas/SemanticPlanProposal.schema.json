@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "alternatives": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dependencies": {
+      "items": {
+        "properties": {
+          "depends_on": {
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "depends_on"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "producer",
+                  "consumer",
+                  "standalone"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ref",
+          "provider",
+          "capability",
+          "action"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "pattern": {
+      "anyOf": [
+        {
+          "enum": [
+            "route",
+            "delegate",
+            "parallel",
+            "pipeline",
+            "debate"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [],
+  "title": "SemanticPlanProposal",
+  "type": "object"
+}

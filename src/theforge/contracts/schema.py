@@ -33,6 +33,7 @@ from theforge.contracts import (
     RiskAssessment,
     RoutingDecision,
     RunTelemetry,
+    SemanticPlanProposal,
     TaskSpec,
     VerificationResult,
     WorkspaceDescriptor,
@@ -46,7 +47,7 @@ EXPORTED: tuple[type[Any], ...] = (
     # cross-forge-foundation (Wave D)
     ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, Handoff, WorkspaceDescriptor,
     WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
-    ComplexityAssessment, CapabilityGraph,
+    ComplexityAssessment, CapabilityGraph, SemanticPlanProposal,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open

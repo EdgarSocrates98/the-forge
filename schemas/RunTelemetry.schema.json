@@ -452,6 +452,30 @@
     "schema": {
       "type": "string"
     },
+    "semantic_planner_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
     "unknowns": {
       "items": {
         "type": "string"

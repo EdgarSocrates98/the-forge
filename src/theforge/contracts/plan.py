@@ -25,6 +25,7 @@ from theforge.contracts.verification import ReproducibilityInfo
 
 PLAN_SCHEMA = "theforge/ExecutionPlan/v1"
 PLAN_RESULT_SCHEMA = "theforge/PlanResult/v1"
+SEMANTIC_PLAN_SCHEMA = "theforge/SemanticPlanProposal/v1"
 # Format of a plan node id (checked relationally, so it is reported as a violation).
 PLAN_NODE_ID: Final = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 
@@ -85,7 +86,7 @@ class ExecutionPlan:
     plan_run: str
     task_id: str
     pattern: PlanPattern
-    source: Literal["decomposed", "file"]
+    source: Literal["decomposed", "file", "semantic"]
     profile: BudgetProfile
     nodes: list[PlanNode]
     violations: list[PlanViolation] = field(default_factory=list)  # empty <=> validated
@@ -101,12 +102,88 @@ class ExecutionPlan:
 
 
 @dataclass(frozen=True, kw_only=True)
+class SemanticPlanOption:
+    """One eligible (provider, capability) the semantic planner may select (C5)."""
+
+    provider: str
+    capability: str
+    actions: list[str]
+    state: str = ""
+    produces: list[str] = field(default_factory=list)
+    consumes: list[str] = field(default_factory=list)
+    requires: list[str] = field(default_factory=list)
+    conflicts: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
 class PlanRequest:
-    """Request payload of the `plan` op (crosses the protocol: open schema)."""
+    """Request payload of the `plan` op (crosses the protocol: open schema).
+
+    ``purpose="estimate"`` (the default and the only purpose of v1 providers)
+    answers a ``PlanEstimate``. ``purpose="proposal"`` — answered only by a
+    capability that declares ``proposes_plans`` — asks a semantic planner to
+    compose ``options`` into a ``SemanticPlanProposal``; ``ambiguity`` states why
+    the deterministic tiers could not decide.
+    """
 
     task: TaskSpec
     capability: str
     action: str
+    purpose: Literal["estimate", "proposal"] = "estimate"
+    options: list[SemanticPlanOption] = field(default_factory=list)
+    ambiguity: str = ""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SemanticPlanNode:
+    """A proposed plan node; ``ref`` is the proposal-local id used by dependencies."""
+
+    ref: str
+    provider: str
+    capability: str
+    action: str
+    targets: list[str] = field(default_factory=lambda: ["."])
+    depends_on: list[str] = field(default_factory=list)
+    inputs: list[str] = field(default_factory=list)
+    role: NodeRole | None = None  # inferred by the validator when absent
+    rationale: str = ""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SemanticPlanDependency:
+    """A proposed edge ``node`` depends on ``depends_on``, with its stated reason."""
+
+    node: str
+    depends_on: str
+    rationale: str = ""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SemanticPlanProposal:
+    """Response payload of the `plan` op with ``purpose="proposal"`` (open schema).
+
+    The proposal is *advisory*: the deterministic validator maps it to an
+    ``ExecutionPlan`` (``source="semantic"``) and ``check_plan`` stays sovereign —
+    unknown providers, capabilities, actions, broken refs and profile limits are
+    violations, never silently repaired.
+    """
+
+    schema: str = SEMANTIC_PLAN_SCHEMA
+    nodes: list[SemanticPlanNode] = field(default_factory=list)
+    dependencies: list[SemanticPlanDependency] = field(default_factory=list)
+    pattern: PlanPattern | None = None
+    rationale: str = ""
+    evidence: list[str] = field(default_factory=list)
+    assumptions: list[str] = field(default_factory=list)
+    unknowns: list[str] = field(default_factory=list)
+    confidence: Literal["high", "medium", "low"] | None = None
+    alternatives: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != SEMANTIC_PLAN_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {SEMANTIC_PLAN_SCHEMA}")
 
 
 @dataclass(frozen=True, kw_only=True)

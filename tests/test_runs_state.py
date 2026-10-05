@@ -30,6 +30,7 @@ from theforge.contracts import (
     RiskAssessment,
     RiskDimensions,
     RunTelemetry,
+    SemanticPlanProposal,
     TaskSpec,
     VerificationResult,
     WorkspaceDescriptor,
@@ -178,10 +179,11 @@ def make_risk(run_id: str) -> RiskAssessment:
 def test_risk_is_a_known_artifact_in_run_order() -> None:
     assert ARTIFACTS == ("task", "workspace-descriptor", "routing", "plan", "installation",
                          "risk", "handoff", "context", "context-r1", "context-r2", "result",
-                         "plan-result", "graph", "capability-graph", "verification",
-                         "telemetry", "diagnostic", "complexity", "receipt")
+                         "plan-result", "graph", "capability-graph", "semantic-proposal",
+                         "verification", "telemetry", "diagnostic", "complexity", "receipt")
     assert ARTIFACT_TYPES["complexity"] is ComplexityAssessment
     assert ARTIFACT_TYPES["capability-graph"] is CapabilityGraph
+    assert ARTIFACT_TYPES["semantic-proposal"] is SemanticPlanProposal
     assert set(ARTIFACT_TYPES) == set(ARTIFACTS)
     assert ARTIFACT_TYPES["risk"] is RiskAssessment
     assert ARTIFACT_TYPES["receipt"] is ExecutionReceipt

@@ -35,10 +35,13 @@ FIXED_EXITS: Final = frozenset({EXIT_FAILURE, EXIT_USAGE, EXIT_PERSISTENCE, EXIT
 PLAN_DESCRIPTION = """\
 Plan a task across providers, one node per specialist, executed locally in sequence.
 
-Without --from FILE the nodes are ordered by the textual order of their keywords in the
-intent (rule `intent-order`): a proxy of the data flow that can infer a wrong dependency
-(e.g. "an API that consumes the Spark pipeline data" puts the API first). Review the plan
-without --execute; --from FILE fixes the order explicitly.
+Without --from FILE the nodes are ordered by declared capability relations first (rule
+`capability-graph`: requires and produces→consumes among qualified providers) and then by
+the textual order of their keywords in the intent (rule `intent-order`): proxies of the
+data flow that can infer a wrong dependency (e.g. "an API that consumes the Spark pipeline
+data" puts the API first). Review the plan without --execute; --from FILE fixes the order
+explicitly. An ambiguous decomposition may be resolved by a `proposes_plans` provider
+(semantic tier), revalidated by the deterministic plan checks.
 """
 
 

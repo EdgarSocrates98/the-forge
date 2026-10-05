@@ -55,6 +55,10 @@ from theforge.contracts.plan import (
     PlanRequest,
     PlanResult,
     PlanViolation,
+    SemanticPlanDependency,
+    SemanticPlanNode,
+    SemanticPlanOption,
+    SemanticPlanProposal,
     Synthesis,
 )
 from theforge.contracts.receipt import ExecutionReceipt, PlanRefs, ReceiptInputs, ReceiptProvider
@@ -116,7 +120,9 @@ __all__ = [
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanRefs", "PlanRequest", "PlanResult",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ReceiptInputs",
     "ReceiptProvider", "RepositoryInfo", "ReproducibilityInfo", "Request", "Response",
-    "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunTelemetry", "Selection", "Signals",
+    "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunTelemetry", "Selection",
+    "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
+    "SemanticPlanProposal", "Signals",
     "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult", "Violation",
     "WorkspaceDescriptor", "WorkspaceGraph", "WorkspaceRelation", "WorkspaceSummary", "from_dict",
     "new_request_id", "to_dict",
