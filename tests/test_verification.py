@@ -111,7 +111,7 @@ def test_all_four_levels_with_evidence_and_artifacts(work: Path) -> None:
                                "context-reverification:conditional", "artifact-hashes"]
     assert got.independent.status == "not_performed"
     assert got.independent.details == [NO_INDEPENDENT_VERIFIER]
-    assert NO_INDEPENDENT_VERIFIER == "no independent verifier: op verify is reserved"
+    assert NO_INDEPENDENT_VERIFIER == "no independent verifier for this capability"
     assert got.limitations == []
 
 

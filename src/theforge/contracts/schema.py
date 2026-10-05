@@ -38,14 +38,16 @@ from theforge.contracts import (
     SemanticPlanProposal,
     TaskSpec,
     VerificationResult,
+    VerifyRequest,
+    VerifyVerdict,
     WorkspaceDescriptor,
     WorkspaceGraph,
 )
 
 EXPORTED: tuple[type[Any], ...] = (
     ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
-    ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, RiskAssessment,
-    RunTelemetry,
+    ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, VerifyRequest,
+    VerifyVerdict, RiskAssessment, RunTelemetry,
     # cross-forge-foundation (Wave D)
     ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, PlanState, Handoff,
     WorkspaceDescriptor,

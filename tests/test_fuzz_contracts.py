@@ -147,6 +147,11 @@ SEEDS: dict[str, dict[str, Any]] = {
     "HealthReport": {"status": "degraded", "checks": [{"name": "n", "ok": False, "detail": "d"}]},
     "ExecuteRequest": {"task": TASK, "capability": "demo.echo", "action": "echo",
                        "context": CONTEXT},
+    "VerifyRequest": {"task": TASK, "capability": "demo.echo", "action": "echo",
+                      "run_id": "run-1",
+                      "result": {"producer": P, "created_at": "t", "status": "ok"},
+                      "handoff": HANDOFF},
+    "VerifyVerdict": {"status": "passed", "details": ["d"], "basis": ["replay"]},
     "RiskAssessment": {
         "producer": P, "created_at": "t", "run_id": "run-1", "provider_id": "demo-forge",
         "capability": "demo.echo", "action": "echo", "operation_class": "read_only",

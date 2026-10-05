@@ -63,6 +63,27 @@ FLAKY_ENTRY = {
     "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-flaky.json")),
     "trust": "local",
 }
+# An independent verifier (verify op + can_verify on fixture-spark/spark.performance):
+# ``verdict`` (passed) / ``verify_status`` drive the answer.
+VERIFIER_ENTRY = {
+    "id": "fixture-verifier",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-verifier.json")),
+    "trust": "local",
+}
+VERIFIER_FAIL_ENTRY = {
+    "id": "fixture-verifier-fail",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-verifier-fail.json")),
+    "trust": "local",
+}
+# A provider that declares can_verify on its own capability — the producer is never
+# its own independent verifier, so the run records not_performed (same identity).
+SELFVERIFY_ENTRY = {
+    "id": "fixture-selfverify",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-selfverify.json")),
+    "trust": "local",
+}
 
 
 def write_providers(

@@ -31,6 +31,7 @@ from theforge.contracts.envelope import (
     HealthReport,
     Request,
     Response,
+    VerifyRequest,
     new_request_id,
 )
 from theforge.contracts.explain import ExplainReport
@@ -100,6 +101,7 @@ from theforge.contracts.verification import (
     ReproducibilityInfo,
     VerificationCheck,
     VerificationResult,
+    VerifyVerdict,
 )
 from theforge.contracts.workspace import (
     RepositoryInfo,
@@ -132,7 +134,8 @@ __all__ = [
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunTelemetry", "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals",
-    "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult", "Violation",
+    "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult",
+    "VerifyRequest", "VerifyVerdict", "Violation",
     "WorkspaceDescriptor", "WorkspaceGraph", "WorkspaceRelation", "WorkspaceSummary", "from_dict",
     "new_request_id", "to_dict",
 ]

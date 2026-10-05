@@ -38,6 +38,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | local do cache do registry | [0009](0009-registry-cache-location.md) | `cycle2-reality-hardening` |
 | modelo de execução multi-provider | [0018](0018-multi-provider-execution.md) | `cross-forge-foundation` |
 | fonte canônica de assets agentic | [0020](0020-agentic-assets-canonical-source.md) | `agentic-maintainability` |
+| verificação independente (`can_verify`, op `verify`) | [0021](0021-independent-verification.md) | `cycle-3` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

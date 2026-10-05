@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "basis": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "details": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "title": "VerifyVerdict",
+  "type": "object"
+}

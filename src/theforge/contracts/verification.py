@@ -25,6 +25,25 @@ class VerificationCheck:
 
 
 @dataclass(frozen=True, kw_only=True)
+class VerifyVerdict:
+    """Response payload of the ``verify`` op (crosses the protocol: open schema).
+
+    ``passed``/``failed`` are verdicts on the verified result itself; a verifier
+    that cannot judge answers ``refused``/``error`` at the envelope level —
+    The Forge records that as ``not_performed``, never as a verdict.
+
+    Epistemic rule (G4): a verdict never rewrites the epistemic status of the
+    producer's evidence. ``passed`` certifies *that an independent identity
+    verified the result* — it is new evidence about the verification, not new
+    evidence for the claims; an ``inferred`` claim stays ``inferred``.
+    """
+
+    status: Literal["passed", "failed"]
+    details: list[str] = field(default_factory=list)
+    basis: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
 class VerificationResult:
     schema: str = VERIFICATION_SCHEMA
     producer: Producer

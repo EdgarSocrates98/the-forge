@@ -13,6 +13,9 @@ key ``{"claim": ..., "subject": ...}`` adds a referee-style evidence with
 ``id="decision"`` (the debate convention). A ``flaky: <int>`` key makes the
 first N ``execute`` calls exit 3 (a retryable FORGE-PROTO-EXIT): the count lives
 in ``<workspace_root>/.forge/flaky-<id>.count`` so it survives across attempts.
+When the manifest declares the ``verify`` op, that op answers the test-only
+``verdict`` key (default ``{"status": "passed"}``), or the envelope status of
+``verify_status`` (``refused``/``error``) when the key is set.
 """
 
 import json
@@ -30,6 +33,8 @@ def main() -> int:
     proposal = manifest.pop("proposal", None)  # test-only SemanticPlanProposal
     decision = manifest.pop("decision", None)  # test-only referee decision evidence
     flaky = manifest.pop("flaky", 0)  # test-only: exit 3 on the first N executes
+    verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
+    verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
     op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
@@ -61,6 +66,11 @@ def main() -> int:
                                 "checks": [{"name": "fixture", "ok": False,
                                             "detail": "backend down"}]})
         return reply("ok", {"status": "ok", "checks": [{"name": "fixture", "ok": True}]})
+    if op == "verify" and "verify" in manifest["ops"]:
+        if verify_status != "ok":
+            return reply(verify_status,
+                         error=err("FIXTURE-VERIFY", f"verifier {verify_status}"))
+        return reply("ok", verdict)
     if op == "execute" or (op == "plan" and "plan" in manifest["ops"]):
         payload = req.get("payload") or {}
         cap = payload.get("capability")

@@ -435,3 +435,58 @@ há sinal de pausa/cancelamento no CLI hoje. A identidade do provider no reuso
 preserve ambos ainda reusa. Um plano `rejected` não é resumível (recusa antes
 de qualquer estado); um `planned` sem `--execute` gera o snapshot `planned`
 mas resumi-lo executa — resume é sempre um run de execução.
+
+## Wave G — Verificação independente (`can_verify` + op `verify`)
+
+**Objetivo.** O quarto nível do `VerificationResult` deixa de ser estruturalmente
+`not_performed`: um provider de **identidade distinta** que declara a op `verify`
+e uma capability com `relations.can_verify` sobre `<produtor>/<capability>` julga
+o resultado persistido, e o veredicto entra no `independent` (ADR 0021).
+
+**Design.** `src/theforge/forger/verification.py` ganhou duas funções:
+
+- `select_verifier(records, producer, capability, allow_unverified)`: o provider
+  `ready` de menor `id` que declara a op `verify` e `can_verify` exato. O produtor
+  — mesmo `id` **ou mesmo `argv`** (o mesmo programa sob outro id) — nunca é
+  independente (G2); `blocked`/`unverified` também são recusados, e todo descarte
+  é nomeado no `details` do check.
+- `request_verdict(...)`: chama a op `verify` com `VerifyRequest{task, capability,
+  action, run_id, result, handoff?}` — só o que já foi persistido e redigido,
+  nenhum arquivo do workspace. `VerifyVerdict` `passed`/`failed` é veredicto;
+  `refused`/`error`, `producer` divergente, payload malformado e falha de
+  transporte viram `not_performed` — falha do verificador nunca é evidência
+  contra o resultado.
+
+**Orquestração.** `_record_verification` coleta o check antes de persistir o
+artefato: `result is None` → `not_performed` ("no valid result"); sem candidato →
+`not_performed` com a razão; com verificador, o veredicto entra no artefato com
+`basis` `verifier:<id>`. Um `failed` demove o run a `partial` com a limitação
+`independent verification failed: <verifier>` — a mesma disciplina do
+`FORGE-RESULT-ARTIFACT-HASH`. O caminho vale para todo run (`ask` e cada nó de
+plano — ambos passam por `Forger.ask`), inclusive o de erro interno
+(`_late_verification`): `_Trace` guarda `task`/`profile` para isso.
+
+**Contratos.** `VerifyRequest` (payload do `verify`) e `VerifyVerdict` (resposta)
+em `contracts/envelope.py`/`contracts/verification.py` — abertos como
+`ExecuteRequest`/`PlanEstimate`, com schemas gerados. Nenhum campo obrigatório
+novo em contrato fechado: `VerificationResult` não mudou.
+
+**Testes.** `tests/test_independent_verification.py` (17): seleção (candidato
+declarado, falta de op `verify`, alvo ausente, produtor auto-verificando — mesma
+identidade —, clone de `argv`, `blocked`/`unverified`, quebra de `ready`,
+desempate determinístico por `id`), veredicto (passed/failed, refused, error,
+malformado, `producer` divergente, `TransportError`) e e2e real (verifier
+`passed` + artefato persistido, `failed` → `partial` + limitação, sem verificador
+→ `not_performed`, auto-verificação → `not_performed`, nó de plano coberto de
+graça, payload espiado: só campos do contrato). Fixtures: `fixture-verifier`
+(verdict `passed`), `fixture-verifier-fail`, `fixture-selfverify` (can_verify na
+própria capability), chaves test-only `verdict`/`verify_status` no
+`fixture_forge`. Seeds de fuzz `VerifyRequest`/`VerifyVerdict`.
+
+**Resultado.** Foco verde (17+29+14 testes), fuzz/schemas/conformance verdes,
+mypy+ruff limpos, schemas `VerifyRequest`/`VerifyVerdict` gerados.
+
+**Limitações.** A estratégia do verificador é dele — o core só exige o veredicto
+auditável; `static checks`/`test runner`/`specialist reviewer` entram sem mudança
+de contrato. Um único verificador por run (o menor `id` elegível): quorum e
+verificadores múltiplos ficam para uma wave futura.

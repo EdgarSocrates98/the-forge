@@ -86,12 +86,22 @@ from theforge.contracts.types import (
     ProfileRequest,
     Reproducibility,
 )
-from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
+from theforge.contracts.verification import (
+    ReproducibilityInfo,
+    VerificationCheck,
+    VerificationResult,
+)
 from theforge.diagnostics import build_diagnostic
 from theforge.errors import PersistenceError, UsageError
 from theforge.forger.reproducibility import assess_run
 from theforge.forger.telemetry import TelemetryRecorder
-from theforge.forger.verification import ARTIFACT_HASH_LIMITATION, build_verification
+from theforge.forger.verification import (
+    ARTIFACT_HASH_LIMITATION,
+    INDEPENDENT_FAILED_LIMITATION,
+    build_verification,
+    request_verdict,
+    select_verifier,
+)
 from theforge.meta import PRODUCER, VERSION
 from theforge.planning.estimate import stricter_decision
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
@@ -184,8 +194,10 @@ class _Trace:
     run_id: str
     started_at: str
     task_sha: str
+    task: TaskSpec  # persisted verbatim; the verify op payload needs it
     telemetry: TelemetryRecorder  # phases and counters of this run, written by _finish (10.x)
     request: AskRequest
+    profile: ContextProfile | None = None  # resolved at routing (auto or assumed)
     stage: str = "task"  # last stage entered, for the diagnostic of an internal error
     routing_sha: str | None = None
     context_sha: str | None = None
@@ -198,6 +210,7 @@ class _Trace:
     identity: ProviderFingerprint | None = None
     decision: RoutingDecision | None = None
     capability: Capability | None = None
+    action: str = ""  # the selected action, for the verify op payload
     handoff: Handoff | None = None  # as persisted: exactly what the provider receives
     handoff_sha: str | None = None
     complexity_sha: str | None = None  # ComplexityAssessment, only for --profile auto
@@ -329,7 +342,8 @@ class Forger:
         # Always measured, so a run that never gets there records an explicit zero.
         for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):
             telemetry.count(counter, 0)
-        trace = _Trace(run_id=run_id, started_at=started, telemetry=telemetry,
+        trace = _Trace(run_id=run_id, started_at=started, task=task,
+                       telemetry=telemetry,
                        task_sha=self.store.write(run_id, "task", task), request=request,
                        complexity_config=config)
         trace.limitations.extend(config_warnings)
@@ -412,6 +426,7 @@ class Forger:
             trace.telemetry.set_profile(profile)
         else:
             profile = assumed_profile(task.budget_profile)
+        trace.profile = profile
         pinned = request.provider is not None
         trace.stage = "health"
         with telemetry.phase("routing"):  # health (and fallback) completes the routing
@@ -439,6 +454,7 @@ class Forger:
         if capability is None:  # the router only selects declared capabilities
             raise RuntimeError(f"{record.entry.id} does not declare {selection.capability!r}")
         trace.capability = capability
+        trace.action = selection.action
         if trace.handoff is not None and not capability.accepts_handoff:  # 4.7
             trace.limitations.append(
                 f"{HANDOFF_UNDECLARED_LIMITATION}: {record.entry.id}/{capability.id}")
@@ -490,18 +506,46 @@ class Forger:
         """Build and persist the run's ``VerificationResult`` (9.1-9.6).
 
         ``result`` is the validated result as the provider returned it (``None`` without
-        one). Returns the artifact-hash limitations, one per diverging declared artifact.
+        one). Returns the demotion limitations: one per diverging declared artifact,
+        plus the independent-verifier note when that check failed (Wave G).
         """
         assert record.manifest is not None
+        verifier_id: str | None = None
+        if result is None or trace.capability is None:
+            independent = VerificationCheck(
+                status="not_performed",
+                details=["no valid result" if result is None
+                         else "no capability recorded"])
+        else:
+            verifier, reason = select_verifier(
+                self.registry.records(), producer=record,
+                capability=trace.capability.id,
+                allow_unverified=trace.request.allow_unverified)
+            if verifier is None:
+                independent = VerificationCheck(status="not_performed",
+                                                details=[reason])
+            else:
+                verifier_id = verifier.entry.id
+                independent = request_verdict(
+                    verifier, run_id=trace.run_id, task=trace.task,
+                    capability=trace.capability.id, action=trace.action,
+                    result=result, handoff=trace.handoff,
+                    transport_factory=self.transport_factory,
+                    timeout=self._timeout(
+                        trace.profile
+                        or assumed_profile(trace.task.budget_profile)))
         verification = build_verification(
             trace.run_id, response_status, result, trace.drift,
             self.store.work_dir(trace.run_id),
             expected=Producer(id=record.entry.id, version=record.manifest.version),
-            handoff=trace.handoff)
+            handoff=trace.handoff, independent=independent)
         trace.verification = verification
         trace.verification_sha = self.store.write(trace.run_id, "verification", verification)
         prefix = f"{ARTIFACT_HASH_LIMITATION}:"
-        return [note for note in verification.limitations if note.startswith(prefix)]
+        notes = [note for note in verification.limitations if note.startswith(prefix)]
+        if verification.independent.status == "failed":
+            notes.append(f"{INDEPENDENT_FAILED_LIMITATION}: {verifier_id}")
+        return notes
 
     def _verify_context(
         self, trace: _Trace, result: ExecutionResult, pack: ContextPack,

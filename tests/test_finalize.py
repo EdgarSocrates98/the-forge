@@ -43,7 +43,7 @@ def _trace(store: RunStore) -> _Trace:
     store.create(run_id)
     task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id=run_id, intent="x",
                     workspace_root="/ws")
-    return _Trace(run_id=run_id, started_at=utc_now(),
+    return _Trace(run_id=run_id, started_at=utc_now(), task=task,
                   telemetry=TelemetryRecorder(run_id, profile_for("balanced")),
                   task_sha=store.write(run_id, "task", task),
                   request=AskRequest(intent="x"))
