@@ -334,6 +334,13 @@ SEEDS: dict[str, dict[str, Any]] = {
         "evidence": ["keyword hit"], "alternatives": ["other/x.y"],
         "unknowns": ["u"], "limitations": ["l"],
     },
+    # surface identity (cycle 3.1)
+    "ProviderSurfaceIdentity": {
+        "provider_id": "demo-forge", "provider_version": "1.0.0",
+        "adapter_version": "0.2.0", "protocol_version": "forge/v1",
+        "surface_fingerprint": SHA, "capability_fingerprint": SHA,
+        "native_surface_fingerprint": SHA, "recorded_at": "t",
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

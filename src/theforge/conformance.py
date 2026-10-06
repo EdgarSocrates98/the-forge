@@ -48,8 +48,16 @@ from theforge.contracts import (
     to_dict,
 )
 from theforge.contracts.canonical import sha256_hex, utc_now
+from theforge.contracts.features import (
+    HANDOFF,
+    KNOWN_FEATURES,
+    PLAN_PROPOSAL,
+    RESOLVE,
+    VERIFY,
+    implied_features,
+)
 from theforge.contracts.integrity import check_producer, check_timestamp, validate_result
-from theforge.contracts.types import SHA256_RE
+from theforge.contracts.types import FEATURE_ID_RE, SHA256_RE
 from theforge.meta import PRODUCER
 from theforge.protocol import SubprocessTransport, TransportError, TransportFactory
 from theforge.registry.health import HEALTH_TIMEOUT
@@ -194,6 +202,7 @@ def check_provider(
                         f"{manifest.id!r}")
                 checks.append(_fail("describe", "; ".join(problems)) if problems
                               else _ok("describe", f"{manifest.id} {manifest.version}"))
+                checks.append(_feature_consistency(manifest))
 
     # --- health -------------------------------------------------------------
     response, failure = _call(transport, "health", {}, HEALTH_TIMEOUT)
@@ -224,6 +233,33 @@ def check_provider(
                       f"every call bounded (describe/health {HEALTH_TIMEOUT:g}s, "
                       f"execute {timeout:g}s); a hang fails its own check"))
     return ConformanceReport(argv=list(argv), checks=checks)
+
+
+def _feature_consistency(manifest: ForgeManifest) -> ConformanceCheck:
+    """``features``: declared known features must be exercisable by the manifest.
+
+    A declared feature with no backing surface is a broken promise — ``verify/v1``
+    without the ``verify`` op, ``handoff/v1`` without any ``accepts_handoff``.
+    Implied features need no declaration; unknown-but-wellformed ids are ignored
+    (a newer provider may declare them for a newer core).
+    """
+    implied = implied_features(manifest)
+    missing = sorted(f for f in manifest.features if f in _FEATURE_BACKING
+                     and f not in implied)
+    unknown = sorted(f for f in manifest.features
+                     if f not in KNOWN_FEATURES and FEATURE_ID_RE.match(f))
+    if missing:
+        return _fail("features", "declared without backing surface: "
+                     + ", ".join(missing))
+    detail = f"{len(manifest.features)} declared, {len(implied)} implied"
+    if unknown:
+        detail += f"; forward-declared: {', '.join(unknown)}"
+    return _ok("features", detail)
+
+
+# Features with a backing manifest surface (checked by _feature_consistency;
+# the rest of KNOWN_FEATURES has no implied signal and stays forward-declared).
+_FEATURE_BACKING = frozenset({HANDOFF, VERIFY, PLAN_PROPOSAL, RESOLVE})
 
 
 def _behavior_checks(

@@ -49,6 +49,10 @@ class ReceiptProvider:
     executable: str | None = None
     fingerprint: str | None = None
     observed_version: str | None = None
+    # Surface fingerprints of the manifest the run executed against (None in
+    # receipts older than ProviderSurfaceIdentity — never "unchanged").
+    surface_fingerprint: str | None = None
+    native_surface_fingerprint: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

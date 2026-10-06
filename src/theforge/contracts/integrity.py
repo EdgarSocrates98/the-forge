@@ -28,6 +28,7 @@ from theforge.contracts.types import (
     MAX_CLAIM_CHARS,
     MAX_CONTEXT_REQUEST_ITEMS,
     MAX_DEPENDENCIES,
+    MAX_FEATURES,
     MAX_GLOBS,
     MAX_HANDOFF_BYTES,
     MAX_HANDOFF_ITEMS,
@@ -268,6 +269,11 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
         ("inputs.handoff_sha256", receipt.inputs.handoff_sha256),
         ("provider.manifest_sha256",
          receipt.provider.manifest_sha256 if receipt.provider is not None else None),
+        ("provider.surface_fingerprint",
+         receipt.provider.surface_fingerprint if receipt.provider is not None else None),
+        ("provider.native_surface_fingerprint",
+         receipt.provider.native_surface_fingerprint
+         if receipt.provider is not None else None),
         ("result_sha256", receipt.result_sha256),
         ("telemetry_sha256", receipt.telemetry_sha256),
         ("verification_sha256", receipt.verification_sha256),
@@ -379,6 +385,13 @@ def validate_manifest_limits(manifest: ForgeManifest) -> tuple[Violation, ...]:
             Codes.MANIFEST_LIMITS,
             f"manifest {manifest.id} declares {count} capabilities (max {MAX_CAPABILITIES})",
             "capabilities",
+        ))
+    if len(manifest.features) > MAX_FEATURES:
+        violations.append(Violation(
+            Codes.MANIFEST_LIMITS,
+            f"manifest {manifest.id} declares {len(manifest.features)} features "
+            f"(max {MAX_FEATURES})",
+            "features",
         ))
     for i, cap in enumerate(manifest.capabilities):
         where = f"capabilities[{i}]"

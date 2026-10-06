@@ -78,6 +78,8 @@ def run_doctor(
         if not healthy:
             status = "fail" if record.entry.trust == "builtin" else "warn"
         detail = f"{record.state}/{health.status}"
+        if health.surface_fingerprint is not None:
+            detail += f" surface:{health.surface_fingerprint[:12]}"
         if health.error is not None:
             detail += f" {health.error.code}"
         checks.append(Check(name=f"provider:{record.entry.id}", status=status, detail=detail))

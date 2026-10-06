@@ -62,6 +62,8 @@ MAX_REPOSITORIES: Final = 64
 MAX_GRAPH_NODES: Final = 2_000
 
 SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
+# Declared protocol feature ids ("<name>/v<major>"), e.g. "handoff/v1".
+FEATURE_ID_RE: Final = re.compile(r"^[a-z][a-z0-9-]*/v[0-9]+$")
 
 
 def check_sha256(value: str, *, field: str) -> None:
@@ -76,6 +78,7 @@ MAX_KEYWORDS: Final = 64
 MAX_GLOBS: Final = 32
 MAX_DEPENDENCIES: Final = 32
 MAX_ACTIONS: Final = 16
+MAX_FEATURES: Final = 32
 
 # Globs that match every file regardless of name or extension. Extension globs such as
 # "*.md" are legitimate signals and are NOT catch-all.

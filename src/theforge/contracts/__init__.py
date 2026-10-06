@@ -44,6 +44,7 @@ from theforge.contracts.envelope import (
 from theforge.contracts.explain import ExplainReport
 from theforge.contracts.graph import GraphEdge, GraphNode, WorkspaceGraph
 from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
+from theforge.contracts.identity import SURFACE_IDENTITY_SCHEMA, ProviderSurfaceIdentity
 from theforge.contracts.installation import InstallationItem, InstallationPlan
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
@@ -156,11 +157,12 @@ __all__ = [
     "PlanRequest", "PlanResult", "PlanState",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ProjectIntel",
     "ProposalChoice", "ProviderCapabilityPerformance", "ProviderPerformance",
+    "ProviderSurfaceIdentity",
     "ReceiptInputs",
     "ReceiptProvider", "RememberedDecision", "RepositoryInfo", "ReproducibilityInfo",
     "Request", "ResolveCandidate", "ResolveRequest", "Response",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RoutingProposal",
-    "RunBudget", "RunTelemetry", "Selection",
+    "RunBudget", "RunTelemetry", "SURFACE_IDENTITY_SCHEMA", "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals", "Span",
     "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult",

@@ -14,6 +14,7 @@ from theforge.contracts import (
     ErrorInfo,
     ForgeManifest,
     Producer,
+    ProviderSurfaceIdentity,
     from_dict,
     to_dict,
 )
@@ -32,6 +33,11 @@ from theforge.protocol import (
 )
 from theforge.registry.config import ProviderEntry, resolve_entries, user_cache_dir
 from theforge.registry.identity import fingerprint
+from theforge.registry.surface import (
+    capability_fingerprint,
+    surface_fingerprint,
+    surface_identity,
+)
 from theforge.security.redact import redact, redact_text
 from theforge.state import LEGACY_REGISTRY_DIR, remove_legacy_cache
 
@@ -52,6 +58,8 @@ class RegistryRecord:
     manifest: ForgeManifest | None = None
     manifest_sha256: str | None = None
     protocol: str | None = None
+    # The versioned surface identity of the manifest in use (ready records only).
+    surface: ProviderSurfaceIdentity | None = None
     error: str | None = None
 
     def routable(self, allow_unverified: bool = False) -> bool:
@@ -64,7 +72,11 @@ class RegistryRecord:
 
 @dataclass(frozen=True, kw_only=True)
 class RegistryCacheEntry:
-    """On-disk registry cache document (user cache dir), re-read with ``strict=True``."""
+    """On-disk registry cache document (user cache dir), re-read with ``strict=True``.
+
+    ``surface_fingerprint``/``capability_fingerprint`` are the digests the writer
+    computed for ``manifest``; absent in cache files written before they existed.
+    """
 
     schema: Literal["theforge/RegistryCache/v2"]
     entry: ProviderEntry
@@ -75,6 +87,8 @@ class RegistryCacheEntry:
     manifest_sha256: str
     protocol: str
     written_at: str
+    surface_fingerprint: str | None = None
+    capability_fingerprint: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -234,7 +248,9 @@ class Registry:
                 error=f"no common protocol (offered {manifest.protocols}, "
                       f"supported {list(SUPPORTED_PROTOCOLS)})")
         return RegistryRecord(entry=entry, state="ready", manifest=manifest,
-                              manifest_sha256=digest, protocol=protocol)
+                              manifest_sha256=digest, protocol=protocol,
+                              surface=surface_identity(manifest, protocol=protocol,
+                                                       recorded_at=utc_now()))
 
     def _apply_manifest_rules(self, manifest: ForgeManifest) -> ForgeManifest | str:
         """Exclude capabilities over the limits or off the taxonomy, with a warning (1.9, 5.2).
@@ -327,7 +343,11 @@ class Registry:
                 entry_digest=sha256_of(to_dict(record.entry)),
                 fingerprint=fingerprint(record.entry).digest, state="ready",
                 manifest=record.manifest, manifest_sha256=record.manifest_sha256,
-                protocol=record.protocol, written_at=utc_now())
+                protocol=record.protocol, written_at=utc_now(),
+                surface_fingerprint=record.surface.surface_fingerprint
+                if record.surface is not None else None,
+                capability_fingerprint=record.surface.capability_fingerprint
+                if record.surface is not None else None)
             document = to_dict(cached)
             if redact(document) != document:
                 # Persisted data must pass through redaction, but the cache is re-read
@@ -370,11 +390,20 @@ class Registry:
                 raise ValueError("manifest hash mismatch")
             if cached.manifest.id != entry.id:
                 raise ValueError("manifest id does not match registry entry")
+            if cached.surface_fingerprint is not None and \
+                    cached.surface_fingerprint != surface_fingerprint(cached.manifest):
+                raise ValueError("cached surface fingerprint does not match the manifest")
+            if cached.capability_fingerprint is not None and \
+                    cached.capability_fingerprint != capability_fingerprint(cached.manifest):
+                raise ValueError("cached capability fingerprint does not match the manifest")
             protocol = choose_protocol(cached.manifest.protocols)
             if protocol is None or protocol != cached.protocol:
                 raise ValueError("cached protocol does not match negotiated protocol")
             return RegistryRecord(entry=entry, state="ready", manifest=cached.manifest,
-                                  manifest_sha256=cached.manifest_sha256, protocol=protocol)
+                                  manifest_sha256=cached.manifest_sha256, protocol=protocol,
+                                  surface=surface_identity(
+                                      cached.manifest, protocol=protocol,
+                                      recorded_at=cached.written_at))
         except (OSError, ValueError) as exc:
             self._warn(f"registry cache for {entry.id} discarded: {exc}")
             return None

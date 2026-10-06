@@ -1,6 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
+    "adapter_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "capabilities": {
       "items": {
         "properties": {
@@ -206,6 +216,12 @@
       "required": [],
       "type": "object"
     },
+    "features": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
     "id": {
       "pattern": "^[a-z][a-z0-9-]*$",
       "type": "string"
@@ -215,6 +231,16 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "native_surface_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "ops": {
       "items": {

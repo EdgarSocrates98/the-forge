@@ -498,7 +498,9 @@
       "properties": [
         "fingerprint",
         "id",
+        "native_surface_fingerprint",
         "observed_version",
+        "surface_fingerprint",
         "trust",
         "version"
       ],

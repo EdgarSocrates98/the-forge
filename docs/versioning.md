@@ -39,6 +39,25 @@ Fonte única. As colunas dos especialistas mostram a janela `SUPPORTED_SPECIALIS
 | The Forge | Forge Protocol | theforge-sparkforge-adapter | sparkforge-aws | theforge-apiforge-adapter | apiforge | Suporte até |
 |---|---|---|---|---|---|---|
 | 0.1.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | lançamento de 0.3.0 |
+| 0.2.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | lançamento de 0.4.0 |
+
+## Identidade de superfície
+`version` não é identidade: a mesma versão pode carregar uma superfície diferente (observado em sparkforge 0.5.0 e apiforge 0.1.0). O contrato `theforge/ProviderSurfaceIdentity/v1` pareia as versões declaradas com dois fingerprints determinísticos que o core computa do manifest em uso:
+
+- **`capability_fingerprint`**: sha256 sobre o conjunto de capabilities — id, actions, `default_action`, `state`, `operation_class`, tiers de `context`, flags `accepts_handoff`/`proposes_plans`/`resolves_ambiguity`, `aliases`, `deprecated`/`replaced_by` e `relations`.
+- **`surface_fingerprint`**: o capability fingerprint mais `ops`, `protocols`, `features`, `execution`, `context_revalidation` e `domains` declarados.
+- **`native_surface_fingerprint`**: declarado pelo provider (`manifest.native_surface_fingerprint`) — nos adapters, o sha256 do snapshot nativo empacotado. Hash é evidência, não confiança.
+
+Os fingerprints excluem `id`/`version`, `description`/`signals` (apresentação e roteamento, não forma operacional), `limitations`/`unknowns` e qualquer valor de máquina ou timestamp — `recorded_at` é o instante em que o core observou a identidade e nunca entra num fingerprint.
+
+Onde aparecem: o `RegistryRecord` carrega a identidade inteira; o cache do registry guarda e confere os dois fingerprints (arquivo corrompido ou adulterado é descartado); `providers health` e `doctor` mostram `surface:<prefix>`; o receipt do run grava `provider.surface_fingerprint`/`native_surface_fingerprint`; `replay` e `resume` recusam ou marcam drift quando a superfície gravada diverge da atual — mudança de superfície com a mesma versão deixa de ser invisível.
+
+## Features de protocolo
+`manifest.features` declara ids `"<nome>/v<major>"` (ex.: `handoff/v1`). O core nunca assume feature: ausente significa *não negociado* e o ponto de uso degrada — limitação, passo pulado ou pedido mais estreito — nunca quebra. O kit de conformidade falha quando um feature conhecido é declarado sem a superfície que o sustenta (ex.: `verify/v1` sem a op `verify`); ids bem-formados que o core não conhece são ignorados, então um provider mais novo pode declarar `delta/v2` contra um core antigo.
+
+`supports(manifest, feature)` resolve contra o declarado ∪ implícito: `accepts_handoff` já implica `handoff/v1`, a op `verify` já implica `verify/v1`, `proposes_plans` implica `plan-proposal/v1`, `resolves_ambiguity` implica `resolve/v1` — manifests antigos continuam completos sem declarar nada.
+
+Vocabulário conhecido deste core: `handoff/v1`, `verify/v1`, `plan-proposal/v1`, `resolve/v1`, `semantic-handoff/v1`, `economy-receipt/v1`, `trace-ref/v1`, `resume/v1`, `delta/v1`, `graph-refs/v1`.
 
 ## Regra de manutenção
 - Toda wave ou release que altera `theforge.__version__` acrescenta a linha da nova versão nesta matriz **no mesmo commit**.

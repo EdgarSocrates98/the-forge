@@ -213,6 +213,14 @@ O ID, as ações, os aliases e o formato de `replaced_by` passam pelas regras me
 
 O manifest pode declarar `context_revalidation` (opcional; os adapters reais declaram `"hash"`: conferem o sha256 de cada arquivo do ContextPack antes de usá-lo). Um core que não conhece o campo o ignora, como qualquer campo desconhecido de provider.
 
+Campos opcionais no nível do manifest, aditivos sobre `theforge/ForgeManifest/v1`:
+
+| Campo | Default | Efeito |
+|---|---|---|
+| `features` | `[]` | ids `"<nome>/v<major>"` de features de protocolo declarados (ex.: `handoff/v1`); ver [versioning.md — Features de protocolo](versioning.md#features-de-protocolo). Malformado ou duplicado torna o provider `invalid`; id desconhecido bem-formado é ignorado |
+| `adapter_version` | `null` | a release do adapter que responde o protocolo, quando o provider é um adapter |
+| `native_surface_fingerprint` | `null` | sha256 declarado da superfície nativa servida (nos adapters, o snapshot empacotado); gravado no receipt e no cache |
+
 Atualizar o core para esta versão muda o `manifest_sha256` de todo provider (os defaults acima entram no hash). Cada entrada do cache do registry é descartada uma vez, com o aviso `registry cache for <id> discarded: …`, e o provider é descrito de novo. Não há ação a tomar.
 
 ### Limites
@@ -222,6 +230,7 @@ Limites (`contracts/types.py`, valores iniciais):
 | Limite | Valor | Ao exceder |
 |---|---|---|
 | capabilities por manifest | 256 | provider `invalid` |
+| `features` por manifest | 32 | provider `invalid` |
 | `actions` por capability | 16 | capability excluída |
 | `signals.keywords` por capability | 64 | capability excluída |
 | `signals.file_globs` por capability | 32 | capability excluída |

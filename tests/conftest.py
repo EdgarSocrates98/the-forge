@@ -129,6 +129,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),
     "test_root_hygiene.py": ("unit",),
+    # cycle-3.1 surface identity / feature negotiation
+    "test_surface_identity.py": ("unit", "contract", "integration"),
 }
 
 

@@ -189,6 +189,8 @@ def health(data: dict[str, Any]) -> str:
     lines = []
     for p in data["providers"]:
         line = f"{_clean(p['id']):<20} {_clean(p['status'])}"
+        if p.get("surface_fingerprint"):
+            line += f"  surface:{_clean(p['surface_fingerprint'])[:12]}"
         if p["error"]:
             line += f"  {_clean(p['error']['code'])}: {_detail(p['error']['detail'])}"
         lines.append(line)

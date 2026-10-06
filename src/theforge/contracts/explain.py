@@ -72,6 +72,8 @@ class ProviderSection:
     trust: str
     observed_version: str | None = None
     fingerprint: str | None = None
+    surface_fingerprint: str | None = None
+    native_surface_fingerprint: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

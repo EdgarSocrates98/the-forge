@@ -50,7 +50,8 @@ def test_cache_lives_in_user_cache_dir_not_forge(tmp_path: Path) -> None:
     doc = json.loads(files[0].read_text(encoding="utf-8"))
     assert doc["schema"] == "theforge/RegistryCache/v2"
     assert set(doc) == {"schema", "entry", "entry_digest", "fingerprint", "state", "manifest",
-                        "manifest_sha256", "protocol", "written_at"}
+                        "manifest_sha256", "protocol", "written_at",
+                        "surface_fingerprint", "capability_fingerprint"}
     assert files[0].name == f"fixture-spark-{doc['entry_digest'][:12]}.json"
 
 
@@ -309,6 +310,9 @@ def test_tampered_cache_of_non_selected_provider_is_detected_before_decision(
 def test_tampered_extra_capability_of_selected_provider_is_rediscovered_before_execute(
     tmp_path: Path,
 ) -> None:
+    from theforge.contracts import ForgeManifest, from_dict
+    from theforge.registry.surface import capability_fingerprint, surface_fingerprint
+
     forge = make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
     case_a(tmp_path)
     Registry(forge).refresh()
@@ -318,6 +322,11 @@ def test_tampered_extra_capability_of_selected_provider_is_rediscovered_before_e
                 "operation_class": "local_mutation"}
     doc["manifest"]["capabilities"].append(injected)
     doc["manifest_sha256"] = sha256_of(doc["manifest"])
+    # the surface fingerprints must be recomputed too: a consistent tamper is
+    # what revalidation (not the cache read) is expected to catch
+    tampered_manifest = from_dict(ForgeManifest, doc["manifest"], "$.manifest")
+    doc["surface_fingerprint"] = surface_fingerprint(tampered_manifest)
+    doc["capability_fingerprint"] = capability_fingerprint(tampered_manifest)
     path.write_text(json.dumps(doc), encoding="utf-8")
     # the tampered cache is internally consistent: records() serves it without describing
     tampered = Registry(forge, transport_factory=_boom).get("fixture-spark")

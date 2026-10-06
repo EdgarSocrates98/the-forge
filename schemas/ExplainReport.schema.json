@@ -1328,7 +1328,27 @@
             "id": {
               "type": "string"
             },
+            "native_surface_fingerprint": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "observed_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "surface_fingerprint": {
               "anyOf": [
                 {
                   "type": "string"

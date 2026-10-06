@@ -1158,6 +1158,7 @@ class Forger:
             return
         warning = record_performance(
             self.root, record.entry.id, capability.id, status=status,
+            surface=record.surface.surface_fingerprint if record.surface else None,
             verified=(trace.verification is not None
                       and trace.verification.forge.status == "passed"),
             evidence=len(result.evidence) if result is not None else 0,
@@ -1223,7 +1224,12 @@ class Forger:
                                        manifest_sha256=record.manifest_sha256,
                                        executable=identity.executable if identity else None,
                                        fingerprint=identity.digest if identity else None,
-                                       observed_version=record.manifest.version)
+                                       observed_version=record.manifest.version,
+                                       surface_fingerprint=record.surface.surface_fingerprint
+                                       if record.surface else None,
+                                       native_surface_fingerprint=(
+                                           record.surface.native_surface_fingerprint
+                                           if record.surface else None))
         # Telemetry before the receipt, on every outcome (10.4).
         telemetry_sha, telemetry_notes = self._write_telemetry(trace)
         limitations = list(trace.limitations)

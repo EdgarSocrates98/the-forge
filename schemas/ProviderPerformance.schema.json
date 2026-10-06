@@ -45,6 +45,16 @@
           "runs": {
             "type": "integer"
           },
+          "surface": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updated_at": {
             "type": "string"
           },

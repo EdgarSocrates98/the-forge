@@ -218,6 +218,7 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
         outcome = check_health(record)
         rows.append({"id": record.entry.id, "trust": record.entry.trust,
                      "status": outcome.status,
+                     "surface_fingerprint": outcome.surface_fingerprint,
                      "error": to_dict(outcome.error) if outcome.error else None})
     _warn(registry)
     _emit(args, {"providers": rows}, render.health)

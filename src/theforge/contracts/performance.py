@@ -18,11 +18,20 @@ PERFORMANCE_SCHEMA = "theforge/ProviderPerformance/v1"
 
 @dataclass(frozen=True, kw_only=True)
 class ProviderCapabilityPerformance:
-    """Measured statistics of one provider executing one capability."""
+    """Measured statistics of one provider executing one capability.
+
+    ``surface`` is the ``ProviderSurfaceIdentity.surface_fingerprint`` of the
+    manifest the runs executed against: a provider that changes its surface
+    starts a fresh history — old entries stay recorded (scoped, never silently
+    reused) and only answer ``score`` for their own fingerprint. Entries
+    written before surfaces existed carry ``None`` and never match a real
+    fingerprint.
+    """
 
     provider: str
     capability: str
     runs: int  # provider runs measured (execute attempted)
+    surface: str | None = None
     ok: int
     partial: int
     failed: int  # provider_failure + refused + error envelope outcomes
@@ -66,11 +75,13 @@ class ProviderPerformance:
         if self.schema != PERFORMANCE_SCHEMA:
             raise ContractError(
                 f"unsupported schema {self.schema!r}, expected {PERFORMANCE_SCHEMA!r}")
-        keys = [(e.provider, e.capability) for e in self.entries]
+        keys = [(e.provider, e.capability, e.surface) for e in self.entries]
         if len(keys) != len(set(keys)):
-            raise ContractError("provider-performance: duplicate provider/capability")
+            raise ContractError(
+                "provider-performance: duplicate provider/capability/surface")
 
-    def score(self, provider: str, capability: str) -> tuple[float, float, float, int]:
+    def score(self, provider: str, capability: str,
+              surface: str | None = None) -> tuple[float, float, float, int]:
         """Measured-history key — higher is better, for tie-break only (H5).
 
         Ordered (verified-run rate, delivered rate, negated mean latency, runs):
@@ -78,9 +89,14 @@ class ProviderPerformance:
         count last so a long mediocre history never beats a short clean one on
         volume. No entry (or no runs) yields the all-zero floor, so providers
         without history tie each other and lose to any clean one.
+
+        ``surface`` scopes the lookup: only history recorded against that exact
+        surface fingerprint counts — a changed surface never inherits it, and a
+        ``None`` argument matches only legacy entries that recorded no surface.
         """
         entry = next((e for e in self.entries
-                      if e.provider == provider and e.capability == capability), None)
+                      if e.provider == provider and e.capability == capability
+                      and e.surface == surface), None)
         if entry is None or entry.runs <= 0:
             return (0.0, 0.0, 0.0, 0)
         return (entry.verified_runs / entry.runs,
