@@ -854,3 +854,42 @@ evidência emitida) — o mesmo mecanismo opt-in das chaves `decision`,
 **Testes.** O e2e novo + asserções de posição/risco no teste unitário de
 `compose_decision`; seed de fuzz do `DecisionRecord` cobre os campos
 novos; schema regenerado (`DecisionRecord.schema.json`).
+
+## Wave P — Benchmark cross-forge real
+
+`run_bench.py` mede etapas internas sobre workspaces sintéticos; a Wave P
+adiciona `scripts/bench/run_runs_bench.py`, que mede **runs inteiros** pela
+superfície real: cada caso executa o pipeline completo — scan, routing, risco,
+contexto, transporte subprocesso (Forge Protocol v1), verificação,
+persistência, receipt — sobre os providers de fixture, o mesmo argv que o kit
+de conformidade certifica. Offline e sem credenciais: os fixtures reexecutam
+comportamento declarado; se os especialistas reais se comportam igual fica com
+a suíte opt-in (`docs/real-providers.md`).
+
+Os 8 casos exigidos: `single_spark`, `single_api`, `pipeline` (Spark→API com
+handoff), `ambiguous` (empate spark/spark-b, sem execução), `high_risk`
+(capability `destructive` recusada pela política antes de contexto/execução),
+`semantic_fallback` (o mesmo empate resolvido pelo `fixture-resolver`),
+`parallel` (dois nós independentes + um dependente) e `debate` (dois proposers
++ referee, `DecisionRecord` persistido). Cada caso afirma o status esperado —
+um outcome errado falha o caso, não vira métrica.
+
+Métricas por caso, **lidas dos artefatos persistidos** do run e de seus filhos
+(`telemetry`, `handoff`, `plan-result`), nunca de objetos vivos: `context_bytes`,
+`provider_calls` (`providers_executed`, incluindo estimativas `plan` do root),
+`semantic_calls` (planner + resolver), `handoff_bytes`, `verification_calls`
+(spans `verification`) e `status`. Wall time: mediana/p90 sobre N repetições
+com uma de aquecimento não cronometrada (cache de describe do registry).
+
+Decisão de medição: cada repetição recebe um workspace **novo** — caso
+contrário o histórico de intel/performance da rep N-1 alimentaria o routing da
+rep N (a ambiguidade seria resolvida pelo histórico do ADR 0022 em vez do
+resolver, e `semantic_calls` variaria entre reps). Saída
+`theforge-bench-runs/v1` com `origin` no formato de `theforge-bench/v1`;
+`--check`/`--budgets-from`/`--results` seguem a disciplina do `run_bench.py`.
+
+Fixture novo: `fixture-risky.json` (capability `data.destroy`,
+`operation_class: destructive`) — o caso `high_risk` mede o caminho de recusa
+de política, não a execução. Testes: `tests/test_runs_bench.py` (cobertura dos
+8 casos, formato do relatório, roundtrip/budgets e quatro runs reais de
+fixture que exercitam a extração de métricas contra artefatos persistidos).

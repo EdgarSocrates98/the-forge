@@ -1,0 +1,23 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-risky",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "execute"],
+  "domains": ["operations"],
+  "capabilities": [
+    {
+      "id": "data.destroy",
+      "actions": ["drop"],
+      "default_action": "drop",
+      "state": "supported",
+      "operation_class": "destructive",
+      "description": "Drop datasets and tables (destructive, policy-gated)",
+      "signals": {
+        "keywords": ["__risky_internal__"],
+        "file_globs": [],
+        "dependencies": []
+      }
+    }
+  ]
+}
