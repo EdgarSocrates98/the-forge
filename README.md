@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="Forge Doctor" width="440">
+  <img src="docs/assets/logo.png" alt="The Forge" width="440">
 </p>
 
 # The Forge
