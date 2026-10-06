@@ -1,5 +1,6 @@
 Run:         <RUN>  status: ok
 Task:        "avalie esse contrato OpenAPI" (targets: api; profile: auto->economy)
+Complexity:  trivial score=0.10 confidence=0.85   auto->economy: level trivial -> economy
 Budget:      economy  context 65536B/16 files  providers≤1  60.0s
 Candidates:  fixture-api/api.contract  file_globs[openapi.yaml] keywords[contrato,openapi]  rank=[2]  state=supported
 Selected:    fixture-api api.contract:review (primary)   pattern: route
@@ -23,6 +24,7 @@ Receipt:     budget=<HASH> complexity=<HASH> context=<HASH> risk=<HASH> routing_
 Provider:    fixture-api 0.0.1 (trust: local)
 Evidence:    1 (observed=1)   duration=<MS>
 Verification: self_report=reported provider_evidence=reported forge=passed independent=not_performed
+  independent: no independent verifier for fixture-api/api.contract: no provider declares can_verify
 Reproducibility: partially_reproducible (provider does not declare deterministic execution; context verification not performed at level minimal)
 Limitations: complexity: repositories: unknown: no workspace descriptor
              complexity: technologies: unknown: no workspace descriptor

@@ -83,6 +83,15 @@ def build_parser() -> argparse.ArgumentParser:
     cap_search.add_argument("query")
     cap_search.set_defaults(handler=commands.cmd_capabilities_search)
 
+    graph = sub.add_parser(
+        "graph", parents=[common],
+        help="the capability graph: declared+observed relations of the registry "
+             "and workspace (cached manifests only, no provider process)")
+    graph.add_argument("--ref", metavar="CAPABILITY",
+                       help="only the edges touching this capability "
+                            "('provider/capability' or a bare capability id)")
+    graph.set_defaults(handler=commands.cmd_graph)
+
     providers = sub.add_parser("providers", help="provider operations") \
         .add_subparsers(dest="providers_command", required=True)
     providers.add_parser("health", parents=[common]) \

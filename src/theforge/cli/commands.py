@@ -224,6 +224,48 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
     return 0 if all(row["status"] in ("ok", "degraded") for row in rows) else 1
 
 
+def cmd_graph(args: argparse.Namespace) -> int:
+    """``theforge graph``: the declared+observed capability graph of the registry
+    and workspace (Wave B structure, Wave Q surface). Cached manifests only — no
+    provider process starts, like ``workspace show`` (7.8). ``--ref`` restricts
+    the listing to the edges touching that capability (``p/c`` or bare ``c``)."""
+    from theforge.capability_graph import build_capability_graph
+
+    root = _root(args)
+    registry = Registry(find_forge_dir(root))
+    records = registry.cached_records()
+    # ``.``: the observed half of the graph (technologies -> relevant_to) needs
+    # the real scan, not the empty one ``workspace show`` uses for cheapness.
+    descriptor = describe_workspace(root, records, scan_workspace(root, ["."]))
+    cached = {record.entry.id for record in records}
+    missing = [f"provider {entry.id}: no cached manifest, its signals were not used "
+               "(run `theforge registry refresh`)"
+               for entry in registry.entries() if entry.id not in cached]
+    graph = build_capability_graph(records, descriptor)
+    data: dict[str, Any] = {**to_dict(graph), "ref": args.ref}
+    if args.ref:
+        edges = [e for e in data["edges"]
+                 if _cap_match(str(e.get("source", "")), args.ref)
+                 or _cap_match(str(e.get("target", "")), args.ref)]
+        keep = {str(e.get("source")) for e in edges} | {str(e.get("target")) for e in edges}
+        data["edges"] = edges
+        data["nodes"] = [n for n in data["nodes"]
+                         if _cap_match(str(n.get("id", "")), args.ref)
+                         or n.get("id") in keep]
+    if missing:
+        data["limitations"] = [*(data.get("limitations") or []), *missing]
+    _warn(registry)
+    _emit(args, redact(data), render.graph)
+    return 0
+
+
+def _cap_match(node_id: str, ref: str) -> bool:
+    """``p/c`` matches exactly; bare ``c`` matches ``capability:*/c``."""
+    key = node_id.removeprefix("capability:")
+    return node_id.startswith("capability:") and (
+        key == ref or ("/" not in ref and key.endswith(f"/{ref}")))
+
+
 def cmd_provider_init(args: argparse.Namespace) -> int:
     from theforge.scaffold import init_provider
 
@@ -312,6 +354,11 @@ def cmd_plan(args: argparse.Namespace) -> int:
         "result": to_dict(outcome.result) if outcome.result else None,
         "installation": store.read_optional(outcome.run_id, "installation"),
         "decision": store.read_optional(outcome.run_id, "decision"),
+        "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
+        "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
+        "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),
+        "complexity": store.read_optional(outcome.run_id, "complexity"),
+        "budget": store.read_optional(outcome.run_id, "budget"),
         "error": to_dict(outcome.error) if outcome.error else None,
         "error_family": error_family(outcome.error.code) if outcome.error else None,
     })
@@ -352,6 +399,11 @@ def cmd_resume(args: argparse.Namespace) -> int:
         "result": to_dict(outcome.result) if outcome.result else None,
         "installation": store.read_optional(outcome.run_id, "installation"),
         "decision": store.read_optional(outcome.run_id, "decision"),
+        "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
+        "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
+        "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),
+        "complexity": store.read_optional(outcome.run_id, "complexity"),
+        "budget": store.read_optional(outcome.run_id, "budget"),
         "error": to_dict(outcome.error) if outcome.error else None,
         "error_family": error_family(outcome.error.code) if outcome.error else None,
     })

@@ -893,3 +893,46 @@ Fixture novo: `fixture-risky.json` (capability `data.destroy`,
 de política, não a execução. Testes: `tests/test_runs_bench.py` (cobertura dos
 8 casos, formato do relatório, roundtrip/budgets e quatro runs reais de
 fixture que exercitam a extração de métricas contra artefatos persistidos).
+
+## Wave Q — CLI: `graph`, explain "porquê" e payloads completos
+
+Avaliação da superfície de inspeção pedida pela spec (`inspect`, `resume`,
+`trace`, `decisions`, `budget`, `graph`): `resume`/`trace`/`decisions` já
+existem (Waves F/J/I); `inspect` e `budget` foram **rejeitados como verbos** —
+a decisão e a cobertura estão documentadas em `docs/cli.md`
+("Comandos deliberadamente ausentes"): `status`/`doctor`/`explain`/`trace`
+já cobrem inspeção, e `plan` grava o artefato `budget` mesmo sem `--execute`
+(a forma barata de ver um `RunBudget` é `plan` + `explain`).
+
+**`theforge graph`** (novo): expõe o grafo de capabilities — a estrutura que a
+Wave B já persistia como artefato `capability-graph` nos runs de plano, antes
+invisível fora do explain. Read-only por construção: deriva só dos manifests do
+cache do registry (`cached_records`, como `workspace show`) — nenhum processo de
+provider inicia; um provider configurado sem cache vira limitação
+`no cached manifest`, não um describe. O scan real do workspace (`scan "."`)
+alimenta a metade observada do grafo (`uses_technology`, `relevant_to`). Cada
+aresta sai com epistemic + evidence; `--ref <cap>` filtra o subgrafo que toca a
+capability (`p/c` exato, `c` nua casa `*/c`) — e o filtro age sobre os dados
+emitidos, então texto e `--json` concordam.
+
+**Explain "porquê".** Quatro linhas aditivas respondem o que a saída anterior
+só deixava implícito: `Complexity:` (level/score/confidence/`requested->selected`
++ `profile_reason` — avaliação medida) após `Task:`; `Resolved: semantically ->`
+com rationale e alternativas quando o run gravou `routing-proposal` (a proposta
+é evidência da escolha, não sinal medido); `Planner:` com confidence/rationale/
+assumptions nos planos `source: semantic`; `Graph:` com o resumo do
+capability-graph que o planner viu. Na verificação, `independent` passa a nomear
+o verificador (`independent=passed (fixture-verifier)`, extraído do `basis`
+`verifier:<id>`) e um `not_performed` explica o motivo.
+
+**Payloads.** `plan --json` e `resume --json` passam a emitir os artefatos
+persistidos relevantes — `decision`, `semantic_proposal`, `routing_proposal`,
+`capability_graph`, `complexity`, `budget` — todos `null` quando o run não os
+produziu, lidos de disco (não de objetos vivos).
+
+**Testes** (`tests/test_graph_cli.py`, 6): grafo com relações declaradas e
+observadas (incl. `relevant_to` via requirements.txt num repo git), filtro
+`--ref` nas duas formas com paridade JSON/texto, prova de não-spawn (provider
+sem cache vira limitação, não nó), grafo vazio sem `.forge` (exit 0), e e2e do
+explain mostrando `Complexity:`/`Graph:` num plano executado e
+`Resolved: semantically`/`independent=passed (fixture-verifier)` num ask.

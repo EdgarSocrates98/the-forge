@@ -123,9 +123,11 @@ Integrity:   ok (7 checked)
 Not recorded: none
 ```
 
-- `Provider` (com a versão observada quando difere da declarada), `Evidence` (contagem por status epistêmico e duração), `Verification` (os quatro níveis; detalhes de uma checagem `failed` em linhas abaixo) e `Reproducibility` (nível e motivos; `unknown` com `not recorded` em runs anteriores a esta versão).
+- `Provider` (com a versão observada quando difere da declarada), `Evidence` (contagem por status epistêmico e duração), `Verification` (os quatro níveis; detalhes de uma checagem `failed` em linhas abaixo; `independent` passa a nomear o verificador — `independent=passed (fixture-verifier)` — e um `not_performed` explica o motivo) e `Reproducibility` (nível e motivos; `unknown` com `not recorded` em runs anteriores a esta versão).
+- `Complexity:` logo após `Task:` quando o run gravou `complexity`: `level`, `score`, `confidence` e `requested->selected` com o `profile_reason` — o porquê do perfil efetivo (avaliação medida, não raciocínio).
+- `Resolved: semantically -> <provider>/<capability>:<action>` logo após as notas de routing quando o run gravou `routing-proposal`: a escolha do resolver semântico com `confidence`, `rationale` e `alternatives` — a proposta é evidência da escolha, não sinal medido ([ADR 0025](adr/0025-semantic-routing-fallback.md)).
 - `Plan run: <id> (node <nó>)` num run de nó, `Replay of: <id>` num run criado por `replay --mode execute` e `Resumed from: <id>` num run criado por `resume`; nós reutilizados pelo resume aparecem como `(reused)` e retentativas como `xN attempts`.
-- Num run de plano: `Plan` (status, padrão, origem e perfil), `Nodes` (um por linha: provider, capability e ação, dependências com status epistêmico, regra e evidência, desfecho, run e `blocked_by`), `Violations`, `Handoffs` (origem → destino, itens, truncado), `Synthesis`, `Failures`, `Plan result` (status, ordem efetiva, reprodutibilidade combinada), `Workspace` (repositórios, tecnologias, relações) e `Install` (itens do plano de instalação).
+- Num run de plano: `Graph` (resumo do `capability-graph` que o planner viu), `Plan` (status, padrão, origem e perfil), `Planner` (a proposta semântica com `confidence`, `rationale` e `assumptions`, quando `source: semantic`), `Nodes` (um por linha: provider, capability e ação, dependências com status epistêmico, regra e evidência, desfecho, run e `blocked_by`), `Violations`, `Handoffs` (origem → destino, itens, truncado), `Synthesis`, `Failures`, `Plan result` (status, ordem efetiva, reprodutibilidade combinada), `Workspace` (repositórios, tecnologias, relações) e `Install` (itens do plano de instalação).
 - `Error family` quando o run tem erro, `Limitations`, `Unknowns`, `Integrity` e `Not recorded` (seções esperadas sem dado gravado).
 - `Integrity`: `ok (N checked[, M unrecorded])` ou `N divergence(s)` seguido de uma linha `<tipo> <artefato>` por divergência (`modified`, `missing` ou `unreadable`; `work/<path>` para um artifact do provider, `<run>/<artefato>` para um run de nó). Com divergência o exit é 6 e o stderr traz uma linha `theforge: integrity divergence: <n> artifact(s) diverge [FORGE-PERSIST-DIVERGENCE · persistence]`; o que é conferido está em [security.md](security.md#integridade-de-runs-e-âncora-de-confiança).
 
@@ -182,7 +184,24 @@ Explain:     theforge explain <run_id>
   ```
 - **Perfil.** Só `max` permite mais de um provider (até 4). Em `economy` e `balanced` uma tarefa que precisaria de vários providers usa a decisão de routing de um provider: um nó `route` quando ela seleciona um, senão `ambiguous`/`no_route` (exit 3); havendo vários providers qualificados, o run registra a limitação `multi-provider decomposition not allowed by profile`. Limite de 8 nós por plano.
 - Provider referenciado ausente, inválido, incompatível ou indisponível aparece em `Install:` (plano de instalação somente de planejamento: nada é baixado nem executado).
-- `--approve`, `--allow-unverified` e `--target` têm o mesmo sentido de `ask`. `--json` emite `run_id`, `status`, `plan`, `result` (`PlanResult`), `installation`, `error` e `error_family`.
+- `--approve`, `--allow-unverified` e `--target` têm o mesmo sentido de `ask`. `--json` emite `run_id`, `status`, `plan`, `result` (`PlanResult`), `installation`, `decision` (`DecisionRecord` num debate), `semantic_proposal` (planner semântico), `routing_proposal` (resolver semântico num nó ambíguo), `capability_graph`, `complexity` (`ComplexityAssessment`), `budget` (`RunBudget`), `error` e `error_family` — todos lidos dos artefatos gravados, ou `null` quando o run não os produziu.
+
+## `graph`
+
+`theforge graph` mostra o grafo de capabilities do workspace ([architecture.md](architecture.md), ADR implícito da Wave B): as relações declaradas (`produces`, `consumes`, `requires`, `complements`, `conflicts`, `can_verify`, `can_review`, `in_domain`, `has_capability`, `has_action`) mais as observadas (`uses_technology`, `relevant_to` entre um capability e uma tecnologia do workspace), cada aresta com seu status epistêmico e sua evidência. É a mesma estrutura persistida como artefato `capability-graph` nos runs de plano — aqui derivada dos manifests **em cache**, sem iniciar nenhum processo de provider (como `workspace show`); um provider configurado sem cache vira a limitação `provider <id>: no cached manifest` (rode `theforge registry refresh`).
+
+```
+$ theforge graph
+Capability graph: 3 provider  4 capability  9 action  2 domain  (18 edges)
+produces:
+  capability:fixture-spark/spark.performance -> artifact_type:spark.analysis-report (explicit: fixture-spark/spark.performance relations.produces)
+can_verify:
+  capability:fixture-verifier/audit.verify -> capability:fixture-spark/spark.performance (explicit: fixture-verifier/audit.verify relations.can_verify)
+...
+```
+
+- `--ref <capability>` restringe a visão às arestas que tocam aquela capability — `p/c` casa exatamente, `c` nua casa `*/c` em todos os providers. O `--json` emite o mesmo subgrafo filtrado (`nodes`, `edges`, `limitations`, `ref`).
+- Exit 0 mesmo sem `.forge` ou sem providers (visão vazia); `describe`/`health`/`execute` nunca são chamados.
 
 ## `workspace show`
 Descreve o workspace sem iniciar nenhum processo de provider: repositórios (raiz e subdiretórios até 3 níveis, sem seguir symlinks), o resumo git de cada um, tecnologias com o arquivo de evidência, relações (`contains` observada e `depends_on` declarada em `.forge/config/workspace.toml`), limitações e incógnitas. Usa só os manifests do cache do registry; um provider configurado sem cache vira a limitação `provider <id>: no cached manifest, its signals were not used` (rode `theforge registry refresh`). `--json` emite o `WorkspaceDescriptor` redigido. Exit 0.
@@ -223,7 +242,7 @@ Só `depends_on` entre dois repositórios descobertos é aceito; uma entrada inv
 - **Revalidação**: o plano gravado é rechecado contra o registry atual — um provider que sumiu ou perdeu a capability recusa o resume (`FORGE-PLAN-*`, exit 4). Um run desconhecido ou sem `plan` é erro de uso (exit 2).
 - **Retry**: `retry.toml` (usuário em `THEFORGE_CONFIG_DIR`, projeto em `.forge/config/`; o projeto vence por chave) habilita retentativa de falhas transitórias de protocolo: `[retry] max_attempts = 1..5`, `retryable_codes` (default `FORGE-PROTO-TIMEOUT`, `FORGE-PROTO-EXIT`), `backoff_seconds`/`backoff_cap_seconds` (exponencial determinístico, sem jitter). O default é `max_attempts = 1` — nunca retenta — e recusas/policy nunca retentam. `NodeOutcome.attempts` conta as tentativas; cada tentativa é um run filho com recibo próprio.
 
-`--json` emite `run_id`, `status`, `resumed_from`, `plan`, `result` (com `reused`/`attempts` por nó), `installation`, `decision` e `error`/`error_family`.
+`--json` emite `run_id`, `status`, `resumed_from`, `plan`, `result` (com `reused`/`attempts` por nó), `installation`, `decision`, `semantic_proposal`, `routing_proposal`, `capability_graph`, `complexity`, `budget` e `error`/`error_family`.
 
 ## `trace`
 
@@ -247,6 +266,13 @@ Limitations: none
 - Spans de run `plan`: `scan`, `planning` (routing + decomposição + validação), `node:<id>` por nó (atributos: provider/capability/ação/role + `outcome`, `attempts` > 1 e `reused` quando houver) com `handoff` aninhado, e `synthesis`.
 - Um span `ERROR` marca a etapa que lançou — o detalhe da falha está em `error`/`diagnostic` do run, não no span.
 - Run desconhecido é erro de uso (exit 2). Um run sem artefato `telemetry` reporta `no telemetry recorded` em `Limitations:` (exit 0). `--json` emite `run_id`, `status`, `kind`, `spans` e `limitations`.
+
+## Comandos deliberadamente ausentes
+
+Dois verbos foram avaliados e **não** existem, para não duplicar a superfície:
+
+- **`inspect`** — a inspeção já está coberta por quatro comandos complementares: `status`/`doctor` (saúde operacional do workspace e do registry), `explain <run>` (por que um run decidiu o que decidiu, com todos os artefatos) e `trace <run>` (o que aconteceu, span a span). Um `inspect` genérico seria um quinto nome para o mesmo conteúdo.
+- **`budget`** — `theforge plan` grava o artefato `budget` (`RunBudget/v1`) mesmo sem `--execute`: a forma barata de ver o orçamento de uma tarefa é `plan "<texto>"` sem executar, seguido de `explain <run>` (linha `Budget:`), ou `plan --json` (chave `budget`).
 
 ## Variáveis de ambiente
 | Variável | Efeito |
