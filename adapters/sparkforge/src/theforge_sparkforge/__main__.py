@@ -70,6 +70,10 @@ def manifest(exposure: catalog.Exposure) -> dict[str, Any]:
         "limitations": exposure.limitations,
         "unknowns": [],
         "context_revalidation": CONTEXT_REVALIDATION,
+        # ``pyspark.static-analysis`` owns the upstream intake: the handoff
+        # feature is backed by a capability flag and declared here so
+        # negotiation does not depend on the reader deriving it.
+        "features": ["handoff/v1"],
         "adapter_version": VERSION,
         "native_surface_fingerprint": exposure.native_fingerprint or None,
     }

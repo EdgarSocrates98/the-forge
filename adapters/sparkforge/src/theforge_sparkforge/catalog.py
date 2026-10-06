@@ -65,7 +65,13 @@ class ArgBinding:
 
 @dataclass(frozen=True)
 class CapabilitySpec:
-    """One capability: its actions ``(action, native tool)`` in declaration order."""
+    """One capability: its actions ``(action, native tool)`` in declaration order.
+
+    ``accepts_handoff``: the first action's native tool admits a translated
+    ``theforge/Handoff/v1`` (``theforge_sparkforge.handoff`` -> the specialist's
+    upstream-facts document). ``consumes`` names the artifact types that intake
+    consumes — the capability-graph edges.
+    """
 
     id: str
     description: str
@@ -73,6 +79,8 @@ class CapabilitySpec:
     signals: SignalsSpec
     bindings: Mapping[str, ArgBinding] = field(default_factory=dict)  # tool -> binding
     unbound: Mapping[str, str] = field(default_factory=dict)  # tool -> why no binding
+    accepts_handoff: bool = False
+    consumes: tuple[str, ...] = ()
 
 
 def action_name(tool: str) -> str:
@@ -128,6 +136,11 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
         bindings={_analyze("pyspark"): _path(PYSPARK_GLOBS),
                   _analyze("graph"): _path(PYSPARK_GLOBS)},
         unbound={_analyze("call_graph"): FACTS_INPUT},
+        # The observe -> engineer edge: Doctor Data's diagnostics reach
+        # `analyze pyspark` as a translated sparkforge/upstream-facts/v1
+        # document (sparkforge >= the upstream intake).
+        accepts_handoff=True,
+        consumes=("data.diagnostic-evidence",),
     ),
     CapabilitySpec(
         id="spark.runtime-analysis",
@@ -452,7 +465,7 @@ def exclusion(tool: str, binding: ArgBinding | None, unbound: str | None,
 
 
 def _capability(entry: CapabilitySpec, actions: Sequence[str]) -> dict[str, Any]:
-    return {
+    capability = {
         "id": entry.id,
         "actions": list(actions),
         "default_action": actions[0],
@@ -462,7 +475,13 @@ def _capability(entry: CapabilitySpec, actions: Sequence[str]) -> dict[str, Any]
         "signals": {"keywords": list(entry.signals.keywords),
                     "file_globs": list(entry.signals.file_globs),
                     "dependencies": list(entry.signals.dependencies)},
+        # The intake lives on the spec's first action; if it was excluded,
+        # surviving actions do not admit a handoff.
+        "accepts_handoff": entry.accepts_handoff and entry.actions[0][0] in actions,
     }
+    if entry.consumes:
+        capability["relations"] = {"consumes": list(entry.consumes)}
+    return capability
 
 
 def _group(tools: Sequence[str], reason: str) -> str:

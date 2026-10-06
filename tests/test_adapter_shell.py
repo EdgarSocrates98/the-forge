@@ -50,10 +50,9 @@ ADAPTERS = {
                   "forge-doctor-api", ">=0.2.0,<0.3.0"),
 }
 # Adapter release versions (semver of each distribution): bumps track surface
-# changes per docs/versioning.md — sparkforge stays 0.2.0 until its handoff
-# intake lands (cycle 3.1 wave E).
+# changes per docs/versioning.md.
 ADAPTER_VERSION = {
-    "sparkforge": "0.2.0",
+    "sparkforge": "0.3.0",
     "apiforge": "0.3.0",
     "doctordata": "0.3.0",
     "doctorapi": "0.3.0",
@@ -172,7 +171,7 @@ TEST_PRODUCER = ("shell-test-forge", "9.8.7")
 # provider -> (argv prefix, (producer id, producer version))
 SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     "test-handlers": ([sys.executable, str(SHELL_FORGE)], TEST_PRODUCER),
-    "sparkforge": ([sys.executable, "-m", "theforge_sparkforge"], ("spark-forge", "0.2.0")),
+    "sparkforge": ([sys.executable, "-m", "theforge_sparkforge"], ("spark-forge", "0.3.0")),
     "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.3.0")),
     "doctordata": ([sys.executable, "-m", "theforge_doctordata"],
                    ("forge-doctor-data", "0.3.0")),

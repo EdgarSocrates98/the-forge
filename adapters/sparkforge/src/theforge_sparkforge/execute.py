@@ -37,6 +37,7 @@ from typing import Any
 
 from theforge_sparkforge import PROVIDER_ID, VERSION, backend, catalog, translate
 from theforge_sparkforge._shell import (
+    STAGE_DIR,
     AdapterOptions,
     NativeOutcome,
     OpHandler,
@@ -51,6 +52,7 @@ from theforge_sparkforge._shell import (
     select_inputs,
     stage_context,
 )
+from theforge_sparkforge.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
 
 NATIVE_MODULE = "theforge_sparkforge.native_call"
 NATIVE_FAILED = "SPARKFORGE-ADAPTER-NATIVE-FAILED"
@@ -62,6 +64,71 @@ _RECORDING_KEYS = {"tool", "arguments", "output", "judge"}
 _STAGE_PREFIX = re.compile(r"(?<![\w.\-/\\])stage[/\\]")
 
 Runner = Callable[..., NativeOutcome]
+
+
+def _upstream_files(payload: Mapping[str, Any], entry: catalog.CapabilitySpec,
+                    action: str, cwd: Path
+                    ) -> tuple[dict[str, str], list[str]]:
+    """Translate a delivered handoff into the action's upstream-facts file.
+
+    Returns ``{upstream: upstream-facts.json}`` (stage-relative, as ``--file``
+    arguments expect) plus the translation's limitations; or ``({}, [])`` when
+    the request carries no handoff or the action does not own the intake. The
+    document lands inside ``stage/`` so the native side reads a file under the
+    staged tree like every other input.
+    """
+    if not isinstance(payload.get("handoff"), Mapping):
+        return {}, []
+    if not entry.accepts_handoff:
+        return {}, ["handoff delivered but not consumed: capability "
+                    f"'{entry.id}' declares no upstream intake"]
+    if action != entry.actions[0][0]:
+        return {}, ["handoff delivered but not consumed: the intake belongs to action "
+                    f"'{entry.actions[0][0]}'"]
+    document, notes = translate_handoff(payload["handoff"])
+    stage = cwd / STAGE_DIR
+    stage.mkdir(parents=True, exist_ok=True)
+    name = UPSTREAM_FILE
+    if (stage / name).exists():
+        # A staged workspace file is never shadowed by the intake document.
+        stem = UPSTREAM_FILE.removesuffix(".json")
+        count = 2
+        while (stage / f"{stem}-{count}.json").exists():
+            count += 1
+        name = f"{stem}-{count}.json"
+    (stage / name).write_text(
+        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8")
+    return {UPSTREAM_ARG: name}, notes
+
+
+def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *,
+                    live: bool) -> list[str]:
+    """The limitation a call owes when the delivered handoff was not consumed.
+
+    Live, consumption shows under ``output.filters_applied.upstream`` (an older
+    Spark Forge ignores the argument silently — the audit, not a crash, reports
+    the gap). In replay no specialist runs: the evidence is the recorded
+    ``arguments.upstream``. A recording that consumed a handoff this request
+    does not carry is reported too — its foreign facts are not this run's.
+    """
+    output = recorded.get("output")
+    filters = output.get("filters_applied") if isinstance(output, Mapping) else None
+    consumed = isinstance(filters, Mapping) and bool(filters.get(UPSTREAM_ARG))
+    arguments = recorded.get("arguments")
+    recorded_arg = isinstance(arguments, Mapping) and bool(arguments.get(UPSTREAM_ARG))
+    if had_handoff:
+        if consumed or (not live and recorded_arg):
+            return []
+        if live:
+            return ["handoff delivered but not consumed: the installed Spark Forge has "
+                    "no upstream intake on analyze pyspark "
+                    "(filters_applied.upstream absent)"]
+        return ["handoff delivered but not consumed: the recorded run of this action "
+                "carries no upstream intake (re-record with a handoff)"]
+    if consumed or recorded_arg:
+        return ["the recorded run consumed a handoff this request does not carry"]
+    return []
 
 
 def workspace_detail(reply: Reply) -> Reply:
@@ -158,14 +225,22 @@ def execute(options: AdapterOptions, request: Request, cwd: Path, *,
     entry = catalog.spec(capability)
     tool = catalog.tool_for(capability, action)
     binding = entry.bindings.get(tool) if entry is not None and tool is not None else None
-    if tool is None or binding is None:  # the gate only lets declared, bound actions through
+    if entry is None or tool is None or binding is None:
+        # the gate only lets declared, bound actions through
         raise RuntimeError("declared action without a binding")
     stage: StagedInput = stage_context(payload, cwd)
     required = {binding.arg: binding.globs}
     empty = no_input(stage, required, provider_id=PROVIDER_ID, version=VERSION)
     if empty is not None:
+        if isinstance(payload.get("handoff"), Mapping):
+            empty = replace(empty, limitations=[*empty.limitations,
+                            "handoff delivered but not consumed: no input staged"])
         return finalize(empty, cwd)
     files, notes = bound_files(binding, select_inputs(stage, required)[binding.arg])
+    upstream_files, upstream_notes = (
+        ({}, []) if options.replay is not None
+        else _upstream_files(payload, entry, action, cwd))
+    files.update(upstream_files)
     recorded = (_replay_recording(options.replay, capability, action, tool)
                 if options.replay is not None
                 else _live_recording(payload, cwd, tool, files, run))
@@ -174,6 +249,9 @@ def execute(options: AdapterOptions, request: Request, cwd: Path, *,
     draft = translate.translate_recording(recorded, stage)
     if isinstance(draft, Reply):
         return workspace_detail(draft)
+    notes += upstream_notes
+    notes += _upstream_audit(recorded, isinstance(payload.get("handoff"), Mapping),
+                             live=options.replay is None)
     if notes:
         draft = replace(draft, limitations=[*draft.limitations, *notes])
     return finalize(draft, cwd)

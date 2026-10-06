@@ -89,7 +89,7 @@ def _call(op: str, *options: str, payload: dict[str, Any] | None = None) -> Resp
                              timeout=60, cwd=cwd)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.2.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.3.0")
     assert response.request_id == f"req-{op}"
     return response
 
@@ -120,7 +120,7 @@ def snapshot() -> dict[str, Any]:
 
 def test_replay_describe_manifest_passes_taxonomy_and_limits(manifest: ForgeManifest) -> None:
     assert manifest.id == "spark-forge"
-    assert manifest.version == "0.2.0"
+    assert manifest.version == "0.3.0"
     assert manifest.protocols == ["forge/v1"]
     assert set(manifest.ops) == {"describe", "health", "execute"}
     assert manifest.domains == ["data-engineering"]
@@ -696,7 +696,7 @@ ANALYZE_TOOL, JUDGE_TOOL = "sparkforge_analyze_pyspark", "sparkforge_judge"
 OUTPUT_RECORDING = DEFAULT / f"{CAPABILITY}.{ACTION}.json"
 ERROR_SCENARIO = SCENARIOS / "native-error"
 ERROR_RECORDING = ERROR_SCENARIO / f"{CAPABILITY}.{ACTION}.error.json"
-PRODUCER = {"id": "spark-forge", "version": "0.2.0"}
+PRODUCER = {"id": "spark-forge", "version": "0.3.0"}
 # Machine-specific fragments a portable recording never contains: a drive path (raw or JSON-
 # escaped; a URL scheme is followed by a second slash), a user directory, a temp directory.
 MACHINE_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:(?:\\|/(?!/))|/Users/|/home/|AppData|/tmp/",
@@ -1151,16 +1151,19 @@ RECORDED_ACTIONS = sorted(path.name[:-len(".json")].rsplit(".", 1)
 
 def _execute(cwd: Path, *options: str, capability: str = CAPABILITY, action: str = ACTION,
              files: list[str] | None = None, root: Path = WORKSPACE,
-             env: dict[str, str] | None = None) -> Response:
+             env: dict[str, str] | None = None,
+             handoff: dict[str, Any] | None = None) -> Response:
     payload = {"task": {"intent": "analyze the spark job", "budget_profile": "balanced"},
                "capability": capability, "action": action,
                **_context(root, WORKSPACE_FILES if files is None else files)}
+    if handoff is not None:
+        payload["handoff"] = handoff
     argv = [sys.executable, "-m", "theforge_sparkforge", *options, "execute"]
     out = subprocess.run(argv, input=_request("execute", payload), capture_output=True,
                          timeout=180, cwd=cwd, env=env)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.2.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.3.0")
     return response
 
 
@@ -1318,7 +1321,8 @@ RECORDING = json.loads(Path(os.environ["FAKE_SPARKFORGE_RECORDING"]).read_text("
 MODE = os.environ.get("FAKE_SPARKFORGE_MODE", "ok")
 TOOLS = {
     "sparkforge_analyze_pyspark": {"inputSchema": {"properties": {
-        "path": {}, "kind": {}, "limit": {}, "cursor": {}, "detail_level": {}}}},
+        "path": {}, "kind": {}, "limit": {}, "cursor": {}, "detail_level": {},
+        "upstream": {}}}},
     "sparkforge_analyze_graph": {"inputSchema": {"properties": {"path": {}, "limit": {}}}},
     "sparkforge_judge": {"inputSchema": {"properties": {"facts": {}, "limit": {}}}},
 }
@@ -1356,7 +1360,27 @@ def call_tool(name, arguments):
         return {"error": "Caminho nao encontrado para analise: stage/jobs/x.py", "exit_code": 2}
     if name == "sparkforge_judge":
         return RECORDING["judge"]["output"]
-    return RECORDING["output"]
+    output = dict(RECORDING["output"])
+    if MODE != "old" and arguments.get("upstream"):
+        filters = dict(output.get("filters_applied") or {})
+        filters["upstream"] = arguments["upstream"]
+        output["filters_applied"] = filters
+        items = list(output.get("items") or [])
+        items.append({
+            "id": "upstream:provider:data:item-1",
+            "kind": "upstream.evidence",
+            "subject": {"file": "jobs/x.py", "line": 4},
+            "measures": {"subject": "provider.finding"},
+            "attrs": {"upstream": {
+                "provider": "doctor-data", "run_id": "run-1", "node": "observe",
+                "item": "ev#1", "epistemic": "inferred",
+                "claim": "dataframe churned"}},
+            "provenance": {"extractor": "theforge/handoff"},
+        })
+        output["items"] = items
+        output["total_count"] = output.get("total_count", len(items)) + 1
+        output["returned_count"] = output.get("returned_count", len(items)) + 1
+    return output
 '''
 
 
@@ -1489,3 +1513,170 @@ def test_live_native_writes_to_the_stdout_fd_never_corrupt_the_answer(tmp_path: 
     assert result.status == "ok"
     assert [e.id for e in result.evidence] == [item["id"] for item in _items(_recorded())]
     assert _left_in(cwd) == set()
+
+
+# --- handoff intake (upstream-facts) ------------------------------------------------------
+
+HANDOFF_ORIGIN = {"plan_run": "plan-1", "node": "observe", "run_id": "run-1",
+                  "provider": {"id": "doctor-data", "version": "1.0.0rc1"}}
+
+
+def _handoff(*items: Any) -> dict[str, Any]:
+    return {"schema": "theforge/Handoff/v1",
+            "producer": {"id": "theforge", "version": "0.4.0"},
+            "created_at": "2026-01-01T00:00:00Z", "plan_run": "plan-1",
+            "target_node": "engineer", "items": list(items)}
+
+
+def _handoff_item(**over: Any) -> dict[str, Any]:
+    item: dict[str, Any] = {"kind": "evidence", "id": "ev#1",
+                            "origin": dict(HANDOFF_ORIGIN), "epistemic": "inferred",
+                            "subject": "pyspark.dataframe",
+                            "claim": "the dataframe is rebuilt per batch",
+                            "location": {"path": "jobs/orders_job.py", "line": 42}}
+    item.update(over)
+    return item
+
+
+def test_translate_handoff_maps_each_item_to_a_foreign_fact() -> None:
+    from theforge_sparkforge import handoff as upstream
+
+    document, notes = upstream.translate_handoff(_handoff(_handoff_item()))
+    assert notes == []
+    assert document["schema"] == "sparkforge/upstream-facts/v1"
+    (fact,) = document["facts"]
+    assert fact["id"].startswith("upstream:")
+    assert fact["kind"] == "upstream.evidence"
+    assert fact["provenance"]["extractor"] == "theforge/handoff"
+    assert "artifact" not in fact["provenance"]  # the intake stamps what it consumed
+    map_ = fact["attrs"]["upstream"]
+    assert map_["provider"] == "doctor-data" and map_["run_id"] == "run-1"
+    assert map_["node"] == "observe" and map_["item"] == "ev#1"
+    assert map_["plan_run"] == "plan-1"
+    assert map_["epistemic"] == "inferred"  # verbatim, never upgraded
+    assert map_["claim"] == "the dataframe is rebuilt per batch"
+    assert fact["subject"] == {"file": "jobs/orders_job.py", "line": 42}
+
+
+def test_translate_handoff_is_deterministic_and_bounded() -> None:
+    from theforge_sparkforge import handoff as upstream
+
+    items = [_handoff_item(id=f"ev#{n}", claim=f"claim {n}") for n in range(130)]
+    document, notes = upstream.translate_handoff(_handoff(*items))
+    assert len(document["facts"]) == 128
+    assert any("truncated to 128" in note for note in notes)
+    again, _ = upstream.translate_handoff(_handoff(*items))
+    assert again == document  # content-addressed ids: byte-identical rerun
+
+
+def test_translate_handoff_skips_malformed_items_with_a_limitation() -> None:
+    from theforge_sparkforge import handoff as upstream
+
+    document, notes = upstream.translate_handoff(
+        _handoff(_handoff_item(), {"kind": "evidence", "id": ""}, "not-a-mapping"))
+    assert len(document["facts"]) == 1
+    assert notes == ["2 handoff item(s) malformed: not translated"]
+
+
+def test_manifest_declares_the_handoff_intake_on_static_analysis(
+        manifest: ForgeManifest) -> None:
+    static = next(c for c in manifest.capabilities if c.id == "pyspark.static-analysis")
+    assert static.accepts_handoff is True
+    assert list(static.relations.consumes) == ["data.diagnostic-evidence"]
+    others = [c for c in manifest.capabilities if c.id != "pyspark.static-analysis"]
+    assert all(not c.accepts_handoff for c in others)
+    assert "handoff/v1" in manifest.features
+
+
+def test_live_execute_feeds_the_handoff_to_the_native_intake(tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, handoff=_handoff(_handoff_item())))
+    assert result.status == "ok"
+    tool_call = _probes(probe)[0]
+    assert tool_call["arguments"]["upstream"] == "stage/upstream-facts.json"
+    foreign = [e for e in result.evidence if e.id.startswith("upstream:")]
+    assert len(foreign) == 1
+    entry = foreign[0]
+    assert entry.epistemic == "inferred"  # the producer's status, verbatim
+    assert entry.derived_from is not None
+    assert entry.derived_from.provider == "doctor-data"
+    assert entry.derived_from.run_id == "run-1" and entry.derived_from.item == "ev#1"
+    assert not [n for n in result.limitations if "not consumed" in n]
+    # The intake file is staged, never left behind.
+    assert _left_in(cwd) == set()
+
+
+def test_live_execute_reports_a_handoff_the_specialist_did_not_consume(
+        tmp_path: Path) -> None:
+    env, _ = _fake_sparkforge(tmp_path, "old")  # a Spark Forge without the intake ignores it
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, handoff=_handoff(_handoff_item())))
+    assert any("handoff delivered but not consumed" in n and "upstream intake" in n
+               for n in result.limitations)
+
+
+def test_execute_without_handoff_never_writes_nor_passes_the_intake(
+        tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env))
+    assert result.status == "ok"
+    assert "upstream" not in _probes(probe)[0]["arguments"]
+    assert not [n for n in result.limitations if "handoff" in n]
+    assert _left_in(cwd) == set()
+
+
+def test_execute_on_a_capability_without_intake_reports_the_handoff(
+        tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, action="graph",
+                              handoff=_handoff(_handoff_item())))
+    assert result.status == "ok"
+    assert any("handoff delivered but not consumed" in n and "'pyspark'" in n
+               for n in result.limitations)
+    assert "upstream" not in _probes(probe)[0]["arguments"]
+    assert _left_in(cwd) == set()
+
+
+def test_replay_with_a_handoff_reports_the_recording_did_not_consume_it(
+        tmp_path: Path) -> None:
+    scenario = _replay_scenario(tmp_path, OUTPUT_RECORDING)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, "--replay", str(scenario),
+                              handoff=_handoff(_handoff_item())))
+    assert result.status == "ok"
+    assert any("handoff delivered but not consumed" in n and "recorded run" in n
+               for n in result.limitations)
+    assert _left_in(cwd) == set()  # no intake file is ever written in replay
+
+
+def test_recording_helper_feeds_a_handoff_through_the_native_intake(tmp_path: Path) -> None:
+    from theforge_sparkforge import record_execute
+
+    staged: list[Path] = []
+    output = {"items": [], "next_cursor": None}
+
+    def call(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        staged.append(Path(arguments["upstream"]))
+        return output
+
+    name, data = record_execute.record_action(
+        call, workspace=WORKSPACE, capability=CAPABILITY, action=ACTION,
+        arguments={"path": "jobs"}, accepted=_ACCEPTED | {"upstream"},
+        handoff=_handoff(_handoff_item()))
+    assert name == f"{CAPABILITY}.{ACTION}.json"
+    assert data["arguments"]["upstream"] == "upstream-facts.json"  # workspace-relative
+    # The tool saw the staged document while it existed.
+    assert staged == [Path("stage/upstream-facts.json")]
+
+
+def test_recording_helper_refuses_a_handoff_on_a_capability_without_intake() -> None:
+    from theforge_sparkforge import record_execute
+
+    with pytest.raises(record_execute.RecordingError, match="upstream intake"):
+        record_execute.record_action(_fake_call({}, []), workspace=WORKSPACE,
+                                     capability="spark.runtime-analysis", action="plan",
+                                     arguments={"path": "jobs"}, accepted=_ACCEPTED,
+                                     handoff=_handoff(_handoff_item()))
