@@ -36,6 +36,12 @@ python3.12 -m venv <api-venv>
 <api-python> -c "import apiforge, theforge_apiforge"           # deve sair 0
 ```
 
+A prova cross-forge (`test_cross_forge_real.py`) exige a entrada `--upstream` do
+`api.analyze` — `apiforge/upstream-facts/v1`, implementada na branch
+`feat/upstream-facts` do api-forge. Com um `apiforge` sem ela o adapter degrada
+com a limitação de consumo ausente (correto como comportamento) e a prova falha:
+o teste real precisa desse ref, também no workflow (`api_forge_ref`).
+
 O adapter roda em Python ≥ 3.10. Num interpretador que não é 3.12, porém, `describe` recusa com o motivo e `health` responde `unavailable` (ver [Troubleshooting](#troubleshooting)).
 
 ### Desenvolvimento neste repositório

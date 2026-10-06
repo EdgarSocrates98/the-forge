@@ -1105,3 +1105,36 @@ medição tem budget commitado.
 Como manda a spec, o planner semântico **não** entra no SLA determinístico: é
 medido separadamente pelo `run_runs_bench.py` (métrica `semantic_calls` e wall
 time por caso), com isolamento de workspace por repetição.
+
+## Wave X — Final reality test (e2e com os Forges reais)
+
+A spec exige prova real — não só contratos — da cadeia completa do ciclo 3:
+
+> task → complexity → workspace/capability graph → hybrid planner → execução
+> multi-provider → handoff → verificação → síntese → receipt → explain
+
+Ambiente montado como o `real-providers.yml` faz: `.venv-spark` (py3.11) com
+`sparkforge-aws` **de `main`** + adapter, `.venv-api` (py3.12) com `apiforge` de
+`feat/upstream-facts` + adapter — `main` do api-forge ainda não carrega a
+entrada `--upstream` (`apiforge/upstream-facts/v1`), então a prova de consumo
+de handoff exige a branch da feature; `docs/real-providers.md` registra isso.
+
+`tests/test_cross_forge_real.py` ganhou o bloco "Cycle 3 reality chain" sobre o
+mesmo run real da prova (nenhum spawn extra): `verification` como
+`VerificationResult` tipado com `independent.basis` conferido, `theforge trace`
+com spans reais do provider, `theforge graph` listando as duas capabilities
+reais, e um segundo `plan --profile auto` (sem `--execute`) provando o ramo
+medido da cadeia: `complexity` (com `profile_reason` e `confidence` medida),
+`capability-graph` e `budget` persistidos e ligados
+(`budget.profile == selected_profile`), com `explain` renderizando a linha
+`Complexity:`.
+
+Resultado: **`pytest -m real_provider` = 18/18 verde** com
+`THEFORGE_REAL_PROVIDERS_REQUIRED=1` — a cadeia inteira, incluindo os artefatos
+do ciclo 3, correu sobre subprocessos reais dos dois Forges.
+
+Achado registrado: a prova falhou na primeira tentativa porque `main` do
+api-forge (release v0.1.0) não expõe o parâmetro `upstream` de
+`analyze_project` — o adapter degrada corretamente com limitação, mas a prova
+de consumo exige a branch da feature. Nenhum defeito no core; o doc e o teste
+agora nomeiam o requisito.

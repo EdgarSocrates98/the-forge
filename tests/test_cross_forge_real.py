@@ -40,7 +40,11 @@ import real_providers as rp
 from cross_workspace import CrossWorkspace, mounted_cross_workspace
 from theforge.cli.main import main
 from theforge.contracts import PROTOCOL_V1, ExecutionReceipt, ExecutionResult
+from theforge.contracts.budget import RunBudget
+from theforge.contracts.capability_graph import CapabilityGraph
+from theforge.contracts.complexity import ComplexityAssessment
 from theforge.contracts.plan import ExecutionPlan, PlanResult
+from theforge.contracts.verification import VerificationResult
 from theforge.runs import RunStore
 from theforge.state import init_workspace
 
@@ -152,6 +156,57 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
     code, report, err = _cli(capsys, "explain", plan_run, "--root", root, "--json")
     assert code == 0, err
     assert report["kind"] == "plan" and report["integrity"]["divergences"] == []
+
+    # --- Cycle 3 reality chain (wave X): structured verification on the real
+    # provider run, plus the wave J/Q observability surfaces answering on it.
+    verified = store.read_contract(n2.run_id, "verification", VerificationResult)
+    assert verified.forge.status == "passed"
+    if verified.independent.status == "passed":
+        # Independent verification (wave G) may only rest on a verifier other
+        # than the provider it checked.
+        assert [b for b in verified.independent.basis
+                if b.startswith("verifier:") and "api-forge" not in b]
+
+    # trace of a real provider run: the span tree exists and is non-empty.
+    code, trace, err = _cli(capsys, "trace", n2.run_id, "--root", root, "--json")
+    assert code == 0, err
+    assert trace["spans"], trace
+
+    # The registry+workspace capability graph answers read-only on the mounted
+    # workspace: both real providers and both used capabilities are visible.
+    code, graph_data, err = _cli(capsys, "graph", "--root", root, "--json")
+    assert code == 0, err
+    listed = {node["id"] for node in graph_data["nodes"]}
+    assert "capability:spark-forge/pyspark.static-analysis" in listed
+    assert "capability:api-forge/api.analyze" in listed
+    assert graph_data["edges"]
+
+    # The measured branch of the chain: --profile auto is the path where the
+    # complexity engine assesses the task (a pinned profile legitimately skips
+    # the measurement). The plan run it produces must persist the assessment,
+    # the capability graph it planned over and the resolved budget — and the
+    # human explain must render the measured "why".
+    code, auto_plan, err = _cli(capsys, "plan", PROOF_TASK, "--profile", "auto",
+                                "--root", root, "--json")
+    assert code == 0 and auto_plan["status"] == "planned", (auto_plan, err)
+    auto_run = auto_plan["run_id"]
+    complexity = store.read_contract(auto_run, "complexity", ComplexityAssessment)
+    assert complexity.requested_profile == "auto"
+    assert complexity.profile_reason.strip()
+    assert 0.0 <= complexity.confidence <= 1.0
+    budget = store.read_contract(auto_run, "budget", RunBudget)
+    assert budget.profile == complexity.selected_profile
+    capability_graph = store.read_contract(
+        auto_run, "capability-graph", CapabilityGraph)
+    node_ids = {node.id for node in capability_graph.nodes}
+    for provider, capability in (("spark-forge", "pyspark.static-analysis"),
+                                 ("api-forge", "api.analyze")):
+        assert f"provider:{provider}" in node_ids
+        assert f"capability:{provider}/{capability}" in node_ids
+    code = main(["explain", auto_run, "--root", root])
+    out, err = capsys.readouterr()
+    assert code == 0, err
+    assert "Complexity:" in out, out
 
     # Live counterpart of the hand-built API Forge cross recording (drift of its shape).
     recorded = json.loads(API_RECORDING.read_text(encoding="utf-8"))["case_files"]
