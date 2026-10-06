@@ -10,7 +10,7 @@ import traceback
 from pathlib import Path, PurePath
 
 from theforge.contracts.canonical import utc_now
-from theforge.contracts.codes import family_of
+from theforge.contracts.codes import family_of, hint_of
 from theforge.contracts.diagnostic import Diagnostic, DiagnosticCause, DiagnosticFrame
 from theforge.meta import PRODUCER
 from theforge.security.redact import redact_text
@@ -31,6 +31,7 @@ def build_diagnostic(exc: BaseException, *, stage: str, code: str,
         stage=redact_text(stage),
         code=code,
         family=family_of(code),
+        hint=hint_of(code),
         error_type=type(exc).__name__,
         message=_message(exc),
         causes=[DiagnosticCause(type=type(cause).__name__, message=_message(cause))

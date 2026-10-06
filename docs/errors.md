@@ -8,6 +8,8 @@ Esta é a **lista canônica** dos códigos de erro de The Forge. Os valores fica
 
 Os demais documentos não mantêm tabela concorrente: apontam para esta página. [protocol.md](protocol.md#códigos-de-erro-do-core) só guarda uma tabela curta dos códigos de manifest e de pedido de contexto.
 
+A dica de recuperação de cada código vive em `CODE_HINTS`/`hint_of` no mesmo módulo (toda linha de erro da CLI termina com `theforge: hint: …`, e `Diagnostic.hint` a carrega). A matriz modo de falha → código, superfície e recuperação está em [failure-semantics.md](failure-semantics.md).
+
 ## Famílias
 
 | Família | Abrange |

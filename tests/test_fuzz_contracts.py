@@ -222,7 +222,9 @@ SEEDS: dict[str, dict[str, Any]] = {
     },
     "Diagnostic": {
         "producer": P, "created_at": "t", "stage": "cli:plan", "code": "FORGE-INTERNAL",
-        "family": "internal", "error_type": "RuntimeError", "message": "m",
+        "family": "internal",
+        "hint": "unexpected core error; report a bug with the --debug diagnostic output",
+        "error_type": "RuntimeError", "message": "m",
         "causes": [{"type": "OSError", "message": "c"}],
         "frames": [{"module": "theforge.cli.main", "function": "main", "line": 1}],
     },

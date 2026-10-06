@@ -139,7 +139,9 @@ def test_unreadable_plan_file_is_a_usage_error_exit_2(
     code, out, err = run(capsys, "plan", "spark", "--from", str(bad), "--root", str(tmp_path))
     assert code == 2 and out == ""
     assert err.startswith("theforge: error: ")
-    assert err.rstrip().endswith(f"[{Codes.PLAN_FILE} · plan]") and "Traceback" not in err
+    error, hint = err.rstrip().splitlines()
+    assert error.endswith(f"[{Codes.PLAN_FILE} · plan]") and "Traceback" not in err
+    assert hint.startswith("theforge: hint: ")
 
 
 def test_rejected_plan_exits_4_with_code_family_and_installation(

@@ -7,7 +7,7 @@ variables); the family is the one of the code in the single code source.
 from dataclasses import dataclass, field
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.codes import family_of
+from theforge.contracts.codes import family_of, hint_of
 from theforge.contracts.types import Producer
 
 DIAGNOSTIC_SCHEMA = "theforge/Diagnostic/v1"
@@ -40,6 +40,7 @@ class Diagnostic:
     stage: str  # e.g. "cli:plan", "forger:execute", "planning:decompose"
     code: str
     family: str | None  # family_of(code); None for native provider codes
+    hint: str | None = None  # hint_of(code); None for native provider codes
     error_type: str
     message: str  # redacted
     causes: list[DiagnosticCause] = field(default_factory=list)  # __cause__/__context__
@@ -53,3 +54,5 @@ class Diagnostic:
         if self.family != expected:
             raise ContractError(f"diagnostic family {self.family!r} does not match code "
                                 f"{self.code!r} (expected {expected!r})")
+        if self.hint is not None and self.hint != hint_of(self.code):
+            raise ContractError(f"diagnostic hint does not match code {self.code!r}")

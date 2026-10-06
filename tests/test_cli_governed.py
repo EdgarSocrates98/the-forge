@@ -59,7 +59,9 @@ def test_usage_error_shows_code_and_family(
         tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     code, _, err = run(capsys, "ask", "oi", "--root", str(tmp_path))
     assert code == 2
-    assert err.startswith("theforge: error: ") and err.rstrip().endswith("[FORGE-USAGE · usage]")
+    error, hint = err.rstrip().splitlines()
+    assert error.startswith("theforge: error: ") and error.endswith("[FORGE-USAGE · usage]")
+    assert hint.startswith("theforge: hint: ")
 
 
 def test_plan_file_usage_error_keeps_its_own_code(
@@ -71,7 +73,10 @@ def test_plan_file_usage_error_keeps_its_own_code(
     monkeypatch.setattr("theforge.cli.main.commands.cmd_status", raiser)
     code, _, err = run(capsys, "status", "--root", str(tmp_path))
     assert code == 2
-    assert err == "theforge: error: plan file is not valid JSON [FORGE-PLAN-FILE · plan]\n"
+    error, hint = err.rstrip().splitlines()
+    assert error == ("theforge: error: plan file is not valid JSON "
+                     "[FORGE-PLAN-FILE · plan]")
+    assert hint.startswith("theforge: hint: ")
 
 
 def test_persistence_error_keeps_prefix_and_exit_5(
@@ -83,8 +88,10 @@ def test_persistence_error_keeps_prefix_and_exit_5(
     code, _, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
                        "--root", str(tmp_path))
     assert code == 5
-    assert err.startswith("theforge: persistence error: ")
-    assert re.search(r"\[FORGE-PERSIST-(WRITE|READ) · persistence\]\n$", err)
+    error, hint = err.rstrip().splitlines()
+    assert error.startswith("theforge: persistence error: ")
+    assert re.search(r"\[FORGE-PERSIST-(WRITE|READ) · persistence\]$", error)
+    assert hint.startswith("theforge: hint: ")
 
 
 @pytest.mark.parametrize(("exc", "exit_code", "suffix"), [
@@ -106,7 +113,9 @@ def test_every_forge_error_is_governed(
     prefix = ("theforge: persistence error: " if isinstance(exc, PersistenceError)
               else "theforge: error: ")
     assert code == exit_code
-    assert err == f"{prefix}{exc} {suffix}\n"
+    error, hint = err.rstrip().splitlines()
+    assert error == f"{prefix}{exc} {suffix}"
+    assert hint.startswith("theforge: hint: ")
 
 
 def test_forge_error_message_is_redacted(
@@ -129,8 +138,10 @@ def test_unexpected_error_in_process_is_governed(
     monkeypatch.setattr("theforge.cli.main.commands.cmd_status", boom)
     code, _, err = run(capsys, "status", "--root", str(tmp_path))
     assert code == 70
-    assert err == ("theforge: internal error: ValueError: boom secret=[REDACTED] "
-                   "[FORGE-INTERNAL · internal]\n")
+    error, hint = err.rstrip().splitlines()
+    assert error == ("theforge: internal error: ValueError: boom secret=[REDACTED] "
+                     "[FORGE-INTERNAL · internal]")
+    assert hint.startswith("theforge: hint: ")
 
 
 def test_interrupt_is_unchanged(
@@ -152,8 +163,10 @@ def test_core_internal_failure_exits_70_without_traceback(tmp_path: Path) -> Non
     assert proc.returncode == 70
     assert "Traceback" not in proc.stderr + proc.stdout
     assert REDACTION_PROBE not in proc.stderr + proc.stdout
-    assert proc.stderr == ("theforge: internal error: RuntimeError: registry exploded "
-                           "token=[REDACTED] [FORGE-INTERNAL · internal]\n")
+    lines = proc.stderr.splitlines()
+    assert lines[0] == ("theforge: internal error: RuntimeError: registry exploded "
+                        "token=[REDACTED] [FORGE-INTERNAL · internal]")
+    assert len(lines) == 2 and lines[1].startswith("theforge: hint: ")
     assert "theforge: debug:" not in proc.stderr
 
 
@@ -164,8 +177,9 @@ def test_core_internal_failure_with_debug_prints_redacted_diagnostic(tmp_path: P
     assert "Traceback" not in proc.stderr and REDACTION_PROBE not in proc.stderr
     lines = proc.stderr.splitlines()
     assert lines[0].startswith("theforge: internal error: RuntimeError:")
+    assert lines[1].startswith("theforge: hint: ")
     debug = [line for line in lines if line.startswith("theforge: debug: ")]
-    assert debug and len(debug) == len(lines) - 1
+    assert debug and len(debug) == len(lines) - 2
     text = "\n".join(debug)
     assert "stage=cli:capabilities" in text and "code=FORGE-INTERNAL" in text
     assert "family=internal" in text and "error: RuntimeError: registry exploded" in text

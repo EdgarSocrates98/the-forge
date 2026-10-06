@@ -146,3 +146,132 @@ CODE_FAMILIES: Final[Mapping[str, ErrorFamily]] = MappingProxyType({
 def family_of(code: str) -> ErrorFamily | None:
     """Family of a ``FORGE-*`` code; None for native provider codes (``AF-*``...) (13.3)."""
     return CODE_FAMILIES.get(code)
+
+
+# Recovery hints (Cycle 3 Wave U): one actionable next step per code, surfaced on the CLI
+# error line and on ``Diagnostic.hint``. The failure-mode matrix that ties the modes to
+# these codes is ``docs/failure-semantics.md``. Like families, every code has a hint and
+# the taxonomy test enforces it.
+CODE_HINTS: Final[Mapping[str, str]] = MappingProxyType({
+    Codes.PROTO_NOT_JSON:
+        "the provider wrote non-JSON to stdout; run `theforge provider check <argv...>`",
+    Codes.PROTO_SCHEMA:
+        "the response is off-contract; run `theforge provider check <argv...>`",
+    Codes.PROTO_MISMATCH:
+        "the provider echoed a different request_id; run `theforge provider check <argv...>`",
+    Codes.PROTO_VERSION:
+        "the provider answered a protocol version it did not negotiate; check `protocols` "
+        "in its manifest",
+    Codes.PROTO_SPAWN:
+        "the argv is wrong or not executable; check the registry entry and try "
+        "`theforge providers health`",
+    Codes.PROTO_TIMEOUT:
+        "the provider exceeded the timeout; retry or use a profile with a higher "
+        "`execute_timeout_s`",
+    Codes.PROTO_OVERSIZE:
+        "the response exceeded 8 MB; the provider must shrink or paginate the payload",
+    Codes.PROTO_EXIT:
+        "the provider exited non-zero; run its argv manually to see stderr",
+    Codes.PROTO_PRODUCER:
+        "producer identity does not match the invoked provider; run "
+        "`theforge provider check <argv...>`",
+    Codes.PROTO_OP_MISMATCH:
+        "the response `op` differs from the request; run `theforge provider check <argv...>`",
+    Codes.PROTO_OP_UNSUPPORTED:
+        "no ready provider offers `execute` for that capability; check "
+        "`theforge capabilities` and the manifests' `ops`",
+    Codes.PROVIDER_BLOCKED:
+        "the provider is blocked by policy; change `trust` in providers.toml or remove it",
+    Codes.PROVIDER_UNTRUSTED:
+        "the provider is unverified; verify it or pass --allow-unverified",
+    Codes.PROVIDER_NOT_READY:
+        "run `theforge providers health` and fix the provider's describe/health ops",
+    Codes.HEALTH_FAILED:
+        "run `theforge providers health` for the failing check detail",
+    Codes.HEALTH_UNAVAILABLE:
+        "the health op is unreachable; check the provider argv and process state",
+    Codes.RESULT_ARTIFACT_HASH:
+        "the declared artifact diverges from the work/ output; inspect the run's work dir",
+    Codes.RESULT_DUP_EVIDENCE:
+        "the provider emitted duplicate evidence ids; run `theforge provider check`",
+    Codes.RESULT_DUP_FINDING:
+        "the provider emitted duplicate finding ids; run `theforge provider check`",
+    Codes.RESULT_DANGLING_EVIDENCE:
+        "a finding cites evidence that is not listed; fix the provider result",
+    Codes.RESULT_ARTIFACT_PATH:
+        "the provider declared an artifact outside the allowed path rules; fix the result",
+    Codes.CONTEXT_BYTES:
+        "the context pack exceeded its budget — a core bug; report with --debug output",
+    Codes.CONTEXT_PATH:
+        "the context pack contains a path outside the rules — a core bug; report with "
+        "--debug output",
+    Codes.CONTEXT_REQUEST_UNSUPPORTED:
+        "the capability does not declare `context.requests`; update the manifest or the "
+        "provider",
+    Codes.CONTEXT_REQUEST_LIMIT:
+        "context negotiation rounds are exhausted; raise the profile or accept the "
+        "delivered pack",
+    Codes.CONTEXT_REQUEST_INVALID:
+        "a context request must carry 1-64 items; fix the provider's request",
+    Codes.RECEIPT_INVALID:
+        "the run's hash chain diverges; `theforge explain <run>` shows the divergence",
+    Codes.REGISTRY_MANIFEST_CHANGED:
+        "the manifest changed mid-run; keep the registry stable and retry",
+    Codes.MANIFEST_LIMITS:
+        "the manifest exceeds limits or uses a catch-all glob; see "
+        "docs/provider-authoring.md",
+    Codes.MANIFEST_VERSION:
+        "the manifest version is not SemVer 2.0.0; fix `version` in the manifest",
+    Codes.MANIFEST_TAXONOMY:
+        "a capability, action, alias or replaced_by is off-taxonomy; see "
+        "docs/capabilities.md",
+    Codes.POLICY_APPROVAL_REQUIRED:
+        "the operation class needs approval; re-run with --approve <class>",
+    Codes.POLICY_DENIED:
+        "the operation class is denied by policy; choose another approach or change the "
+        "policy",
+    Codes.PLAN_INVALID:
+        "the plan is structurally invalid (cycle, missing dep, bad pattern); fix the "
+        "plan or let the planner regenerate it",
+    Codes.PLAN_CAPABILITY:
+        "a node names a provider without the capability/action; check "
+        "`theforge capabilities`",
+    Codes.PLAN_LIMIT:
+        "the plan exceeds node/provider limits of the profile; split it or raise the "
+        "profile",
+    Codes.PLAN_PATTERN_RESERVED:
+        "`pattern` must be one of the executable patterns; fix the plan source",
+    Codes.PLAN_FILE:
+        "the plan file is unreadable or off-contract; validate it against "
+        "schemas/ExecutionPlan",
+    Codes.PLAN_DEPENDENCY_FAILED:
+        "an upstream node produced no valid result; fix it and `theforge resume`",
+    Codes.PLAN_ESTIMATE:
+        "the provider's `plan` op failed; the plan proceeds without estimates — "
+        "fix the op to restore them",
+    Codes.WORKSPACE_CONFIG:
+        "a workspace.toml entry is invalid; check the warning and fix the file",
+    Codes.WORKSPACE_GRAPH_EDGE:
+        "a graph edge was rejected; check the endpoint kinds and relation rules",
+    Codes.PERSIST_WRITE:
+        "a run file could not be written; check permissions and disk space under .forge/",
+    Codes.PERSIST_READ:
+        "a run file could not be read; check the path and file permissions",
+    Codes.PERSIST_DIVERGENCE:
+        "persisted artifacts diverge from their recorded hashes; `theforge explain <run>` "
+        "shows which",
+    Codes.REPLAY_NOT_REPRODUCIBLE:
+        "the run lacks the evidence for execution replay; use --mode record or a "
+        "verifiable run",
+    Codes.REPLAY_UNSUPPORTED:
+        "this artifact kind cannot be replayed; see docs/cli.md for the supported modes",
+    Codes.USAGE:
+        "check `theforge <command> --help` for the correct usage",
+    Codes.INTERNAL:
+        "unexpected core error; report a bug with the --debug diagnostic output",
+})
+
+
+def hint_of(code: str) -> str | None:
+    """Recovery hint of a ``FORGE-*`` code; None for native provider codes (U)."""
+    return CODE_HINTS.get(code)

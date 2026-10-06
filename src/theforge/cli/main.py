@@ -16,7 +16,7 @@ from typing import Final
 from theforge import __version__
 from theforge.cli import commands, render
 from theforge.contracts import to_dict
-from theforge.contracts.codes import Codes
+from theforge.contracts.codes import Codes, hint_of
 from theforge.diagnostics import build_diagnostic
 from theforge.errors import ForgeError, PersistenceError, ReplayRefused
 from theforge.security.redact import redact_text
@@ -213,6 +213,9 @@ def _fail(args: argparse.Namespace, prefix: str, message: str, exc: BaseExceptio
           code: str) -> None:
     print(f"theforge: {prefix}: {redact_text(render.clean(message))} "
           f"{render.code_suffix(code, commands.error_family(code))}", file=sys.stderr)
+    hint = hint_of(code)
+    if hint:
+        print(f"theforge: hint: {hint}", file=sys.stderr)
     if getattr(args, "debug", False):
         diagnostic = build_diagnostic(exc, stage=_stage(args), code=code)
         commands.print_debug(to_dict(diagnostic))

@@ -92,6 +92,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
 - [Códigos de erro](docs/errors.md) (lista canônica dos códigos `FORGE-*`)
+- [Semântica de falha](docs/failure-semantics.md) (modos de falha → código, superfície, recuperação)
 - [Performance: benchmark, baseline e budgets](docs/performance.md)
 - [Desenvolvimento com agentes](docs/agentic.md)
 - [Índice de ADRs](docs/adr/README.md)

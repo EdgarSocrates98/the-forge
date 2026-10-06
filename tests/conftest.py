@@ -124,6 +124,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_cycle3_adversarial.py": ("unit", "integration"),
     # planned by design (cycle-3 property tests)
     "test_cycle3_properties.py": ("unit",),
+    "test_failure_semantics.py": ("unit", "integration"),
     # planned by design (agentic-maintainability)
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),

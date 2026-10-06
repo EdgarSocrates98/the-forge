@@ -1034,3 +1034,32 @@ as funções puras que o fuzz de contrato não alcança. Ficam em
   contíguos por fonte;
 - **integridade de persistência** — handoff serializado e recarregado pelo
   caminho do resume é byte-idêntico (canonical JSON roundtrip strict).
+
+## Wave U — Semântica de falha
+
+Os nove modos pedidos foram auditados contra a superfície real: código+família
+(`Codes`/`CODE_FAMILIES`), mensagem humana (`[<code> · <family>]` no stderr) e
+resultado machine-readable (NodeOutcome/violations/limitations/`Diagnostic`)
+já existiam; o elemento que faltava era a **dica de recuperação**.
+
+- **`CODE_HINTS`/`hint_of`** (`contracts/codes.py`): uma dica acionável por
+  código, na fonte única ao lado de `CODE_FAMILIES`, com completude enforced por
+  teste (tabela ↔ taxonomia, como as famílias);
+- **superfícies**: a linha de erro da CLI ganha `theforge: hint: …` e
+  `Diagnostic` ganha o campo aditivo `hint` (schema regerado;
+  `__post_init__` valida `hint == hint_of(code)`);
+- **`docs/failure-semantics.md`**: a matriz dos nove modos — provider failed,
+  planner unavailable/invalid, verifier unavailable, budget/context exhausted,
+  partial evidence, handoff incomplete, resume incompatible — cada um com
+  código, família, mensagem, resultado machine-readable e recuperação. Três
+  modos são desfechos declarados, não erros: verifier unavailable
+  (`not_performed` + razão), budget exhausted (`truncated`/`excluded`) e
+  partial evidence (epistemic status) — a matriz documenta exatamente onde cada
+  um aparece;
+- **`tests/test_failure_semantics.py`**: completude da tabela de hints, hint na
+  linha de erro do CLI real e no `Diagnostic` (roundtrip strict), planner
+  indisponível degradando para limitação `proposal: FORGE-PLAN-ESTIMATE`
+  (nunca exceção), e os literais `FORGE-*` da doc conferidos contra a taxonomia.
+
+Drift intencional: dois testes de stderr exato em `test_cli_explain` foram
+atualizados para a linha `hint:` aditiva.
