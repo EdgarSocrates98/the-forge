@@ -106,7 +106,7 @@ def test_cross_scenarios_are_complete() -> None:
         assert recordings == [f"{capability}.{action}.json"], (scenario, recordings)
     api = json.loads((SCENARIOS["api-forge"][1] / "api.analyze.analyze.json")
                      .read_text(encoding="utf-8"))
-    assert api["provenance"] == "hand-built"  # until the real workflow re-records it
+    assert api["provenance"] == "recorded"  # re-recorded by record_execute (cycle 3.1)
     spark = json.loads((SCENARIOS["spark-forge"][1] / "pyspark.static-analysis.pyspark.json")
                        .read_text(encoding="utf-8"))
     assert "provenance" not in spark  # recorded by record_execute from the real Spark Forge

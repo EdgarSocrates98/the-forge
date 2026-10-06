@@ -305,7 +305,7 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
 
-Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 64 KiB — são truncados com limitação, itens malformados são pulados com limitação). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. O Spark Forge e o `api.change-control` ainda não declaram: recebem o handoff e o run do nó registra `handoff-use-undeclared`.
+Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 32 KiB — são truncados com limitação, itens malformados são pulados com limitação). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. O Spark Forge e o `api.change-control` ainda não declaram: recebem o handoff e o run do nó registra `handoff-use-undeclared`.
 
 #### Evidência derivada (`Evidence.derived_from`)
 

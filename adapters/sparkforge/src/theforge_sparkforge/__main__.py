@@ -70,6 +70,8 @@ def manifest(exposure: catalog.Exposure) -> dict[str, Any]:
         "limitations": exposure.limitations,
         "unknowns": [],
         "context_revalidation": CONTEXT_REVALIDATION,
+        "adapter_version": VERSION,
+        "native_surface_fingerprint": exposure.native_fingerprint or None,
     }
 
 

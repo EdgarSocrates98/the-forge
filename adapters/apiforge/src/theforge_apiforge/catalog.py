@@ -13,6 +13,7 @@ Input globs name the files a verb reads from ``stage/``: none of them accepts an
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -202,6 +203,15 @@ def load_snapshot(path: Path = SNAPSHOT_PATH) -> dict[str, Any]:
     return validate_snapshot(data)
 
 
+def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
+    """The sha256 the manifest declares as ``native_surface_fingerprint``: the canonical
+    snapshot minus ``recorded_at`` (a timestamp, not surface)."""
+    payload = {key: value for key, value in snapshot.items() if key != "recorded_at"}
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
+
+
 def capability_entry(record: Mapping[str, Any], spec: VerbSpec) -> dict[str, Any]:
     """The manifest capability for an eligible record (native id and state kept)."""
     return {
@@ -255,4 +265,10 @@ def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: 
         # context-intelligence-v2: the adapter verifies the sha256 of every file it stages
         # and the specialist reads only those copies (ignored by cores without the field).
         "context_revalidation": "hash",
+        # ``api.analyze`` owns the upstream intake: the handoff feature is backed by a
+        # capability flag and declared here so negotiation does not depend on the reader
+        # deriving it.
+        "features": ["handoff/v1"],
+        "adapter_version": version,
+        "native_surface_fingerprint": native_fingerprint(snapshot),
     }

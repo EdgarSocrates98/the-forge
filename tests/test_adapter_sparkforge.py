@@ -89,7 +89,7 @@ def _call(op: str, *options: str, payload: dict[str, Any] | None = None) -> Resp
                              timeout=60, cwd=cwd)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.1.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.2.0")
     assert response.request_id == f"req-{op}"
     return response
 
@@ -120,7 +120,7 @@ def snapshot() -> dict[str, Any]:
 
 def test_replay_describe_manifest_passes_taxonomy_and_limits(manifest: ForgeManifest) -> None:
     assert manifest.id == "spark-forge"
-    assert manifest.version == "0.1.0"
+    assert manifest.version == "0.2.0"
     assert manifest.protocols == ["forge/v1"]
     assert set(manifest.ops) == {"describe", "health", "execute"}
     assert manifest.domains == ["data-engineering"]
@@ -696,7 +696,7 @@ ANALYZE_TOOL, JUDGE_TOOL = "sparkforge_analyze_pyspark", "sparkforge_judge"
 OUTPUT_RECORDING = DEFAULT / f"{CAPABILITY}.{ACTION}.json"
 ERROR_SCENARIO = SCENARIOS / "native-error"
 ERROR_RECORDING = ERROR_SCENARIO / f"{CAPABILITY}.{ACTION}.error.json"
-PRODUCER = {"id": "spark-forge", "version": "0.1.0"}
+PRODUCER = {"id": "spark-forge", "version": "0.2.0"}
 # Machine-specific fragments a portable recording never contains: a drive path (raw or JSON-
 # escaped; a URL scheme is followed by a second slash), a user directory, a temp directory.
 MACHINE_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:(?:\\|/(?!/))|/Users/|/home/|AppData|/tmp/",
@@ -1160,7 +1160,7 @@ def _execute(cwd: Path, *options: str, capability: str = CAPABILITY, action: str
                          timeout=180, cwd=cwd, env=env)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.1.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.2.0")
     return response
 
 

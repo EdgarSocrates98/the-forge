@@ -19,6 +19,7 @@ that needs a value no ``ExecuteRequest`` v1 field carries, has no binding and is
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -379,6 +380,18 @@ class Exposure:
 
     capabilities: list[dict[str, Any]]
     limitations: list[str]
+    # sha256 of the recorded native surface the snapshot was derived from — every field
+    # but ``recorded_at``, so a re-recorded identical surface keeps the same fingerprint.
+    native_fingerprint: str = ""
+
+
+def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
+    """The sha256 the manifest declares as ``native_surface_fingerprint``: the canonical
+    snapshot minus ``recorded_at`` (a timestamp, not surface)."""
+    payload = {key: value for key, value in snapshot.items() if key != "recorded_at"}
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
 
 
 def spec(capability_id: str) -> CapabilitySpec | None:
@@ -500,4 +513,5 @@ def derive(snapshot: Mapping[str, Any]) -> Exposure:
             limitations.append(f"capability '{entry.id}' not exposed: no action is "
                                "read-only, offline and fillable from workspace files")
     limitations.extend(_uncatalogued(tools, catalogued))
-    return Exposure(capabilities=capabilities, limitations=limitations)
+    return Exposure(capabilities=capabilities, limitations=limitations,
+                    native_fingerprint=native_fingerprint(snapshot))

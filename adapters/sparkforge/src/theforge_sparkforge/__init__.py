@@ -5,6 +5,6 @@ on stdin/stdout and never imports ``theforge``.
 """
 
 PROVIDER_ID = "spark-forge"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 # Spark Forge releases this adapter supports (pre-1.0: one specialist minor at a time).
 SUPPORTED_SPECIALIST = ">=0.5.0,<0.6.0"

@@ -37,10 +37,12 @@ python3.12 -m venv <api-venv>
 ```
 
 A prova cross-forge (`test_cross_forge_real.py`) exige a entrada `--upstream` do
-`api.analyze` — `apiforge/upstream-facts/v1`, implementada na branch
-`feat/upstream-facts` do api-forge. Com um `apiforge` sem ela o adapter degrada
-com a limitação de consumo ausente (correto como comportamento) e a prova falha:
-o teste real precisa desse ref, também no workflow (`api_forge_ref`).
+`api.analyze` — `apiforge/upstream-facts/v1`, estável na `main` do api-forge desde
+o PR #34 (`1745f87`; endurecida no ciclo 3.1 com namespaces `upstream:`/`upstream.`
+e a recusa `AF-UPSTREAM-FORBIDDEN` de chaves imperativas). Com um `apiforge` sem
+ela o adapter degrada com a limitação de consumo ausente (correto como
+comportamento) e a prova falha: o teste real precisa da main pós-#34 (ou de
+`apiforge>=0.1` publicado com o intake), também no workflow (`api_forge_ref`).
 
 O adapter roda em Python ≥ 3.10. Num interpretador que não é 3.12, porém, `describe` recusa com o motivo e `health` responde `unavailable` (ver [Troubleshooting](#troubleshooting)).
 
@@ -126,8 +128,8 @@ A integração cobre, por Forge, `describe` (manifest `ready` e snapshot igual �
 ### Prova cross-forge (Spark Forge → API Forge)
 `tests/test_cross_forge_real.py` (marker `real_provider`, mesmo contrato de ambiente) registra os dois adapters e roda `theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max --execute` no workspace de prova `tests/fixtures/workspaces/cross/` (montado em diretório temporário, um repositório git por subdiretório). Confere o plano `spark-forge/pyspark.static-analysis` → `api-forge/api.analyze`, ao menos um item de handoff com origem no Spark Forge e o status epistêmico original recebido pelo nó de API, a síntese com os dois runs e `theforge explain` do plano sem divergência ([ADR 0018](adr/0018-multi-provider-execution.md)).
 
-- `api-forge/api.analyze` declara `accepts_handoff` e consome os itens: o adapter traduz o handoff a `apiforge/upstream-facts/v1` (limitado a 32 itens/64 KiB, itens malformados pulados com limitação), grava `upstream-facts.json` no cwd nativo, passa `--upstream` ao `analyze` do especialista instalado e marca as evidências derivadas com `derived_from` apontando para o item e o run do Spark Forge — o check `handoff-provenance` da verificação confere isso. O teste faz a prova A/B: o mesmo `execute` do nó, com e sem o `handoff` gravado, produz evidência observavelmente diferente. Quando o apiforge instalado não tem a entrada, o adapter responde `ok`/`partial` com a limitação de consumo ausente (e nunca inventa evidência upstream). `spark-forge` e `api.change-control` não declaram e seguem registrando `handoff-use-undeclared`.
-- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. A gravação do Spark vem do gravador; a do API Forge foi montada à mão a partir de um run real com `--upstream` e leva `"provenance": "hand-built"`. Em replay o adapter re-deriva as upstream facts do handoff **da requisição** (a tradução é determinística e vive no adapter, sem especialista): a provenance é sempre a do run atual, nunca a da gravação; sem handoff na requisição as facts upstream gravadas são descartadas. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
+- `api-forge/api.analyze` declara `accepts_handoff` e consome os itens: o adapter traduz o handoff a `apiforge/upstream-facts/v1` (limitado a 32 itens/32 KiB, itens malformados pulados com limitação; no especialista o teto é 128 itens/256 KiB e o intake recusa chaves imperativas com `AF-UPSTREAM-FORBIDDEN`), grava `upstream-facts.json` no cwd nativo, passa `--upstream` ao `analyze` do especialista instalado e marca as evidências derivadas com `derived_from` apontando para o item e o run do Spark Forge — o check `handoff-provenance` da verificação confere isso. O teste faz a prova A/B: o mesmo `execute` do nó, com e sem o `handoff` gravado, produz evidência observavelmente diferente. Quando o apiforge instalado não tem a entrada, o adapter responde `ok`/`partial` com a limitação de consumo ausente (e nunca inventa evidência upstream). `spark-forge` e `api.change-control` não declaram e seguem registrando `handoff-use-undeclared`.
+- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. As duas gravações saem dos gravadores: a do Spark por `record_execute` e a do API Forge por `record_execute --handoff` sobre a main pós-PR #34 (`"provenance": "recorded"`, upstream facts embutidas). Em replay o adapter re-deriva as upstream facts do handoff **da requisição** (a tradução é determinística e vive no adapter, sem especialista): a provenance é sempre a do run atual, nunca a da gravação; sem handoff na requisição as facts upstream gravadas são descartadas. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
 
 ## Regravar snapshots e gravações de replay
 
@@ -141,6 +143,7 @@ Os arquivos gravados são comparados byte a byte. A escrita é canônica: chaves
 
 # API: native_matrix.json (matriz pública de capabilities)
 <api-python> -m theforge_apiforge.record [--out <arquivo>] [--recorded-at <timestamp>]
+                                       [--environment <dir-do-cenário>]
 ```
 
 Sem `--output`/`--out`, o comando sobrescreve o snapshot empacotado no adapter. Rode a partir de um checkout com o adapter instalado em modo editável (`pip install -e`), senão a gravação vai para o `site-packages`. No Spark, `recorded_at` só muda quando a superfície muda. `--environment <dir>` também grava o `environment.json` (`{python, specialist_version}`) e o `health.json` (`{dispatcher, specialist_version}`) de um cenário de replay. Depois de regravar, rode a suíte offline: mudança de snapshot muda o manifest, e capabilities novas precisam constar em [capabilities.md](capabilities.md).
@@ -177,7 +180,14 @@ API: `theforge_apiforge.record_execute` grava uma ação a partir de um workspac
   --out tests/fixtures/native/apiforge/scenarios/cross
 ```
 
-As gravações atuais de `tests/fixtures/native/apiforge/` ainda levam `"provenance": "hand-built"` (montadas a partir de runs reais, conferidas pelo teste cross) até a primeira regravação pelo gravador. Arquivos `.json` são reserializados (chaves ordenadas, indentação 2, LF final) para que os hashes do caso continuem valendo.
+Dos arquivos de `tests/fixtures/native/apiforge/` resta `hand-built` apenas
+`default/api.change-control.run.json`: a saída do verbo embute caminhos do diretório de
+trabalho, e o gravador a recusa por conter caminho da máquina — a regravação destrava
+quando o verbo portabilizar seus caminhos. `default/api.analyze.analyze.json`,
+`scenarios/cross/api.analyze.analyze.json` e os `environment.json`/`health.json` dos dois
+cenários já saem dos gravadores (`"provenance": "recorded"`). Arquivos `.json` são
+reserializados (chaves ordenadas, indentação 2, LF final) para que os hashes do caso
+continuem valendo.
 
 ## Troubleshooting
 

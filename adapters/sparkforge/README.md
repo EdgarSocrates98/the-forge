@@ -3,7 +3,7 @@
 Provider [Forge Protocol v1](../../docs/protocol.md) que expõe o Spark Forge (`sparkforge-aws`) ao The Forge. Stdlib-only, Python ≥ 3.10, sem dependências declaradas e sem `import theforge`: fala o protocolo só por JSON (stdin/stdout).
 
 - id do provider: `spark-forge`
-- versão: `0.1.0`
+- versão: `0.2.0`
 - especialista suportado: `sparkforge-aws >=0.5.0,<0.6.0`
 
 > Estado: `describe`, `health` e `execute` implementados, ao vivo e em replay. Decisão e contenção no [ADR 0014](../../docs/adr/0014-provider-adapter-location.md); catálogo de capabilities no [ADR 0017](../../docs/adr/0017-capability-taxonomy.md) e em [capabilities.md](../../docs/capabilities.md); guia completo em [real-providers.md](../../docs/real-providers.md).

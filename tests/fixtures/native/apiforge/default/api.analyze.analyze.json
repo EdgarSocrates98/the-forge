@@ -10,7 +10,7 @@
     "--detail-level",
     "summary"
   ],
-  "assembled_from": "API Forge 0.1.0 case format (apiforge.case manifest, findings.json, facts.json, api-ir.json) for tests/fixtures/workspaces/api staged under stage/; shape checked against a live apiforge 0.1.0 analyze run (Python 3.12.13) in the adapter layout; provisional until re-recorded by the execute recorder",
+  "assembled_from": "recorded by theforge_apiforge.record_execute: apiforge 0.1.0 analyze analyze on Python 3.12.13 (win32)",
   "case_dir": "case",
   "case_files": {
     "api-ir.json": {
@@ -198,7 +198,7 @@
         "contract:stage/openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
       },
       "inputs": {
-        "contract": "stage/openapi.yaml",
+        "contract": "stage\\openapi.yaml",
         "project": "stage"
       },
       "schema_version": "1"
@@ -330,7 +330,8 @@
     }
   },
   "exit_code": 0,
-  "provenance": "hand-built",
+  "native_cwd": ".",
+  "provenance": "recorded",
   "stdout": {
     "artifacts": {
       "api_ir": "api-ir.json",
@@ -347,6 +348,7 @@
     "diagnostics": 0,
     "findings": 1,
     "operations": 3,
-    "out_dir": "case"
+    "out_dir": "case",
+    "upstream": 0
   }
 }
