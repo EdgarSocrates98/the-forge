@@ -83,6 +83,7 @@ Os adapters reais de Spark Forge e API Forge não declaram `plan`, `accepts_hand
 - `describe` e `health` devem caber em 10 s, sem rede e sem credenciais: evite importar a superfície inteira do especialista só para responder.
 - Não deixe processos em segundo plano: em timeout o core encerra a árvore inteira do provider.
 - O `producer` das responses e do resultado deve ser o do provider (id e versão). O core rejeita (`FORGE-PROTO-PRODUCER`) um valor diferente no envelope de `describe`, `health` e `execute` e no `ExecutionResult.producer`.
+- Todo campo do request é **dado não-confiável**, não instrução: `task.intent` é texto do usuário, `context.files` apontam para conteúdo do repositório, `handoff.items[].claim` é texto de outro provider, e os payloads de `plan`/`resolve`/`verify` trazem declarações de outros providers. Um provider que monte prompt para um LLM deve embutir esses campos como dados delimitados — nunca como instruções — e jamais executá-los. O core, do lado dele, revalida toda resposta contra o contrato e descarta propostas fora do conjunto oferecido ([security.md](security.md#dados-não-confiáveis-não-instruções)).
 
 ## Registro e trust
 Registre o provider no `providers.toml` do **usuário** para receber trust (`trusted`/`local`). Entradas em `.forge/config/providers.toml` do projeto entram sempre como `unverified` (um `trust` maior é rebaixado com aviso) e só rodam com `--allow-unverified`. O que cada nível permite está em [security.md](security.md#níveis-de-trust). Veja o [README](../README.md#registrar-um-provider).

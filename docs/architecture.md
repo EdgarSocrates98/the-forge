@@ -1,4 +1,4 @@
-# Arquitetura (ciclos 1 e 2)
+# Arquitetura (ciclos 1–3)
 
 ```mermaid
 flowchart TD

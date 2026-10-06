@@ -286,6 +286,9 @@ def test_request_proposal_sends_purpose_and_options() -> None:
     assert request["payload"]["purpose"] == "proposal"
     assert request["payload"]["capability"] == "planner.compose"
     assert request["payload"]["ambiguity"] == "tie"
+    # Bounded input (N2): no workspace files, no context pack — the payload
+    # carries untrusted data for the planner, never repository contents.
+    assert "files" not in request["payload"] and "context" not in request["payload"]
 
 
 def test_request_proposal_refusal_is_a_limitation() -> None:

@@ -1,4 +1,4 @@
-# Segurança — threat model resumido (ciclos 1 e 2)
+# Segurança — threat model resumido (ciclos 1–3)
 
 Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defeituoso e tentativa de escalar trust. Fora do modelo: usuário local mal-intencionado com escrita no próprio home. Os códigos `FORGE-*` citados aqui estão, com a família de cada um, na lista canônica [errors.md](errors.md).
 
@@ -14,7 +14,14 @@ Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defei
 | Vazamento de credencial em artefatos | redaction de padrões e chaves sensíveis antes de persistir; stderr do provider truncado e redigido, nunca persistido bruto; o cache do registry não é gravado quando a redação alteraria a entrada ou o manifest ([ADR 0009](adr/0009-registry-cache-location.md)) | `.forge/runs/<id>/work/` não é redigido ([exceção](#exceção-forgerunsidwork)) |
 | Forge especialista real (Spark Forge, API Forge) | adapter fora do core, em processo separado e no interpretador do especialista ([ADR 0014](adr/0014-provider-adapter-location.md)); só capabilities read-only e offline expostas, o resto em `limitations` do manifest; o especialista lê só cópias com sha256 conferido do ContextPack; estado nativo contido no cwd do run e reduzido aos artifacts declarados; health sem rede e sem credenciais | sandbox de SO; drift da superfície nativa é detectado só no workflow agendado |
 | Exaustão de recursos | timeout por op (describe e health 10 s; execute 60 s / 180 s / 600 s em economy / balanced / max); stdout limitado a 8 MB; stderr a 64 KB; kill da árvore de processos em timeout, oversize ou interrupção | limite de CPU/memória |
-| Prompt injection via workspace | core não usa LLM | relevante no ciclo com LLM |
+| Prompt injection via workspace | core não usa LLM; conteúdo de arquivo nunca sai do ContextPack para os ops semânticos | providers semânticos que alimentam LLM devem tratar os campos como dado ([dados não-confiáveis](#dados-não-confiáveis-não-instruções)) |
+| Prompt injection no planner/resolver/verifier semântico | `plan`, `resolve` e `verify` trocam contratos tipados, não prompts; a resposta é consultiva e só pode escolher dentro do conjunto oferecido — revalidada de forma determinística, e inválida, fora do conjunto ou de `producer` divergente preserva o desfecho determinístico; payload mínimo por construção | — |
+| Claim de handoff malicioso | o item é dado para o destinatário: `claim` ≤ 500 chars, redigido, só de nós `inputs`, sem conteúdo de arquivo nem saída integral; o destino deve tratá-lo como dado não-confiável | — |
+| Histórico de performance envenenado | `.forge/metrics/provider-performance.json` relido estritamente, malformado ignorado com nota; a história só desempata candidatos já empatados — nunca cria rota nem resolve `ambiguous` sozinha | — |
+| Spoofing de capability por provider | o id do manifest precisa bater com a entrada registrada e `producer` é conferido em toda resposta; dois providers declarando o mesmo id geram nota `capability-overlap` com desempate determinístico (trust → história → id), nunca substituição silenciosa; `unverified`/`blocked` não entram no routing | assinatura de manifest |
+| Memória cross-run envenenada | `.forge/intel/decisions.json` relido estritamente e ignorado com nota quando malformado; a memória só alimenta `theforge decisions`, que não inicia provider | — |
+| Corrida na execução paralela | workdir e transporte por nó (cada nó é um run filho); `plan-state` por escrita atômica; telemetria e spans sob lock; o scheduler só libera o nó quando os `inputs` terminaram | — |
+| Cache de inteligência envenenado | `.forge/intel/project.json` relido estritamente com guarda de root e fingerprints por seção — seção divergente é recomputada; sinais de git são lidos ao vivo em todo refresh, nunca do cache | — |
 | Supply chain do core | zero dependências de runtime (gate de CI); build reprodutível via hatchling | lockfile do dev, assinatura |
 | Mutação inesperada | policy `allow/ask/deny` sobre o `operation_class` declarado; artefato `risk` em todo run que chega a um provider; cwd controlado | enforcement real (sandbox) |
 | Repositório afrouxando a policy | `.forge/config/policy.toml` só endurece; tentativas de afrouxar são ignoradas com aviso | — |
@@ -28,6 +35,14 @@ Modelo de ameaça: repositório analisado malicioso, provider malicioso ou defei
 | Vazamento por diagnóstico de erro | sem traceback na CLI; `--debug` mostra um [diagnóstico redigido](#diagnóstico-de-debug) só com quadros `theforge.*`, sem variáveis locais nem caminhos absolutos | — |
 | Run adulterado depois de gravado | `explain` e `replay --mode verify` recalculam os hashes registrados no receipt e saem com exit 6 em divergência ([âncora de confiança](#integridade-de-runs-e-âncora-de-confiança)) | adulteração coordenada de receipt e artefatos não é detectável sem âncora externa |
 | Plano de instalação executando código | `InstallationPlan` é só de planejamento: texto informativo, nenhum download, instalação ou comando | — |
+
+## Dados não-confiáveis, não instruções
+Invariante do ciclo 3: tudo que vem de fora do core — conteúdo do repositório, saída de provider (manifest, resultado, claim de handoff, estimativa), proposta de um backend de raciocínio — é **dado**, nunca instrução. O core não tem LLM e não interpreta texto: cada string externa é validada contra o contrato, redigida antes de persistir e, no máximo, retransmitida como campo de outro payload. Nenhum campo vindo de fora vira comando do core, altera o routing fora das regras determinísticas nem executa algo.
+
+- **Ops semânticas.** `plan`, `resolve` e `verify` carregam dados não-confiáveis nos dois sentidos: o request traz a intent do usuário e sinais declarados por providers; a resposta é consultiva e revalidada campo a campo — escolha fora do conjunto oferecido, veredicto malformado ou `producer` divergente são descartados e a decisão determinística permanece. Um provider semântico que monte prompt para um LLM deve tratar cada campo do request como dado não-confiável ([provider-authoring.md](provider-authoring.md#regras-de-segurança)).
+- **Handoff.** `claim`/`location` de cada item é texto produzido por outro provider — dado para o destinatário, redigido e limitado antes do envio ([handoff](#handoff-e-op-plan)).
+- **Workspace.** Conteúdo de arquivo chega ao provider só via `ContextFile`/`ContextLines` declarados; para o core são bytes com sha256, nunca instrução.
+- **Estado persistido.** Receipts, caches, métricas e inteligência são relidos estritamente e descartados com nota quando malformados — nunca executados.
 
 ## Ambiente do provider
 O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`), quando existem no ambiente do pai. Nenhuma outra variável passa.

@@ -783,3 +783,37 @@ continua responsabilidade do autor, documentada em provider-authoring.md.
 segura por instantes o arquivo recém-escrito e transformava a escrita em
 flake de `WinError 5`; falha persistente continua virando
 `PersistenceError`.
+
+## Wave N — Security evolution
+
+**N1 — threat model do ciclo 3.** `docs/security.md` passa a cobrir os
+ciclos 1–3, com linhas novas para as ameaças deste ciclo: prompt injection
+nos ops semânticos (`plan`/`resolve`/`verify` — resposta consultiva
+revalidada contra o conjunto oferecido; o core não tem LLM), claim de
+handoff malicioso (dado limitado e redigido), histórico de performance
+envenenado (releitura estrita; influência limitada ao desempate H5),
+spoofing de capability (`capability-overlap` + desempate
+trust→história→id, nunca substituição silenciosa), memória cross-run
+envenenada (decisions relida estritamente, display-only), corrida na
+execução paralela (workdir por nó, escrita atômica, telemetria sob lock) e
+cache de inteligência envenenado (fingerprints por seção + guarda de root;
+git sempre ao vivo). A ameaça "replay tampering" já era coberta pela linha
+de adulteração de run (`explain`/`replay --mode verify` recalculam os
+hashes do receipt, divergência → exit 6) — mantida sem duplicar.
+
+**N2 — dados não-confiáveis, não instruções.** Invariante nova em
+`security.md`: tudo que vem de fora do core (repositório, saída de
+provider, proposta de backend de raciocínio) é dado, nunca instrução —
+validado contra o contrato, redigido ao persistir e, no máximo,
+retransmitido como campo de payload. O provider-authoring ganhou a regra
+correspondente para quem alimenta LLM (campos do request como dados
+delimitados). Asserção nova no teste do planner: o payload do `plan` não
+carrega `files` nem `context` (paridade com a asserção que o `resolve` já
+tinha).
+
+**N3 — gatilho de sandbox.** ADR 0012 reavaliado com gatilho explícito e
+obrigatório: mutação externa/destrutiva por providers, providers portando
+credenciais ou execução de terceiros sem revisão manual reabrem o ADR. O
+ciclo 3 não disparou nenhuma das três condições (só superfícies
+consultivas, adapters read-only/offline, trust manual) — a decisão de não
+implementar sandbox de SO permanece, registrada no próprio ADR.
