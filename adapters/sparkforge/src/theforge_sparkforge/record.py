@@ -64,10 +64,10 @@ def render(data: Mapping[str, Any]) -> str:
 
 def environment() -> dict[str, Any]:
     """The replay ``environment.json`` of this interpreter (``{python, specialist_version}``)."""
-    import sparkforge  # the specialist's public version; light import
+    from theforge_sparkforge.native_pkg import installed_version
 
     return {"python": platform.python_version(),
-            "specialist_version": str(sparkforge.__version__)}
+            "specialist_version": str(installed_version())}
 
 
 def health_probes() -> dict[str, Any]:
@@ -106,10 +106,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if reason is not None:
         print(f"record: {reason}", file=sys.stderr)
         return 2
-    import sparkforge
-    from sparkforge.adapters.tools import TOOLS
+    from theforge_sparkforge.native_pkg import import_tools, installed_version
 
-    snapshot = build_snapshot(TOOLS, str(sparkforge.__version__), previous=_read(args.output))
+    tools_surface, _call_tool = import_tools()
+    snapshot = build_snapshot(tools_surface, str(installed_version()),
+                              previous=_read(args.output))
     _write(args.output, snapshot)
     print(f"record: {len(snapshot['tools'])} tools of sparkforge "
           f"{snapshot['specialist_version']} -> {args.output}")

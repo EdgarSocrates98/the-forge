@@ -602,7 +602,7 @@ def test_live_health_without_sparkforge_is_unavailable_with_reason() -> None:
 
 
 def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import health
+    from theforge_sparkforge import health, native_pkg
 
     seen: list[str] = []
 
@@ -610,12 +610,68 @@ def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatc
         seen.append(name)
         return object()
 
-    monkeypatch.setattr(health.importlib.util, "find_spec", fake_find_spec)
-    monkeypatch.setattr(health, "_installed_version", lambda: "0.5.0")
+    monkeypatch.setattr(native_pkg.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(native_pkg, "installed_version", lambda: "0.5.0")
     observation = health.observe_live()
     assert observation.dispatcher and observation.specialist_version == "0.5.0"
-    assert "sparkforge.adapters.tools" in seen
+    assert "sparkforge_aws.adapters.tools" in seen
     assert "sparkforge.adapters.tools" not in sys.modules
+
+
+def test_live_health_checks_the_pre_rename_dispatcher_too(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import health, native_pkg
+
+    def fake_find_spec(name: str) -> object:
+        if name.startswith("sparkforge_aws."):
+            raise ImportError("no sparkforge_aws here")
+        return object()
+
+    monkeypatch.setattr(native_pkg.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(native_pkg, "installed_version", lambda: "0.5.0")
+    observation = health.observe_live()
+    assert observation.dispatcher and observation.specialist_version == "0.5.0"
+
+
+def _fake_specialist(monkeypatch: pytest.MonkeyPatch, package: str,
+                     marker: str) -> None:
+    """A fake installed specialist: ``package``/``package.adapters``/
+    ``package.adapters.tools`` in ``sys.modules`` (``import_tools`` resolves
+    parents first)."""
+    import sys as _sys
+    import types
+
+    monkeypatch.delitem(_sys.modules, f"{package}.adapters.tools", raising=False)
+    monkeypatch.delitem(_sys.modules, f"{package}.adapters", raising=False)
+    monkeypatch.delitem(_sys.modules, package, raising=False)
+    pkg = types.ModuleType(package)
+    adapters = types.ModuleType(f"{package}.adapters")
+    tools_mod = types.ModuleType(f"{package}.adapters.tools")
+    tools_mod.TOOLS = {marker: {}}  # type: ignore[attr-defined]
+    tools_mod.call_tool = lambda *_a: marker  # type: ignore[attr-defined]
+    adapters.tools = tools_mod  # type: ignore[attr-defined]
+    pkg.adapters = adapters  # type: ignore[attr-defined]
+    monkeypatch.setitem(_sys.modules, package, pkg)
+    monkeypatch.setitem(_sys.modules, f"{package}.adapters", adapters)
+    monkeypatch.setitem(_sys.modules, f"{package}.adapters.tools", tools_mod)
+
+
+def test_import_tools_prefers_the_renamed_package(monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import native_pkg
+
+    _fake_specialist(monkeypatch, "sparkforge_aws", "new")
+    _fake_specialist(monkeypatch, "sparkforge", "old")
+    tools, _call = native_pkg.import_tools()
+    assert tools == {"new": {}}
+
+
+def test_import_tools_falls_back_to_the_legacy_package(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import native_pkg
+
+    _fake_specialist(monkeypatch, "sparkforge", "old")
+    tools, _call = native_pkg.import_tools()
+    assert tools == {"old": {}}
 
 
 @pytest.mark.parametrize(("version", "inside"), [
@@ -667,7 +723,7 @@ class _BrokenSparkforge:
 @pytest.mark.parametrize(("metadata", "expected"), [("0.5.2", "0.5.2"), (None, None)])
 def test_broken_sparkforge_version_falls_back_to_metadata(
         monkeypatch: pytest.MonkeyPatch, metadata: str | None, expected: str | None) -> None:
-    from theforge_sparkforge import health
+    from theforge_sparkforge import health, native_pkg
 
     def fake_metadata(name: str) -> str:
         assert name == "sparkforge-aws"
@@ -675,17 +731,19 @@ def test_broken_sparkforge_version_falls_back_to_metadata(
             raise importlib.metadata.PackageNotFoundError(name)
         return metadata
 
+    monkeypatch.delitem(sys.modules, "sparkforge_aws", raising=False)
     monkeypatch.setitem(sys.modules, "sparkforge", _BrokenSparkforge())
-    monkeypatch.setattr(health, "metadata_version", fake_metadata)
-    assert health._installed_version() == expected
+    monkeypatch.setattr(native_pkg, "metadata_version", fake_metadata)
+    assert native_pkg.installed_version() == expected
     observation = health.Observation(interpreter="x", python="3.11.15", dispatcher=True,
-                                     specialist_version=health._installed_version())
+                                     specialist_version=native_pkg.installed_version())
     report = from_dict(HealthReport, health.report(
         observation, window=SUPPORTED_SPECIALIST, assumed=None, snapshot_problem=None))
     version = _check(report, "specialist-version")
     assert version.ok is (expected is not None)
     if expected is None:
-        assert report.status == "degraded" and "no sparkforge version" in version.detail
+        assert (report.status == "degraded"
+                and "no sparkforge-aws version" in version.detail)
 
 
 # --- execute translation over real recordings (4.3) ---------------------------------------

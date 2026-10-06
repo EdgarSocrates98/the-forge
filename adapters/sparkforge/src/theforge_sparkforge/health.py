@@ -3,10 +3,11 @@
 Four checks build the ``HealthReport`` payload (``{status, checks: [{name, ok, detail}]}``):
 
 1. ``interpreter``: Python >= 3.10;
-2. ``dispatcher``: ``sparkforge.adapters.tools`` is importable, found with ``find_spec`` and
-   never imported (importing the tool surface costs seconds);
-3. ``specialist-version``: the Spark Forge version (``sparkforge.__version__``, a light import;
-   ``--assume-specialist-version`` replaces it) inside ``SUPPORTED_SPECIALIST``;
+2. ``dispatcher``: a tool surface (``sparkforge_aws.adapters.tools`` or, pre-rename,
+   ``sparkforge.adapters.tools``) is importable, found with ``find_spec`` and never
+   imported (importing the tool surface costs seconds);
+3. ``specialist-version``: the Spark Forge version (the package ``__version__``, a light
+   import; ``--assume-specialist-version`` replaces it) inside ``SUPPORTED_SPECIALIST``;
 4. ``snapshot``: the packaged ``native_catalog.json`` is present and readable.
 
 (1), (2) or (4) failing -> ``unavailable``; only (3) failing -> ``degraded`` with the version
@@ -16,17 +17,16 @@ probes come from the scenario's ``environment.json`` and ``health.json``.
 
 from __future__ import annotations
 
-import importlib.util
 import re
 import sys
 from dataclasses import dataclass
-from importlib.metadata import version as metadata_version
 from typing import Any
 
+from theforge_sparkforge import native_pkg
 from theforge_sparkforge.backend import INSTALL_HINT, MIN_PYTHON
 
-DISPATCHER = "sparkforge.adapters.tools"
-DISTRIBUTION = "sparkforge-aws"
+DISPATCHER = "/".join(native_pkg.DISPATCHERS)
+DISTRIBUTION = native_pkg.DISTRIBUTION
 _SEMVER = re.compile(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)")
 _CLAUSE = re.compile(r"(>=|<=|==|!=|>|<)\s*(\S+)")
 _PYTHON = re.compile(r"(\d+)\.(\d+)(?:\.\d+)?")
@@ -69,32 +69,14 @@ def in_window(version: str, window: str) -> bool:
     return True
 
 
-def _installed_version() -> str | None:
-    """``sparkforge.__version__`` (``sparkforge/__init__`` is light), else the distribution
-    metadata of ``sparkforge-aws``; None when neither answers."""
-    try:
-        import sparkforge
-        version = getattr(sparkforge, "__version__", None)
-        if isinstance(version, str):
-            return version
-    except Exception:  # noqa: BLE001 - any failure of the specialist falls back to metadata
-        pass
-    try:
-        return metadata_version(DISTRIBUTION)
-    except Exception:  # noqa: BLE001 - unreadable metadata: no version, never internal
-        return None
-
-
 def observe_live() -> Observation:
     """The native side of this interpreter, without importing the dispatcher."""
-    try:
-        dispatcher = importlib.util.find_spec(DISPATCHER) is not None
-    except (ImportError, ValueError):
-        dispatcher = False
+    dispatcher = native_pkg.dispatcher_found()
     python = ".".join(str(part) for part in sys.version_info[:3])  # no pre-release suffix
     return Observation(interpreter=f"{sys.executable}", python=python,
                        dispatcher=dispatcher,
-                       specialist_version=_installed_version() if dispatcher else None)
+                       specialist_version=native_pkg.installed_version() if dispatcher
+                       else None)
 
 
 def _python_ok(python: str) -> bool:
@@ -117,13 +99,13 @@ def report(observation: Observation, *, window: str, assumed: str | None,
         f"{where}" if python_ok else f"{where}; the Spark Forge needs Python >= {floor}")
     dispatcher = _check(
         "dispatcher", observation.dispatcher,
-        f"{DISPATCHER} is importable with {where} (found, not imported)"
+        f"a tool surface ({DISPATCHER}) is importable with {where} (found, not imported)"
         if observation.dispatcher else
-        f"sparkforge is not importable with {where}: {DISPATCHER} not found; "
+        f"the Spark Forge is not importable with {where}: none of {DISPATCHER} found; "
         f"{INSTALL_HINT} in that interpreter")
     version = assumed if assumed is not None else observation.specialist_version
     if version is None:
-        detail = f"found no sparkforge version, supported {window}"
+        detail = f"found no sparkforge-aws version, supported {window}"
         version_ok = False
     else:
         version_ok = in_window(version, window)

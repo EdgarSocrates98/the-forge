@@ -257,11 +257,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     out = args.out.resolve()
     workspace_arg = args.workspace.absolute()
     _contain_native_state()
-    from sparkforge.adapters.tools import TOOLS, call_tool
+    from theforge_sparkforge.native_pkg import import_tools
+
+    tools_surface, call_tool = import_tools()
 
     try:
         tool = tool_of(args.capability, args.action)
-        schema = TOOLS[tool].get("inputSchema") or {}
+        schema = tools_surface[tool].get("inputSchema") or {}
         accepted = set(schema.get("properties") or {})
         workspace = check_workspace(workspace_arg, out)
         handoff = None
