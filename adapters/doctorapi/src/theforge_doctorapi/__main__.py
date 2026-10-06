@@ -10,13 +10,16 @@ module without importing it (or replays it from ``health.json``), never running 
 API (``health``). ``execute`` runs the mapped seam through the adapter bridge over the staged
 context (live) or replays its recording (``--replay``), then translates the emitted document
 (``execute``); the shell reduces the cwd to the declared artifacts afterwards.
+``verify`` answers a ``VerifyRequest`` with the Doctor's deterministic coherence
+audit of another provider's persisted result and handoff (``verify_op``) — the
+independent-verification seam the core calls on a distinct provider.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from theforge_doctorapi import PROVIDER_ID, VERSION
+from theforge_doctorapi import PROVIDER_ID, VERSION, verify_op
 from theforge_doctorapi import execute as execute_module
 from theforge_doctorapi._shell import (
     AdapterOptions,
@@ -69,7 +72,8 @@ def describe(options: AdapterOptions) -> OpHandler:
                                "python -m theforge_doctorapi.record")
         return Reply(status="ok",
                      payload=manifest_payload(snapshot, provider_id=PROVIDER_ID,
-                                              version=VERSION))
+                                              version=VERSION,
+                                              ops=OPS))
     return handle
 
 
@@ -83,10 +87,17 @@ def _execute(options: AdapterOptions) -> OpHandler:
     return execute_module.handler(options)
 
 
+def _verify(options: AdapterOptions) -> OpHandler:
+    return verify_op.handler(options, environment_problem)
+
+
+OPS = ("describe", "health", "execute", "verify")
+
 HANDLERS: dict[str, HandlerFactory] = {
     "describe": describe,
     "health": health,
     "execute": _execute,
+    "verify": _verify,
 }
 
 

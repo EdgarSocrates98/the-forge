@@ -24,7 +24,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +42,9 @@ class CapabilitySpec:
 
     ``input_globs`` name the files the capability reads from ``stage/``; ``stage_root``
     inputs receive the staged workspace root itself. ``verify_input`` marks the action that
-    validates a staged contract payload instead of scanning the workspace.
+    validates a staged contract payload instead of scanning the workspace. ``relations``
+    carries the declared capability-graph edges (``produces``/``consumes`` artifact types,
+    ``can_verify`` ``<provider>/<capability>`` refs).
     """
 
     seam: str
@@ -53,6 +55,7 @@ class CapabilitySpec:
     description: str
     stage_root: bool = True
     verify_input: bool = False
+    relations: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 # A scan consumes the whole staged tree; a ``*`` requirement means "any staged file".
@@ -65,6 +68,23 @@ DATA_GLOBS = ("*.py", "*.sql", "*.yaml", "*.yml", "*.toml", "*.cfg", "*.ini", "*
               "requirements*.txt")
 CONTRACT_GLOBS = ("*.json",)
 
+# Artifact type of what ``data.scan`` emits: the forge-contracts/1 diagnostic the
+# evidence bus forwards to a consumer declaring it.
+DIAGNOSTIC_EVIDENCE = "data.diagnostic-evidence"
+# Runs of the sibling data engineer this Doctor audits through the ``verify`` op.
+# The audit is structural (findings↔evidence coherence, hashes, handoff
+# invariants), so every capability the spark-forge adapter may expose qualifies;
+# a ref that stops resolving after a surface change is recorded by the graph as
+# an unresolved target, never dropped silently.
+VERIFIES: tuple[str, ...] = tuple(
+    f"spark-forge/{cap}" for cap in (
+        "pyspark.static-analysis", "spark.runtime-analysis", "streaming.analysis",
+        "glue.analysis", "emr.analysis", "athena.analysis", "iceberg.analysis",
+        "parquet.footer-analysis", "terraform.analysis", "orchestration.analysis",
+        "data-quality.analysis", "lakeformation.access-analysis",
+        "cloudwatch.analysis", "platform.graph-analysis", "migration.assessment",
+        "finops.performance-analysis"))
+
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "data.scan": CapabilitySpec(
         seam=SEAM_SCAN,
@@ -76,6 +96,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         description="Deterministic scan of a data platform repository: findings, "
                     "capability assessments, platform graph and remediation plans, "
                     "returned as a forge-contracts/1 HandoffBundle (accept_request).",
+        relations={"produces": (DIAGNOSTIC_EVIDENCE,)},
     ),
     "data.verify": CapabilitySpec(
         seam=SEAM_CONFORMANCE,
@@ -89,6 +110,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
                     "negotiation (check_conformance).",
         stage_root=False,
         verify_input=True,
+        relations={"can_verify": VERIFIES},
     ),
 }
 
@@ -156,7 +178,7 @@ def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
 
 def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
     """The manifest capability for a seam the recorded surface provides."""
-    return {
+    entry: dict[str, Any] = {
         "actions": list(spec.actions),
         "default_action": spec.actions[0],
         "state": "supported",
@@ -168,6 +190,10 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
             "dependencies": [],
         },
     }
+    if spec.relations:
+        entry["relations"] = {name: list(refs)
+                              for name, refs in spec.relations.items()}
+    return entry
 
 
 def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: str,

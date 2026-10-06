@@ -12,7 +12,9 @@ one extra evidence (only when the request carries a handoff), and a ``decision``
 key ``{"claim": ..., "subject": ...}`` adds a referee-style evidence with
 ``id="decision"`` (the debate convention). A ``findings`` list replaces the
 default ``f1`` finding (missing ``evidence_ids`` are wired to the emitted
-evidence). A ``flaky: <int>`` key makes the
+evidence). A ``hash_evidence: "<sha256>"`` key puts a bare hash on the first
+evidence (no location — contract-legal, unverifiable by a context hash). A
+``flaky: <int>`` key makes the
 first N ``execute`` calls exit 3 (a retryable FORGE-PROTO-EXIT): the count lives
 in ``<workspace_root>/.forge/flaky-<id>.count`` so it survives across attempts.
 When the manifest declares the ``verify`` op, that op answers the test-only
@@ -39,6 +41,7 @@ def main() -> int:
     decision = manifest.pop("decision", None)  # test-only referee decision evidence
     flaky = manifest.pop("flaky", 0)  # test-only: exit 3 on the first N executes
     cite = bool(manifest.pop("cite", False))  # test-only: e1 cites context file 1
+    evhash = manifest.pop("hash_evidence", None)  # test-only: e1 carries a bare sha256
     findings = manifest.pop("findings", None)  # test-only: replace f1 findings
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
@@ -104,6 +107,8 @@ def main() -> int:
                  "claim": f"received {len(files)} context files", "producer": producer}
         if cite and files:  # test-only: the evidence cites a sent file (context ROI)
             first["location"] = {"path": files[0]}
+        if evhash:  # test-only: a hash with no location — contract-legal, unverifiable
+            first["hash"] = evhash
         evidence = [first]
         handoff = payload.get("handoff")
         if isinstance(handoff, dict):

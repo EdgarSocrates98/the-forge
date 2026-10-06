@@ -60,7 +60,7 @@ def _call(op: str, options: tuple[str, ...] = (), payload: dict[str, Any] | None
     response = from_dict(Response, data)
     assert response.op == op and response.request_id == f"req-{op}"
     assert (response.producer.id, response.producer.version) == ("forge-doctor-api",
-                                                                 "0.2.0")
+                                                                 "0.3.0")
     return response, data
 
 
@@ -119,9 +119,9 @@ def test_replay_describe_manifest() -> None:
     response, raw = _describe()
     assert response.status == "ok", response.error
     manifest = from_dict(ForgeManifest, response.payload)
-    assert manifest.id == "forge-doctor-api" and manifest.version == "0.2.0"
+    assert manifest.id == "forge-doctor-api" and manifest.version == "0.3.0"
     assert manifest.protocols == [PROTOCOL_V1]
-    assert set(manifest.ops) >= {"describe", "health", "execute"}
+    assert set(manifest.ops) == {"describe", "health", "execute", "verify"}
     assert [c.id for c in manifest.capabilities] == EXPOSED
     assert manifest.execution.local and manifest.execution.offline
     assert not manifest.execution.requires_network
@@ -135,10 +135,15 @@ def test_replay_describe_manifest() -> None:
     diagnose = manifest.capability("api.diagnose")
     verify = manifest.capability("api.verify")
     assert diagnose is not None and diagnose.actions == ["analyze"]
+    # The diagnose emits the diagnostic artifact type a consumer can declare (wave E).
+    assert diagnose.relations.produces == ["api.diagnostic-evidence"]
     assert verify is not None and verify.actions == ["verify"]
+    # The Doctor audits sibling engineer runs through the ``verify`` op.
+    assert verify.relations.can_verify == list(catalog.VERIFIES)
+    assert all(ref.startswith("api-forge/") for ref in verify.relations.can_verify)
     # Wave B surface fields on the raw payload.
     assert raw["payload"]["context_revalidation"] == "hash"
-    assert raw["payload"]["adapter_version"] == "0.2.0"
+    assert raw["payload"]["adapter_version"] == "0.3.0"
     fingerprint = raw["payload"]["native_surface_fingerprint"]
     assert fingerprint == catalog.native_fingerprint(_snapshot())
 
@@ -151,7 +156,7 @@ def test_describe_flags_a_hand_built_snapshot() -> None:
     snapshot = _snapshot()
     assert snapshot["provenance"] == "recorded"
     payload = catalog.manifest_payload({**snapshot, "provenance": "hand-built"},
-                                       provider_id="forge-doctor-api", version="0.2.0")
+                                       provider_id="forge-doctor-api", version="0.3.0")
     assert any("hand-built" in n for n in payload["limitations"])
 
 
@@ -160,7 +165,7 @@ def test_seam_absent_becomes_a_limitation_not_a_capability() -> None:
     for seam in snapshot["seams"]:
         seam["present"] = seam["name"] != catalog.SEAM_DIAGNOSE
     payload = catalog.manifest_payload(snapshot, provider_id="forge-doctor-api",
-                                       version="0.2.0")
+                                       version="0.3.0")
     manifest = from_dict(ForgeManifest, payload)
     assert manifest.capability("api.diagnose") is None
     assert manifest.capability("api.verify") is not None
@@ -344,7 +349,7 @@ def test_in_window_plain_semver() -> None:
 # --- execute (replay) -----------------------------------------------------------------------
 
 
-PRODUCER = Producer(id="forge-doctor-api", version="0.2.0")
+PRODUCER = Producer(id="forge-doctor-api", version="0.3.0")
 
 
 def _result(response: Response, *, expect_ok: bool = True) -> ExecutionResult:
@@ -447,3 +452,158 @@ def test_diagnose_with_no_input_is_partial() -> None:
                              context={"root": str(WORKSPACE), "files": []})
     result = _result(response, expect_ok=False)
     assert result.status == "partial"
+
+
+# --- verify op (cycle 3.1 wave E): independent verification ----------------------------------
+
+SHA = "a" * 64
+
+
+def _verify_payload(result: dict[str, Any], handoff: dict[str, Any] | None = None
+                    ) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "task": {"schema": "theforge/TaskSpec/v1", "id": "t1", "intent": "x",
+                 "targets": []},
+        "capability": "api.analyze", "action": "analyze",
+        "run_id": "run-1", "result": result}
+    if handoff is not None:
+        payload["handoff"] = handoff
+    return payload
+
+
+def _clean_result(**over: Any) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "schema": "theforge/ExecutionResult/v1",
+        "producer": {"id": "api-forge", "version": "0.2.0"},
+        "capability": "api.analyze", "action": "analyze",
+        "status": "ok",
+        "evidence": [{"id": "e1", "epistemic": "observed",
+                      "subject": "contract", "claim": "saw it",
+                      "producer": {"id": "api-forge", "version": "0.2.0"}}],
+        "findings": [{"id": "f1", "title": "t", "severity": "low",
+                      "evidence_ids": ["e1"]}],
+        "artifacts": [], "limitations": [], "unknowns": [], "assumptions": []}
+    result.update(over)
+    return result
+
+
+def _verify(payload: dict[str, Any], replay: Path = DEFAULT
+            ) -> tuple[Response, dict[str, Any]]:
+    return _call("verify", ("--replay", str(replay)), payload)
+
+
+def test_verify_op_passes_a_coherent_result() -> None:
+    response, _ = _verify(_verify_payload(_clean_result()))
+    assert response.status == "ok", response.error
+    verdict = response.payload
+    assert verdict["status"] == "passed"
+    assert verdict["details"] == ["result-coherence: passed"]
+    assert verdict["basis"] == ["forge-doctor-api/coherence-audit"]
+
+
+def test_verify_op_fails_a_finding_without_evidence() -> None:
+    result = _clean_result(findings=[{"id": "f1", "title": "t", "severity": "low"}])
+    response, _ = _verify(_verify_payload(result))
+    assert response.status == "ok"
+    assert response.payload["status"] == "failed"
+    assert any("f1" in detail and "evidence" in detail
+               for detail in response.payload["details"])
+
+
+def test_verify_op_fails_an_unverifiable_evidence_hash() -> None:
+    evidence = [{"id": "e1", "epistemic": "observed", "subject": "s",
+                 "claim": "c", "hash": SHA}]
+    response, _ = _verify(_verify_payload(_clean_result(evidence=evidence)))
+    assert response.payload["status"] == "failed"
+    assert any("hash without location" in detail
+               for detail in response.payload["details"])
+
+
+def test_verify_op_fails_a_dangling_evidence_ref() -> None:
+    result = _clean_result(
+        findings=[{"id": "f1", "title": "t", "severity": "low",
+                   "evidence_ids": ["ghost"]}])
+    response, _ = _verify(_verify_payload(result))
+    assert response.payload["status"] == "failed"
+    assert any("ghost" in detail for detail in response.payload["details"])
+
+
+def _handoff(items: list[dict[str, Any]]) -> dict[str, Any]:
+    return {"schema": "theforge/Handoff/v1",
+            "producer": {"id": "theforge", "version": "0.2.0"},
+            "created_at": "2026-01-01T00:00:00Z", "plan_run": "p1",
+            "target_node": "n2", "items": items}
+
+
+def _item(**over: Any) -> dict[str, Any]:
+    item: dict[str, Any] = {
+        "kind": "evidence", "id": "e1",
+        "origin": {"plan_run": "p1", "node": "n1", "run_id": "r1",
+                   "provider": {"id": "forge-doctor-api", "version": "0.3.0"}},
+        "epistemic": "observed", "subject": "s", "claim": "c"}
+    item.update(over)
+    return item
+
+
+def test_verify_op_audits_the_consumed_handoff() -> None:
+    handoff = _handoff([
+        _item(),
+        _item(kind="artifact", id="out.json", hash=SHA, epistemic=None),
+    ])
+    response, _ = _verify(_verify_payload(_clean_result(), handoff))
+    assert response.payload["status"] == "passed"
+    assert response.payload["details"] == ["result-coherence: passed",
+                                           "handoff-coherence: passed"]
+
+
+def test_verify_op_fails_a_handoff_artifact_without_hash() -> None:
+    handoff = _handoff([_item(kind="artifact", id="out.json", epistemic=None)])
+    response, _ = _verify(_verify_payload(_clean_result(), handoff))
+    assert response.payload["status"] == "failed"
+    assert any("hash is required" in detail
+               for detail in response.payload["details"])
+
+
+def test_verify_op_fails_handoff_evidence_without_epistemic() -> None:
+    item = _item()
+    del item["epistemic"]
+    response, _ = _verify(_verify_payload(_clean_result(), _handoff([item])))
+    assert response.payload["status"] == "failed"
+    assert any("epistemic is required" in detail
+               for detail in response.payload["details"])
+
+
+def test_verify_op_never_upgrades_epistemic() -> None:
+    """The verdict describes the verification, never the claim's truth."""
+    result = _clean_result()  # observed evidence
+    response, _ = _verify(_verify_payload(result))
+    assert response.payload["status"] == "passed"
+    # no epistemic field exists on a verdict — the producer's claims stand
+    assert "epistemic" not in response.payload
+
+
+def test_verify_op_rejects_a_non_object_payload() -> None:
+    # A scalar payload fails at request parsing, before the handler runs.
+    response, _ = _verify("nope")
+    assert response.status == "error"
+    assert response.error is not None
+    assert response.error.code == "ADAPTER-REQUEST-INVALID"
+
+
+@pytest.mark.parametrize("payload", [
+    {"result": "nope"},
+    {"task": {}, "capability": "x", "action": "y", "run_id": "r"},
+])
+def test_verify_op_refuses_a_malformed_payload(payload: Any) -> None:
+    response, _ = _verify(payload)
+    assert response.status == "refused"
+    assert response.error is not None
+    assert response.error.code == "ADAPTER-REQUEST-INVALID"
+
+
+def test_verify_op_refuses_without_the_specialist() -> None:
+    response, _ = _verify(_verify_payload(_clean_result()),
+                          SCENARIOS / "specialist-missing")
+    assert response.status == "refused"
+    assert response.error is not None
+    assert response.error.code == "DOCTORAPI-ADAPTER-UNAVAILABLE"

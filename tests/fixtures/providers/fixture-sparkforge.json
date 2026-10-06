@@ -1,0 +1,23 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "spark-forge",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "execute"],
+  "domains": ["data-engineering"],
+  "capabilities": [
+    {
+      "id": "pyspark.static-analysis",
+      "actions": ["pyspark"],
+      "default_action": "pyspark",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Static analysis of PySpark code (fixture standing in as the spark-forge id)",
+      "signals": {
+        "keywords": ["spark", "pyspark", "glue", "lento", "slow", "performance", "job"],
+        "file_globs": ["*glue*.py", "*_job.py", "*.scala"],
+        "dependencies": ["pyspark", "awsglue"]
+      }
+    }
+  ]
+}

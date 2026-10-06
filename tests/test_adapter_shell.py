@@ -49,7 +49,16 @@ ADAPTERS = {
     "doctorapi": ("theforge-doctorapi-adapter", "theforge_doctorapi",
                   "forge-doctor-api", ">=0.2.0,<0.3.0"),
 }
-OPS = ["describe", "health", "execute", "bogus"]
+# Adapter release versions (semver of each distribution): bumps track surface
+# changes per docs/versioning.md — sparkforge stays 0.2.0 until its handoff
+# intake lands (cycle 3.1 wave E).
+ADAPTER_VERSION = {
+    "sparkforge": "0.2.0",
+    "apiforge": "0.3.0",
+    "doctordata": "0.3.0",
+    "doctorapi": "0.3.0",
+}
+OPS = ["describe", "health", "execute", "verify", "bogus"]
 
 
 def _pyproject(name: str) -> dict[str, Any]:
@@ -75,7 +84,7 @@ def test_adapter_distribution_metadata(name: str) -> None:
     data = _pyproject(name)
     project = data["project"]
     assert project["name"] == ADAPTERS[name][0]
-    assert project["version"] == "0.2.0"
+    assert project["version"] == ADAPTER_VERSION[name]
     assert parse_semver(project["version"]) is not None
     assert project["requires-python"] == ">=3.10"
     assert project["dependencies"] == []
@@ -130,7 +139,7 @@ def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
     assert response.op == op
     assert response.request_id == f"req-{op}"
     assert response.producer.id == ADAPTERS[name][2]
-    assert response.producer.version == "0.2.0"
+    assert response.producer.version == ADAPTER_VERSION[name]
     if op == "health":
         # Health always answers; a missing specialist is a HealthReport status (4.2/5.2).
         assert response.status == "ok" and response.error is None
@@ -164,11 +173,11 @@ TEST_PRODUCER = ("shell-test-forge", "9.8.7")
 SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     "test-handlers": ([sys.executable, str(SHELL_FORGE)], TEST_PRODUCER),
     "sparkforge": ([sys.executable, "-m", "theforge_sparkforge"], ("spark-forge", "0.2.0")),
-    "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.2.0")),
+    "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.3.0")),
     "doctordata": ([sys.executable, "-m", "theforge_doctordata"],
-                   ("forge-doctor-data", "0.2.0")),
+                   ("forge-doctor-data", "0.3.0")),
     "doctorapi": ([sys.executable, "-m", "theforge_doctorapi"],
-                  ("forge-doctor-api", "0.2.0")),
+                  ("forge-doctor-api", "0.3.0")),
 }
 
 

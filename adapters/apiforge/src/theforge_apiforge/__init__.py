@@ -5,7 +5,7 @@ imports ``theforge``. The API Forge itself needs Python 3.12 (``REQUIRED_PYTHON`
 """
 
 PROVIDER_ID = "api-forge"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 # API Forge releases this adapter supports (pre-1.0: one specialist minor at a time).
 SUPPORTED_SPECIALIST = ">=0.1.0,<0.2.0"
 # Interpreter the API Forge needs; the adapter itself runs on Python >= 3.10.

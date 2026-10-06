@@ -6,7 +6,7 @@ internals), speaks the protocol on stdin/stdout and never imports ``theforge``.
 """
 
 PROVIDER_ID = "forge-doctor-api"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 # Forge Doctor API is pre-1.0: its public surface may change per minor release, so the
 # adapter pins a tight window and drifts to ``degraded`` outside it.
 SUPPORTED_SPECIALIST = ">=0.2.0,<0.3.0"

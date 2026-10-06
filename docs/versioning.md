@@ -39,7 +39,7 @@ Fonte única. As colunas dos especialistas mostram a janela `SUPPORTED_SPECIALIS
 | The Forge | Forge Protocol | theforge-sparkforge-adapter | sparkforge-aws | theforge-apiforge-adapter | apiforge | theforge-doctordata-adapter | forge-doctor-data | theforge-doctorapi-adapter | forge-doctor-api | Suporte até |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 0.1.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | — | — | — | — | lançamento de 0.3.0 |
-| 0.2.0 | `forge/v1` | 0.2.0 | `>=0.5.0,<0.6.0` | 0.2.0 | `>=0.1.0,<0.2.0` | 0.2.0 | `>=1.0.0rc1,<2.0.0` | 0.2.0 | `>=0.2.0,<0.3.0` | lançamento de 0.4.0 |
+| 0.2.0 | `forge/v1` | 0.2.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | lançamento de 0.4.0 |
 
 ## Identidade de superfície
 `version` não é identidade: a mesma versão pode carregar uma superfície diferente (observado em sparkforge 0.5.0 e apiforge 0.1.0). O contrato `theforge/ProviderSurfaceIdentity/v1` pareia as versões declaradas com dois fingerprints determinísticos que o core computa do manifest em uso:

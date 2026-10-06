@@ -6,7 +6,7 @@ protocol on stdin/stdout and never imports ``theforge``.
 """
 
 PROVIDER_ID = "forge-doctor-data"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 # Forge Doctor Data releases this adapter supports (one major line at a time).
 SUPPORTED_SPECIALIST = ">=1.0.0rc1,<2.0.0"
 # Interpreter the specialist needs (``requires-python >= 3.11``); the adapter itself runs on

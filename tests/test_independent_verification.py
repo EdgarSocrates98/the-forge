@@ -12,16 +12,23 @@ verifier answering ``passed``/``failed`` (failure demotes the run to
 verifying itself never counting as independent.
 """
 
+import importlib.util
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from helpers import (
+    PROVIDERS,
     SELFVERIFY_ENTRY,
     SPARK_ENTRY,
     VERIFIER_ENTRY,
     VERIFIER_FAIL_ENTRY,
     case_a,
+    case_b,
+    fixture_argv,
     make_workspace,
 )
 from theforge.contracts import (
@@ -374,3 +381,103 @@ def test_verify_payload_is_bounded_and_redacted(tmp_path: Path) -> None:
     assert payload["run_id"] == out.run_id
     assert payload["result"]["producer"]["id"] == "fixture-spark"
     assert payload["handoff"] is None
+
+
+# --- real Doctor adapters in --replay (cycle 3.1 wave E) -------------------------------------
+
+DOCTOR_FIXTURES = Path(__file__).parent / "fixtures" / "native"
+# Producer fixtures that stand in under the real provider ids, so the Doctors'
+# declared can_verify refs resolve: spark-forge/pyspark.static-analysis is
+# audited by forge-doctor-data, api-forge/api.analyze by forge-doctor-api.
+SPARKFORGE_ENTRY = {
+    "id": "spark-forge",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-sparkforge.json")),
+    "trust": "local",
+}
+SPARKFORGE_HASH_ENTRY = {
+    "id": "spark-forge",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-sparkforge-hash.json")),
+    "trust": "local",
+}
+APIFORGE_ENTRY = {
+    "id": "api-forge",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-apiforge.json")),
+    "trust": "local",
+}
+DOCTORDATA_ENTRY = {
+    "id": "forge-doctor-data",
+    "argv": [sys.executable, "-m", "theforge_doctordata", "--replay",
+             str(DOCTOR_FIXTURES / "doctordata" / "default")],
+    "trust": "local",
+}
+DOCTORAPI_ENTRY = {
+    "id": "forge-doctor-api",
+    "argv": [sys.executable, "-m", "theforge_doctorapi", "--replay",
+             str(DOCTOR_FIXTURES / "doctorapi" / "default")],
+    "trust": "local",
+}
+HAS_DOCTORDATA = importlib.util.find_spec("theforge_doctordata") is not None
+HAS_DOCTORAPI = importlib.util.find_spec("theforge_doctorapi") is not None
+
+
+@pytest.mark.skipif(not HAS_DOCTORDATA,
+                    reason="theforge_doctordata adapter is not installed")
+def test_real_doctor_data_verifies_a_spark_run(tmp_path: Path) -> None:
+    """Phase 14/16: Spark Forge run -> Doctor Data ``verify`` op -> passed."""
+    make_workspace(tmp_path, [SPARKFORGE_ENTRY, DOCTORDATA_ENTRY])
+    case_a(tmp_path)
+    forger, store = _forger(tmp_path)
+    out = forger.ask(AskRequest(
+        intent="analise esse Glue Job porque está lento", provider="spark-forge",
+        capability="pyspark.static-analysis", action="pyspark"))
+    assert out.status == "ok" and out.verification is not None
+    check = out.verification.independent
+    assert check.status == "passed"
+    assert check.basis == ["verifier:forge-doctor-data",
+                           "forge-doctor-data/coherence-audit"]
+    assert "result-coherence: passed" in check.details
+    persisted = store.read_contract(out.run_id, "verification", VerificationResult)
+    assert persisted.independent == check
+
+
+@pytest.mark.skipif(not HAS_DOCTORDATA,
+                    reason="theforge_doctordata adapter is not installed")
+def test_real_doctor_data_fails_unverifiable_evidence(tmp_path: Path) -> None:
+    """The Doctor catches what the contract allows but no one can re-hash."""
+    make_workspace(tmp_path, [SPARKFORGE_HASH_ENTRY, DOCTORDATA_ENTRY])
+    case_a(tmp_path)
+    forger, _ = _forger(tmp_path)
+    out = forger.ask(AskRequest(
+        intent="analise esse Glue Job porque está lento", provider="spark-forge",
+        capability="pyspark.static-analysis", action="pyspark"))
+    assert out.verification is not None
+    check = out.verification.independent
+    assert check.status == "failed"
+    assert check.basis[0] == "verifier:forge-doctor-data"
+    assert any("hash without location" in detail for detail in check.details)
+    assert out.status == "partial"  # an independent failure demotes the run
+    assert out.result is not None
+    assert any("independent verification failed: forge-doctor-data" in note
+               for note in out.result.limitations)
+
+
+@pytest.mark.skipif(not HAS_DOCTORAPI,
+                    reason="theforge_doctorapi adapter is not installed")
+def test_real_doctor_api_verifies_an_api_run(tmp_path: Path) -> None:
+    """Phase 14/16: API Forge run -> Doctor API ``verify`` op -> passed."""
+    make_workspace(tmp_path, [APIFORGE_ENTRY, DOCTORAPI_ENTRY])
+    case_b(tmp_path)
+    forger, store = _forger(tmp_path)
+    out = forger.ask(AskRequest(
+        intent="analyze this api contract", provider="api-forge",
+        capability="api.analyze", action="analyze"))
+    assert out.status == "ok" and out.verification is not None
+    check = out.verification.independent
+    assert check.status == "passed"
+    assert check.basis == ["verifier:forge-doctor-api",
+                           "forge-doctor-api/coherence-audit"]
+    persisted = store.read_contract(out.run_id, "verification", VerificationResult)
+    assert persisted.independent == check

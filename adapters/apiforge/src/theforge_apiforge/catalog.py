@@ -70,6 +70,10 @@ class VerbSpec:
     # ``upstream-facts.json`` to the verb. Absent: the verb has no intake, the capability
     # does not claim consumption and the run carries the undeclared-use limitation.
     upstream: str | None = None
+    # Artifact types the handoff intake consumes (capability-graph edges). The
+    # upstream intake is generic facts with provenance, so every diagnostic
+    # evidence type a Doctor declares is consumable.
+    consumes: tuple[str, ...] = ()
 
 
 OPENAPI_GLOBS = ("openapi.yaml", "openapi.json", "*.openapi.yaml", "*.openapi.json")
@@ -94,6 +98,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         description="Static analysis of an OpenAPI contract against the API project that "
                     "implements it (API Forge `analyze`).",
         upstream="--upstream",
+        consumes=("api.diagnostic-evidence", "data.diagnostic-evidence"),
     ),
     "api.change-control": VerbSpec(
         argv=("change-control", "run"),
@@ -214,7 +219,7 @@ def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
 
 def capability_entry(record: Mapping[str, Any], spec: VerbSpec) -> dict[str, Any]:
     """The manifest capability for an eligible record (native id and state kept)."""
-    return {
+    entry: dict[str, Any] = {
         "id": record["capability_id"],
         "actions": list(spec.actions),
         "default_action": spec.actions[0],
@@ -228,6 +233,9 @@ def capability_entry(record: Mapping[str, Any], spec: VerbSpec) -> dict[str, Any
         },
         "accepts_handoff": spec.upstream is not None,
     }
+    if spec.consumes:
+        entry["relations"] = {"consumes": list(spec.consumes)}
+    return entry
 
 
 def _excluded_note(record: Mapping[str, Any], reason: str) -> str:

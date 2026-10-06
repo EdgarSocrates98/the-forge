@@ -25,7 +25,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -43,7 +43,9 @@ class CapabilitySpec:
 
     ``input_globs`` name the files the capability reads from ``stage/``; ``stage_root``
     inputs receive the staged workspace root itself. ``verify_input`` marks the action that
-    validates a staged document instead of scanning the workspace.
+    validates a staged document instead of scanning the workspace. ``relations``
+    carries the declared capability-graph edges (``produces``/``consumes`` artifact
+    types, ``can_verify`` ``<provider>/<capability>`` refs).
     """
 
     seam: str
@@ -54,6 +56,7 @@ class CapabilitySpec:
     description: str
     stage_root: bool = True
     verify_input: bool = False
+    relations: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 # A diagnose consumes the whole staged tree; a ``*`` requirement means "any staged file".
@@ -63,6 +66,17 @@ PROJECT_GLOBS = ("*",)
 API_GLOBS = ("*.yaml", "*.yml", "*.json", "*.proto", "*.graphql", "*.gql",
              "*.py", "*.java", "*.kt", "*.go", "*.ts", "*.js")
 HANDOFF_GLOBS = ("*.json",)
+
+# Artifact type of what ``api.diagnose`` emits: the diagnostic the evidence bus
+# forwards to a consumer declaring it.
+DIAGNOSTIC_EVIDENCE = "api.diagnostic-evidence"
+# Runs of the sibling engineer this Doctor audits through the ``verify`` op: the
+# coherence audit (findings↔evidence, hashes, handoff invariants) is structural,
+# so every capability the apiforge adapter may expose qualifies; a ref that stops
+# resolving after a surface change is recorded by the graph as an unresolved
+# target, never dropped.
+VERIFIES: tuple[str, ...] = tuple(
+    f"api-forge/{cap}" for cap in ("api.analyze", "api.change-control"))
 
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "api.diagnose": CapabilitySpec(
@@ -76,6 +90,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
                     "ApiHandoffBundle v2 (findings, evidence, unknowns, capabilities, "
                     "graph edges, content hashes) plus ForgeHandoff envelope and "
                     "diagnostic-manifest (DoctorBoundary, spec 070).",
+        relations={"produces": (DIAGNOSTIC_EVIDENCE,)},
     ),
     "api.verify": CapabilitySpec(
         seam=SEAM_VERIFY,
@@ -89,6 +104,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
                     "content-addressed so handoff_id is recomputed and compared.",
         stage_root=False,
         verify_input=True,
+        relations={"can_verify": VERIFIES},
     ),
 }
 
@@ -156,7 +172,7 @@ def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
 
 def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
     """The manifest capability for a seam the recorded surface provides."""
-    return {
+    entry: dict[str, Any] = {
         "actions": list(spec.actions),
         "default_action": spec.actions[0],
         "state": "supported",
@@ -168,6 +184,10 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
             "dependencies": [],
         },
     }
+    if spec.relations:
+        entry["relations"] = {name: list(refs)
+                              for name, refs in spec.relations.items()}
+    return entry
 
 
 def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: str,
