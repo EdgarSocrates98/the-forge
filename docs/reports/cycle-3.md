@@ -1063,3 +1063,45 @@ já existiam; o elemento que faltava era a **dica de recuperação**.
 
 Drift intencional: dois testes de stderr exato em `test_cli_explain` foram
 atualizados para a linha `hint:` aditiva.
+
+## Wave V — Quality gates
+
+Auditoria da lista pedida contra o CI real: todos os gates já existem.
+
+| Gate pedido | Onde |
+|---|---|
+| `ruff`, `mypy` | job `test` do `ci.yml` (Ubuntu+Windows × py3.11–3.14) |
+| `schemas` | step "Schema parity": regera + `git diff --exit-code` + `test_schemas.py` |
+| `unit`/`contract`/`integration`/`security`/`offline e2e`/`docs consistency`/`agentic parity` | suíte offline única `-m "not slow and not real_provider"`, marcadores por arquivo em `conftest.py` |
+| `package build` | job `package`: `python -m build` |
+| `fresh install` | `scripts/ci/fresh_install.py` (wheel em venv novo, `doctor`/`init`/`ask`) |
+| zero-deps | `scripts/ci/check_zero_deps.py` |
+| real providers / raciocínio semântico | workflow separado `real-providers.yml` (não-bloqueante) |
+
+A única peça nova da wave é a linha `hint:` na superfície de erro (Wave U), que
+garante que "recovery hint" faz parte do protocolo de falha — verificada pelo
+próprio gate (`test_failure_semantics.py` roda na suíte offline).
+
+## Wave W — Performance gates
+
+Cinco medições novas no `run_bench.py` cobrem as superfícies do ciclo 3 que
+faltavam na lista pedida, todas caminhos determinísticos:
+
+| Medição | Mediana (esta máquina) | Budget (×1,5) |
+|---|---:|---:|
+| `graph_build` | 0,095 ms | 0,143 ms |
+| `graph_refresh_warm` | 45,388 ms | 68,082 ms |
+| `plan_validate` | 0,113 ms | 0,170 ms |
+| `replay_verify` | 8,521 ms | 12,782 ms |
+| `explain_build` | 20,900 ms | 31,350 ms |
+
+`graph_build` é o `build_capability_graph` puro sobre o descritor do workspace
+de 10k; `graph_refresh_warm` é o `refresh_intel` com snapshot válido — o caminho
+incremental real que alimenta o grafo (a atualização "warm" da spec). As
+medianas entraram no `baseline.json` e os budgets derivados no `budgets.json`
+(origem registrada com o HEAD medido); `test_bench.py` agora garante que toda
+medição tem budget commitado.
+
+Como manda a spec, o planner semântico **não** entra no SLA determinístico: é
+medido separadamente pelo `run_runs_bench.py` (métrica `semantic_calls` e wall
+time por caso), com isolamento de workspace por repetição.

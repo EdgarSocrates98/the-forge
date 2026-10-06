@@ -112,7 +112,19 @@ def test_measurement_names_cover_the_procedure(bench: ModuleType) -> None:
         "cli_startup", "registry_cold", "registry_warm", "scan_1k", "scan_10k", "routing_10k",
         "context_1k_cold", "context_1k_warm", "context_10k_cold", "context_10k_warm",
         "persist_run",
+        "graph_build", "graph_refresh_warm", "plan_validate", "replay_verify",
+        "explain_build",
     )
+
+
+def test_every_measurement_has_a_committed_budget(bench: ModuleType) -> None:
+    """Wave W: the budgets file covers every measurement of the procedure."""
+    budgets = bench.load_budgets(BENCH / "budgets.json")
+    missing = bench.missing_budgets(
+        {name: bench.Measurement(name=name, median_ms=1.0, p90_ms=1.0, runs=1)
+         for name in bench.MEASUREMENTS},
+        budgets)
+    assert missing == []
 
 
 def test_report_format(bench: ModuleType) -> None:

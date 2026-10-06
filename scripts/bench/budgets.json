@@ -64,5 +64,35 @@
     "baseline_ms": 14.741,
     "factor": 1.5,
     "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "graph_build": {
+    "budget_ms": 0.143,
+    "baseline_ms": 0.095,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "graph_refresh_warm": {
+    "budget_ms": 68.082,
+    "baseline_ms": 45.388,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "plan_validate": {
+    "budget_ms": 0.17,
+    "baseline_ms": 0.113,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "replay_verify": {
+    "budget_ms": 12.782,
+    "baseline_ms": 8.521,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "explain_build": {
+    "budget_ms": 31.35,
+    "baseline_ms": 20.9,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
   }
 }

@@ -25,6 +25,15 @@ python scripts/bench/run_bench.py --budgets-from scripts/bench/baseline.json [--
 | `routing_10k` | routing sobre a varredura de 10 000 arquivos |
 | `context_1k_cold` / `context_1k_warm`, `context_10k_cold` / `context_10k_warm` | `build_context_pack` com o perfil `balanced`, cache de fingerprints frio (desligado) e quente (populado) |
 | `persist_run` | gravação de `task`, `routing`, `context`, `result`, `telemetry` e `receipt` de um run real com o eco |
+| `graph_build` | `build_capability_graph` sobre o descritor do workspace de 10 000 arquivos (Cycle 3, Wave W) |
+| `graph_refresh_warm` | `refresh_intel` com snapshot válido — o caminho incremental que alimenta o grafo (seções frescas reusadas) |
+| `plan_validate` | `check_plan` de um plano `pipeline` de 32 nós encadeados |
+| `replay_verify` | `verify_run_hashes` de um run real com o eco |
+| `explain_build` | `build_explain_report` de um run real com o eco |
+
+O planner semântico não entra no SLA determinístico: é medido à parte pelo
+`run_runs_bench.py` (métrica `semantic_calls` por caso — Wave P), nunca por budget
+de latência aqui.
 
 ## Baseline
 Arquivo: `scripts/bench/baseline.json` (gravado no commit `f1df8a0`; medido em `d77ba5f`). Medido antes do cache de fingerprints: nesse ponto `warm` só difere de `cold` por uma chamada de aquecimento não cronometrada, então as duas variantes medem o mesmo trabalho e a diferença entre elas é ruído.
