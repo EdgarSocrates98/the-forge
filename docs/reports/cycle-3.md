@@ -936,3 +936,33 @@ observadas (incl. `relevant_to` via requirements.txt num repo git), filtro
 sem cache vira limitação, não nó), grafo vazio sem `.forge` (exit 0), e e2e do
 explain mostrando `Complexity:`/`Graph:` num plano executado e
 `Resolved: semantically`/`independent=passed (fixture-verifier)` num ask.
+
+## Wave R — Documentação e ADRs do ciclo
+
+Cinco decisões do ciclo 3 estavam implementadas e testadas mas sem ADR próprio
+— a Wave R registra cada uma com contexto, decisão e consequências:
+
+- **ADR 0026** — perfil por avaliação de complexidade medida: dimensões
+  declaradas com peso e evidência, `confidence < 0.5` degrada a `balanced`,
+  `complexity.toml` auditável, artefato linkado no receipt.
+- **ADR 0027** — grafo de capabilities: três fontes só (manifests em cache,
+  descriptor, nada mais), dois planos epistêmicos (`explicit`/`observed`),
+  consumidores determinísticos (ordem do pipeline, descoberta de verifiers,
+  filtro de handoff), alvos ausentes viram limitação.
+- **ADR 0028** — planner híbrido: tiers 0/1 determinísticos, tier-2 só em
+  `ambiguous` não-economy, `SemanticPlanProposal` revalidado por `check_plan`
+  como qualquer plano — o "semantic reasoning provider" como papel único que o
+  resolver do ADR 0025 também veste.
+- **ADR 0029** — evidence bus v2: `Handoff` tipado com `origin` completa,
+  dedup por `also_from`, filtro por `consumes` antes do orçamento, gravado
+  antes de enviar (identidade por hash é a base do reuso do resume).
+- **ADR 0030** — modos avançados: cinco padrões, concorrência por nível
+  limitada a 4, ordem canônica topológica (nunca de conclusão),
+  `DecisionRecord` com posições verbatim ou `unresolved`.
+
+O índice de ADRs ganha as cinco linhas e a tabela de decisões exigidas cobre o
+ciclo 3 inteiro. `capabilities.md` ganha a seção "Relações declaradas" (o ref
+`cap.id`/`provider/cap.id` é matéria de taxonomia, não de protocolo) e o README
+ganha o bloco de status do ciclo 3 e a linha do relatório novo. `errors.md`
+permanece completo — varredura de `FORGE-*` em `src/` contra a tabela não
+encontra código sem linha.

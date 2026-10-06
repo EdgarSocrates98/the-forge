@@ -29,6 +29,11 @@ Decisões de arquitetura de The Forge, uma por arquivo `NNNN-<slug>.md`. Cada AD
 | 0023 | [Inteligência de projeto: freshness computada, reuso por seção](0023-project-intelligence.md) | aceito (2026-10-05) |
 | 0024 | [Trace local é um campo do RunTelemetry, não um segundo sistema](0024-local-trace-spans.md) | aceito (2026-10-05) |
 | 0025 | [Resolver semântico como fallback de routing, nunca como router](0025-semantic-routing-fallback.md) | aceito (2026-10-07) |
+| 0026 | [Perfil por avaliação de complexidade medida](0026-complexity-model.md) | aceito (2026-10-07) |
+| 0027 | [Grafo de capabilities: relações declaradas + observadas](0027-capability-graph.md) | aceito (2026-10-07) |
+| 0028 | [Planner híbrido: determinismo decompõe, semântica só desempata](0028-hybrid-planner.md) | aceito (2026-10-07) |
+| 0029 | [Handoff como bus de evidência tipada](0029-evidence-bus.md) | aceito (2026-10-07) |
+| 0030 | [Modos avançados de execução](0030-execution-modes.md) | aceito (2026-10-07) |
 
 ## Decisões exigidas pelo Cycle 2
 
@@ -48,6 +53,11 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | inteligência de projeto e staleness explícito | [0023](0023-project-intelligence.md) | `cycle-3` |
 | trace local dentro do artefato de telemetria | [0024](0024-local-trace-spans.md) | `cycle-3` |
 | resolver semântico como fallback de routing | [0025](0025-semantic-routing-fallback.md) | `cycle-3` |
+| perfil por avaliação de complexidade medida | [0026](0026-complexity-model.md) | `cycle-3` |
+| grafo de capabilities declarado + observado | [0027](0027-capability-graph.md) | `cycle-3` |
+| planner híbrido (tier-2 semântico limitado) | [0028](0028-hybrid-planner.md) | `cycle-3` |
+| handoff como bus de evidência tipada | [0029](0029-evidence-bus.md) | `cycle-3` |
+| modos avançados de execução e `DecisionRecord` | [0030](0030-execution-modes.md) | `cycle-3` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR
