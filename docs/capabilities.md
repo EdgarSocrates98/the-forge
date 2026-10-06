@@ -103,6 +103,10 @@ Todas são `read_only`, `supported` e rodam localmente e offline.
 | `spark-forge` | `finops.performance-analysis` | `workload` | `sparkforge_analyze_workload` |
 | `api-forge` | `api.analyze` | `analyze` | verbo `apiforge analyze --detail-level summary`; registro `api.analyze` da matriz (supported, read_only) |
 | `api-forge` | `api.change-control` | `run` | verbo `apiforge change-control run`; registro `api.change-control` da matriz (supported, read_only) |
+| `forge-doctor-data` | `data.scan` | `analyze` | seam `accept_request` (`kind=scan`) do `forge_doctor_data.core.forger`; HandoffBundle `forge-contracts/1` |
+| `forge-doctor-data` | `data.verify` | `verify` | seam `check_conformance` de `forge_doctor_data.core.conformance` |
+| `forge-doctor-api` | `api.diagnose` | `analyze` | seam `DoctorBoundary` (`handle` + `endpoint_dict`) de `forge_doctor_api.handoff.boundary` (spec 070); `ApiHandoffBundle` v2 + envelope `ForgeHandoff` + `diagnostic-manifest` |
+| `forge-doctor-api` | `api.verify` | `verify` | strict parse `ApiHandoffBundle.from_dict` / `ForgeHandoff.parse` + integridade `body_sha256` (v2) |
 
 ### Superfície nativa não exposta
 O motivo é o texto exato que o adapter publica em `limitations` no describe. Ações e capabilities excluídas são listadas uma a uma; ferramentas sem capability são agrupadas pelo motivo.

@@ -1,0 +1,30 @@
+{
+  "contract_version": "forge-contracts/1",
+  "provenance": "recorded",
+  "recorded_at": "2026-10-06T15:24:16Z",
+  "request_kinds": [
+    "scan"
+  ],
+  "seams": [
+    {
+      "callable": "accept_request",
+      "module": "forge_doctor_data.core.forger",
+      "name": "accept_request",
+      "parameters": [
+        "payload"
+      ],
+      "present": true
+    },
+    {
+      "callable": "check_conformance",
+      "module": "forge_doctor_data.core.conformance",
+      "name": "check_conformance",
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "present": true
+    }
+  ],
+  "specialist_version": "1.0.0rc1"
+}

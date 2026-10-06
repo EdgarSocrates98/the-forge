@@ -2,7 +2,8 @@
 
 Marker ``real_provider`` (excluded from the default selection): ``python -m pytest -m
 real_provider``. Each Forge runs only when the environment contract of ``real_providers.py``
-(``THEFORGE_REAL_{SPARKFORGE,APIFORGE}_PYTHON``) names an interpreter with the adapter and the
+(``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``) names an interpreter with the
+adapter and the
 specialist; otherwise its tests skip with the reason, or fail when
 ``THEFORGE_REAL_PROVIDERS_REQUIRED=1``. See ``docs/real-providers.md``.
 
@@ -93,7 +94,8 @@ class Case:
 
     @property
     def unavailable_code(self) -> str:
-        return f"{self.spec.provider_id.replace('-', '').upper()}-ADAPTER-UNAVAILABLE"
+        return (self.spec.unavailable_code
+                or f"{self.spec.provider_id.replace('-', '').upper()}-ADAPTER-UNAVAILABLE")
 
 
 CASES = {
@@ -104,6 +106,14 @@ CASES = {
     "api": Case("api", FIXTURES / "workspaces" / "api", "api.analyze", "analyze",
                 ">=0.1.0,<0.2.0",
                 ADAPTERS / "apiforge" / "src" / "theforge_apiforge" / "native_matrix.json"),
+    "doctordata": Case("doctordata", FIXTURES / "workspaces" / "data" / "shop",
+                       "data.scan", "analyze", ">=1.0.0rc1,<2.0.0",
+                       ADAPTERS / "doctordata" / "src" / "theforge_doctordata"
+                       / "native_surface.json"),
+    "doctorapi": Case("doctorapi", FIXTURES / "workspaces" / "cross" / "orders-api",
+                      "api.diagnose", "analyze", ">=0.2.0,<0.3.0",
+                      ADAPTERS / "doctorapi" / "src" / "theforge_doctorapi"
+                      / "native_surface.json"),
 }
 
 
@@ -164,8 +174,43 @@ def _recorded_evidence_shapes(case: Case) -> set[str]:
     if case.name == "spark":
         facts = recording["output"]["items"]
         return {rp.id_shape(item["id"]) for item in facts}
-    facts = recording["case_files"]["facts.json"]["facts"]
-    return {rp.id_shape(item["fact_id"]) for item in facts}
+    if case.name == "api":
+        facts = recording["case_files"]["facts.json"]["facts"]
+        return {rp.id_shape(item["fact_id"]) for item in facts}
+    if case.name == "doctordata":
+        # Translated evidence ids: "<fingerprint|check_id>#ev", "plan:<id>"
+        # and fixed sections.
+        fids = [f["fingerprint"] if isinstance(f.get("fingerprint"), str)
+                and f["fingerprint"] else f.get("check_id", "finding")
+                for f in recording.get("findings", []) if isinstance(f, dict)]
+        shapes = {rp.id_shape(f"{f}#ev") for f in fids if isinstance(f, str)}
+        shapes |= {rp.id_shape(f"{f}#9#ev") for f in fids
+                   if isinstance(f, str)}  # deduped ids gain "#n"
+        shapes |= {rp.id_shape(f"plan:{p['id']}") for p in recording.get("plans") or ()
+                   if isinstance(p, dict) and isinstance(p.get("id"), str)}
+        return shapes | {rp.id_shape(x) for x in
+                         ("capability-registry", "platform-graph", "scan-summary")}
+    # doctorapi: "<finding id>#e<i>", per-section refs and fixed sections.
+    bundle = recording["bundle"]
+    fids = [f["id"] for f in bundle.get("findings", [])
+            if isinstance(f, dict) and isinstance(f.get("id"), str)]
+    shapes = {rp.id_shape(f"{f}#e0") for f in fids}
+    shapes |= {rp.id_shape(f"{f}#9#e0") for f in fids}
+    for section in ("breaking_changes", "clients_affected", "runtime_regressions",
+                    "security_candidates", "reliability_signals", "operations",
+                    "contracts"):
+        shapes |= {rp.id_shape(f"{section}:{i}")
+                   for i in range(len(bundle.get(section) or ()))}
+    shapes |= {rp.id_shape(f"external:{i}")
+               for i in range(len(bundle.get("external_references") or ()))}
+    shapes |= {rp.id_shape(f"remediation:{i}")
+               for i in range(len(bundle.get("remediation_candidates") or ()))}
+    shapes |= {rp.id_shape(f"capability:{c['name']}")
+               for c in bundle.get("capabilities") or ()
+               if isinstance(c, dict) and c.get("name")}
+    return shapes | {rp.id_shape(x) for x in
+                     ("handoff-envelope", "diagnostic-manifest", "service-graph",
+                      "domain-hashes", "delta")}
 
 
 def _hashed_evidence_drift(pack: dict[str, Any], result: ExecutionResult) -> list[str]:
@@ -213,8 +258,8 @@ def _live_snapshot(case: Case, forge: rp.RealForge, directory: Path) -> dict[str
     if case.name == "spark":
         argv = [str(forge.python), "-m", "theforge_sparkforge.record", "--output", str(target)]
     else:
-        argv = [str(forge.python), "-m", "theforge_apiforge.record", "--out", str(target),
-                "--recorded-at", "live"]
+        argv = [str(forge.python), "-m", f"{case.spec.adapter_module}.record",
+                "--out", str(target), "--recorded-at", "live"]
     rp.run_native(argv, directory)
     data: dict[str, Any] = json.loads(target.read_text(encoding="utf-8"))
     return data
@@ -370,6 +415,22 @@ def _live_api_case(tmp_path: Path, user_config_dir: Path, case: Case,
     return files
 
 
+def _live_doctor_document(tmp_path: Path, user_config_dir: Path, case: Case,
+                          forge: rp.RealForge) -> dict[str, Any]:
+    """The live bridge document of the action: the ``native/handoff.json`` artifact of a
+    core run over a copy of the example workspace."""
+    root = _workspace(tmp_path, case, user_config_dir, forge.entry())
+    outcome, store = _ask(root, case)
+    assert outcome.status in ("ok", "partial"), outcome.error
+    assert outcome.result is not None
+    work = store.work_dir(outcome.run_id)
+    artifacts = {a.path for a in outcome.result.artifacts}
+    assert "native/handoff.json" in artifacts, artifacts
+    doc: dict[str, Any] = json.loads(
+        (work / "native" / "handoff.json").read_text(encoding="utf-8"))
+    return doc
+
+
 def test_live_native_output_has_the_recorded_keys_and_id_formats(
         tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge) -> None:
     """Execute drift: the live native output of the exercised action has the same top-level
@@ -385,11 +446,16 @@ def test_live_native_output_has_the_recorded_keys_and_id_formats(
         }
         assert live["tool"] == recording["tool"]
         assert live["arguments"] == recording["arguments"]
-    else:
+    elif case.name == "api":
         live_files = _live_api_case(tmp_path, user_config_dir, case, forge)
         recorded_files = recording["case_files"]
         assert sorted(live_files) == sorted(recorded_files)
         pairs = {name: (recorded_files[name], live_files[name]) for name in recorded_files}
+    else:
+        # The Doctors: the live native output is the bridge document itself, declared as
+        # the ``native/handoff.json`` artifact of a core run over the same workspace.
+        live_doc = _live_doctor_document(tmp_path, user_config_dir, case, forge)
+        pairs = {"recording": (recording, live_doc)}
     drift = {name: (rp.top_keys(old), rp.top_keys(new)) for name, (old, new) in pairs.items()
              if rp.top_keys(old) != rp.top_keys(new)}
     assert drift == {}, f"{case.recording.name}: top-level keys drifted {drift}"

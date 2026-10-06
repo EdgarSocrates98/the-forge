@@ -3,7 +3,7 @@
 The Forge versiona cinco coisas diferentes, cada uma com regra própria. Mudar uma não muda as outras: um adapter novo não muda o protocolo, e um campo opcional novo num contrato não muda a versão do schema.
 
 ## Versão de pacote
-- Vale para `theforge` (`theforge.__version__`) e para os adapters `theforge-sparkforge-adapter` e `theforge-apiforge-adapter` (`version` no `pyproject.toml` de cada um, igual ao `VERSION` do pacote).
+- Vale para `theforge` (`theforge.__version__`) e para os adapters `theforge-sparkforge-adapter`, `theforge-apiforge-adapter`, `theforge-doctordata-adapter` e `theforge-doctorapi-adapter` (`version` no `pyproject.toml` de cada um, igual ao `VERSION` do pacote).
 - [SemVer 2.0.0](https://semver.org/): `MAJOR.MINOR.PATCH`. Antes de 1.0, um minor novo pode quebrar compatibilidade; patch nunca quebra.
 - Os adapters têm release própria, independente de `theforge` ([ADR 0014](adr/0014-provider-adapter-location.md)). A compatibilidade entre eles é a da [matriz](#matriz-de-compatibilidade).
 
@@ -36,10 +36,10 @@ The Forge versiona cinco coisas diferentes, cada uma com regra própria. Mudar u
 ## Matriz de compatibilidade
 Fonte única. As colunas dos especialistas mostram a janela `SUPPORTED_SPECIALIST` de cada adapter.
 
-| The Forge | Forge Protocol | theforge-sparkforge-adapter | sparkforge-aws | theforge-apiforge-adapter | apiforge | Suporte até |
-|---|---|---|---|---|---|---|
-| 0.1.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | lançamento de 0.3.0 |
-| 0.2.0 | `forge/v1` | 0.2.0 | `>=0.5.0,<0.6.0` | 0.2.0 | `>=0.1.0,<0.2.0` | lançamento de 0.4.0 |
+| The Forge | Forge Protocol | theforge-sparkforge-adapter | sparkforge-aws | theforge-apiforge-adapter | apiforge | theforge-doctordata-adapter | forge-doctor-data | theforge-doctorapi-adapter | forge-doctor-api | Suporte até |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.1.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | — | — | — | — | lançamento de 0.3.0 |
+| 0.2.0 | `forge/v1` | 0.2.0 | `>=0.5.0,<0.6.0` | 0.2.0 | `>=0.1.0,<0.2.0` | 0.2.0 | `>=1.0.0rc1,<2.0.0` | 0.2.0 | `>=0.2.0,<0.3.0` | lançamento de 0.4.0 |
 
 ## Identidade de superfície
 `version` não é identidade: a mesma versão pode carregar uma superfície diferente (observado em sparkforge 0.5.0 e apiforge 0.1.0). O contrato `theforge/ProviderSurfaceIdentity/v1` pareia as versões declaradas com dois fingerprints determinísticos que o core computa do manifest em uso:

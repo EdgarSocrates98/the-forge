@@ -1,6 +1,7 @@
 """Environment contract of the real-Forge integration tests (real-provider-integration 7.1).
 
-``tests/real_providers.py`` reads ``THEFORGE_REAL_{SPARKFORGE,APIFORGE}_PYTHON`` and
+``tests/real_providers.py`` reads ``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_
+PYTHON`` and
 ``THEFORGE_REAL_PROVIDERS_REQUIRED`` and checks, in order: variable set, file exists,
 ``import <adapter>, <specialist>`` exits 0. A missing prerequisite skips with an explicit reason,
 or fails when the run declares the real Forges required. Everything here runs on a simulated
@@ -19,7 +20,8 @@ import pytest
 import real_providers as rp
 from theforge.security.env import safe_env
 
-ALL_VARS = (rp.SPARK_PYTHON_VAR, rp.API_PYTHON_VAR, rp.REQUIRED_VAR)
+ALL_VARS = (rp.SPARK_PYTHON_VAR, rp.API_PYTHON_VAR, rp.DOCTORDATA_PYTHON_VAR,
+            rp.DOCTORAPI_PYTHON_VAR, rp.REQUIRED_VAR)
 
 
 def _ok_probe(python: Path, modules: Sequence[str]) -> str | None:
@@ -47,6 +49,8 @@ def interpreter(tmp_path: Path) -> Path:
 def test_contract_variable_names() -> None:
     assert rp.SPARK_PYTHON_VAR == "THEFORGE_REAL_SPARKFORGE_PYTHON"
     assert rp.API_PYTHON_VAR == "THEFORGE_REAL_APIFORGE_PYTHON"
+    assert rp.DOCTORDATA_PYTHON_VAR == "THEFORGE_REAL_DOCTORDATA_PYTHON"
+    assert rp.DOCTORAPI_PYTHON_VAR == "THEFORGE_REAL_DOCTORAPI_PYTHON"
     assert rp.REQUIRED_VAR == "THEFORGE_REAL_PROVIDERS_REQUIRED"
     assert rp.IMPORT_TIMEOUT == 60.0
     assert {name: (spec.provider_id, spec.variable, spec.adapter_module, spec.specialist_module)
@@ -54,6 +58,10 @@ def test_contract_variable_names() -> None:
         "spark": ("spark-forge", rp.SPARK_PYTHON_VAR, "theforge_sparkforge",
                   "sparkforge.adapters.tools"),
         "api": ("api-forge", rp.API_PYTHON_VAR, "theforge_apiforge", "apiforge"),
+        "doctordata": ("forge-doctor-data", rp.DOCTORDATA_PYTHON_VAR,
+                       "theforge_doctordata", "forge_doctor_data"),
+        "doctorapi": ("forge-doctor-api", rp.DOCTORAPI_PYTHON_VAR,
+                      "theforge_doctorapi", "forge_doctor_api"),
     }
 
 

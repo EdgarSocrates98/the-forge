@@ -343,12 +343,15 @@ Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-loc
 | `ADAPTER-NATIVE-TIMEOUT` | `error` | a chamada nativa passou de 85% do timeout de execute do perfil; a árvore nativa é encerrada |
 | `ADAPTER-OUTPUT-TOO-LARGE` | `error` | o resultado passa de 4 MiB mesmo sem nenhum finding inline; nada é gravado |
 | `ADAPTER-REPLAY-MISSING` / `ADAPTER-REPLAY-INVALID` | `error` | em `--replay`, um arquivo do cenário (gravação da ação, `environment.json` ou `health.json`) não existe ou é inválido |
-| `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12) |
-| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
+| `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12; nos Doctors, Python < 3.11) |
+| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` / `DOCTORDATA-ADAPTER-SNAPSHOT-INVALID` / `DOCTORAPI-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
 | `SPARKFORGE-ADAPTER-NATIVE-FAILED` | `error` | o processo filho nativo saiu com código ≠ 0 ou com stdout truncado |
-| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
+| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` / `DOCTORDATA-ADAPTER-NATIVE-INVALID` / `DOCTORAPI-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
 | `APIFORGE-ADAPTER-NATIVE-FAILURE` | `error` | a CLI saiu com erro sem uma linha `AF-*` reconhecível |
 | `APIFORGE-ADAPTER-INPUT-OUTSIDE` | `refused` | caminho do bundle de `change-control` fora do workspace |
+| `DOCTORDATA-ADAPTER-NATIVE-FAILURE` / `DOCTORAPI-ADAPTER-NATIVE-FAILURE` | `error` | o bridge saiu com código ≠ 0 sem uma linha `FDD-*`/`FDA-*` reconhecível |
+| `FDD-REQUEST-INVALID` / `FDA-REQUEST-INVALID` | `refused` | requisição ou entrada staged malformada (exit 2 do bridge), `field=request` |
+| `FDD-*` / `FDA-*` (demais) | `error` | falha nativa do Doctor (exit 1 do bridge): tipo+mensagem no `detail` |
 | `SPARKFORGE-TOOL-UNKNOWN` | `refused` | tool nativa inexistente |
 | `SPARKFORGE-<código nativo>` / `SPARKFORGE-TOOL-ERROR` | `refused` ou `error` | erro nativo: tipado ou exit 2 → `refused`, senão `error` |
 | `AF-*` | `refused` ou `error` | erro nativo do API Forge: exit 2 → `refused`; exit 3, `AF-CLI-INTERNAL` ou outro → `error` |

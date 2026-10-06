@@ -23,8 +23,12 @@ flowchart TD
     T -->|"argv op, JSON stdin/stdout"| E[echo-forge]
     T --> S["theforge_sparkforge (interpretador do Spark Forge)"]
     T --> A["theforge_apiforge (Python 3.12 do API Forge)"]
+    T --> DD["theforge_doctordata (interpretador do Doctor Data)"]
+    T --> DA["theforge_doctorapi (interpretador do Doctor API)"]
     S -->|"processo filho, cwd = work/"| SN[sparkforge-aws: call_tool]
     A -->|"CLI pública, cwd = work/"| AN[apiforge]
+    DD -->|"bridge filho, cwd = work/"| DN[forge_doctor_data: accept_request/check_conformance]
+    DA -->|"bridge filho, cwd = work/"| DAN[forge_doctor_api: DoctorBoundary/handoff]
 ```
 
 ## Fluxo de `ask`
@@ -241,17 +245,18 @@ Todo run grava o artefato `telemetry` (`RunTelemetry` v1, schema fechado) antes 
 O legado `.forge/registry/` não é mais criado; `init` e `registry refresh` o removem com aviso.
 
 ## Adapters reais
-Spark Forge e API Forge entram como providers comuns, por dois adapters fora do pacote `theforge` ([ADR 0014](adr/0014-provider-adapter-location.md)): `adapters/sparkforge` (`theforge-sparkforge-adapter`) e `adapters/apiforge` (`theforge-apiforge-adapter`). Instalação e registro em [real-providers.md](real-providers.md).
+Spark Forge, API Forge, Forge Doctor Data e Forge Doctor API entram como providers comuns, por quatro adapters fora do pacote `theforge` ([ADR 0014](adr/0014-provider-adapter-location.md)): `adapters/sparkforge` (`theforge-sparkforge-adapter`), `adapters/apiforge` (`theforge-apiforge-adapter`), `adapters/doctordata` (`theforge-doctordata-adapter`) e `adapters/doctorapi` (`theforge-doctorapi-adapter`). Instalação e registro em [real-providers.md](real-providers.md).
 
 - **Fronteira.** Cada adapter é stdlib-only, instalado no interpretador do especialista, e nunca importa `theforge`; o core nunca importa um adapter nem um especialista. O core vê só o `argv` registrado e os envelopes JSON.
-- **Shell comum.** `_shell.py` (envelope, gates de op/protocolo/capability/ação, `stage_context`, `evidence_hash`, `finalize`, `run_native`, `cleanup_workdir`) é copiado byte a byte nos dois adapters; um teste garante a igualdade. Os códigos de erro dos adapters estão em [protocol.md](protocol.md#códigos-dos-adapters-reais).
-- **describe.** Deriva o manifest de uma tabela positiva (`catalog.py`) cruzada com um snapshot gravado da superfície nativa (`native_catalog.json`, `native_matrix.json`), sem importar a superfície de tools. Os IDs seguem a taxonomia do [ADR 0017](adr/0017-capability-taxonomy.md); o catálogo está em [capabilities.md](capabilities.md).
+- **Shell comum.** `_shell.py` (envelope, gates de op/protocolo/capability/ação, `stage_context`, `evidence_hash`, `finalize`, `run_native`, `cleanup_workdir`) é copiado byte a byte nos quatro adapters; um teste garante a igualdade. Os códigos de erro dos adapters estão em [protocol.md](protocol.md#códigos-dos-adapters-reais).
+- **describe.** Deriva o manifest de uma tabela positiva (`catalog.py`) cruzada com um snapshot gravado da superfície nativa (`native_catalog.json`, `native_matrix.json`, `native_surface.json`), sem importar a superfície de tools. Os IDs seguem a taxonomia do [ADR 0017](adr/0017-capability-taxonomy.md); o catálogo está em [capabilities.md](capabilities.md).
 - **Capabilities não expostas.** Só ações read-only, offline e preenchíveis com arquivos do workspace são declaradas. Tools que pedem rede, credenciais AWS ou escrita local, e capabilities `unsupported` ou de mutação do API Forge, ficam em `limitations` do manifest com o motivo e nunca são executáveis.
-- **health.** Só checagens locais, sem rede e sem credenciais: interpretador, importabilidade e versão do especialista contra `SUPPORTED_SPECIALIST` (fora da janela → `degraded` com a versão encontrada e a janela). O Spark nunca chama o `doctor` nativo (que sonda credenciais AWS). O API não roda o `apiforge doctor`: confere só que `apiforge.cli` existe (`find_spec`, sem importar), porque importar a CLI leva de 3 a 17 s, acima do orçamento de 10 s; dependência quebrada da CLI aparece no `execute`.
-- **execute.** O adapter copia para `<cwd>/stage/` só os arquivos do ContextPack com sha256 conferido (`context_revalidation = "hash"`) e roda o especialista num processo filho com cwd no `work/` do run: no Spark, `python -m theforge_sparkforge.native_call` (`detail_level = "normal"`); no API, a CLI pública com `APIFORGE_CACHE=off` (no `change-control run`, cwd na raiz do workspace copiado). A chamada nativa tem 85% do timeout de execute do perfil (`ADAPTER-NATIVE-TIMEOUT`). Erros nativos viram `refused`/`error` estruturados com o código nativo preservado.
+- **health.** Só checagens locais, sem rede e sem credenciais: interpretador, importabilidade e versão do especialista contra `SUPPORTED_SPECIALIST` (fora da janela → `degraded` com a versão encontrada e a janela). O Spark nunca chama o `doctor` nativo (que sonda credenciais AWS). O API não roda o `apiforge doctor`: confere só que `apiforge.cli` existe (`find_spec`, sem importar), porque importar a CLI leva de 3 a 17 s, acima do orçamento de 10 s; dependência quebrada da CLI aparece no `execute`. Os Doctors conferem o boundary público por `find_spec` — também sem importá-lo.
+- **execute.** O adapter copia para `<cwd>/stage/` só os arquivos do ContextPack com sha256 conferido (`context_revalidation = "hash"`) e roda o especialista num processo filho com cwd no `work/` do run: no Spark, `python -m theforge_sparkforge.native_call` (`detail_level = "normal"`); no API, a CLI pública com `APIFORGE_CACHE=off` (no `change-control run`, cwd na raiz do workspace copiado); nos Doctors, um bridge filho (`python -m <adapter>.bridge` via `run_native` com `PYTHONIOENCODING=utf-8`) que é o único módulo a importar o especialista e usa só seams públicos (`accept_request`/`check_conformance` no Data; `DoctorBoundary`/`build_request`/`from_dict`/`parse` no API). A chamada nativa tem 85% do timeout de execute do perfil (`ADAPTER-NATIVE-TIMEOUT`). Erros nativos viram `refused`/`error` estruturados com o código nativo preservado (`FDD-*`/`FDA-*` nos Doctors).
+- **Saída nativa.** Os Doctors gravam o documento nativo canônico (HandoffBundle / ApiHandoffBundle+envelope+manifest) em `native/handoff.json` — findings, evidência e unknowns são traduzidos para o barramento, mas o grafo e o detalhe completo ficam no artefato (sem fundir grafos estrangeiros).
 - **Tamanho.** Acima de 4 MiB, o resultado mantém os findings que cabem, grava a saída nativa completa no artifact `native/full-output.json` e vira `partial`; se nem o resultado sem nenhum finding couber, `ADAPTER-OUTPUT-TOO-LARGE` (`error`).
 - **Contenção.** Em todo desfecho, `cleanup_workdir` reduz `work/` aos `artifacts[]` declarados; `.sparkforge/`, `traces.db`, `.apiforge/` e caches nunca ficam no workspace do usuário nem no run.
-- **Testes.** A conformance offline roda os dois adapters em `--replay` (gravações em `tests/fixtures/native/`) no CI principal; a integração contra os Forges reais (`-m real_provider`) roda no workflow agendado.
+- **Testes.** A conformance offline roda os quatro adapters em `--replay` (gravações em `tests/fixtures/native/`) no CI principal; a integração contra os Forges reais (`-m real_provider`) roda no workflow agendado.
 
 ## CI
 Decisões em [ADR 0011](adr/0011-ci-support-matrix.md).

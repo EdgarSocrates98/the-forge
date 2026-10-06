@@ -44,6 +44,10 @@ ADAPTERS = {
                    ">=0.5.0,<0.6.0"),
     "apiforge": ("theforge-apiforge-adapter", "theforge_apiforge", "api-forge",
                  ">=0.1.0,<0.2.0"),
+    "doctordata": ("theforge-doctordata-adapter", "theforge_doctordata",
+                   "forge-doctor-data", ">=1.0.0rc1,<2.0.0"),
+    "doctorapi": ("theforge-doctorapi-adapter", "theforge_doctorapi",
+                  "forge-doctor-api", ">=0.2.0,<0.3.0"),
 }
 OPS = ["describe", "health", "execute", "bogus"]
 
@@ -110,7 +114,9 @@ def test_adapter_sources_never_import_theforge(name: str) -> None:
 @pytest.mark.parametrize("op", OPS)
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
-    specialist = {"sparkforge": "sparkforge", "apiforge": "apiforge"}[name]
+    specialist = {"sparkforge": "sparkforge", "apiforge": "apiforge",
+                  "doctordata": "forge_doctor_data",
+                  "doctorapi": "forge_doctor_api"}[name]
     if importlib.util.find_spec(specialist) is not None or (
             name == "apiforge" and sys.version_info[:2] == (3, 12)):
         pytest.skip(f"{specialist} may be usable in this interpreter")
@@ -159,6 +165,10 @@ SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     "test-handlers": ([sys.executable, str(SHELL_FORGE)], TEST_PRODUCER),
     "sparkforge": ([sys.executable, "-m", "theforge_sparkforge"], ("spark-forge", "0.2.0")),
     "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.2.0")),
+    "doctordata": ([sys.executable, "-m", "theforge_doctordata"],
+                   ("forge-doctor-data", "0.2.0")),
+    "doctorapi": ([sys.executable, "-m", "theforge_doctorapi"],
+                  ("forge-doctor-api", "0.2.0")),
 }
 
 

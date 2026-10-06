@@ -61,9 +61,9 @@ Depois rode `theforge registry refresh`. Para começar um provider do zero, `the
 
 O `version` do manifest precisa ser SemVer 2.0.0 (senão o provider fica `invalid`, `FORGE-MANIFEST-VERSION`), e cada capability segue a [taxonomia](docs/capabilities.md) (fora dela, a capability é excluída com aviso `FORGE-MANIFEST-TAXONOMY`). Para quem já tem um provider: [nota de migração](docs/provider-authoring.md#nota-de-migração-ciclo-2-wave-b).
 
-## Spark Forge e API Forge
+## Forges reais
 
-Os Forges reais entram por dois adapters em `adapters/`, instalados no interpretador de cada especialista (o API Forge exige Python 3.12) e registrados como qualquer provider ([ADR 0014](docs/adr/0014-provider-adapter-location.md)). Só capabilities read-only e offline são expostas; o resto aparece em `limitations` do manifest com o motivo ([catálogo](docs/capabilities.md), [ADR 0017](docs/adr/0017-capability-taxonomy.md)). O estado nativo de cada execute fica em `.forge/runs/<id>/work/` e é reduzido aos artifacts declarados; esse diretório não passa por redaction ([segurança](docs/security.md#exceção-forgerunsidwork)). Instalação, registro, testes de integração e troubleshooting: [docs/real-providers.md](docs/real-providers.md).
+Os Forges reais entram por quatro adapters em `adapters/`, instalados no interpretador de cada especialista (o API Forge exige Python 3.12; os Doctors exigem Python ≥ 3.11) e registrados como qualquer provider ([ADR 0014](docs/adr/0014-provider-adapter-location.md)): Spark Forge (`spark-forge`), API Forge (`api-forge`), Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`). Só capabilities read-only e offline são expostas; o resto aparece em `limitations` do manifest com o motivo ([catálogo](docs/capabilities.md), [ADR 0017](docs/adr/0017-capability-taxonomy.md)). O estado nativo de cada execute fica em `.forge/runs/<id>/work/` e é reduzido aos artifacts declarados; esse diretório não passa por redaction ([segurança](docs/security.md#exceção-forgerunsidwork)). Instalação, registro, testes de integração e troubleshooting: [docs/real-providers.md](docs/real-providers.md).
 
 ## Exit codes
 
@@ -105,7 +105,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 A suíte offline roda os adapters reais em modo replay, então o setup de desenvolvimento os instala editáveis junto com o core:
 
 ```bash
-.venv/bin/python -m pip install -e ".[dev]" -e ./adapters/sparkforge -e ./adapters/apiforge
+.venv/bin/python -m pip install -e ".[dev]" -e ./adapters/sparkforge -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi
 .venv/bin/python -m pytest            # suite offline
 .venv/bin/python -m pytest -m slow    # gates de zero deps e instalação limpa (baixa hatchling)
 .venv/bin/python -m pytest -m security   # categoria: unit, contract, integration, e2e, slow, security

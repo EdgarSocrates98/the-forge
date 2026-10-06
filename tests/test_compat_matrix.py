@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 import theforge_apiforge
+import theforge_doctorapi
+import theforge_doctordata
 import theforge_sparkforge
 
 import theforge
@@ -24,7 +26,9 @@ VERSIONING = REPO / "docs" / "versioning.md"
 MATRIX_HEADING = "## Matriz de compatibilidade"
 RULE = "docs/versioning.md, seção 'Regra de manutenção'"
 COLUMNS = ("The Forge", "Forge Protocol", "theforge-sparkforge-adapter", "sparkforge-aws",
-           "theforge-apiforge-adapter", "apiforge", "Suporte até")
+           "theforge-apiforge-adapter", "apiforge",
+           "theforge-doctordata-adapter", "forge-doctor-data",
+           "theforge-doctorapi-adapter", "forge-doctor-api", "Suporte até")
 
 
 @dataclass(frozen=True)
@@ -76,6 +80,12 @@ def current_adapters() -> dict[str, Adapter]:
         "api-forge": Adapter("theforge-apiforge-adapter", "apiforge",
                              _pyproject_version("apiforge"),
                              theforge_apiforge.SUPPORTED_SPECIALIST),
+        "forge-doctor-data": Adapter("theforge-doctordata-adapter", "forge-doctor-data",
+                                     _pyproject_version("doctordata"),
+                                     theforge_doctordata.SUPPORTED_SPECIALIST),
+        "forge-doctor-api": Adapter("theforge-doctorapi-adapter", "forge-doctor-api",
+                                    _pyproject_version("doctorapi"),
+                                    theforge_doctorapi.SUPPORTED_SPECIALIST),
     }
 
 
@@ -168,10 +178,13 @@ def test_unsupported_protocol_major_fails() -> None:
 
 def test_parse_matrix_reads_table_and_rejects_missing_heading() -> None:
     header = "| " + " | ".join(COLUMNS) + " |"
+    row = "| 1.0.0 | `forge/v1` | 1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | " \
+          "1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | x |"
     doc = "\n".join([MATRIX_HEADING, "", header, "|" + "---|" * len(COLUMNS),
-                     "| 1.0.0 | `forge/v1` | 1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | "
-                     "`>=1.0.0,<1.1.0` | x |", "", "## Next"])
+                     row, "", "## Next"])
     assert parse_matrix(doc) == [dict(zip(COLUMNS, ["1.0.0", "forge/v1", "1.0.0",
+                                                    ">=1.0.0,<1.1.0", "1.0.0",
+                                                    ">=1.0.0,<1.1.0", "1.0.0",
                                                     ">=1.0.0,<1.1.0", "1.0.0",
                                                     ">=1.0.0,<1.1.0", "x"], strict=True))]
     with pytest.raises(AssertionError, match="Regra de manutenção"):

@@ -2,7 +2,8 @@
 
 Only this test harness reads the variables below, to build the ``argv`` registered in the
 isolated user ``providers.toml`` of a test. They never reach a provider: the entry carries only
-``id``/``argv``/``trust`` and the core's environment allowlist is unchanged.
+``id``/``argv``/``trust`` and the core's environment allowlist is unchanged. The variables are
+``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``.
 
 Per Forge, in this order, each with an explicit reason: the variable is set, it names an
 existing interpreter (absolute path), and ``<python> -c "import <adapter>, <specialist>"``
@@ -26,6 +27,8 @@ from theforge.security.env import safe_env
 
 SPARK_PYTHON_VAR = "THEFORGE_REAL_SPARKFORGE_PYTHON"
 API_PYTHON_VAR = "THEFORGE_REAL_APIFORGE_PYTHON"
+DOCTORDATA_PYTHON_VAR = "THEFORGE_REAL_DOCTORDATA_PYTHON"
+DOCTORAPI_PYTHON_VAR = "THEFORGE_REAL_DOCTORAPI_PYTHON"
 REQUIRED_VAR = "THEFORGE_REAL_PROVIDERS_REQUIRED"
 IMPORT_TIMEOUT = 60.0
 DOC = "docs/real-providers.md"
@@ -45,6 +48,8 @@ class ForgeSpec:
     adapter_module: str
     specialist_module: str
     needs: str
+    # The adapter's unavailability code; default derived from the provider id.
+    unavailable_code: str = ""
 
 
 FORGES: dict[str, ForgeSpec] = {
@@ -55,6 +60,18 @@ FORGES: dict[str, ForgeSpec] = {
     "api": ForgeSpec("api", "API Forge", "api-forge", API_PYTHON_VAR,
                      "theforge_apiforge", "apiforge",
                      "API Forge needs Python 3.12"),
+    "doctordata": ForgeSpec("doctordata", "Forge Doctor Data", "forge-doctor-data",
+                            DOCTORDATA_PYTHON_VAR, "theforge_doctordata",
+                            "forge_doctor_data",
+                            "Forge Doctor Data needs an interpreter with "
+                            "forge-doctor-data and theforge-doctordata-adapter",
+                            "DOCTORDATA-ADAPTER-UNAVAILABLE"),
+    "doctorapi": ForgeSpec("doctorapi", "Forge Doctor API", "forge-doctor-api",
+                           DOCTORAPI_PYTHON_VAR, "theforge_doctorapi",
+                           "forge_doctor_api",
+                           "Forge Doctor API needs an interpreter with "
+                           "forge-doctor-api and theforge-doctorapi-adapter",
+                           "DOCTORAPI-ADAPTER-UNAVAILABLE"),
 }
 
 
