@@ -115,6 +115,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_trace.py": ("unit", "integration"),
     # planned by design (cycle-3 semantic routing fallback)
     "test_semantic_routing.py": ("unit", "integration"),
+    # planned by design (cycle-3 forge sdk / provider authoring)
+    "test_provider_init.py": ("unit", "integration"),
     # planned by design (agentic-maintainability)
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),

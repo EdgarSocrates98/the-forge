@@ -141,6 +141,29 @@ def health(data: dict[str, Any]) -> str:
     return "\n".join(lines) or "no providers"
 
 
+def provider_init(data: dict[str, Any]) -> str:
+    lines = [f"Scaffolded {_clean(data['provider_id'])} in {_clean(data['directory'])}"]
+    for path in data["files"]:
+        name = str(path).replace("\\", "/").rsplit("/", 1)[-1]
+        lines.append(f"  wrote {_clean(name)}")
+    lines.append(f"Capability: {_clean(data['capability'])}")
+    lines.append(f"argv:       {_clean(' '.join(data['argv']))}")
+    lines.append("Register it in a providers.toml, then `theforge registry refresh` "
+                 "(nothing was installed).")
+    return "\n".join(lines)
+
+
+def provider_check(data: dict[str, Any]) -> str:
+    lines = []
+    for c in data["checks"]:
+        line = f"{_clean(c['id']):<22} {c['status']}"
+        if c["detail"]:
+            line += f"  {_detail(c['detail'])}"
+        lines.append(line)
+    lines.append("conformance: " + ("ok" if data["ok"] else "FAILED"))
+    return "\n".join(lines)
+
+
 def ask(data: dict[str, Any]) -> str:
     decision = data["decision"]
     run_id = _clean(data["run_id"])

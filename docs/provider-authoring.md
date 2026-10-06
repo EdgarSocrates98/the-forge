@@ -2,6 +2,16 @@
 
 Um provider é qualquer executável que implementa o [Forge Protocol v1](protocol.md). A linguagem é livre.
 
+## Scaffold (`theforge provider init`)
+`theforge provider init <dir> --id <provider-id> [--capability <ns.subject>]` escreve o ponto de partida num diretório novo ou vazio (nunca sobrescreve, nunca instala nada, nunca registra sozinho):
+
+- `provider.py` — esqueleto stdlib do protocolo: `argv[-1]` é a op, o request vem JSON no stdin, toda response é um envelope válido com `producer`, `request_id` e `op` ecoados, sempre exit 0. `op_execute` é onde o trabalho real entra.
+- `manifest.json` — o `ForgeManifest` que `describe` responde: capability inicial derivada do id (ou `--capability`), sinais placeholder marcados em `limitations`.
+- `test_conformance.py` — pytest que dirige o kit de conformidade do core.
+- `README.md` — o snippet TOML para registrar o provider (manual: providers.toml do usuário ou do projeto).
+
+O scaffold sai já conforme: `theforge provider check -- python provider.py` passa a bateria inteira.
+
 ## Mínimo
 1. Ler `argv[-1]` como op e o request JSON do stdin.
 2. `describe`: responder com o `ForgeManifest` (`id` igual ao id registrado; `version` em SemVer 2.0.0; `ops` contendo `describe` e `health`, e `execute` se o provider executa algo).
@@ -89,4 +99,13 @@ Para providers escritos antes desta versão do core:
 - **Evidence.** Revise `Evidence.hash`: hash que não seja o sha256 exato do conteúdo em `location.path` deve virar `null`.
 
 ## Certificação
-Adicione o argv do provider em `PROVIDER_ARGVS` de `tests/test_conformance.py` e rode `python -m pytest tests/test_conformance.py`.
+O kit de conformidade mora no core (`theforge.conformance.check_provider`) e roda sobre qualquer argv — o provider não precisa estar registrado nem o workspace inicializado:
+
+```
+theforge provider check -- python provider.py    # exit 0 conforme, 1 falha, 2 uso inválido
+theforge provider check --json -- ...            # checks individuais em JSON
+```
+
+A bateria cobre o contrato de authoring inteiro: `describe`/`health`, `execute` em cada capability declarada, contexto (tier `reference` sempre, `excerpt` quando declarado), handoff quando `accepts_handoff` está declarado, recusas (capability/ação/op desconhecidas, protocolo estranho, JSON inválido — tudo `refused`/`error` governado, exit 0, com `request_id`/`op` ecoados), identidade de `producer` em envelope e resultado, artifacts presentes no workdir com sha256 conferido, e uma sonda de determinismo (o mesmo `execute` duas vezes, comparado módulo `created_at`) quando `execution.deterministic` está declarado. Toda chamada é limitada por timeout — um provider que trava reprova o check que o chamou. Checks de superfície não declarada (`handoff`, `artifacts`, `replay-determinism`) saem `skip`, nunca `fail`.
+
+No repositório, `tests/test_conformance.py` dirige o mesmo kit para cada argv de `PROVIDER_ARGVS` (echo-forge, fixtures e os adapters reais em replay) — pytest não é necessário para certificar um provider fora do repo.

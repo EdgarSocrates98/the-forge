@@ -224,6 +224,34 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
     return 0 if all(row["status"] in ("ok", "degraded") for row in rows) else 1
 
 
+def cmd_provider_init(args: argparse.Namespace) -> int:
+    from theforge.scaffold import init_provider
+
+    result = init_provider(Path(args.directory), args.id, capability=args.capability)
+    _emit(args, {"directory": str(result.directory),
+                 "files": [str(p) for p in result.files],
+                 "argv": result.argv, "provider_id": result.provider_id,
+                 "capability": result.capability}, render.provider_init)
+    return 0
+
+
+def cmd_provider_check(args: argparse.Namespace) -> int:
+    from theforge.conformance import check_provider
+
+    argv = list(args.argv)
+    if argv and argv[0] == "--":
+        argv = argv[1:]
+    if not argv:
+        raise UsageError("provider check requires the provider argv, e.g. "
+                         "`theforge provider check -- python provider.py`")
+    report = check_provider(argv)
+    checks = [{"id": c.id, "status": c.status, "detail": c.detail}
+              for c in report.checks]
+    _emit(args, {"argv": report.argv, "ok": report.ok, "checks": checks},
+          render.provider_check)
+    return 0 if report.ok else 1
+
+
 def cmd_ask(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)

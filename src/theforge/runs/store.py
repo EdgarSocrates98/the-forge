@@ -5,6 +5,7 @@ import os
 import re
 import secrets
 import stat
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, TypeVar
@@ -88,6 +89,21 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
 
 def new_run_id() -> str:
     return f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{secrets.token_hex(4)}"
+
+
+def _replace(tmp: Path, path: Path) -> None:
+    """``tmp.replace(path)`` with a bounded retry: Windows AV/indexers can
+    briefly hold a lock on a freshly written file, turning the atomic
+    replace into a transient ``PermissionError``. Retries stay under ~300 ms
+    and only cover ``PermissionError`` — any persistent failure raises."""
+    for attempt in range(6):
+        try:
+            tmp.replace(path)
+            return
+        except PermissionError:
+            if attempt == 5:
+                raise
+            time.sleep(0.01 * (1 << attempt))
 
 
 class RunStore:
@@ -208,7 +224,7 @@ class RunStore:
         self._contained(path)
         try:
             tmp.write_text(text, encoding="utf-8")
-            tmp.replace(path)
+            _replace(tmp, path)
         except OSError as exc:
             raise PersistenceError(f"cannot write {path}: {exc}") from exc
         return sha256_of(json.loads(text))

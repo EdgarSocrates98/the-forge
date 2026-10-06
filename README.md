@@ -55,7 +55,7 @@ trust = "local"                        # trusted | local | unverified | blocked 
 
 O `providers.toml` de projeto (`.forge/config/providers.toml`) pode declarar providers, mas eles entram sempre como `unverified` e não são executados (nem `describe`) sem `--allow-unverified`. Para confiar num provider de projeto, copie a entrada para o arquivo do usuário. Ids builtin (`echo-forge`) são reservados: usá-los em qualquer `providers.toml` é erro de uso (exit 2). Uma entrada de projeto cujo id já esteja definido no arquivo do usuário é ignorada, com aviso.
 
-Depois rode `theforge registry refresh`.
+Depois rode `theforge registry refresh`. Para começar um provider do zero, `theforge provider init <dir> --id <id>` escreve o scaffold (manifest, esqueleto stdlib, teste de conformidade) e `theforge provider check -- <argv>` roda a bateria de conformidade sem registrar nada ([provider-authoring](docs/provider-authoring.md)).
 
 O `version` do manifest precisa ser SemVer 2.0.0 (senão o provider fica `invalid`, `FORGE-MANIFEST-VERSION`), e cada capability segue a [taxonomia](docs/capabilities.md) (fora dela, a capability é excluída com aviso `FORGE-MANIFEST-TAXONOMY`). Para quem já tem um provider: [nota de migração](docs/provider-authoring.md#nota-de-migração-ciclo-2-wave-b).
 
@@ -68,7 +68,7 @@ Os Forges reais entram por dois adapters em `adapters/`, instalados no interpret
 | Código | Significado |
 |---|---|
 | 0 | sucesso: `ok` / `partial` em `ask` e `plan`, `planned` em `plan` sem `--execute`, `explain`/`replay` sem divergência |
-| 1 | `doctor` / `providers health` com falha |
+| 1 | `doctor` / `providers health` / `provider check` com falha |
 | 2 | uso inválido (inclusive arquivo de plano ilegível, `FORGE-PLAN-FILE`, e run id malformado ou desconhecido) ou workspace não inicializado |
 | 3 | `no_route` / `ambiguous` |
 | 4 | `provider_failure` / `refused` (inclusive recusa de policy, plano rejeitado e `replay --mode execute` recusado) |

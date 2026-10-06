@@ -11,6 +11,7 @@ The Forge versiona cinco coisas diferentes, cada uma com regra própria. Mudar u
 - Forma `forge/vN` (hoje `forge/v1`). O core aceita os majors em `SUPPORTED_PROTOCOLS` e negocia o maior major comum ([protocol.md](protocol.md)).
 - Mudança incompatível no protocolo (op, envelope, semântica de exit code) exige major novo (`forge/v2`). Acréscimo compatível não muda a versão.
 - Um core novo pode suportar mais de um major ao mesmo tempo durante a transição.
+- `theforge provider check -- <argv>` certifica um provider contra o protocolo que o core fala hoje (`forge/v1`): a bateria recusa envelope fora do contrato e protocolo estranho ([kit de conformidade](provider-authoring.md#certificação)).
 
 ## Versão de schema de contrato
 - Cada contrato persistido ou trocado carrega `schema = "theforge/<Name>/vN"`.

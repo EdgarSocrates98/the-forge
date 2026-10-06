@@ -129,6 +129,7 @@ Obrigatória; vale para os ciclos 1 e 2 (Waves A–D):
 - `planning` importa `contracts`, `errors`, `security`, `profiles`, `protocol`, `registry`, `routing`, `workspace` e `meta`; nunca `policy`, `runs`, `forger` ou `cli` (a comparação de decisões de policy usa só o contrato `PolicyDecision`).
 - `explain` importa `contracts`, `errors`, `security`, `context.verify` (hash sem cache), `meta` e `runs`.
 - `forger` importa os pacotes à esquerda; `cli` importa `forger`, `explain` e os demais.
+- `conformance` (kit de `provider check`: contracts, protocol, `registry.health`, `security.env`, `meta`) e `scaffold` (`provider init`: `contracts.manifest`, `errors`) são folhas consumidas só por `cli` e pelos testes — nada no pipeline de run os importa.
 - Nenhum módulo importa adapters ou especialistas.
 
 ## Routing

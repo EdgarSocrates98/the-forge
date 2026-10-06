@@ -88,6 +88,26 @@ def build_parser() -> argparse.ArgumentParser:
     providers.add_parser("health", parents=[common]) \
         .set_defaults(handler=commands.cmd_providers_health)
 
+    provider = sub.add_parser(
+        "provider", help="provider authoring: scaffold and conformance") \
+        .add_subparsers(dest="provider_command", required=True)
+    provider_init = provider.add_parser(
+        "init", parents=[common],
+        help="write a stdlib-only provider skeleton into an empty directory")
+    provider_init.add_argument("directory", help="target directory (new or empty)")
+    provider_init.add_argument("--id", required=True, metavar="PROVIDER_ID",
+                               help="the provider id the manifest will declare")
+    provider_init.add_argument("--capability", metavar="CAPABILITY_ID",
+                               help="first capability id (default: <id-prefix>.describe)")
+    provider_init.set_defaults(handler=commands.cmd_provider_init)
+    provider_check = provider.add_parser(
+        "check", parents=[common],
+        help="run the Forge Protocol conformance battery against an argv")
+    provider_check.add_argument(
+        "argv", nargs=argparse.REMAINDER, metavar="ARGV",
+        help="the provider argv (prefix with -- when it starts with a dash)")
+    provider_check.set_defaults(handler=commands.cmd_provider_check)
+
     ask = sub.add_parser("ask", parents=[common], help="route a task to a specialist")
     ask.add_argument("intent")
     ask.add_argument("--capability")

@@ -13,6 +13,8 @@
 | `capabilities list [--provider id]` | capabilities declaradas, com aliases, depreciação (`replaced_by`) e `declared_by`; aviso em stderr para cada depreciada | 0 |
 | `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
+| `provider init <dir> --id <provider-id> [--capability <id>]` | escreve o scaffold de provider (manifest, esqueleto stdlib, teste de conformidade, README) num diretório novo ou vazio; nada é instalado nem registrado | 0 / 2 |
+| `provider check [--json] -- <argv>...` | bateria de conformidade do Forge Protocol sobre um argv qualquer ([kit](provider-authoring.md#certificação)) | 0 / 1 / 2 |
 | `ask "<texto>" [--capability id] [--action a] [--profile auto\|economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa | 0 / 2 / 3 / 4 / 5 |
 | `plan "<texto>" [--profile auto\|economy\|balanced\|max] [--target path]... [--from FILE] [--execute] [--allow-unverified] [--approve CAPABILITY]...` | monta (e, com `--execute`, executa) um plano multi-provider ([`plan`](#plan)) | 0 / 2 / 3 / 4 / 5 |
 
@@ -29,7 +31,7 @@
 | Código | Significado |
 |---|---|
 | 0 | sucesso: `ok` / `partial` em `ask` e `plan`, `planned` em `plan` sem `--execute`, `explain`/`replay` sem divergência |
-| 1 | `doctor` / `providers health` com falha |
+| 1 | `doctor` / `providers health` / `provider check` com falha |
 | 2 | uso inválido (inclusive arquivo de plano ilegível, `FORGE-PLAN-FILE`, e run id malformado ou desconhecido) ou workspace não inicializado |
 | 3 | `no_route` / `ambiguous` |
 | 4 | `provider_failure` / `refused` (inclusive recusa de policy, plano rejeitado e `replay --mode execute` recusado) |

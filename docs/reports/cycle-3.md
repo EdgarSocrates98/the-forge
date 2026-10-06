@@ -731,3 +731,55 @@ versionada, lifecycle por estado, capabilities declaradas, health verificado
 por chamada real). Um catálogo remoto seria, se existir, índice opt-in
 separado — nunca fonte de verdade. Discovery local continua sem MCP e sem
 rede.
+
+## Wave M — Forge SDK / provider authoring v2
+
+**M1 — `theforge provider init`.** Scaffold determinístico em
+`src/theforge/scaffold.py`: escreve num diretório novo ou vazio (recusa
+sobrescrever, `UsageError`) um provider completo e já conforme —
+`provider.py` (esqueleto stdlib do protocolo: op por `argv[-1]`, request JSON
+no stdin, envelope de response com `producer`/`request_id`/`op` ecoados,
+sempre exit 0), `manifest.json` (template `ForgeManifest` com capability
+derivada do id ou `--capability`), `test_conformance.py` (pytest dirigindo o
+kit) e `README.md` com o snippet TOML de registro. Nada é instalado, nada é
+registrado: o passo de trust continua manual.
+
+**M2 — conformance kit no core.** `src/theforge/conformance.py` expõe
+`check_provider(argv)`: a bateria inteira fora do pytest, reusável por
+qualquer provider, sem registry nem workspace. Checks: `describe`, `health`,
+`execute` (cada capability declarada, com integridade completa do resultado),
+`context` (tier `reference`; `excerpt` quando declarado), `handoff` (quando
+`accepts_handoff`), `refusals` (capability/ação desconhecidas `refused` com
+código), `artifacts` (presença no workdir + sha256), `replay-determinism`
+(mesmo request duas vezes, comparado módulo `created_at`, quando o manifest
+declara `deterministic`), `malformed-protocol` (JSON inválido, op
+desconhecida, `forge/v9`, echoes de `request_id`/`op`), `producer-identity`
+(envelope e resultado contra o manifest) e `timeout` (toda chamada limitada;
+hang reprova o check que a chamou). Superfície não declarada sai `skip`,
+nunca `fail`. `tests/test_conformance.py` agora dirige o mesmo kit —
+certificação de CI e `theforge provider check` são literalmente a mesma
+implementação. CLI novo: `theforge provider init|check` (grupo `provider` de
+authoring; `providers` continua operações do registry).
+
+**M3 — matriz já formalizada.** `docs/versioning.md` mantém a matriz The
+Forge × Forge Protocol × adapters × especialistas, verificada por
+`tests/test_compat_matrix.py` a cada mudança de versão — a tabela pedida já
+existia com enforcement por teste.
+
+**Testes.** `tests/test_provider_init.py` (11): scaffold conforme de
+fábrica (init → `check_provider` verde), recusa de diretório não vazio, ids
+inválidos, derivação de capability, refusas governadas do esqueleto e os
+exit codes do CLI (0/1/2). `tests/test_conformance.py` reescrito sobre o kit:
+5 argvs (echo-forge, fixtures, adapters reais em replay) passam a bateria.
+
+**Limitações.** O scaffold gera Python stdlib (outras linguagens seguem o
+mesmo `manifest.json` + protocolo, sem esqueleto gerado). O kit certifica a
+superfície de protocolo, não a qualidade do trabalho do provider — a
+conformidade de domínio (sinais que discriminam, evidências honestas)
+continua responsabilidade do autor, documentada em provider-authoring.md.
+
+**Hardening transversal.** `RunStore.write` ganhou retry limitado
+(~300 ms, só `PermissionError`) no replace atômico: AV/indexer do Windows
+segura por instantes o arquivo recém-escrito e transformava a escrita em
+flake de `WinError 5`; falha persistente continua virando
+`PersistenceError`.
