@@ -91,6 +91,22 @@ CITE_ENTRY = {
     "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-cite.json")),
     "trust": "local",
 }
+# A second spark executor with the same capability id and signals as
+# fixture-spark: on a spark workspace both score identically, so deterministic
+# routing ends ``ambiguous`` — the semantic-resolver test setup.
+SPARK_B_ENTRY = {
+    "id": "fixture-spark-b",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-b.json")),
+    "trust": "local",
+}
+# A routing resolver: capability ``resolver.routing`` declares
+# ``resolves_ambiguity`` and its ``resolve`` op answers the test-only
+# ``resolution`` payload of its manifest.
+RESOLVER_ENTRY = {
+    "id": "fixture-resolver",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-resolver.json")),
+    "trust": "local",
+}
 
 
 def write_providers(

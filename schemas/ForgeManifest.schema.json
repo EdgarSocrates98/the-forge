@@ -114,6 +114,9 @@
               }
             ]
           },
+          "resolves_ambiguity": {
+            "type": "boolean"
+          },
           "signals": {
             "properties": {
               "dependencies": {

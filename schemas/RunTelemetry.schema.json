@@ -548,6 +548,30 @@
       "required": [],
       "type": "object"
     },
+    "semantic_resolver_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
     "spans": {
       "items": {
         "additionalProperties": false,

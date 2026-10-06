@@ -82,6 +82,14 @@ from theforge.contracts.plan import (
     Synthesis,
 )
 from theforge.contracts.receipt import ExecutionReceipt, PlanRefs, ReceiptInputs, ReceiptProvider
+from theforge.contracts.resolve import (
+    RESOLVE_REQUEST_SCHEMA,
+    ROUTING_PROPOSAL_SCHEMA,
+    ProposalChoice,
+    ResolveCandidate,
+    ResolveRequest,
+    RoutingProposal,
+)
 from theforge.contracts.result import (
     Artifact,
     ContextRequest,
@@ -127,7 +135,8 @@ __all__ = [
     "BUDGET_SCHEMA", "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
     "DECISIONS_SCHEMA", "INTEL_SCHEMA",
     "OPERATION_CLASS_LIMITATION", "PERFORMANCE_SCHEMA", "PLAN_STATE_SCHEMA",
-    "PROTOCOL_V1", "Artifact", "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
+    "PROTOCOL_V1", "RESOLVE_REQUEST_SCHEMA", "ROUTING_PROPOSAL_SCHEMA", "Artifact",
+    "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
     "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
     "ComplexityAssessment",
@@ -146,11 +155,12 @@ __all__ = [
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ProjectIntel",
-    "ProviderCapabilityPerformance", "ProviderPerformance", "ReceiptInputs",
+    "ProposalChoice", "ProviderCapabilityPerformance", "ProviderPerformance",
+    "ReceiptInputs",
     "ReceiptProvider", "RememberedDecision", "RepositoryInfo", "ReproducibilityInfo",
-    "Request", "Response",
-    "RiskAssessment", "RiskDimensions", "RoutingDecision", "RunBudget", "RunTelemetry",
-    "Selection",
+    "Request", "ResolveCandidate", "ResolveRequest", "Response",
+    "RiskAssessment", "RiskDimensions", "RoutingDecision", "RoutingProposal",
+    "RunBudget", "RunTelemetry", "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals", "Span",
     "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult",

@@ -87,6 +87,10 @@ class Capability:
     # Whether the capability answers ``plan`` requests of ``purpose="proposal"``
     # with a SemanticPlanProposal (the tier-2 semantic planner, wave C).
     proposes_plans: bool = False
+    # Whether the capability answers ``resolve`` requests with a RoutingProposal
+    # (the semantic routing fallback, wave K); the provider must also declare
+    # the ``resolve`` op.
+    resolves_ambiguity: bool = False
     # Optional declared relationships feeding the capability graph (v1 additive).
     relations: CapabilityRelations = field(default_factory=CapabilityRelations)
 

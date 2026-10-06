@@ -646,3 +646,62 @@ runs filhos (cada filho tem a própria telemetria, linkada pelo `trace` do pai
 via `node:<id>` + run id no outcome). `start_ms` mede a partir do primeiro
 estágio instrumentado, não do `started_at` do receipt. Não há tail-sampling nem
 exporter — por design nesta wave.
+
+## Wave K — Semantic routing fallback (`resolve` + `RoutingProposal`)
+
+**Fallback, nunca substituto.** O router determinístico não foi tocado:
+`route()` continua soberano e `ambiguous` continua sendo o desfecho quando
+nada decide. A novidade é a camada opcional posterior: quando a decisão final
+de um `ask` não pinado é `ambiguous` e o profile assumido não é `economy`, o
+core procura um *resolver* — o primeiro provider `ready` (ordem de id) que
+declara a op `resolve` e uma capability `resolves_ambiguity` (campo aditivo no
+manifest; [ADR 0025](../adr/0025-semantic-routing-fallback.md)).
+
+**Entrada mínima (K1).** `ResolveRequest/v1` (schema aberto, cruza o
+protocolo): `task`, `candidates` — só o conjunto que o routing já provou
+elegível, com ações declaradas e os sinais que pontuaram —, `ambiguity` (a
+razão determinística) e `technologies` (nomes vindos da inteligência de
+projeto, fingerprints recomputados). Nunca arquivos, packs ou o repositório.
+
+**Proposta estruturada (K2), validador soberano.** `RoutingProposal/v1`
+(`choice{provider, capability, action}`, `confidence`, `reason`, `evidence`,
+`alternatives`, `unknowns`, `limitations`) nunca roteia como veio:
+`proposal_selection` revalida deterministicamente — provider registrado,
+capability resolvida (alias anotado, deprecated notado), candidato dentro do
+conjunto oferecido, ação declarada (vazia = `default_action`). A seleção
+validada entra no funil comum (`_select_healthy` → health → policy → contexto
+→ `execute` → verificação): a partir dali é indistinguível de uma rota
+determinística.
+
+**Proveniência e epistemia honestas.** A proposta é persistida como artefato
+`routing-proposal` e ligada ao receipt por `inputs.routing_proposal_sha256`;
+a decisão gravada carrega a razão original da ambiguidade em `limitations`,
+razão `semantic resolver <id>` e confiança `low` com `unresolved` declarando
+que o desempate é raciocínio limitado, não sinal medido. Falha do resolver,
+proposta malformada, `producer` divergente ou escolha inválida deixam o
+`ambiguous` determinístico com a limitação correspondente — nunca um chute.
+
+**Backend genérico (K3).** `routing.resolve` conhece só a op e os contratos:
+hosted model, modelo local ou raciocínio provido pelo host são implementações
+intercambiáveis atrás do protocolo; nenhum SDK ou provider nomeado entra no
+core.
+
+**Observável.** Counter `semantic_resolver_calls` e span `resolver`
+(`provider`, `outcome`) no mesmo `RunTelemetry` — o desempate semântico é
+visível no `trace` e explicável no `explain`.
+
+**Testes.** `tests/test_semantic_routing.py` (19): seleção do resolver (ordem
+de id, flag+op exigidas, trust gates), conjunto de candidatos (dedup, exclui
+`unsupported`, carrega sinais), request/response (payload mínimo — sem
+`files`/`context`; `refused`, payload malformado e `producer` errado viram
+limitação), validação (pick válido, action default, alias→canônico; rejeita
+provider desconhecido, capability/ação inventada, pick fora do conjunto) e
+cinco caminhos e2e: ambiguidade resolvida e executada com proposta persistida
+e ligada no receipt; sem resolver → `ambiguous`; `economy` → `ambiguous`;
+resolver falho → `ambiguous`; pick fora do conjunto → `ambiguous` com a
+proposta rejeitada persistida.
+
+**Limitações.** O resolver é chamado uma vez por decisão ambígua de `ask`
+(runs de nó são pinados e nunca chegam a `ambiguous`). Só o primeiro resolver
+elegível é consultado — não há consenso entre resolvers nem segunda opinião.
+A `confidence` da proposta é declaração do resolver, não métrica do core.

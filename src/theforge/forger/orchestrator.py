@@ -103,7 +103,7 @@ from theforge.forger.verification import (
     request_verdict,
     select_verifier,
 )
-from theforge.intel import record_decision
+from theforge.intel import record_decision, refresh_intel
 from theforge.meta import PRODUCER, VERSION
 from theforge.metrics import load_performance, record_performance
 from theforge.planning.estimate import stricter_decision
@@ -126,6 +126,12 @@ from theforge.registry import (
     user_config_dir,
 )
 from theforge.routing import MIN_SIGNAL_TYPES, route
+from theforge.routing.resolve import (
+    proposal_selection,
+    request_resolution,
+    resolve_candidates,
+    resolver_capability,
+)
 from theforge.routing.router import EXECUTE_OP
 from theforge.routing.signals import workspace_dependencies
 from theforge.runs import RunStore, new_run_id
@@ -219,6 +225,9 @@ class _Trace:
     complexity_sha: str | None = None  # ComplexityAssessment: --profile auto, or a promotion
     complexity_config: ComplexityConfig | None = None  # the loaded policy of an auto run
     budget_sha: str | None = None  # RunBudget, written once the profile resolves
+    # RoutingProposal of the semantic resolver, when an ambiguous decision was
+    # resolved semantically (Wave K); the proposal is the pick's evidence.
+    routing_proposal_sha: str | None = None
     profile_basis: str | None = None  # evidence-backed reason the effective profile was chosen
     executed: bool = False  # an execute call was attempted (reproducibility, 14.1)
     response_status: str | None = None  # the provider's own status, when it answered
@@ -419,6 +428,11 @@ class Forger:
         if routed.error is not None:
             trace.routing_sha = self.store.write(run_id, "routing", decision)
             return self._finish(trace, decision, "provider_failure", error=routed.error)
+        if decision.status == "ambiguous" and request.provider is None:
+            resolved = self._resolve_ambiguous(trace, task, decision, records, scan)
+            if resolved is not None:
+                decision = resolved
+                trace.decision = decision
         if decision.status != "routed":
             trace.routing_sha = self.store.write(run_id, "routing", decision)
             op_error = _unexecutable_request(task, records, request.allow_unverified)
@@ -811,6 +825,84 @@ class Forger:
             return ErrorInfo(code=Codes.POLICY_DENIED, detail=policy.reason)
         return None
 
+    def _resolve_ambiguous(
+        self, trace: _Trace, task: TaskSpec, decision: RoutingDecision,
+        records: dict[str, RegistryRecord], scan: WorkspaceScan,
+    ) -> RoutingDecision | None:
+        """Wave K: a bounded semantic resolver may break an ``ambiguous`` routing.
+
+        Only an ambiguous unpinned decision under a non-economy profile asks. The
+        resolver sees the minimal input (task, the candidates the router scored
+        and their matched signals, the ambiguity reason, technology names — never
+        the repository) and answers a ``RoutingProposal`` that can only pick from
+        that set; ``proposal_selection`` re-checks the pick deterministically,
+        the proposal is persisted as ``routing-proposal``, and the validated
+        selection continues through the same health/policy/context/verification
+        gauntlet as any deterministic route. Every failure degrades to the
+        deterministic ``ambiguous`` with a limitation — never a guess, never a
+        raised error.
+        """
+        if assumed_profile(task.budget_profile).name == "economy":
+            trace.limitations.append(
+                "ambiguous routing: semantic resolver disabled by profile 'economy'")
+            return None
+        picked = resolver_capability(
+            records, allow_unverified=trace.request.allow_unverified)
+        if picked is None:
+            trace.limitations.append(
+                "ambiguous routing: no provider declares a routing-resolver "
+                "capability (resolves_ambiguity, op resolve)")
+            return None
+        record, capability = picked
+        candidates = resolve_candidates(decision, records)
+        if not candidates:
+            trace.limitations.append(
+                "ambiguous routing: no eligible candidates for a resolution")
+            return None
+        intel, notes = refresh_intel(self.root, scan, list(records.values()))
+        trace.limitations.extend(notes)
+        technologies = sorted({t.name for t in intel.descriptor.technologies})
+        with trace.telemetry.span("resolver", provider=record.entry.id) as span:
+            proposal, note = request_resolution(
+                record, capability, task, candidates, decision.reason, technologies,
+                transport_factory=self.transport_factory,
+                allow_unverified=trace.request.allow_unverified)
+            span.attrs["outcome"] = "answered" if proposal is not None else "failed"
+        trace.telemetry.count("semantic_resolver_calls", 1)
+        if note is not None:
+            trace.limitations.append(f"ambiguous routing: {note}")
+        if proposal is None:
+            return None
+        trace.routing_proposal_sha = self.store.write(
+            trace.run_id, "routing-proposal", proposal)
+        selection, notes, failure = proposal_selection(proposal, candidates, records)
+        if selection is None:
+            trace.limitations.append(f"semantic resolution rejected: {failure}")
+            return None
+        limitations = [
+            *decision.limitations,
+            f"deterministic routing ambiguous: {decision.reason}",
+            f"resolved by semantic resolver {record.entry.id}/{capability.id}: "
+            f"{proposal.reason or 'no reason given'}",
+            *notes,
+            *proposal.limitations,
+            *(f"alternative considered: {a}" for a in proposal.alternatives),
+        ]
+        if proposal.confidence != "high":
+            limitations.append(f"resolver confidence: {proposal.confidence}")
+        return replace(
+            decision, status="routed", selected=[selection],
+            reason=(f"semantic resolver {record.entry.id} picked "
+                    f"{selection.provider}/{selection.capability}"),
+            confidence=Confidence(
+                level="low",
+                measured_signals=list(decision.confidence.measured_signals),
+                unresolved=[*decision.confidence.unresolved,
+                            "tie resolved by a semantic resolver — bounded "
+                            "reasoning, not measured evidence"]),
+            limitations=limitations,
+            unknowns=[*decision.unknowns, *proposal.unknowns])
+
     def _final_route(
         self, trace: _Trace, task: TaskSpec, request: AskRequest, files: list[str]
     ) -> _Routed:
@@ -1145,7 +1237,8 @@ class Forger:
                                  context_round_sha256=list(trace.context_round_shas),
                                  handoff_sha256=trace.handoff_sha,
                                  complexity_sha256=trace.complexity_sha,
-                                 budget_sha256=trace.budget_sha),
+                                 budget_sha256=trace.budget_sha,
+                                 routing_proposal_sha256=trace.routing_proposal_sha),
             provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
             finished_at=utc_now(), error=error, limitations=limitations,
             telemetry_sha256=telemetry_sha,

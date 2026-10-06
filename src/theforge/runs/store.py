@@ -37,6 +37,7 @@ from theforge.contracts.plan import (
     PlanState,
     SemanticPlanProposal,
 )
+from theforge.contracts.resolve import RoutingProposal
 from theforge.contracts.verification import VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.errors import PersistenceError
@@ -53,7 +54,8 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 # multi-repo WorkspaceDescriptor, distinct from the ContextPack workspace summary.
 ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
              "handoff", "context", "context-r1", "context-r2", "result", "plan-state",
-             "plan-result", "graph", "capability-graph", "semantic-proposal", "decision",
+             "plan-result", "graph", "capability-graph", "semantic-proposal",
+             "routing-proposal", "decision",
              "verification", "telemetry", "diagnostic", "complexity", "budget",
              "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
@@ -65,6 +67,7 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
     "budget": RunBudget,
     "capability-graph": CapabilityGraph,
     "semantic-proposal": SemanticPlanProposal,
+    "routing-proposal": RoutingProposal,
     "installation": InstallationPlan,
     "risk": RiskAssessment,
     "handoff": Handoff,

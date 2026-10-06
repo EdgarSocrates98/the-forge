@@ -1,0 +1,38 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-resolver-ghost",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "resolve"],
+  "domains": ["meta"],
+  "capabilities": [
+    {
+      "id": "resolver.routing",
+      "actions": ["resolve"],
+      "default_action": "resolve",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Resolver that picks a provider outside the offered set",
+      "resolves_ambiguity": true,
+      "signals": {
+        "keywords": ["__resolver_ghost_internal__"],
+        "file_globs": [],
+        "dependencies": []
+      }
+    }
+  ],
+  "resolution": {
+    "schema": "theforge/RoutingProposal/v1",
+    "choice": {
+      "provider": "ghost-forge",
+      "capability": "ghost.run",
+      "action": "run"
+    },
+    "confidence": "high",
+    "reason": "hallucinated a provider that was never offered",
+    "evidence": [],
+    "alternatives": [],
+    "unknowns": [],
+    "limitations": []
+  }
+}

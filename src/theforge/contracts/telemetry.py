@@ -103,6 +103,10 @@ class RunTelemetry:
     negotiation_rounds: Metric = field(default_factory=Metric)
     # Tier-2 planner calls this run (plan runs only; 0 on every other outcome).
     semantic_planner_calls: Metric = field(default_factory=Metric)
+    # Semantic routing-resolver calls this run (ask runs whose deterministic
+    # routing ended ``ambiguous``; 0 elsewhere). The proposal itself is the
+    # ``routing-proposal`` artifact, bound by ``ReceiptInputs``.
+    semantic_resolver_calls: Metric = field(default_factory=Metric)
     # Context ROI of an ask run (Wave H): pack files the returned evidence cited,
     # and the evidence/finding counts the result carried. ``0`` on every outcome
     # without a valid result; ``unknown`` on plan runs (each node run counts its own).

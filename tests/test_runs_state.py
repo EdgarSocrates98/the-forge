@@ -31,6 +31,7 @@ from theforge.contracts import (
     ReceiptInputs,
     RiskAssessment,
     RiskDimensions,
+    RoutingProposal,
     RunBudget,
     RunTelemetry,
     SemanticPlanProposal,
@@ -183,12 +184,14 @@ def test_risk_is_a_known_artifact_in_run_order() -> None:
     assert ARTIFACTS == ("task", "workspace-descriptor", "routing", "plan", "installation",
                          "risk", "handoff", "context", "context-r1", "context-r2", "result",
                          "plan-state", "plan-result", "graph", "capability-graph",
-                         "semantic-proposal", "decision", "verification", "telemetry",
-                         "diagnostic", "complexity", "budget", "receipt")
+                         "semantic-proposal", "routing-proposal", "decision",
+                         "verification", "telemetry", "diagnostic", "complexity",
+                         "budget", "receipt")
     assert ARTIFACT_TYPES["complexity"] is ComplexityAssessment
     assert ARTIFACT_TYPES["budget"] is RunBudget
     assert ARTIFACT_TYPES["capability-graph"] is CapabilityGraph
     assert ARTIFACT_TYPES["semantic-proposal"] is SemanticPlanProposal
+    assert ARTIFACT_TYPES["routing-proposal"] is RoutingProposal
     assert ARTIFACT_TYPES["decision"] is DecisionRecord
     assert ARTIFACT_TYPES["plan-state"] is PlanState
     assert set(ARTIFACT_TYPES) == set(ARTIFACTS)

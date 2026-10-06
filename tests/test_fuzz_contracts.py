@@ -313,6 +313,23 @@ SEEDS: dict[str, dict[str, Any]] = {
                      "artifacts": 0, "context_bytes": 0, "files_sent": 0,
                      "files_cited": 0, "duration_ms": 10.0, "updated_at": "t"}],
     },
+    # semantic routing fallback (Wave K)
+    "ResolveRequest": {
+        "task": TASK, "ambiguity": "tie at rank 2",
+        "technologies": ["pyspark"],
+        "candidates": [{
+            "provider": "demo-forge", "capability": "demo.echo",
+            "actions": ["echo"], "state": "supported",
+            "matched": {"dependencies": [], "file_globs": ["*.md"], "keywords": ["k"]},
+        }],
+    },
+    "RoutingProposal": {
+        "choice": {"provider": "demo-forge", "capability": "demo.echo",
+                   "action": "echo"},
+        "confidence": "medium", "reason": "demo-forge matched the intent",
+        "evidence": ["keyword hit"], "alternatives": ["other/x.y"],
+        "unknowns": ["u"], "limitations": ["l"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

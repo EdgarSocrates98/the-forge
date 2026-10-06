@@ -34,9 +34,11 @@ from theforge.contracts import (
     ProjectIntel,
     ProviderPerformance,
     Request,
+    ResolveRequest,
     Response,
     RiskAssessment,
     RoutingDecision,
+    RoutingProposal,
     RunBudget,
     RunTelemetry,
     SemanticPlanProposal,
@@ -61,11 +63,14 @@ EXPORTED: tuple[type[Any], ...] = (
     RunBudget, ProviderPerformance,
     # project-intelligence (Wave I)
     ProjectIntel, DecisionMemory,
+    # semantic routing fallback (Wave K)
+    ResolveRequest, RoutingProposal,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
 # (Handoff, PlanRequest, PlanEstimate and SemanticPlanProposal cross the protocol in
-# the ``plan`` op and in ExecuteRequest.handoff).
+# the ``plan`` op and in ExecuteRequest.handoff; ResolveRequest and RoutingProposal
+# cross it in the ``resolve`` op).
 CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
     ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,

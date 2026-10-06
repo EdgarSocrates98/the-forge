@@ -34,6 +34,10 @@ class ReceiptInputs:
     # On-disk hash of the RunBudget; present on every run that resolved a profile
     # (older runs: absent).
     budget_sha256: str | None = None
+    # On-disk hash of the RoutingProposal the semantic resolver answered; present
+    # exactly when an ``ambiguous`` decision was resolved semantically — the
+    # proposal is the evidence of the pick (older runs: absent).
+    routing_proposal_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

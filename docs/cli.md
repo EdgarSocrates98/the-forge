@@ -40,6 +40,8 @@
 
 Não existe outro exit: os valores por desfecho (`ok`, `partial`, `planned` → 0; `ambiguous`, `no_route` → 3; `refused`, `provider_failure` → 4) mais os fixos {1, 2, 5, 6, 70, 130}.
 
+**Resolver semântico.** Quando o routing de um `ask` termina `ambiguous` e o profile não é `economy`, um provider com a op `resolve` e uma capability `resolves_ambiguity` pode escolher *entre os candidatos já elegíveis* — a proposta (`RoutingProposal`) é persistida como artefato `routing-proposal`, revalidada deterministicamente, e a seleção passa pelo mesmo funil de health/policy/verificação (`source` do desempate fica na decisão e no `explain`). Sem resolver declarado, com proposta inválida ou com falha na chamada, o desfecho permanece `ambiguous` com a limitação correspondente ([ADR 0025](adr/0025-semantic-routing-fallback.md)).
+
 ## Mensagens de erro e `--debug`
 Todo erro sai em stderr com um prefixo fixo e termina com `[<código> · <família>]` ([errors.md](errors.md)):
 

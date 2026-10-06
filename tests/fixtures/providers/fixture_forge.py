@@ -16,6 +16,9 @@ in ``<workspace_root>/.forge/flaky-<id>.count`` so it survives across attempts.
 When the manifest declares the ``verify`` op, that op answers the test-only
 ``verdict`` key (default ``{"status": "passed"}``), or the envelope status of
 ``verify_status`` (``refused``/``error``) when the key is set.
+When the manifest declares the ``resolve`` op, that op answers the test-only
+``resolution`` key (a RoutingProposal), or the envelope status of
+``resolve_status`` when the key is set.
 """
 
 import json
@@ -36,6 +39,8 @@ def main() -> int:
     cite = bool(manifest.pop("cite", False))  # test-only: e1 cites context file 1
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
+    resolution = manifest.pop("resolution", None)  # test-only RoutingProposal
+    resolve_status = manifest.pop("resolve_status", "ok")  # test-only envelope status
     op = args[1]
     producer = {"id": manifest["id"], "version": manifest["version"]}
     rid = "unknown"
@@ -72,6 +77,11 @@ def main() -> int:
             return reply(verify_status,
                          error=err("FIXTURE-VERIFY", f"verifier {verify_status}"))
         return reply("ok", verdict)
+    if op == "resolve" and "resolve" in manifest["ops"]:
+        if resolve_status != "ok":
+            return reply(resolve_status,
+                         error=err("FIXTURE-RESOLVE", f"resolver {resolve_status}"))
+        return reply("ok", resolution if resolution is not None else {})
     if op == "execute" or (op == "plan" and "plan" in manifest["ops"]):
         payload = req.get("payload") or {}
         cap = payload.get("capability")

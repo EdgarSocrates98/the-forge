@@ -19,7 +19,7 @@ Rounds:      none
 Drift:       none
 Telemetry:   profile=economy scan=<MS> routing=<MS> context=<MS> provider=<MS> files=1/1 cache=0/1 context_bytes=64 providers=1 fallbacks=0 rounds=0 verification=minimal
 Result:      ok: 1 findings, 1 evidence
-Receipt:     budget=<HASH> complexity=<HASH> context=<HASH> risk=<HASH> routing=<HASH> task=<HASH> result=<HASH>
+Receipt:     budget=<HASH> complexity=<HASH> context=<HASH> risk=<HASH> routing_proposal=- routing=<HASH> task=<HASH> result=<HASH>
 Provider:    fixture-api 0.0.1 (trust: local)
 Evidence:    1 (observed=1)   duration=<MS>
 Verification: self_report=reported provider_evidence=reported forge=passed independent=not_performed
