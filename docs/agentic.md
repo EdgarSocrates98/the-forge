@@ -157,3 +157,26 @@ Os 11 comandos `.claude/commands/kiro/` (invocados como `/kiro:<nome>`) foram re
 
 ## Política de hooks
 O repositório não versiona hooks de desenvolvimento. Se forem adicionados (hooks de edição de um host ou pre-commit), rodam só checagens focadas e determinísticas sobre os arquivos alterados: `ruff check` nos arquivos tocados, os testes relevantes à mudança, a paridade de schemas quando `src/theforge/contracts/` muda e a auditoria agentic quando assets agentic ou instruções de host mudam. Nunca rodam a suíte completa a cada edição, nunca acessam a rede nem dependem de providers reais, credenciais ou assets locais, e não substituem o CI. Detalhes no [ADR 0020](adr/0020-agentic-assets-canonical-source.md).
+
+## Capability × skill × MCP tool × comando de host
+
+O ciclo 3 avaliou a compatibilidade conceitual do Forge com os formatos dos hosts (ciclo 3, wave L) sem converter nada: são planos distintos, e confundi-los quebraria as invariantes.
+
+| Conceito | O que é | Quem o lê | Vida |
+|---|---|---|---|
+| **Forge capability** | capacidade declarada no manifest de um provider, roteada deterministicamente e executada via Forge Protocol (subprocess + JSON) | o core (`route`) | versionada no manifest, validada por `describe`/`health`, auditável por run |
+| **Agent Skill** (`kiro-*`) | instruções em Markdown que dirigem o *comportamento do agente* dentro de um host | o agente, no host | asset versionado, paridade entre mirrors auditada |
+| **MCP tool** | ferramenta exposta ao agente por um servidor MCP | o agente, via configuração do host | descoberta na config MCP do host, fora do git deste repositório |
+| **Comando de host** (`/kiro-…`, `$kiro-…`) | invocação de uma skill no CLI do host | o host | sintaxe de cada host |
+
+- Uma capability **não é** uma skill: não é Markdown, não orienta a conversa — é um contrato com ops verificáveis e resultado auditável. Uma skill **não é** uma capability: não declara sinais roteáveis nem responde `describe`/`health`.
+- Pontos de encontro legítimos, sempre como adaptação e nunca como substituição: uma skill pode orientar o agente a rodar `theforge …`; um servidor MCP poderia embrulhar a CLI do Forge como ferramenta do agente. O provider e o routing permanecem atrás do Forge Protocol.
+- Outros hosts entram pelo mesmo contrato: um arquivo de instrução curto com o bloco de invariantes, um diretório de skills declarado em `agentic.toml` e a auditoria no caminho da mudança. Um quarto host com diretório próprio é justamente um dos gatilhos que reabrem o ADR 0020 (fonte canônica renderizada).
+
+## MCP Registry como referência
+
+O registry oficial do MCP foi avaliado como inspiração para discovery/lifecycle (ciclo 3, wave L), sem adoção automática: os dois registram coisas diferentes — o registry MCP descobre *servidores que equipam o agente*; o Forge Registry descobre *providers que executam trabalho*.
+
+- **O que a comparação confirma já coberto:** o Forge Registry já tem o equivalente local do que um registry remoto oferece — identidade versionada (manifest `id`+`version`), lifecycle por estado (`ready`, `broken`, `changed`, `unreachable`), capacidades declaradas (`capabilities`), e health verificado por chamada real em vez de metadado declarado.
+- **O que inspiraria, se um dia existir catálogo remoto de providers:** publicação de manifests como pacotes com nome e versão, indexação por capability id e um receipt de ingestão — sempre como *índice opt-in separado*, nunca como fonte de verdade do registry local, e nunca executado sem o mesmo funil de trust/policy de um provider local.
+- **Não-objetivo explícito:** o Forge continua offline-first — `registry refresh` lê manifests locais e roda `health`; nenhuma descoberta de capability depende de MCP, de rede ou de um catálogo remoto.

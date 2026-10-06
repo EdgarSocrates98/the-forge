@@ -705,3 +705,29 @@ proposta rejeitada persistida.
 (runs de nó são pinados e nunca chegam a `ambiguous`). Só o primeiro resolver
 elegível é consultado — não há consenso entre resolvers nem segunda opinião.
 A `confidence` da proposta é declaração do resolver, não métrica do core.
+
+## Wave L — Host integration / reavaliação do ADR 0020
+
+**Gatilho objetivo, medido.** O ADR 0020 marcou a migração para fonte
+canônica renderizada a (1) um quarto host com diretório próprio ou (2) ≥3
+sincronizações manuais de mirrors num ciclo. A reavaliação mediu o histórico:
+`git log` sobre os três diretórios de skills mostra só a instalação upstream
+(`0955ba4`) e a remoção dos comandos legados do Claude (`1d01b49`, um host) —
+**0 sincronizações multi-host**; os hosts continuam três; a auditoria sai com
+0 achados de falha. O gatilho não disparou: mantida a alternativa (A), com a
+revisão registrada no próprio ADR.
+
+**L1 — compatibilidade sem conversão.** O mapa conceitual em
+[agentic.md](../agentic.md) fixa os quatro planos como coisas distintas:
+Forge capability (contrato roteado e executado por provider), Agent Skill
+(Markdown que dirige o agente), MCP tool (ferramenta do agente via host) e
+comando de host (sintaxe de invocação). Encontros legítimos só por adaptação
+— uma skill pode mandar rodar `theforge`; um servidor MCP poderia embrulhar
+a CLI — nunca como substituto do provider nem do routing.
+
+**L2 — MCP Registry como referência.** A avaliação confirmou que o Forge
+Registry já cobre localmente o que um registry remoto ofereceria (identidade
+versionada, lifecycle por estado, capabilities declaradas, health verificado
+por chamada real). Um catálogo remoto seria, se existir, índice opt-in
+separado — nunca fonte de verdade. Discovery local continua sem MCP e sem
+rede.
