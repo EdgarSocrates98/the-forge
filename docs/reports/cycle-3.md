@@ -995,3 +995,42 @@ qual caso vive onde:
 - **handoff adulterado em disco** — `handoff.json` do consumidor reescrito com
   claim diferente (JSON válido, conteúdo divergente): `verify_run_hashes` do
   reuso detecta e o nó reexecuta com a limitação `resume: node n2 re-executed`.
+
+## Wave T — Fuzzing e testes de propriedade
+
+Auditoria do fuzzing existente (`tests/test_fuzz_contracts.py`) contra a lista
+pedida: todo contrato exportado tem seed — incluindo os do ciclo 3
+(`ExecutionPlan`, `Handoff`, `PlanState`, `DecisionRecord`, `CapabilityGraph`,
+`SemanticPlanProposal`, `RoutingProposal`, `ComplexityAssessment`, `RunBudget`,
+`RunTelemetry`, `ProjectIntel`, `DecisionMemory`, `ProviderPerformance`) — com
+mutações near-valid (1–4 edições: replace/delete/add/wrap/dup sobre caminhos
+reais) e JSON arbitrário, nos modos tolerante e strict, com o invariante "sai
+`ContractError` ou nada". Roundtrip de serialização, canonicalização estável e
+redação idempotente já tinham propriedades próprias (`test_canonical`,
+`test_security`).
+
+O que faltava eram as propriedades *não-decode* — invariantes de runtime sobre
+as funções puras que o fuzz de contrato não alcança. Ficam em
+`tests/test_cycle3_properties.py` (8 propriedades Hypothesis):
+
+- **ordenação determinística** — `topological_order` sobre DAGs aleatórios: a
+  ordem é idêntica entre chamadas e sob qualquer permutação da ordem de
+  declaração, e toda dependência precede o dependente;
+- **aciclicidade onde exigida** — listas arbitrárias de dependências (incluindo
+  referências a nós ausentes): ou a ordem respeita as deps ou `ValueError`
+  "cycle"; nunca laço infinito, nunca outra exceção;
+- **provider desconhecido nunca executa** — `check_plan` sobre nós com
+  providers/capabilities/ações aleatórios: zero violações implica que todo nó
+  resolve para provider `ready` que oferece a ação; um provider fora do
+  registry é sempre reportado;
+- **budget nunca excedido** — `build_context_pack` sobre tamanhos de arquivo
+  aleatórios em disco real contra budget e `max_files` aleatórios:
+  `used_bytes <= budget_bytes`, `files <= max_files` e `used_bytes` é a soma
+  exata dos arquivos entregues;
+- **bounded sizes** — `build_handoff` com fontes arbitrariamente grandes:
+  `items <= MAX_HANDOFF_ITEMS` e o JSON canônico `<= MAX_HANDOFF_BYTES`;
+- **ordem de handoff** — permutar a sequência de fontes nunca muda o handoff
+  emitido: os itens seguem a ordem de `inputs` do consumidor, em blocos
+  contíguos por fonte;
+- **integridade de persistência** — handoff serializado e recarregado pelo
+  caminho do resume é byte-idêntico (canonical JSON roundtrip strict).
