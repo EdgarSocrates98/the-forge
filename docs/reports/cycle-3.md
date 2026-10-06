@@ -966,3 +966,32 @@ ciclo 3 inteiro. `capabilities.md` ganha a seção "Relações declaradas" (o re
 ganha o bloco de status do ciclo 3 e a linha do relatório novo. `errors.md`
 permanece completo — varredura de `FORGE-*` em `src/` contra a tabela não
 encontra código sem linha.
+
+## Wave S — Testes adversariais do ciclo
+
+Auditoria dos 17 casos pedidos contra a suíte existente: 13 já estavam
+cobertos pelas waves donas — proposta que inventa provider/capability, excede o
+limite de providers do profile, planner indisponível/malformado
+(`test_hybrid_planner`), resolver indisponível/malformado
+(`test_semantic_routing`), segredo/truncamento/deduplicação de handoff
+(`test_handoff`), métrica histórica envenenada (`test_economy`), verificador de
+mesma identidade (`test_independent_verification`), debate sem evidência e
+nó paralelo que falha (`test_execution_modes`).
+
+Os 4 gaps ficam em `tests/test_cycle3_adversarial.py`, que documenta na docstring
+qual caso vive onde:
+
+- **proposta semântica com ciclo** — `proposal_plan` rejeita com
+  `FORGE-PLAN-INVALID` "cycle": a validação estrutural é soberana sobre o
+  raciocínio, exatamente como num `--from FILE`;
+- **timeout num nó paralelo** — `bad_forge` modo `timeout` dorme 30s no
+  `execute` com `execute_timeout=3`: o nó vira `provider_failure`
+  (`FORGE-PROTO-TIMEOUT`), o irmão independente termina `ok`, o dependente fica
+  `skipped blocked_by`, plano `partial`;
+- **resume após `partial`** — plano que terminou com um nó ok e um
+  `provider_failure`: o resume reuso-reidrata o provado (`attempts=0`, mesmo
+  run filho) e reexecuta o falho, que falha de novo — o desfecho continua
+  `partial` e honesto;
+- **handoff adulterado em disco** — `handoff.json` do consumidor reescrito com
+  claim diferente (JSON válido, conteúdo divergente): `verify_run_hashes` do
+  reuso detecta e o nó reexecuta com a limitação `resume: node n2 re-executed`.
