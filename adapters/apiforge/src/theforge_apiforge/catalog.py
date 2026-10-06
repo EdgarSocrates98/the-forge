@@ -64,6 +64,11 @@ class VerbSpec:
     case_subdir: str = ""
     # Input holding an af-change-bundle/1 whose path fields must stay in the workspace.
     bundle_input: str | None = None
+    # CLI flag that admits a translated handoff (``theforge_apiforge.handoff``); when set,
+    # the capability declares ``accepts_handoff`` and ``execute`` passes the translated
+    # ``upstream-facts.json`` to the verb. Absent: the verb has no intake, the capability
+    # does not claim consumption and the run carries the undeclared-use limitation.
+    upstream: str | None = None
 
 
 OPENAPI_GLOBS = ("openapi.yaml", "openapi.json", "*.openapi.yaml", "*.openapi.json")
@@ -87,6 +92,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         output_dir="case",
         description="Static analysis of an OpenAPI contract against the API project that "
                     "implements it (API Forge `analyze`).",
+        upstream="--upstream",
     ),
     "api.change-control": VerbSpec(
         argv=("change-control", "run"),
@@ -210,6 +216,7 @@ def capability_entry(record: Mapping[str, Any], spec: VerbSpec) -> dict[str, Any
             "file_globs": list(spec.signals.file_globs),
             "dependencies": list(spec.signals.dependencies),
         },
+        "accepts_handoff": spec.upstream is not None,
     }
 
 

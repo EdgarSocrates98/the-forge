@@ -51,7 +51,10 @@ def _echo(root: Path) -> tuple[Forger, RunStore, str, _Spy]:
     """An echo run (``reproducible``) and a Forger whose provider starts are spied."""
     forger, store = _forger(root, [])
     write_file(root, "notes.txt", "hello\n")
-    out = forger.ask(AskRequest(intent="eco", capability="demo.echo"))
+    # ``reproducible`` needs conditional verification; auto resolves this trivial
+    # task to economy (minimal), so these replay tests pin balanced explicitly.
+    out = forger.ask(AskRequest(intent="eco", capability="demo.echo",
+                                profile="balanced"))
     assert out.status == "ok", out.error
     assert out.receipt.reproducibility is not None
     assert out.receipt.reproducibility.level == "reproducible"

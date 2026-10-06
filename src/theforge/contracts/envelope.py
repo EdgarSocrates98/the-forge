@@ -8,11 +8,12 @@ from theforge.contracts.base import ContractError
 from theforge.contracts.context import ContextPack
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.plan import PlanEstimate, PlanRequest
+from theforge.contracts.result import ExecutionResult
 from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, HealthStatus, Producer, ResponseStatus
 
 __all__ = ["PROTOCOL_V1", "ExecuteRequest", "HealthCheck", "HealthReport", "PlanEstimate",
-           "PlanRequest", "Request", "Response", "new_request_id"]
+           "PlanRequest", "Request", "Response", "VerifyRequest", "new_request_id"]
 
 PROTOCOL_V1 = "forge/v1"
 
@@ -70,3 +71,23 @@ class ExecuteRequest:
     # Additive: structured items from the nodes this plan node depends on (None outside
     # plans). Providers that do not know the field keep ignoring it.
     handoff: Handoff | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class VerifyRequest:
+    """Payload of the ``verify`` op (Wave G): what an independent verifier judges.
+
+    Sent only to a provider whose manifest declares the ``verify`` op and a
+    capability whose ``relations.can_verify`` names ``<producer>/<capability>``
+    — and whose identity (fingerprint) differs from the producer's. The payload
+    is the persisted, redacted result plus the task and handoff that produced it;
+    the verifier answers ``Response.payload`` with a check verdict
+    (``status`` = ``passed``/``failed``, ``details``/``basis`` lists).
+    """
+
+    task: TaskSpec
+    capability: str
+    action: str
+    run_id: str  # the run whose result is being verified
+    result: ExecutionResult
+    handoff: Handoff | None = None  # the handoff the verified run received, if any

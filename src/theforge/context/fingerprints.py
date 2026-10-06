@@ -236,6 +236,20 @@ def _inside(path: Path, root: Path) -> bool:
 # --- line-range hashing: single owner of the newline rule ---------------------------------
 
 
+def hash_file(resolved: Path) -> tuple[str, int] | None:
+    """(sha256, bytes) of the whole file, streamed in chunks. None = unreadable."""
+    digest = hashlib.sha256()
+    size = 0
+    try:
+        with resolved.open("rb") as fh:
+            while chunk := fh.read(_CHUNK):
+                digest.update(chunk)
+                size += len(chunk)
+    except OSError:
+        return None
+    return digest.hexdigest(), size
+
+
 def hash_lines(resolved: Path, lines: LineRange) -> tuple[str, int] | None:
     """(sha256, bytes) of lines ``start..end`` (1-based, inclusive).
 

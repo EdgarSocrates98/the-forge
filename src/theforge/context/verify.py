@@ -12,13 +12,13 @@ same path) or found by re-verification, which re-hashes the selected items witho
 and marks the result ``partial``; without drift it returns the result unchanged.
 """
 
-import hashlib
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final
 
-from theforge.context.fingerprints import hash_lines
+from theforge.context.fingerprints import hash_file, hash_lines
 from theforge.contracts.context import ContextFile, ContextPack
 from theforge.contracts.result import Evidence, ExecutionResult
 from theforge.contracts.types import VerificationLevel
@@ -27,7 +27,6 @@ from theforge.security.paths import resolve_inside
 DRIFT_LIMITATION_PREFIX: Final = "context-drift:"
 NOT_REVERIFIED_LIMITATION: Final = "context-not-reverified"
 _ASSERTIVE: Final = frozenset({"confirmed", "observed"})
-_CHUNK: Final = 1 << 16
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -75,14 +74,8 @@ def items_to_verify(pack: ContextPack, result: ExecutionResult,
 
 def _whole_file_sha256(resolved: Path) -> str | None:
     """Uncached whole-file hash (never through FingerprintStore). None = unreadable."""
-    digest = hashlib.sha256()
-    try:
-        with resolved.open("rb") as fh:
-            while chunk := fh.read(_CHUNK):
-                digest.update(chunk)
-    except OSError:
-        return None
-    return digest.hexdigest()
+    got = hash_file(resolved)
+    return None if got is None else got[0]
 
 
 def current_file_sha256(root: Path, path: str) -> str | None:
@@ -94,6 +87,31 @@ def current_file_sha256(root: Path, path: str) -> str | None:
     if resolved is None or not resolved.is_file():
         return None
     return _whole_file_sha256(resolved)
+
+
+def declared_artifact_problem(root: Path, path: str, sha256: str) -> str | None:
+    """Why a provider-declared artifact fails verification, or None when its hash matches.
+
+    Classification order, each stricter check gating the next: the declared path must be
+    lexically under ``root`` (an absolute or ``..`` path is refused without stat'ing
+    outside), must exist, must resolve physically inside ``root`` (a link that escapes
+    or cannot be resolved fails), must be a regular file, and its uncached content must
+    hash to ``sha256``. A link whose target stays inside ``root`` verifies by content.
+    """
+    base = Path(os.path.normpath(root))
+    lexical = Path(os.path.normpath(root / path))
+    if not lexical.is_relative_to(base):
+        return "declared path escapes work/"
+    resolved = resolve_inside(root, root / path)
+    if resolved is None:
+        if not os.path.lexists(lexical):
+            return "missing"
+        return "unresolvable or a link resolving outside work/"
+    if not resolved.is_file():
+        return "not a regular file"
+    if _whole_file_sha256(resolved) != sha256:
+        return "hash differs"
+    return None
 
 
 def _current_sha256(root: Path, item: ContextFile) -> str | None:

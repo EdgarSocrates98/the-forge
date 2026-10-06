@@ -132,7 +132,16 @@ def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
     assert telemetry.scan_ms.kind == "measured" and telemetry.routing_ms.kind == "measured"
     assert {"context_ms", "provider_ms"} <= set(telemetry.unknowns)
     assert plan_executor_module.PLAN_TELEMETRY_LIMITATION in telemetry.limitations
-    assert telemetry.profile.name == store.read(out.run_id, "task")["budget_profile"]
+    # Telemetry records the EFFECTIVE profile: the requested one, or what the
+    # complexity assessment resolved ``auto`` to (bound by hash when written).
+    requested = store.read(out.run_id, "task")["budget_profile"]
+    complexity = store.read_optional(out.run_id, "complexity")
+    assert receipt.inputs.complexity_sha256 == store.persisted_sha256(
+        out.run_id, "complexity")
+    if requested == "auto" and complexity is not None:
+        assert telemetry.profile.name == complexity["selected_profile"]
+    else:
+        assert telemetry.profile.name == requested
     _assert_explained(store, out)  # every closed plan run explains without divergence (8.1)
     return receipt
 
@@ -179,6 +188,25 @@ def test_plan_only_persists_the_plan_with_estimates_and_starts_no_node(
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     assert telemetry.providers_executed.value == 0
     assert _child_runs(store, out.run_id) == []
+
+
+def test_auto_plan_floors_to_max_when_the_task_needs_two_providers(
+        cross: CrossWorkspace) -> None:
+    """``--profile auto`` on a two-provider intent: the assessment must not pick a
+    profile that forbids the split — the provider floor raises it to ``max``."""
+    executor, store, _ = _executor(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
+    out = executor.run(PlanCommand(intent=PROOF_TASK))  # profile auto
+    assert out.status == "planned" and out.error is None
+    assert store.read(out.run_id, "task")["budget_profile"] == "auto"
+    assessment = store.read(out.run_id, "complexity")
+    assert assessment["requested_profile"] == "auto"
+    assert assessment["selected_profile"] == "max"
+    assert "providers required" in assessment["profile_reason"]
+    plan = store.read_contract(out.run_id, "plan", ExecutionPlan)
+    assert [(n.id, n.provider) for n in plan.nodes] == [("n1", "fixture-spark"),
+                                                       ("n2", "fixture-api")]
+    assert plan.profile == "max"
+    _assert_closed(store, out)
 
 
 def test_rejected_plan_file_is_refused_with_its_first_violation(tmp_path: Path) -> None:
@@ -304,6 +332,9 @@ def test_proof_task_runs_two_nodes_with_the_first_handoff_in_the_second(
     handoff = store.read(n2.run_id, "handoff")
     assert {item["origin"]["node"] for item in handoff["items"]} == {"n1"}
     assert spy.calls[-1][4]["handoff"] == handoff
+    # Evidence bus (Wave D): n1's run verification crosses as a typed item.
+    [ver_item] = [i for i in handoff["items"] if i["kind"] == "verification"]
+    assert ver_item["epistemic"] == "observed" and "forge=passed" in ver_item["claim"]
     child = store.read_contract(n2.run_id, "receipt", ExecutionReceipt)
     assert (child.parent_run, child.plan_node) == (out.run_id, "n2")
     claims = [e["claim"] for e in store.read(n2.run_id, "result")["evidence"]]

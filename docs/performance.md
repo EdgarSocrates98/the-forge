@@ -25,6 +25,15 @@ python scripts/bench/run_bench.py --budgets-from scripts/bench/baseline.json [--
 | `routing_10k` | routing sobre a varredura de 10 000 arquivos |
 | `context_1k_cold` / `context_1k_warm`, `context_10k_cold` / `context_10k_warm` | `build_context_pack` com o perfil `balanced`, cache de fingerprints frio (desligado) e quente (populado) |
 | `persist_run` | gravação de `task`, `routing`, `context`, `result`, `telemetry` e `receipt` de um run real com o eco |
+| `graph_build` | `build_capability_graph` sobre o descritor do workspace de 10 000 arquivos (Cycle 3, Wave W) |
+| `graph_refresh_warm` | `refresh_intel` com snapshot válido — o caminho incremental que alimenta o grafo (seções frescas reusadas) |
+| `plan_validate` | `check_plan` de um plano `pipeline` de 32 nós encadeados |
+| `replay_verify` | `verify_run_hashes` de um run real com o eco |
+| `explain_build` | `build_explain_report` de um run real com o eco |
+
+O planner semântico não entra no SLA determinístico: é medido à parte pelo
+`run_runs_bench.py` (métrica `semantic_calls` por caso — Wave P), nunca por budget
+de latência aqui.
 
 ## Baseline
 Arquivo: `scripts/bench/baseline.json` (gravado no commit `f1df8a0`; medido em `d77ba5f`). Medido antes do cache de fingerprints: nesse ponto `warm` só difere de `cold` por uma chamada de aquecimento não cronometrada, então as duas variantes medem o mesmo trabalho e a diferença entre elas é ruído.
@@ -73,6 +82,37 @@ Arquivo: `scripts/bench/budgets.json`. Regra (gerada por `--budgets-from`): `bud
 | `persist_run` | 14,741 | 1,5 | 22,111 | 10,665 |
 
 Origem da remedição final (`scripts/bench/final.json`, `--quick`, 3 repetições): AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel; Windows-10-10.0.26300-SP0; CPython 3.11.15; 2026-10-04T15:33:14Z; The Forge 0.1.0; commit `68eb7ef` com worktree sujo (`git_dirty: true`; o commit seguinte, `f637e2a`, só acrescenta `budgets.json` e `final.json`). Comparação contra os budgets: 0 regressões em 11 medições. Uma remedição anterior com 10 repetições, feita com a máquina carregada (pouca memória livre e outro processo ativo), acusou `registry_warm` (28,1 ms) e `scan_1k` (1 481,6 ms) acima do budget; a repetição em máquina quieta não as reproduziu, então foram tratadas como ruído. O contexto frio ficou ~8× (1k) e ~17× (10k) mais rápido pela nova seleção limitada por perfil (medianas `context_*_cold`); no contexto quente o cache evita reler os 64 arquivos selecionados (`files_hashed=0`, `cache_hits=64`), mas não reduz o tempo de parede nesse tamanho, pois carregar e gravar o JSON do cache custa tanto ou mais que reler ~125 KB.
+
+## Benchmark de runs cross-forge (Ciclo 3, Wave P)
+
+`scripts/bench/run_runs_bench.py` mede **runs inteiros** pela superfície real de orquestração — onde `run_bench.py` mede etapas internas sobre workspaces sintéticos, este mede o pipeline completo: os providers de fixture são subprocessos reais falando Forge Protocol v1 (o mesmo argv que o kit de conformidade certifica), então cada caso atravessa routing, avaliação de risco, contexto, transporte, verificação, persistência e receipt. Offline e sem credenciais por construção — os fixtures reexecutam comportamento declarado, que é o que um benchmark isolado precisa; se os SparkForge/APIForge *reais* se comportam igual é coberto pela suíte opt-in de providers reais ([docs/real-providers.md](real-providers.md)), uma medição diferente.
+
+```bash
+python scripts/bench/run_runs_bench.py [--quick] [--runs N] [--out PATH] [--check BUDGETS]
+python scripts/bench/run_runs_bench.py --results PATH --check BUDGETS
+python scripts/bench/run_runs_bench.py --budgets-from BASELINE [--factor F] [--out PATH]
+```
+
+Casos (cada um afirma o status esperado — um outcome errado falha o caso):
+
+| Caso | O que mede |
+|---|---|
+| `single_spark` | `ask` roteado a `fixture-spark` (com `fixture-verifier` presente) |
+| `single_api` | `ask` roteado a `fixture-api` |
+| `pipeline` | plano `pipeline`: nó Spark → nó API (handoff cross-provider) |
+| `ambiguous` | `ask` empatado entre `fixture-spark` e `fixture-spark-b` — termina `ambiguous` sem executar |
+| `high_risk` | `ask` pinado numa capability `destructive` — a política recusa antes de contexto/execução |
+| `semantic_fallback` | o mesmo `ask` ambíguo, resolvido por `fixture-resolver` (ADR 0025) |
+| `parallel` | plano `parallel`: dois nós independentes + um dependente, threads reais |
+| `debate` | plano `debate`: dois proposers + referee, `DecisionRecord` persistido |
+
+Por caso o relatório registra mediana e p90 do tempo de parede da chamada (`time.perf_counter_ns`; uma repetição de aquecimento não cronometrada popula o cache de describe do registry) mais as métricas de run pedidas pela onda, **lidas dos artefatos persistidos** do run e de seus filhos — nunca de objetos vivos: `context_bytes` (counter), `provider_calls` (`providers_executed` somado sobre root + nós, incluindo as chamadas `plan` de estimativa), `semantic_calls` (planner + resolver), `handoff_bytes` (bytes de cada artefato `handoff`), `verification_calls` (spans `verification`) e `status`.
+
+Cada repetição usa um workspace **novo** (setup não cronometrado): sem isso, o histórico de intel/performance da repetição anterior alimentaria o routing da próxima — um routing ambíguo poderia ser resolvido pelo histórico (ADR 0022) em vez do resolver, e as métricas variariam entre reps. O cache de describe do registry vive fora do workspace e permanece quente — esse é o estado estacionário.
+
+Saída: `{"schema": "theforge-bench-runs/v1", "origin": {...}, "cases": {nome: {median_ms, p90_ms, runs, status, expect, nodes, metrics}}}` — `origin` tem o mesmo formato de `theforge-bench/v1`. `--check`/`--budgets-from` comparam as medianas de wall time como no `run_bench.py`. Isolamento idêntico: tudo sob um diretório temporário, `THEFORGE_CONFIG_DIR`/`THEFORGE_CACHE_DIR` apontando para lá.
+
+Medição de referência nesta máquina (`--runs 1`, commit `9377061`, worktree sujo): `single_spark` ~0,9 s, `single_api` ~0,4 s, `pipeline` ~1,7 s (4 provider calls: 2 `execute` + 2 estimativas `plan`), `ambiguous` ~0,6 s (zero execução), `high_risk` ~0,3 s (recusa na política), `semantic_fallback` ~1,0 s (1 chamada semântica), `parallel` ~2,0 s (6 calls, 3 verificações, ~5,3 KB de handoff), `debate` ~1,9 s (6 calls, ~6,6 KB de handoff). Números de uma única repetição — referência de ordem de grandeza, não baseline.
 
 ## Custos fora do benchmark
 - Git: quando o workspace está dentro de um repositório, cada `ask` faz 5 processos `git` com orçamento total de 5 s ([ADR 0016](adr/0016-git-read-only-signals.md)); observado em ~0,7–1,3 s por run nos testes, nesta máquina. O benchmark de contexto chama `build_context_pack` sem git.

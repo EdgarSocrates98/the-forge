@@ -113,6 +113,7 @@ class ExplainReport:
     plan: PlanSection | None = None
     parent_run: str | None = None
     replay_of: str | None = None
+    resumed_from: str | None = None  # the plan run this run resumed (receipt field)
     error: ErrorInfo | None = None
     error_family: str | None = None
     integrity: IntegrityReport

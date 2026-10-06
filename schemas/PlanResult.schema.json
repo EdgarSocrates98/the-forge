@@ -5,6 +5,16 @@
     "created_at": {
       "type": "string"
     },
+    "decision_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "limitations": {
       "items": {
         "type": "string"
@@ -15,6 +25,9 @@
       "items": {
         "additionalProperties": false,
         "properties": {
+          "attempts": {
+            "type": "integer"
+          },
           "blocked_by": {
             "anyOf": [
               {
@@ -120,6 +133,9 @@
                 "type": "null"
               }
             ]
+          },
+          "reused": {
+            "type": "boolean"
           },
           "run_id": {
             "anyOf": [

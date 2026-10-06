@@ -131,7 +131,55 @@
     "created_at": {
       "type": "string"
     },
+    "evidence_returned": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
     "fallbacks_used": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "files_cited": {
       "additionalProperties": false,
       "properties": {
         "kind": {
@@ -204,6 +252,30 @@
       "type": "object"
     },
     "files_selected": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "findings_returned": {
       "additionalProperties": false,
       "properties": {
         "kind": {
@@ -451,6 +523,103 @@
     },
     "schema": {
       "type": "string"
+    },
+    "semantic_planner_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "semantic_resolver_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "spans": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_ms": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "error"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "start_ms",
+          "duration_ms"
+        ],
+        "type": "object"
+      },
+      "type": "array"
     },
     "unknowns": {
       "items": {

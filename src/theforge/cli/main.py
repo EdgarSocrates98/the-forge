@@ -16,7 +16,7 @@ from typing import Final
 from theforge import __version__
 from theforge.cli import commands, render
 from theforge.contracts import to_dict
-from theforge.contracts.codes import Codes
+from theforge.contracts.codes import Codes, hint_of
 from theforge.diagnostics import build_diagnostic
 from theforge.errors import ForgeError, PersistenceError, ReplayRefused
 from theforge.security.redact import redact_text
@@ -35,10 +35,13 @@ FIXED_EXITS: Final = frozenset({EXIT_FAILURE, EXIT_USAGE, EXIT_PERSISTENCE, EXIT
 PLAN_DESCRIPTION = """\
 Plan a task across providers, one node per specialist, executed locally in sequence.
 
-Without --from FILE the nodes are ordered by the textual order of their keywords in the
-intent (rule `intent-order`): a proxy of the data flow that can infer a wrong dependency
-(e.g. "an API that consumes the Spark pipeline data" puts the API first). Review the plan
-without --execute; --from FILE fixes the order explicitly.
+Without --from FILE the nodes are ordered by declared capability relations first (rule
+`capability-graph`: requires and produces→consumes among qualified providers) and then by
+the textual order of their keywords in the intent (rule `intent-order`): proxies of the
+data flow that can infer a wrong dependency (e.g. "an API that consumes the Spark pipeline
+data" puts the API first). Review the plan without --execute; --from FILE fixes the order
+explicitly. An ambiguous decomposition may be resolved by a `proposes_plans` provider
+(semantic tier), revalidated by the deterministic plan checks.
 """
 
 
@@ -80,16 +83,47 @@ def build_parser() -> argparse.ArgumentParser:
     cap_search.add_argument("query")
     cap_search.set_defaults(handler=commands.cmd_capabilities_search)
 
+    graph = sub.add_parser(
+        "graph", parents=[common],
+        help="the capability graph: declared+observed relations of the registry "
+             "and workspace (cached manifests only, no provider process)")
+    graph.add_argument("--ref", metavar="CAPABILITY",
+                       help="only the edges touching this capability "
+                            "('provider/capability' or a bare capability id)")
+    graph.set_defaults(handler=commands.cmd_graph)
+
     providers = sub.add_parser("providers", help="provider operations") \
         .add_subparsers(dest="providers_command", required=True)
     providers.add_parser("health", parents=[common]) \
         .set_defaults(handler=commands.cmd_providers_health)
 
+    provider = sub.add_parser(
+        "provider", help="provider authoring: scaffold and conformance") \
+        .add_subparsers(dest="provider_command", required=True)
+    provider_init = provider.add_parser(
+        "init", parents=[common],
+        help="write a stdlib-only provider skeleton into an empty directory")
+    provider_init.add_argument("directory", help="target directory (new or empty)")
+    provider_init.add_argument("--id", required=True, metavar="PROVIDER_ID",
+                               help="the provider id the manifest will declare")
+    provider_init.add_argument("--capability", metavar="CAPABILITY_ID",
+                               help="first capability id (default: <id-prefix>.describe)")
+    provider_init.set_defaults(handler=commands.cmd_provider_init)
+    provider_check = provider.add_parser(
+        "check", parents=[common],
+        help="run the Forge Protocol conformance battery against an argv")
+    provider_check.add_argument(
+        "argv", nargs=argparse.REMAINDER, metavar="ARGV",
+        help="the provider argv (prefix with -- when it starts with a dash)")
+    provider_check.set_defaults(handler=commands.cmd_provider_check)
+
     ask = sub.add_parser("ask", parents=[common], help="route a task to a specialist")
     ask.add_argument("intent")
     ask.add_argument("--capability")
     ask.add_argument("--action")
-    ask.add_argument("--profile", choices=["economy", "balanced", "max"], default="balanced")
+    ask.add_argument("--profile", choices=["auto", "economy", "balanced", "max"],
+                     default="auto",
+                     help="budget profile; auto lets the complexity engine decide")
     ask.add_argument("--target", dest="targets", action="append")
     ask.add_argument("--allow-unverified", action="store_true")
     ask.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
@@ -100,7 +134,9 @@ def build_parser() -> argparse.ArgumentParser:
         "plan", parents=[common], help="plan (and optionally execute) a multi-provider task",
         description=PLAN_DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
     plan.add_argument("intent")
-    plan.add_argument("--profile", choices=["economy", "balanced", "max"], default="balanced")
+    plan.add_argument("--profile", choices=["auto", "economy", "balanced", "max"],
+                      default="auto",
+                      help="budget profile; auto lets the complexity engine decide")
     plan.add_argument("--target", dest="targets", action="append")
     plan.add_argument("--from", dest="plan_file", metavar="FILE",
                       help="explicit plan file (fixes the node order); default: decompose "
@@ -130,6 +166,27 @@ def build_parser() -> argparse.ArgumentParser:
     replay.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
                         help="approve a capability for the re-execution (repeatable)")
     replay.set_defaults(handler=commands.cmd_replay)
+
+    resume = sub.add_parser(
+        "resume", parents=[common],
+        help="resume a plan run: nodes whose recorded inputs still verify are "
+             "reused, the rest re-execute")
+    resume.add_argument("run_id", help="the plan run to resume")
+    resume.add_argument("--allow-unverified", action="store_true")
+    resume.add_argument("--approve", dest="approvals", action="append", metavar="CAPABILITY",
+                        help="approve a capability for the nodes that use it (repeatable)")
+    resume.set_defaults(handler=commands.cmd_resume)
+
+    decisions = sub.add_parser("decisions", parents=[common],
+                             help="the project's reusable-decision memory "
+                                  "(.forge/intel/decisions.json)")
+    decisions.set_defaults(handler=commands.cmd_decisions)
+
+    trace = sub.add_parser("trace", parents=[common],
+                           help="the run's local trace: what happened, span by span "
+                                "(explain answers why)")
+    trace.add_argument("run_id")
+    trace.set_defaults(handler=commands.cmd_trace)
     return parser
 
 
@@ -156,6 +213,9 @@ def _fail(args: argparse.Namespace, prefix: str, message: str, exc: BaseExceptio
           code: str) -> None:
     print(f"theforge: {prefix}: {redact_text(render.clean(message))} "
           f"{render.code_suffix(code, commands.error_family(code))}", file=sys.stderr)
+    hint = hint_of(code)
+    if hint:
+        print(f"theforge: hint: {hint}", file=sys.stderr)
     if getattr(args, "debug", False):
         diagnostic = build_diagnostic(exc, stage=_stage(args), code=code)
         commands.print_debug(to_dict(diagnostic))

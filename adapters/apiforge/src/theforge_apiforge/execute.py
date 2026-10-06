@@ -60,6 +60,11 @@ from theforge_apiforge._shell import (
 )
 from theforge_apiforge.backend import REPLAY_INVALID, REPLAY_MISSING, ReplayBackend
 from theforge_apiforge.catalog import VERB_MAP, InputSpec, SnapshotError, VerbSpec, load_snapshot
+from theforge_apiforge.handoff import (
+    UPSTREAM_EXTRACTOR,
+    UPSTREAM_FILE,
+    translate_handoff,
+)
 from theforge_apiforge.health import CLI
 from theforge_apiforge.translate import NativeCase, native_failure, read_case, translate_case
 
@@ -247,6 +252,78 @@ def replay_verb(directory: Path, capability: str, action: str, spec: VerbSpec,
     return _write_case(data, spec, cwd, path.name)
 
 
+def _upstream_supported() -> bool:
+    """True iff the installed API Forge exposes the upstream intake on ``analyze_project``
+    (an older specialist without it degrades to a limitation, never a failed probe)."""
+    try:
+        import importlib
+        import inspect
+        module = importlib.import_module("apiforge.application.analyze")
+        return "upstream" in inspect.signature(module.analyze_project).parameters
+    except Exception:  # noqa: BLE001 - any import/shape problem means "not supported"
+        return False
+
+
+def _upstream_invocation(call: Invocation, payload: Mapping[str, Any],
+                         spec: VerbSpec) -> tuple[Invocation, list[str]]:
+    """Translate a delivered handoff into the verb's upstream-facts input file.
+
+    Returns ``call`` unchanged plus a limitation when the payload carries no handoff or
+    the installed specialist has no intake; when it does, the bounded document lands at
+    ``<native cwd>/<UPSTREAM_FILE>`` and the verb's flag is appended to the argv.
+    """
+    if spec.upstream is None:
+        return call, []
+    if not isinstance(payload.get("handoff"), Mapping):
+        return call, []
+    if not _upstream_supported():
+        return call, ["handoff delivered but not consumed: the installed apiforge has no "
+                      "upstream intake (analyze_project lacks the 'upstream' parameter)"]
+    document, notes = translate_handoff(payload["handoff"])
+    call.cwd.mkdir(parents=True, exist_ok=True)
+    (call.cwd / UPSTREAM_FILE).write_text(
+        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8")
+    return replace(call, argv=(*call.argv, spec.upstream, UPSTREAM_FILE)), notes
+
+
+def _upstream_replay(spec: VerbSpec, payload: Mapping[str, Any], cwd: Path) -> list[str]:
+    """Re-derive the case's upstream facts from THIS request's handoff, in replay.
+
+    The handoff→facts translation is adapter-deterministic — the specialist's only part
+    is folding them into the case — so a replayed run must carry the provenance of its
+    own handoff, never the recorded one. Recorded upstream facts with no handoff in the
+    request are dropped: in that run the verb saw no ``--upstream`` intake.
+    """
+    if spec.upstream is None:
+        return []
+    directory = cwd / spec.output_dir / spec.case_subdir if spec.case_subdir \
+        else cwd / spec.output_dir
+    facts_path = directory / "facts.json"
+    try:
+        case = json.loads(facts_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError):
+        return []
+    facts = case.get("facts") if isinstance(case, dict) else None
+    if not isinstance(facts, list):
+        return []
+    native = [fact for fact in facts
+              if not (isinstance(fact, Mapping)
+                      and isinstance(fact.get("source"), Mapping)
+                      and fact["source"].get("extractor") == UPSTREAM_EXTRACTOR)]
+    notes: list[str] = []
+    upstream: list[Any] = []
+    if isinstance(payload.get("handoff"), Mapping):
+        document, notes = translate_handoff(payload["handoff"])
+        upstream = document["facts"]
+    if len(native) == len(facts) and not upstream:
+        return notes
+    case["facts"] = [*native, *upstream]
+    facts_path.write_text(json.dumps(case, indent=2, sort_keys=True,
+                                     ensure_ascii=False) + "\n", encoding="utf-8")
+    return notes
+
+
 def live_verb(call: Invocation, payload: Mapping[str, Any], *, run: Run) -> Reply | None:
     """Run the verb; a reply for a native failure, None when it succeeded."""
     call.cwd.mkdir(parents=True, exist_ok=True)
@@ -351,10 +428,14 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
     call = invocation(spec, selected, stage, cwd)
     if isinstance(call, Reply):
         return call
-    if options.replay is not None:
-        failure = replay_verb(options.replay, capability, action, spec, cwd)
-    else:
+    upstream_notes: list[str] = []
+    if options.replay is None:
+        call, upstream_notes = _upstream_invocation(call, payload, spec)
         failure = live_verb(call, payload, run=run)
+    else:
+        failure = replay_verb(options.replay, capability, action, spec, cwd)
+        if failure is None:
+            upstream_notes = _upstream_replay(spec, payload, cwd)
     if failure is not None:
         return failure
     rewritten = relativize_outputs(cwd, spec)
@@ -362,7 +443,7 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
                            project=call.project, verb=_verb_name(spec))
     if isinstance(draft, Reply):
         return draft
-    notes = [*_selection_notes(spec, selected), *rewritten]
+    notes = [*_selection_notes(spec, selected), *upstream_notes, *rewritten]
     if notes:
         draft = replace(draft, limitations=[*notes, *draft.limitations])
     return finalize(draft, cwd)

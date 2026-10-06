@@ -20,15 +20,18 @@ from theforge.contracts.types import (
     Outcome,
     PlanPattern,
     Producer,
+    check_sha256,
 )
 from theforge.contracts.verification import ReproducibilityInfo
 
 PLAN_SCHEMA = "theforge/ExecutionPlan/v1"
 PLAN_RESULT_SCHEMA = "theforge/PlanResult/v1"
+SEMANTIC_PLAN_SCHEMA = "theforge/SemanticPlanProposal/v1"
+DECISION_SCHEMA = "theforge/DecisionRecord/v1"
 # Format of a plan node id (checked relationally, so it is reported as a violation).
 PLAN_NODE_ID: Final = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 
-NodeRole = Literal["producer", "consumer", "standalone"]
+NodeRole = Literal["producer", "consumer", "standalone", "proposer", "referee"]
 NodeStatus = Literal["ok", "partial", "refused", "provider_failure", "no_route", "skipped"]
 
 
@@ -85,7 +88,7 @@ class ExecutionPlan:
     plan_run: str
     task_id: str
     pattern: PlanPattern
-    source: Literal["decomposed", "file"]
+    source: Literal["decomposed", "file", "semantic"]
     profile: BudgetProfile
     nodes: list[PlanNode]
     violations: list[PlanViolation] = field(default_factory=list)  # empty <=> validated
@@ -101,12 +104,88 @@ class ExecutionPlan:
 
 
 @dataclass(frozen=True, kw_only=True)
+class SemanticPlanOption:
+    """One eligible (provider, capability) the semantic planner may select (C5)."""
+
+    provider: str
+    capability: str
+    actions: list[str]
+    state: str = ""
+    produces: list[str] = field(default_factory=list)
+    consumes: list[str] = field(default_factory=list)
+    requires: list[str] = field(default_factory=list)
+    conflicts: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
 class PlanRequest:
-    """Request payload of the `plan` op (crosses the protocol: open schema)."""
+    """Request payload of the `plan` op (crosses the protocol: open schema).
+
+    ``purpose="estimate"`` (the default and the only purpose of v1 providers)
+    answers a ``PlanEstimate``. ``purpose="proposal"`` — answered only by a
+    capability that declares ``proposes_plans`` — asks a semantic planner to
+    compose ``options`` into a ``SemanticPlanProposal``; ``ambiguity`` states why
+    the deterministic tiers could not decide.
+    """
 
     task: TaskSpec
     capability: str
     action: str
+    purpose: Literal["estimate", "proposal"] = "estimate"
+    options: list[SemanticPlanOption] = field(default_factory=list)
+    ambiguity: str = ""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SemanticPlanNode:
+    """A proposed plan node; ``ref`` is the proposal-local id used by dependencies."""
+
+    ref: str
+    provider: str
+    capability: str
+    action: str
+    targets: list[str] = field(default_factory=lambda: ["."])
+    depends_on: list[str] = field(default_factory=list)
+    inputs: list[str] = field(default_factory=list)
+    role: NodeRole | None = None  # inferred by the validator when absent
+    rationale: str = ""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SemanticPlanDependency:
+    """A proposed edge ``node`` depends on ``depends_on``, with its stated reason."""
+
+    node: str
+    depends_on: str
+    rationale: str = ""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SemanticPlanProposal:
+    """Response payload of the `plan` op with ``purpose="proposal"`` (open schema).
+
+    The proposal is *advisory*: the deterministic validator maps it to an
+    ``ExecutionPlan`` (``source="semantic"``) and ``check_plan`` stays sovereign —
+    unknown providers, capabilities, actions, broken refs and profile limits are
+    violations, never silently repaired.
+    """
+
+    schema: str = SEMANTIC_PLAN_SCHEMA
+    nodes: list[SemanticPlanNode] = field(default_factory=list)
+    dependencies: list[SemanticPlanDependency] = field(default_factory=list)
+    pattern: PlanPattern | None = None
+    rationale: str = ""
+    evidence: list[str] = field(default_factory=list)
+    assumptions: list[str] = field(default_factory=list)
+    unknowns: list[str] = field(default_factory=list)
+    confidence: Literal["high", "medium", "low"] | None = None
+    alternatives: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != SEMANTIC_PLAN_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {SEMANTIC_PLAN_SCHEMA}")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -119,6 +198,10 @@ class NodeOutcome:
     blocked_by: str | None = None  # required when skipped (validate_plan_result)
     error: ErrorInfo | None = None
     reproducibility: ReproducibilityInfo | None = None
+    # Child runs this plan run drove for the node (0 when skipped or resumed-reused).
+    attempts: int = 0
+    # ``resume`` marked this outcome: it reuses the recorded child run, unchanged.
+    reused: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -150,6 +233,60 @@ class Synthesis:
     unknowns: list[str] = field(default_factory=list)
 
 
+# Durable scheduler state of a plan run (F1): rewritten as nodes finish, so a
+# crashed plan is resumable from ``plan-state`` even without a ``plan-result``.
+PLAN_STATE_SCHEMA = "theforge/PlanState/v1"
+# Reachable run states: planned (never executed), running, completed, partial,
+# failed. ``paused``/``cancelled`` are declared for a future scheduler and are
+# never written today.
+PlanRunState = Literal["planned", "running", "paused", "partial", "failed",
+                       "completed", "cancelled"]
+# Reachable node states: pending (deps unmet), ready (deps met, not yet started —
+# a snapshot may catch it), running (child run in flight; a crash leaves this),
+# succeeded (valid result: ok/partial), failed, skipped (blocked_by), cancelled
+# (declared, never written today).
+NodePlanState = Literal["pending", "ready", "running", "succeeded", "failed",
+                        "skipped", "cancelled"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class PlanNodeState:
+    """One node's scheduling state inside a ``PlanState`` snapshot."""
+
+    node: str
+    state: NodePlanState
+    run_id: str | None = None  # the child run once the node reached execute
+    result_sha256: str | None = None  # the child's result artifact hash
+    blocked_by: str | None = None
+    attempts: int = 0
+    reused: bool = False  # a resume reused the recorded child run
+
+
+@dataclass(frozen=True, kw_only=True)
+class PlanState:
+    """Scheduler snapshot of a plan run (core-only artifact ``plan-state``, F1).
+
+    Written once when the plan is validated (nodes ``pending``), after every node
+    records, and once more with the terminal ``run_state`` before ``plan-result``.
+    Each write replaces the artifact; the receipt binds the final hash. A run
+    interrupted mid-plan keeps the last snapshot — that is what ``resume`` reads
+    when no ``plan-result`` exists.
+    """
+
+    schema: str = PLAN_STATE_SCHEMA
+    producer: Producer
+    created_at: str
+    plan_run: str
+    run_state: PlanRunState
+    nodes: list[PlanNodeState]
+    resumed_from: str | None = None  # the plan run this execution resumes
+
+    def __post_init__(self) -> None:
+        if self.schema != PLAN_STATE_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {PLAN_STATE_SCHEMA}")
+
+
 @dataclass(frozen=True, kw_only=True)
 class PlanResult:
     schema: str = PLAN_RESULT_SCHEMA
@@ -161,6 +298,7 @@ class PlanResult:
     nodes: list[NodeOutcome]
     synthesis: Synthesis
     reproducibility: ReproducibilityInfo
+    decision_sha256: str | None = None  # the debate's DecisionRecord artifact, when any
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
 
@@ -168,3 +306,66 @@ class PlanResult:
         if self.schema != PLAN_RESULT_SCHEMA:
             raise ContractError(
                 f"unsupported schema {self.schema!r}, expected {PLAN_RESULT_SCHEMA!r}")
+        if self.decision_sha256 is not None:
+            check_sha256(self.decision_sha256, field="decision_sha256")
+
+
+@dataclass(frozen=True, kw_only=True)
+class DecisionOption:
+    """One option weighed in a debate: a proposer node and its outcome claim.
+
+    ``position`` is the proposer's stated proposal — the title of its first
+    finding, verbatim; ``evidence`` the ids it produced; ``risks`` its
+    ``high``/``critical`` findings as ``"<id>: <title>"``. The record cites
+    each position structurally: the core reports what the proposer
+    asserted, never a paraphrase.
+    """
+
+    node: str
+    provider: str
+    capability: str
+    status: NodeStatus
+    run_id: str | None = None
+    claim: str = ""  # the proposer's outcome line ("status=… capability=… action=…")
+    position: str = ""  # first finding title, verbatim
+    evidence: list[str] = field(default_factory=list)  # evidence ids produced
+    risks: list[str] = field(default_factory=list)  # "<id>: <title>" high/critical findings
+
+
+@dataclass(frozen=True, kw_only=True)
+class DecisionRecord:
+    """The auditable outcome of a ``debate`` plan (core-only artifact, E4).
+
+    The referee answers ``evidence id="decision"`` whose claim is the chosen
+    option's node id — a documented convention the core can verify: the claim
+    must name a proposer node, else the record is ``unresolved`` with the reason
+    in limitations. The core never invents the choice.
+    """
+
+    schema: str = DECISION_SCHEMA
+    producer: Producer
+    created_at: str
+    plan_run: str
+    referee: str  # the referee node id
+    question: str
+    options: list[DecisionOption]
+    evidence: list[str] = field(default_factory=list)  # "<node>:<item-id>" handed to the referee
+    tradeoffs: list[str] = field(default_factory=list)  # "<node>: <finding id>: <title>"
+    chosen: str = "unresolved"  # a proposer node id, or "unresolved"
+    rejected: list[str] = field(default_factory=list)  # proposer node ids not chosen
+    rationale: str = ""  # the referee decision finding's claim (verbatim)
+    confidence: Literal["high", "low", "unknown"] = "unknown"
+    unknowns: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != DECISION_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {DECISION_SCHEMA!r}")
+        option_ids = {o.node for o in self.options}
+        if self.chosen != "unresolved" and self.chosen not in option_ids:
+            raise ContractError(
+                f"decision chosen {self.chosen!r} is not a proposer node")
+        if self.chosen != "unresolved" and set(self.rejected) != option_ids - {self.chosen}:
+            raise ContractError(
+                "decision rejected must be exactly the options not chosen")

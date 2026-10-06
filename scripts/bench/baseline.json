@@ -64,6 +64,31 @@
       "median_ms": 14.741,
       "p90_ms": 33.107,
       "runs": 10
+    },
+    "graph_build": {
+      "median_ms": 0.095,
+      "p90_ms": 0.166,
+      "runs": 3
+    },
+    "graph_refresh_warm": {
+      "median_ms": 45.388,
+      "p90_ms": 50.725,
+      "runs": 3
+    },
+    "plan_validate": {
+      "median_ms": 0.113,
+      "p90_ms": 0.168,
+      "runs": 3
+    },
+    "replay_verify": {
+      "median_ms": 8.521,
+      "p90_ms": 36.434,
+      "runs": 3
+    },
+    "explain_build": {
+      "median_ms": 20.9,
+      "p90_ms": 24.438,
+      "runs": 3
     }
   }
 }

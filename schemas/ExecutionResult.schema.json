@@ -20,6 +20,12 @@
       },
       "type": "array"
     },
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
     "context_request": {
       "anyOf": [
         {
@@ -82,6 +88,52 @@
         "properties": {
           "claim": {
             "type": "string"
+          },
+          "derived_from": {
+            "anyOf": [
+              {
+                "properties": {
+                  "item": {
+                    "type": "string"
+                  },
+                  "node": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "plan_run": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "run_id",
+                  "item"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "epistemic": {
             "enum": [

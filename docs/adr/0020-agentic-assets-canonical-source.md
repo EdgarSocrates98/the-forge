@@ -44,3 +44,10 @@ Esta wave não adiciona hooks. Se hooks de desenvolvimento forem adicionados (po
 - **Limitação da paridade por perfil.** O perfil semântico compara nome, caminhos de repositório referenciados, skills referenciadas, fases de `spec.json` e arquivos de apoio. Prosa divergente que não muda nenhum desses elementos (por exemplo, uma instrução reescrita só num host) passa sem achado. É o custo de tolerar a sintaxe por host; (C) elimina essa lacuna na origem.
 - Editar uma skill exige mudar os três hosts na mesma mudança; reinstalar o instalador exige reaplicar as instruções curtas e rodar a auditoria. O procedimento está em [docs/agentic.md](../agentic.md).
 - A decisão é revisitada quando o gatilho disparar ou no início do próximo ciclo, com o histórico de sincronizações como evidência.
+
+## Reavaliação (2026-10-05, ciclo 3 wave L)
+
+- **Evidência de sincronizações:** `git log -- .claude/skills .agents/skills .devin/skills` mostra dois commits desde a instalação — `0955ba4` (a instalação upstream) e `1d01b49` (remoção dos comandos legados `.claude/commands/kiro/`, um host só). Nenhum commit alterou a mesma skill em mais de um diretório de host: sincronizações manuais contadas = **0** (< 3).
+- **Número de hosts:** três (Claude Code, Codex, Devin); nenhum quarto host com diretório próprio foi adicionado.
+- **Auditoria no momento da revisão:** `python scripts/agentic/audit_assets.py` sai com 0 achados de falha.
+- **Decisão mantida: (A).** O gatilho objetivo não disparou; (C) continua o caminho recomendado quando disparar, e esta seção é atualizada a cada revisão.

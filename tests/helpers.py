@@ -41,6 +41,79 @@ SPARK_PLAN_ENTRY = dict(SPARK_ENTRY, argv=fixture_argv(
     "fixture_forge.py", str(PROVIDERS / "fixture-spark-plan.json")))
 API_PLAN_ENTRY = dict(API_ENTRY, argv=fixture_argv(
     "fixture_forge.py", str(PROVIDERS / "fixture-api-plan.json")))
+# A planner provider: capability ``planner.compose`` declares ``proposes_plans``
+# and its ``plan`` op answers the test-only ``proposal`` payload of its manifest.
+PLANNER_ENTRY = {
+    "id": "fixture-planner",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-planner.json")),
+    "trust": "local",
+}
+# Debate variants: same fixture providers whose manifests carry a test-only
+# ``findings`` list — a stated proposal (first finding title) plus a risk —
+# so a debate e2e cites real positions instead of the mechanical f1 line.
+SPARK_DEBATE_ENTRY = dict(SPARK_PLAN_ENTRY, argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-spark-debate.json")))
+API_DEBATE_ENTRY = dict(API_PLAN_ENTRY, argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-api-debate.json")))
+# A referee provider for ``debate`` plans: its manifest's test-only ``decision`` key
+# makes ``execute`` emit the convention evidence (id="decision", claim=<node id>).
+REFEREE_ENTRY = {
+    "id": "fixture-referee",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-referee.json")),
+    "trust": "local",
+}
+# A provider whose first ``execute`` exits 3 (FORGE-PROTO-EXIT — retryable): the
+# manifest's test-only ``flaky`` key drives it; the count lives in the workspace
+# .forge so a retry attempt sees the marker.
+FLAKY_ENTRY = {
+    "id": "fixture-flaky",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-flaky.json")),
+    "trust": "local",
+}
+# An independent verifier (verify op + can_verify on fixture-spark/spark.performance):
+# ``verdict`` (passed) / ``verify_status`` drive the answer.
+VERIFIER_ENTRY = {
+    "id": "fixture-verifier",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-verifier.json")),
+    "trust": "local",
+}
+VERIFIER_FAIL_ENTRY = {
+    "id": "fixture-verifier-fail",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-verifier-fail.json")),
+    "trust": "local",
+}
+# A provider that declares can_verify on its own capability — the producer is never
+# its own independent verifier, so the run records not_performed (same identity).
+SELFVERIFY_ENTRY = {
+    "id": "fixture-selfverify",
+    "argv": fixture_argv("fixture_forge.py",
+                         str(PROVIDERS / "fixture-selfverify.json")),
+    "trust": "local",
+}
+# A provider whose first evidence item cites a sent context file (``cite`` key):
+# exercises the files_cited/context-ROI measurement of the economy engine.
+CITE_ENTRY = {
+    "id": "fixture-cite",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-cite.json")),
+    "trust": "local",
+}
+# A second spark executor with the same capability id and signals as
+# fixture-spark: on a spark workspace both score identically, so deterministic
+# routing ends ``ambiguous`` — the semantic-resolver test setup.
+SPARK_B_ENTRY = {
+    "id": "fixture-spark-b",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-b.json")),
+    "trust": "local",
+}
+# A routing resolver: capability ``resolver.routing`` declares
+# ``resolves_ambiguity`` and its ``resolve`` op answers the test-only
+# ``resolution`` payload of its manifest.
+RESOLVER_ENTRY = {
+    "id": "fixture-resolver",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-resolver.json")),
+    "trust": "local",
+}
 
 
 def write_providers(

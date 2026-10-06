@@ -252,7 +252,8 @@ def test_echo_run_is_reproducible(tmp_path: Path) -> None:
     make_workspace(tmp_path, [])
     write_file(tmp_path, "notes.txt", "hello\n")
     forger, store = _forger(tmp_path)
-    out = forger.ask(AskRequest(intent="eco", capability="demo.echo"))
+    out = forger.ask(AskRequest(intent="eco", capability="demo.echo",
+                                profile="balanced"))
     assert out.status == "ok"
     info = out.receipt.reproducibility
     assert info is not None and info.level == "reproducible", info

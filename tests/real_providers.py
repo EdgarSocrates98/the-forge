@@ -173,3 +173,55 @@ def register(config_dir: Path, *entries: dict[str, Any]) -> list[dict[str, Any]]
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "providers.toml").write_text("\n".join(lines), encoding="utf-8")
     return listed
+
+
+# --- shared helpers of the real-provider tests (drift checks and native calls) -------------
+
+NATIVE_TIMEOUT = 300.0
+_HEX_TAIL = re.compile(r"(?P<prefix>.*?)(?P<hex>[0-9a-f]{6,})")
+ID_KEYS = {"id", "fact_id", "finding_id", "case_id"}
+
+
+def run_native(argv: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    """A command in a specialist interpreter with the core's credential-free environment."""
+    proc = subprocess.run(argv, cwd=cwd, env=safe_env(), capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=NATIVE_TIMEOUT,
+                          stdin=subprocess.DEVNULL, check=False)
+    assert proc.returncode == 0, (argv, proc.stdout, proc.stderr)
+    return proc
+
+
+def left_in(directory: Path) -> set[str]:
+    """The relative POSIX paths of everything left inside ``directory``."""
+    return {path.relative_to(directory).as_posix() for path in directory.rglob("*")}
+
+
+def id_shape(value: str) -> str:
+    """The format of a native id: its prefix and the length of its hex tail
+    (``f_2d3af1`` -> ``f_<hex6>``, ``fact:4019d1fcb4d4726e`` -> ``fact:<hex16>``)."""
+    match = _HEX_TAIL.fullmatch(value)
+    if match is None:
+        return re.sub(r"\d", "9", value)
+    return f"{match['prefix']}<hex{len(match['hex'])}>"
+
+
+def id_shapes(document: Any) -> set[str]:
+    """``key=shape`` of every native id in ``document`` (id fields and evidence references)."""
+    shapes: set[str] = set()
+    if isinstance(document, dict):
+        for key, value in document.items():
+            if key in ID_KEYS and isinstance(value, str):
+                shapes.add(f"{key}={id_shape(value)}")
+            elif key == "evidence" and isinstance(value, list):
+                shapes |= {f"evidence={id_shape(v)}" for v in value if isinstance(v, str)}
+            else:
+                shapes |= id_shapes(value)
+    elif isinstance(document, list):
+        for item in document:
+            shapes |= id_shapes(item)
+    return shapes
+
+
+def top_keys(document: Any) -> list[str]:
+    """The sorted top-level keys of a JSON object (or its type name when it is not one)."""
+    return sorted(document) if isinstance(document, dict) else [type(document).__name__]

@@ -27,6 +27,46 @@ class CapabilityContext:
     requests: bool = False
 
 
+# Artifact/evidence type identifier (e.g. "code-analysis-evidence"); free of any
+# domain registry: a provider declares what it produces/consumes, the graph links.
+ARTIFACT_TYPE_ID = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$")
+# Capability reference: "<capability>" (same provider) or "<provider>/<capability>".
+CAPABILITY_REF = re.compile(
+    r"^([a-z][a-z0-9-]*/)?[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
+
+
+@dataclass(frozen=True, kw_only=True)
+class CapabilityRelations:
+    """Optional declared relationships of a capability (capability-graph edges).
+
+    ``produces``/``consumes`` name artifact types; the rest name capabilities
+    (``<capability>`` for same-provider, ``<provider>/<capability>`` across).
+    Declared, not verified: the target may be absent from the registry — the
+    graph keeps the edge and names it in limitations.
+    """
+
+    produces: list[str] = field(default_factory=list)
+    consumes: list[str] = field(default_factory=list)
+    requires: list[str] = field(default_factory=list)
+    complements: list[str] = field(default_factory=list)
+    conflicts: list[str] = field(default_factory=list)
+    can_verify: list[str] = field(default_factory=list)
+    can_review: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        for name in ("produces", "consumes"):
+            for value in getattr(self, name):
+                if not ARTIFACT_TYPE_ID.match(value):
+                    raise ContractError(
+                        f"capability relations.{name}: invalid artifact type {value!r}")
+        for name in ("requires", "complements", "conflicts", "can_verify",
+                     "can_review"):
+            for value in getattr(self, name):
+                if not CAPABILITY_REF.match(value):
+                    raise ContractError(
+                        f"capability relations.{name}: invalid capability ref {value!r}")
+
+
 @dataclass(frozen=True, kw_only=True)
 class Capability:
     id: str = field(metadata={"pattern": CAPABILITY_ID.pattern})
@@ -44,6 +84,15 @@ class Capability:
     context: CapabilityContext = field(default_factory=CapabilityContext)
     # Whether the capability declares it consumes the handoff of an ExecuteRequest.
     accepts_handoff: bool = False
+    # Whether the capability answers ``plan`` requests of ``purpose="proposal"``
+    # with a SemanticPlanProposal (the tier-2 semantic planner, wave C).
+    proposes_plans: bool = False
+    # Whether the capability answers ``resolve`` requests with a RoutingProposal
+    # (the semantic routing fallback, wave K); the provider must also declare
+    # the ``resolve`` op.
+    resolves_ambiguity: bool = False
+    # Optional declared relationships feeding the capability graph (v1 additive).
+    relations: CapabilityRelations = field(default_factory=CapabilityRelations)
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):

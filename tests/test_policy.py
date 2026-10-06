@@ -221,6 +221,19 @@ def test_project_policy_cannot_loosen(tmp_path: Path) -> None:
     assert "destructive" in warnings[0]
 
 
+def test_flattened_duplicate_rule_warns_and_last_wins(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "u" / "policy.toml",
+        '[rules]\n"local_mutation.local" = "deny"\n'
+        '[rules.local_mutation]\nlocal = "ask"\n',
+    )
+    warnings: list[str] = []
+    config = load_policy(user_dir=tmp_path / "u", forge_dir=tmp_path / "f", warnings=warnings)
+    assert config.rules["local_mutation.local"] == "ask"
+    assert len(warnings) == 1
+    assert "local_mutation.local" in warnings[0] and "more than once" in warnings[0]
+
+
 def test_project_cannot_loosen_below_user_tightening(tmp_path: Path) -> None:
     _write(tmp_path / "u" / "policy.toml", '[rules]\nread_only = "deny"\n')
     _write(tmp_path / "f" / "config" / "policy.toml", '[rules]\nread_only = "ask"\n')

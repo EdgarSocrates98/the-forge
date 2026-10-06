@@ -50,6 +50,7 @@ def _echo(capsys: pytest.CaptureFixture[str], root: Path) -> str:
     make_workspace(root, [])
     write_file(root, "notes.txt", "hello\n")
     code, out, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
+                         "--profile", "balanced",  # reproducible needs >=conditional verify
                          "--root", str(root), "--json")
     assert code == 0, err
     return str(json.loads(out)["run_id"])
@@ -198,7 +199,10 @@ def test_explain_unknown_or_malformed_run_is_a_usage_error(
     root = str(tmp_path)
     for run_id in ("20260101T000000Z-deadbeef", "../escape"):
         code, _, err = run(capsys, "explain", run_id, "--root", root)
-        assert code == 2 and err.rstrip().endswith("[FORGE-USAGE · usage]")
+        assert code == 2
+        error, hint = err.rstrip().splitlines()
+        assert error.endswith("[FORGE-USAGE · usage]")
+        assert hint.startswith("theforge: hint: ")
 
 
 def test_json_output_never_shows_a_raw_traceback(capsys: pytest.CaptureFixture[str]) -> None:
@@ -266,7 +270,9 @@ def test_replay_refusal_exits_4_with_code_and_family(
     code, out, err = run(capsys, "replay", run_id, "--mode", "execute", "--root", root)
     assert code == 4 and out == ""
     assert err.startswith("theforge: error: ")
-    assert err.rstrip().endswith(f"[{Codes.REPLAY_NOT_REPRODUCIBLE} · replay]")
+    error, hint = err.rstrip().splitlines()
+    assert error.endswith(f"[{Codes.REPLAY_NOT_REPRODUCIBLE} · replay]")
+    assert hint.startswith("theforge: hint: ")
     code, _, err = run(capsys, "replay", "20260101T000000Z-deadbeef", "--mode", "verify",
                        "--root", root)
     assert code == 2 and "unknown run" in err

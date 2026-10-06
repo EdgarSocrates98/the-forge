@@ -18,6 +18,7 @@ from theforge.errors import UsageError
 from theforge.explain import build_explain_report
 from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
 from theforge.forger.replay import replay
+from theforge.intel import load_decisions
 from theforge.registry import Registry, RegistryRecord, check_health
 from theforge.routing.signals import normalize_tokens
 from theforge.runs import RunStore
@@ -223,6 +224,76 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
     return 0 if all(row["status"] in ("ok", "degraded") for row in rows) else 1
 
 
+def cmd_graph(args: argparse.Namespace) -> int:
+    """``theforge graph``: the declared+observed capability graph of the registry
+    and workspace (Wave B structure, Wave Q surface). Cached manifests only — no
+    provider process starts, like ``workspace show`` (7.8). ``--ref`` restricts
+    the listing to the edges touching that capability (``p/c`` or bare ``c``)."""
+    from theforge.capability_graph import build_capability_graph
+
+    root = _root(args)
+    registry = Registry(find_forge_dir(root))
+    records = registry.cached_records()
+    # ``.``: the observed half of the graph (technologies -> relevant_to) needs
+    # the real scan, not the empty one ``workspace show`` uses for cheapness.
+    descriptor = describe_workspace(root, records, scan_workspace(root, ["."]))
+    cached = {record.entry.id for record in records}
+    missing = [f"provider {entry.id}: no cached manifest, its signals were not used "
+               "(run `theforge registry refresh`)"
+               for entry in registry.entries() if entry.id not in cached]
+    graph = build_capability_graph(records, descriptor)
+    data: dict[str, Any] = {**to_dict(graph), "ref": args.ref}
+    if args.ref:
+        edges = [e for e in data["edges"]
+                 if _cap_match(str(e.get("source", "")), args.ref)
+                 or _cap_match(str(e.get("target", "")), args.ref)]
+        keep = {str(e.get("source")) for e in edges} | {str(e.get("target")) for e in edges}
+        data["edges"] = edges
+        data["nodes"] = [n for n in data["nodes"]
+                         if _cap_match(str(n.get("id", "")), args.ref)
+                         or n.get("id") in keep]
+    if missing:
+        data["limitations"] = [*(data.get("limitations") or []), *missing]
+    _warn(registry)
+    _emit(args, redact(data), render.graph)
+    return 0
+
+
+def _cap_match(node_id: str, ref: str) -> bool:
+    """``p/c`` matches exactly; bare ``c`` matches ``capability:*/c``."""
+    key = node_id.removeprefix("capability:")
+    return node_id.startswith("capability:") and (
+        key == ref or ("/" not in ref and key.endswith(f"/{ref}")))
+
+
+def cmd_provider_init(args: argparse.Namespace) -> int:
+    from theforge.scaffold import init_provider
+
+    result = init_provider(Path(args.directory), args.id, capability=args.capability)
+    _emit(args, {"directory": str(result.directory),
+                 "files": [str(p) for p in result.files],
+                 "argv": result.argv, "provider_id": result.provider_id,
+                 "capability": result.capability}, render.provider_init)
+    return 0
+
+
+def cmd_provider_check(args: argparse.Namespace) -> int:
+    from theforge.conformance import check_provider
+
+    argv = list(args.argv)
+    if argv and argv[0] == "--":
+        argv = argv[1:]
+    if not argv:
+        raise UsageError("provider check requires the provider argv, e.g. "
+                         "`theforge provider check -- python provider.py`")
+    report = check_provider(argv)
+    checks = [{"id": c.id, "status": c.status, "detail": c.detail}
+              for c in report.checks]
+    _emit(args, {"argv": report.argv, "ok": report.ok, "checks": checks},
+          render.provider_check)
+    return 0 if report.ok else 1
+
+
 def cmd_ask(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)
@@ -282,6 +353,57 @@ def cmd_plan(args: argparse.Namespace) -> int:
         "plan": to_dict(outcome.plan) if outcome.plan else None,
         "result": to_dict(outcome.result) if outcome.result else None,
         "installation": store.read_optional(outcome.run_id, "installation"),
+        "decision": store.read_optional(outcome.run_id, "decision"),
+        "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
+        "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
+        "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),
+        "complexity": store.read_optional(outcome.run_id, "complexity"),
+        "budget": store.read_optional(outcome.run_id, "budget"),
+        "error": to_dict(outcome.error) if outcome.error else None,
+        "error_family": error_family(outcome.error.code) if outcome.error else None,
+    })
+    _emit(args, data, render.plan)
+    if args.debug and outcome.diagnostic is not None:
+        print_debug(to_dict(outcome.diagnostic))
+    return EXIT_BY_STATUS.get(outcome.status, 4)
+
+
+def cmd_resume(args: argparse.Namespace) -> int:
+    """``theforge resume RUN``: continue a plan run, reusing the nodes whose
+    recorded inputs still verify (F1/F2). The prior task and plan persist
+    verbatim — identical hashes are the integrity proof."""
+    root = _root(args)
+    forge_dir = require_forge_dir(root)
+    registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
+    store = RunStore(forge_dir)
+    with _run_lookup():
+        if not store.run_dir(args.run_id).is_dir():
+            raise LookupError(f"unknown run {args.run_id}")
+        task = store.read_optional(args.run_id, "task")
+        if task is None or store.read_optional(args.run_id, "plan") is None:
+            raise UsageError(f"run {args.run_id} has no resumable plan")
+    profile = task.get("budget_profile")
+    outcome = PlanExecutor(Forger(root, registry, store)).run(PlanCommand(
+        intent=str(task.get("intent") or ""),
+        targets=list(task.get("targets") or ["."]),
+        profile=profile if profile in ("auto", "economy", "balanced", "max") else "auto",
+        execute=True, resume_run=args.run_id,
+        approvals=frozenset(args.approvals or ()), allow_unverified=args.allow_unverified,
+        debug=args.debug,
+    ))
+    _warn(registry)
+    data: dict[str, Any] = redact({
+        "run_id": outcome.run_id, "status": outcome.status,
+        "resumed_from": args.run_id,
+        "plan": to_dict(outcome.plan) if outcome.plan else None,
+        "result": to_dict(outcome.result) if outcome.result else None,
+        "installation": store.read_optional(outcome.run_id, "installation"),
+        "decision": store.read_optional(outcome.run_id, "decision"),
+        "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
+        "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
+        "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),
+        "complexity": store.read_optional(outcome.run_id, "complexity"),
+        "budget": store.read_optional(outcome.run_id, "budget"),
         "error": to_dict(outcome.error) if outcome.error else None,
         "error_family": error_family(outcome.error.code) if outcome.error else None,
     })
@@ -306,6 +428,42 @@ def cmd_workspace_show(args: argparse.Namespace) -> int:
         descriptor, limitations=[*descriptor.limitations, *missing])
     _warn(registry)
     _emit(args, redact(to_dict(descriptor)), render.workspace)
+    return 0
+
+
+def cmd_decisions(args: argparse.Namespace) -> int:
+    """The project's reusable-decision memory (Wave I): reads
+    ``.forge/intel/decisions.json`` only — no provider process starts. A missing
+    memory is an empty memory, not an error; a malformed one is reported."""
+    root = _root(args)
+    memory, warning = load_decisions(root)
+    data: dict[str, Any] = (to_dict(memory) if memory is not None
+                            else {"entries": []})
+    if warning is not None:
+        data["limitations"] = [warning]
+    _emit(args, redact(data), render.decisions)
+    return 0
+
+
+def cmd_trace(args: argparse.Namespace) -> int:
+    """``theforge trace RUN``: what happened — the run's span tree from its
+    ``telemetry`` artifact (Wave J). Distinct from ``explain``, which answers
+    *why* it happened. Read-only: no provider process starts; a run without a
+    telemetry artifact reports so instead of failing."""
+    store = RunStore(require_forge_dir(_root(args)))
+    with _run_lookup():
+        if not store.run_dir(args.run_id).is_dir():
+            raise LookupError(f"unknown run {args.run_id}")
+        telemetry = store.read_optional(args.run_id, "telemetry")
+        receipt = store.read_optional(args.run_id, "receipt")
+    data: dict[str, Any] = {
+        "run_id": args.run_id,
+        "status": (receipt or {}).get("status"),
+        "kind": (receipt or {}).get("kind"),
+        "spans": (telemetry or {}).get("spans") or [],
+        "limitations": [] if telemetry is not None else ["no telemetry recorded"],
+    }
+    _emit(args, redact(data), render.trace)
     return 0
 
 

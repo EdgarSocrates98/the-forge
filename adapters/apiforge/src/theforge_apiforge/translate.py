@@ -52,6 +52,7 @@ from theforge_apiforge._shell import (
     fail,
     refuse,
 )
+from theforge_apiforge.handoff import UPSTREAM_EXTRACTOR
 
 NATIVE_FAILURE = "APIFORGE-ADAPTER-NATIVE-FAILURE"
 NATIVE_INVALID = "APIFORGE-ADAPTER-NATIVE-INVALID"
@@ -255,6 +256,57 @@ def _claim(kind: str, measures: object) -> str:
     return text if len(text) <= CLAIM_LIMIT else text[:CLAIM_LIMIT - 3] + "..."
 
 
+_EPISTEMIC = ("confirmed", "observed", "inferred", "proposed", "unresolved")
+
+
+def _upstream_evidence(item: Mapping[str, Any], fact_id: str, kind: str,
+                       stage: StagedInput, limitations: list[str]) -> dict[str, Any] | None:
+    """A case fact admitted through the upstream intake as Forge ``Evidence``.
+
+    The provenance map written at intake becomes the evidence's ``derived_from``
+    (source provider, run, node, item); the original ``epistemic`` is kept verbatim
+    (``inferred`` + limitation when missing or unknown, never upgraded) and the claim
+    travels in ``attrs.upstream.claim``. ``source.path`` is synthetic — the workspace
+    location, when the handoff item had one, lives under ``attrs.upstream.location``.
+    """
+    attrs = item.get("attrs")
+    upstream = attrs.get("upstream") if isinstance(attrs, Mapping) else None
+    if not isinstance(upstream, Mapping):
+        limitations.append(f"upstream fact {fact_id} has no provenance map; skipped")
+        return None
+    provenance = {key: upstream[key] for key in ("provider", "run_id", "node", "plan_run",
+                                                 "item") if isinstance(upstream.get(key), str)}
+    if not all(key in provenance for key in ("provider", "run_id", "item")):
+        limitations.append(f"upstream fact {fact_id}: provenance lacks "
+                           "provider/run_id/item; skipped")
+        return None
+    epistemic = upstream.get("epistemic")
+    if not isinstance(epistemic, str) or epistemic not in _EPISTEMIC:
+        limitations.append(f"upstream fact {fact_id}: epistemic {epistemic!r} unknown, "
+                           "reported as inferred")
+        epistemic = "inferred"
+    measures = item.get("measures")
+    subject = measures.get("subject") if isinstance(measures, Mapping) else None
+    claim = upstream.get("claim")
+    location = upstream.get("location")
+    path = _clean(location["path"]) if isinstance(location, Mapping) and isinstance(
+        location.get("path"), str) else None
+    line = location.get("line") if isinstance(location, Mapping) else None
+    entry: dict[str, Any] = {
+        "id": fact_id, "epistemic": epistemic,
+        "subject": subject if isinstance(subject, str) and subject else kind,
+        "claim": claim if isinstance(claim, str) and claim else _claim(kind, measures),
+        "hash": evidence_hash(path, item.get("source", {}).get("sha256")
+                              if isinstance(item.get("source"), Mapping) else None, stage),
+        "derived_from": provenance,
+    }
+    if path is not None:
+        entry["location"] = {"path": path,
+                             "line": line if isinstance(line, int)
+                             and not isinstance(line, bool) and line >= 1 else None}
+    return entry
+
+
 def _evidence(facts: list[Any], stage: StagedInput, project: str, epistemic: str,
               limitations: list[str]) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
@@ -272,6 +324,11 @@ def _evidence(facts: list[Any], stage: StagedInput, project: str, epistemic: str
         kind = kind if isinstance(kind, str) and kind else "fact"
         source = item.get("source")
         source = source if isinstance(source, Mapping) else {}
+        if source.get("extractor") == UPSTREAM_EXTRACTOR:
+            upstream = _upstream_evidence(item, fact_id, kind, stage, limitations)
+            if upstream is not None:
+                evidence.append(upstream)
+            continue
         raw_path = source.get("path")
         path = workspace_path(raw_path, stage, project)
         entry: dict[str, Any] = {

@@ -65,6 +65,7 @@ from typing import Any, Final
 
 from workspace import generate_workspace
 
+from theforge.capability_graph import build_capability_graph
 from theforge.context import WorkspaceScan, build_context_pack, scan_workspace
 from theforge.context.fingerprints import RACY_WINDOW_NS, FingerprintStore, HashStats
 from theforge.contracts import (
@@ -76,10 +77,14 @@ from theforge.contracts import (
     TaskSpec,
 )
 from theforge.contracts.canonical import utc_now
+from theforge.contracts.plan import ExecutionPlan, PlanDependency, PlanNode
 from theforge.contracts.telemetry import ProfileSnapshot
 from theforge.contracts.types import BudgetProfile
+from theforge.explain import build_explain_report, verify_run_hashes
 from theforge.forger import AskRequest, Forger
+from theforge.intel import refresh_intel
 from theforge.meta import PRODUCER, VERSION
+from theforge.planning.validate import check_plan
 from theforge.profiles import PROFILES
 from theforge.providers.echo.provider import DOC_GLOBS
 from theforge.registry import Registry
@@ -87,6 +92,7 @@ from theforge.routing import route
 from theforge.routing.signals import workspace_dependencies
 from theforge.runs import RunStore, new_run_id
 from theforge.state import init_workspace
+from theforge.workspace.describe import describe_workspace
 
 SCHEMA: Final = "theforge-bench/v1"
 REPO: Final = Path(__file__).resolve().parents[2]
@@ -95,6 +101,10 @@ MEASUREMENTS: Final = (
     "cli_startup", "registry_cold", "registry_warm", "scan_1k", "scan_10k", "routing_10k",
     "context_1k_cold", "context_1k_warm", "context_10k_cold", "context_10k_warm",
     "persist_run",
+    # Cycle 3 surfaces (Wave W): the capability graph build, the warm incremental
+    # refresh that feeds it, plan validation, replay verification and explain.
+    "graph_build", "graph_refresh_warm", "plan_validate", "replay_verify",
+    "explain_build",
 )
 DEFAULT_RUNS: Final = 10
 QUICK_RUNS: Final = 3
@@ -337,8 +347,9 @@ def _telemetry(run_id: str) -> RunTelemetry:
                         profile=snapshot)
 
 
-def _recorded_run(root: Path, registry: Registry) -> tuple[RunStore, dict[str, object]]:
-    """One real echo run; returns its store and the artifacts ``persist_run`` rewrites."""
+def _recorded_run(root: Path, registry: Registry,
+                  ) -> tuple[RunStore, str, dict[str, object]]:
+    """One real echo run; returns its store, run id and the artifacts ``persist_run`` rewrites."""
     root.mkdir(parents=True)
     init_workspace(root)
     (root / "notes.md").write_text("# Notes\n\nbenchmark run\n", encoding="utf-8")
@@ -354,7 +365,7 @@ def _recorded_run(root: Path, registry: Registry) -> tuple[RunStore, dict[str, o
     artifacts: dict[str, object] = {name: store.read_contract(run, name, cls)
                                     for name, cls in types.items()}
     artifacts["telemetry"] = _telemetry(run)  # the Forger does not write telemetry yet
-    return store, artifacts
+    return store, run, artifacts
 
 
 def _backdate(root: Path) -> None:
@@ -472,7 +483,7 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
                 log(f"{name}: {results[name].hashing}")
             check_context_cache(label, last["cold"], last["warm"])
 
-        store, artifacts = _recorded_run(tmp / "ws-run", warm)
+        store, run_id, artifacts = _recorded_run(tmp / "ws-run", warm)
 
         def persist() -> None:
             run_id = new_run_id()
@@ -481,6 +492,42 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
                 store.write(run_id, name, artifacts[name])
 
         record("persist_run", persist)
+
+        # --- Cycle 3 surfaces (Wave W) ---------------------------------------------------
+        # The capability graph build over the big workspace's descriptor, the warm
+        # incremental refresh that feeds it (intel snapshot reuse), plan validation,
+        # replay verification and explain — all deterministic paths; the semantic
+        # planner is measured separately by run_runs_bench.py (semantic_calls).
+        descriptor = describe_workspace(ws["10k"], list(records), scans["10k"])
+        record("graph_build",
+               lambda: build_capability_graph(list(records), descriptor))
+
+        intel_root = tmp / "ws-intel"
+        generate_workspace(intel_root, 1_000, seed=SEED)
+        init_workspace(intel_root)
+        intel_scan = _scan(intel_root, 1_000)
+        refresh_intel(intel_root, intel_scan, list(records))  # prime the snapshot, untimed
+        record("graph_refresh_warm",
+               lambda: refresh_intel(intel_root, intel_scan, list(records)))
+
+        plan = ExecutionPlan(
+            producer=PRODUCER, created_at=utc_now(), status="validated",
+            plan_run="bench-plan", task_id="bench-task", pattern="pipeline",
+            source="file", profile="max",
+            nodes=[PlanNode(id=f"n{i}", role="standalone",
+                            provider="echo-forge", capability="demo.echo",
+                            action="echo",
+                            depends_on=[PlanDependency(node=f"n{i - 1}",
+                                                       epistemic="explicit",
+                                                       evidence="bench")]
+                            if i else [])
+                   for i in range(32)])
+        record("plan_validate",
+               lambda: check_plan(plan, {r.entry.id: r for r in records},
+                                  PROFILES["max"]))
+
+        record("replay_verify", lambda: verify_run_hashes(store, run_id))
+        record("explain_build", lambda: build_explain_report(store, run_id))
     return {name: results[name] for name in MEASUREMENTS}
 
 

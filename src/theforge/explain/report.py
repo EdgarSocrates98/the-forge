@@ -165,7 +165,8 @@ def build_explain_report(store: RunStore, run_id: str, *,
     pack = found.typed("context", ContextPack)
     result = found.typed("result", ExecutionResult)
     verification = found.typed("verification", VerificationResult)
-    for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic"):
+    for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic",
+                 "decision", "plan-state"):
         found.typed(name, ARTIFACT_TYPES[name])  # drop the ones that do not parse
     plan = _plan(found)
     telemetry = found.raw.get("telemetry")
@@ -211,6 +212,7 @@ def build_explain_report(store: RunStore, run_id: str, *,
             level="unknown", reasons=[NOT_RECORDED_REASON]), plan=plan,
         parent_run=receipt.parent_run if receipt else None,
         replay_of=receipt.replay_of if receipt else None,
+        resumed_from=receipt.resumed_from if receipt else None,
         error=error, error_family=family_of(error.code) if error else None,
         integrity=verify_run_hashes(store, run_id),
         limitations=[*(receipt.limitations if receipt else []),

@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capability_graph_sha": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "descriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "paths": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "producer": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "type": "object"
+        },
+        "relations": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "epistemic": {
+                "enum": [
+                  "explicit",
+                  "observed"
+                ]
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "contains",
+                  "depends_on"
+                ]
+              },
+              "source": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "source",
+              "target",
+              "kind",
+              "epistemic",
+              "evidence"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "repositories": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "dependency_files": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "git": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "available": {
+                        "type": "boolean"
+                      },
+                      "branch": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "changed_files": {
+                        "anyOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "detached": {
+                        "type": "boolean"
+                      },
+                      "dirty": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "head": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "state": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "available"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "limitations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "root": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "technologies": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "evidence": {
+                "type": "string"
+              },
+              "matched_by": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "name": {
+                "type": "string"
+              },
+              "repository": {
+                "type": "string"
+              },
+              "source": {
+                "enum": [
+                  "dependency_manifest",
+                  "provider_signal"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "repository",
+              "source",
+              "evidence"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "producer",
+        "created_at",
+        "root"
+      ],
+      "type": "object"
+    },
+    "fingerprints": {
+      "additionalProperties": false,
+      "properties": {
+        "depfiles_sha": {
+          "type": "string"
+        },
+        "files_sha": {
+          "type": "string"
+        },
+        "manifests_sha": {
+          "type": "string"
+        },
+        "relations_sha": {
+          "type": "string"
+        },
+        "repos_sha": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "files_sha",
+        "repos_sha",
+        "depfiles_sha",
+        "manifests_sha",
+        "relations_sha"
+      ],
+      "type": "object"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "reused": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "root": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "updated_at",
+    "root",
+    "fingerprints",
+    "descriptor"
+  ],
+  "title": "ProjectIntel",
+  "type": "object"
+}

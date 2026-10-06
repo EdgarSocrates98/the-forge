@@ -50,6 +50,16 @@ Há dois tipos de regra:
 - Num pedido explícito, o ID canônico vem primeiro: os providers que declaram o nome como alias só entram se nenhum o declarar como ID. A decisão registra `capability-alias` e usa sempre o ID canônico. Se o mesmo alias resolver para IDs canônicos diferentes em providers diferentes, o resultado é `ambiguous`, nunca um chute.
 - O routing por sinais não usa aliases.
 
+## Relações declaradas
+`capabilities[].relations` alimenta o grafo de capabilities ([ADR 0027](adr/0027-capability-graph.md)) — declaração de intenção, nunca prova de comportamento:
+
+- **Sobre capabilities** — `requires`, `complements`, `conflicts`, `can_verify`, `can_review`: o ref é `cap.id` para a capability do próprio provider e `provider/cap.id` entre providers. `can_verify`/`can_review` marcam candidatura a verificação/revisão independente ([ADR 0021](adr/0021-independent-verification.md)).
+- **Sobre artefatos** — `produces`, `consumes`: o ref é um tipo de artefato (`^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$`, ex.: `spark.analysis-report`). `consumes` também filtra quais artifacts do handoff o nó recebe antes do orçamento de bytes.
+- Um alvo ausente do registry não invalida o manifest: a aresta é mantida e o alvo vira limitação do grafo (`declared relation targets not in the registry`).
+- Flags de papel na mesma capability: `accepts_handoff` (lê o `handoff` do `ExecuteRequest`), `proposes_plans` (responde `plan` com `purpose="proposal"` — o planner semântico do tier-2, [ADR 0028](adr/0028-hybrid-planner.md)) e `resolves_ambiguity` (responde `resolve` com `RoutingProposal` — o resolver semântico de routing, [ADR 0025](adr/0025-semantic-routing-fallback.md)).
+
+`theforge graph` mostra o grafo inteiro — relações declaradas e observadas — a partir do cache do registry, sem iniciar providers.
+
 ## Regras mecânicas
 Fonte: `src/theforge/contracts/taxonomy.py`. Uma violação gera `FORGE-MANIFEST-TAXONOMY` e exclui só a capability violadora.
 

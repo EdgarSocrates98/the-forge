@@ -437,6 +437,46 @@ def validate_plan_structure(plan: ExecutionPlan) -> list[PlanViolation]:
             f"(executable: {', '.join(sorted(EXECUTABLE_PATTERNS))})")
     if plan.pattern == "route" and count > 1:
         add(Codes.PLAN_INVALID, None, f"pattern 'route' allows one node, plan has {count}")
+    if plan.pattern == "delegate":
+        # Bounded subtasks owned by the manager (the core): specialists never
+        # hand off to each other — no dependencies and no inputs.
+        for node in plan.nodes:
+            if node.depends_on or node.inputs:
+                add(Codes.PLAN_INVALID, node.id,
+                    f"pattern 'delegate': node {node.id!r} must not declare "
+                    "depends_on/inputs (subtasks are independent)")
+    if plan.pattern == "debate":
+        proposers = [n.id for n in plan.nodes if n.role == "proposer"]
+        referees = [n for n in plan.nodes if n.role == "referee"]
+        others = [n.id for n in plan.nodes if n.role not in ("proposer", "referee")]
+        if len(referees) != 1:
+            add(Codes.PLAN_INVALID, None,
+                f"pattern 'debate' requires exactly one referee node (role='referee'), "
+                f"plan has {len(referees)}")
+        if len(proposers) < 2:
+            add(Codes.PLAN_INVALID, None,
+                f"pattern 'debate' requires at least two proposer nodes "
+                f"(role='proposer'), plan has {len(proposers)}")
+        for oid in others:
+            add(Codes.PLAN_INVALID, oid,
+                f"pattern 'debate': node {oid!r} has role outside proposer/referee")
+        if len(referees) == 1:
+            deps = {d.node for d in referees[0].depends_on}
+            missing = [p for p in proposers if p not in deps]
+            if missing:
+                add(Codes.PLAN_INVALID, referees[0].id,
+                    f"referee {referees[0].id!r} must depend on every proposer "
+                    f"(missing: {', '.join(sorted(missing))})")
+            missing_inputs = [p for p in proposers if p not in referees[0].inputs]
+            if missing_inputs:
+                add(Codes.PLAN_INVALID, referees[0].id,
+                    f"referee {referees[0].id!r} must list every proposer in inputs "
+                    f"(missing: {', '.join(sorted(missing_inputs))})")
+            for node in plan.nodes:
+                if node.role != "referee" and node.depends_on:
+                    add(Codes.PLAN_INVALID, node.id,
+                        f"pattern 'debate': proposer {node.id!r} must be independent "
+                        "(no depends_on)")
     ids = {n.id for n in plan.nodes}
     seen: set[str] = set()
     for node in plan.nodes:

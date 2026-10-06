@@ -9,11 +9,13 @@ from theforge.context.verify import DriftReport
 from theforge.contracts import (
     Artifact,
     Evidence,
+    EvidenceSource,
     ExecutionResult,
     Location,
     Producer,
 )
 from theforge.contracts.codes import Codes
+from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.verification import VERIFICATION_SCHEMA
 from theforge.forger.verification import (
     ARTIFACT_HASH_LIMITATION,
@@ -61,9 +63,30 @@ def _drift(level: str = "conditional", drifted: tuple[str, ...] = (),
 
 
 def _build(work: Path, result: ExecutionResult | None, *, status: str | None = "ok",
-           drift: DriftReport | None = None):  # type: ignore[no-untyped-def]
+           drift: DriftReport | None = None, handoff: Handoff | None = None):
     return build_verification("run-1", status, result, drift, work, expected=PROVIDER,
-                              created_at=NOW)
+                              created_at=NOW, handoff=handoff)
+
+
+HANDOFF = Handoff(
+    producer=PRODUCER, created_at=NOW, plan_run="plan-1", target_node="n2",
+    items=[HandoffItem(
+        kind="evidence", id="f_src1",
+        origin=HandoffOrigin(plan_run="plan-1", node="n1", run_id="run-n1",
+                             provider=Producer(id="spark-forge", version="1.0.0")),
+        epistemic="inferred", subject="pyspark.dataframe",
+        claim="etl.py reads orders.csv")],
+)
+
+
+def _derived(eid: str, epistemic: str, *, item: str = "f_src1", node: str | None = "n1",
+             run_id: str = "run-n1") -> Evidence:
+    evidence = _evidence(eid, epistemic)
+    return Evidence(
+        id=evidence.id, epistemic=epistemic,  # type: ignore[arg-type]
+        subject=evidence.subject, claim=evidence.claim, producer=evidence.producer,
+        derived_from=EvidenceSource(provider="spark-forge", run_id=run_id, item=item,
+                                    node=node, plan_run="plan-1"))
 
 
 ARTIFACT = Artifact(path="out/report.json", sha256=_sha(DATA))
@@ -88,7 +111,7 @@ def test_all_four_levels_with_evidence_and_artifacts(work: Path) -> None:
                                "context-reverification:conditional", "artifact-hashes"]
     assert got.independent.status == "not_performed"
     assert got.independent.details == [NO_INDEPENDENT_VERIFIER]
-    assert NO_INDEPENDENT_VERIFIER == "no independent verifier: op verify is reserved"
+    assert NO_INDEPENDENT_VERIFIER == "no independent verifier for this capability"
     assert got.limitations == []
 
 
@@ -214,3 +237,129 @@ def test_symlinked_artifact_escaping_work_dir_fails(work: Path, tmp_path: Path) 
                  drift=_drift())
     assert got.forge.status == "failed"
     assert got.limitations == [f"{Codes.RESULT_ARTIFACT_HASH}: out/link.txt"]
+
+
+# --- cycle-2.1 wave D: physical classification of declared artifacts ------------------------
+
+
+def test_broken_artifact_symlink_fails_with_its_reason(work: Path) -> None:
+    link = work / "out" / "broken.txt"
+    try:
+        link.symlink_to(work / "nowhere.txt")
+    except OSError:
+        pytest.skip("symlinks not permitted on this platform")
+    artifact = Artifact(path="out/broken.txt", sha256=_sha(DATA))
+    got = _build(work, _result(artifacts=[artifact]), drift=_drift())
+    assert got.forge.status == "failed"
+    assert any("out/broken.txt: unresolvable" in d for d in got.forge.details)
+
+
+def test_directory_declared_as_artifact_fails_with_its_reason(work: Path) -> None:
+    artifact = Artifact(path="out", sha256=_sha(DATA))
+    got = _build(work, _result(artifacts=[artifact]), drift=_drift())
+    assert got.forge.status == "failed"
+    assert any("out: not a regular file" in d for d in got.forge.details)
+
+
+def test_artifact_problems_classify_each_failure(work: Path, tmp_path: Path) -> None:
+    """Every failure kind reports its physical reason, in declaration order."""
+    from theforge.forger.verification import artifact_problems
+
+    outside = tmp_path / "outside.txt"
+    outside.write_bytes(DATA)
+    try:
+        (work / "out" / "link.txt").symlink_to(outside)
+        (work / "out" / "broken.txt").symlink_to(work / "gone.txt")
+    except OSError:
+        pytest.skip("symlinks not permitted on this platform")
+    (work / "out" / "tampered.txt").write_bytes(b"changed\n")
+    artifacts = [
+        Artifact(path="out/missing.txt", sha256=_sha(DATA)),
+        Artifact(path="out", sha256=_sha(DATA)),
+        Artifact(path="out/tampered.txt", sha256=_sha(DATA)),
+        Artifact(path="out/link.txt", sha256=_sha(DATA)),
+        Artifact(path="out/broken.txt", sha256=_sha(DATA)),
+        Artifact(path="../outside.txt", sha256=_sha(DATA)),
+        Artifact(path=str(outside), sha256=_sha(DATA)),
+        ARTIFACT,
+    ]
+    assert artifact_problems(_result(artifacts=artifacts), work) == [
+        ("out/missing.txt", "missing"),
+        ("out", "not a regular file"),
+        ("out/tampered.txt", "hash differs"),
+        ("out/link.txt", "unresolvable or a link resolving outside work/"),
+        ("out/broken.txt", "unresolvable or a link resolving outside work/"),
+        ("../outside.txt", "declared path escapes work/"),
+        (str(outside), "declared path escapes work/"),
+    ]
+
+
+def test_artifact_symlink_to_a_file_inside_work_verifies_by_content(work: Path) -> None:
+    """A link that stays inside work/ resolves to real content and can verify."""
+    try:
+        (work / "out" / "inside-link.txt").symlink_to(work / "out" / "report.json")
+    except OSError:
+        pytest.skip("symlinks not permitted on this platform")
+    artifact = Artifact(path="out/inside-link.txt", sha256=_sha(DATA))
+    got = _build(work, _result(artifacts=[artifact]), drift=_drift())
+    assert got.forge.status == "passed"
+
+
+# --- handoff-provenance (Cycle 2.1 F4/F5) ---------------------------------------------------
+
+def test_derived_evidence_resolving_the_handoff_passes(work: Path) -> None:
+    got = _build(work, _result(evidence=[_derived("up-1", "inferred")]),
+                 handoff=HANDOFF)
+    assert got.forge.status == "passed"
+    assert "handoff-provenance" in got.forge.basis
+    assert any("handoff-provenance: passed (1 derived evidence)" in d
+               for d in got.forge.details)
+
+
+def test_derived_evidence_without_handoff_fails(work: Path) -> None:
+    got = _build(work, _result(evidence=[_derived("up-1", "inferred")]))
+    assert got.forge.status == "failed"
+    assert any("not in the delivered handoff" in d for d in got.forge.details)
+
+
+def test_derived_evidence_unknown_item_fails(work: Path) -> None:
+    got = _build(work, _result(evidence=[_derived("up-1", "inferred", item="f_absent")]),
+                 handoff=HANDOFF)
+    assert got.forge.status == "failed"
+    assert any("f_absent" in d for d in got.forge.details)
+
+
+def test_derived_evidence_node_mismatch_fails(work: Path) -> None:
+    got = _build(work, _result(evidence=[_derived("up-1", "inferred", node="n9")]),
+                 handoff=HANDOFF)
+    assert got.forge.status == "failed"
+    assert any("different node/plan_run" in d for d in got.forge.details)
+
+
+def test_epistemic_upgrade_of_a_derived_item_fails(work: Path) -> None:
+    """An ``inferred`` handoff item never becomes ``confirmed`` by derivation."""
+    got = _build(work, _result(evidence=[_derived("up-1", "confirmed")]),
+                 handoff=HANDOFF)
+    assert got.forge.status == "failed"
+    assert any("inferred -> confirmed" in d for d in got.forge.details)
+
+
+def test_same_or_weaker_epistemic_of_a_derived_item_passes(work: Path) -> None:
+    for epistemic in ("inferred", "proposed", "unresolved"):
+        got = _build(work, _result(evidence=[_derived("up-1", epistemic)]),
+                     handoff=HANDOFF)
+        assert got.forge.status == "passed", (epistemic, got.forge.details)
+
+
+def test_handoff_without_derived_evidence_still_runs_the_check(work: Path) -> None:
+    got = _build(work, _result(evidence=[_evidence("e1", "observed")]), handoff=HANDOFF)
+    assert got.forge.status == "passed"
+    assert any("handoff-provenance: passed (0 derived evidence)" in d
+               for d in got.forge.details)
+
+
+def test_no_derived_and_no_handoff_records_not_performed(work: Path) -> None:
+    got = _build(work, _result(evidence=[_evidence("e1", "observed")]))
+    assert got.forge.status == "passed"
+    assert "handoff-provenance" not in got.forge.basis
+    assert any("handoff-provenance: not performed" in d for d in got.forge.details)

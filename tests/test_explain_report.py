@@ -255,3 +255,44 @@ def test_planned_only_plan_run_lists_plan_result_as_not_recorded(
     assert "plan-result" in report.not_recorded
     assert report.integrity.divergences == []
     _valid(report)
+
+
+def test_refused_plan_run_surfaces_the_installation_items(tmp_path: Path) -> None:
+    """A plan refused for an invalid provider: the explain report carries the installation
+    section verbatim, checks its recorded hash and writes nothing (cross-forge 6.1/6.2)."""
+    forger, store = _forger(tmp_path, [bad_entry("invalid-manifest", "bad-i"),
+                                       SPARK_PLAN_ENTRY])
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps({
+        "task_id": "from-file", "pattern": "pipeline", "source": "file",
+        "profile": "max",
+        "nodes": [
+            {"id": "n1", "role": "standalone", "provider": "fixture-spark",
+             "capability": "spark.performance", "action": "diagnose"},
+            {"id": "n2", "role": "consumer", "provider": "bad-i",
+             "capability": "bad.thing", "action": "run",
+             "depends_on": [{"node": "n1", "epistemic": "explicit",
+                             "evidence": "plan file"}],
+             "inputs": ["n1"]}]}), encoding="utf-8")
+    out = PlanExecutor(forger).run(PlanCommand(intent="spark then invalid",
+                                               profile="max", plan_file=plan_file,
+                                               execute=True))
+    assert out.status == "refused"
+    before = _snapshot(store.runs_dir)
+    report = build_explain_report(store, out.run_id)
+    assert (report.kind, report.status) == ("plan", "refused")
+    assert report.error is not None and report.error_family is not None
+    plan = report.plan
+    assert plan is not None and plan.result is None
+    installation = plan.installation
+    assert installation is not None and installation.planning_only is True
+    (item,) = installation.items
+    assert (item.provider, item.state, item.source, item.nodes) == (
+        "bad-i", "invalid", "registry", ["n2"])
+    assert item.reason
+    assert report.artifacts["installation"] == store.read(out.run_id, "installation")
+    assert "installation" in report.integrity.checked
+    assert report.integrity.divergences == []
+    assert "plan-result" in report.not_recorded
+    _valid(report)
+    assert _snapshot(store.runs_dir) == before

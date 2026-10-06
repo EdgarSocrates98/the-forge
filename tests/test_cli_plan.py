@@ -62,7 +62,7 @@ def test_plan_without_execute_exits_0_and_shows_the_plan(
     assert "Plan:        validated  pattern: pipeline  source: decomposed  profile: max" in out
     [n1] = [line for line in out.splitlines() if " n1 fixture-spark " in f" {line} "]
     [n2] = [line for line in out.splitlines() if " n2 fixture-api " in f" {line} "]
-    assert "after" not in n1 and "after n1 (inferred, intent-order: " in n2
+    assert "after" not in n1 and "after n1 (inferred, capability-graph: " in n2
     assert "Install:     none" in out and "nothing was executed" in out
 
     code, out, _ = run(capsys, "plan", PROOF_TASK, "--profile", "max", "--root", root, "--json")
@@ -103,7 +103,8 @@ def test_plan_help_cites_the_intent_order_rule_and_the_plan_file(
     out = capsys.readouterr().out
     assert info.value.code == 0
     assert "`intent-order`" in out and "can infer a wrong dependency" in out
-    assert "--from FILE fixes the order explicitly" in out
+    assert "`capability-graph`" in out and "proposes_plans" in out
+    assert "--from FILE fixes the order" in out
 
 
 def test_plan_arguments_reach_the_executor(
@@ -138,7 +139,9 @@ def test_unreadable_plan_file_is_a_usage_error_exit_2(
     code, out, err = run(capsys, "plan", "spark", "--from", str(bad), "--root", str(tmp_path))
     assert code == 2 and out == ""
     assert err.startswith("theforge: error: ")
-    assert err.rstrip().endswith(f"[{Codes.PLAN_FILE} · plan]") and "Traceback" not in err
+    error, hint = err.rstrip().splitlines()
+    assert error.endswith(f"[{Codes.PLAN_FILE} · plan]") and "Traceback" not in err
+    assert hint.startswith("theforge: hint: ")
 
 
 def test_rejected_plan_exits_4_with_code_family_and_installation(

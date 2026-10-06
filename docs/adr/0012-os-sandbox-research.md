@@ -24,5 +24,12 @@ Nenhum sandbox de SO neste ciclo, e nenhuma dependência nova. Job Object fica r
 ## Consequências
 A proteção real vem do trust (ADR 0006/0010): só providers configurados pelo usuário roteiam. Um sandbox futuro deve ser opcional e por plataforma, com degradação explícita e registrada no receipt.
 
-## Reavaliar quando
-Uma wave executar mutação local ou externa de providers não `builtin` sem aprovação, ou houver provider de terceiros sem revisão do usuário.
+## Reavaliar quando (gatilho obrigatório)
+Reabrir este ADR — e o sandbox deixa de ser opcional — quando **qualquer** uma destas condições se tornar verdade:
+
+- uma wave permite **mutação externa** ou **ação destrutiva** por providers (hoje os `operation_class` expostos são declarados e a policy confia na declaração, sem enforcement de SO);
+- um provider passa a **portar credenciais** (variáveis de ambiente fora da allowlist, segredos em payload ou acesso esperado a `~/.aws`, `~/.ssh` e similares);
+- providers de **terceiros sem revisão** passam a executar sem o passo manual de registro/trust do usuário (hoje: `providers.toml` do usuário é o único caminho para trust > `unverified`).
+
+## Reavaliação — ciclo 3 (2026-10-06)
+O ciclo 3 foi avaliado contra o gatilho e **não o disparou**: as adições foram superfícies consultivas (`plan`, `resolve`, `verify` — todas com a superfície endurecida de `describe`/`health`), execução paralela com workdir por nó, caches relidos estritamente e memória de decisões sem poder de routing. Os adapters reais continuam read-only e offline; nenhum provider porta credenciais; trust continua manual. A decisão permanece: sem sandbox de SO, sem dependência nova, Job Object restrito ao kill de árvore.

@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "type": "integer"
+          },
+          "blocked_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "node": {
+            "type": "string"
+          },
+          "result_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reused": {
+            "type": "boolean"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "ready",
+              "running",
+              "succeeded",
+              "failed",
+              "skipped",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "node",
+          "state"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "plan_run": {
+      "type": "string"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "resumed_from": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "run_state": {
+      "enum": [
+        "planned",
+        "running",
+        "paused",
+        "partial",
+        "failed",
+        "completed",
+        "cancelled"
+      ]
+    },
+    "schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "plan_run",
+    "run_state",
+    "nodes"
+  ],
+  "title": "PlanState",
+  "type": "object"
+}

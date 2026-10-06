@@ -12,6 +12,9 @@ OperationClass = Literal[
     "read_only", "local_mutation", "external_read", "external_mutation", "destructive"
 ]
 BudgetProfile = Literal["economy", "balanced", "max"]
+# What a caller may request: a fixed profile, or ``auto`` to let the complexity
+# engine pick one (theforge/ComplexityAssessment/v1 records the decision).
+ProfileRequest = BudgetProfile | Literal["auto"]
 Epistemic = Literal["confirmed", "observed", "inferred", "proposed", "unresolved"]
 MetricKind = Literal["measured", "estimated", "unknown"]
 ResponseStatus = Literal["ok", "partial", "refused", "error"]
@@ -40,7 +43,12 @@ MAX_CONTEXT_REQUEST_ITEMS: Final = 64
 # verification contracts import them and never redeclare them.
 # Multi-provider patterns: all are representable; only EXECUTABLE_PATTERNS run.
 PlanPattern = Literal["route", "delegate", "parallel", "pipeline", "debate"]
-EXECUTABLE_PATTERNS: Final = frozenset({"route", "pipeline"})
+EXECUTABLE_PATTERNS: Final = frozenset(
+    {"route", "pipeline", "delegate", "parallel", "debate"})
+# Patterns whose independent nodes may run concurrently (bounded).
+CONCURRENT_PATTERNS: Final = frozenset({"delegate", "parallel", "debate"})
+# Bound on concurrently executed plan nodes (a level never widens past this).
+MAX_PARALLEL_NODES: Final = 4
 # Epistemic status of a graph edge or plan dependency (inferred always names its rule).
 EdgeEpistemic = Literal["explicit", "observed", "inferred"]
 Reproducibility = Literal["reproducible", "partially_reproducible", "non_reproducible",

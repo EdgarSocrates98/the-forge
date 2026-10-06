@@ -67,6 +67,27 @@ def test_intent_line_range_suffixes(token: str, expected: LineRange) -> None:
     assert dict(refs.ranges) == {"b.md": expected}
 
 
+def test_intent_hash_single_line_suffix() -> None:
+    refs = parse_intent_refs("explain b.md#L7 please", scan(["b.md"]))
+    assert refs.paths == frozenset({"b.md"})
+    assert dict(refs.ranges) == {"b.md": LineRange(start=7, end=7)}
+
+
+def test_intent_slash_words_without_extension_are_not_citations() -> None:
+    refs = parse_intent_refs("read and/or write, input/output", scan(["a/b.md"]))
+    assert refs.paths == frozenset() and dict(refs.rejected) == {}
+
+
+def test_intent_extless_missing_path_is_not_a_missing_citation() -> None:
+    refs = parse_intent_refs("check src/Makefile", scan(["a/b.md"]))
+    assert refs.paths == frozenset() and dict(refs.rejected) == {}
+
+
+def test_intent_extless_cited_path_still_resolves() -> None:
+    refs = parse_intent_refs("check src/Makefile", scan(["src/Makefile"]))
+    assert refs.paths == frozenset({"src/Makefile"})
+
+
 def test_intent_normalizes_backslash_and_leading_dot_slash() -> None:
     refs = parse_intent_refs(r"see .\a\b.md and ./c/d.py", scan(["a/b.md", "c/d.py"]))
     assert refs.paths == frozenset({"a/b.md", "c/d.py"})

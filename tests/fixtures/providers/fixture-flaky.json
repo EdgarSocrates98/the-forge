@@ -1,0 +1,27 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-flaky",
+ "version": "0.0.1",
+ "protocols": ["forge/v1"],
+ "ops": ["describe", "health", "execute", "plan"],
+ "domains": ["testing"],
+ "capabilities": [
+  {
+   "id": "flaky.thing",
+   "actions": ["run"],
+   "default_action": "run",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Fails transiently, then works (retry-policy fixture)",
+   "signals": {"keywords": ["flaky"], "file_globs": [], "dependencies": []}
+  }
+ ],
+ "estimate": {
+  "context_needed": [],
+  "operation_class": "read_only",
+  "expected_artifacts": [],
+  "unknowns": [],
+  "limitations": []
+ },
+ "flaky": 1
+}

@@ -39,7 +39,7 @@ from theforge.contracts.manifest import CapabilityContext
 from theforge.contracts.result import ContextRequest
 from theforge.contracts.types import ExclusionReason, Metric, Tier
 from theforge.meta import PRODUCER
-from theforge.profiles import PROFILES, ContextProfile, profile_for
+from theforge.profiles import PROFILES, ContextProfile, assumed_profile
 from theforge.security.paths import is_secret_name, resolve_inside
 from theforge.security.redact import redact_text
 
@@ -100,7 +100,7 @@ def build_context_pack(
     fingerprints: FingerprintStore | None = None,
 ) -> ContextPack:
     """ContextPack round 0. Defaults: the task's profile, no excerpts, no git, no cache."""
-    profile = profile if profile is not None else profile_for(task.budget_profile)
+    profile = profile if profile is not None else assumed_profile(task.budget_profile)
     tiers = effective_tiers(profile, capability_context or CapabilityContext())
     store = fingerprints if fingerprints is not None else FingerprintStore(
         scan.root, enabled=False)

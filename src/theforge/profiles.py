@@ -10,9 +10,12 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final
 
-from theforge.contracts.types import BudgetProfile, Tier, VerificationLevel
+from theforge.contracts.types import BudgetProfile, ProfileRequest, Tier, VerificationLevel
 
 MAX_NEGOTIATION_ROUNDS: Final = 2
+# The profile a run assumes before a complexity assessment resolves ``auto`` —
+# and the one it keeps when the assessment cannot run (no_route, early refusal).
+DEFAULT_PROFILE: Final[BudgetProfile] = "balanced"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -55,3 +58,8 @@ PROFILES: Final[Mapping[BudgetProfile, ContextProfile]] = MappingProxyType(_TABL
 def profile_for(name: BudgetProfile) -> ContextProfile:
     """The profile for ``name``; an unknown name raises ``KeyError``."""
     return PROFILES[name]
+
+
+def assumed_profile(requested: ProfileRequest) -> ContextProfile:
+    """The profile in force before an assessment resolves ``auto`` (the default)."""
+    return profile_for(DEFAULT_PROFILE if requested == "auto" else requested)

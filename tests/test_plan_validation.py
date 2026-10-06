@@ -144,11 +144,65 @@ def test_plan_without_nodes() -> None:
     assert codes(validate_plan_structure(plan())) == [(Codes.PLAN_INVALID, None)]
 
 
-@pytest.mark.parametrize("pattern", ["delegate", "parallel", "debate"])
-def test_reserved_pattern(pattern: str) -> None:
-    violations = validate_plan_structure(plan(pnode("a"), pattern=pattern))
+def test_unknown_pattern_is_reserved() -> None:
+    # Every declared pattern executes (Wave E); a value outside the Literal — only
+    # reachable by bypassing contract parsing — is still refused as reserved.
+    violations = validate_plan_structure(plan(pnode("a"), pattern="scatter"))
     assert codes(violations) == [(Codes.PLAN_PATTERN_RESERVED, None)]
     assert "reserved" in violations[0].detail
+
+
+def test_delegate_plan_runs_independent_subtasks() -> None:
+    assert validate_plan_structure(plan(pnode("a"), pnode("b"), pattern="delegate")) == []
+
+
+def test_delegate_plan_rejects_specialist_dependencies() -> None:
+    violations = validate_plan_structure(plan(pnode("a"), pnode("b", "a"),
+                                              pattern="delegate"))
+    assert codes(violations) == [(Codes.PLAN_INVALID, "b")]
+    assert "delegate" in violations[0].detail
+
+
+def proposer(nid: str) -> PlanNode:
+    return replace(pnode(nid), role="proposer")
+
+
+def referee(nid: str, *proposer_ids: str) -> PlanNode:
+    return PlanNode(id=nid, role="referee", provider="demo", capability="demo.echo",
+                    action="echo", depends_on=[dep(p) for p in proposer_ids],
+                    inputs=list(proposer_ids))
+
+
+def test_debate_plan_shape() -> None:
+    p = plan(proposer("a"), proposer("b"), referee("r", "a", "b"), pattern="debate")
+    assert validate_plan_structure(p) == []
+
+
+def test_debate_plan_needs_two_proposers_and_one_referee() -> None:
+    assert (Codes.PLAN_INVALID, None) in codes(validate_plan_structure(
+        plan(proposer("a"), referee("r", "a"), pattern="debate")))
+    no_referee = codes(validate_plan_structure(
+        plan(proposer("a"), proposer("b"), pattern="debate")))
+    assert (Codes.PLAN_INVALID, None) in no_referee
+
+
+def test_debate_referee_must_depend_on_and_read_every_proposer() -> None:
+    missing_dep = plan(proposer("a"), proposer("b"),
+                       referee("r", "a"), pattern="debate")
+    assert codes(validate_plan_structure(missing_dep)) == [
+        (Codes.PLAN_INVALID, "r"), (Codes.PLAN_INVALID, "r")]  # depends_on and inputs
+    no_input = plan(proposer("a"), proposer("b"),
+                    replace(referee("r", "a", "b"), inputs=["a"]), pattern="debate")
+    assert codes(validate_plan_structure(no_input)) == [(Codes.PLAN_INVALID, "r")]
+
+
+def test_debate_rejects_other_roles_and_dependent_proposers() -> None:
+    odd = plan(proposer("a"), proposer("b"), pnode("x"), referee("r", "a", "b"),
+               pattern="debate")
+    assert codes(validate_plan_structure(odd)) == [(Codes.PLAN_INVALID, "x")]
+    dependent = plan(proposer("a"), replace(proposer("b"), depends_on=[dep("a")]),
+                     referee("r", "a", "b"), pattern="debate")
+    assert (Codes.PLAN_INVALID, "b") in codes(validate_plan_structure(dependent))
 
 
 def test_route_plan_with_more_than_one_node() -> None:
@@ -169,7 +223,7 @@ def test_every_violation_is_reported_at_once() -> None:
     nodes = [pnode("a", "b"), pnode("b", "a"), pnode("a"), pnode("Bad"),
              pnode("c", "ghost"), pnode("d", inputs=["a"])]
     nodes += [pnode(f"x{i}") for i in range(MAX_PLAN_NODES)]
-    found = codes(validate_plan_structure(plan(*nodes, pattern="debate")))
+    found = codes(validate_plan_structure(plan(*nodes, pattern="scatter")))
     assert found == [
         (Codes.PLAN_LIMIT, None),
         (Codes.PLAN_PATTERN_RESERVED, None),
@@ -457,7 +511,7 @@ def test_check_plan_limits_distinct_providers_by_profile() -> None:
 def test_check_plan_adds_registry_violations_to_structural_ones() -> None:
     p = plan(rnode("a", "ghost", "x.y", "analyze", "missing"),
              rnode("b", "api", "api.analyze"),
-             rnode("c", "spark", "pyspark.static-analysis"), pattern="debate")
+             rnode("c", "spark", "pyspark.static-analysis"), pattern="scatter")
     assert codes(check_plan(p, RECORDS, profile_for("balanced"))) == [
         (Codes.PLAN_PATTERN_RESERVED, None),
         (Codes.PLAN_INVALID, "a"),

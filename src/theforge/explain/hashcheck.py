@@ -134,14 +134,21 @@ def _recorded(receipt: ExecutionReceipt) -> dict[str, str | None]:
         "context": inputs.context_sha256,
         "risk": inputs.risk_sha256,
         "handoff": inputs.handoff_sha256,
+        "complexity": inputs.complexity_sha256,
+        "budget": inputs.budget_sha256,
+        "routing-proposal": inputs.routing_proposal_sha256,
         "result": receipt.result_sha256,
         "telemetry": receipt.telemetry_sha256,
         "verification": receipt.verification_sha256,
         "plan": refs.plan_sha256 if refs else None,
         "workspace-descriptor": refs.workspace_descriptor_sha256 if refs else None,
         "graph": refs.graph_sha256 if refs else None,
+        "capability-graph": refs.capability_graph_sha256 if refs else None,
+        "semantic-proposal": refs.semantic_proposal_sha256 if refs else None,
         "installation": refs.installation_sha256 if refs else None,
         "plan-result": refs.plan_result_sha256 if refs else None,
+        "plan-state": refs.plan_state_sha256 if refs else None,
+        "decision": refs.decision_sha256 if refs else None,
     }
     for index, name in enumerate(_ROUNDS):
         hashes[name] = rounds[index] if index < len(rounds) else None

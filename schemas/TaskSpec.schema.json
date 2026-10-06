@@ -2,10 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
     "budget_profile": {
-      "enum": [
-        "economy",
-        "balanced",
-        "max"
+      "anyOf": [
+        {
+          "enum": [
+            "economy",
+            "balanced",
+            "max"
+          ]
+        },
+        {
+          "enum": [
+            "auto"
+          ]
+        }
       ]
     },
     "constraints": {

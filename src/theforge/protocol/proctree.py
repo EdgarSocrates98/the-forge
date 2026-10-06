@@ -16,16 +16,21 @@ daemonization) is not reached.
 """
 
 import contextlib
+import os
 import subprocess
 import sys
+import threading
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import IO
 
-__all__ = ["SpawnedProcess", "close", "kill_tree", "spawn"]
+__all__ = ["SpawnedProcess", "close", "join_threads", "kill_tree", "owned", "read_chunk",
+           "spawn", "wait_slice"]
 
 _REAP_SECONDS = 5.0
+_CHUNK = 1 << 16
 
 
 @dataclass
@@ -38,6 +43,43 @@ class SpawnedProcess:
 def _reap(proc: subprocess.Popen[bytes], timeout: float) -> None:
     with contextlib.suppress(subprocess.TimeoutExpired):
         proc.wait(timeout=timeout)
+
+
+# --- shared pipe helpers (single owner; used by transport.py and context/git.py) --------
+
+
+def read_chunk(stream: IO[bytes]) -> bytes:
+    """Return whatever is available (up to a chunk) without waiting for a full chunk."""
+    try:
+        return os.read(stream.fileno(), _CHUNK)
+    except (OSError, ValueError):
+        return b""
+
+
+@contextlib.contextmanager
+def owned(stream: IO[bytes]) -> Iterator[None]:
+    """Close ``stream`` when the owning pump thread is done with it."""
+    try:
+        yield
+    finally:
+        with contextlib.suppress(OSError):
+            stream.close()
+
+
+def wait_slice(proc: subprocess.Popen[bytes], seconds: float) -> bool:
+    """Wait up to ``seconds`` for the process root; True when it has exited."""
+    try:
+        proc.wait(timeout=seconds)
+    except subprocess.TimeoutExpired:
+        return False
+    return True
+
+
+def join_threads(threads: Iterable[threading.Thread], join_seconds: float) -> None:
+    """Join all pump threads within one shared bound (never longer than ``join_seconds``)."""
+    deadline = time.monotonic() + join_seconds
+    for thread in threads:
+        thread.join(timeout=max(deadline - time.monotonic(), 0.0))
 
 
 if sys.platform == "win32":

@@ -131,6 +131,60 @@ def capabilities(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# Relation edge kinds in display order; the mechanical structure edges
+# (has_capability, has_action, in_domain) are listed last — they derive from
+# the manifest boilerplate, not from declared intent.
+_GRAPH_EDGE_ORDER = ("produces", "consumes", "requires", "complements",
+                     "conflicts", "can_verify", "can_review", "relevant_to",
+                     "uses_technology", "in_domain", "has_capability",
+                     "has_action")
+
+
+def _ref_match(node_id: str, ref: str) -> bool:
+    """``p/c`` matches exactly; bare ``c`` matches ``capability:*/c``."""
+    if not node_id.startswith("capability:"):
+        return False
+    key = node_id.removeprefix("capability:")
+    return key == ref or ("/" not in ref and key.endswith(f"/{ref}"))
+
+
+def graph(data: dict[str, Any]) -> str:
+    """The capability graph (``theforge graph``): every edge of the persisted
+    CapabilityGraph, grouped by kind, with the epistemic tag of each edge."""
+    nodes = [n for n in data.get("nodes") or [] if isinstance(n, dict)]
+    edges = [e for e in data.get("edges") or [] if isinstance(e, dict)]
+    ref = data.get("ref")
+    if ref:
+        edges = [e for e in edges
+                 if _ref_match(str(e.get("source", "")), ref)
+                 or _ref_match(str(e.get("target", "")), ref)]
+        keep = {e.get("source") for e in edges} | {e.get("target") for e in edges}
+        nodes = [n for n in nodes
+                 if _ref_match(str(n.get("id", "")), ref) or n.get("id") in keep]
+    counts: dict[str, int] = {}
+    for node in nodes:
+        kind = _clean(node.get("kind", "?"))
+        counts[kind] = counts.get(kind, 0) + 1
+    summary = "  ".join(f"{v} {k}" for k, v in sorted(counts.items()))
+    head = (f"Capability graph: {summary or 'empty'}  ({len(edges)} edges"
+            f"{', ref ' + _clean(ref) if ref else ''})")
+    lines = [head]
+    by_kind: dict[str, list[dict[str, Any]]] = {}
+    for edge in edges:
+        by_kind.setdefault(str(edge.get("kind", "?")), []).append(edge)
+    ordered = [k for k in _GRAPH_EDGE_ORDER if k in by_kind]
+    ordered += sorted(k for k in by_kind if k not in _GRAPH_EDGE_ORDER)
+    for kind in ordered:
+        lines.append(f"{kind}:")
+        for edge in by_kind[kind]:
+            lines.append(
+                f"  {_clean(edge.get('source', '?'))} -> {_clean(edge.get('target', '?'))} "
+                f"({_clean(edge.get('epistemic', '?'))}: "
+                f"{_clean(edge.get('evidence', '?'))})")
+    lines += _labelled("Limitations:", _list(data.get("limitations")))
+    return "\n".join(lines)
+
+
 def health(data: dict[str, Any]) -> str:
     lines = []
     for p in data["providers"]:
@@ -139,6 +193,29 @@ def health(data: dict[str, Any]) -> str:
             line += f"  {_clean(p['error']['code'])}: {_detail(p['error']['detail'])}"
         lines.append(line)
     return "\n".join(lines) or "no providers"
+
+
+def provider_init(data: dict[str, Any]) -> str:
+    lines = [f"Scaffolded {_clean(data['provider_id'])} in {_clean(data['directory'])}"]
+    for path in data["files"]:
+        name = str(path).replace("\\", "/").rsplit("/", 1)[-1]
+        lines.append(f"  wrote {_clean(name)}")
+    lines.append(f"Capability: {_clean(data['capability'])}")
+    lines.append(f"argv:       {_clean(' '.join(data['argv']))}")
+    lines.append("Register it in a providers.toml, then `theforge registry refresh` "
+                 "(nothing was installed).")
+    return "\n".join(lines)
+
+
+def provider_check(data: dict[str, Any]) -> str:
+    lines = []
+    for c in data["checks"]:
+        line = f"{_clean(c['id']):<22} {c['status']}"
+        if c["detail"]:
+            line += f"  {_detail(c['detail'])}"
+        lines.append(line)
+    lines.append("conformance: " + ("ok" if data["ok"] else "FAILED"))
+    return "\n".join(lines)
 
 
 def ask(data: dict[str, Any]) -> str:
@@ -311,6 +388,12 @@ def _metric(telemetry: dict[str, Any], name: str, unit: str = "") -> str:
     return f"{'~' if kind == 'estimated' else ''}{round(value)}{unit}"
 
 
+def _num(value: object) -> str:
+    """A plain float field (complexity score/confidence), two decimals."""
+    return (f"{value:.2f}" if isinstance(value, (int, float))
+            and not isinstance(value, bool) else "?")
+
+
 def _telemetry(telemetry: dict[str, Any] | None) -> str:
     if not telemetry:
         return "Telemetry:   not recorded"
@@ -339,8 +422,31 @@ def explain(data: dict[str, Any]) -> str:
              f"status: {_clean(receipt.get('status', 'incomplete'))}"]
     if task:
         targets = ", ".join(_clean(t) for t in task.get("targets") or [])
+        profile = _clean(task.get('budget_profile', '?'))
+        complexity = data.get("complexity") or {}
+        if task.get("budget_profile") == "auto" and complexity.get("selected_profile"):
+            profile = f"auto->{_clean(complexity.get('selected_profile'))}"
         lines.append(f"Task:        \"{_clean(task.get('intent', '?'))}\" "
-                     f"(targets: {targets}; profile: {_clean(task.get('budget_profile', '?'))})")
+                     f"(targets: {targets}; profile: {profile})")
+        if complexity:
+            requested = _clean(complexity.get("requested_profile", "auto"))
+            selected = _clean(complexity.get("selected_profile", "?"))
+            lines.append(
+                f"Complexity:  {_clean(complexity.get('level', '?'))} "
+                f"score={_num(complexity.get('score'))} "
+                f"confidence={_num(complexity.get('confidence'))}   "
+                f"{requested}->{selected}: "
+                f"{_clean(complexity.get('profile_reason') or '-')}")
+    budget = data.get("budget")
+    if budget:
+        head = (f"Budget:      {_clean(budget.get('profile', '?'))}  "
+                f"context {_clean(budget.get('context_bytes', '?'))}B/"
+                f"{_clean(budget.get('max_files', '?'))} files  "
+                f"providers≤{_clean(budget.get('provider_calls', '?'))}  "
+                f"{_clean(budget.get('wall_time_s', '?'))}s")
+        adjustments = budget.get("adjustments") or []
+        lines.append(head if not adjustments
+                     else f"{head}  (+{_clean(adjustments[0])})")
     if routing:
         candidates = routing.get("candidates") or []
         if not candidates:
@@ -369,6 +475,20 @@ def explain(data: dict[str, Any]) -> str:
                  if isinstance(note, str) and note.startswith(ROUTING_NOTE_PREFIXES)]
         if notes:
             lines.extend(_labelled("Notes:", notes))
+        # Wave K: an ambiguous decision resolved by a semantic resolver — the
+        # proposal is the evidence of the pick (ADR 0025).
+        proposal = data.get("routing-proposal") or {}
+        if proposal:
+            choice = proposal.get("choice") or {}
+            lines.append(
+                f"Resolved:    semantically -> {_clean(choice.get('provider', '?'))}/"
+                f"{_clean(choice.get('capability', '?'))}:{_clean(choice.get('action', '?'))} "
+                f"(confidence {_clean(proposal.get('confidence') or '-')})")
+            if proposal.get("reason"):
+                lines.append(f"  rationale: {_clean(proposal['reason'])}")
+            alternatives = _list(proposal.get("alternatives"))
+            if alternatives:
+                lines.append(f"  alternatives: {', '.join(alternatives)}")
     if task:
         lines.extend(_risk(data.get("risk")))
     telemetry = data.get("telemetry")
@@ -429,12 +549,18 @@ def _integrity(integrity: dict[str, Any]) -> list[str]:
 
 
 def _verification(verification: dict[str, Any]) -> list[str]:
+    indep = verification.get("independent") or {}
+    verifier = next((str(b).removeprefix("verifier:") for b in indep.get("basis") or []
+                     if str(b).startswith("verifier:")), None)
     lines = ["Verification: " + " ".join(
         f"{name}={_clean((verification.get(name) or {}).get('status', '?'))}"
+        + (f" ({_clean(verifier)})" if name == "independent" and verifier else "")
         for name in _CHECKS)]
     for name in _CHECKS:
         check = verification.get(name) or {}
-        if check.get("status") == "failed":
+        status = check.get("status")
+        # ``why the verifier`` and ``why no verifier`` are both routing evidence.
+        if status == "failed" or (name == "independent" and status == "not_performed"):
             lines.extend(f"  {name}: {detail}" for detail in _list(check.get("details")))
     return lines
 
@@ -455,6 +581,11 @@ def _node_row(node: dict[str, Any], outcome: dict[str, Any] | None) -> str:
         row += f"  -> {_clean(outcome.get('status', '?'))}"
         if outcome.get("run_id"):
             row += f" run={_clean(outcome['run_id'])}"
+        if outcome.get("reused"):
+            row += " (reused)"
+        attempts = outcome.get("attempts") or 0
+        if isinstance(attempts, int) and attempts > 1:
+            row += f" x{attempts} attempts"
         if outcome.get("blocked_by"):
             row += f" blocked_by={_clean(outcome['blocked_by'])}"
     return row
@@ -482,16 +613,52 @@ def _synthesis_lines(result: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _decision_lines(decision: dict[str, Any]) -> list[str]:
+    """The DecisionRecord of a debate plan: options, choice, rationale, confidence."""
+    lines = _labelled("Options:", [
+        f"{_clean(o.get('node', '?'))} {_clean(o.get('provider', '?'))}/"
+        f"{_clean(o.get('capability', '?'))} -> {_clean(o.get('status', '?'))}"
+        + (f"  {_detail(o['position'])}" if o.get("position") else "")
+        + (f"  (risks: {_clean('; '.join(str(r) for r in o['risks']))})"
+           if o.get("risks") else "")
+        for o in decision.get("options") or []])
+    chosen = _clean(decision.get("chosen", "?"))
+    rejected = ", ".join(_clean(r) for r in _list(decision.get("rejected"))) or "none"
+    lines.append(f"Decision:    {chosen}  (rejected: {rejected}; "
+                 f"confidence: {_clean(decision.get('confidence', '?'))})")
+    rationale = _clean(decision.get("rationale") or "")
+    if rationale:
+        lines.append(f"Rationale:   {rationale}")
+    return lines
+
+
 def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | None,
                   descriptor: dict[str, Any] | None,
-                  installation: dict[str, Any] | None) -> list[str]:
+                  installation: dict[str, Any] | None,
+                  decision: dict[str, Any] | None = None,
+                  semantic_proposal: dict[str, Any] | None = None,
+                  capability_graph: dict[str, Any] | None = None) -> list[str]:
     """Plan, node states with their runs, handoffs, synthesis, workspace and installation."""
     lines: list[str] = []
+    if capability_graph:
+        lines.append(f"Graph:       {len(capability_graph.get('nodes') or [])} nodes, "
+                     f"{len(capability_graph.get('edges') or [])} edges "
+                     "(the declared+observed relations the planner could see)")
     if plan_data:
         lines.append(f"Plan:        {_clean(plan_data.get('status', '?'))}  "
                      f"pattern: {_clean(plan_data.get('pattern', '?'))}  "
                      f"source: {_clean(plan_data.get('source', '?'))}  "
                      f"profile: {_clean(plan_data.get('profile', '?'))}")
+    if semantic_proposal:  # tier-2 planner (Wave C): its rationale is the why
+        lines.append(f"Planner:     semantic proposal  "
+                     f"(confidence {_clean(semantic_proposal.get('confidence') or '-')})")
+        rationale = _clean(semantic_proposal.get("rationale") or "")
+        if rationale:
+            lines.append(f"  rationale: {rationale}")
+        assumptions = _list(semantic_proposal.get("assumptions"))
+        if assumptions:
+            lines += _labelled("  assumptions:", assumptions)
+    if plan_data:
         outcomes = {n.get("node"): n for n in (result or {}).get("nodes") or []}
         lines += _labelled("Nodes:", [_node_row(node, outcomes.get(node.get("id")))
                                       for node in plan_data.get("nodes") or []])
@@ -502,6 +669,8 @@ def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | Non
             lines += _labelled("Violations:", violations)
     if result:
         lines += _synthesis_lines(result)
+    if decision:
+        lines += _decision_lines(decision)
     if descriptor:
         repositories = [_clean(r.get("path", "?")) for r in descriptor.get("repositories") or []]
         lines.append(f"Workspace:   {len(repositories)} repositories "
@@ -549,10 +718,16 @@ def report_sections(report: dict[str, Any]) -> list[str]:
                      + (f" (node {_clean(node)})" if node else ""))
     if report.get("replay_of"):
         lines.append(f"Replay of:   {_clean(report['replay_of'])}")
+    if report.get("resumed_from"):
+        lines.append(f"Resumed from: {_clean(report['resumed_from'])}")
     section = report.get("plan") or {}
     if section:
+        artifacts = report.get("artifacts") or {}
         lines += plan_sections(section.get("plan"), section.get("result"),
-                               section.get("workspace_descriptor"), section.get("installation"))
+                               section.get("workspace_descriptor"), section.get("installation"),
+                               artifacts.get("decision"),
+                               artifacts.get("semantic-proposal"),
+                               artifacts.get("capability-graph"))
     if report.get("error"):
         lines.append(f"Error family: {_clean(report.get('error_family') or 'provider code')}")
     lines += _labelled("Limitations:", _list(report.get("limitations")))
@@ -571,9 +746,12 @@ def explain_report(report: dict[str, Any]) -> str:
 
 def plan(data: dict[str, Any]) -> str:
     run_id = _clean(data["run_id"])
-    lines = [f"Run {run_id}: {_clean(data['status'])}",
-             *plan_sections(data.get("plan"), data.get("result"), None,
-                            data.get("installation"))]
+    lines = [f"Run {run_id}: {_clean(data['status'])}"]
+    if data.get("resumed_from"):
+        lines.append(f"Resumed from: {_clean(data['resumed_from'])}")
+    lines += plan_sections(data.get("plan"), data.get("result"), None,
+                           data.get("installation"), data.get("decision"),
+                           data.get("semantic_proposal"), data.get("capability_graph"))
     error = data.get("error")
     if error:
         lines.append(f"Error:       {_clean(error['code'])}: {_detail(error['detail'])} "
@@ -609,6 +787,79 @@ def workspace(data: dict[str, Any]) -> str:
                       *_labelled("Relations:", relations),
                       *_labelled("Limitations:", _list(data.get("limitations"))),
                       *_labelled("Unknowns:", _list(data.get("unknowns")))])
+
+
+def decisions(data: dict[str, Any]) -> str:
+    """The reusable-decision memory: one line per remembered decision."""
+    entries = data.get("entries") or []
+    lines = []
+    for entry in sorted(entries, key=lambda e: (e.get("kind") or "",
+                                                e.get("subject") or "")):
+        runs = _list(entry.get("runs"))
+        lines.append(
+            f"{_clean(entry.get('kind', '?'))}: {_clean(entry.get('subject', '?'))} -> "
+            f"{_clean(entry.get('choice', '?'))}  "
+            f"({entry.get('corroborations', 1)}x, last {_clean(entry.get('updated_at', '?'))}"
+            f"{'; runs ' + ','.join(runs[-3:]) if runs else ''})\n"
+            f"    basis: {_clean(entry.get('basis', '?'))}")
+    return "\n".join([f"Decision memory: {len(entries)} entr"
+                      f"{'y' if len(entries) == 1 else 'ies'}", *lines,
+                      *_labelled("Limitations:", _list(data.get("limitations")))])
+
+
+_TRACE_ATTRS = ("node", "provider", "capability", "action", "role", "round",
+                "outcome", "attempts", "reused")
+
+
+def _span_line(span: dict[str, Any]) -> str:
+    """One span row: name, the interesting attributes, duration, error marker."""
+    attrs = span.get("attributes") or {}
+    shown = " ".join(f"{key}={_clean(attrs[key])}" for key in _TRACE_ATTRS
+                     if key in attrs)
+    name = _clean(span.get("name", "?"))
+    if shown:
+        name = f"{name} ({shown})"
+    try:
+        ms = float(span.get("duration_ms") or 0.0)
+    except (TypeError, ValueError):
+        ms = 0.0
+    marker = "  ERROR" if span.get("status") == "error" else ""
+    return f"{name}  {ms:.1f}ms{marker}"
+
+
+def trace(data: dict[str, Any]) -> str:
+    """The run's local trace (Wave J): *what happened* — spans in start order,
+    nested by parent. ``explain`` answers why; ``trace`` answers what."""
+    spans = [s for s in (data.get("spans") or []) if isinstance(s, dict)]
+    total = 0.0
+    for span in spans:
+        try:
+            total = max(total, float(span.get("start_ms") or 0.0)
+                        + float(span.get("duration_ms") or 0.0))
+        except (TypeError, ValueError):
+            continue
+    lines = [f"trace {_clean(data['run_id'])}  {_clean(data.get('status') or 'unknown')}  "
+             f"{total:.0f}ms"]
+    ids = {s.get("id") for s in spans}
+    children: dict[Any, list[dict[str, Any]]] = {}
+    for span in spans:
+        parent = span.get("parent")
+        children.setdefault(parent if parent in ids else None, []).append(span)
+    for group in children.values():
+        group.sort(key=lambda s: (float(s.get("start_ms") or 0.0),
+                                  str(s.get("id") or "")))
+
+    def _level(parent: Any, prefix: str) -> None:
+        group = children.get(parent) or []
+        for index, span in enumerate(group):
+            last = index == len(group) - 1
+            lines.append(f"{prefix}{'└─ ' if last else '├─ '}{_span_line(span)}")
+            _level(span.get("id"), prefix + ("   " if last else "│  "))
+
+    _level(None, "")
+    if not spans:
+        lines.append("  no spans recorded")
+    return "\n".join([*lines, *_labelled("Limitations:", _list(data.get("limitations")))])
 
 
 def replay(data: dict[str, Any]) -> str:

@@ -11,7 +11,11 @@ from pathlib import Path
 from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hints
 
 from theforge.contracts import (
+    CapabilityGraph,
+    ComplexityAssessment,
     ContextPack,
+    DecisionMemory,
+    DecisionRecord,
     Diagnostic,
     Evidence,
     ExecuteRequest,
@@ -26,33 +30,53 @@ from theforge.contracts import (
     PlanEstimate,
     PlanRequest,
     PlanResult,
+    PlanState,
+    ProjectIntel,
+    ProviderPerformance,
     Request,
+    ResolveRequest,
     Response,
     RiskAssessment,
     RoutingDecision,
+    RoutingProposal,
+    RunBudget,
     RunTelemetry,
+    SemanticPlanProposal,
     TaskSpec,
     VerificationResult,
+    VerifyRequest,
+    VerifyVerdict,
     WorkspaceDescriptor,
     WorkspaceGraph,
 )
 
 EXPORTED: tuple[type[Any], ...] = (
     ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
-    ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, RiskAssessment,
-    RunTelemetry,
+    ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, VerifyRequest,
+    VerifyVerdict, RiskAssessment, RunTelemetry,
     # cross-forge-foundation (Wave D)
-    ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, Handoff, WorkspaceDescriptor,
+    ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, PlanState, Handoff,
+    WorkspaceDescriptor,
     WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
+    ComplexityAssessment, CapabilityGraph, SemanticPlanProposal, DecisionRecord,
+    # economy-engine (Wave H)
+    RunBudget, ProviderPerformance,
+    # project-intelligence (Wave I)
+    ProjectIntel, DecisionMemory,
+    # semantic routing fallback (Wave K)
+    ResolveRequest, RoutingProposal,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
-# (Handoff, PlanRequest and PlanEstimate cross the protocol in the ``plan`` op and in
-# ExecuteRequest.handoff).
+# (Handoff, PlanRequest, PlanEstimate and SemanticPlanProposal cross the protocol in
+# the ``plan`` op and in ExecuteRequest.handoff; ResolveRequest and RoutingProposal
+# cross it in the ``resolve`` op).
 CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
     ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,
-    InstallationPlan, ExplainReport, Diagnostic,
+    InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
+    CapabilityGraph, DecisionRecord, PlanState, RunBudget, ProviderPerformance,
+    ProjectIntel, DecisionMemory,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

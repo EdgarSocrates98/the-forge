@@ -65,6 +65,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_context_verify.py": ("unit",),
     "test_context_flow.py": ("integration",),
     "test_bench.py": ("unit",),
+    "test_runs_bench.py": ("integration",),
     "test_telemetry.py": ("unit",),
     # planned by design (cross-forge-foundation)
     "test_error_taxonomy.py": ("unit",),
@@ -93,6 +94,37 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_diagnostics.py": ("unit", "security"),
     "test_forger_binding.py": ("integration",),
     "test_explain_evolution.py": ("contract",),
+    # planned by design (cycle-2.1 closure)
+    "test_finalize.py": ("integration", "security"),
+    # planned by design (cycle-3 complexity engine)
+    "test_complexity.py": ("unit", "integration"),
+    # planned by design (cycle-3 capability graph)
+    "test_capability_graph.py": ("unit", "integration"),
+    # planned by design (cycle-3 hybrid planner)
+    "test_hybrid_planner.py": ("unit", "integration"),
+    # planned by design (cycle-3 execution modes)
+    "test_execution_modes.py": ("unit", "integration"),
+    # planned by design (cycle-3 scheduler/resume)
+    "test_plan_resume.py": ("unit", "integration"),
+    # planned by design (cycle-3 independent verification)
+    "test_independent_verification.py": ("unit", "integration"),
+    # planned by design (cycle-3 economy engine)
+    "test_economy.py": ("unit", "integration"),
+    # planned by design (cycle-3 project intelligence)
+    "test_intel.py": ("unit", "integration"),
+    # planned by design (cycle-3 tracing)
+    "test_trace.py": ("unit", "integration"),
+    # planned by design (cycle-3 semantic routing fallback)
+    "test_semantic_routing.py": ("unit", "integration"),
+    # planned by design (cycle-3 forge sdk / provider authoring)
+    "test_provider_init.py": ("unit", "integration"),
+    # planned by design (cycle-3 cli evolution)
+    "test_graph_cli.py": ("unit", "integration"),
+    # planned by design (cycle-3 adversarial)
+    "test_cycle3_adversarial.py": ("unit", "integration"),
+    # planned by design (cycle-3 property tests)
+    "test_cycle3_properties.py": ("unit",),
+    "test_failure_semantics.py": ("unit", "integration"),
     # planned by design (agentic-maintainability)
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),

@@ -36,6 +36,12 @@ python3.12 -m venv <api-venv>
 <api-python> -c "import apiforge, theforge_apiforge"           # deve sair 0
 ```
 
+A prova cross-forge (`test_cross_forge_real.py`) exige a entrada `--upstream` do
+`api.analyze` — `apiforge/upstream-facts/v1`, implementada na branch
+`feat/upstream-facts` do api-forge. Com um `apiforge` sem ela o adapter degrada
+com a limitação de consumo ausente (correto como comportamento) e a prova falha:
+o teste real precisa desse ref, também no workflow (`api_forge_ref`).
+
 O adapter roda em Python ≥ 3.10. Num interpretador que não é 3.12, porém, `describe` recusa com o motivo e `health` responde `unavailable` (ver [Troubleshooting](#troubleshooting)).
 
 ### Desenvolvimento neste repositório
@@ -120,8 +126,8 @@ A integração cobre, por Forge, `describe` (manifest `ready` e snapshot igual �
 ### Prova cross-forge (Spark Forge → API Forge)
 `tests/test_cross_forge_real.py` (marker `real_provider`, mesmo contrato de ambiente) registra os dois adapters e roda `theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max --execute` no workspace de prova `tests/fixtures/workspaces/cross/` (montado em diretório temporário, um repositório git por subdiretório). Confere o plano `spark-forge/pyspark.static-analysis` → `api-forge/api.analyze`, ao menos um item de handoff com origem no Spark Forge e o status epistêmico original recebido pelo nó de API, a síntese com os dois runs e `theforge explain` do plano sem divergência ([ADR 0018](adr/0018-multi-provider-execution.md)).
 
-- Os adapters não declaram `accepts_handoff`: o nó de API recebe o handoff, ignora o campo e registra `handoff-use-undeclared: api-forge/api.analyze`. Isso é esperado.
-- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. A gravação do Spark vem do gravador; a do API Forge foi montada à mão a partir de um run real e leva `"provenance": "hand-built"`. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
+- `api-forge/api.analyze` declara `accepts_handoff` e consome os itens: o adapter traduz o handoff a `apiforge/upstream-facts/v1` (limitado a 32 itens/64 KiB, itens malformados pulados com limitação), grava `upstream-facts.json` no cwd nativo, passa `--upstream` ao `analyze` do especialista instalado e marca as evidências derivadas com `derived_from` apontando para o item e o run do Spark Forge — o check `handoff-provenance` da verificação confere isso. O teste faz a prova A/B: o mesmo `execute` do nó, com e sem o `handoff` gravado, produz evidência observavelmente diferente. Quando o apiforge instalado não tem a entrada, o adapter responde `ok`/`partial` com a limitação de consumo ausente (e nunca inventa evidência upstream). `spark-forge` e `api.change-control` não declaram e seguem registrando `handoff-use-undeclared`.
+- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. A gravação do Spark vem do gravador; a do API Forge foi montada à mão a partir de um run real com `--upstream` e leva `"provenance": "hand-built"`. Em replay o adapter re-deriva as upstream facts do handoff **da requisição** (a tradução é determinística e vive no adapter, sem especialista): a provenance é sempre a do run atual, nunca a da gravação; sem handoff na requisição as facts upstream gravadas são descartadas. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
 
 ## Regravar snapshots e gravações de replay
 
@@ -160,7 +166,18 @@ Spark: grave uma ação a partir de um workspace. O workspace nunca é tocado: e
   --out tests/fixtures/native/sparkforge/default
 ```
 
-API: ainda não há gravador de execute. As gravações em `tests/fixtures/native/apiforge/` (`{argv, case_dir, case_files, ...}`) foram montadas a partir do formato de caso do API Forge 0.1.0, conferido contra um run real, e levam `"provenance": "hand-built"` até serem regravadas a partir do Forge real. Para atualizar uma, rode o verbo nativo no workspace de exemplo, com `--out-dir` sob o cwd e sem sobrepor `--project`, e transcreva os arquivos do caso no mesmo layout. Arquivos `.json` são reserializados (chaves ordenadas, indentação 2, LF final) para que os hashes do caso continuem valendo.
+API: `theforge_apiforge.record_execute` grava uma ação a partir de um workspace, como o gravador do Spark. O workspace nunca é tocado: é copiado sem links para `stage/` num diretório temporário, cada `--arg` é `<input>=<caminho relativo ao workspace>` (para `api.analyze`, `contract` e `project`), e o verbo roda pela CLI pública com o mesmo argv que o adapter constrói. `--handoff <arquivo>` alimenta a entrada `--upstream` com um documento `theforge/Handoff/v1`, como o adapter faz ao vivo. A gravação sai como `{argv, case_dir, case_files, exit_code, native_cwd, stdout, provenance: "recorded", assembled_from}` em `<capability>.<action>.json` — ou `{exit_code, stderr}` em `<capability>.<action>.error.json` quando o verbo falha — e é recusada quando carregaria um caminho da máquina:
+
+```bash
+<api-python> -m theforge_apiforge.record_execute \
+  --workspace tests/fixtures/workspaces/cross \
+  --capability api.analyze --action analyze \
+  --arg contract=orders-api/openapi.yaml --arg project=orders-api \
+  [--handoff <handoff.json>] \
+  --out tests/fixtures/native/apiforge/scenarios/cross
+```
+
+As gravações atuais de `tests/fixtures/native/apiforge/` ainda levam `"provenance": "hand-built"` (montadas a partir de runs reais, conferidas pelo teste cross) até a primeira regravação pelo gravador. Arquivos `.json` são reserializados (chaves ordenadas, indentação 2, LF final) para que os hashes do caso continuem valendo.
 
 ## Troubleshooting
 

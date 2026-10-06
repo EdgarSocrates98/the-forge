@@ -33,9 +33,9 @@ SIGNAL_DEPENDENCY: Final = "dependency_manifest"
 TARGET_PREFIX: Final = "target:"
 GLOB_PREFIX: Final = "glob:"
 
-# Range suffixes: ":N", ":N-M", ":LN-LM" and "#LN-LM".
+# Range suffixes: ":N", ":N-M", ":LN-LM", "#LN" and "#LN-LM".
 _REF: Final = re.compile(
-    r"^(?P<path>.+?)(?::L?(?P<a>\d+)(?:-L?(?P<b>\d+))?|#L(?P<c>\d+)-L(?P<d>\d+))?$")
+    r"^(?P<path>.+?)(?::L?(?P<a>\d+)(?:-L?(?P<b>\d+))?|#L(?P<c>\d+)(?:-L(?P<d>\d+))?)?$")
 _EXT: Final = re.compile(r"\.[A-Za-z][A-Za-z0-9_-]*$")
 _DRIVE: Final = re.compile(r"^[A-Za-z]:")
 _LEADING: Final = "\"'`([{<*"
@@ -69,6 +69,11 @@ def parse_intent_refs(intent: str, scan: WorkspaceScan) -> IntentRefs:
             continue
         path, lines = parsed
         reason = _rejection(path, files, excluded)
+        if reason == "missing" and _EXT.search(path.rsplit("/", 1)[-1]) is None:
+            # A slash-token whose last segment has no extension and matches nothing on
+            # disk ("and/or", "src/here") is prose, not a file citation: skip it
+            # silently instead of recording a missing reference.
+            continue
         if reason is not None:
             rejected[path] = reason
             continue

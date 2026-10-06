@@ -162,7 +162,8 @@ def test_persisted_pack_has_workspace_signals_and_tiers(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("excerpts", "bad-a")])
     write_file(tmp_path, "notes.txt", LINES10)
     write_file(tmp_path, "pyproject.toml", "[project]\n")
-    out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
+    out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing",
+                                         profile="balanced"))  # excerpt tiers asserted
     assert out.status == "ok"
     pack = RunStore(tmp_path / ".forge").read(out.run_id, "context")
     assert pack["workspace"]["files_scanned"] >= 2
@@ -464,7 +465,9 @@ def _setup_outcome(root: Path, outcome: str) -> AskRequest:
             "failure-health": "unhealthy"}[outcome]
     make_workspace(root, [bad_entry(mode, "bad-a")])
     write_file(root, DRIFTED, LINES10)
-    return AskRequest(intent="run it", capability="bad.thing")
+    # Profile mechanics, not defaulting: a routed trivial run resolves auto->economy,
+    # and the assertions bind the balanced profile.
+    return AskRequest(intent="run it", capability="bad.thing", profile="balanced")
 
 
 @pytest.mark.parametrize(("outcome", "status", "executed"), [
@@ -525,7 +528,8 @@ def test_negotiated_run_records_rounds_counters_and_tiers(
         assert getattr(telemetry, name).kind == "measured", name
     assert "requested" in telemetry.profile.effective_tiers
     assert telemetry.verification_performed is not None
-    assert telemetry.unknowns == []
+    # this negotiated ask was routed without ambiguity: neither semantic path ran
+    assert telemetry.unknowns == ["semantic_planner_calls", "semantic_resolver_calls"]
 
 
 def test_drift_is_recorded_in_the_telemetry(tmp_path: Path, no_git: None) -> None:

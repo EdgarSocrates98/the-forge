@@ -20,6 +20,7 @@
         "replay_of",
         "reproducibility",
         "result",
+        "resumed_from",
         "risk",
         "routing",
         "run_id",
@@ -259,6 +260,7 @@
     "plan.result": {
       "properties": [
         "created_at",
+        "decision_sha256",
         "limitations",
         "nodes",
         "order",
@@ -283,12 +285,14 @@
     },
     "plan.result.nodes[]": {
       "properties": [
+        "attempts",
         "blocked_by",
         "error",
         "node",
         "receipt_sha256",
         "reproducibility",
         "result_sha256",
+        "reused",
         "run_id",
         "status"
       ],

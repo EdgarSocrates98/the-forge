@@ -139,6 +139,13 @@ def _read_rules(path: Path, label: str, warnings: list[str]) -> dict[str, Rule]:
             entries.extend((f"local_mutation.{trust}", sub) for trust, sub in value.items())
         else:
             entries.append((key, value))
+    seen: set[str] = set()
+    for key, _ in entries:
+        if key in seen:
+            warnings.append(
+                f"{label} policy {path}: rule {key!r} set more than once "
+                "(flattened duplicate); the last value wins")
+        seen.add(key)
     rules: dict[str, Rule] = {}
     for key, value in entries:
         if key not in DEFAULT_RULES:

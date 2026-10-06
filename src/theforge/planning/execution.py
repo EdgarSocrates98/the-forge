@@ -10,6 +10,7 @@ from theforge.contracts.handoff import Handoff
 from theforge.contracts.plan import NodeOutcome, NodeStatus, PlanNode
 from theforge.contracts.result import ExecutionResult
 from theforge.contracts.types import Producer
+from theforge.contracts.verification import VerificationResult
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -19,6 +20,8 @@ class NodeExecution:
     result: ExecutionResult | None  # re-read from the child run; None without a valid result
     handoff: Handoff | None  # handoff delivered to the node
     provider: Producer | None  # id and version of the provider that ran the node
+    verification: VerificationResult | None = None  # the child run's verification
+    reached_execute: bool = False  # the child run called the provider's execute op
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -32,3 +35,6 @@ class SourceResult:
     capability: str
     action: str
     result: ExecutionResult
+    # The node run's VerificationResult when one was persisted (evidence bus:
+    # handed off as the source's ``verification`` item).
+    verification: VerificationResult | None = None

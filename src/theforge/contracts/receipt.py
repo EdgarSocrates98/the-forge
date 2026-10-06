@@ -26,6 +26,18 @@ class ReceiptInputs:
     # On-disk hashes of the negotiation-round packs, in order (context-r1, context-r2).
     context_round_sha256: list[str] = field(default_factory=list)
     handoff_sha256: str | None = None  # on-disk hash of the handoff delivered to a plan node
+    # On-disk hash of the ComplexityAssessment; present exactly when the requested
+    # profile was ``auto`` and the run reached routing, or when measured complexity
+    # promoted an explicitly requested profile (the assessment is the promotion's
+    # evidence; older runs: absent).
+    complexity_sha256: str | None = None
+    # On-disk hash of the RunBudget; present on every run that resolved a profile
+    # (older runs: absent).
+    budget_sha256: str | None = None
+    # On-disk hash of the RoutingProposal the semantic resolver answered; present
+    # exactly when an ``ambiguous`` decision was resolved semantically — the
+    # proposal is the evidence of the pick (older runs: absent).
+    routing_proposal_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -51,6 +63,16 @@ class PlanRefs:
     workspace_descriptor_sha256: str | None = None
     graph_sha256: str | None = None
     installation_sha256: str | None = None
+    # On-disk hash of the CapabilityGraph built for the plan run (None in older runs).
+    capability_graph_sha256: str | None = None
+    # On-disk hash of the SemanticPlanProposal a tier-2 planner returned (None when
+    # no proposal was asked or the planner failed — the limitation says which).
+    semantic_proposal_sha256: str | None = None
+    # On-disk hash of the DecisionRecord a ``debate`` plan produced (None otherwise).
+    decision_sha256: str | None = None
+    # On-disk hash of the run's final PlanState snapshot (None when the run never
+    # reached a validated plan, or in runs older than the scheduler states).
+    plan_state_sha256: str | None = None
     plan_result_sha256: str | None = None  # None when the plan was not executed
 
 
@@ -75,6 +97,9 @@ class ExecutionReceipt:
     parent_run: str | None = None  # plan run, on the receipt of a plan node run
     plan_node: str | None = None  # node id, together with parent_run
     replay_of: str | None = None  # original run of a re-execute replay
+    # The plan run a ``resume`` continues: nodes it could prove intact were reused,
+    # the rest re-executed (per-node ``reused`` on the plan result).
+    resumed_from: str | None = None
     verification_sha256: str | None = None  # on-disk hash of the VerificationResult
     reproducibility: ReproducibilityInfo | None = None  # None => unknown (older runs)
     plan: PlanRefs | None = None  # required exactly when kind == "plan"
