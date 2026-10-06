@@ -50,13 +50,18 @@ class ForgeSpec:
     needs: str
     # The adapter's unavailability code; default derived from the provider id.
     unavailable_code: str = ""
+    # Other module names the same specialist answers to (the upstream
+    # sparkforge -> sparkforge_aws rename kept the 0.5.x line: an install may
+    # expose either name, and both are valid).
+    specialist_alternatives: tuple[str, ...] = ()
 
 
 FORGES: dict[str, ForgeSpec] = {
     "spark": ForgeSpec("spark", "Spark Forge", "spark-forge", SPARK_PYTHON_VAR,
-                       "theforge_sparkforge", "sparkforge.adapters.tools",
+                       "theforge_sparkforge", "sparkforge_aws.adapters.tools",
                        "Spark Forge needs an interpreter with sparkforge-aws and "
-                       "theforge-sparkforge-adapter"),
+                       "theforge-sparkforge-adapter",
+                       specialist_alternatives=("sparkforge.adapters.tools",)),
     "api": ForgeSpec("api", "API Forge", "api-forge", API_PYTHON_VAR,
                      "theforge_apiforge", "apiforge",
                      "API Forge needs Python 3.12"),
@@ -151,7 +156,12 @@ def check_forge(name: str, environ: Mapping[str, str] | None = None, *,
     if not value:
         raise ForgeUnavailable(missing_variable_reason(name))
     python = validate_interpreter(spec.variable, value)
-    failure = probe(python, (spec.adapter_module, spec.specialist_module))
+    names = (spec.specialist_module, *spec.specialist_alternatives)
+    failure: str | None = None
+    for module in names:
+        failure = probe(python, (spec.adapter_module, module))
+        if failure is None:
+            break
     if failure is not None:
         raise ForgeUnavailable(
             f"{spec.label} not importable with {python}: {failure} "

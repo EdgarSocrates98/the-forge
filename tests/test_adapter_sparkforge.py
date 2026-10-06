@@ -381,7 +381,7 @@ def test_recorded_snapshot_has_origin_version_and_tool_surface(snapshot: dict[st
     assert set(snapshot) == {"specialist_version", "recorded_at", "tools"}
     assert snapshot["specialist_version"] == "0.5.0"
     assert len(snapshot["recorded_at"]) == 10  # YYYY-MM-DD (UTC)
-    assert len(snapshot["tools"]) == 136
+    assert len(snapshot["tools"]) == 143
     for name, entry in snapshot["tools"].items():
         assert name.startswith("sparkforge_")
         assert set(entry) == {"annotations", "required"}

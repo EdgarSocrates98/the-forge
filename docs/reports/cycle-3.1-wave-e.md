@@ -42,3 +42,73 @@ Phase 37 (nested receipts, contrato aditivo).
   `--replay` — Doctor Data verifica run do `spark-forge` (passed e failed→
   partial), Doctor API verifica `api-forge` (passed); `OPS` do shell test ganha
   `verify`.
+
+## E.2 — intake upstream no Spark Forge + adapter handoff (Phases 13/14, seam do consumidor)
+
+- **Upstream (PR EdgarSocrates98/spark-forge-aws#129, merged)**: novo intake
+  `sparkforge/upstream-facts/v1` no `analyze pyspark` — flag `--upstream` no CLI
+  e campo `upstream` na tool `sparkforge_analyze_pyspark`. O documento é
+  evidência, nunca instrução: envelope `{schema, facts[]}` validado
+  estritamente (máx. 128 facts / 256 KiB), chaves imperativas recusadas
+  recursivamente (`prompt`, `command`, `objective`, …, variantes normalizadas),
+  provenance do documento reescrita com `artifact`/`artifact_sha256` do
+  arquivo ingerido, e o `filters_applied.upstream` ecoa o caminho consumido —
+  o único sinal observável de intake. Facts estrangeiros entram ao fim de
+  `items`, paginam e projetam como qualquer item e nunca contam em
+  `unresolved`. SDD `UPSTREAM_FACTS` completo (explore→ship, `sdd check` verde),
+  gate de wheel reproduzível (3514 testes) e lock de superfície regenerado.
+- **Merge pós-rename**: a `main` do especialista renomeou `sparkforge` →
+  `sparkforge_aws` no meio da branch; o merge re-aplicou o intake na árvore
+  nova e o handler `_cmd_analyze_pyspark` da main foi corrigido para propagar
+  `upstream` em `filters_applied` (o schema compartilhado das tools ficou
+  inalterado — declarar `upstream` ali mentiria nas outras 12).
+- **Adapter (`theforge_sparkforge` 0.3.0)**: `handoff.py` traduz
+  `theforge/Handoff/v1` → `sparkforge/upstream-facts/v1` (somente itens
+  `artifact` cujo `artifact_type` o capability declara em `consumes`; ids
+  `upstream:<sha256[:16]>` content-addressed; `provenance.extractor:
+  theforge/handoff`; `attrs.upstream` preserva provider/run/node/item). Em
+  `execute` o documento vai para `stage/upstream-facts.json` — com proteção de
+  colisão (`stage/upstream-facts-<n>.json` se o nome já existir no workspace) —
+  e chega ao nativo como `--file upstream=…`; o consumo é auditado por
+  `filters_applied.upstream` (specialist sem intake → limitation explícita, e
+  `no_input` também nota o handoff não consumido). Em replay nada é escrito: a
+  presença de `arguments.upstream` na gravação decide o consumo gravado.
+  `translate.py` devolve facts estrangeiros como evidence com `derived_from`
+  apontando para provider/run/node/item de origem e `epistemic` verbatim.
+  `native_pkg.py` resolve `sparkforge_aws` com fallback `sparkforge` (o rename
+  quebrou 5 call sites contra especialistas `0.5.0` novos). `record_execute`
+  ganhou `--handoff` para gravar runs que consumiram intake.
+- **Capacidade**: `pyspark.static-analysis` declara `accepts_handoff` +
+  `relations.consumes: [data.diagnostic-evidence]` — a aresta observe→engineer
+  do lado de dados, simétrica à do `api.analyze`.
+
+## E.3 — prova real de quatro Forges (Phases 15/16)
+
+- **Workflow** `.github/workflows/real-providers.yml` agora cobre os quatro
+  repositórios (checkouts `siblings/*`, venvs `.venv-spark`/`.venv-api`/
+  `.venv-dd`/`.venv-da`, probes de import e as quatro variáveis
+  `THEFORGE_REAL_*_PYTHON` + `THEFORGE_REAL_PROVIDERS_REQUIRED`). Mantido fora
+  do gate de PR: ambiente de especialista externo + cota de CI esgotada.
+- **`tests/real_providers.py`**: quatro specs de Forge; o Spark probeia
+  `sparkforge_aws.adapters.tools` com fallback a `sparkforge.adapters.tools`
+  (instalações pré-rename seguem servindo).
+- **`tests/test_cross_forge_real.py`**:
+  `test_four_provider_proof_observe_then_engineer_then_verify` registra os
+  quatro providers reais e executa um plano `--profile max` no workspace cross
+  inteiro. Nenhuma ordem é fixada no teste: ele confere que toda aresta
+  `produces→consumes` declarada é honrada — `forge-doctor-data` antes de
+  `spark-forge`, `forge-doctor-api` antes de `api-forge`, com a dependência
+  citando a regra `capability-graph`. Para cada cadeia: handoff do engineer
+  contém itens do Doctor (`origin.provider.id`), evidência chega com
+  `derived_from` + `epistemic` verbatim, e a verificação independente passa
+  conduzida pelo Doctor da cadeia (`verifier:forge-doctor-data` /
+  `forge-doctor-api` no `basis`). Síntese cobre os quatro runs; `explain` do
+  plano sem divergência; `graph` lista as arestas `produces`/`consumes`.
+- **Refresh legítimo de fixtures**: a `main` pós-merge mudou a superfície
+  nativa (136 → 143 tools, `_trust` no output, CLI `sparkforge-aws`).
+  `native_catalog.json` regravado e as cinco tools novas classificadas em
+  `UNCATALOGUED` por razão explícita (`agentops_*` → estado de run/sessão;
+  `doctor_agentic` → plumbing de host; `agentops_baseline` cai no
+  `readOnlyHint`). Gravações do cenário `cross` regravadas com o engine novo.
+- **Gates**: `pytest -m real_provider` 3/3 (live, quatro venvs), suíte offline
+  completa verde, ruff + mypy limpos.

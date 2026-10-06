@@ -372,14 +372,15 @@ UNCATALOGUED: tuple[tuple[tuple[str, ...], str], ...] = (
     ((_tool("judge"), _tool("fuse"), _tool("rules_lookup"), _tool("validate_output"),
       _tool("root_cause")),
      "consumed internally by the analysis actions or takes no workspace file input"),
-    ((_tool("case_*"), _tool("change_*"), _tool("debate_*"), _tool("decision_*"),
-      _tool("next_step"), _tool("playbook"), _tool("proof"), _tool("receipt_*"),
-      _tool("report_*"), _tool("resume"), _tool("runtime_detect"), _tool("sdd_*")),
-     "works on Spark Forge case, report or session state, not on workspace inputs"),
-    ((_tool("context_*"), _tool("knowledge_*"), _tool("pack_list"), _tool("policy_explain"),
-      _tool("telemetry_export")),
-     "host and agent plumbing (context gateway, knowledge, packs, policy, telemetry), not an "
-     "analysis"),
+    ((_tool("agentops_*"), _tool("case_*"), _tool("change_*"), _tool("debate_*"),
+      _tool("decision_*"), _tool("next_step"), _tool("playbook"), _tool("proof"),
+      _tool("receipt_*"), _tool("report_*"), _tool("resume"), _tool("runtime_detect"),
+      _tool("sdd_*")),
+     "works on Spark Forge case, run, report or session state, not on workspace inputs"),
+    ((_tool("context_*"), _tool("doctor_agentic"), _tool("knowledge_*"), _tool("pack_list"),
+      _tool("policy_explain"), _tool("telemetry_export")),
+     "host and agent plumbing (context gateway, doctor, knowledge, packs, policy, "
+     "telemetry), not an analysis"),
 )
 OPEN_WORLD_REASON = ("call AWS APIs over the network and write collection artifacts "
                      "(openWorldHint)")

@@ -56,7 +56,7 @@ def test_contract_variable_names() -> None:
     assert {name: (spec.provider_id, spec.variable, spec.adapter_module, spec.specialist_module)
             for name, spec in rp.FORGES.items()} == {
         "spark": ("spark-forge", rp.SPARK_PYTHON_VAR, "theforge_sparkforge",
-                  "sparkforge.adapters.tools"),
+                  "sparkforge_aws.adapters.tools"),
         "api": ("api-forge", rp.API_PYTHON_VAR, "theforge_apiforge", "apiforge"),
         "doctordata": ("forge-doctor-data", rp.DOCTORDATA_PYTHON_VAR,
                        "theforge_doctordata", "forge_doctor_data"),
@@ -157,7 +157,7 @@ def test_import_failure(interpreter: Path) -> None:
 def test_all_prerequisites_met(interpreter: Path) -> None:
     forge = rp.check_forge("spark", {rp.SPARK_PYTHON_VAR: str(interpreter)}, probe=_ok_probe)
     assert forge == rp.RealForge("spark-forge", interpreter, "theforge_sparkforge",
-                                 "sparkforge.adapters.tools")
+                                 "sparkforge_aws.adapters.tools")
     assert forge.argv() == [str(interpreter), "-m", "theforge_sparkforge"]
     assert forge.argv("--assume-specialist-version", "9.9.9")[-2:] == [
         "--assume-specialist-version", "9.9.9"]
@@ -267,7 +267,7 @@ def test_probe_spawn_error(interpreter: Path) -> None:
 def test_register_writes_isolated_user_providers_toml(
         interpreter: Path, user_config_dir: Path) -> None:
     spark = rp.RealForge("spark-forge", interpreter, "theforge_sparkforge",
-                         "sparkforge.adapters.tools")
+                         "sparkforge_aws.adapters.tools")
     api = rp.RealForge("api-forge", interpreter, "theforge_apiforge", "apiforge")
     entries = rp.register(user_config_dir, spark.entry(),
                           api.entry("--assume-specialist-version", "9.9.9"))
