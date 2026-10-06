@@ -48,6 +48,13 @@ PLANNER_ENTRY = {
     "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-planner.json")),
     "trust": "local",
 }
+# Debate variants: same fixture providers whose manifests carry a test-only
+# ``findings`` list — a stated proposal (first finding title) plus a risk —
+# so a debate e2e cites real positions instead of the mechanical f1 line.
+SPARK_DEBATE_ENTRY = dict(SPARK_PLAN_ENTRY, argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-spark-debate.json")))
+API_DEBATE_ENTRY = dict(API_PLAN_ENTRY, argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-api-debate.json")))
 # A referee provider for ``debate`` plans: its manifest's test-only ``decision`` key
 # makes ``execute`` emit the convention evidence (id="decision", claim=<node id>).
 REFEREE_ENTRY = {

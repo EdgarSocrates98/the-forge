@@ -102,10 +102,17 @@ def compose_decision(task: TaskSpec, plan: ExecutionPlan,
 def _option(execution: NodeExecution | None, node: PlanNode) -> DecisionOption:
     status = execution.outcome.status if execution is not None else "skipped"
     run_id = execution.outcome.run_id if execution is not None else None
-    claim = ""
+    claim, position, evidence, risks = "", "", [], []
     if execution is not None and execution.result is not None:
+        result = execution.result
         claim = (f"status={execution.outcome.status} capability={node.capability} "
                  f"action={node.action}")
+        if result.findings:
+            position = result.findings[0].title
+        evidence = [e.id for e in result.evidence]
+        risks = [f"{f.id}: {f.title}" for f in result.findings
+                 if f.severity in ("high", "critical")]
     return DecisionOption(node=node.id, provider=node.provider,
                           capability=node.capability, status=status, run_id=run_id,
-                          claim=claim)
+                          claim=claim, position=position, evidence=evidence,
+                          risks=risks)

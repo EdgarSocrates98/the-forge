@@ -529,6 +529,9 @@ def _decision_lines(decision: dict[str, Any]) -> list[str]:
     lines = _labelled("Options:", [
         f"{_clean(o.get('node', '?'))} {_clean(o.get('provider', '?'))}/"
         f"{_clean(o.get('capability', '?'))} -> {_clean(o.get('status', '?'))}"
+        + (f"  {_detail(o['position'])}" if o.get("position") else "")
+        + (f"  (risks: {_clean('; '.join(str(r) for r in o['risks']))})"
+           if o.get("risks") else "")
         for o in decision.get("options") or []])
     chosen = _clean(decision.get("chosen", "?"))
     rejected = ", ".join(_clean(r) for r in _list(decision.get("rejected"))) or "none"

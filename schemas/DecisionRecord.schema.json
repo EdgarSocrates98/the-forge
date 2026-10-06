@@ -37,11 +37,26 @@
           "claim": {
             "type": "string"
           },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "node": {
+            "type": "string"
+          },
+          "position": {
             "type": "string"
           },
           "provider": {
             "type": "string"
+          },
+          "risks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "run_id": {
             "anyOf": [

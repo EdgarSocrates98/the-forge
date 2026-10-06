@@ -312,7 +312,14 @@ class PlanResult:
 
 @dataclass(frozen=True, kw_only=True)
 class DecisionOption:
-    """One option weighed in a debate: a proposer node and its outcome claim."""
+    """One option weighed in a debate: a proposer node and its outcome claim.
+
+    ``position`` is the proposer's stated proposal — the title of its first
+    finding, verbatim; ``evidence`` the ids it produced; ``risks`` its
+    ``high``/``critical`` findings as ``"<id>: <title>"``. The record cites
+    each position structurally: the core reports what the proposer
+    asserted, never a paraphrase.
+    """
 
     node: str
     provider: str
@@ -320,6 +327,9 @@ class DecisionOption:
     status: NodeStatus
     run_id: str | None = None
     claim: str = ""  # the proposer's outcome line ("status=… capability=… action=…")
+    position: str = ""  # first finding title, verbatim
+    evidence: list[str] = field(default_factory=list)  # evidence ids produced
+    risks: list[str] = field(default_factory=list)  # "<id>: <title>" high/critical findings
 
 
 @dataclass(frozen=True, kw_only=True)

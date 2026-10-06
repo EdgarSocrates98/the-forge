@@ -16,8 +16,10 @@ from typing import Any
 import pytest
 
 from helpers import (
+    API_DEBATE_ENTRY,
     API_PLAN_ENTRY,
     REFEREE_ENTRY,
+    SPARK_DEBATE_ENTRY,
     SPARK_PLAN_ENTRY,
     bad_entry,
     make_workspace,
@@ -117,7 +119,10 @@ def _decision_evidence(claim: str, subject: str = "rationale") -> Evidence:
 def test_decision_record_of_a_resolved_debate() -> None:
     a, b, ref = _debate()
     executions = [
-        _exec(a, findings=[Finding(id="f1", title="proposal A")]),
+        _exec(a, evidence=[Evidence(id="e1", epistemic="observed", subject="s",
+                                    claim="c", producer=P)],
+              findings=[Finding(id="f1", title="proposal A"),
+                        Finding(id="r1", title="risk A", severity="high")]),
         _exec(b, findings=[Finding(id="f1", title="proposal B")]),
         _exec(ref, evidence=[_decision_evidence("a", "a has the stronger evidence")],
               handoff=_handoff("a", ref)),
@@ -128,8 +133,14 @@ def test_decision_record_of_a_resolved_debate() -> None:
     assert record.confidence == "high" and record.limitations == []
     assert record.question == TASK.intent and record.referee == "ref"
     assert {o.node for o in record.options} == {"a", "b"}
+    by_node = {o.node: o for o in record.options}
+    assert by_node["a"].position == "proposal A"  # first finding title, verbatim
+    assert by_node["a"].evidence == ["e1"]
+    assert by_node["a"].risks == ["r1: risk A"]
+    assert by_node["b"].position == "proposal B" and by_node["b"].risks == []
     assert record.evidence == ["a:e1"]  # the items the referee received, by origin
-    assert sorted(record.tradeoffs) == ["a: f1: proposal A", "b: f1: proposal B"]
+    assert sorted(record.tradeoffs) == ["a: f1: proposal A", "a: r1: risk A",
+                                        "b: f1: proposal B"]
 
 
 def test_decision_record_is_unresolved_without_the_convention() -> None:
@@ -351,6 +362,64 @@ def test_debate_e2e_without_the_convention_is_unresolved(tmp_path: Path) -> None
     assert any("did not declare" in n for n in decision["limitations"])
     assert out.result.unknowns == decision["unknowns"]
     _assert_closed(store, out.run_id, "ok")
+
+
+def test_debate_e2e_cites_both_positions(tmp_path: Path) -> None:
+    """Wave O concrete proof — the canonical cross-forge question: 'does this
+    transformation belong in the Spark pipeline or the API?'. Each proposer's
+    position, evidence and risks land on its DecisionOption verbatim; the
+    record cites both, never a majority vote."""
+    executor, store = _executor(tmp_path, [SPARK_DEBATE_ENTRY, API_DEBATE_ENTRY,
+                                           REFEREE_ENTRY])
+    plan_file = _plan_file(tmp_path / "plan.json", [
+        _file_node("n1", "fixture-spark", "spark.performance", "diagnose",
+                   role="proposer"),
+        _file_node("n2", "fixture-api", "api.contract", "review", role="proposer"),
+        _file_node("ref", "fixture-referee", "judge.decide", "decide", "n1", "n2",
+                   role="referee")], "debate")
+    out = executor.run(PlanCommand(
+        intent="essa transformação deve ficar no pipeline Spark ou na API?",
+        profile="max", plan_file=plan_file, execute=True))
+    assert out.status == "ok" and out.result is not None
+    decision = store.read(out.run_id, "decision")
+    options = {o["node"]: o for o in decision["options"]}
+    # Both positions cited, verbatim — proposal, evidence and risks each.
+    assert options["n1"]["position"] == \
+        "keep the transformation in the Spark pipeline"
+    assert options["n1"]["evidence"] == ["e1"]
+    assert options["n1"]["risks"] == [
+        "r1: API-layer transforms couple the contract to data volume"]
+    assert options["n2"]["position"] == \
+        "move the transformation into the API layer"
+    assert options["n2"]["evidence"] == ["e1"]
+    assert options["n2"]["risks"] == []  # 'medium' is a tradeoff, not a risk
+    assert sorted(decision["tradeoffs"]) == [
+        "n1: p1: keep the transformation in the Spark pipeline",
+        "n1: r1: API-layer transforms couple the contract to data volume",
+        "n2: p1: move the transformation into the API layer",
+        "n2: r1: pipeline placement adds a redeploy per schema change",
+    ]
+    # The referee's choice follows the evidence handed to it — recorded, never
+    # invented by the core.
+    assert decision["chosen"] == "n1" and decision["rejected"] == ["n2"]
+    assert decision["rationale"] == \
+        "n1's proposal is the one with evidence-backed tradeoffs"
+    # The referee received every item the proposers produced (outcome,
+    # findings, evidence, verification) — the full record of what the
+    # choice weighed.
+    assert decision["evidence"] == [
+        "n1:e1", "n1:outcome", "n1:p1", "n1:r1", "n1:verification",
+        "n2:e1", "n2:outcome", "n2:p1", "n2:r1", "n2:verification"]
+    receipt = _assert_closed(store, out.run_id, "ok")
+    assert receipt.plan is not None
+    # The rendered explain report shows the positions, not just the winner.
+    from theforge.cli import render
+    from theforge.contracts import to_dict
+    from theforge.explain import build_explain_report
+    text = render.explain_report(to_dict(build_explain_report(store, out.run_id)))
+    assert "keep the transformation in the Spark pipeline" in text
+    assert "move the transformation into the API layer" in text
+    assert "Decision:    n1" in text
 
 
 def test_delegate_e2e_runs_independent_specialists(tmp_path: Path) -> None:

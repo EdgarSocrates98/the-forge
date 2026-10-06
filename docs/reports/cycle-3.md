@@ -817,3 +817,40 @@ credenciais ou execução de terceiros sem revisão manual reabrem o ADR. O
 ciclo 3 não disparou nenhuma das três condições (só superfícies
 consultivas, adapters read-only/offline, trust manual) — a decisão de não
 implementar sandbox de SO permanece, registrada no próprio ADR.
+
+## Wave O — Prova de debate cross-forge
+
+O modo `debate` da Wave E já executava proposer→referee; a Wave O torna a
+prova concreta e as posições citáveis estruturalmente.
+
+**`DecisionOption` enriquecido** (campos aditivos, `v1` sem bump): além de
+`node`/`provider`/`capability`/`status`/`run_id`/`claim`, cada opção agora
+carrega `position` (título do primeiro finding do proposer, verbatim — a
+proposta declarada), `evidence` (ids de evidência que produziu) e `risks`
+(findings `high`/`critical` como `"<id>: <title>"`). O record continua sem
+opinião do core: cita o que cada proposer afirmou, e a escolha segue sendo
+a convenção auditável do referee (`evidence id="decision"`) — evidence,
+constraints, risk e architecture são eixo do referee, registrados em
+`rationale` verbatim; nunca "maioria de agentes".
+
+**Prova e2e** (`test_debate_e2e_cites_both_positions`): a pergunta
+canônica — "essa transformação deve ficar no pipeline Spark ou na API?" —
+com `fixture-spark` e `fixture-api` como proposers (novas variantes de
+manifest com a chave test-only `findings`: proposta + risco declarados) e
+o referee fixture decidindo `n1`. O teste afirma as duas posições no
+record (position/evidence/risks por opção), os tradeoffs dos dois lados, a
+evidência que o referee recebeu (outcome + findings + evidência +
+verificação de cada proposer) e a renderização das posições no explain —
+não só o vencedor.
+
+**Explain.** `render._decision_lines` passa a mostrar `position` e
+`risks` por opção: a saída cita ambas as posições, como a spec pede.
+
+**Fixture.** `fixture_forge.py` aceita a chave test-only `findings` (lista
+que substitui o `f1` mecânico; `evidence_ids` ausentes são ligados à
+evidência emitida) — o mesmo mecanismo opt-in das chaves `decision`,
+`verdict` e `resolution`.
+
+**Testes.** O e2e novo + asserções de posição/risco no teste unitário de
+`compose_decision`; seed de fuzz do `DecisionRecord` cobre os campos
+novos; schema regenerado (`DecisionRecord.schema.json`).
