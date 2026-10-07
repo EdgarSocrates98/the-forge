@@ -204,13 +204,41 @@ def test_plan_run_checks_its_refs_telemetry_and_every_node_run(
     before = _snapshot(store.runs_dir)
     report = verify_run_hashes(store, plan_run)
     assert report.divergences == [] and report.unrecorded == []
-    for name in ("task", "workspace-descriptor", "plan", "graph", "plan-result",
-                 "telemetry"):
+    for name in (
+        "task",
+        "workspace-descriptor",
+        "plan",
+        "graph",
+        "plan-result",
+        "global-stop",
+        "telemetry",
+    ):
         assert name in report.checked
     for child in nodes:
         for name in ("receipt", "result", "verification", "telemetry"):
             assert f"{child}/{name}" in report.checked
     assert _snapshot(store.runs_dir) == before
+
+
+
+
+def test_plan_run_detects_tampered_global_stop(cross: CrossWorkspace) -> None:
+    store, plan_run, _ = _plan_run(cross.root)
+    receipt = store.read_contract(plan_run, "receipt", ExecutionReceipt)
+    assert receipt.plan is not None
+    expected = receipt.plan.global_stop_sha256
+    assert expected is not None
+    _rewrite(
+        store,
+        plan_run,
+        "global-stop",
+        lambda data: data.update(reasons=["forged stop rationale"]),
+    )
+    report = verify_run_hashes(store, plan_run)
+    divergence = next(d for d in report.divergences if d.artifact == "global-stop")
+    assert divergence.kind == "modified"
+    assert divergence.expected == expected
+    assert divergence.actual == store.persisted_sha256(plan_run, "global-stop")
 
 
 def test_plan_run_detects_an_altered_node_receipt_and_plan_telemetry(
