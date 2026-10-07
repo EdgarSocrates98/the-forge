@@ -50,3 +50,8 @@ reserva `plan_nodes × retry.max_attempts` e registra a ampliação em
 `execute`. Quando ainda há gaps e esse teto foi atingido, a decisão global
 usa `stop_budget_exhausted`; um plano já completo não é reclassificado apenas
 porque consumiu todo o teto.
+
+
+`budget_remaining` é contado em **slots de chamadas provider `execute`**
+do `RunBudget` do plano. Não representa dinheiro, tokens ou segundos; essas
+dimensões continuam nos receipts/telemetria de economy.
