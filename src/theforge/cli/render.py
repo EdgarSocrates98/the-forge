@@ -110,6 +110,18 @@ def provider_detail(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def registry_sources(data: dict[str, Any]) -> str:
+    lines = [f"local (authoritative): {data['local_entries']} installed providers"]
+    for s in data["sources"]:
+        line = f"{_clean(s['id']):<20} {_clean(s['kind']):<11} {_clean(s['status']):<12}"
+        if s["entries"] is not None:
+            line += f" entries={s['entries']} registry={_clean(s['registry'] or '-')}"
+        if s["detail"]:
+            line += f"  {_clean(s['detail'])}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def capabilities(data: dict[str, Any]) -> str:
     rows = data["capabilities"]
     if not rows:

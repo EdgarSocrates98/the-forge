@@ -28,6 +28,7 @@ from theforge.contracts import (
     ExecutionResult,
     ExplainReport,
     ForgeManifest,
+    ForgeRegistryEntry,
     Handoff,
     HealthReport,
     InstallationPlan,
@@ -38,6 +39,7 @@ from theforge.contracts import (
     ProjectIntel,
     ProviderPerformance,
     ProviderSurfaceIdentity,
+    RegistryDocument,
     Request,
     ResolveRequest,
     Response,
@@ -76,6 +78,8 @@ EXPORTED: tuple[type[Any], ...] = (
     EconomyRollup,
     # capability negotiation v2 (cycle 4, wave A)
     CapabilityRequirement, CapabilityOffer, CapabilityNegotiationResult,
+    # registry metadata (cycle 4, wave C)
+    ForgeRegistryEntry, RegistryDocument,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open

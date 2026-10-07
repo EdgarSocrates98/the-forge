@@ -384,6 +384,33 @@ SEEDS: dict[str, dict[str, Any]] = {
         "limitations": ["l"], "policy_conflicts": ["trust:local"],
         "surface_fingerprint": SHA, "evidence": ["e"],
     },
+    # registry metadata (cycle 4, wave C)
+    "ForgeRegistryEntry": {
+        "provider": "acme-forge", "version": "1.2.3",
+        "publisher": {"id": "acme", "organization": "Acme",
+                      "repository": "https://github.com/acme/x", "key_id": "k1"},
+        "description": "d", "manifest_url": "https://reg.example/m.json",
+        "manifest_sha256": SHA,
+        "distribution": {"kind": "pip-package", "package": "acme-forge",
+                         "version": "1.2.3", "sha256": SHA},
+        "protocols": ["forge/v1"], "capabilities": ["data.pipeline"],
+        "platforms": ["any"],
+        "runtime": {"python": ">=3.11", "offline": True,
+                    "requires_network": False, "requires_credentials": False},
+        "hashes": {"wheel": SHA},
+        "signatures": [{"key_id": "k1", "algorithm": "ed25519",
+                        "signature": "sig", "signed": "manifest"}],
+        "source_repository": "https://github.com/acme/x", "license": "Apache-2.0",
+        "security_contact": "sec@acme.example", "released_at": "2026-01-01",
+        "limitations": ["l"],
+    },
+    "RegistryDocument": {
+        "registry": {"id": "test-registry", "name": "Test",
+                     "url": "https://reg.example"},
+        "produced_at": "2026-01-01T00:00:00Z",
+        "entries": [{"provider": "acme-forge", "version": "1.2.3"}],
+        "limitations": ["l"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

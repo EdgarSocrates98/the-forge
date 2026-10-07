@@ -22,7 +22,14 @@ from theforge.forger.replay import replay
 from theforge.intel import load_decisions
 from theforge.metrics import load_performance
 from theforge.negotiation import negotiate_all
-from theforge.registry import Registry, RegistryRecord, check_health
+from theforge.registry import (
+    Registry,
+    RegistryRecord,
+    check_health,
+    load_source_specs,
+    local_document,
+    read_sources,
+)
 from theforge.routing.signals import normalize_tokens
 from theforge.runs import RunStore
 from theforge.security.redact import redact
@@ -186,6 +193,28 @@ def cmd_registry_show(args: argparse.Namespace) -> int:
             "manifest": to_dict(record.manifest) if record.manifest else None,
             "manifest_sha256": record.manifest_sha256}
     _emit(args, data, render.provider_detail)
+    return 0
+
+
+def cmd_registry_sources(args: argparse.Namespace) -> int:
+    """Registry sources (cycle 4, wave C): the local installed registry is the
+    authoritative source; configured sources are untrusted metadata only."""
+    forge_dir = find_forge_dir(_root(args))
+    warnings: list[str] = []
+    specs = load_source_specs(forge_dir, warnings=warnings)
+    for warning in warnings:
+        print(f"theforge: warning: {warning}", file=sys.stderr)
+    registry = Registry(forge_dir)
+    local = local_document(registry.records())
+    _warn(registry)
+    sources = [{
+        "id": read.spec.id, "kind": read.spec.kind, "enabled": read.spec.enabled,
+        "status": read.status, "detail": read.detail,
+        "entries": len(read.document.entries) if read.document else None,
+        "registry": read.document.registry.id if read.document else None,
+    } for read in read_sources(specs)]
+    _emit(args, {"local_entries": len(local.entries), "sources": sources},
+          render.registry_sources)
     return 0
 
 

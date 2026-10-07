@@ -70,6 +70,10 @@ def build_parser() -> argparse.ArgumentParser:
         .set_defaults(handler=commands.cmd_registry_list)
     registry.add_parser("refresh", parents=[common]) \
         .set_defaults(handler=commands.cmd_registry_refresh)
+    registry.add_parser("sources", parents=[common],
+                        help="configured registry sources (untrusted metadata; "
+                             "the local installed registry stays authoritative)") \
+        .set_defaults(handler=commands.cmd_registry_sources)
     show = registry.add_parser("show", parents=[common])
     show.add_argument("provider_id")
     show.set_defaults(handler=commands.cmd_registry_show)

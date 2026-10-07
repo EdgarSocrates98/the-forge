@@ -10,6 +10,7 @@
 | `registry list` | providers (usa o cache do usuário) | 0 |
 | `registry refresh` | re-`describe` de todos os providers; remove o cache legado `.forge/registry` com aviso | 0 |
 | `registry show <id>` | manifest, argv e hash | 0 / 2 se desconhecido |
+| `registry sources` | fontes de registry configuradas (`registries.toml`): status por fonte + projeção do registry local (autoritativo); metadata não-confiável, nunca instala — [registry-sources.md](registry-sources.md) | 0 |
 | `capabilities list [--provider id]` | capabilities declaradas, com aliases, depreciação (`replaced_by`) e `declared_by`; aviso em stderr para cada depreciada | 0 |
 | `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
 | `capabilities negotiate --requirement <req.json>` | negocia um `CapabilityRequirement/v1` contra os manifests em cache: resultado dimensional por provider (`FULL`/`PARTIAL`/`UNSUPPORTED`/`INCOMPATIBLE`/`UNRESOLVED`), offline, sem disparar providers — [capability-negotiation.md](capability-negotiation.md) | 0 |
