@@ -73,3 +73,22 @@ def test_partial_matrix_execution_remains_blocked() -> None:
         ]
     })
     assert result["state"] == REMOTE_BLOCKED
+
+
+def test_skipped_required_job_is_not_remote_verified() -> None:
+    result = classify({
+        "jobs": [
+            job(
+                "linux",
+                "success",
+                steps=[{"name": "pytest", "conclusion": "success"}],
+            ),
+            job(
+                "windows",
+                "skipped",
+                steps=[{"name": "pytest", "conclusion": "skipped"}],
+            ),
+        ]
+    })
+    assert result["state"] == REMOTE_BLOCKED
+    assert "windows" in result["blocked_jobs"]
