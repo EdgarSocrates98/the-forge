@@ -31,3 +31,12 @@ um candidato concreto sendo avaliado. Portanto:
 
 `stop_no_expected_gain` fica reservado para uma decisão em que um candidato real
 tenha sido avaliado e não ofereça evidência incremental declarada.
+
+
+## Falhas são incerteza, não evidência
+
+Falhas de nós também são unresolved. Um nó `refused`, `provider_failure`,
+`no_route` ou `skipped` é materializado como
+`node:<id>:<status>` na decisão global. Assim, um plano parcial/falho nunca
+pode terminar como `stop_sufficient_evidence` apenas porque nenhum provider
+retornou uma string em `unknowns`.
