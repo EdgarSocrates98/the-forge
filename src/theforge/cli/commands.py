@@ -551,6 +551,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         "installation": store.read_optional(outcome.run_id, "installation"),
         "decision": store.read_optional(outcome.run_id, "decision"),
         "economy": store.read_optional(outcome.run_id, "economy"),
+        "global_stop": store.read_optional(outcome.run_id, "global-stop"),
         "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
         "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
         "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),
