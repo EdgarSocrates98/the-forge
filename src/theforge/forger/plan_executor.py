@@ -36,8 +36,8 @@ from typing import Final
 from theforge.capability_graph import build_capability_graph
 from theforge.complexity import ComplexityConfig, assess, load_complexity_config, task_inputs
 from theforge.context import scan_workspace
-from theforge.control import StopSignals, decide_global_stop
 from theforge.context.scan import WorkspaceScan
+from theforge.control import StopSignals, decide_global_stop
 from theforge.contracts import (
     CapabilityRequirement,
     Confidence,
