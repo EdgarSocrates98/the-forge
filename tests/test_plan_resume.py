@@ -304,6 +304,9 @@ def test_retry_policy_drives_a_second_attempt(tmp_path: Path) -> None:
                for n in receipt.limitations)
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     assert telemetry.providers_executed.value == 2
+    budget = store.read(out.run_id, "budget")
+    assert budget["provider_calls"] == 3
+    assert any("retry reserve" in item for item in budget["adjustments"])
 
 
 def test_retry_is_off_by_default(tmp_path: Path) -> None:
