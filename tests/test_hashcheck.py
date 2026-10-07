@@ -197,7 +197,8 @@ def _plan_run(root: Path) -> tuple[RunStore, str, PlanResult]:
 
 
 def test_plan_run_checks_its_refs_telemetry_and_every_node_run(
-        cross: CrossWorkspace) -> None:
+    cross: CrossWorkspace,
+) -> None:
     store, plan_run, result = _plan_run(cross.root)
     nodes = [n.run_id for n in result.nodes]
     assert all(nodes)
@@ -219,11 +220,9 @@ def test_plan_run_checks_its_refs_telemetry_and_every_node_run(
             assert f"{child}/{name}" in report.checked
     assert _snapshot(store.runs_dir) == before
 
-
-
-
 def test_joint_plan_result_receipt_tamper_cannot_hide_global_stop_link(
-        cross: CrossWorkspace) -> None:
+    cross: CrossWorkspace,
+) -> None:
     store, plan_run, _ = _plan_run(cross.root)
     result_path = store.run_dir(plan_run) / "plan-result.json"
     receipt_path = store.run_dir(plan_run) / "receipt.json"
