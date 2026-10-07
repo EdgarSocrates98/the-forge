@@ -84,7 +84,7 @@ class ContextBudgetRecommendation:
     current_budget_bytes: int
     suggested_budget_bytes: int
     maturity: Literal["warming", "mature"]
-    basis: list[str] = field(default_factory=list)
+    basis: list[str] = field(metadata={"min_items": 1})
     advisory: Literal[True] = True
 
     def __post_init__(self) -> None:
