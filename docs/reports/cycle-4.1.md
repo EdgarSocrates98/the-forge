@@ -71,6 +71,9 @@ Static/mechanical checks performed against the branch include:
   evidence-based release checklist;
 - a stdlib-only remote validation classifier distinguishes quota/runner blockage
   from executed test failure and can act as a release gate with `--require-verified`.
+- structural validation at HEAD `5a9a3cc0e1a6bbaca02a17d398e5f1fd674e0a8b`: 119/119
+  tests categorized, 54/54 published schemas present, 29/29 root docs linked and
+  48/48 ADRs indexed; no missing entries detected.
 
 ## Intentionally deferred
 
