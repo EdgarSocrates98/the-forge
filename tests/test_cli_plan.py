@@ -81,6 +81,11 @@ def test_plan_execute_runs_the_proof_task_with_the_fixtures(
     assert code == 0, err
     data = json.loads(out)
     assert data["status"] == "ok" and data["error"] is None
+    assert data["global_stop"]["run_id"] == data["run_id"]
+    assert data["global_stop"]["action"] in (
+        "stop_sufficient_evidence",
+        "stop_no_expected_gain",
+    )
     result = data["result"]
     assert result["order"] == ["n1", "n2"]
     assert [(n["node"], n["status"]) for n in result["nodes"]] == [("n1", "ok"), ("n2", "ok")]
@@ -94,6 +99,7 @@ def test_plan_execute_runs_the_proof_task_with_the_fixtures(
     assert f"-> ok run={result['nodes'][0]['run_id']}" in text
     assert "Handoffs:    n1 -> n2: " in text and "Synthesis:   n1 ok: " in text
     assert "Plan result: ok  order: n1, n2" in text and "nothing was executed" not in text
+    assert "Global stop:" in text and "information_gain=" in text
 
 
 def test_plan_help_cites_the_intent_order_rule_and_the_plan_file(
