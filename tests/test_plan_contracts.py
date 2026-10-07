@@ -16,6 +16,7 @@ from theforge.contracts import (
 )
 from theforge.contracts import types as T
 from theforge.contracts.codes import Codes
+from theforge.contracts.integrity import validate_plan_result_links
 from theforge.contracts.handoff import HANDOFF_SCHEMA, Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.plan import (
     PLAN_RESULT_SCHEMA,
@@ -437,3 +438,16 @@ def test_plan_result_global_stop_hash_is_validated() -> None:
             plan_result_dict(global_stop_sha256="not-a-sha"),
             strict=True,
         )
+
+
+def test_plan_result_link_must_match_persisted_global_stop() -> None:
+    result = from_dict(
+        PlanResult,
+        plan_result_dict(global_stop_sha256="a" * 64),
+        strict=True,
+    )
+    validate_plan_result_links(result, global_stop_sha256="a" * 64)
+    with pytest.raises(ContractError, match="does not match"):
+        validate_plan_result_links(result, global_stop_sha256="b" * 64)
+    with pytest.raises(ContractError, match="requires a persisted"):
+        validate_plan_result_links(result, global_stop_sha256=None)
