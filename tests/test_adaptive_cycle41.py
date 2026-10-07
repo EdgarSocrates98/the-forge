@@ -59,6 +59,8 @@ def test_roi_never_crosses_surface_or_family() -> None:
     assert roi.cited_items == 2
     assert roi.utilization_ratio == pytest.approx(0.1)
     assert roi.maturity == "cold"
+    assert roi.delivered_runs == 2
+    assert roi.verified_runs == 2
 
 
 def test_unknown_measurements_remain_a_limitation() -> None:
@@ -87,6 +89,23 @@ def test_roi_recommendation_is_advisory_and_conservative() -> None:
     assert rec.suggested_budget_bytes == 100_000
     assert rec.maturity == "mature"
     assert any("causality is not inferred" in item for item in rec.basis)
+
+
+def test_unverified_history_never_recommends_context_reduction() -> None:
+    roi = build_context_roi(
+        [
+            obs("r1"),
+            obs("r2"),
+            obs("r3", verified="failed"),
+            *[obs(f"r{i}") for i in range(4, 9)],
+        ],
+        provider="spark",
+        capability="data.performance",
+        surface_fingerprint="s1",
+    )
+    assert roi.maturity == "mature"
+    assert roi.verified_runs < roi.runs
+    assert recommend_context_budget(roi, current_budget_bytes=200_000) is None
 
 
 def test_high_utilization_does_not_recommend_reduction() -> None:
