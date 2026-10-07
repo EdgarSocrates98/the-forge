@@ -143,6 +143,7 @@ def eval_obs(
         task_family="data.spark.performance",
         surface_fingerprint=surface,
         status="ok",
+        context_bytes=1000 if provider == "spark-a" else 500,
         verification=verified,  # type: ignore[arg-type]
     )
 
@@ -189,6 +190,34 @@ def test_time_holdout_excludes_hypothesis_history() -> None:
     assert result.observations == 2
     assert result.verified_observations == 2
     assert result.state == "eligible_for_review"
+
+def test_one_sided_history_never_becomes_reviewable() -> None:
+    result = advance_experiment(
+        experiment(minimum_runs=4, minimum_verified_runs=4),
+        [
+            eval_obs("r1", "spark-a", "sa"),
+            eval_obs("r2", "spark-a", "sa"),
+            eval_obs("r3", "spark-a", "sa"),
+            eval_obs("r4", "spark-a", "sa"),
+        ],
+    )
+    assert result.state == "observing"
+    assert any("both champion and challenger" in reason for reason in result.reasons)
+
+
+def test_challenger_quality_regression_blocks_review() -> None:
+    result = advance_experiment(
+        experiment(minimum_runs=4, minimum_verified_runs=3),
+        [
+            eval_obs("r1", "spark-a", "sa"),
+            eval_obs("r2", "spark-a", "sa"),
+            eval_obs("r3", "spark-b", "sb"),
+            eval_obs("r4", "spark-b", "sb", verified="failed"),
+        ],
+    )
+    assert result.state == "observing"
+    assert any("verification rate is worse" in reason for reason in result.reasons)
+
 
 def test_surface_change_invalidates_experiment() -> None:
     result = advance_experiment(
