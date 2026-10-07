@@ -222,6 +222,9 @@ deterministic tie-break
 ```
 
 O histórico nunca cruza uma mudança de `surface_fingerprint` silenciosamente.
+Retries também entram no budget global: em planos, o teto de provider calls reserva
+`plan_nodes × retry.max_attempts`, enquanto a telemetria registra apenas executes
+realmente efetuados.
 
 ### Trace federation
 
