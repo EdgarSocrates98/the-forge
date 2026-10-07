@@ -29,8 +29,13 @@ class StopSignals:
             raise ValueError("stop signals: repeated_failures cannot be negative")
         if self.repeated_failure_limit <= 0:
             raise ValueError("stop signals: repeated_failure_limit must be positive")
-        if self.budget_remaining is not None and self.budget_remaining < 0:
-            raise ValueError("stop signals: budget_remaining cannot be negative")
+        if self.budget_remaining is not None:
+            if isinstance(self.budget_remaining, bool) or not isinstance(
+                self.budget_remaining, int
+            ):
+                raise ValueError("stop signals: budget_remaining must be an integer")
+            if self.budget_remaining < 0:
+                raise ValueError("stop signals: budget_remaining cannot be negative")
 
 
 def expected_information_gain(signals: StopSignals) -> InformationGain:
