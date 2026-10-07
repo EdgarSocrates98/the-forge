@@ -254,6 +254,25 @@ def test_challenger_quality_regression_blocks_review() -> None:
     assert any("verification rate is worse" in reason for reason in result.reasons)
 
 
+def test_discovery_cutoff_is_used_when_evaluation_cutoff_is_absent() -> None:
+    exp = experiment(
+        discovery_before="2026-10-07T12:00:00Z",
+        minimum_runs=2,
+        minimum_verified_runs=2,
+    )
+    result = advance_experiment(
+        exp,
+        [
+            eval_obs("hypothesis-a", "spark-a", "sa", created_at="2026-10-07T11:00:00Z"),
+            eval_obs("hypothesis-b", "spark-b", "sb", created_at="2026-10-07T11:01:00Z"),
+            eval_obs("eval-a", "spark-a", "sa", created_at="2026-10-07T13:00:00Z"),
+            eval_obs("eval-b", "spark-b", "sb", created_at="2026-10-07T13:01:00Z"),
+        ],
+    )
+    assert result.observations == 2
+    assert result.state == "eligible_for_review"
+
+
 def test_holdout_uses_temporal_not_lexical_ordering() -> None:
     result = advance_experiment(
         experiment(
