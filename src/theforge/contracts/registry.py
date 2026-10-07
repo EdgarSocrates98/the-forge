@@ -99,6 +99,7 @@ class ForgeRegistryEntry:
     runtime: RuntimeRequirements | None = None
     hashes: dict[str, str] = field(default_factory=dict)   # name -> sha256 hex
     signatures: list[SignatureRef] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)  # pinned "name==ver"
     source_repository: str | None = None
     license: str | None = None
     security_contact: str | None = None

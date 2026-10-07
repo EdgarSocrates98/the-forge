@@ -7,6 +7,12 @@
       },
       "type": "array"
     },
+    "dependencies": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
     "description": {
       "anyOf": [
         {

@@ -427,6 +427,26 @@ SEEDS: dict[str, dict[str, Any]] = {
         "runtime": {"offline": True, "requires_network": False},
         "limitations": ["l"],
     },
+    # governed install planning (cycle 4, wave F)
+    "InstallationPlanV2": {
+        "producer": P, "created_at": "t", "provider": "acme-forge",
+        "version": "1.2.3", "source": "feed", "registry": "reg",
+        "distribution": {"kind": "pip-package", "package": "acme-forge",
+                         "version": "1.2.3", "sha256": SHA},
+        "expected_hashes": {"manifest": SHA},
+        "signature": {"key_id": "k", "algorithm": "ed25519", "signature": "s"},
+        "runtime": {"offline": True, "requires_network": False},
+        "environment": "venv:providers/acme-forge-1.2.3",
+        "dependencies": ["dep==1.0"], "permissions": ["network"],
+        "post_install_checks": ["provider-check", "health"],
+        "rollback": {"action": "remove-new"},
+        "steps": [{"stage": s, "description": "d", "status": "pending"}
+                  for s in ("plan", "approval", "download", "verify",
+                            "isolated-install", "provider-check",
+                            "surface-fingerprint", "health")],
+        "approval": {"required": True, "granted": False},
+        "limitations": ["l"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

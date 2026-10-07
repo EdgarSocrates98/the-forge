@@ -226,6 +226,43 @@ def discovery(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def install_plan(data: dict[str, Any]) -> str:
+    p = data["plan"]
+    lines = [
+        f"install plan (v2, planning_only={p['planning_only']}): "
+        f"{_clean(p['provider'])} {_clean(p['version'])}",
+        f"  source={_clean(p['source'])} registry={_clean(p.get('registry') or '-')}",
+        f"  distribution: {_clean(p['distribution'].get('kind') or '-')}"
+        + (f" {_clean(p['distribution']['package'])}=={_clean(p['distribution']['version'])}"
+           if p['distribution'].get('package') else ""),
+        f"  environment: {_clean(p['environment'])}",
+        f"  expected hashes: {len(p['expected_hashes'])}  "
+        f"signature: {_clean('declared' if p.get('signature') else 'none')}",
+    ]
+    if p.get("dependencies"):
+        lines.append(f"  dependencies: {_clean(', '.join(p['dependencies']))}")
+    if p.get("permissions"):
+        lines.append(f"  permissions: {_clean(', '.join(p['permissions']))}")
+    lines.append("  stages:")
+    for step in p["steps"]:
+        lines.append(f"    [pending] {_clean(step['stage']):<22} "
+                     f"{_clean(step['description'])}")
+    approval = p["approval"]
+    lines.append(f"  approval: required={approval['required']} "
+                 f"granted={approval['granted']}"
+                 + (f" by={_clean(approval['granted_by'])}"
+                    if approval.get("granted_by") else ""))
+    rb = p["rollback"]
+    lines.append(f"  rollback: {_clean(rb['action'])}"
+                 + (f" (previous {_clean(rb['previous_version'])})"
+                    if rb.get("previous_version") else ""))
+    for lim in p.get("limitations", []):
+        lines.append(f"  limitation: {_clean(lim)}")
+    lines.append("No action was taken — the plan is a document; execution is a "
+                 "separate milestone.")
+    return "\n".join(lines)
+
+
 _GRAPH_EDGE_ORDER = ("produces", "consumes", "requires", "complements",
                      "conflicts", "can_verify", "can_review", "relevant_to",
                      "uses_technology", "in_domain", "has_capability",

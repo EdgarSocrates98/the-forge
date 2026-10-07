@@ -309,6 +309,17 @@ def cmd_capabilities_discover(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_install_plan(args: argparse.Namespace) -> int:
+    """``install plan`` — deterministic InstallationPlan/v2 from a configured
+    source's entry (§27-30). Plan-only: emits the document, executes nothing."""
+    from theforge.registry.install_plan import build_install_plan
+    result = build_install_plan(args.provider, args.version, args.source,
+                                forge_dir=find_forge_dir(_root(args)),
+                                approve=args.approve)
+    _emit(args, {"plan": to_dict(result.plan)}, render.install_plan)
+    return 0
+
+
 def cmd_providers_health(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     rows = []

@@ -108,6 +108,22 @@ def build_parser() -> argparse.ArgumentParser:
                                    "provider fully satisfies the requirement")
     cap_discover.set_defaults(handler=commands.cmd_capabilities_discover)
 
+    install = sub.add_parser("install", help="governed provider installation") \
+        .add_subparsers(dest="install_command", required=True)
+    install_plan = install.add_parser(
+        "plan", parents=[common],
+        help="build a deterministic InstallationPlan/v2 for a remote candidate "
+             "(plan-only: nothing is downloaded or installed)")
+    install_plan.add_argument("--provider", required=True)
+    install_plan.add_argument("--version", required=True,
+                              help="pinned SemVer — never 'latest'")
+    install_plan.add_argument("--source", required=True,
+                              help="registry source id from registries.toml")
+    install_plan.add_argument("--approve", action="store_true",
+                              help="record the approval gate as granted "
+                                   "(plan still does not execute)")
+    install_plan.set_defaults(handler=commands.cmd_install_plan)
+
     graph = sub.add_parser(
         "graph", parents=[common],
         help="the capability graph: declared+observed relations of the registry "

@@ -55,7 +55,14 @@ from theforge.contracts.explain import ExplainReport
 from theforge.contracts.graph import GraphEdge, GraphNode, WorkspaceGraph
 from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.identity import SURFACE_IDENTITY_SCHEMA, ProviderSurfaceIdentity
-from theforge.contracts.installation import InstallationItem, InstallationPlan
+from theforge.contracts.installation import (
+    InstallApproval,
+    InstallationItem,
+    InstallationPlan,
+    InstallationPlanV2,
+    InstallStep,
+    RollbackStrategy,
+)
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
 from theforge.contracts.manifest import (
@@ -182,7 +189,8 @@ __all__ = [
     "ExecutionReceipt", "ExecutionResult", "ExplainReport", "Finding", "ForgeManifest",
     "ForgeRegistryEntry",
     "GitSummary", "GraphEdge", "GraphNode", "Handoff", "HandoffItem", "HandoffOrigin",
-    "HealthCheck", "HealthReport", "InstallationItem", "InstallationPlan",
+    "HealthCheck", "HealthReport", "InstallApproval", "InstallationItem",
+    "InstallationPlan", "InstallationPlanV2", "InstallStep",
     "IntegrityError", "IntelFingerprints",
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "MetricStatus",
     "NativeTrace", "NodeEconomy", "NodeOutcome",
@@ -197,7 +205,7 @@ __all__ = [
     "REGISTRY_DOCUMENT_SCHEMA", "REGISTRY_ENTRY_SCHEMA", "REMOTE_CANDIDATE_SCHEMA",
     "RememberedDecision", "RemoteProviderCandidate", "RepositoryInfo",
     "ReproducibilityInfo",
-    "Request", "ResolveCandidate", "ResolveRequest", "Response",
+    "Request", "ResolveCandidate", "ResolveRequest", "Response", "RollbackStrategy",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RoutingProposal",
     "RunBudget", "RunTelemetry", "SURFACE_IDENTITY_SCHEMA", "Selection",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",

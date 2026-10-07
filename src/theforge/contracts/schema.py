@@ -32,6 +32,7 @@ from theforge.contracts import (
     Handoff,
     HealthReport,
     InstallationPlan,
+    InstallationPlanV2,
     PlanEstimate,
     PlanRequest,
     PlanResult,
@@ -81,6 +82,8 @@ EXPORTED: tuple[type[Any], ...] = (
     CapabilityRequirement, CapabilityOffer, CapabilityNegotiationResult,
     # registry metadata (cycle 4, wave C/E)
     ForgeRegistryEntry, RegistryDocument, RemoteProviderCandidate,
+    # governed install planning (cycle 4, wave F)
+    InstallationPlanV2,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -96,6 +99,8 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     # negotiation results are core-produced artifacts; the requirement and the
     # offer travel (manifest embeds the offer, CLI accepts the requirement).
     CapabilityNegotiationResult,
+    # the v2 install plan is a core-produced document — never remote input.
+    InstallationPlanV2,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
