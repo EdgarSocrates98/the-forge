@@ -81,6 +81,14 @@ def build_parser() -> argparse.ArgumentParser:
                        help="aggregate recorded execution observations into a "
                             "global economy receipt (read-only, offline)") \
         .set_defaults(handler=commands.cmd_economy_report)
+    economy_experiment = economy.add_parser(
+        "experiment", parents=[common],
+        help="evaluate a StrategyExperiment/v1 against local observations "
+             "(read-only, advisory; never promotes)")
+    economy_experiment.add_argument(
+        "--spec", required=True, metavar="EXPERIMENT_JSON",
+        help="a theforge/StrategyExperiment/v1 JSON document")
+    economy_experiment.set_defaults(handler=commands.cmd_economy_experiment)
     show = registry.add_parser("show", parents=[common])
     show.add_argument("provider_id")
     show.set_defaults(handler=commands.cmd_registry_show)
