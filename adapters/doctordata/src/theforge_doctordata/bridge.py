@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 REQUEST_INVALID = "FDD-REQUEST-INVALID"
@@ -34,21 +35,100 @@ def _fail(code: str, detail: str, exit_code: int) -> int:
     return exit_code
 
 
-def _scan(target: str, bounded: dict[str, Any] | None) -> dict[str, Any]:
+def _scan(target: str, bounded: dict[str, Any] | None,
+          delta_baseline: str | None = None,
+          delta_changed: list[str] | None = None) -> dict[str, Any]:
     from forge_doctor_data.core.forger import ForgerRequestError, accept_request
 
-    options: dict[str, Any] = {}
     if bounded:
         unknown = sorted(set(bounded) - set(BOUNDED_KEYS))
         if unknown:
             raise _BridgeRefuse(f"unknown bounded keys {unknown} (valid: {BOUNDED_KEYS})")
-        options["bounded"] = {key: int(value) for key, value in bounded.items()}
-    try:
-        bundle = accept_request({"kind": "scan", "path": target, "options": options})
-    except ForgerRequestError as exc:
-        raise _BridgeRefuse(str(exc)) from exc
+    limits = {key: int(value) for key, value in (bounded or {}).items()}
+    if delta_baseline is None and delta_changed is None:
+        try:
+            bundle = accept_request({"kind": "scan", "path": target,
+                                     "options": {"bounded": limits} if limits else {}})
+        except ForgerRequestError as exc:
+            raise _BridgeRefuse(str(exc)) from exc
+        plain: dict[str, Any] = bundle.to_dict()
+        return plain
+    # delta/v1: one scan — the report is needed to snapshot the current state.
+    # ``accept_request`` cannot hand it back, so the delta path replicates its
+    # normalize tail (bounded + x-forge-data extension) over the same seams.
+    from forge_doctor_data.contracts import HandoffBundle
+    from forge_doctor_data.core.handoff import build_handoff_bundle
+    from forge_doctor_data.core.service import ScanRequest, ScanService
+
+    outcome = ScanService().run(ScanRequest(path=Path(target)))
+    bundle = HandoffBundle.from_dict(
+        build_handoff_bundle(outcome.report, outcome.ctx))
+    if limits:
+        bundle = bundle.bounded(**{k: limits.get(k) for k in BOUNDED_KEYS})
+    bundle.extensions["x-forge-data"] = {
+        "request_kind": "scan", "bounded": bool(limits),
+        **({"limits": dict(sorted(limits.items()))} if limits else {}),
+    }
     document: dict[str, Any] = bundle.to_dict()
+    document["delta"] = _scan_delta(Path(target), delta_baseline or "",
+                                    delta_changed or [], outcome)
     return document
+
+
+def _scan_delta(root: Path, ref: str, changed: list[str], outcome: Any,
+                ) -> dict[str, Any]:
+    """The ``delta`` section of a scan document: ``diff_snapshots`` of the resolved
+    baseline against a freshly recorded snapshot — never a fabricated one.
+
+    The baseline lives in the specialist's own store (``.forge-doctor-data/history``),
+    staged with the workspace; the current snapshot is recorded inside the stage, so
+    the real workspace's history stays the specialist's to write.
+    """
+    from forge_doctor_data.core.history import (
+        HistoryError,
+        diff_snapshots,
+        list_snapshots,
+        load_snapshot,
+        record_snapshot,
+        resolve_snapshot,
+    )
+
+    delta: dict[str, Any] = {"changed_files": sorted(changed)}
+    prev = None
+    try:
+        if ref:
+            prev = load_snapshot(resolve_snapshot(root, ref))
+        else:
+            snaps = list_snapshots(root)
+            if snaps:
+                prev = load_snapshot(snaps[-1])
+        delta["baseline_ref"] = (prev.name if prev is not None
+                                 else ref or "latest")
+        if prev is None:
+            delta["unresolved"] = (
+                "no baseline snapshot under .forge-doctor-data/history in the staged "
+                "workspace; the full scan was reported")
+    except HistoryError as exc:
+        delta["baseline_ref"] = ref or "latest"
+        delta["unresolved"] = f"baseline unresolved: {exc}"
+    try:
+        current = load_snapshot(record_snapshot(outcome.report, root, outcome.ctx))
+    except Exception as exc:  # noqa: BLE001 - snapshotting never masks the scan
+        delta["unresolved"] = f"current snapshot failed to record: {exc}"
+        return delta
+    if prev is not None:
+        diff = diff_snapshots(prev, current)
+        delta.update({
+            "older": diff.older, "newer": diff.newer,
+            "new_findings": list(diff.new_findings),
+            "resolved_findings": list(diff.resolved_findings),
+            "entities_added": list(diff.entities_added),
+            "entities_removed": list(diff.entities_removed),
+            "capability_transitions": list(diff.capability_transitions),
+            "drift_added": list(diff.drift_added),
+            "drift_resolved": list(diff.drift_resolved),
+        })
+    return delta
 
 
 def _conformance(path: str) -> dict[str, Any]:
@@ -74,6 +154,11 @@ def main(argv: list[str] | None = None) -> int:
     scan.add_argument("--target", required=True)
     scan.add_argument("--bounded", default=None,
                       help="JSON object of HandoffBundle.bounded() limits")
+    scan.add_argument("--delta-baseline", default=None,
+                      help="history snapshot ref the delta diffs against "
+                           "(''/unset with changed-files = newest)")
+    scan.add_argument("--delta-changed-files", default=None,
+                      help="JSON array of workspace-relative changed paths (hint)")
     conf = sub.add_parser("conformance", help="check_conformance of a JSON file")
     conf.add_argument("--file", required=True)
     args = parser.parse_args(argv)
@@ -84,7 +169,14 @@ def main(argv: list[str] | None = None) -> int:
                 bounded = json.loads(args.bounded)
                 if not isinstance(bounded, dict):
                     raise _BridgeRefuse("--bounded must be a JSON object")
-            document = _scan(args.target, bounded)
+            changed = None
+            if args.delta_changed_files is not None:
+                changed = json.loads(args.delta_changed_files)
+                if not isinstance(changed, list) \
+                        or not all(isinstance(p, str) for p in changed):
+                    raise _BridgeRefuse(
+                        "--delta-changed-files must be a JSON array of strings")
+            document = _scan(args.target, bounded, args.delta_baseline, changed)
         else:
             document = _conformance(args.file)
     except _BridgeRefuse as exc:

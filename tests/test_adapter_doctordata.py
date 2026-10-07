@@ -627,3 +627,43 @@ def test_verify_op_refuses_without_the_specialist() -> None:
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "DOCTORDATA-ADAPTER-UNAVAILABLE"
+
+
+# --- delta handoff (Phase 49) ------------------------------------------------------------------
+
+def test_describe_declares_delta_feature() -> None:
+    response, _ = _describe()
+    manifest = from_dict(ForgeManifest, response.payload)
+    assert "delta/v1" in manifest.features
+
+
+def test_replay_scan_surfaces_delta_evidence() -> None:
+    response, _, _ = _execute("data.scan", "analyze", replay=SCENARIOS / "delta")
+    result = _result(response)
+    delta = [ev for ev in result.evidence if ev.id == "delta"]
+    assert delta, "a recorded delta section must surface as evidence"
+    claim = delta[0].claim
+    assert "20250101-000000.json" in claim
+    assert "+1 findings" in claim and "+1 entities" in claim
+    assert "1 capabilities" in claim
+
+
+def test_malformed_delta_hint_is_a_limitation_not_a_crash() -> None:
+    response, _, _ = _execute("data.scan", "analyze",
+                             extra={"delta": {"baseline_ref": 42}})
+    result = _result(response)
+    assert result.status == "ok"
+    assert any("delta descriptor malformed" in lim for lim in result.limitations)
+
+
+def test_delta_argv_shape() -> None:
+    from theforge_doctordata import execute as dd_execute
+    argv, warning = dd_execute._delta_argv(
+        {"delta": {"baseline_ref": "snap-1", "changed_files": ["b.py", "a.py"]}})
+    assert warning is None
+    assert argv == ["--delta-baseline", "snap-1",
+                    "--delta-changed-files", '["a.py", "b.py"]']
+    argv, warning = dd_execute._delta_argv({})
+    assert argv == [] and warning is None
+    argv, warning = dd_execute._delta_argv({"delta": "nope"})
+    assert argv == [] and warning is not None

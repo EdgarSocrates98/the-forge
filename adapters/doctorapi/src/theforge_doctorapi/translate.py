@@ -350,11 +350,32 @@ def _bundle_meta(bundle: Mapping[str, Any],
                                         f"artifact {ARTIFACT_PATH}")})
     delta = bundle.get("delta")
     if isinstance(delta, Mapping) and delta:
+        def _n(key: str) -> int | None:
+            value = delta.get(key)
+            if isinstance(value, int):
+                return value
+            return len(value) if isinstance(value, list) else None
+        parts: list[str] = []
+        for key, label in (("findings_added", "+{} findings"),
+                           ("findings_removed", "-{} findings"),
+                           ("findings_changed", "~{} findings"),
+                           ("operations_added", "+{} ops"),
+                           ("operations_removed", "-{} ops"),
+                           ("graph_entities_added", "+{} entities"),
+                           ("graph_entities_removed", "-{} entities"),
+                           ("unknowns_added", "+{} unknowns"),
+                           ("unknowns_removed", "-{} unknowns")):
+            count = _n(key)
+            if count:
+                parts.append(label.format(count))
+        baseline = delta.get("baseline_ref")
+        head = (f"delta vs {baseline}" if isinstance(baseline, str) and baseline
+                else "delta context")
+        claim = (f"{head}: {', '.join(parts)}" if parts
+                 else f"{head}: no changes")
         evidence.append({"id": "delta", "epistemic": "inferred",
                          "subject": "delta",
-                         "claim": _clip(f"delta context present "
-                                        f"({', '.join(sorted(delta))}); detail in "
-                                        f"artifact {ARTIFACT_PATH}")})
+                         "claim": _clip(f"{claim}; detail in artifact {ARTIFACT_PATH}")})
     return evidence
 
 

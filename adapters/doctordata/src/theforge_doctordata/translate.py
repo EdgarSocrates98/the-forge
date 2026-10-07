@@ -320,6 +320,29 @@ def translate_bundle(bundle: Mapping[str, Any], stage: StagedInput,
         limits = extension.get("limits")
         limitations.append(f"bundle bounded by native limits: "
                            f"{json.dumps(limits, sort_keys=True) if limits else 'unspecified'}")
+    delta = bundle.get("delta")
+    if isinstance(delta, Mapping) and delta:
+        unresolved = delta.get("unresolved")
+        if isinstance(unresolved, str) and unresolved:
+            limitations.append(f"delta: {unresolved}")
+        baseline = delta.get("baseline_ref")
+        parts: list[str] = []
+        for key, label in (("new_findings", "+{} findings"),
+                           ("resolved_findings", "-{} findings"),
+                           ("entities_added", "+{} entities"),
+                           ("entities_removed", "-{} entities"),
+                           ("capability_transitions", "~{} capabilities"),
+                           ("drift_added", "+{} drift"),
+                           ("drift_resolved", "-{} drift")):
+            value = delta.get(key)
+            if isinstance(value, list) and value:
+                parts.append(label.format(len(value)))
+        head = (f"delta vs {baseline}" if isinstance(baseline, str) and baseline
+                else "delta context")
+        claim = (f"{head}: {', '.join(parts)}" if parts else f"{head}: no changes")
+        evidence.append({"id": "delta", "epistemic": "inferred",
+                         "subject": "delta",
+                         "claim": _clip(f"{claim}; detail in artifact {ARTIFACT_PATH}")})
     return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
                        evidence=evidence, artifacts=[{
                            "path": ARTIFACT_PATH, "sha256": artifact_hash}],

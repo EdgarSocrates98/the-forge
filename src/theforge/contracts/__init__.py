@@ -42,6 +42,7 @@ from theforge.contracts.economy import (
 )
 from theforge.contracts.envelope import (
     PROTOCOL_V1,
+    DeltaRequest,
     ExecuteRequest,
     HealthCheck,
     HealthReport,
@@ -154,7 +155,7 @@ __all__ = [
     "ComplexityDimension",
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
     "ContextRequestItem", "ContractError", "DecisionKind", "DecisionMemory",
-    "DecisionOption", "DecisionRecord", "Diagnostic",
+    "DecisionOption", "DecisionRecord", "DeltaRequest", "Diagnostic",
     "DiagnosticCause", "DiagnosticFrame", "EconomyMetric", "EconomyRollup",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",
     "ExecutionInfo", "ExecutionPlan",

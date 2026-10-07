@@ -8,7 +8,9 @@ The manifest file may carry test-only ``estimate``, ``proposal`` and ``decision`
 keys (never part of the described manifest): when the manifest declares the ``plan``
 op, that op answers ``estimate`` normally and ``proposal`` when the request carries
 ``purpose="proposal"``. ``execute`` echoes the number of handoff items it received as
-one extra evidence (only when the request carries a handoff), and a ``decision``
+one extra evidence (only when the request carries a handoff), an ``id="delta"``
+evidence describing a received ``delta`` hint (only when the request carries one),
+and a ``decision``
 key ``{"claim": ..., "subject": ...}`` adds a referee-style evidence with
 ``id="decision"`` (the debate convention). A ``findings`` list replaces the
 default ``f1`` finding (missing ``evidence_ids`` are wired to the emitted
@@ -119,6 +121,13 @@ def main() -> int:
             evidence.append({"id": "e2", "epistemic": "observed", "subject": "handoff",
                              "claim": f"received {len(handoff.get('items') or [])} "
                                       "handoff items",
+                             "producer": producer})
+        delta = payload.get("delta")  # delta/v1 echo: what the request hinted
+        if isinstance(delta, dict):
+            evidence.append({"id": "delta", "epistemic": "observed", "subject": "delta",
+                             "claim": f"delta baseline={delta.get('baseline_ref')!r} "
+                                      f"changed={len(delta.get('changed_files') or [])} "
+                                      f"({', '.join(delta.get('changed_files') or [])})",
                              "producer": producer})
         if isinstance(evidence_extra, list):  # test-only: caller-authored items
             for item in evidence_extra:

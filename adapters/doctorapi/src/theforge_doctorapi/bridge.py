@@ -47,19 +47,55 @@ class _BridgeRefuse(Exception):
     """A refused bridge call: reported as ``FDA-REQUEST-INVALID`` (exit 2)."""
 
 
-def _diagnose(target: str) -> dict[str, Any]:
+def _resolve_baseline(root: Path, ref: str) -> tuple[Any | None, str]:
+    """The ``DoctorReport`` the delta diffs against, or ``None``.
+
+    ``ref`` empty or ``"latest"`` resolves to the newest snapshot of the
+    specialist's own store (``<stage>/.forge-doctor/snapshots``), staged with the
+    workspace. An unresolvable or missing store returns ``(None, effective_ref)``
+    — the boundary then records an explicit unknown, never a fabricated delta.
+    """
+    from forge_doctor_api.temporal import SNAPSHOT_DIR, SnapshotError, SnapshotStore
+
+    store = SnapshotStore(root / SNAPSHOT_DIR)
+    snaps = store.list()
+    effective = ref or "latest"
+    snap_id = snaps[-1].id if ref in ("", "latest") and snaps else ref
+    try:
+        return store.report(snap_id), effective
+    except SnapshotError:
+        return None, effective
+    except Exception:  # noqa: BLE001 - a corrupt snapshot is an unresolved baseline
+        return None, effective
+
+
+def _diagnose(target: str, delta_baseline: str | None, delta_changed: str | None,
+              ) -> dict[str, Any]:
     from forge_doctor_api.core.context import ProjectContext
     from forge_doctor_api.handoff.boundary import DoctorBoundary
-    from forge_doctor_api.handoff.protocol import build_request
+    from forge_doctor_api.handoff.protocol import RequestDelta, build_request
 
     root = Path(target)
     if not root.is_dir():
         raise _BridgeRefuse(f"target {target!r} is not a directory")
     context = ProjectContext.from_root(root)
     boundary = DoctorBoundary(context=context)
-    request = build_request(target=str(root))
-    bundle = boundary.handle(request)
-    endpoint = boundary.endpoint_dict(request)
+    delta = None
+    baseline = None
+    if delta_baseline is not None or delta_changed is not None:
+        try:
+            raw = json.loads(delta_changed or "[]")
+        except (ValueError, TypeError) as exc:
+            raise _BridgeRefuse(f"malformed --delta-changed-files: {exc}") from exc
+        if not isinstance(raw, list) or not all(isinstance(p, str) for p in raw):
+            raise _BridgeRefuse("--delta-changed-files must be a JSON array of strings")
+        changed = tuple(sorted(raw))
+        baseline, resolved_ref = _resolve_baseline(
+            root, delta_baseline if delta_baseline is not None else "")
+        delta = RequestDelta(baseline_ref=resolved_ref, changed_files=changed)
+    request = build_request(target=str(root), delta=delta)
+    bundle = boundary.handle(request, baseline=baseline)
+    endpoint = boundary.endpoint_dict(request, baseline=baseline)
     envelope = endpoint.get("handoff") or {}
     if bundle.handoff_id and envelope.get("handoff_id") != bundle.handoff_id:
         raise _BridgeRefuse(
@@ -121,11 +157,17 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     diag = sub.add_parser("diagnose", help="DoctorBoundary handle + endpoint_dict")
     diag.add_argument("--target", required=True)
+    diag.add_argument("--delta-baseline", default=None,
+                      help="snapshot ref the delta diffs against (''/latest = newest)")
+    diag.add_argument("--delta-changed-files", default=None,
+                      help="JSON array of workspace-relative changed paths (hint)")
     ver = sub.add_parser("verify", help="strict-parse + integrity check of a document")
     ver.add_argument("--file", required=True)
     args = parser.parse_args(argv)
     try:
-        document = _diagnose(args.target) if args.command == "diagnose" else _verify(args.file)
+        document = (_diagnose(args.target, args.delta_baseline,
+                              args.delta_changed_files)
+                    if args.command == "diagnose" else _verify(args.file))
     except _BridgeRefuse as exc:
         return _fail(REQUEST_INVALID, str(exc), 2)
     except Exception as exc:  # noqa: BLE001 - the adapter maps the type+message only

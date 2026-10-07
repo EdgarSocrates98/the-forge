@@ -13,7 +13,7 @@
 |---|---|---|---|
 | `describe` | sim | `{}` | `ForgeManifest` |
 | `health` | sim | `{}` | `HealthReport` (`ok\|degraded\|unavailable`) |
-| `execute` | não | `ExecuteRequest{task, capability, action, context, handoff?}` | `ExecutionResult` |
+| `execute` | não | `ExecuteRequest{task, capability, action, context, handoff?, delta?}` | `ExecutionResult` |
 | `plan` | não | `PlanRequest{task, capability, action}` | `PlanEstimate` |
 | `verify` | não | `VerifyRequest{task, capability, action, run_id, result, handoff?}` | `VerifyVerdict` |
 | `resolve` | não | `ResolveRequest{task, candidates, ambiguity, technologies}` | `RoutingProposal` |
@@ -305,7 +305,19 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
 
-Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 32 KiB — são truncados com limitação, itens malformados são pulados com limitação). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. O Spark Forge e o `api.change-control` ainda não declaram: recebem o handoff e o run do nó registra `handoff-use-undeclared`.
+Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 32 KiB — são truncados com limitação, itens malformados são pulados com limitação), e `pyspark.static-analysis` do Spark Forge declara `accepts_handoff` com `relations.consumes: ["data.diagnostic-evidence"]`, traduzindo os itens a `sparkforge/upstream-facts/v1` (`--file upstream=upstream-facts.json`, auditado pelo `filters_applied.upstream` da saída). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. `api.change-control` não declara: recebe o handoff e o run do nó registra `handoff-use-undeclared`.
+
+### Delta (`delta/v1`)
+Um provider cujo manifest declara `delta/v1` recebe, no campo opcional `delta` do `ExecuteRequest`, um `DeltaRequest` — a dica incremental de um run **subsequente** sobre o mesmo workspace:
+
+```json
+{"delta": {"baseline_ref": "", "changed_files": ["jobs/x.py", "api/openapi.yaml"]}}
+```
+
+- `baseline_ref` é um token opaco resolvido **dentro** do especialista (sua própria store de snapshots/histórico); `""` pede o baseline mais recente que ele tiver gravado. O core não interpreta refs nem guarda estado do especialista.
+- `changed_files` é a superfície mudada que o cache de fingerprints observou desde o run anterior (paths relativos POSIX adicionados/modificados/removidos, até 256 — acima disso o campo é truncado com limitação).
+- O campo só sai quando o cache de fingerprints tem estado anterior para aquele workspace: primeiro run, cache desligado ou descartado → sem `delta`. Providers sem `delta/v1` no manifest nunca veem o campo.
+- É dica, nunca condição de corretude: baseline não resolvido vira `unknown` explícito no documento do especialista (ex.: `delta.unresolved`), nunca um delta fabricado nem um full scan disfarçado de delta. Os adapters dos Doctors traduzem a seção `delta` do documento nativo em evidência `id="delta"` com contagens por tipo de mudança.
 
 #### Evidência derivada (`Evidence.derived_from`)
 
@@ -435,7 +447,7 @@ Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execu
 | `theforge/ExplainReport/v1` | `theforge explain --json` ([cli.md](cli.md#explain)) | não |
 | `theforge/Diagnostic/v1` | artefato `diagnostic` e linhas `theforge: debug:` com `--debug` | não |
 
-Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.{accepts_handoff, proposes_plans, resolves_ambiguity, relations}`, `PlanRequest.{purpose, options, ambiguity}`, `Evidence.derived_from`, `ExecutionResult.{assumptions, provider_receipt, provider_economy, native_trace}`, `ExecutionReceipt.provider_receipt`, `ProviderSection.provider_receipt` (`ExplainReport`), `ResultSection.native_trace` (`ExplainReport`), `PlanSection.economy` (`ExplainReport`), `HandoffItem.{derived_from, also_from, artifact_type}` e os kinds `constraint`/`assumption`/`verification`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, resumed_from, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256, budget_sha256, routing_proposal_sha256}`, `NodeOutcome.{attempts, reused}`, `PlanResult.{decision_sha256, economy_sha256}`, `PlanRefs.{capability_graph_sha256, semantic_proposal_sha256, decision_sha256, economy_sha256, plan_state_sha256}`, `RunTelemetry.{semantic_planner_calls, semantic_resolver_calls, files_cited, evidence_returned, findings_returned, spans}` (`Span`: `id`, `name`, `start_ms`, `duration_ms`, `parent`, `status`, `attributes`), o valor `semantic` de `ExecutionPlan.source` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.{handoff, delta}`, `Capability.{accepts_handoff, proposes_plans, resolves_ambiguity, relations}`, `PlanRequest.{purpose, options, ambiguity}`, `Evidence.derived_from`, `ExecutionResult.{assumptions, provider_receipt, provider_economy, native_trace}`, `ExecutionReceipt.provider_receipt`, `ProviderSection.provider_receipt` (`ExplainReport`), `ResultSection.native_trace` (`ExplainReport`), `PlanSection.economy` (`ExplainReport`), `HandoffItem.{derived_from, also_from, artifact_type}` e os kinds `constraint`/`assumption`/`verification`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, resumed_from, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256, budget_sha256, routing_proposal_sha256}`, `NodeOutcome.{attempts, reused}`, `PlanResult.{decision_sha256, economy_sha256}`, `PlanRefs.{capability_graph_sha256, semantic_proposal_sha256, decision_sha256, economy_sha256, plan_state_sha256}`, `RunTelemetry.{semantic_planner_calls, semantic_resolver_calls, files_cited, evidence_returned, findings_returned, spans}` (`Span`: `id`, `name`, `start_ms`, `duration_ms`, `parent`, `status`, `attributes`), o valor `semantic` de `ExecutionPlan.source` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
 
 `ExecutionResult.provider_receipt` é o ponteiro para o recibo **nativo** do provider (`ProviderReceipt{ref, sha256}` — a identidade verbatim do recibo do especialista, ex. `case:<id>` do API Forge, mais o sha256 do documento de recibo que ele gravou e que já é artefato do run). O receipt do run copia o ponteiro sem mudar nada — referência, nunca o conteúdo — e `theforge explain` o expõe na seção `provider` como drill-down do explain nativo. Um resultado sem `provider_receipt` é o normal: nenhum recibo nativo é inventado.
 

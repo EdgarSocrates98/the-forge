@@ -66,7 +66,9 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_fingerprints.py": ("unit", "security"),
     "test_context_verify.py": ("unit",),
     "test_context_flow.py": ("integration",),
+    "test_delta_handoff.py": ("integration", "contract"),
     "test_bench.py": ("unit",),
+    "test_economy_bench.py": ("integration",),
     "test_runs_bench.py": ("integration",),
     "test_telemetry.py": ("unit",),
     # planned by design (cross-forge-foundation)

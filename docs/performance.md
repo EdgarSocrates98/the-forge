@@ -35,6 +35,27 @@ O planner semântico não entra no SLA determinístico: é medido à parte pelo
 `run_runs_bench.py` (métrica `semantic_calls` por caso — Wave P), nunca por budget
 de latência aqui.
 
+## Benchmark de economia de contexto
+
+`scripts/bench/run_context_economy.py` (Cycle 3.1, fases 50–51): mede a premissa
+do mesh — *o Doctor observa uma vez; os engenheiros recebem contexto delimitado
+mais a evidência via handoff* — contra o baseline em que cada especialista relê
+o workspace inteiro. Mesmo procedimento de isolamento do `run_bench` (diretório
+temporário, `THEFORGE_CONFIG_DIR`/`THEFORGE_CACHE_DIR` próprios, workspace
+sintético determinístico), fora da suíte offline.
+
+```bash
+python scripts/bench/run_context_economy.py [--runs N] [--out PATH]
+```
+
+- Braços: `direct` (Spark Forge e API Forge com `targets: ["."]`) e `mesh`
+  (`forge-doctor-data` sobre `["."]`, depois Spark e API delimitados aos seus
+  domínios — `jobs`/`requirements.txt` e `api`/`src` — com `inputs` no doctor).
+- Tudo roda em `specialist-replay` (terminologia em [real-providers.md](real-providers.md#níveis-de-real)): adapters reais em subprocesso, saída nativa gravada. O relatório declara `provider_mode`.
+- Métricas observáveis por braço, lidas dos artifacts do run store: `provider_calls`, `files_scanned`, `context_files`, `context_bytes`, `handoff_bytes`, `evidence_bytes`, `wall_ms`, mais um breakdown por nó. `model_calls` e `provider_tokens` saem `null` — não observáveis offline, e desconhecido não é zero.
+- Saída: `{"schema": "theforge-economy-bench/v1", "origin", "provider_mode", "arms", "comparison"}` — `comparison` traz `mesh_minus_direct` por métrica.
+- Leitura honesta esperada: `files_scanned` cai pela metade (o scan inteiro acontece uma vez, não por especialista) e o contexto dos engenheiros colapsa para os arquivos do domínio; o `context_bytes` total pode **subir** quando a superfície de globs do doctor é mais larga que a soma dos especialistas — o ganho é uma varredura ampla única em vez de N.
+
 ## Baseline
 Arquivo: `scripts/bench/baseline.json` (gravado no commit `f1df8a0`; medido em `d77ba5f`). Medido antes do cache de fingerprints: nesse ponto `warm` só difere de `cold` por uma chamada de aquecimento não cronometrada, então as duas variantes medem o mesmo trabalho e a diferença entre elas é ruído.
 

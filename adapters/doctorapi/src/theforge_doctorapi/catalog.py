@@ -221,6 +221,9 @@ def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: 
         # context-intelligence-v2: the adapter verifies the sha256 of every file it stages
         # and the specialist reads only those copies.
         "context_revalidation": "hash",
+        # delta/v1: ``api.diagnose`` accepts the execute-time ``delta`` hint and resolves
+        # the baseline through the specialist's own ``.forge-doctor/snapshots`` store.
+        "features": ["delta/v1"],
         "adapter_version": version,
         "native_surface_fingerprint": native_fingerprint(snapshot),
     }

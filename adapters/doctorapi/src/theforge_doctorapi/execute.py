@@ -30,6 +30,7 @@ import json
 import re
 import sys
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -93,15 +94,35 @@ def native_failure(exit_code: int, stderr: str) -> Reply:
                 unlock="inspect the forge-doctor-api installation and rerun")
 
 
+def _delta_argv(payload: Mapping[str, Any]) -> tuple[list[str], str | None]:
+    """``--delta-*`` bridge flags for the request's ``delta`` hint, plus a limitation
+    when the hint is malformed (a hint is never worth a refusal)."""
+    delta = payload.get("delta")
+    if delta is None:
+        return [], None
+    if not isinstance(delta, Mapping):
+        return [], "delta descriptor is not an object; ignored"
+    baseline = delta.get("baseline_ref", "")
+    changed = delta.get("changed_files") or []
+    if not isinstance(baseline, str) or not isinstance(changed, list) \
+            or not all(isinstance(p, str) for p in changed):
+        return [], "delta descriptor malformed; ignored"
+    return ["--delta-baseline", baseline,
+            "--delta-changed-files", json.dumps(sorted(changed))], None
+
+
 def _bridge_argv(capability: str, action: str, selected: Mapping[str, list[str]],
-                 stage_root: Path) -> tuple[list[str], str] | Reply:
-    """``(argv, staged payload path)`` for the capability's action."""
+                 stage_root: Path, payload: Mapping[str, Any],
+                 ) -> tuple[list[str], str, str | None] | Reply:
+    """``(argv, staged payload path, delta warning)`` for the capability's action."""
     spec = CAPABILITY_MAP[capability]
     if spec.verify_input:
         chosen = sorted(selected["payload"])
         return (["-m", BRIDGE, "verify", "--file", str(stage_root / chosen[0])],
-                chosen[0])
-    return (["-m", BRIDGE, "diagnose", "--target", str(stage_root)], "")
+                chosen[0], None)
+    extra, warning = _delta_argv(payload)
+    return (["-m", BRIDGE, "diagnose", "--target", str(stage_root), *extra], "",
+            warning)
 
 
 def _read_recording(path: Path) -> dict[str, Any] | Reply:
@@ -193,10 +214,10 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
     if empty is not None:
         return finalize(empty, cwd)
     selected = select_inputs(stage, required)
-    call = _bridge_argv(capability, action, selected, stage.root)
+    call = _bridge_argv(capability, action, selected, stage.root, payload)
     if isinstance(call, Reply):
         return call
-    argv, subject = call
+    argv, subject, delta_warning = call
     if options.replay is None:
         document = _live_document(argv, payload, cwd, run)
     else:
@@ -212,6 +233,8 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
         draft = translate_bundle(document, stage, artifact_hash)
     if isinstance(draft, Reply):
         return draft
+    if delta_warning is not None:
+        draft = replace(draft, limitations=(*draft.limitations, delta_warning))
     return finalize(draft, cwd)
 
 
