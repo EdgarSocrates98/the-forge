@@ -44,6 +44,8 @@ a deleted feature branch.
 
 A GitHub Actions run with jobs created but `steps = null` is
 `REMOTE_VALIDATION_BLOCKED`, not green and not a code-test failure.
+Exported jobs JSON can be classified offline with
+`python scripts/ci/classify_remote_validation.py jobs.json`.
 
 - [ ] normal `ci.yml` executes all Linux/Windows matrix steps and is green
 - [ ] `compat.yml` executes macOS compatibility and is green
