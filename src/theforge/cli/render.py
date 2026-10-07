@@ -150,7 +150,25 @@ def _ref_match(node_id: str, ref: str) -> bool:
 
 def graph(data: dict[str, Any]) -> str:
     """The capability graph (``theforge graph``): every edge of the persisted
-    CapabilityGraph, grouped by kind, with the epistemic tag of each edge."""
+    CapabilityGraph, grouped by kind, with the epistemic tag of each edge.
+    ``--mesh`` instead prints the domain mesh projection (observe/engineer/
+    verify) derived from declared relations."""
+    mesh = data.get("mesh")
+    if mesh is not None:
+        lines = ["Capability mesh (declared relations):"]
+        if not mesh.get("domains"):
+            lines.append("  (no artifact type is both produced and consumed)")
+        for row in mesh.get("domains") or []:
+            lines.append(f"DOMAIN: {_clean(row.get('domain', '?'))}")
+            for role in ("observe", "engineer", "verify"):
+                members = row.get(role) or []
+                lines.append(f"  {role}:")
+                lines += [f"    {_clean(member)}" for member in members] or \
+                         ["    (none declared)"]
+        if mesh.get("unplaced_verify"):
+            lines += _labelled("Unplaced verify:",
+                               [_clean(item) for item in mesh["unplaced_verify"]])
+        return "\n".join(lines)
     nodes = [n for n in data.get("nodes") or [] if isinstance(n, dict)]
     edges = [e for e in data.get("edges") or [] if isinstance(e, dict)]
     ref = data.get("ref")

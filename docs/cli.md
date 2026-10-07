@@ -201,6 +201,28 @@ can_verify:
 ```
 
 - `--ref <capability>` restringe a visão às arestas que tocam aquela capability — `p/c` casa exatamente, `c` nua casa `*/c` em todos os providers. O `--json` emite o mesmo subgrafo filtrado (`nodes`, `edges`, `limitations`, `ref`).
+- `--mesh` renderiza a **malha de capabilities**: por domínio declarado, os papéis `observe`/`engineer`/`verify` preenchidos pelos capabilities dos providers — derivado inteiramente das relações declaradas nos manifests (`produces`/`consumes`/`can_verify`/`can_review`/`in_domain`), nunca de heurísticas do core. Verificação é posicionada no domínio declarado do verificador intersetado com o domínio do alvo; relações sem candidato no domínio aparecem como `unplaced` (nunca descartadas em silêncio). Combina com `--ref` e `--json`.
+
+```
+$ theforge graph --mesh
+Capability mesh (declared relations):
+DOMAIN: api
+  observe:
+    forge-doctor-api/api.diagnose
+  engineer:
+    api-forge/api.analyze
+  verify:
+    forge-doctor-api/api.verify
+DOMAIN: data
+  observe:
+    forge-doctor-data/data.scan
+  engineer:
+    api-forge/api.analyze
+    spark-forge/pyspark.static-analysis
+  verify:
+    forge-doctor-data/data.verify
+```
+
 - Exit 0 mesmo sem `.forge` ou sem providers (visão vazia); `describe`/`health`/`execute` nunca são chamados.
 
 ## `workspace show`

@@ -78,13 +78,16 @@ def _node(nid: str, provider: str, capability: str, action: str,
     return node
 
 
-def _run(root: Path, entries: list[dict[str, Any]],
-         nodes: list[dict[str, Any]]) -> tuple[Any, RunStore]:
+def _run(root: Path, entries: list[dict[str, Any]], nodes: list[dict[str, Any]],
+         *, profile: str = "max") -> tuple[Any, RunStore]:
     executor, store = _executor(root, entries)
     plan = root / "plan.json"
     plan.write_text(json.dumps({"task_id": "t", "pattern": "pipeline", "source": "file",
-                                "profile": "max", "nodes": nodes}), encoding="utf-8")
-    out = executor.run(PlanCommand(intent="ecosystem contract", profile="max",
+                                # The file must carry a real BudgetProfile; the
+                                # command profile (possibly "auto") wins anyway.
+                                "profile": "max", "nodes": nodes}),
+                    encoding="utf-8")
+    out = executor.run(PlanCommand(intent="ecosystem contract", profile=profile,
                                    plan_file=plan, execute=True))
     return out, store
 
@@ -216,3 +219,77 @@ def test_api_receipt_enters_the_forge(tmp_path: Path) -> None:
     assert receipt.provider_receipt.ref.startswith("case:")
     assert receipt.provider_receipt.sha256
     assert verify_run_hashes(store, run_id).divergences == []
+
+
+# --- 7. Final ecosystem proof (Phases 56-58) ----------------------------------------------------
+
+
+def test_final_ecosystem_proof_chain(cross: CrossWorkspace) -> None:
+    """The full mesh chain offline (specialist-replay): task -> complexity ->
+    capability graph -> observe -> engineer -> verify -> synthesis ->
+    receipts -> explain -> trace, for both domains at once."""
+    out, store = _run(cross.root, [DD_ENTRY, DA_ENTRY, SPARK_CROSS, API_CROSS], [
+        _node("n1", "forge-doctor-data", "data.scan", "analyze"),
+        _node("n2", "spark-forge", "pyspark.static-analysis", "pyspark", "n1"),
+        _node("n3", "forge-doctor-api", "api.diagnose", "analyze"),
+        _node("n4", "api-forge", "api.analyze", "analyze", "n3"),
+    ])
+    assert out.status == "ok"
+    plan_run = out.run_id
+    receipt = store.read(plan_run, "receipt")
+    assert receipt["kind"] == "plan"
+
+    # Task -> CapabilityGraph -> budget: every upstream artifact the chain
+    # consumes is persisted and hash-bound (complexity is assessed only on
+    # decomposed runs — a plan file fixes its profile, by design).
+    refs = store.read(plan_run, "plan-result")
+    assert refs is not None
+    for name in ("task", "workspace-descriptor", "capability-graph",
+                 "routing", "budget", "telemetry"):
+        assert store.read_optional(plan_run, name) is not None, name
+
+    runs = {n: _child(out, n) for n in ("n1", "n2", "n3", "n4")}
+
+    # observe -> engineer: each engineer consumed its doctor's evidence.
+    dd_handoff = _assert_handoff_consumed(store, plan_run, runs["n2"],
+                                          "forge-doctor-data")
+    da_handoff = _assert_handoff_consumed(store, plan_run, runs["n4"],
+                                          "forge-doctor-api")
+    assert dd_handoff.items and da_handoff.items
+
+    # engineer -> verify: the independent verification of each engineer ran
+    # against the OTHER domain's doctor (can_verify edges, declared).
+    for nid, verifier_id in (("n2", "forge-doctor-data"),
+                             ("n4", "forge-doctor-api")):
+        verification = store.read_optional(runs[nid], "verification")
+        assert verification is not None, nid
+        basis = json.dumps(verification)
+        assert f"verifier:{verifier_id}" in basis, (nid, verification)
+        assert verification["independent"]["status"] == "passed", nid
+
+    # receipts: every run carries provider identity + fingerprints; the whole
+    # run set (plan + children + verifies) verifies byte-for-byte (Phase 58).
+    for nid, run_id in runs.items():
+        child = from_dict(ExecutionReceipt, store.read(run_id, "receipt"),
+                          strict=True)
+        assert child.parent_run == plan_run and child.plan_node == nid
+        assert child.provider is not None
+        assert child.provider.fingerprint and child.provider.manifest_sha256
+        assert child.provider.surface_fingerprint
+    for run_id in store.list_runs():
+        assert verify_run_hashes(store, run_id).divergences == [], run_id
+
+    # explain (Phase 57): every required section resolves on the plan run and
+    # on each child — task, routing, plan, evidence, verification, trace.
+    plan_report = build_explain_report(store, plan_run)
+    assert plan_report.kind == "plan" and plan_report.plan is not None
+    assert plan_report.plan.result is not None
+    assert "plan" not in plan_report.not_recorded
+    for nid, run_id in runs.items():
+        report = build_explain_report(store, run_id)
+        assert report.kind == "run" and report.result is not None
+        assert report.parent_run == plan_run
+        # trace: the run's spans exist and name the provider call.
+        telemetry = report.telemetry or {}
+        spans = [s["name"] for s in telemetry.get("spans", [])]
+        assert any(name.startswith("provider:") for name in spans), (nid, spans)

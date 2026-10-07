@@ -319,3 +319,92 @@ class TestPlanRun:
             graph, ["fixture-api/api.contract", "fixture-spark/spark.performance"])
         assert order == ["fixture-spark/spark.performance",
                          "fixture-api/api.contract"] and unresolved == []
+
+
+class TestMeshView:
+    """Cycle 3.1 Phase 83: the domain mesh projection — observe/engineer/verify
+    per domain, derived only from declared relations and manifest domains."""
+
+    def test_observe_engineer_verify_per_domain(self) -> None:
+        from theforge.capability_graph import mesh_view
+        graph = _graph(
+            _record("doc-data", _manifest(
+                "doc-data",
+                _cap("data.scan", relations=CapabilityRelations(
+                    produces=["data.diagnostic-evidence"])),
+                _cap("data.verify", relations=CapabilityRelations(
+                    can_verify=["eng/spark.job"])),
+                domains=["data"])),
+            _record("doc-api", _manifest(
+                "doc-api",
+                _cap("api.diagnose", relations=CapabilityRelations(
+                    produces=["api.diagnostic-evidence"])),
+                _cap("api.verify", relations=CapabilityRelations(
+                    can_verify=["apieng/api.analyze"])),
+                domains=["api"])),
+            _record("eng", _manifest(
+                "eng",
+                _cap("spark.job", relations=CapabilityRelations(
+                    consumes=["data.diagnostic-evidence"])),
+                domains=["data"])),
+            _record("apieng", _manifest(
+                "apieng",
+                _cap("api.analyze", relations=CapabilityRelations(
+                    consumes=["api.diagnostic-evidence"])),
+                domains=["api"])))
+        mesh = mesh_view(graph)
+        rows = {row["domain"]: row for row in mesh["domains"]}
+        assert set(rows) == {"data", "api"}
+        assert rows["data"] == {"domain": "data",
+                                "observe": ["doc-data/data.scan"],
+                                "engineer": ["eng/spark.job"],
+                                "verify": ["doc-data/data.verify"]}
+        assert rows["api"]["verify"] == ["doc-api/api.verify"]
+        assert mesh["unplaced_verify"] == []
+
+    def test_verifier_declared_domains_narrow_the_placement(self) -> None:
+        """A verifier whose manifest declares ``api`` does not land under
+        ``data`` even when the engineer it verifies also consumes there."""
+        from theforge.capability_graph import mesh_view
+        graph = _graph(
+            _record("doc-api", _manifest(
+                "doc-api",
+                _cap("api.verify", relations=CapabilityRelations(
+                    can_verify=["eng/job.run"])),
+                domains=["api"])),
+            _record("doc", _manifest(
+                "doc", _cap("obs.scan", relations=CapabilityRelations(
+                    produces=["data.e", "api.e"])))),
+            _record("eng", _manifest(
+                "eng", _cap("job.run", relations=CapabilityRelations(
+                    consumes=["data.e", "api.e"])),
+                domains=["data", "api"])))
+        mesh = mesh_view(graph)
+        rows = {row["domain"]: row for row in mesh["domains"]}
+        assert rows["api"]["verify"] == ["doc-api/api.verify"]
+        assert rows["data"]["verify"] == []
+        assert mesh["unplaced_verify"] == []
+
+    def test_unplaced_verify_named(self) -> None:
+        from theforge.capability_graph import mesh_view
+        graph = _graph(
+            _record("doc", _manifest(
+                "doc",
+                _cap("obs.scan", relations=CapabilityRelations(
+                    produces=["data.e"])),
+                _cap("obs.verify", relations=CapabilityRelations(
+                    can_verify=["stray/orphan.cap"])),
+                domains=["data"])),
+            _record("eng", _manifest(
+                "eng", _cap("job.run", relations=CapabilityRelations(
+                    consumes=["data.e"])),
+                domains=["data"])),
+            _record("stray", _manifest(
+                "stray", _cap("orphan.cap"))))  # produces/consumes nothing
+        mesh = mesh_view(graph)
+        assert mesh["domains"][0]["verify"] == []
+        assert mesh["unplaced_verify"] == ["doc/obs.verify -> stray/orphan.cap"]
+
+    def test_empty_graph_gives_empty_mesh(self) -> None:
+        from theforge.capability_graph import mesh_view
+        assert mesh_view(_graph()) == {"domains": [], "unplaced_verify": []}

@@ -244,6 +244,9 @@ def cmd_graph(args: argparse.Namespace) -> int:
                for entry in registry.entries() if entry.id not in cached]
     graph = build_capability_graph(records, descriptor)
     data: dict[str, Any] = {**to_dict(graph), "ref": args.ref}
+    if getattr(args, "mesh", False):
+        from theforge.capability_graph import mesh_view
+        data["mesh"] = mesh_view(graph)
     if args.ref:
         edges = [e for e in data["edges"]
                  if _cap_match(str(e.get("source", "")), args.ref)

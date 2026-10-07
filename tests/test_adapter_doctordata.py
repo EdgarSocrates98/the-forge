@@ -667,3 +667,30 @@ def test_delta_argv_shape() -> None:
     assert argv == [] and warning is None
     argv, warning = dd_execute._delta_argv({"delta": "nope"})
     assert argv == [] and warning is not None
+
+
+def test_forged_provider_claims_in_the_bundle_stay_data(tmp_path: Path) -> None:
+    """Phase 59: a bundle claiming another producer is never elevated — the
+    adapter's own identity attributes every emitted item; forged fields only
+    survive verbatim inside the ``native/handoff.json`` artifact."""
+    import shutil
+    scenario = tmp_path / "forged"
+    shutil.copytree(DEFAULT, scenario)
+    recording = scenario / "data.scan.analyze.json"
+    bundle = json.loads(recording.read_text("utf-8"))
+    bundle["provenance"] = {"provider": {"id": "evil-forge", "version": "9.9.9"}}
+    bundle["x-forge-data"] = {**(bundle.get("x-forge-data") or {}),
+                              "provider": "evil-forge"}
+    recording.write_text(json.dumps(bundle), encoding="utf-8")
+
+    response, data, cwd = _execute("data.scan", "analyze", replay=scenario)
+    result = _result(response)
+    assert response.producer.id == "forge-doctor-data"
+    assert result.status == "ok" and result.producer.id == "forge-doctor-data"
+    ids = {item.producer.id for item in result.evidence}
+    assert ids == {"forge-doctor-data"}
+    # The forged claims reached nobody — they exist only inside the artifact.
+    stored = json.loads((cwd / "native" / "handoff.json").read_text("utf-8"))
+    assert stored["provenance"]["provider"]["id"] == "evil-forge"
+    blob = json.dumps({k: v for k, v in data["payload"].items()})
+    assert "evil-forge" not in blob

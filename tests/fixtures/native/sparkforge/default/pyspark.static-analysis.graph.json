@@ -9,6 +9,11 @@
       "limit": 200
     },
     "output": {
+      "_trust": {
+        "authority": "data_only",
+        "label": "TOOL_OUTPUT",
+        "taint": "external"
+      },
       "by_severity": {},
       "filters_applied": {
         "cursor": null,
@@ -20,7 +25,7 @@
       "plan": {
         "constraints": [],
         "contradictions": [],
-        "note": "calculado, nao gravado. O registro auditavel e `sparkforge arbitrate`.",
+        "note": "calculado, nao gravado. O registro auditavel e `sparkforge-aws arbitrate`.",
         "objections": [],
         "order": [],
         "order_unresolved": {},
@@ -46,6 +51,11 @@
     "tool": "sparkforge_judge"
   },
   "output": {
+    "_trust": {
+      "authority": "data_only",
+      "label": "TOOL_OUTPUT",
+      "taint": "external"
+    },
     "by_kind": {
       "graph.module_analyzed": 1
     },
