@@ -7,6 +7,7 @@ from typing import Literal, cast
 from theforge.contracts.adaptive import (
     ContextBudgetRecommendation,
     ContextROI,
+    ExperimentState,
     HistoryMaturity,
     StrategyExperiment,
 )
@@ -153,7 +154,7 @@ def advance_experiment(
 
     verified = sum(1 for item in comparable if item.verification == "passed")
     observations = len(comparable)
-    state = "observing"
+    state: ExperimentState = "observing"
     reasons = list(experiment.reasons)
     if (
         observations >= experiment.minimum_runs
