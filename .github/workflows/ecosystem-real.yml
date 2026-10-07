@@ -10,7 +10,7 @@
 # skipping. See docs/real-providers.md.
 #
 # Secret hygiene: SIBLING_REPOS_TOKEN (read access to the sibling repos) is referenced only by
-# the two sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
+# the four sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
 name: ecosystem-real
 
 on:
