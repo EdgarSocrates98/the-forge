@@ -63,3 +63,12 @@ menos metade de `minimum_runs` (arredondada para baixo, mínimo 1), além do mí
 global. Um eixo econômico só conta como evidência de ganho quando está medido em
 **todos** os runs de ambos os braços. Cobertura parcial permanece incerteza e não
 prova melhoria.
+
+
+### Promotion evidence
+
+`promoted` não é apenas um label. Um `StrategyExperiment/v1` em estado
+`promoted` precisa carregar `approval_sha256`, hash de um artefato de
+aprovação governada. Estados reviewáveis/terminais (`eligible_for_review`,
+`promoted`, `rejected`, `stale`, `cancelled`) exigem
+`reasons`. Isso impede promotion-by-assertion sem evidência.
