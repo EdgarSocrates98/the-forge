@@ -54,3 +54,12 @@ Um experimento não pode misturar silenciosamente famílias distintas.
 ausente e `discovery_before` existir, o core usa `discovery_before` como
 corte mínimo da avaliação. Runs no corpus de descoberta/hipótese não contam como
 evidência de validação.
+
+
+### Cobertura mínima
+
+A elegibilidade também exige cobertura por braço: cada estratégia precisa ter pelo
+menos metade de `minimum_runs` (arredondada para baixo, mínimo 1), além do mínimo
+global. Um eixo econômico só conta como evidência de ganho quando está medido em
+**todos** os runs de ambos os braços. Cobertura parcial permanece incerteza e não
+prova melhoria.
