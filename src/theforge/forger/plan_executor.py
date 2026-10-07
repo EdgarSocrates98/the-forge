@@ -622,7 +622,9 @@ class PlanExecutor:
             trace.run_id,
             StopSignals(
                 other_unresolved=unresolved,
-                candidate_unique_evidence=False,
+                # No concrete next candidate exists at terminalization; that
+                # absence is not evidence of zero information gain.
+                candidate_unique_evidence=None,
                 verification_required=bool(valid_executions),
                 verification_satisfied=verification_satisfied,
             ),
