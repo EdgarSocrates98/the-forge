@@ -13,6 +13,7 @@ from typing import Any, Final, TypeVar
 from theforge.contracts import (
     ContextPack,
     EconomyRollup,
+    GlobalStopDecision,
     ExecutionReceipt,
     ExecutionResult,
     RiskAssessment,
@@ -57,7 +58,7 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
              "handoff", "context", "context-r1", "context-r2", "result", "plan-state",
              "plan-result", "graph", "capability-graph", "semantic-proposal",
-             "routing-proposal", "decision", "economy",
+             "routing-proposal", "decision", "economy", "global-stop",
              "verification", "telemetry", "diagnostic", "complexity", "budget",
              "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
@@ -81,6 +82,7 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
     "plan-result": PlanResult,
     "decision": DecisionRecord,
     "economy": EconomyRollup,
+    "global-stop": GlobalStopDecision,
     "graph": WorkspaceGraph,
     "verification": VerificationResult,
     "telemetry": RunTelemetry,
@@ -211,7 +213,9 @@ class RunStore:
                 plan_result_sha256=(self.persisted_sha256(run_id, "plan-result")
                                     if plan_kind else None),
                 telemetry_sha256=(self.persisted_sha256(run_id, "telemetry")
-                                  if plan_kind else None))
+                                  if plan_kind else None),
+                global_stop_sha256=(self.persisted_sha256(run_id, "global-stop")
+                                    if plan_kind else None))
         data = redact(to_dict(contract))
         text = json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False)
         tmp = path.with_suffix(".json.tmp")
