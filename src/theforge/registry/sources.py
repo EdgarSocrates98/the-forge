@@ -65,8 +65,8 @@ __all__ = [
 REGISTRIES_FILE = "registries.toml"
 LOCAL_REGISTRY_ID = "local"
 
-SOURCE_KINDS = ("local-file", "http")
-SourceKind = Literal["local-file", "http"]
+SOURCE_KINDS = ("local-file", "http", "a2a")
+SourceKind = Literal["local-file", "http", "a2a"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -77,7 +77,7 @@ class SourceSpec:
     kind: SourceKind
     enabled: bool = False  # opt-in: a configured source does nothing until enabled
     path: str | None = None   # local-file: JSON document path (config-relative)
-    url: str | None = None    # http: document URL (Wave D client)
+    url: str | None = None    # http: document URL; a2a: agent card URL
     max_age_s: int | None = None  # freshness budget for cached remote documents
     timeout_s: int | None = None  # http: bounded wait per request (default 10)
 
@@ -86,8 +86,9 @@ class SourceSpec:
             raise ContractError(f"registry source: invalid id {self.id!r}")
         if self.kind == "local-file" and not self.path:
             raise ContractError(f"registry source {self.id!r}: local-file requires 'path'")
-        if self.kind == "http" and not self.url:
-            raise ContractError(f"registry source {self.id!r}: http requires 'url'")
+        if self.kind in ("http", "a2a") and not self.url:
+            raise ContractError(
+                f"registry source {self.id!r}: {self.kind} requires 'url'")
         if self.max_age_s is not None and self.max_age_s <= 0:
             raise ContractError(
                 f"registry source {self.id!r}: max_age_s must be positive")
@@ -224,10 +225,10 @@ def read_sources(specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = Non
         source: RegistrySource
         if spec.kind == "local-file":
             source = FileRegistrySource(spec=spec)
-        else:  # http — read-only remote client (Wave D)
-            from theforge.registry.remote import HttpRegistrySource
-            source = HttpRegistrySource(spec=spec, fetcher=fetcher,
-                                        cache_dir=cache_dir)
+        else:  # http / a2a — read-only remote clients (Waves D and I)
+            from theforge.registry.remote import A2ACardSource, HttpRegistrySource
+            cls = A2ACardSource if spec.kind == "a2a" else HttpRegistrySource
+            source = cls(spec=spec, fetcher=fetcher, cache_dir=cache_dir)
         reads.append(source.read())
     return reads
 

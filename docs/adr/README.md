@@ -69,6 +69,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | InstallationPlan v2: plano gated, execução fora do escopo | [0037](0037-installation-plan-v2.md) | `cycle-4` |
 | observações de execução: grão atômico, axes nunca-silenciosos | [0038](0038-economy-observations.md) | `cycle-4` |
 | shadow champion/challenger: recomendação por história, nunca promoção | [0039](0039-shadow-recommendation.md) | `cycle-4` |
+| A2A bridge: documentos, remoto nunca provider local | [0040](0040-a2a-bridge.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

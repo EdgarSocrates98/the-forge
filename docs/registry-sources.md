@@ -43,7 +43,7 @@ usuário (mesma precedência de `providers.toml`).
 ```toml
 [[sources]]
 id = "team-mirror"
-kind = "local-file"          # ou "http"
+kind = "local-file"          # ou "http" / "a2a"
 path = "registry.json"       # relativo ao diretório do registries.toml
 enabled = true               # opt-in: default desabilitado
 
@@ -58,7 +58,9 @@ timeout_s = 10               # espera limitada por request (default 10)
 
 - `id` — identificador da fonte (`[a-zA-Z0-9_-]+`).
 - `kind` — `local-file` (documento JSON; mirrors, catálogos vendored, feeds
-  air-gapped) ou `http` (cliente read-only com cache e freshness — Wave D).
+  air-gapped), `http` (cliente read-only com cache e freshness — Wave D) ou
+  `a2a` (Agent Card remoto convertido em `RegistryDocument` — Wave I,
+  experimental; ver [a2a-bridge.md](a2a-bridge.md)).
 - `enabled` — **default `false`**: uma fonte configurada não faz nada até ser
   habilitada explicitamente.
 - `max_age_s` — freshness budget: cache mais novo que isso nem dispara fetch.
@@ -95,6 +97,16 @@ Todo read remoto carrega proveniência no `SourceRead`: `freshness`
 (`fresh`/`stale`/`unknown`), `from_cache`, `retrieved_at`, `etag`,
 `body_sha256` — e `status="stale"` quando o documento servido expirou o
 budget. Stale nunca é silenciosamente fresh.
+
+## Fonte `a2a` (experimental)
+
+`kind = "a2a"` aponta `url` para um A2A Agent Card remoto. O cliente é o
+mesmo `http` read-only (mesmas regras de URL, cache, freshness e
+kill-switch); só o decode difere — o card é convertido pelo bridge em um
+`RegistryDocument` de uma entrada cujas claims são marcadas *external /
+remote / unverified* (nunca provider local, `distribution` vazio, dimensões
+de política em `runtime`/`limitations`). Detalhes do mapeamento:
+[a2a-bridge.md](a2a-bridge.md).
 
 ## Leitura
 

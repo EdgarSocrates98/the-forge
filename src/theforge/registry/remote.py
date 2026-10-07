@@ -34,6 +34,7 @@ from theforge.registry.sources import SourceRead, SourceSpec
 from theforge.security.redact import redact_text
 
 __all__ = [
+    "A2ACardSource",
     "CACHE_KIND",
     "DEFAULT_MAX_AGE_S",
     "DEFAULT_TIMEOUT_S",
@@ -226,10 +227,14 @@ class HttpRegistrySource:
 
         try:
             text = response.body.decode("utf-8")
-            document = from_dict(RegistryDocument, json.loads(text), "$")
-        except (ValueError, UnicodeDecodeError, ContractError) as exc:
+        except UnicodeDecodeError as exc:
             return SourceRead(spec=spec, status="invalid",
                               detail=f"{spec.id}: {redact_text(str(exc))[:200]}")
+        document, error = self._decode(text)
+        if error is not None or document is None:
+            return SourceRead(spec=spec, status="invalid",
+                              detail=f"{spec.id}: "
+                                     f"{redact_text(error or 'empty document')[:200]}")
 
         body_sha = hashlib.sha256(response.body).hexdigest()
         etag = next((v for k, v in response.headers.items()
@@ -240,6 +245,15 @@ class HttpRegistrySource:
                           freshness="fresh", retrieved_at=now, etag=etag,
                           body_sha256=body_sha, bytes_received=len(response.body),
                           latency_ms=latency_ms)
+
+    def _decode(self, text: str) -> tuple[RegistryDocument | None, str | None]:
+        """Decode a fetched/cached body into a document — the one seam the
+        A2A card source overrides (the body stays the raw fetched bytes, so a
+        cached card re-converts the same way)."""
+        try:
+            return from_dict(RegistryDocument, json.loads(text), "$"), None
+        except (ValueError, ContractError) as exc:
+            return None, str(exc)
 
     def _degraded(self, spec: SourceSpec, cached: CachedDocument | None,
                   why: str) -> SourceRead:
@@ -290,9 +304,8 @@ class HttpRegistrySource:
             return None
         if hashlib.sha256(body.encode("utf-8")).hexdigest() != body_sha:
             return None  # poisoned cache: integrity failure → treat as absent
-        try:
-            document = from_dict(RegistryDocument, json.loads(body), "$")
-        except (ValueError, ContractError):
+        document, error = self._decode(body)
+        if error is not None or document is None:
             return None
         etag = raw.get("etag")
         return CachedDocument(retrieved_at=retrieved_at,
@@ -326,3 +339,25 @@ class HttpRegistrySource:
             with contextlib.suppress(OSError):
                 self._cache_path.write_text(
                     json.dumps(raw, indent=1, sort_keys=True), encoding="utf-8")
+
+
+class A2ACardSource(HttpRegistrySource):
+    """``a2a`` source: fetch a remote A2A Agent Card and bridge it into a
+    single-entry ``RegistryDocument`` (Cycle 4, Wave I).
+
+    Same transport, cache, and freshness discipline as ``http`` sources; only
+    the body decode differs. The card's claims enter as an unverified remote
+    candidate — a remote agent is never a local provider, and the entry
+    carries the endpoint and policy caveats in ``limitations``.
+    """
+
+    def _decode(self, text: str) -> tuple[RegistryDocument | None, str | None]:
+        from theforge.interop.a2a import card_to_document, parse_agent_card
+        card, error = parse_agent_card(text)
+        if error is not None or card is None:
+            return None, error or "empty agent card"
+        document, warnings = card_to_document(
+            card, source_id=self.spec.id, produced_at=self._clock())
+        if document is None:
+            return None, "; ".join(warnings) or "unusable agent card"
+        return document, None  # warnings ride inside document.limitations
