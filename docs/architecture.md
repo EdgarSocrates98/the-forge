@@ -277,7 +277,9 @@ Decisões em [ADR 0011](adr/0011-ci-support-matrix.md).
 |---|---|---|
 | `ci.yml` | `pull_request` e `push` em `main` (gate de PR) | Ubuntu e Windows × Python 3.11–3.14: ruff, mypy, paridade de schemas, `pytest -m "not slow and not real_provider"`; job `package`: build, `scripts/ci/check_zero_deps.py` e `scripts/ci/fresh_install.py` (wheel em venv novo, `doctor`, `init` e `ask` com `demo.echo`) |
 | `compat.yml` | semanal e `workflow_dispatch` | macOS × 3.11 e 3.14, mesma suíte offline |
-| `real-providers.yml` | semanal e `workflow_dispatch`; nunca bloqueia PR | checkout dos repositórios irmãos em `siblings/spark-forge-aws` e `siblings/api-forge`, venv 3.11 (Spark) e 3.12 (API) e `pytest -m real_provider` com `THEFORGE_REAL_PROVIDERS_REQUIRED=1` |
+| `ecosystem-real.yml` | semanal e `workflow_dispatch`; nunca bloqueia PR | checkout dos quatro irmãos em `siblings/`, um venv por especialista (3.11 Spark/Doctors, 3.12 API) e `pytest -m real_provider` com `THEFORGE_REAL_PROVIDERS_REQUIRED=1` |
+| `provider-surface-drift.yml` | semanal e `workflow_dispatch`; nunca bloqueia PR | `record --check` por especialista: `surface drift: none`/`additive` (exit 0) ou `breaking` (exit 1); o snapshot nunca é auto-mergido |
+| `release-compat.yml` | semanal e `workflow_dispatch`; nunca bloqueia PR | `theforge provider check` contra o venv de cada especialista na main — conformidade de protocolo independente de versão de pacote |
 
 - O segredo `SIBLING_REPOS_TOKEN` (fallback `github.token`) só aparece no `with.token` dos checkouts dos irmãos, com `persist-credentials: false`; nunca em `env` nem em `run`. Todos os workflows usam `permissions: contents: read`.
 - Os testes são classificados pelos markers `unit`, `contract`, `integration`, `e2e`, `slow`, `security` e `real_provider`; um arquivo de teste sem categoria falha a coleta. A suíte offline bloqueia rede (exceto loopback) dentro do processo do pytest; o marker `allow_network` libera um teste.

@@ -3,6 +3,11 @@
 Run in the API Forge interpreter (Python 3.12 with ``apiforge``)::
 
     python -m theforge_apiforge.record [--out PATH] [--recorded-at TIMESTAMP]
+    python -m theforge_apiforge.record --check [--out PATH]
+
+``--check`` writes nothing: it classifies the drift of the live capability matrix over
+the recorded snapshot as ``none``, ``additive`` (new capabilities or a bare version
+bump; exit 0) or ``breaking`` (removed or changed capabilities; exit 1).
 
 It reads the public capability matrix through ``apiforge.capabilities.load_capabilities``
 and writes ``{specialist_version, recorded_at, provenance, capabilities: [{capability_id,
@@ -17,7 +22,7 @@ import argparse
 import json
 import platform
 import sys
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -89,11 +94,55 @@ def _write(path: Path, data: dict[str, Any]) -> None:
     path.write_bytes(encode_snapshot(data))
 
 
+def _capability_map(snapshot: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    entries = snapshot.get("capabilities")
+    return {str(entry["capability_id"]): entry for entry in entries} \
+        if isinstance(entries, list) else {}
+
+
+def classify_drift(packaged: Mapping[str, Any], fresh: Mapping[str, Any],
+                   ) -> tuple[str, list[str]]:
+    """``none`` | ``additive`` | ``breaking`` drift of ``fresh`` over ``packaged``.
+
+    A capability that disappeared or whose recorded attributes changed is breaking;
+    a capability that only appeared — or a bare specialist-version bump — is a
+    compatible additive drift.
+    """
+    old, new = _capability_map(packaged), _capability_map(fresh)
+    breaking = [f"capability removed: {cid}" for cid in sorted(set(old) - set(new))]
+    breaking += [f"capability changed: {cid}: {dict(old[cid])} -> {dict(new[cid])}"
+                 for cid in sorted(set(old) & set(new)) if old[cid] != new[cid]]
+    notes = [f"capability added: {cid}" for cid in sorted(set(new) - set(old))]
+    if packaged.get("specialist_version") != fresh.get("specialist_version"):
+        notes.append(f"specialist version {packaged.get('specialist_version')} -> "
+                     f"{fresh.get('specialist_version')}")
+    if breaking:
+        return "breaking", [*breaking, *notes]
+    return ("additive" if notes else "none"), notes
+
+
+def _check(path: Path, fresh: dict[str, Any]) -> int:
+    try:
+        packaged = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"record --check: cannot read {path}: {exc}", file=sys.stderr)
+        return 1
+    status, lines = classify_drift(packaged, fresh)
+    print(f"surface drift: {status}")
+    for line in lines:
+        print(f"  {line}")
+    return 1 if status == "breaking" else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m theforge_apiforge.record",
                                      description=__doc__.splitlines()[0] if __doc__ else None)
     parser.add_argument("--out", type=Path, default=SNAPSHOT_PATH,
-                        help="snapshot path (default: the packaged native_matrix.json)")
+                        help="snapshot path (default: the packaged native_matrix.json); "
+                             "with --check, the recorded snapshot to compare against")
+    parser.add_argument("--check", action="store_true",
+                        help="do not write; classify drift of the live surface over the "
+                             "recorded snapshot (none|additive|breaking; exit 1 on breaking)")
     parser.add_argument("--recorded-at", default=None,
                         help="timestamp to record (default: now, UTC)")
     parser.add_argument("--environment", type=Path, default=None, metavar="DIR",
@@ -110,6 +159,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     snapshot = build_snapshot(load_capabilities(),
                               specialist_version=str(apiforge.__version__),
                               recorded_at=args.recorded_at or _utc_now())
+    if args.check:
+        return _check(args.out, snapshot)
     args.out.write_bytes(encode_snapshot(snapshot))
     print(f"recorded {len(snapshot['capabilities'])} capabilities from apiforge "
           f"{snapshot['specialist_version']} to {args.out}")

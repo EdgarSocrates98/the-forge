@@ -131,6 +131,36 @@ def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *,
     return []
 
 
+def _upstream_replay(recorded: Mapping[str, Any], payload: Mapping[str, Any],
+                     ) -> tuple[Mapping[str, Any], list[str]]:
+    """Re-derive the items page's upstream facts from THIS request's handoff, in replay.
+
+    The handoff→facts translation is adapter-deterministic — the specialist's only
+    part is folding the facts into the items page — so a replayed run must carry the
+    provenance of its own handoff, never the recorded one. Recorded ``upstream:*``
+    items with no handoff in the request are dropped: in that run the tool saw no
+    intake. Stale judge references to dropped items fall off on their own
+    (``_findings`` restricts ``evidence_ids`` to facts present in the result).
+    """
+    output = recorded.get("output")
+    if not isinstance(output, Mapping):
+        return recorded, []
+    items = output.get("items")
+    if not isinstance(items, list):
+        return recorded, []
+    native = [item for item in items if not (
+        isinstance(item, Mapping) and isinstance(item.get("id"), str)
+        and item["id"].startswith("upstream:"))]
+    notes: list[str] = []
+    upstream: list[Any] = []
+    if isinstance(payload.get("handoff"), Mapping):
+        document, notes = translate_handoff(payload["handoff"])
+        upstream = list(document["facts"])
+    if len(native) == len(items) and not upstream:
+        return recorded, notes
+    return {**recorded, "output": {**output, "items": [*native, *upstream]}}, notes
+
+
 def workspace_detail(reply: Reply) -> Reply:
     """``reply`` with the ``stage/`` prefix of native paths removed from its error detail."""
     error = reply.error
@@ -246,6 +276,8 @@ def execute(options: AdapterOptions, request: Request, cwd: Path, *,
                 else _live_recording(payload, cwd, tool, files, run))
     if isinstance(recorded, Reply):
         return recorded
+    if options.replay is not None:
+        recorded, upstream_notes = _upstream_replay(recorded, payload)
     draft = translate.translate_recording(recorded, stage)
     if isinstance(draft, Reply):
         return workspace_detail(draft)

@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from theforge_doctordata import _shell, catalog, health
+from theforge_doctordata import _shell, catalog, health, record
 
 from theforge.contracts import (
     PROTOCOL_V1,
@@ -231,6 +231,28 @@ def test_native_fingerprint_ignores_recorded_at() -> None:
     assert catalog.native_fingerprint(later) == catalog.native_fingerprint(snapshot)
     different = {**snapshot, "seams": []}
     assert catalog.native_fingerprint(different) != catalog.native_fingerprint(snapshot)
+
+
+def test_record_check_classifies_drift() -> None:
+    snapshot = _snapshot()
+    assert record.classify_drift(snapshot, snapshot) == ("none", [])
+    added = {**snapshot, "seams": [*snapshot["seams"], {
+        "name": "new_seam", "module": "m", "callable": "c", "present": True,
+        "parameters": []}]}
+    status, lines = record.classify_drift(snapshot, added)
+    assert status == "additive" and lines == ["seam added: new_seam"]
+    missing = {**snapshot, "seams": snapshot["seams"][1:]}
+    status, lines = record.classify_drift(snapshot, missing)
+    assert status == "breaking" and lines[0].startswith("seam removed:")
+    dropped = {**snapshot, "request_kinds": []}
+    status, lines = record.classify_drift(snapshot, dropped)
+    assert status == "breaking" and "request kind removed: scan" in lines
+    bumped = {**snapshot, "contract_version": "forge-contracts/2"}
+    status, lines = record.classify_drift(snapshot, bumped)
+    assert status == "breaking" and any("contract_version" in line for line in lines)
+    versioned = {**snapshot, "specialist_version": "9.9.9"}
+    status, lines = record.classify_drift(snapshot, versioned)
+    assert status == "additive" and any("specialist version" in line for line in lines)
 
 
 def _valid_snapshot() -> dict[str, Any]:

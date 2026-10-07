@@ -263,6 +263,18 @@ SEEDS: dict[str, dict[str, Any]] = {
         "chosen": "a", "rejected": ["b"], "rationale": "a has the evidence",
         "confidence": "high", "unknowns": ["u"], "limitations": ["l"],
     },
+    "EconomyRollup": {
+        "schema": "theforge/EconomyRollup/v1", "producer": P, "created_at": "t",
+        "plan_run": "plan-1",
+        "receipts": [{"node": "n1", "receipt": {
+            "schema": "theforge/ProviderEconomyReceipt/v1", "provider": "p1",
+            "run": "r1",
+            "context_bytes": {"value": 512, "status": "measured"},
+            "provider_tokens": {"status": "unresolved"},
+            "basis": ["case-metrics"], "limitations": ["l"]}}],
+        "totals": {"context_bytes": {"value": 512, "status": "measured"}},
+        "conflicts": [], "limitations": ["l"],
+    },
     "PlanState": {
         "producer": P, "created_at": "t", "plan_run": "plan-1", "run_state": "running",
         "nodes": [{"node": "n1", "state": "succeeded", "run_id": "run-1",

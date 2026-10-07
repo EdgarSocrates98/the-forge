@@ -8,7 +8,9 @@ isolated user ``providers.toml`` of a test. They never reach a provider: the ent
 Per Forge, in this order, each with an explicit reason: the variable is set, it names an
 existing interpreter (absolute path), and ``<python> -c "import <adapter>, <specialist>"``
 exits 0 within ``IMPORT_TIMEOUT``. A missing prerequisite skips the Forge's integration tests,
-unless ``THEFORGE_REAL_PROVIDERS_REQUIRED=1``, in which case it fails them.
+unless required mode is on — ``THEFORGE_REAL_PROVIDERS_REQUIRED=1`` or the ecosystem-level
+alias ``THEFORGE_ECOSYSTEM_REQUIRED=1`` — in which case it fails them (Phase 47: no silent
+skips).
 See ``docs/real-providers.md``.
 """
 
@@ -30,6 +32,9 @@ API_PYTHON_VAR = "THEFORGE_REAL_APIFORGE_PYTHON"
 DOCTORDATA_PYTHON_VAR = "THEFORGE_REAL_DOCTORDATA_PYTHON"
 DOCTORAPI_PYTHON_VAR = "THEFORGE_REAL_DOCTORAPI_PYTHON"
 REQUIRED_VAR = "THEFORGE_REAL_PROVIDERS_REQUIRED"
+# Ecosystem-wide alias: a CI that sets THEFORGE_ECOSYSTEM_REQUIRED=1 means the same
+# thing — a missing prerequisite is a failure, never a silent skip.
+ECOSYSTEM_REQUIRED_VAR = "THEFORGE_ECOSYSTEM_REQUIRED"
 IMPORT_TIMEOUT = 60.0
 DOC = "docs/real-providers.md"
 # python, python3, python3.12, python.exe, python3.12.exe (case-insensitive).
@@ -171,7 +176,8 @@ def check_forge(name: str, environ: Mapping[str, str] | None = None, *,
 
 def is_required(environ: Mapping[str, str] | None = None) -> bool:
     env = os.environ if environ is None else environ
-    return env.get(REQUIRED_VAR, "").strip() == "1"
+    return (env.get(REQUIRED_VAR, "").strip() == "1"
+            or env.get(ECOSYSTEM_REQUIRED_VAR, "").strip() == "1")
 
 
 def require_forge(name: str, environ: Mapping[str, str] | None = None, *,
@@ -180,8 +186,10 @@ def require_forge(name: str, environ: Mapping[str, str] | None = None, *,
     try:
         return check_forge(name, environ, probe=probe)
     except ForgeUnavailable as exc:
-        if is_required(environ):
-            pytest.fail(f"{REQUIRED_VAR}=1: {exc.reason}", pytrace=False)
+        env = os.environ if environ is None else environ
+        for var in (REQUIRED_VAR, ECOSYSTEM_REQUIRED_VAR):
+            if env.get(var, "").strip() == "1":
+                pytest.fail(f"{var}=1: {exc.reason}", pytrace=False)
         pytest.skip(exc.reason)
 
 

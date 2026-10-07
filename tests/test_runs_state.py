@@ -184,7 +184,7 @@ def test_risk_is_a_known_artifact_in_run_order() -> None:
     assert ARTIFACTS == ("task", "workspace-descriptor", "routing", "plan", "installation",
                          "risk", "handoff", "context", "context-r1", "context-r2", "result",
                          "plan-state", "plan-result", "graph", "capability-graph",
-                         "semantic-proposal", "routing-proposal", "decision",
+                         "semantic-proposal", "routing-proposal", "decision", "economy",
                          "verification", "telemetry", "diagnostic", "complexity",
                          "budget", "receipt")
     assert ARTIFACT_TYPES["complexity"] is ComplexityAssessment

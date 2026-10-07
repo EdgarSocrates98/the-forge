@@ -7,7 +7,8 @@ level fields and the ``forge-contracts`` version. ``describe`` declares a capabi
 for a seam the snapshot marks present, so a drifted specialist degrades to manifest
 limitations instead of a runtime surprise.
 
-``--check`` compares the packaged snapshot with a fresh capture and reports drift.
+``--check`` compares the packaged snapshot with a fresh capture and classifies the
+drift as ``none``, ``additive`` (exit 0) or ``breaking`` (exit 1).
 """
 
 from __future__ import annotations
@@ -79,10 +80,43 @@ def capture() -> dict[str, Any]:
     }
 
 
+def classify_drift(packaged: dict[str, Any], fresh: dict[str, Any],
+                   ) -> tuple[str, list[str]]:
+    """``none`` | ``additive`` | ``breaking`` drift of ``fresh`` over ``packaged``.
+
+    A seam that disappeared, turned absent or changed its signature, a dropped request
+    kind or a ``contract_version`` bump is breaking; a new seam, a new request kind or
+    a bare specialist-version bump is a compatible additive drift.
+    """
+    old = {str(s["name"]): s for s in packaged.get("seams", [])}
+    new = {str(s["name"]): s for s in fresh.get("seams", [])}
+    breaking = [f"seam removed: {name}" for name in sorted(set(old) - set(new))]
+    breaking += [f"seam changed: {name}: {old[name]} -> {new[name]}"
+                 for name in sorted(set(old) & set(new)) if old[name] != new[name]]
+    old_kinds = set(packaged.get("request_kinds", []))
+    new_kinds = set(fresh.get("request_kinds", []))
+    breaking += [f"request kind removed: {kind}" for kind in sorted(old_kinds - new_kinds)]
+    for key in sorted(set(packaged) | set(fresh)):
+        if key in {"seams", "request_kinds", "specialist_version", "recorded_at",
+                   "provenance"}:
+            continue
+        if packaged.get(key) != fresh.get(key):
+            breaking.append(f"{key} {packaged.get(key)} -> {fresh.get(key)}")
+    notes = [f"seam added: {name}" for name in sorted(set(new) - set(old))]
+    notes += [f"request kind added: {kind}" for kind in sorted(new_kinds - old_kinds)]
+    if packaged.get("specialist_version") != fresh.get("specialist_version"):
+        notes.append(f"specialist version {packaged.get('specialist_version')} -> "
+                     f"{fresh.get('specialist_version')}")
+    if breaking:
+        return "breaking", [*breaking, *notes]
+    return ("additive" if notes else "none"), notes
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m theforge_doctordata.record")
     parser.add_argument("--check", action="store_true",
-                        help="do not write; exit 1 when the packaged snapshot drifts")
+                        help="do not write; classify drift over the packaged snapshot "
+                             "(none|additive|breaking; exit 1 on breaking)")
     parser.add_argument("--out", default=None,
                         help="write the snapshot to this path instead of the packaged one")
     parser.add_argument("--recorded-at", default=None,
@@ -97,14 +131,14 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, ValueError) as exc:
             print(f"cannot read {SNAPSHOT_PATH.name}: {exc}", file=sys.stderr)
             return 1
-        drift = native_fingerprint(packaged) != native_fingerprint(fresh)
-        if drift:
-            print(f"native surface drifted: packaged "
-                  f"{native_fingerprint(packaged)[:12]} != live "
-                  f"{native_fingerprint(fresh)[:12]}", file=sys.stderr)
-            return 1
-        print("native surface unchanged")
-        return 0
+        status, lines = classify_drift(packaged, fresh)
+        print(f"surface drift: {status}")
+        for line in lines:
+            print(f"  {line}")
+        if status != "none":
+            print(f"packaged {native_fingerprint(packaged)[:12]} != live "
+                  f"{native_fingerprint(fresh)[:12]}")
+        return 1 if status == "breaking" else 0
     validate_snapshot(fresh)
     target = Path(args.out) if args.out else SNAPSHOT_PATH
     target.write_text(

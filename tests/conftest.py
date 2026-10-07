@@ -116,6 +116,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_plan_economy.py": ("unit", "integration"),
     # planned by design (cycle-3.1 federation security)
     "test_federation_adversarial.py": ("unit", "integration", "security"),
+    "test_ecosystem_contracts.py": ("contract", "integration"),
+    "test_debug_tmp.py": ("unit",),
     # planned by design (cycle-3 project intelligence)
     "test_intel.py": ("unit", "integration"),
     # planned by design (cycle-3 tracing)

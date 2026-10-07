@@ -361,6 +361,29 @@ def test_record_builds_a_deterministic_snapshot() -> None:
     assert json.loads(encoded) == first
 
 
+def test_record_check_classifies_drift() -> None:
+    base = {"specialist_version": "1.0", "capabilities": [
+        {"capability_id": "a.one", "state": "supported", "risk": "read_only",
+         "limitations": []},
+        {"capability_id": "b.two", "state": "supported", "risk": "read_only",
+         "limitations": []}]}
+    assert record.classify_drift(base, base) == ("none", [])
+    added = {**base, "capabilities": [*base["capabilities"],
+             {"capability_id": "c.new", "state": "supported", "risk": "read_only",
+              "limitations": []}]}
+    status, lines = record.classify_drift(base, added)
+    assert status == "additive" and lines == ["capability added: c.new"]
+    status, lines = record.classify_drift(
+        base, {**base, "capabilities": base["capabilities"][:1]})
+    assert status == "breaking" and lines == ["capability removed: b.two"]
+    changed = {**base, "capabilities": [base["capabilities"][0],
+               {**base["capabilities"][1], "state": "unsupported"}]}
+    status, lines = record.classify_drift(base, changed)
+    assert status == "breaking" and lines[0].startswith("capability changed: b.two")
+    status, lines = record.classify_drift(base, {**base, "specialist_version": "2.0"})
+    assert status == "additive" and "specialist version 1.0 -> 2.0" in lines
+
+
 @pytest.mark.skipif(ON_312, reason="this environment runs Python 3.12")
 def test_record_refuses_outside_python_312(tmp_path: Path) -> None:
     out = subprocess.run([sys.executable, "-m", "theforge_apiforge.record",

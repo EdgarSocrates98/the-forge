@@ -427,6 +427,26 @@ def test_snapshot_rerecording_is_deterministic() -> None:
     assert rendered.endswith("\n") and list(json.loads(rendered)) == sorted(first)
 
 
+def test_record_check_classifies_drift() -> None:
+    base = record.build_snapshot(_tools(["sparkforge_a", "sparkforge_b"]), "0.5.0",
+                                 today="2026-10-03")
+    assert record.classify_drift(base, base) == ("none", [])
+    added = {**base, "tools": {**base["tools"], "sparkforge_c": {
+        "annotations": {}, "required": []}}}
+    status, lines = record.classify_drift(base, added)
+    assert status == "additive" and lines == ["tool added: sparkforge_c"]
+    missing = {**base, "tools": {"sparkforge_a": base["tools"]["sparkforge_a"]}}
+    status, lines = record.classify_drift(base, missing)
+    assert status == "breaking" and lines == ["tool removed: sparkforge_b"]
+    tampered = {**base, "tools": {**base["tools"], "sparkforge_a": {
+        "annotations": {}, "required": ["x"]}}}
+    status, lines = record.classify_drift(base, tampered)
+    assert status == "breaking" and lines[0].startswith("tool changed: sparkforge_a")
+    bumped = {**base, "specialist_version": "0.6.0"}
+    status, lines = record.classify_drift(base, bumped)
+    assert status == "additive" and "specialist version 0.5.0 -> 0.6.0" in lines
+
+
 def test_record_without_sparkforge_fails_with_reason_and_writes_nothing(tmp_path: Path) -> None:
     from theforge_sparkforge import native_pkg
     if native_pkg.dispatcher_found():
