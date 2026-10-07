@@ -602,23 +602,28 @@ class PlanExecutor:
         # At this terminal point there is no remaining planned candidate, so any
         # unresolved question has no expected gain inside this plan; callers may
         # create a new plan instead of silently extending the current one.
-        unresolved = sorted({
-            *plan.unknowns,
-            *(unknown
-              for execution in trace.executions
-              if execution.result is not None
-              for unknown in execution.result.unknowns),
-        })
+        unresolved = sorted(
+            set(plan.unknowns).union(
+                unknown
+                for execution in trace.executions
+                if execution.result is not None
+                for unknown in execution.result.unknowns
+            )
+        )
+        valid_executions = [
+            execution for execution in trace.executions if execution.result is not None
+        ]
+        verification_satisfied = bool(valid_executions) and all(
+            execution.verification is not None
+            and execution.verification.forge.status == "passed"
+            for execution in valid_executions
+        )
         stop = decide_global_stop(
             trace.run_id,
             StopSignals(
                 other_unresolved=unresolved,
                 candidate_unique_evidence=False,
-                verification_satisfied=all(
-                    execution.verification is None
-                    or execution.verification.forge.status == "passed"
-                    for execution in trace.executions
-                ),
+                verification_satisfied=verification_satisfied,
             ),
         )
         trace.global_stop_sha = self.forger.store.write(trace.run_id, "global-stop", stop)
