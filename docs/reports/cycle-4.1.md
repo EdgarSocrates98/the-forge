@@ -28,6 +28,11 @@ control-plane gaps without opening Marketplace or remote arbitrary execution.
   a stable profile, and never change runtime budgets automatically;
 - retry-aware provider-call budgets reserve the configured attempt ceiling while
   telemetry records actual execute calls; terminal budget exhaustion is explicit;
+- Global Stop treats failed/skipped/refused nodes as unresolved evidence gaps,
+  keeps terminal information gain unknown without a concrete next candidate and
+  derives policy/repeated-failure signals from typed node outcomes;
+- PlanResult/receipt/global-stop are relationally hash-checked against coordinated
+  tampering, not only file-by-file hashes;
 - experiment promotion now requires an `approval_sha256` evidence link;
 - NativeTrace hardening tests and explicit trace-federation boundary;
 - ADRs 0044–0048.
@@ -47,7 +52,7 @@ API Forge main closure commit: `4a7356e9bba8cb5177d5632b5b2106ae52d37c3c`.
 ## Remote validation
 
 GitHub Actions runs for The Forge currently terminate without job steps in the
-observed environment. The latest observed Cycle 4.1 run `37669972394` produced all
+observed environment. The latest observed Cycle 4.1 run `37679759764` produced all
 10 expected Linux/Windows test/package jobs, but every job returned with
 `steps = null`. Treat this as `REMOTE_BLOCKED`, not a code/test failure and
 not a green run, until a runner executes actual steps.
