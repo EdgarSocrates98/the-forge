@@ -144,7 +144,8 @@ def record_action(call: NativeCall, *, workspace: Path, capability: str, action:
     """Call the action's tool over a temporary copy of ``workspace`` (and the chained judge
     when there are facts); return the recording ``(file name, data)``.
 
-    ``call`` is ``sparkforge.adapters.tools.call_tool``; ``arguments`` maps native argument ->
+    ``call`` is ``call_tool`` of the resolved tool surface (``sparkforge_aws.adapters.tools``,
+    or pre-rename ``sparkforge.adapters.tools``); ``arguments`` maps native argument ->
     workspace-relative path; ``accepted`` are the tool's input properties. ``handoff``, when
     given, is a ``theforge/Handoff/v1`` payload: it is translated into the specialist's
     upstream-facts document, staged as ``stage/upstream-facts.json`` and passed to the tool

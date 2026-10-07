@@ -292,13 +292,14 @@ def test_missing_tool_or_unfillable_argument_is_not_declared(snapshot: dict[str,
 # --- describe without the specialist ------------------------------------------------------
 
 def test_describe_without_sparkforge_is_refused_with_actionable_reason() -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
+    from theforge_sparkforge import native_pkg
+    if native_pkg.dispatcher_found():
         pytest.skip("the Spark Forge is importable in this interpreter")
     response = _call("describe")
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "SPARKFORGE-ADAPTER-UNAVAILABLE"
-    assert "sparkforge is not importable" in response.error.detail
+    assert "sparkforge-aws is not importable" in response.error.detail
     assert f"Python {sys.version_info.major}.{sys.version_info.minor}" in response.error.detail
     assert "sparkforge-aws >=0.5,<0.6" in response.error.detail
     assert response.error.unlock
@@ -427,14 +428,15 @@ def test_snapshot_rerecording_is_deterministic() -> None:
 
 
 def test_record_without_sparkforge_fails_with_reason_and_writes_nothing(tmp_path: Path) -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
+    from theforge_sparkforge import native_pkg
+    if native_pkg.dispatcher_found():
         pytest.skip("the Spark Forge is importable in this interpreter")
     target = tmp_path / "native_catalog.json"
     out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record",
                           "--output", str(target)], capture_output=True, timeout=60,
                          cwd=tmp_path)
     assert out.returncode != 0
-    assert b"sparkforge is not importable" in out.stderr
+    assert b"sparkforge-aws is not importable" in out.stderr
     assert not target.exists()
 
 
@@ -1139,14 +1141,15 @@ def test_recording_helper_rejects_an_undeclared_action_or_escaping_argument() ->
 
 
 def test_recording_helper_without_sparkforge_fails_and_writes_nothing(tmp_path: Path) -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
+    from theforge_sparkforge import native_pkg
+    if native_pkg.dispatcher_found():
         pytest.skip("the Spark Forge is importable in this interpreter")
     out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record_execute",
                           "--workspace", str(WORKSPACE), "--capability", CAPABILITY,
                           "--action", ACTION, "--arg", "path=jobs", "--out", str(tmp_path)],
                          capture_output=True, timeout=60, cwd=tmp_path)
     assert out.returncode != 0
-    assert b"sparkforge is not importable" in out.stderr
+    assert b"sparkforge-aws is not importable" in out.stderr
     assert list(tmp_path.iterdir()) == []
 
 

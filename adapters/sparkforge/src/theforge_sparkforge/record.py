@@ -2,8 +2,9 @@
 the installed Spark Forge: ``python -m theforge_sparkforge.record [--output PATH]
 [--environment DIR]``.
 
-Run it in the Spark Forge's own interpreter. It is the only module that imports
-``sparkforge.adapters.tools.TOOLS``: describe reads the recorded snapshot instead (importing the
+Run it in the Spark Forge's own interpreter. It is the only module that imports the tool
+surface (``sparkforge_aws.adapters.tools.TOOLS``, or pre-rename ``sparkforge.adapters.tools``,
+through ``native_pkg``): describe reads the recorded snapshot instead (importing the
 tool surface costs seconds). The snapshot keeps, per tool, its MCP annotations and its required
 arguments, plus the origin ``specialist_version``. The output is deterministic: sorted keys and
 lists, LF endings, and ``recorded_at`` (UTC date) only changes when the recorded surface does.

@@ -4,8 +4,9 @@ The common shell (``_shell.py``) owns the Forge Protocol v1 envelope, the adapte
 the protocol, capability and action gates.
 
 ``describe`` never imports the Spark Forge tool surface (seconds to load): it checks that
-``sparkforge`` is importable (``find_spec``) and derives the manifest from the capability table
-(``catalog.py``) crossed with the recorded snapshot (``native_catalog.json``). With
+a tool surface is importable (``find_spec``: ``sparkforge_aws.adapters.tools``, or
+``sparkforge.adapters.tools`` on pre-rename installs) and derives the manifest from the
+capability table (``catalog.py``) crossed with the recorded snapshot (``native_catalog.json``). With
 ``--replay <dir>`` the import check is replaced by the scenario's ``environment.json``.
 
 ``health`` (``health.py``) checks the interpreter, the dispatcher (``find_spec``, never
