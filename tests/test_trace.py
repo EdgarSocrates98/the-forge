@@ -18,6 +18,7 @@ from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.telemetry import (
     MAX_SPANS,
     SPAN_ATTRS_MAX,
+    NativeTrace,
     RunTelemetry,
     Span,
 )
@@ -114,6 +115,48 @@ def test_telemetry_without_spans_still_parses() -> None:
     data = to_dict(_telemetry([]))
     del data["spans"]
     assert from_dict(RunTelemetry, data, strict=True).spans == []
+
+
+
+
+# --- provider trace federation -------------------------------------------------
+
+
+def test_native_trace_is_an_opaque_bounded_provider_reference() -> None:
+    trace = NativeTrace(
+        ref="agentops:run-123",
+        summary="critical path: inspect -> reason -> verify",
+        critical_path=["inspect", "reason", "verify"],
+    )
+    assert trace.ref == "agentops:run-123"
+    assert trace.critical_path[-1] == "verify"
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "file:///etc/passwd",
+        "https://evil.example/trace",
+        "data:text/plain,prompt",
+        "javascript:alert(1)",
+        "C:\\\\temp\\\\trace.json",
+        "agentops:../secret",
+        "forge:run/1",
+        "theforge:run/1",
+    ],
+)
+def test_native_trace_ref_never_becomes_a_dereferenceable_path_or_url(ref: str) -> None:
+    with pytest.raises(ContractError):
+        NativeTrace(ref=ref)
+
+
+def test_native_trace_summary_and_critical_path_are_bounded() -> None:
+    with pytest.raises(ContractError):
+        NativeTrace(ref="agentops:r", summary="x" * 241)
+    with pytest.raises(ContractError):
+        NativeTrace(ref="agentops:r", critical_path=["x"] * 33)
+    with pytest.raises(ContractError):
+        NativeTrace(ref="agentops:r", critical_path=["x" * 121])
 
 
 # --- recorder ----------------------------------------------------------------
