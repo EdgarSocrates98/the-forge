@@ -2,7 +2,7 @@
 
 from dataclasses import replace
 from statistics import median
-from typing import cast
+from typing import Literal, cast
 
 from theforge.contracts.adaptive import (
     ContextBudgetRecommendation,
@@ -106,7 +106,7 @@ def recommend_context_budget(
         task_family=roi.task_family,
         current_budget_bytes=current_budget_bytes,
         suggested_budget_bytes=suggested,
-        maturity=cast("Literal['warming', 'mature']", roi.maturity),
+        maturity=cast(Literal["warming", "mature"], roi.maturity),
         basis=[
             f"{roi.measured_runs} measured comparable runs",
             f"context citation utilization {roi.utilization_ratio:.3f}",
