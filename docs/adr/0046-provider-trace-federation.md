@@ -1,6 +1,6 @@
 # ADR 0046 — Provider Trace Federation
 
-Status: Accepted
+- Status: aceito (2026-10-07)
 
 ## Context
 
