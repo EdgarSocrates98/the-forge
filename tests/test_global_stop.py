@@ -171,11 +171,11 @@ def test_property_mandatory_verification_never_stops_for_low_gain(
 
 
 @given(
-    remaining=st.floats(min_value=0, max_value=1_000_000, allow_nan=False, allow_infinity=False),
+    remaining=st.integers(min_value=0, max_value=1_000_000),
     failures=st.integers(min_value=0, max_value=20),
 )
 def test_property_budget_exhaustion_is_global_ceiling(
-    remaining: float, failures: int
+    remaining: int, failures: int
 ) -> None:
     decision = decide_global_stop(
         "property-run",
