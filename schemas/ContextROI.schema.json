@@ -76,9 +76,6 @@
         }
       ]
     },
-    "verified_runs": {
-      "type": "integer"
-    },
     "utilization_ratio": {
       "anyOf": [
         {
@@ -88,6 +85,9 @@
           "type": "null"
         }
       ]
+    },
+    "verified_runs": {
+      "type": "integer"
     }
   },
   "required": [

@@ -21,7 +21,6 @@ from theforge.contracts.complexity import (
     ComplexityDimension,
     ComplexityLevel,
 )
-from theforge.contracts.control import GlobalStopDecision
 from theforge.contracts.context import (
     ContextFile,
     ContextPack,
@@ -30,6 +29,7 @@ from theforge.contracts.context import (
     LineRange,
     WorkspaceSummary,
 )
+from theforge.contracts.control import GlobalStopDecision
 from theforge.contracts.decisions import (
     DECISIONS_SCHEMA,
     DecisionKind,
@@ -208,7 +208,8 @@ __all__ = [
     "ExecutionInfo", "ExecutionPlan",
     "ExecutionReceipt", "ExecutionResult", "ExplainReport", "Finding", "ForgeManifest",
     "ForgeRegistryEntry",
-    "GitSummary", "GraphEdge", "GraphNode", "Handoff", "HandoffItem", "HandoffOrigin",
+    "GitSummary", "GlobalStopDecision", "GraphEdge", "GraphNode", "Handoff", "HandoffItem",
+    "HandoffOrigin",
     "HealthCheck", "HealthReport", "InstallApproval", "InstallationItem",
     "InstallationPlan", "InstallationPlanV2", "InstallStep",
     "IntegrityError", "IntelFingerprints",

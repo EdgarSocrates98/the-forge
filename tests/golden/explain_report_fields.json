@@ -113,6 +113,7 @@
     "plan": {
       "properties": [
         "economy",
+        "global_stop",
         "installation",
         "plan",
         "result",
@@ -225,6 +226,39 @@
         "value"
       ],
       "required": []
+    },
+    "plan.global_stop": {
+      "properties": [
+        "action",
+        "budget_remaining",
+        "created_at",
+        "information_gain",
+        "producer",
+        "reasons",
+        "run_id",
+        "schema",
+        "unresolved",
+        "verification_required",
+        "verification_satisfied"
+      ],
+      "required": [
+        "action",
+        "created_at",
+        "information_gain",
+        "producer",
+        "reasons",
+        "run_id"
+      ]
+    },
+    "plan.global_stop.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
     },
     "plan.installation": {
       "properties": [
@@ -367,6 +401,7 @@
         "created_at",
         "decision_sha256",
         "economy_sha256",
+        "global_stop_sha256",
         "limitations",
         "nodes",
         "order",

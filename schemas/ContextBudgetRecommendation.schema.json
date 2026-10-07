@@ -11,8 +11,8 @@
       "items": {
         "type": "string"
       },
-      "type": "array",
-      "minItems": 1
+      "minItems": 1,
+      "type": "array"
     },
     "capability": {
       "type": "string"

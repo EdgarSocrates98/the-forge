@@ -464,6 +464,40 @@ SEEDS: dict[str, dict[str, Any]] = {
         "entries": [{"name": "io.github.acme/filesystem"}],
         "next_cursor": "abc", "limitations": ["l"],
     },
+    # cycle 4.1 global control / adaptive learning
+    "GlobalStopDecision": {
+        "producer": P, "created_at": "t", "run_id": "plan-1",
+        "action": "continue", "information_gain": "unknown",
+        "reasons": ["expected information gain is unknown"],
+        "unresolved": ["node:n2:skipped"], "budget_remaining": 2,
+        "verification_required": True, "verification_satisfied": True,
+    },
+    "ContextROI": {
+        "producer": P, "created_at": "t", "provider": "echo-forge",
+        "capability": "data.pipeline", "surface_fingerprint": SHA,
+        "task_family": "migration", "runs": 3, "measured_runs": 2,
+        "delivered_bytes": 1024, "delivered_items": 4, "cited_items": 2,
+        "utilization_ratio": 0.5, "maturity": "warming",
+        "delivered_runs": 2, "verified_runs": 2, "limitations": ["l"],
+    },
+    "ContextBudgetRecommendation": {
+        "producer": P, "created_at": "t", "provider": "echo-forge",
+        "capability": "data.pipeline", "surface_fingerprint": SHA,
+        "task_family": "migration", "current_budget_bytes": 1000,
+        "suggested_budget_bytes": 500, "maturity": "mature",
+        "basis": ["measured comparable runs"], "advisory": True,
+    },
+    "StrategyExperiment": {
+        "producer": P, "created_at": "t", "experiment_id": "exp-1",
+        "capability": "data.pipeline", "task_family": "migration",
+        "champion": "forge-a", "challenger": "forge-b",
+        "champion_surface": SHA, "challenger_surface": "b" * 64,
+        "state": "observing", "discovery_before": "2026-01-01T00:00:00Z",
+        "evaluation_after": "2026-01-02T00:00:00Z",
+        "minimum_runs": 4, "minimum_verified_runs": 2,
+        "observations": 2, "verified_observations": 1,
+        "reasons": ["collecting"], "operator_approval_required": True,
+    },
     # economy observations (cycle 4, wave G)
     "ExecutionObservation": {
         "producer": P, "created_at": "t", "run_id": "r1",

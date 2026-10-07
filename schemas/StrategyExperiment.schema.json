@@ -2,6 +2,17 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
+    "approval_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "capability": {
       "type": "string"
     },
@@ -106,17 +117,6 @@
     },
     "verified_observations": {
       "type": "integer"
-    },
-    "approval_sha256": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "pattern": "^[0-9a-f]{64}$"
     }
   },
   "required": [
