@@ -358,7 +358,16 @@ class TestE2E:
             verification="passed",
         )
         for index, profile in enumerate(
-            ["economy", "balanced", "economy", "balanced", "economy", "balanced", "economy", "balanced"]
+            [
+                "economy",
+                "balanced",
+                "economy",
+                "balanced",
+                "economy",
+                "balanced",
+                "economy",
+                "balanced",
+            ]
         ):
             record_observation(
                 tmp_path,
