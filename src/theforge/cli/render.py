@@ -161,6 +161,10 @@ def economy_report(data: dict[str, Any]) -> str:
                     f"    advisory budget: {recommendation['current_budget_bytes']} -> "
                     f"{recommendation['suggested_budget_bytes']} bytes"
                 )
+            elif row.get("recommendation_limitation"):
+                lines.append(
+                    f"    note: {_clean(row['recommendation_limitation'])}"
+                )
     for conflict in data["conflicts"]:
         lines.append(f"conflict: {_clean(conflict)}")
     for family in data["task_families"]:
