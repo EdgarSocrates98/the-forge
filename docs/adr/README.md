@@ -36,6 +36,22 @@ Decisões de arquitetura de The Forge, uma por arquivo `NNNN-<slug>.md`. Cada AD
 | 0030 | [Modos avançados de execução](0030-execution-modes.md) | aceito (2026-10-07) |
 | 0031 | [Contratos compartilhados: schema repository agora](0031-shared-contracts.md) | aceito (2026-10-07) |
 | 0032 | [A2A e MCP como superfícies opcionais, nunca substitutos](0032-external-protocol-interop.md) | aceito (2026-10-07) |
+| 0033 | [Capability Negotiation v2](0033-capability-negotiation-v2.md) | aceito (2026-10-07) |
+| 0034 | [Registry sources](0034-registry-sources.md) | aceito (2026-10-07) |
+| 0035 | [Remote registry client](0035-remote-registry-client.md) | aceito (2026-10-07) |
+| 0036 | [Remote discovery](0036-remote-discovery.md) | aceito (2026-10-07) |
+| 0037 | [InstallationPlan v2](0037-installation-plan-v2.md) | aceito (2026-10-07) |
+| 0038 | [Economy observations](0038-economy-observations.md) | aceito (2026-10-07) |
+| 0039 | [Shadow recommendation](0039-shadow-recommendation.md) | aceito (2026-10-07) |
+| 0040 | [A2A bridge](0040-a2a-bridge.md) | aceito (2026-10-07) |
+| 0041 | [MCP registry awareness](0041-mcp-registry-awareness.md) | aceito (2026-10-07) |
+| 0042 | [forge-contracts audit](0042-forge-contracts-audit.md) | aceito (2026-10-07) |
+| 0043 | [Security hardening](0043-security-hardening.md) | aceito (2026-10-07) |
+| 0044 | [Global Stop Authority](0044-global-stop-authority.md) | aceito (2026-10-07) |
+| 0045 | [Information Gain Model](0045-information-gain-model.md) | aceito (2026-10-07) |
+| 0046 | [Provider Trace Federation](0046-provider-trace-federation.md) | aceito (2026-10-07) |
+| 0047 | [Context ROI Is Advisory, Not Causal](0047-context-roi-advisory.md) | aceito (2026-10-07) |
+| 0048 | [Adaptive Strategy Experiments](0048-adaptive-experiments.md) | aceito (2026-10-07) |
 
 ## Decisões exigidas pelo Cycle 2
 
