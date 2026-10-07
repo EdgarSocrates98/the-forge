@@ -11,7 +11,8 @@
       "items": {
         "type": "string"
       },
-      "type": "array"
+      "type": "array",
+      "minItems": 1
     },
     "capability": {
       "type": "string"
@@ -76,7 +77,8 @@
     "task_family",
     "current_budget_bytes",
     "suggested_budget_bytes",
-    "maturity"
+    "maturity",
+    "basis"
   ],
   "title": "ContextBudgetRecommendation",
   "type": "object"
