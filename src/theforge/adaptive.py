@@ -205,6 +205,19 @@ def advance_experiment(
         observations >= experiment.minimum_runs
         and verified >= experiment.minimum_verified_runs
     ):
+        minimum_per_arm = max(1, experiment.minimum_runs // 2)
+        if len(champion) < minimum_per_arm or len(challenger) < minimum_per_arm:
+            reasons.append(
+                "each arm requires at least "
+                f"{minimum_per_arm} evaluation runs before review"
+            )
+            return replace(
+                experiment,
+                state=state,
+                observations=observations,
+                verified_observations=verified,
+                reasons=reasons,
+            )
         champion_verified = sum(
             1 for item in champion if item.verification == "passed"
         ) / len(champion)
@@ -240,7 +253,10 @@ def advance_experiment(
                     for item in challenger
                     if (value := getattr(item, metric)) is not None
                 ]
-                if not champion_values or not challenger_values:
+                if (
+                    len(champion_values) != len(champion)
+                    or len(challenger_values) != len(challenger)
+                ):
                     continue
                 incumbent = float(median(champion_values))
                 candidate = float(median(challenger_values))
