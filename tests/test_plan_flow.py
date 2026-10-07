@@ -432,6 +432,9 @@ def test_policy_refusal_of_the_first_node_blocks_the_second(tmp_path: Path) -> N
     assert out.result.reproducibility.level == "unknown"
     assert _child_runs(store, out.run_id) == [n1.run_id]
     _assert_closed(store, out)
+    stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
+    assert stop.action != "stop_sufficient_evidence"
+    assert {"node:n1:refused", "node:n2:skipped"} <= set(stop.unresolved)
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     assert telemetry.providers_executed.value == 0
 
@@ -452,6 +455,9 @@ def test_independent_node_still_runs_after_another_fails(tmp_path: Path) -> None
     assert spy.ops("execute") == ["bad-r", "fixture-spark"]
     assert any(f.startswith("a: ") for f in out.result.synthesis.failures)
     _assert_closed(store, out)
+    stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
+    assert stop.action != "stop_sufficient_evidence"
+    assert {"node:a:refused", "node:c:skipped"} <= set(stop.unresolved)
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     assert telemetry.providers_executed.value == 2
 
@@ -478,6 +484,13 @@ def test_failure_at_the_root_of_a_chain_blocks_every_descendant_by_the_root(
     assert spy.ops("execute") == ["bad-r"]
     assert _child_runs(store, out.run_id) == [out.result.nodes[0].run_id]
     _assert_closed(store, out)
+    stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
+    assert stop.action != "stop_sufficient_evidence"
+    assert {
+        "node:n1:refused",
+        "node:n2:skipped",
+        "node:n3:skipped",
+    } <= set(stop.unresolved)
 
 
 @pytest.mark.parametrize(("approvals", "bad_status"), [
