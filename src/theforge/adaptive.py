@@ -1,6 +1,7 @@
 """Context ROI aggregation and conservative strategy experiments."""
 
 from dataclasses import replace
+from datetime import datetime
 from statistics import median
 from typing import Literal, cast
 
@@ -69,6 +70,8 @@ def build_context_roi(
     delivered_items = sum(item.context_items or 0 for item in measured)
     cited_items = sum(item.context_items_cited or 0 for item in measured)
     utilization = (cited_items / delivered_items) if delivered_items else None
+    delivered_runs = sum(1 for item in comparable if item.status in ("ok", "partial"))
+    verified_runs = sum(1 for item in comparable if item.verification == "passed")
     limitations: list[str] = []
     if task_family is None and comparable:
         limitations.append("task family is unscoped; comparable runs may span families")
@@ -91,6 +94,8 @@ def build_context_roi(
         cited_items=cited_items,
         utilization_ratio=utilization,
         maturity=_maturity(len(comparable)),
+        delivered_runs=delivered_runs,
+        verified_runs=verified_runs,
         limitations=limitations,
     )
 
@@ -105,6 +110,8 @@ def recommend_context_budget(
     if roi.maturity not in ("warming", "mature"):
         return None
     if roi.utilization_ratio is None or roi.measured_runs < 3:
+        return None
+    if roi.delivered_runs != roi.runs or roi.verified_runs != roi.runs:
         return None
     if not 0 < floor_ratio < 1:
         raise ValueError("floor_ratio must be in (0,1)")
@@ -127,8 +134,9 @@ def recommend_context_budget(
         maturity=cast(Literal["warming", "mature"], roi.maturity),
         basis=[
             f"{roi.measured_runs} measured comparable runs",
+            f"{roi.verified_runs}/{roi.runs} comparable runs forge-verified",
             f"context citation utilization {roi.utilization_ratio:.3f}",
-            "advisory only; quality causality is not inferred",
+            "advisory experiment only; quality causality is not inferred",
         ],
     )
 
