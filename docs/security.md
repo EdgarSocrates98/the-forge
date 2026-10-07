@@ -235,5 +235,11 @@ Catálogos privados e ambientes air-gapped são suportados pelo mesmo mecanismo 
 | Provider declara artificialmente “sem ganho” | Information gain é calculado pelo core a partir de unknowns, capability/verification e policy; texto do provider não é instrução de controle. |
 | Poisoning de ROI | Context ROI é escopado por provider + capability + surface fingerprint + task family; métricas ausentes permanecem unknown/limitation e história fria não recomenda redução. |
 | História antiga após mudança de provider | Mudança de `surface_fingerprint` separa a série histórica e marca experimentos incompatíveis como `stale`. |
-| Auto-promoção de challenger | `StrategyExperiment/v1` exige aprovação de operador/policy; Cycle 4.1 não promove automaticamente. |
+| Auto-promoção de challenger | `StrategyExperiment/v1` nunca promove automaticamente; estado `promoted` exige `approval_sha256` e estados governados exigem rationale. |
 | Native trace como caminho/URL | `NativeTrace.ref` é opaco; schemes dereferenceáveis/reservados e traversal são rejeitados e o core nunca abre/faz fetch do ref. |
+
+
+| Ameaça | Mitigação |
+|---|---|
+| Retry amplification | `max_attempts` é limitado a 1..5; o pior caso é reservado em `RunBudget.provider_calls`, cada execute real entra na telemetria e a ampliação fica explícita em `adjustments`. |
+| Promotion by assertion | `promoted` exige hash de aprovação governada; texto do provider/registry nunca é aprovação. |
