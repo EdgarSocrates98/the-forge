@@ -158,6 +158,7 @@ Antes de iniciar o provider, o core decide `allow`, `ask` ou `deny` e grava o ar
 - Configuração: tabela `[rules]` em `policy.toml` no diretório de configuração do usuário (pode afrouxar ou endurecer) e em `.forge/config/policy.toml` (só endurece). A regra aplicada é registrada como `<origem>.<chave>`, com origem `default`, `user` ou `project`.
 - `ask` sem aprovação: `refused` com `FORGE-POLICY-APPROVAL-REQUIRED` e `unlock = --approve <capability>`. Com `theforge ask … --approve <capability>`, vira `allow` e o run registra `approved: true`. `deny`: `refused` com `FORGE-POLICY-DENIED`; `--approve` não desbloqueia.
 - O `RiskAssessment` sempre registra `source: provider_declaration` e a limitação `operation_class is a provider declaration, not sandbox enforcement`.
+- **Hierarquia (ciclo 3.1):** a mais restritiva vence entre quatro camadas — a policy global da Forge, o `operation_class` declarado pela capability, a policy interna do especialista e o boundary dos Doctors. Cada camada só pode endurecer: `.forge/config/policy.toml` só endurece sobre a do usuário, a estimativa de `plan` só endurece sobre a classe declarada, e uma decisão interna do especialista só pode recusar mais cedo — nada abaixo do core relaxa um `deny`. O stop segue a mesma direção: o timeout/kill da árvore do subprocesso do nó é o teto absoluto; políticas internas de stop/recovery do especialista operam dentro dele e nunca o estendem.
 
 ## Limitações de isolamento
 Não há sandbox. Detalhes e pesquisa por plataforma em [ADR 0012](adr/0012-os-sandbox-research.md).
