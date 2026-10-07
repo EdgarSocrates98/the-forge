@@ -127,7 +127,9 @@ def experiment(**over: object) -> StrategyExperiment:
     return StrategyExperiment(**base)  # type: ignore[arg-type]
 
 
-def eval_obs(run: str, provider: str, surface: str, verified: str = "passed") -> ExecutionObservation:
+def eval_obs(
+    run: str, provider: str, surface: str, verified: str = "passed"
+) -> ExecutionObservation:
     return ExecutionObservation(
         producer=PRODUCER,
         created_at="t",
