@@ -315,6 +315,36 @@ class TestE2E:
         cmd_economy_report(_args_at(tmp_path, json_=False))
         cmd_economy_report(_args_at(tmp_path, json_=True))
 
+    def test_economy_report_exposes_context_roi_and_advisory(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from theforge.cli.commands import cmd_economy_report
+
+        for i in range(8):
+            record_observation(
+                tmp_path,
+                obs(
+                    run_id=f"roi-{i}",
+                    task_family="data.audit",
+                    surface_fingerprint="surface-a",
+                    profile="balanced",
+                    context_bytes=1_000,
+                    context_items=10,
+                    context_items_cited=1,
+                    verification="passed",
+                ),
+            )
+        assert cmd_economy_report(_args_at(tmp_path, json_=True)) == 0
+        payload = json.loads(capsys.readouterr().out)
+        (row,) = payload["context_roi"]
+        assert row["roi"]["maturity"] == "mature"
+        assert row["roi"]["utilization_ratio"] == pytest.approx(0.1)
+        recommendation = row["recommendation"]
+        assert recommendation is not None
+        assert recommendation["advisory"] is True
+        assert recommendation["current_budget_bytes"] == 262_144
+        assert recommendation["suggested_budget_bytes"] == 131_072
+
     def test_discovery_report_carries_economy(self, tmp_path: Path) -> None:
         from theforge.contracts.negotiation import CapabilityRequirement
         from theforge.registry.discovery import discover
