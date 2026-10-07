@@ -240,6 +240,50 @@ def test_one_sided_history_never_becomes_reviewable() -> None:
     assert any("both champion and challenger" in reason for reason in result.reasons)
 
 
+def test_unbalanced_experiment_sample_never_becomes_reviewable() -> None:
+    result = advance_experiment(
+        experiment(minimum_runs=6, minimum_verified_runs=6),
+        [
+            eval_obs("a1", "spark-a", "sa"),
+            eval_obs("a2", "spark-a", "sa"),
+            eval_obs("a3", "spark-a", "sa"),
+            eval_obs("a4", "spark-a", "sa"),
+            eval_obs("a5", "spark-a", "sa"),
+            eval_obs("b1", "spark-b", "sb"),
+        ],
+    )
+    assert result.state == "observing"
+    assert any("each arm requires" in reason for reason in result.reasons)
+
+
+def test_partial_metric_coverage_never_proves_economy_gain() -> None:
+    champion = [
+        eval_obs("a1", "spark-a", "sa"),
+        eval_obs("a2", "spark-a", "sa"),
+    ]
+    challenger = [
+        eval_obs("b1", "spark-b", "sb"),
+        ExecutionObservation(
+            producer=PRODUCER,
+            created_at="2026-10-07T13:00:00Z",
+            run_id="b2",
+            provider="spark-b",
+            capability="data.performance",
+            task_family="data.spark.performance",
+            surface_fingerprint="sb",
+            status="ok",
+            context_bytes=None,
+            verification="passed",
+        ),
+    ]
+    result = advance_experiment(
+        experiment(minimum_runs=4, minimum_verified_runs=4),
+        [*champion, *challenger],
+    )
+    assert result.state == "observing"
+    assert any("no measured economy improvement" in reason for reason in result.reasons)
+
+
 def test_challenger_quality_regression_blocks_review() -> None:
     result = advance_experiment(
         experiment(minimum_runs=4, minimum_verified_runs=3),
