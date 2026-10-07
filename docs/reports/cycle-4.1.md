@@ -20,10 +20,15 @@ control-plane gaps without opening Marketplace or remote arbitrary execution.
 - StrategyExperiment/v1;
 - conservative surface-scoped ROI aggregation;
 - advisory context-budget recommendation;
-- shadow experiment lifecycle with time-based holdout, surface invalidation
-  and no automatic promotion;
+- shadow experiment lifecycle with time-based holdout, exact task-family isolation,
+  balanced arms, complete metric coverage, quality non-regression and no automatic
+  promotion;
 - Context ROI is exposed through the existing `economy report` as bounded
-  advisory rows; recommendations never change runtime budgets automatically;
+  advisory rows; recommendations require complete measured/verified history and
+  a stable profile, and never change runtime budgets automatically;
+- retry-aware provider-call budgets reserve the configured attempt ceiling while
+  telemetry records actual execute calls; terminal budget exhaustion is explicit;
+- experiment promotion now requires an `approval_sha256` evidence link;
 - NativeTrace hardening tests and explicit trace-federation boundary;
 - ADRs 0044–0048.
 
@@ -86,7 +91,7 @@ Static/mechanical checks performed against the branch include:
 | Explain/replay integrity | DONE | hashcheck + explain integration/tests |
 | Trace federation | DONE for current scope | existing NativeTrace reused; refs hardened |
 | Context ROI | DONE advisory | surface/task scoped observations; economy report |
-| Adaptive experiments | DONE/CONSERVATIVE | holdout + two-arm sample gate + quality non-regression + measured economy improvement; promotion remains operator/policy controlled |
+| Adaptive experiments | DONE/CONSERVATIVE | holdout + balanced two-arm coverage + complete economy evidence + quality non-regression; promotion requires approval hash and remains operator/policy controlled |
 | Automatic budget reduction | DEFERRED | intentionally unsafe before experiment proof |
 | Early scheduler stop | DEFERRED | terminal decision first; arbitrary node skipping not enabled |
 | Remote The Forge CI | BLOCKED | Actions jobs return with no steps |
