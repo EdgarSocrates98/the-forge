@@ -12,6 +12,8 @@ from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hin
 
 from theforge.contracts import (
     CapabilityGraph,
+    ContextBudgetRecommendation,
+    ContextROI,
     CapabilityNegotiationResult,
     CapabilityOffer,
     CapabilityRequirement,
@@ -31,6 +33,7 @@ from theforge.contracts import (
     ForgeManifest,
     ForgeRegistryEntry,
     GlobalEconomyReceipt,
+    GlobalStopDecision,
     Handoff,
     HealthReport,
     InstallationPlan,
@@ -55,6 +58,7 @@ from theforge.contracts import (
     RunBudget,
     RunTelemetry,
     SemanticPlanProposal,
+    StrategyExperiment,
     TaskSpec,
     VerificationResult,
     VerifyRequest,
@@ -92,6 +96,8 @@ EXPORTED: tuple[type[Any], ...] = (
     ExecutionObservation, GlobalEconomyReceipt,
     # mcp registry awareness (cycle 4, wave J)
     McpRegistryDocument, McpServerEntry,
+    # cycle 4.1 global control / adaptive learning
+    GlobalStopDecision, ContextROI, ContextBudgetRecommendation, StrategyExperiment,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -111,6 +117,7 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     InstallationPlanV2,
     # observations are core-produced; the global receipt is a core-composed view.
     ExecutionObservation, GlobalEconomyReceipt,
+    GlobalStopDecision, ContextROI, ContextBudgetRecommendation, StrategyExperiment,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
