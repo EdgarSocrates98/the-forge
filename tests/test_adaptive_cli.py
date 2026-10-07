@@ -19,6 +19,7 @@ def _obs(run: str, provider: str, surface: str, created_at: str) -> ExecutionObs
         task_family="data.spark.performance",
         surface_fingerprint=surface,
         status="ok",
+        context_bytes=1000 if provider == "spark-a" else 500,
         verification="passed",
     )
 
