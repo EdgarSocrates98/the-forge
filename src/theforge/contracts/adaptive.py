@@ -40,6 +40,8 @@ class ContextROI:
     cited_items: int
     utilization_ratio: float | None
     maturity: HistoryMaturity
+    delivered_runs: int = 0
+    verified_runs: int = 0
     limitations: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -47,11 +49,23 @@ class ContextROI:
             raise ContractError(f"context roi: unsupported schema {self.schema!r}")
         if not self.provider or not self.capability or not self.surface_fingerprint:
             raise ContractError("context roi: provider/capability/surface are required")
-        for name in ("runs", "measured_runs", "delivered_bytes", "delivered_items", "cited_items"):
+        for name in (
+            "runs",
+            "measured_runs",
+            "delivered_bytes",
+            "delivered_items",
+            "cited_items",
+            "delivered_runs",
+            "verified_runs",
+        ):
             if getattr(self, name) < 0:
                 raise ContractError(f"context roi: {name} cannot be negative")
         if self.measured_runs > self.runs:
             raise ContractError("context roi: measured_runs exceeds runs")
+        if self.delivered_runs > self.runs:
+            raise ContractError("context roi: delivered_runs exceeds runs")
+        if self.verified_runs > self.runs:
+            raise ContractError("context roi: verified_runs exceeds runs")
         if self.cited_items > self.delivered_items:
             raise ContractError("context roi: cited_items exceeds delivered_items")
         if self.utilization_ratio is not None and not 0 <= self.utilization_ratio <= 1:
@@ -144,7 +158,10 @@ class StrategyExperiment:
             if raw is None:
                 continue
             try:
-                timestamps[name] = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                if parsed.tzinfo is None:
+                    raise ValueError("timezone offset required")
+                timestamps[name] = parsed
             except ValueError as exc:
                 raise ContractError(
                     f"strategy experiment: {name} must be an ISO-8601 timestamp"
