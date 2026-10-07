@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capability": {"type":"string"},
+    "challenger": {"type":"string"},
+    "challenger_surface": {"type":"string"},
+    "champion": {"type":"string"},
+    "champion_surface": {"type":"string"},
+    "created_at": {"type":"string"},
+    "discovery_before": {"anyOf":[{"type":"string"},{"type":"null"}]},
+    "evaluation_after": {"anyOf":[{"type":"string"},{"type":"null"}]},
+    "experiment_id": {"type":"string"},
+    "minimum_runs": {"type":"integer"},
+    "minimum_verified_runs": {"type":"integer"},
+    "observations": {"type":"integer"},
+    "operator_approval_required": {"enum":[true]},
+    "producer": {"additionalProperties": false,"properties":{"id":{"type":"string"},"version":{"type":"string"}},"required":["id","version"],"type":"object"},
+    "reasons": {"items":{"type":"string"},"type":"array"},
+    "schema": {"type":"string"},
+    "state": {"enum":["planned","shadow","observing","eligible_for_review","promoted","rejected","stale","cancelled"]},
+    "task_family": {"anyOf":[{"type":"string"},{"type":"null"}]},
+    "verified_observations": {"type":"integer"}
+  },
+  "required": ["producer","created_at","experiment_id","capability","task_family","champion","challenger","champion_surface","challenger_surface"],
+  "title": "StrategyExperiment",
+  "type": "object"
+}
