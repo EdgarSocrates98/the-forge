@@ -18,7 +18,7 @@ class StopSignals:
     verification_required: bool = False
     verification_satisfied: bool = False
     budget_exhausted: bool = False
-    budget_remaining: float | None = None
+    budget_remaining: int | None = None
     policy_blocked: bool = False
     user_stop: bool = False
     repeated_failures: int = 0
