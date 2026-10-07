@@ -290,6 +290,28 @@
       ],
       "type": "object"
     },
+    "delta": {
+      "anyOf": [
+        {
+          "properties": {
+            "baseline_ref": {
+              "type": "string"
+            },
+            "changed_files": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "handoff": {
       "anyOf": [
         {

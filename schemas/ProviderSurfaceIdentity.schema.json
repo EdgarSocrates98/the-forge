@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capability_fingerprint": {
+      "type": "string"
+    },
+    "native_surface_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "provider_version": {
+      "type": "string"
+    },
+    "recorded_at": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "surface_fingerprint": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider_id",
+    "provider_version",
+    "surface_fingerprint",
+    "capability_fingerprint"
+  ],
+  "title": "ProviderSurfaceIdentity",
+  "type": "object"
+}

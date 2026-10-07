@@ -10,10 +10,12 @@ from typing import Any, Literal
 
 from theforge.contracts.base import ContractError
 from theforge.contracts.context import GitSummary
+from theforge.contracts.economy import EconomyRollup
 from theforge.contracts.installation import InstallationPlan
 from theforge.contracts.plan import ExecutionPlan, PlanResult
-from theforge.contracts.result import Finding
+from theforge.contracts.result import Finding, ProviderReceipt
 from theforge.contracts.routing import Candidate, Selection
+from theforge.contracts.telemetry import NativeTrace
 from theforge.contracts.types import ErrorInfo, Metric, Producer
 from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
@@ -72,6 +74,11 @@ class ProviderSection:
     trust: str
     observed_version: str | None = None
     fingerprint: str | None = None
+    surface_fingerprint: str | None = None
+    native_surface_fingerprint: str | None = None
+    # The provider-native receipt/explain pointer of this run (nested explain
+    # drill-down), copied from the run receipt. None when the run carried none.
+    provider_receipt: ProviderReceipt | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -81,6 +88,9 @@ class ResultSection:
     evidence_by_epistemic: dict[str, int]
     artifacts: int
     duration_ms: Metric
+    # Bounded pointer to the provider's internal trace (ref + summary); the
+    # spans themselves never leave the specialist. None when unreported.
+    native_trace: NativeTrace | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -89,6 +99,8 @@ class PlanSection:
     result: PlanResult | None = None
     workspace_descriptor: WorkspaceDescriptor | None = None  # workspace-descriptor artifact
     installation: InstallationPlan | None = None
+    # The cross-provider EconomyRollup (None when no node reported economy).
+    economy: EconomyRollup | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

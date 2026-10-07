@@ -112,6 +112,7 @@
     },
     "plan": {
       "properties": [
+        "economy",
         "installation",
         "plan",
         "result",
@@ -120,6 +121,110 @@
       "required": [
         "plan"
       ]
+    },
+    "plan.economy": {
+      "properties": [
+        "conflicts",
+        "created_at",
+        "limitations",
+        "plan_run",
+        "producer",
+        "receipts",
+        "schema",
+        "totals"
+      ],
+      "required": [
+        "created_at",
+        "plan_run",
+        "producer"
+      ]
+    },
+    "plan.economy.producer": {
+      "properties": [
+        "id",
+        "version"
+      ],
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "plan.economy.receipts[]": {
+      "properties": [
+        "node",
+        "receipt"
+      ],
+      "required": [
+        "node",
+        "receipt"
+      ]
+    },
+    "plan.economy.receipts[].receipt": {
+      "properties": [
+        "basis",
+        "context_bytes",
+        "cost_usd",
+        "limitations",
+        "model_calls",
+        "provider",
+        "provider_tokens",
+        "run",
+        "schema",
+        "tool_calls",
+        "wall_time_ms"
+      ],
+      "required": [
+        "provider"
+      ]
+    },
+    "plan.economy.receipts[].receipt.context_bytes": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.cost_usd": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.model_calls": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.provider_tokens": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.tool_calls": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.wall_time_ms": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.totals{}": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
     },
     "plan.installation": {
       "properties": [
@@ -261,6 +366,7 @@
       "properties": [
         "created_at",
         "decision_sha256",
+        "economy_sha256",
         "limitations",
         "nodes",
         "order",
@@ -498,7 +604,10 @@
       "properties": [
         "fingerprint",
         "id",
+        "native_surface_fingerprint",
         "observed_version",
+        "provider_receipt",
+        "surface_fingerprint",
         "trust",
         "version"
       ],
@@ -506,6 +615,16 @@
         "id",
         "trust",
         "version"
+      ]
+    },
+    "provider.provider_receipt": {
+      "properties": [
+        "ref",
+        "sha256"
+      ],
+      "required": [
+        "ref",
+        "sha256"
       ]
     },
     "reproducibility": {
@@ -523,6 +642,7 @@
         "duration_ms",
         "evidence_by_epistemic",
         "findings",
+        "native_trace",
         "status"
       ],
       "required": [
@@ -550,6 +670,16 @@
       "required": [
         "id",
         "title"
+      ]
+    },
+    "result.native_trace": {
+      "properties": [
+        "critical_path",
+        "ref",
+        "summary"
+      ],
+      "required": [
+        "ref"
       ]
     },
     "routing": {

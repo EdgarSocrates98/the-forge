@@ -163,8 +163,9 @@ def test_delegate_plan_rejects_specialist_dependencies() -> None:
     assert "delegate" in violations[0].detail
 
 
-def proposer(nid: str) -> PlanNode:
-    return replace(pnode(nid), role="proposer")
+def proposer(nid: str, provider: str | None = None) -> PlanNode:
+    return replace(pnode(nid), role="proposer",
+                   provider=provider if provider is not None else f"demo-{nid}")
 
 
 def referee(nid: str, *proposer_ids: str) -> PlanNode:
@@ -194,6 +195,21 @@ def test_debate_referee_must_depend_on_and_read_every_proposer() -> None:
     no_input = plan(proposer("a"), proposer("b"),
                     replace(referee("r", "a", "b"), inputs=["a"]), pattern="debate")
     assert codes(validate_plan_structure(no_input)) == [(Codes.PLAN_INVALID, "r")]
+
+
+def test_debate_proposers_must_span_two_providers() -> None:
+    """The cross-domain boundary (cycle 3.1): a debate with every proposer on one
+    provider is that specialist's internal disagreement — it is refused at
+    structure-check time, never replayed as plan nodes."""
+    same = plan(proposer("a", "demo"), proposer("b", "demo"),
+                referee("r", "a", "b"), pattern="debate")
+    violations = validate_plan_structure(same)
+    assert (Codes.PLAN_INVALID, None) in codes(violations)
+    assert any("cross-domain boundary" in v.detail for v in violations)
+    # Mixed slates stay valid: three proposers across two providers.
+    mixed = plan(proposer("a", "demo"), proposer("b", "demo"), proposer("c", "other"),
+                 referee("r", "a", "b", "c"), pattern="debate")
+    assert validate_plan_structure(mixed) == []
 
 
 def test_debate_rejects_other_roles_and_dependent_proposers() -> None:

@@ -150,7 +150,25 @@ def _ref_match(node_id: str, ref: str) -> bool:
 
 def graph(data: dict[str, Any]) -> str:
     """The capability graph (``theforge graph``): every edge of the persisted
-    CapabilityGraph, grouped by kind, with the epistemic tag of each edge."""
+    CapabilityGraph, grouped by kind, with the epistemic tag of each edge.
+    ``--mesh`` instead prints the domain mesh projection (observe/engineer/
+    verify) derived from declared relations."""
+    mesh = data.get("mesh")
+    if mesh is not None:
+        lines = ["Capability mesh (declared relations):"]
+        if not mesh.get("domains"):
+            lines.append("  (no artifact type is both produced and consumed)")
+        for row in mesh.get("domains") or []:
+            lines.append(f"DOMAIN: {_clean(row.get('domain', '?'))}")
+            for role in ("observe", "engineer", "verify"):
+                members = row.get(role) or []
+                lines.append(f"  {role}:")
+                lines += [f"    {_clean(member)}" for member in members] or \
+                         ["    (none declared)"]
+        if mesh.get("unplaced_verify"):
+            lines += _labelled("Unplaced verify:",
+                               [_clean(item) for item in mesh["unplaced_verify"]])
+        return "\n".join(lines)
     nodes = [n for n in data.get("nodes") or [] if isinstance(n, dict)]
     edges = [e for e in data.get("edges") or [] if isinstance(e, dict)]
     ref = data.get("ref")
@@ -189,6 +207,8 @@ def health(data: dict[str, Any]) -> str:
     lines = []
     for p in data["providers"]:
         line = f"{_clean(p['id']):<20} {_clean(p['status'])}"
+        if p.get("surface_fingerprint"):
+            line += f"  surface:{_clean(p['surface_fingerprint'])[:12]}"
         if p["error"]:
             line += f"  {_clean(p['error']['code'])}: {_detail(p['error']['detail'])}"
         lines.append(line)
@@ -502,6 +522,15 @@ def explain(data: dict[str, Any]) -> str:
         lines.append(f"Result:      {_clean(result.get('status', '?'))}: "
                      f"{len(result.get('findings') or [])} findings, "
                      f"{len(result.get('evidence') or [])} evidence")
+    provider_receipt = (result or {}).get("provider_receipt")
+    if provider_receipt:  # nested receipt: the provider-native run record to drill into
+        lines.append(f"Native rcpt: {_clean(provider_receipt.get('ref', '?'))}  "
+                     f"sha256={_clean(provider_receipt.get('sha256', '?'))[:12]}")
+    native_trace = (result or {}).get("native_trace")
+    if native_trace:  # trace federation: the native ref; spans stay provider-side
+        lines.append(f"Native trace: {_clean(native_trace.get('ref', '?'))}"
+                     + (f"  {_clean(native_trace['summary'])}"
+                        if native_trace.get("summary") else ""))
     error = receipt.get("error")
     if error:
         unlock = f" (unlock: {_clean(error['unlock'])})" if error.get("unlock") else ""
@@ -613,6 +642,25 @@ def _synthesis_lines(result: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _economy_lines(economy: dict[str, Any]) -> list[str]:
+    """The EconomyRollup lines: per-metric totals, then per-node receipts."""
+    totals = economy.get("totals") or {}
+    cells = []
+    for name in ("cost_usd", "provider_tokens", "context_bytes", "tool_calls",
+                 "model_calls", "wall_time_ms"):
+        metric = totals.get(name) or {}
+        value = metric.get("value")
+        cells.append(f"{name}={_num(value)}" if value is not None
+                     else f"{name}={_clean(metric.get('status') or 'unresolved')}")
+    lines = [f"Economy:     {'  '.join(cells)}"]
+    lines += _labelled("  per-node:", [
+        f"{_clean(entry.get('node'))}={(entry.get('receipt') or {}).get('provider', '?')}"
+        for entry in economy.get("receipts") or []])
+    lines += _labelled("  conflicts:", _list(economy.get("conflicts")))
+    lines += _labelled("  notes:", _list(economy.get("limitations")))
+    return lines
+
+
 def _decision_lines(decision: dict[str, Any]) -> list[str]:
     """The DecisionRecord of a debate plan: options, choice, rationale, confidence."""
     lines = _labelled("Options:", [
@@ -637,7 +685,8 @@ def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | Non
                   installation: dict[str, Any] | None,
                   decision: dict[str, Any] | None = None,
                   semantic_proposal: dict[str, Any] | None = None,
-                  capability_graph: dict[str, Any] | None = None) -> list[str]:
+                  capability_graph: dict[str, Any] | None = None,
+                  economy: dict[str, Any] | None = None) -> list[str]:
     """Plan, node states with their runs, handoffs, synthesis, workspace and installation."""
     lines: list[str] = []
     if capability_graph:
@@ -671,6 +720,8 @@ def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | Non
         lines += _synthesis_lines(result)
     if decision:
         lines += _decision_lines(decision)
+    if economy:
+        lines += _economy_lines(economy)
     if descriptor:
         repositories = [_clean(r.get("path", "?")) for r in descriptor.get("repositories") or []]
         lines.append(f"Workspace:   {len(repositories)} repositories "
@@ -727,7 +778,8 @@ def report_sections(report: dict[str, Any]) -> list[str]:
                                section.get("workspace_descriptor"), section.get("installation"),
                                artifacts.get("decision"),
                                artifacts.get("semantic-proposal"),
-                               artifacts.get("capability-graph"))
+                               artifacts.get("capability-graph"),
+                               section.get("economy"))
     if report.get("error"):
         lines.append(f"Error family: {_clean(report.get('error_family') or 'provider code')}")
     lines += _labelled("Limitations:", _list(report.get("limitations")))
@@ -751,7 +803,8 @@ def plan(data: dict[str, Any]) -> str:
         lines.append(f"Resumed from: {_clean(data['resumed_from'])}")
     lines += plan_sections(data.get("plan"), data.get("result"), None,
                            data.get("installation"), data.get("decision"),
-                           data.get("semantic_proposal"), data.get("capability_graph"))
+                           data.get("semantic_proposal"), data.get("capability_graph"),
+                           data.get("economy"))
     error = data.get("error")
     if error:
         lines.append(f"Error:       {_clean(error['code'])}: {_detail(error['detail'])} "

@@ -58,7 +58,7 @@ def _call(op: str, options: tuple[str, ...] = (), payload: dict[str, Any] | None
     data = json.loads(out.stdout)
     response = from_dict(Response, data)
     assert response.op == op and response.request_id == f"req-{op}"
-    assert (response.producer.id, response.producer.version) == ("api-forge", "0.1.0")
+    assert (response.producer.id, response.producer.version) == ("api-forge", "0.3.0")
     return response, data
 
 
@@ -77,7 +77,7 @@ def test_replay_describe_exposes_analyze_and_change_control() -> None:
     response, raw = _describe()
     assert response.status == "ok", response.error
     manifest = from_dict(ForgeManifest, response.payload)
-    assert manifest.id == "api-forge" and manifest.version == "0.1.0"
+    assert manifest.id == "api-forge" and manifest.version == "0.3.0"
     assert manifest.protocols == [PROTOCOL_V1]
     assert set(manifest.ops) >= {"describe", "health", "execute"}
     assert [c.id for c in manifest.capabilities] == EXPOSED
@@ -123,12 +123,15 @@ def test_replay_describe_lists_every_other_record_with_reason() -> None:
     assert "offline verb" in reasons["capability 'cloud.inspect' (heuristic)"]
 
 
-def test_replay_describe_flags_a_hand_built_snapshot() -> None:
+def test_describe_flags_a_hand_built_snapshot() -> None:
+    """A matrix marked ``hand-built`` is flagged provisional in the manifest
+    limitations; the packaged matrix is recorded against API Forge main."""
     snapshot = _snapshot()
-    assert snapshot["provenance"] == "hand-built"
-    response, _ = _describe()
-    manifest = from_dict(ForgeManifest, response.payload)
-    assert any("hand-built" in n and "0.1.0" in n for n in manifest.limitations)
+    assert snapshot["provenance"] == "recorded"
+    hand_built = catalog.manifest_payload(
+        {**snapshot, "provenance": "hand-built"},
+        provider_id="api-forge", version="0.3.0")
+    assert any("hand-built" in n and "0.1.0" in n for n in hand_built["limitations"])
 
 
 def test_describe_is_deterministic() -> None:
@@ -307,7 +310,7 @@ def test_default_scenario_layout() -> None:
     environment = json.loads((DEFAULT / "environment.json").read_text("utf-8"))
     assert environment["python"].startswith("3.12")
     assert environment["specialist_version"] == "0.1.0"
-    assert environment["provenance"] == "hand-built"
+    assert environment["provenance"] == "recorded"
     for scenario in SCENARIOS.iterdir():
         assert (scenario / "environment.json").is_file(), scenario  # complete scenarios
 
@@ -356,6 +359,29 @@ def test_record_builds_a_deterministic_snapshot() -> None:
     encoded = record.encode_snapshot(first)
     assert encoded.endswith(b"\n") and b"\r" not in encoded
     assert json.loads(encoded) == first
+
+
+def test_record_check_classifies_drift() -> None:
+    base = {"specialist_version": "1.0", "capabilities": [
+        {"capability_id": "a.one", "state": "supported", "risk": "read_only",
+         "limitations": []},
+        {"capability_id": "b.two", "state": "supported", "risk": "read_only",
+         "limitations": []}]}
+    assert record.classify_drift(base, base) == ("none", [])
+    added = {**base, "capabilities": [*base["capabilities"],
+             {"capability_id": "c.new", "state": "supported", "risk": "read_only",
+              "limitations": []}]}
+    status, lines = record.classify_drift(base, added)
+    assert status == "additive" and lines == ["capability added: c.new"]
+    status, lines = record.classify_drift(
+        base, {**base, "capabilities": base["capabilities"][:1]})
+    assert status == "breaking" and lines == ["capability removed: b.two"]
+    changed = {**base, "capabilities": [base["capabilities"][0],
+               {**base["capabilities"][1], "state": "unsupported"}]}
+    status, lines = record.classify_drift(base, changed)
+    assert status == "breaking" and lines[0].startswith("capability changed: b.two")
+    status, lines = record.classify_drift(base, {**base, "specialist_version": "2.0"})
+    assert status == "additive" and "specialist version 1.0 -> 2.0" in lines
 
 
 @pytest.mark.skipif(ON_312, reason="this environment runs Python 3.12")
@@ -633,7 +659,7 @@ def test_health_module_no_longer_carries_the_doctor() -> None:
 
 # --- translation of cases and native errors (5.3) -------------------------------------------
 
-PRODUCER = Producer(id="api-forge", version="0.1.0")
+PRODUCER = Producer(id="api-forge", version="0.3.0")
 ANALYZE_RECORDING = DEFAULT / "api.analyze.analyze.json"
 WORKSPACE_FILES = ["openapi.yaml", "app/__init__.py", "app/main.py", "requirements.txt",
                    "change-bundle.json"]
@@ -690,9 +716,9 @@ def _validated(draft: Any, cwd: Path) -> ExecutionResult:
     return result
 
 
-def test_analyze_recording_is_a_provisional_case_of_the_example_workspace() -> None:
+def test_analyze_recording_is_a_recorded_case_of_the_example_workspace() -> None:
     recording = _analyze_recording()
-    assert recording["provenance"] == "hand-built" and recording["assembled_from"]
+    assert recording["provenance"] == "recorded" and recording["assembled_from"]
     assert recording["exit_code"] == 0
     assert recording["argv"][:1] == ["analyze"] and "--fail-on" not in recording["argv"]
     assert recording["case_dir"] == catalog.VERB_MAP["api.analyze"].output_dir
@@ -1582,6 +1608,20 @@ def test_replay_execute_without_handoff_drops_recorded_upstream(tmp_path: Path) 
     facts = json.loads((cwd / "case" / "facts.json").read_text(encoding="utf-8"))
     assert not [f for f in facts["facts"]
                 if f["source"].get("extractor") == "theforge/handoff"]
+
+
+def test_execute_carries_the_native_case_receipt(tmp_path: Path) -> None:
+    """Phase 37 nested receipt: the result points at the provider's own run record —
+    ``case_id`` verbatim plus the sha256 of the manifest file it wrote (already an
+    artifact of the run). Never the contents."""
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload("api.analyze"), SCENARIOS / "cross")
+    assert response.status == "ok", response.error
+    result = _result(response, data, cwd)
+    assert result.provider_receipt is not None
+    assert result.provider_receipt.ref == "case:cff8bff8a5345118"
+    hashed = {a.path: a.sha256 for a in result.artifacts}
+    assert result.provider_receipt.sha256 == hashed["case/case.json"]
 
 
 # --- execute recorder (Cycle 2.1 Wave G) --------------------------------------

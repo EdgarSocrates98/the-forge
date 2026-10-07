@@ -60,6 +60,17 @@ Há dois tipos de regra:
 
 `theforge graph` mostra o grafo inteiro — relações declaradas e observadas — a partir do cache do registry, sem iniciar providers.
 
+## Identidade de superfície e invalidação
+
+Cada manifest resolvido ganha uma `ProviderSurfaceIdentity` (`theforge/ProviderSurfaceIdentity/v1`) com dois fingerprints computados pelo core: `capability_fingerprint` (o conjunto de capabilities — ids, ações, sinais) e `surface_fingerprint` (a superfície operacional inteira — capabilities + ops, protocolos, features, execution, trust e segurança declaradas). O adapter pode declarar `native_surface_fingerprint`, o hash da superfície nativa que gerou o manifest (ex.: o catálogo de tools do especialista) — fica registrado mas não participa dos fingerprints do core.
+
+A regra de invalidação é uniforme: **mudança de superfície não herda nada**.
+
+- **Registry cache**: uma entrada cacheada só é usada se o digest da entry, o `sha256` do manifest, ambos os fingerprints e o protocolo negociado conferirem com o estado atual — qualquer divergência descarta o cache e o provider é re-probeado (`manifest hash mismatch`, `cached surface fingerprint does not match…`).
+- **Provider performance**: histórico é escopado por `(provider, capability, surface)` — `ProviderPerformance.score` só responde por entradas gravadas contra o fingerprint exato; um provider que muda de superfície recomeça do zero e o histórico antigo fica preservado, acessível mas sem efeito no ranking.
+- **Capability graph**: reconstruído por comando a partir dos records já verificados pelo registry — não há snapshot persistido para ficar obsoleto; o `theforge graph` sempre reflete as superfícies vigentes.
+- **Snapshots nativos**: o `native_surface_fingerprint` declarado é comparado pelo adapter ao fingerprint do especialista instalado — drift de superfície nativa (ex.: tools novas no catálogo do especialista) aparece como diferença de fingerprint registrada no receipt, não como dados velhos reutilizados em silêncio.
+
 ## Regras mecânicas
 Fonte: `src/theforge/contracts/taxonomy.py`. Uma violação gera `FORGE-MANIFEST-TAXONOMY` e exclui só a capability violadora.
 
@@ -103,6 +114,10 @@ Todas são `read_only`, `supported` e rodam localmente e offline.
 | `spark-forge` | `finops.performance-analysis` | `workload` | `sparkforge_analyze_workload` |
 | `api-forge` | `api.analyze` | `analyze` | verbo `apiforge analyze --detail-level summary`; registro `api.analyze` da matriz (supported, read_only) |
 | `api-forge` | `api.change-control` | `run` | verbo `apiforge change-control run`; registro `api.change-control` da matriz (supported, read_only) |
+| `forge-doctor-data` | `data.scan` | `analyze` | seam `accept_request` (`kind=scan`) do `forge_doctor_data.core.forger`; HandoffBundle `forge-contracts/1` |
+| `forge-doctor-data` | `data.verify` | `verify` | seam `check_conformance` de `forge_doctor_data.core.conformance` |
+| `forge-doctor-api` | `api.diagnose` | `analyze` | seam `DoctorBoundary` (`handle` + `endpoint_dict`) de `forge_doctor_api.handoff.boundary` (spec 070); `ApiHandoffBundle` v2 + envelope `ForgeHandoff` + `diagnostic-manifest` |
+| `forge-doctor-api` | `api.verify` | `verify` | strict parse `ApiHandoffBundle.from_dict` / `ForgeHandoff.parse` + integridade `body_sha256` (v2) |
 
 ### Superfície nativa não exposta
 O motivo é o texto exato que o adapter publica em `limitations` no describe. Ações e capabilities excluídas são listadas uma a uma; ferramentas sem capability são agrupadas pelo motivo.
@@ -153,12 +168,12 @@ O motivo é o texto exato que o adapter publica em `limitations` no describe. A�
 | `spark-forge` | `finops.performance-analysis` | `simulate` | `sparkforge_simulate` | `consumes facts produced by another Spark Forge analyzer, not a workspace file` |
 | `spark-forge` | `finops.performance-analysis` | `economy-report` | `sparkforge_economy_report` | `reads the Spark Forge run ledger by 'run_id', not workspace files` |
 | `spark-forge` | — | — | `sparkforge_collect_athena_workgroup`, `sparkforge_collect_cloudwatch`, `sparkforge_collect_cloudwatch_logs`, `sparkforge_collect_emr_cluster`, `sparkforge_collect_emr_eks`, `sparkforge_collect_emr_serverless`, `sparkforge_collect_event_log`, `sparkforge_collect_glue_job`, `sparkforge_collect_glue_job_runs`, `sparkforge_collect_glue_resource_link`, `sparkforge_collect_iam_access`, `sparkforge_collect_iceberg_metadata`, `sparkforge_collect_lakeformation`, `sparkforge_collect_managed_flink`, `sparkforge_collect_parquet_footer`, `sparkforge_collect_schema_registry`, `sparkforge_collect_streaming_integrations` | `call AWS APIs over the network and write collection artifacts (openWorldHint)` |
-| `spark-forge` | — | — | `sparkforge_arbitrate`, `sparkforge_case_open`, `sparkforge_case_update`, `sparkforge_change_propose`, `sparkforge_change_sandbox`, `sparkforge_code_context`, `sparkforge_code_export`, `sparkforge_code_path`, `sparkforge_code_read`, `sparkforge_code_search`, `sparkforge_code_shape`, `sparkforge_code_status`, `sparkforge_code_symbol`, `sparkforge_code_sync`, `sparkforge_debate_next`, `sparkforge_debate_start`, `sparkforge_debate_submit`, `sparkforge_funcval_compare`, `sparkforge_funcval_plan`, `sparkforge_receipt_emit`, `sparkforge_report_sign`, `sparkforge_scan`, `sparkforge_sdd_stamp` | `write local Spark Forge state (case, debate, receipts, sandbox, code index) into the repository (readOnlyHint false)` |
+| `spark-forge` | — | — | `sparkforge_agentops_baseline`, `sparkforge_arbitrate`, `sparkforge_case_open`, `sparkforge_case_update`, `sparkforge_change_propose`, `sparkforge_change_sandbox`, `sparkforge_code_context`, `sparkforge_code_export`, `sparkforge_code_path`, `sparkforge_code_read`, `sparkforge_code_search`, `sparkforge_code_shape`, `sparkforge_code_status`, `sparkforge_code_symbol`, `sparkforge_code_sync`, `sparkforge_debate_next`, `sparkforge_debate_start`, `sparkforge_debate_submit`, `sparkforge_funcval_compare`, `sparkforge_funcval_plan`, `sparkforge_receipt_emit`, `sparkforge_report_sign`, `sparkforge_scan`, `sparkforge_sdd_stamp` | `write local Spark Forge state (case, debate, receipts, sandbox, code index) into the repository (readOnlyHint false)` |
 | `spark-forge` | — | — | `sparkforge_doctor` | `probes the AWS credential chain and the host environment` |
 | `spark-forge` | — | — | `sparkforge_collect_verify` | `operates on AWS collection artifacts registered in the local collection manifest` |
 | `spark-forge` | — | — | `sparkforge_fuse`, `sparkforge_judge`, `sparkforge_root_cause`, `sparkforge_rules_lookup`, `sparkforge_validate_output` | `consumed internally by the analysis actions or takes no workspace file input` |
-| `spark-forge` | — | — | `sparkforge_case_get`, `sparkforge_change_plan`, `sparkforge_debate_referee`, `sparkforge_decision_evaluate`, `sparkforge_next_step`, `sparkforge_playbook`, `sparkforge_proof`, `sparkforge_receipt_verify`, `sparkforge_report_github`, `sparkforge_report_verify`, `sparkforge_resume`, `sparkforge_runtime_detect`, `sparkforge_sdd_check`, `sparkforge_sdd_status` | `works on Spark Forge case, report or session state, not on workspace inputs` |
-| `spark-forge` | — | — | `sparkforge_context_expand`, `sparkforge_context_start`, `sparkforge_knowledge_drift`, `sparkforge_knowledge_path`, `sparkforge_pack_list`, `sparkforge_policy_explain`, `sparkforge_telemetry_export` | `host and agent plumbing (context gateway, knowledge, packs, policy, telemetry), not an analysis` |
+| `spark-forge` | — | — | `sparkforge_agentops_compare`, `sparkforge_agentops_critical_path`, `sparkforge_agentops_inspect`, `sparkforge_agentops_timeline`, `sparkforge_case_get`, `sparkforge_change_plan`, `sparkforge_debate_referee`, `sparkforge_decision_evaluate`, `sparkforge_next_step`, `sparkforge_playbook`, `sparkforge_proof`, `sparkforge_receipt_verify`, `sparkforge_report_github`, `sparkforge_report_verify`, `sparkforge_resume`, `sparkforge_runtime_detect`, `sparkforge_sdd_check`, `sparkforge_sdd_status` | `works on Spark Forge case, run, report or session state, not on workspace inputs` |
+| `spark-forge` | — | — | `sparkforge_context_expand`, `sparkforge_context_inspect`, `sparkforge_context_start`, `sparkforge_doctor_agentic`, `sparkforge_knowledge_drift`, `sparkforge_knowledge_path`, `sparkforge_pack_list`, `sparkforge_policy_explain`, `sparkforge_telemetry_export` | `host and agent plumbing (context gateway, doctor, knowledge, packs, policy, telemetry), not an analysis` |
 | `api-forge` | `api.next-step` | — | registro `api.next-step` da matriz (supported, read_only) | `the native verb needs --phase, which ExecuteRequest v1 has no field for` |
 | `api-forge` | `api.provenance` | — | registro `api.provenance` da matriz (supported, read_only) | `no single offline verb produces it` |
 | `api-forge` | `cicd.inspect` | — | registro `cicd.inspect` da matriz (heuristic, read_only) | `no single offline verb produces it` |

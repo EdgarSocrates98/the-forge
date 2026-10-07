@@ -11,11 +11,12 @@ reaches the API node, which declares ``accepts_handoff`` and consumes it — the
 ``upstream:<id>`` entries whose ``derived_from`` points back at the Spark node run — and the
 synthesis references both node runs, whose evidence carries the specialists' native ids.
 
-The Spark Forge recording was made with ``theforge_sparkforge.record_execute`` from the local
-real Spark Forge; the API Forge one is hand-built (``"provenance": "hand-built"``) from the case
-files of a live API Forge run (with the Spark handoff admitted through ``--upstream``) until the
-first run of the real-provider workflow re-records it. Wave B's ``default`` scenarios are not
-used here.
+The Spark Forge recording was made with ``theforge_sparkforge.record_execute --handoff`` from
+the local real Spark Forge (cycle 3.1: it carries ``arguments.upstream`` and the folded
+upstream facts; in replay the adapter re-derives those facts from the request's own handoff
+and drops the recorded ones when no handoff arrives). The API Forge one was re-recorded by
+``record_execute --handoff`` over the post-PR-#34 main (``"provenance": "recorded"``). Wave
+B's ``default`` scenarios are not used here.
 """
 
 import json
@@ -106,7 +107,7 @@ def test_cross_scenarios_are_complete() -> None:
         assert recordings == [f"{capability}.{action}.json"], (scenario, recordings)
     api = json.loads((SCENARIOS["api-forge"][1] / "api.analyze.analyze.json")
                      .read_text(encoding="utf-8"))
-    assert api["provenance"] == "hand-built"  # until the real workflow re-records it
+    assert api["provenance"] == "recorded"  # re-recorded by record_execute (cycle 3.1)
     spark = json.loads((SCENARIOS["spark-forge"][1] / "pyspark.static-analysis.pyspark.json")
                        .read_text(encoding="utf-8"))
     assert "provenance" not in spark  # recorded by record_execute from the real Spark Forge

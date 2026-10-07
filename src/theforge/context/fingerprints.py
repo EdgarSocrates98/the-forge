@@ -23,6 +23,7 @@ import json
 import os
 import tempfile
 import time
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final, Literal
@@ -104,6 +105,9 @@ class FingerprintStore:
         self.stats = HashStats()
         self.warnings: list[str] = []
         self._entries: dict[str, FingerprintEntry] = {}
+        # rel -> sha256 exactly as loaded (the workspace state the Forge last saw).
+        # ``None`` means no prior state: cold run, disabled or discarded cache.
+        self._prior: dict[str, str] | None = None
         base = cache_dir if cache_dir is not None else user_cache_dir()
         digest = hashlib.sha256(self.root_key.encode("utf-8")).hexdigest()[:12]
         self.path: Path | None = base / "context" / f"{digest}.json"
@@ -188,6 +192,27 @@ class FingerprintStore:
             self.warnings.append(f"fingerprint cache discarded ({self.path}): {exc}")
             return
         self._entries = dict(cache.entries)
+        if self._entries:
+            self._prior = {rel: entry.sha256 for rel, entry in self._entries.items()}
+
+    # --- delta handoff (delta/v1) ----------------------------------------------------------
+
+    def changed_surface(self, current: Mapping[str, str], present: Collection[str],
+                        ) -> tuple[list[str], list[str]] | None:
+        """``(changed-or-new, removed)`` workspace-relative paths vs the loaded state.
+
+        ``current`` maps the files this run actually hashed (the context pack) to
+        their sha256; ``present`` is everything the scan saw. ``None`` when no
+        prior state exists — a first run never claims a delta baseline. Paths
+        cached before but not re-hashed now (unselected this run) are not
+        reported: their stored hash says nothing new about the workspace.
+        """
+        if self._prior is None:
+            return None
+        prior = self._prior
+        changed = sorted(rel for rel, sha in current.items() if prior.get(rel) != sha)
+        removed = sorted(rel for rel in prior if rel not in present)
+        return changed, removed
 
     def save(self) -> None:
         """Write the cache once, atomically, after redaction. Failures become warnings."""

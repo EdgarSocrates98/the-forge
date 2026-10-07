@@ -2,7 +2,14 @@
 
 - Branch: `feat/cycle2.1-cycle3`
 - Início: 2026-10-05
-- Status: IN PROGRESS
+- Status: COMPLETED (implementação) — fechamento de release no [Cycle 3.1](cycle-3.1.md).
+
+A implementação do Cycle 3 encerrou no merge `4d75818` (branch
+`feat/cycle2.1-cycle3`). O fechamento de release migrou para o Cycle 3.1
+porque a convergência de ecossistema identificou gaps pós-implementação
+(superfícies versionadas, adapters dos Doctors, federação de
+economia/trace, prova dos 4 especialistas) — histórico preservado em
+[cycle-3.1.md](cycle-3.1.md).
 - Fonte de requisitos: `prompt_evo_cycle2_cycle3.md` (arquivo local, fora do git por `.gitignore`).
 
 Este documento acompanha o Cycle 3 onda a onda, no mesmo formato do Cycle 2.1: objetivo,

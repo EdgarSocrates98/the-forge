@@ -12,7 +12,7 @@
     "--upstream",
     "upstream-facts.json"
   ],
-  "assembled_from": "API Forge 0.1.0 case files (case.json, api-ir.json, facts.json, findings.json) copied from the declared artifacts of a live apiforge 0.1.0 analyze run (Python 3.12.13, win32) through the adapter, as node n2 of the cross-forge-foundation proof plan over tests/fixtures/workspaces/cross staged under stage/ with the Spark Forge handoff admitted through --upstream upstream-facts.json; provisional until re-recorded by an execute recorder",
+  "assembled_from": "recorded by theforge_apiforge.record_execute: apiforge 0.1.0 analyze analyze on Python 3.12.13 (win32)",
   "case_dir": "case",
   "case_files": {
     "api-ir.json": {
@@ -171,14 +171,14 @@
         },
         "facts": {
           "path": "facts.json",
-          "sha256": "8466d3e97658163721edc111b696a967af7947d9f17e4c4722cf91527f2b9d13"
+          "sha256": "3ae07a4af4d5f02367572e40f7ce538a5b0a224e68d2ebf0309a9e864c5f3e30"
         },
         "findings": {
           "path": "findings.json",
           "sha256": "8aa973100a15bf817985395637131e838cf84e427be4792583def923f020f5fa"
         }
       },
-      "case_id": "case:fe8bc3c0158ab923",
+      "case_id": "case:cff8bff8a5345118",
       "diagnostics_count": 0,
       "finding_counts": {},
       "generator": "apiforge 0.1.0",
@@ -281,524 +281,36 @@
         {
           "attrs": {
             "upstream": {
-              "claim": "status=ok capability=pyspark.static-analysis action=pyspark",
+              "claim": "daily_orders_job.py scans the full orders dataset before filtering",
               "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "outcome",
-              "kind": "decision",
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:1250ed2b1099569e",
-          "kind": "upstream.decision",
-          "measures": {
-            "subject": "n1"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/outcome",
-            "sha256": "1250ed2b1099569eb00679ec97930c81edb13cdf85f4f46c09c0c00ac671fd75"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.chain: length=4",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_2349be",
+              "evidence_ids": [
+                "f_e7a1c2"
+              ],
+              "item": "f_e7a1c2",
               "kind": "evidence",
               "location": {
-                "line": 18,
+                "line": 12,
                 "path": "data-pipeline/jobs/daily_orders_job.py"
               },
               "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
+              "plan_run": "run-plan-cross",
               "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
+              "provider_version": "0.5.0",
+              "run_id": "run-spark-cross"
             }
           },
-          "fact_id": "upstream:e925890f26e80d03",
+          "fact_id": "upstream:9f92946be0de7b17",
           "kind": "upstream.evidence",
           "measures": {
-            "subject": "pyspark.chain"
+            "severity": "medium",
+            "subject": "pyspark.dataframe"
           },
           "source": {
             "column": null,
             "extractor": "theforge/handoff",
             "line": null,
-            "path": "handoff/n1/f_2349be",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.function_def list_daily_orders: name_reference_count=0",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_2b99ad",
-              "kind": "evidence",
-              "location": {
-                "line": 10,
-                "path": "orders-api/app/main.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:bef14bec7326b5f4",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.function_def"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_2b99ad",
-            "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.module_analyzed: resolved_calls=0, unresolved_count=0",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_2e9c41",
-              "kind": "evidence",
-              "location": {
-                "line": null,
-                "path": "orders-api/app/__init__.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:bc5ce5fdc514e083",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.module_analyzed"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_2e9c41",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.chain: length=2",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_36d217",
-              "kind": "evidence",
-              "location": {
-                "line": 15,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:674920e62fb2dcb1",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.chain"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_36d217",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.module_analyzed: resolved_calls=14, unresolved_count=0",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_3af892",
-              "kind": "evidence",
-              "location": {
-                "line": null,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:c1f7a5955eff50ce",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.module_analyzed"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_3af892",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.read",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_4d5f71",
-              "kind": "evidence",
-              "location": {
-                "line": 10,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:b3a301a884da7c8e",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.read"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_4d5f71",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.chain: length=2",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_4e47e6",
-              "kind": "evidence",
-              "location": {
-                "line": 9,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:c6e83337007568cd",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.chain"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_4e47e6",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.write",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_7a351c",
-              "kind": "evidence",
-              "location": {
-                "line": 18,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:658d23d9ea17155c",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.write"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_7a351c",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.module_analyzed: resolved_calls=3, unresolved_count=0",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_a52204",
-              "kind": "evidence",
-              "location": {
-                "line": null,
-                "path": "orders-api/app/main.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:bb22b9134e8ddfc0",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.module_analyzed"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_a52204",
-            "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.chain: length=2",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_c33583",
-              "kind": "evidence",
-              "location": {
-                "line": 10,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:7dab1a0ad6cdf511",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.chain"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_c33583",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.read",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_f25ac7",
-              "kind": "evidence",
-              "location": {
-                "line": 9,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:85629a0d898e16c8",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.read"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_f25ac7",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.function_def get_daily_order: name_reference_count=0",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_f3b197",
-              "kind": "evidence",
-              "location": {
-                "line": 15,
-                "path": "orders-api/app/main.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:dfde071d52d727fe",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.function_def"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_f3b197",
-            "sha256": "9dec9dca9157934ce8dcde59f7e0579fb7dee9c5b81bc246a343d1906b689468"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.chain: length=3",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_f8a190",
-              "kind": "evidence",
-              "location": {
-                "line": 7,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:5fd26acd17e88cd2",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.chain"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_f8a190",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.chain: join_index=0, length=3",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_fb6690",
-              "kind": "evidence",
-              "location": {
-                "line": 13,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:f99262d197c09222",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.chain"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_fb6690",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
-          },
-          "version": 1
-        },
-        {
-          "attrs": {
-            "upstream": {
-              "claim": "pyspark.join: on_arity=1",
-              "epistemic": "observed",
-              "evidence_ids": [],
-              "item": "f_ffa74f",
-              "kind": "evidence",
-              "location": {
-                "line": 13,
-                "path": "data-pipeline/jobs/daily_orders_job.py"
-              },
-              "node": "n1",
-              "plan_run": "20261005T050656Z-580379c9",
-              "provider": "spark-forge",
-              "provider_version": "0.1.0",
-              "run_id": "20261005T050657Z-3098584f"
-            }
-          },
-          "fact_id": "upstream:a4f216e3826e5e28",
-          "kind": "upstream.evidence",
-          "measures": {
-            "subject": "pyspark.join"
-          },
-          "source": {
-            "column": null,
-            "extractor": "theforge/handoff",
-            "line": null,
-            "path": "handoff/n1/f_ffa74f",
-            "sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1"
+            "path": "handoff/n1/f_e7a1c2",
+            "sha256": "9f92946be0de7b1734e6c9ee1b83d6e1bd6843e1b8ed0e7acd25ce2a659b7769"
           },
           "version": 1
         }
@@ -809,5 +321,25 @@
     }
   },
   "exit_code": 0,
-  "provenance": "hand-built"
+  "native_cwd": ".",
+  "provenance": "recorded",
+  "stdout": {
+    "artifacts": {
+      "api_ir": "api-ir.json",
+      "facts": "facts.json",
+      "findings": "findings.json"
+    },
+    "cache": {
+      "enabled": true,
+      "hit": false,
+      "key": "2cc8cf552f175d07"
+    },
+    "case_id": "case:cff8bff8a5345118",
+    "changes": 0,
+    "diagnostics": 0,
+    "findings": 0,
+    "operations": 2,
+    "out_dir": "case",
+    "upstream": 1
+  }
 }

@@ -90,6 +90,10 @@ def build_parser() -> argparse.ArgumentParser:
     graph.add_argument("--ref", metavar="CAPABILITY",
                        help="only the edges touching this capability "
                             "('provider/capability' or a bare capability id)")
+    graph.add_argument("--mesh", action="store_true",
+                       help="the domain mesh projection: per domain, the "
+                            "observe/engineer/verify capabilities derived from "
+                            "declared produces/consumes/can_verify relations")
     graph.set_defaults(handler=commands.cmd_graph)
 
     providers = sub.add_parser("providers", help="provider operations") \

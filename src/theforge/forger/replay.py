@@ -184,6 +184,22 @@ def _refusal(forger: Forger, store: RunStore, run_id: str,
         reasons.append(f"provider {provider.id}: fingerprint not recorded")
     elif fingerprint(entry).digest != provider.fingerprint:
         reasons.append(f"provider {provider.id} identity changed (executable fingerprint)")
+    # A recorded surface fingerprint that no longer matches means the provider's
+    # declared capabilities changed in place — even at the same version (3.1).
+    if provider.surface_fingerprint is not None:
+        current_surface = cached.surface.surface_fingerprint \
+            if cached is not None and cached.surface is not None else None
+        if current_surface is None:
+            reasons.append(f"provider {provider.id}: current surface unknown")
+        elif current_surface != provider.surface_fingerprint:
+            reasons.append(f"provider {provider.id} surface changed "
+                           "(declared surface fingerprint)")
+    if provider.native_surface_fingerprint is not None and cached is not None \
+            and cached.surface is not None \
+            and cached.surface.native_surface_fingerprint is not None \
+            and cached.surface.native_surface_fingerprint \
+            != provider.native_surface_fingerprint:
+        reasons.append(f"provider {provider.id} native surface changed")
     return reasons
 
 

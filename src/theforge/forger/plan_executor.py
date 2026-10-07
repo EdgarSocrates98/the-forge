@@ -104,6 +104,7 @@ from theforge.planning.decompose import (
     decomposed_plan,
     decomposition_dependencies,
 )
+from theforge.planning.economy import compose_economy
 from theforge.planning.estimate import request_estimate
 from theforge.planning.execution import NodeExecution, SourceResult
 from theforge.planning.graph import build_graph
@@ -188,6 +189,7 @@ class _PlanTrace:
     semantic_proposal_sha: str | None = None  # tier-2 SemanticPlanProposal, when asked
     decision_sha: str | None = None  # DecisionRecord of a debate plan, when produced
     decision_record: DecisionRecord | None = None  # the object, for decision memory (I3)
+    economy_sha: str | None = None  # EconomyRollup, when any node reported economy
     routing_sha: str | None = None
     plan: ExecutionPlan | None = None
     plan_sha: str | None = None
@@ -575,12 +577,21 @@ class PlanExecutor:
             trace.decision_record = decision
             decision_notes = decision.limitations
             decision_unknowns = decision.unknowns
+        # The cross-provider EconomyRollup composes whenever any node reported
+        # provider economy (any pattern — it is the run's spending view, not a
+        # debate artifact), bound into the result like the decision.
+        economy_sha = None
+        economy = compose_economy(trace.run_id, trace.executions)
+        if economy is not None:
+            economy_sha = self.forger.store.write(trace.run_id, "economy", economy)
+            trace.economy_sha = economy_sha
         result = PlanResult(
             producer=PRODUCER, created_at=utc_now(), status=status, plan_run=trace.run_id,
             order=order, nodes=outcomes, synthesis=synthesize(plan, trace.executions),
             reproducibility=combine_levels([o.reproducibility for o in outcomes
                                             if o.reproducibility is not None]),
             decision_sha256=decision_sha,
+            economy_sha256=economy_sha,
             limitations=decision_notes, unknowns=decision_unknowns)
         validate_plan_result(result)
         trace.plan_result_sha = self.forger.store.write(trace.run_id, "plan-result", result)
@@ -710,6 +721,10 @@ class PlanExecutor:
             handle.attrs["outcome"] = execution.outcome.status
             if execution.outcome.attempts > 1:
                 handle.attrs["attempts"] = str(execution.outcome.attempts)
+            # Trace federation (Phase 22): the node span links to the provider's
+            # native trace; the spans themselves never leave the specialist.
+            if execution.result is not None and execution.result.native_trace is not None:
+                handle.attrs["native_trace_ref"] = execution.result.native_trace.ref
             return execution
 
     def _run_node(self, trace: _PlanTrace, plan: ExecutionPlan, node: PlanNode,
@@ -870,6 +885,7 @@ class PlanExecutor:
                           capability_graph_sha256=trace.capability_graph_sha,
                           semantic_proposal_sha256=trace.semantic_proposal_sha,
                           decision_sha256=trace.decision_sha,
+                          economy_sha256=trace.economy_sha,
                           plan_state_sha256=trace.plan_state_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)

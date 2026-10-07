@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
+from theforge.contracts.result import ProviderReceipt
 from theforge.contracts.types import ErrorInfo, Outcome, Producer, TrustLevel
 from theforge.contracts.verification import ReproducibilityInfo
 
@@ -49,6 +50,10 @@ class ReceiptProvider:
     executable: str | None = None
     fingerprint: str | None = None
     observed_version: str | None = None
+    # Surface fingerprints of the manifest the run executed against (None in
+    # receipts older than ProviderSurfaceIdentity — never "unchanged").
+    surface_fingerprint: str | None = None
+    native_surface_fingerprint: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -70,6 +75,9 @@ class PlanRefs:
     semantic_proposal_sha256: str | None = None
     # On-disk hash of the DecisionRecord a ``debate`` plan produced (None otherwise).
     decision_sha256: str | None = None
+    # On-disk hash of the EconomyRollup composed from node provider-economy
+    # receipts (None when no node reported economy).
+    economy_sha256: str | None = None
     # On-disk hash of the run's final PlanState snapshot (None when the run never
     # reached a validated plan, or in runs older than the scheduler states).
     plan_state_sha256: str | None = None
@@ -101,6 +109,9 @@ class ExecutionReceipt:
     # the rest re-executed (per-node ``reused`` on the plan result).
     resumed_from: str | None = None
     verification_sha256: str | None = None  # on-disk hash of the VerificationResult
+    # The provider-native run receipt the result pointed at (ref + hash; the
+    # content itself stays with the specialist). None when the result carried none.
+    provider_receipt: ProviderReceipt | None = None
     reproducibility: ReproducibilityInfo | None = None  # None => unknown (older runs)
     plan: PlanRefs | None = None  # required exactly when kind == "plan"
 

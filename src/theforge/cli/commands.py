@@ -218,6 +218,7 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
         outcome = check_health(record)
         rows.append({"id": record.entry.id, "trust": record.entry.trust,
                      "status": outcome.status,
+                     "surface_fingerprint": outcome.surface_fingerprint,
                      "error": to_dict(outcome.error) if outcome.error else None})
     _warn(registry)
     _emit(args, {"providers": rows}, render.health)
@@ -243,6 +244,9 @@ def cmd_graph(args: argparse.Namespace) -> int:
                for entry in registry.entries() if entry.id not in cached]
     graph = build_capability_graph(records, descriptor)
     data: dict[str, Any] = {**to_dict(graph), "ref": args.ref}
+    if getattr(args, "mesh", False):
+        from theforge.capability_graph import mesh_view
+        data["mesh"] = mesh_view(graph)
     if args.ref:
         edges = [e for e in data["edges"]
                  if _cap_match(str(e.get("source", "")), args.ref)
@@ -354,6 +358,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         "result": to_dict(outcome.result) if outcome.result else None,
         "installation": store.read_optional(outcome.run_id, "installation"),
         "decision": store.read_optional(outcome.run_id, "decision"),
+        "economy": store.read_optional(outcome.run_id, "economy"),
         "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
         "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
         "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),
@@ -399,6 +404,7 @@ def cmd_resume(args: argparse.Namespace) -> int:
         "result": to_dict(outcome.result) if outcome.result else None,
         "installation": store.read_optional(outcome.run_id, "installation"),
         "decision": store.read_optional(outcome.run_id, "decision"),
+        "economy": store.read_optional(outcome.run_id, "economy"),
         "semantic_proposal": store.read_optional(outcome.run_id, "semantic-proposal"),
         "routing_proposal": store.read_optional(outcome.run_id, "routing-proposal"),
         "capability_graph": store.read_optional(outcome.run_id, "capability-graph"),

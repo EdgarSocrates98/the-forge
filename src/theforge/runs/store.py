@@ -12,6 +12,7 @@ from typing import Any, Final, TypeVar
 
 from theforge.contracts import (
     ContextPack,
+    EconomyRollup,
     ExecutionReceipt,
     ExecutionResult,
     RiskAssessment,
@@ -56,7 +57,7 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
              "handoff", "context", "context-r1", "context-r2", "result", "plan-state",
              "plan-result", "graph", "capability-graph", "semantic-proposal",
-             "routing-proposal", "decision",
+             "routing-proposal", "decision", "economy",
              "verification", "telemetry", "diagnostic", "complexity", "budget",
              "receipt")
 ARTIFACT_TYPES: Final[dict[str, type]] = {
@@ -79,6 +80,7 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
     "plan-state": PlanState,
     "plan-result": PlanResult,
     "decision": DecisionRecord,
+    "economy": EconomyRollup,
     "graph": WorkspaceGraph,
     "verification": VerificationResult,
     "telemetry": RunTelemetry,

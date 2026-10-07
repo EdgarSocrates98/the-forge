@@ -141,11 +141,17 @@ def _overlap_notes(declared: Sequence[tuple[str, Capability]], suffix: str = "")
             for cid, providers in by_id.items() if len(providers) > 1]
 
 
-def _perf_desc(performance: ProviderPerformance | None, provider: str,
+def _perf_desc(performance: ProviderPerformance | None, record: RegistryRecord,
                capability: str) -> tuple[float, ...]:
-    """Negated measured-history key: sorts ascending within a larger sort key (H5)."""
-    return tuple(-v for v in performance.score(provider, capability)) \
-        if performance is not None else (0.0,)
+    """Negated measured-history key: sorts ascending within a larger sort key (H5).
+
+    Scoped by the record's surface fingerprint: history recorded against another
+    surface simply does not apply (a changed surface never silently inherits it).
+    """
+    if performance is None:
+        return (0.0,)
+    surface = record.surface.surface_fingerprint if record.surface else None
+    return tuple(-v for v in performance.score(record.entry.id, capability, surface))
 
 
 def _route_explicit(
@@ -169,7 +175,7 @@ def _route_explicit(
                          unresolved=[f"capability:{requested}"])
     # Trust dominates; measured history only orders equals, then id (H5).
     matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust],
-                                _perf_desc(performance, m[0].entry.id, m[1].id),
+                                _perf_desc(performance, m[0], m[1].id),
                                 m[0].entry.id))
     candidates = [Candidate(provider=r.entry.id, capability=c.id, state=c.state,
                             rank_key=[TRUST_RANK[r.entry.trust]]) for r, c in matches]
@@ -284,10 +290,17 @@ def _route_by_signals(
         # candidate strictly ahead resolves it — including the raw-presence
         # equality, which is the *same* ambiguity signals could not decide. Equal
         # or absent history stays ambiguous; the floor and any non-tied rival
-        # with equal raw presence still block.
-        best = max(performance.score(r[0].provider, r[0].capability) for r in tied)
+        # with equal raw presence still block. History is scoped to each
+        # record's surface fingerprint — a changed surface inherits nothing.
+        def _surface(r: tuple[Candidate, _Scored]) -> str | None:
+            surface = r[1].record.surface
+            return surface.surface_fingerprint if surface else None
+
+        best = max(performance.score(r[0].provider, r[0].capability, _surface(r))
+                   for r in tied)
         winners = [r for r in tied
-                   if performance.score(r[0].provider, r[0].capability) == best]
+                   if performance.score(r[0].provider, r[0].capability, _surface(r))
+                   == best]
         if best > (0.0, 0.0, 0.0, 0) and len(winners) == 1:
             winner = winners[0]
             ranked = [winner, *[r for r in ranked if r is not winner]]

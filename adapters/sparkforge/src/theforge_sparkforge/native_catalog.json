@@ -1,7 +1,65 @@
 {
-  "recorded_at": "2026-10-04",
+  "recorded_at": "2026-10-06",
   "specialist_version": "0.5.0",
   "tools": {
+    "sparkforge_agentops_baseline": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "required": [
+        "action",
+        "baseline_path",
+        "run_id"
+      ]
+    },
+    "sparkforge_agentops_compare": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "run_a",
+        "run_b"
+      ]
+    },
+    "sparkforge_agentops_critical_path": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "run_id"
+      ]
+    },
+    "sparkforge_agentops_inspect": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "run_id"
+      ]
+    },
+    "sparkforge_agentops_timeline": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "run_id"
+      ]
+    },
     "sparkforge_analyze_airflow_dag": {
       "annotations": {
         "destructiveHint": false,
@@ -1022,6 +1080,17 @@
         "ref"
       ]
     },
+    "sparkforge_context_inspect": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": [
+        "payload"
+      ]
+    },
     "sparkforge_context_start": {
       "annotations": {
         "destructiveHint": false,
@@ -1107,6 +1176,15 @@
       ]
     },
     "sparkforge_doctor": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_doctor_agentic": {
       "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,

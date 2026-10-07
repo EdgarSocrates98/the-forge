@@ -52,6 +52,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_adapter_shell.py": ("integration", "contract"),
     "test_adapter_sparkforge.py": ("integration", "contract"),
     "test_adapter_apiforge.py": ("integration", "contract"),
+    "test_adapter_doctordata.py": ("integration", "contract"),
+    "test_adapter_doctorapi.py": ("integration", "contract"),
     "test_adapters_core.py": ("integration",),
     "test_real_providers_env.py": ("unit",),
     "test_capability_catalog_doc.py": ("unit",),
@@ -64,7 +66,9 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_fingerprints.py": ("unit", "security"),
     "test_context_verify.py": ("unit",),
     "test_context_flow.py": ("integration",),
+    "test_delta_handoff.py": ("integration", "contract"),
     "test_bench.py": ("unit",),
+    "test_economy_bench.py": ("integration",),
     "test_runs_bench.py": ("integration",),
     "test_telemetry.py": ("unit",),
     # planned by design (cross-forge-foundation)
@@ -110,6 +114,12 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_independent_verification.py": ("unit", "integration"),
     # planned by design (cycle-3 economy engine)
     "test_economy.py": ("unit", "integration"),
+    # planned by design (cycle-3.1 economy/trace federation)
+    "test_plan_economy.py": ("unit", "integration"),
+    # planned by design (cycle-3.1 federation security)
+    "test_federation_adversarial.py": ("unit", "integration", "security"),
+    "test_ecosystem_contracts.py": ("contract", "integration"),
+    "test_debug_tmp.py": ("unit",),
     # planned by design (cycle-3 project intelligence)
     "test_intel.py": ("unit", "integration"),
     # planned by design (cycle-3 tracing)
@@ -129,6 +139,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),
     "test_root_hygiene.py": ("unit",),
+    # cycle-3.1 surface identity / feature negotiation
+    "test_surface_identity.py": ("unit", "contract", "integration"),
 }
 
 

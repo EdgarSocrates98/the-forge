@@ -51,6 +51,7 @@ from theforge.contracts import (
     ContextPack,
     ContextRequest,
     ContractError,
+    DeltaRequest,
     ErrorInfo,
     ExecuteRequest,
     ExecutionReceipt,
@@ -71,6 +72,8 @@ from theforge.contracts import (
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import Codes
 from theforge.contracts.diagnostic import Diagnostic
+from theforge.contracts.envelope import DELTA_MAX_CHANGED_FILES
+from theforge.contracts.features import DELTA
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import (
     check_producer,
@@ -656,11 +659,12 @@ class Forger:
         telemetry.count("providers_executed", 1)  # one provider per ask run, every round
         trace.executed = True
         trace.stage = "execute"
+        delta = self._delta_request(trace, record, pack, scan, fingerprints)
         total_ms = 0.0
         while True:
             payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
                                              action=selection.action, context=pack,
-                                             handoff=trace.handoff))
+                                             handoff=trace.handoff, delta=delta))
             started_exec = time.perf_counter()
             try:
                 # provider:<id> span per execute call; the phase metric sums (4.2)
@@ -722,6 +726,35 @@ class Forger:
                 trace.context_round_shas.append(
                     self.store.write(trace.run_id, f"context-r{pack.round}", pack))
                 trace.last_pack = pack
+
+    @staticmethod
+    def _delta_request(trace: _Trace, record: RegistryRecord, pack: ContextPack,
+                       scan: WorkspaceScan, fingerprints: FingerprintStore,
+                       ) -> DeltaRequest | None:
+        """The incremental hint of a subsequent run, only when safe (Phase 49).
+
+        Sent iff the provider declares ``delta/v1`` and the fingerprint cache
+        holds prior state for this workspace — a first run has nothing to diff
+        against. ``baseline_ref`` is empty: the provider resolves its own latest
+        stored baseline; when it cannot, the honest answer is an unknown, never
+        a fabricated delta. ``changed_files`` is the changed surface the cache
+        observed (added/modified/removed), capped by the contract.
+        """
+        manifest = record.manifest
+        if manifest is None or DELTA not in manifest.features:
+            return None
+        surface = fingerprints.changed_surface(
+            {item.path: item.sha256 for item in pack.files}, set(scan.files))
+        if surface is None:
+            return None
+        changed, removed = surface
+        files = sorted(changed + removed)
+        if len(files) > DELTA_MAX_CHANGED_FILES:
+            trace.limitations.append(
+                f"delta changed_files truncated to {DELTA_MAX_CHANGED_FILES} "
+                f"of {len(files)} observed paths")
+            files = files[:DELTA_MAX_CHANGED_FILES]
+        return DeltaRequest(baseline_ref="", changed_files=files)
 
     @staticmethod
     def _refuse_request(
@@ -1158,6 +1191,7 @@ class Forger:
             return
         warning = record_performance(
             self.root, record.entry.id, capability.id, status=status,
+            surface=record.surface.surface_fingerprint if record.surface else None,
             verified=(trace.verification is not None
                       and trace.verification.forge.status == "passed"),
             evidence=len(result.evidence) if result is not None else 0,
@@ -1223,7 +1257,12 @@ class Forger:
                                        manifest_sha256=record.manifest_sha256,
                                        executable=identity.executable if identity else None,
                                        fingerprint=identity.digest if identity else None,
-                                       observed_version=record.manifest.version)
+                                       observed_version=record.manifest.version,
+                                       surface_fingerprint=record.surface.surface_fingerprint
+                                       if record.surface else None,
+                                       native_surface_fingerprint=(
+                                           record.surface.native_surface_fingerprint
+                                           if record.surface else None))
         # Telemetry before the receipt, on every outcome (10.4).
         telemetry_sha, telemetry_notes = self._write_telemetry(trace)
         limitations = list(trace.limitations)
@@ -1246,6 +1285,7 @@ class Forger:
             plan_node=node.node if node is not None else None,
             replay_of=trace.request.replay_of,
             verification_sha256=trace.verification_sha,
+            provider_receipt=result.provider_receipt if result is not None else None,
             reproducibility=self._reproducibility(trace, status),
         )
         self.store.write(trace.run_id, "receipt", receipt)

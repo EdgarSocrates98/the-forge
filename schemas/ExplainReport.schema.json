@@ -297,6 +297,285 @@
         {
           "additionalProperties": false,
           "properties": {
+            "economy": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "conflicts": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "limitations": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "plan_run": {
+                      "type": "string"
+                    },
+                    "producer": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "version"
+                      ],
+                      "type": "object"
+                    },
+                    "receipts": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "node": {
+                            "type": "string"
+                          },
+                          "receipt": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "basis": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "context_bytes": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "cost_usd": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "limitations": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "model_calls": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "provider": {
+                                "type": "string"
+                              },
+                              "provider_tokens": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "run": {
+                                "type": "string"
+                              },
+                              "schema": {
+                                "type": "string"
+                              },
+                              "tool_calls": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "wall_time_ms": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "provider"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "node",
+                          "receipt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "schema": {
+                      "type": "string"
+                    },
+                    "totals": {
+                      "additionalProperties": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "measured",
+                              "estimated",
+                              "unresolved",
+                              "not_applicable"
+                            ]
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [],
+                        "type": "object"
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "producer",
+                    "created_at",
+                    "plan_run"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "installation": {
               "anyOf": [
                 {
@@ -655,6 +934,16 @@
                       "type": "string"
                     },
                     "decision_sha256": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "economy_sha256": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -1328,7 +1617,52 @@
             "id": {
               "type": "string"
             },
+            "native_surface_fingerprint": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "observed_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "provider_receipt": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "ref": {
+                      "pattern": "^[a-z][a-z0-9+.-]{1,30}:[^\\s]+$",
+                      "type": "string"
+                    },
+                    "sha256": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "sha256"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "surface_fingerprint": {
               "anyOf": [
                 {
                   "type": "string"
@@ -1461,6 +1795,35 @@
                 "type": "object"
               },
               "type": "array"
+            },
+            "native_trace": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "critical_path": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "ref": {
+                      "pattern": "^[a-z][a-z0-9+.-]{1,30}:[^\\s]+$",
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ref"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "status": {
               "type": "string"

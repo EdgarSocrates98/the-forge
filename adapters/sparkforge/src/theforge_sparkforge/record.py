@@ -2,8 +2,9 @@
 the installed Spark Forge: ``python -m theforge_sparkforge.record [--output PATH]
 [--environment DIR]``.
 
-Run it in the Spark Forge's own interpreter. It is the only module that imports
-``sparkforge.adapters.tools.TOOLS``: describe reads the recorded snapshot instead (importing the
+Run it in the Spark Forge's own interpreter. It is the only module that imports the tool
+surface (``sparkforge_aws.adapters.tools.TOOLS``, or pre-rename ``sparkforge.adapters.tools``,
+through ``native_pkg``): describe reads the recorded snapshot instead (importing the
 tool surface costs seconds). The snapshot keeps, per tool, its MCP annotations and its required
 arguments, plus the origin ``specialist_version``. The output is deterministic: sorted keys and
 lists, LF endings, and ``recorded_at`` (UTC date) only changes when the recorded surface does.
@@ -64,10 +65,10 @@ def render(data: Mapping[str, Any]) -> str:
 
 def environment() -> dict[str, Any]:
     """The replay ``environment.json`` of this interpreter (``{python, specialist_version}``)."""
-    import sparkforge  # the specialist's public version; light import
+    from theforge_sparkforge.native_pkg import installed_version
 
     return {"python": platform.python_version(),
-            "specialist_version": str(sparkforge.__version__)}
+            "specialist_version": str(installed_version())}
 
 
 def health_probes() -> dict[str, Any]:
@@ -86,6 +87,42 @@ def _read(path: Path) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+def classify_drift(packaged: Mapping[str, Any], fresh: Mapping[str, Any],
+                   ) -> tuple[str, list[str]]:
+    """``none`` | ``additive`` | ``breaking`` drift of ``fresh`` over ``packaged``.
+
+    A tool that disappeared or whose recorded attributes changed (annotations or
+    required arguments) is breaking; a tool that only appeared — or a bare
+    specialist-version bump — is a compatible additive drift.
+    """
+    old = packaged.get("tools")
+    new = fresh.get("tools")
+    old = dict(old) if isinstance(old, Mapping) else {}
+    new = dict(new) if isinstance(new, Mapping) else {}
+    breaking = [f"tool removed: {name}" for name in sorted(set(old) - set(new))]
+    breaking += [f"tool changed: {name}: {old[name]} -> {new[name]}"
+                 for name in sorted(set(old) & set(new)) if old[name] != new[name]]
+    notes = [f"tool added: {name}" for name in sorted(set(new) - set(old))]
+    if packaged.get("specialist_version") != fresh.get("specialist_version"):
+        notes.append(f"specialist version {packaged.get('specialist_version')} -> "
+                     f"{fresh.get('specialist_version')}")
+    if breaking:
+        return "breaking", [*breaking, *notes]
+    return ("additive" if notes else "none"), notes
+
+
+def _check(path: Path, fresh: Mapping[str, Any]) -> int:
+    packaged = _read(path)
+    if packaged is None:
+        print(f"record --check: cannot read {path}", file=sys.stderr)
+        return 1
+    status, lines = classify_drift(packaged, fresh)
+    print(f"surface drift: {status}")
+    for line in lines:
+        print(f"  {line}")
+    return 1 if status == "breaking" else 0
+
+
 def _write(path: Path, data: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="\n") as fh:
@@ -97,7 +134,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m theforge_sparkforge.record",
         description="Re-record the Spark Forge tool snapshot from the installed specialist.")
     parser.add_argument("--output", type=Path, default=SNAPSHOT_PATH,
-                        help="snapshot file to write (default: the packaged native_catalog.json)")
+                        help="snapshot file to write (default: the packaged native_catalog.json); "
+                             "with --check, the recorded snapshot to compare against")
+    parser.add_argument("--check", action="store_true",
+                        help="do not write; classify drift of the live tool surface over the "
+                             "recorded snapshot (none|additive|breaking; exit 1 on breaking)")
     parser.add_argument("--environment", type=Path, default=None, metavar="DIR",
                         help="also write DIR/environment.json and DIR/health.json for a "
                              "replay scenario")
@@ -106,10 +147,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if reason is not None:
         print(f"record: {reason}", file=sys.stderr)
         return 2
-    import sparkforge
-    from sparkforge.adapters.tools import TOOLS
+    from theforge_sparkforge.native_pkg import import_tools, installed_version
 
-    snapshot = build_snapshot(TOOLS, str(sparkforge.__version__), previous=_read(args.output))
+    tools_surface, _call_tool = import_tools()
+    snapshot = build_snapshot(tools_surface, str(installed_version()),
+                              previous=_read(args.output))
+    if args.check:
+        return _check(args.output, snapshot)
     _write(args.output, snapshot)
     print(f"record: {len(snapshot['tools'])} tools of sparkforge "
           f"{snapshot['specialist_version']} -> {args.output}")

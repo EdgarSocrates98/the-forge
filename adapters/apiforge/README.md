@@ -3,7 +3,7 @@
 Provider [Forge Protocol v1](../../docs/protocol.md) que expõe o API Forge (`apiforge`) ao The Forge. Stdlib-only, Python ≥ 3.10, sem dependências declaradas e sem `import theforge`: fala o protocolo só por JSON (stdin/stdout).
 
 - id do provider: `api-forge`
-- versão: `0.1.0`
+- versão: `0.2.0`
 - especialista suportado: `apiforge >=0.1.0,<0.2.0` (exige Python 3.12)
 
 > Estado: `describe`, `health` e `execute` implementados, ao vivo e em replay. Decisão e contenção no [ADR 0014](../../docs/adr/0014-provider-adapter-location.md); catálogo de capabilities no [ADR 0017](../../docs/adr/0017-capability-taxonomy.md) e em [capabilities.md](../../docs/capabilities.md); guia completo em [real-providers.md](../../docs/real-providers.md).

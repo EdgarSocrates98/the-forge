@@ -1,0 +1,152 @@
+# Weekly drift watch: the live public surface of each specialist main vs the
+# adapter's recorded snapshot (cycle 3.1, Phase 44). Never part of the PR gate.
+#
+# Each specialist runs in its own interpreter with its adapter installed, and
+# `python -m theforge_<adapter>.record --check` classifies the drift as
+#   surface drift: none      — packaged snapshot matches the live surface
+#   surface drift: additive  — new tools/seams/capabilities or a bare version
+#                              bump (compatible; exit 0, reported in the log)
+#   surface drift: breaking  — a recorded tool/seam/capability disappeared or
+#                              changed, a request kind was dropped or the
+#                              contract version moved (exit 1: the job is red)
+#
+# The snapshot is never auto-merged: drift is re-recorded by a human with
+# `record` (see docs/real-providers.md) after the diff is reviewed.
+name: provider-surface-drift
+
+on:
+  schedule:
+    - cron: "53 4 * * 1" # Mondays 04:53 UTC
+  workflow_dispatch:
+    inputs:
+      spark_forge_ref:
+        description: "spark-forge-aws ref to check (default: main)"
+        required: false
+        default: "main"
+      api_forge_ref:
+        description: "api-forge ref to check (default: main)"
+        required: false
+        default: "main"
+      doctor_data_ref:
+        description: "forge-doctor-data ref to check (default: main)"
+        required: false
+        default: "main"
+      doctor_api_ref:
+        description: "forge-doctor-api ref to check (default: main)"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  drift:
+    name: surface drift (ubuntu-latest, spark py3.11, api py3.12, doctors py3.11)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout spark-forge-aws
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/spark-forge-aws
+          ref: ${{ inputs.spark_forge_ref || 'main' }}
+          path: siblings/spark-forge-aws
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout api-forge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/api-forge
+          ref: ${{ inputs.api_forge_ref || 'main' }}
+          path: siblings/api-forge
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-data
+          ref: ${{ inputs.doctor_data_ref || 'main' }}
+          path: siblings/forge-doctor-data
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-api
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-api
+          ref: ${{ inputs.doctor_api_ref || 'main' }}
+          path: siblings/forge-doctor-api
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Set up Python 3.12 (API Forge)
+        id: py312
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up Python 3.11 (Spark Forge and Doctors)
+        id: py311
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Spark Forge venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-spark
+          .venv-spark/bin/python -m pip install --upgrade pip
+          .venv-spark/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge
+
+      - name: API Forge venv (specialist main + adapter)
+        env:
+          PY312: ${{ steps.py312.outputs.python-path }}
+        run: |
+          "$PY312" -m venv .venv-api
+          .venv-api/bin/python -m pip install --upgrade pip
+          .venv-api/bin/python -m pip install ./siblings/api-forge ./adapters/apiforge
+
+      - name: Doctor Data venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-dd
+          .venv-dd/bin/python -m pip install --upgrade pip
+          .venv-dd/bin/python -m pip install ./siblings/forge-doctor-data ./adapters/doctordata
+
+      - name: Doctor API venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-da
+          .venv-da/bin/python -m pip install --upgrade pip
+          .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
+
+      # record --check exits 0 on none/additive, 1 on breaking — a breaking drift
+      # turns the job red; additive and version-only drift is reported in the log.
+      - name: Spark Forge surface drift
+        run: .venv-spark/bin/python -m theforge_sparkforge.record --check
+
+      - name: API Forge surface drift
+        run: .venv-api/bin/python -m theforge_apiforge.record --check
+
+      - name: Doctor Data surface drift
+        run: .venv-dd/bin/python -m theforge_doctordata.record --check
+
+      - name: Doctor API surface drift
+        run: .venv-da/bin/python -m theforge_doctorapi.record --check

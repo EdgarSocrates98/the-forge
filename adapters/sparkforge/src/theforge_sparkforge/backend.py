@@ -13,12 +13,13 @@ called and no result is invented.
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+from theforge_sparkforge import native_pkg
 
 ENVIRONMENT_FILE = "environment.json"
 HEALTH_FILE = "health.json"
@@ -32,16 +33,13 @@ _PYTHON_VERSION = re.compile(r"(\d+)\.(\d+)(?:\.\d+)?")
 def live_unavailable_reason() -> str | None:
     """Why the Spark Forge cannot be used from this interpreter, or None if importable.
 
-    Uses ``find_spec`` only: nothing of the Spark Forge is imported.
+    Uses ``find_spec`` only, via the shared resolver (``sparkforge_aws`` after the
+    rename, ``sparkforge`` before it): nothing of the Spark Forge is imported.
     """
-    try:
-        found = importlib.util.find_spec("sparkforge") is not None
-    except (ImportError, ValueError):
-        found = False
-    if found:
+    if native_pkg.dispatcher_found():
         return None
     version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    return (f"sparkforge is not importable with {sys.executable} (Python {version}); "
+    return (f"sparkforge-aws is not importable with {sys.executable} (Python {version}); "
             f"{INSTALL_HINT} in this interpreter")
 
 
@@ -59,7 +57,7 @@ class Environment:
             return (f"recorded interpreter runs Python {self.python}; the Spark Forge needs "
                     f"Python >= {MIN_PYTHON[0]}.{MIN_PYTHON[1]}")
         if self.specialist_version is None:
-            return (f"sparkforge is not importable with the recorded interpreter "
+            return (f"sparkforge-aws is not importable with the recorded interpreter "
                     f"(Python {self.python}); {INSTALL_HINT} in it")
         return None
 
@@ -98,8 +96,9 @@ def load_environment(replay: Path) -> Environment | ReplayProblem:
 
 @dataclass(frozen=True)
 class HealthRecording:
-    """The native probes of health recorded in ``health.json``: whether the dispatcher
-    (``sparkforge.adapters.tools``) was found and the Spark Forge version read (None: none).
+    """The native probes of health recorded in ``health.json``: whether a dispatcher
+    (``sparkforge_aws.adapters.tools``, or pre-rename ``sparkforge.adapters.tools``) was
+    found and the Spark Forge version read (None: none).
 
     An optional ``provenance`` string marks a recording derived by hand from a real one.
     """

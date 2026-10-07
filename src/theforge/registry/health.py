@@ -1,6 +1,6 @@
 """Provider health check shared by doctor, `providers health` and The Forger."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -17,9 +17,24 @@ HEALTH_TIMEOUT = 10.0
 class HealthOutcome:
     status: Literal["ok", "degraded", "unavailable", "error"]
     error: ErrorInfo | None = None
+    # Surface fingerprint of the manifest the check ran against (ready records).
+    surface_fingerprint: str | None = None
 
 
 def check_health(
+    record: RegistryRecord, *, transport_factory: TransportFactory = SubprocessTransport,
+    timeout: float = HEALTH_TIMEOUT, allow_unverified: bool = False,
+) -> HealthOutcome:
+    outcome = _check(record, transport_factory=transport_factory, timeout=timeout,
+                     allow_unverified=allow_unverified)
+    if record.surface is not None:
+        # The fingerprint of the manifest in use rides every outcome, error included.
+        outcome = replace(outcome,
+                          surface_fingerprint=record.surface.surface_fingerprint)
+    return outcome
+
+
+def _check(
     record: RegistryRecord, *, transport_factory: TransportFactory = SubprocessTransport,
     timeout: float = HEALTH_TIMEOUT, allow_unverified: bool = False,
 ) -> HealthOutcome:

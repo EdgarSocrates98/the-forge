@@ -185,6 +185,54 @@ def _unresolved(tool: str, page: Mapping[str, Any]) -> str | None:
     return f"{tool}: {count} item(s) unresolved by the Spark Forge{suffix}"
 
 
+def _upstream_entry(item: Mapping[str, Any], fact_id: str, page: Mapping[str, Any],
+                    stage: StagedInput,
+                    limitations: list[str]) -> dict[str, Any] | None:
+    """A foreign fact (``upstream:*``) as derived evidence: the epistemic status is the
+    producer's own (verbatim, never upgraded to ``observed``) and the provenance is the
+    ``attrs.upstream`` map the intake required — without it the fact cannot be told
+    apart from a local observation and is skipped, never laundered."""
+    attrs = item.get("attrs")
+    upstream = attrs.get("upstream") if isinstance(attrs, Mapping) else None
+    if not isinstance(upstream, Mapping):
+        limitations.append(f"upstream fact {fact_id} has no provenance map: skipped")
+        return None
+    origin = {key: upstream[key] for key in ("provider", "run_id", "node", "item")
+              if isinstance(upstream.get(key), str)}
+    if len(origin) != 4:
+        limitations.append(f"upstream fact {fact_id} has incomplete provenance: skipped")
+        return None
+    if isinstance(upstream.get("plan_run"), str):
+        origin["plan_run"] = upstream["plan_run"]
+    file, line, _symbol = _location(item)
+    # The upstream location is workspace-relative (the producer's context root), never
+    # relative to the analyzed path — hence "" as base, not the native items' ``base``.
+    path = workspace_path(file, "", stage)
+    epistemic = upstream.get("epistemic")
+    claim = upstream.get("claim")
+    kind = upstream.get("kind")
+    measures = item.get("measures")
+    subject = (measures.get("subject") if isinstance(measures, Mapping)
+               and isinstance(measures.get("subject"), str) else None)
+    entry: dict[str, Any] = {
+        "id": fact_id,
+        "epistemic": epistemic if isinstance(epistemic, str) else "inferred",
+        "subject": subject or (f"upstream.{kind}" if isinstance(kind, str) else "upstream"),
+        "claim": claim if isinstance(claim, str) and claim
+        else _claim(f"upstream.{kind}" if isinstance(kind, str) else "upstream", "",
+                    measures),
+        "hash": evidence_hash(path, _native_hash(item, page), stage),
+        "derived_from": origin,
+    }
+    if path is not None:
+        entry["location"] = {"path": path,
+                             "line": line if line is not None and line >= 1 else None}
+    elif file is not None:
+        limitations.append(f"evidence {fact_id}: native location {file!r} is outside the "
+                           "workspace; no location")
+    return entry
+
+
 def _evidence(page: Mapping[str, Any], stage: StagedInput, base: str,
               limitations: list[str]) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
@@ -198,6 +246,11 @@ def _evidence(page: Mapping[str, Any], stage: StagedInput, base: str,
             limitations.append(f"native fact {fact_id} repeated: first occurrence kept")
             continue
         seen.add(fact_id)
+        if fact_id.startswith("upstream:"):
+            foreign = _upstream_entry(item, fact_id, page, stage, limitations)
+            if foreign is not None:
+                evidence.append(foreign)
+            continue
         kind = item.get("kind")
         kind = kind if isinstance(kind, str) and kind else "fact"
         file, line, symbol = _location(item)

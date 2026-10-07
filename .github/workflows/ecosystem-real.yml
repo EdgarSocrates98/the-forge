@@ -11,7 +11,7 @@
 #
 # Secret hygiene: SIBLING_REPOS_TOKEN (read access to the sibling repos) is referenced only by
 # the two sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
-name: real-providers
+name: ecosystem-real
 
 on:
   schedule:
@@ -24,6 +24,14 @@ on:
         default: "main"
       api_forge_ref:
         description: "api-forge ref to test against (default: main)"
+        required: false
+        default: "main"
+      doctor_data_ref:
+        description: "forge-doctor-data ref to test against (default: main)"
+        required: false
+        default: "main"
+      doctor_api_ref:
+        description: "forge-doctor-api ref to test against (default: main)"
         required: false
         default: "main"
 
@@ -66,6 +74,24 @@ jobs:
           token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
           persist-credentials: false
 
+      - name: Checkout forge-doctor-data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-data
+          ref: ${{ inputs.doctor_data_ref || 'main' }}
+          path: siblings/forge-doctor-data
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-api
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-api
+          ref: ${{ inputs.doctor_api_ref || 'main' }}
+          path: siblings/forge-doctor-api
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
       # 3.12 first, 3.11 last: the last setup-python is the default `python` (the core's).
       - name: Set up Python 3.12 (API Forge)
         id: py312
@@ -82,7 +108,8 @@ jobs:
       - name: Install the core (editable, dev extras, adapters)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge
+          python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge \
+            -e ./adapters/doctordata -e ./adapters/doctorapi
 
       - name: Spark Forge venv (3.11, sparkforge-aws + adapter)
         env:
@@ -91,7 +118,7 @@ jobs:
           "$PY311" -m venv .venv-spark
           .venv-spark/bin/python -m pip install --upgrade pip
           .venv-spark/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge
-          .venv-spark/bin/python -c "import sparkforge.adapters.tools, theforge_sparkforge"
+          .venv-spark/bin/python -c "import sparkforge_aws.adapters.tools, theforge_sparkforge"
 
       - name: API Forge venv (3.12, apiforge + adapter)
         env:
@@ -102,10 +129,30 @@ jobs:
           .venv-api/bin/python -m pip install ./siblings/api-forge ./adapters/apiforge
           .venv-api/bin/python -c "import apiforge, theforge_apiforge"
 
+      - name: Doctor Data venv (3.11, forge-doctor-data + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-dd
+          .venv-dd/bin/python -m pip install --upgrade pip
+          .venv-dd/bin/python -m pip install ./siblings/forge-doctor-data ./adapters/doctordata
+          .venv-dd/bin/python -c "import forge_doctor_data, theforge_doctordata"
+
+      - name: Doctor API venv (3.11, forge-doctor-api + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-da
+          .venv-da/bin/python -m pip install --upgrade pip
+          .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
+          .venv-da/bin/python -c "import forge_doctor_api, theforge_doctorapi"
+
       - name: Export the real-provider environment contract
         run: |
           echo "THEFORGE_REAL_SPARKFORGE_PYTHON=$PWD/.venv-spark/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_PROVIDERS_REQUIRED=1" >> "$GITHUB_ENV"
 
       # The exit code is propagated as is: any failure, and an empty selection (exit 5), fails.

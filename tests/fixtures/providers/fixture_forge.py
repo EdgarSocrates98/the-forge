@@ -8,11 +8,15 @@ The manifest file may carry test-only ``estimate``, ``proposal`` and ``decision`
 keys (never part of the described manifest): when the manifest declares the ``plan``
 op, that op answers ``estimate`` normally and ``proposal`` when the request carries
 ``purpose="proposal"``. ``execute`` echoes the number of handoff items it received as
-one extra evidence (only when the request carries a handoff), and a ``decision``
+one extra evidence (only when the request carries a handoff), an ``id="delta"``
+evidence describing a received ``delta`` hint (only when the request carries one),
+and a ``decision``
 key ``{"claim": ..., "subject": ...}`` adds a referee-style evidence with
 ``id="decision"`` (the debate convention). A ``findings`` list replaces the
 default ``f1`` finding (missing ``evidence_ids`` are wired to the emitted
-evidence). A ``flaky: <int>`` key makes the
+evidence). A ``hash_evidence: "<sha256>"`` key puts a bare hash on the first
+evidence (no location — contract-legal, unverifiable by a context hash). A
+``flaky: <int>`` key makes the
 first N ``execute`` calls exit 3 (a retryable FORGE-PROTO-EXIT): the count lives
 in ``<workspace_root>/.forge/flaky-<id>.count`` so it survives across attempts.
 When the manifest declares the ``verify`` op, that op answers the test-only
@@ -39,7 +43,12 @@ def main() -> int:
     decision = manifest.pop("decision", None)  # test-only referee decision evidence
     flaky = manifest.pop("flaky", 0)  # test-only: exit 3 on the first N executes
     cite = bool(manifest.pop("cite", False))  # test-only: e1 cites context file 1
+    evhash = manifest.pop("hash_evidence", None)  # test-only: e1 carries a bare sha256
     findings = manifest.pop("findings", None)  # test-only: replace f1 findings
+    provider_receipt = manifest.pop("provider_receipt", None)  # test-only result field
+    provider_economy = manifest.pop("provider_economy", None)  # test-only result field
+    native_trace = manifest.pop("native_trace", None)  # test-only result field
+    evidence_extra = manifest.pop("evidence_extra", None)  # test-only: extra evidence
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
     resolution = manifest.pop("resolution", None)  # test-only RoutingProposal
@@ -104,6 +113,8 @@ def main() -> int:
                  "claim": f"received {len(files)} context files", "producer": producer}
         if cite and files:  # test-only: the evidence cites a sent file (context ROI)
             first["location"] = {"path": files[0]}
+        if evhash:  # test-only: a hash with no location — contract-legal, unverifiable
+            first["hash"] = evhash
         evidence = [first]
         handoff = payload.get("handoff")
         if isinstance(handoff, dict):
@@ -111,6 +122,17 @@ def main() -> int:
                              "claim": f"received {len(handoff.get('items') or [])} "
                                       "handoff items",
                              "producer": producer})
+        delta = payload.get("delta")  # delta/v1 echo: what the request hinted
+        if isinstance(delta, dict):
+            evidence.append({"id": "delta", "epistemic": "observed", "subject": "delta",
+                             "claim": f"delta baseline={delta.get('baseline_ref')!r} "
+                                      f"changed={len(delta.get('changed_files') or [])} "
+                                      f"({', '.join(delta.get('changed_files') or [])})",
+                             "producer": producer})
+        if isinstance(evidence_extra, list):  # test-only: caller-authored items
+            for item in evidence_extra:
+                if isinstance(item, dict):
+                    evidence.append({**item, "producer": producer})
         if isinstance(decision, dict):  # referee convention: id="decision", claim=node
             evidence.append({"id": "decision", "epistemic": "confirmed",
                              "subject": str(decision.get("subject") or "fixture decision"),
@@ -127,14 +149,21 @@ def main() -> int:
                     else [{"id": "f1", "title": f"{manifest['id']} handled "
                                                 f"{cap}:{payload.get('action')}",
                            "severity": "info"}])
-        return reply("ok", {
+        result = {
             "schema": "theforge/ExecutionResult/v1", "producer": producer,
             "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",
             "findings": [{**f, "evidence_ids": f.get("evidence_ids")
                               or [e["id"] for e in evidence]}
                          for f in declared],
             "evidence": evidence,
-        })
+        }
+        if isinstance(provider_receipt, dict):  # test-only: a native receipt pointer
+            result["provider_receipt"] = provider_receipt
+        if isinstance(provider_economy, dict):  # test-only: economy summary
+            result["provider_economy"] = provider_economy
+        if isinstance(native_trace, dict):  # test-only: native trace pointer
+            result["native_trace"] = native_trace
+        return reply("ok", result)
     return reply("refused", error=err("FIXTURE-OP-UNSUPPORTED", op, "op"))
 
 

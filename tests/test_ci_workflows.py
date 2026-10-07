@@ -149,12 +149,16 @@ def test_package_job_builds_and_runs_both_gates_on_the_wheel() -> None:
     assert not any("pip install -e" in line for line in lines)
 
 
-# --- compat.yml (7.8) and real-providers.yml (7.7) --------------------------------------------
+# --- compat.yml (7.8), ecosystem-real.yml (7.7), provider-surface-drift.yml and
+# --- release-compat.yml (cycle 3.1 phases 44-46) ----------------------------------------------
 
 WORKFLOWS = REPO / ".github" / "workflows"
 COMPAT_WORKFLOW = WORKFLOWS / "compat.yml"
-REAL_PROVIDERS_WORKFLOW = WORKFLOWS / "real-providers.yml"
-SIBLING_REPOS = {"EdgarSocrates98/spark-forge-aws", "EdgarSocrates98/api-forge"}
+REAL_PROVIDERS_WORKFLOW = WORKFLOWS / "ecosystem-real.yml"
+DRIFT_WORKFLOW = WORKFLOWS / "provider-surface-drift.yml"
+RELEASE_COMPAT_WORKFLOW = WORKFLOWS / "release-compat.yml"
+SIBLING_REPOS = {"EdgarSocrates98/spark-forge-aws", "EdgarSocrates98/api-forge",
+                 "EdgarSocrates98/forge-doctor-data", "EdgarSocrates98/forge-doctor-api"}
 OFF_GATE_TRIGGERS = {"schedule", "workflow_dispatch"}
 
 
@@ -238,12 +242,12 @@ def test_real_providers_workflow_is_manual_weekly_and_fails_visibly() -> None:
         assert "continue-on-error" not in step, step
 
 
-def test_real_providers_checks_out_both_siblings_in_separate_paths_with_token() -> None:
+def test_real_providers_checks_out_each_sibling_in_its_own_path_with_token() -> None:
     steps = _steps(_real_job())
     siblings = [s for s in steps if s.get("with", {}).get("repository")]
     assert {s["with"]["repository"] for s in siblings} == SIBLING_REPOS
     paths = [s["with"]["path"] for s in siblings]
-    assert len(set(paths)) == len(paths) == 2
+    assert len(set(paths)) == len(paths) == len(SIBLING_REPOS)
     assert all(p and not p.startswith(("/", "..")) and p != "." for p in paths)
     for step in siblings:
         assert str(step["uses"]).startswith("actions/checkout@")
@@ -305,9 +309,13 @@ def test_real_providers_builds_one_venv_per_specialist_with_its_adapter() -> Non
     job = _real_job()
     for venv, python_id, sibling, adapter, probe in (
         (".venv-spark", "py311", "./siblings/spark-forge-aws", "./adapters/sparkforge",
-         "import sparkforge.adapters.tools, theforge_sparkforge"),
+         "import sparkforge_aws.adapters.tools, theforge_sparkforge"),
         (".venv-api", "py312", "./siblings/api-forge", "./adapters/apiforge",
          "import apiforge, theforge_apiforge"),
+        (".venv-dd", "py311", "./siblings/forge-doctor-data", "./adapters/doctordata",
+         "import forge_doctor_data, theforge_doctordata"),
+        (".venv-da", "py311", "./siblings/forge-doctor-api", "./adapters/doctorapi",
+         "import forge_doctor_api, theforge_doctorapi"),
     ):
         step = _step_running(job, f"-m venv {venv}")
         env_values = " ".join(str(v) for v in step.get("env", {}).values())
@@ -325,6 +333,8 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
     exports = {
         "THEFORGE_REAL_SPARKFORGE_PYTHON=$PWD/.venv-spark/bin/python",
         "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python",
+        "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python",
+        "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python",
         "THEFORGE_REAL_PROVIDERS_REQUIRED=1",
     }
     export_lines = [line for line in lines if "$GITHUB_ENV" in line]
@@ -332,12 +342,70 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
     for expected in exports:
         index = _index_of(export_lines, f'echo "{expected}" >> "$GITHUB_ENV"')
         assert index >= 0
-    # the contract is exported after both venvs exist and before the real tests run
-    assert _index_of(lines, "-m venv .venv-api") < _index_of(lines, "$GITHUB_ENV")
-    assert _index_of(lines, "-m venv .venv-spark") < _index_of(lines, "$GITHUB_ENV")
+    # the contract is exported after all four venvs exist and before the real tests run
+    for venv in (".venv-api", ".venv-spark", ".venv-dd", ".venv-da"):
+        assert _index_of(lines, f"-m venv {venv}") < _index_of(lines, "$GITHUB_ENV")
     assert _index_of(lines, "$GITHUB_ENV") < _index_of(lines, "-m pytest")
     # the variables match the committed contract of tests/real_providers.py
     contract = (REPO / "tests" / "real_providers.py").read_text(encoding="utf-8")
     for name in ("THEFORGE_REAL_SPARKFORGE_PYTHON", "THEFORGE_REAL_APIFORGE_PYTHON",
+                 "THEFORGE_REAL_DOCTORDATA_PYTHON", "THEFORGE_REAL_DOCTORAPI_PYTHON",
                  "THEFORGE_REAL_PROVIDERS_REQUIRED"):
         assert f'"{name}"' in contract, name
+
+
+def _single_job(path: Path) -> dict[str, Any]:
+    jobs = _load_path(path)["jobs"]
+    assert len(jobs) == 1
+    return next(iter(jobs.values()))
+
+
+def test_drift_workflow_is_scheduled_manual_hardened_and_off_gate() -> None:
+    data = _load_path(DRIFT_WORKFLOW)
+    _assert_scheduled_and_manual_only(data)
+    _assert_hardened(data)
+    job = _single_job(DRIFT_WORKFLOW)
+    assert "continue-on-error" not in job
+    for step in _steps(job):
+        assert "continue-on-error" not in step, step
+    siblings = [s for s in _steps(job) if s.get("with", {}).get("repository")]
+    assert {s["with"]["repository"] for s in siblings} == SIBLING_REPOS
+
+
+def test_drift_workflow_checks_each_specialist_surface_without_writing() -> None:
+    job = _single_job(DRIFT_WORKFLOW)
+    lines = _run_lines(job)
+    for venv, adapter in ((".venv-spark", "theforge_sparkforge"),
+                          (".venv-api", "theforge_apiforge"),
+                          (".venv-dd", "theforge_doctordata"),
+                          (".venv-da", "theforge_doctorapi")):
+        install = _index_of(lines, f"{venv}/bin/python -m pip install")
+        check = _index_of(lines, f"{venv}/bin/python -m {adapter}.record --check")
+        assert install < check
+    # the snapshot is never re-recorded or merged by CI
+    assert "record --out" not in " ".join(lines)
+    assert "record --output" not in " ".join(lines)
+
+
+def test_release_compat_is_scheduled_manual_hardened_and_off_gate() -> None:
+    data = _load_path(RELEASE_COMPAT_WORKFLOW)
+    _assert_scheduled_and_manual_only(data)
+    _assert_hardened(data)
+    job = _single_job(RELEASE_COMPAT_WORKFLOW)
+    siblings = [s for s in _steps(job) if s.get("with", {}).get("repository")]
+    assert {s["with"]["repository"] for s in siblings} == SIBLING_REPOS
+
+
+def test_release_compat_runs_conformance_per_specialist_venv() -> None:
+    job = _single_job(RELEASE_COMPAT_WORKFLOW)
+    lines = _run_lines(job)
+    assert _index_of(lines, "python -m pip install .") >= 0
+    for venv, adapter in ((".venv-spark", "theforge_sparkforge"),
+                          (".venv-api", "theforge_apiforge"),
+                          (".venv-dd", "theforge_doctordata"),
+                          (".venv-da", "theforge_doctorapi")):
+        install = _index_of(lines, f"{venv}/bin/python -m pip install")
+        check = _index_of(
+            lines,
+            f"python -m theforge provider check -- {venv}/bin/python -m {adapter}")
+        assert install < check

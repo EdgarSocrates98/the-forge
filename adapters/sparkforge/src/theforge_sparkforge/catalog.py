@@ -19,6 +19,7 @@ that needs a value no ``ExecuteRequest`` v1 field carries, has no binding and is
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -64,7 +65,13 @@ class ArgBinding:
 
 @dataclass(frozen=True)
 class CapabilitySpec:
-    """One capability: its actions ``(action, native tool)`` in declaration order."""
+    """One capability: its actions ``(action, native tool)`` in declaration order.
+
+    ``accepts_handoff``: the first action's native tool admits a translated
+    ``theforge/Handoff/v1`` (``theforge_sparkforge.handoff`` -> the specialist's
+    upstream-facts document). ``consumes`` names the artifact types that intake
+    consumes — the capability-graph edges.
+    """
 
     id: str
     description: str
@@ -72,6 +79,8 @@ class CapabilitySpec:
     signals: SignalsSpec
     bindings: Mapping[str, ArgBinding] = field(default_factory=dict)  # tool -> binding
     unbound: Mapping[str, str] = field(default_factory=dict)  # tool -> why no binding
+    accepts_handoff: bool = False
+    consumes: tuple[str, ...] = ()
 
 
 def action_name(tool: str) -> str:
@@ -127,6 +136,11 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
         bindings={_analyze("pyspark"): _path(PYSPARK_GLOBS),
                   _analyze("graph"): _path(PYSPARK_GLOBS)},
         unbound={_analyze("call_graph"): FACTS_INPUT},
+        # The observe -> engineer edge: Doctor Data's diagnostics reach
+        # `analyze pyspark` as a translated sparkforge/upstream-facts/v1
+        # document (sparkforge >= the upstream intake).
+        accepts_handoff=True,
+        consumes=("data.diagnostic-evidence",),
     ),
     CapabilitySpec(
         id="spark.runtime-analysis",
@@ -358,14 +372,15 @@ UNCATALOGUED: tuple[tuple[tuple[str, ...], str], ...] = (
     ((_tool("judge"), _tool("fuse"), _tool("rules_lookup"), _tool("validate_output"),
       _tool("root_cause")),
      "consumed internally by the analysis actions or takes no workspace file input"),
-    ((_tool("case_*"), _tool("change_*"), _tool("debate_*"), _tool("decision_*"),
-      _tool("next_step"), _tool("playbook"), _tool("proof"), _tool("receipt_*"),
-      _tool("report_*"), _tool("resume"), _tool("runtime_detect"), _tool("sdd_*")),
-     "works on Spark Forge case, report or session state, not on workspace inputs"),
-    ((_tool("context_*"), _tool("knowledge_*"), _tool("pack_list"), _tool("policy_explain"),
-      _tool("telemetry_export")),
-     "host and agent plumbing (context gateway, knowledge, packs, policy, telemetry), not an "
-     "analysis"),
+    ((_tool("agentops_*"), _tool("case_*"), _tool("change_*"), _tool("debate_*"),
+      _tool("decision_*"), _tool("next_step"), _tool("playbook"), _tool("proof"),
+      _tool("receipt_*"), _tool("report_*"), _tool("resume"), _tool("runtime_detect"),
+      _tool("sdd_*")),
+     "works on Spark Forge case, run, report or session state, not on workspace inputs"),
+    ((_tool("context_*"), _tool("doctor_agentic"), _tool("knowledge_*"), _tool("pack_list"),
+      _tool("policy_explain"), _tool("telemetry_export")),
+     "host and agent plumbing (context gateway, doctor, knowledge, packs, policy, "
+     "telemetry), not an analysis"),
 )
 OPEN_WORLD_REASON = ("call AWS APIs over the network and write collection artifacts "
                      "(openWorldHint)")
@@ -379,6 +394,18 @@ class Exposure:
 
     capabilities: list[dict[str, Any]]
     limitations: list[str]
+    # sha256 of the recorded native surface the snapshot was derived from — every field
+    # but ``recorded_at``, so a re-recorded identical surface keeps the same fingerprint.
+    native_fingerprint: str = ""
+
+
+def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
+    """The sha256 the manifest declares as ``native_surface_fingerprint``: the canonical
+    snapshot minus ``recorded_at`` (a timestamp, not surface)."""
+    payload = {key: value for key, value in snapshot.items() if key != "recorded_at"}
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
 
 
 def spec(capability_id: str) -> CapabilitySpec | None:
@@ -439,7 +466,7 @@ def exclusion(tool: str, binding: ArgBinding | None, unbound: str | None,
 
 
 def _capability(entry: CapabilitySpec, actions: Sequence[str]) -> dict[str, Any]:
-    return {
+    capability = {
         "id": entry.id,
         "actions": list(actions),
         "default_action": actions[0],
@@ -449,7 +476,13 @@ def _capability(entry: CapabilitySpec, actions: Sequence[str]) -> dict[str, Any]
         "signals": {"keywords": list(entry.signals.keywords),
                     "file_globs": list(entry.signals.file_globs),
                     "dependencies": list(entry.signals.dependencies)},
+        # The intake lives on the spec's first action; if it was excluded,
+        # surviving actions do not admit a handoff.
+        "accepts_handoff": entry.accepts_handoff and entry.actions[0][0] in actions,
     }
+    if entry.consumes:
+        capability["relations"] = {"consumes": list(entry.consumes)}
+    return capability
 
 
 def _group(tools: Sequence[str], reason: str) -> str:
@@ -500,4 +533,5 @@ def derive(snapshot: Mapping[str, Any]) -> Exposure:
             limitations.append(f"capability '{entry.id}' not exposed: no action is "
                                "read-only, offline and fillable from workspace files")
     limitations.extend(_uncatalogued(tools, catalogued))
-    return Exposure(capabilities=capabilities, limitations=limitations)
+    return Exposure(capabilities=capabilities, limitations=limitations,
+                    native_fingerprint=native_fingerprint(snapshot))

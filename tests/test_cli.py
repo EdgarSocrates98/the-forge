@@ -29,7 +29,7 @@ def test_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as info:
         main(["--version"])
     assert info.value.code == 0
-    assert "theforge 0.1.0" in capsys.readouterr().out
+    assert "theforge 0.2.0" in capsys.readouterr().out
 
 
 def test_init_is_idempotent(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -128,6 +128,31 @@ def test_explain_receipt_line_lists_negotiation_round_hashes() -> None:
     out = render.explain({"run_id": "x", "receipt": {"status": "ok", "inputs": {
         "task_sha256": "a" * 64, "context_round_sha256": ["b" * 64, "c" * 64]}}})
     assert f"context_round={'b' * 12},{'c' * 12}" in out
+
+
+def test_provider_receipt_flows_from_result_to_receipt_and_explain(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Phase 37/38: a result's provider-native receipt pointer lands on the run
+    receipt and on the explain provider section — ref + hash, never content."""
+    manifest = json.loads((PROVIDERS / "fixture-api.json").read_text(encoding="utf-8"))
+    manifest["provider_receipt"] = {"ref": "case:feedface", "sha256": "d" * 64}
+    path = tmp_path / "api-receipt.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    entry = {"id": "fixture-api",
+             "argv": fixture_argv("fixture_forge.py", str(path)), "trust": "local"}
+    make_workspace(tmp_path, [entry])
+    case_b(tmp_path)
+    root = str(tmp_path)
+    code, out, _ = run(capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api",
+                       "--root", root, "--json")
+    data = json.loads(out)
+    assert code == 0 and data["status"] == "ok"
+    code, out, _ = run(capsys, "explain", data["run_id"], "--root", root, "--json")
+    report = json.loads(out)
+    assert code == 0
+    assert report["artifacts"]["receipt"]["provider_receipt"] == manifest[
+        "provider_receipt"]
+    assert report["provider"]["provider_receipt"]["ref"] == "case:feedface"
 
 
 def test_persistence_failure_exit_5(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

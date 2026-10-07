@@ -46,6 +46,7 @@ from theforge.contracts.complexity import ComplexityAssessment
 from theforge.contracts.plan import ExecutionPlan, PlanResult
 from theforge.contracts.verification import VerificationResult
 from theforge.runs import RunStore
+from theforge.security.env import safe_env
 from theforge.state import init_workspace
 
 PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
@@ -284,9 +285,10 @@ def _adapter_execute(forge: rp.RealForge, payload: dict[str, Any], cwd: Path
                           "request_id": "req-ab", "payload": payload})
     proc = subprocess.run([*forge.argv(), "execute"], input=request, capture_output=True,
                           text=True, encoding="utf-8", timeout=rp.NATIVE_TIMEOUT,
-                          cwd=cwd, env=rp.safe_env(), check=False)
+                          cwd=cwd, env=safe_env(), check=False)
     assert proc.returncode == 0, proc.stderr
-    return json.loads(proc.stdout)
+    out: dict[str, Any] = json.loads(proc.stdout)
+    return out
 
 
 def test_spark_cross_recording_matches_the_live_native_output(
@@ -322,3 +324,156 @@ def test_spark_cross_recording_matches_the_live_native_output(
                 for name, (old, new) in pairs.items()
                 if rp.id_shapes(old) != rp.id_shapes(new)}
     assert id_drift == {}, f"{SPARK_RECORDING.name}: id formats drifted {id_drift}"
+
+
+# The Doctor API keyword surface is two-word phrases: the intent must carry one
+# whole phrase ("api health" here) for the observer to qualify next to the
+# engineers — file globs alone are a single signal type.
+FOUR_PROVIDER_TASK = ("Analise o pipeline Spark que produz dados consumidos pela API "
+                      "e faca api health dos dois lados")
+# The capability-graph relations this proof must justify: producer -> consumer
+# (artifact type) edges declared by the four adapters' catalogs.
+GRAPH_ORDER = (("forge-doctor-data", "spark-forge"), ("forge-doctor-api", "api-forge"),
+               ("forge-doctor-data", "api-forge"))
+
+
+@pytest.fixture
+def four_forges() -> tuple[rp.RealForge, rp.RealForge, rp.RealForge, rp.RealForge]:
+    return (rp.require_forge("doctordata"), rp.require_forge("spark"),
+            rp.require_forge("doctorapi"), rp.require_forge("api"))
+
+
+def test_four_provider_proof_observe_then_engineer_then_verify(
+        four_forges: tuple[rp.RealForge, rp.RealForge, rp.RealForge, rp.RealForge],
+        cross: CrossWorkspace, user_config_dir: Path, tmp_path: Path,
+        capsys: pytest.CaptureFixture[str]) -> None:
+    """Phase 15/16: Doctor Data -> Spark Forge and Doctor API -> API Forge over the
+    mounted cross workspace, with the capability graph (produces/consumes declared
+    edges) justifying the order and the Doctors verifying the engineers' runs.
+
+    No node order is hardcoded: the assertions check that every declared
+    produces->consumes pair among the four capabilities is satisfied by the
+    executed order, and that each constrained adjacency cites the
+    ``capability-graph`` rule (not the intent-order keyword proxy).
+    """
+    doctordata, spark, doctorapi, api = four_forges
+    init_workspace(cross.root)
+    rp.register(user_config_dir, doctordata.entry(), spark.entry(),
+                doctorapi.entry(), api.entry())
+    root = str(cross.root)
+
+    code, data, err = _cli(capsys, "plan", FOUR_PROVIDER_TASK, "--profile", "max",
+                           "--execute", "--root", root, "--json")
+    assert data is not None, err
+    assert data["status"] in ("ok", "partial"), (data["status"], data["error"], err)
+    assert code == 0, err
+    plan_run = data["run_id"]
+    store = RunStore(cross.root / ".forge")
+
+    plan = store.read_contract(plan_run, "plan", ExecutionPlan)
+    result = store.read_contract(plan_run, "plan-result", PlanResult)
+    providers = [n.provider for n in plan.nodes]
+    assert sorted(providers) == ["api-forge", "forge-doctor-api", "forge-doctor-data",
+                                 "spark-forge"], providers
+    order = [plan.nodes[int(node_id[1:]) - 1].provider for node_id in result.order]
+    position = {provider: index for index, provider in enumerate(order)}
+
+    # Every declared produces->consumes edge is honored by the executed order.
+    for producer, consumer in GRAPH_ORDER:
+        assert position[producer] < position[consumer], (
+            f"{producer} must precede {consumer}: {order}")
+    # The constrained edges cite the capability-graph rule, not keyword order.
+    edge_rule = {
+        (plan.nodes[int(dep.node[1:]) - 1].provider, node.provider): dep.rule
+        for node in plan.nodes for dep in node.depends_on
+    }
+    assert edge_rule.get(("forge-doctor-data", "spark-forge")) == "capability-graph"
+    assert edge_rule.get(("forge-doctor-api", "api-forge")) == "capability-graph"
+
+    by_id = {f"n{index + 1}": node for index, node in enumerate(plan.nodes)}
+    runs = {by_id[outcome.node].provider: outcome for outcome in result.nodes}
+    for outcome in result.nodes:
+        assert outcome.status in ("ok", "partial"), (outcome.node, outcome.status)
+        assert outcome.run_id is not None, outcome.node
+
+    # --- Spark Forge consumed Doctor Data evidence through the upstream intake.
+    spark_node = runs["spark-forge"]
+    assert spark_node.run_id is not None
+    handoff = store.read(spark_node.run_id, "handoff")
+    assert handoff is not None
+    from_doctor = [item for item in handoff["items"]
+                   if item["origin"]["provider"]["id"] == "forge-doctor-data"]
+    assert from_doctor, handoff
+    spark_result = store.read_contract(spark_node.run_id, "result", ExecutionResult)
+    upstream = [e for e in spark_result.evidence if e.derived_from is not None]
+    assert upstream, "no upstream-derived evidence in the Spark Forge result"
+    dd_run = runs["forge-doctor-data"].run_id
+    for entry in upstream:
+        origin = entry.derived_from
+        assert origin is not None
+        assert origin.provider == "forge-doctor-data" and origin.run_id == dd_run
+    handed = {item["id"]: item for item in handoff["items"]}
+    for entry in upstream:
+        assert entry.derived_from is not None
+        item = handed[entry.derived_from.item]
+        if item.get("epistemic") is not None:
+            assert entry.epistemic == item["epistemic"]  # verbatim, never re-derived
+    spark_receipt = store.read_contract(spark_node.run_id, "receipt", ExecutionReceipt)
+    assert not [n for n in spark_receipt.limitations
+                if n.startswith("handoff-use-undeclared")]
+
+    # --- API Forge consumed Doctor API evidence through the upstream intake.
+    api_node = runs["api-forge"]
+    assert api_node.run_id is not None
+    api_handoff = store.read(api_node.run_id, "handoff")
+    assert api_handoff is not None
+    from_doctor_api = [item for item in api_handoff["items"]
+                       if item["origin"]["provider"]["id"] == "forge-doctor-api"]
+    assert from_doctor_api, api_handoff
+    api_result = store.read_contract(api_node.run_id, "result", ExecutionResult)
+    api_upstream = [e for e in api_result.evidence if e.derived_from is not None]
+    assert api_upstream, "no upstream-derived evidence in the API Forge result"
+    da_run = runs["forge-doctor-api"].run_id
+    for entry in api_upstream:
+        origin = entry.derived_from
+        assert origin is not None
+        assert origin.provider == "forge-doctor-api" and origin.run_id == da_run
+
+    # --- Verification loop: each engineer run was independently verified by the
+    # matching Doctor through its live verify op.
+    spark_ver = store.read_contract(spark_node.run_id, "verification",
+                                    VerificationResult)
+    assert spark_ver.forge.status == "passed"
+    assert spark_ver.independent.status == "passed", spark_ver.independent
+    assert [b for b in spark_ver.independent.basis
+            if b.startswith("verifier:") and "forge-doctor-data" in b]
+    api_ver = store.read_contract(api_node.run_id, "verification", VerificationResult)
+    assert api_ver.forge.status == "passed"
+    assert api_ver.independent.status == "passed", api_ver.independent
+    assert [b for b in api_ver.independent.basis
+            if b.startswith("verifier:") and "forge-doctor-api" in b]
+
+    # --- Forge synthesis references all four node runs.
+    synthesis = result.synthesis
+    assert {(s.provider, s.run_id) for s in synthesis.nodes} == {
+        (provider, outcome.run_id) for provider, outcome in runs.items()}
+    handed_pairs = {(h.source, h.target) for h in synthesis.handoffs}
+    assert handed_pairs
+
+    # explain of the plan run: no divergence, exit 0.
+    code, report, err = _cli(capsys, "explain", plan_run, "--root", root, "--json")
+    assert code == 0, err
+    assert report["kind"] == "plan" and report["integrity"]["divergences"] == []
+
+    # The capability graph answers read-only with all four providers present.
+    code, graph_data, err = _cli(capsys, "graph", "--root", root, "--json")
+    assert code == 0, err
+    listed = {node["id"] for node in graph_data["nodes"]}
+    for provider in ("forge-doctor-data", "spark-forge", "forge-doctor-api",
+                     "api-forge"):
+        assert f"provider:{provider}" in listed
+    edges = {(e["source"], e["kind"], e["target"]) for e in graph_data["edges"]}
+    assert any(kind == "produces" and "forge-doctor-data" in source
+               for source, kind, _ in edges)
+    assert any(kind == "consumes" and "spark-forge" in source
+               for source, kind, _ in edges)

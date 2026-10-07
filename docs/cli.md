@@ -168,7 +168,7 @@ Explain:     theforge explain <run_id>
 
 - **Sem `--execute`** (padrão): descreve o workspace, decompõe ou lê o plano, valida, pede a [estimativa `plan`](protocol.md#operação-plan) aos providers que a declaram, confere health e grava tudo; nenhum nó executa e o desfecho é `planned` (exit 0).
 - **`--execute`**: executa os nós na ordem topológica, cada um como um run próprio com o provider fixado, e mostra o desfecho de cada nó (`-> ok run=<id>`, `-> skipped blocked_by=<nó>`), `Handoffs`, `Synthesis`, `Failures` e `Plan result`. Desfechos: `ok`, `partial`, `refused`, `provider_failure`.
-- **Padrões.** `route` (um nó) e `pipeline` rodam sequencialmente; `delegate`, `parallel` e `debate` executam os nós independentes de cada nível em concorrência limitada (4), com a ordem gravada sempre topológica. `delegate` só aceita subtarefas independentes (sem `depends_on`/`inputs` entre especialistas); `debate` exige ≥2 `proposer` e 1 `referee` dependente de todos, e grava o artefato `decision` (`DecisionRecord/v1`: `question`, `options`, `evidence`, `tradeoffs`, `chosen`, `rejected`, `rationale`, `confidence`, `unknowns`) — `chosen="unresolved"` quando o referee não declara `evidence id="decision"` com a claim de um proposer. A decomposição só emite `route`/`pipeline`; os demais padrões entram por `--from FILE` ou por proposta semântica validada.
+- **Padrões.** `route` (um nó) e `pipeline` rodam sequencialmente; `delegate`, `parallel` e `debate` executam os nós independentes de cada nível em concorrência limitada (4), com a ordem gravada sempre topológica. `delegate` só aceita subtarefas independentes (sem `depends_on`/`inputs` entre especialistas); `debate` exige ≥2 `proposer` **de providers distintos** (a fronteira cross-domain — discordância interna de um provider é decidida pelo especialista, não replicada em nós) e 1 `referee` dependente de todos, e grava o artefato `decision` (`DecisionRecord/v1`: `question`, `options`, `evidence`, `tradeoffs`, `chosen`, `rejected`, `rationale`, `confidence`, `unknowns`) — `chosen="unresolved"` quando o referee não declara `evidence id="decision"` com a claim de um proposer. A decomposição só emite `route`/`pipeline`; os demais padrões entram por `--from FILE` ou por proposta semântica validada.
 - **Ordem dos nós.** Sem `--from`, a ordem segue primeiro as relações declaradas no grafo de capabilities (regra `capability-graph`: `requires` e produces→consumes entre os qualificados) e só depois a ordem textual das keywords casadas (regra `intent-order`): ambos são proxies do fluxo de dados e podem inferir a dependência errada ("uma API que consome os dados do pipeline Spark" põe a API primeiro). Revise o plano sem `--execute` antes de executar.
 - **Planner semântico.** Quando a decomposição fica `ambiguous` e o profile não é `economy`, um provider com capability `proposes_plans` pode propor um `SemanticPlanProposal` que o core valida como qualquer plano (`source: semantic` na saída). Sem planner declarado, ou com proposta inválida, o desfecho fica `ambiguous` com a limitação correspondente.
 - **`--from FILE`**: lê um `ExecutionPlan` em JSON (até 1 MiB, leitura estrita) e fixa a ordem e as dependências explicitamente. Os campos controlados pelo run (`plan_run`, `producer`, `created_at`, `status`, `violations`, `source`, `task_id`) são substituídos, e o `--profile` da linha de comando prevalece sobre o do arquivo (com limitação). Capability dada por alias vira o ID canônico com a nota `capability-alias`. Arquivo ilegível ou fora do contrato é erro de uso `FORGE-PLAN-FILE` (exit 2); um plano que não passa na validação termina `refused` com o primeiro código `FORGE-PLAN-*` (exit 4), sem executar nenhum nó.
@@ -201,6 +201,28 @@ can_verify:
 ```
 
 - `--ref <capability>` restringe a visão às arestas que tocam aquela capability — `p/c` casa exatamente, `c` nua casa `*/c` em todos os providers. O `--json` emite o mesmo subgrafo filtrado (`nodes`, `edges`, `limitations`, `ref`).
+- `--mesh` renderiza a **malha de capabilities**: por domínio declarado, os papéis `observe`/`engineer`/`verify` preenchidos pelos capabilities dos providers — derivado inteiramente das relações declaradas nos manifests (`produces`/`consumes`/`can_verify`/`can_review`/`in_domain`), nunca de heurísticas do core. Verificação é posicionada no domínio declarado do verificador intersetado com o domínio do alvo; relações sem candidato no domínio aparecem como `unplaced` (nunca descartadas em silêncio). Combina com `--ref` e `--json`.
+
+```
+$ theforge graph --mesh
+Capability mesh (declared relations):
+DOMAIN: api
+  observe:
+    forge-doctor-api/api.diagnose
+  engineer:
+    api-forge/api.analyze
+  verify:
+    forge-doctor-api/api.verify
+DOMAIN: data
+  observe:
+    forge-doctor-data/data.scan
+  engineer:
+    api-forge/api.analyze
+    spark-forge/pyspark.static-analysis
+  verify:
+    forge-doctor-data/data.verify
+```
+
 - Exit 0 mesmo sem `.forge` ou sem providers (visão vazia); `describe`/`health`/`execute` nunca são chamados.
 
 ## `workspace show`

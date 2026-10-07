@@ -2,6 +2,7 @@
 
 import secrets
 from dataclasses import dataclass, field
+from pathlib import PurePosixPath
 from typing import Any, Literal
 
 from theforge.contracts.base import ContractError
@@ -12,10 +13,13 @@ from theforge.contracts.result import ExecutionResult
 from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, HealthStatus, Producer, ResponseStatus
 
-__all__ = ["PROTOCOL_V1", "ExecuteRequest", "HealthCheck", "HealthReport", "PlanEstimate",
-           "PlanRequest", "Request", "Response", "VerifyRequest", "new_request_id"]
+__all__ = ["PROTOCOL_V1", "DeltaRequest", "ExecuteRequest", "HealthCheck", "HealthReport",
+           "PlanEstimate", "PlanRequest", "Request", "Response", "VerifyRequest",
+           "new_request_id"]
 
 PROTOCOL_V1 = "forge/v1"
+DELTA_MAX_CHANGED_FILES = 256
+_DELTA_REF_MAX = 256
 
 
 def new_request_id() -> str:
@@ -63,6 +67,41 @@ class HealthReport:
 
 
 @dataclass(frozen=True, kw_only=True)
+class DeltaRequest:
+    """Optional incremental hint on ``execute`` (delta/v1).
+
+    ``baseline_ref`` names the prior observation the provider should diff
+    against; it is an opaque token resolved inside the specialist's own store —
+    ``""`` asks for the provider's latest stored baseline. ``changed_files`` is
+    the changed surface the caller observed since its last look at the
+    workspace (added/modified/removed paths, workspace-relative POSIX).
+
+    Sent only to providers whose manifest declares ``delta/v1`` and only when
+    the core holds a prior fingerprint state for the workspace (a subsequent
+    run). It is a hint, never a correctness condition: a provider that cannot
+    resolve the baseline must surface an explicit unknown, not fabricate a
+    delta. Providers that do not declare the feature never see the field.
+    """
+
+    baseline_ref: str = ""
+    changed_files: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if len(self.baseline_ref) > _DELTA_REF_MAX:
+            raise ContractError(
+                f"delta baseline_ref exceeds {_DELTA_REF_MAX} characters")
+        if len(self.changed_files) > DELTA_MAX_CHANGED_FILES:
+            raise ContractError(
+                f"delta changed_files exceeds {DELTA_MAX_CHANGED_FILES} entries")
+        for path in self.changed_files:
+            if not isinstance(path, str) or not path or path.startswith("/") \
+                    or ".." in PurePosixPath(path).parts or "\\" in path:
+                raise ContractError(
+                    f"delta changed_files entry {path!r}: expected a "
+                    "workspace-relative POSIX path")
+
+
+@dataclass(frozen=True, kw_only=True)
 class ExecuteRequest:
     task: TaskSpec
     capability: str
@@ -71,6 +110,8 @@ class ExecuteRequest:
     # Additive: structured items from the nodes this plan node depends on (None outside
     # plans). Providers that do not know the field keep ignoring it.
     handoff: Handoff | None = None
+    # Additive: incremental hint for providers declaring ``delta/v1`` (Phase 49).
+    delta: DeltaRequest | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

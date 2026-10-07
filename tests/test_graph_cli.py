@@ -174,3 +174,35 @@ def test_explain_shows_the_semantic_resolution_and_verifier_identity(
     assert "Resolved:    semantically -> fixture-spark/spark.performance:" in out
     assert "rationale:" in out and "alternatives: fixture-spark-b" in out
     assert "independent=passed (fixture-verifier)" in out
+
+
+def test_graph_mesh_view_lists_domain_roles(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Cycle 3.1 Phase 83: ``--mesh`` projects the graph into DOMAIN →
+    observe/engineer/verify, derived only from declared relations."""
+    from helpers import API_DOMAIN_ENTRY, SPARK_DOMAIN_ENTRY, VERIFIER_ENTRY
+    make_workspace(tmp_path, [SPARK_ENTRY, SPARK_DOMAIN_ENTRY, API_DOMAIN_ENTRY,
+                              VERIFIER_ENTRY])
+    case_a(tmp_path)
+    root = str(tmp_path)
+    code, _, err = run(capsys, "registry", "refresh", "--root", root)
+    assert code == 0, err
+    code, out, err = run(capsys, "graph", "--mesh", "--root", root, "--json")
+    assert code == 0, err
+    mesh = json.loads(out)["mesh"]
+    assert mesh["domains"] == [{
+        "domain": "spark",
+        "observe": ["fixture-spark-domain/spark.performance"],
+        "engineer": ["fixture-api-domain/api.contract"],
+        "verify": [],
+    }]
+    # The verifier's edge targets a provider outside the mesh — named, never
+    # dropped silently.
+    assert mesh["unplaced_verify"] == [
+        "fixture-verifier/audit.verify -> fixture-spark/spark.performance"]
+
+    code, out, _ = run(capsys, "graph", "--mesh", "--root", root)
+    assert code == 0
+    assert "DOMAIN: spark" in out and "observe:" in out
+    assert "fixture-spark-domain/spark.performance" in out
+    assert "Unplaced verify:" in out

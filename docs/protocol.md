@@ -13,7 +13,7 @@
 |---|---|---|---|
 | `describe` | sim | `{}` | `ForgeManifest` |
 | `health` | sim | `{}` | `HealthReport` (`ok\|degraded\|unavailable`) |
-| `execute` | não | `ExecuteRequest{task, capability, action, context, handoff?}` | `ExecutionResult` |
+| `execute` | não | `ExecuteRequest{task, capability, action, context, handoff?, delta?}` | `ExecutionResult` |
 | `plan` | não | `PlanRequest{task, capability, action}` | `PlanEstimate` |
 | `verify` | não | `VerifyRequest{task, capability, action, run_id, result, handoff?}` | `VerifyVerdict` |
 | `resolve` | não | `ResolveRequest{task, candidates, ambiguity, technologies}` | `RoutingProposal` |
@@ -213,6 +213,14 @@ O ID, as ações, os aliases e o formato de `replaced_by` passam pelas regras me
 
 O manifest pode declarar `context_revalidation` (opcional; os adapters reais declaram `"hash"`: conferem o sha256 de cada arquivo do ContextPack antes de usá-lo). Um core que não conhece o campo o ignora, como qualquer campo desconhecido de provider.
 
+Campos opcionais no nível do manifest, aditivos sobre `theforge/ForgeManifest/v1`:
+
+| Campo | Default | Efeito |
+|---|---|---|
+| `features` | `[]` | ids `"<nome>/v<major>"` de features de protocolo declarados (ex.: `handoff/v1`); ver [versioning.md — Features de protocolo](versioning.md#features-de-protocolo). Malformado ou duplicado torna o provider `invalid`; id desconhecido bem-formado é ignorado |
+| `adapter_version` | `null` | a release do adapter que responde o protocolo, quando o provider é um adapter |
+| `native_surface_fingerprint` | `null` | sha256 declarado da superfície nativa servida (nos adapters, o snapshot empacotado); gravado no receipt e no cache |
+
 Atualizar o core para esta versão muda o `manifest_sha256` de todo provider (os defaults acima entram no hash). Cada entrada do cache do registry é descartada uma vez, com o aviso `registry cache for <id> discarded: …`, e o provider é descrito de novo. Não há ação a tomar.
 
 ### Limites
@@ -222,6 +230,7 @@ Limites (`contracts/types.py`, valores iniciais):
 | Limite | Valor | Ao exceder |
 |---|---|---|
 | capabilities por manifest | 256 | provider `invalid` |
+| `features` por manifest | 32 | provider `invalid` |
 | `actions` por capability | 16 | capability excluída |
 | `signals.keywords` por capability | 64 | capability excluída |
 | `signals.file_globs` por capability | 32 | capability excluída |
@@ -296,7 +305,19 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
 
-Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 64 KiB — são truncados com limitação, itens malformados são pulados com limitação). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. O Spark Forge e o `api.change-control` ainda não declaram: recebem o handoff e o run do nó registra `handoff-use-undeclared`.
+Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 32 KiB — são truncados com limitação, itens malformados são pulados com limitação), e `pyspark.static-analysis` do Spark Forge declara `accepts_handoff` com `relations.consumes: ["data.diagnostic-evidence"]`, traduzindo os itens a `sparkforge/upstream-facts/v1` (`--file upstream=upstream-facts.json`, auditado pelo `filters_applied.upstream` da saída). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. `api.change-control` não declara: recebe o handoff e o run do nó registra `handoff-use-undeclared`.
+
+### Delta (`delta/v1`)
+Um provider cujo manifest declara `delta/v1` recebe, no campo opcional `delta` do `ExecuteRequest`, um `DeltaRequest` — a dica incremental de um run **subsequente** sobre o mesmo workspace:
+
+```json
+{"delta": {"baseline_ref": "", "changed_files": ["jobs/x.py", "api/openapi.yaml"]}}
+```
+
+- `baseline_ref` é um token opaco resolvido **dentro** do especialista (sua própria store de snapshots/histórico); `""` pede o baseline mais recente que ele tiver gravado. O core não interpreta refs nem guarda estado do especialista.
+- `changed_files` é a superfície mudada que o cache de fingerprints observou desde o run anterior (paths relativos POSIX adicionados/modificados/removidos, até 256 — acima disso o campo é truncado com limitação).
+- O campo só sai quando o cache de fingerprints tem estado anterior para aquele workspace: primeiro run, cache desligado ou descartado → sem `delta`. Providers sem `delta/v1` no manifest nunca veem o campo.
+- É dica, nunca condição de corretude: baseline não resolvido vira `unknown` explícito no documento do especialista (ex.: `delta.unresolved`), nunca um delta fabricado nem um full scan disfarçado de delta. Os adapters dos Doctors traduzem a seção `delta` do documento nativo em evidência `id="delta"` com contagens por tipo de mudança.
 
 #### Evidência derivada (`Evidence.derived_from`)
 
@@ -308,6 +329,58 @@ Uma capability que consumiu o handoff pode marcar a evidência que carrega adian
 O `debate` é caro e raro — nunca o padrão: a decomposição determinística só emite `route`/`pipeline`; `delegate`, `parallel` e `debate` entram por `--from FILE` ou por proposta semântica validada. Ao fim de um `debate` o core compõe o `DecisionRecord/v1` (artefato `decision`, schema fechado) com `question`, `options`, `evidence` (os itens que o referee recebeu), `tradeoffs` (findings dos proposers), `chosen`, `rejected`, `rationale`, `confidence`, `unknowns` e `limitations`. Cada `options[]` cita a posição do proposer de forma estrutural — `position` (título do primeiro finding, verbatim), `evidence` (ids produzidos) e `risks` (findings `high`/`critical` como `"<id>: <title>"`) — junto de `provider`, `capability`, `status`, `run_id` e `claim`. A escolha é uma convenção auditável: o referee declara `evidence` com `id="decision"` e `claim` = id do nó proposer escolhido; sem ela, ou com uma claim fora dos proposers, o record fica `unresolved` com a razão em `limitations` — o core nunca inventa a escolha.
 
 Um plano executado também grava `plan-state` (`PlanState/v1`): snapshot durável do escalonador, regravado quando o plano é validado, após cada nó registrado e uma última vez antes do `plan-result` — o receipt liga o hash final. `theforge resume <run_id>` continua um run de plano (a task e o plano gravados são reusados verbatim — hashes idênticos são a prova) re-hidratando só os nós cujas entradas ainda verificam (cadeia de hashes do run filho, identidade do provider, handoff reconstruído byte-idêntico); o resto reexecuta e o motivo é registrado como limitação. A retentativa de falhas transitórias é política (`retry.toml`), nunca o default: só os códigos listados, no máximo `max_attempts` tentativas, cada uma um run filho completo.
+
+## Proveniência e identidade
+
+### Hierarquia de runs
+
+Cada execução é um run com receipt próprio, e a hierarquia é explícita — nunca achatada:
+
+```
+run raiz (kind=plan)          — theforge plan …; carrega a task original
+└── run de nó (kind=node)     — parent_run=<raiz>, plan_node=<nó>; um por nó
+    └── run nativo            — interno ao especialista; alcançável por
+                                ProviderReceipt.ref / NativeTrace.ref,
+                                nunca fundido ao receipt do core
+```
+
+`theforge explain <run>` mostra a hierarquia: no run de plano a seção
+`Plan` lista os runs filhos (`Plan run:` + status de cada nó); no run de
+nó, `Native rcpt:`/`Native trace:` apontam o nível nativo. Um run de
+nó sabe seu pai (`metadata.parent_run`), o pai sabe os filhos pelos
+`node_runs` gravados no plan-state/result.
+
+### Cadeia de proveniência
+
+O fluxo completo — **observação → decisão → verificação → síntese** — é
+verificável elo a elo:
+
+1. **Doctor finding**: evidência nativa traduzida lossless (ver
+   `ontology.md`), com `id`, `source` e `derived_from` estáveis.
+2. **Handoff item**: cada item carrega `origin` (plan_run, node, run_id,
+   provider) e o `hash` sha256 do conteúdo original quando aplicável.
+3. **Evidência derivada**: o consumidor marca `derived_from` apontando o
+   item recebido; o check `handoff-provenance` reprova citação a item não
+   entregue ou elevação epistêmica sem verificação.
+4. **Verificação**: `VerifyRequest` leva o handoff verbatim; o veredito
+   independente vai ao `VerificationResult` do run.
+5. **Síntese**: seções do resultado final citam os `node` ids de origem —
+   o leitor navega do claim ao run que o produziu.
+
+### Semântica de hash
+
+Todo artefato persistido pelo core é gravado como JSON canônico e o
+`sha256` retornado é do conteúdo serializado completo — que inclui os
+campos `schema` (`theforge/<Name>/v1`) e `producer` (`{id, version}`). Ou
+seja, **o hash liga conteúdo + versão do schema + identidade do produtor
+por construção**: dois artefatos com mesmo conteúdo mas schemas ou
+producers diferentes têm hashes diferentes.
+
+Hash é garantia de **integridade e identidade de conteúdo**, nunca de
+**autoria**: um provider malicioso pode hashear qualquer coisa. Autoria é
+questão de confiança (registro, `trust`, `boundary`), não de hash. A
+verificação `integrity` confere que os artefatos referenciados existem e
+batem com os hashes gravados — não que quem os escreveu era confiável.
 
 ## Códigos de erro do core
 Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados. A lista canônica e testada de códigos `FORGE-*`, com a família de cada um, é [errors.md](errors.md). Esta seção só resume os códigos de manifest e de pedido de contexto citados acima:
@@ -334,12 +407,15 @@ Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-loc
 | `ADAPTER-NATIVE-TIMEOUT` | `error` | a chamada nativa passou de 85% do timeout de execute do perfil; a árvore nativa é encerrada |
 | `ADAPTER-OUTPUT-TOO-LARGE` | `error` | o resultado passa de 4 MiB mesmo sem nenhum finding inline; nada é gravado |
 | `ADAPTER-REPLAY-MISSING` / `ADAPTER-REPLAY-INVALID` | `error` | em `--replay`, um arquivo do cenário (gravação da ação, `environment.json` ou `health.json`) não existe ou é inválido |
-| `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12) |
-| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
+| `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12; nos Doctors, Python < 3.11) |
+| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` / `DOCTORDATA-ADAPTER-SNAPSHOT-INVALID` / `DOCTORAPI-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
 | `SPARKFORGE-ADAPTER-NATIVE-FAILED` | `error` | o processo filho nativo saiu com código ≠ 0 ou com stdout truncado |
-| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
+| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` / `DOCTORDATA-ADAPTER-NATIVE-INVALID` / `DOCTORAPI-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
 | `APIFORGE-ADAPTER-NATIVE-FAILURE` | `error` | a CLI saiu com erro sem uma linha `AF-*` reconhecível |
 | `APIFORGE-ADAPTER-INPUT-OUTSIDE` | `refused` | caminho do bundle de `change-control` fora do workspace |
+| `DOCTORDATA-ADAPTER-NATIVE-FAILURE` / `DOCTORAPI-ADAPTER-NATIVE-FAILURE` | `error` | o bridge saiu com código ≠ 0 sem uma linha `FDD-*`/`FDA-*` reconhecível |
+| `FDD-REQUEST-INVALID` / `FDA-REQUEST-INVALID` | `refused` | requisição ou entrada staged malformada (exit 2 do bridge), `field=request` |
+| `FDD-*` / `FDA-*` (demais) | `error` | falha nativa do Doctor (exit 1 do bridge): tipo+mensagem no `detail` |
 | `SPARKFORGE-TOOL-UNKNOWN` | `refused` | tool nativa inexistente |
 | `SPARKFORGE-<código nativo>` / `SPARKFORGE-TOOL-ERROR` | `refused` ou `error` | erro nativo: tipado ou exit 2 → `refused`, senão `error` |
 | `AF-*` | `refused` ou `error` | erro nativo do API Forge: exit 2 → `refused`; exit 3, `AF-CLI-INTERNAL` ou outro → `error` |
@@ -357,6 +433,8 @@ Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execu
 | `theforge/ExecutionPlan/v1` | artefato `plan` do run do plano | não |
 | `theforge/PlanResult/v1` | artefato `plan-result`: desfecho por nó, ordem efetiva, síntese, reprodutibilidade combinada | não |
 | `theforge/DecisionRecord/v1` | artefato `decision` de um plano `debate` ([padrões](#padrões)) | não |
+| `theforge/ProviderEconomyReceipt/v1` | campo aditivo `provider_economy` do `ExecutionResult`: a economia interna do provider, resumida (por métrica: `measured`/`estimated`/`unresolved`/`not_applicable`) | sim (schema aberto, dentro do resultado) |
+| `theforge/EconomyRollup/v1` | artefato `economy` de um run de plano quando algum nó reportou economia — totais por métrica, `conflicts` e `limitations`; ligado ao receipt por `plan.economy_sha256` | não |
 | `theforge/RunBudget/v1` | artefato `budget` de todo run que resolve um perfil, ligado ao receipt por `inputs.budget_sha256` | não |
 | `theforge/ProviderPerformance/v1` | histórico medido por provider+capability em `.forge/metrics/provider-performance.json` ([economia](architecture.md#economia)) | não |
 | `theforge/ProjectIntel/v1` | snapshot fingerprinted do workspace em `.forge/intel/project.json`; freshness é veredito de leitura, nunca gravado ([inteligência do projeto](architecture.md#inteligência-do-projeto)) | não |
@@ -369,6 +447,12 @@ Contratos da execução multi-provider ([ADR 0018](adr/0018-multi-provider-execu
 | `theforge/ExplainReport/v1` | `theforge explain --json` ([cli.md](cli.md#explain)) | não |
 | `theforge/Diagnostic/v1` | artefato `diagnostic` e linhas `theforge: debug:` com `--debug` | não |
 
-Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.handoff`, `Capability.{accepts_handoff, proposes_plans, resolves_ambiguity, relations}`, `PlanRequest.{purpose, options, ambiguity}`, `Evidence.derived_from`, `ExecutionResult.assumptions`, `HandoffItem.{derived_from, also_from, artifact_type}` e os kinds `constraint`/`assumption`/`verification`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, resumed_from, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256, budget_sha256, routing_proposal_sha256}`, `NodeOutcome.{attempts, reused}`, `PlanResult.decision_sha256`, `PlanRefs.{capability_graph_sha256, semantic_proposal_sha256, decision_sha256, plan_state_sha256}`, `RunTelemetry.{semantic_planner_calls, semantic_resolver_calls, files_cited, evidence_returned, findings_returned, spans}` (`Span`: `id`, `name`, `start_ms`, `duration_ms`, `parent`, `status`, `attributes`), o valor `semantic` de `ExecutionPlan.source` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+Campos aditivos em contratos existentes: `RoutingDecision.pattern`, `ExecuteRequest.{handoff, delta}`, `Capability.{accepts_handoff, proposes_plans, resolves_ambiguity, relations}`, `PlanRequest.{purpose, options, ambiguity}`, `Evidence.derived_from`, `ExecutionResult.{assumptions, provider_receipt, provider_economy, native_trace}`, `ExecutionReceipt.provider_receipt`, `ProviderSection.provider_receipt` (`ExplainReport`), `ResultSection.native_trace` (`ExplainReport`), `PlanSection.economy` (`ExplainReport`), `HandoffItem.{derived_from, also_from, artifact_type}` e os kinds `constraint`/`assumption`/`verification`, `ExecutionInfo.deterministic`, `ExecutionReceipt.{kind, parent_run, plan_node, replay_of, resumed_from, verification_sha256, reproducibility, plan}`, `ReceiptInputs.{handoff_sha256, complexity_sha256, budget_sha256, routing_proposal_sha256}`, `NodeOutcome.{attempts, reused}`, `PlanResult.{decision_sha256, economy_sha256}`, `PlanRefs.{capability_graph_sha256, semantic_proposal_sha256, decision_sha256, economy_sha256, plan_state_sha256}`, `RunTelemetry.{semantic_planner_calls, semantic_resolver_calls, files_cited, evidence_returned, findings_returned, spans}` (`Span`: `id`, `name`, `start_ms`, `duration_ms`, `parent`, `status`, `attributes`), o valor `semantic` de `ExecutionPlan.source` e o desfecho `planned` (só em receipts de `kind = "plan"`). Runs e manifests gravados sem eles continuam válidos: verificação e reprodutibilidade ausentes valem "não registrado" e `unknown`.
+
+`ExecutionResult.provider_receipt` é o ponteiro para o recibo **nativo** do provider (`ProviderReceipt{ref, sha256}` — a identidade verbatim do recibo do especialista, ex. `case:<id>` do API Forge, mais o sha256 do documento de recibo que ele gravou e que já é artefato do run). O receipt do run copia o ponteiro sem mudar nada — referência, nunca o conteúdo — e `theforge explain` o expõe na seção `provider` como drill-down do explain nativo. Um resultado sem `provider_receipt` é o normal: nenhum recibo nativo é inventado.
+
+`ExecutionResult.provider_economy` é o resumo da economia **interna** do provider (`ProviderEconomyReceipt/v1`): cada métrica (`context_bytes`, `tool_calls`, `model_calls`, `provider_tokens`, `cost_usd`, `wall_time_ms`) carrega um `status` — `measured`/`estimated` exigem valor, `unresolved`/`not_applicable` o recusam. **UNKNOWN != ZERO é estrutural**: um custo não medido nunca entra como `0`. Um run de plano compõe o `EconomyRollup/v1` (artefato `economy`, ligado por `plan.economy_sha256` e `PlanResult.economy_sha256`): os totais somam só valores compatíveis, `not_applicable` não contribui, um `unresolved` bloqueia a soma (limitation nomeia os nós), e recibos que citam o mesmo `(provider, run)` com valores divergentes viram `conflicts` — nunca média silenciosa. O `explain` mostra o rollup na seção do plano.
+
+`ExecutionResult.native_trace` é o ponteiro limitado para o trace **interno** do provider (`NativeTrace{ref, summary, critical_path}` — bounds: summary ≤ 240 chars, critical_path ≤ 32 estágios ≤ 120 chars cada). A federação de traces é por referência: o span `node:<id>` do plano recebe o atributo `native_trace_ref`; os spans internos nunca saem do especialista e a expansão é on-demand.
 
 Nomes reservados (sem implementação): `EnvironmentReport` (v0 não estável em `doctor`); a op `estimate`. O antigo nome reservado `Budget` foi implementado como `RunBudget/v1`.

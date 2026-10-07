@@ -36,7 +36,8 @@ REPO = Path(__file__).parents[1]
 DOC = REPO / "docs" / "capabilities.md"
 ADR = REPO / "docs" / "adr" / "0017-capability-taxonomy.md"
 NATIVE = REPO / "tests" / "fixtures" / "native"
-ADAPTERS = {"spark-forge": "sparkforge", "api-forge": "apiforge"}
+ADAPTERS = {"spark-forge": "sparkforge", "api-forge": "apiforge",
+            "forge-doctor-data": "doctordata", "forge-doctor-api": "doctorapi"}
 
 EXPOSED_HEADER = "| Provider | Capability | Ações | Origem nativa |"
 EXCLUDED_HEADER = "| Provider | Capability | Ação | Origem nativa | Motivo |"
@@ -170,7 +171,7 @@ def doc() -> str:
 def test_every_exposed_capability_is_catalogued_with_its_actions(
         doc: str, manifests: dict[str, dict[str, Any]]) -> None:
     exposed = exposed_of(manifests)
-    assert len(exposed) == 17   # 15 Spark Forge + 2 API Forge
+    assert len(exposed) == 21   # 15 Spark Forge + 2 API Forge + 4 Doctors
     assert catalog_drift(parse_exposed(doc), exposed) == []
 
 

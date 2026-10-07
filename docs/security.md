@@ -135,6 +135,25 @@ Nenhum erro mostra traceback na CLI, nem em erro interno inesperado (exit 70). C
 - O artefato `diagnostic` e o próprio receipt não têm hash registrado. Artefatos presentes sem hash registrado (runs gravados antes de o hash existir) aparecem como `unrecorded`, nunca como divergência.
 - `replay --mode execute` recusa reexecutar quando as entradas registradas (`task`, `routing`, `handoff`, contexto, receipt) divergem dos hashes, para que uma tarefa editada não rode com outros parâmetros.
 
+## Ameaças da federação (ciclo 3.1)
+A federação acrescenta superfícies novas — cada uma com a mitigação existente:
+
+| Ameaça | Mitigação |
+|---|---|
+| Handoff malicioso de Doctor | O handoff é montado pelo core só de resultados válidos dos nós em `inputs`; `origin` é construída pelo core (provider não a forja); itens são tipados, redigidos e capados (256 itens / 256 KiB); claims são texto de até 500 caracteres — dado, nunca instrução. |
+| Receipt aninhado adulterado | `provider_receipt` é só `{ref, sha256}` — um ponteiro, nunca conteúdo. Vive dentro do `result`, então adulterá-lo quebra o hash do resultado: `explain`/`replay --mode verify` reportam a divergência. |
+| `native_trace.ref` falso | `ref` é validado por `check_ref`: forma `<scheme>:<id>` (scheme ≥ 2 letras — letra única é drive), sem espaço, `\` ou segmento `..`, e schemes reservados (`file`, `http(s)`, `ftp`, `ssh`, `data`, `javascript`, `theforge`, `forge`) são rejeitados no parse — um ref fora do namespace permitido invalida o resultado inteiro. O core nunca resolve nem abre refs: são rótulos para drill-down manual, não caminhos. |
+| Spoof de fingerprint de superfície | `surface_fingerprint`/`capability_fingerprint` são **computados pelo core** sobre o manifest — o provider não os declara. `native_surface_fingerprint` é declarado, mas é informativo e nunca participa da identidade. `registry revalidate` compara `manifest_sha256` vivo com o em uso — mesma versão com superfície diferente resulta `changed`. |
+| Injeção de graph-ref | Refs de grafos/traces/recibos são opacos e validados (`check_ref`); o core não mantém um resolver — nenhum ref vira caminho de filesystem nem URL buscada. |
+| Falsificação de proveniência cross-provider | `origin` do item é construída pelo core do run real; `Evidence.derived_from` é conferido contra o handoff **entregue** (`handoff-provenance`): item não recebido, `node`/`plan_run` divergentes ou upgrade epistêmico falham a verificação `forge` do run. |
+| Escalação de autoridade do planner interno | `SemanticPlanProposal` não carrega campos de orçamento/perfil: budget, teto de providers e limites vêm do perfil do comando; `check_plan` rejeita provider/capability desconhecida, ciclo e excesso de providers — a proposta é consultiva, a validação determinística é soberana. |
+| Relaxação de policy por payload | Campos `policy`/`trust` contrabandeados num resultado são descartados pelo parse estrito/não-estrito e nunca chegam ao avaliador — policy lê só as dimensões declaradas do manifest e as regras de configuração; trust vem só do `providers.toml`. |
+
+## Cadeia de suprimento
+A identidade de superfície registra, por execução: o fingerprint do executável (`receipt.provider.fingerprint`, sha256 do binário resolvido), a versão do adapter (o `version` do manifest = `producer.version`), a versão observada do especialista (`provider.observed_version`) e os fingerprints de superfície (`surface_fingerprint`, `capability_fingerprint`, `native_surface_fingerprint` declarado). A deriva de qualquer um é detectável: cache do registry valida todos antes de servir, `revalidate` reporta `changed`, e o histórico de performance é escopado por fingerprint.
+
+Hash de wheel não é coletado: após a instalação, o hash do artefato original não está disponível offline de forma confiável, e o fingerprint do executável + fingerprints de superfície + versões já cobrem a detecção de adulteração local. Hash é integridade, nunca confiança — a confiança vem do `providers.toml` e do trust gate, não de um digest.
+
 ## Níveis de trust
 Trust só é concedido no `providers.toml` do usuário. Detalhes e justificativa em [ADR 0010](adr/0010-policy-model.md).
 
@@ -158,6 +177,7 @@ Antes de iniciar o provider, o core decide `allow`, `ask` ou `deny` e grava o ar
 - Configuração: tabela `[rules]` em `policy.toml` no diretório de configuração do usuário (pode afrouxar ou endurecer) e em `.forge/config/policy.toml` (só endurece). A regra aplicada é registrada como `<origem>.<chave>`, com origem `default`, `user` ou `project`.
 - `ask` sem aprovação: `refused` com `FORGE-POLICY-APPROVAL-REQUIRED` e `unlock = --approve <capability>`. Com `theforge ask … --approve <capability>`, vira `allow` e o run registra `approved: true`. `deny`: `refused` com `FORGE-POLICY-DENIED`; `--approve` não desbloqueia.
 - O `RiskAssessment` sempre registra `source: provider_declaration` e a limitação `operation_class is a provider declaration, not sandbox enforcement`.
+- **Hierarquia (ciclo 3.1):** a mais restritiva vence entre quatro camadas — a policy global da Forge, o `operation_class` declarado pela capability, a policy interna do especialista e o boundary dos Doctors. Cada camada só pode endurecer: `.forge/config/policy.toml` só endurece sobre a do usuário, a estimativa de `plan` só endurece sobre a classe declarada, e uma decisão interna do especialista só pode recusar mais cedo — nada abaixo do core relaxa um `deny`. O stop segue a mesma direção: o timeout/kill da árvore do subprocesso do nó é o teto absoluto; políticas internas de stop/recovery do especialista operam dentro dele e nunca o estendem.
 
 ## Limitações de isolamento
 Não há sandbox. Detalhes e pesquisa por plataforma em [ADR 0012](adr/0012-os-sandbox-research.md).

@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import atexit
 import gc
+import json
 import os
 import posixpath
 import re
@@ -45,6 +46,7 @@ from typing import Any
 from theforge_sparkforge import catalog
 from theforge_sparkforge._shell import STAGE_DIR
 from theforge_sparkforge.backend import expected_recording, live_unavailable_reason
+from theforge_sparkforge.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
 from theforge_sparkforge.record import render
 
 JUDGE_TOOL = "sparkforge_judge"
@@ -136,17 +138,37 @@ def check_workspace(workspace: Path, out: Path | None = None) -> Path:
 
 
 def record_action(call: NativeCall, *, workspace: Path, capability: str, action: str,
-                  arguments: Mapping[str, str], accepted: Collection[str]
+                  arguments: Mapping[str, str], accepted: Collection[str],
+                  handoff: Mapping[str, Any] | None = None
                   ) -> tuple[str, dict[str, Any]]:
     """Call the action's tool over a temporary copy of ``workspace`` (and the chained judge
     when there are facts); return the recording ``(file name, data)``.
 
-    ``call`` is ``sparkforge.adapters.tools.call_tool``; ``arguments`` maps native argument ->
-    workspace-relative path; ``accepted`` are the tool's input properties.
+    ``call`` is ``call_tool`` of the resolved tool surface (``sparkforge_aws.adapters.tools``,
+    or pre-rename ``sparkforge.adapters.tools``); ``arguments`` maps native argument ->
+    workspace-relative path; ``accepted`` are the tool's input properties. ``handoff``, when
+    given, is a ``theforge/Handoff/v1`` payload: it is translated into the specialist's
+    upstream-facts document, staged as ``stage/upstream-facts.json`` and passed to the tool
+    exactly as the live backend does — the recording then carries ``arguments.upstream`` and
+    the foreign facts the intake accepted.
     """
     tool = tool_of(capability, action)
     workspace = check_workspace(workspace)
     relative = {name: _relative(value) for name, value in arguments.items()}
+    if handoff is not None:
+        spec = next((s for s in catalog.CAPABILITIES if s.id == capability), None)
+        if spec is None or not spec.accepts_handoff or action != spec.actions[0][0]:
+            raise RecordingError(
+                f"capability {capability}/{action} does not own the upstream intake")
+        # A workspace file of the same name must never be shadowed: the intake
+        # document takes the first free deterministic name.
+        stem = UPSTREAM_FILE.removesuffix(".json")
+        name = UPSTREAM_FILE
+        count = 2
+        while (workspace / name).exists():
+            name = f"{stem}-{count}.json"
+            count += 1
+        relative[UPSTREAM_ARG] = name
     recorded_args: dict[str, Any] = dict(relative)
     if "detail_level" in accepted:
         recorded_args["detail_level"] = DETAIL_LEVEL
@@ -158,6 +180,13 @@ def record_action(call: NativeCall, *, workspace: Path, capability: str, action:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         root = Path(tmp)
         shutil.copytree(workspace, root / STAGE_DIR, symlinks=True, ignore=_skip_links)
+        if handoff is not None:
+            document, notes = translate_handoff(handoff)
+            if notes:
+                raise RecordingError("the handoff does not translate: " + "; ".join(notes))
+            (root / STAGE_DIR / relative[UPSTREAM_ARG]).write_text(
+                json.dumps(document, indent=2, sort_keys=True,
+                           ensure_ascii=False) + "\n", encoding="utf-8")
         os.chdir(root)
         try:
             output = call(tool, dict(native_args))
@@ -216,6 +245,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--action", required=True)
     parser.add_argument("--arg", dest="args", type=_parse_arg, action="append", default=[],
                         metavar="NAME=PATH", help="native file argument, workspace-relative")
+    parser.add_argument("--handoff", type=Path, metavar="HANDOFF_JSON",
+                        help="theforge/Handoff/v1 document: translated into the specialist's "
+                             "upstream-facts intake, as the live backend does")
     parser.add_argument("--out", type=Path, required=True, metavar="SCENARIO_DIR",
                         help="replay scenario directory to write the recording into")
     args = parser.parse_args(argv)
@@ -226,16 +258,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     out = args.out.resolve()
     workspace_arg = args.workspace.absolute()
     _contain_native_state()
-    from sparkforge.adapters.tools import TOOLS, call_tool
+    from theforge_sparkforge.native_pkg import import_tools
+
+    tools_surface, call_tool = import_tools()
 
     try:
         tool = tool_of(args.capability, args.action)
-        schema = TOOLS[tool].get("inputSchema") or {}
+        schema = tools_surface[tool].get("inputSchema") or {}
         accepted = set(schema.get("properties") or {})
         workspace = check_workspace(workspace_arg, out)
+        handoff = None
+        if args.handoff is not None:
+            try:
+                raw = args.handoff.read_text(encoding="utf-8")
+                loaded = json.loads(raw)
+            except (OSError, ValueError) as exc:
+                raise RecordingError(f"--handoff {args.handoff}: {exc}") from exc
+            if not isinstance(loaded, dict) or "items" not in loaded:
+                raise RecordingError(f"--handoff {args.handoff} is not a "
+                                     "theforge/Handoff/v1 document")
+            handoff = loaded
         name, data = record_action(call_tool, workspace=workspace,
                                    capability=args.capability, action=args.action,
-                                   arguments=dict(args.args), accepted=accepted)
+                                   arguments=dict(args.args), accepted=accepted,
+                                   handoff=handoff)
     except RecordingError as exc:
         print(f"record_execute: {exc}", file=sys.stderr)
         return 2

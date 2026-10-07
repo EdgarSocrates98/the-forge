@@ -110,9 +110,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"native_call: {exc}", file=sys.stderr)
         return 2
     answer = _private_stdout()
-    from sparkforge.adapters.tools import TOOLS, call_tool
+    from theforge_sparkforge.native_pkg import import_tools
 
-    result = call_action(TOOLS, call_tool, args.tool, files)
+    tools_surface, call_tool = import_tools()
+
+    result = call_action(tools_surface, call_tool, args.tool, files)
     with answer:
         answer.write(json.dumps(result, sort_keys=True).encode("ascii"))
     return 0

@@ -12,7 +12,7 @@ the artifact is deterministic and diffable.
 """
 
 from collections.abc import Mapping, Sequence
-from typing import Final
+from typing import Any, Final
 
 from theforge.contracts import (
     CapabilityGraph,
@@ -275,3 +275,70 @@ def produces_consumes_order(
     cyclic = nodes - done
     unresolved = sorted(ref for ref in refs if in_graph.get(ref) in cyclic)
     return ordered + missing, unresolved
+
+
+def mesh_view(graph: CapabilityGraph) -> dict[str, Any]:
+    """DOMAIN → {observe, engineer, verify} rows (cycle 3.1 Phase 83), derived
+    only from declared relations — no provider-name or domain knowledge in the
+    core: a capability producing an artifact type that another capability
+    consumes is an *observer* of that type's namespace; the consumer is an
+    *engineer*; a capability with ``can_verify`` on a mesh member is a
+    *verifier* of every namespace that member produces or consumes.
+
+    ``unplaced`` names ``can_verify`` edges whose target neither produces nor
+    consumes a consumed artifact type — a real relation outside the mesh, never
+    dropped silently.
+    """
+    produced: dict[str, set[str]] = {}   # artifact_type node -> producer caps
+    consumed: dict[str, set[str]] = {}   # artifact_type node -> consumer caps
+    verifies: list[tuple[str, str]] = []  # (verifier cap, target cap)
+    declared_domains: dict[str, set[str]] = {}  # provider id -> manifest domains
+    for edge in graph.edges:
+        if edge.kind == "produces" and edge.target.startswith("artifact_type:"):
+            produced.setdefault(edge.target, set()).add(edge.source)
+        elif edge.kind == "consumes" and edge.target.startswith("artifact_type:"):
+            consumed.setdefault(edge.target, set()).add(edge.source)
+        elif edge.kind == "can_verify":
+            verifies.append((edge.source, edge.target))
+        elif edge.kind == "in_domain" and edge.target.startswith("domain:"):
+            declared_domains.setdefault(
+                edge.source.removeprefix("provider:"), set()).add(
+                    edge.target.removeprefix("domain:"))
+
+    def strip(cap_node: str) -> str:
+        return cap_node.removeprefix("capability:")
+
+    def namespace(artifact_node: str) -> str:
+        return artifact_node.removeprefix("artifact_type:").split(".", 1)[0]
+
+    rows: dict[str, dict[str, set[str]]] = {}
+    for art in sorted(set(produced) & set(consumed)):
+        domain = namespace(art)
+        row = rows.setdefault(domain, {"observe": set(), "engineer": set(),
+                                       "verify": set()})
+        row["observe"] |= {strip(c) for c in produced[art]}
+        row["engineer"] |= {strip(c) for c in consumed[art]}
+    mesh_domains = set(rows)
+    # A verifier covers the mesh domains where its target's provider already
+    # appears (observe/engineer), narrowed by the domains the verifier's own
+    # manifest declares; a verifier without declared domains covers them all.
+    member_providers: dict[str, set[str]] = {
+        domain: {key.split("/", 1)[0] for caps in row.values() for key in caps}
+        for domain, row in rows.items()}
+    unplaced: list[str] = []
+    for verifier, target in sorted(verifies):
+        target_provider = strip(target).split("/", 1)[0]
+        candidates = {d for d in mesh_domains
+                      if target_provider in member_providers[d]}
+        declared = declared_domains.get(strip(verifier).split("/", 1)[0])
+        placed = candidates & declared if declared else candidates
+        if not placed:
+            unplaced.append(f"{strip(verifier)} -> {strip(target)}")
+        for domain in sorted(placed):
+            rows[domain]["verify"].add(strip(verifier))
+    return {"domains": [{"domain": domain,
+                         "observe": sorted(row["observe"]),
+                         "engineer": sorted(row["engineer"]),
+                         "verify": sorted(row["verify"])}
+                        for domain, row in sorted(rows.items())],
+            "unplaced_verify": sorted(unplaced)}

@@ -89,7 +89,7 @@ def _call(op: str, *options: str, payload: dict[str, Any] | None = None) -> Resp
                              timeout=60, cwd=cwd)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.1.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.3.0")
     assert response.request_id == f"req-{op}"
     return response
 
@@ -120,7 +120,7 @@ def snapshot() -> dict[str, Any]:
 
 def test_replay_describe_manifest_passes_taxonomy_and_limits(manifest: ForgeManifest) -> None:
     assert manifest.id == "spark-forge"
-    assert manifest.version == "0.1.0"
+    assert manifest.version == "0.3.0"
     assert manifest.protocols == ["forge/v1"]
     assert set(manifest.ops) == {"describe", "health", "execute"}
     assert manifest.domains == ["data-engineering"]
@@ -292,13 +292,14 @@ def test_missing_tool_or_unfillable_argument_is_not_declared(snapshot: dict[str,
 # --- describe without the specialist ------------------------------------------------------
 
 def test_describe_without_sparkforge_is_refused_with_actionable_reason() -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
+    from theforge_sparkforge import native_pkg
+    if native_pkg.dispatcher_found():
         pytest.skip("the Spark Forge is importable in this interpreter")
     response = _call("describe")
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "SPARKFORGE-ADAPTER-UNAVAILABLE"
-    assert "sparkforge is not importable" in response.error.detail
+    assert "sparkforge-aws is not importable" in response.error.detail
     assert f"Python {sys.version_info.major}.{sys.version_info.minor}" in response.error.detail
     assert "sparkforge-aws >=0.5,<0.6" in response.error.detail
     assert response.error.unlock
@@ -381,7 +382,7 @@ def test_recorded_snapshot_has_origin_version_and_tool_surface(snapshot: dict[st
     assert set(snapshot) == {"specialist_version", "recorded_at", "tools"}
     assert snapshot["specialist_version"] == "0.5.0"
     assert len(snapshot["recorded_at"]) == 10  # YYYY-MM-DD (UTC)
-    assert len(snapshot["tools"]) == 136
+    assert len(snapshot["tools"]) == 143
     for name, entry in snapshot["tools"].items():
         assert name.startswith("sparkforge_")
         assert set(entry) == {"annotations", "required"}
@@ -426,15 +427,36 @@ def test_snapshot_rerecording_is_deterministic() -> None:
     assert rendered.endswith("\n") and list(json.loads(rendered)) == sorted(first)
 
 
+def test_record_check_classifies_drift() -> None:
+    base = record.build_snapshot(_tools(["sparkforge_a", "sparkforge_b"]), "0.5.0",
+                                 today="2026-10-03")
+    assert record.classify_drift(base, base) == ("none", [])
+    added = {**base, "tools": {**base["tools"], "sparkforge_c": {
+        "annotations": {}, "required": []}}}
+    status, lines = record.classify_drift(base, added)
+    assert status == "additive" and lines == ["tool added: sparkforge_c"]
+    missing = {**base, "tools": {"sparkforge_a": base["tools"]["sparkforge_a"]}}
+    status, lines = record.classify_drift(base, missing)
+    assert status == "breaking" and lines == ["tool removed: sparkforge_b"]
+    tampered = {**base, "tools": {**base["tools"], "sparkforge_a": {
+        "annotations": {}, "required": ["x"]}}}
+    status, lines = record.classify_drift(base, tampered)
+    assert status == "breaking" and lines[0].startswith("tool changed: sparkforge_a")
+    bumped = {**base, "specialist_version": "0.6.0"}
+    status, lines = record.classify_drift(base, bumped)
+    assert status == "additive" and "specialist version 0.5.0 -> 0.6.0" in lines
+
+
 def test_record_without_sparkforge_fails_with_reason_and_writes_nothing(tmp_path: Path) -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
+    from theforge_sparkforge import native_pkg
+    if native_pkg.dispatcher_found():
         pytest.skip("the Spark Forge is importable in this interpreter")
     target = tmp_path / "native_catalog.json"
     out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record",
                           "--output", str(target)], capture_output=True, timeout=60,
                          cwd=tmp_path)
     assert out.returncode != 0
-    assert b"sparkforge is not importable" in out.stderr
+    assert b"sparkforge-aws is not importable" in out.stderr
     assert not target.exists()
 
 
@@ -602,7 +624,7 @@ def test_live_health_without_sparkforge_is_unavailable_with_reason() -> None:
 
 
 def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import health
+    from theforge_sparkforge import health, native_pkg
 
     seen: list[str] = []
 
@@ -610,12 +632,68 @@ def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatc
         seen.append(name)
         return object()
 
-    monkeypatch.setattr(health.importlib.util, "find_spec", fake_find_spec)
-    monkeypatch.setattr(health, "_installed_version", lambda: "0.5.0")
+    monkeypatch.setattr(native_pkg.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(native_pkg, "installed_version", lambda: "0.5.0")
     observation = health.observe_live()
     assert observation.dispatcher and observation.specialist_version == "0.5.0"
-    assert "sparkforge.adapters.tools" in seen
+    assert "sparkforge_aws.adapters.tools" in seen
     assert "sparkforge.adapters.tools" not in sys.modules
+
+
+def test_live_health_checks_the_pre_rename_dispatcher_too(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import health, native_pkg
+
+    def fake_find_spec(name: str) -> object:
+        if name.startswith("sparkforge_aws."):
+            raise ImportError("no sparkforge_aws here")
+        return object()
+
+    monkeypatch.setattr(native_pkg.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(native_pkg, "installed_version", lambda: "0.5.0")
+    observation = health.observe_live()
+    assert observation.dispatcher and observation.specialist_version == "0.5.0"
+
+
+def _fake_specialist(monkeypatch: pytest.MonkeyPatch, package: str,
+                     marker: str) -> None:
+    """A fake installed specialist: ``package``/``package.adapters``/
+    ``package.adapters.tools`` in ``sys.modules`` (``import_tools`` resolves
+    parents first)."""
+    import sys as _sys
+    import types
+
+    monkeypatch.delitem(_sys.modules, f"{package}.adapters.tools", raising=False)
+    monkeypatch.delitem(_sys.modules, f"{package}.adapters", raising=False)
+    monkeypatch.delitem(_sys.modules, package, raising=False)
+    pkg = types.ModuleType(package)
+    adapters = types.ModuleType(f"{package}.adapters")
+    tools_mod = types.ModuleType(f"{package}.adapters.tools")
+    tools_mod.TOOLS = {marker: {}}  # type: ignore[attr-defined]
+    tools_mod.call_tool = lambda *_a: marker  # type: ignore[attr-defined]
+    adapters.tools = tools_mod  # type: ignore[attr-defined]
+    pkg.adapters = adapters  # type: ignore[attr-defined]
+    monkeypatch.setitem(_sys.modules, package, pkg)
+    monkeypatch.setitem(_sys.modules, f"{package}.adapters", adapters)
+    monkeypatch.setitem(_sys.modules, f"{package}.adapters.tools", tools_mod)
+
+
+def test_import_tools_prefers_the_renamed_package(monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import native_pkg
+
+    _fake_specialist(monkeypatch, "sparkforge_aws", "new")
+    _fake_specialist(monkeypatch, "sparkforge", "old")
+    tools, _call = native_pkg.import_tools()
+    assert tools == {"new": {}}
+
+
+def test_import_tools_falls_back_to_the_legacy_package(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    from theforge_sparkforge import native_pkg
+
+    _fake_specialist(monkeypatch, "sparkforge", "old")
+    tools, _call = native_pkg.import_tools()
+    assert tools == {"old": {}}
 
 
 @pytest.mark.parametrize(("version", "inside"), [
@@ -667,7 +745,7 @@ class _BrokenSparkforge:
 @pytest.mark.parametrize(("metadata", "expected"), [("0.5.2", "0.5.2"), (None, None)])
 def test_broken_sparkforge_version_falls_back_to_metadata(
         monkeypatch: pytest.MonkeyPatch, metadata: str | None, expected: str | None) -> None:
-    from theforge_sparkforge import health
+    from theforge_sparkforge import health, native_pkg
 
     def fake_metadata(name: str) -> str:
         assert name == "sparkforge-aws"
@@ -675,17 +753,19 @@ def test_broken_sparkforge_version_falls_back_to_metadata(
             raise importlib.metadata.PackageNotFoundError(name)
         return metadata
 
+    monkeypatch.delitem(sys.modules, "sparkforge_aws", raising=False)
     monkeypatch.setitem(sys.modules, "sparkforge", _BrokenSparkforge())
-    monkeypatch.setattr(health, "metadata_version", fake_metadata)
-    assert health._installed_version() == expected
+    monkeypatch.setattr(native_pkg, "metadata_version", fake_metadata)
+    assert native_pkg.installed_version() == expected
     observation = health.Observation(interpreter="x", python="3.11.15", dispatcher=True,
-                                     specialist_version=health._installed_version())
+                                     specialist_version=native_pkg.installed_version())
     report = from_dict(HealthReport, health.report(
         observation, window=SUPPORTED_SPECIALIST, assumed=None, snapshot_problem=None))
     version = _check(report, "specialist-version")
     assert version.ok is (expected is not None)
     if expected is None:
-        assert report.status == "degraded" and "no sparkforge version" in version.detail
+        assert (report.status == "degraded"
+                and "no sparkforge-aws version" in version.detail)
 
 
 # --- execute translation over real recordings (4.3) ---------------------------------------
@@ -696,7 +776,7 @@ ANALYZE_TOOL, JUDGE_TOOL = "sparkforge_analyze_pyspark", "sparkforge_judge"
 OUTPUT_RECORDING = DEFAULT / f"{CAPABILITY}.{ACTION}.json"
 ERROR_SCENARIO = SCENARIOS / "native-error"
 ERROR_RECORDING = ERROR_SCENARIO / f"{CAPABILITY}.{ACTION}.error.json"
-PRODUCER = {"id": "spark-forge", "version": "0.1.0"}
+PRODUCER = {"id": "spark-forge", "version": "0.3.0"}
 # Machine-specific fragments a portable recording never contains: a drive path (raw or JSON-
 # escaped; a URL scheme is followed by a second slash), a user directory, a temp directory.
 MACHINE_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:(?:\\|/(?!/))|/Users/|/home/|AppData|/tmp/",
@@ -1081,14 +1161,15 @@ def test_recording_helper_rejects_an_undeclared_action_or_escaping_argument() ->
 
 
 def test_recording_helper_without_sparkforge_fails_and_writes_nothing(tmp_path: Path) -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
+    from theforge_sparkforge import native_pkg
+    if native_pkg.dispatcher_found():
         pytest.skip("the Spark Forge is importable in this interpreter")
     out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record_execute",
                           "--workspace", str(WORKSPACE), "--capability", CAPABILITY,
                           "--action", ACTION, "--arg", "path=jobs", "--out", str(tmp_path)],
                          capture_output=True, timeout=60, cwd=tmp_path)
     assert out.returncode != 0
-    assert b"sparkforge is not importable" in out.stderr
+    assert b"sparkforge-aws is not importable" in out.stderr
     assert list(tmp_path.iterdir()) == []
 
 
@@ -1151,16 +1232,19 @@ RECORDED_ACTIONS = sorted(path.name[:-len(".json")].rsplit(".", 1)
 
 def _execute(cwd: Path, *options: str, capability: str = CAPABILITY, action: str = ACTION,
              files: list[str] | None = None, root: Path = WORKSPACE,
-             env: dict[str, str] | None = None) -> Response:
+             env: dict[str, str] | None = None,
+             handoff: dict[str, Any] | None = None) -> Response:
     payload = {"task": {"intent": "analyze the spark job", "budget_profile": "balanced"},
                "capability": capability, "action": action,
                **_context(root, WORKSPACE_FILES if files is None else files)}
+    if handoff is not None:
+        payload["handoff"] = handoff
     argv = [sys.executable, "-m", "theforge_sparkforge", *options, "execute"]
     out = subprocess.run(argv, input=_request("execute", payload), capture_output=True,
                          timeout=180, cwd=cwd, env=env)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.1.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.3.0")
     return response
 
 
@@ -1318,7 +1402,8 @@ RECORDING = json.loads(Path(os.environ["FAKE_SPARKFORGE_RECORDING"]).read_text("
 MODE = os.environ.get("FAKE_SPARKFORGE_MODE", "ok")
 TOOLS = {
     "sparkforge_analyze_pyspark": {"inputSchema": {"properties": {
-        "path": {}, "kind": {}, "limit": {}, "cursor": {}, "detail_level": {}}}},
+        "path": {}, "kind": {}, "limit": {}, "cursor": {}, "detail_level": {},
+        "upstream": {}}}},
     "sparkforge_analyze_graph": {"inputSchema": {"properties": {"path": {}, "limit": {}}}},
     "sparkforge_judge": {"inputSchema": {"properties": {"facts": {}, "limit": {}}}},
 }
@@ -1356,7 +1441,27 @@ def call_tool(name, arguments):
         return {"error": "Caminho nao encontrado para analise: stage/jobs/x.py", "exit_code": 2}
     if name == "sparkforge_judge":
         return RECORDING["judge"]["output"]
-    return RECORDING["output"]
+    output = dict(RECORDING["output"])
+    if MODE != "old" and arguments.get("upstream"):
+        filters = dict(output.get("filters_applied") or {})
+        filters["upstream"] = arguments["upstream"]
+        output["filters_applied"] = filters
+        items = list(output.get("items") or [])
+        items.append({
+            "id": "upstream:provider:data:item-1",
+            "kind": "upstream.evidence",
+            "subject": {"file": "jobs/x.py", "line": 4},
+            "measures": {"subject": "provider.finding"},
+            "attrs": {"upstream": {
+                "provider": "doctor-data", "run_id": "run-1", "node": "observe",
+                "item": "ev#1", "epistemic": "inferred",
+                "claim": "dataframe churned"}},
+            "provenance": {"extractor": "theforge/handoff"},
+        })
+        output["items"] = items
+        output["total_count"] = output.get("total_count", len(items)) + 1
+        output["returned_count"] = output.get("returned_count", len(items)) + 1
+    return output
 '''
 
 
@@ -1489,3 +1594,170 @@ def test_live_native_writes_to_the_stdout_fd_never_corrupt_the_answer(tmp_path: 
     assert result.status == "ok"
     assert [e.id for e in result.evidence] == [item["id"] for item in _items(_recorded())]
     assert _left_in(cwd) == set()
+
+
+# --- handoff intake (upstream-facts) ------------------------------------------------------
+
+HANDOFF_ORIGIN = {"plan_run": "plan-1", "node": "observe", "run_id": "run-1",
+                  "provider": {"id": "doctor-data", "version": "1.0.0rc1"}}
+
+
+def _handoff(*items: Any) -> dict[str, Any]:
+    return {"schema": "theforge/Handoff/v1",
+            "producer": {"id": "theforge", "version": "0.4.0"},
+            "created_at": "2026-01-01T00:00:00Z", "plan_run": "plan-1",
+            "target_node": "engineer", "items": list(items)}
+
+
+def _handoff_item(**over: Any) -> dict[str, Any]:
+    item: dict[str, Any] = {"kind": "evidence", "id": "ev#1",
+                            "origin": dict(HANDOFF_ORIGIN), "epistemic": "inferred",
+                            "subject": "pyspark.dataframe",
+                            "claim": "the dataframe is rebuilt per batch",
+                            "location": {"path": "jobs/orders_job.py", "line": 42}}
+    item.update(over)
+    return item
+
+
+def test_translate_handoff_maps_each_item_to_a_foreign_fact() -> None:
+    from theforge_sparkforge import handoff as upstream
+
+    document, notes = upstream.translate_handoff(_handoff(_handoff_item()))
+    assert notes == []
+    assert document["schema"] == "sparkforge/upstream-facts/v1"
+    (fact,) = document["facts"]
+    assert fact["id"].startswith("upstream:")
+    assert fact["kind"] == "upstream.evidence"
+    assert fact["provenance"]["extractor"] == "theforge/handoff"
+    assert "artifact" not in fact["provenance"]  # the intake stamps what it consumed
+    map_ = fact["attrs"]["upstream"]
+    assert map_["provider"] == "doctor-data" and map_["run_id"] == "run-1"
+    assert map_["node"] == "observe" and map_["item"] == "ev#1"
+    assert map_["plan_run"] == "plan-1"
+    assert map_["epistemic"] == "inferred"  # verbatim, never upgraded
+    assert map_["claim"] == "the dataframe is rebuilt per batch"
+    assert fact["subject"] == {"file": "jobs/orders_job.py", "line": 42}
+
+
+def test_translate_handoff_is_deterministic_and_bounded() -> None:
+    from theforge_sparkforge import handoff as upstream
+
+    items = [_handoff_item(id=f"ev#{n}", claim=f"claim {n}") for n in range(130)]
+    document, notes = upstream.translate_handoff(_handoff(*items))
+    assert len(document["facts"]) == 128
+    assert any("truncated to 128" in note for note in notes)
+    again, _ = upstream.translate_handoff(_handoff(*items))
+    assert again == document  # content-addressed ids: byte-identical rerun
+
+
+def test_translate_handoff_skips_malformed_items_with_a_limitation() -> None:
+    from theforge_sparkforge import handoff as upstream
+
+    document, notes = upstream.translate_handoff(
+        _handoff(_handoff_item(), {"kind": "evidence", "id": ""}, "not-a-mapping"))
+    assert len(document["facts"]) == 1
+    assert notes == ["2 handoff item(s) malformed: not translated"]
+
+
+def test_manifest_declares_the_handoff_intake_on_static_analysis(
+        manifest: ForgeManifest) -> None:
+    static = next(c for c in manifest.capabilities if c.id == "pyspark.static-analysis")
+    assert static.accepts_handoff is True
+    assert list(static.relations.consumes) == ["data.diagnostic-evidence"]
+    others = [c for c in manifest.capabilities if c.id != "pyspark.static-analysis"]
+    assert all(not c.accepts_handoff for c in others)
+    assert "handoff/v1" in manifest.features
+
+
+def test_live_execute_feeds_the_handoff_to_the_native_intake(tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, handoff=_handoff(_handoff_item())))
+    assert result.status == "ok"
+    tool_call = _probes(probe)[0]
+    assert tool_call["arguments"]["upstream"] == "stage/upstream-facts.json"
+    foreign = [e for e in result.evidence if e.id.startswith("upstream:")]
+    assert len(foreign) == 1
+    entry = foreign[0]
+    assert entry.epistemic == "inferred"  # the producer's status, verbatim
+    assert entry.derived_from is not None
+    assert entry.derived_from.provider == "doctor-data"
+    assert entry.derived_from.run_id == "run-1" and entry.derived_from.item == "ev#1"
+    assert not [n for n in result.limitations if "not consumed" in n]
+    # The intake file is staged, never left behind.
+    assert _left_in(cwd) == set()
+
+
+def test_live_execute_reports_a_handoff_the_specialist_did_not_consume(
+        tmp_path: Path) -> None:
+    env, _ = _fake_sparkforge(tmp_path, "old")  # a Spark Forge without the intake ignores it
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, handoff=_handoff(_handoff_item())))
+    assert any("handoff delivered but not consumed" in n and "upstream intake" in n
+               for n in result.limitations)
+
+
+def test_execute_without_handoff_never_writes_nor_passes_the_intake(
+        tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env))
+    assert result.status == "ok"
+    assert "upstream" not in _probes(probe)[0]["arguments"]
+    assert not [n for n in result.limitations if "handoff" in n]
+    assert _left_in(cwd) == set()
+
+
+def test_execute_on_a_capability_without_intake_reports_the_handoff(
+        tmp_path: Path) -> None:
+    env, probe = _fake_sparkforge(tmp_path)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, env=env, action="graph",
+                              handoff=_handoff(_handoff_item())))
+    assert result.status == "ok"
+    assert any("handoff delivered but not consumed" in n and "'pyspark'" in n
+               for n in result.limitations)
+    assert "upstream" not in _probes(probe)[0]["arguments"]
+    assert _left_in(cwd) == set()
+
+
+def test_replay_with_a_handoff_reports_the_recording_did_not_consume_it(
+        tmp_path: Path) -> None:
+    scenario = _replay_scenario(tmp_path, OUTPUT_RECORDING)
+    cwd = _run_dir(tmp_path)
+    result = _result(_execute(cwd, "--replay", str(scenario),
+                              handoff=_handoff(_handoff_item())))
+    assert result.status == "ok"
+    assert any("handoff delivered but not consumed" in n and "recorded run" in n
+               for n in result.limitations)
+    assert _left_in(cwd) == set()  # no intake file is ever written in replay
+
+
+def test_recording_helper_feeds_a_handoff_through_the_native_intake(tmp_path: Path) -> None:
+    from theforge_sparkforge import record_execute
+
+    staged: list[Path] = []
+    output = {"items": [], "next_cursor": None}
+
+    def call(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        staged.append(Path(arguments["upstream"]))
+        return output
+
+    name, data = record_execute.record_action(
+        call, workspace=WORKSPACE, capability=CAPABILITY, action=ACTION,
+        arguments={"path": "jobs"}, accepted=_ACCEPTED | {"upstream"},
+        handoff=_handoff(_handoff_item()))
+    assert name == f"{CAPABILITY}.{ACTION}.json"
+    assert data["arguments"]["upstream"] == "upstream-facts.json"  # workspace-relative
+    # The tool saw the staged document while it existed.
+    assert staged == [Path("stage/upstream-facts.json")]
+
+
+def test_recording_helper_refuses_a_handoff_on_a_capability_without_intake() -> None:
+    from theforge_sparkforge import record_execute
+
+    with pytest.raises(record_execute.RecordingError, match="upstream intake"):
+        record_execute.record_action(_fake_call({}, []), workspace=WORKSPACE,
+                                     capability="spark.runtime-analysis", action="plan",
+                                     arguments={"path": "jobs"}, accepted=_ACCEPTED,
+                                     handoff=_handoff(_handoff_item()))

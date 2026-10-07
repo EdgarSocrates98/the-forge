@@ -5,19 +5,44 @@ from typing import Literal
 
 from theforge.contracts.base import ContractError
 from theforge.contracts.context import LineRange
+from theforge.contracts.economy import ProviderEconomyReceipt
+from theforge.contracts.telemetry import NativeTrace
 from theforge.contracts.types import (
+    REF_RE,
     SHA256_RE,
     Epistemic,
     Metric,
     Producer,
     Severity,
+    check_ref,
     check_sha256,
 )
 
 __all__ = ["RESULT_SCHEMA", "Artifact", "ContextRequest", "ContextRequestItem", "Evidence",
-           "EvidenceSource", "ExecutionResult", "Finding", "Location", "Metric", "Metrics"]
+           "EvidenceSource", "ExecutionResult", "Finding", "Location", "Metric", "Metrics",
+           "NativeTrace", "ProviderEconomyReceipt", "ProviderReceipt"]
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
+
+
+@dataclass(frozen=True, kw_only=True)
+class ProviderReceipt:
+    """A pointer to the provider's own run record — never its contents.
+
+    ``ref`` is the native receipt identity verbatim (e.g. an API Forge
+    ``case:<id>``); ``sha256`` is the hash of the native receipt document the
+    provider wrote, so the pointer can be resolved and checked against the
+    run's artifacts. Providers without a native receipt emit nothing.
+    """
+
+    ref: str = field(metadata={"pattern": REF_RE.pattern})
+    sha256: str = field(metadata={"pattern": SHA256_RE.pattern})
+
+    def __post_init__(self) -> None:
+        if not self.ref:
+            raise ContractError("provider_receipt.ref must not be empty")
+        check_ref(self.ref, field="provider_receipt.ref")
+        check_sha256(self.sha256, field="sha256")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -114,6 +139,16 @@ class ExecutionResult:
     assumptions: list[str] = field(default_factory=list)
     # Optional negotiation request: a response carrying it is never persisted as `result`.
     context_request: ContextRequest | None = None
+    # Provider-native run receipt (ref + hash, never the content); nested-receipt
+    # drill-down — the run receipt copies it as is.
+    provider_receipt: ProviderReceipt | None = None
+    # The provider's internal economy for this execution, summarized
+    # (ProviderEconomyReceipt/v1); a plan run aggregates them into the
+    # EconomyRollup. None when the provider does not report economy.
+    provider_economy: ProviderEconomyReceipt | None = None
+    # Bounded pointer to the provider's internal trace (ref + summary, never the
+    # spans); the run's node span links to it via ``native_trace_ref``.
+    native_trace: NativeTrace | None = None
 
     def __post_init__(self) -> None:
         if self.schema != RESULT_SCHEMA:

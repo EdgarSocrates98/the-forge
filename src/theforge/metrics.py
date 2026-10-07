@@ -62,23 +62,28 @@ def record_performance(
     root: Path, provider: str, capability: str, *,
     status: str, verified: bool, evidence: int, artifacts: int,
     context_bytes: int, files_sent: int, files_cited: int, duration_ms: float,
+    surface: str | None = None,
 ) -> str | None:
     """Fold one executed run into the store; returns a warning on failure.
 
     ``status`` is the run outcome (``ok``/``partial``/anything else counts as
     failed); ``verified`` records whether the ``forge`` verification check
-    passed. Best-effort by contract: nothing here raises.
+    passed. ``surface`` is the surface fingerprint the run executed against:
+    history accumulates per (provider, capability, surface), so a provider that
+    changes its surface starts clean instead of silently inheriting the old
+    numbers. Best-effort by contract: nothing here raises.
     """
     try:
         store, warning = load_performance(root)
         entries = {} if store is None else {
-            (e.provider, e.capability): e for e in store.entries}
-        key = (provider, capability)
+            (e.provider, e.capability, e.surface): e for e in store.entries}
+        key = (provider, capability, surface)
         old = entries.get(key)
         base = old or ProviderCapabilityPerformance(
             provider=provider, capability=capability, runs=0, ok=0, partial=0,
             failed=0, verified_runs=0, evidence=0, artifacts=0, context_bytes=0,
-            files_sent=0, files_cited=0, duration_ms=0.0, updated_at=utc_now())
+            files_sent=0, files_cited=0, duration_ms=0.0, updated_at=utc_now(),
+            surface=surface)
         entries[key] = replace(
             base,
             runs=base.runs + 1,

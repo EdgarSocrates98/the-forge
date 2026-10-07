@@ -2,12 +2,15 @@
 
 Only this test harness reads the variables below, to build the ``argv`` registered in the
 isolated user ``providers.toml`` of a test. They never reach a provider: the entry carries only
-``id``/``argv``/``trust`` and the core's environment allowlist is unchanged.
+``id``/``argv``/``trust`` and the core's environment allowlist is unchanged. The variables are
+``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``.
 
 Per Forge, in this order, each with an explicit reason: the variable is set, it names an
 existing interpreter (absolute path), and ``<python> -c "import <adapter>, <specialist>"``
 exits 0 within ``IMPORT_TIMEOUT``. A missing prerequisite skips the Forge's integration tests,
-unless ``THEFORGE_REAL_PROVIDERS_REQUIRED=1``, in which case it fails them.
+unless required mode is on — ``THEFORGE_REAL_PROVIDERS_REQUIRED=1`` or the ecosystem-level
+alias ``THEFORGE_ECOSYSTEM_REQUIRED=1`` — in which case it fails them (Phase 47: no silent
+skips).
 See ``docs/real-providers.md``.
 """
 
@@ -26,7 +29,12 @@ from theforge.security.env import safe_env
 
 SPARK_PYTHON_VAR = "THEFORGE_REAL_SPARKFORGE_PYTHON"
 API_PYTHON_VAR = "THEFORGE_REAL_APIFORGE_PYTHON"
+DOCTORDATA_PYTHON_VAR = "THEFORGE_REAL_DOCTORDATA_PYTHON"
+DOCTORAPI_PYTHON_VAR = "THEFORGE_REAL_DOCTORAPI_PYTHON"
 REQUIRED_VAR = "THEFORGE_REAL_PROVIDERS_REQUIRED"
+# Ecosystem-wide alias: a CI that sets THEFORGE_ECOSYSTEM_REQUIRED=1 means the same
+# thing — a missing prerequisite is a failure, never a silent skip.
+ECOSYSTEM_REQUIRED_VAR = "THEFORGE_ECOSYSTEM_REQUIRED"
 IMPORT_TIMEOUT = 60.0
 DOC = "docs/real-providers.md"
 # python, python3, python3.12, python.exe, python3.12.exe (case-insensitive).
@@ -45,16 +53,35 @@ class ForgeSpec:
     adapter_module: str
     specialist_module: str
     needs: str
+    # The adapter's unavailability code; default derived from the provider id.
+    unavailable_code: str = ""
+    # Other module names the same specialist answers to (the upstream
+    # sparkforge -> sparkforge_aws rename kept the 0.5.x line: an install may
+    # expose either name, and both are valid).
+    specialist_alternatives: tuple[str, ...] = ()
 
 
 FORGES: dict[str, ForgeSpec] = {
     "spark": ForgeSpec("spark", "Spark Forge", "spark-forge", SPARK_PYTHON_VAR,
-                       "theforge_sparkforge", "sparkforge.adapters.tools",
+                       "theforge_sparkforge", "sparkforge_aws.adapters.tools",
                        "Spark Forge needs an interpreter with sparkforge-aws and "
-                       "theforge-sparkforge-adapter"),
+                       "theforge-sparkforge-adapter",
+                       specialist_alternatives=("sparkforge.adapters.tools",)),
     "api": ForgeSpec("api", "API Forge", "api-forge", API_PYTHON_VAR,
                      "theforge_apiforge", "apiforge",
                      "API Forge needs Python 3.12"),
+    "doctordata": ForgeSpec("doctordata", "Forge Doctor Data", "forge-doctor-data",
+                            DOCTORDATA_PYTHON_VAR, "theforge_doctordata",
+                            "forge_doctor_data",
+                            "Forge Doctor Data needs an interpreter with "
+                            "forge-doctor-data and theforge-doctordata-adapter",
+                            "DOCTORDATA-ADAPTER-UNAVAILABLE"),
+    "doctorapi": ForgeSpec("doctorapi", "Forge Doctor API", "forge-doctor-api",
+                           DOCTORAPI_PYTHON_VAR, "theforge_doctorapi",
+                           "forge_doctor_api",
+                           "Forge Doctor API needs an interpreter with "
+                           "forge-doctor-api and theforge-doctorapi-adapter",
+                           "DOCTORAPI-ADAPTER-UNAVAILABLE"),
 }
 
 
@@ -134,7 +161,12 @@ def check_forge(name: str, environ: Mapping[str, str] | None = None, *,
     if not value:
         raise ForgeUnavailable(missing_variable_reason(name))
     python = validate_interpreter(spec.variable, value)
-    failure = probe(python, (spec.adapter_module, spec.specialist_module))
+    names = (spec.specialist_module, *spec.specialist_alternatives)
+    failure: str | None = None
+    for module in names:
+        failure = probe(python, (spec.adapter_module, module))
+        if failure is None:
+            break
     if failure is not None:
         raise ForgeUnavailable(
             f"{spec.label} not importable with {python}: {failure} "
@@ -144,7 +176,8 @@ def check_forge(name: str, environ: Mapping[str, str] | None = None, *,
 
 def is_required(environ: Mapping[str, str] | None = None) -> bool:
     env = os.environ if environ is None else environ
-    return env.get(REQUIRED_VAR, "").strip() == "1"
+    return (env.get(REQUIRED_VAR, "").strip() == "1"
+            or env.get(ECOSYSTEM_REQUIRED_VAR, "").strip() == "1")
 
 
 def require_forge(name: str, environ: Mapping[str, str] | None = None, *,
@@ -153,8 +186,10 @@ def require_forge(name: str, environ: Mapping[str, str] | None = None, *,
     try:
         return check_forge(name, environ, probe=probe)
     except ForgeUnavailable as exc:
-        if is_required(environ):
-            pytest.fail(f"{REQUIRED_VAR}=1: {exc.reason}", pytrace=False)
+        env = os.environ if environ is None else environ
+        for var in (REQUIRED_VAR, ECOSYSTEM_REQUIRED_VAR):
+            if env.get(var, "").strip() == "1":
+                pytest.fail(f"{var}=1: {exc.reason}", pytrace=False)
         pytest.skip(exc.reason)
 
 

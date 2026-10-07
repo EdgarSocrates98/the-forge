@@ -4,7 +4,13 @@ import re
 from dataclasses import dataclass, field
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import CapabilityState, OperationClass, RevalidationStrategy
+from theforge.contracts.types import (
+    FEATURE_ID_RE,
+    SHA256_RE,
+    CapabilityState,
+    OperationClass,
+    RevalidationStrategy,
+)
 
 MANIFEST_SCHEMA = "theforge/ForgeManifest/v1"
 CAPABILITY_ID = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
@@ -130,6 +136,13 @@ class ForgeManifest:
     unknowns: list[str] = field(default_factory=list)
     # How the provider revalidates the content it read; None = undeclared (v1).
     context_revalidation: RevalidationStrategy | None = None
+    # Declared protocol features ("<name>/v<major>", e.g. "handoff/v1"); empty means
+    # the provider declares none beyond what its ops/capability flags imply.
+    features: list[str] = field(default_factory=list)
+    # The adapter release the responder declares itself to be, when it is one.
+    adapter_version: str | None = None
+    # Provider-declared sha256 of the native/specialist surface it serves.
+    native_surface_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         if self.schema != MANIFEST_SCHEMA:
@@ -152,6 +165,16 @@ class ForgeManifest:
         clashes = sorted(set(aliases) & set(ids))
         if clashes:
             raise ContractError(f"manifest {self.id}: alias equal to capability id {clashes}")
+        bad_features = sorted({f for f in self.features if not FEATURE_ID_RE.match(f)})
+        if bad_features:
+            raise ContractError(f"manifest {self.id}: malformed feature ids {bad_features}")
+        dup_features = sorted({f for f in self.features if self.features.count(f) > 1})
+        if dup_features:
+            raise ContractError(f"manifest {self.id}: duplicate features {dup_features}")
+        if self.native_surface_fingerprint is not None and not SHA256_RE.fullmatch(
+                self.native_surface_fingerprint):
+            raise ContractError(
+                f"manifest {self.id}: native_surface_fingerprint is not a sha256 digest")
 
     def capability(self, capability_id: str) -> Capability | None:
         return next((c for c in self.capabilities if c.id == capability_id), None)

@@ -419,4 +419,24 @@ def translate_case(case: NativeCase, stage: StagedInput, *, state: str = "suppor
     return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
                        evidence=evidence, artifacts=[dict(item) for item in case.artifacts],
                        limitations=limitations,
+                       provider_receipt=_provider_receipt(case),
                        native_output={"findings": findings_doc, "facts": facts_doc})
+
+
+CASE_MANIFEST = "case.json"
+
+
+def _provider_receipt(case: NativeCase) -> dict[str, str] | None:
+    """The pointer to the native case manifest: ``case_id`` verbatim plus the sha256
+    ``read_case`` computed for the manifest file itself (the receipt is in the run's
+    artifacts). None when the case wrote no manifest — never invented.
+    """
+    manifest = case.documents.get(CASE_MANIFEST)
+    case_id = manifest.get("case_id") if isinstance(manifest, Mapping) else None
+    if not isinstance(case_id, str) or not case_id:
+        return None
+    hashed = next((item["sha256"] for item in case.artifacts
+                   if item["path"].endswith(f"/{CASE_MANIFEST}")), None)
+    if hashed is None:
+        return None
+    return {"ref": case_id, "sha256": hashed}

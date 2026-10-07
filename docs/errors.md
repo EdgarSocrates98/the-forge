@@ -49,7 +49,7 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-MANIFEST-LIMITS` | registry | manifest ou capability acima dos limites, ou glob catch-all (aviso; capability ou provider excluído) |
 | `FORGE-MANIFEST-VERSION` | registry | `version` do manifest não é SemVer 2.0.0 (provider `invalid`) |
 | `FORGE-MANIFEST-TAXONOMY` | registry | capability, ação, alias ou `replaced_by` fora das regras mecânicas da taxonomia (aviso; capability excluída, provider `invalid` se nenhuma restar) |
-| `FORGE-PLAN-INVALID` | plan | plano com ciclo, dependência inexistente, id duplicado, `inputs` fora de `depends_on`, ou regra estrutural do padrão violada — `delegate` proíbe `depends_on`/`inputs`; `debate` exige ≥2 `proposer` independentes e 1 `referee` que depende de todos e os declara em `inputs` (`refused`, nenhum nó executado) |
+| `FORGE-PLAN-INVALID` | plan | plano com ciclo, dependência inexistente, id duplicado, `inputs` fora de `depends_on`, ou regra estrutural do padrão violada — `delegate` proíbe `depends_on`/`inputs`; `debate` exige ≥2 `proposer` independentes de providers distintos (a fronteira cross-domain — a discordância interna de um provider é decidida por ele) e 1 `referee` que depende de todos e os declara em `inputs` (`refused`, nenhum nó executado) |
 | `FORGE-PLAN-CAPABILITY` | plan | nó com provider que não está pronto ou que não declara a capability ou a ação (`refused`) |
 | `FORGE-PLAN-LIMIT` | plan | nós ou providers distintos acima do limite (`refused`) |
 | `FORGE-PLAN-PATTERN-RESERVED` | plan | valor de `pattern` fora dos cinco executáveis (`route`, `delegate`, `parallel`, `pipeline`, `debate`) (`refused`) |

@@ -165,6 +165,9 @@ def _provider_identity(receipt: ExecutionReceipt, node: PlanNode,
     if provider.manifest_sha256 is not None and record.manifest_sha256 is not None \
             and provider.manifest_sha256 != record.manifest_sha256:
         return "provider manifest changed"
+    if provider.surface_fingerprint is not None and record.surface is not None \
+            and provider.surface_fingerprint != record.surface.surface_fingerprint:
+        return "provider declared surface changed"
     return None
 
 
