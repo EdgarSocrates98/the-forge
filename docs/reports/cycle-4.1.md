@@ -84,7 +84,7 @@ Static/mechanical checks performed against the branch include:
 | Explain/replay integrity | DONE | hashcheck + explain integration/tests |
 | Trace federation | DONE for current scope | existing NativeTrace reused; refs hardened |
 | Context ROI | DONE advisory | surface/task scoped observations; economy report |
-| Adaptive experiments | PARTIAL/CONSERVATIVE | holdout + surface invalidation + sample gate; promotion remains operator/policy controlled |
+| Adaptive experiments | DONE/CONSERVATIVE | holdout + two-arm sample gate + quality non-regression + measured economy improvement; promotion remains operator/policy controlled |
 | Automatic budget reduction | DEFERRED | intentionally unsafe before experiment proof |
 | Early scheduler stop | DEFERRED | terminal decision first; arbitrary node skipping not enabled |
 | Remote The Forge CI | BLOCKED | Actions jobs return with no steps |
