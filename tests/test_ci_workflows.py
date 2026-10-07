@@ -16,9 +16,9 @@ CI_WORKFLOW = REPO / ".github" / "workflows" / "ci.yml"
 
 PYTHONS = ["3.11", "3.12", "3.13", "3.14"]
 OSES = ["ubuntu-latest", "windows-latest"]
-# Offline suite installs the core and both real-provider adapters editable (real-provider 3.1).
+# Offline suite installs the core and all four ecosystem adapters editable (cycle 4.1 closure).
 INSTALL_WITH_ADAPTERS = (
-    "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge"
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi"
 )
 
 
