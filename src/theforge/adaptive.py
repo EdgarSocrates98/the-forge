@@ -23,11 +23,12 @@ def _timestamp(value: str) -> datetime:
 
 
 def _after_cutoff(value: str, cutoff: str | None) -> bool:
-    """Malformed historical timestamps are not evaluation evidence."""
-    if cutoff is None:
-        return True
+    """Malformed historical timestamps are never evaluation evidence."""
     try:
-        return _timestamp(value) > _timestamp(cutoff)
+        observed = _timestamp(value)
+        if observed.tzinfo is None:
+            return False
+        return cutoff is None or observed > _timestamp(cutoff)
     except (TypeError, ValueError):
         return False
 
