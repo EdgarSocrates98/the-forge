@@ -113,6 +113,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Adaptive strategy](docs/adaptive-strategy.md) (shadow champion/challenger — advisory, nunca promove sozinho)
 - [A2A bridge](docs/a2a-bridge.md) (experimental: cards/tasks/artifacts ⇄ contratos Forge; agente remoto nunca é provider local)
 - [MCP interoperability](docs/interoperability-mcp.md) (MCP = tools ≠ provider; awareness opcional via registry oficial, detecção sem instalação)
+- [Contract stability](docs/contract-stability.md) (scorecard forge-contracts: evidência para não extrair)
 - [Desenvolvimento com agentes](docs/agentic.md)
 - [Índice de ADRs](docs/adr/README.md)
 - [Relatório do Cycle 3.1](docs/reports/cycle-3.1.md) (fechamento; [waves](docs/reports/cycle-3.1-audit.md) documentadas uma a uma)

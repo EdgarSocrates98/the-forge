@@ -71,6 +71,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | shadow champion/challenger: recomendação por história, nunca promoção | [0039](0039-shadow-recommendation.md) | `cycle-4` |
 | A2A bridge: documentos, remoto nunca provider local | [0040](0040-a2a-bridge.md) | `cycle-4` |
 | MCP awareness: tooling ≠ provider, detecção nunca instalação | [0041](0041-mcp-registry-awareness.md) | `cycle-4` |
+| forge-contracts: auditoria empírica reafirma não extrair | [0042](0042-forge-contracts-audit.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR
