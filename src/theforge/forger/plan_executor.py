@@ -54,7 +54,7 @@ from theforge.contracts import (
 )
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.capability_graph import CapabilityGraph
-from theforge.contracts.codes import Codes
+from theforge.contracts.codes import Codes, family_of
 from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import validate_plan_result
@@ -631,6 +631,15 @@ class PlanExecutor:
             for execution in valid_executions
         )
         execute_calls = sum(execution.execute_calls for execution in trace.executions)
+        policy_blocked = any(
+            outcome.error is not None and family_of(outcome.error.code) == "policy"
+            for outcome in outcomes
+        )
+        repeated_failures = sum(
+            outcome.attempts
+            for outcome in outcomes
+            if outcome.status == "provider_failure"
+        )
         budget_exhausted = bool(
             unresolved
             and trace.budget is not None
@@ -649,6 +658,9 @@ class PlanExecutor:
                     if trace.budget is not None
                     else None
                 ),
+                policy_blocked=policy_blocked,
+                repeated_failures=repeated_failures,
+                repeated_failure_limit=max(2, trace.retry_policy.max_attempts),
                 verification_required=bool(valid_executions),
                 verification_satisfied=verification_satisfied,
             ),
