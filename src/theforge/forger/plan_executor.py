@@ -602,14 +602,19 @@ class PlanExecutor:
         # At terminalization there is no concrete next candidate to evaluate:
         # unresolved questions therefore keep information gain unknown instead
         # of being mislabeled as zero gain.
-        unresolved = sorted(
-            set(plan.unknowns).union(
-                unknown
-                for execution in trace.executions
-                if execution.result is not None
-                for unknown in execution.result.unknowns
-            )
+        unresolved_items = set(plan.unknowns)
+        unresolved_items.update(
+            unknown
+            for execution in trace.executions
+            if execution.result is not None
+            for unknown in execution.result.unknowns
         )
+        unresolved_items.update(
+            f"node:{outcome.node}:{outcome.status}"
+            for outcome in outcomes
+            if outcome.status not in ("ok", "partial")
+        )
+        unresolved = sorted(unresolved_items)
         valid_executions = [
             execution for execution in trace.executions if execution.result is not None
         ]
