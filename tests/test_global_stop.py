@@ -97,6 +97,7 @@ def test_contract_rejects_unsafe_sufficient_stop() -> None:
             run_id="r",
             action="stop_sufficient_evidence",
             information_gain="none",
+            reasons=["test unsafe stop"],
             unresolved=["still unknown"],
         )
 
@@ -109,9 +110,41 @@ def test_contract_rejects_gain_stop_before_mandatory_verification() -> None:
             run_id="r",
             action="stop_no_expected_gain",
             information_gain="none",
+            reasons=["test unsafe gain stop"],
             verification_required=True,
             verification_satisfied=False,
         )
+
+
+def test_global_stop_requires_nonempty_reasons_and_consistent_gain() -> None:
+    with pytest.raises(ContractError, match="reasons"):
+        GlobalStopDecision(
+            producer=PRODUCER,
+            created_at="t",
+            run_id="r",
+            action="continue",
+            information_gain="unknown",
+            reasons=[],
+        )
+    with pytest.raises(ContractError, match="requires information_gain"):
+        GlobalStopDecision(
+            producer=PRODUCER,
+            created_at="t",
+            run_id="r",
+            action="stop_no_expected_gain",
+            information_gain="low",
+            reasons=["contradictory"],
+            unresolved=["x"],
+        )
+
+
+def test_stop_signals_reject_impossible_counters() -> None:
+    with pytest.raises(ValueError, match="repeated_failures"):
+        StopSignals(repeated_failures=-1)
+    with pytest.raises(ValueError, match="repeated_failure_limit"):
+        StopSignals(repeated_failure_limit=0)
+    with pytest.raises(ValueError, match="budget_remaining"):
+        StopSignals(budget_remaining=-1)
 
 
 def test_roundtrip_is_strict() -> None:
