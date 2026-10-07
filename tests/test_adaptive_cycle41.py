@@ -376,6 +376,23 @@ def test_experiment_requires_timezone_aware_holdout() -> None:
         experiment(evaluation_after="2026-10-07T12:00:00")
 
 
+def test_promoted_experiment_requires_approval_evidence() -> None:
+    with pytest.raises(ContractError, match="approval_sha256"):
+        experiment(state="promoted", reasons=["approved elsewhere"])
+    approved = experiment(
+        state="promoted",
+        reasons=["operator approved candidate"],
+        approval_sha256="a" * 64,
+    )
+    assert approved.approval_sha256 == "a" * 64
+
+
+def test_governed_experiment_states_require_reasons() -> None:
+    for state in ("eligible_for_review", "rejected", "stale", "cancelled"):
+        with pytest.raises(ContractError, match="requires reasons"):
+            experiment(state=state)
+
+
 def test_experiment_rejects_invalid_holdout_timestamps() -> None:
     with pytest.raises(ContractError, match="ISO-8601"):
         experiment(evaluation_after="not-a-time")
