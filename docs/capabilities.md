@@ -60,6 +60,17 @@ Há dois tipos de regra:
 
 `theforge graph` mostra o grafo inteiro — relações declaradas e observadas — a partir do cache do registry, sem iniciar providers.
 
+## Identidade de superfície e invalidação
+
+Cada manifest resolvido ganha uma `ProviderSurfaceIdentity` (`theforge/ProviderSurfaceIdentity/v1`) com dois fingerprints computados pelo core: `capability_fingerprint` (o conjunto de capabilities — ids, ações, sinais) e `surface_fingerprint` (a superfície operacional inteira — capabilities + ops, protocolos, features, execution, trust e segurança declaradas). O adapter pode declarar `native_surface_fingerprint`, o hash da superfície nativa que gerou o manifest (ex.: o catálogo de tools do especialista) — fica registrado mas não participa dos fingerprints do core.
+
+A regra de invalidação é uniforme: **mudança de superfície não herda nada**.
+
+- **Registry cache**: uma entrada cacheada só é usada se o digest da entry, o `sha256` do manifest, ambos os fingerprints e o protocolo negociado conferirem com o estado atual — qualquer divergência descarta o cache e o provider é re-probeado (`manifest hash mismatch`, `cached surface fingerprint does not match…`).
+- **Provider performance**: histórico é escopado por `(provider, capability, surface)` — `ProviderPerformance.score` só responde por entradas gravadas contra o fingerprint exato; um provider que muda de superfície recomeça do zero e o histórico antigo fica preservado, acessível mas sem efeito no ranking.
+- **Capability graph**: reconstruído por comando a partir dos records já verificados pelo registry — não há snapshot persistido para ficar obsoleto; o `theforge graph` sempre reflete as superfícies vigentes.
+- **Snapshots nativos**: o `native_surface_fingerprint` declarado é comparado pelo adapter ao fingerprint do especialista instalado — drift de superfície nativa (ex.: tools novas no catálogo do especialista) aparece como diferença de fingerprint registrada no receipt, não como dados velhos reutilizados em silêncio.
+
 ## Regras mecânicas
 Fonte: `src/theforge/contracts/taxonomy.py`. Uma violação gera `FORGE-MANIFEST-TAXONOMY` e exclui só a capability violadora.
 

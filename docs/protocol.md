@@ -318,6 +318,58 @@ O `debate` é caro e raro — nunca o padrão: a decomposição determinística 
 
 Um plano executado também grava `plan-state` (`PlanState/v1`): snapshot durável do escalonador, regravado quando o plano é validado, após cada nó registrado e uma última vez antes do `plan-result` — o receipt liga o hash final. `theforge resume <run_id>` continua um run de plano (a task e o plano gravados são reusados verbatim — hashes idênticos são a prova) re-hidratando só os nós cujas entradas ainda verificam (cadeia de hashes do run filho, identidade do provider, handoff reconstruído byte-idêntico); o resto reexecuta e o motivo é registrado como limitação. A retentativa de falhas transitórias é política (`retry.toml`), nunca o default: só os códigos listados, no máximo `max_attempts` tentativas, cada uma um run filho completo.
 
+## Proveniência e identidade
+
+### Hierarquia de runs
+
+Cada execução é um run com receipt próprio, e a hierarquia é explícita — nunca achatada:
+
+```
+run raiz (kind=plan)          — theforge plan …; carrega a task original
+└── run de nó (kind=node)     — parent_run=<raiz>, plan_node=<nó>; um por nó
+    └── run nativo            — interno ao especialista; alcançável por
+                                ProviderReceipt.ref / NativeTrace.ref,
+                                nunca fundido ao receipt do core
+```
+
+`theforge explain <run>` mostra a hierarquia: no run de plano a seção
+`Plan` lista os runs filhos (`Plan run:` + status de cada nó); no run de
+nó, `Native rcpt:`/`Native trace:` apontam o nível nativo. Um run de
+nó sabe seu pai (`metadata.parent_run`), o pai sabe os filhos pelos
+`node_runs` gravados no plan-state/result.
+
+### Cadeia de proveniência
+
+O fluxo completo — **observação → decisão → verificação → síntese** — é
+verificável elo a elo:
+
+1. **Doctor finding**: evidência nativa traduzida lossless (ver
+   `ontology.md`), com `id`, `source` e `derived_from` estáveis.
+2. **Handoff item**: cada item carrega `origin` (plan_run, node, run_id,
+   provider) e o `hash` sha256 do conteúdo original quando aplicável.
+3. **Evidência derivada**: o consumidor marca `derived_from` apontando o
+   item recebido; o check `handoff-provenance` reprova citação a item não
+   entregue ou elevação epistêmica sem verificação.
+4. **Verificação**: `VerifyRequest` leva o handoff verbatim; o veredito
+   independente vai ao `VerificationResult` do run.
+5. **Síntese**: seções do resultado final citam os `node` ids de origem —
+   o leitor navega do claim ao run que o produziu.
+
+### Semântica de hash
+
+Todo artefato persistido pelo core é gravado como JSON canônico e o
+`sha256` retornado é do conteúdo serializado completo — que inclui os
+campos `schema` (`theforge/<Name>/v1`) e `producer` (`{id, version}`). Ou
+seja, **o hash liga conteúdo + versão do schema + identidade do produtor
+por construção**: dois artefatos com mesmo conteúdo mas schemas ou
+producers diferentes têm hashes diferentes.
+
+Hash é garantia de **integridade e identidade de conteúdo**, nunca de
+**autoria**: um provider malicioso pode hashear qualquer coisa. Autoria é
+questão de confiança (registro, `trust`, `boundary`), não de hash. A
+verificação `integrity` confere que os artefatos referenciados existem e
+batem com os hashes gravados — não que quem os escreveu era confiável.
+
 ## Códigos de erro do core
 Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de publicados. A lista canônica e testada de códigos `FORGE-*`, com a família de cada um, é [errors.md](errors.md). Esta seção só resume os códigos de manifest e de pedido de contexto citados acima:
 
