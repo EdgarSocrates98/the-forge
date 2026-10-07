@@ -12,13 +12,13 @@ from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hin
 
 from theforge.contracts import (
     CapabilityGraph,
-    ContextBudgetRecommendation,
-    ContextROI,
     CapabilityNegotiationResult,
     CapabilityOffer,
     CapabilityRequirement,
     ComplexityAssessment,
+    ContextBudgetRecommendation,
     ContextPack,
+    ContextROI,
     DecisionMemory,
     DecisionRecord,
     Diagnostic,
