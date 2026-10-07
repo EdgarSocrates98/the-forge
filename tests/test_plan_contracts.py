@@ -422,3 +422,10 @@ def test_parent_run_and_plan_node_go_together() -> None:
     for extra in ({"parent_run": "p1"}, {"plan_node": "a"}):
         with pytest.raises(ContractError, match="go together"):
             from_dict(ExecutionReceipt, receipt_dict(**extra), strict=True)
+
+
+def test_plan_result_global_stop_hash_is_validated() -> None:
+    result = _result(global_stop_sha256="a" * 64)
+    assert result.global_stop_sha256 == "a" * 64
+    with pytest.raises(ContractError, match="global_stop_sha256"):
+        _result(global_stop_sha256="not-a-sha")
