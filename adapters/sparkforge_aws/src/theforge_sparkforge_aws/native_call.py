@@ -1,16 +1,16 @@
-"""One Spark Forge action, run by the live backend as a child process in the execute cwd:
-``python -m theforge_sparkforge.native_call --tool TOOL [--file NAME=PATH ...]``.
+"""One Spark Forge AWS action, run by the live backend as a child process in the execute cwd:
+``python -m theforge_sparkforge_aws.native_call --tool TOOL [--file NAME=PATH ...]``.
 
-Run it in the Spark Forge's own interpreter with the execute cwd as process cwd (the live
+Run it in the Spark Forge AWS's own interpreter with the execute cwd as process cwd (the live
 backend does, through ``run_native``). Every ``--file`` is a path relative to ``stage/`` (the
 staged workspace; ``.`` is ``stage/`` itself), lexically contained and resolving inside it:
-anything else is refused with exit code 2 before the Spark Forge is imported. The tool gets
+anything else is refused with exit code 2 before the Spark Forge AWS is imported. The tool gets
 ``stage/<path>`` (so the repository it analyzes is under the cwd) plus, when its input schema
 accepts them, ``detail_level = "normal"`` and ``limit = 200``; when the output has facts,
 ``sparkforge_judge`` is chained over them, as the native CLI does (``analyze --out`` ->
 ``judge --facts``) and as ``record_execute`` records it.
 
-The Spark Forge keeps its own state relative to the process cwd (the ``.sparkforge/traces.db``
+The Spark Forge AWS keeps its own state relative to the process cwd (the ``.sparkforge/traces.db``
 ledger, flushed at exit, and caches under the analyzed repository): all of it lands in the
 execute cwd and is removed by the shell's workdir cleanup once the reply is built. Running the
 call in a child process means the ledger's SQLite connections are closed when the child exits
@@ -18,8 +18,8 @@ and the native call is bounded by the ``run_native`` timeout.
 
 stdout carries one JSON object (ASCII): ``{arguments, output, judge}`` (``arguments`` as passed
 to the tool, ``judge`` = ``{tool, arguments, output}`` or ``null``) or ``{unknown_tool}`` when the
-installed Spark Forge does not know the tool, written to a private copy of the original
-stdout; fd 1 itself is pointed at stderr before the Spark Forge is imported, so whatever it
+installed Spark Forge AWS does not know the tool, written to a private copy of the original
+stdout; fd 1 itself is pointed at stderr before the Spark Forge AWS is imported, so whatever it
 prints (``print``, raw fd writes, ``sys.__stdout__``, ``atexit`` output) goes to stderr.
 """
 
@@ -33,8 +33,8 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from theforge_sparkforge._shell import STAGE_DIR
-from theforge_sparkforge.record_execute import DETAIL_LEVEL, JUDGE_TOOL, PAGE_LIMIT
+from theforge_sparkforge_aws._shell import STAGE_DIR
+from theforge_sparkforge_aws.record_execute import DETAIL_LEVEL, JUDGE_TOOL, PAGE_LIMIT
 
 NativeCall = Callable[[str, dict[str, Any]], Any]
 
@@ -97,8 +97,8 @@ def _parse_file(value: str) -> tuple[str, str]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m theforge_sparkforge.native_call",
-        description="Call one Spark Forge tool over stage/ (live backend of the adapter).")
+        prog="python -m theforge_sparkforge_aws.native_call",
+        description="Call one Spark Forge AWS tool over stage/ (live backend of the adapter).")
     parser.add_argument("--tool", required=True)
     parser.add_argument("--file", dest="files", type=_parse_file, action="append", default=[],
                         metavar="NAME=PATH", help="native file argument, relative to stage/")
@@ -110,7 +110,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"native_call: {exc}", file=sys.stderr)
         return 2
     answer = _private_stdout()
-    from theforge_sparkforge.native_pkg import import_tools
+    from theforge_sparkforge_aws.native_pkg import import_tools
 
     tools_surface, call_tool = import_tools()
 
@@ -122,7 +122,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _private_stdout() -> BinaryIO:
     """The original stdout, kept for the answer only. From here on fd 1, ``sys.stdout`` and
-    ``sys.__stdout__`` (a wrapper of fd 1) all write to stderr, so nothing the Spark Forge
+    ``sys.__stdout__`` (a wrapper of fd 1) all write to stderr, so nothing the Spark Forge AWS
     prints (raw fd writes, ``sys.__stdout__``, ``atexit`` output) can reach the answer."""
     sys.stdout.flush()
     answer_fd = os.dup(1)

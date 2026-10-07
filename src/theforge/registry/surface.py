@@ -1,7 +1,7 @@
 """Deterministic surface fingerprints of a provider manifest (cycle 3.1).
 
 ``version`` is not identity: the same declared version can ship a different
-surface (seen on sparkforge 0.5.0 and apiforge 0.1.0). These digests answer
+surface (seen on sparkforge-aws 0.5.0 and apiforge 0.1.0). These digests answer
 "did the declared operational surface change?" and feed the
 ``ProviderSurfaceIdentity`` the registry attaches to every record.
 

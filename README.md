@@ -6,14 +6,14 @@
 
 > Uma entrada. Vários especialistas. Apenas o contexto necessário. Resultado verificável.
 
-The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
+The Forge é um control plane local-first. Ele descobre Forges especialistas (Spark Forge AWS, API Forge, …), escolhe o provider certo por capability de forma determinística e explicável e registra cada execução com evidência e receipt verificáveis. **The Forger** é o orquestrador interno.
 
 **Status:** Cycle 3: CLOSED — [relatório](docs/reports/cycle-3.md). Cycle 3.1: PARTIAL — implementação encerrada e verificada localmente (3574 testes, prova dos 4 especialistas reais); o fechamento formal aguarda a CI de `main`, hoje bloqueada pela quota de GitHub Actions da conta — [relatório de fechamento](docs/reports/cycle-3.1.md). Relatórios do [Cycle 2](docs/reports/cycle-2.md) e do [Cycle 2.1](docs/reports/cycle-2.1.md). O ciclo 3 mantém a invariante — determinismo onde o sistema sabe, inteligência limitada onde precisa raciocinar — sobre o novo eixo: avaliação de complexidade medida escolhe o perfil ([ADR 0026](docs/adr/0026-complexity-model.md)), um grafo de capabilities declarado+observado informa ordem e verificação ([ADR 0027](docs/adr/0027-capability-graph.md)), o planner híbrido só chama raciocínio semântico quando o determinismo esgota ([ADR 0028](docs/adr/0028-hybrid-planner.md)), o handoff é um bus de evidência tipada com proveniência ([ADR 0029](docs/adr/0029-evidence-bus.md)), e os modos `delegate`/`parallel`/`debate` executam com concorrência limitada e `DecisionRecord` auditável ([ADR 0030](docs/adr/0030-execution-modes.md)). Sobre eles: scheduler durável com `resume`/`retry`, verificação independente ([ADR 0021](docs/adr/0021-independent-verification.md)), economia medida ([ADR 0022](docs/adr/0022-economy-engine.md)), inteligência de projeto ([ADR 0023](docs/adr/0023-project-intelligence.md)), trace local ([ADR 0024](docs/adr/0024-local-trace-spans.md)), resolver semântico de routing ([ADR 0025](docs/adr/0025-semantic-routing-fallback.md)), scaffold+conformance de providers (`theforge provider init|check`), benchmark de runs reais e o `theforge graph` de inspeção.
 
 Uma linha por wave do Cycle 2:
 
 - **Wave A — endurecimento:** contratos com invariantes semânticas, Forge Protocol resistente a providers adversariais, routing resistente a manipulação, cache do registry fora do workspace ([ADR 0009](docs/adr/0009-registry-cache-location.md)), ambiente mínimo para providers, policy de risco com `--approve` ([ADR 0010](docs/adr/0010-policy-model.md)) e CI em Linux e Windows, com macOS semanal ([ADR 0011](docs/adr/0011-ci-support-matrix.md)).
-- **Wave B — providers reais:** adapters de Spark Forge e API Forge ([providers reais](docs/real-providers.md)), versão de provider em SemVer e matriz de compatibilidade ([versionamento](docs/versioning.md)), taxonomia de capabilities com aliases e depreciação ([capabilities](docs/capabilities.md)).
+- **Wave B — providers reais:** adapters de Spark Forge AWS e API Forge ([providers reais](docs/real-providers.md)), versão de provider em SemVer e matriz de compatibilidade ([versionamento](docs/versioning.md)), taxonomia de capabilities com aliases e depreciação ([capabilities](docs/capabilities.md)).
 - **Wave C — contexto v2:** tiers, negociação e revalidação de contexto, sinais git somente leitura, cache de fingerprints, perfis `economy`/`balanced`/`max` e telemetria por run ([arquitetura](docs/architecture.md#contexto-e-perfis), [performance](docs/performance.md)).
 - **Wave D — execução multi-provider:** `theforge plan`, descritor de workspace multi-repo, verificação em quatro níveis, reprodutibilidade, `explain --json` com verificação de hashes, `replay` e taxonomia de erros por família ([ADR 0018](docs/adr/0018-multi-provider-execution.md), [ADR 0019](docs/adr/0019-error-taxonomy-and-reproducibility.md), [códigos de erro](docs/errors.md)).
 - **Wave E — manutenção agentic:** auditoria de paridade dos assets agentic, instruções de host curtas, documentação e ADRs consolidados ([desenvolvimento com agentes](docs/agentic.md), [ADR 0020](docs/adr/0020-agentic-assets-canonical-source.md)).
@@ -63,12 +63,12 @@ O `version` do manifest precisa ser SemVer 2.0.0 (senão o provider fica `invali
 
 ## Forges reais
 
-Os Forges reais entram por quatro adapters em `adapters/`, instalados no interpretador de cada especialista (o API Forge exige Python 3.12; os Doctors exigem Python ≥ 3.11) e registrados como qualquer provider ([ADR 0014](docs/adr/0014-provider-adapter-location.md)): Spark Forge (`spark-forge`), API Forge (`api-forge`), Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`). Só capabilities read-only e offline são expostas; o resto aparece em `limitations` do manifest com o motivo ([catálogo](docs/capabilities.md), [ADR 0017](docs/adr/0017-capability-taxonomy.md)). O estado nativo de cada execute fica em `.forge/runs/<id>/work/` e é reduzido aos artifacts declarados; esse diretório não passa por redaction ([segurança](docs/security.md#exceção-forgerunsidwork)). Instalação, registro, testes de integração e troubleshooting: [docs/real-providers.md](docs/real-providers.md).
+Os Forges reais entram por quatro adapters em `adapters/`, instalados no interpretador de cada especialista (o API Forge exige Python 3.12; os Doctors exigem Python ≥ 3.11) e registrados como qualquer provider ([ADR 0014](docs/adr/0014-provider-adapter-location.md)): Spark Forge AWS (`spark-forge-aws`), API Forge (`api-forge`), Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`). Só capabilities read-only e offline são expostas; o resto aparece em `limitations` do manifest com o motivo ([catálogo](docs/capabilities.md), [ADR 0017](docs/adr/0017-capability-taxonomy.md)). O estado nativo de cada execute fica em `.forge/runs/<id>/work/` e é reduzido aos artifacts declarados; esse diretório não passa por redaction ([segurança](docs/security.md#exceção-forgerunsidwork)). Instalação, registro, testes de integração e troubleshooting: [docs/real-providers.md](docs/real-providers.md).
 
 ### Mapa do ecossistema
 
 - **The Forge** é a plataforma (este repositório); **The Forger** é o orquestrador interno que coordena — routing, budget, planos, receipts.
-- **Forges especialistas** engenheiram: Spark Forge (pipelines de dados AWS/PySpark) e API Forge (construção/evolução de APIs).
+- **Forges especialistas** engenheiram: Spark Forge AWS (pipelines de dados AWS/PySpark) e API Forge (construção/evolução de APIs).
 - **Doctors** observam: Forge Doctor Data e Forge Doctor API escaneiam e diagnosticam, produzem evidência e verificam o trabalho dos engenheiros — nunca executam mudanças.
 - **Routing** pertence só à Forge (determinístico, de sinais declarados); **verificação** pertence a um provider *diferente* do produtor (`can_verify` declarado).
 - **Troca**: evidência tipada com proveniência via `Handoff` — nunca prompts repetidos nem estado interno sincronizado.
@@ -96,7 +96,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Arquitetura](docs/architecture.md)
 - [Forge Protocol v1](docs/protocol.md)
 - [Escrevendo um provider](docs/provider-authoring.md)
-- [Providers reais: Spark Forge e API Forge](docs/real-providers.md)
+- [Providers reais: Spark Forge AWS e API Forge](docs/real-providers.md)
 - [Capabilities: taxonomia e catálogo](docs/capabilities.md)
 - [Versionamento e compatibilidade](docs/versioning.md)
 - [Segurança](docs/security.md)
@@ -117,7 +117,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 A suíte offline roda os adapters reais em modo replay, então o setup de desenvolvimento os instala editáveis junto com o core:
 
 ```bash
-.venv/bin/python -m pip install -e ".[dev]" -e ./adapters/sparkforge -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi
+.venv/bin/python -m pip install -e ".[dev]" -e ./adapters/sparkforge_aws -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi
 .venv/bin/python -m pytest            # suite offline
 .venv/bin/python -m pytest -m slow    # gates de zero deps e instalação limpa (baixa hatchling)
 .venv/bin/python -m pytest -m security   # categoria: unit, contract, integration, e2e, slow, security

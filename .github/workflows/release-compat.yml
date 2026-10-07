@@ -95,7 +95,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Set up Python 3.11 (core, Spark Forge and Doctors)
+      - name: Set up Python 3.11 (core, Spark Forge AWS and Doctors)
         id: py311
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
@@ -106,13 +106,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install .
 
-      - name: Spark Forge venv (specialist main + adapter)
+      - name: Spark Forge AWS venv (specialist main + adapter)
         env:
           PY311: ${{ steps.py311.outputs.python-path }}
         run: |
-          "$PY311" -m venv .venv-spark
-          .venv-spark/bin/python -m pip install --upgrade pip
-          .venv-spark/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge
+          "$PY311" -m venv .venv-spark-aws
+          .venv-spark-aws/bin/python -m pip install --upgrade pip
+          .venv-spark-aws/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge_aws
 
       - name: API Forge venv (specialist main + adapter)
         env:
@@ -139,8 +139,8 @@ jobs:
           .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
 
       # theforge provider check -- <argv> — conformance over the live adapter.
-      - name: Conformance — Spark Forge adapter
-        run: python -m theforge provider check -- .venv-spark/bin/python -m theforge_sparkforge
+      - name: Conformance — Spark Forge AWS adapter
+        run: python -m theforge provider check -- .venv-spark-aws/bin/python -m theforge_sparkforge_aws
 
       - name: Conformance — API Forge adapter
         run: python -m theforge provider check -- .venv-api/bin/python -m theforge_apiforge

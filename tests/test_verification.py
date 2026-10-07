@@ -24,7 +24,7 @@ from theforge.forger.verification import (
 )
 from theforge.meta import PRODUCER
 
-PROVIDER = Producer(id="spark-forge", version="1.0.0")
+PROVIDER = Producer(id="spark-forge-aws", version="1.0.0")
 NOW = "2026-10-04T00:00:00Z"
 DATA = b"artifact body\n"
 
@@ -73,7 +73,7 @@ HANDOFF = Handoff(
     items=[HandoffItem(
         kind="evidence", id="f_src1",
         origin=HandoffOrigin(plan_run="plan-1", node="n1", run_id="run-n1",
-                             provider=Producer(id="spark-forge", version="1.0.0")),
+                             provider=Producer(id="spark-forge-aws", version="1.0.0")),
         epistemic="inferred", subject="pyspark.dataframe",
         claim="etl.py reads orders.csv")],
 )
@@ -85,7 +85,7 @@ def _derived(eid: str, epistemic: str, *, item: str = "f_src1", node: str | None
     return Evidence(
         id=evidence.id, epistemic=epistemic,  # type: ignore[arg-type]
         subject=evidence.subject, claim=evidence.claim, producer=evidence.producer,
-        derived_from=EvidenceSource(provider="spark-forge", run_id=run_id, item=item,
+        derived_from=EvidenceSource(provider="spark-forge-aws", run_id=run_id, item=item,
                                     node=node, plan_run="plan-1"))
 
 
@@ -197,7 +197,7 @@ def test_no_drift_report_records_reverification_not_performed(work: Path) -> Non
 
 
 def test_producer_mismatch_fails_forge_check(work: Path) -> None:
-    other = Producer(id="spark-forge", version="9.9.9")
+    other = Producer(id="spark-forge-aws", version="9.9.9")
     got = _build(work, _result(producer=other), drift=_drift())
     assert got.forge.status == "failed"
     assert "producer" in got.forge.basis

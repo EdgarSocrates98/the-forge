@@ -1,6 +1,6 @@
 """Test handler set for the adapters' common shell (real-provider-integration 3.1).
 
-argv: shell_forge.py [adapter options] OP. Loads ``_shell.py`` straight from the Spark Forge
+argv: shell_forge.py [adapter options] OP. Loads ``_shell.py`` straight from the Spark Forge AWS
 adapter sources (both copies are byte-identical, checked by the tests), so it runs on any
 Python >= 3.10 without installing anything. ``test.echo``/``test.boom`` and their actions are
 declared only here, for the shell tests. ``--assume-specialist-version describe-refuses`` makes
@@ -31,8 +31,8 @@ import stat
 import sys
 from pathlib import Path
 
-SHELL = (Path(__file__).resolve().parents[3] / "adapters" / "sparkforge" / "src"
-         / "theforge_sparkforge" / "_shell.py")
+SHELL = (Path(__file__).resolve().parents[3] / "adapters" / "sparkforge_aws" / "src"
+         / "theforge_sparkforge_aws" / "_shell.py")
 _spec = importlib.util.spec_from_file_location("adapter_shell_under_test", SHELL)
 assert _spec is not None and _spec.loader is not None
 shell = importlib.util.module_from_spec(_spec)

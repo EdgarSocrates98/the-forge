@@ -1,8 +1,8 @@
 """Re-record ``native_catalog.json`` (and a replay ``environment.json`` + ``health.json``) from
-the installed Spark Forge: ``python -m theforge_sparkforge.record [--output PATH]
+the installed Spark Forge AWS: ``python -m theforge_sparkforge_aws.record [--output PATH]
 [--environment DIR]``.
 
-Run it in the Spark Forge's own interpreter. It is the only module that imports the tool
+Run it in the Spark Forge AWS's own interpreter. It is the only module that imports the tool
 surface (``sparkforge_aws.adapters.tools.TOOLS``, or pre-rename ``sparkforge.adapters.tools``,
 through ``native_pkg``): describe reads the recorded snapshot instead (importing the
 tool surface costs seconds). The snapshot keeps, per tool, its MCP annotations and its required
@@ -21,8 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from theforge_sparkforge import health
-from theforge_sparkforge.backend import live_unavailable_reason
+from theforge_sparkforge_aws import health
+from theforge_sparkforge_aws.backend import live_unavailable_reason
 
 SNAPSHOT_PATH = Path(__file__).with_name("native_catalog.json")
 ENVIRONMENT_FILE = "environment.json"
@@ -46,7 +46,7 @@ def _tool_entry(spec: Mapping[str, Any]) -> dict[str, Any]:
 def build_snapshot(tools: Mapping[str, Mapping[str, Any]], specialist_version: str, *,
                    today: str | None = None, previous: Mapping[str, Any] | None = None
                    ) -> dict[str, Any]:
-    """The snapshot of ``tools`` (``TOOLS`` of the Spark Forge): annotations and required
+    """The snapshot of ``tools`` (``TOOLS`` of the Spark Forge AWS): annotations and required
     arguments per tool. ``recorded_at`` is kept from ``previous`` when nothing else changed."""
     surface = {name: _tool_entry(spec) for name, spec in sorted(tools.items())}
     recorded_at = today or _today()
@@ -65,7 +65,7 @@ def render(data: Mapping[str, Any]) -> str:
 
 def environment() -> dict[str, Any]:
     """The replay ``environment.json`` of this interpreter (``{python, specialist_version}``)."""
-    from theforge_sparkforge.native_pkg import installed_version
+    from theforge_sparkforge_aws.native_pkg import installed_version
 
     return {"python": platform.python_version(),
             "specialist_version": str(installed_version())}
@@ -131,8 +131,8 @@ def _write(path: Path, data: Mapping[str, Any]) -> None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m theforge_sparkforge.record",
-        description="Re-record the Spark Forge tool snapshot from the installed specialist.")
+        prog="python -m theforge_sparkforge_aws.record",
+        description="Re-record the Spark Forge AWS tool snapshot from the installed specialist.")
     parser.add_argument("--output", type=Path, default=SNAPSHOT_PATH,
                         help="snapshot file to write (default: the packaged native_catalog.json); "
                              "with --check, the recorded snapshot to compare against")
@@ -147,7 +147,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if reason is not None:
         print(f"record: {reason}", file=sys.stderr)
         return 2
-    from theforge_sparkforge.native_pkg import import_tools, installed_version
+    from theforge_sparkforge_aws.native_pkg import import_tools, installed_version
 
     tools_surface, _call_tool = import_tools()
     snapshot = build_snapshot(tools_surface, str(installed_version()),

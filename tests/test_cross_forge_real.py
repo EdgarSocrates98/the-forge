@@ -1,8 +1,8 @@
-"""Cross-forge proof with the real Spark Forge and API Forge (cross-forge-foundation 8.3).
+"""Cross-forge proof with the real Spark Forge AWS and API Forge (cross-forge-foundation 8.3).
 
 Marker ``real_provider`` (excluded from the default selection, collected by ``python -m pytest
 -m real_provider`` as run by the scheduled real-provider workflow). It uses the Wave B
-environment contract of ``real_providers.py``: without ``THEFORGE_REAL_SPARKFORGE_PYTHON`` /
+environment contract of ``real_providers.py``: without ``THEFORGE_REAL_SPARKFORGE_AWS_PYTHON`` /
 ``THEFORGE_REAL_APIFORGE_PYTHON`` naming interpreters with the adapter and the specialist the
 test skips with the reason, or fails when ``THEFORGE_REAL_PROVIDERS_REQUIRED=1``. See
 ``docs/real-providers.md``.
@@ -10,8 +10,8 @@ test skips with the reason, or fails when ``THEFORGE_REAL_PROVIDERS_REQUIRED=1``
 Both real adapters are registered in the test's isolated user ``providers.toml`` (``id``/
 ``argv``/``trust`` only) and the proof task runs through the CLI, ``theforge plan --profile max
 --execute``, on the mounted ``cross`` workspace (one git repository per directory): the plan is
-``spark-forge/pyspark.static-analysis`` -> ``api-forge/api.analyze``, the API node receives at
-least one item that originates in the Spark Forge with its original epistemic status and —
+``spark-forge-aws/pyspark.static-analysis`` -> ``api-forge/api.analyze``, the API node receives at
+least one item that originates in the Spark Forge AWS with its original epistemic status and —
 because ``api.analyze`` declares ``accepts_handoff`` — consumes them through the specialist's
 upstream-facts intake, surfacing them as ``upstream:<id>`` evidence whose ``derived_from``
 names the Spark node run; the plan ends ``ok`` or ``partial`` with a synthesis referencing
@@ -50,13 +50,13 @@ from theforge.security.env import safe_env
 from theforge.state import init_workspace
 
 PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
-EXPECTED_NODES = [("n1", "spark-forge", "pyspark.static-analysis", "pyspark"),
+EXPECTED_NODES = [("n1", "spark-forge-aws", "pyspark.static-analysis", "pyspark"),
                   ("n2", "api-forge", "api.analyze", "analyze")]
 NATIVE = Path(__file__).parent / "fixtures" / "native"
 API_RECORDING = NATIVE / "apiforge" / "scenarios" / "cross" / "api.analyze.analyze.json"
-SPARK_RECORDING = (NATIVE / "sparkforge" / "scenarios" / "cross"
+SPARK_RECORDING = (NATIVE / "sparkforge_aws" / "scenarios" / "cross"
                    / "pyspark.static-analysis.pyspark.json")
-NATIVE_ID = {"spark-forge": re.compile(r"f_[0-9a-f]{6}"),
+NATIVE_ID = {"spark-forge-aws": re.compile(r"f_[0-9a-f]{6}"),
              "api-forge": re.compile(r"(?:fact|upstream):[0-9a-f]{16}")}
 
 
@@ -102,18 +102,18 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
     n1, n2 = result.nodes
     assert n1.status in ("ok", "partial") and n2.status in ("ok", "partial"), result.nodes
     assert n1.run_id is not None and n2.run_id is not None
-    for outcome, provider in ((n1, "spark-forge"), (n2, "api-forge")):
+    for outcome, provider in ((n1, "spark-forge-aws"), (n2, "api-forge")):
         assert outcome.run_id is not None
         receipt =store.read_contract(outcome.run_id, "receipt", ExecutionReceipt)
         assert receipt.parent_run == plan_run and receipt.plan_node == outcome.node
         assert receipt.provider is not None and receipt.provider.id == provider
 
-    # The API node received Spark Forge items with their original epistemic status (6.2).
+    # The API node received Spark Forge AWS items with their original epistemic status (6.2).
     source = {e.id: e for e in store.read_contract(n1.run_id, "result", ExecutionResult)
               .evidence}
     handoff = store.read(n2.run_id, "handoff")
     from_spark = [item for item in handoff["items"]
-                  if item["origin"]["provider"]["id"] == "spark-forge"
+                  if item["origin"]["provider"]["id"] == "spark-forge-aws"
                   and item["origin"]["run_id"] == n1.run_id]
     assert from_spark, handoff
     evidence = [item for item in from_spark if item["kind"] == "evidence"]
@@ -133,7 +133,7 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
         origin = entry.derived_from
         assert origin is not None
         assert (origin.provider, origin.node, origin.run_id, origin.plan_run) == (
-            "spark-forge", "n1", n1.run_id, plan_run)
+            "spark-forge-aws", "n1", n1.run_id, plan_run)
         item = handed[origin.item]
         if item.get("epistemic") is not None:  # the epistemic status survives verbatim
             assert entry.epistemic == item["epistemic"]
@@ -145,7 +145,7 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
     # The synthesis references both node runs, with the specialists' native evidence ids.
     synthesis = result.synthesis
     assert [(s.node, s.provider, s.run_id) for s in synthesis.nodes] == [
-        ("n1", "spark-forge", n1.run_id), ("n2", "api-forge", n2.run_id)]
+        ("n1", "spark-forge-aws", n1.run_id), ("n2", "api-forge", n2.run_id)]
     assert [(h.source, h.target) for h in synthesis.handoffs] == [("n1", "n2")]
     for node in synthesis.nodes:
         assert node.run_id is not None
@@ -178,7 +178,7 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
     code, graph_data, err = _cli(capsys, "graph", "--root", root, "--json")
     assert code == 0, err
     listed = {node["id"] for node in graph_data["nodes"]}
-    assert "capability:spark-forge/pyspark.static-analysis" in listed
+    assert "capability:spark-forge-aws/pyspark.static-analysis" in listed
     assert "capability:api-forge/api.analyze" in listed
     assert graph_data["edges"]
 
@@ -200,7 +200,7 @@ def test_proof_task_runs_across_the_real_spark_forge_and_api_forge(
     capability_graph = store.read_contract(
         auto_run, "capability-graph", CapabilityGraph)
     node_ids = {node.id for node in capability_graph.nodes}
-    for provider, capability in (("spark-forge", "pyspark.static-analysis"),
+    for provider, capability in (("spark-forge-aws", "pyspark.static-analysis"),
                                  ("api-forge", "api.analyze")):
         assert f"provider:{provider}" in node_ids
         assert f"capability:{provider}/{capability}" in node_ids
@@ -294,17 +294,20 @@ def _adapter_execute(forge: rp.RealForge, payload: dict[str, Any], cwd: Path
 def test_spark_cross_recording_matches_the_live_native_output(
         forges: tuple[rp.RealForge, rp.RealForge], cross: CrossWorkspace,
         tmp_path: Path) -> None:
-    """The Spark Forge half of the cross recording, re-executed live on the mounted
+    """The Spark Forge AWS half of the cross recording, re-executed live on the mounted
     workspace: same tool, same arguments, same output and judge shapes and id formats as
     the replay recording (the ``spark`` counterpart of the API case-file check above)."""
     spark, _api = forges
     recorded = json.loads(SPARK_RECORDING.read_text(encoding="utf-8"))
     out = tmp_path / "live"
-    argv = [str(spark.python), "-m", "theforge_sparkforge.record_execute",
+    argv = [str(spark.python), "-m", "theforge_sparkforge_aws.record_execute",
             "--workspace", str(cross.root), "--capability", "pyspark.static-analysis",
             "--action", "pyspark", "--out", str(out)]
     argv += [f"--arg={name}={value}" for name, value in recorded["arguments"].items()
-             if name not in ("detail_level", "limit")]
+             if name not in ("detail_level", "limit", "upstream")]
+    # The recorded run consumed a handoff: without --handoff the upstream intake would
+    # read a workspace file that does not exist (the arg stays in the recording).
+    argv += ["--handoff", str(SPARK_RECORDING.parent / "handoff.json")]
     scratch = tmp_path / "scratch"
     scratch.mkdir()
     rp.run_native(argv, scratch)
@@ -333,7 +336,7 @@ FOUR_PROVIDER_TASK = ("Analise o pipeline Spark que produz dados consumidos pela
                       "e faca api health dos dois lados")
 # The capability-graph relations this proof must justify: producer -> consumer
 # (artifact type) edges declared by the four adapters' catalogs.
-GRAPH_ORDER = (("forge-doctor-data", "spark-forge"), ("forge-doctor-api", "api-forge"),
+GRAPH_ORDER = (("forge-doctor-data", "spark-forge-aws"), ("forge-doctor-api", "api-forge"),
                ("forge-doctor-data", "api-forge"))
 
 
@@ -347,7 +350,7 @@ def test_four_provider_proof_observe_then_engineer_then_verify(
         four_forges: tuple[rp.RealForge, rp.RealForge, rp.RealForge, rp.RealForge],
         cross: CrossWorkspace, user_config_dir: Path, tmp_path: Path,
         capsys: pytest.CaptureFixture[str]) -> None:
-    """Phase 15/16: Doctor Data -> Spark Forge and Doctor API -> API Forge over the
+    """Phase 15/16: Doctor Data -> Spark Forge AWS and Doctor API -> API Forge over the
     mounted cross workspace, with the capability graph (produces/consumes declared
     edges) justifying the order and the Doctors verifying the engineers' runs.
 
@@ -374,7 +377,7 @@ def test_four_provider_proof_observe_then_engineer_then_verify(
     result = store.read_contract(plan_run, "plan-result", PlanResult)
     providers = [n.provider for n in plan.nodes]
     assert sorted(providers) == ["api-forge", "forge-doctor-api", "forge-doctor-data",
-                                 "spark-forge"], providers
+                                 "spark-forge-aws"], providers
     order = [plan.nodes[int(node_id[1:]) - 1].provider for node_id in result.order]
     position = {provider: index for index, provider in enumerate(order)}
 
@@ -387,7 +390,7 @@ def test_four_provider_proof_observe_then_engineer_then_verify(
         (plan.nodes[int(dep.node[1:]) - 1].provider, node.provider): dep.rule
         for node in plan.nodes for dep in node.depends_on
     }
-    assert edge_rule.get(("forge-doctor-data", "spark-forge")) == "capability-graph"
+    assert edge_rule.get(("forge-doctor-data", "spark-forge-aws")) == "capability-graph"
     assert edge_rule.get(("forge-doctor-api", "api-forge")) == "capability-graph"
 
     by_id = {f"n{index + 1}": node for index, node in enumerate(plan.nodes)}
@@ -396,8 +399,8 @@ def test_four_provider_proof_observe_then_engineer_then_verify(
         assert outcome.status in ("ok", "partial"), (outcome.node, outcome.status)
         assert outcome.run_id is not None, outcome.node
 
-    # --- Spark Forge consumed Doctor Data evidence through the upstream intake.
-    spark_node = runs["spark-forge"]
+    # --- Spark Forge AWS consumed Doctor Data evidence through the upstream intake.
+    spark_node = runs["spark-forge-aws"]
     assert spark_node.run_id is not None
     handoff = store.read(spark_node.run_id, "handoff")
     assert handoff is not None
@@ -406,7 +409,7 @@ def test_four_provider_proof_observe_then_engineer_then_verify(
     assert from_doctor, handoff
     spark_result = store.read_contract(spark_node.run_id, "result", ExecutionResult)
     upstream = [e for e in spark_result.evidence if e.derived_from is not None]
-    assert upstream, "no upstream-derived evidence in the Spark Forge result"
+    assert upstream, "no upstream-derived evidence in the Spark Forge AWS result"
     dd_run = runs["forge-doctor-data"].run_id
     for entry in upstream:
         origin = entry.derived_from
@@ -469,11 +472,11 @@ def test_four_provider_proof_observe_then_engineer_then_verify(
     code, graph_data, err = _cli(capsys, "graph", "--root", root, "--json")
     assert code == 0, err
     listed = {node["id"] for node in graph_data["nodes"]}
-    for provider in ("forge-doctor-data", "spark-forge", "forge-doctor-api",
+    for provider in ("forge-doctor-data", "spark-forge-aws", "forge-doctor-api",
                      "api-forge"):
         assert f"provider:{provider}" in listed
     edges = {(e["source"], e["kind"], e["target"]) for e in graph_data["edges"]}
     assert any(kind == "produces" and "forge-doctor-data" in source
                for source, kind, _ in edges)
-    assert any(kind == "consumes" and "spark-forge" in source
+    assert any(kind == "consumes" and "spark-forge-aws" in source
                for source, kind, _ in edges)

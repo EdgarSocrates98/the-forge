@@ -159,7 +159,7 @@ Exits: 0 sem divergência, 2 para run id malformado ou desconhecido, 6 com diver
 $ theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max
 Run <run_id>: planned
 Plan:        validated  pattern: pipeline  source: decomposed  profile: max
-Nodes:       n1 spark-forge pyspark.static-analysis:pyspark
+Nodes:       n1 spark-forge-aws pyspark.static-analysis:pyspark
              n2 api-forge api.analyze:analyze  after n1 (inferred, intent-order: …)
 Install:     none
 Execute:     nothing was executed; re-run with --execute
@@ -175,7 +175,7 @@ Explain:     theforge explain <run_id>
 
   ```json
   {"task_id": "x", "pattern": "pipeline", "profile": "max", "nodes": [
-    {"id": "n1", "role": "producer", "provider": "spark-forge",
+    {"id": "n1", "role": "producer", "provider": "spark-forge-aws",
      "capability": "pyspark.static-analysis", "action": "pyspark"},
     {"id": "n2", "role": "consumer", "provider": "api-forge",
      "capability": "api.analyze", "action": "analyze",
@@ -218,7 +218,7 @@ DOMAIN: data
     forge-doctor-data/data.scan
   engineer:
     api-forge/api.analyze
-    spark-forge/pyspark.static-analysis
+    spark-forge-aws/pyspark.static-analysis
   verify:
     forge-doctor-data/data.verify
 ```

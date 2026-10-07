@@ -269,7 +269,7 @@ def test_history_tie_among_winners_stays_ambiguous() -> None:
 def test_history_never_rescues_below_min_signals() -> None:
     """A rank-1 tie is still too thin: history cannot waive MIN_SIGNAL_TYPES."""
     perf = _perf(_entry("api-forge", "api.contract", verified=4, ok=4, partial=0),
-                 _entry("spark-forge", "spark.performance", verified=0, ok=0,
+                 _entry("spark-forge-aws", "spark.performance", verified=0, ok=0,
                         partial=1, failed=3))
     d = route(task("performance da api"), [SPARK, API], [], set(),
               performance=perf)
@@ -280,7 +280,7 @@ def test_history_never_overrides_trust() -> None:
     """H5: a lower-trust provider with a perfect history still loses (secondary only)."""
     caps = SPARK.manifest.capabilities if SPARK.manifest else []
     trusted = record("zzz-trusted", caps, trust="trusted")
-    perf = _perf(_entry("spark-forge", "spark.performance", verified=4, ok=4,
+    perf = _perf(_entry("spark-forge-aws", "spark.performance", verified=4, ok=4,
                         partial=0))
     d = route(task("x", requested_capability="spark.performance"),
               [SPARK, trusted], [], set(), performance=perf)
@@ -297,7 +297,7 @@ def test_history_breaks_explicit_tie_within_same_trust() -> None:
     assert d.selected[0].provider == "zzz-forge"  # history beats the bare id order
     plain = route(task("x", requested_capability="spark.performance"),
                   [SPARK, other], [], set())
-    assert plain.selected[0].provider == "spark-forge"  # id order without history
+    assert plain.selected[0].provider == "spark-forge-aws"  # id order without history
 
 
 # --- e2e -------------------------------------------------------------------------

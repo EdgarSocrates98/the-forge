@@ -140,7 +140,7 @@ def test_replay_describe_manifest() -> None:
     assert verify is not None and verify.actions == ["verify"]
     # The Doctor audits sibling engineer runs through the ``verify`` op.
     assert verify.relations.can_verify == list(catalog.VERIFIES)
-    assert all(ref.startswith("spark-forge/") for ref in verify.relations.can_verify)
+    assert all(ref.startswith("spark-forge-aws/") for ref in verify.relations.can_verify)
     # Wave B surface fields on the raw payload.
     assert raw["payload"]["context_revalidation"] == "hash"
     assert raw["payload"]["adapter_version"] == "0.3.0"
@@ -494,12 +494,12 @@ def _verify_payload(result: dict[str, Any], handoff: dict[str, Any] | None = Non
 def _clean_result(**over: Any) -> dict[str, Any]:
     result: dict[str, Any] = {
         "schema": "theforge/ExecutionResult/v1",
-        "producer": {"id": "spark-forge", "version": "0.2.0"},
+        "producer": {"id": "spark-forge-aws", "version": "0.2.0"},
         "capability": "pyspark.static-analysis", "action": "pyspark",
         "status": "ok",
         "evidence": [{"id": "e1", "epistemic": "observed",
                       "subject": "job", "claim": "saw it",
-                      "producer": {"id": "spark-forge", "version": "0.2.0"}}],
+                      "producer": {"id": "spark-forge-aws", "version": "0.2.0"}}],
         "findings": [{"id": "f1", "title": "t", "severity": "low",
                       "evidence_ids": ["e1"]}],
         "artifacts": [], "limitations": [], "unknowns": [], "assumptions": []}

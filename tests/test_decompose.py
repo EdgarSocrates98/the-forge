@@ -164,7 +164,7 @@ def test_decomposed_plan_refuses_unplanned_decomposition(tmp_path: Path) -> None
 
 # --- proof task with the Wave B adapters' packaged manifests ----------------------------
 
-WAVE_B = (("spark-forge", "theforge_sparkforge", NATIVE / "sparkforge" / "default",
+WAVE_B = (("spark-forge-aws", "theforge_sparkforge_aws", NATIVE / "sparkforge_aws" / "default",
            "pyspark.static-analysis"),
           ("api-forge", "theforge_apiforge", NATIVE / "apiforge" / "default", "api.analyze"))
 

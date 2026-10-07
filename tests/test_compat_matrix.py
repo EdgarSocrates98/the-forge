@@ -16,7 +16,7 @@ import pytest
 import theforge_apiforge
 import theforge_doctorapi
 import theforge_doctordata
-import theforge_sparkforge
+import theforge_sparkforge_aws
 
 import theforge
 from theforge.protocol import SUPPORTED_PROTOCOLS, major
@@ -25,7 +25,7 @@ REPO = Path(__file__).parents[1]
 VERSIONING = REPO / "docs" / "versioning.md"
 MATRIX_HEADING = "## Matriz de compatibilidade"
 RULE = "docs/versioning.md, seção 'Regra de manutenção'"
-COLUMNS = ("The Forge", "Forge Protocol", "theforge-sparkforge-adapter", "sparkforge-aws",
+COLUMNS = ("The Forge", "Forge Protocol", "theforge-sparkforge-aws-adapter", "sparkforge-aws",
            "theforge-apiforge-adapter", "apiforge",
            "theforge-doctordata-adapter", "forge-doctor-data",
            "theforge-doctorapi-adapter", "forge-doctor-api", "Suporte até")
@@ -74,9 +74,9 @@ def _pyproject_version(adapter_dir: str) -> str:
 
 def current_adapters() -> dict[str, Adapter]:
     return {
-        "spark-forge": Adapter("theforge-sparkforge-adapter", "sparkforge-aws",
-                               _pyproject_version("sparkforge"),
-                               theforge_sparkforge.SUPPORTED_SPECIALIST),
+        "spark-forge-aws": Adapter("theforge-sparkforge-aws-adapter", "sparkforge-aws",
+                               _pyproject_version("sparkforge_aws"),
+                               theforge_sparkforge_aws.SUPPORTED_SPECIALIST),
         "api-forge": Adapter("theforge-apiforge-adapter", "apiforge",
                              _pyproject_version("apiforge"),
                              theforge_apiforge.SUPPORTED_SPECIALIST),
@@ -148,7 +148,7 @@ def test_forge_version_bump_without_row_fails(monkeypatch: pytest.MonkeyPatch) -
     assert "0.99.0" in problems[0] and RULE in problems[0]
 
 
-@pytest.mark.parametrize("adapter_id", ["spark-forge", "api-forge"])
+@pytest.mark.parametrize("adapter_id", ["spark-forge-aws", "api-forge"])
 def test_adapter_version_bump_without_row_fails(adapter_id: str) -> None:
     adapters = current_adapters()
     bumped = {**adapters, adapter_id: Adapter(adapters[adapter_id].column,
@@ -159,7 +159,7 @@ def test_adapter_version_bump_without_row_fails(adapter_id: str) -> None:
     assert "0.98.0" in problems[0] and adapter_id in problems[0] and RULE in problems[0]
 
 
-@pytest.mark.parametrize("module", [theforge_sparkforge, theforge_apiforge])
+@pytest.mark.parametrize("module", [theforge_sparkforge_aws, theforge_apiforge])
 def test_specialist_window_change_without_row_fails(monkeypatch: pytest.MonkeyPatch,
                                                     module: object) -> None:
     monkeypatch.setattr(module, "SUPPORTED_SPECIALIST", ">=9.0.0,<9.1.0")

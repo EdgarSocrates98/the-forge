@@ -1,4 +1,4 @@
-"""Health of the Spark Forge adapter: no network, no credentials, never the native ``doctor``.
+"""Health of the Spark Forge AWS adapter: no network, no credentials, never the native ``doctor``.
 
 Four checks build the ``HealthReport`` payload (``{status, checks: [{name, ok, detail}]}``):
 
@@ -6,7 +6,7 @@ Four checks build the ``HealthReport`` payload (``{status, checks: [{name, ok, d
 2. ``dispatcher``: a tool surface (``sparkforge_aws.adapters.tools`` or, pre-rename,
    ``sparkforge.adapters.tools``) is importable, found with ``find_spec`` and never
    imported (importing the tool surface costs seconds);
-3. ``specialist-version``: the Spark Forge version (the package ``__version__``, a light
+3. ``specialist-version``: the Spark Forge AWS version (the package ``__version__``, a light
    import; ``--assume-specialist-version`` replaces it) inside ``SUPPORTED_SPECIALIST``;
 4. ``snapshot``: the packaged ``native_catalog.json`` is present and readable.
 
@@ -22,8 +22,8 @@ import sys
 from dataclasses import dataclass
 from typing import Any
 
-from theforge_sparkforge import native_pkg
-from theforge_sparkforge.backend import INSTALL_HINT, MIN_PYTHON
+from theforge_sparkforge_aws import native_pkg
+from theforge_sparkforge_aws.backend import INSTALL_HINT, MIN_PYTHON
 
 DISPATCHER = "/".join(native_pkg.DISPATCHERS)
 DISTRIBUTION = native_pkg.DISTRIBUTION
@@ -96,12 +96,12 @@ def report(observation: Observation, *, window: str, assumed: str | None,
     python_ok = _python_ok(observation.python)
     interpreter = _check(
         "interpreter", python_ok,
-        f"{where}" if python_ok else f"{where}; the Spark Forge needs Python >= {floor}")
+        f"{where}" if python_ok else f"{where}; the Spark Forge AWS needs Python >= {floor}")
     dispatcher = _check(
         "dispatcher", observation.dispatcher,
         f"a tool surface ({DISPATCHER}) is importable with {where} (found, not imported)"
         if observation.dispatcher else
-        f"the Spark Forge is not importable with {where}: none of {DISPATCHER} found; "
+        f"the Spark Forge AWS is not importable with {where}: none of {DISPATCHER} found; "
         f"{INSTALL_HINT} in that interpreter")
     version = assumed if assumed is not None else observation.specialist_version
     if version is None:

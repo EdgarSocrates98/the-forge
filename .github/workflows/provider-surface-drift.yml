@@ -99,19 +99,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Set up Python 3.11 (Spark Forge and Doctors)
+      - name: Set up Python 3.11 (Spark Forge AWS and Doctors)
         id: py311
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
 
-      - name: Spark Forge venv (specialist main + adapter)
+      - name: Spark Forge AWS venv (specialist main + adapter)
         env:
           PY311: ${{ steps.py311.outputs.python-path }}
         run: |
-          "$PY311" -m venv .venv-spark
-          .venv-spark/bin/python -m pip install --upgrade pip
-          .venv-spark/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge
+          "$PY311" -m venv .venv-spark-aws
+          .venv-spark-aws/bin/python -m pip install --upgrade pip
+          .venv-spark-aws/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge_aws
 
       - name: API Forge venv (specialist main + adapter)
         env:
@@ -139,8 +139,8 @@ jobs:
 
       # record --check exits 0 on none/additive, 1 on breaking — a breaking drift
       # turns the job red; additive and version-only drift is reported in the log.
-      - name: Spark Forge surface drift
-        run: .venv-spark/bin/python -m theforge_sparkforge.record --check
+      - name: Spark Forge AWS surface drift
+        run: .venv-spark-aws/bin/python -m theforge_sparkforge_aws.record --check
 
       - name: API Forge surface drift
         run: .venv-api/bin/python -m theforge_apiforge.record --check

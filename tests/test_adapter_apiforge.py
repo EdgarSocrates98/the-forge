@@ -1400,17 +1400,17 @@ from theforge_apiforge import handoff as upstream  # noqa: E402
 HANDOFF_ITEMS = [
     {"kind": "evidence", "id": "f_2d3af1",
      "origin": {"plan_run": "plan-1", "node": "n1", "run_id": "run-n1",
-                "provider": {"id": "spark-forge", "version": "0.1.0"}},
+                "provider": {"id": "spark-forge-aws", "version": "0.1.0"}},
      "epistemic": "inferred", "subject": "pyspark.dataframe",
      "claim": "etl.py reads orders.csv",
      "location": {"path": "data-pipeline/jobs/etl.py", "line": 12}},
     {"kind": "finding", "id": "f_99aa",
      "origin": {"plan_run": "plan-1", "node": "n1", "run_id": "run-n1",
-                "provider": {"id": "spark-forge", "version": "0.1.0"}},
+                "provider": {"id": "spark-forge-aws", "version": "0.1.0"}},
      "severity": "medium", "claim": "no schema validation on the output frame"},
     {"kind": "decision", "id": "outcome",
      "origin": {"plan_run": "plan-1", "node": "n1", "run_id": "run-n1",
-                "provider": {"id": "spark-forge", "version": "0.1.0"}},
+                "provider": {"id": "spark-forge-aws", "version": "0.1.0"}},
      "epistemic": "observed", "claim": "n1 ok: 2 facts, 1 finding"},
 ]
 
@@ -1441,7 +1441,7 @@ def test_translate_handoff_maps_items_with_their_provenance() -> None:
     provenance = first["attrs"]["upstream"]
     assert (provenance["provider"], provenance["run_id"], provenance["node"],
             provenance["item"], provenance["plan_run"]) == (
-                "spark-forge", "run-n1", "n1", "f_2d3af1", "plan-1")
+                "spark-forge-aws", "run-n1", "n1", "f_2d3af1", "plan-1")
     assert provenance["epistemic"] == "inferred"  # verbatim, never upgraded
     assert provenance["claim"] == "etl.py reads orders.csv"
     assert provenance["location"] == {"path": "data-pipeline/jobs/etl.py", "line": 12}
@@ -1502,7 +1502,7 @@ def test_upstream_facts_translate_to_derived_evidence(tmp_path: Path) -> None:
     assert entry["epistemic"] == "inferred"  # the handoff item's status, verbatim
     assert entry["subject"] == "pyspark.dataframe"
     assert entry["claim"] == "etl.py reads orders.csv"
-    assert entry["derived_from"] == {"provider": "spark-forge", "run_id": "run-n1",
+    assert entry["derived_from"] == {"provider": "spark-forge-aws", "run_id": "run-n1",
                                    "node": "n1", "plan_run": "plan-1", "item": "f_2d3af1"}
     assert entry["location"] == {"path": "data-pipeline/jobs/etl.py", "line": 12}
     native = [e for e in draft.evidence if not e.get("derived_from")]
@@ -1547,7 +1547,7 @@ def test_live_execute_feeds_the_handoff_to_the_native_verb(
     result = _result(response, data, cwd)
     derived = [e for e in result.evidence if e.derived_from is not None]
     assert len(derived) == 1 and derived[0].derived_from is not None
-    assert derived[0].derived_from.provider == "spark-forge"
+    assert derived[0].derived_from.provider == "spark-forge-aws"
     assert derived[0].derived_from.run_id == "run-n1"
     assert derived[0].derived_from.node == "n1"
     assert derived[0].derived_from.item == "f_2d3af1"

@@ -34,7 +34,7 @@ Phase 37 (nested receipts, contrato aditivo).
   para `partial` com `independent verification failed: <provider>`.
 - **Fixtures de teste**: `fixture_forge.py` ganhou `hash_evidence` (evidence com
   `hash` sem `location` — legal no contrato, não-verificável semanticamente) e
-  três manifests-aliases (`fixture-sparkforge`, `fixture-sparkforge-hash`,
+  três manifests-aliases (`fixture-sparkforge-aws`, `fixture-sparkforge-aws-hash`,
   `fixture-apiforge`) que se apresentam com os ids reais dos providers para os
   refs `can_verify` resolverem.
 - **Testes**: ops/relations nos manifests dos dois Doctors; verify op

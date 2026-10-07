@@ -33,7 +33,7 @@ def task(intent: str, **kw: object) -> TaskSpec:
                     workspace_root="/ws", **kw)
 
 
-SPARK = record("spark-forge", [cap("spark.performance", actions=("diagnose", "optimize"),
+SPARK = record("spark-forge-aws", [cap("spark.performance", actions=("diagnose", "optimize"),
                                    kw=("glue", "lento", "performance"),
                                    globs=("*glue*.py",), deps=("pyspark",))])
 API = record("api-forge", [cap("api.contract", actions=("review",),
@@ -44,7 +44,7 @@ def test_case_a_routes_to_spark() -> None:
     d = route(task("analise esse Glue Job porque está lento"), [SPARK, API],
               ["jobs/orders_glue_job.py"], {"pyspark"})
     assert d.status == "routed"
-    assert (d.selected[0].provider, d.selected[0].action) == ("spark-forge", "diagnose")
+    assert (d.selected[0].provider, d.selected[0].action) == ("spark-forge-aws", "diagnose")
     assert d.confidence.level == "high"
     assert d.candidates[0].rank_key == [3]  # presence of types only (cycle 2)
     assert d.confidence.measured_signals == [
@@ -79,7 +79,7 @@ def test_explicit_capability_tie_breaks_by_trust_then_id() -> None:
     d = route(task("x", requested_capability="spark.performance"),
               [SPARK, trusted, unverified], [], set(), allow_unverified=True)
     assert d.selected[0].provider == "zzz-forge"
-    assert [c.provider for c in d.candidates] == ["zzz-forge", "spark-forge", "aaa-forge"]
+    assert [c.provider for c in d.candidates] == ["zzz-forge", "spark-forge-aws", "aaa-forge"]
     assert "tie-break" in d.reason
 
 
@@ -200,7 +200,7 @@ def test_explicit_overlap_is_noted() -> None:
     d = route(task("x", requested_capability="spark.performance"), [SPARK, other], [], set())
     assert d.selected[0].provider == "zzz-forge"
     assert d.limitations == ["capability-overlap: 'spark.performance' declared by "
-                             "spark-forge, zzz-forge; tie-break trust, history, id"]
+                             "spark-forge-aws, zzz-forge; tie-break trust, history, id"]
 
 
 def test_signal_overlap_and_deprecation_are_noted_without_changing_ranking() -> None:
@@ -212,7 +212,7 @@ def test_signal_overlap_and_deprecation_are_noted_without_changing_ranking() -> 
     d = route(task("analise esse Glue Job porque está lento"), [SPARK, deprecated, API],
               ["jobs/orders_glue_job.py"], {"pyspark"})
     assert d.status == "ambiguous"  # same signals: the overlap stays ambiguous, never a guess
-    assert "capability-overlap: 'spark.performance' declared by old-forge, spark-forge" \
+    assert "capability-overlap: 'spark.performance' declared by old-forge, spark-forge-aws" \
         in d.limitations
     assert "capability-deprecated: 'spark.performance' (old-forge) is deprecated; " \
         "no replacement declared" in d.limitations
@@ -220,13 +220,13 @@ def test_signal_overlap_and_deprecation_are_noted_without_changing_ranking() -> 
 
 def test_signal_deprecated_selection_keeps_confidence() -> None:
     spark_caps = SPARK.manifest.capabilities if SPARK.manifest else []
-    deprecated = record("spark-forge", [_with(c, deprecated=True, replaced_by="spark.perf")
+    deprecated = record("spark-forge-aws", [_with(c, deprecated=True, replaced_by="spark.perf")
                                         for c in spark_caps])
     d = route(task("analise esse Glue Job porque está lento"), [deprecated, API],
               ["jobs/orders_glue_job.py"], {"pyspark"})
     assert d.status == "routed" and d.confidence.level == "high"
     assert d.candidates[0].rank_key == [3]
-    assert d.limitations == ["capability-deprecated: 'spark.performance' (spark-forge) is "
+    assert d.limitations == ["capability-deprecated: 'spark.performance' (spark-forge-aws) is "
                              "deprecated; replaced_by 'spark.perf'"]
 
 

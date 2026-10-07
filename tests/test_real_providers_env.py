@@ -1,6 +1,6 @@
 """Environment contract of the real-Forge integration tests (real-provider-integration 7.1).
 
-``tests/real_providers.py`` reads ``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_
+``tests/real_providers.py`` reads ``THEFORGE_REAL_{SPARKFORGE_AWS,APIFORGE,DOCTORDATA,DOCTORAPI}_
 PYTHON`` and
 ``THEFORGE_REAL_PROVIDERS_REQUIRED`` and checks, in order: variable set, file exists,
 ``import <adapter>, <specialist>`` exits 0. A missing prerequisite skips with an explicit reason,
@@ -47,7 +47,7 @@ def interpreter(tmp_path: Path) -> Path:
 # --- the contract itself ------------------------------------------------------------------
 
 def test_contract_variable_names() -> None:
-    assert rp.SPARK_PYTHON_VAR == "THEFORGE_REAL_SPARKFORGE_PYTHON"
+    assert rp.SPARK_PYTHON_VAR == "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON"
     assert rp.API_PYTHON_VAR == "THEFORGE_REAL_APIFORGE_PYTHON"
     assert rp.DOCTORDATA_PYTHON_VAR == "THEFORGE_REAL_DOCTORDATA_PYTHON"
     assert rp.DOCTORAPI_PYTHON_VAR == "THEFORGE_REAL_DOCTORAPI_PYTHON"
@@ -55,7 +55,7 @@ def test_contract_variable_names() -> None:
     assert rp.IMPORT_TIMEOUT == 60.0
     assert {name: (spec.provider_id, spec.variable, spec.adapter_module, spec.specialist_module)
             for name, spec in rp.FORGES.items()} == {
-        "spark": ("spark-forge", rp.SPARK_PYTHON_VAR, "theforge_sparkforge",
+        "spark": ("spark-forge-aws", rp.SPARK_PYTHON_VAR, "theforge_sparkforge_aws",
                   "sparkforge_aws.adapters.tools"),
         "api": ("api-forge", rp.API_PYTHON_VAR, "theforge_apiforge", "apiforge"),
         "doctordata": ("forge-doctor-data", rp.DOCTORDATA_PYTHON_VAR,
@@ -87,7 +87,7 @@ def test_missing_variable(value: str | None) -> None:
 def test_missing_variable_spark_reason() -> None:
     with pytest.raises(rp.ForgeUnavailable) as info:
         rp.check_forge("spark", {}, probe=_never_probe)
-    assert info.value.reason.startswith("THEFORGE_REAL_SPARKFORGE_PYTHON not set (")
+    assert info.value.reason.startswith("THEFORGE_REAL_SPARKFORGE_AWS_PYTHON not set (")
     assert "docs/real-providers.md" in info.value.reason
 
 
@@ -96,7 +96,7 @@ def test_nonexistent_file(tmp_path: Path) -> None:
     environ = {rp.SPARK_PYTHON_VAR: str(missing)}
     with pytest.raises(rp.ForgeUnavailable) as info:
         rp.check_forge("spark", environ, probe=_never_probe)
-    assert info.value.reason.startswith("THEFORGE_REAL_SPARKFORGE_PYTHON=")
+    assert info.value.reason.startswith("THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=")
     assert str(missing) in info.value.reason and "does not exist" in info.value.reason
 
 
@@ -156,9 +156,9 @@ def test_import_failure(interpreter: Path) -> None:
 
 def test_all_prerequisites_met(interpreter: Path) -> None:
     forge = rp.check_forge("spark", {rp.SPARK_PYTHON_VAR: str(interpreter)}, probe=_ok_probe)
-    assert forge == rp.RealForge("spark-forge", interpreter, "theforge_sparkforge",
+    assert forge == rp.RealForge("spark-forge-aws", interpreter, "theforge_sparkforge_aws",
                                  "sparkforge_aws.adapters.tools")
-    assert forge.argv() == [str(interpreter), "-m", "theforge_sparkforge"]
+    assert forge.argv() == [str(interpreter), "-m", "theforge_sparkforge_aws"]
     assert forge.argv("--assume-specialist-version", "9.9.9")[-2:] == [
         "--assume-specialist-version", "9.9.9"]
 
@@ -230,11 +230,11 @@ def test_probe_ok_runs_import_without_credentials(
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "s3cr3t")
     monkeypatch.setenv(rp.SPARK_PYTHON_VAR, str(interpreter))
     run = _fake_run((0, ""))
-    assert rp.probe_imports(interpreter, ["theforge_sparkforge", "sparkforge.adapters.tools"],
+    assert rp.probe_imports(interpreter, ["theforge_sparkforge_aws", "sparkforge.adapters.tools"],
                             run=run) is None
     (call,) = run.calls
     assert call["argv"] == [str(interpreter), "-c",
-                            "import theforge_sparkforge, sparkforge.adapters.tools"]
+                            "import theforge_sparkforge_aws, sparkforge.adapters.tools"]
     assert call["timeout"] == rp.IMPORT_TIMEOUT
     assert "AWS_SECRET_ACCESS_KEY" not in call["env"]
     assert not any(key.startswith("THEFORGE_REAL_") for key in call["env"])
@@ -266,7 +266,7 @@ def test_probe_spawn_error(interpreter: Path) -> None:
 
 def test_register_writes_isolated_user_providers_toml(
         interpreter: Path, user_config_dir: Path) -> None:
-    spark = rp.RealForge("spark-forge", interpreter, "theforge_sparkforge",
+    spark = rp.RealForge("spark-forge-aws", interpreter, "theforge_sparkforge_aws",
                          "sparkforge_aws.adapters.tools")
     api = rp.RealForge("api-forge", interpreter, "theforge_apiforge", "apiforge")
     entries = rp.register(user_config_dir, spark.entry(),
@@ -277,7 +277,7 @@ def test_register_writes_isolated_user_providers_toml(
     providers = tomllib.loads(text)["providers"]
     assert providers == entries
     assert providers == [
-        {"id": "spark-forge", "argv": [str(interpreter), "-m", "theforge_sparkforge"],
+        {"id": "spark-forge-aws", "argv": [str(interpreter), "-m", "theforge_sparkforge_aws"],
          "trust": "trusted"},
         {"id": "api-forge", "argv": [str(interpreter), "-m", "theforge_apiforge",
                                      "--assume-specialist-version", "9.9.9"],

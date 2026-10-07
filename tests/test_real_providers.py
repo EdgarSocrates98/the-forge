@@ -2,7 +2,8 @@
 
 Marker ``real_provider`` (excluded from the default selection): ``python -m pytest -m
 real_provider``. Each Forge runs only when the environment contract of ``real_providers.py``
-(``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``) names an interpreter with the
+(``THEFORGE_REAL_{SPARKFORGE_AWS,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``) names an interpreter
+with the
 adapter and the
 specialist; otherwise its tests skip with the reason, or fail when
 ``THEFORGE_REAL_PROVIDERS_REQUIRED=1``. See ``docs/real-providers.md``.
@@ -101,7 +102,7 @@ class Case:
 CASES = {
     "spark": Case("spark", FIXTURES / "workspaces" / "spark", "pyspark.static-analysis",
                   "pyspark", ">=0.5.0,<0.6.0",
-                  ADAPTERS / "sparkforge" / "src" / "theforge_sparkforge"
+                  ADAPTERS / "sparkforge_aws" / "src" / "theforge_sparkforge_aws"
                   / "native_catalog.json"),
     "api": Case("api", FIXTURES / "workspaces" / "api", "api.analyze", "analyze",
                 ">=0.1.0,<0.2.0",
@@ -256,7 +257,7 @@ def _live_snapshot(case: Case, forge: rp.RealForge, directory: Path) -> dict[str
     directory.mkdir(parents=True)
     target = directory / case.snapshot.name
     if case.name == "spark":
-        argv = [str(forge.python), "-m", "theforge_sparkforge.record", "--output", str(target)]
+        argv = [str(forge.python), "-m", "theforge_sparkforge_aws.record", "--output", str(target)]
     else:
         argv = [str(forge.python), "-m", f"{case.spec.adapter_module}.record",
                 "--out", str(target), "--recorded-at", "live"]
@@ -385,7 +386,7 @@ def _live_spark_output(case: Case, forge: rp.RealForge, tmp_path: Path) -> dict[
     workspace = tmp_path / "spark-ws"
     shutil.copytree(case.workspace, workspace)
     out = tmp_path / "live"
-    argv = [str(forge.python), "-m", "theforge_sparkforge.record_execute",
+    argv = [str(forge.python), "-m", "theforge_sparkforge_aws.record_execute",
             "--workspace", str(workspace), "--capability", case.capability,
             "--action", case.action, "--out", str(out)]
     argv += [f"--arg={name}={value}" for name, value in recording["arguments"].items()

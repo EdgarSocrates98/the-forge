@@ -21,7 +21,7 @@ O scaffold sai já conforme: `theforge provider check -- python provider.py` pas
 6. Sempre exit 0 com uma response válida. Crash vira `provider_failure` no core.
 7. Em toda response: ecoar `request_id`, emitir `"op"` igual à op pedida e `producer` com `id` igual ao id registrado e `version` igual à `version` do manifest.
 
-Exemplo completo e standalone: `tests/fixtures/providers/fixture_forge.py`. Exemplos reais, que traduzem um Forge especialista existente: `adapters/sparkforge` e `adapters/apiforge` ([ADR 0014](adr/0014-provider-adapter-location.md), guia em [real-providers.md](real-providers.md)).
+Exemplo completo e standalone: `tests/fixtures/providers/fixture_forge.py`. Exemplos reais, que traduzem um Forge especialista existente: `adapters/sparkforge_aws` e `adapters/apiforge` ([ADR 0014](adr/0014-provider-adapter-location.md), guia em [real-providers.md](real-providers.md)).
 
 ## Versão
 `version` precisa ser [SemVer 2.0.0](https://semver.org/): `1.2.3`, `0.1.0-rc.1`, `1.0.0+build.5`. Versão malformada deixa o provider `invalid` com `FORGE-MANIFEST-VERSION` ([versioning.md](versioning.md#versão-de-provider)).
@@ -73,7 +73,7 @@ Detalhes normativos em [protocol.md](protocol.md#execução-multi-provider) e de
 - **Determinismo.** Declare `execution.deterministic: true` só se as mesmas entradas (task, ContextPack, handoff) sempre produzem o mesmo resultado. Sem a declaração, nenhum run do provider é `reproducible` (no máximo `partially_reproducible`), e `replay --mode execute` continua possível. Declarar `requires_network`, `offline: false`, `local: false` ou uma classe `external_*`/`destructive` torna o run `non_reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - **Artifacts.** Desde esta versão o core recalcula o sha256 de cada `artifacts[].path` em `work/`: um hash declarado diferente do arquivo gravado deixa o run `partial` com `FORGE-RESULT-ARTIFACT-HASH`.
 
-Os adapters reais de Spark Forge e API Forge não declaram `plan`, `accepts_handoff` nem `deterministic`: num plano eles recebem e ignoram o handoff (limitação `handoff-use-undeclared`), e seus runs ficam `partially_reproducible` ou menos.
+Os adapters reais de Spark Forge AWS e API Forge não declaram `plan`, `accepts_handoff` nem `deterministic`: num plano eles recebem e ignoram o handoff (limitação `handoff-use-undeclared`), e seus runs ficam `partially_reproducible` ou menos.
 
 ## Regras de segurança
 - Leia apenas os arquivos listados no ContextPack e confira se continuam dentro de `workspace_root`.

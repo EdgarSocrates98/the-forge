@@ -28,7 +28,7 @@ Instale o adapter **no mesmo interpretador Python 3.12 do API Forge**:
 Desenvolvimento neste repositório (editável, junto do core):
 
 ```bash
-python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge
+python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge
 ```
 
 Verificação rápida:

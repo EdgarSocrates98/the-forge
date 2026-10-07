@@ -7,9 +7,9 @@ replay mode — the ``specialist-replay`` tier of docs/real-providers.md: real
 adapter subprocess + real Forge Protocol envelopes + recorded native output.
 Nothing about the specialist is invented, and no network is touched.
 
-  direct   Spark Forge and API Forge each receive the whole workspace — the
+  direct   Spark Forge AWS and API Forge each receive the whole workspace — the
            pre-mesh baseline where every specialist rereads everything.
-  mesh     Doctor Data scans the workspace once; Spark Forge and API Forge
+  mesh     Doctor Data scans the workspace once; Spark Forge AWS and API Forge
            receive a bounded context (their domain targets only) plus the
            doctor's evidence through the plan handoff.
 
@@ -72,7 +72,7 @@ DOMAIN_FILES: Final[Mapping[str, str]] = {
 }
 
 DIRECT_NODES: Final = (
-    {"id": "n1", "role": "standalone", "provider": "spark-forge",
+    {"id": "n1", "role": "standalone", "provider": "spark-forge-aws",
      "capability": "pyspark.static-analysis", "action": "pyspark", "targets": ["."]},
     {"id": "n2", "role": "standalone", "provider": "api-forge",
      "capability": "api.analyze", "action": "analyze", "targets": ["."]},
@@ -80,7 +80,7 @@ DIRECT_NODES: Final = (
 MESH_NODES: Final = (
     {"id": "n1", "role": "producer", "provider": "forge-doctor-data",
      "capability": "data.scan", "action": "analyze", "targets": ["."]},
-    {"id": "n2", "role": "consumer", "provider": "spark-forge",
+    {"id": "n2", "role": "consumer", "provider": "spark-forge-aws",
      "capability": "pyspark.static-analysis", "action": "pyspark",
      "targets": ["jobs", "requirements.txt"],
      "depends_on": [{"node": "n1", "epistemic": "explicit",
@@ -112,7 +112,7 @@ def _replay(adapter: str) -> list[str]:
 ENTRIES: Final = (
     {"id": "forge-doctor-data", "argv": _replay("doctordata"), "trust": "local"},
     {"id": "forge-doctor-api", "argv": _replay("doctorapi"), "trust": "local"},
-    {"id": "spark-forge", "argv": _replay("sparkforge"), "trust": "local"},
+    {"id": "spark-forge-aws", "argv": _replay("sparkforge_aws"), "trust": "local"},
     {"id": "api-forge", "argv": _replay("apiforge"), "trust": "local"},
 )
 
@@ -269,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--runs must be >= 1")
 
     for module in ("theforge_doctordata", "theforge_doctorapi",
-                   "theforge_sparkforge", "theforge_apiforge"):
+                   "theforge_sparkforge_aws", "theforge_apiforge"):
         try:
             __import__(module)
         except ImportError:

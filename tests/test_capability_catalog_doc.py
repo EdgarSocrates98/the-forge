@@ -36,7 +36,7 @@ REPO = Path(__file__).parents[1]
 DOC = REPO / "docs" / "capabilities.md"
 ADR = REPO / "docs" / "adr" / "0017-capability-taxonomy.md"
 NATIVE = REPO / "tests" / "fixtures" / "native"
-ADAPTERS = {"spark-forge": "sparkforge", "api-forge": "apiforge",
+ADAPTERS = {"spark-forge-aws": "sparkforge_aws", "api-forge": "apiforge",
             "forge-doctor-data": "doctordata", "forge-doctor-api": "doctorapi"}
 
 EXPOSED_HEADER = "| Provider | Capability | Ações | Origem nativa |"
@@ -171,7 +171,7 @@ def doc() -> str:
 def test_every_exposed_capability_is_catalogued_with_its_actions(
         doc: str, manifests: dict[str, dict[str, Any]]) -> None:
     exposed = exposed_of(manifests)
-    assert len(exposed) == 21   # 15 Spark Forge + 2 API Forge + 4 Doctors
+    assert len(exposed) == 21   # 15 Spark Forge AWS + 2 API Forge + 4 Doctors
     assert catalog_drift(parse_exposed(doc), exposed) == []
 
 
@@ -189,9 +189,9 @@ def test_an_uncatalogued_capability_is_detected(
     exposed = exposed_of(manifests)
     catalogued = parse_exposed(doc)
     missing = dict(catalogued)
-    del missing["spark-forge", "pyspark.static-analysis"]
+    del missing["spark-forge-aws", "pyspark.static-analysis"]
     assert catalog_drift(missing, exposed) == [
-        "spark-forge/pyspark.static-analysis is exposed but not in docs/capabilities.md"]
+        "spark-forge-aws/pyspark.static-analysis is exposed but not in docs/capabilities.md"]
 
     extra = dict(exposed)
     extra["api-forge", "api.provenance"] = ("provenance",)
@@ -203,10 +203,10 @@ def test_a_catalogued_capability_not_exposed_or_with_other_actions_is_detected(
         doc: str, manifests: dict[str, dict[str, Any]]) -> None:
     exposed = exposed_of(manifests)
     catalogued = dict(parse_exposed(doc))
-    catalogued["spark-forge", "migration.assessment"] = ("migration-assess",)
+    catalogued["spark-forge-aws", "migration.assessment"] = ("migration-assess",)
     catalogued["api-forge", "api.analyze"] = ("analyze", "diff")
     assert catalog_drift(catalogued, exposed) == [
-        "spark-forge/migration.assessment is catalogued but not exposed",
+        "spark-forge-aws/migration.assessment is catalogued but not exposed",
         "api-forge/api.analyze: catalogued actions ['analyze', 'diff'] != exposed ['analyze']"]
 
 

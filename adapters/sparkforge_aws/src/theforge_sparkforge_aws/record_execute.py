@@ -1,8 +1,8 @@
-"""Record the native output of one Spark Forge action for replay:
-``python -m theforge_sparkforge.record_execute --workspace DIR --capability CAP --action ACT
+"""Record the native output of one Spark Forge AWS action for replay:
+``python -m theforge_sparkforge_aws.record_execute --workspace DIR --capability CAP --action ACT
 --out SCENARIO_DIR [--arg NAME=PATH ...]``.
 
-Run it in the Spark Forge's own interpreter. The workspace (an existing directory, not a link,
+Run it in the Spark Forge AWS's own interpreter. The workspace (an existing directory, not a link,
 that does not overlap ``--out``) is never touched: it is copied, without links (never
 followed), to ``stage/`` inside a fresh temporary directory, the process cwd during the native
 calls, and every ``--arg`` is a path relative to the workspace, passed to the tool as
@@ -10,7 +10,8 @@ calls, and every ``--arg`` is a path relative to the workspace, passed to the to
 accepts them, ``detail_level = "normal"`` (the smallest form the chained judge accepts:
 ``summary`` drops the fact ``subject``) and ``limit = 200`` are added. When the output has
 facts, ``sparkforge_judge`` is chained over them, as the native CLI does (``analyze --out`` ->
-``judge --facts``). The Spark Forge's own state (its ``.sparkforge/traces.db`` ledger, flushed at
+``judge --facts``). The Spark Forge AWS's own state (its ``.sparkforge/traces.db`` ledger,
+flushed at
 exit into the cwd) is kept in a temporary directory removed at exit.
 
 The recording is written in the replay layout (``backend.py``):
@@ -43,11 +44,11 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from theforge_sparkforge import catalog
-from theforge_sparkforge._shell import STAGE_DIR
-from theforge_sparkforge.backend import expected_recording, live_unavailable_reason
-from theforge_sparkforge.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
-from theforge_sparkforge.record import render
+from theforge_sparkforge_aws import catalog
+from theforge_sparkforge_aws._shell import STAGE_DIR
+from theforge_sparkforge_aws.backend import expected_recording, live_unavailable_reason
+from theforge_sparkforge_aws.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
+from theforge_sparkforge_aws.record import render
 
 JUDGE_TOOL = "sparkforge_judge"
 DETAIL_LEVEL = "normal"
@@ -212,7 +213,7 @@ def record_action(call: NativeCall, *, workspace: Path, capability: str, action:
 def _contain_native_state() -> None:
     """Make a fresh temporary directory the process cwd until exit.
 
-    The Spark Forge flushes its ledger (``.sparkforge/traces.db``) into the cwd from an
+    The Spark Forge AWS flushes its ledger (``.sparkforge/traces.db``) into the cwd from an
     ``atexit`` hook registered at the first native call; the cleanup registered here first runs
     after it (``atexit`` is LIFO) and removes the directory, so nothing is left behind.
     """
@@ -237,8 +238,8 @@ def _parse_arg(value: str) -> tuple[str, str]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m theforge_sparkforge.record_execute",
-        description="Record the native output of one Spark Forge action for replay.")
+        prog="python -m theforge_sparkforge_aws.record_execute",
+        description="Record the native output of one Spark Forge AWS action for replay.")
     parser.add_argument("--workspace", type=Path, required=True,
                         help="workspace to copy (never modified)")
     parser.add_argument("--capability", required=True)
@@ -258,7 +259,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     out = args.out.resolve()
     workspace_arg = args.workspace.absolute()
     _contain_native_state()
-    from theforge_sparkforge.native_pkg import import_tools
+    from theforge_sparkforge_aws.native_pkg import import_tools
 
     tools_surface, call_tool = import_tools()
 

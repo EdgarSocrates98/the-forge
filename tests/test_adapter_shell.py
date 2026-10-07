@@ -40,7 +40,8 @@ from theforge.security import env as core_env
 REPO = Path(__file__).parents[1]
 ADAPTERS = {
     # name: (distribution, package, provider id, specialist window)
-    "sparkforge": ("theforge-sparkforge-adapter", "theforge_sparkforge", "spark-forge",
+    "sparkforge_aws": ("theforge-sparkforge-aws-adapter", "theforge_sparkforge_aws",
+                        "spark-forge-aws",
                    ">=0.5.0,<0.6.0"),
     "apiforge": ("theforge-apiforge-adapter", "theforge_apiforge", "api-forge",
                  ">=0.1.0,<0.2.0"),
@@ -52,7 +53,7 @@ ADAPTERS = {
 # Adapter release versions (semver of each distribution): bumps track surface
 # changes per docs/versioning.md.
 ADAPTER_VERSION = {
-    "sparkforge": "0.3.0",
+    "sparkforge_aws": "0.3.0",
     "apiforge": "0.3.0",
     "doctordata": "0.3.0",
     "doctorapi": "0.3.0",
@@ -122,10 +123,11 @@ def test_adapter_sources_never_import_theforge(name: str) -> None:
 @pytest.mark.parametrize("op", OPS)
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
-    specialist = {"sparkforge": "sparkforge", "apiforge": "apiforge",
-                  "doctordata": "forge_doctor_data",
-                  "doctorapi": "forge_doctor_api"}[name]
-    if importlib.util.find_spec(specialist) is not None or (
+    specialist = {"sparkforge_aws": ("sparkforge_aws", "sparkforge"),
+                  "apiforge": ("apiforge",),
+                  "doctordata": ("forge_doctor_data",),
+                  "doctorapi": ("forge_doctor_api",)}[name]
+    if any(importlib.util.find_spec(mod) is not None for mod in specialist) or (
             name == "apiforge" and sys.version_info[:2] == (3, 12)):
         pytest.skip(f"{specialist} may be usable in this interpreter")
     request = {"protocol": PROTOCOL_V1, "kind": "Request", "op": op,
@@ -148,6 +150,7 @@ def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
     assert response.error is not None
     # Without the specialist in this interpreter, describe (and so execute, gated by it)
     # refuses with the adapter's own unavailability code (4.1/5.1).
+    # The adapter key upper-cased: sparkforge_aws -> SPARKFORGE_AWS-ADAPTER-UNAVAILABLE.
     assert (response.error.code.startswith("ADAPTER-")
             or response.error.code == f"{name.upper()}-ADAPTER-UNAVAILABLE")
 
@@ -171,7 +174,8 @@ TEST_PRODUCER = ("shell-test-forge", "9.8.7")
 # provider -> (argv prefix, (producer id, producer version))
 SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     "test-handlers": ([sys.executable, str(SHELL_FORGE)], TEST_PRODUCER),
-    "sparkforge": ([sys.executable, "-m", "theforge_sparkforge"], ("spark-forge", "0.3.0")),
+    "sparkforge_aws": ([sys.executable, "-m", "theforge_sparkforge_aws"],
+                        ("spark-forge-aws", "0.3.0")),
     "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.3.0")),
     "doctordata": ([sys.executable, "-m", "theforge_doctordata"],
                    ("forge-doctor-data", "0.3.0")),
@@ -409,7 +413,7 @@ def test_shell_test_handlers_parse_as_python_310() -> None:
 
 # --- result builder, staging and missing input (3.2) --------------------------------------
 
-SHELL_SOURCE = _package_dir("sparkforge") / "_shell.py"
+SHELL_SOURCE = _package_dir("sparkforge_aws") / "_shell.py"
 LINE_RANGE_REASON = "line-range items not supported by this adapter"
 
 
@@ -579,7 +583,7 @@ def test_evidence_hash_returns_the_verified_sha256_for_an_equal_native_hash(
 ) -> None:
     verified = _sha(JOB)
     assert shell.evidence_hash("jobs/a.py", verified, staged_job) == verified
-    # Spark Forge prefixes its artifact hashes; the prefix is dropped before comparing.
+    # Spark Forge AWS prefixes its artifact hashes; the prefix is dropped before comparing.
     assert shell.evidence_hash("jobs/a.py", f"sha256:{verified}", staged_job) == verified
 
 

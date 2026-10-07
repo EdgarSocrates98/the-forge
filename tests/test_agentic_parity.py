@@ -900,7 +900,8 @@ REQUIRED_ANCHORS = {
     "src/theforge", "adapters/", "stdlib", "Forge Protocol", "ambiguous", "ExecutionResult",
     "security.redact", ".forge/runs/<id>/work/", "domínio", "theforge/<Name>/v1",
     "python -m theforge.contracts.schema schemas",
-    "-e ./adapters/sparkforge -e ./adapters/apiforge", "python -m pytest", "ruff check .", "mypy",
+    "-e ./adapters/sparkforge_aws -e ./adapters/apiforge", "python -m pytest", "ruff check .",
+    "mypy",
 }
 
 

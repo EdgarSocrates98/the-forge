@@ -50,7 +50,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # planned by design (real-provider-integration)
     "test_manifest_rules.py": ("unit", "contract"),
     "test_adapter_shell.py": ("integration", "contract"),
-    "test_adapter_sparkforge.py": ("integration", "contract"),
+    "test_adapter_sparkforge_aws.py": ("integration", "contract"),
     "test_adapter_apiforge.py": ("integration", "contract"),
     "test_adapter_doctordata.py": ("integration", "contract"),
     "test_adapter_doctorapi.py": ("integration", "contract"),

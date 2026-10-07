@@ -3,8 +3,8 @@
 # and never blocks a merge. A failure is visible: the job is red (no continue-on-error) and an
 # empty real_provider selection is a regression (pytest exit 5 fails the run).
 #
-# Each specialist runs in its own interpreter, never in the core's: Spark Forge in a 3.11 venv
-# (.venv-spark) and API Forge in a 3.12 venv (.venv-api, API Forge requires 3.12), each with its
+# Each specialist runs in its own interpreter, never in the core's: Spark Forge AWS in a 3.11 venv
+# (.venv-spark-aws) and API Forge in a 3.12 venv (.venv-api, API Forge requires 3.12), each with its
 # adapter. The env contract of tests/real_providers.py (THEFORGE_REAL_*) points the tests at
 # them, with THEFORGE_REAL_PROVIDERS_REQUIRED=1 so a missing prerequisite fails instead of
 # skipping. See docs/real-providers.md.
@@ -99,7 +99,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Set up Python 3.11 (core and Spark Forge)
+      - name: Set up Python 3.11 (core and Spark Forge AWS)
         id: py311
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
@@ -108,17 +108,17 @@ jobs:
       - name: Install the core (editable, dev extras, adapters)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge \
+          python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge \
             -e ./adapters/doctordata -e ./adapters/doctorapi
 
-      - name: Spark Forge venv (3.11, sparkforge-aws + adapter)
+      - name: Spark Forge AWS venv (3.11, sparkforge-aws + adapter)
         env:
           PY311: ${{ steps.py311.outputs.python-path }}
         run: |
-          "$PY311" -m venv .venv-spark
-          .venv-spark/bin/python -m pip install --upgrade pip
-          .venv-spark/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge
-          .venv-spark/bin/python -c "import sparkforge_aws.adapters.tools, theforge_sparkforge"
+          "$PY311" -m venv .venv-spark-aws
+          .venv-spark-aws/bin/python -m pip install --upgrade pip
+          .venv-spark-aws/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge_aws
+          .venv-spark-aws/bin/python -c "import sparkforge_aws.adapters.tools, theforge_sparkforge_aws"
 
       - name: API Forge venv (3.12, apiforge + adapter)
         env:
@@ -149,7 +149,7 @@ jobs:
 
       - name: Export the real-provider environment contract
         run: |
-          echo "THEFORGE_REAL_SPARKFORGE_PYTHON=$PWD/.venv-spark/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=$PWD/.venv-spark-aws/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python" >> "$GITHUB_ENV"

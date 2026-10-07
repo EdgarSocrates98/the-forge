@@ -25,7 +25,7 @@ Todos os gates foram executados localmente: `pytest` (3574 testes coletados),
 | componente | versão |
 |---|---|
 | theforge | 0.2.0 |
-| theforge-sparkforge-adapter | 0.3.0 |
+| theforge-sparkforge-aws-adapter | 0.3.0 |
 | theforge-apiforge-adapter | 0.3.0 |
 | theforge-doctordata-adapter | 0.3.0 |
 | theforge-doctorapi-adapter | 0.3.0 |
@@ -111,7 +111,7 @@ relaxamento de policy global, escalada de budget (capado pelo teto global).
 ## Real-provider proof
 
 - **Specialist-real (35/35, required mode):** os quatro especialistas
-  instalados em venvs locais (`.venv-spark` 0.5.0, `.venv-api` 0.1.0
+  instalados em venvs locais (`.venv-spark-aws` 0.5.0, `.venv-api` 0.1.0
   @`1745f87`, `.venv-dd` 1.0.0rc1, `.venv-da` 0.2.0) — describe/health/
   execute live através do core, com fingerprints, receipts e verificação de
   hashes intactos.

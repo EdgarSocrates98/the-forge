@@ -1,12 +1,12 @@
-# Providers reais: Spark Forge, API Forge e os Doctors
+# Providers reais: Spark Forge AWS, API Forge e os Doctors
 
-The Forge fala com os especialistas através de adapters Forge Protocol v1 instalados **no interpretador de cada especialista**, nunca no interpretador do core: Spark Forge (`sparkforge-aws`), API Forge (`apiforge`) e, desde o ciclo 3.1, os observadores determinísticos Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`). O porquê está no [ADR 0014](adr/0014-provider-adapter-location.md).
+The Forge fala com os especialistas através de adapters Forge Protocol v1 instalados **no interpretador de cada especialista**, nunca no interpretador do core: Spark Forge AWS (`sparkforge-aws`), API Forge (`apiforge`) e, desde o ciclo 3.1, os observadores determinísticos Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`). O porquê está no [ADR 0014](adr/0014-provider-adapter-location.md).
 
-| | Spark Forge | API Forge | Doctor Data | Doctor API |
+| | Spark Forge AWS | API Forge | Doctor Data | Doctor API |
 |---|---|---|---|---|
-| Distribuição do adapter | `theforge-sparkforge-adapter` (`adapters/sparkforge`) | `theforge-apiforge-adapter` (`adapters/apiforge`) | `theforge-doctordata-adapter` (`adapters/doctordata`) | `theforge-doctorapi-adapter` (`adapters/doctorapi`) |
-| Módulo | `theforge_sparkforge` | `theforge_apiforge` | `theforge_doctordata` | `theforge_doctorapi` |
-| id do provider | `spark-forge` | `api-forge` | `forge-doctor-data` | `forge-doctor-api` |
+| Distribuição do adapter | `theforge-sparkforge-aws-adapter` (`adapters/sparkforge_aws`) | `theforge-apiforge-adapter` (`adapters/apiforge`) | `theforge-doctordata-adapter` (`adapters/doctordata`) | `theforge-doctorapi-adapter` (`adapters/doctorapi`) |
+| Módulo | `theforge_sparkforge_aws` | `theforge_apiforge` | `theforge_doctordata` | `theforge_doctorapi` |
+| id do provider | `spark-forge-aws` | `api-forge` | `forge-doctor-data` | `forge-doctor-api` |
 | Especialista suportado | `sparkforge-aws >=0.5.0,<0.6.0` | `apiforge >=0.1.0,<0.2.0` | `forge-doctor-data >=1.0.0rc1,<2.0.0` | `forge-doctor-api >=0.2.0,<0.3.0` |
 | Interpretador | Python ≥ 3.10 (o CI usa 3.11) | Python 3.12 (exigido pelo API Forge) | Python ≥ 3.11 | Python ≥ 3.11 |
 | Seam nativo | `sparkforge_aws.adapters.tools` (`sparkforge.*` antes do rename do pacote; resolvido por `native_pkg`) | `apiforge` CLI pública | `accept_request` + `check_conformance` (`forge-contracts/1`) | `DoctorBoundary` (spec 070) + strict parse |
@@ -15,14 +15,14 @@ Os adapters são stdlib-only, sem dependências declaradas, e não importam `the
 
 ## Instalação
 
-### Spark Forge (venv Python 3.11)
+### Spark Forge AWS (venv Python 3.11)
 
 ```bash
 python3.11 -m venv <spark-venv>
 <spark-python> -m pip install --upgrade pip
 <spark-python> -m pip install "sparkforge-aws>=0.5,<0.6"      # ou: <checkout-spark-forge-aws>
-<spark-python> -m pip install <the-forge>/adapters/sparkforge
-<spark-python> -c "import sparkforge_aws.adapters.tools, theforge_sparkforge"   # deve sair 0
+<spark-python> -m pip install <the-forge>/adapters/sparkforge_aws
+<spark-python> -c "import sparkforge_aws.adapters.tools, theforge_sparkforge_aws"   # deve sair 0
 ```
 
 ### API Forge (venv Python 3.12)
@@ -76,7 +76,7 @@ importada sob `TYPE_CHECKING` e `Model.from_dict` resolve hints em runtime.
 A suíte offline usa os adapters em modo replay, sem os especialistas:
 
 ```bash
-python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge \
+python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge \
   -e ./adapters/doctordata -e ./adapters/doctorapi
 ```
 
@@ -84,7 +84,7 @@ python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge 
 
 ```bash
 echo '{"protocol":"forge/v1","kind":"Request","op":"describe","request_id":"r1","payload":{}}' \
-  | <spark-python> -m theforge_sparkforge describe
+  | <spark-python> -m theforge_sparkforge_aws describe
 echo '{"protocol":"forge/v1","kind":"Request","op":"health","request_id":"r2","payload":{}}' \
   | <api-python> -m theforge_apiforge health
 echo '{"protocol":"forge/v1","kind":"Request","op":"describe","request_id":"r3","payload":{}}' \
@@ -101,8 +101,8 @@ Registre os dois no `providers.toml` **do usuário**, que é o único que conced
 
 ```toml
 [[providers]]
-id = "spark-forge"
-argv = ["<spark-python>", "-m", "theforge_sparkforge"]
+id = "spark-forge-aws"
+argv = ["<spark-python>", "-m", "theforge_sparkforge_aws"]
 trust = "local"   # ou "trusted"
 
 [[providers]]
@@ -125,7 +125,7 @@ Use o caminho absoluto do interpretador do venv: o core executa esse `argv` sem 
 
 ```bash
 theforge registry refresh
-theforge registry show spark-forge
+theforge registry show spark-forge-aws
 theforge providers health
 ```
 
@@ -136,7 +136,7 @@ Só capabilities read-only e offline são declaradas. Tools que pedem rede, cred
 - O adapter copia para `.forge/runs/<id>/work/stage/` só os arquivos do `ContextPack` com sha256 conferido. O especialista lê essas cópias, com cwd em `work/`.
 - O estado nativo (`.sparkforge/`, `traces.db`, `.apiforge/`, cache de caso) fica em `work/` e é apagado no fim. Sobram só os artifacts declarados: a saída nativa completa em `native/full-output.json` quando o resultado passa de 4 MiB, e os arquivos de caso do API Forge.
 - `work/` **não passa por `security.redact`**: o que sobra ali foi escrito pelo provider e pode conter trechos do código analisado. Trate o diretório com a mesma sensibilidade do workspace e não o publique ([ADR 0014](adr/0014-provider-adapter-location.md#segurança-e-contenção)).
-- O Spark Forge roda cada ação num processo filho (`python -m theforge_sparkforge.native_call`) com `detail_level = "normal"` e `limit = 200`, encadeando `sparkforge_judge` quando há facts. O API Forge roda a CLI pública com `APIFORGE_CACHE=off`. No `change-control run`, o cwd é a raiz do workspace copiado, porque o bundle cita `contract`/`project` relativos. Os Doctors rodam a seam pública num processo filho (`theforge_doctordata.bridge` / `theforge_doctorapi.bridge`, com `PYTHONIOENCODING=utf-8`) sobre a árvore copiada em `stage/` e declaram o documento nativo como artifact `native/handoff.json`.
+- O Spark Forge AWS roda cada ação num processo filho (`python -m theforge_sparkforge_aws.native_call`) com `detail_level = "normal"` e `limit = 200`, encadeando `sparkforge_judge` quando há facts. O API Forge roda a CLI pública com `APIFORGE_CACHE=off`. No `change-control run`, o cwd é a raiz do workspace copiado, porque o bundle cita `contract`/`project` relativos. Os Doctors rodam a seam pública num processo filho (`theforge_doctordata.bridge` / `theforge_doctorapi.bridge`, com `PYTHONIOENCODING=utf-8`) sobre a árvore copiada em `stage/` e declaram o documento nativo como artifact `native/handoff.json`.
 
 ## Níveis de "real"
 
@@ -156,7 +156,7 @@ Os testes `real_provider` (`python -m pytest -m real_provider`) rodam contra os 
 
 | Variável | Valor | Efeito |
 |---|---|---|
-| `THEFORGE_REAL_SPARKFORGE_PYTHON` | caminho absoluto de um interpretador com `sparkforge-aws` e `theforge-sparkforge-adapter` | habilita a integração do Spark Forge |
+| `THEFORGE_REAL_SPARKFORGE_AWS_PYTHON` | caminho absoluto de um interpretador com `sparkforge-aws` e `theforge-sparkforge-aws-adapter` | habilita a integração do Spark Forge AWS |
 | `THEFORGE_REAL_APIFORGE_PYTHON` | caminho absoluto de um interpretador 3.12 com `apiforge` e `theforge-apiforge-adapter` | habilita a integração do API Forge |
 | `THEFORGE_REAL_DOCTORDATA_PYTHON` | caminho absoluto de um interpretador ≥ 3.11 com `forge-doctor-data` e `theforge-doctordata-adapter` | habilita a integração do Doctor Data |
 | `THEFORGE_REAL_DOCTORAPI_PYTHON` | caminho absoluto de um interpretador ≥ 3.11 com `forge-doctor-api` e `theforge-doctorapi-adapter` | habilita a integração do Doctor API |
@@ -166,33 +166,33 @@ Os testes `real_provider` (`python -m pytest -m real_provider`) rodam contra os 
 - Só o harness de teste lê essas variáveis, para montar o `argv` do `providers.toml` de usuário isolado de cada teste. Elas nunca chegam ao ambiente do provider, porque a allowlist de ambiente do core não muda.
 - Os pré-requisitos de cada Forge são verificados nesta ordem, cada um com motivo explícito: a variável está definida; o valor é um caminho absoluto de um interpretador (`python`, `python3` ou `python3.x`, com `.exe` opcional) e o arquivo existe; e `<python> -c "import <adapter>, <especialista>"` sai 0 em até 60 s. Exemplo de motivo: `THEFORGE_REAL_APIFORGE_PYTHON not set (API Forge needs Python 3.12; see docs/real-providers.md)`.
 - Sem `THEFORGE_REAL_PROVIDERS_REQUIRED=1`, um pré-requisito ausente **pula** a integração daquele Forge com o motivo, e a suíte não falha. Com a variável, o mesmo caso **falha**.
-- No CI, o workflow agendado `ecosystem-real.yml` cria um venv próprio por especialista — 3.11 (Spark Forge e os dois Doctors) e 3.12 (API Forge) — a partir dos irmãos em `siblings/` e exporta as quatro variáveis, com `THEFORGE_REAL_PROVIDERS_REQUIRED=1`. Uma seleção vazia é regressão. O workflow não roda em pull requests e nunca bloqueia merge.
+- No CI, o workflow agendado `ecosystem-real.yml` cria um venv próprio por especialista — 3.11 (Spark Forge AWS e os dois Doctors) e 3.12 (API Forge) — a partir dos irmãos em `siblings/` e exporta as quatro variáveis, com `THEFORGE_REAL_PROVIDERS_REQUIRED=1`. Uma seleção vazia é regressão. O workflow não roda em pull requests e nunca bloqueia merge.
 - `provider-surface-drift.yml` (semanal/`workflow_dispatch`) roda `python -m theforge_<adapter>.record --check` no venv de cada especialista contra a main dele: classifica `surface drift: none`, `additive` (ferramenta/seam/capability nova ou só bump de versão — exit 0, reportado no log) ou `breaking` (item gravado removido/alterado, request kind removido, versão de contrato movida — exit 1, job vermelho). O snapshot nunca é re-gravado pelo CI.
 - `release-compat.yml` (semanal/`workflow_dispatch`) instala a main de cada especialista no seu interpretador e roda `theforge provider check -- <venv>/bin/python -m theforge_<adapter>` — conformidade de protocolo independente de número de versão.
 
 Localmente:
 
 ```bash
-export THEFORGE_REAL_SPARKFORGE_PYTHON=<spark-python>
+export THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=<spark-python>
 export THEFORGE_REAL_APIFORGE_PYTHON=<api-python>
 export THEFORGE_REAL_DOCTORDATA_PYTHON=<dd-python>
 export THEFORGE_REAL_DOCTORAPI_PYTHON=<da-python>
 python -m pytest -m real_provider
 ```
 
-No PowerShell: `$env:THEFORGE_REAL_SPARKFORGE_PYTHON = "<spark-python>"`.
+No PowerShell: `$env:THEFORGE_REAL_SPARKFORGE_AWS_PYTHON = "<spark-python>"`.
 
 A integração cobre, por Forge, `describe` (manifest `ready` e snapshot igual à superfície viva), `health`, `execute` de uma capability sobre `tests/fixtures/workspaces/{spark,api,data/shop,cross/orders-api}/`, provider ausente e version skew (`--assume-specialist-version 9.9.9`).
 
-### Prova cross-forge (Spark Forge → API Forge)
-`tests/test_cross_forge_real.py` (marker `real_provider`, mesmo contrato de ambiente) registra os dois adapters e roda `theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max --execute` no workspace de prova `tests/fixtures/workspaces/cross/` (montado em diretório temporário, um repositório git por subdiretório). Confere o plano `spark-forge/pyspark.static-analysis` → `api-forge/api.analyze`, ao menos um item de handoff com origem no Spark Forge e o status epistêmico original recebido pelo nó de API, a síntese com os dois runs e `theforge explain` do plano sem divergência ([ADR 0018](adr/0018-multi-provider-execution.md)).
+### Prova cross-forge (Spark Forge AWS → API Forge)
+`tests/test_cross_forge_real.py` (marker `real_provider`, mesmo contrato de ambiente) registra os dois adapters e roda `theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max --execute` no workspace de prova `tests/fixtures/workspaces/cross/` (montado em diretório temporário, um repositório git por subdiretório). Confere o plano `spark-forge-aws/pyspark.static-analysis` → `api-forge/api.analyze`, ao menos um item de handoff com origem no Spark Forge AWS e o status epistêmico original recebido pelo nó de API, a síntese com os dois runs e `theforge explain` do plano sem divergência ([ADR 0018](adr/0018-multi-provider-execution.md)).
 
 ### Prova hierárquica de quatro Forges (observe → engineer → verify)
-No mesmo arquivo, `test_four_provider_proof_observe_then_engineer_then_verify` registra os quatro adapters reais e roda um plano `--profile max --execute` sobre o workspace cross completo (`data-pipeline` + `orders-api`). A prova não fixa ordem nenhuma: confere que toda aresta `produces→consumes` declarada é honrada pela ordem executada — `forge-doctor-data` antes de `spark-forge` e `forge-doctor-api` antes de `api-forge`, com `capability-graph` como a regra citada na dependência, não o proxy de ordem de palavra-chave do intent. Para cada cadeia o teste verifica: o handoff do run do engineer contém itens com origem no Doctor (`origin.provider.id`), a evidência do engineer chega com `derived_from` apontando para provider/run/node/item do Doctor e `epistemic` verbatim; e a verificação independente do run do engineer passou, conduzida pelo Doctor da cadeia (`basis` cita `verifier:forge-doctor-data`/`forge-doctor-api`). A síntese cobre os quatro runs e `theforge explain` do plano sai sem divergência.
+No mesmo arquivo, `test_four_provider_proof_observe_then_engineer_then_verify` registra os quatro adapters reais e roda um plano `--profile max --execute` sobre o workspace cross completo (`data-pipeline` + `orders-api`). A prova não fixa ordem nenhuma: confere que toda aresta `produces→consumes` declarada é honrada pela ordem executada — `forge-doctor-data` antes de `spark-forge-aws` e `forge-doctor-api` antes de `api-forge`, com `capability-graph` como a regra citada na dependência, não o proxy de ordem de palavra-chave do intent. Para cada cadeia o teste verifica: o handoff do run do engineer contém itens com origem no Doctor (`origin.provider.id`), a evidência do engineer chega com `derived_from` apontando para provider/run/node/item do Doctor e `epistemic` verbatim; e a verificação independente do run do engineer passou, conduzida pelo Doctor da cadeia (`basis` cita `verifier:forge-doctor-data`/`forge-doctor-api`). A síntese cobre os quatro runs e `theforge explain` do plano sai sem divergência.
 
-- `api-forge/api.analyze` declara `accepts_handoff` e consome os itens: o adapter traduz o handoff a `apiforge/upstream-facts/v1` (limitado a 32 itens/32 KiB, itens malformados pulados com limitação; no especialista o teto é 128 itens/256 KiB e o intake recusa chaves imperativas com `AF-UPSTREAM-FORBIDDEN`), grava `upstream-facts.json` no cwd nativo, passa `--upstream` ao `analyze` do especialista instalado e marca as evidências derivadas com `derived_from` apontando para o item e o run do Spark Forge — o check `handoff-provenance` da verificação confere isso. O teste faz a prova A/B: o mesmo `execute` do nó, com e sem o `handoff` gravado, produz evidência observavelmente diferente. Quando o apiforge instalado não tem a entrada, o adapter responde `ok`/`partial` com a limitação de consumo ausente (e nunca inventa evidência upstream). `api.change-control` não declara e segue registrando `handoff-use-undeclared`.
-- `spark-forge/pyspark.static-analysis` (ação `pyspark`) declara `accepts_handoff` e `relations.consumes: ["data.diagnostic-evidence"]` — a aresta observe→engineer do ciclo 3.1. O adapter traduz o handoff a `sparkforge/upstream-facts/v1` (`theforge_sparkforge.handoff`, nos mesmos tetos do intake: 128 facts/256 KiB, ids `upstream:<sha256[:16]>` content-addressed, provenance `theforge/handoff`), grava `stage/upstream-facts.json`, passa `--file upstream=upstream-facts.json` ao `native_call` e audita o consumo pelo `output.filters_applied.upstream` — um Spark Forge sem o intake ignora o argumento silenciosamente e a limitação `handoff delivered but not consumed` registra o gap (a entrada existe na `main` do especialista a partir do SDD `UPSTREAM_FACTS`; instalações `0.5.0` anteriores a ela seguem suportadas, sem intake). As facts estrangeiras voltam como evidência com `derived_from` apontando para provider/run/node/item do item de origem e `epistemic` verbatim — nunca `observed` (observado é o que o próprio especialista extraiu). Em replay nenhum arquivo de intake é escrito: a presença de `arguments.upstream` na gravação decide se o run gravado consumiu um handoff, e um handoff novo contra uma gravação sem intake vira limitação explícita.
-- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. As duas gravações saem dos gravadores: a do Spark por `record_execute --handoff` (carrega `arguments.upstream` e as facts dobradas) e a do API Forge por `record_execute --handoff` sobre a main pós-PR #34 (`"provenance": "recorded"`, upstream facts embutidas). Em replay o adapter re-deriva as upstream facts do handoff **da requisição** (a tradução é determinística e vive no adapter, sem especialista): a provenance é sempre a do run atual, nunca a da gravação; sem handoff na requisição as facts upstream gravadas são descartadas. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
+- `api-forge/api.analyze` declara `accepts_handoff` e consome os itens: o adapter traduz o handoff a `apiforge/upstream-facts/v1` (limitado a 32 itens/32 KiB, itens malformados pulados com limitação; no especialista o teto é 128 itens/256 KiB e o intake recusa chaves imperativas com `AF-UPSTREAM-FORBIDDEN`), grava `upstream-facts.json` no cwd nativo, passa `--upstream` ao `analyze` do especialista instalado e marca as evidências derivadas com `derived_from` apontando para o item e o run do Spark Forge AWS — o check `handoff-provenance` da verificação confere isso. O teste faz a prova A/B: o mesmo `execute` do nó, com e sem o `handoff` gravado, produz evidência observavelmente diferente. Quando o apiforge instalado não tem a entrada, o adapter responde `ok`/`partial` com a limitação de consumo ausente (e nunca inventa evidência upstream). `api.change-control` não declara e segue registrando `handoff-use-undeclared`.
+- `spark-forge-aws/pyspark.static-analysis` (ação `pyspark`) declara `accepts_handoff` e `relations.consumes: ["data.diagnostic-evidence"]` — a aresta observe→engineer do ciclo 3.1. O adapter traduz o handoff a `sparkforge/upstream-facts/v1` (`theforge_sparkforge_aws.handoff`, nos mesmos tetos do intake: 128 facts/256 KiB, ids `upstream:<sha256[:16]>` content-addressed, provenance `theforge/handoff`), grava `stage/upstream-facts.json`, passa `--file upstream=upstream-facts.json` ao `native_call` e audita o consumo pelo `output.filters_applied.upstream` — um Spark Forge AWS sem o intake ignora o argumento silenciosamente e a limitação `handoff delivered but not consumed` registra o gap (a entrada existe na `main` do especialista a partir do SDD `UPSTREAM_FACTS`; instalações `0.5.0` anteriores a ela seguem suportadas, sem intake). As facts estrangeiras voltam como evidência com `derived_from` apontando para provider/run/node/item do item de origem e `epistemic` verbatim — nunca `observed` (observado é o que o próprio especialista extraiu). Em replay nenhum arquivo de intake é escrito: a presença de `arguments.upstream` na gravação decide se o run gravado consumiu um handoff, e um handoff novo contra uma gravação sem intake vira limitação explícita.
+- O equivalente offline (`tests/test_cross_forge_replay.py`) roda os adapters em `--replay` sobre os cenários `scenarios/cross/` de `tests/fixtures/native/sparkforge_aws/` e `tests/fixtures/native/apiforge/`, possuídos pela spec `cross-forge-foundation`; os cenários `default` não mudam. As duas gravações saem dos gravadores: a do Spark por `record_execute --handoff` (carrega `arguments.upstream` e as facts dobradas) e a do API Forge por `record_execute --handoff` sobre a main pós-PR #34 (`"provenance": "recorded"`, upstream facts embutidas). Em replay o adapter re-deriva as upstream facts do handoff **da requisição** (a tradução é determinística e vive no adapter, sem especialista): a provenance é sempre a do run atual, nunca a da gravação; sem handoff na requisição as facts upstream gravadas são descartadas. O teste real compara essas gravações com as saídas vivas (chaves dos arquivos de caso do API Forge e formato dos IDs nativos), como contraparte dos checks de drift da integração.
 - `delta/v1` (fase 49): os dois Doctors declaram a feature no manifest; num run subsequente sobre o mesmo workspace o core envia `delta` no `ExecuteRequest` ([protocol.md — Delta](protocol.md#delta-deltav1)). O bridge do Doctor API resolve `baseline_ref` na store `.forge-doctor/snapshots` do workspace copiado em `stage/` e passa o `DoctorReport` de baseline ao `DoctorBoundary`, que emite o `DeltaContext` determinístico; o do Doctor Data grava um snapshot do relatório atual dentro do stage e o difere contra o anterior de `.forge-doctor-data/history` via `diff_snapshots`. Baseline não resolvido vira `delta.unresolved` explícito — nunca um delta fabricado — e a seção vira evidência `id="delta"` com contagens por tipo de mudança. Em replay a gravação responde o documento com ou sem `delta` igualmente; os cenários `scenarios/delta/` de cada Doctor cobrem o transporte e a tradução.
 
 ## Regravar snapshots e gravações de replay
@@ -203,7 +203,7 @@ Os arquivos gravados são comparados byte a byte. A escrita é canônica: chaves
 
 ```bash
 # Spark: native_catalog.json (tools, anotações MCP, argumentos obrigatórios, versão de origem)
-<spark-python> -m theforge_sparkforge.record [--output <arquivo>] [--environment <dir-do-cenário>]
+<spark-python> -m theforge_sparkforge_aws.record [--output <arquivo>] [--environment <dir-do-cenário>]
 
 # API: native_matrix.json (matriz pública de capabilities)
 <api-python> -m theforge_apiforge.record [--out <arquivo>] [--recorded-at <timestamp>]
@@ -230,11 +230,11 @@ Ação sem gravação responde `error` `ADAPTER-REPLAY-MISSING` com o nome do ar
 Spark: grave uma ação a partir de um workspace. O workspace nunca é tocado: ele é copiado sem links para um diretório temporário, e cada `--arg` é um caminho relativo a ele.
 
 ```bash
-<spark-python> -m theforge_sparkforge.record_execute \
+<spark-python> -m theforge_sparkforge_aws.record_execute \
   --workspace tests/fixtures/workspaces/spark \
   --capability pyspark.static-analysis --action pyspark \
   --arg path=jobs \
-  --out tests/fixtures/native/sparkforge/default
+  --out tests/fixtures/native/sparkforge_aws/default
 ```
 
 API: `theforge_apiforge.record_execute` grava uma ação a partir de um workspace, como o gravador do Spark. O workspace nunca é tocado: é copiado sem links para `stage/` num diretório temporário, cada `--arg` é `<input>=<caminho relativo ao workspace>` (para `api.analyze`, `contract` e `project`), e o verbo roda pela CLI pública com o mesmo argv que o adapter constrói. `--handoff <arquivo>` alimenta a entrada `--upstream` com um documento `theforge/Handoff/v1`, como o adapter faz ao vivo. A gravação sai como `{argv, case_dir, case_files, exit_code, native_cwd, stdout, provenance: "recorded", assembled_from}` em `<capability>.<action>.json` — ou `{exit_code, stderr}` em `<capability>.<action>.error.json` quando o verbo falha — e é recusada quando carregaria um caminho da máquina:
@@ -264,8 +264,8 @@ Os códigos `FORGE-*` desta tabela estão, com a família de cada um, na lista c
 | Sintoma | Causa | O que fazer |
 |---|---|---|
 | provider `unreachable`, `FORGE-PROTO-SPAWN` com o caminho | o `argv[0]` registrado não existe ou não é executável | corrija o caminho absoluto do interpretador no `providers.toml` e rode `theforge registry refresh` |
-| provider `invalid` com `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | o adapter roda, mas o especialista não é importável nesse interpretador (ou, no API, o interpretador não é 3.12; nos Doctors, menor que 3.11); o `describe` recusa com o motivo | instale o especialista no mesmo venv do adapter ou registre o interpretador certo |
-| `ModuleNotFoundError: theforge_sparkforge` / `theforge_apiforge` / `theforge_doctordata` / `theforge_doctorapi` no spawn | o adapter não foi instalado no interpretador registrado | `<python> -m pip install <the-forge>/adapters/<forge>` |
+| provider `invalid` com `SPARKFORGE_AWS-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | o adapter roda, mas o especialista não é importável nesse interpretador (ou, no API, o interpretador não é 3.12; nos Doctors, menor que 3.11); o `describe` recusa com o motivo | instale o especialista no mesmo venv do adapter ou registre o interpretador certo |
+| `ModuleNotFoundError: theforge_sparkforge_aws` / `theforge_apiforge` / `theforge_doctordata` / `theforge_doctorapi` no spawn | o adapter não foi instalado no interpretador registrado | `<python> -m pip install <the-forge>/adapters/<forge>` |
 | Python 3.12 ausente | o API Forge exige 3.12. Sem ele, o `health` do API responde `unavailable` (`API Forge requires Python 3.12; this adapter runs on <x.y> at <python>`), e a integração pula com `THEFORGE_REAL_APIFORGE_PYTHON not set (API Forge needs Python 3.12; ...)` | instale um 3.12, crie o venv do API Forge e aponte a variável ou o `providers.toml` para ele |
 | health `degraded` com `found <v>, supported <janela>` | version skew: a versão do especialista está fora de `SUPPORTED_SPECIALIST` do adapter (Spark `>=0.5.0,<0.6.0`, API `>=0.1.0,<0.2.0`, Doctor Data `>=1.0.0rc1,<2.0.0` — `rc` compara abaixo do release, Doctor API `>=0.2.0,<0.3.0`) | instale uma versão dentro da janela ou atualize o adapter para uma versão cuja linha da matriz em [versioning.md](versioning.md) cubra a versão instalada |
 | health `unavailable` (Spark) | `sparkforge_aws.adapters.tools` (ou `sparkforge.adapters.tools` pré-rename) não é encontrável, o Python é menor que 3.10 ou o snapshot está ausente ou ilegível | reinstale `sparkforge-aws` e o adapter no mesmo venv |

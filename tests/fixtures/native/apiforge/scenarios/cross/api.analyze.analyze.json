@@ -294,7 +294,7 @@
               },
               "node": "n1",
               "plan_run": "run-plan-cross",
-              "provider": "spark-forge",
+              "provider": "spark-forge-aws",
               "provider_version": "0.5.0",
               "run_id": "run-spark-cross"
             }
