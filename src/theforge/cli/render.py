@@ -170,6 +170,23 @@ def economy_report(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+
+def economy_experiment(data: dict[str, Any]) -> str:
+    lines = [
+        f"experiment {_clean(data.get('experiment_id', '?'))}: "
+        f"{_clean(data.get('state', '?'))}",
+        f"  capability={_clean(data.get('capability', '?'))} "
+        f"champion={_clean(data.get('champion', '?'))} "
+        f"challenger={_clean(data.get('challenger', '?'))}",
+        f"  observations={data.get('observations', 0)} "
+        f"verified={data.get('verified_observations', 0)} "
+        "promotion=operator-review-only",
+    ]
+    for reason in data.get("reasons") or []:
+        lines.append(f"  note: {_clean(reason)}")
+    return "\n".join(lines)
+
+
 def capabilities(data: dict[str, Any]) -> str:
     rows = data["capabilities"]
     if not rows:
