@@ -190,3 +190,38 @@ Não há sandbox. Detalhes e pesquisa por plataforma em [ADR 0012](adr/0012-os-s
 - **Windows, modo degradado:** se o Job Object não puder ser criado ou atribuído, o kill usa `taskkill /T /F`, que não alcança um neto órfão cujo pai já terminou. O neto sobrevive, mas a chamada continua limitada (timeout + 2 s de graça + até 5 s de join das pipes).
 - **Adapters reais:** a contenção do estado nativo é feita pelo adapter, não pelo core, e o especialista continua com acesso ao filesystem inteiro. No Spark Forge AWS, cada execute roda num processo filho para que o journal nativo (`.sparkforge/traces.db`, gravado também no `atexit`) seja fechado antes da limpeza. Depurar uma falha nativa exige reexecutar, porque o estado nativo é apagado.
 - **Routing por sinais genéricos:** uma dependência ou keywords genéricas declaradas por **um único** provider confiável ainda podem vencer um provider mais específico, porque distinguir sinal genérico de específico exigiria conhecimento de domínio no core. A mitigação é o trust: só providers configurados pelo usuário roteiam.
+
+## Ameaças do registry e da federação de metadados (ciclo 4)
+
+Fontes externas (`http`, `a2a`, `mcp`) entregam **metadados não confiáveis**. Nenhuma delas pode criar trust, identidade ou roteabilidade local — trust continua vindo só do `providers.toml` do usuário, e um candidato remoto nunca entra no routing sem instalação explícita e aprovada ([remote-discovery](remote-discovery.md), [provider-distribution](provider-distribution.md)).
+
+| Ameaça | Mitigação | Limite |
+|---|---|---|
+| Registry malicioso / poisoning | fonte opt-in e desabilitável; documento decodificado de forma tolerante mas validado por contrato (`RegistryDocument` v1); entradas malformadas viram dados inválidos, nunca exceção | o core não pode distinguir um registry comprometido que sirva entradas *válidas* — por isso nada disso concede trust |
+| Impersonação de publisher | `PublisherIdentity` é declaração, não prova; candidatos remotos são sempre `unverified` por construção; popularidade do registry não é sinal de trust | identidade forte exige assinatura verificada (futuro — ver §Assinaturas) |
+| Dependency confusion / package substitution / typosquatting | `DistributionRef` declara tipo + coordenadas + `sha256`; o `InstallationPlan` v2 pinna versão e carrega `expected_hashes`; aprovação explícita (`--approve`) obrigatória; plano é *plan-only*, nunca executa | hash prova **identidade de conteúdo**, não segurança — um artefato com hash correto pode continuar malicioso |
+| Spoofing de assinatura | `SignatureRef` é metadado carregado para o stage `verify` do plano; nenhuma verificação local é fingida — sem verificação, a assinatura não conta como garantia | verificação real pesquisada em §Assinaturas |
+| Publisher comprometido / versão stale vulnerável | reads carregam provenance + freshness (`retrieved_at`, `from_cache`, `stale`); metadado expirado é servido como `stale`, nunca como fresco; o plano registra versão e hash fixos | o core não conhece CVEs — stale é informado, a decisão é do usuário |
+| Mismatch manifest/distribuição | `manifest_sha256` em `entry.hashes` + `distribution.sha256` entram em `expected_hashes`; divergência quebra o plano antes de qualquer execução | — |
+| Injeção via descrição/nome de metadado | nomes e descrições de fontes remotas são **dados**: tamanho limitado, redigidos por `security.redact`, slugificados quando precisam virar id; nunca chegam a um prompt ou shell | o core não executa instruções contidas em metadados — eles não entram em `argv` nem em prompts do core |
+| Cache de registry adulterado (ciclo 4) | envelope de cache com `body_sha256` verificado na leitura; cache fora do workspace; `THEFORGE_NO_NETWORK=1` desliga qualquer leitura remota | quem escreve no próprio home está fora do modelo |
+| Agent Card A2A malicioso | card é documento: decodificado com limites (`_MAX_SKILLS`, `_MAX_PARTS`, tamanho de strings), `entry_from_card` produz no máximo um candidato `unverified`; descrições passam por redação; auth é HTTP-layer, nunca vira trust Forge | agentes A2A nunca executam — são metadados para discovery |
+| Identidade A2A/MCP forjada | `RemoteProviderCandidate.trust` é fixo em `unverified`; MCP servers ficam num tipo separado (`McpServerEntry`) que não entra no grafo de providers | — |
+| Histórico de performance/enconomia envenenado | `provider-performance.json` e `observations.jsonl` falham fechado: malformado → warning + ignorado; contagens impossíveis (`ok > runs`) violam o contrato; observações conflitantes do mesmo `(run_id, provider, capability)` viram `conflict` explícito, nunca média silenciosa | conteúdo *válido* fabricado é dado local confiável — o arquivo de métricas está no workspace do usuário |
+| Recomendação com história rasa/fabricada | challenger frio ou sem runs verificados nunca é recomendado; `ShadowRecommendation.advisory` é `True` por contrato — nenhum caminho a promove | — |
+| Superfície mudada com história antiga | história é escopada por `surface_fingerprint`; fingerprint novo → `stale`, e o score antigo não responde pela superfície nova | — |
+| Manifest malicioso | todo manifest passa pela validação de contrato (ops obrigatórias, ids únicos, padrões de id); campos extras de resultado/payload são descartados antes de qualquer decisão | — |
+
+### Assinaturas (pesquisa, §82)
+
+Não inventamos criptografia. A pesquisa cobriu os três ecossistemas propostos:
+
+- **Sigstore** (cosign/signing a blob com identidade OIDC + Rekor): é o caminho escolhido como *alvo* — verificação offline-deferred, identidade baseada em OIDC, transparência via log público. No core stdlib-only, a verificação real exige dependências — então hoje `SignatureRef` carrega `algorithm`/`key_id`/`signature`/`signed` como metadado declarativo, e o `InstallationPlan` v2 reserva o stage `verify` para um verificador externo opcional.
+- **Package index signatures** (PEP 691/PEP 740-style, por índice): boa para distribuições `pip-package`; mesma política — metadado carregado, verificação delegada.
+- **GitHub artifact attestations**: útil quando a distribuição já sai de GitHub Actions; mesmo slot `SignatureRef`.
+
+Decisão: **carregar metadado de assinatura hoje, verificar por verificador externo opcional depois** — nunca fingir verificação local com crypto caseira. Detalhes no [ADR 0043](adr/0043-security-hardening.md).
+
+### Registries de organização
+
+Catálogos privados e ambientes air-gapped são suportados pelo mesmo mecanismo de fontes: `kind: "local-file"` para catálogo versionado no repositório da organização (sem rede), ou `http` apontando para o registry interno — ambos read-only, explícitos e desabilitáveis. Nenhum catálogo corporativo precisa de tratamento especial: a fronteira de trust é a mesma.

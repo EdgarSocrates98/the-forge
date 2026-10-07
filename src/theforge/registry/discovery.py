@@ -22,7 +22,6 @@ from theforge.contracts.registry import (
     SignatureRef,
 )
 from theforge.contracts.semver import parse_semver
-from theforge.negotiation import negotiate_all
 from theforge.registry.mcp import read_mcp_sources
 from theforge.registry.registry import RegistryRecord
 from theforge.registry.sources import (
@@ -248,6 +247,9 @@ def discover(requirement: CapabilityRequirement,
     """Local-first discovery: negotiate installed providers; consult enabled
     sources under the ``profile`` policy (or ``force_remote``).
     ``source_kwargs`` forwards fetcher/cache_dir to ``read_sources`` (tests)."""
+    # Lazy import: ``theforge.negotiation`` imports ``theforge.registry``
+    # submodules — keeping this here breaks the import cycle either way.
+    from theforge.negotiation import negotiate_all
     local_results = negotiate_all(requirement, list(records),
                                   performance=performance)
     top = local_results[0] if local_results else None
