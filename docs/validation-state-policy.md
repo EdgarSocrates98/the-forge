@@ -31,3 +31,16 @@ For GitHub Actions specifically:
 The classification logic lives in `scripts/ci/classify_remote_validation.py`
 and is intentionally stdlib-only/offline: it consumes a previously exported
 GitHub jobs JSON document and never calls GitHub itself.
+
+
+## Release-gate mode
+
+O classificador é informativo por padrão. Para usá-lo como gate de release:
+
+```bash
+python scripts/ci/classify_remote_validation.py jobs.json --require-verified
+```
+
+O exit code é `0` somente para `REMOTE_VERIFIED`. Estados
+`REMOTE_BLOCKED` e `REMOTE_FAILED` continuam semanticamente distintos no
+JSON, mas ambos bloqueiam um release que exige prova remota.
