@@ -40,3 +40,13 @@ Falhas de nós também são unresolved. Um nó `refused`, `provider_failure`,
 `node:<id>:<status>` na decisão global. Assim, um plano parcial/falho nunca
 pode terminar como `stop_sufficient_evidence` apenas porque nenhum provider
 retornou uma string em `unknowns`.
+
+
+### Retry budget
+
+Retries não são chamadas invisíveis. Em plan runs, `RunBudget.provider_calls`
+reserva `plan_nodes × retry.max_attempts` e registra a ampliação em
+`adjustments`. A telemetria conta somente tentativas que realmente alcançaram
+`execute`. Quando ainda há gaps e esse teto foi atingido, a decisão global
+usa `stop_budget_exhausted`; um plano já completo não é reclassificado apenas
+porque consumiu todo o teto.
