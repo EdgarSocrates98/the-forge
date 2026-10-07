@@ -74,6 +74,7 @@ def test_unknown_measurements_remain_a_limitation() -> None:
     assert roi.measured_runs == 2
     assert roi.maturity == "warming"
     assert roi.limitations
+    assert recommend_context_budget(roi, current_budget_bytes=200_000) is None
 
 
 def test_roi_recommendation_is_advisory_and_conservative() -> None:
@@ -290,6 +291,11 @@ def test_surface_change_invalidates_experiment() -> None:
     )
     assert result.state == "stale"
     assert "surface changed" in result.reasons[-1]
+
+
+def test_experiment_requires_timezone_aware_holdout() -> None:
+    with pytest.raises(ContractError, match="ISO-8601"):
+        experiment(evaluation_after="2026-10-07T12:00:00")
 
 
 def test_experiment_rejects_invalid_holdout_timestamps() -> None:
