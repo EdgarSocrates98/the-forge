@@ -345,6 +345,33 @@ class TestE2E:
         assert recommendation["current_budget_bytes"] == 262_144
         assert recommendation["suggested_budget_bytes"] == 131_072
 
+    def test_economy_report_does_not_mix_profiles_for_roi_advice(
+            self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        from theforge.cli.commands import cmd_economy_report
+
+        base = dict(
+            task_family="data.audit",
+            surface_fingerprint="surface-1",
+            context_bytes=100,
+            context_items=10,
+            context_items_cited=1,
+            verification="passed",
+        )
+        for index, profile in enumerate(
+            ["economy", "balanced", "economy", "balanced", "economy", "balanced", "economy", "balanced"]
+        ):
+            record_observation(
+                tmp_path,
+                obs(run_id=f"mixed-{index}", profile=profile, **base),
+            )
+        cmd_economy_report(_args_at(tmp_path, json_=True))
+        payload = json.loads(capsys.readouterr().out)
+        rows = payload["context_roi"]
+        assert len(rows) == 1
+        assert rows[0]["recommendation"] is None
+        assert "one known profile" in rows[0]["recommendation_limitation"]
+
+
     def test_discovery_report_carries_economy(self, tmp_path: Path) -> None:
         from theforge.contracts.negotiation import CapabilityRequirement
         from theforge.registry.discovery import discover
