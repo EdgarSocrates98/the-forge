@@ -2,19 +2,88 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "action": {"enum": ["continue","stop_sufficient_evidence","stop_budget_exhausted","stop_policy","stop_no_expected_gain","stop_repeated_failure","stop_user_constraint","unresolved"]},
-    "budget_remaining": {"anyOf": [{"type":"number"},{"type":"null"}]},
-    "created_at": {"type":"string"},
-    "information_gain": {"enum": ["high","medium","low","none","unknown"]},
-    "producer": {"additionalProperties": false,"properties":{"id":{"type":"string"},"version":{"type":"string"}},"required":["id","version"],"type":"object"},
-    "reasons": {"items":{"type":"string"},"type":"array"},
-    "run_id": {"type":"string"},
-    "schema": {"type":"string"},
-    "unresolved": {"items":{"type":"string"},"type":"array"},
-    "verification_required": {"type":"boolean"},
-    "verification_satisfied": {"type":"boolean"}
+    "action": {
+      "enum": [
+        "continue",
+        "stop_sufficient_evidence",
+        "stop_budget_exhausted",
+        "stop_policy",
+        "stop_no_expected_gain",
+        "stop_repeated_failure",
+        "stop_user_constraint",
+        "unresolved"
+      ]
+    },
+    "budget_remaining": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "information_gain": {
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "none",
+        "unknown"
+      ]
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "unresolved": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "verification_required": {
+      "type": "boolean"
+    },
+    "verification_satisfied": {
+      "type": "boolean"
+    }
   },
-  "required": ["producer","created_at","run_id","action","information_gain"],
+  "required": [
+    "producer",
+    "created_at",
+    "run_id",
+    "action",
+    "information_gain"
+  ],
   "title": "GlobalStopDecision",
   "type": "object"
 }
