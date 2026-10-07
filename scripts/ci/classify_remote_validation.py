@@ -55,7 +55,10 @@ def classify(payload: Any) -> dict[str, Any]:
             blocked.append(name)
             continue
         with_steps.append(job)
-        if job.get("conclusion") not in ("success", "skipped"):
+        conclusion = job.get("conclusion")
+        if conclusion == "skipped":
+            blocked.append(name)
+        elif conclusion != "success":
             failed_with_steps.append(name)
 
     if failed_with_steps:
@@ -65,7 +68,7 @@ def classify(payload: Any) -> dict[str, Any]:
     elif blocked:
         # Partial execution is not sufficient proof for the required matrix.
         state = REMOTE_BLOCKED
-    elif all(job.get("conclusion") in ("success", "skipped") for job in with_steps):
+    elif all(job.get("conclusion") == "success" for job in with_steps):
         state = REMOTE_VERIFIED
     else:
         state = REMOTE_FAILED
