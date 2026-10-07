@@ -11,7 +11,14 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import BudgetProfile, Metric, Producer, VerificationLevel
+from theforge.contracts.types import (
+    REF_RE,
+    BudgetProfile,
+    Metric,
+    Producer,
+    VerificationLevel,
+    check_ref,
+)
 
 TELEMETRY_SCHEMA = "theforge/RunTelemetry/v1"
 
@@ -34,13 +41,14 @@ class NativeTrace:
     ``native_trace_ref`` link. Expansion is on-demand, never imported whole.
     """
 
-    ref: str
+    ref: str = field(metadata={"pattern": REF_RE.pattern})
     summary: str = ""
     critical_path: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.ref:
             raise ContractError("native_trace.ref must not be empty")
+        check_ref(self.ref, field="native_trace.ref")
         if len(self.ref) > SPAN_ATTR_LEN:
             raise ContractError(
                 f"native_trace.ref exceeds {SPAN_ATTR_LEN} chars")

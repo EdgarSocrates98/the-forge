@@ -8,11 +8,13 @@ from theforge.contracts.context import LineRange
 from theforge.contracts.economy import ProviderEconomyReceipt
 from theforge.contracts.telemetry import NativeTrace
 from theforge.contracts.types import (
+    REF_RE,
     SHA256_RE,
     Epistemic,
     Metric,
     Producer,
     Severity,
+    check_ref,
     check_sha256,
 )
 
@@ -33,12 +35,13 @@ class ProviderReceipt:
     run's artifacts. Providers without a native receipt emit nothing.
     """
 
-    ref: str
+    ref: str = field(metadata={"pattern": REF_RE.pattern})
     sha256: str = field(metadata={"pattern": SHA256_RE.pattern})
 
     def __post_init__(self) -> None:
         if not self.ref:
             raise ContractError("provider_receipt.ref must not be empty")
+        check_ref(self.ref, field="provider_receipt.ref")
         check_sha256(self.sha256, field="sha256")
 
 

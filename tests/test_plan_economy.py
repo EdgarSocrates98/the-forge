@@ -182,10 +182,10 @@ def test_native_trace_bounds_and_ref() -> None:
     with pytest.raises(ContractError, match="ref must not be empty"):
         NativeTrace(ref="")
     with pytest.raises(ContractError, match="summary"):
-        NativeTrace(ref="t:1", summary="x" * (NATIVE_TRACE_SUMMARY_MAX + 1))
+        NativeTrace(ref="tr:1", summary="x" * (NATIVE_TRACE_SUMMARY_MAX + 1))
     with pytest.raises(ContractError, match="critical_path"):
-        NativeTrace(ref="t:1", critical_path=["s"] * (NATIVE_TRACE_PATH_MAX + 1))
-    trace = NativeTrace(ref="t:1", critical_path=["a", "b"])
+        NativeTrace(ref="tr:1", critical_path=["s"] * (NATIVE_TRACE_PATH_MAX + 1))
+    trace = NativeTrace(ref="tr:1", critical_path=["a", "b"])
     assert trace.critical_path == ["a", "b"]
 
 

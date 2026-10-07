@@ -1643,6 +1643,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "ref": {
+                      "pattern": "^[a-z][a-z0-9+.-]{1,30}:[^\\s]+$",
                       "type": "string"
                     },
                     "sha256": {
@@ -1807,6 +1808,7 @@
                       "type": "array"
                     },
                     "ref": {
+                      "pattern": "^[a-z][a-z0-9+.-]{1,30}:[^\\s]+$",
                       "type": "string"
                     },
                     "summary": {

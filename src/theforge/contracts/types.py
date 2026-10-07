@@ -64,12 +64,42 @@ MAX_GRAPH_NODES: Final = 2_000
 SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 # Declared protocol feature ids ("<name>/v<major>"), e.g. "handoff/v1".
 FEATURE_ID_RE: Final = re.compile(r"^[a-z][a-z0-9-]*/v[0-9]+$")
+# A provider-native reference is URI-scheme-shaped: "<scheme>:<body>" with a
+# scheme of at least two letters (one-letter "schemes" are drive letters) and a
+# non-empty, whitespace-free body — ``case:abc``, ``apiforge://run/9/trace``.
+REF_RE: Final = re.compile(r"^[a-z][a-z0-9+.-]{1,30}:[^\s]+$")
+REF_LEN_MAX: Final = 240
+# Schemes that can never be a provider-native reference: dereferenceable
+# (file/http/…), instruction-bearing (data/javascript) and the core's own
+# namespaces — a ref in one of these is rejected at parse, not stored.
+FORBIDDEN_REF_SCHEMES: Final = frozenset(
+    {"file", "http", "https", "ftp", "ssh", "data", "javascript",
+     "theforge", "forge"})
 
 
 def check_sha256(value: str, *, field: str) -> None:
     """Reject anything that is not a lowercase hex SHA-256 digest."""
     if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
         raise ContractError(f"{field}: invalid sha256 {value!r}, expected 64 lowercase hex chars")
+
+
+def check_ref(value: str, *, field: str) -> None:
+    """Require an opaque provider-native reference (``<scheme>:<body>``).
+
+    Refs are *pointers into the provider's world* — the core stores and echoes
+    them but never resolves, fetches or opens them. The shape check makes that
+    boundary enforceable: filesystem paths, ``..`` traversal, backslashes and
+    reserved/executable URI families fail the contract at parse.
+    """
+    if not isinstance(value, str) or not value or len(value) > REF_LEN_MAX or \
+            REF_RE.fullmatch(value) is None:
+        raise ContractError(
+            f"{field}: invalid ref {value!r}, expected '<scheme>:<opaque id>'")
+    scheme, _, body = value.partition(":")
+    if scheme in FORBIDDEN_REF_SCHEMES:
+        raise ContractError(f"{field}: ref scheme {scheme!r} is reserved")
+    if "\\" in body or ".." in body.split("/"):
+        raise ContractError(f"{field}: ref {value!r} must not embed path segments")
 
 
 # Manifest limits (initial values; changing them is a revalidation trigger).

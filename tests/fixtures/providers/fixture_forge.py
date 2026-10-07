@@ -46,6 +46,7 @@ def main() -> int:
     provider_receipt = manifest.pop("provider_receipt", None)  # test-only result field
     provider_economy = manifest.pop("provider_economy", None)  # test-only result field
     native_trace = manifest.pop("native_trace", None)  # test-only result field
+    evidence_extra = manifest.pop("evidence_extra", None)  # test-only: extra evidence
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
     resolution = manifest.pop("resolution", None)  # test-only RoutingProposal
@@ -119,6 +120,10 @@ def main() -> int:
                              "claim": f"received {len(handoff.get('items') or [])} "
                                       "handoff items",
                              "producer": producer})
+        if isinstance(evidence_extra, list):  # test-only: caller-authored items
+            for item in evidence_extra:
+                if isinstance(item, dict):
+                    evidence.append({**item, "producer": producer})
         if isinstance(decision, dict):  # referee convention: id="decision", claim=node
             evidence.append({"id": "decision", "epistemic": "confirmed",
                              "subject": str(decision.get("subject") or "fixture decision"),
