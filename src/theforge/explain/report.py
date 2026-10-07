@@ -30,6 +30,7 @@ from theforge.contracts import (
 from theforge.contracts.base import ContractError
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import family_of
+from theforge.contracts.control import GlobalStopDecision
 from theforge.contracts.economy import EconomyRollup
 from theforge.contracts.explain import (
     ContextSection,
@@ -146,10 +147,17 @@ def _plan(found: _Artifacts) -> PlanSection | None:
     descriptor = found.typed("workspace-descriptor", WorkspaceDescriptor)
     installation = found.typed("installation", InstallationPlan)
     economy = found.typed("economy", EconomyRollup)
+    global_stop = found.typed("global-stop", GlobalStopDecision)
     if plan is None:
         return None
-    return PlanSection(plan=plan, result=result, workspace_descriptor=descriptor,
-                       installation=installation, economy=economy)
+    return PlanSection(
+        plan=plan,
+        result=result,
+        workspace_descriptor=descriptor,
+        installation=installation,
+        economy=economy,
+        global_stop=global_stop,
+    )
 
 
 def build_explain_report(store: RunStore, run_id: str, *,
@@ -169,7 +177,7 @@ def build_explain_report(store: RunStore, run_id: str, *,
     result = found.typed("result", ExecutionResult)
     verification = found.typed("verification", VerificationResult)
     for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic",
-                 "decision", "economy", "plan-state"):
+                 "decision", "economy", "global-stop", "plan-state"):
         found.typed(name, ARTIFACT_TYPES[name])  # drop the ones that do not parse
     plan = _plan(found)
     telemetry = found.raw.get("telemetry")
