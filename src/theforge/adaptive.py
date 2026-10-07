@@ -57,7 +57,7 @@ def build_context_roi(
         if item.provider == provider
         and item.capability == capability
         and item.surface_fingerprint == surface_fingerprint
-        and (task_family is None or item.task_family == task_family)
+        and item.task_family == task_family
     ]
     measured = [
         item
@@ -74,7 +74,7 @@ def build_context_roi(
     verified_runs = sum(1 for item in comparable if item.verification == "passed")
     limitations: list[str] = []
     if task_family is None and comparable:
-        limitations.append("task family is unscoped; comparable runs may span families")
+        limitations.append("task family is unresolved; only unresolved-family runs were compared")
     if len(measured) < len(comparable):
         limitations.append("some comparable runs lack complete context measurements")
     if not comparable:
@@ -162,7 +162,7 @@ def advance_experiment(
         item
         for item in evaluation
         if item.capability == experiment.capability
-        and (experiment.task_family is None or item.task_family == experiment.task_family)
+        and item.task_family == experiment.task_family
         and _after_cutoff(item.created_at, experiment.evaluation_after)
     ]
     if any(
@@ -271,14 +271,3 @@ def advance_experiment(
         verified_observations=verified,
         reasons=reasons,
     )
-
-def comparative_context_median(
-    observations: list[ExecutionObservation], provider: str
-) -> float | None:
-    """Return no number when the underlying context metric is unknown."""
-    values = [
-        item.context_bytes
-        for item in observations
-        if item.provider == provider and item.context_bytes is not None
-    ]
-    return float(median(values)) if values else None
