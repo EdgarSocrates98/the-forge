@@ -2,20 +2,82 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "advisory": {"enum":[true]},
-    "basis": {"items":{"type":"string"},"type":"array"},
-    "capability": {"type":"string"},
-    "created_at": {"type":"string"},
-    "current_budget_bytes": {"type":"integer"},
-    "maturity": {"enum":["warming","mature"]},
-    "producer": {"additionalProperties": false,"properties":{"id":{"type":"string"},"version":{"type":"string"}},"required":["id","version"],"type":"object"},
-    "provider": {"type":"string"},
-    "schema": {"type":"string"},
-    "suggested_budget_bytes": {"type":"integer"},
-    "surface_fingerprint": {"type":"string"},
-    "task_family": {"anyOf":[{"type":"string"},{"type":"null"}]}
+    "advisory": {
+      "enum": [
+        true
+      ]
+    },
+    "basis": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "current_budget_bytes": {
+      "type": "integer"
+    },
+    "maturity": {
+      "enum": [
+        "warming",
+        "mature"
+      ]
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "suggested_budget_bytes": {
+      "type": "integer"
+    },
+    "surface_fingerprint": {
+      "type": "string"
+    },
+    "task_family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
   },
-  "required": ["producer","created_at","provider","capability","surface_fingerprint","task_family","current_budget_bytes","suggested_budget_bytes","maturity"],
+  "required": [
+    "producer",
+    "created_at",
+    "provider",
+    "capability",
+    "surface_fingerprint",
+    "task_family",
+    "current_budget_bytes",
+    "suggested_budget_bytes",
+    "maturity"
+  ],
   "title": "ContextBudgetRecommendation",
   "type": "object"
 }
