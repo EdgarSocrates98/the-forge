@@ -12,6 +12,22 @@ CONTEXT_RECOMMENDATION_SCHEMA = "theforge/ContextBudgetRecommendation/v1"
 STRATEGY_EXPERIMENT_SCHEMA = "theforge/StrategyExperiment/v1"
 
 HistoryMaturity = Literal["absent", "cold", "warming", "mature", "stale"]
+def _require_int(name: str, value: object, *, positive: bool = false) -> None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ContractError(f"{name} must be an integer")
+    if positive and value <= 0:
+        raise ContractError(f"{name} must be positive")
+    if not positive and value < 0:
+        raise ContractError(f"{name} cannot be negative")
+
+
+def _require_ratio(name: str, value: object) -> None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ContractError(f"{name} must be numeric")
+    if not 0 <= float(value) <= 1:
+        raise ContractError(f"{name} must be in [0,1]")
+
+
 ExperimentState = Literal[
     "planned",
     "shadow",
@@ -58,8 +74,7 @@ class ContextROI:
             "delivered_runs",
             "verified_runs",
         ):
-            if getattr(self, name) < 0:
-                raise ContractError(f"context roi: {name} cannot be negative")
+            _require_int(f"context roi: {name}", getattr(self, name))
         if self.measured_runs > self.runs:
             raise ContractError("context roi: measured_runs exceeds runs")
         if self.delivered_runs > self.runs:
@@ -68,8 +83,8 @@ class ContextROI:
             raise ContractError("context roi: verified_runs exceeds runs")
         if self.cited_items > self.delivered_items:
             raise ContractError("context roi: cited_items exceeds delivered_items")
-        if self.utilization_ratio is not None and not 0 <= self.utilization_ratio <= 1:
-            raise ContractError("context roi: utilization_ratio must be in [0,1]")
+        if self.utilization_ratio is not None:
+            _require_ratio("context roi: utilization_ratio", self.utilization_ratio)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -92,8 +107,16 @@ class ContextBudgetRecommendation:
             raise ContractError(
                 f"context recommendation: unsupported schema {self.schema!r}"
             )
-        if self.current_budget_bytes <= 0 or self.suggested_budget_bytes <= 0:
-            raise ContractError("context recommendation: budgets must be positive")
+        _require_int(
+            "context recommendation: current_budget_bytes",
+            self.current_budget_bytes,
+            positive=True,
+        )
+        _require_int(
+            "context recommendation: suggested_budget_bytes",
+            self.suggested_budget_bytes,
+            positive=True,
+        )
         if self.suggested_budget_bytes >= self.current_budget_bytes:
             raise ContractError(
                 "context recommendation: suggestion must reduce the current budget"
@@ -142,14 +165,25 @@ class StrategyExperiment:
             raise ContractError("strategy experiment: identity fields must not be empty")
         if self.champion == self.challenger:
             raise ContractError("strategy experiment: champion and challenger must differ")
-        if self.minimum_runs <= 0 or self.minimum_verified_runs <= 0:
-            raise ContractError("strategy experiment: minimums must be positive")
+        _require_int(
+            "strategy experiment: minimum_runs",
+            self.minimum_runs,
+            positive=True,
+        )
+        _require_int(
+            "strategy experiment: minimum_verified_runs",
+            self.minimum_verified_runs,
+            positive=True,
+        )
         if self.minimum_verified_runs > self.minimum_runs:
             raise ContractError(
                 "strategy experiment: minimum_verified_runs exceeds minimum_runs"
             )
-        if self.observations < 0 or self.verified_observations < 0:
-            raise ContractError("strategy experiment: observations cannot be negative")
+        _require_int("strategy experiment: observations", self.observations)
+        _require_int(
+            "strategy experiment: verified_observations",
+            self.verified_observations,
+        )
         if self.verified_observations > self.observations:
             raise ContractError(
                 "strategy experiment: verified observations exceed observations"
