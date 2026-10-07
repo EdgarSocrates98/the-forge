@@ -9,10 +9,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Final, cast
 
-from theforge.adaptive import build_context_roi, recommend_context_budget
+from theforge.adaptive import advance_experiment, build_context_roi, recommend_context_budget
 from theforge.cli import render
 from theforge.context import scan_workspace
-from theforge.contracts import CapabilityRequirement, to_dict
+from theforge.contracts import CapabilityRequirement, StrategyExperiment, to_dict
 from theforge.contracts.base import ContractError, from_dict
 from theforge.contracts.codes import Codes, family_of
 from theforge.contracts.types import BudgetProfile
@@ -286,6 +286,30 @@ def cmd_economy_report(args: argparse.Namespace) -> int:
         )
     data["context_roi"] = roi_rows
     _emit(args, data, render.economy_report)
+    return 0
+
+
+
+def cmd_economy_experiment(args: argparse.Namespace) -> int:
+    """Evaluate a StrategyExperiment/v1 against local execution observations.
+
+    Read-only and offline: this command never promotes a challenger and never
+    changes routing, profiles or budgets. It merely advances the experiment's
+    evidence state from the observations already recorded in the workspace.
+    """
+    root = _root(args)
+    path = Path(args.spec)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        experiment = from_dict(StrategyExperiment, payload, strict=True)
+    except (OSError, json.JSONDecodeError, ContractError) as exc:
+        raise UsageError(f"invalid strategy experiment {path}: {exc}") from exc
+    observations, warning = load_observations(root)
+    evaluated = advance_experiment(experiment, observations)
+    data = to_dict(evaluated)
+    if warning:
+        data["reasons"] = [*data.get("reasons", []), warning]
+    _emit(args, data, render.economy_experiment)
     return 0
 
 
