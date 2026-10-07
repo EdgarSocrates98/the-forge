@@ -40,3 +40,18 @@ O shadow viaja no artefato `routing` do run (`RoutingDecision.shadow`), então
   gates continuam decidindo a seleção.
 - **Anti-viés**: o shadow nasce do `ProviderPerformance` store — o mesmo
   corpus não treina e avalia políticas adaptativas futuras (§104).
+
+
+## Cycle 4.1: experimentos governados
+
+O shadow continua apenas advisory. O Cycle 4.1 acrescenta uma camada explícita
+de experimento para não transformar histórico em promoção automática:
+
+- [Context ROI](context-roi.md) mede utilização sem alegar causalidade;
+- [Adaptive experiments](adaptive-experiments.md) separa champion/challenger,
+  surface fingerprints, amostra mínima e estado de revisão;
+- mudança de surface torna a experiência `stale`;
+- promoção exige operador/policy.
+
+A decisão cross-provider de continuar ou parar é independente da promoção e
+fica em [Global Stop](global-stop.md).
