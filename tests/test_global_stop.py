@@ -145,6 +145,8 @@ def test_stop_signals_reject_impossible_counters() -> None:
         StopSignals(repeated_failure_limit=0)
     with pytest.raises(ValueError, match="budget_remaining"):
         StopSignals(budget_remaining=-1)
+    with pytest.raises(ValueError, match="budget_remaining"):
+        StopSignals(budget_remaining=True)
 
 
 def test_roundtrip_is_strict() -> None:
