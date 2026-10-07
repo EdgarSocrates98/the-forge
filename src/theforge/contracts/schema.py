@@ -134,6 +134,8 @@ def _object(cls: type[Any], closed: bool) -> dict[str, Any]:
         schema = _type(hints[f.name], closed)
         if "pattern" in f.metadata:
             schema = {**schema, "pattern": f.metadata["pattern"]}
+        if "min_items" in f.metadata:
+            schema = {**schema, "minItems": f.metadata["min_items"]}
         properties[f.name] = schema
         if f.default is MISSING and f.default_factory is MISSING:
             required.append(f.name)
