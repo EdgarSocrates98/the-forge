@@ -220,21 +220,33 @@ def test_plan_run_report_has_plan_nodes_handoffs_and_plan_telemetry(
     plan = report.plan
     assert plan is not None and len(plan.plan.nodes) == 2
     assert plan.result is not None and plan.workspace_descriptor is not None
+    assert plan.global_stop is not None
+    assert plan.global_stop.run_id == out.run_id
+    assert plan.global_stop.action in ("stop_sufficient_evidence", "stop_no_expected_gain")
     assert [n.status for n in plan.result.nodes] == ["ok", "ok"]
     assert all(n.run_id for n in plan.result.nodes)
     assert plan.result.synthesis.handoffs
     assert report.telemetry is not None and report.telemetry["run_id"] == out.run_id
     assert report.reproducibility.level != "unknown" or report.reproducibility.reasons
     assert report.provider is None and report.result is None and report.context is None
-    assert {"graph", "plan", "plan-result", "workspace-descriptor", "telemetry",
-            "receipt"} <= set(report.artifacts)
+    assert {
+        "graph",
+        "plan",
+        "plan-result",
+        "workspace-descriptor",
+        "global-stop",
+        "telemetry",
+        "receipt",
+    } <= set(report.artifacts)
     assert report.integrity.divergences == []
     assert any("/receipt" in name for name in report.integrity.checked)
     assert "provider" not in report.not_recorded and "result" not in report.not_recorded
     assert "plan" not in report.not_recorded
     _valid(report)
-    text = render.explain({"run_id": report.run_id, **report.artifacts})
+    text = render.explain_report(to_dict(report))
     assert "Telemetry:   profile=max" in text
+    assert "Global stop:" in text
+    assert "information_gain=" in text
     node_run = plan.result.nodes[1].run_id
     assert node_run is not None
     node = build_explain_report(store, node_run)
