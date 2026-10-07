@@ -1,6 +1,7 @@
 """Cycle 4.1 global stop / information-gain invariants."""
 
 import pytest
+from hypothesis import given, strategies as st
 
 from theforge.contracts import ContractError, GlobalStopDecision, from_dict, to_dict
 from theforge.control import StopSignals, decide_global_stop, expected_information_gain
@@ -116,3 +117,43 @@ def test_contract_rejects_gain_stop_before_mandatory_verification() -> None:
 def test_roundtrip_is_strict() -> None:
     decision = decide_global_stop("r1", StopSignals(other_unresolved=["x"]))
     assert from_dict(GlobalStopDecision, to_dict(decision), strict=True) == decision
+
+
+@given(
+    unresolved=st.lists(st.text(min_size=1, max_size=30), min_size=1, max_size=8),
+)
+def test_property_mandatory_verification_never_stops_for_low_gain(
+    unresolved: list[str],
+) -> None:
+    decision = decide_global_stop(
+        "property-run",
+        StopSignals(
+            other_unresolved=unresolved,
+            candidate_unique_evidence=False,
+            verification_required=True,
+            verification_satisfied=False,
+        ),
+    )
+    assert decision.action == "continue"
+
+
+@given(
+    remaining=st.floats(min_value=0, max_value=1_000_000, allow_nan=False, allow_infinity=False),
+    failures=st.integers(min_value=0, max_value=20),
+)
+def test_property_budget_exhaustion_is_global_ceiling(
+    remaining: float, failures: int
+) -> None:
+    decision = decide_global_stop(
+        "property-run",
+        StopSignals(
+            critical_unresolved=["critical"],
+            candidate_unique_evidence=True,
+            budget_exhausted=True,
+            budget_remaining=remaining,
+            repeated_failures=failures,
+            verification_required=True,
+            verification_satisfied=False,
+        ),
+    )
+    assert decision.action == "stop_budget_exhausted"
