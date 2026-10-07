@@ -8,7 +8,8 @@ with the artifact as it is on disk now, using the same digest ``RunStore.write``
   ``telemetry_sha256``, ``verification_sha256``, and every ``result.artifacts[]`` re-hashed
   under the run's ``work/`` directory (reported as ``work/<path>``);
 - ``kind="plan"``: the same inputs and telemetry plus the ``PlanRefs`` (plan, workspace
-  descriptor, graph, installation, plan-result) and, for every ``NodeOutcome`` with a run,
+  descriptor, graph, installation, plan-result, global-stop), the internal
+  ``PlanResult.global_stop_sha256`` relation, and, for every ``NodeOutcome`` with a run,
   the node's receipt against ``receipt_sha256`` (``<run>/receipt``) and that node run
   verified in turn (its entries prefixed with ``<run>/``).
 
