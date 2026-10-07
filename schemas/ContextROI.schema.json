@@ -17,6 +17,9 @@
     "delivered_items": {
       "type": "integer"
     },
+    "delivered_runs": {
+      "type": "integer"
+    },
     "limitations": {
       "items": {
         "type": "string"
@@ -72,6 +75,9 @@
           "type": "null"
         }
       ]
+    },
+    "verified_runs": {
+      "type": "integer"
     },
     "utilization_ratio": {
       "anyOf": [
