@@ -1,6 +1,7 @@
 """Remote validation classification stays evidence-honest."""
 
 import json
+from pathlib import Path
 
 from scripts.ci.classify_remote_validation import (
     NOT_RUN,
@@ -12,7 +13,12 @@ from scripts.ci.classify_remote_validation import (
 )
 
 
-def job(name: str, conclusion: str, *, steps: list[dict[str, object]] | None):
+def job(
+    name: str,
+    conclusion: str,
+    *,
+    steps: list[dict[str, object]] | None,
+) -> dict[str, object]:
     return {"name": name, "conclusion": conclusion, "steps": steps}
 
 
@@ -97,7 +103,7 @@ def test_skipped_required_job_is_not_remote_verified() -> None:
     assert "windows" in result["blocked_jobs"]
 
 
-def test_require_verified_exit_code(tmp_path) -> None:
+def test_require_verified_exit_code(tmp_path: Path) -> None:
     blocked = tmp_path / "blocked.json"
     blocked.write_text(
         json.dumps({"jobs": [job("linux", "failure", steps=None)]}),
