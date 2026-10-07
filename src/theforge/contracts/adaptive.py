@@ -1,6 +1,7 @@
 """Context ROI and strategy-experiment contracts (Cycle 4.1)."""
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Literal
 
 from theforge.contracts.base import ContractError
@@ -137,3 +138,22 @@ class StrategyExperiment:
             )
         if not self.operator_approval_required:
             raise ContractError("strategy experiment: promotion requires operator approval")
+        timestamps: dict[str, datetime] = {}
+        for name in ("discovery_before", "evaluation_after"):
+            raw = getattr(self, name)
+            if raw is None:
+                continue
+            try:
+                timestamps[name] = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ContractError(
+                    f"strategy experiment: {name} must be an ISO-8601 timestamp"
+                ) from exc
+        if (
+            "discovery_before" in timestamps
+            and "evaluation_after" in timestamps
+            and timestamps["evaluation_after"] < timestamps["discovery_before"]
+        ):
+            raise ContractError(
+                "strategy experiment: evaluation_after cannot precede discovery_before"
+            )
