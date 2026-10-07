@@ -59,7 +59,7 @@ not a green run, until a runner executes actual steps.
 
 Static/mechanical checks performed against the branch include:
 
-- README documentation-index check currently resolves all 28/28 root `docs/*.md` files;
+- README documentation-index check currently resolves all 29/29 root `docs/*.md` files;
 - ADR index checker covers every numbered ADR and rejects duplicate numbers;
 - ADR 0044–0048 use the required `- Status:` marker;
 - package and runtime versions both report 0.2.1;
@@ -68,7 +68,9 @@ Static/mechanical checks performed against the branch include:
   committed schema files;
 - modified Python files were inspected for line length/trailing whitespace;
 - release metadata is bound across package/runtime/README/CHANGELOG, with an
-  evidence-based release checklist.
+  evidence-based release checklist;
+- a stdlib-only remote validation classifier distinguishes quota/runner blockage
+  from executed test failure and can act as a release gate with `--require-verified`.
 
 ## Intentionally deferred
 
