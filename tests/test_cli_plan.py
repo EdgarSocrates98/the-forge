@@ -82,10 +82,8 @@ def test_plan_execute_runs_the_proof_task_with_the_fixtures(
     data = json.loads(out)
     assert data["status"] == "ok" and data["error"] is None
     assert data["global_stop"]["run_id"] == data["run_id"]
-    assert data["global_stop"]["action"] in (
-        "stop_sufficient_evidence",
-        "stop_no_expected_gain",
-    )
+    assert data["global_stop"]["action"] == "stop_sufficient_evidence"
+    assert data["global_stop"]["unresolved"] == []
     result = data["result"]
     assert result["order"] == ["n1", "n2"]
     assert [(n["node"], n["status"]) for n in result["nodes"]] == [("n1", "ok"), ("n2", "ok")]
