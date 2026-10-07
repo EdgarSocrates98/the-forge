@@ -16,6 +16,11 @@ from theforge.contracts.observation import ExecutionObservation
 from theforge.meta import PRODUCER
 
 
+def _timestamp(value: str) -> datetime:
+    """Parse the contract-validated ISO-8601 timestamp for temporal comparison."""
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
 def _maturity(runs: int) -> HistoryMaturity:
     if runs <= 0:
         return "absent"
@@ -140,7 +145,7 @@ def advance_experiment(
         and (experiment.task_family is None or item.task_family == experiment.task_family)
         and (
             experiment.evaluation_after is None
-            or item.created_at > experiment.evaluation_after
+            or _timestamp(item.created_at) > _timestamp(experiment.evaluation_after)
         )
     ]
     if any(
