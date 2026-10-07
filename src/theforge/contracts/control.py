@@ -52,8 +52,13 @@ class GlobalStopDecision:
             raise ContractError("global stop: run_id must not be empty")
         if not self.reasons:
             raise ContractError("global stop: reasons must not be empty")
-        if self.budget_remaining is not None and self.budget_remaining < 0:
-            raise ContractError("global stop: budget_remaining cannot be negative")
+        if self.budget_remaining is not None:
+            if isinstance(self.budget_remaining, bool) or not isinstance(
+                self.budget_remaining, int
+            ):
+                raise ContractError("global stop: budget_remaining must be an integer")
+            if self.budget_remaining < 0:
+                raise ContractError("global stop: budget_remaining cannot be negative")
         if (
             self.action == "stop_no_expected_gain"
             and self.information_gain != "none"
