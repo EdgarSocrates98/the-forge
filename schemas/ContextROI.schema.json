@@ -2,23 +2,103 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "capability": {"type":"string"},
-    "cited_items": {"type":"integer"},
-    "created_at": {"type":"string"},
-    "delivered_bytes": {"type":"integer"},
-    "delivered_items": {"type":"integer"},
-    "limitations": {"items":{"type":"string"},"type":"array"},
-    "maturity": {"enum":["absent","cold","warming","mature","stale"]},
-    "measured_runs": {"type":"integer"},
-    "producer": {"additionalProperties": false,"properties":{"id":{"type":"string"},"version":{"type":"string"}},"required":["id","version"],"type":"object"},
-    "provider": {"type":"string"},
-    "runs": {"type":"integer"},
-    "schema": {"type":"string"},
-    "surface_fingerprint": {"type":"string"},
-    "task_family": {"anyOf":[{"type":"string"},{"type":"null"}]},
-    "utilization_ratio": {"anyOf":[{"type":"number"},{"type":"null"}]}
+    "capability": {
+      "type": "string"
+    },
+    "cited_items": {
+      "type": "integer"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "delivered_bytes": {
+      "type": "integer"
+    },
+    "delivered_items": {
+      "type": "integer"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "maturity": {
+      "enum": [
+        "absent",
+        "cold",
+        "warming",
+        "mature",
+        "stale"
+      ]
+    },
+    "measured_runs": {
+      "type": "integer"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "runs": {
+      "type": "integer"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "surface_fingerprint": {
+      "type": "string"
+    },
+    "task_family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "utilization_ratio": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
   },
-  "required": ["producer","created_at","provider","capability","surface_fingerprint","task_family","runs","measured_runs","delivered_bytes","delivered_items","cited_items","utilization_ratio","maturity"],
+  "required": [
+    "producer",
+    "created_at",
+    "provider",
+    "capability",
+    "surface_fingerprint",
+    "task_family",
+    "runs",
+    "measured_runs",
+    "delivered_bytes",
+    "delivered_items",
+    "cited_items",
+    "utilization_ratio",
+    "maturity"
+  ],
   "title": "ContextROI",
   "type": "object"
 }
