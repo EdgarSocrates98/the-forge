@@ -34,8 +34,13 @@ _NEXT_PROFILE: Final[dict[BudgetProfile, BudgetProfile]] = {
 _PROMOTABLE: Final = ("budget_bytes", "max_files", "negotiation_rounds")
 
 
-def resolve_budget(profile: ContextProfile, *, run_id: str, plan_nodes: int = 0,
-                   assessment: ComplexityAssessment | None = None,
+def resolve_budget(
+    profile: ContextProfile,
+    *,
+    run_id: str,
+    plan_nodes: int = 0,
+    retry_attempts: int = 1,
+    assessment: ComplexityAssessment | None = None,
                    producer: Producer = PRODUCER,
                    created_at: str | None = None) -> tuple[ContextProfile, RunBudget]:
     """``(effective profile, RunBudget)`` — the profile possibly promoted one step.
@@ -45,8 +50,12 @@ def resolve_budget(profile: ContextProfile, *, run_id: str, plan_nodes: int = 0,
     only with measured confidence (``min_confidence`` gates nothing else here —
     the assessment already fell back when unconfident).
     ``plan_nodes`` > 0 marks a plan run: its provider/verification bounds cover
-    the nodes, each a child run with its own budget.
+    the nodes, each a child run with its own budget. ``retry_attempts`` is the
+    explicit retry-policy ceiling; plan provider-call budget reserves that worst
+    case and records the widening in ``adjustments``.
     """
+    if retry_attempts < 1:
+        raise ValueError("retry_attempts must be >= 1")
     effective = profile
     adjustments: list[str] = []
     nxt_name = _NEXT_PROFILE.get(profile.name)
@@ -69,11 +78,19 @@ def resolve_budget(profile: ContextProfile, *, run_id: str, plan_nodes: int = 0,
                 f"promotion {profile.name}→{nxt_name} (complexity "
                 f"{assessment.level}, confidence {assessment.confidence:.2f}): "
                 + ", ".join(raised))
+    provider_calls = (
+        plan_nodes * retry_attempts if plan_nodes else effective.max_providers
+    )
+    if plan_nodes and retry_attempts > 1:
+        adjustments.append(
+            f"retry reserve provider_calls {plan_nodes}→{provider_calls} "
+            f"(max_attempts {retry_attempts})"
+        )
     budget = RunBudget(
         producer=producer, created_at=created_at or utc_now(), run_id=run_id,
         profile=profile.name,
         context_bytes=effective.budget_bytes, max_files=effective.max_files,
-        provider_calls=plan_nodes if plan_nodes else effective.max_providers,
+        provider_calls=provider_calls,
         semantic_calls=1 if (plan_nodes and effective.name != "economy") else 0,
         verification_calls=plan_nodes if plan_nodes else 1,
         wall_time_s=effective.execute_timeout_s,
