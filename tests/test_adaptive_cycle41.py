@@ -5,6 +5,7 @@ import pytest
 from theforge.adaptive import advance_experiment, build_context_roi, recommend_context_budget
 from theforge.contracts import (
     ContextBudgetRecommendation,
+    ContextROI,
     ContractError,
     ExecutionObservation,
     StrategyExperiment,
@@ -426,8 +427,6 @@ def test_recommendation_cannot_increase_budget() -> None:
 
 def test_adaptive_contracts_reject_boolean_numeric_values() -> None:
     with pytest.raises(ContractError, match="runs must be an integer"):
-        from theforge.contracts import ContextROI
-
         ContextROI(
             producer=PRODUCER,
             created_at="t",
