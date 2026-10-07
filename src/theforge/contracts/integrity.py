@@ -249,7 +249,8 @@ def validate_context_request(request: ContextRequest) -> None:
 
 def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
                      plan_result_sha256: str | None = None,
-                     telemetry_sha256: str | None = None) -> None:
+                     telemetry_sha256: str | None = None,
+                     global_stop_sha256: str | None = None) -> None:
     """Order: hash formats, timestamps, then consistency with what is on disk.
 
     ``result_sha256`` is the hash of the persisted result (None when none was persisted).
@@ -285,6 +286,7 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
             ("plan.graph_sha256", plan.graph_sha256),
             ("plan.installation_sha256", plan.installation_sha256),
             ("plan.plan_result_sha256", plan.plan_result_sha256),
+            ("plan.global_stop_sha256", plan.global_stop_sha256),
         ])
     hashes.extend(
         (f"inputs.context_round_sha256[{i}]", value)
@@ -307,7 +309,8 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
     if plan is not None:
         violations.extend(_plan_receipt_violations(
             receipt, plan.plan_result_sha256, plan_result_sha256=plan_result_sha256,
-            telemetry_sha256=telemetry_sha256))
+            telemetry_sha256=telemetry_sha256,
+            global_stop_sha256=global_stop_sha256))
     elif receipt.status in _SUCCESS:
         if receipt.result_sha256 is None:
             violations.append(Violation(
@@ -332,7 +335,8 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
 
 def _plan_receipt_violations(receipt: ExecutionReceipt, recorded: str | None, *,
                              plan_result_sha256: str | None,
-                             telemetry_sha256: str | None) -> list[Violation]:
+                             telemetry_sha256: str | None,
+                             global_stop_sha256: str | None) -> list[Violation]:
     """Plan receipt vs disk: required plan result, plan-result and telemetry hashes."""
     violations: list[Violation] = []
     if receipt.status in _SUCCESS and recorded is None:
@@ -352,6 +356,12 @@ def _plan_receipt_violations(receipt: ExecutionReceipt, recorded: str | None, *,
             Codes.RECEIPT_INVALID,
             "telemetry_sha256 does not match the persisted telemetry hash",
             "telemetry_sha256",
+        ))
+    if receipt.plan is not None and receipt.plan.global_stop_sha256 != global_stop_sha256:
+        violations.append(Violation(
+            Codes.RECEIPT_INVALID,
+            "plan.global_stop_sha256 does not match the persisted global-stop hash",
+            "plan.global_stop_sha256",
         ))
     return violations
 
