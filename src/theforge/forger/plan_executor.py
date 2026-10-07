@@ -645,7 +645,7 @@ class PlanExecutor:
                 candidate_unique_evidence=None,
                 budget_exhausted=budget_exhausted,
                 budget_remaining=(
-                    float(max(0, trace.budget.provider_calls - execute_calls))
+                    max(0, trace.budget.provider_calls - execute_calls)
                     if trace.budget is not None
                     else None
                 ),
