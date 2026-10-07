@@ -377,7 +377,6 @@ def _over_limit(cap_id: str, field: str, items: list[str], limit: int) -> Violat
     )
 
 
-
 def validate_plan_result_links(
     result: PlanResult,
     *,
