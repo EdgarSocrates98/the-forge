@@ -1,6 +1,6 @@
 # ADR 0047 — Context ROI Is Advisory, Not Causal
 
-Status: Accepted
+- Status: aceito (2026-10-07)
 
 ## Decision
 
