@@ -45,46 +45,74 @@ CONFIG_FILE = "complexity.toml"
 # Dimension names, in contract order. Weights are policy: these defaults are the
 # built-in opinion and every key is overridable in complexity.toml.
 DIMENSIONS: Final[tuple[str, ...]] = (
-    "repositories", "technologies", "candidate_providers", "capabilities_matched",
-    "file_impact", "dependency_depth", "cross_domain", "mutation_level",
-    "external_systems", "security_sensitivity", "cross_account", "ambiguity",
-    "required_verification", "estimated_context", "execution_cost",
+    "repositories",
+    "technologies",
+    "candidate_providers",
+    "capabilities_matched",
+    "file_impact",
+    "dependency_depth",
+    "cross_domain",
+    "mutation_level",
+    "external_systems",
+    "security_sensitivity",
+    "cross_account",
+    "ambiguity",
+    "required_verification",
+    "estimated_context",
+    "execution_cost",
 )
 
-DEFAULT_WEIGHTS: Final[Mapping[str, float]] = MappingProxyType({
-    "mutation_level": 2.0,
-    "security_sensitivity": 2.0,
-    "external_systems": 1.5,
-    "cross_account": 1.5,
-    "repositories": 1.0,
-    "technologies": 1.0,
-    "candidate_providers": 1.0,
-    "cross_domain": 1.0,
-    "dependency_depth": 1.0,
-    "ambiguity": 1.0,
-    "required_verification": 1.0,
-    "file_impact": 1.0,
-    "capabilities_matched": 0.5,
-    "estimated_context": 0.5,
-    "execution_cost": 0.5,
-})
+DEFAULT_WEIGHTS: Final[Mapping[str, float]] = MappingProxyType(
+    {
+        "mutation_level": 2.0,
+        "security_sensitivity": 2.0,
+        "external_systems": 1.5,
+        "cross_account": 1.5,
+        "repositories": 1.0,
+        "technologies": 1.0,
+        "candidate_providers": 1.0,
+        "cross_domain": 1.0,
+        "dependency_depth": 1.0,
+        "ambiguity": 1.0,
+        "required_verification": 1.0,
+        "file_impact": 1.0,
+        "capabilities_matched": 0.5,
+        "estimated_context": 0.5,
+        "execution_cost": 0.5,
+    }
+)
 # Upper bounds, exclusive: score < low -> trivial, < medium -> low, ... else critical.
-DEFAULT_THRESHOLDS: Final[Mapping[str, float]] = MappingProxyType({
-    "low": 0.20, "medium": 0.40, "high": 0.60, "critical": 0.80,
-})
-DEFAULT_PROFILE_MAP: Final[Mapping[ComplexityLevel, BudgetProfile]] = MappingProxyType({
-    "trivial": "economy", "low": "economy", "medium": "balanced",
-    "high": "max", "critical": "max",
-})
+DEFAULT_THRESHOLDS: Final[Mapping[str, float]] = MappingProxyType(
+    {
+        "low": 0.20,
+        "medium": 0.40,
+        "high": 0.60,
+        "critical": 0.80,
+    }
+)
+DEFAULT_PROFILE_MAP: Final[Mapping[ComplexityLevel, BudgetProfile]] = MappingProxyType(
+    {
+        "trivial": "economy",
+        "low": "economy",
+        "medium": "balanced",
+        "high": "max",
+        "critical": "max",
+    }
+)
 DEFAULT_FALLBACK: Final[BudgetProfile] = "balanced"
 DEFAULT_MIN_CONFIDENCE: Final = 0.5
 
 # Reference points for the measured dimensions (the ``max`` profile bounds).
 _MAX_PROFILE_FILES: Final = 256
-_RISK_SCORE: Final[Mapping[str, float]] = MappingProxyType({
-    "destructive": 1.0, "external_mutation": 0.7, "external_read": 0.5,
-    "local_mutation": 0.4, "read_only": 0.0,
-})
+_RISK_SCORE: Final[Mapping[str, float]] = MappingProxyType(
+    {
+        "destructive": 1.0,
+        "external_mutation": 0.7,
+        "external_read": 0.5,
+        "local_mutation": 0.4,
+        "read_only": 0.0,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -157,14 +185,14 @@ def _measure(inputs: ComplexityInputs) -> dict[str, tuple[float | None, str]]:
     worst_class = "read_only"
     for name, score in _RISK_SCORE.items():
         if any(getattr(c.dimensions, name) == "yes" for c in declared) and (
-                score >= _RISK_SCORE[worst_class]):
+            score >= _RISK_SCORE[worst_class]
+        ):
             worst_class = name
     ext_read = _worst_risk(inputs.candidates, "external_read")
     ext_mut = _worst_risk(inputs.candidates, "external_mutation")
     if "yes" in (ext_read, ext_mut):
         external = "yes"
-    elif ("unknown" in (ext_read, ext_mut)
-          or len(declared) < len(inputs.candidates)):
+    elif "unknown" in (ext_read, ext_mut) or len(declared) < len(inputs.candidates):
         external = "unknown"
     else:
         external = "no"
@@ -174,64 +202,88 @@ def _measure(inputs: ComplexityInputs) -> dict[str, tuple[float | None, str]]:
     if inputs.candidates:
         top = min(c.rank_key for c in inputs.candidates)
         ties = sum(1 for c in inputs.candidates if c.rank_key == top) - 1
-    ambiguity = (0.6 if inputs.routing_confidence == "low" else 0.1)
+    ambiguity = 0.6 if inputs.routing_confidence == "low" else 0.1
     ambiguity = min(1.0, ambiguity + 0.1 * inputs.routing_unresolved + 0.15 * ties)
     return {
         "repositories": (
-            None if inputs.repositories is None else
-            _ladder(inputs.repositories, ((1, 0.0), (2, 0.4), (3, 0.7), (4, 1.0))),
-            "unknown: no workspace descriptor" if inputs.repositories is None else
-            str(inputs.repositories)),
+            None
+            if inputs.repositories is None
+            else _ladder(inputs.repositories, ((1, 0.0), (2, 0.4), (3, 0.7), (4, 1.0))),
+            "unknown: no workspace descriptor"
+            if inputs.repositories is None
+            else str(inputs.repositories),
+        ),
         "technologies": (
             None if inputs.technologies is None else min(1.0, inputs.technologies / 4),
-            "unknown: no workspace descriptor" if inputs.technologies is None else
-            str(inputs.technologies)),
-        "candidate_providers": (
-            min(1.0, max(0, len(providers) - 1) / 3), str(len(providers))),
+            "unknown: no workspace descriptor"
+            if inputs.technologies is None
+            else str(inputs.technologies),
+        ),
+        "candidate_providers": (min(1.0, max(0, len(providers) - 1) / 3), str(len(providers))),
         "capabilities_matched": (
-            min(1.0, max(0, len(inputs.candidates) - 1) / 4), str(len(inputs.candidates))),
+            min(1.0, max(0, len(inputs.candidates) - 1) / 4),
+            str(len(inputs.candidates)),
+        ),
         # Breadth on either axis raises impact: a wide workspace to search or many
         # explicitly named targets to cover (16 targets saturate the dimension).
         "file_impact": (
-            min(1.0, max(inputs.files_scanned / _MAX_PROFILE_FILES,
-                         inputs.targets / 16)),
-            f"{inputs.files_scanned} files, {inputs.targets} targets"),
-        "dependency_depth": (min(1.0, inputs.upstream_nodes / 3),
-                             f"{inputs.upstream_nodes} upstream nodes"),
-        "cross_domain": (min(1.0, max(0, len(families) - 1) / 2),
-                         f"{len(families)} families"),
+            min(1.0, max(inputs.files_scanned / _MAX_PROFILE_FILES, inputs.targets / 16)),
+            f"{inputs.files_scanned} files, {inputs.targets} targets",
+        ),
+        "dependency_depth": (
+            min(1.0, inputs.upstream_nodes / 3),
+            f"{inputs.upstream_nodes} upstream nodes",
+        ),
+        "cross_domain": (min(1.0, max(0, len(families) - 1) / 2), f"{len(families)} families"),
         "mutation_level": (_RISK_SCORE[worst_class], worst_class),
         "external_systems": ({"yes": 1.0, "unknown": 0.3, "no": 0.0}[external], external),
-        "security_sensitivity": (
-            {"yes": 1.0, "unknown": 0.3, "no": 0.0}[credentials], credentials),
-        "cross_account": ({"yes": 1.0, "unknown": 0.3, "no": 0.0}[cross_account],
-                          cross_account),
-        "ambiguity": (ambiguity,
-                      f"{inputs.routing_confidence} confidence, "
-                      f"{inputs.routing_unresolved} unresolved, {ties} ties"),
+        "security_sensitivity": ({"yes": 1.0, "unknown": 0.3, "no": 0.0}[credentials], credentials),
+        "cross_account": ({"yes": 1.0, "unknown": 0.3, "no": 0.0}[cross_account], cross_account),
+        "ambiguity": (
+            ambiguity,
+            f"{inputs.routing_confidence} confidence, "
+            f"{inputs.routing_unresolved} unresolved, {ties} ties",
+        ),
         "required_verification": (
-            0.8 if _RISK_SCORE[worst_class] >= 0.7 else
-            0.4 if _RISK_SCORE[worst_class] >= 0.4 else 0.1,
-            f"derived from {worst_class}"),
+            0.8
+            if _RISK_SCORE[worst_class] >= 0.7
+            else 0.4
+            if _RISK_SCORE[worst_class] >= 0.4
+            else 0.1,
+            f"derived from {worst_class}",
+        ),
         # Byte-accurate context cost needs the broker's selection; the scan only lists
         # files, so the v1 estimate stays unmeasured rather than guessed.
         "estimated_context": (None, "unknown: context bytes not estimated pre-broker"),
         "execution_cost": (
-            min(1.0, inputs.files_scanned / (2 * _MAX_PROFILE_FILES)
-                + len(providers) / 8 + inputs.handoff_items / 32),
+            min(
+                1.0,
+                inputs.files_scanned / (2 * _MAX_PROFILE_FILES)
+                + len(providers) / 8
+                + inputs.handoff_items / 32,
+            ),
             f"{inputs.files_scanned} files, {len(providers)} providers, "
-            f"{inputs.handoff_items} handoff items"),
+            f"{inputs.handoff_items} handoff items",
+        ),
     }
 
 
-def assess(inputs: ComplexityInputs, config: ComplexityConfig, *,
-           producer: Producer = PRODUCER, created_at: str | None = None
-           ) -> ComplexityAssessment:
+def assess(
+    inputs: ComplexityInputs,
+    config: ComplexityConfig,
+    *,
+    producer: Producer = PRODUCER,
+    created_at: str | None = None,
+) -> ComplexityAssessment:
     """Score the inputs, pick the level and resolve the effective profile."""
     measured = _measure(inputs)
     dimensions = [
-        ComplexityDimension(name=name, score=measured[name][0],
-                            weight=config.weights.get(name, 0.0), value=measured[name][1])
+        ComplexityDimension(
+            name=name,
+            score=measured[name][0],
+            weight=config.weights.get(name, 0.0),
+            value=measured[name][1],
+        )
         for name in DIMENSIONS
     ]
     limitations: list[str] = []
@@ -248,22 +300,29 @@ def assess(inputs: ComplexityInputs, config: ComplexityConfig, *,
             signals.append(f"{dim.name}={dim.value}")
     if any(c.dimensions is None for c in inputs.candidates):
         missing = sum(1 for c in inputs.candidates if c.dimensions is None)
-        limitations.append(f"risk undeclared for {missing} candidate(s); "
-                           "their dimensions scored as unknown")
-    score = (sum(d.score * d.weight for d in dimensions if d.score is not None)
-             / measured_weight if measured_weight else 0.0)
+        limitations.append(
+            f"risk undeclared for {missing} candidate(s); their dimensions scored as unknown"
+        )
+    score = (
+        sum(d.score * d.weight for d in dimensions if d.score is not None) / measured_weight
+        if measured_weight
+        else 0.0
+    )
     confidence = measured_weight / total_weight if total_weight else 0.0
     thresholds = config.thresholds
     level: ComplexityLevel = "critical"
-    for name, bound in (("low", "trivial"), ("medium", "low"),
-                        ("high", "medium"), ("critical", "high")):
+    for name, bound in (
+        ("low", "trivial"),
+        ("medium", "low"),
+        ("high", "medium"),
+        ("critical", "high"),
+    ):
         if score < thresholds[name]:
             level = bound  # type: ignore[assignment]  # literal ladder
             break
     if confidence < config.min_confidence:
         selected = config.fallback_profile
-        reason = (f"confidence {confidence:.2f} < {config.min_confidence:.2f} "
-                  f"-> fallback {selected}")
+        reason = f"confidence {confidence:.2f} < {config.min_confidence:.2f} -> fallback {selected}"
     else:
         selected = config.profile_map[level]
         reason = f"level {level} -> {selected}"
@@ -271,8 +330,7 @@ def assess(inputs: ComplexityInputs, config: ComplexityConfig, *,
     # allows fewer would silently degrade the work (decompose caps the split).
     if inputs.required_providers > PROFILES[selected].max_providers:
         raised: BudgetProfile = "max"
-        for candidate_name in cast(tuple[BudgetProfile, ...],
-                                   ("economy", "balanced", "max")):
+        for candidate_name in cast(tuple[BudgetProfile, ...], ("economy", "balanced", "max")):
             if PROFILES[candidate_name].max_providers >= inputs.required_providers:
                 raised = candidate_name
                 break
@@ -281,13 +339,23 @@ def assess(inputs: ComplexityInputs, config: ComplexityConfig, *,
         if inputs.required_providers > PROFILES["max"].max_providers:
             limitations.append(
                 f"{inputs.required_providers} providers required; 'max' allows "
-                f"{PROFILES['max'].max_providers}")
+                f"{PROFILES['max'].max_providers}"
+            )
     return ComplexityAssessment(
-        producer=producer, created_at=created_at or utc_now(), task_id=inputs.task_id,
-        level=level, score=round(score, 4), confidence=round(confidence, 4),
-        dimensions=dimensions, signals=sorted(signals),
-        requested_profile=inputs.requested_profile, selected_profile=selected,
-        profile_reason=reason, config_source=config.source, limitations=limitations)
+        producer=producer,
+        created_at=created_at or utc_now(),
+        task_id=inputs.task_id,
+        level=level,
+        score=round(score, 4),
+        confidence=round(confidence, 4),
+        dimensions=dimensions,
+        signals=sorted(signals),
+        requested_profile=inputs.requested_profile,
+        selected_profile=selected,
+        profile_reason=reason,
+        config_source=config.source,
+        limitations=limitations,
+    )
 
 
 def _read_config(path: Path, label: str, warnings: list[str]) -> dict[str, dict[str, object]]:
@@ -311,66 +379,81 @@ def _read_config(path: Path, label: str, warnings: list[str]) -> dict[str, dict[
     return out
 
 
-def _valid_weights(values: dict[str, object], label: str, path: Path,
-                   warnings: list[str]) -> dict[str, float]:
+def _valid_weights(
+    values: dict[str, object], label: str, path: Path, warnings: list[str]
+) -> dict[str, float]:
     valid: dict[str, float] = {}
     for key, value in values.items():
         if key not in DIMENSIONS:
             warnings.append(f"{label} complexity {path}: unknown weight {key!r}; ignored")
         elif not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
-            warnings.append(f"{label} complexity {path}: weight {key!r} must be a "
-                            f"non-negative number; ignored")
+            warnings.append(
+                f"{label} complexity {path}: weight {key!r} must be a non-negative number; ignored"
+            )
         else:
             valid[key] = float(value)
     return valid
 
 
-def _valid_thresholds(values: dict[str, object], label: str, path: Path,
-                      warnings: list[str]) -> dict[str, float]:
+def _valid_thresholds(
+    values: dict[str, object], label: str, path: Path, warnings: list[str]
+) -> dict[str, float]:
     valid: dict[str, float] = {}
     for key, value in values.items():
         if key not in DEFAULT_THRESHOLDS:
             warnings.append(f"{label} complexity {path}: unknown threshold {key!r}; ignored")
-        elif (not isinstance(value, (int, float)) or isinstance(value, bool)
-                or not 0.0 < value < 1.0):
-            warnings.append(f"{label} complexity {path}: threshold {key!r} must be a "
-                            "number inside 0..1; ignored")
+        elif (
+            not isinstance(value, (int, float)) or isinstance(value, bool) or not 0.0 < value < 1.0
+        ):
+            warnings.append(
+                f"{label} complexity {path}: threshold {key!r} must be a "
+                "number inside 0..1; ignored"
+            )
         else:
             valid[key] = float(value)
     merged = {**DEFAULT_THRESHOLDS, **valid}
     bounds = [merged[name] for name in ("low", "medium", "high", "critical")]
     if bounds != sorted(bounds):
-        warnings.append(f"{label} complexity {path}: thresholds are not ordered "
-                        f"({bounds}); the whole table is ignored")
+        warnings.append(
+            f"{label} complexity {path}: thresholds are not ordered "
+            f"({bounds}); the whole table is ignored"
+        )
         return {}
     return valid
 
 
-def _valid_profiles(values: dict[str, object], label: str, path: Path,
-                    warnings: list[str]) -> dict[str, object]:
+def _valid_profiles(
+    values: dict[str, object], label: str, path: Path, warnings: list[str]
+) -> dict[str, object]:
     valid: dict[str, object] = {}
     for key, value in values.items():
         if key in (*DEFAULT_PROFILE_MAP, "fallback"):
             if value not in ("economy", "balanced", "max"):
-                warnings.append(f"{label} complexity {path}: profile {key!r} must be a "
-                                "budget profile; ignored")
+                warnings.append(
+                    f"{label} complexity {path}: profile {key!r} must be a budget profile; ignored"
+                )
             else:
                 valid[key] = value
         elif key == "min_confidence":
-            if (not isinstance(value, (int, float)) or isinstance(value, bool)
-                    or not 0.0 <= value <= 1.0):
-                warnings.append(f"{label} complexity {path}: min_confidence must be a "
-                                "number inside 0..1; ignored")
+            if (
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or not 0.0 <= value <= 1.0
+            ):
+                warnings.append(
+                    f"{label} complexity {path}: min_confidence must be a "
+                    "number inside 0..1; ignored"
+                )
             else:
                 valid[key] = float(value)
         else:
-            warnings.append(f"{label} complexity {path}: unknown profile key {key!r}; "
-                            "ignored")
+            warnings.append(f"{label} complexity {path}: unknown profile key {key!r}; ignored")
     return valid
 
 
-def load_complexity_config(*, user_dir: Path, forge_dir: Path,
-                           warnings: list[str]) -> ComplexityConfig:
+def load_complexity_config(
+    *, user_dir: Path, forge_dir: Path, warnings: list[str]
+) -> ComplexityConfig:
     """Merge defaults, the user file and the project file (project wins per key).
 
     Missing files keep the defaults; problems are appended to ``warnings`` and never
@@ -382,20 +465,21 @@ def load_complexity_config(*, user_dir: Path, forge_dir: Path,
     fallback: BudgetProfile = DEFAULT_FALLBACK
     min_confidence = DEFAULT_MIN_CONFIDENCE
     contributed: list[str] = []
-    for path, label in ((user_dir / CONFIG_FILE, "user"),
-                        (forge_dir / "config" / CONFIG_FILE, "project")):
+    for path, label in (
+        (user_dir / CONFIG_FILE, "user"),
+        (forge_dir / "config" / CONFIG_FILE, "project"),
+    ):
         tables = _read_config(path, label, warnings)
         changed = False
-        for key, value in _valid_weights(tables.get("weights", {}), label, path,
-                                         warnings).items():
+        for key, value in _valid_weights(tables.get("weights", {}), label, path, warnings).items():
             weights[key] = value
             changed = True
-        for key, value in _valid_thresholds(tables.get("thresholds", {}), label, path,
-                                            warnings).items():
+        for key, value in _valid_thresholds(
+            tables.get("thresholds", {}), label, path, warnings
+        ).items():
             thresholds[key] = value
             changed = True
-        for key, raw in _valid_profiles(tables.get("profiles", {}), label, path,
-                                        warnings).items():
+        for key, raw in _valid_profiles(tables.get("profiles", {}), label, path, warnings).items():
             if key == "fallback":
                 fallback = cast(BudgetProfile, raw)
             elif key == "min_confidence":
@@ -406,14 +490,18 @@ def load_complexity_config(*, user_dir: Path, forge_dir: Path,
         if changed:
             contributed.append(label)
     return ComplexityConfig(
-        weights=MappingProxyType(weights), thresholds=MappingProxyType(thresholds),
-        profile_map=MappingProxyType(profile_map), fallback_profile=fallback,
+        weights=MappingProxyType(weights),
+        thresholds=MappingProxyType(thresholds),
+        profile_map=MappingProxyType(profile_map),
+        fallback_profile=fallback,
         min_confidence=min_confidence,
-        source="+".join(contributed) if contributed else "default")
+        source="+".join(contributed) if contributed else "default",
+    )
 
 
-def candidate_risks(decision: RoutingDecision,
-                    records: Mapping[str, RegistryRecord]) -> tuple[CandidateRisk, ...]:
+def candidate_risks(
+    decision: RoutingDecision, records: Mapping[str, RegistryRecord]
+) -> tuple[CandidateRisk, ...]:
     """Risk evidence per routed candidate: declared dims, or None when the manifest
     (or the capability on it) is unknown — ``assess`` then scores it as unknown."""
     out: list[CandidateRisk] = []
@@ -424,11 +512,17 @@ def candidate_risks(decision: RoutingDecision,
             resolved = record.manifest.resolve(candidate.capability)
             capability = resolved[0] if resolved else None
             if capability is not None:
-                dims = assess_dimensions(operation_class=capability.operation_class,
-                                         execution=record.manifest.execution)
-        out.append(CandidateRisk(provider=candidate.provider,
-                                 capability=candidate.capability,
-                                 rank_key=tuple(candidate.rank_key), dimensions=dims))
+                dims = assess_dimensions(
+                    operation_class=capability.operation_class, execution=record.manifest.execution
+                )
+        out.append(
+            CandidateRisk(
+                provider=candidate.provider,
+                capability=candidate.capability,
+                rank_key=tuple(candidate.rank_key),
+                dimensions=dims,
+            )
+        )
     return tuple(out)
 
 
@@ -440,11 +534,16 @@ def upstream_fan_in(handoff: Handoff | None) -> tuple[int, int]:
     return len(nodes), len(handoff.items)
 
 
-def task_inputs(task: TaskSpec, scan: WorkspaceScan, decision: RoutingDecision,
-                records: Mapping[str, RegistryRecord], *,
-                descriptor: WorkspaceDescriptor | None = None,
-                handoff: Handoff | None = None,
-                decomposable: bool = False) -> ComplexityInputs:
+def task_inputs(
+    task: TaskSpec,
+    scan: WorkspaceScan,
+    decision: RoutingDecision,
+    records: Mapping[str, RegistryRecord],
+    *,
+    descriptor: WorkspaceDescriptor | None = None,
+    handoff: Handoff | None = None,
+    decomposable: bool = False,
+) -> ComplexityInputs:
     """Build the engine's inputs from the run's measured evidence (nothing else).
 
     ``decomposable`` marks a plan run: the distinct providers among the routed
@@ -453,13 +552,16 @@ def task_inputs(task: TaskSpec, scan: WorkspaceScan, decision: RoutingDecision,
     upstream, items = upstream_fan_in(handoff)
     candidates = candidate_risks(decision, records)
     return ComplexityInputs(
-        task_id=task.id, requested_profile=task.budget_profile,
-        targets=len(task.targets), files_scanned=len(scan.files),
+        task_id=task.id,
+        requested_profile=task.budget_profile,
+        targets=len(task.targets),
+        files_scanned=len(scan.files),
         candidates=candidates,
         routing_confidence=decision.confidence.level,
         routing_unresolved=len(decision.confidence.unresolved),
         repositories=len(descriptor.repositories) if descriptor is not None else None,
         technologies=len(descriptor.technologies) if descriptor is not None else None,
-        handoff_items=items, upstream_nodes=upstream,
-        required_providers=(len({c.provider for c in candidates})
-                            if decomposable else 1))
+        handoff_items=items,
+        upstream_nodes=upstream,
+        required_providers=(len({c.provider for c in candidates}) if decomposable else 1),
+    )

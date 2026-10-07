@@ -68,36 +68,72 @@ from theforge.contracts import (
 )
 
 EXPORTED: tuple[type[Any], ...] = (
-    ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
-    ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest, VerifyRequest,
-    VerifyVerdict, RiskAssessment, RunTelemetry,
+    ForgeManifest,
+    TaskSpec,
+    RoutingDecision,
+    ContextPack,
+    ExecutionResult,
+    Evidence,
+    ExecutionReceipt,
+    Request,
+    Response,
+    HealthReport,
+    ExecuteRequest,
+    VerifyRequest,
+    VerifyVerdict,
+    RiskAssessment,
+    RunTelemetry,
     # cross-forge-foundation (Wave D)
-    ExecutionPlan, PlanRequest, PlanEstimate, PlanResult, PlanState, Handoff,
+    ExecutionPlan,
+    PlanRequest,
+    PlanEstimate,
+    PlanResult,
+    PlanState,
+    Handoff,
     WorkspaceDescriptor,
-    WorkspaceGraph, VerificationResult, InstallationPlan, ExplainReport, Diagnostic,
-    ComplexityAssessment, CapabilityGraph, SemanticPlanProposal, DecisionRecord,
+    WorkspaceGraph,
+    VerificationResult,
+    InstallationPlan,
+    ExplainReport,
+    Diagnostic,
+    ComplexityAssessment,
+    CapabilityGraph,
+    SemanticPlanProposal,
+    DecisionRecord,
     # economy-engine (Wave H)
-    RunBudget, ProviderPerformance,
+    RunBudget,
+    ProviderPerformance,
     # project-intelligence (Wave I)
-    ProjectIntel, DecisionMemory,
+    ProjectIntel,
+    DecisionMemory,
     # semantic routing fallback (Wave K)
-    ResolveRequest, RoutingProposal,
+    ResolveRequest,
+    RoutingProposal,
     # surface identity (cycle 3.1, wave B)
     ProviderSurfaceIdentity,
     # economy federation (cycle 3.1, wave F)
     EconomyRollup,
     # capability negotiation v2 (cycle 4, wave A)
-    CapabilityRequirement, CapabilityOffer, CapabilityNegotiationResult,
+    CapabilityRequirement,
+    CapabilityOffer,
+    CapabilityNegotiationResult,
     # registry metadata (cycle 4, wave C/E)
-    ForgeRegistryEntry, RegistryDocument, RemoteProviderCandidate,
+    ForgeRegistryEntry,
+    RegistryDocument,
+    RemoteProviderCandidate,
     # governed install planning (cycle 4, wave F)
     InstallationPlanV2,
     # economy observations (cycle 4, wave G)
-    ExecutionObservation, GlobalEconomyReceipt,
+    ExecutionObservation,
+    GlobalEconomyReceipt,
     # mcp registry awareness (cycle 4, wave J)
-    McpRegistryDocument, McpServerEntry,
+    McpRegistryDocument,
+    McpServerEntry,
     # cycle 4.1 global control / adaptive learning
-    GlobalStopDecision, ContextROI, ContextBudgetRecommendation, StrategyExperiment,
+    GlobalStopDecision,
+    ContextROI,
+    ContextBudgetRecommendation,
+    StrategyExperiment,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -105,19 +141,40 @@ EXPORTED: tuple[type[Any], ...] = (
 # the ``plan`` op and in ExecuteRequest.handoff; ResolveRequest and RoutingProposal
 # cross it in the ``resolve`` op).
 CLOSED_SCHEMAS: tuple[type[Any], ...] = (
-    RoutingDecision, ExecutionReceipt, RiskAssessment, RunTelemetry,
-    ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph, VerificationResult,
-    InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
-    CapabilityGraph, DecisionRecord, PlanState, RunBudget, ProviderPerformance,
-    ProjectIntel, DecisionMemory, ProviderSurfaceIdentity, EconomyRollup,
+    RoutingDecision,
+    ExecutionReceipt,
+    RiskAssessment,
+    RunTelemetry,
+    ExecutionPlan,
+    PlanResult,
+    WorkspaceDescriptor,
+    WorkspaceGraph,
+    VerificationResult,
+    InstallationPlan,
+    ExplainReport,
+    Diagnostic,
+    ComplexityAssessment,
+    CapabilityGraph,
+    DecisionRecord,
+    PlanState,
+    RunBudget,
+    ProviderPerformance,
+    ProjectIntel,
+    DecisionMemory,
+    ProviderSurfaceIdentity,
+    EconomyRollup,
     # negotiation results are core-produced artifacts; the requirement and the
     # offer travel (manifest embeds the offer, CLI accepts the requirement).
     CapabilityNegotiationResult,
     # the v2 install plan is a core-produced document — never remote input.
     InstallationPlanV2,
     # observations are core-produced; the global receipt is a core-composed view.
-    ExecutionObservation, GlobalEconomyReceipt,
-    GlobalStopDecision, ContextROI, ContextBudgetRecommendation, StrategyExperiment,
+    ExecutionObservation,
+    GlobalEconomyReceipt,
+    GlobalStopDecision,
+    ContextROI,
+    ContextBudgetRecommendation,
+    StrategyExperiment,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
@@ -160,8 +217,13 @@ def _type(tp: Any, closed: bool) -> dict[str, Any]:
         return {"type": "object", "additionalProperties": _type(args[1], closed)}
     if isinstance(tp, type) and is_dataclass(tp):
         return _object(tp, closed)
-    scalars: dict[Any, str] = {str: "string", int: "integer", float: "number",
-                               bool: "boolean", type(None): "null"}
+    scalars: dict[Any, str] = {
+        str: "string",
+        int: "integer",
+        float: "number",
+        bool: "boolean",
+        type(None): "null",
+    }
     if tp in scalars:
         return {"type": scalars[tp]}
     raise TypeError(f"unsupported annotation {tp!r}")
@@ -172,8 +234,11 @@ def export(directory: Path) -> list[Path]:
     written: list[Path] = []
     for cls in EXPORTED:
         path = directory / f"{cls.__name__}.schema.json"
-        path.write_text(json.dumps(json_schema(cls), indent=2, sort_keys=True) + "\n",
-                        encoding="utf-8", newline="\n")
+        path.write_text(
+            json.dumps(json_schema(cls), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         written.append(path)
     return written
 

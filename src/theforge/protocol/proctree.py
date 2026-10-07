@@ -26,8 +26,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import IO
 
-__all__ = ["SpawnedProcess", "close", "join_threads", "kill_tree", "owned", "read_chunk",
-           "spawn", "wait_slice"]
+__all__ = [
+    "SpawnedProcess",
+    "close",
+    "join_threads",
+    "kill_tree",
+    "owned",
+    "read_chunk",
+    "spawn",
+    "wait_slice",
+]
 
 _REAP_SECONDS = 5.0
 _CHUNK = 1 << 16
@@ -132,7 +140,10 @@ if sys.platform == "win32":
     _kernel32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
     _kernel32.CreateJobObjectW.restype = wintypes.HANDLE
     _kernel32.SetInformationJobObject.argtypes = [
-        wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+        wintypes.HANDLE,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        wintypes.DWORD,
     ]
     _kernel32.SetInformationJobObject.restype = wintypes.BOOL
     _kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
@@ -153,8 +164,10 @@ if sys.platform == "win32":
         info = _ExtendedLimit()
         info.BasicLimitInformation.LimitFlags = _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
         ok = _kernel32.SetInformationJobObject(
-            job, _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION_CLASS,
-            ctypes.byref(info), ctypes.sizeof(info),
+            job,
+            _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION_CLASS,
+            ctypes.byref(info),
+            ctypes.sizeof(info),
         )
         if not ok:
             _kernel32.CloseHandle(job)
@@ -174,8 +187,13 @@ if sys.platform == "win32":
         job = _create_job()
         try:
             proc = subprocess.Popen(
-                list(argv), cwd=cwd, env=dict(env), shell=False,
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                list(argv),
+                cwd=cwd,
+                env=dict(env),
+                shell=False,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 creationflags=_CREATE_SUSPENDED,
             )
         except BaseException:
@@ -209,14 +227,17 @@ if sys.platform == "win32":
     def kill_tree(sp: SpawnedProcess, *, grace_seconds: float = 2.0) -> None:
         proc = sp.proc
         terminated = sp.job_handle is not None and bool(
-            _kernel32.TerminateJobObject(sp.job_handle, 1))
+            _kernel32.TerminateJobObject(sp.job_handle, 1)
+        )
         if not terminated and proc.poll() is None:
             # Fallback: recursive kill by PID while the root still exists (PID not reusable).
             with contextlib.suppress(OSError, subprocess.SubprocessError):
                 subprocess.run(
                     ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
-                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL, timeout=max(grace_seconds, 1.0) + 5.0,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=max(grace_seconds, 1.0) + 5.0,
                     check=False,
                 )
         _reap(proc, max(grace_seconds, 0.0))
@@ -236,8 +257,13 @@ else:
 
     def spawn(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str]) -> SpawnedProcess:
         proc = subprocess.Popen(
-            list(argv), cwd=cwd, env=dict(env), shell=False,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            list(argv),
+            cwd=cwd,
+            env=dict(env),
+            shell=False,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             start_new_session=True,
         )
         return SpawnedProcess(proc=proc, tree_kill_supported=True)

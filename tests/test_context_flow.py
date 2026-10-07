@@ -36,11 +36,17 @@ class _Recorder:
         self.argv = list(argv)
         self.inner = SubprocessTransport(argv)
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
         _Recorder.calls.append((op, self.argv[-1]))
-        return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                               check_protocol=check_protocol)
+        return self.inner.call(op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol)
 
 
 @pytest.fixture
@@ -55,8 +61,11 @@ def git_calls(monkeypatch: pytest.MonkeyPatch) -> list[Path]:
 
     def spy(root: Path, **_: Any) -> GitState:
         calls.append(root)
-        return GitState(summary=GitSummary(available=False), changed=frozenset(),
-                        limitations=("git: spy unavailable",))
+        return GitState(
+            summary=GitSummary(available=False),
+            changed=frozenset(),
+            limitations=("git: spy unavailable",),
+        )
 
     monkeypatch.setattr(orchestrator, "read_git_state", spy)
     return calls
@@ -73,16 +82,21 @@ def _executed(recorder: type[_Recorder]) -> list[str]:
 
 # --- health fallback by profile (9.1, 9.2) --------------------------------------------------
 
+
 def _two_providers(root: Path) -> None:
-    make_workspace(root, [bad_entry("unhealthy", "bad-a", trust="trusted"),
-                          bad_entry("ok", "bad-b", trust="local")])
+    make_workspace(
+        root,
+        [bad_entry("unhealthy", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
 
 
 def test_economy_never_tries_the_fallback(
-        tmp_path: Path, recorder: type[_Recorder], git_calls: list[Path]) -> None:
+    tmp_path: Path, recorder: type[_Recorder], git_calls: list[Path]
+) -> None:
     _two_providers(tmp_path)
     out = _forger(tmp_path, recorder).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile="economy"))
+        AskRequest(intent="run it", capability="bad.thing", profile="economy")
+    )
     assert out.status == "provider_failure" and out.result is None
     assert out.error is not None and out.error.code == "FORGE-HEALTH-UNAVAILABLE"
     assert [pid for op, pid in recorder.calls if op == "health"] == ["bad-a"]
@@ -94,10 +108,12 @@ def test_economy_never_tries_the_fallback(
 
 @pytest.mark.parametrize("profile", ["balanced", "max"])
 def test_balanced_and_max_try_the_fallback(
-        tmp_path: Path, recorder: type[_Recorder], profile: BudgetProfile) -> None:
+    tmp_path: Path, recorder: type[_Recorder], profile: BudgetProfile
+) -> None:
     _two_providers(tmp_path)
     out = _forger(tmp_path, recorder).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile=profile))
+        AskRequest(intent="run it", capability="bad.thing", profile=profile)
+    )
     assert out.status == "ok"
     assert out.decision.selected[0].provider == "bad-b"
     assert [pid for op, pid in recorder.calls if op == "health"] == ["bad-a", "bad-b"]
@@ -106,26 +122,33 @@ def test_balanced_and_max_try_the_fallback(
 
 
 def test_economy_healthy_primary_runs_without_limitation(
-        tmp_path: Path, recorder: type[_Recorder]) -> None:
+    tmp_path: Path, recorder: type[_Recorder]
+) -> None:
     make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
     out = _forger(tmp_path, recorder).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile="economy"))
+        AskRequest(intent="run it", capability="bad.thing", profile="economy")
+    )
     assert out.status == "ok"
     assert not any("fallback disabled" in note for note in out.receipt.limitations)
 
 
 @pytest.mark.parametrize("profile", ["economy", "balanced", "max"])
 def test_exactly_one_provider_executes_per_run(
-        tmp_path: Path, recorder: type[_Recorder], profile: BudgetProfile) -> None:
-    make_workspace(tmp_path, [bad_entry("ok", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    tmp_path: Path, recorder: type[_Recorder], profile: BudgetProfile
+) -> None:
+    make_workspace(
+        tmp_path,
+        [bad_entry("ok", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     out = _forger(tmp_path, recorder).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile=profile))
+        AskRequest(intent="run it", capability="bad.thing", profile=profile)
+    )
     assert out.status == "ok"
     assert _executed(recorder) == ["bad-a"]
 
 
 # --- git only after policy (3.1) -------------------------------------------------------------
+
 
 def test_no_route_does_not_run_git(tmp_path: Path, git_calls: list[Path]) -> None:
     make_workspace(tmp_path, [])
@@ -136,7 +159,8 @@ def test_no_route_does_not_run_git(tmp_path: Path, git_calls: list[Path]) -> Non
 
 @pytest.mark.parametrize("mode", ["mutating", "no-execute-op"])
 def test_refused_before_context_does_not_run_git(
-        tmp_path: Path, git_calls: list[Path], mode: str) -> None:
+    tmp_path: Path, git_calls: list[Path], mode: str
+) -> None:
     make_workspace(tmp_path, [bad_entry(mode, "bad-a")])
     out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
     assert out.status == "refused"
@@ -145,7 +169,8 @@ def test_refused_before_context_does_not_run_git(
 
 
 def test_routed_run_queries_git_once_and_carries_its_limitations(
-        tmp_path: Path, git_calls: list[Path]) -> None:
+    tmp_path: Path, git_calls: list[Path]
+) -> None:
     make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
     out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
     assert out.status == "ok"
@@ -158,12 +183,14 @@ def test_routed_run_queries_git_once_and_carries_its_limitations(
 
 # --- persisted ContextPack v2 (1.4, 3.4) -----------------------------------------------------
 
+
 def test_persisted_pack_has_workspace_signals_and_tiers(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("excerpts", "bad-a")])
     write_file(tmp_path, "notes.txt", LINES10)
     write_file(tmp_path, "pyproject.toml", "[project]\n")
-    out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing",
-                                         profile="balanced"))  # excerpt tiers asserted
+    out = _forger(tmp_path).ask(
+        AskRequest(intent="run it", capability="bad.thing", profile="balanced")
+    )  # excerpt tiers asserted
     assert out.status == "ok"
     pack = RunStore(tmp_path / ".forge").read(out.run_id, "context")
     assert pack["workspace"]["files_scanned"] >= 2
@@ -179,14 +206,18 @@ def test_persisted_pack_has_workspace_signals_and_tiers(tmp_path: Path) -> None:
 
 # --- excerpts by profile through the full flow (1.6, 9.1-9.3) --------------------------------
 
-@pytest.mark.parametrize(("profile", "excerpt"), [
-    ("economy", False), ("balanced", True), ("max", True)])
+
+@pytest.mark.parametrize(
+    ("profile", "excerpt"), [("economy", False), ("balanced", True), ("max", True)]
+)
 def test_capability_declaring_excerpts_gets_them_except_in_economy(
-        tmp_path: Path, profile: BudgetProfile, excerpt: bool) -> None:
+    tmp_path: Path, profile: BudgetProfile, excerpt: bool
+) -> None:
     make_workspace(tmp_path, [bad_entry("excerpts", "bad-a")])
     write_file(tmp_path, "notes.txt", LINES10)
-    out = _forger(tmp_path).ask(AskRequest(intent="run it notes.txt:2-3",
-                                           capability="bad.thing", profile=profile))
+    out = _forger(tmp_path).ask(
+        AskRequest(intent="run it notes.txt:2-3", capability="bad.thing", profile=profile)
+    )
     assert out.status == "ok"
     pack = RunStore(tmp_path / ".forge").read(out.run_id, "context")
     tiers = [f["tier"] for f in pack["files"]]
@@ -202,13 +233,15 @@ def test_capability_declaring_excerpts_gets_them_except_in_economy(
 def test_capability_without_excerpts_never_gets_them(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
     write_file(tmp_path, "notes.txt", LINES10)
-    out = _forger(tmp_path).ask(AskRequest(intent="run it notes.txt:2-3",
-                                           capability="bad.thing", profile="max"))
+    out = _forger(tmp_path).ask(
+        AskRequest(intent="run it notes.txt:2-3", capability="bad.thing", profile="max")
+    )
     pack = RunStore(tmp_path / ".forge").read(out.run_id, "context")
     assert [f["tier"] for f in pack["files"]] == ["reference"]
 
 
 # --- fingerprint cache (5.5) -----------------------------------------------------------------
+
 
 def test_fingerprint_cache_is_saved_outside_the_workspace(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("excerpts", "bad-a")])
@@ -221,14 +254,14 @@ def test_fingerprint_cache_is_saved_outside_the_workspace(tmp_path: Path) -> Non
 
 
 def test_fingerprint_cache_warnings_become_run_limitations(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("THEFORGE_CACHE_DIR", str(tmp_path / "cache"))  # inside the workspace
     make_workspace(tmp_path, [bad_entry("excerpts", "bad-a")])
     write_file(tmp_path, "notes.txt", LINES10)
     out = _forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
     assert out.status == "ok"
-    assert any(note.startswith("fingerprint cache disabled")
-               for note in out.receipt.limitations)
+    assert any(note.startswith("fingerprint cache disabled") for note in out.receipt.limitations)
     assert not (tmp_path / "cache" / "context").exists()  # nothing written inside it
 
 
@@ -240,32 +273,35 @@ REQUESTED = "req.txt"  # the file bad_forge's context-request modes ask for
 @pytest.fixture
 def no_git(monkeypatch: pytest.MonkeyPatch) -> None:
     def stub(root: Path, **_: Any) -> GitState:
-        return GitState(summary=GitSummary(available=False), changed=frozenset(),
-                        limitations=())
+        return GitState(summary=GitSummary(available=False), changed=frozenset(), limitations=())
 
     monkeypatch.setattr(orchestrator, "read_git_state", stub)
 
 
-def _negotiate(root: Path, mode: str, profile: BudgetProfile,
-               recorder: type[_Recorder]) -> Any:
+def _negotiate(root: Path, mode: str, profile: BudgetProfile, recorder: type[_Recorder]) -> Any:
     make_workspace(root, [bad_entry(mode, "bad-a")])
     write_file(root, REQUESTED, LINES10)
     return _forger(root, recorder).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile=profile))
+        AskRequest(intent="run it", capability="bad.thing", profile=profile)
+    )
 
 
 def _assert_receipt_consistent(root: Path, run_id: str) -> ExecutionReceipt:
     store = RunStore(root / ".forge")
     receipt = store.read_contract(run_id, "receipt", ExecutionReceipt)
     validate_receipt(receipt, result_sha256=store.persisted_sha256(run_id, "result"))
-    rounds = [sha for name in ("context-r1", "context-r2")
-              if (sha := store.persisted_sha256(run_id, name)) is not None]
+    rounds = [
+        sha
+        for name in ("context-r1", "context-r2")
+        if (sha := store.persisted_sha256(run_id, name)) is not None
+    ]
     assert receipt.inputs.context_round_sha256 == rounds
     return receipt
 
 
 def test_valid_request_in_balanced_extends_the_pack_and_ends_ok(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None) -> None:
+    tmp_path: Path, recorder: type[_Recorder], no_git: None
+) -> None:
     out = _negotiate(tmp_path, "context-request", "balanced", recorder)
     assert out.status == "ok", out.error
     assert out.result is not None and out.result.context_request is None
@@ -285,7 +321,8 @@ def test_valid_request_in_balanced_extends_the_pack_and_ends_ok(
 
 
 def test_valid_request_in_economy_fails_by_limit(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None) -> None:
+    tmp_path: Path, recorder: type[_Recorder], no_git: None
+) -> None:
     out = _negotiate(tmp_path, "context-request", "economy", recorder)
     assert out.status == "provider_failure" and out.result is None
     assert out.error is not None and out.error.code == Codes.CONTEXT_REQUEST_LIMIT
@@ -298,8 +335,8 @@ def test_valid_request_in_economy_fails_by_limit(
 
 @pytest.mark.parametrize(("profile", "rounds"), [("balanced", 1), ("max", 2)])
 def test_request_loop_fails_by_limit_after_the_profile_rounds(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None,
-        profile: BudgetProfile, rounds: int) -> None:
+    tmp_path: Path, recorder: type[_Recorder], no_git: None, profile: BudgetProfile, rounds: int
+) -> None:
     out = _negotiate(tmp_path, "context-request-loop", profile, recorder)
     assert out.status == "provider_failure" and out.result is None
     assert out.error is not None and out.error.code == Codes.CONTEXT_REQUEST_LIMIT
@@ -313,14 +350,22 @@ def test_request_loop_fails_by_limit_after_the_profile_rounds(
     assert receipt.status == "provider_failure" and receipt.result_sha256 is None
 
 
-@pytest.mark.parametrize(("mode", "code"), [
-    ("context-request-undeclared", Codes.CONTEXT_REQUEST_UNSUPPORTED),
-    ("context-request-invalid", Codes.CONTEXT_REQUEST_INVALID),
-])
+@pytest.mark.parametrize(
+    ("mode", "code"),
+    [
+        ("context-request-undeclared", Codes.CONTEXT_REQUEST_UNSUPPORTED),
+        ("context-request-invalid", Codes.CONTEXT_REQUEST_INVALID),
+    ],
+)
 @pytest.mark.parametrize("profile", ["balanced", "max"])
 def test_undeclared_or_invalid_request_fails_with_its_code(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None,
-        mode: str, code: str, profile: BudgetProfile) -> None:
+    tmp_path: Path,
+    recorder: type[_Recorder],
+    no_git: None,
+    mode: str,
+    code: str,
+    profile: BudgetProfile,
+) -> None:
     out = _negotiate(tmp_path, mode, profile, recorder)
     assert out.status == "provider_failure" and out.result is None
     assert out.error is not None and out.error.code == code
@@ -332,8 +377,8 @@ def test_undeclared_or_invalid_request_fails_with_its_code(
 
 
 def test_negotiation_saves_the_fingerprint_cache_once(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None,
-        monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, recorder: type[_Recorder], no_git: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
     saves: list[int] = []
     real_save = FingerprintStore.save
 
@@ -355,13 +400,13 @@ DRIFTED = "notes.txt"  # the *.txt file bad_forge's drift-report/mutate-context 
 def _run_mode(root: Path, mode: str, profile: BudgetProfile) -> Any:
     make_workspace(root, [bad_entry(mode, "bad-a")])
     write_file(root, DRIFTED, LINES10)
-    return _forger(root).ask(AskRequest(intent="run it", capability="bad.thing",
-                                        profile=profile))
+    return _forger(root).ask(AskRequest(intent="run it", capability="bad.thing", profile=profile))
 
 
 @pytest.mark.parametrize("profile", ["economy", "balanced", "max"])
 def test_reported_drift_ends_partial_with_demoted_evidence(
-        tmp_path: Path, no_git: None, profile: BudgetProfile) -> None:
+    tmp_path: Path, no_git: None, profile: BudgetProfile
+) -> None:
     out = _run_mode(tmp_path, "drift-report", profile)
     assert out.status == "partial", out.error
     assert out.result is not None and out.result.status == "partial"
@@ -379,10 +424,12 @@ def test_reported_drift_ends_partial_with_demoted_evidence(
     assert f"context-drift: {DRIFTED}" in receipt.limitations
 
 
-@pytest.mark.parametrize(("profile", "detected"), [
-    ("economy", False), ("balanced", True), ("max", True)])
+@pytest.mark.parametrize(
+    ("profile", "detected"), [("economy", False), ("balanced", True), ("max", True)]
+)
 def test_change_during_execution_is_detected_by_reverification(
-        tmp_path: Path, no_git: None, profile: BudgetProfile, detected: bool) -> None:
+    tmp_path: Path, no_git: None, profile: BudgetProfile, detected: bool
+) -> None:
     out = _run_mode(tmp_path, "mutate-context", profile)
     assert (tmp_path / DRIFTED).read_text(encoding="utf-8") != LINES10  # it did change
     assert out.result is not None
@@ -402,14 +449,14 @@ def test_change_during_execution_is_detected_by_reverification(
 
 @pytest.mark.parametrize("profile", ["balanced", "max"])
 def test_unchanged_context_is_reverified_without_drift(
-        tmp_path: Path, no_git: None, profile: BudgetProfile) -> None:
+    tmp_path: Path, no_git: None, profile: BudgetProfile
+) -> None:
     out = _run_mode(tmp_path, "ok", profile)
     assert out.status == "ok"
     assert not any(n.startswith("context-") for n in out.receipt.limitations)
 
 
-def test_provider_measured_tokens_are_persisted_unchanged(
-        tmp_path: Path, no_git: None) -> None:
+def test_provider_measured_tokens_are_persisted_unchanged(tmp_path: Path, no_git: None) -> None:
     out = _run_mode(tmp_path, "tokens-measured", "balanced")
     assert out.status == "ok", out.error
     store = RunStore(tmp_path / ".forge")
@@ -422,14 +469,17 @@ def test_provider_measured_tokens_are_persisted_unchanged(
     assert metrics["duration_ms"]["value"] != 999999
 
 
-@pytest.mark.parametrize(("reported", "kept"), [
-    (Metric(value=1234.0, kind="measured"), Metric(value=1234.0, kind="measured")),
-    (Metric(value=88.0, kind="estimated"), Metric(value=88.0, kind="estimated")),
-    (Metric(value=None, kind="unknown"), Metric()),
-    (Metric(value=5.0, kind="unknown"), Metric()),       # a value without a kind is not kept
-    (Metric(value=None, kind="measured"), Metric()),     # a kind without a value is not kept
-    (Metric(value=-1.0, kind="measured"), Metric()),     # a negative count is not a count
-])
+@pytest.mark.parametrize(
+    ("reported", "kept"),
+    [
+        (Metric(value=1234.0, kind="measured"), Metric(value=1234.0, kind="measured")),
+        (Metric(value=88.0, kind="estimated"), Metric(value=88.0, kind="estimated")),
+        (Metric(value=None, kind="unknown"), Metric()),
+        (Metric(value=5.0, kind="unknown"), Metric()),  # a value without a kind is not kept
+        (Metric(value=None, kind="measured"), Metric()),  # a kind without a value is not kept
+        (Metric(value=-1.0, kind="measured"), Metric()),  # a negative count is not a count
+    ],
+)
 def test_honest_tokens_keeps_only_reported_counts(reported: Metric, kept: Metric) -> None:
     assert orchestrator.honest_tokens(reported) == kept
 
@@ -441,6 +491,7 @@ def test_tokens_without_a_provider_count_are_unknown(tmp_path: Path, no_git: Non
 
 
 # --- run telemetry on every outcome (6.5, 6.6, 9.4, 10.1-10.5; task 4.4) ---------------------
+
 
 def _telemetry(root: Path, run_id: str) -> RunTelemetry:
     """Strictly re-read telemetry, proven bound to the receipt by the on-disk hash (10.3)."""
@@ -460,9 +511,14 @@ def _setup_outcome(root: Path, outcome: str) -> AskRequest:
     if outcome == "ambiguous":
         make_workspace(root, [SPARK_ENTRY, API_ENTRY])
         return AskRequest(intent="performance da api")
-    mode = {"ok": "ok", "partial": "drift-report", "refused-provider": "refuse",
-            "refused-op": "no-execute-op", "failure-execute": "crash",
-            "failure-health": "unhealthy"}[outcome]
+    mode = {
+        "ok": "ok",
+        "partial": "drift-report",
+        "refused-provider": "refuse",
+        "refused-op": "no-execute-op",
+        "failure-execute": "crash",
+        "failure-health": "unhealthy",
+    }[outcome]
     make_workspace(root, [bad_entry(mode, "bad-a")])
     write_file(root, DRIFTED, LINES10)
     # Profile mechanics, not defaulting: a routed trivial run resolves auto->economy,
@@ -470,18 +526,22 @@ def _setup_outcome(root: Path, outcome: str) -> AskRequest:
     return AskRequest(intent="run it", capability="bad.thing", profile="balanced")
 
 
-@pytest.mark.parametrize(("outcome", "status", "executed"), [
-    ("ok", "ok", 1),
-    ("partial", "partial", 1),
-    ("refused-provider", "refused", 1),
-    ("refused-op", "refused", 0),
-    ("no_route", "no_route", 0),
-    ("ambiguous", "ambiguous", 0),
-    ("failure-execute", "provider_failure", 1),
-    ("failure-health", "provider_failure", 0),
-])
+@pytest.mark.parametrize(
+    ("outcome", "status", "executed"),
+    [
+        ("ok", "ok", 1),
+        ("partial", "partial", 1),
+        ("refused-provider", "refused", 1),
+        ("refused-op", "refused", 0),
+        ("no_route", "no_route", 0),
+        ("ambiguous", "ambiguous", 0),
+        ("failure-execute", "provider_failure", 1),
+        ("failure-health", "provider_failure", 0),
+    ],
+)
 def test_every_outcome_writes_telemetry_bound_to_the_receipt(
-        tmp_path: Path, no_git: None, outcome: str, status: str, executed: int) -> None:
+    tmp_path: Path, no_git: None, outcome: str, status: str, executed: int
+) -> None:
     out = _forger(tmp_path).ask(_setup_outcome(tmp_path, outcome))
     assert out.status == status, out.error
     telemetry = _telemetry(tmp_path, out.run_id)
@@ -498,12 +558,15 @@ def test_every_outcome_writes_telemetry_bound_to_the_receipt(
 
 @pytest.mark.parametrize("profile", ["economy", "balanced", "max"])
 def test_at_most_one_provider_executed_is_recorded_in_every_profile(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None,
-        profile: BudgetProfile) -> None:
-    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    tmp_path: Path, recorder: type[_Recorder], no_git: None, profile: BudgetProfile
+) -> None:
+    make_workspace(
+        tmp_path,
+        [bad_entry("unhealthy", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     out = _forger(tmp_path, recorder).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile=profile))
+        AskRequest(intent="run it", capability="bad.thing", profile=profile)
+    )
     telemetry = _telemetry(tmp_path, out.run_id)
     assert telemetry.providers_executed.value == float(len(_executed(recorder)))
     assert telemetry.providers_executed.value is not None
@@ -515,7 +578,8 @@ def test_at_most_one_provider_executed_is_recorded_in_every_profile(
 
 
 def test_negotiated_run_records_rounds_counters_and_tiers(
-        tmp_path: Path, recorder: type[_Recorder], no_git: None) -> None:
+    tmp_path: Path, recorder: type[_Recorder], no_git: None
+) -> None:
     out = _negotiate(tmp_path, "context-request", "balanced", recorder)
     assert out.status == "ok", out.error
     telemetry = _telemetry(tmp_path, out.run_id)
@@ -539,7 +603,8 @@ def test_drift_is_recorded_in_the_telemetry(tmp_path: Path, no_git: None) -> Non
 
 
 def test_provider_without_revalidation_is_undeclared_with_a_receipt_limitation(
-        tmp_path: Path, no_git: None) -> None:
+    tmp_path: Path, no_git: None
+) -> None:
     out = _run_mode(tmp_path, "ok", "balanced")
     assert out.status == "ok"
     telemetry = _telemetry(tmp_path, out.run_id)
@@ -558,7 +623,8 @@ def test_echo_declares_hash_revalidation(tmp_path: Path, no_git: None) -> None:
 
 
 def test_receipt_does_not_duplicate_limitations_shared_with_telemetry(
-        tmp_path: Path, no_git: None) -> None:
+    tmp_path: Path, no_git: None
+) -> None:
     out = _run_mode(tmp_path, "mutate-context", "economy")  # minimal: context-not-reverified
     telemetry = _telemetry(tmp_path, out.run_id)
     assert "context-not-reverified" in telemetry.limitations
@@ -567,7 +633,8 @@ def test_receipt_does_not_duplicate_limitations_shared_with_telemetry(
 
 
 def test_persisted_telemetry_is_redacted(
-        tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
     real_build = orchestrator.TelemetryRecorder.build
 
     def leaky(self: orchestrator.TelemetryRecorder) -> RunTelemetry:
@@ -590,7 +657,8 @@ def test_usage_error_still_writes_telemetry(tmp_path: Path, no_git: None) -> Non
 
 
 def test_internal_error_still_writes_telemetry(
-        tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
     make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
 
     def boom(*_: Any, **__: Any) -> Any:
@@ -606,7 +674,8 @@ def test_internal_error_still_writes_telemetry(
 
 
 def test_a_telemetry_failure_never_costs_the_receipt_nor_fakes_the_status(
-        tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
     def broken(self: orchestrator.TelemetryRecorder) -> RunTelemetry:
         raise RuntimeError("telemetry kaboom")
 
@@ -617,14 +686,17 @@ def test_a_telemetry_failure_never_costs_the_receipt_nor_fakes_the_status(
     receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
     assert receipt.status == "provider_failure" and receipt.telemetry_sha256 is None
     assert store.read_optional(out.run_id, "telemetry") is None
-    assert any(n.startswith(orchestrator.TELEMETRY_UNAVAILABLE_LIMITATION)
-               for n in receipt.limitations)
+    assert any(
+        n.startswith(orchestrator.TELEMETRY_UNAVAILABLE_LIMITATION) for n in receipt.limitations
+    )
 
 
 # --- observable difference between profiles on one workspace and task (9.4, 9.5; task 5.1) --
 
+
 def test_profiles_differ_observably_on_the_same_workspace_and_task(
-        tmp_path: Path, no_git: None) -> None:
+    tmp_path: Path, no_git: None
+) -> None:
     """Same workspace, same task, three profiles: the telemetry ProfileSnapshot and the
     persisted ContextPack show pairwise distinct context budgets and executed verification
     levels, and only ``max`` raises the providers limit (9.5)."""

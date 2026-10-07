@@ -182,12 +182,14 @@ def advance_experiment(
         )
 
     champion = [
-        item for item in scoped
+        item
+        for item in scoped
         if item.provider == experiment.champion
         and item.surface_fingerprint == experiment.champion_surface
     ]
     challenger = [
-        item for item in scoped
+        item
+        for item in scoped
         if item.provider == experiment.challenger
         and item.surface_fingerprint == experiment.challenger_surface
     ]
@@ -201,15 +203,11 @@ def advance_experiment(
         state = "shadow"
     elif not champion or not challenger:
         reasons.append("both champion and challenger require observed evaluation runs")
-    elif (
-        observations >= experiment.minimum_runs
-        and verified >= experiment.minimum_verified_runs
-    ):
+    elif observations >= experiment.minimum_runs and verified >= experiment.minimum_verified_runs:
         minimum_per_arm = max(1, experiment.minimum_runs // 2)
         if len(champion) < minimum_per_arm or len(challenger) < minimum_per_arm:
             reasons.append(
-                "each arm requires at least "
-                f"{minimum_per_arm} evaluation runs before review"
+                f"each arm requires at least {minimum_per_arm} evaluation runs before review"
             )
             return replace(
                 experiment,
@@ -218,27 +216,23 @@ def advance_experiment(
                 verified_observations=verified,
                 reasons=reasons,
             )
-        champion_verified = sum(
-            1 for item in champion if item.verification == "passed"
-        ) / len(champion)
-        challenger_verified = sum(
-            1 for item in challenger if item.verification == "passed"
-        ) / len(challenger)
-        champion_delivered = sum(
-            1 for item in champion if item.status in ("ok", "partial")
-        ) / len(champion)
+        champion_verified = sum(1 for item in champion if item.verification == "passed") / len(
+            champion
+        )
+        challenger_verified = sum(1 for item in challenger if item.verification == "passed") / len(
+            challenger
+        )
+        champion_delivered = sum(1 for item in champion if item.status in ("ok", "partial")) / len(
+            champion
+        )
         challenger_delivered = sum(
             1 for item in challenger if item.status in ("ok", "partial")
         ) / len(challenger)
 
         if challenger_verified < champion_verified:
-            reasons.append(
-                "challenger verification rate is worse than champion"
-            )
+            reasons.append("challenger verification rate is worse than champion")
         elif challenger_delivered < champion_delivered:
-            reasons.append(
-                "challenger delivered-result rate is worse than champion"
-            )
+            reasons.append("challenger delivered-result rate is worse than champion")
         else:
             improved: list[str] = []
             regressed: list[str] = []
@@ -253,9 +247,8 @@ def advance_experiment(
                     for item in challenger
                     if (value := getattr(item, metric)) is not None
                 ]
-                if (
-                    len(champion_values) != len(champion)
-                    or len(challenger_values) != len(challenger)
+                if len(champion_values) != len(champion) or len(challenger_values) != len(
+                    challenger
                 ):
                     continue
                 incumbent = float(median(champion_values))
@@ -266,13 +259,10 @@ def advance_experiment(
                     regressed.append(metric)
             if regressed:
                 reasons.append(
-                    "challenger regresses measured economy axes: "
-                    + ", ".join(regressed)
+                    "challenger regresses measured economy axes: " + ", ".join(regressed)
                 )
             elif not improved:
-                reasons.append(
-                    "no measured economy improvement yet; keep experiment observing"
-                )
+                reasons.append("no measured economy improvement yet; keep experiment observing")
             else:
                 state = "eligible_for_review"
                 reasons.append(

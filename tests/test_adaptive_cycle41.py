@@ -232,6 +232,7 @@ def test_time_holdout_excludes_hypothesis_history() -> None:
     assert result.verified_observations == 2
     assert result.state == "eligible_for_review"
 
+
 def test_one_sided_history_never_becomes_reviewable() -> None:
     result = advance_experiment(
         experiment(minimum_runs=4, minimum_verified_runs=4),

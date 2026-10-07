@@ -17,7 +17,10 @@ CATEGORIES = ("unit", "contract", "integration", "e2e", "slow", "security", "rea
 def _pytest(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", *args],
-        cwd=cwd, capture_output=True, text=True, timeout=120,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
 
 
@@ -26,8 +29,11 @@ def test_category_selects_non_empty_subset(marker: str) -> None:
     proc = _pytest("--collect-only", "-q", "-m", marker, cwd=REPO)
     assert proc.returncode == 0, proc.stdout + proc.stderr
     # addopts already has -q, so this prints "tests/test_x.py: N" per selected file.
-    counts = [int(line.rsplit(":", 1)[1]) for line in proc.stdout.splitlines()
-              if line.startswith("tests") and ".py: " in line]
+    counts = [
+        int(line.rsplit(":", 1)[1])
+        for line in proc.stdout.splitlines()
+        if line.startswith("tests") and ".py: " in line
+    ]
     assert sum(counts) > 0, proc.stdout
 
 
@@ -63,11 +69,14 @@ def test_external_name_resolution_is_blocked() -> None:
         socket.getaddrinfo("example.com", 80)
 
 
-@pytest.mark.parametrize(("name", "arg"), [
-    ("gethostbyname", "example.com"),
-    ("gethostbyname_ex", "example.com"),
-    ("gethostbyaddr", "192.0.2.1"),
-])
+@pytest.mark.parametrize(
+    ("name", "arg"),
+    [
+        ("gethostbyname", "example.com"),
+        ("gethostbyname_ex", "example.com"),
+        ("gethostbyaddr", "192.0.2.1"),
+    ],
+)
 def test_legacy_name_resolution_is_blocked(name: str, arg: str) -> None:
     with pytest.raises(OSError, match="network access disabled"):
         getattr(socket, name)(arg)

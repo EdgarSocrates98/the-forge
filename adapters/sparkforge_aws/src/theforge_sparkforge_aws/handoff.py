@@ -43,8 +43,9 @@ _SEVERITY = ("info", "low", "medium", "high", "critical")
 
 
 def _canonical(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
 
 
 def _fact(item: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -52,15 +53,26 @@ def _fact(item: Mapping[str, Any]) -> dict[str, Any] | None:
     origin = item.get("origin")
     kind = item.get("kind")
     item_id = item.get("id")
-    if not (isinstance(origin, Mapping) and isinstance(kind, str) and kind
-            and isinstance(item_id, str) and item_id):
+    if not (
+        isinstance(origin, Mapping)
+        and isinstance(kind, str)
+        and kind
+        and isinstance(item_id, str)
+        and item_id
+    ):
         return None
     provider = origin.get("provider")
     run_id = origin.get("run_id")
     node = origin.get("node")
-    if not (isinstance(provider, Mapping) and isinstance(provider.get("id"), str)
-            and provider["id"] and isinstance(run_id, str) and run_id
-            and isinstance(node, str) and node):
+    if not (
+        isinstance(provider, Mapping)
+        and isinstance(provider.get("id"), str)
+        and provider["id"]
+        and isinstance(run_id, str)
+        and run_id
+        and isinstance(node, str)
+        and node
+    ):
         return None
     upstream: dict[str, Any] = {
         "provider": provider["id"],
@@ -78,9 +90,10 @@ def _fact(item: Mapping[str, Any]) -> dict[str, Any] | None:
     subject: dict[str, Any] = {}
     if isinstance(location, Mapping) and isinstance(location.get("path"), str):
         line = location.get("line")
-        subject = {"file": location["path"],
-                   "line": line if isinstance(line, int)
-                   and not isinstance(line, bool) else None}
+        subject = {
+            "file": location["path"],
+            "line": line if isinstance(line, int) and not isinstance(line, bool) else None,
+        }
         upstream["location"] = dict(subject)
     item_subject = item.get("subject")
     if not subject and isinstance(item_subject, str) and item_subject:
@@ -136,14 +149,17 @@ def translate_handoff(handoff: Mapping[str, Any]) -> tuple[dict[str, Any], list[
     if skipped:
         limitations.append(f"{skipped} handoff item(s) malformed: not translated")
     if len(facts) > MAX_UPSTREAM_ITEMS:
-        limitations.append(f"upstream facts truncated to {MAX_UPSTREAM_ITEMS} of "
-                           f"{len(facts)} translated items")
+        limitations.append(
+            f"upstream facts truncated to {MAX_UPSTREAM_ITEMS} of {len(facts)} translated items"
+        )
         del facts[MAX_UPSTREAM_ITEMS:]
     document: dict[str, Any] = {"schema": UPSTREAM_SCHEMA, "facts": facts}
     if len(_canonical(document)) > MAX_UPSTREAM_BYTES:
         kept = len(facts)
         while facts and len(_canonical(document)) > MAX_UPSTREAM_BYTES:
             facts.pop()
-        limitations.append(f"upstream facts truncated to {len(facts)} of {kept} items: "
-                           f"document exceeds {MAX_UPSTREAM_BYTES} bytes")
+        limitations.append(
+            f"upstream facts truncated to {len(facts)} of {kept} items: "
+            f"document exceeds {MAX_UPSTREAM_BYTES} bytes"
+        )
     return document, limitations

@@ -26,39 +26,57 @@ TS = "2026-01-01T00:00:00Z"
 
 
 def record(pid: str, state: Any = "ready", error: str | None = None) -> RegistryRecord:
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
-                          state=state, error=error)
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust="local"), state=state, error=error
+    )
 
 
 def pnode(nid: str, provider: str) -> PlanNode:
-    return PlanNode(id=nid, role="standalone", provider=provider, capability="demo.echo",
-                    action="echo")
+    return PlanNode(
+        id=nid, role="standalone", provider=provider, capability="demo.echo", action="echo"
+    )
 
 
 def plan(*nodes: PlanNode) -> ExecutionPlan:
-    return ExecutionPlan(producer=P, created_at=TS, status="validated", plan_run="p1",
-                         task_id="t1", pattern="pipeline", source="file", profile="max",
-                         nodes=list(nodes))
+    return ExecutionPlan(
+        producer=P,
+        created_at=TS,
+        status="validated",
+        plan_run="p1",
+        task_id="t1",
+        pattern="pipeline",
+        source="file",
+        profile="max",
+        nodes=list(nodes),
+    )
 
 
 def unavailable(detail: str, unlock: str | None = None) -> HealthOutcome:
-    return HealthOutcome(status="unavailable",
-                         error=ErrorInfo(code="FORGE-HEALTH-UNAVAILABLE", detail=detail,
-                                         unlock=unlock))
+    return HealthOutcome(
+        status="unavailable",
+        error=ErrorInfo(code="FORGE-HEALTH-UNAVAILABLE", detail=detail, unlock=unlock),
+    )
 
 
-def build(p: ExecutionPlan | None, records: dict[str, RegistryRecord],
-          health: dict[str, HealthOutcome] | None = None) -> InstallationPlan | None:
+def build(
+    p: ExecutionPlan | None,
+    records: dict[str, RegistryRecord],
+    health: dict[str, HealthOutcome] | None = None,
+) -> InstallationPlan | None:
     return build_installation_plan("p1", p, records, health or {}, created_at=TS)
 
 
 def test_single_plan_with_registry_and_health_items() -> None:
-    records = {"spark": record("spark", "invalid", "manifest: bad version"),
-               "api": record("api"),
-               "ok": record("ok")}
+    records = {
+        "spark": record("spark", "invalid", "manifest: bad version"),
+        "api": record("api"),
+        "ok": record("ok"),
+    }
     p = plan(pnode("a", "spark"), pnode("b", "api"), pnode("c", "spark"), pnode("d", "ok"))
-    health = {"api": unavailable("java missing", unlock="install a JDK 17"),
-              "ok": HealthOutcome(status="ok")}
+    health = {
+        "api": unavailable("java missing", unlock="install a JDK 17"),
+        "ok": HealthOutcome(status="ok"),
+    }
     result = build(p, records, health)
 
     assert result is not None
@@ -68,7 +86,9 @@ def test_single_plan_with_registry_and_health_items() -> None:
     assert result.created_at == TS
     assert result.producer.id == "theforge"
     assert [(i.provider, i.source, i.state) for i in result.items] == [
-        ("spark", "registry", "invalid"), ("api", "health", "unavailable")]
+        ("spark", "registry", "invalid"),
+        ("api", "health", "unavailable"),
+    ]
     spark, api = result.items
     assert spark.reason == "manifest: bad version"
     assert spark.suggested_action == "manifest: bad version"
@@ -91,23 +111,36 @@ def test_other_registry_states_are_not_installation_items(state: str) -> None:
 
 
 def test_health_error_uses_detail_without_unlock() -> None:
-    health = {"x": HealthOutcome(status="error",
-                                 error=ErrorInfo(code="FORGE-HEALTH-FAILED", detail="boom"))}
+    health = {
+        "x": HealthOutcome(
+            status="error", error=ErrorInfo(code="FORGE-HEALTH-FAILED", detail="boom")
+        )
+    }
     result = build(plan(pnode("a", "x")), {"x": record("x")}, health)
     assert result is not None
     (item,) = result.items
     assert (item.source, item.state, item.reason, item.suggested_action) == (
-        "health", "unavailable", "boom", "boom")
+        "health",
+        "unavailable",
+        "boom",
+        "boom",
+    )
 
 
 def test_degraded_health_is_not_an_item() -> None:
-    assert build(plan(pnode("a", "x")), {"x": record("x")},
-                 {"x": HealthOutcome(status="degraded")}) is None
+    assert (
+        build(plan(pnode("a", "x")), {"x": record("x")}, {"x": HealthOutcome(status="degraded")})
+        is None
+    )
 
 
 def test_registry_item_wins_over_health_for_the_same_provider() -> None:
-    health = {"x": HealthOutcome(status="error", error=ErrorInfo(
-        code="FORGE-PROVIDER-NOT-READY", detail="x is invalid: bad"))}
+    health = {
+        "x": HealthOutcome(
+            status="error",
+            error=ErrorInfo(code="FORGE-PROVIDER-NOT-READY", detail="x is invalid: bad"),
+        )
+    }
     result = build(plan(pnode("a", "x")), {"x": record("x", "invalid", "bad")}, health)
     assert result is not None
     assert [(i.provider, i.source) for i in result.items] == [("x", "registry")]
@@ -118,31 +151,41 @@ def test_referenced_provider_absent_from_registry() -> None:
     assert result is not None
     (item,) = result.items
     assert (item.provider, item.source, item.state, item.nodes) == (
-        "ghost", "registry", "absent", ["a"])
+        "ghost",
+        "registry",
+        "absent",
+        ["a"],
+    )
     assert "ghost" in item.reason
 
 
 def test_no_items_means_no_plan() -> None:
     records = {"x": record("x"), "y": record("y")}
-    assert build(plan(pnode("a", "x"), pnode("b", "y")), records,
-                 {"x": HealthOutcome(status="ok")}) is None
+    assert (
+        build(plan(pnode("a", "x"), pnode("b", "y")), records, {"x": HealthOutcome(status="ok")})
+        is None
+    )
     assert build(None, records) is None
 
 
 def test_unreferenced_provider_is_ignored_when_a_plan_exists() -> None:
     records = {"x": record("x"), "broken": record("broken", "invalid", "bad")}
-    assert build(plan(pnode("a", "x")), records,
-                 {"broken": unavailable("down")}) is None
+    assert build(plan(pnode("a", "x")), records, {"broken": unavailable("down")}) is None
 
 
 def test_decomposition_considers_every_registered_provider() -> None:
-    records = {"zeta": record("zeta", "unreachable", "timeout"),
-               "alpha": record("alpha", "incompatible", "protocol 9"),
-               "ok": record("ok")}
+    records = {
+        "zeta": record("zeta", "unreachable", "timeout"),
+        "alpha": record("alpha", "incompatible", "protocol 9"),
+        "ok": record("ok"),
+    }
     result = build(None, records, {"ok": unavailable("down")})
     assert result is not None
     assert [(i.provider, i.source, i.nodes) for i in result.items] == [
-        ("alpha", "registry", []), ("ok", "health", []), ("zeta", "registry", [])]
+        ("alpha", "registry", []),
+        ("ok", "health", []),
+        ("zeta", "registry", []),
+    ]
 
 
 def test_missing_registry_error_falls_back_to_state() -> None:
@@ -156,9 +199,11 @@ def test_missing_registry_error_falls_back_to_state() -> None:
 def test_reason_and_action_are_redacted() -> None:
     secret = "password=" + secrets.token_hex(8)  # random per run: a redaction fixture
     health = {"y": unavailable(f"login failed {secret}", unlock=f"set {secret}")}
-    result = build(plan(pnode("a", "x"), pnode("b", "y")),
-                   {"x": record("x", "invalid", f"argv has {secret}"), "y": record("y")},
-                   health)
+    result = build(
+        plan(pnode("a", "x"), pnode("b", "y")),
+        {"x": record("x", "invalid", f"argv has {secret}"), "y": record("y")},
+        health,
+    )
     assert result is not None
     dumped = repr(to_dict(result))
     assert secret.split("=", 1)[1] not in dumped
@@ -189,6 +234,13 @@ def test_builder_never_executes_anything() -> None:
         elif isinstance(node, ast.ImportFrom) and node.module:
             imported.add(node.module)
             imported.update(f"{node.module}.{alias.name}" for alias in node.names)
-    forbidden = ("subprocess", "os", "shutil", "urllib", "socket", "theforge.protocol",
-                 "theforge.registry.health.check_health")
+    forbidden = (
+        "subprocess",
+        "os",
+        "shutil",
+        "urllib",
+        "socket",
+        "theforge.protocol",
+        "theforge.registry.health.check_health",
+    )
     assert not [m for m in imported if m.startswith(forbidden)]

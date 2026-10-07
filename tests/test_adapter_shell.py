@@ -40,15 +40,25 @@ from theforge.security import env as core_env
 REPO = Path(__file__).parents[1]
 ADAPTERS = {
     # name: (distribution, package, provider id, specialist window)
-    "sparkforge_aws": ("theforge-sparkforge-aws-adapter", "theforge_sparkforge_aws",
-                        "spark-forge-aws",
-                   ">=0.5.0,<0.6.0"),
-    "apiforge": ("theforge-apiforge-adapter", "theforge_apiforge", "api-forge",
-                 ">=0.1.0,<0.2.0"),
-    "doctordata": ("theforge-doctordata-adapter", "theforge_doctordata",
-                   "forge-doctor-data", ">=1.0.0rc1,<2.0.0"),
-    "doctorapi": ("theforge-doctorapi-adapter", "theforge_doctorapi",
-                  "forge-doctor-api", ">=0.2.0,<0.3.0"),
+    "sparkforge_aws": (
+        "theforge-sparkforge-aws-adapter",
+        "theforge_sparkforge_aws",
+        "spark-forge-aws",
+        ">=0.5.0,<0.6.0",
+    ),
+    "apiforge": ("theforge-apiforge-adapter", "theforge_apiforge", "api-forge", ">=0.1.0,<0.2.0"),
+    "doctordata": (
+        "theforge-doctordata-adapter",
+        "theforge_doctordata",
+        "forge-doctor-data",
+        ">=1.0.0rc1,<2.0.0",
+    ),
+    "doctorapi": (
+        "theforge-doctorapi-adapter",
+        "theforge_doctorapi",
+        "forge-doctor-api",
+        ">=0.2.0,<0.3.0",
+    ),
 }
 # Adapter release versions (semver of each distribution): bumps track surface
 # changes per docs/versioning.md.
@@ -75,7 +85,10 @@ def _run(name: str, op: str, stdin: bytes) -> subprocess.CompletedProcess[bytes]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:
         return subprocess.run(
             [sys.executable, "-m", ADAPTERS[name][1], op],
-            input=stdin, capture_output=True, timeout=60, cwd=cwd,
+            input=stdin,
+            capture_output=True,
+            timeout=60,
+            cwd=cwd,
         )
 
 
@@ -123,15 +136,23 @@ def test_adapter_sources_never_import_theforge(name: str) -> None:
 @pytest.mark.parametrize("op", OPS)
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
-    specialist = {"sparkforge_aws": ("sparkforge_aws", "sparkforge"),
-                  "apiforge": ("apiforge",),
-                  "doctordata": ("forge_doctor_data",),
-                  "doctorapi": ("forge_doctor_api",)}[name]
+    specialist = {
+        "sparkforge_aws": ("sparkforge_aws", "sparkforge"),
+        "apiforge": ("apiforge",),
+        "doctordata": ("forge_doctor_data",),
+        "doctorapi": ("forge_doctor_api",),
+    }[name]
     if any(importlib.util.find_spec(mod) is not None for mod in specialist) or (
-            name == "apiforge" and sys.version_info[:2] == (3, 12)):
+        name == "apiforge" and sys.version_info[:2] == (3, 12)
+    ):
         pytest.skip(f"{specialist} may be usable in this interpreter")
-    request = {"protocol": PROTOCOL_V1, "kind": "Request", "op": op,
-               "request_id": f"req-{op}", "payload": {}}
+    request = {
+        "protocol": PROTOCOL_V1,
+        "kind": "Request",
+        "op": op,
+        "request_id": f"req-{op}",
+        "payload": {},
+    }
     out = _run(name, op, json.dumps(request).encode("utf-8"))
     assert out.returncode == 0, out.stderr
     data = json.loads(out.stdout)
@@ -151,8 +172,10 @@ def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
     # Without the specialist in this interpreter, describe (and so execute, gated by it)
     # refuses with the adapter's own unavailability code (4.1/5.1).
     # The adapter key upper-cased: sparkforge_aws -> SPARKFORGE_AWS-ADAPTER-UNAVAILABLE.
-    assert (response.error.code.startswith("ADAPTER-")
-            or response.error.code == f"{name.upper()}-ADAPTER-UNAVAILABLE")
+    assert (
+        response.error.code.startswith("ADAPTER-")
+        or response.error.code == f"{name.upper()}-ADAPTER-UNAVAILABLE"
+    )
 
 
 @pytest.mark.parametrize("stdin", [b"", b"not json", b"[1, 2]", b'{"request_id": 7}'])
@@ -174,13 +197,13 @@ TEST_PRODUCER = ("shell-test-forge", "9.8.7")
 # provider -> (argv prefix, (producer id, producer version))
 SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     "test-handlers": ([sys.executable, str(SHELL_FORGE)], TEST_PRODUCER),
-    "sparkforge_aws": ([sys.executable, "-m", "theforge_sparkforge_aws"],
-                        ("spark-forge-aws", "0.3.0")),
+    "sparkforge_aws": (
+        [sys.executable, "-m", "theforge_sparkforge_aws"],
+        ("spark-forge-aws", "0.3.0"),
+    ),
     "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.3.0")),
-    "doctordata": ([sys.executable, "-m", "theforge_doctordata"],
-                   ("forge-doctor-data", "0.3.0")),
-    "doctorapi": ([sys.executable, "-m", "theforge_doctorapi"],
-                  ("forge-doctor-api", "0.3.0")),
+    "doctordata": ([sys.executable, "-m", "theforge_doctordata"], ("forge-doctor-data", "0.3.0")),
+    "doctorapi": ([sys.executable, "-m", "theforge_doctorapi"], ("forge-doctor-api", "0.3.0")),
 }
 
 
@@ -191,14 +214,27 @@ def _adapter_constants(name: str) -> tuple[str, str]:
     return namespace["PROVIDER_ID"], namespace["VERSION"]
 
 
-def _request(op: str, payload: dict[str, Any] | None = None, *, rid: str | None = None,
-             protocol: str = PROTOCOL_V1) -> bytes:
-    return json.dumps({"protocol": protocol, "kind": "Request", "op": op,
-                       "request_id": rid or f"req-{op}", "payload": payload or {}}).encode()
+def _request(
+    op: str,
+    payload: dict[str, Any] | None = None,
+    *,
+    rid: str | None = None,
+    protocol: str = PROTOCOL_V1,
+) -> bytes:
+    return json.dumps(
+        {
+            "protocol": protocol,
+            "kind": "Request",
+            "op": op,
+            "request_id": rid or f"req-{op}",
+            "payload": payload or {},
+        }
+    ).encode()
 
 
-def _call(provider: str, op: str, stdin: bytes, options: tuple[str, ...] = ()
-          ) -> tuple[Response, subprocess.CompletedProcess[bytes]]:
+def _call(
+    provider: str, op: str, stdin: bytes, options: tuple[str, ...] = ()
+) -> tuple[Response, subprocess.CompletedProcess[bytes]]:
     argv = [*SHELL_PROVIDERS[provider][0], *options, op]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:  # never the repo
         out = subprocess.run(argv, input=stdin, capture_output=True, timeout=60, cwd=cwd)
@@ -211,8 +247,12 @@ def _call(provider: str, op: str, stdin: bytes, options: tuple[str, ...] = ()
 
 
 def _execute(capability: Any, action: Any) -> dict[str, Any]:
-    return {"task": {"intent": "x"}, "capability": capability, "action": action,
-            "context": {"files": []}}
+    return {
+        "task": {"intent": "x"},
+        "capability": capability,
+        "action": action,
+        "context": {"files": []},
+    }
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
@@ -223,8 +263,9 @@ def test_shell_providers_match_adapter_constants(name: str) -> None:
 @pytest.mark.parametrize("op", ["describe", "health", "execute", "bogus", ""])
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_echoes_op_request_id_and_producer(provider: str, op: str) -> None:
-    response, _ = _call(provider, op, _request(op, _execute("test.echo", "run"),
-                                               rid=f"rid-{provider}-{op}"))
+    response, _ = _call(
+        provider, op, _request(op, _execute("test.echo", "run"), rid=f"rid-{provider}-{op}")
+    )
     assert response.request_id == f"rid-{provider}-{op}"
 
 
@@ -240,8 +281,9 @@ def test_shell_refuses_unknown_op(provider: str) -> None:
 @pytest.mark.parametrize("op", ["health", "execute"])
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_refuses_incompatible_protocol_outside_describe(provider: str, op: str) -> None:
-    response, _ = _call(provider, op, _request(op, _execute("test.echo", "run"),
-                                               protocol="forge/v2"))
+    response, _ = _call(
+        provider, op, _request(op, _execute("test.echo", "run"), protocol="forge/v2")
+    )
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "ADAPTER-PROTOCOL-UNSUPPORTED"
@@ -257,8 +299,9 @@ def test_shell_describe_is_not_gated_by_protocol() -> None:
 
 @pytest.mark.parametrize("capability", ["nope.missing", None, 42])
 def test_shell_refuses_undeclared_capability(capability: Any) -> None:
-    response, _ = _call("test-handlers", "execute",
-                        _request("execute", _execute(capability, "run")))
+    response, _ = _call(
+        "test-handlers", "execute", _request("execute", _execute(capability, "run"))
+    )
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "ADAPTER-CAPABILITY-UNSUPPORTED"
@@ -268,12 +311,14 @@ def test_shell_refuses_undeclared_capability(capability: Any) -> None:
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_execute_surfaces_a_non_ok_describe(provider: str) -> None:
     # The adapters' describe refuses until 4.1/5.1; the test set refuses on request.
-    options = (("--assume-specialist-version", "describe-refuses")
-               if provider == "test-handlers" else ())
+    options = (
+        ("--assume-specialist-version", "describe-refuses") if provider == "test-handlers" else ()
+    )
     describe, _ = _call(provider, "describe", _request("describe"), options)
     assert describe.status == "refused" and describe.error is not None
-    response, _ = _call(provider, "execute",
-                        _request("execute", _execute("test.echo", "run")), options)
+    response, _ = _call(
+        provider, "execute", _request("execute", _execute("test.echo", "run")), options
+    )
     assert response.request_id == "req-execute"
     assert response.status == describe.status
     assert response.error == describe.error
@@ -281,8 +326,9 @@ def test_shell_execute_surfaces_a_non_ok_describe(provider: str) -> None:
 
 @pytest.mark.parametrize("action", ["missing", None, ["run"]])
 def test_shell_refuses_undeclared_action(action: Any) -> None:
-    response, _ = _call("test-handlers", "execute",
-                        _request("execute", _execute("test.echo", action)))
+    response, _ = _call(
+        "test-handlers", "execute", _request("execute", _execute("test.echo", action))
+    )
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "ADAPTER-ACTION-UNSUPPORTED"
@@ -290,15 +336,21 @@ def test_shell_refuses_undeclared_action(action: Any) -> None:
 
 
 def test_shell_dispatches_declared_capability_and_action() -> None:
-    response, _ = _call("test-handlers", "execute",
-                        _request("execute", _execute("test.echo", "run")))
+    response, _ = _call(
+        "test-handlers", "execute", _request("execute", _execute("test.echo", "run"))
+    )
     assert response.status == "ok"
-    assert response.payload["handled"] == {"capability": "test.echo", "action": "run",
-                                           "request_id": "req-execute"}
+    assert response.payload["handled"] == {
+        "capability": "test.echo",
+        "action": "run",
+        "request_id": "req-execute",
+    }
 
 
-@pytest.mark.parametrize("stdin", [b"", b"not json", b"[1, 2]", b'{"request_id": 7}',
-                                   b"\xff\xfe", b'{"protocol": "forge/v1"}'])
+@pytest.mark.parametrize(
+    "stdin",
+    [b"", b"not json", b"[1, 2]", b'{"request_id": 7}', b"\xff\xfe", b'{"protocol": "forge/v1"}'],
+)
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_malformed_request_is_structured_error(provider: str, stdin: bytes) -> None:
     response, _ = _call(provider, "describe", stdin)
@@ -308,8 +360,9 @@ def test_shell_malformed_request_is_structured_error(provider: str, stdin: bytes
     assert response.error.code == "ADAPTER-REQUEST-INVALID"
 
 
-@pytest.mark.parametrize("change", [{"kind": "Response"}, {"op": "health"},
-                                    {"payload": [1]}, {"protocol": 1}])
+@pytest.mark.parametrize(
+    "change", [{"kind": "Response"}, {"op": "health"}, {"payload": [1]}, {"protocol": 1}]
+)
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_invalid_envelope_keeps_request_id(provider: str, change: dict[str, Any]) -> None:
     request = json.loads(_request("describe"))
@@ -321,9 +374,16 @@ def test_shell_invalid_envelope_keeps_request_id(provider: str, change: dict[str
     assert response.error.code == "ADAPTER-REQUEST-INVALID"
 
 
-@pytest.mark.parametrize("options", [("--replay",), ("--bogus", "x"),
-                                     ("--assume-specialist-version",), ("stray",),
-                                     ("--replay", "a", "--replay", "b")])
+@pytest.mark.parametrize(
+    "options",
+    [
+        ("--replay",),
+        ("--bogus", "x"),
+        ("--assume-specialist-version",),
+        ("stray",),
+        ("--replay", "a", "--replay", "b"),
+    ],
+)
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_invalid_adapter_options_are_structured_error(
     provider: str, options: tuple[str, ...]
@@ -342,15 +402,16 @@ def test_shell_passes_adapter_options_to_the_handlers(tmp_path: Path) -> None:
     options = ("--replay", str(tmp_path), "--assume-specialist-version", "9.9.9")
     response, _ = _call("test-handlers", "health", _request("health"), options)
     assert response.status == "ok"
-    assert response.payload["options"] == {"replay": str(tmp_path),
-                                           "assume_specialist_version": "9.9.9"}
+    assert response.payload["options"] == {
+        "replay": str(tmp_path),
+        "assume_specialist_version": "9.9.9",
+    }
 
 
 @pytest.mark.parametrize("op", ["health", "execute"])
 def test_shell_unexpected_exception_is_internal_error_without_traceback(op: str) -> None:
     options = ("--assume-specialist-version", "boom") if op == "health" else ()
-    response, out = _call("test-handlers", op, _request(op, _execute("test.boom", "run")),
-                          options)
+    response, out = _call("test-handlers", op, _request(op, _execute("test.boom", "run")), options)
     assert response.status == "error"
     assert response.request_id == f"req-{op}"
     assert response.error is not None
@@ -360,11 +421,13 @@ def test_shell_unexpected_exception_is_internal_error_without_traceback(op: str)
     assert b"Traceback" not in raw and b"s3cr3t" not in raw
 
 
-@pytest.mark.parametrize(("action", "kind"), [("exit", "SystemExit"),
-                                              ("interrupt", "KeyboardInterrupt")])
+@pytest.mark.parametrize(
+    ("action", "kind"), [("exit", "SystemExit"), ("interrupt", "KeyboardInterrupt")]
+)
 def test_shell_base_exceptions_still_answer_with_exit_zero(action: str, kind: str) -> None:
-    response, out = _call("test-handlers", "execute",
-                          _request("execute", _execute("test.boom", action)))
+    response, out = _call(
+        "test-handlers", "execute", _request("execute", _execute("test.boom", action))
+    )
     assert response.status == "error"
     assert response.error is not None
     assert response.error.code == "ADAPTER-INTERNAL"
@@ -375,8 +438,10 @@ def test_shell_base_exceptions_still_answer_with_exit_zero(action: str, kind: st
 
 def test_shell_deeply_nested_request_is_invalid() -> None:
     depth = 100_000
-    raw = b'{"protocol":"forge/v1","kind":"Request","op":"health","request_id":"r",' \
-          b'"payload":{"x":' + b"[" * depth + b"]" * depth + b"}}"
+    raw = (
+        b'{"protocol":"forge/v1","kind":"Request","op":"health","request_id":"r",'
+        b'"payload":{"x":' + b"[" * depth + b"]" * depth + b"}}"
+    )
     response, out = _call("test-handlers", "health", raw)
     assert response.status == "error"
     assert response.error is not None
@@ -385,8 +450,9 @@ def test_shell_deeply_nested_request_is_invalid() -> None:
 
 
 def test_shell_unserializable_reply_is_internal_error() -> None:
-    response, _ = _call("test-handlers", "execute",
-                        _request("execute", _execute("test.echo", "unserializable")))
+    response, _ = _call(
+        "test-handlers", "execute", _request("execute", _execute("test.echo", "unserializable"))
+    )
     assert response.status == "error"
     assert response.error is not None
     assert response.error.code == "ADAPTER-INTERNAL"
@@ -448,12 +514,20 @@ def _item(path: str, data: bytes, **extra: Any) -> dict[str, Any]:
 
 def _pack(root: Path, items: list[dict[str, Any]]) -> dict[str, Any]:
     used = sum(item["bytes"] for item in items)
-    return {"schema": "theforge/ContextPack/v1",
-            "producer": {"id": "theforge", "version": "0.1.0"},
-            "created_at": "2026-10-03T00:00:00Z", "status": "complete", "task_id": "t",
-            "provider_id": TEST_PRODUCER[0], "root": str(root), "files": items,
-            "excluded": [], "budget_bytes": max(used, 1), "used_bytes": used,
-            "truncated": False}
+    return {
+        "schema": "theforge/ContextPack/v1",
+        "producer": {"id": "theforge", "version": "0.1.0"},
+        "created_at": "2026-10-03T00:00:00Z",
+        "status": "complete",
+        "task_id": "t",
+        "provider_id": TEST_PRODUCER[0],
+        "root": str(root),
+        "files": items,
+        "excluded": [],
+        "budget_bytes": max(used, 1),
+        "used_bytes": used,
+        "truncated": False,
+    }
 
 
 def _skip(path: str, reason: str) -> str:
@@ -461,8 +535,11 @@ def _skip(path: str, reason: str) -> str:
 
 
 def _tree(root: Path) -> dict[str, bytes]:
-    return {p.relative_to(root).as_posix(): p.read_bytes()
-            for p in sorted(root.rglob("*")) if p.is_file()}
+    return {
+        p.relative_to(root).as_posix(): p.read_bytes()
+        for p in sorted(root.rglob("*"))
+        if p.is_file()
+    }
 
 
 def _work(tmp_path: Path) -> Path:
@@ -479,7 +556,8 @@ def test_stage_context_copies_verified_files_and_keeps_their_sha256(tmp_path: Pa
     ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "b.txt": OTHER})
     cwd = _work(tmp_path)
     staged = shell.stage_context(
-        {"context": _pack(ws, [_item("jobs/a.py", JOB), _item("b.txt", OTHER)])}, cwd)
+        {"context": _pack(ws, [_item("jobs/a.py", JOB), _item("b.txt", OTHER)])}, cwd
+    )
     assert staged.root == cwd / "stage"
     assert dict(staged.files) == {"jobs/a.py": _sha(JOB), "b.txt": _sha(OTHER)}
     assert list(staged.limitations) == []
@@ -495,22 +573,29 @@ def test_stage_context_without_files_stages_nothing(tmp_path: Path, payload: Any
     assert _tree(cwd) == {}
 
 
-@pytest.mark.parametrize(("item", "reason"), [
-    (_item("gone.py", JOB), "file not found"),
-    (_item("../outside.py", JOB), "outside workspace root"),
-    (_item("jobs/../../outside.py", JOB), "outside workspace root"),
-    (_item("/etc/outside.py", JOB), "outside workspace root"),
-    (_item("C:/outside.py", JOB), "outside workspace root"),
-    (_item("jobs\\a.py", JOB), "outside workspace root"),
-    ({**_item("jobs/a.py", JOB), "sha256": _sha(OTHER)}, "sha256 mismatch"),
-    ({**_item("jobs/a.py", JOB), "sha256": "NOT-A-HASH"}, "sha256 mismatch"),
-    # A line-range item is never compared with the whole-file hash: neither a range hash
-    # (which differs from the file's) nor a hash equal to the whole file stages it.
-    (_item("jobs/a.py", b"df.collect()", tier="excerpt", lines={"start": 1, "end": 1}),
-     LINE_RANGE_REASON),
-    (_item("jobs/a.py", JOB, tier="requested", lines={"start": 1, "end": 1}),
-     LINE_RANGE_REASON),
-])
+@pytest.mark.parametrize(
+    ("item", "reason"),
+    [
+        (_item("gone.py", JOB), "file not found"),
+        (_item("../outside.py", JOB), "outside workspace root"),
+        (_item("jobs/../../outside.py", JOB), "outside workspace root"),
+        (_item("/etc/outside.py", JOB), "outside workspace root"),
+        (_item("C:/outside.py", JOB), "outside workspace root"),
+        (_item("jobs\\a.py", JOB), "outside workspace root"),
+        ({**_item("jobs/a.py", JOB), "sha256": _sha(OTHER)}, "sha256 mismatch"),
+        ({**_item("jobs/a.py", JOB), "sha256": "NOT-A-HASH"}, "sha256 mismatch"),
+        # A line-range item is never compared with the whole-file hash: neither a range hash
+        # (which differs from the file's) nor a hash equal to the whole file stages it.
+        (
+            _item("jobs/a.py", b"df.collect()", tier="excerpt", lines={"start": 1, "end": 1}),
+            LINE_RANGE_REASON,
+        ),
+        (
+            _item("jobs/a.py", JOB, tier="requested", lines={"start": 1, "end": 1}),
+            LINE_RANGE_REASON,
+        ),
+    ],
+)
 def test_stage_context_omits_each_reason_as_a_limitation(
     tmp_path: Path, item: dict[str, Any], reason: str
 ) -> None:
@@ -547,7 +632,8 @@ def test_stage_context_bounds_an_item_without_a_valid_size(
     cwd = _work(tmp_path)
     staged = shell.stage_context({"context": {"root": str(ws), "files": items}}, cwd)
     assert list(staged.limitations) == [
-        _skip("big.py", f"no declared size and file exceeds {len(JOB) - 1} bytes")]
+        _skip("big.py", f"no declared size and file exceeds {len(JOB) - 1} bytes")
+    ]
     assert dict(staged.files) == {"small.py": _sha(b"ok\n")}
 
 
@@ -564,9 +650,9 @@ def test_stage_context_omits_a_symlink_escaping_the_root(tmp_path: Path) -> None
     _symlink_or_skip(ws / "link.py", secret)
     cwd = _work(tmp_path)
     staged = shell.stage_context(
-        {"context": _pack(ws, [_item("link.py", OTHER), _item("jobs/a.py", JOB)])}, cwd)
-    assert list(staged.limitations) == [
-        _skip("link.py", "symlink resolves outside workspace root")]
+        {"context": _pack(ws, [_item("link.py", OTHER), _item("jobs/a.py", JOB)])}, cwd
+    )
+    assert list(staged.limitations) == [_skip("link.py", "symlink resolves outside workspace root")]
     assert dict(staged.files) == {"jobs/a.py": _sha(JOB)}
     assert _tree(cwd) == {"stage/jobs/a.py": JOB}
 
@@ -579,7 +665,7 @@ def staged_job(tmp_path: Path) -> Any:
 
 
 def test_evidence_hash_returns_the_verified_sha256_for_an_equal_native_hash(
-    staged_job: Any
+    staged_job: Any,
 ) -> None:
     verified = _sha(JOB)
     assert shell.evidence_hash("jobs/a.py", verified, staged_job) == verified
@@ -587,20 +673,23 @@ def test_evidence_hash_returns_the_verified_sha256_for_an_equal_native_hash(
     assert shell.evidence_hash("jobs/a.py", f"sha256:{verified}", staged_job) == verified
 
 
-@pytest.mark.parametrize(("path", "native"), [
-    ("jobs/a.py", None),                       # native hash missing
-    ("jobs/a.py", ""),                         # malformed
-    ("jobs/a.py", "abc123"),                   # malformed
-    ("jobs/a.py", 42),                         # malformed (not a string)
-    ("jobs/a.py", _sha(JOB).upper()),          # malformed (not lowercase hex)
-    ("jobs/a.py", f"md5:{_sha(JOB)}"),         # malformed (unknown prefix)
-    ("jobs/a.py", _sha(OTHER)),                # different from the verified sha256
-    ("jobs/a.py", _sha(JOB.strip())),          # hash of other content (normalized text)
-    ("b.py", _sha(JOB)),                       # path skipped (mismatch), never copied
-    ("b.py", _sha(OTHER)),                     # path skipped even with its real hash
-    ("missing.py", _sha(JOB)),                 # path not in the pack
-    (None, _sha(JOB)),                         # evidence without location
-])
+@pytest.mark.parametrize(
+    ("path", "native"),
+    [
+        ("jobs/a.py", None),  # native hash missing
+        ("jobs/a.py", ""),  # malformed
+        ("jobs/a.py", "abc123"),  # malformed
+        ("jobs/a.py", 42),  # malformed (not a string)
+        ("jobs/a.py", _sha(JOB).upper()),  # malformed (not lowercase hex)
+        ("jobs/a.py", f"md5:{_sha(JOB)}"),  # malformed (unknown prefix)
+        ("jobs/a.py", _sha(OTHER)),  # different from the verified sha256
+        ("jobs/a.py", _sha(JOB.strip())),  # hash of other content (normalized text)
+        ("b.py", _sha(JOB)),  # path skipped (mismatch), never copied
+        ("b.py", _sha(OTHER)),  # path skipped even with its real hash
+        ("missing.py", _sha(JOB)),  # path not in the pack
+        (None, _sha(JOB)),  # evidence without location
+    ],
+)
 def test_evidence_hash_is_null_in_every_other_case(
     staged_job: Any, path: str | None, native: Any
 ) -> None:
@@ -610,11 +699,22 @@ def test_evidence_hash_is_null_in_every_other_case(
 def test_finalize_builds_a_result_the_core_accepts(tmp_path: Path) -> None:
     producer = Producer(id=TEST_PRODUCER[0], version=TEST_PRODUCER[1])
     draft = shell.ResultDraft(
-        provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1],
+        provider_id=TEST_PRODUCER[0],
+        version=TEST_PRODUCER[1],
         findings=[{"id": "R1#1", "title": "R1: t", "severity": "low", "evidence_ids": ["e1"]}],
-        evidence=[{"id": "e1", "epistemic": "observed", "subject": "s", "claim": "c",
-                   "location": {"path": "jobs/a.py", "line": 1}, "hash": None}],
-        limitations=["l1"], unknowns=["u1"])
+        evidence=[
+            {
+                "id": "e1",
+                "epistemic": "observed",
+                "subject": "s",
+                "claim": "c",
+                "location": {"path": "jobs/a.py", "line": 1},
+                "hash": None,
+            }
+        ],
+        limitations=["l1"],
+        unknowns=["u1"],
+    )
     reply = shell.finalize(draft, tmp_path)
     assert reply.status == "ok"
     result = from_dict(ExecutionResult, reply.payload)
@@ -625,16 +725,19 @@ def test_finalize_builds_a_result_the_core_accepts(tmp_path: Path) -> None:
     assert check_timestamp(result.created_at, field="created_at") is None
     assert result.evidence[0].producer == producer
     assert result.limitations == ["l1"] and result.unknowns == ["u1"]
-    partial = shell.finalize(shell.ResultDraft(provider_id=TEST_PRODUCER[0],
-                                               version=TEST_PRODUCER[1], partial=True),
-                             tmp_path)
+    partial = shell.finalize(
+        shell.ResultDraft(provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1], partial=True),
+        tmp_path,
+    )
     assert partial.status == "partial" and partial.payload["status"] == "partial"
     assert _tree(tmp_path) == {}
 
 
 def _stage_request(pack: dict[str, Any]) -> bytes:
-    return _request("execute", {"task": {"intent": "x"}, "capability": "test.stage",
-                                "action": "analyze", "context": pack})
+    return _request(
+        "execute",
+        {"task": {"intent": "x"}, "capability": "test.stage", "action": "analyze", "context": pack},
+    )
 
 
 def _call_in(cwd: Path, stdin: bytes, options: tuple[str, ...] = ()) -> Response:
@@ -680,15 +783,16 @@ def test_present_input_reaches_the_specialist(tmp_path: Path) -> None:
     # Control for the test above: with a matching file the replay recording is consulted.
     ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
     (tmp_path / "replay").mkdir()
-    response = _call_in(_work(tmp_path), _stage_request(_pack(ws, [_item("jobs/a.py", JOB)])),
-                        ("--replay", str(tmp_path / "replay")))
+    response = _call_in(
+        _work(tmp_path),
+        _stage_request(_pack(ws, [_item("jobs/a.py", JOB)])),
+        ("--replay", str(tmp_path / "replay")),
+    )
     assert response.status == "error"
     assert response.error is not None and response.error.code == "ADAPTER-REPLAY-MISSING"
 
 
-def test_staged_execute_applies_the_hash_rule_and_writes_only_inside_cwd(
-    tmp_path: Path
-) -> None:
+def test_staged_execute_applies_the_hash_rule_and_writes_only_inside_cwd(tmp_path: Path) -> None:
     ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB, "b.py": OTHER, "notes.md": b"n\n"})
     replay = tmp_path / "replay"
     replay.mkdir()
@@ -701,21 +805,34 @@ def test_staged_execute_applies_the_hash_rule_and_writes_only_inside_cwd(
         {"id": "f_different", "path": "jobs/a.py", "sha256": _sha(OTHER)},
         {"id": "f_not_copied", "path": "b.py", "sha256": _sha(OTHER)},
     ]
-    (replay / "test.stage.analyze.json").write_text(json.dumps({"facts": facts}),
-                                                    encoding="utf-8")
+    (replay / "test.stage.analyze.json").write_text(json.dumps({"facts": facts}), encoding="utf-8")
     cwd = _work(tmp_path)
-    pack = _pack(ws, [_item("jobs/a.py", JOB), {**_item("b.py", OTHER), "sha256": verified},
-                      _item("notes.md", b"n\n", tier="excerpt", lines={"start": 1, "end": 1})])
+    pack = _pack(
+        ws,
+        [
+            _item("jobs/a.py", JOB),
+            {**_item("b.py", OTHER), "sha256": verified},
+            _item("notes.md", b"n\n", tier="excerpt", lines={"start": 1, "end": 1}),
+        ],
+    )
     before = _tree(tmp_path)
     response = _call_in(cwd, _stage_request(pack), ("--replay", str(replay)))
     assert response.status == "ok", response.error
     result = _valid_result(response)
     hashes = {e.id: e.hash for e in result.evidence}
-    assert hashes == {"f_equal": verified, "f_prefixed": verified, "f_missing": None,
-                      "f_malformed": None, "f_different": None, "f_not_copied": None}
+    assert hashes == {
+        "f_equal": verified,
+        "f_prefixed": verified,
+        "f_missing": None,
+        "f_malformed": None,
+        "f_different": None,
+        "f_not_copied": None,
+    }
     assert [f.evidence_ids for f in result.findings] == [list(hashes)]
-    assert result.limitations == [_skip("b.py", "sha256 mismatch"),
-                                  _skip("notes.md", LINE_RANGE_REASON)]
+    assert result.limitations == [
+        _skip("b.py", "sha256 mismatch"),
+        _skip("notes.md", LINE_RANGE_REASON),
+    ]
     after = _tree(tmp_path)
     assert {p: d for p, d in after.items() if not p.startswith("work/")} == before
     assert {p for p in after if p.startswith("work/")} == set()  # stage/ cleaned up (3.5)
@@ -730,13 +847,22 @@ MIB = 1024 * 1024
 
 def _size(payload: dict[str, Any]) -> int:
     """Bytes of ``payload`` as the shell serializes it."""
-    return len(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
-                          allow_nan=False).encode("utf-8"))
+    return len(
+        json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+        ).encode("utf-8")
+    )
 
 
 def _evidence(eid: str, claim: str = "c") -> dict[str, Any]:
-    return {"id": eid, "epistemic": "observed", "subject": "s", "claim": claim,
-            "location": {"path": "jobs/a.py", "line": 1}, "hash": None}
+    return {
+        "id": eid,
+        "epistemic": "observed",
+        "subject": "s",
+        "claim": claim,
+        "location": {"path": "jobs/a.py", "line": 1},
+        "hash": None,
+    }
 
 
 def _big_draft(pads: list[int], **extra: Any) -> Any:
@@ -746,19 +872,34 @@ def _big_draft(pads: list[int], **extra: Any) -> Any:
     findings = []
     for k, pad in enumerate(pads):
         evidence.append(_evidence(f"e{k}", "x" * pad))
-        findings.append({"id": f"R{k}#1", "title": f"R{k}: t", "severity": "low",
-                         "evidence_ids": [f"e{k}", "shared"]})
+        findings.append(
+            {
+                "id": f"R{k}#1",
+                "title": f"R{k}: t",
+                "severity": "low",
+                "evidence_ids": [f"e{k}", "shared"],
+            }
+        )
     evidence.append(_evidence("orphan", "o" * 10))
-    fields: dict[str, Any] = {"limitations": ["l1"], "unknowns": ["u1"],
-                              "native_output": {"native": "complete", "pads": pads}}
+    fields: dict[str, Any] = {
+        "limitations": ["l1"],
+        "unknowns": ["u1"],
+        "native_output": {"native": "complete", "pads": pads},
+    }
     fields.update(extra)
-    return shell.ResultDraft(provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1],
-                             findings=findings, evidence=evidence, **fields)
+    return shell.ResultDraft(
+        provider_id=TEST_PRODUCER[0],
+        version=TEST_PRODUCER[1],
+        findings=findings,
+        evidence=evidence,
+        **fields,
+    )
 
 
 def _truncation(n: int, m: int) -> str:
-    return (f"output truncated: {n} of {m} findings inline; "
-            f"full native output in artifact {SPILL_PATH}")
+    return (
+        f"output truncated: {n} of {m} findings inline; full native output in artifact {SPILL_PATH}"
+    )
 
 
 def _strip_time(payload: dict[str, Any]) -> dict[str, Any]:
@@ -799,6 +940,7 @@ def test_finalize_spills_a_result_above_four_mib(tmp_path: Path) -> None:
 def small_limit(monkeypatch: pytest.MonkeyPatch) -> Any:
     def set_limit(value: int) -> None:
         monkeypatch.setattr(shell, "INLINE_LIMIT", value)
+
     return set_limit
 
 
@@ -813,8 +955,7 @@ def test_finalize_at_the_limit_is_unchanged_and_one_byte_over_spills(
     assert reply.status == "ok"
     assert _strip_time(reply.payload) == _strip_time(plain.payload)
     assert [f["id"] for f in reply.payload["findings"]] == ["R0#1", "R1#1", "R2#1"]
-    assert [e["id"] for e in reply.payload["evidence"]] == ["shared", "e0", "e1", "e2",
-                                                           "orphan"]
+    assert [e["id"] for e in reply.payload["evidence"]] == ["shared", "e0", "e1", "e2", "orphan"]
     assert reply.payload["artifacts"] == [] and reply.payload["limitations"] == ["l1"]
     assert _tree(tmp_path) == {}
     small_limit(exact - 1)
@@ -838,8 +979,10 @@ def test_finalize_keeps_the_most_findings_that_fit(tmp_path: Path, small_limit: 
     # One more finding (with its evidence) would not fit.
     grown = dict(reply.payload)
     grown["findings"] = [*reply.payload["findings"], dict(draft.findings[kept])]
-    grown["evidence"] = [*reply.payload["evidence"],
-                         {**draft.evidence[kept + 1], "producer": reply.payload["producer"]}]
+    grown["evidence"] = [
+        *reply.payload["evidence"],
+        {**draft.evidence[kept + 1], "producer": reply.payload["producer"]},
+    ]
     assert _size(grown) > 3500
 
 
@@ -888,9 +1031,7 @@ def test_finalize_spill_is_deterministic(tmp_path: Path, small_limit: Any) -> No
     assert _tree(tmp_path / "a") == _tree(tmp_path / "b")
 
 
-def test_finalize_never_reports_a_result_that_cannot_fit(
-    tmp_path: Path, small_limit: Any
-) -> None:
+def test_finalize_never_reports_a_result_that_cannot_fit(tmp_path: Path, small_limit: Any) -> None:
     # Even without findings the result exceeds the limit (huge limitations): a structured
     # error, never an oversized response nor a stray spill file.
     small_limit(1000)
@@ -900,19 +1041,19 @@ def test_finalize_never_reports_a_result_that_cannot_fit(
     assert _tree(tmp_path) == {}
 
 
-def test_staged_execute_above_the_limit_is_partial_with_an_intact_artifact(
-    tmp_path: Path
-) -> None:
+def test_staged_execute_above_the_limit_is_partial_with_an_intact_artifact(tmp_path: Path) -> None:
     ws = _workspace(tmp_path / "ws", {"jobs/a.py": JOB})
     replay = tmp_path / "replay"
     replay.mkdir()
-    recording = {"split": True,
-                 "facts": [{"id": f"f{k}", "path": "jobs/a.py", "pad": MIB + MIB // 2}
-                           for k in range(4)]}
+    recording = {
+        "split": True,
+        "facts": [{"id": f"f{k}", "path": "jobs/a.py", "pad": MIB + MIB // 2} for k in range(4)],
+    }
     (replay / "test.stage.analyze.json").write_text(json.dumps(recording), encoding="utf-8")
     cwd = _work(tmp_path)
-    response = _call_in(cwd, _stage_request(_pack(ws, [_item("jobs/a.py", JOB)])),
-                        ("--replay", str(replay)))
+    response = _call_in(
+        cwd, _stage_request(_pack(ws, [_item("jobs/a.py", JOB)])), ("--replay", str(replay))
+    )
     assert response.status == "partial", response.error
     result = _valid_result(response)
     assert result.status == "partial"
@@ -972,8 +1113,13 @@ def _assert_stopped(beat: Path) -> None:
 
 
 def _native_payload(action: str, **extra: Any) -> dict[str, Any]:
-    return {"task": {"intent": "x", "budget_profile": "economy"}, "capability": "test.native",
-            "action": action, "context": {}, **extra}
+    return {
+        "task": {"intent": "x", "budget_profile": "economy"},
+        "capability": "test.native",
+        "action": action,
+        "context": {},
+        **extra,
+    }
 
 
 SHORTEST = min(CORE_EXECUTE_TIMEOUTS.values())
@@ -986,14 +1132,13 @@ def test_shell_execute_timeouts_match_the_core() -> None:
 def test_shell_credential_rules_match_the_core() -> None:
     def rules(patterns: Any) -> list[tuple[str, int]]:
         return [(p.pattern, p.flags) for p in patterns]
+
     assert rules(shell.CREDENTIAL_PATTERNS) == rules(core_env.CREDENTIAL_PATTERNS)
     assert rules([shell._URL_USERINFO]) == rules([core_env._URL_USERINFO])
 
 
 @pytest.mark.parametrize("profile", [*sorted(CORE_EXECUTE_TIMEOUTS), None, "bogus"])
-def test_native_timeout_is_85_percent_of_the_profile_execute_timeout(
-    profile: str | None
-) -> None:
+def test_native_timeout_is_85_percent_of_the_profile_execute_timeout(profile: str | None) -> None:
     task: dict[str, Any] = {"intent": "x"}
     if profile is not None:
         task["budget_profile"] = profile
@@ -1004,10 +1149,18 @@ def test_native_timeout_is_85_percent_of_the_profile_execute_timeout(
     assert shell.native_timeout({"task": "x"}) == pytest.approx(SHORTEST * 0.85)
 
 
-@pytest.mark.parametrize(("argv", "error"), [
-    ("python -c pass", TypeError), (b"python", TypeError), ([], ValueError), ((), ValueError),
-    ([sys.executable, 1], TypeError), (None, TypeError), (iter([sys.executable]), TypeError),
-])
+@pytest.mark.parametrize(
+    ("argv", "error"),
+    [
+        ("python -c pass", TypeError),
+        (b"python", TypeError),
+        ([], ValueError),
+        ((), ValueError),
+        ([sys.executable, 1], TypeError),
+        (None, TypeError),
+        (iter([sys.executable]), TypeError),
+    ],
+)
 def test_run_native_rejects_an_argv_that_is_not_a_list_of_strings(
     tmp_path: Path, argv: Any, error: type[Exception]
 ) -> None:
@@ -1046,15 +1199,27 @@ _ADAPTER_UNDER_SIGTERM = (
 )
 
 
-@pytest.mark.skipif(sys.platform == "win32",
-                    reason="POSIX only: on Windows the native job is nested in the core's job")
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX only: on Windows the native job is nested in the core's job",
+)
 def test_sigterm_to_the_adapter_group_also_kills_the_native_tree(tmp_path: Path) -> None:
     beat = tmp_path / "beat"
     cwd = _work(tmp_path)
     # Like the core: the adapter leads its own group, which the core signals on timeout.
     adapter = subprocess.Popen(
-        [sys.executable, "-c", _ADAPTER_UNDER_SIGTERM, str(SHELL_SOURCE), PARENT, str(beat),
-         HEARTBEAT, str(cwd)], start_new_session=True)
+        [
+            sys.executable,
+            "-c",
+            _ADAPTER_UNDER_SIGTERM,
+            str(SHELL_SOURCE),
+            PARENT,
+            str(beat),
+            HEARTBEAT,
+            str(cwd),
+        ],
+        start_new_session=True,
+    )
     try:
         deadline = time.monotonic() + 20
         while not beat.exists() and time.monotonic() < deadline:
@@ -1087,11 +1252,14 @@ def test_run_native_env_never_carries_credentials(
     for name, value in CREDENTIAL_ENV.items():
         monkeypatch.setenv(name, value)
     monkeypatch.setenv("FORGE_PLAIN", "kept")
-    adjustments = {"APIFORGE_CACHE": "off", "EXTRA_SECRET": "s3cr3t-adj",
-                   "aws_session_token": "s3cr3t-adj2", "MY_TOKEN": "s3cr3t-adj3",
-                   "MIRROR": "https://u:s3cr3t@mirror.example/"}
-    outcome = shell.run_native(_py(DUMP_ENV), cwd=_work(tmp_path), env=adjustments,
-                               timeout=30)
+    adjustments = {
+        "APIFORGE_CACHE": "off",
+        "EXTRA_SECRET": "s3cr3t-adj",
+        "aws_session_token": "s3cr3t-adj2",
+        "MY_TOKEN": "s3cr3t-adj3",
+        "MIRROR": "https://u:s3cr3t@mirror.example/",
+    }
+    outcome = shell.run_native(_py(DUMP_ENV), cwd=_work(tmp_path), env=adjustments, timeout=30)
     assert outcome.returncode == 0, outcome.stderr
     env = json.loads(outcome.stdout)
     upper = {name.upper() for name in env}
@@ -1111,22 +1279,25 @@ def test_run_native_adjustment_overrides_the_received_value(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("APIFORGE_CACHE", "on")
-    outcome = shell.run_native(_py(DUMP_ENV), cwd=_work(tmp_path),
-                               env={"apiforge_cache": "off"}, timeout=30)
+    outcome = shell.run_native(
+        _py(DUMP_ENV), cwd=_work(tmp_path), env={"apiforge_cache": "off"}, timeout=30
+    )
     env = json.loads(outcome.stdout)
     assert [v for k, v in env.items() if k.upper() == "APIFORGE_CACHE"] == ["off"]
 
 
 def test_run_native_caps_both_outputs_without_blocking(tmp_path: Path) -> None:
-    code = ("import sys; sys.stdout.write('o' * 200000); sys.stdout.flush(); "
-            "sys.stderr.write('e' * 200000); sys.stderr.flush()")
-    outcome = shell.run_native(_py(code), cwd=_work(tmp_path), env={}, timeout=30,
-                               stdout_cap=1000, stderr_cap=500)
+    code = (
+        "import sys; sys.stdout.write('o' * 200000); sys.stdout.flush(); "
+        "sys.stderr.write('e' * 200000); sys.stderr.flush()"
+    )
+    outcome = shell.run_native(
+        _py(code), cwd=_work(tmp_path), env={}, timeout=30, stdout_cap=1000, stderr_cap=500
+    )
     assert outcome.returncode == 0
     assert outcome.stdout == b"o" * 1000 and outcome.stdout_truncated
     assert outcome.stderr == b"e" * 500 and outcome.stderr_truncated
-    small = shell.run_native(_py("print('hi')"), cwd=tmp_path, env={},
-                             timeout=30, stdout_cap=1000)
+    small = shell.run_native(_py("print('hi')"), cwd=tmp_path, env={}, timeout=30, stdout_cap=1000)
     assert small.stdout.strip() == b"hi" and not small.stdout_truncated
     assert shell.NATIVE_STDOUT_CAP >= 8 * 1024 * 1024
     assert 0 < shell.NATIVE_STDERR_CAP <= shell.NATIVE_STDOUT_CAP
@@ -1136,8 +1307,9 @@ def test_run_native_timeout_is_structured_and_kills_the_whole_tree(tmp_path: Pat
     beat = tmp_path / "beat"
     started = time.monotonic()
     with pytest.raises(shell.NativeTimeout) as caught:
-        shell.run_native(_py(PARENT, str(beat), "sleep", HEARTBEAT), cwd=_work(tmp_path),
-                         env={}, timeout=3.0)
+        shell.run_native(
+            _py(PARENT, str(beat), "sleep", HEARTBEAT), cwd=_work(tmp_path), env={}, timeout=3.0
+        )
     assert time.monotonic() - started < 15
     reply = caught.value.reply()
     assert reply.status == "error"
@@ -1148,15 +1320,17 @@ def test_run_native_timeout_is_structured_and_kills_the_whole_tree(tmp_path: Pat
 
 def test_run_native_kills_children_left_behind_by_a_finished_process(tmp_path: Path) -> None:
     beat = tmp_path / "beat"
-    outcome = shell.run_native(_py(PARENT, str(beat), "exit", HEARTBEAT), cwd=_work(tmp_path),
-                               env={}, timeout=30)
+    outcome = shell.run_native(
+        _py(PARENT, str(beat), "exit", HEARTBEAT), cwd=_work(tmp_path), env={}, timeout=30
+    )
     assert outcome.returncode == 0, outcome.stderr
     _assert_stopped(beat)
 
 
 def test_execute_native_timeout_is_a_structured_error_with_exit_zero(tmp_path: Path) -> None:
-    response = _call_in(_work(tmp_path),
-                        _request("execute", _native_payload("sleep", native_timeout=1.5)))
+    response = _call_in(
+        _work(tmp_path), _request("execute", _native_payload("sleep", native_timeout=1.5))
+    )
     assert response.status == "error"
     assert response.error is not None and response.error.code == NATIVE_TIMEOUT_CODE
     assert response.payload == {}
@@ -1166,8 +1340,14 @@ def test_execute_native_env_from_the_core_never_reaches_credentials(tmp_path: Pa
     cwd = _work(tmp_path)
     core_env = {**os.environ, **CREDENTIAL_ENV, "FORGE_PLAIN": "kept"}
     argv = [*SHELL_PROVIDERS["test-handlers"][0], "execute"]
-    out = subprocess.run(argv, input=_request("execute", _native_payload("env")),
-                         capture_output=True, timeout=60, cwd=cwd, env=core_env)
+    out = subprocess.run(
+        argv,
+        input=_request("execute", _native_payload("env")),
+        capture_output=True,
+        timeout=60,
+        cwd=cwd,
+        env=core_env,
+    )
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
     assert response.status == "ok", response.error
@@ -1187,8 +1367,16 @@ CLEANUP_CASE = b'{"findings": []}\n'
 CLEANUP_PREFIX = "workdir cleanup incomplete: "
 REMOVED_PREFIX = "workdir cleanup removed artifact: "
 # action -> response status
-CLEANUP_OUTCOMES = {"ok": "ok", "partial": "partial", "spill": "partial", "refused": "refused",
-                    "error": "error", "raise": "error", "exit": "error", "timeout": "error"}
+CLEANUP_OUTCOMES = {
+    "ok": "ok",
+    "partial": "partial",
+    "spill": "partial",
+    "refused": "refused",
+    "error": "error",
+    "raise": "error",
+    "exit": "error",
+    "timeout": "error",
+}
 
 
 def _entries(root: Path) -> set[str]:
@@ -1201,14 +1389,19 @@ def _entries(root: Path) -> set[str]:
 
 
 def _parents(paths: set[str]) -> set[str]:
-    return {parent.as_posix() for path in paths for parent in Path(path).parents
-            if parent != Path(".")}
+    return {
+        parent.as_posix() for path in paths for parent in Path(path).parents if parent != Path(".")
+    }
 
 
 def _cleanup_payload(ws: Path, action: str) -> dict[str, Any]:
-    return {"task": {"intent": "x", "budget_profile": "economy"}, "capability": "test.cleanup",
-            "action": action, "context": _pack(ws, [_item("jobs/a.py", JOB)]),
-            "native_timeout": 1.5}
+    return {
+        "task": {"intent": "x", "budget_profile": "economy"},
+        "capability": "test.cleanup",
+        "action": action,
+        "context": _pack(ws, [_item("jobs/a.py", JOB)]),
+        "native_timeout": 1.5,
+    }
 
 
 @pytest.mark.parametrize("action", sorted(CLEANUP_OUTCOMES))
@@ -1262,18 +1455,22 @@ def test_execute_cleanup_never_touches_entries_that_predate_it(tmp_path: Path) -
 
 
 def _populate(cwd: Path) -> None:
-    for rel, data in {"stage/jobs/a.py": JOB, "traces.db": b"db",
-                      ".apiforge/economy.jsonl": b"{}\n", "case/facts.json": b"[]",
-                      CLEANUP_ARTIFACT: CLEANUP_CASE, SPILL_PATH: b"{}",
-                      "native/scratch.txt": b"s", "deep/a/b/c.txt": b"c"}.items():
+    for rel, data in {
+        "stage/jobs/a.py": JOB,
+        "traces.db": b"db",
+        ".apiforge/economy.jsonl": b"{}\n",
+        "case/facts.json": b"[]",
+        CLEANUP_ARTIFACT: CLEANUP_CASE,
+        SPILL_PATH: b"{}",
+        "native/scratch.txt": b"s",
+        "deep/a/b/c.txt": b"c",
+    }.items():
         target = cwd / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
 
 
-def test_cleanup_workdir_keeps_only_artifacts_and_their_parent_directories(
-    tmp_path: Path
-) -> None:
+def test_cleanup_workdir_keeps_only_artifacts_and_their_parent_directories(tmp_path: Path) -> None:
     cwd = _work(tmp_path)
     _populate(cwd)
     notes = shell.cleanup_workdir(cwd, [CLEANUP_ARTIFACT, SPILL_PATH, "missing/never.json"])
@@ -1286,14 +1483,26 @@ def test_cleanup_workdir_always_removes_stage(tmp_path: Path) -> None:
     cwd = _work(tmp_path)
     _populate(cwd)
     assert shell.cleanup_workdir(cwd, ["stage/jobs/a.py", "stage"]) == (
-        f"{REMOVED_PREFIX}stage", f"{REMOVED_PREFIX}stage/jobs/a.py")
+        f"{REMOVED_PREFIX}stage",
+        f"{REMOVED_PREFIX}stage/jobs/a.py",
+    )
     assert _entries(cwd) == set()
 
 
-@pytest.mark.parametrize("keep", [
-    "../outside.txt", "native/../../outside.txt", "OUTSIDE_ABS", "C:/outside.txt",
-    "case\\findings.json", "", ".", "./", "/case/findings.json",
-])
+@pytest.mark.parametrize(
+    "keep",
+    [
+        "../outside.txt",
+        "native/../../outside.txt",
+        "OUTSIDE_ABS",
+        "C:/outside.txt",
+        "case\\findings.json",
+        "",
+        ".",
+        "./",
+        "/case/findings.json",
+    ],
+)
 def test_cleanup_workdir_never_keeps_or_deletes_through_an_escaping_artifact_path(
     tmp_path: Path, keep: str
 ) -> None:
@@ -1331,9 +1540,7 @@ def _symlink(link: Path, target: Path) -> None:
         pytest.skip(f"symlink creation unsupported here: {exc}")
 
 
-def test_cleanup_workdir_removes_symlinks_without_touching_their_targets(
-    tmp_path: Path
-) -> None:
+def test_cleanup_workdir_removes_symlinks_without_touching_their_targets(tmp_path: Path) -> None:
     target, loose = _outside_target(tmp_path)
     cwd = _work(tmp_path)
     _populate(cwd)
@@ -1343,27 +1550,30 @@ def test_cleanup_workdir_removes_symlinks_without_touching_their_targets(
     _symlink(cwd / "keptlink.json", loose)
     keep = [CLEANUP_ARTIFACT, "dirlink/secret.txt", "keptlink.json"]
     # A link is never kept: a declared artifact behind one is removed and reported.
-    assert shell.cleanup_workdir(cwd, keep) == (f"{REMOVED_PREFIX}dirlink/secret.txt",
-                                                f"{REMOVED_PREFIX}keptlink.json")
+    assert shell.cleanup_workdir(cwd, keep) == (
+        f"{REMOVED_PREFIX}dirlink/secret.txt",
+        f"{REMOVED_PREFIX}keptlink.json",
+    )
     assert _entries(cwd) == {"case", CLEANUP_ARTIFACT}
     _assert_outside_intact(target, loose)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="directory junctions are Windows-only")
-def test_cleanup_workdir_removes_junctions_without_touching_their_targets(
-    tmp_path: Path
-) -> None:
+def test_cleanup_workdir_removes_junctions_without_touching_their_targets(tmp_path: Path) -> None:
     target, loose = _outside_target(tmp_path)
     cwd = _work(tmp_path)
     _populate(cwd)
     for link in (cwd / "junction", cwd / "case" / "junction", cwd / "native-link"):
-        made = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
-                              capture_output=True, timeout=30)
+        made = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True, timeout=30
+        )
         if made.returncode != 0:
             pytest.skip(f"mklink /J failed: {made.stdout!r} {made.stderr!r}")
     keep = [CLEANUP_ARTIFACT, "junction/secret.txt", "native-link/nested/deep.txt"]
     assert shell.cleanup_workdir(cwd, keep) == (
-        f"{REMOVED_PREFIX}junction/secret.txt", f"{REMOVED_PREFIX}native-link/nested/deep.txt")
+        f"{REMOVED_PREFIX}junction/secret.txt",
+        f"{REMOVED_PREFIX}native-link/nested/deep.txt",
+    )
     assert _entries(cwd) == {"case", CLEANUP_ARTIFACT}
     _assert_outside_intact(target, loose)
 
@@ -1389,7 +1599,7 @@ def test_cleanup_workdir_removes_read_only_files_and_directories(tmp_path: Path)
 
 @pytest.mark.skipif(sys.platform != "win32", reason="case-insensitive names on Windows only")
 def test_cleanup_workdir_matches_artifact_names_case_insensitively_on_windows(
-    tmp_path: Path
+    tmp_path: Path,
 ) -> None:
     cwd = _work(tmp_path)
     _populate(cwd)
@@ -1442,8 +1652,15 @@ def test_cleanup_workdir_failure_is_a_limitation_and_the_rest_is_removed(
     _failing_removal(monkeypatch, {"traces.db", "c.txt"})
     notes = shell.cleanup_workdir(cwd, [CLEANUP_ARTIFACT])
     assert notes == (f"{CLEANUP_PREFIX}deep/a/b/c.txt", f"{CLEANUP_PREFIX}traces.db")
-    assert _entries(cwd) == {"case", CLEANUP_ARTIFACT, "traces.db", "deep", "deep/a",
-                             "deep/a/b", "deep/a/b/c.txt"}
+    assert _entries(cwd) == {
+        "case",
+        CLEANUP_ARTIFACT,
+        "traces.db",
+        "deep",
+        "deep/a",
+        "deep/a/b",
+        "deep/a/b/c.txt",
+    }
 
 
 def test_cleanup_workdir_bounds_the_failure_limitations(
@@ -1456,8 +1673,9 @@ def test_cleanup_workdir_bounds_the_failure_limitations(
     _failing_removal(monkeypatch, names)
     notes = shell.cleanup_workdir(cwd, [])
     assert len(notes) == shell.CLEANUP_REPORT_LIMIT + 1
-    assert notes[:-1] == tuple(f"{CLEANUP_PREFIX}{name}"
-                               for name in sorted(names)[:shell.CLEANUP_REPORT_LIMIT])
+    assert notes[:-1] == tuple(
+        f"{CLEANUP_PREFIX}{name}" for name in sorted(names)[: shell.CLEANUP_REPORT_LIMIT]
+    )
     assert notes[-1] == f"{CLEANUP_PREFIX}5 more entries"
 
 
@@ -1479,8 +1697,9 @@ def _inproc_handlers(outcome: str) -> dict[str, Any]:
     case = b"case"
 
     def describe(options: Any) -> Any:
-        return lambda request, cwd: shell.Reply(status="ok", payload={
-            "capabilities": [{"id": "t.c", "actions": ["run"]}]})
+        return lambda request, cwd: shell.Reply(
+            status="ok", payload={"capabilities": [{"id": "t.c", "actions": ["run"]}]}
+        )
 
     def execute(options: Any) -> Any:
         def handle(request: Any, cwd: Path) -> Any:
@@ -1498,18 +1717,30 @@ def _inproc_handlers(outcome: str) -> dict[str, Any]:
                 _symlink(cwd / "case", outside)
             if outcome == "unserializable":
                 return shell.Reply(status="ok", payload={"artifacts": artifacts, "x": object()})
-            return shell.finalize(shell.ResultDraft(
-                provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1], artifacts=artifacts,
-                limitations=["l1"]), cwd)
+            return shell.finalize(
+                shell.ResultDraft(
+                    provider_id=TEST_PRODUCER[0],
+                    version=TEST_PRODUCER[1],
+                    artifacts=artifacts,
+                    limitations=["l1"],
+                ),
+                cwd,
+            )
+
         return handle
 
     return {"describe": describe, "execute": execute}
 
 
 def _respond_in(cwd: Path, outcome: str) -> dict[str, Any]:
-    raw = shell.respond(["execute"], _request("execute", {"capability": "t.c", "action": "run"}),
-                        provider_id=TEST_PRODUCER[0], version=TEST_PRODUCER[1],
-                        handlers=_inproc_handlers(outcome), cwd=cwd)
+    raw = shell.respond(
+        ["execute"],
+        _request("execute", {"capability": "t.c", "action": "run"}),
+        provider_id=TEST_PRODUCER[0],
+        version=TEST_PRODUCER[1],
+        handlers=_inproc_handlers(outcome),
+        cwd=cwd,
+    )
     data: dict[str, Any] = json.loads(raw)
     from_dict(Response, data)
     return data

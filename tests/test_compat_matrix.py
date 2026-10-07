@@ -25,18 +25,27 @@ REPO = Path(__file__).parents[1]
 VERSIONING = REPO / "docs" / "versioning.md"
 MATRIX_HEADING = "## Matriz de compatibilidade"
 RULE = "docs/versioning.md, seção 'Regra de manutenção'"
-COLUMNS = ("The Forge", "Forge Protocol", "theforge-sparkforge-aws-adapter", "sparkforge-aws",
-           "theforge-apiforge-adapter", "apiforge",
-           "theforge-doctordata-adapter", "forge-doctor-data",
-           "theforge-doctorapi-adapter", "forge-doctor-api", "Suporte até")
+COLUMNS = (
+    "The Forge",
+    "Forge Protocol",
+    "theforge-sparkforge-aws-adapter",
+    "sparkforge-aws",
+    "theforge-apiforge-adapter",
+    "apiforge",
+    "theforge-doctordata-adapter",
+    "forge-doctor-data",
+    "theforge-doctorapi-adapter",
+    "forge-doctor-api",
+    "Suporte até",
+)
 
 
 @dataclass(frozen=True)
 class Adapter:
-    column: str          # adapter version column in the matrix
-    window_column: str   # specialist window column in the matrix
-    version: str         # from the adapter's pyproject.toml
-    window: str          # the adapter's SUPPORTED_SPECIALIST
+    column: str  # adapter version column in the matrix
+    window_column: str  # specialist window column in the matrix
+    version: str  # from the adapter's pyproject.toml
+    window: str  # the adapter's SUPPORTED_SPECIALIST
 
 
 def _cell(text: str) -> str:
@@ -49,10 +58,11 @@ def parse_matrix(markdown: str) -> list[dict[str, str]]:
     try:
         start = lines.index(MATRIX_HEADING)
     except ValueError:
-        raise AssertionError(f"'{MATRIX_HEADING}' missing from docs/versioning.md "
-                             f"(rule: {RULE})") from None
+        raise AssertionError(
+            f"'{MATRIX_HEADING}' missing from docs/versioning.md (rule: {RULE})"
+        ) from None
     table: list[list[str]] = []
-    for line in lines[start + 1:]:
+    for line in lines[start + 1 :]:
         if line.startswith("## "):
             break
         if line.startswith("|"):
@@ -67,58 +77,85 @@ def parse_matrix(markdown: str) -> list[dict[str, str]]:
 
 
 def _pyproject_version(adapter_dir: str) -> str:
-    data = tomllib.loads((REPO / "adapters" / adapter_dir / "pyproject.toml")
-                         .read_text(encoding="utf-8"))
+    data = tomllib.loads(
+        (REPO / "adapters" / adapter_dir / "pyproject.toml").read_text(encoding="utf-8")
+    )
     return str(data["project"]["version"])
 
 
 def current_adapters() -> dict[str, Adapter]:
     return {
-        "spark-forge-aws": Adapter("theforge-sparkforge-aws-adapter", "sparkforge-aws",
-                               _pyproject_version("sparkforge_aws"),
-                               theforge_sparkforge_aws.SUPPORTED_SPECIALIST),
-        "api-forge": Adapter("theforge-apiforge-adapter", "apiforge",
-                             _pyproject_version("apiforge"),
-                             theforge_apiforge.SUPPORTED_SPECIALIST),
-        "forge-doctor-data": Adapter("theforge-doctordata-adapter", "forge-doctor-data",
-                                     _pyproject_version("doctordata"),
-                                     theforge_doctordata.SUPPORTED_SPECIALIST),
-        "forge-doctor-api": Adapter("theforge-doctorapi-adapter", "forge-doctor-api",
-                                    _pyproject_version("doctorapi"),
-                                    theforge_doctorapi.SUPPORTED_SPECIALIST),
+        "spark-forge-aws": Adapter(
+            "theforge-sparkforge-aws-adapter",
+            "sparkforge-aws",
+            _pyproject_version("sparkforge_aws"),
+            theforge_sparkforge_aws.SUPPORTED_SPECIALIST,
+        ),
+        "api-forge": Adapter(
+            "theforge-apiforge-adapter",
+            "apiforge",
+            _pyproject_version("apiforge"),
+            theforge_apiforge.SUPPORTED_SPECIALIST,
+        ),
+        "forge-doctor-data": Adapter(
+            "theforge-doctordata-adapter",
+            "forge-doctor-data",
+            _pyproject_version("doctordata"),
+            theforge_doctordata.SUPPORTED_SPECIALIST,
+        ),
+        "forge-doctor-api": Adapter(
+            "theforge-doctorapi-adapter",
+            "forge-doctor-api",
+            _pyproject_version("doctorapi"),
+            theforge_doctorapi.SUPPORTED_SPECIALIST,
+        ),
     }
 
 
-def matrix_problems(rows: list[dict[str, str]], forge_version: str,
-                    adapters: Mapping[str, Adapter],
-                    protocols: tuple[str, ...]) -> list[str]:
+def matrix_problems(
+    rows: list[dict[str, str]],
+    forge_version: str,
+    adapters: Mapping[str, Adapter],
+    protocols: tuple[str, ...],
+) -> list[str]:
     matching = [r for r in rows if r["The Forge"] == forge_version]
     if not matching:
-        return [f"The Forge {forge_version} has no row in the compatibility matrix; add it in "
-                f"the same commit that changes theforge.__version__ (rule: {RULE})"]
+        return [
+            f"The Forge {forge_version} has no row in the compatibility matrix; add it in "
+            f"the same commit that changes theforge.__version__ (rule: {RULE})"
+        ]
     if len(matching) > 1:
-        return [f"The Forge {forge_version} has {len(matching)} rows in the compatibility "
-                f"matrix; keep exactly one (rule: {RULE})"]
+        return [
+            f"The Forge {forge_version} has {len(matching)} rows in the compatibility "
+            f"matrix; keep exactly one (rule: {RULE})"
+        ]
     row = matching[0]
     problems = []
     for adapter_id, a in adapters.items():
         if row[a.column] != a.version:
-            problems.append(f"{a.column} {a.version} ({adapter_id}) is not in the matrix row "
-                            f"for The Forge {forge_version} (found '{row[a.column]}'; "
-                            f"rule: {RULE})")
+            problems.append(
+                f"{a.column} {a.version} ({adapter_id}) is not in the matrix row "
+                f"for The Forge {forge_version} (found '{row[a.column]}'; "
+                f"rule: {RULE})"
+            )
         if row[a.window_column] != a.window:
-            problems.append(f"{a.window_column} window '{row[a.window_column]}' in the matrix "
-                            f"row for The Forge {forge_version} differs from {adapter_id} "
-                            f"SUPPORTED_SPECIALIST '{a.window}' (rule: {RULE})")
+            problems.append(
+                f"{a.window_column} window '{row[a.window_column]}' in the matrix "
+                f"row for The Forge {forge_version} differs from {adapter_id} "
+                f"SUPPORTED_SPECIALIST '{a.window}' (rule: {RULE})"
+            )
     supported = {major(p) for p in protocols}
     row_major = major(row["Forge Protocol"])
     if row_major is None or row_major not in supported:
-        problems.append(f"Forge Protocol '{row['Forge Protocol']}' in the matrix row for "
-                        f"The Forge {forge_version} is not in SUPPORTED_PROTOCOLS "
-                        f"{list(protocols)} (rule: {RULE})")
+        problems.append(
+            f"Forge Protocol '{row['Forge Protocol']}' in the matrix row for "
+            f"The Forge {forge_version} is not in SUPPORTED_PROTOCOLS "
+            f"{list(protocols)} (rule: {RULE})"
+        )
     if not row["Suporte até"]:
-        problems.append(f"'Suporte até' is empty in the matrix row for The Forge "
-                        f"{forge_version} (rule: {RULE})")
+        problems.append(
+            f"'Suporte até' is empty in the matrix row for The Forge {forge_version} (rule: {RULE})"
+        )
     return problems
 
 
@@ -127,23 +164,32 @@ def _rows() -> list[dict[str, str]]:
 
 
 def test_matrix_covers_current_versions() -> None:
-    assert matrix_problems(_rows(), theforge.__version__, current_adapters(),
-                           SUPPORTED_PROTOCOLS) == []
+    assert (
+        matrix_problems(_rows(), theforge.__version__, current_adapters(), SUPPORTED_PROTOCOLS)
+        == []
+    )
 
 
 def test_versioning_doc_states_rules_separately() -> None:
     text = VERSIONING.read_text(encoding="utf-8")
-    for heading in ("## Versão de pacote", "## Versão de protocolo",
-                    "## Versão de schema de contrato", "## Versão de provider",
-                    "## Evolução de capability", "## Janela de suporte",
-                    MATRIX_HEADING, "## Regra de manutenção"):
+    for heading in (
+        "## Versão de pacote",
+        "## Versão de protocolo",
+        "## Versão de schema de contrato",
+        "## Versão de provider",
+        "## Evolução de capability",
+        "## Janela de suporte",
+        MATRIX_HEADING,
+        "## Regra de manutenção",
+    ):
         assert heading in text.splitlines(), f"{heading!r} missing from docs/versioning.md"
 
 
 def test_forge_version_bump_without_row_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(theforge, "__version__", "0.99.0")
-    problems = matrix_problems(_rows(), theforge.__version__, current_adapters(),
-                               SUPPORTED_PROTOCOLS)
+    problems = matrix_problems(
+        _rows(), theforge.__version__, current_adapters(), SUPPORTED_PROTOCOLS
+    )
     assert len(problems) == 1
     assert "0.99.0" in problems[0] and RULE in problems[0]
 
@@ -154,9 +200,15 @@ def test_forge_version_bump_without_row_fails(monkeypatch: pytest.MonkeyPatch) -
 )
 def test_adapter_version_bump_without_row_fails(adapter_id: str) -> None:
     adapters = current_adapters()
-    bumped = {**adapters, adapter_id: Adapter(adapters[adapter_id].column,
-                                              adapters[adapter_id].window_column, "0.98.0",
-                                              adapters[adapter_id].window)}
+    bumped = {
+        **adapters,
+        adapter_id: Adapter(
+            adapters[adapter_id].column,
+            adapters[adapter_id].window_column,
+            "0.98.0",
+            adapters[adapter_id].window,
+        ),
+    }
     problems = matrix_problems(_rows(), theforge.__version__, bumped, SUPPORTED_PROTOCOLS)
     assert len(problems) == 1
     assert "0.98.0" in problems[0] and adapter_id in problems[0] and RULE in problems[0]
@@ -171,32 +223,50 @@ def test_adapter_version_bump_without_row_fails(adapter_id: str) -> None:
         theforge_doctorapi,
     ],
 )
-def test_specialist_window_change_without_row_fails(monkeypatch: pytest.MonkeyPatch,
-                                                    module: object) -> None:
+def test_specialist_window_change_without_row_fails(
+    monkeypatch: pytest.MonkeyPatch, module: object
+) -> None:
     monkeypatch.setattr(module, "SUPPORTED_SPECIALIST", ">=9.0.0,<9.1.0")
-    problems = matrix_problems(_rows(), theforge.__version__, current_adapters(),
-                               SUPPORTED_PROTOCOLS)
+    problems = matrix_problems(
+        _rows(), theforge.__version__, current_adapters(), SUPPORTED_PROTOCOLS
+    )
     assert len(problems) == 1
     assert ">=9.0.0,<9.1.0" in problems[0] and RULE in problems[0]
 
 
 def test_unsupported_protocol_major_fails() -> None:
-    problems = matrix_problems(_rows(), theforge.__version__, current_adapters(),
-                               ("forge/v2",))
+    problems = matrix_problems(_rows(), theforge.__version__, current_adapters(), ("forge/v2",))
     assert len(problems) == 1
     assert "forge/v1" in problems[0] and RULE in problems[0]
 
 
 def test_parse_matrix_reads_table_and_rejects_missing_heading() -> None:
     header = "| " + " | ".join(COLUMNS) + " |"
-    row = "| 1.0.0 | `forge/v1` | 1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | " \
-          "1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | x |"
-    doc = "\n".join([MATRIX_HEADING, "", header, "|" + "---|" * len(COLUMNS),
-                     row, "", "## Next"])
-    assert parse_matrix(doc) == [dict(zip(COLUMNS, ["1.0.0", "forge/v1", "1.0.0",
-                                                    ">=1.0.0,<1.1.0", "1.0.0",
-                                                    ">=1.0.0,<1.1.0", "1.0.0",
-                                                    ">=1.0.0,<1.1.0", "1.0.0",
-                                                    ">=1.0.0,<1.1.0", "x"], strict=True))]
+    row = (
+        "| 1.0.0 | `forge/v1` | 1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | "
+        "1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | x |"
+    )
+    doc = "\n".join([MATRIX_HEADING, "", header, "|" + "---|" * len(COLUMNS), row, "", "## Next"])
+    assert parse_matrix(doc) == [
+        dict(
+            zip(
+                COLUMNS,
+                [
+                    "1.0.0",
+                    "forge/v1",
+                    "1.0.0",
+                    ">=1.0.0,<1.1.0",
+                    "1.0.0",
+                    ">=1.0.0,<1.1.0",
+                    "1.0.0",
+                    ">=1.0.0,<1.1.0",
+                    "1.0.0",
+                    ">=1.0.0,<1.1.0",
+                    "x",
+                ],
+                strict=True,
+            )
+        )
+    ]
     with pytest.raises(AssertionError, match="Regra de manutenção"):
         parse_matrix("# nothing here\n")

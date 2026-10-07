@@ -260,8 +260,10 @@ _GUARDS: dict[str, tuple[Any, Callable[..., Any]]] = {
     "connect_ex": (socket.socket, _guarded_connect_ex),
     "create_connection": (socket, _guarded_create_connection),
     "getaddrinfo": (socket, _guarded_getaddrinfo),
-    **{name: (socket, _resolver_guard(name))
-       for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr")},
+    **{
+        name: (socket, _resolver_guard(name))
+        for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr")
+    },
 }
 
 

@@ -56,12 +56,15 @@ class _Check:
     def compare(self, label: str, expected: str, actual: str | None, present: bool) -> None:
         self.checked.append(label)
         if actual is None:
-            self.divergences.append(Divergence(
-                artifact=label, kind="unreadable" if present else "missing",
-                expected=expected))
+            self.divergences.append(
+                Divergence(
+                    artifact=label, kind="unreadable" if present else "missing", expected=expected
+                )
+            )
         elif actual != expected:
-            self.divergences.append(Divergence(artifact=label, kind="modified",
-                                               expected=expected, actual=actual))
+            self.divergences.append(
+                Divergence(artifact=label, kind="modified", expected=expected, actual=actual)
+            )
 
     def receipt(self, run_id: str, prefix: str) -> ExecutionReceipt | None:
         label = f"{prefix}receipt"
@@ -84,15 +87,14 @@ class _Check:
                 self.compare(label, expected, actual, present)
             elif present:
                 self.unrecorded.append(label)
-        for extra, expected in enumerate(receipt.inputs.context_round_sha256[len(_ROUNDS):],
-                                         start=len(_ROUNDS) + 1):
+        for extra, expected in enumerate(
+            receipt.inputs.context_round_sha256[len(_ROUNDS) :], start=len(_ROUNDS) + 1
+        ):
             self.compare(f"{prefix}context-r{extra}", expected, None, False)
         if receipt.result_sha256 is not None:
             self.work_artifacts(run_id, prefix)
         if receipt.kind == "plan":
-            expected_stop = (
-                receipt.plan.global_stop_sha256 if receipt.plan is not None else None
-            )
+            expected_stop = receipt.plan.global_stop_sha256 if receipt.plan is not None else None
             self.nodes(run_id, prefix, depth, expected_stop)
 
     def work_artifacts(self, run_id: str, prefix: str) -> None:
@@ -184,5 +186,6 @@ def verify_run_hashes(store: RunStore, run_id: str, *, depth: int = 0) -> Integr
     """
     check = _Check(store)
     check.run(run_id, "", depth)
-    return IntegrityReport(checked=check.checked, divergences=check.divergences,
-                           unrecorded=check.unrecorded)
+    return IntegrityReport(
+        checked=check.checked, divergences=check.divergences, unrecorded=check.unrecorded
+    )

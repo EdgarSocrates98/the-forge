@@ -85,8 +85,11 @@ def test_corrupt_cache_is_discarded(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("mode", "state"),
-    [("wrong-major", "incompatible"), ("invalid-manifest", "invalid"),
-     ("describe-crash", "unreachable")],
+    [
+        ("wrong-major", "incompatible"),
+        ("invalid-manifest", "invalid"),
+        ("describe-crash", "unreachable"),
+    ],
 )
 def test_bad_providers_degrade(tmp_path: Path, mode: str, state: str) -> None:
     record = Registry(make_forge(tmp_path, [bad_entry(mode, "bad-a")])).get("bad-a")
@@ -101,8 +104,7 @@ def test_manifest_id_must_match_entry(tmp_path: Path) -> None:
 
 
 def test_blocked_is_never_spawned(tmp_path: Path) -> None:
-    entry = {"id": "nope-forge", "argv": ["definitely-not-a-real-forge-binary"],
-             "trust": "blocked"}
+    entry = {"id": "nope-forge", "argv": ["definitely-not-a-real-forge-binary"], "trust": "blocked"}
     record = Registry(make_forge(tmp_path, [entry])).get("nope-forge")
     assert record.state == "blocked" and not record.routable(allow_unverified=True)
 
@@ -182,8 +184,11 @@ def test_forged_cache_cannot_launder_unverified(tmp_path: Path) -> None:
     Registry(forge).refresh()
     path = cache_file("fixture-spark")
     doc = json.loads(path.read_text(encoding="utf-8"))
-    unverified = {"id": "fixture-spark", "argv": ["definitely-not-a-real-forge-binary"],
-                  "trust": "unverified"}
+    unverified = {
+        "id": "fixture-spark",
+        "argv": ["definitely-not-a-real-forge-binary"],
+        "trust": "unverified",
+    }
     write_providers(forge, [unverified])
     entry = next(e for e in Registry(forge).entries() if e.id == "fixture-spark")
     doc["entry"] = to_dict(entry)
@@ -193,8 +198,13 @@ def test_forged_cache_cannot_launder_unverified(tmp_path: Path) -> None:
 
 
 def test_health_refuses_unverified_and_blocked(tmp_path: Path) -> None:
-    forge = make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified"),
-                                  {"id": "nope-forge", "argv": ["x"], "trust": "blocked"}])
+    forge = make_forge(
+        tmp_path,
+        [
+            bad_entry("ok", "bad-a", trust="unverified"),
+            {"id": "nope-forge", "argv": ["x"], "trust": "blocked"},
+        ],
+    )
     ready = Registry(forge, allow_unverified=True).get("bad-a")
     assert ready.state == "ready"
     outcome = check_health(ready, transport_factory=_boom)
@@ -220,6 +230,7 @@ def _tampered(tmp_path: Path, mutate: Any) -> Registry:
 def test_cache_with_wrong_protocol_is_discarded(tmp_path: Path) -> None:
     def mutate(doc: dict[str, Any]) -> None:
         doc["protocol"] = "forge/v9"
+
     registry = _tampered(tmp_path, mutate)
     assert registry.get("fixture-spark").protocol == "forge/v1"
     assert any("fixture-spark" in w for w in registry.warnings)
@@ -229,6 +240,7 @@ def test_cache_with_wrong_manifest_id_is_discarded(tmp_path: Path) -> None:
     def mutate(doc: dict[str, Any]) -> None:
         doc["manifest"]["id"] = "someone-else"
         doc["manifest_sha256"] = sha256_of(doc["manifest"])
+
     registry = _tampered(tmp_path, mutate)
     manifest = registry.get("fixture-spark").manifest
     assert manifest is not None and manifest.id == "fixture-spark"
@@ -278,11 +290,19 @@ class _RecordingTransport:
         self.owner = owner
         self.inner = SubprocessTransport(argv)
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
         self.owner.calls.append((op, cwd))
-        response = self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                                   check_protocol=check_protocol)
+        response = self.inner.call(
+            op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol
+        )
         if self.owner.rewrite is not None:
             response = self.owner.rewrite(op, response)
         self.owner.responses.append(response)
@@ -441,8 +461,11 @@ def test_invalidate_removes_cache_entry(tmp_path: Path) -> None:
     assert not cache_files("fixture-spark")
     assert cache_files("echo-forge")
     recording = _Recording()
-    record = next(r for r in Registry(forge, transport_factory=recording).records()
-                  if r.entry.id == "fixture-spark")
+    record = next(
+        r
+        for r in Registry(forge, transport_factory=recording).records()
+        if r.entry.id == "fixture-spark"
+    )
     assert record.state == "ready"
     assert [op for op, _ in recording.calls] == ["describe"]
 
@@ -462,7 +485,8 @@ def test_no_core_caller_uses_the_callers_cwd(
     check_health(registry.get("fixture-spark"), transport_factory=recording)
     registry.invalidate("fixture-spark")
     out = Forger(tmp_path, registry, RunStore(forge), transport_factory=recording).ask(
-        AskRequest(intent="analise esse Glue Job porque está lento"))
+        AskRequest(intent="analise esse Glue Job porque está lento")
+    )
     assert out.status == "ok"
     assert {op for op, _ in recording.calls} == {"describe", "health", "execute"}
     for op, cwd in recording.calls:
@@ -491,7 +515,8 @@ def test_off_taxonomy_capability_is_excluded_once_with_warning(tmp_path: Path) -
     excluded = [w for w in registry.warnings if "theforge.all" in w]
     assert len(excluded) == 1, registry.warnings  # several violations, one exclusion
     assert excluded[0].startswith(
-        f"bad-a: capability 'theforge.all' excluded ({Codes.MANIFEST_TAXONOMY}: ")
+        f"bad-a: capability 'theforge.all' excluded ({Codes.MANIFEST_TAXONOMY}: "
+    )
 
 
 def test_only_off_taxonomy_capabilities_is_invalid(tmp_path: Path) -> None:

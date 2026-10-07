@@ -37,90 +37,130 @@ from theforge.registry import Registry
 SHA = "b" * 64
 
 
-def run_cli(root: Path, *args: str,
-            env_extra: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def run_cli(
+    root: Path, *args: str, env_extra: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     env = {**os.environ, "PYTHONIOENCODING": "utf-8", **(env_extra or {})}
     return subprocess.run(
         [sys.executable, "-m", "theforge", *args, "--root", str(root)],
-        capture_output=True, text=True, encoding="utf-8", timeout=120, env=env)
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        env=env,
+    )
 
 
-def write_registries(forge_dir: Path, doc_path: Path, source_id: str = "feed",
-                     kind: str = "local-file", url: str | None = None) -> None:
+def write_registries(
+    forge_dir: Path,
+    doc_path: Path,
+    source_id: str = "feed",
+    kind: str = "local-file",
+    url: str | None = None,
+) -> None:
     """Project-scope ``registries.toml`` — local-file resolves ``path``
     relative to the config directory."""
     config = forge_dir / "config"
     config.mkdir(parents=True, exist_ok=True)
     if kind == "local-file":
-        body = (f'[[sources]]\nid = "{source_id}"\nkind = "local-file"\n'
-                f'path = "{doc_path.name}"\nenabled = true\n')
+        body = (
+            f'[[sources]]\nid = "{source_id}"\nkind = "local-file"\n'
+            f'path = "{doc_path.name}"\nenabled = true\n'
+        )
         doc_path = config / doc_path.name  # noqa: PLW2901 — doc lives in config dir
     else:
-        body = (f'[[sources]]\nid = "{source_id}"\nkind = "{kind}"\n'
-                f'url = "{url}"\nenabled = true\n')
+        body = f'[[sources]]\nid = "{source_id}"\nkind = "{kind}"\nurl = "{url}"\nenabled = true\n'
     (config / "registries.toml").write_text(body, encoding="utf-8")
 
 
-def remote_entry(provider: str = "remote-forge",
-                 capability: str = "quantum.optimize") -> dict[str, Any]:
-    return to_dict(ForgeRegistryEntry(
-        provider=provider, version="2.0.0",
-        publisher={"id": "pub-remote", "name": "Remote Inc"},
-        capabilities=[capability],
-        manifest_sha256=SHA,
-        distribution={"kind": "pip-package", "package": f"{provider}-pkg",
-                      "version": "2.0.0", "sha256": "c" * 64}))
+def remote_entry(
+    provider: str = "remote-forge", capability: str = "quantum.optimize"
+) -> dict[str, Any]:
+    return to_dict(
+        ForgeRegistryEntry(
+            provider=provider,
+            version="2.0.0",
+            publisher={"id": "pub-remote", "name": "Remote Inc"},
+            capabilities=[capability],
+            manifest_sha256=SHA,
+            distribution={
+                "kind": "pip-package",
+                "package": f"{provider}-pkg",
+                "version": "2.0.0",
+                "sha256": "c" * 64,
+            },
+        )
+    )
 
 
 def remote_doc(*entries: dict[str, Any]) -> dict[str, Any]:
-    return {"schema": "theforge/RegistryDocument/v1",
-            "registry": {"id": "remote"},
-            "produced_at": "2026-01-01T00:00:00Z",
-            "entries": list(entries)}
+    return {
+        "schema": "theforge/RegistryDocument/v1",
+        "registry": {"id": "remote"},
+        "produced_at": "2026-01-01T00:00:00Z",
+        "entries": list(entries),
+    }
 
 
 # ── §136 PROOF 1 — local negotiation ────────────────────────────────────────
 
+
 def test_proof1_requirement_selects_between_same_capability(
-        tmp_path: Path, user_config_dir: Path) -> None:
+    tmp_path: Path, user_config_dir: Path
+) -> None:
     """Two installed providers offer ``spark.performance``; the explicit
     requirement (``network_allowed=false``) selects the offline one."""
     make_workspace(tmp_path, [SPARK_ENTRY, SPARK_NET_ENTRY])
-    req = write_file(tmp_path, "req.json", json.dumps(
-        {"schema": "theforge/CapabilityRequirement/v1",
-         "capability": "spark.performance", "network_allowed": False}))
+    req = write_file(
+        tmp_path,
+        "req.json",
+        json.dumps(
+            {
+                "schema": "theforge/CapabilityRequirement/v1",
+                "capability": "spark.performance",
+                "network_allowed": False,
+            }
+        ),
+    )
 
-    r = run_cli(tmp_path, "capabilities", "negotiate",
-                "--requirement", str(req), "--json")
+    r = run_cli(tmp_path, "capabilities", "negotiate", "--requirement", str(req), "--json")
     assert r.returncode == 0, r.stderr
     data = json.loads(r.stdout)
     by_provider = {res["provider"]: res for res in data["results"]}
     assert by_provider["fixture-spark-net"]["state"] == "INCOMPATIBLE"
-    assert any(c.startswith("runtime:") for c in
-               by_provider["fixture-spark-net"]["policy_conflicts"])
+    assert any(
+        c.startswith("runtime:") for c in by_provider["fixture-spark-net"]["policy_conflicts"]
+    )
     assert by_provider["fixture-spark"]["state"] in ("FULL", "PARTIAL")
 
     # The same requirement drives routing: ask lands on the offline provider.
-    r = run_cli(tmp_path, "ask", "optimize this spark job",
-                "--requirement", str(req), "--capability", "spark.performance",
-                "--json")
+    r = run_cli(
+        tmp_path,
+        "ask",
+        "optimize this spark job",
+        "--requirement",
+        str(req),
+        "--capability",
+        "spark.performance",
+        "--json",
+    )
     assert r.returncode == 0, r.stderr
-    assert json.loads(r.stdout)["decision"]["selected"][0]["provider"] == \
-        "fixture-spark"
+    assert json.loads(r.stdout)["decision"]["selected"][0]["provider"] == "fixture-spark"
 
 
 # ── §137 PROOF 2 — missing local capability ─────────────────────────────────
 
+
 def test_proof2_remote_candidate_reported_never_installed(
-        tmp_path: Path, user_config_dir: Path) -> None:
+    tmp_path: Path, user_config_dir: Path
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     forge_dir = tmp_path / ".forge"
     doc = tmp_path / ".forge" / "config" / "remote.json"
     write_registries(forge_dir, doc)
     doc.write_text(json.dumps(remote_doc(remote_entry())), encoding="utf-8")
 
-    r = run_cli(tmp_path, "capabilities", "discover",
-                "--capability", "quantum.optimize", "--json")
+    r = run_cli(tmp_path, "capabilities", "discover", "--capability", "quantum.optimize", "--json")
     assert r.returncode == 0, r.stderr
     data = json.loads(r.stdout)
     assert data["satisfied_locally"] is False
@@ -138,16 +178,25 @@ def test_proof2_remote_candidate_reported_never_installed(
 
 # ── §138 PROOF 3 — deterministic install plan ───────────────────────────────
 
-def test_proof3_install_plan_deterministic_and_gated(
-        tmp_path: Path, user_config_dir: Path) -> None:
+
+def test_proof3_install_plan_deterministic_and_gated(tmp_path: Path, user_config_dir: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     forge_dir = tmp_path / ".forge"
     doc = forge_dir / "config" / "remote.json"
     write_registries(forge_dir, doc)
     doc.write_text(json.dumps(remote_doc(remote_entry())), encoding="utf-8")
 
-    args = ("install", "plan", "--provider", "remote-forge",
-            "--version", "2.0.0", "--source", "feed", "--json")
+    args = (
+        "install",
+        "plan",
+        "--provider",
+        "remote-forge",
+        "--version",
+        "2.0.0",
+        "--source",
+        "feed",
+        "--json",
+    )
     r1 = run_cli(tmp_path, *args)
     r2 = run_cli(tmp_path, *args)
     assert r1.returncode == 0 and r2.returncode == 0, r1.stderr
@@ -171,51 +220,93 @@ def test_proof3_install_plan_deterministic_and_gated(
 
 # ── §139 PROOF 4 — history-preferred challenger ─────────────────────────────
 
+
 def test_proof4_shadow_recommendation_is_explained_and_advisory(
-        tmp_path: Path, user_config_dir: Path) -> None:
+    tmp_path: Path, user_config_dir: Path
+) -> None:
     """Two providers run ``spark.performance``; measured history favors the
     challenger — the decision explains it as advisory, never auto-promotes."""
     make_workspace(tmp_path, [SPARK_ENTRY, SPARK_B_ENTRY])
     registry = Registry(tmp_path / ".forge")
     from theforge.registry.surface import surface_fingerprint
-    surfaces = {rec.entry.id: (rec.surface.surface_fingerprint
-                               if rec.surface and rec.surface.surface_fingerprint
-                               else surface_fingerprint(rec.manifest))
-                for rec in registry.records() if rec.manifest}
+
+    surfaces = {
+        rec.entry.id: (
+            rec.surface.surface_fingerprint
+            if rec.surface and rec.surface.surface_fingerprint
+            else surface_fingerprint(rec.manifest)
+        )
+        for rec in registry.records()
+        if rec.manifest
+    }
     inc_fp, cha_fp = surfaces["fixture-spark"], surfaces["fixture-spark-b"]
 
     metrics = tmp_path / ".forge" / "metrics"
     metrics.mkdir(parents=True, exist_ok=True)
     entries = [
-        {"provider": "fixture-spark", "capability": "spark.performance",
-         "runs": 10, "ok": 10, "partial": 0, "failed": 0, "verified_runs": 10,
-         "evidence": 0, "artifacts": 0, "context_bytes": 100_000,
-         "files_sent": 10, "files_cited": 0, "duration_ms": 9000.0,
-         "surface": inc_fp, "updated_at": "t"},
-        {"provider": "fixture-spark-b", "capability": "spark.performance",
-         "runs": 10, "ok": 10, "partial": 0, "failed": 0, "verified_runs": 10,
-         "evidence": 0, "artifacts": 0, "context_bytes": 1000,
-         "files_sent": 1, "files_cited": 0, "duration_ms": 3000.0,
-         "surface": cha_fp, "updated_at": "t"},
+        {
+            "provider": "fixture-spark",
+            "capability": "spark.performance",
+            "runs": 10,
+            "ok": 10,
+            "partial": 0,
+            "failed": 0,
+            "verified_runs": 10,
+            "evidence": 0,
+            "artifacts": 0,
+            "context_bytes": 100_000,
+            "files_sent": 10,
+            "files_cited": 0,
+            "duration_ms": 9000.0,
+            "surface": inc_fp,
+            "updated_at": "t",
+        },
+        {
+            "provider": "fixture-spark-b",
+            "capability": "spark.performance",
+            "runs": 10,
+            "ok": 10,
+            "partial": 0,
+            "failed": 0,
+            "verified_runs": 10,
+            "evidence": 0,
+            "artifacts": 0,
+            "context_bytes": 1000,
+            "files_sent": 1,
+            "files_cited": 0,
+            "duration_ms": 3000.0,
+            "surface": cha_fp,
+            "updated_at": "t",
+        },
     ]
     (metrics / "provider-performance.json").write_text(
-        json.dumps({"schema": "theforge/ProviderPerformance/v1",
-                    "producer": {"id": "t", "version": "1"},
-                    "created_at": "t", "entries": entries}), encoding="utf-8")
+        json.dumps(
+            {
+                "schema": "theforge/ProviderPerformance/v1",
+                "producer": {"id": "t", "version": "1"},
+                "created_at": "t",
+                "entries": entries,
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    req = write_file(tmp_path, "req.json", json.dumps(
-        {"schema": "theforge/CapabilityRequirement/v1",
-         "capability": "spark.performance"}))
-    r = run_cli(tmp_path, "capabilities", "negotiate",
-                "--requirement", str(req), "--json")
+    req = write_file(
+        tmp_path,
+        "req.json",
+        json.dumps(
+            {"schema": "theforge/CapabilityRequirement/v1", "capability": "spark.performance"}
+        ),
+    )
+    r = run_cli(tmp_path, "capabilities", "negotiate", "--requirement", str(req), "--json")
     assert r.returncode == 0, r.stderr
-    by_provider = {res["provider"]: res
-                   for res in json.loads(r.stdout)["results"]}
+    by_provider = {res["provider"]: res for res in json.loads(r.stdout)["results"]}
     assert by_provider["fixture-spark"]["history"] == "mature"
     assert by_provider["fixture-spark-b"]["history"] == "mature"
 
-    r = run_cli(tmp_path, "ask", "optimize this spark job",
-                "--capability", "spark.performance", "--json")
+    r = run_cli(
+        tmp_path, "ask", "optimize this spark job", "--capability", "spark.performance", "--json"
+    )
     assert r.returncode == 0, r.stderr
     out = json.loads(r.stdout)
     shadow = out["decision"].get("shadow")
@@ -223,8 +314,7 @@ def test_proof4_shadow_recommendation_is_explained_and_advisory(
         # Advisory by construction: it names evidence and never executes.
         assert shadow["provider"] == "fixture-spark-b"
         assert shadow["advisory"] is True
-        assert any("context_bytes" in e or "verified" in e
-                   for e in shadow["evidence"])
+        assert any("context_bytes" in e or "verified" in e for e in shadow["evidence"])
     # Whether a shadow fired or the tie broke deterministically, the selected
     # provider is a real installed record — never a phantom.
     assert out["decision"]["selected"][0]["provider"] in surfaces
@@ -232,33 +322,58 @@ def test_proof4_shadow_recommendation_is_explained_and_advisory(
 
 # ── §140 PROOF 5 — surface change stales history ────────────────────────────
 
-def test_proof5_changed_surface_stales_history(
-        tmp_path: Path, user_config_dir: Path) -> None:
+
+def test_proof5_changed_surface_stales_history(tmp_path: Path, user_config_dir: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     registry = Registry(tmp_path / ".forge")
-    live_fp = next(rec.surface.surface_fingerprint
-                   for rec in registry.records()
-                   if rec.entry.id == "fixture-spark")
+    live_fp = next(
+        rec.surface.surface_fingerprint
+        for rec in registry.records()
+        if rec.entry.id == "fixture-spark"
+    )
     assert live_fp
 
     metrics = tmp_path / ".forge" / "metrics"
     metrics.mkdir(parents=True, exist_ok=True)
-    entries = [{"provider": "fixture-spark", "capability": "spark.performance",
-                "runs": 20, "ok": 20, "partial": 0, "failed": 0,
-                "verified_runs": 20, "evidence": 0, "artifacts": 0,
-                "context_bytes": 0, "files_sent": 0, "files_cited": 0,
-                "duration_ms": 0.0, "surface": "old-fingerprint-abc",
-                "updated_at": "t"}]
+    entries = [
+        {
+            "provider": "fixture-spark",
+            "capability": "spark.performance",
+            "runs": 20,
+            "ok": 20,
+            "partial": 0,
+            "failed": 0,
+            "verified_runs": 20,
+            "evidence": 0,
+            "artifacts": 0,
+            "context_bytes": 0,
+            "files_sent": 0,
+            "files_cited": 0,
+            "duration_ms": 0.0,
+            "surface": "old-fingerprint-abc",
+            "updated_at": "t",
+        }
+    ]
     (metrics / "provider-performance.json").write_text(
-        json.dumps({"schema": "theforge/ProviderPerformance/v1",
-                    "producer": {"id": "t", "version": "1"},
-                    "created_at": "t", "entries": entries}), encoding="utf-8")
+        json.dumps(
+            {
+                "schema": "theforge/ProviderPerformance/v1",
+                "producer": {"id": "t", "version": "1"},
+                "created_at": "t",
+                "entries": entries,
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    req = write_file(tmp_path, "req.json", json.dumps(
-        {"schema": "theforge/CapabilityRequirement/v1",
-         "capability": "spark.performance"}))
-    r = run_cli(tmp_path, "capabilities", "negotiate",
-                "--requirement", str(req), "--json")
+    req = write_file(
+        tmp_path,
+        "req.json",
+        json.dumps(
+            {"schema": "theforge/CapabilityRequirement/v1", "capability": "spark.performance"}
+        ),
+    )
+    r = run_cli(tmp_path, "capabilities", "negotiate", "--requirement", str(req), "--json")
     assert r.returncode == 0, r.stderr
     res = json.loads(r.stdout)["results"][0]
     # Old history does not carry onto the new surface — it is stale, not mature.
@@ -267,6 +382,7 @@ def test_proof5_changed_surface_stales_history(
 
 
 # ── §141 PROOF 6 — A2A bridge ────────────────────────────────────────────────
+
 
 class _CardHandler(BaseHTTPRequestHandler):
     card: bytes = b"{}"
@@ -281,20 +397,27 @@ class _CardHandler(BaseHTTPRequestHandler):
         pass
 
 
-def test_proof6_a2a_agent_via_adapter_not_provider(
-        tmp_path: Path, user_config_dir: Path) -> None:
-    card = json.dumps({
-        "name": "external-quantum-agent",
-        "description": "Third-party A2A agent — metadata only",
-        "url": "http://127.0.0.1:1/agent",
-        "version": "1.0.0",
-        "capabilities": {},
-        "skills": [{"id": "quantum.optimize", "name": "quantum optimize",
+def test_proof6_a2a_agent_via_adapter_not_provider(tmp_path: Path, user_config_dir: Path) -> None:
+    card = json.dumps(
+        {
+            "name": "external-quantum-agent",
+            "description": "Third-party A2A agent — metadata only",
+            "url": "http://127.0.0.1:1/agent",
+            "version": "1.0.0",
+            "capabilities": {},
+            "skills": [
+                {
+                    "id": "quantum.optimize",
+                    "name": "quantum optimize",
                     "description": "optimizes quantum circuits",
-                    "inputModes": ["text/plain"], "outputModes": ["text/plain"]}],
-        "defaultInputModes": ["text/plain"],
-        "defaultOutputModes": ["text/plain"],
-    }).encode()
+                    "inputModes": ["text/plain"],
+                    "outputModes": ["text/plain"],
+                }
+            ],
+            "defaultInputModes": ["text/plain"],
+            "defaultOutputModes": ["text/plain"],
+        }
+    ).encode()
     _CardHandler.card = card
     server = HTTPServer(("127.0.0.1", 0), _CardHandler)
     Thread(target=server.serve_forever, daemon=True).start()
@@ -302,11 +425,17 @@ def test_proof6_a2a_agent_via_adapter_not_provider(
         port = server.server_address[1]
         make_workspace(tmp_path, [SPARK_ENTRY])
         forge_dir = tmp_path / ".forge"
-        write_registries(forge_dir, Path("unused.json"), source_id="a2a-feed",
-                         kind="a2a", url=f"http://127.0.0.1:{port}/agent-card.json")
+        write_registries(
+            forge_dir,
+            Path("unused.json"),
+            source_id="a2a-feed",
+            kind="a2a",
+            url=f"http://127.0.0.1:{port}/agent-card.json",
+        )
 
-        r = run_cli(tmp_path, "capabilities", "discover",
-                    "--capability", "quantum.optimize", "--json")
+        r = run_cli(
+            tmp_path, "capabilities", "discover", "--capability", "quantum.optimize", "--json"
+        )
         assert r.returncode == 0, r.stderr
         data = json.loads(r.stdout)
         assert data["satisfied_locally"] is False
@@ -326,8 +455,10 @@ def test_proof6_a2a_agent_via_adapter_not_provider(
 
 # ── §142 PROOF 7 — offline kill switch ───────────────────────────────────────
 
+
 def test_proof7_network_kill_switch_keeps_local_flows(
-        tmp_path: Path, user_config_dir: Path) -> None:
+    tmp_path: Path, user_config_dir: Path
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     forge_dir = tmp_path / ".forge"
     doc = forge_dir / "config" / "remote.json"
@@ -335,32 +466,46 @@ def test_proof7_network_kill_switch_keeps_local_flows(
     doc.write_text(json.dumps(remote_doc(remote_entry())), encoding="utf-8")
     # A remote source too — it must be skipped, not crash.
     config = forge_dir / "config" / "registries.toml"
-    config.write_text(config.read_text(encoding="utf-8") +
-                      '\n[[sources]]\nid = "remote-http"\nkind = "http"\n'
-                      'url = "https://reg.example/x.json"\nenabled = true\n',
-                      encoding="utf-8")
+    config.write_text(
+        config.read_text(encoding="utf-8") + '\n[[sources]]\nid = "remote-http"\nkind = "http"\n'
+        'url = "https://reg.example/x.json"\nenabled = true\n',
+        encoding="utf-8",
+    )
 
     env = {"THEFORGE_NO_NETWORK": "1"}
-    req = write_file(tmp_path, "req.json", json.dumps(
-        {"schema": "theforge/CapabilityRequirement/v1",
-         "capability": "quantum.optimize"}))
+    req = write_file(
+        tmp_path,
+        "req.json",
+        json.dumps(
+            {"schema": "theforge/CapabilityRequirement/v1", "capability": "quantum.optimize"}
+        ),
+    )
 
-    r = run_cli(tmp_path, "capabilities", "discover",
-                "--requirement", str(req), "--json", env_extra=env)
+    r = run_cli(
+        tmp_path, "capabilities", "discover", "--requirement", str(req), "--json", env_extra=env
+    )
     assert r.returncode == 0, r.stderr
     data = json.loads(r.stdout)
     assert data["satisfied_locally"] is False
     # The http source was never consulted; only the local-file source counts.
     assert "remote-http" not in data["sources_consulted"]
-    http_skips = [s for s in data["sources_skipped"] + data["limitations"]
-                  if "remote-http" in s or "network" in s.lower()]
+    http_skips = [
+        s
+        for s in data["sources_skipped"] + data["limitations"]
+        if "remote-http" in s or "network" in s.lower()
+    ]
     assert http_skips, data
 
     # Local flows unaffected: negotiate still negotiates the installed provider.
-    req2 = write_file(tmp_path, "req2.json", json.dumps(
-        {"schema": "theforge/CapabilityRequirement/v1",
-         "capability": "spark.performance"}))
-    r = run_cli(tmp_path, "capabilities", "negotiate",
-                "--requirement", str(req2), "--json", env_extra=env)
+    req2 = write_file(
+        tmp_path,
+        "req2.json",
+        json.dumps(
+            {"schema": "theforge/CapabilityRequirement/v1", "capability": "spark.performance"}
+        ),
+    )
+    r = run_cli(
+        tmp_path, "capabilities", "negotiate", "--requirement", str(req2), "--json", env_extra=env
+    )
     assert r.returncode == 0, r.stderr
     assert json.loads(r.stdout)["results"][0]["provider"] == "fixture-spark"

@@ -37,6 +37,7 @@ from theforge.registry.sources import SourceSpec, read_sources
 
 # ── fixtures ────────────────────────────────────────────────────────────────
 
+
 def capability(cid: str = "data.pipeline", **kw: object) -> Capability:
     kw.setdefault("actions", ["run", "dry-run"])
     kw.setdefault("default_action", "run")
@@ -48,34 +49,53 @@ def capability(cid: str = "data.pipeline", **kw: object) -> Capability:
 
 def record(pid: str = "forge-provider") -> RegistryRecord:
     manifest = ForgeManifest(
-        id=pid, version="1.2.3", protocols=["forge/v1"],
+        id=pid,
+        version="1.2.3",
+        protocols=["forge/v1"],
         ops=["describe", "health", "execute"],
         capabilities=[capability()],
-        execution=ExecutionInfo(local=True, offline=False,
-                                requires_network=True),
-        limitations=["no windows support"])
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
-                          state="ready", manifest=manifest,
-                          manifest_sha256="a" * 64, protocol="forge/v1")
+        execution=ExecutionInfo(local=True, offline=False, requires_network=True),
+        limitations=["no windows support"],
+    )
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
+        state="ready",
+        manifest=manifest,
+        manifest_sha256="a" * 64,
+        protocol="forge/v1",
+    )
 
 
 def task(**kw: object) -> TaskSpec:
     kw.setdefault("id", "t-1")
     kw.setdefault("intent", "pipeline the orders table")
-    return TaskSpec(producer=Producer(id="theforge", version="1"),
-                    created_at=utc_now(), workspace_root="/ws", **kw)  # type: ignore[arg-type]
+    return TaskSpec(
+        producer=Producer(id="theforge", version="1"),
+        created_at=utc_now(),
+        workspace_root="/ws",
+        **kw,
+    )  # type: ignore[arg-type]
 
 
 def result() -> ExecutionResult:
     return ExecutionResult(
         producer=Producer(id="forge-provider", version="1.2.3"),
-        created_at=utc_now(), status="ok",
+        created_at=utc_now(),
+        status="ok",
         findings=[Finding(id="f1", title="found", severity="info")],
-        evidence=[Evidence(id="e1", epistemic="observed", subject="s",
-                           claim="c", producer=Producer(id="p", version="1"),
-                           hash="b" * 64)],
+        evidence=[
+            Evidence(
+                id="e1",
+                epistemic="observed",
+                subject="s",
+                claim="c",
+                producer=Producer(id="p", version="1"),
+                hash="b" * 64,
+            )
+        ],
         artifacts=[Artifact(path="out/report.json", sha256="c" * 64)],
-        limitations=["partial coverage"])
+        limitations=["partial coverage"],
+    )
 
 
 CARD = {
@@ -85,19 +105,22 @@ CARD = {
     "url": "https://agent.example/a2a",
     "protocolVersion": "1.0",
     "capabilities": {"streaming": True},
-    "skills": [{
-        "id": "data.transform",
-        "name": "transform",
-        "description": "transforms data",
-        "tags": ["etl", "json"],
-        "inputModes": ["text/plain", "application/json"],
-        "outputModes": ["application/json"],
-    }],
+    "skills": [
+        {
+            "id": "data.transform",
+            "name": "transform",
+            "description": "transforms data",
+            "tags": ["etl", "json"],
+            "inputModes": ["text/plain", "application/json"],
+            "outputModes": ["application/json"],
+        }
+    ],
     "securitySchemes": {"oauth": {"type": "oauth2"}},
 }
 
 
 # ── Forge -> A2A ────────────────────────────────────────────────────────────
+
 
 def test_agent_card_maps_manifest() -> None:
     card = agent_card(record())
@@ -120,16 +143,19 @@ def test_agent_card_maps_manifest() -> None:
 
 def test_agent_card_requires_ready_record() -> None:
     with pytest.raises(ValueError):
-        agent_card(RegistryRecord(entry=ProviderEntry(id="x", argv=["y"]),
-                                  state="error", manifest=None))
+        agent_card(
+            RegistryRecord(entry=ProviderEntry(id="x", argv=["y"]), state="error", manifest=None)
+        )
 
 
 def test_task_to_send_params_preserves_forge_semantics() -> None:
-    t = task(requested_capability="data.pipeline",
-             requested_action="run",
-             requirement=CapabilityRequirement(capability="data.pipeline",
-                                               offline_required=True),
-             targets=["orders/"], constraints={"k": 1})
+    t = task(
+        requested_capability="data.pipeline",
+        requested_action="run",
+        requirement=CapabilityRequirement(capability="data.pipeline", offline_required=True),
+        targets=["orders/"],
+        constraints={"k": 1},
+    )
     params = task_to_send_params(t)
     message = params["message"]
     assert message["role"] == "user" and message["messageId"] == "t-1"
@@ -155,6 +181,7 @@ def test_artifacts_from_result() -> None:
 
 
 # ── A2A -> Forge ────────────────────────────────────────────────────────────
+
 
 def test_entry_from_card_marks_remote_unverified() -> None:
     converted = entry_from_card(CARD, source_id="a2a-hub")
@@ -184,28 +211,29 @@ def test_entry_from_card_slugifies_and_validates() -> None:
 
 
 def test_entry_from_card_non_semver_version() -> None:
-    converted = entry_from_card({**CARD, "version": "latest"},
-                                source_id="s")
+    converted = entry_from_card({**CARD, "version": "latest"}, source_id="s")
     assert converted.entry is not None
     assert converted.entry.version == "0.0.0"
     assert any("not SemVer" in w for w in converted.warnings)
 
 
 def test_unsupported_modality_is_limitation() -> None:
-    card = {**CARD, "skills": [dict(CARD["skills"][0],
-                                  inputModes=["image/png"])]}
+    card = {**CARD, "skills": [dict(CARD["skills"][0], inputModes=["image/png"])]}
     converted = entry_from_card(card, source_id="s")
     assert converted.entry is not None
-    assert any("unsupported modalities" in lim and "image/png" in lim
-               for lim in converted.limitations)
+    assert any(
+        "unsupported modalities" in lim and "image/png" in lim for lim in converted.limitations
+    )
 
 
 def test_unknown_fields_and_extensions_tolerated() -> None:
     """Forward-compat: unknown card fields and Forge extension metadata
     must not break conversion (unknown-extension conformance case)."""
-    card = {**CARD,
-            "x-vendor-extension": {"nested": [1, 2]},
-            "metadata": {"forge": {"surface_fingerprint": "x"}}}
+    card = {
+        **CARD,
+        "x-vendor-extension": {"nested": [1, 2]},
+        "metadata": {"forge": {"surface_fingerprint": "x"}},
+    }
     converted = entry_from_card(card, source_id="s")
     assert converted.entry is not None
 
@@ -224,8 +252,7 @@ def test_card_roundtrip_forge_to_a2a_to_entry() -> None:
 
 
 def test_card_to_document_wraps_entry() -> None:
-    doc, warnings = card_to_document(CARD, source_id="hub",
-                                     produced_at="2026-01-01T00:00:00Z")
+    doc, warnings = card_to_document(CARD, source_id="hub", produced_at="2026-01-01T00:00:00Z")
     assert doc is not None and warnings == []
     assert doc.registry.id == "hub"
     (entry,) = doc.entries
@@ -242,6 +269,7 @@ def test_parse_agent_card_malformed() -> None:
 
 # ── a2a source kind (transport + cache reuse) ────────────────────────────────
 
+
 def a2a_spec(tmp_path: Path, **kw: object) -> SourceSpec:
     kw.setdefault("id", "agent-hub")
     kw.setdefault("enabled", True)
@@ -252,31 +280,33 @@ def a2a_spec(tmp_path: Path, **kw: object) -> SourceSpec:
 def good_fetch(body: bytes):
     def fetch(url: str, headers: object, timeout: float) -> FetchResponse:
         return FetchResponse(status=200, headers={}, body=body)
+
     return fetch
 
 
 def test_a2a_source_converts_card(tmp_path: Path) -> None:
     spec = a2a_spec(tmp_path)
-    source = A2ACardSource(spec=spec, fetcher=good_fetch(json.dumps(CARD).encode()),
-                           cache_dir=tmp_path)
+    source = A2ACardSource(
+        spec=spec, fetcher=good_fetch(json.dumps(CARD).encode()), cache_dir=tmp_path
+    )
     read = source.read()
     assert read.status == "ok" and read.document is not None
     (entry,) = read.document.entries
     assert entry.provider == "acme-agent"
     assert "a2a/1.0" in entry.protocols
     # cache round-trip: second read decodes the *cached card* the same way
-    again = A2ACardSource(spec=spec,
-                          fetcher=good_fetch(b"should-not-be-served"),
-                          cache_dir=tmp_path).read()
+    again = A2ACardSource(
+        spec=spec, fetcher=good_fetch(b"should-not-be-served"), cache_dir=tmp_path
+    ).read()
     assert again.status == "ok" and again.from_cache
     assert again.document is not None
     assert again.document.entries[0].provider == "acme-agent"
 
 
 def test_a2a_source_via_read_sources(tmp_path: Path) -> None:
-    reads = read_sources([a2a_spec(tmp_path)],
-                         fetcher=good_fetch(json.dumps(CARD).encode()),
-                         cache_dir=tmp_path)
+    reads = read_sources(
+        [a2a_spec(tmp_path)], fetcher=good_fetch(json.dumps(CARD).encode()), cache_dir=tmp_path
+    )
     assert reads[0].status == "ok"
     assert reads[0].document is not None
 
@@ -284,32 +314,33 @@ def test_a2a_source_via_read_sources(tmp_path: Path) -> None:
 def test_a2a_source_remote_failure_and_timeout(tmp_path: Path) -> None:
     def boom(url, headers, timeout):
         raise TimeoutError("timed out")
-    read = A2ACardSource(spec=a2a_spec(tmp_path), fetcher=boom,
-                         cache_dir=tmp_path).read()
+
+    read = A2ACardSource(spec=a2a_spec(tmp_path), fetcher=boom, cache_dir=tmp_path).read()
     assert read.status == "unavailable"
     assert "TimeoutError" in (read.detail or "")
 
 
 def test_a2a_source_malformed_body(tmp_path: Path) -> None:
-    read = A2ACardSource(spec=a2a_spec(tmp_path),
-                         fetcher=good_fetch(b"<html>not a card</html>"),
-                         cache_dir=tmp_path).read()
+    read = A2ACardSource(
+        spec=a2a_spec(tmp_path), fetcher=good_fetch(b"<html>not a card</html>"), cache_dir=tmp_path
+    ).read()
     assert read.status == "invalid"
     assert "not valid JSON" in (read.detail or "")
 
 
 def test_a2a_source_card_without_name(tmp_path: Path) -> None:
-    read = A2ACardSource(spec=a2a_spec(tmp_path),
-                         fetcher=good_fetch(json.dumps({"url": "x"}).encode()),
-                         cache_dir=tmp_path).read()
+    read = A2ACardSource(
+        spec=a2a_spec(tmp_path),
+        fetcher=good_fetch(json.dumps({"url": "x"}).encode()),
+        cache_dir=tmp_path,
+    ).read()
     assert read.status == "invalid"
 
 
-def test_a2a_source_network_disabled(tmp_path: Path,
-                                     monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a2a_source_network_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("THEFORGE_NO_NETWORK", "1")
-    read = A2ACardSource(spec=a2a_spec(tmp_path),
-                         fetcher=good_fetch(json.dumps(CARD).encode()),
-                         cache_dir=tmp_path).read()
+    read = A2ACardSource(
+        spec=a2a_spec(tmp_path), fetcher=good_fetch(json.dumps(CARD).encode()), cache_dir=tmp_path
+    ).read()
     assert read.status == "unavailable"
     assert "network disabled" in (read.detail or "")

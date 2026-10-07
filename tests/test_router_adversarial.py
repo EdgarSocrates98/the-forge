@@ -26,32 +26,53 @@ OPENAPI_INTENT = "Revise este contrato OpenAPI"
 def fixture_record(name: str, entry: dict[str, Any]) -> RegistryRecord:
     data = json.loads((PROVIDERS / name).read_text(encoding="utf-8"))
     manifest = from_dict(ForgeManifest, data)
-    return RegistryRecord(entry=ProviderEntry(id=entry["id"], argv=["x"], trust="local"),
-                          state="ready", manifest=manifest, manifest_sha256="0" * 64,
-                          protocol="forge/v1")
+    return RegistryRecord(
+        entry=ProviderEntry(id=entry["id"], argv=["x"], trust="local"),
+        state="ready",
+        manifest=manifest,
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
 
 
 SPARK = fixture_record("fixture-spark.json", SPARK_ENTRY)
 API = fixture_record("fixture-api.json", API_ENTRY)
 
 
-def make(pid: str, *, kw: tuple[str, ...] = (), globs: tuple[str, ...] = (),
-         deps: tuple[str, ...] = (), state: str = "supported", cid: str = "x.run",
-         ops: tuple[str, ...] = ("describe", "health", "execute")) -> RegistryRecord:
-    capability = Capability(id=cid, actions=["run"], default_action="run", state=state,
-                            operation_class="read_only",
-                            signals=Signals(keywords=list(kw), file_globs=list(globs),
-                                            dependencies=list(deps)))
-    manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"], ops=list(ops),
-                             capabilities=[capability])
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
-                          state="ready", manifest=manifest, manifest_sha256="0" * 64,
-                          protocol="forge/v1")
+def make(
+    pid: str,
+    *,
+    kw: tuple[str, ...] = (),
+    globs: tuple[str, ...] = (),
+    deps: tuple[str, ...] = (),
+    state: str = "supported",
+    cid: str = "x.run",
+    ops: tuple[str, ...] = ("describe", "health", "execute"),
+) -> RegistryRecord:
+    capability = Capability(
+        id=cid,
+        actions=["run"],
+        default_action="run",
+        state=state,
+        operation_class="read_only",
+        signals=Signals(keywords=list(kw), file_globs=list(globs), dependencies=list(deps)),
+    )
+    manifest = ForgeManifest(
+        id=pid, version="1", protocols=["forge/v1"], ops=list(ops), capabilities=[capability]
+    )
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
+        state="ready",
+        manifest=manifest,
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
 
 
 def task(intent: str, **kw: object) -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent,
-                    workspace_root="/ws", **kw)
+    return TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent, workspace_root="/ws", **kw
+    )
 
 
 def workspace(root: Path) -> tuple[list[str], set[str]]:
@@ -63,6 +84,7 @@ def semantic(d: RoutingDecision) -> tuple[Any, ...]:
 
 
 # Reference decisions stay the same.
+
 
 def test_case_a_reference_routes_to_spark(tmp_path: Path) -> None:
     case_a(tmp_path)
@@ -86,7 +108,8 @@ def test_glue_intent_routes_to_data(tmp_path: Path) -> None:
     d = route(task(GLUE_INTENT), [API, SPARK], files, deps)
     assert d.status == "routed"
     assert [(s.provider, s.capability) for s in d.selected] == [
-        ("fixture-spark", "spark.performance")]
+        ("fixture-spark", "spark.performance")
+    ]
 
 
 def test_openapi_intent_routes_to_api(tmp_path: Path) -> None:
@@ -115,8 +138,12 @@ def test_glue_repo_with_many_job_files_still_routes_to_data(tmp_path: Path) -> N
 
 # Volume and gaming never win.
 
-SPAM = make("aaa-spam", kw=("analise", "esse", "porque", "job", "glue", "lento"),
-            globs=("jobs/*.py", "*orders*", "*.py"), deps=("pyspark",))
+SPAM = make(
+    "aaa-spam",
+    kw=("analise", "esse", "porque", "job", "glue", "lento"),
+    globs=("jobs/*.py", "*orders*", "*.py"),
+    deps=("pyspark",),
+)
 SUPERSET_SPAM = make(
     "aaa-superset",
     kw=("spark", "pyspark", "glue", "lento", "slow", "performance", "job", "analise", "esse"),
@@ -137,8 +164,11 @@ def test_spam_provider_never_beats_spark_on_case_a(tmp_path: Path) -> None:
 def test_declaring_more_signals_never_raises_rank(tmp_path: Path) -> None:
     case_a(tmp_path)
     files, deps = workspace(tmp_path)
-    many = make("many", kw=tuple(f"kw{i}" for i in range(60)) + ("glue",),
-                globs=("*glue*.py",) + tuple(f"x{i}/*.py" for i in range(30)))
+    many = make(
+        "many",
+        kw=tuple(f"kw{i}" for i in range(60)) + ("glue",),
+        globs=("*glue*.py",) + tuple(f"x{i}/*.py" for i in range(30)),
+    )
     d = route(task(CASE_A_INTENT), [many], files, deps)
     assert d.candidates[0].rank_key == [2]
 
@@ -186,15 +216,31 @@ def test_single_candidate_signals_are_never_non_discriminating(tmp_path: Path) -
 
 
 def test_capabilities_of_one_provider_never_neutralize_each_other() -> None:
-    caps = [Capability(id=cid, actions=["run"], default_action="run", state="supported",
-                       operation_class="read_only",
-                       signals=Signals(keywords=list(kw), file_globs=["*.txt"]))
-            for cid, kw in (("demo.echo", ("eco",)), ("demo.inspect", ("inspect",)))]
-    manifest = ForgeManifest(id="echo-like", version="1", protocols=["forge/v1"],
-                             ops=["describe", "health", "execute"], capabilities=caps)
-    rec = RegistryRecord(entry=ProviderEntry(id="echo-like", argv=["x"], trust="local"),
-                         state="ready", manifest=manifest, manifest_sha256="0" * 64,
-                         protocol="forge/v1")
+    caps = [
+        Capability(
+            id=cid,
+            actions=["run"],
+            default_action="run",
+            state="supported",
+            operation_class="read_only",
+            signals=Signals(keywords=list(kw), file_globs=["*.txt"]),
+        )
+        for cid, kw in (("demo.echo", ("eco",)), ("demo.inspect", ("inspect",)))
+    ]
+    manifest = ForgeManifest(
+        id="echo-like",
+        version="1",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=caps,
+    )
+    rec = RegistryRecord(
+        entry=ProviderEntry(id="echo-like", argv=["x"], trust="local"),
+        state="ready",
+        manifest=manifest,
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
     d = route(task("eco"), [rec], ["notes.txt"], set())
     assert d.status == "routed" and d.selected[0].capability == "demo.echo"
     assert d.limitations == []
@@ -229,6 +275,7 @@ def test_monorepo_with_both_domains(tmp_path: Path) -> None:
 
 # Capability state, ops and confidence.
 
+
 def test_heuristic_capability_lowers_confidence() -> None:
     rec = make("h-forge", kw=("glue",), globs=("*glue*.py",), state="heuristic")
     d = route(task("glue"), [rec], ["orders_glue.py"], set())
@@ -255,8 +302,12 @@ def test_provider_without_execute_op_is_not_routed() -> None:
         assert any("noexec" in note and "'execute'" in note for note in decision.limitations)
     # Irrelevant non-executing providers add no noise: another capability, or a routed task.
     other = route(task("x", requested_capability="y.run"), [rec], [], set())
-    routed = route(task("glue"), [rec, make("exec", kw=("glue",), globs=("*glue*.py",))],
-                   ["orders_glue.py"], set())
+    routed = route(
+        task("glue"),
+        [rec, make("exec", kw=("glue",), globs=("*glue*.py",))],
+        ["orders_glue.py"],
+        set(),
+    )
     assert routed.status == "routed"
     for decision in (other, routed):
         assert not any("noexec" in note for note in decision.limitations)
@@ -269,9 +320,20 @@ RECORDS = [SPARK, API, SPAM, SUPERSET_SPAM, make("docs", kw=("readme",), globs=(
 
 
 @settings(max_examples=60, deadline=None)
-@given(records=st.permutations(RECORDS), files=st.permutations(FILES),
-       intent=st.sampled_from([CASE_A_INTENT, CASE_B_INTENT, GLUE_INTENT, OPENAPI_INTENT,
-                               "melhore performance", "readme glue"]))
+@given(
+    records=st.permutations(RECORDS),
+    files=st.permutations(FILES),
+    intent=st.sampled_from(
+        [
+            CASE_A_INTENT,
+            CASE_B_INTENT,
+            GLUE_INTENT,
+            OPENAPI_INTENT,
+            "melhore performance",
+            "readme glue",
+        ]
+    ),
+)
 def test_permutations_produce_same_decision(
     records: list[RegistryRecord], files: list[str], intent: str
 ) -> None:

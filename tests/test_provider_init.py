@@ -16,15 +16,11 @@ def test_init_writes_a_conforming_provider(tmp_path: Path) -> None:
     whole conformance battery (nothing is installed, nothing is registered)."""
     result = init_provider(tmp_path / "acme", "acme-forge")
     names = {p.name for p in result.files}
-    assert names == {"provider.py", "manifest.json", "test_conformance.py",
-                     "README.md"}
-    manifest = json.loads(
-        (result.directory / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["id"] == "acme-forge" and manifest["schema"] \
-        == "theforge/ForgeManifest/v1"
+    assert names == {"provider.py", "manifest.json", "test_conformance.py", "README.md"}
+    manifest = json.loads((result.directory / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["id"] == "acme-forge" and manifest["schema"] == "theforge/ForgeManifest/v1"
     report = check_provider(result.argv)
-    assert report.ok, [f"{c.id}: {c.detail}" for c in report.checks
-                       if c.status == "fail"]
+    assert report.ok, [f"{c.id}: {c.detail}" for c in report.checks if c.status == "fail"]
 
 
 def test_init_refuses_a_non_empty_directory(tmp_path: Path) -> None:
@@ -34,8 +30,7 @@ def test_init_refuses_a_non_empty_directory(tmp_path: Path) -> None:
         init_provider(tmp_path, "acme-forge")
 
 
-@pytest.mark.parametrize("provider_id", ["Bad Id", "UPPER", "with_underscore",
-                                         "with space", ""])
+@pytest.mark.parametrize("provider_id", ["Bad Id", "UPPER", "with_underscore", "with space", ""])
 def test_init_rejects_invalid_provider_ids(tmp_path: Path, provider_id: str) -> None:
     with pytest.raises(UsageError):
         init_provider(tmp_path / "p", provider_id)
@@ -62,10 +57,16 @@ def test_generated_skeleton_refuses_unknown_inputs(tmp_path: Path) -> None:
     argv = [sys.executable, str(result.directory / "provider.py")]
 
     def call(op: str, payload: dict) -> dict:
-        body = {"protocol": "forge/v1", "kind": "Request", "op": op,
-                "request_id": "r1", "payload": payload}
-        proc = subprocess.run(argv + [op], input=json.dumps(body).encode(),
-                              capture_output=True, timeout=30)
+        body = {
+            "protocol": "forge/v1",
+            "kind": "Request",
+            "op": op,
+            "request_id": "r1",
+            "payload": payload,
+        }
+        proc = subprocess.run(
+            argv + [op], input=json.dumps(body).encode(), capture_output=True, timeout=30
+        )
         assert proc.returncode == 0
         return json.loads(proc.stdout.decode("utf-8"))
 
@@ -88,16 +89,19 @@ def test_provider_check_cli_exit_codes(tmp_path: Path) -> None:
         env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
         return subprocess.run(
             [sys.executable, "-m", "theforge", *args, "--root", str(tmp_path)],
-            capture_output=True, text=True, encoding="utf-8", timeout=120, env=env)
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=120,
+            env=env,
+        )
 
     result = init_provider(tmp_path / "acme", "acme-forge")
-    r = cli("provider", "check", "--", sys.executable,
-            str(result.directory / "provider.py"))
+    r = cli("provider", "check", "--", sys.executable, str(result.directory / "provider.py"))
     assert r.returncode == 0, r.stderr
     assert "conformance: ok" in r.stdout
 
-    r = cli("provider", "check", "--", sys.executable, "-c",
-            "import sys; sys.exit(3)")
+    r = cli("provider", "check", "--", sys.executable, "-c", "import sys; sys.exit(3)")
     assert r.returncode == 1
     assert "FAILED" in r.stdout
 

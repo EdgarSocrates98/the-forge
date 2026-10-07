@@ -29,9 +29,15 @@ def entry(provider: str = "remote-forge", **kw: object) -> ForgeRegistryEntry:
 
 
 def doc_json(*entries: ForgeRegistryEntry) -> str:
-    return json.dumps(to_dict(RegistryDocument(
-        registry=RegistryIdentity(id="remote-reg", url="https://reg.example"),
-        produced_at="2026-01-01T00:00:00Z", entries=list(entries))))
+    return json.dumps(
+        to_dict(
+            RegistryDocument(
+                registry=RegistryIdentity(id="remote-reg", url="https://reg.example"),
+                produced_at="2026-01-01T00:00:00Z",
+                entries=list(entries),
+            )
+        )
+    )
 
 
 def spec(tmp_path: Path, **kw: object) -> SourceSpec:
@@ -41,25 +47,28 @@ def spec(tmp_path: Path, **kw: object) -> SourceSpec:
 
 
 def source(tmp_path: Path, fetcher, **kw: object) -> HttpRegistrySource:
-    return HttpRegistrySource(spec(tmp_path, **kw), fetcher=fetcher,
-                              cache_dir=tmp_path / "cache")
+    return HttpRegistrySource(spec(tmp_path, **kw), fetcher=fetcher, cache_dir=tmp_path / "cache")
 
 
-def fake_fetch(payload: str = "", status: int = 200,
-               headers: dict[str, str] | None = None,
-               calls: list[tuple[str, dict[str, str]]] | None = None,
-               fail: Exception | None = None):
+def fake_fetch(
+    payload: str = "",
+    status: int = 200,
+    headers: dict[str, str] | None = None,
+    calls: list[tuple[str, dict[str, str]]] | None = None,
+    fail: Exception | None = None,
+):
     def fetch(url: str, req_headers, timeout: float) -> FetchResponse:
         if calls is not None:
             calls.append((url, dict(req_headers)))
         if fail is not None:
             raise fail
-        return FetchResponse(status=status, headers=headers or {},
-                             body=payload.encode("utf-8"))
+        return FetchResponse(status=status, headers=headers or {}, body=payload.encode("utf-8"))
+
     return fetch
 
 
 # ── URL policy ──────────────────────────────────────────────────────────────
+
 
 def test_url_policy() -> None:
     assert _check_url("https://reg.example/x.json", "s") is None
@@ -71,14 +80,14 @@ def test_url_policy() -> None:
 
 
 def test_insecure_url_is_invalid_not_crashed(tmp_path: Path) -> None:
-    spec_ = SourceSpec(id="s", kind="http", url="http://evil.example/x",
-                       enabled=True)
+    spec_ = SourceSpec(id="s", kind="http", url="http://evil.example/x", enabled=True)
     read = HttpRegistrySource(spec_, cache_dir=tmp_path / "c").read()
     assert read.status == "invalid"
     assert "https" in (read.detail or "")
 
 
 # ── happy path + cache ──────────────────────────────────────────────────────
+
 
 def test_fetch_ok_and_cache_roundtrip(tmp_path: Path) -> None:
     calls: list = []
@@ -149,9 +158,14 @@ def test_http_error_status_with_cache_is_stale(tmp_path: Path) -> None:
 
 
 def test_invalid_document_200(tmp_path: Path) -> None:
-    bad = json.dumps({"schema": "theforge/RegistryDocument/v1",
-                      "registry": {"id": "r"}, "produced_at": "t",
-                      "entries": [{"provider": "BAD ID", "version": "1.0.0"}]})
+    bad = json.dumps(
+        {
+            "schema": "theforge/RegistryDocument/v1",
+            "registry": {"id": "r"},
+            "produced_at": "t",
+            "entries": [{"provider": "BAD ID", "version": "1.0.0"}],
+        }
+    )
     read = source(tmp_path, fake_fetch(bad)).read()
     assert read.status == "invalid"
 
@@ -164,6 +178,7 @@ def test_oversized_response_rejected(tmp_path: Path) -> None:
 
 
 # ── cache integrity (poisoning is never silently served) ────────────────────
+
 
 def test_poisoned_cache_ignored(tmp_path: Path) -> None:
     src = source(tmp_path, fake_fetch(doc_json(entry())))
@@ -194,6 +209,7 @@ def test_cache_url_mismatch_ignored(tmp_path: Path) -> None:
 
 # ── kill-switch ─────────────────────────────────────────────────────────────
 
+
 def test_no_network_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("THEFORGE_NO_NETWORK", "1")
     calls: list = []
@@ -211,9 +227,11 @@ def test_no_network_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
 
 def test_read_sources_dispatches_http(tmp_path: Path) -> None:
     calls: list = []
-    reads = read_sources([spec(tmp_path)],
-                         fetcher=fake_fetch(doc_json(entry()), calls=calls),
-                         cache_dir=tmp_path / "cache")
+    reads = read_sources(
+        [spec(tmp_path)],
+        fetcher=fake_fetch(doc_json(entry()), calls=calls),
+        cache_dir=tmp_path / "cache",
+    )
     assert reads[0].status == "ok"
     assert calls and calls[0][0] == "https://reg.example/index.json"
 

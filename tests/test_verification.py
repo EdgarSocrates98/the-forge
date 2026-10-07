@@ -41,61 +41,113 @@ def work(tmp_path: Path) -> Path:
     return directory
 
 
-def _evidence(eid: str, epistemic: str, *, path: str | None = None,
-              digest: str | None = None) -> Evidence:
-    return Evidence(id=eid, epistemic=epistemic, subject="s", claim="c",  # type: ignore[arg-type]
-                    producer=PROVIDER,
-                    location=Location(path=path) if path is not None else None, hash=digest)
+def _evidence(
+    eid: str, epistemic: str, *, path: str | None = None, digest: str | None = None
+) -> Evidence:
+    return Evidence(
+        id=eid,
+        epistemic=epistemic,
+        subject="s",
+        claim="c",  # type: ignore[arg-type]
+        producer=PROVIDER,
+        location=Location(path=path) if path is not None else None,
+        hash=digest,
+    )
 
 
-def _result(*, evidence: list[Evidence] | None = None,
-            artifacts: list[Artifact] | None = None,
-            producer: Producer = PROVIDER) -> ExecutionResult:
-    return ExecutionResult(producer=producer, created_at=NOW, status="ok",
-                           evidence=evidence or [], artifacts=artifacts or [])
+def _result(
+    *,
+    evidence: list[Evidence] | None = None,
+    artifacts: list[Artifact] | None = None,
+    producer: Producer = PROVIDER,
+) -> ExecutionResult:
+    return ExecutionResult(
+        producer=producer,
+        created_at=NOW,
+        status="ok",
+        evidence=evidence or [],
+        artifacts=artifacts or [],
+    )
 
 
-def _drift(level: str = "conditional", drifted: tuple[str, ...] = (),
-           checked: int = 1) -> DriftReport:
+def _drift(
+    level: str = "conditional", drifted: tuple[str, ...] = (), checked: int = 1
+) -> DriftReport:
     limitations = ("context-not-reverified",) if level == "minimal" else ()
-    return DriftReport(drifted=drifted, checked=checked, level=level,  # type: ignore[arg-type]
-                       limitations=limitations)
+    return DriftReport(
+        drifted=drifted,
+        checked=checked,
+        level=level,  # type: ignore[arg-type]
+        limitations=limitations,
+    )
 
 
-def _build(work: Path, result: ExecutionResult | None, *, status: str | None = "ok",
-           drift: DriftReport | None = None, handoff: Handoff | None = None):
-    return build_verification("run-1", status, result, drift, work, expected=PROVIDER,
-                              created_at=NOW, handoff=handoff)
+def _build(
+    work: Path,
+    result: ExecutionResult | None,
+    *,
+    status: str | None = "ok",
+    drift: DriftReport | None = None,
+    handoff: Handoff | None = None,
+):
+    return build_verification(
+        "run-1", status, result, drift, work, expected=PROVIDER, created_at=NOW, handoff=handoff
+    )
 
 
 HANDOFF = Handoff(
-    producer=PRODUCER, created_at=NOW, plan_run="plan-1", target_node="n2",
-    items=[HandoffItem(
-        kind="evidence", id="f_src1",
-        origin=HandoffOrigin(plan_run="plan-1", node="n1", run_id="run-n1",
-                             provider=Producer(id="spark-forge-aws", version="1.0.0")),
-        epistemic="inferred", subject="pyspark.dataframe",
-        claim="etl.py reads orders.csv")],
+    producer=PRODUCER,
+    created_at=NOW,
+    plan_run="plan-1",
+    target_node="n2",
+    items=[
+        HandoffItem(
+            kind="evidence",
+            id="f_src1",
+            origin=HandoffOrigin(
+                plan_run="plan-1",
+                node="n1",
+                run_id="run-n1",
+                provider=Producer(id="spark-forge-aws", version="1.0.0"),
+            ),
+            epistemic="inferred",
+            subject="pyspark.dataframe",
+            claim="etl.py reads orders.csv",
+        )
+    ],
 )
 
 
-def _derived(eid: str, epistemic: str, *, item: str = "f_src1", node: str | None = "n1",
-             run_id: str = "run-n1") -> Evidence:
+def _derived(
+    eid: str,
+    epistemic: str,
+    *,
+    item: str = "f_src1",
+    node: str | None = "n1",
+    run_id: str = "run-n1",
+) -> Evidence:
     evidence = _evidence(eid, epistemic)
     return Evidence(
-        id=evidence.id, epistemic=epistemic,  # type: ignore[arg-type]
-        subject=evidence.subject, claim=evidence.claim, producer=evidence.producer,
-        derived_from=EvidenceSource(provider="spark-forge-aws", run_id=run_id, item=item,
-                                    node=node, plan_run="plan-1"))
+        id=evidence.id,
+        epistemic=epistemic,  # type: ignore[arg-type]
+        subject=evidence.subject,
+        claim=evidence.claim,
+        producer=evidence.producer,
+        derived_from=EvidenceSource(
+            provider="spark-forge-aws", run_id=run_id, item=item, node=node, plan_run="plan-1"
+        ),
+    )
 
 
 ARTIFACT = Artifact(path="out/report.json", sha256=_sha(DATA))
 
 
 def test_all_four_levels_with_evidence_and_artifacts(work: Path) -> None:
-    evidence = [_evidence("e1", "confirmed", path="a.py", digest=_sha(b"a")),
-                _evidence("e2", "confirmed", path="b.py"),
-                _evidence("e3", "inferred")]
+    evidence = [
+        _evidence("e1", "confirmed", path="a.py", digest=_sha(b"a")),
+        _evidence("e2", "confirmed", path="b.py"),
+        _evidence("e3", "inferred"),
+    ]
     got = _build(work, _result(evidence=evidence, artifacts=[ARTIFACT]), drift=_drift())
 
     assert got.schema == VERIFICATION_SCHEMA
@@ -104,11 +156,19 @@ def test_all_four_levels_with_evidence_and_artifacts(work: Path) -> None:
     assert got.self_report.details == ["provider status: ok"]
     assert got.provider_evidence.status == "reported"
     assert got.provider_evidence.details == [
-        "evidence: 3", "epistemic confirmed: 2", "epistemic inferred: 1",
-        "with hash: 1", "with location: 2"]
+        "evidence: 3",
+        "epistemic confirmed: 2",
+        "epistemic inferred: 1",
+        "with hash: 1",
+        "with location: 2",
+    ]
     assert got.forge.status == "passed"
-    assert got.forge.basis == ["result-integrity", "producer",
-                               "context-reverification:conditional", "artifact-hashes"]
+    assert got.forge.basis == [
+        "result-integrity",
+        "producer",
+        "context-reverification:conditional",
+        "artifact-hashes",
+    ]
     assert got.independent.status == "not_performed"
     assert got.independent.details == [NO_INDEPENDENT_VERIFIER]
     assert NO_INDEPENDENT_VERIFIER == "no independent verifier for this capability"
@@ -221,8 +281,9 @@ def test_self_report_never_counts_as_forge_verification(work: Path) -> None:
 def test_absolute_artifact_path_outside_work_dir_fails(work: Path, tmp_path: Path) -> None:
     outside = tmp_path / "abs.txt"
     outside.write_bytes(DATA)
-    got = _build(work, _result(artifacts=[Artifact(path=str(outside), sha256=_sha(DATA))]),
-                 drift=_drift())
+    got = _build(
+        work, _result(artifacts=[Artifact(path=str(outside), sha256=_sha(DATA))]), drift=_drift()
+    )
     assert got.forge.status == "failed"
 
 
@@ -233,8 +294,9 @@ def test_symlinked_artifact_escaping_work_dir_fails(work: Path, tmp_path: Path) 
         (work / "out" / "link.txt").symlink_to(outside)
     except OSError:
         pytest.skip("symlinks not permitted on this platform")
-    got = _build(work, _result(artifacts=[Artifact(path="out/link.txt", sha256=_sha(DATA))]),
-                 drift=_drift())
+    got = _build(
+        work, _result(artifacts=[Artifact(path="out/link.txt", sha256=_sha(DATA))]), drift=_drift()
+    )
     assert got.forge.status == "failed"
     assert got.limitations == [f"{Codes.RESULT_ARTIFACT_HASH}: out/link.txt"]
 
@@ -307,13 +369,12 @@ def test_artifact_symlink_to_a_file_inside_work_verifies_by_content(work: Path) 
 
 # --- handoff-provenance (Cycle 2.1 F4/F5) ---------------------------------------------------
 
+
 def test_derived_evidence_resolving_the_handoff_passes(work: Path) -> None:
-    got = _build(work, _result(evidence=[_derived("up-1", "inferred")]),
-                 handoff=HANDOFF)
+    got = _build(work, _result(evidence=[_derived("up-1", "inferred")]), handoff=HANDOFF)
     assert got.forge.status == "passed"
     assert "handoff-provenance" in got.forge.basis
-    assert any("handoff-provenance: passed (1 derived evidence)" in d
-               for d in got.forge.details)
+    assert any("handoff-provenance: passed (1 derived evidence)" in d for d in got.forge.details)
 
 
 def test_derived_evidence_without_handoff_fails(work: Path) -> None:
@@ -323,39 +384,36 @@ def test_derived_evidence_without_handoff_fails(work: Path) -> None:
 
 
 def test_derived_evidence_unknown_item_fails(work: Path) -> None:
-    got = _build(work, _result(evidence=[_derived("up-1", "inferred", item="f_absent")]),
-                 handoff=HANDOFF)
+    got = _build(
+        work, _result(evidence=[_derived("up-1", "inferred", item="f_absent")]), handoff=HANDOFF
+    )
     assert got.forge.status == "failed"
     assert any("f_absent" in d for d in got.forge.details)
 
 
 def test_derived_evidence_node_mismatch_fails(work: Path) -> None:
-    got = _build(work, _result(evidence=[_derived("up-1", "inferred", node="n9")]),
-                 handoff=HANDOFF)
+    got = _build(work, _result(evidence=[_derived("up-1", "inferred", node="n9")]), handoff=HANDOFF)
     assert got.forge.status == "failed"
     assert any("different node/plan_run" in d for d in got.forge.details)
 
 
 def test_epistemic_upgrade_of_a_derived_item_fails(work: Path) -> None:
     """An ``inferred`` handoff item never becomes ``confirmed`` by derivation."""
-    got = _build(work, _result(evidence=[_derived("up-1", "confirmed")]),
-                 handoff=HANDOFF)
+    got = _build(work, _result(evidence=[_derived("up-1", "confirmed")]), handoff=HANDOFF)
     assert got.forge.status == "failed"
     assert any("inferred -> confirmed" in d for d in got.forge.details)
 
 
 def test_same_or_weaker_epistemic_of_a_derived_item_passes(work: Path) -> None:
     for epistemic in ("inferred", "proposed", "unresolved"):
-        got = _build(work, _result(evidence=[_derived("up-1", epistemic)]),
-                     handoff=HANDOFF)
+        got = _build(work, _result(evidence=[_derived("up-1", epistemic)]), handoff=HANDOFF)
         assert got.forge.status == "passed", (epistemic, got.forge.details)
 
 
 def test_handoff_without_derived_evidence_still_runs_the_check(work: Path) -> None:
     got = _build(work, _result(evidence=[_evidence("e1", "observed")]), handoff=HANDOFF)
     assert got.forge.status == "passed"
-    assert any("handoff-provenance: passed (0 derived evidence)" in d
-               for d in got.forge.details)
+    assert any("handoff-provenance: passed (0 derived evidence)" in d for d in got.forge.details)
 
 
 def test_no_derived_and_no_handoff_records_not_performed(work: Path) -> None:

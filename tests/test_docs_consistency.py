@@ -50,9 +50,17 @@ REQUIRED_DECISIONS: dict[str, tuple[str, str]] = {
     "modelo de policy": ("0010", "cycle2-reality-hardening"),
 }
 REPORT_SECTIONS: tuple[str, ...] = (
-    "Implementado", "Mudanças de arquitetura", "Integração real Spark/API",
-    "Contexto e economy", "Hardening de segurança", "CI", "Prova cross-forge",
-    "Resultados medidos", "Limitações", "Adiamentos intencionais", "Próximo ciclo recomendado",
+    "Implementado",
+    "Mudanças de arquitetura",
+    "Integração real Spark/API",
+    "Contexto e economy",
+    "Hardening de segurança",
+    "CI",
+    "Prova cross-forge",
+    "Resultados medidos",
+    "Limitações",
+    "Adiamentos intencionais",
+    "Próximo ciclo recomendado",
 )
 SHELL_LANGS = frozenset({"", "bash", "sh", "shell", "console"})
 
@@ -68,6 +76,7 @@ ADR_FILE_RE = re.compile(r"^(\d{4})-.+\.md$")
 
 
 # --- reading ---------------------------------------------------------------------------------
+
 
 def read_md(path: Path) -> str:
     return path.read_text(encoding="utf-8").replace("\r\n", "\n")
@@ -91,8 +100,11 @@ def split_fences(md: str) -> Iterator[tuple[str | None, str]]:
         if fence is None and match:
             fence, lang = match.group(1), match.group(2).lower()
             continue
-        if fence is not None and line.strip().startswith(fence[0] * len(fence)) \
-                and line.strip().strip(fence[0]) == "":
+        if (
+            fence is not None
+            and line.strip().startswith(fence[0] * len(fence))
+            and line.strip().strip(fence[0]) == ""
+        ):
             fence = None
             continue
         yield (lang if fence is not None else None), line
@@ -183,11 +195,14 @@ def section_lines(md: str, title_prefix: str, level: int | None = None) -> list[
     lines = list(prose_lines(md))
     for index, line in enumerate(lines):
         match = HEADING_RE.match(line)
-        if match and match.group(2).startswith(title_prefix) \
-                and (level is None or len(match.group(1)) == level):
+        if (
+            match
+            and match.group(2).startswith(title_prefix)
+            and (level is None or len(match.group(1)) == level)
+        ):
             depth = len(match.group(1))
             body = []
-            for following in lines[index + 1:]:
+            for following in lines[index + 1 :]:
                 nxt = HEADING_RE.match(following)
                 if nxt and len(nxt.group(1)) <= depth:
                     break
@@ -197,6 +212,7 @@ def section_lines(md: str, title_prefix: str, level: int | None = None) -> list[
 
 
 # --- checkers --------------------------------------------------------------------------------
+
 
 def link_problems(root: Path) -> list[str]:
     problems = []
@@ -210,8 +226,10 @@ def link_problems(root: Path) -> list[str]:
             if path is None:
                 problems.append(f"{name}: {text} leaves the repository")
                 continue
-            if any(path.startswith(prefix) or path == prefix.rstrip("/")
-                   for prefix in LOCAL_ASSET_PREFIXES):
+            if any(
+                path.startswith(prefix) or path == prefix.rstrip("/")
+                for prefix in LOCAL_ASSET_PREFIXES
+            ):
                 problems.append(f"{name}: {text} points to an unversioned local asset ({path})")
                 continue
             if name.startswith(HISTORICAL_DIR):
@@ -225,7 +243,8 @@ def link_problems(root: Path) -> list[str]:
                     anchor_cache[path] = anchors(read_md(target_file))
                 if anchor not in anchor_cache[path]:
                     problems.append(
-                        f"{name}: {text} points to a missing anchor #{anchor} in {path}")
+                        f"{name}: {text} points to a missing anchor #{anchor} in {path}"
+                    )
     return problems
 
 
@@ -273,8 +292,10 @@ def errors_doc_problems(root: Path) -> list[str]:
         name = rel(root, doc)
         if name == errors or name.startswith(HISTORICAL_DIR):
             continue
-        if any(line.lstrip().startswith("|") and CODE_CELL_RE.search(line)
-               for line in prose_lines(read_md(doc))):
+        if any(
+            line.lstrip().startswith("|") and CODE_CELL_RE.search(line)
+            for line in prose_lines(read_md(doc))
+        ):
             must_link.add(name)
     for name in sorted(must_link):
         if errors not in linked_paths(root, root / name):
@@ -291,8 +312,11 @@ def exit_table(md: str) -> dict[int, str] | None:
     if lines is None:
         return None
     rows = table_rows(lines)[1:]
-    return {int(row[0].strip("` ")): row[1] if len(row) > 1 else "" for row in rows
-            if row and row[0].strip("` ").isdigit()}
+    return {
+        int(row[0].strip("` ")): row[1] if len(row) > 1 else ""
+        for row in rows
+        if row and row[0].strip("` ").isdigit()
+    }
 
 
 def exit_code_problems(root: Path) -> list[str]:
@@ -307,13 +331,16 @@ def exit_code_problems(root: Path) -> list[str]:
         tables[name] = table
         for code in sorted(expected - table.keys()):
             problems.append(
-                f"{name}: exit code {code} emitted by the CLI is missing from the table")
+                f"{name}: exit code {code} emitted by the CLI is missing from the table"
+            )
         for code in sorted(table.keys() - expected):
             problems.append(f"{name}: exit code {code} is not emitted by the CLI")
         meaning = table.get(6, "")
         if 6 in table and not ("`explain`" in meaning and "replay --mode verify" in meaning):
-            problems.append(f"{name}: exit code 6 must describe the integrity divergence of "
-                            "`explain` and `replay --mode verify`")
+            problems.append(
+                f"{name}: exit code 6 must describe the integrity divergence of "
+                "`explain` and `replay --mode verify`"
+            )
     if len(tables) == 2:
         readme, cli = tables["README.md"], tables["docs/cli.md"]
         for code in sorted(readme.keys() ^ cli.keys()):
@@ -349,21 +376,28 @@ def adr_problems(root: Path) -> list[str]:
     for decision, (number, owner) in REQUIRED_DECISIONS.items():
         files = by_number.get(number, [])
         if not files:
-            problems.append(f"required decision '{decision}': ADR {number} is missing "
-                            f"(blocked on owning spec {owner})")
+            problems.append(
+                f"required decision '{decision}': ADR {number} is missing "
+                f"(blocked on owning spec {owner})"
+            )
             continue
         row = decision_rows.get(decision)
         if row is None or len(row) < 3 or f"{files[0]}" not in row[1] or owner not in row[2]:
-            problems.append(f"required decision '{decision}' is not mapped to ADR {number} "
-                            f"(owning spec {owner}) in {ADR_INDEX}")
+            problems.append(
+                f"required decision '{decision}' is not mapped to ADR {number} "
+                f"(owning spec {owner}) in {ADR_INDEX}"
+            )
     return problems
 
 
 def report_problems(root: Path) -> list[str]:
     md = read_md(root / REPORT)
     titles = {text.strip() for level, text in headings(md) if level == 2}
-    problems = [f"{REPORT}: section '## {title}' is missing"
-                for title in REPORT_SECTIONS if title not in titles]
+    problems = [
+        f"{REPORT}: section '## {title}' is missing"
+        for title in REPORT_SECTIONS
+        if title not in titles
+    ]
     lines = section_lines(md, "Resultados medidos", level=2)
     if lines is None:
         return problems
@@ -373,12 +407,15 @@ def report_problems(root: Path) -> list[str]:
     column = rows[0].index("Origem")
     for row in rows[1:]:
         if column >= len(row) or not row[column].strip():
-            problems.append(f"{REPORT}: measured result '{row[0]}' has an empty Origem "
-                            "(cite the source or write 'não medido')")
+            problems.append(
+                f"{REPORT}: measured result '{row[0]}' has an empty Origem "
+                "(cite the source or write 'não medido')"
+            )
     return problems
 
 
 # --- the real repository ---------------------------------------------------------------------
+
 
 def test_relative_links_resolve_and_avoid_local_assets() -> None:
     assert link_problems(REPO) == []
@@ -416,6 +453,7 @@ def test_cycle_report_sections() -> None:
 
 # --- sensitivity: every checker fails on a deliberately broken copy --------------------------
 
+
 @pytest.fixture
 def docs_copy(tmp_path: Path) -> Path:
     for name in ROOT_DOCS:
@@ -430,8 +468,9 @@ def _edit(path: Path, old: str, new: str) -> None:
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
-def _new_problems(root: Path, checker: Callable[[Path], list[str]],
-                  mutate: Callable[[], object]) -> list[str]:
+def _new_problems(
+    root: Path, checker: Callable[[Path], list[str]], mutate: Callable[[], object]
+) -> list[str]:
     before = set(checker(root))
     mutate()
     return [problem for problem in checker(root) if problem not in before]
@@ -447,24 +486,41 @@ VALID_REPORT = "# Relatório final do Cycle 2\n\n" + "".join(
 )
 
 
-@pytest.mark.parametrize(("doc", "old", "new", "expected"), [
-    ("README.md", "](docs/cli.md#exit-codes-gerais)", "](docs/missing.md)", "missing file"),
-    ("README.md", "](docs/cli.md#exit-codes-gerais)", "](docs/cli.md#nao-existe)",
-     "missing anchor"),
-    ("docs/cli.md", "## Exit codes gerais", "## Exit codes", "missing anchor"),
-    ("docs/agentic.md", "\n## ", "\nVer [roadmap](../.kiro/steering/roadmap.md).\n\n## ",
-     "unversioned local asset"),
-])
-def test_link_check_detects_defects(docs_copy: Path, doc: str, old: str, new: str,
-                                    expected: str) -> None:
+@pytest.mark.parametrize(
+    ("doc", "old", "new", "expected"),
+    [
+        ("README.md", "](docs/cli.md#exit-codes-gerais)", "](docs/missing.md)", "missing file"),
+        (
+            "README.md",
+            "](docs/cli.md#exit-codes-gerais)",
+            "](docs/cli.md#nao-existe)",
+            "missing anchor",
+        ),
+        ("docs/cli.md", "## Exit codes gerais", "## Exit codes", "missing anchor"),
+        (
+            "docs/agentic.md",
+            "\n## ",
+            "\nVer [roadmap](../.kiro/steering/roadmap.md).\n\n## ",
+            "unversioned local asset",
+        ),
+    ],
+)
+def test_link_check_detects_defects(
+    docs_copy: Path, doc: str, old: str, new: str, expected: str
+) -> None:
     found = _new_problems(docs_copy, link_problems, lambda: _edit(docs_copy / doc, old, new))
     assert any(expected in problem for problem in found), found
 
 
 def test_link_check_flags_kiro_even_in_historical_records(docs_copy: Path) -> None:
     plan = next((docs_copy / "docs" / "superpowers").rglob("*.md"))
-    found = _new_problems(docs_copy, link_problems, lambda: plan.write_text(
-        read_md(plan) + "\n[spec](../../../.kiro/specs/x/design.md)\n", encoding="utf-8"))
+    found = _new_problems(
+        docs_copy,
+        link_problems,
+        lambda: plan.write_text(
+            read_md(plan) + "\n[spec](../../../.kiro/specs/x/design.md)\n", encoding="utf-8"
+        ),
+    )
     assert any("unversioned local asset" in problem for problem in found), found
 
 
@@ -474,16 +530,21 @@ def test_readme_index_detects_unindexed_doc(docs_copy: Path) -> None:
         (docs_copy / "docs" / "reports").mkdir(exist_ok=True)
         (docs_copy / REPORT).write_text(VALID_REPORT, encoding="utf-8")
         readme = docs_copy / "README.md"  # the real README already links the real report
-        readme.write_text(re.sub(rf"\[[^\]]*\]\({re.escape(REPORT)}\)", "relatório",
-                                 read_md(readme)), encoding="utf-8")
+        readme.write_text(
+            re.sub(rf"\[[^\]]*\]\({re.escape(REPORT)}\)", "relatório", read_md(readme)),
+            encoding="utf-8",
+        )
 
     found = _new_problems(docs_copy, readme_index_problems, mutate)
     assert found == ["README.md does not link docs/new-doc.md", f"README.md does not link {REPORT}"]
 
 
 def test_canonical_cli_detects_alias_in_examples(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, canonical_cli_problems, lambda: _edit(
-        docs_copy / "README.md", "theforge doctor\n", "forge doctor\n"))
+    found = _new_problems(
+        docs_copy,
+        canonical_cli_problems,
+        lambda: _edit(docs_copy / "README.md", "theforge doctor\n", "forge doctor\n"),
+    )
     assert found == ["README.md: example uses the alias: forge doctor"]
 
 
@@ -497,19 +558,25 @@ def test_canonical_cli_requires_alias_mention(docs_copy: Path) -> None:
 
 
 def test_errors_doc_check_detects_code_table_without_link(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, errors_doc_problems, lambda: (
-        docs_copy / "docs" / "codes-excerpt.md").write_text(
+    found = _new_problems(
+        docs_copy,
+        errors_doc_problems,
+        lambda: (docs_copy / "docs" / "codes-excerpt.md").write_text(
             "# Recorte\n\n| Código | Causa |\n|---|---|\n| `FORGE-PLAN-FILE` | x |\n",
-            encoding="utf-8"))
-    assert found == ["docs/codes-excerpt.md has FORGE-* codes but does not link docs/errors.md "
-                     "(canonical list)"]
+            encoding="utf-8",
+        ),
+    )
+    assert found == [
+        "docs/codes-excerpt.md has FORGE-* codes but does not link docs/errors.md (canonical list)"
+    ]
 
 
 def test_errors_doc_check_requires_protocol_link(docs_copy: Path) -> None:
     def mutate() -> None:
         path = docs_copy / "docs" / "protocol.md"
-        path.write_text(re.sub(r"\]\(errors\.md[^)]*\)", "](cli.md)", read_md(path)),
-                        encoding="utf-8")
+        path.write_text(
+            re.sub(r"\]\(errors\.md[^)]*\)", "](cli.md)", read_md(path)), encoding="utf-8"
+        )
 
     found = _new_problems(docs_copy, errors_doc_problems, mutate)
     assert any(problem.startswith("docs/protocol.md") for problem in found), found
@@ -517,50 +584,78 @@ def test_errors_doc_check_requires_protocol_link(docs_copy: Path) -> None:
 
 @pytest.mark.parametrize("doc", ["README.md", "docs/cli.md"])
 def test_exit_code_check_detects_missing_code(docs_copy: Path, doc: str) -> None:
-    found = _new_problems(docs_copy, exit_code_problems, lambda: _edit(
-        docs_copy / doc, "| 130 | interrompido (Ctrl+C) |\n", ""))
+    found = _new_problems(
+        docs_copy,
+        exit_code_problems,
+        lambda: _edit(docs_copy / doc, "| 130 | interrompido (Ctrl+C) |\n", ""),
+    )
     assert f"{doc}: exit code 130 emitted by the CLI is missing from the table" in found
     assert "exit code 130: README.md and docs/cli.md tables differ" in found
 
 
 def test_exit_code_check_detects_unknown_code(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, exit_code_problems, lambda: _edit(
-        docs_copy / "README.md", "| 130 |", "| 99 | outro |\n| 130 |"))
+    found = _new_problems(
+        docs_copy,
+        exit_code_problems,
+        lambda: _edit(docs_copy / "README.md", "| 130 |", "| 99 | outro |\n| 130 |"),
+    )
     assert "README.md: exit code 99 is not emitted by the CLI" in found
 
 
 def test_exit_code_check_requires_integrity_meaning(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, exit_code_problems, lambda: _edit(
-        docs_copy / "docs" / "cli.md", "`replay --mode verify`", "`replay`"))
+    found = _new_problems(
+        docs_copy,
+        exit_code_problems,
+        lambda: _edit(docs_copy / "docs" / "cli.md", "`replay --mode verify`", "`replay`"),
+    )
     assert any("exit code 6 must describe" in problem for problem in found), found
 
 
 def test_adr_check_detects_unindexed_adr(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, adr_problems, lambda: (
-        docs_copy / "docs" / "adr" / "0099-new.md").write_text(
-            "# ADR 0099\n\n- Status: proposto\n", encoding="utf-8"))
+    found = _new_problems(
+        docs_copy,
+        adr_problems,
+        lambda: (docs_copy / "docs" / "adr" / "0099-new.md").write_text(
+            "# ADR 0099\n\n- Status: proposto\n", encoding="utf-8"
+        ),
+    )
     assert found == [f"ADR 0099-new.md is not linked in {ADR_INDEX}"]
 
 
 def test_adr_check_detects_duplicate_number_and_missing_status(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, adr_problems, lambda: (
-        docs_copy / "docs" / "adr" / "0003-duplicate.md").write_text("# Dup\n", encoding="utf-8"))
+    found = _new_problems(
+        docs_copy,
+        adr_problems,
+        lambda: (docs_copy / "docs" / "adr" / "0003-duplicate.md").write_text(
+            "# Dup\n", encoding="utf-8"
+        ),
+    )
     assert "ADR 0003-duplicate.md does not declare '- Status:'" in found
     assert "ADR number 0003 is shared by 0003-duplicate.md, 0003-python-stdlib-only.md" in found
 
 
 def test_adr_check_names_owning_spec_of_missing_decision(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, adr_problems, lambda: (
-        docs_copy / "docs" / "adr" / "0014-provider-adapter-location.md").unlink())
-    assert ("required decision 'ownership dos adapters reais': ADR 0014 is missing "
-            "(blocked on owning spec real-provider-integration)") in found
+    found = _new_problems(
+        docs_copy,
+        adr_problems,
+        lambda: (docs_copy / "docs" / "adr" / "0014-provider-adapter-location.md").unlink(),
+    )
+    assert (
+        "required decision 'ownership dos adapters reais': ADR 0014 is missing "
+        "(blocked on owning spec real-provider-integration)"
+    ) in found
 
 
 def test_adr_check_detects_unmapped_decision(docs_copy: Path) -> None:
-    found = _new_problems(docs_copy, adr_problems, lambda: _edit(
-        docs_copy / ADR_INDEX, "| modelo de policy |", "| outra decisão |"))
-    assert found == ["required decision 'modelo de policy' is not mapped to ADR 0010 "
-                     f"(owning spec cycle2-reality-hardening) in {ADR_INDEX}"]
+    found = _new_problems(
+        docs_copy,
+        adr_problems,
+        lambda: _edit(docs_copy / ADR_INDEX, "| modelo de policy |", "| outra decisão |"),
+    )
+    assert found == [
+        "required decision 'modelo de policy' is not mapped to ADR 0010 "
+        f"(owning spec cycle2-reality-hardening) in {ADR_INDEX}"
+    ]
 
 
 def test_report_check_accepts_a_complete_report(tmp_path: Path) -> None:
@@ -571,18 +666,19 @@ def test_report_check_accepts_a_complete_report(tmp_path: Path) -> None:
 
 def test_report_check_detects_missing_section(tmp_path: Path) -> None:
     (tmp_path / "docs" / "reports").mkdir(parents=True)
-    (tmp_path / REPORT).write_text(VALID_REPORT.replace("## Prova cross-forge\n", ""),
-                                   encoding="utf-8")
+    (tmp_path / REPORT).write_text(
+        VALID_REPORT.replace("## Prova cross-forge\n", ""), encoding="utf-8"
+    )
     assert report_problems(tmp_path) == [f"{REPORT}: section '## Prova cross-forge' is missing"]
 
 
 def test_report_check_detects_empty_origin(tmp_path: Path) -> None:
     (tmp_path / "docs" / "reports").mkdir(parents=True)
-    (tmp_path / REPORT).write_text(VALID_REPORT.replace("| não medido |", "|  |"),
-                                   encoding="utf-8")
+    (tmp_path / REPORT).write_text(VALID_REPORT.replace("| não medido |", "|  |"), encoding="utf-8")
     assert report_problems(tmp_path) == [
         f"{REPORT}: measured result 'latência real' has an empty Origem "
-        "(cite the source or write 'não medido')"]
+        "(cite the source or write 'não medido')"
+    ]
 
 
 def test_report_links_into_kiro_are_flagged(docs_copy: Path) -> None:
@@ -590,8 +686,11 @@ def test_report_links_into_kiro_are_flagged(docs_copy: Path) -> None:
         (docs_copy / "docs" / "reports").mkdir(exist_ok=True)
         (docs_copy / REPORT).write_text(
             VALID_REPORT + "\n[spec](../../.kiro/specs/agentic-maintainability/tasks.md)\n",
-            encoding="utf-8")
+            encoding="utf-8",
+        )
 
     found = _new_problems(docs_copy, link_problems, mutate)
-    assert any(problem.startswith(f"{REPORT}:") and "unversioned local asset" in problem
-               for problem in found), found
+    assert any(
+        problem.startswith(f"{REPORT}:") and "unversioned local asset" in problem
+        for problem in found
+    ), found

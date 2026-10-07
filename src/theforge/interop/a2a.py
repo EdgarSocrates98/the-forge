@@ -62,9 +62,9 @@ FORGE_METADATA_KEY = "forge"
 # limitation, never silently dropped (unsupported-modality conformance case).
 TEXT_MODES = {"text", "text/plain", "application/json"}
 
-_MAX_FIELD = 4096       # free-text fields copied from a card
-_MAX_SKILLS = 256       # cards claiming more skills are truncated
-_MAX_PARTS = 512        # artifacts/parts emitted per result
+_MAX_FIELD = 4096  # free-text fields copied from a card
+_MAX_SKILLS = 256  # cards claiming more skills are truncated
+_MAX_PARTS = 512  # artifacts/parts emitted per result
 _SLUG_RE = re.compile(r"[^a-z0-9-]+")
 
 
@@ -81,6 +81,7 @@ def _text(value: Any, cap: int = _MAX_FIELD) -> str:
 # --------------------------------------------------------------------------
 # Forge -> A2A
 # --------------------------------------------------------------------------
+
 
 def _capability_skill(cap: Capability) -> dict[str, Any]:
     tags = sorted({cap.operation_class, "forge-capability"})
@@ -136,8 +137,8 @@ def agent_card(record: RegistryRecord) -> dict[str, Any]:
                 "provider_id": manifest.id,
                 "manifest_sha256": record.manifest_sha256,
                 "surface_fingerprint": (
-                    record.surface.surface_fingerprint
-                    if record.surface else None),
+                    record.surface.surface_fingerprint if record.surface else None
+                ),
                 "forge_protocols": sorted(manifest.protocols),
                 "trust": record.entry.trust,
                 "execution": to_dict(manifest.execution),
@@ -146,8 +147,7 @@ def agent_card(record: RegistryRecord) -> dict[str, Any]:
         },
     }
     if manifest.limitations:
-        card["metadata"][FORGE_METADATA_KEY]["limitations"] = list(
-            manifest.limitations)
+        card["metadata"][FORGE_METADATA_KEY]["limitations"] = list(manifest.limitations)
     return card
 
 
@@ -192,42 +192,50 @@ def artifacts_from_result(result: ExecutionResult) -> list[dict[str, Any]]:
     and evidence become a summary ``data`` part so nothing provenance-bearing
     is flattened into prose.
     """
-    artifacts: list[dict[str, Any]] = [{
-        "artifactId": "forge-result",
-        "name": "execution-result",
-        "parts": [{
-            "kind": "data",
-            "data": {
-                "schema": result.schema,
-                "status": result.status,
-                "producer": to_dict(result.producer),
-                "created_at": result.created_at,
-                "findings": [to_dict(f) for f in result.findings],
-                "evidence": [to_dict(e) for e in result.evidence],
-                "limitations": list(result.limitations),
-                "unknowns": list(result.unknowns),
-                "assumptions": list(result.assumptions),
-            },
-        }],
-        "metadata": {FORGE_METADATA_KEY: {"metrics": to_dict(result.metrics)}},
-    }]
+    artifacts: list[dict[str, Any]] = [
+        {
+            "artifactId": "forge-result",
+            "name": "execution-result",
+            "parts": [
+                {
+                    "kind": "data",
+                    "data": {
+                        "schema": result.schema,
+                        "status": result.status,
+                        "producer": to_dict(result.producer),
+                        "created_at": result.created_at,
+                        "findings": [to_dict(f) for f in result.findings],
+                        "evidence": [to_dict(e) for e in result.evidence],
+                        "limitations": list(result.limitations),
+                        "unknowns": list(result.unknowns),
+                        "assumptions": list(result.assumptions),
+                    },
+                }
+            ],
+            "metadata": {FORGE_METADATA_KEY: {"metrics": to_dict(result.metrics)}},
+        }
+    ]
     for artifact in result.artifacts[:_MAX_PARTS]:
-        artifacts.append({
-            "artifactId": f"forge-file-{artifact.sha256[:16]}",
-            "name": artifact.path,
-            "parts": [{
-                "kind": "file",
-                "file": {"uri": artifact.path,
-                          "mediaType": "application/octet-stream"},
-            }],
-            "metadata": {FORGE_METADATA_KEY: {"sha256": artifact.sha256}},
-        })
+        artifacts.append(
+            {
+                "artifactId": f"forge-file-{artifact.sha256[:16]}",
+                "name": artifact.path,
+                "parts": [
+                    {
+                        "kind": "file",
+                        "file": {"uri": artifact.path, "mediaType": "application/octet-stream"},
+                    }
+                ],
+                "metadata": {FORGE_METADATA_KEY: {"sha256": artifact.sha256}},
+            }
+        )
     return artifacts
 
 
 # --------------------------------------------------------------------------
 # A2A -> Forge
 # --------------------------------------------------------------------------
+
 
 @dataclass(frozen=True, kw_only=True)
 class CardConversion:
@@ -249,8 +257,7 @@ def parse_agent_card(text: str) -> tuple[dict[str, Any] | None, str | None]:
     return data, None
 
 
-def entry_from_card(card: dict[str, Any], *,
-                    source_id: str) -> CardConversion:
+def entry_from_card(card: dict[str, Any], *, source_id: str) -> CardConversion:
     """Translate an A2A Agent Card into a ``ForgeRegistryEntry``.
 
     The result is a *remote candidate* description: external, remote,
@@ -268,14 +275,16 @@ def entry_from_card(card: dict[str, Any], *,
     provider = _slug(raw_name) if isinstance(raw_name, str) else ""
     if not provider:
         return CardConversion(
-            entry=None, limitations=limitations,
-            warnings=[f"{source_id}: agent card has no usable 'name'"])
+            entry=None,
+            limitations=limitations,
+            warnings=[f"{source_id}: agent card has no usable 'name'"],
+        )
 
     version = card.get("version")
     if not isinstance(version, str) or parse_semver(version) is None:
         warnings.append(
-            f"{source_id}: agent card version {version!r} is not SemVer; "
-            "recorded as 0.0.0")
+            f"{source_id}: agent card version {version!r} is not SemVer; recorded as 0.0.0"
+        )
         version = "0.0.0"
 
     skills = card.get("skills")
@@ -290,25 +299,27 @@ def entry_from_card(card: dict[str, Any], *,
                 capabilities.append(_text(skill_id, 256))
             tags = skill.get("tags")
             if isinstance(tags, list):
-                technologies.update(
-                    _text(t, 128) for t in tags if isinstance(t, str))
-            modes = {m for key in ("inputModes", "outputModes")
-                     for m in (skill.get(key) or []) if isinstance(m, str)}
+                technologies.update(_text(t, 128) for t in tags if isinstance(t, str))
+            modes = {
+                m
+                for key in ("inputModes", "outputModes")
+                for m in (skill.get(key) or [])
+                if isinstance(m, str)
+            }
             if unsupported := sorted(m for m in modes if m not in TEXT_MODES):
                 limitations.append(
-                    f"skill {skill_id!r} declares unsupported modalities: "
-                    + ", ".join(unsupported))
+                    f"skill {skill_id!r} declares unsupported modalities: " + ", ".join(unsupported)
+                )
         if len(skills) > _MAX_SKILLS:
-            warnings.append(f"{source_id}: card skills truncated at "
-                            f"{_MAX_SKILLS}")
+            warnings.append(f"{source_id}: card skills truncated at {_MAX_SKILLS}")
     else:
         limitations.append("card declares no skills array")
 
     url = card.get("url")
     if isinstance(url, str) and url:
         limitations.append(
-            f"service endpoint {url[:200]!r} — remote execution only, "
-            "nothing installable")
+            f"service endpoint {url[:200]!r} — remote execution only, nothing installable"
+        )
     provider_meta = card.get("provider")
     publisher = PublisherIdentity(id=f"a2a:{provider}")
     if isinstance(provider_meta, dict):
@@ -317,16 +328,18 @@ def entry_from_card(card: dict[str, Any], *,
         publisher = PublisherIdentity(
             id=f"a2a:{provider}",
             organization=_text(org, 256) if isinstance(org, str) else None,
-            homepage=_text(pub_url, 512) if isinstance(pub_url, str) else None)
+            homepage=_text(pub_url, 512) if isinstance(pub_url, str) else None,
+        )
 
     security_schemes = card.get("securitySchemes")
-    requires_credentials = bool(
-        isinstance(security_schemes, dict) and security_schemes) or bool(
-        card.get("security"))
+    requires_credentials = bool(isinstance(security_schemes, dict) and security_schemes) or bool(
+        card.get("security")
+    )
     if requires_credentials:
         limitations.append(
             "card declares authentication — credentials never leave the "
-            "Forge; supply them to the remote agent out-of-band")
+            "Forge; supply them to the remote agent out-of-band"
+        )
 
     protocols = [f"a2a/{A2A_PROTOCOL_VERSION}"]
     declared_proto = card.get("protocolVersion")
@@ -334,7 +347,8 @@ def entry_from_card(card: dict[str, Any], *,
         protocols.append(f"a2a/{declared_proto}")
         limitations.append(
             f"card declares A2A protocolVersion {declared_proto!r}; bridge "
-            f"supports {A2A_PROTOCOL_VERSION} — semantics may drift")
+            f"supports {A2A_PROTOCOL_VERSION} — semantics may drift"
+        )
 
     description = card.get("description")
     entry = ForgeRegistryEntry(
@@ -347,17 +361,16 @@ def entry_from_card(card: dict[str, Any], *,
         technologies=sorted(technologies),
         platforms=["any"],
         runtime=RuntimeRequirements(
-            offline=False, requires_network=True,
-            requires_credentials=requires_credentials),
+            offline=False, requires_network=True, requires_credentials=requires_credentials
+        ),
         limitations=limitations,
     )
-    return CardConversion(entry=entry, limitations=limitations,
-                          warnings=warnings)
+    return CardConversion(entry=entry, limitations=limitations, warnings=warnings)
 
 
-def card_to_document(card: dict[str, Any], *, source_id: str,
-                     produced_at: str) -> tuple[RegistryDocument | None,
-                                                list[str]]:
+def card_to_document(
+    card: dict[str, Any], *, source_id: str, produced_at: str
+) -> tuple[RegistryDocument | None, list[str]]:
     """Wrap an agent card as a single-entry ``RegistryDocument``.
 
     ``produced_at`` is injected — the bridge never reads the clock itself.
@@ -368,8 +381,7 @@ def card_to_document(card: dict[str, Any], *, source_id: str,
     if converted.entry is None:
         return None, converted.warnings
     document = RegistryDocument(
-        registry=RegistryIdentity(id=source_id,
-                                  name="a2a agent card bridge"),
+        registry=RegistryIdentity(id=source_id, name="a2a agent card bridge"),
         produced_at=produced_at,
         entries=[converted.entry],
         limitations=converted.limitations + converted.warnings,

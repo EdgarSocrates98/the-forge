@@ -59,10 +59,7 @@ class GlobalStopDecision:
                 raise ContractError("global stop: budget_remaining must be an integer")
             if self.budget_remaining < 0:
                 raise ContractError("global stop: budget_remaining cannot be negative")
-        if (
-            self.action == "stop_no_expected_gain"
-            and self.information_gain != "none"
-        ):
+        if self.action == "stop_no_expected_gain" and self.information_gain != "none":
             raise ContractError(
                 "global stop: stop_no_expected_gain requires information_gain='none'"
             )
@@ -75,6 +72,4 @@ class GlobalStopDecision:
             and not self.verification_satisfied
             and self.action in ("stop_sufficient_evidence", "stop_no_expected_gain")
         ):
-            raise ContractError(
-                "global stop: mandatory verification prevents evidence/gain stop"
-            )
+            raise ContractError("global stop: mandatory verification prevents evidence/gain stop")

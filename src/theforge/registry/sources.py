@@ -76,8 +76,8 @@ class SourceSpec:
     id: str
     kind: SourceKind
     enabled: bool = False  # opt-in: a configured source does nothing until enabled
-    path: str | None = None   # local-file: JSON document path (config-relative)
-    url: str | None = None    # http: document URL; a2a: card; mcp: /servers
+    path: str | None = None  # local-file: JSON document path (config-relative)
+    url: str | None = None  # http: document URL; a2a: card; mcp: /servers
     max_age_s: int | None = None  # freshness budget for cached remote documents
     timeout_s: int | None = None  # http: bounded wait per request (default 10)
 
@@ -87,18 +87,16 @@ class SourceSpec:
         if self.kind == "local-file" and not self.path:
             raise ContractError(f"registry source {self.id!r}: local-file requires 'path'")
         if self.kind in ("http", "a2a", "mcp") and not self.url:
-            raise ContractError(
-                f"registry source {self.id!r}: {self.kind} requires 'url'")
+            raise ContractError(f"registry source {self.id!r}: {self.kind} requires 'url'")
         if self.max_age_s is not None and self.max_age_s <= 0:
-            raise ContractError(
-                f"registry source {self.id!r}: max_age_s must be positive")
+            raise ContractError(f"registry source {self.id!r}: max_age_s must be positive")
         if self.timeout_s is not None and self.timeout_s <= 0:
-            raise ContractError(
-                f"registry source {self.id!r}: timeout_s must be positive")
+            raise ContractError(f"registry source {self.id!r}: timeout_s must be positive")
 
 
-def load_source_specs(forge_dir: Path | None, user_dir: Path | None = None,
-                      warnings: list[str] | None = None) -> list[SourceSpec]:
+def load_source_specs(
+    forge_dir: Path | None, user_dir: Path | None = None, warnings: list[str] | None = None
+) -> list[SourceSpec]:
     """All configured sources: user ``registries.toml`` first, then the project
     file adds ids not already defined (the project file can never override a
     user source — same precedence philosophy as providers.toml)."""
@@ -113,7 +111,8 @@ def load_source_specs(forge_dir: Path | None, user_dir: Path | None = None,
                 if warnings is not None:
                     warnings.append(
                         f"{path}: registry source {spec.id!r} ignored; already defined "
-                        "in the user registries.toml")
+                        "in the user registries.toml"
+                    )
                 continue
             merged[spec.id] = spec
     return sorted(merged.values(), key=lambda s: s.id)
@@ -166,8 +165,7 @@ class SourceRead:
     spec: SourceSpec
     # ``skipped`` covers kinds this reader does not serve (``mcp`` sources are
     # tooling metadata — read via read_mcp_sources, never provider candidates).
-    status: Literal["ok", "disabled", "unavailable", "invalid", "stale",
-                    "skipped"]
+    status: Literal["ok", "disabled", "unavailable", "invalid", "stale", "skipped"]
     document: RegistryDocument | None = None
     detail: str | None = None
     # Remote-read provenance (None for local-file reads).
@@ -197,24 +195,29 @@ class FileRegistrySource:
             body = path.read_bytes()
             data = json.loads(body.decode("utf-8"))
         except OSError as exc:
-            return SourceRead(spec=self.spec, status="unavailable",
-                              detail=f"{self.spec.id}: {exc.strerror or exc}")
+            return SourceRead(
+                spec=self.spec,
+                status="unavailable",
+                detail=f"{self.spec.id}: {exc.strerror or exc}",
+            )
         except ValueError:
-            return SourceRead(spec=self.spec, status="invalid",
-                              detail=f"{self.spec.id}: not a JSON document")
+            return SourceRead(
+                spec=self.spec, status="invalid", detail=f"{self.spec.id}: not a JSON document"
+            )
         try:
             # Tolerant decode: a registry document is external metadata that
             # may carry newer fields — forward-compat beats strictness here.
             document = from_dict(RegistryDocument, data, "$")
         except ContractError as exc:
-            return SourceRead(spec=self.spec, status="invalid",
-                              detail=f"{self.spec.id}: {redact_text(str(exc))}")
-        return SourceRead(spec=self.spec, status="ok", document=document,
-                          bytes_received=len(body))
+            return SourceRead(
+                spec=self.spec, status="invalid", detail=f"{self.spec.id}: {redact_text(str(exc))}"
+            )
+        return SourceRead(spec=self.spec, status="ok", document=document, bytes_received=len(body))
 
 
-def read_sources(specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = None,
-                 cache_dir: Path | None = None) -> list[SourceRead]:
+def read_sources(
+    specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = None, cache_dir: Path | None = None
+) -> list[SourceRead]:
     """Read every *enabled* source, in spec order; disabled ones are reported
     as ``disabled`` so the UX can say a source exists but is off (§20).
 
@@ -231,13 +234,17 @@ def read_sources(specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = Non
         elif spec.kind == "mcp":
             # MCP server metadata is tooling, not provider metadata — it is
             # read through registry.mcp.read_mcp_sources instead (§68).
-            reads.append(SourceRead(
-                spec=spec, status="skipped",
-                detail=f"{spec.id}: mcp source — tooling registry, not a "
-                       "provider registry"))
+            reads.append(
+                SourceRead(
+                    spec=spec,
+                    status="skipped",
+                    detail=f"{spec.id}: mcp source — tooling registry, not a provider registry",
+                )
+            )
             continue
         else:  # http / a2a — read-only remote clients (Waves D and I)
             from theforge.registry.remote import A2ACardSource, HttpRegistrySource
+
             cls = A2ACardSource if spec.kind == "a2a" else HttpRegistrySource
             source = cls(spec=spec, fetcher=fetcher, cache_dir=cache_dir)
         reads.append(source.read())
@@ -253,20 +260,30 @@ def local_document(records: Sequence[RegistryRecord]) -> RegistryDocument:
         manifest = record.manifest
         if record.state != "ready" or manifest is None:
             continue
-        entries.append(ForgeRegistryEntry(
-            provider=manifest.id, version=manifest.version,
-            publisher=PublisherIdentity(id=f"local:{manifest.id}"),
-            description=None,
-            protocols=list(manifest.protocols),
-            capabilities=sorted(c.id for c in manifest.capabilities
-                                if c.state != "unsupported"),
-            platforms=["any"],
-            runtime=RuntimeRequirements(
-                python=None, offline=manifest.execution.offline,
-                requires_network=manifest.execution.requires_network),
-            hashes={"manifest_sha256": record.manifest_sha256}
-            if record.manifest_sha256 else {},
-            limitations=list(manifest.limitations)))
+        entries.append(
+            ForgeRegistryEntry(
+                provider=manifest.id,
+                version=manifest.version,
+                publisher=PublisherIdentity(id=f"local:{manifest.id}"),
+                description=None,
+                protocols=list(manifest.protocols),
+                capabilities=sorted(
+                    c.id for c in manifest.capabilities if c.state != "unsupported"
+                ),
+                platforms=["any"],
+                runtime=RuntimeRequirements(
+                    python=None,
+                    offline=manifest.execution.offline,
+                    requires_network=manifest.execution.requires_network,
+                ),
+                hashes={"manifest_sha256": record.manifest_sha256}
+                if record.manifest_sha256
+                else {},
+                limitations=list(manifest.limitations),
+            )
+        )
     return RegistryDocument(
         registry=RegistryIdentity(id=LOCAL_REGISTRY_ID, name="installed providers"),
-        produced_at=utc_now(), entries=entries)
+        produced_at=utc_now(),
+        entries=entries,
+    )

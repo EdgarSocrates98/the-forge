@@ -47,7 +47,8 @@ class ComplexityAssessment:
     def __post_init__(self) -> None:
         if self.schema != COMPLEXITY_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {COMPLEXITY_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {COMPLEXITY_SCHEMA!r}"
+            )
         if self.level not in LEVELS:
             raise ContractError(f"complexity level {self.level!r} is not one of {LEVELS}")
         for name, value in (("score", self.score), ("confidence", self.confidence)):
@@ -55,11 +56,14 @@ class ComplexityAssessment:
                 raise ContractError(f"complexity {name} {value} outside 0..1")
         if self.selected_profile not in ("economy", "balanced", "max"):
             raise ContractError(
-                f"complexity selected_profile {self.selected_profile!r} is not a budget profile")
+                f"complexity selected_profile {self.selected_profile!r} is not a budget profile"
+            )
         for dim in self.dimensions:
             if dim.score is not None and not 0.0 <= dim.score <= 1.0:
                 raise ContractError(
-                    f"complexity dimension {dim.name!r} score {dim.score} outside 0..1")
+                    f"complexity dimension {dim.name!r} score {dim.score} outside 0..1"
+                )
             if dim.weight < 0:
                 raise ContractError(
-                    f"complexity dimension {dim.name!r} weight {dim.weight} is negative")
+                    f"complexity dimension {dim.name!r} weight {dim.weight} is negative"
+                )

@@ -70,4 +70,5 @@ class WorkspaceDescriptor:
     def __post_init__(self) -> None:
         if self.schema != WORKSPACE_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {WORKSPACE_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {WORKSPACE_SCHEMA!r}"
+            )

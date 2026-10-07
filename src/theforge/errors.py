@@ -44,7 +44,8 @@ class ReplayRefused(ForgeError):
 
     default_code: ClassVar[str] = Codes.REPLAY_NOT_REPRODUCIBLE
     _CODES: ClassVar[frozenset[str]] = frozenset(
-        {Codes.REPLAY_NOT_REPRODUCIBLE, Codes.REPLAY_UNSUPPORTED})
+        {Codes.REPLAY_NOT_REPRODUCIBLE, Codes.REPLAY_UNSUPPORTED}
+    )
 
     def __init__(self, reasons: tuple[str, ...], *, code: str | None = None) -> None:
         chosen = self.default_code if code is None else code

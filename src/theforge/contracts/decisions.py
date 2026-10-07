@@ -40,11 +40,9 @@ class RememberedDecision:
 
     def __post_init__(self) -> None:
         if self.corroborations < 1:
-            raise ContractError(
-                f"decision {self.id!r}: corroborations must be >= 1")
+            raise ContractError(f"decision {self.id!r}: corroborations must be >= 1")
         if len(self.runs) > MAX_RUN_TRAIL:
-            raise ContractError(
-                f"decision {self.id!r}: run trail exceeds {MAX_RUN_TRAIL}")
+            raise ContractError(f"decision {self.id!r}: run trail exceeds {MAX_RUN_TRAIL}")
         for name in ("id", "subject", "choice", "basis", "created_at", "updated_at"):
             if not isinstance(getattr(self, name), str):
                 raise ContractError(f"decision {name} must be a string")
@@ -62,11 +60,12 @@ class DecisionMemory:
     def __post_init__(self) -> None:
         if self.schema != DECISIONS_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {DECISIONS_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {DECISIONS_SCHEMA!r}"
+            )
         ids = [e.id for e in self.entries]
         if len(ids) != len(set(ids)):
             raise ContractError("decision-memory: duplicate decision id")
         if len(self.entries) > MAX_DECISIONS:
             raise ContractError(
-                f"decision-memory: {len(self.entries)} entries exceed "
-                f"{MAX_DECISIONS}")
+                f"decision-memory: {len(self.entries)} entries exceed {MAX_DECISIONS}"
+            )

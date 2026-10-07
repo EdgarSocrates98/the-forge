@@ -31,8 +31,10 @@ ENVIRONMENT_FILE = "environment.json"
 HEALTH_FILE = "health.json"
 SPECIALIST_MODULE = "forge_doctor_data"
 REQUIRED = f"{REQUIRED_PYTHON[0]}.{REQUIRED_PYTHON[1]}+"
-UNLOCK = (f"run the adapter with a Python {REQUIRED} interpreter that has "
-          f"forge-doctor-data {SUPPORTED_SPECIALIST} installed (see docs/real-providers.md)")
+UNLOCK = (
+    f"run the adapter with a Python {REQUIRED} interpreter that has "
+    f"forge-doctor-data {SUPPORTED_SPECIALIST} installed (see docs/real-providers.md)"
+)
 
 FindSpec = Callable[[str], object]
 
@@ -46,21 +48,30 @@ class ReplayError(Exception):
         self.detail = detail
 
 
-def live_environment_problem(version_info: Sequence[int] | None = None,
-                             executable: str | None = None,
-                             find_spec: FindSpec | None = None) -> str | None:
+def live_environment_problem(
+    version_info: Sequence[int] | None = None,
+    executable: str | None = None,
+    find_spec: FindSpec | None = None,
+) -> str | None:
     """Why Forge Doctor Data cannot run in this interpreter, or None when it can."""
-    running = (sys.version_info[0], sys.version_info[1]) if version_info is None else (
-        version_info[0], version_info[1])
+    running = (
+        (sys.version_info[0], sys.version_info[1])
+        if version_info is None
+        else (version_info[0], version_info[1])
+    )
     executable = sys.executable if executable is None else executable
     find_spec = importlib.util.find_spec if find_spec is None else find_spec
     found = f"{running[0]}.{running[1]}"
     if running < REQUIRED_PYTHON:
-        return (f"Forge Doctor Data requires Python {REQUIRED}; this adapter runs on "
-                f"{found} at {executable}")
+        return (
+            f"Forge Doctor Data requires Python {REQUIRED}; this adapter runs on "
+            f"{found} at {executable}"
+        )
     if find_spec(SPECIALIST_MODULE) is None:
-        return (f"{SPECIALIST_MODULE} is not importable with {executable} (Python {found}); "
-                f"install forge-doctor-data {SUPPORTED_SPECIALIST} in this interpreter")
+        return (
+            f"{SPECIALIST_MODULE} is not importable with {executable} (Python {found}); "
+            f"install forge-doctor-data {SUPPORTED_SPECIALIST} in this interpreter"
+        )
     return None
 
 
@@ -68,19 +79,27 @@ def read_environment(directory: Path) -> dict[str, Any]:
     """The scenario's ``environment.json``; ``ReplayError`` when absent or malformed."""
     path = directory / ENVIRONMENT_FILE
     if not path.is_file():
-        raise ReplayError(REPLAY_MISSING,
-                          f"replay recording {ENVIRONMENT_FILE} not found in {directory}")
+        raise ReplayError(
+            REPLAY_MISSING, f"replay recording {ENVIRONMENT_FILE} not found in {directory}"
+        )
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, ValueError):
         data = None
-    if (not isinstance(data, dict) or not isinstance(data.get("python"), str)
-            or not (data.get("specialist_version") is None
-                    or isinstance(data.get("specialist_version"), str))):
-        raise ReplayError(REPLAY_INVALID,
-                          f"replay recording {ENVIRONMENT_FILE} in {directory} must be an "
-                          "object with a string 'python' and a string or null "
-                          "'specialist_version'")
+    if (
+        not isinstance(data, dict)
+        or not isinstance(data.get("python"), str)
+        or not (
+            data.get("specialist_version") is None
+            or isinstance(data.get("specialist_version"), str)
+        )
+    ):
+        raise ReplayError(
+            REPLAY_INVALID,
+            f"replay recording {ENVIRONMENT_FILE} in {directory} must be an "
+            "object with a string 'python' and a string or null "
+            "'specialist_version'",
+        )
     return data
 
 
@@ -90,17 +109,20 @@ def read_health(directory: Path) -> dict[str, Any]:
     ``ReplayError`` when absent or malformed."""
     path = directory / HEALTH_FILE
     if not path.is_file():
-        raise ReplayError(REPLAY_MISSING,
-                          f"replay recording {HEALTH_FILE} not found in {directory}")
+        raise ReplayError(
+            REPLAY_MISSING, f"replay recording {HEALTH_FILE} not found in {directory}"
+        )
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, ValueError, RecursionError):
         data = None
     if not isinstance(data, dict) or type(data.get("boundary")) is not bool:
-        raise ReplayError(REPLAY_INVALID,
-                          f"replay recording {HEALTH_FILE} in {directory} must be an object "
-                          "with a boolean 'boundary' (whether the boundary module was "
-                          "found)")
+        raise ReplayError(
+            REPLAY_INVALID,
+            f"replay recording {HEALTH_FILE} in {directory} must be an object "
+            "with a boolean 'boundary' (whether the boundary module was "
+            "found)",
+        )
     return data
 
 
@@ -117,12 +139,16 @@ def replay_environment_problem(environment: dict[str, Any]) -> str | None:
     """The live checks, answered from a recorded ``environment.json``."""
     python = environment["python"]
     if not _at_least(python):
-        return (f"Forge Doctor Data requires Python {REQUIRED}; the replay environment "
-                f"({ENVIRONMENT_FILE}) records Python {python}")
+        return (
+            f"Forge Doctor Data requires Python {REQUIRED}; the replay environment "
+            f"({ENVIRONMENT_FILE}) records Python {python}"
+        )
     if environment.get("specialist_version") is None:
-        return (f"{SPECIALIST_MODULE} is not importable in the replay environment "
-                f"({ENVIRONMENT_FILE}, Python {python}); install forge-doctor-data "
-                f"{SUPPORTED_SPECIALIST}")
+        return (
+            f"{SPECIALIST_MODULE} is not importable in the replay environment "
+            f"({ENVIRONMENT_FILE}, Python {python}); install forge-doctor-data "
+            f"{SUPPORTED_SPECIALIST}"
+        )
     return None
 
 

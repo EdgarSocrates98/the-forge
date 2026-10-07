@@ -100,8 +100,12 @@ def expand_wheels(patterns: list[str]) -> tuple[list[Path], list[str]]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
-    parser.add_argument("--pyproject", type=Path, default=REPO / "pyproject.toml",
-                        help="pyproject.toml to check (default: repository root)")
+    parser.add_argument(
+        "--pyproject",
+        type=Path,
+        default=REPO / "pyproject.toml",
+        help="pyproject.toml to check (default: repository root)",
+    )
     parser.add_argument("wheels", nargs="*", help="wheel files or glob patterns to inspect")
     args = parser.parse_args(argv)
 

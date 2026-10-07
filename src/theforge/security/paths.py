@@ -3,13 +3,37 @@
 from fnmatch import fnmatch
 from pathlib import Path
 
-IGNORED_DIRS = frozenset({
-    ".git", ".forge", "node_modules", ".venv", "venv", "__pycache__", "dist", "build",
-    ".mypy_cache", ".pytest_cache", ".ruff_cache", ".hypothesis",
-})
+IGNORED_DIRS = frozenset(
+    {
+        ".git",
+        ".forge",
+        "node_modules",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "dist",
+        "build",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".hypothesis",
+    }
+)
 SECRET_PATTERNS = (
-    ".env", ".env.*", "*.pem", "*.key", "id_rsa*", "id_ed25519*", "*.pfx", "*.p12",
-    "credentials*", ".npmrc", ".netrc", ".pgpass", "*.token", "secrets.*",
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    "id_rsa*",
+    "id_ed25519*",
+    "*.pfx",
+    "*.p12",
+    "credentials*",
+    ".npmrc",
+    ".netrc",
+    ".pgpass",
+    "*.token",
+    "secrets.*",
 )
 
 

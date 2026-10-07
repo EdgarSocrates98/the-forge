@@ -24,9 +24,7 @@ def _obs(run: str, provider: str, surface: str, created_at: str) -> ExecutionObs
     )
 
 
-def test_economy_experiment_is_read_only_and_never_promotes(
-    tmp_path: Path, capsys
-) -> None:
+def test_economy_experiment_is_read_only_and_never_promotes(tmp_path: Path, capsys) -> None:
     forge = tmp_path / ".forge"
     forge.mkdir()
     for item in (
@@ -54,15 +52,17 @@ def test_economy_experiment_is_read_only_and_never_promotes(
     spec.write_text(json.dumps(to_dict(experiment)), encoding="utf-8")
 
     before = (forge / "metrics" / "observations.jsonl").read_bytes()
-    code = main([
-        "economy",
-        "experiment",
-        "--spec",
-        str(spec),
-        "--root",
-        str(tmp_path),
-        "--json",
-    ])
+    code = main(
+        [
+            "economy",
+            "experiment",
+            "--spec",
+            str(spec),
+            "--root",
+            str(tmp_path),
+            "--json",
+        ]
+    )
     out = json.loads(capsys.readouterr().out)
     after = (forge / "metrics" / "observations.jsonl").read_bytes()
 
@@ -73,33 +73,38 @@ def test_economy_experiment_is_read_only_and_never_promotes(
     assert before == after
 
 
-def test_economy_experiment_rejects_unknown_contract_fields(
-    tmp_path: Path, capsys
-) -> None:
+def test_economy_experiment_rejects_unknown_contract_fields(tmp_path: Path, capsys) -> None:
     (tmp_path / ".forge").mkdir()
     spec = tmp_path / "bad.json"
-    spec.write_text(json.dumps({
-        "producer": {"id": "theforge", "version": "0.2.1"},
-        "created_at": "t",
-        "experiment_id": "e",
-        "capability": "data.performance",
-        "task_family": None,
-        "champion": "a",
-        "challenger": "b",
-        "champion_surface": "sa",
-        "challenger_surface": "sb",
-        "surprise": "instruction-like extension",
-    }), encoding="utf-8")
+    spec.write_text(
+        json.dumps(
+            {
+                "producer": {"id": "theforge", "version": "0.2.1"},
+                "created_at": "t",
+                "experiment_id": "e",
+                "capability": "data.performance",
+                "task_family": None,
+                "champion": "a",
+                "challenger": "b",
+                "champion_surface": "sa",
+                "challenger_surface": "sb",
+                "surprise": "instruction-like extension",
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    code = main([
-        "economy",
-        "experiment",
-        "--spec",
-        str(spec),
-        "--root",
-        str(tmp_path),
-        "--json",
-    ])
+    code = main(
+        [
+            "economy",
+            "experiment",
+            "--spec",
+            str(spec),
+            "--root",
+            str(tmp_path),
+            "--json",
+        ]
+    )
     captured = capsys.readouterr()
     assert code == 2
     assert "invalid strategy experiment" in captured.err

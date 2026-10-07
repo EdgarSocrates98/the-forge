@@ -36,19 +36,22 @@ def _forger(root: Path) -> Forger:
     return Forger(root, Registry(forge), RunStore(forge))
 
 
-@pytest.mark.parametrize(("mode", "code", "needle"), [
-    ("dup-evidence", Codes.RESULT_DUP_EVIDENCE, "'e1'"),
-    ("dup-finding", Codes.RESULT_DUP_FINDING, "'f1'"),
-    ("dangling-ref", Codes.RESULT_DANGLING_EVIDENCE, "'e-missing'"),
-    ("artifact-absolute", Codes.RESULT_ARTIFACT_PATH, "/etc/passwd"),
-    ("artifact-traversal", Codes.RESULT_ARTIFACT_PATH, "escape.txt"),
-    ("bad-hash", Codes.PROTO_SCHEMA, "hash"),
-    ("bad-artifact-hash", Codes.PROTO_SCHEMA, "sha256"),
-    ("bad-timestamp", Codes.PROTO_SCHEMA, "yesterday"),
-    ("wrong-producer", Codes.PROTO_PRODUCER, "someone-else"),
-    ("wrong-version-producer", Codes.PROTO_PRODUCER, "9.9.9"),
-    ("execute-wrong-envelope-producer", Codes.PROTO_PRODUCER, "someone-else"),
-])
+@pytest.mark.parametrize(
+    ("mode", "code", "needle"),
+    [
+        ("dup-evidence", Codes.RESULT_DUP_EVIDENCE, "'e1'"),
+        ("dup-finding", Codes.RESULT_DUP_FINDING, "'f1'"),
+        ("dangling-ref", Codes.RESULT_DANGLING_EVIDENCE, "'e-missing'"),
+        ("artifact-absolute", Codes.RESULT_ARTIFACT_PATH, "/etc/passwd"),
+        ("artifact-traversal", Codes.RESULT_ARTIFACT_PATH, "escape.txt"),
+        ("bad-hash", Codes.PROTO_SCHEMA, "hash"),
+        ("bad-artifact-hash", Codes.PROTO_SCHEMA, "sha256"),
+        ("bad-timestamp", Codes.PROTO_SCHEMA, "yesterday"),
+        ("wrong-producer", Codes.PROTO_PRODUCER, "someone-else"),
+        ("wrong-version-producer", Codes.PROTO_PRODUCER, "9.9.9"),
+        ("execute-wrong-envelope-producer", Codes.PROTO_PRODUCER, "someone-else"),
+    ],
+)
 def test_invalid_result_is_provider_failure_without_result_artifact(
     tmp_path: Path, mode: str, code: str, needle: str
 ) -> None:
@@ -88,11 +91,19 @@ def test_inconsistent_context_pack_is_internal_error_and_nothing_is_sent(
         def __init__(self, argv: Sequence[str]) -> None:
             self.inner = SubprocessTransport(argv)
 
-        def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-                 cwd: Path | None = None, check_protocol: bool = True) -> Response:
+        def call(
+            self,
+            op: str,
+            payload: dict[str, Any],
+            *,
+            timeout: float,
+            cwd: Path | None = None,
+            check_protocol: bool = True,
+        ) -> Response:
             sent.append(op)
-            return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                                   check_protocol=check_protocol)
+            return self.inner.call(
+                op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol
+            )
 
     monkeypatch.setattr(orchestrator, "build_context_pack", inflated)
     make_workspace(tmp_path, [bad_entry("ok", "bad-a")])
@@ -234,16 +245,28 @@ def _bad_forge_modes() -> set[str]:
     tree = ast.parse((PROVIDERS / "bad_forge.py").read_text(encoding="utf-8"))
     modes: set[str] = set()
     for node in ast.walk(tree):
-        if (isinstance(node, ast.Compare) and isinstance(node.left, ast.Name)
-                and node.left.id == "mode"):
-            modes |= {c.value for comp in node.comparators for c in ast.walk(comp)
-                      if isinstance(c, ast.Constant) and isinstance(c.value, str)}
-        if (isinstance(node, ast.Assign) and isinstance(node.value, (ast.Dict, ast.Tuple))
-                and any(isinstance(t, ast.Name) and t.id in MODE_TABLES for t in node.targets)):
-            keys = (node.value.keys if isinstance(node.value, ast.Dict)
-                    else node.value.elts)  # a tuple table lists the modes themselves
-            modes |= {k.value for k in keys
-                      if isinstance(k, ast.Constant) and isinstance(k.value, str)}
+        if (
+            isinstance(node, ast.Compare)
+            and isinstance(node.left, ast.Name)
+            and node.left.id == "mode"
+        ):
+            modes |= {
+                c.value
+                for comp in node.comparators
+                for c in ast.walk(comp)
+                if isinstance(c, ast.Constant) and isinstance(c.value, str)
+            }
+        if (
+            isinstance(node, ast.Assign)
+            and isinstance(node.value, (ast.Dict, ast.Tuple))
+            and any(isinstance(t, ast.Name) and t.id in MODE_TABLES for t in node.targets)
+        ):
+            keys = (
+                node.value.keys if isinstance(node.value, ast.Dict) else node.value.elts
+            )  # a tuple table lists the modes themselves
+            modes |= {
+                k.value for k in keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+            }
     return modes
 
 
@@ -269,7 +292,8 @@ def test_every_mode_through_the_full_forger(
         out = Forger(tmp_path, Registry(forge), store, execute_timeout=3).ask(
             # balanced: modes include context-request negotiation and conditional
             # verification, which the auto->economy resolution would disable.
-            AskRequest(intent="run it", capability="bad.thing", profile="balanced"))
+            AskRequest(intent="run it", capability="bad.thing", profile="balanced")
+        )
         if mode in GRANDCHILD_MODES:
             marker = store.work_dir(out.run_id) / "grandchild.pid"
             assert marker.is_file(), "provider did not publish its grandchild PID"
@@ -306,11 +330,17 @@ def _probe_env() -> dict[str, str]:
 
 @pytest.mark.parametrize("op", ["describe", "health", "execute"])
 def test_env_probe_full_reports_received_environment_in_every_op(op: str) -> None:
-    proc = subprocess.run([*bad_argv("env-probe-full"), op], input="{}", env=_probe_env(),
-                          capture_output=True, text=True, timeout=30, check=True)
+    proc = subprocess.run(
+        [*bad_argv("env-probe-full"), op],
+        input="{}",
+        env=_probe_env(),
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
     payload = json.loads(proc.stdout)["payload"]
-    lines = ([c["name"] for c in payload["checks"]] if op == "health"
-             else payload["limitations"])
+    lines = [c["name"] for c in payload["checks"]] if op == "health" else payload["limitations"]
     names = {line.removeprefix("env:") for line in lines if line.startswith("env:")}
     assert "PROBE_MARKER" in names
     assert "SOME_UNSET_VARIABLE" not in names

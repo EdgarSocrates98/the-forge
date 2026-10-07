@@ -12,28 +12,32 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Final
 
-ALLOWED_ENV: Final[Mapping[str, str]] = MappingProxyType({
-    "PATH": "resolve executables the provider spawns (python, git, …)",
-    "PATHEXT": "Windows: executable extensions needed to resolve commands on PATH",
-    "SYSTEMROOT": "Windows: required by the CPython runtime and Winsock initialisation",
-    "SYSTEMDRIVE": "Windows: system drive used by runtime and temp-path resolution",
-    "WINDIR": "Windows: Windows directory expected by system libraries",
-    "COMSPEC": "Windows: command interpreter used by subprocess/shell helpers",
-    "HOME": "POSIX: Path.home() and tool config lookup in the child process",
-    "USERPROFILE": "Windows: Path.home() and tool config lookup in the child process",
-    "TEMP": "Windows: temporary directory for tempfile",
-    "TMP": "Windows/POSIX: temporary directory for tempfile",
-    "TMPDIR": "POSIX: temporary directory for tempfile",
-    "LANG": "locale for consistent text decoding in the child",
-    "LC_ALL": "locale override for consistent text decoding in the child",
-    "PYTHONIOENCODING": "forced to utf-8 so protocol JSON on stdio is UTF-8",
-    "PYTHONUTF8": "forced to 1 so Python providers use UTF-8 mode",
-})
+ALLOWED_ENV: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "PATH": "resolve executables the provider spawns (python, git, …)",
+        "PATHEXT": "Windows: executable extensions needed to resolve commands on PATH",
+        "SYSTEMROOT": "Windows: required by the CPython runtime and Winsock initialisation",
+        "SYSTEMDRIVE": "Windows: system drive used by runtime and temp-path resolution",
+        "WINDIR": "Windows: Windows directory expected by system libraries",
+        "COMSPEC": "Windows: command interpreter used by subprocess/shell helpers",
+        "HOME": "POSIX: Path.home() and tool config lookup in the child process",
+        "USERPROFILE": "Windows: Path.home() and tool config lookup in the child process",
+        "TEMP": "Windows: temporary directory for tempfile",
+        "TMP": "Windows/POSIX: temporary directory for tempfile",
+        "TMPDIR": "POSIX: temporary directory for tempfile",
+        "LANG": "locale for consistent text decoding in the child",
+        "LC_ALL": "locale override for consistent text decoding in the child",
+        "PYTHONIOENCODING": "forced to utf-8 so protocol JSON on stdio is UTF-8",
+        "PYTHONUTF8": "forced to 1 so Python providers use UTF-8 mode",
+    }
+)
 
-_FORCED: Final[Mapping[str, str]] = MappingProxyType({
-    "PYTHONIOENCODING": "utf-8",
-    "PYTHONUTF8": "1",
-})
+_FORCED: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
+    }
+)
 
 CREDENTIAL_PATTERNS: Final[tuple[re.Pattern[str], ...]] = tuple(
     re.compile(pattern, re.IGNORECASE)

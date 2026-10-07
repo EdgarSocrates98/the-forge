@@ -30,13 +30,24 @@ PROVIDER_ARGVS = {
     "fixture-api": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api.json")),
     # Real adapters in replay mode (healthy `default` scenario): no network, no credentials and
     # no sibling repos; execute with an empty or non-matching context takes the "no input" path.
-    "spark-forge-aws-replay": [sys.executable, "-m", "theforge_sparkforge_aws", "--replay",
-                           str(FIXTURES / "native" / "sparkforge_aws" / "default")],
-    "api-forge-replay": [sys.executable, "-m", "theforge_apiforge", "--replay",
-                         str(FIXTURES / "native" / "apiforge" / "default")],
+    "spark-forge-aws-replay": [
+        sys.executable,
+        "-m",
+        "theforge_sparkforge_aws",
+        "--replay",
+        str(FIXTURES / "native" / "sparkforge_aws" / "default"),
+    ],
+    "api-forge-replay": [
+        sys.executable,
+        "-m",
+        "theforge_apiforge",
+        "--replay",
+        str(FIXTURES / "native" / "apiforge" / "default"),
+    ],
 }
 pytestmark = pytest.mark.parametrize(
-    "argv", list(PROVIDER_ARGVS.values()), ids=list(PROVIDER_ARGVS))
+    "argv", list(PROVIDER_ARGVS.values()), ids=list(PROVIDER_ARGVS)
+)
 
 
 def test_conformance_battery(argv: list[str]) -> None:
@@ -44,8 +55,7 @@ def test_conformance_battery(argv: list[str]) -> None:
     context, handoff, refusals, artifacts, determinism, malformed protocol,
     producer identity — every call bounded by its timeout)."""
     report = check_provider(argv)
-    assert report.ok, [f"{c.id}: {c.detail}" for c in report.checks
-                       if c.status == "fail"]
+    assert report.ok, [f"{c.id}: {c.detail}" for c in report.checks if c.status == "fail"]
 
 
 def test_echo_confirms_context_hashes(argv: list[str], tmp_path) -> None:
@@ -57,19 +67,35 @@ def test_echo_confirms_context_hashes(argv: list[str], tmp_path) -> None:
     import subprocess
 
     (tmp_path / "notes.txt").write_bytes(b"hello")
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1",
-                    intent="conformance", workspace_root=str(tmp_path))
-    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
-                       task_id="t1", provider_id="x", root=str(tmp_path),
-                       files=[ContextFile(path="notes.txt",
-                                          sha256=sha256_hex(b"hello"), bytes=5)],
-                       budget_bytes=1024)
-    body = {"protocol": "forge/v1", "kind": "Request", "op": "execute",
-            "request_id": "r_echo",
-            "payload": to_dict(ExecuteRequest(task=task, capability="demo.echo",
-                                              action="echo", context=pack))}
-    proc = subprocess.run([*argv, "execute"], input=json.dumps(body).encode(),
-                          capture_output=True, timeout=30)
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent="conformance",
+        workspace_root=str(tmp_path),
+    )
+    pack = ContextPack(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="complete",
+        task_id="t1",
+        provider_id="x",
+        root=str(tmp_path),
+        files=[ContextFile(path="notes.txt", sha256=sha256_hex(b"hello"), bytes=5)],
+        budget_bytes=1024,
+    )
+    body = {
+        "protocol": "forge/v1",
+        "kind": "Request",
+        "op": "execute",
+        "request_id": "r_echo",
+        "payload": to_dict(
+            ExecuteRequest(task=task, capability="demo.echo", action="echo", context=pack)
+        ),
+    }
+    proc = subprocess.run(
+        [*argv, "execute"], input=json.dumps(body).encode(), capture_output=True, timeout=30
+    )
     data = json.loads(proc.stdout.decode("utf-8"))
     result = from_dict(ExecutionResult, data["payload"])
     assert [e.epistemic for e in result.evidence] == ["confirmed"]

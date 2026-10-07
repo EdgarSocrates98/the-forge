@@ -74,12 +74,26 @@ class GraphBuilder:
         self._edges.setdefault(edge, None)
         return True
 
-    def propose(self, *, source: str, target: str, kind: EdgeKind, epistemic: EdgeEpistemic,
-                evidence: str, rule: str | None = None) -> bool:
+    def propose(
+        self,
+        *,
+        source: str,
+        target: str,
+        kind: EdgeKind,
+        epistemic: EdgeEpistemic,
+        evidence: str,
+        rule: str | None = None,
+    ) -> bool:
         """Build and add an edge; one without evidence or inferred without rule is dropped."""
         try:
-            edge = GraphEdge(source=source, target=target, kind=kind, epistemic=epistemic,
-                             evidence=evidence, rule=rule)
+            edge = GraphEdge(
+                source=source,
+                target=target,
+                kind=kind,
+                epistemic=epistemic,
+                evidence=evidence,
+                rule=rule,
+            )
         except ContractError as exc:
             self._reject(f"{Codes.WORKSPACE_GRAPH_EDGE}: {exc}")
             return False
@@ -92,32 +106,46 @@ class GraphBuilder:
         excess = len(nodes) - self._max_nodes
         if excess > 0:
             cuttable = [n.id for n in nodes if n.kind in _TRUNCATABLE]
-            dropped = set(cuttable[max(len(cuttable) - excess, 0):])
+            dropped = set(cuttable[max(len(cuttable) - excess, 0) :])
             nodes = [n for n in nodes if n.id not in dropped]
             truncated = True
-            limitations.append(f"graph-truncated: {len(dropped)} evidence/artifact nodes "
-                               f"dropped above {self._max_nodes} nodes")
+            limitations.append(
+                f"graph-truncated: {len(dropped)} evidence/artifact nodes "
+                f"dropped above {self._max_nodes} nodes"
+            )
         kept = {n.id for n in nodes}
-        edges = sorted((e for e in self._edges if e.source in kept and e.target in kept),
-                       key=_edge_key)
-        return WorkspaceGraph(producer=PRODUCER, created_at=created_at or utc_now(),
-                              plan_run=self._plan_run, nodes=nodes, edges=edges,
-                              truncated=truncated, limitations=limitations)
+        edges = sorted(
+            (e for e in self._edges if e.source in kept and e.target in kept), key=_edge_key
+        )
+        return WorkspaceGraph(
+            producer=PRODUCER,
+            created_at=created_at or utc_now(),
+            plan_run=self._plan_run,
+            nodes=nodes,
+            edges=edges,
+            truncated=truncated,
+            limitations=limitations,
+        )
 
     def _reject(self, limitation: str) -> None:
         self._limitations.setdefault(limitation, None)
 
 
 def _edge_key(edge: GraphEdge) -> tuple[str, str, str, str, str, str]:
-    return (edge.source, edge.kind, edge.target, edge.epistemic, edge.evidence,
-            edge.rule or "")
+    return (edge.source, edge.kind, edge.target, edge.epistemic, edge.evidence, edge.rule or "")
 
 
-def build_graph(plan_run: str, descriptor: WorkspaceDescriptor,
-                records: Sequence[RegistryRecord], plan: ExecutionPlan | None,
-                plan_sha256: str | None, outcomes: Sequence[NodeExecution], *,
-                created_at: str | None = None,
-                max_nodes: int = MAX_GRAPH_NODES) -> WorkspaceGraph:
+def build_graph(
+    plan_run: str,
+    descriptor: WorkspaceDescriptor,
+    records: Sequence[RegistryRecord],
+    plan: ExecutionPlan | None,
+    plan_sha256: str | None,
+    outcomes: Sequence[NodeExecution],
+    *,
+    created_at: str | None = None,
+    max_nodes: int = MAX_GRAPH_NODES,
+) -> WorkspaceGraph:
     """Graph of an (executed) plan; inputs are visited in sorted order (8.5).
 
     Without a plan (an ``ambiguous``/``no_route`` decomposition) the graph holds only the
@@ -135,56 +163,107 @@ def build_graph(plan_run: str, descriptor: WorkspaceDescriptor,
         builder.add_node(GraphNode(id=f"repository:{path}", kind="repository", label=path))
     for rec in recs:
         manifest = rec.manifest
-        builder.add_node(GraphNode(id=f"provider:{rec.entry.id}", kind="provider",
-                                   label=manifest.version if manifest else rec.state))
+        builder.add_node(
+            GraphNode(
+                id=f"provider:{rec.entry.id}",
+                kind="provider",
+                label=manifest.version if manifest else rec.state,
+            )
+        )
         for capability in manifest.capabilities if manifest else []:
-            builder.add_node(GraphNode(id=f"capability:{rec.entry.id}/{capability.id}",
-                                       kind="capability", label=capability.state))
+            builder.add_node(
+                GraphNode(
+                    id=f"capability:{rec.entry.id}/{capability.id}",
+                    kind="capability",
+                    label=capability.state,
+                )
+            )
     for node in plan_nodes:
-        builder.add_node(GraphNode(id=f"plan_node:{node.id}", kind="plan_node",
-                                   label=f"{node.provider}/{node.capability}:{node.action}"))
+        builder.add_node(
+            GraphNode(
+                id=f"plan_node:{node.id}",
+                kind="plan_node",
+                label=f"{node.provider}/{node.capability}:{node.action}",
+            )
+        )
     for ex in executions:
         if ex.result is None:
             continue
         for item in ex.result.evidence:
-            builder.add_node(GraphNode(id=f"evidence:{ex.node.id}/{item.id}",
-                                       kind="evidence", label=item.epistemic))
+            builder.add_node(
+                GraphNode(
+                    id=f"evidence:{ex.node.id}/{item.id}", kind="evidence", label=item.epistemic
+                )
+            )
         for artifact in ex.result.artifacts:
-            builder.add_node(GraphNode(id=f"artifact:{ex.node.id}/{artifact.path}",
-                                       kind="artifact", label=artifact.sha256))
+            builder.add_node(
+                GraphNode(
+                    id=f"artifact:{ex.node.id}/{artifact.path}",
+                    kind="artifact",
+                    label=artifact.sha256,
+                )
+            )
 
     # Workspace relations, as evidenced by the descriptor.
     def repo_node(path: str) -> str:
         return WORKSPACE_NODE if path == "." and "." not in repos else f"repository:{path}"
 
     if "." in repos:
-        builder.propose(source=WORKSPACE_NODE, target="repository:.", kind="contains",
-                        epistemic="observed", evidence="./.git")
+        builder.propose(
+            source=WORKSPACE_NODE,
+            target="repository:.",
+            kind="contains",
+            epistemic="observed",
+            evidence="./.git",
+        )
     for rel in sorted(descriptor.relations, key=lambda r: (r.source, r.kind, r.target)):
-        builder.propose(source=repo_node(rel.source), target=repo_node(rel.target),
-                        kind=rel.kind, epistemic=rel.epistemic, evidence=rel.evidence)
+        builder.propose(
+            source=repo_node(rel.source),
+            target=repo_node(rel.target),
+            kind=rel.kind,
+            epistemic=rel.epistemic,
+            evidence=rel.evidence,
+        )
 
     for rec in recs:
         evidence = f"manifest:{rec.manifest_sha256}" if rec.manifest_sha256 else ""
         for capability in rec.manifest.capabilities if rec.manifest else []:
-            builder.propose(source=f"provider:{rec.entry.id}",
-                            target=f"capability:{rec.entry.id}/{capability.id}",
-                            kind="declares", epistemic="explicit", evidence=evidence)
+            builder.propose(
+                source=f"provider:{rec.entry.id}",
+                target=f"capability:{rec.entry.id}/{capability.id}",
+                kind="declares",
+                epistemic="explicit",
+                evidence=evidence,
+            )
 
     plan_evidence = f"plan:{plan_sha256}" if plan_sha256 else ""
     for node in plan_nodes:
         me = f"plan_node:{node.id}"
-        builder.propose(source=me, target=f"capability:{node.provider}/{node.capability}",
-                        kind="uses", epistemic="explicit", evidence=plan_evidence)
+        builder.propose(
+            source=me,
+            target=f"capability:{node.provider}/{node.capability}",
+            kind="uses",
+            epistemic="explicit",
+            evidence=plan_evidence,
+        )
         owners = {repository_of(descriptor, target) for target in node.targets}
-        for owner in sorted(WORKSPACE_NODE if o is None else f"repository:{o}"
-                            for o in owners):
-            builder.propose(source=me, target=owner, kind="targets", epistemic="explicit",
-                            evidence=plan_evidence)
+        for owner in sorted(WORKSPACE_NODE if o is None else f"repository:{o}" for o in owners):
+            builder.propose(
+                source=me,
+                target=owner,
+                kind="targets",
+                epistemic="explicit",
+                evidence=plan_evidence,
+            )
         for dep in sorted(node.depends_on, key=lambda d: d.node):
-            builder.propose(source=me, target=f"plan_node:{dep.node}", kind="depends_on",
-                            epistemic=dep.epistemic, evidence=plan_evidence,
-                            rule=dep.rule if dep.epistemic == "inferred" else None)
+            builder.propose(
+                source=me,
+                target=f"plan_node:{dep.node}",
+                kind="depends_on",
+                epistemic=dep.epistemic,
+                evidence=plan_evidence,
+                rule=dep.rule if dep.epistemic == "inferred" else None,
+            )
 
     for ex in executions:
         me = f"plan_node:{ex.node.id}"
@@ -192,18 +271,33 @@ def build_graph(plan_run: str, descriptor: WorkspaceDescriptor,
             sha = ex.outcome.result_sha256
             evidence = f"result:{sha}" if sha else ""
             for item in sorted(ex.result.evidence, key=lambda e: e.id):
-                builder.propose(source=me, target=f"evidence:{ex.node.id}/{item.id}",
-                                kind="produced", epistemic="observed", evidence=evidence)
+                builder.propose(
+                    source=me,
+                    target=f"evidence:{ex.node.id}/{item.id}",
+                    kind="produced",
+                    epistemic="observed",
+                    evidence=evidence,
+                )
             for artifact in sorted(ex.result.artifacts, key=lambda a: a.path):
-                builder.propose(source=me, target=f"artifact:{ex.node.id}/{artifact.path}",
-                                kind="produced", epistemic="observed", evidence=evidence)
+                builder.propose(
+                    source=me,
+                    target=f"artifact:{ex.node.id}/{artifact.path}",
+                    kind="produced",
+                    epistemic="observed",
+                    evidence=evidence,
+                )
         if ex.handoff is not None:
             # The handoff is already redacted: this is the hash of the persisted artifact.
             evidence = f"handoff:{sha256_of(to_dict(ex.handoff))}"
             for hitem in ex.handoff.items:
                 if hitem.kind != "evidence":
                     continue
-                builder.propose(source=f"evidence:{hitem.origin.node}/{hitem.id}", target=me,
-                                kind="handed_off_to", epistemic="observed", evidence=evidence)
+                builder.propose(
+                    source=f"evidence:{hitem.origin.node}/{hitem.id}",
+                    target=me,
+                    kind="handed_off_to",
+                    epistemic="observed",
+                    evidence=evidence,
+                )
 
     return builder.build(created_at=created_at)

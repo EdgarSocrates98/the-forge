@@ -70,8 +70,11 @@ def spark_error(native: Mapping[str, Any]) -> Reply:
     typed = isinstance(raw_code, str) and _ERROR_CODE.fullmatch(raw_code) is not None
     code = f"{CODE_PREFIX}{raw_code}" if typed else TOOL_ERROR
     approval = native.get("required_approval")
-    unlock = (f"grant the Spark Forge AWS approval {approval!r} and run again"
-              if isinstance(approval, str) and approval else None)
+    unlock = (
+        f"grant the Spark Forge AWS approval {approval!r} and run again"
+        if isinstance(approval, str) and approval
+        else None
+    )
     exit_code = native.get("exit_code")
     if typed or (exit_code == REFUSAL_EXIT_CODE and not isinstance(exit_code, bool)):
         return refuse(code, detail, unlock=unlock)
@@ -80,8 +83,11 @@ def spark_error(native: Mapping[str, Any]) -> Reply:
 
 def unknown_tool(tool: str, detail: str | None = None) -> Reply:
     """The refusal of a tool the installed Spark Forge AWS does not know (``KeyError``)."""
-    return refuse(TOOL_UNKNOWN, detail or f"the Spark Forge AWS has no tool {tool!r}",
-                  unlock="install a sparkforge-aws release inside the supported window")
+    return refuse(
+        TOOL_UNKNOWN,
+        detail or f"the Spark Forge AWS has no tool {tool!r}",
+        unlock="install a sparkforge-aws release inside the supported window",
+    )
 
 
 def invalid_output(tool: str, why: str) -> Reply:
@@ -128,8 +134,11 @@ def _location(item: Mapping[str, Any]) -> tuple[object, int | None, str]:
     if isinstance(subject, Mapping):
         line = subject.get("line")
         symbol = subject.get("symbol")
-        return (subject.get("file"), line if isinstance(line, int) else None,
-                symbol if isinstance(symbol, str) else "")
+        return (
+            subject.get("file"),
+            line if isinstance(line, int) else None,
+            symbol if isinstance(symbol, str) else "",
+        )
     at = item.get("at")
     symbol = item.get("symbol")
     symbol = symbol if isinstance(symbol, str) else ""
@@ -146,18 +155,21 @@ def _native_hash(item: Mapping[str, Any], envelope: Mapping[str, Any]) -> object
     if not isinstance(provenance, Mapping):
         shared = envelope.get("provenance")
         ref = item.get("provenance_ref")
-        provenance = (shared.get(ref) if isinstance(shared, Mapping) and isinstance(ref, str)
-                      else None)
+        provenance = (
+            shared.get(ref) if isinstance(shared, Mapping) and isinstance(ref, str) else None
+        )
     return provenance.get("artifact_sha256") if isinstance(provenance, Mapping) else None
 
 
 def _claim(kind: str, symbol: str, measures: object) -> str:
     head = f"{kind} {symbol}" if symbol else kind
     if isinstance(measures, Mapping) and measures:
-        parts = ", ".join(f"{key}={json.dumps(measures[key], sort_keys=True, ensure_ascii=False)}"
-                          for key in sorted(measures, key=str))
+        parts = ", ".join(
+            f"{key}={json.dumps(measures[key], sort_keys=True, ensure_ascii=False)}"
+            for key in sorted(measures, key=str)
+        )
         head = f"{head}: {parts}"
-    return head if len(head) <= CLAIM_LIMIT else head[:CLAIM_LIMIT - 3] + "..."
+    return head if len(head) <= CLAIM_LIMIT else head[: CLAIM_LIMIT - 3] + "..."
 
 
 def _pagination(tool: str, page: Mapping[str, Any]) -> str | None:
@@ -185,9 +197,13 @@ def _unresolved(tool: str, page: Mapping[str, Any]) -> str | None:
     return f"{tool}: {count} item(s) unresolved by the Spark Forge AWS{suffix}"
 
 
-def _upstream_entry(item: Mapping[str, Any], fact_id: str, page: Mapping[str, Any],
-                    stage: StagedInput,
-                    limitations: list[str]) -> dict[str, Any] | None:
+def _upstream_entry(
+    item: Mapping[str, Any],
+    fact_id: str,
+    page: Mapping[str, Any],
+    stage: StagedInput,
+    limitations: list[str],
+) -> dict[str, Any] | None:
     """A foreign fact (``upstream:*``) as derived evidence: the epistemic status is the
     producer's own (verbatim, never upgraded to ``observed``) and the provenance is the
     ``attrs.upstream`` map the intake required — without it the fact cannot be told
@@ -197,8 +213,11 @@ def _upstream_entry(item: Mapping[str, Any], fact_id: str, page: Mapping[str, An
     if not isinstance(upstream, Mapping):
         limitations.append(f"upstream fact {fact_id} has no provenance map: skipped")
         return None
-    origin = {key: upstream[key] for key in ("provider", "run_id", "node", "item")
-              if isinstance(upstream.get(key), str)}
+    origin = {
+        key: upstream[key]
+        for key in ("provider", "run_id", "node", "item")
+        if isinstance(upstream.get(key), str)
+    }
     if len(origin) != 4:
         limitations.append(f"upstream fact {fact_id} has incomplete provenance: skipped")
         return None
@@ -212,29 +231,33 @@ def _upstream_entry(item: Mapping[str, Any], fact_id: str, page: Mapping[str, An
     claim = upstream.get("claim")
     kind = upstream.get("kind")
     measures = item.get("measures")
-    subject = (measures.get("subject") if isinstance(measures, Mapping)
-               and isinstance(measures.get("subject"), str) else None)
+    subject = (
+        measures.get("subject")
+        if isinstance(measures, Mapping) and isinstance(measures.get("subject"), str)
+        else None
+    )
     entry: dict[str, Any] = {
         "id": fact_id,
         "epistemic": epistemic if isinstance(epistemic, str) else "inferred",
         "subject": subject or (f"upstream.{kind}" if isinstance(kind, str) else "upstream"),
-        "claim": claim if isinstance(claim, str) and claim
-        else _claim(f"upstream.{kind}" if isinstance(kind, str) else "upstream", "",
-                    measures),
+        "claim": claim
+        if isinstance(claim, str) and claim
+        else _claim(f"upstream.{kind}" if isinstance(kind, str) else "upstream", "", measures),
         "hash": evidence_hash(path, _native_hash(item, page), stage),
         "derived_from": origin,
     }
     if path is not None:
-        entry["location"] = {"path": path,
-                             "line": line if line is not None and line >= 1 else None}
+        entry["location"] = {"path": path, "line": line if line is not None and line >= 1 else None}
     elif file is not None:
-        limitations.append(f"evidence {fact_id}: native location {file!r} is outside the "
-                           "workspace; no location")
+        limitations.append(
+            f"evidence {fact_id}: native location {file!r} is outside the workspace; no location"
+        )
     return entry
 
 
-def _evidence(page: Mapping[str, Any], stage: StagedInput, base: str,
-              limitations: list[str]) -> list[dict[str, Any]]:
+def _evidence(
+    page: Mapping[str, Any], stage: StagedInput, base: str, limitations: list[str]
+) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     seen: set[str] = set()
     for item in page["items"]:
@@ -256,22 +279,29 @@ def _evidence(page: Mapping[str, Any], stage: StagedInput, base: str,
         file, line, symbol = _location(item)
         path = workspace_path(file, base, stage)
         entry: dict[str, Any] = {
-            "id": fact_id, "epistemic": "observed", "subject": kind,
+            "id": fact_id,
+            "epistemic": "observed",
+            "subject": kind,
             "claim": _claim(kind, symbol, item.get("measures")),
             "hash": evidence_hash(path, _native_hash(item, page), stage),
         }
         if path is not None:
-            entry["location"] = {"path": path,
-                                 "line": line if line is not None and line >= 1 else None}
+            entry["location"] = {
+                "path": path,
+                "line": line if line is not None and line >= 1 else None,
+            }
         elif file is not None:
-            limitations.append(f"evidence {fact_id}: native location {file!r} is outside the "
-                               "workspace; no location")
+            limitations.append(
+                f"evidence {fact_id}: native location {file!r} is outside the "
+                "workspace; no location"
+            )
         evidence.append(entry)
     return evidence
 
 
-def _findings(judged: Mapping[str, Any], present: set[str],
-              limitations: list[str]) -> list[dict[str, Any]]:
+def _findings(
+    judged: Mapping[str, Any], present: set[str], limitations: list[str]
+) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
     for item in judged["items"]:
@@ -285,8 +315,9 @@ def _findings(judged: Mapping[str, Any], present: set[str],
         severity = item.get("severity")
         mapped = SEVERITY.get(severity) if isinstance(severity, str) else None
         if mapped is None:
-            limitations.append(f"finding {finding_id}: unknown native severity {severity!r}, "
-                               "reported as info")
+            limitations.append(
+                f"finding {finding_id}: unknown native severity {severity!r}, reported as info"
+            )
         refs: list[str] = []
         raw_refs = item.get("evidence")
         for ref in raw_refs if isinstance(raw_refs, list) else []:
@@ -294,12 +325,18 @@ def _findings(judged: Mapping[str, Any], present: set[str],
                 if ref not in refs:
                     refs.append(ref)
             else:
-                limitations.append(f"finding {finding_id}: evidence {ref!r} is not in the "
-                                   "native output; reference dropped")
-        findings.append({"id": finding_id,
-                         "title": f"{rule}: {title}" if isinstance(title, str) and title
-                         else rule,
-                         "severity": mapped or "info", "evidence_ids": refs})
+                limitations.append(
+                    f"finding {finding_id}: evidence {ref!r} is not in the "
+                    "native output; reference dropped"
+                )
+        findings.append(
+            {
+                "id": finding_id,
+                "title": f"{rule}: {title}" if isinstance(title, str) and title else rule,
+                "severity": mapped or "info",
+                "evidence_ids": refs,
+            }
+        )
     return findings
 
 
@@ -311,8 +348,15 @@ def _page_problem(page: object) -> str | None:
     return None
 
 
-def translate_spark(native: object, judged: object, stage: StagedInput, *, tool: str,
-                    base: str = "", judge_tool: str = JUDGE_TOOL) -> ResultDraft | Reply:
+def translate_spark(
+    native: object,
+    judged: object,
+    stage: StagedInput,
+    *,
+    tool: str,
+    base: str = "",
+    judge_tool: str = JUDGE_TOOL,
+) -> ResultDraft | Reply:
     """The result draft of a native output and its chained judge output (None: not judged),
     or the structured reply of a native error or an unexpected output."""
     if isinstance(native, Mapping) and is_native_error(native):
@@ -338,13 +382,18 @@ def translate_spark(native: object, judged: object, stage: StagedInput, *, tool:
             partial = True
     if (note := _unresolved(tool, native)) is not None:
         limitations.append(note)
-    return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
-                       evidence=evidence, limitations=limitations, partial=partial,
-                       native_output={"output": native, "judge": judged})
+    return ResultDraft(
+        provider_id=PROVIDER_ID,
+        version=VERSION,
+        findings=findings,
+        evidence=evidence,
+        limitations=limitations,
+        partial=partial,
+        native_output={"output": native, "judge": judged},
+    )
 
 
-def translate_recording(recorded: Mapping[str, Any], stage: StagedInput
-                        ) -> ResultDraft | Reply:
+def translate_recording(recorded: Mapping[str, Any], stage: StagedInput) -> ResultDraft | Reply:
     """Translate an execute recording (``{tool, arguments, output, judge}``, see
     ``record_execute``) against the staged workspace."""
     tool = recorded.get("tool")
@@ -355,6 +404,11 @@ def translate_recording(recorded: Mapping[str, Any], stage: StagedInput
     judge = recorded.get("judge")
     judged = judge.get("output") if isinstance(judge, Mapping) else None
     judge_tool = judge.get("tool") if isinstance(judge, Mapping) else None
-    return translate_spark(recorded.get("output"), judged, stage, tool=tool, base=base,
-                           judge_tool=judge_tool if isinstance(judge_tool, str) else JUDGE_TOOL)
-
+    return translate_spark(
+        recorded.get("output"),
+        judged,
+        stage,
+        tool=tool,
+        base=base,
+        judge_tool=judge_tool if isinstance(judge_tool, str) else JUDGE_TOOL,
+    )

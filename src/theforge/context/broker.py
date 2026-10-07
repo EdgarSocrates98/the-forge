@@ -54,8 +54,7 @@ _DRIVE: Final = re.compile(r"^[A-Za-z]:")
 _TRUNCATING: Final = frozenset({"budget", "max_files"})
 
 
-def effective_tiers(profile: ContextProfile,
-                    capability: CapabilityContext) -> frozenset[Tier]:
+def effective_tiers(profile: ContextProfile, capability: CapabilityContext) -> frozenset[Tier]:
     """Profile tiers ∩ (metadata, reference + excerpt/requested when the capability declares)."""
     declared: set[Tier] = {"metadata", "reference"}
     if capability.excerpts:
@@ -93,7 +92,11 @@ class _Selection:
 
 
 def build_context_pack(
-    task: TaskSpec, provider_id: str, globs: list[str], scan: WorkspaceScan, *,
+    task: TaskSpec,
+    provider_id: str,
+    globs: list[str],
+    scan: WorkspaceScan,
+    *,
     profile: ContextProfile | None = None,
     capability_context: CapabilityContext | None = None,
     git: GitState | None = None,
@@ -102,44 +105,58 @@ def build_context_pack(
     """ContextPack round 0. Defaults: the task's profile, no excerpts, no git, no cache."""
     profile = profile if profile is not None else assumed_profile(task.budget_profile)
     tiers = effective_tiers(profile, capability_context or CapabilityContext())
-    store = fingerprints if fingerprints is not None else FingerprintStore(
-        scan.root, enabled=False)
+    store = fingerprints if fingerprints is not None else FingerprintStore(scan.root, enabled=False)
     refs = parse_intent_refs(task.intent, scan)
     changed = git.changed if git is not None else frozenset()
     ranked, unmatched = rank_candidates(task, globs, scan, changed, refs)
 
-    sel = _Selection(budget=profile.budget_bytes, max_files=profile.max_files, files=[],
-                     excluded=[], tier_bytes={t: 0 for t in _TIER_ORDER if t in tiers},
-                     truncated=False)
+    sel = _Selection(
+        budget=profile.budget_bytes,
+        max_files=profile.max_files,
+        files=[],
+        excluded=[],
+        tier_bytes={t: 0 for t in _TIER_ORDER if t in tiers},
+        truncated=False,
+    )
     for candidate in ranked:
         _select(sel, scan.root, candidate, store, excerpts="excerpt" in tiers)
 
     workspace = WorkspaceSummary(
-        files_scanned=len(scan.files), unmatched_files=unmatched,
+        files_scanned=len(scan.files),
+        unmatched_files=unmatched,
         dependency_files=sorted(c.path for c in ranked if SIGNAL_DEPENDENCY in c.signals),
         git=git.summary if git is not None else None,
     )
     return ContextPack(
-        producer=PRODUCER, created_at=utc_now(),
-        status="truncated" if sel.truncated else "complete", task_id=task.id,
-        provider_id=provider_id, root=str(scan.root), files=sel.files,
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="truncated" if sel.truncated else "complete",
+        task_id=task.id,
+        provider_id=provider_id,
+        root=str(scan.root),
+        files=sel.files,
         excluded=_merge_exclusions(scan.excluded, refs.rejected, sel.excluded),
-        budget_bytes=sel.budget, used_bytes=sel.used, truncated=sel.truncated,
+        budget_bytes=sel.budget,
+        used_bytes=sel.used,
+        truncated=sel.truncated,
         limitations=list(git.limitations) if git is not None else [],
-        workspace=workspace, tier_bytes=sel.tier_bytes, tokens=Metric(), round=0,
+        workspace=workspace,
+        tier_bytes=sel.tier_bytes,
+        tokens=Metric(),
+        round=0,
     )
 
 
-def _select(sel: _Selection, root: Path, candidate: RankedFile, store: FingerprintStore, *,
-            excerpts: bool) -> None:
+def _select(
+    sel: _Selection, root: Path, candidate: RankedFile, store: FingerprintStore, *, excerpts: bool
+) -> None:
     rel, signals = candidate.path, list(candidate.signals)
     if len(sel.files) >= sel.max_files:
         sel.exclude(rel, "max_files", signals)
         return
     resolved = resolve_inside(root, root / rel)
     if resolved is None:
-        sel.exclude(rel, "missing" if not os.path.lexists(root / rel) else "outside_root",
-                    signals)
+        sel.exclude(rel, "missing" if not os.path.lexists(root / rel) else "outside_root", signals)
         return
     reason = ";".join(signals)
     if candidate.lines is not None and excerpts:
@@ -149,8 +166,17 @@ def _select(sel: _Selection, root: Path, candidate: RankedFile, store: Fingerpri
             if size > sel.remaining:
                 sel.exclude(rel, "budget", signals)
             else:
-                sel.add(ContextFile(path=rel, sha256=sha, bytes=size, reason=reason,
-                                    tier="excerpt", lines=candidate.lines, signals=signals))
+                sel.add(
+                    ContextFile(
+                        path=rel,
+                        sha256=sha,
+                        bytes=size,
+                        reason=reason,
+                        tier="excerpt",
+                        lines=candidate.lines,
+                        signals=signals,
+                    )
+                )
             return
         # Range past the end of the file (or unreadable): handled as the whole file.
     try:
@@ -164,21 +190,41 @@ def _select(sel: _Selection, root: Path, candidate: RankedFile, store: Fingerpri
             sel.exclude(rel, "unreadable", signals)
             return
         if fp.size <= sel.remaining:  # the file may have grown after stat
-            sel.add(ContextFile(path=rel, sha256=fp.sha256, bytes=fp.size, reason=reason,
-                                tier="reference", signals=signals))
+            sel.add(
+                ContextFile(
+                    path=rel,
+                    sha256=fp.sha256,
+                    bytes=fp.size,
+                    reason=reason,
+                    tier="reference",
+                    signals=signals,
+                )
+            )
             return
     if excerpts:
         prefix = store.prefix(resolved, sel.remaining)
         if prefix is not None:
             lines, sha, size = prefix
-            sel.add(ContextFile(path=rel, sha256=sha, bytes=size, reason=reason,
-                                tier="excerpt", lines=lines, signals=signals))
+            sel.add(
+                ContextFile(
+                    path=rel,
+                    sha256=sha,
+                    bytes=size,
+                    reason=reason,
+                    tier="excerpt",
+                    lines=lines,
+                    signals=signals,
+                )
+            )
             return
     sel.exclude(rel, "budget", signals)
 
 
-def _merge_exclusions(scanned: list[ExcludedFile], rejected: Mapping[str, ExclusionReason],
-                      selected: list[ExcludedFile]) -> list[ExcludedFile]:
+def _merge_exclusions(
+    scanned: list[ExcludedFile],
+    rejected: Mapping[str, ExclusionReason],
+    selected: list[ExcludedFile],
+) -> list[ExcludedFile]:
     """Scan exclusions, then refused intent citations (redacted), then selection exclusions.
 
     A citation of a path the scan already excluded for the same reason adds the
@@ -198,8 +244,12 @@ def _merge_exclusions(scanned: list[ExcludedFile], rejected: Mapping[str, Exclus
 
 
 def extend_context_pack(
-    pack: ContextPack, request: ContextRequest, scan: WorkspaceScan, *,
-    profile: ContextProfile, fingerprints: FingerprintStore,
+    pack: ContextPack,
+    request: ContextRequest,
+    scan: WorkspaceScan,
+    *,
+    profile: ContextProfile,
+    fingerprints: FingerprintStore,
 ) -> ContextPack:
     """The next round's pack: previous items kept, approved request items added as
     ``requested``, refused ones recorded in ``excluded`` with their reason (8.2).
@@ -209,10 +259,15 @@ def extend_context_pack(
     presence, remaining-budget and file-limit rules as the initial selection. An item
     already delivered with the same scope is skipped (neither added nor refused).
     """
-    sel = _Selection(budget=pack.budget_bytes, max_files=profile.max_files,
-                     files=list(pack.files), excluded=list(pack.excluded),
-                     tier_bytes=dict(pack.tier_bytes), truncated=pack.truncated,
-                     used=pack.used_bytes)
+    sel = _Selection(
+        budget=pack.budget_bytes,
+        max_files=profile.max_files,
+        files=list(pack.files),
+        excluded=list(pack.excluded),
+        tier_bytes=dict(pack.tier_bytes),
+        truncated=pack.truncated,
+        used=pack.used_bytes,
+    )
     sel.tier_bytes.setdefault("requested", 0)
     allowed = "requested" in profile.tiers
     files = frozenset(scan.files)
@@ -224,8 +279,7 @@ def extend_context_pack(
             rel = rel[2:]
         if any((f.path, f.lines) == (rel, item.lines) for f in sel.files):
             continue
-        reason = (_request_rejection(rel, files, scan_reasons) if allowed
-                  else "tier_not_allowed")
+        reason = _request_rejection(rel, files, scan_reasons) if allowed else "tier_not_allowed"
         if reason is not None:
             sel.exclude(redact_text(item.path), reason, list(signals))
             continue
@@ -238,18 +292,31 @@ def extend_context_pack(
         else:
             sel.exclude(rel, added, list(signals))
     return replace(
-        pack, created_at=utc_now(), files=sel.files, excluded=sel.excluded,
-        used_bytes=sel.used, tier_bytes=sel.tier_bytes, truncated=sel.truncated,
-        status="truncated" if sel.truncated else "complete", round=pack.round + 1,
+        pack,
+        created_at=utc_now(),
+        files=sel.files,
+        excluded=sel.excluded,
+        used_bytes=sel.used,
+        tier_bytes=sel.tier_bytes,
+        truncated=sel.truncated,
+        status="truncated" if sel.truncated else "complete",
+        round=pack.round + 1,
     )
 
 
-def _request_rejection(rel: str, files: frozenset[str],
-                       scan_reasons: Mapping[str, str]) -> ExclusionReason | None:
+def _request_rejection(
+    rel: str, files: frozenset[str], scan_reasons: Mapping[str, str]
+) -> ExclusionReason | None:
     """Lexical containment, secret name, presence in the scan (no filesystem access)."""
     parts = rel.split("/")
-    if (not rel or "\x00" in rel or "\\" in rel or rel.startswith(("/", "~"))
-            or _DRIVE.match(rel) or ".." in parts):
+    if (
+        not rel
+        or "\x00" in rel
+        or "\\" in rel
+        or rel.startswith(("/", "~"))
+        or _DRIVE.match(rel)
+        or ".." in parts
+    ):
         return "outside_root"
     if is_secret_name(parts[-1]) or scan_reasons.get(rel) == "secret":
         return "secret"
@@ -260,8 +327,9 @@ def _request_rejection(rel: str, files: frozenset[str],
     return "missing"
 
 
-def _requested_item(root: Path, rel: str, lines: LineRange | None, store: FingerprintStore,
-                    remaining: int) -> ContextFile | ExclusionReason:
+def _requested_item(
+    root: Path, rel: str, lines: LineRange | None, store: FingerprintStore, remaining: int
+) -> ContextFile | ExclusionReason:
     resolved = resolve_inside(root, root / rel)
     if resolved is None:
         return "missing" if not os.path.lexists(root / rel) else "outside_root"
@@ -282,5 +350,12 @@ def _requested_item(root: Path, rel: str, lines: LineRange | None, store: Finger
         sha, size = fp.sha256, fp.size
     if size > remaining:
         return "budget"
-    return ContextFile(path=rel, sha256=sha, bytes=size, reason=SIGNAL_REQUESTED,
-                       tier="requested", lines=lines, signals=[SIGNAL_REQUESTED])
+    return ContextFile(
+        path=rel,
+        sha256=sha,
+        bytes=size,
+        reason=SIGNAL_REQUESTED,
+        tier="requested",
+        lines=lines,
+        signals=[SIGNAL_REQUESTED],
+    )

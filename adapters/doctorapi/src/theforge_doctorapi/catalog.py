@@ -63,8 +63,20 @@ class CapabilitySpec:
 PROJECT_GLOBS = ("*",)
 # File families the Doctor API scan is built to recognize (OpenAPI/AsyncAPI/GraphQL/proto
 # descriptions and the API project's source languages); routing hints only.
-API_GLOBS = ("*.yaml", "*.yml", "*.json", "*.proto", "*.graphql", "*.gql",
-             "*.py", "*.java", "*.kt", "*.go", "*.ts", "*.js")
+API_GLOBS = (
+    "*.yaml",
+    "*.yml",
+    "*.json",
+    "*.proto",
+    "*.graphql",
+    "*.gql",
+    "*.py",
+    "*.java",
+    "*.kt",
+    "*.go",
+    "*.ts",
+    "*.js",
+)
 HANDOFF_GLOBS = ("*.json",)
 
 # Artifact type of what ``api.diagnose`` emits: the diagnostic the evidence bus
@@ -76,32 +88,43 @@ DIAGNOSTIC_EVIDENCE = "api.diagnostic-evidence"
 # resolving after a surface change is recorded by the graph as an unresolved
 # target, never dropped.
 VERIFIES: tuple[str, ...] = tuple(
-    f"api-forge/{cap}" for cap in ("api.analyze", "api.change-control"))
+    f"api-forge/{cap}" for cap in ("api.analyze", "api.change-control")
+)
 
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "api.diagnose": CapabilitySpec(
         seam=SEAM_DIAGNOSE,
         actions=("analyze",),
         input_globs=PROJECT_GLOBS,
-        signals_keywords=("api diagnosis", "api health", "api evidence", "api graph",
-                          "api impact", "diagnose api"),
+        signals_keywords=(
+            "api diagnosis",
+            "api health",
+            "api evidence",
+            "api graph",
+            "api impact",
+            "diagnose api",
+        ),
         file_globs=API_GLOBS,
         description="Deterministic observe/diagnose of an API project: bounded "
-                    "ApiHandoffBundle v2 (findings, evidence, unknowns, capabilities, "
-                    "graph edges, content hashes) plus ForgeHandoff envelope and "
-                    "diagnostic-manifest (DoctorBoundary, spec 070).",
+        "ApiHandoffBundle v2 (findings, evidence, unknowns, capabilities, "
+        "graph edges, content hashes) plus ForgeHandoff envelope and "
+        "diagnostic-manifest (DoctorBoundary, spec 070).",
         relations={"produces": (DIAGNOSTIC_EVIDENCE,)},
     ),
     "api.verify": CapabilitySpec(
         seam=SEAM_VERIFY,
         actions=("verify",),
         input_globs=HANDOFF_GLOBS,
-        signals_keywords=("verify handoff", "check handoff", "api handoff integrity",
-                          "validate bundle"),
+        signals_keywords=(
+            "verify handoff",
+            "check handoff",
+            "api handoff integrity",
+            "validate bundle",
+        ),
         file_globs=HANDOFF_GLOBS,
         description="Strict parse and integrity check of a Doctor API document "
-                    "(ApiHandoffBundle or ForgeHandoff envelope); v2 bundles are "
-                    "content-addressed so handoff_id is recomputed and compared.",
+        "(ApiHandoffBundle or ForgeHandoff envelope); v2 bundles are "
+        "content-addressed so handoff_id is recomputed and compared.",
         stage_root=False,
         verify_input=True,
         relations={"can_verify": VERIFIES},
@@ -139,8 +162,7 @@ def validate_snapshot(data: object) -> dict[str, Any]:
     for index, item in enumerate(seams):
         seam = _seam(item, index)
         if seam["name"] in seen:
-            raise SnapshotError(f"snapshot.seams[{index}]: duplicate seam "
-                                f"{seam['name']!r}")
+            raise SnapshotError(f"snapshot.seams[{index}]: duplicate seam {seam['name']!r}")
         seen.add(seam["name"])
     return data
 
@@ -156,17 +178,19 @@ def load_snapshot(path: Path = SNAPSHOT_PATH) -> dict[str, Any]:
 
 def seam_present(snapshot: Mapping[str, Any], name: str) -> bool:
     """Whether the recorded surface has the seam an exposed capability needs."""
-    return any(isinstance(item, Mapping) and item.get("name") == name
-               and item.get("present") is True
-               for item in snapshot.get("seams") or ())
+    return any(
+        isinstance(item, Mapping) and item.get("name") == name and item.get("present") is True
+        for item in snapshot.get("seams") or ()
+    )
 
 
 def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
     """The sha256 the manifest declares as ``native_surface_fingerprint``: the canonical
     snapshot minus ``recorded_at`` (a timestamp, not surface)."""
     payload = {key: value for key, value in snapshot.items() if key != "recorded_at"}
-    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
     return hashlib.sha256(blob).hexdigest()
 
 
@@ -185,28 +209,34 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
         },
     }
     if spec.relations:
-        entry["relations"] = {name: list(refs)
-                              for name, refs in spec.relations.items()}
+        entry["relations"] = {name: list(refs) for name, refs in spec.relations.items()}
     return entry
 
 
-def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: str,
-                     ops: Sequence[str] = ("describe", "health", "execute")
-                     ) -> dict[str, Any]:
+def manifest_payload(
+    snapshot: Mapping[str, Any],
+    *,
+    provider_id: str,
+    version: str,
+    ops: Sequence[str] = ("describe", "health", "execute"),
+) -> dict[str, Any]:
     """The ``ForgeManifest`` v1 payload derived from a validated surface snapshot."""
     capabilities: list[dict[str, Any]] = []
     limitations: list[str] = []
     if snapshot["provenance"] == HAND_BUILT:
         limitations.append(
             "native surface snapshot is hand-built (provisional until re-recorded with "
-            "python -m theforge_doctorapi.record)")
+            "python -m theforge_doctorapi.record)"
+        )
     for capability_id in sorted(CAPABILITY_MAP):
         spec = CAPABILITY_MAP[capability_id]
         if seam_present(snapshot, spec.seam):
             capabilities.append({"id": capability_id, **capability_entry(spec)})
         else:
-            limitations.append(f"capability '{capability_id}' not exposed: seam "
-                               f"{spec.seam!r} absent from the recorded native surface")
+            limitations.append(
+                f"capability '{capability_id}' not exposed: seam "
+                f"{spec.seam!r} absent from the recorded native surface"
+            )
     return {
         "schema": "theforge/ForgeManifest/v1",
         "id": provider_id,

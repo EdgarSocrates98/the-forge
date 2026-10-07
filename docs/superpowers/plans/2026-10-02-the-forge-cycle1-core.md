@@ -346,8 +346,13 @@ class Outer:
 
 def test_roundtrip() -> None:
     obj = Outer(
-        kind="a", inner=Inner(name="x", size=2), items=[Inner(name="y")],
-        note="n", ratio=0.5, flag=True, extra={"k": [1]},
+        kind="a",
+        inner=Inner(name="x", size=2),
+        items=[Inner(name="y")],
+        note="n",
+        ratio=0.5,
+        flag=True,
+        extra={"k": [1]},
     )
     assert from_dict(Outer, to_dict(obj)) == obj
 
@@ -535,15 +540,21 @@ from theforge.contracts import (
 
 P = {"id": "p", "version": "1"}
 CAP = {
-    "id": "demo.echo", "actions": ["echo"], "default_action": "echo",
-    "state": "supported", "operation_class": "read_only",
+    "id": "demo.echo",
+    "actions": ["echo"],
+    "default_action": "echo",
+    "state": "supported",
+    "operation_class": "read_only",
 }
 
 
 def manifest_dict(**overrides: object) -> dict[str, object]:
     data: dict[str, object] = {
-        "id": "demo-forge", "version": "1.0.0", "protocols": ["forge/v1"],
-        "ops": ["describe", "health", "execute"], "capabilities": [dict(CAP)],
+        "id": "demo-forge",
+        "version": "1.0.0",
+        "protocols": ["forge/v1"],
+        "ops": ["describe", "health", "execute"],
+        "capabilities": [dict(CAP)],
     }
     data.update(overrides)
     return data
@@ -602,8 +613,12 @@ def test_response_ok_minimal() -> None:
 def test_routed_decision_requires_selection() -> None:
     with pytest.raises(ContractError, match="requires a selection"):
         RoutingDecision(
-            producer=Producer(id="p", version="1"), created_at="t", status="routed",
-            task_id="t", reason="r", confidence=Confidence(level="high"),
+            producer=Producer(id="p", version="1"),
+            created_at="t",
+            status="routed",
+            task_id="t",
+            reason="r",
+            confidence=Confidence(level="high"),
         )
 
 
@@ -614,7 +629,9 @@ def test_execution_result_metrics_default_unknown() -> None:
 
 def test_metric_int_coerced_to_float() -> None:
     data = {
-        "producer": P, "created_at": "t", "status": "ok",
+        "producer": P,
+        "created_at": "t",
+        "status": "ok",
         "metrics": {"duration_ms": {"value": 12, "kind": "measured"}},
     }
     assert from_dict(ExecutionResult, data).metrics.duration_ms.value == 12.0
@@ -654,7 +671,11 @@ Severity = Literal["info", "low", "medium", "high", "critical"]
 HealthStatus = Literal["ok", "degraded", "unavailable"]
 
 TRUST_RANK: dict[str, int] = {
-    "builtin": 0, "trusted": 1, "local": 2, "unverified": 3, "blocked": 4,
+    "builtin": 0,
+    "trusted": 1,
+    "local": 2,
+    "unverified": 3,
+    "blocked": 4,
 }
 
 
@@ -1125,12 +1146,41 @@ from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, Producer
 
 __all__ = [
-    "PROTOCOL_V1", "Artifact", "Candidate", "Capability", "Confidence", "ContextFile",
-    "ContextPack", "ContractError", "ErrorInfo", "Evidence", "ExcludedFile", "ExecuteRequest",
-    "ExecutionInfo", "ExecutionReceipt", "ExecutionResult", "Finding", "ForgeManifest",
-    "HealthCheck", "HealthReport", "Location", "MatchedSignals", "Metric", "Metrics",
-    "Producer", "ReceiptInputs", "ReceiptProvider", "Request", "Response", "RoutingDecision",
-    "Selection", "Signals", "TaskSpec", "from_dict", "new_request_id", "to_dict",
+    "PROTOCOL_V1",
+    "Artifact",
+    "Candidate",
+    "Capability",
+    "Confidence",
+    "ContextFile",
+    "ContextPack",
+    "ContractError",
+    "ErrorInfo",
+    "Evidence",
+    "ExcludedFile",
+    "ExecuteRequest",
+    "ExecutionInfo",
+    "ExecutionReceipt",
+    "ExecutionResult",
+    "Finding",
+    "ForgeManifest",
+    "HealthCheck",
+    "HealthReport",
+    "Location",
+    "MatchedSignals",
+    "Metric",
+    "Metrics",
+    "Producer",
+    "ReceiptInputs",
+    "ReceiptProvider",
+    "Request",
+    "Response",
+    "RoutingDecision",
+    "Selection",
+    "Signals",
+    "TaskSpec",
+    "from_dict",
+    "new_request_id",
+    "to_dict",
 ]
 ```
 
@@ -1199,10 +1249,14 @@ from theforge.security.redact import REDACTED, redact, redact_text
         ("key AKIAABCDEFGHIJKLMNOP here", "AKIAABCDEFGHIJKLMNOP"),
         ("token=abc123secretvalue", "abc123secretvalue"),
         ("password: hunter2xyz", "hunter2xyz"),
-        ("AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY",
-         "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"),
-        ("Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345",
-         "abcdefghijklmnopqrstuvwxyz012345"),
+        (
+            "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY",
+            "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY",
+        ),
+        (
+            "Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345",
+            "abcdefghijklmnopqrstuvwxyz012345",
+        ),
         ("ghp_" + "a" * 36, "a" * 36),
         ("-----BEGIN RSA PRIVATE KEY-----\nMIIE\n-----END RSA PRIVATE KEY-----", "MIIE"),
     ],
@@ -1226,15 +1280,21 @@ def test_redact_text_is_idempotent(text: str) -> None:
 def test_redact_structure_and_sensitive_keys() -> None:
     data = {"intent": "password=hunter2xyz", "nested": [{"api_key": "plain"}], "count": 3}
     assert redact(data) == {
-        "intent": f"password={REDACTED}", "nested": [{"api_key": REDACTED}], "count": 3,
+        "intent": f"password={REDACTED}",
+        "nested": [{"api_key": REDACTED}],
+        "count": 3,
     }
 
 
 def test_safe_env_drops_credentials() -> None:
-    env = safe_env({
-        "PATH": "/bin", "AWS_SECRET_ACCESS_KEY": "x", "GITHUB_TOKEN": "y",
-        "SystemRoot": "C:\\Windows",
-    })
+    env = safe_env(
+        {
+            "PATH": "/bin",
+            "AWS_SECRET_ACCESS_KEY": "x",
+            "GITHUB_TOKEN": "y",
+            "SystemRoot": "C:\\Windows",
+        }
+    )
     assert env["PATH"] == "/bin"
     assert env["SystemRoot"] == "C:\\Windows"
     assert "AWS_SECRET_ACCESS_KEY" not in env and "GITHUB_TOKEN" not in env
@@ -1243,9 +1303,16 @@ def test_safe_env_drops_credentials() -> None:
 
 @pytest.mark.parametrize(
     ("name", "secret"),
-    [(".env", True), (".env.local", True), ("id_rsa", True), ("server.pem", True),
-     ("creds.key", True), ("credentials.json", True), ("notes.txt", False),
-     ("environment.py", False)],
+    [
+        (".env", True),
+        (".env.local", True),
+        ("id_rsa", True),
+        ("server.pem", True),
+        ("creds.key", True),
+        ("credentials.json", True),
+        ("notes.txt", False),
+        ("environment.py", False),
+    ],
 )
 def test_secret_names(name: str, secret: bool) -> None:
     assert is_secret_name(name) is secret
@@ -1295,24 +1362,40 @@ from typing import Any
 REDACTED = "[REDACTED]"
 
 _PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"),
-     REDACTED),
+    (
+        re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"),
+        REDACTED,
+    ),
     (re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"), REDACTED),
     (re.compile(r"\bghp_[A-Za-z0-9]{36}\b"), REDACTED),
     (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{22,}\b"), REDACTED),
     (re.compile(r"\bsk-[A-Za-z0-9_-]{20,}"), REDACTED),
     (re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}"), REDACTED),
     (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/-]{20,}=*"), REDACTED),
-    (re.compile(
-        r"(?i)\b(api[_-]?key|secret|token|password|passwd|client_secret"
-        r"|aws_secret_access_key|aws_session_token)(\s*[:=]\s*)(?!\[REDACTED\])[^\s'\",;]+"
-    ), r"\1\2" + REDACTED),
+    (
+        re.compile(
+            r"(?i)\b(api[_-]?key|secret|token|password|passwd|client_secret"
+            r"|aws_secret_access_key|aws_session_token)(\s*[:=]\s*)(?!\[REDACTED\])[^\s'\",;]+"
+        ),
+        r"\1\2" + REDACTED,
+    ),
 )
 
-SENSITIVE_KEYS = frozenset({
-    "password", "passwd", "secret", "token", "api_key", "apikey", "authorization",
-    "access_key", "secret_key", "client_secret", "aws_secret_access_key",
-})
+SENSITIVE_KEYS = frozenset(
+    {
+        "password",
+        "passwd",
+        "secret",
+        "token",
+        "api_key",
+        "apikey",
+        "authorization",
+        "access_key",
+        "secret_key",
+        "client_secret",
+        "aws_secret_access_key",
+    }
+)
 
 
 def redact_text(text: str) -> str:
@@ -1343,10 +1426,23 @@ def redact(value: Any) -> Any:
 import os
 from collections.abc import Mapping
 
-ALLOWED_ENV = frozenset({
-    "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
-    "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LC_ALL",
-})
+ALLOWED_ENV = frozenset(
+    {
+        "PATH",
+        "PATHEXT",
+        "SYSTEMROOT",
+        "SYSTEMDRIVE",
+        "WINDIR",
+        "COMSPEC",
+        "HOME",
+        "USERPROFILE",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        "LANG",
+        "LC_ALL",
+    }
+)
 
 
 def safe_env(source: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -1365,12 +1461,31 @@ def safe_env(source: Mapping[str, str] | None = None) -> dict[str, str]:
 from fnmatch import fnmatch
 from pathlib import Path
 
-IGNORED_DIRS = frozenset({
-    ".git", ".forge", "node_modules", ".venv", "venv", "__pycache__", "dist", "build",
-    ".mypy_cache", ".pytest_cache", ".ruff_cache", ".hypothesis",
-})
+IGNORED_DIRS = frozenset(
+    {
+        ".git",
+        ".forge",
+        "node_modules",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "dist",
+        "build",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".hypothesis",
+    }
+)
 SECRET_PATTERNS = (
-    ".env", ".env.*", "*.pem", "*.key", "id_rsa*", "id_ed25519*", "*.pfx", "*.p12",
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    "id_rsa*",
+    "id_ed25519*",
+    "*.pfx",
+    "*.p12",
     "credentials*",
 )
 
@@ -1445,10 +1560,19 @@ def main() -> int:
     proto = "forge/v9" if mode == "wrong-major" else "forge/v1"
 
     def reply(status, payload=None, error=None, request_id=None):
-        sys.stdout.write(json.dumps({
-            "protocol": proto, "kind": "Response", "request_id": request_id or rid,
-            "producer": producer, "status": status, "payload": payload or {}, "error": error,
-        }))
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "protocol": proto,
+                    "kind": "Response",
+                    "request_id": request_id or rid,
+                    "producer": producer,
+                    "status": status,
+                    "payload": payload or {},
+                    "error": error,
+                }
+            )
+        )
         return 0
 
     if op == "describe":
@@ -1456,21 +1580,36 @@ def main() -> int:
             sys.stderr.write("describe failed\n")
             return 3
         cap_id = "Bad Id" if mode == "invalid-manifest" else "bad.thing"
-        return reply("ok", {
-            "schema": "theforge/ForgeManifest/v1", "id": pid, "version": "0.0.1",
-            "protocols": [proto], "ops": ["describe", "health", "execute"],
-            "domains": ["test"],
-            "capabilities": [{
-                "id": cap_id, "actions": ["run"], "default_action": "run",
-                "state": "supported", "operation_class": "read_only",
-                "signals": {"keywords": ["bad"], "file_globs": [], "dependencies": []},
-            }],
-        })
+        return reply(
+            "ok",
+            {
+                "schema": "theforge/ForgeManifest/v1",
+                "id": pid,
+                "version": "0.0.1",
+                "protocols": [proto],
+                "ops": ["describe", "health", "execute"],
+                "domains": ["test"],
+                "capabilities": [
+                    {
+                        "id": cap_id,
+                        "actions": ["run"],
+                        "default_action": "run",
+                        "state": "supported",
+                        "operation_class": "read_only",
+                        "signals": {"keywords": ["bad"], "file_globs": [], "dependencies": []},
+                    }
+                ],
+            },
+        )
     if op == "health":
         if mode == "unhealthy":
-            return reply("ok", {"status": "unavailable",
-                                "checks": [{"name": "backend", "ok": False,
-                                            "detail": "backend down"}]})
+            return reply(
+                "ok",
+                {
+                    "status": "unavailable",
+                    "checks": [{"name": "backend", "ok": False, "detail": "backend down"}],
+                },
+            )
         return reply("ok", {"status": "ok", "checks": []})
     if op == "execute":
         if mode == "timeout":
@@ -1487,13 +1626,22 @@ def main() -> int:
         if mode == "mismatch":
             return reply("ok", dict(RESULT, producer=producer), request_id="nope")
         if mode == "bad-envelope":
-            sys.stdout.write(json.dumps({"protocol": "forge/v1", "kind": "Response",
-                                         "request_id": rid, "status": "ok"}))
+            sys.stdout.write(
+                json.dumps(
+                    {"protocol": "forge/v1", "kind": "Response", "request_id": rid, "status": "ok"}
+                )
+            )
             return 0
         if mode == "refuse":
-            return reply("refused", error={"code": "BAD-REFUSED", "detail": "refused on purpose",
-                                           "field": "capability",
-                                           "unlock": "try another capability"})
+            return reply(
+                "refused",
+                error={
+                    "code": "BAD-REFUSED",
+                    "detail": "refused on purpose",
+                    "field": "capability",
+                    "unlock": "try another capability",
+                },
+            )
         if mode == "bad-result":
             return reply("ok", {"status": "weird"})
         if mode == "env-probe":
@@ -1501,8 +1649,7 @@ def main() -> int:
         if mode == "cwd-probe":
             return reply("ok", {"cwd": os.getcwd()})
         return reply("ok", dict(RESULT, producer=producer))
-    return reply("refused", error={"code": "BAD-OP", "detail": op, "field": "op",
-                                   "unlock": None})
+    return reply("refused", error={"code": "BAD-OP", "detail": op, "field": "op", "unlock": None})
 
 
 if __name__ == "__main__":
@@ -1584,7 +1731,8 @@ def case_a(root: Path) -> None:
 
 def case_b(root: Path) -> None:
     write_file(
-        root, "api/openapi.yaml",
+        root,
+        "api/openapi.yaml",
         "openapi: 3.0.0\ninfo:\n  title: Orders\n  version: 1.0.0\npaths: {}\n",
     )
 ```
@@ -1602,8 +1750,13 @@ from theforge.protocol import SubprocessTransport, TransportError, choose_protoc
 
 @pytest.mark.parametrize(
     ("offered", "expected"),
-    [(["forge/v1"], "forge/v1"), (["forge/v1", "forge/v2"], "forge/v1"),
-     (["forge/v9"], None), (["garbage"], None), ([], None)],
+    [
+        (["forge/v1"], "forge/v1"),
+        (["forge/v1", "forge/v2"], "forge/v1"),
+        (["forge/v9"], None),
+        (["garbage"], None),
+        ([], None),
+    ],
 )
 def test_choose_protocol(offered: list[str], expected: str | None) -> None:
     assert choose_protocol(offered) == expected
@@ -1622,9 +1775,14 @@ def _failure(mode: str, timeout: float = 10) -> TransportError:
 
 @pytest.mark.parametrize(
     ("mode", "code"),
-    [("crash", "FORGE-PROTO-EXIT"), ("garbage", "FORGE-PROTO-NOT-JSON"),
-     ("oversize", "FORGE-PROTO-OVERSIZE"), ("mismatch", "FORGE-PROTO-MISMATCH"),
-     ("wrong-major", "FORGE-PROTO-VERSION"), ("bad-envelope", "FORGE-PROTO-SCHEMA")],
+    [
+        ("crash", "FORGE-PROTO-EXIT"),
+        ("garbage", "FORGE-PROTO-NOT-JSON"),
+        ("oversize", "FORGE-PROTO-OVERSIZE"),
+        ("mismatch", "FORGE-PROTO-MISMATCH"),
+        ("wrong-major", "FORGE-PROTO-VERSION"),
+        ("bad-envelope", "FORGE-PROTO-SCHEMA"),
+    ],
 )
 def test_transport_failures(mode: str, code: str) -> None:
     assert _failure(mode).code == code
@@ -1640,14 +1798,14 @@ def test_crash_stderr_is_redacted() -> None:
 
 def test_spawn_failure() -> None:
     with pytest.raises(TransportError) as info:
-        SubprocessTransport(["definitely-not-a-real-forge-binary"]).call(
-            "describe", {}, timeout=5)
+        SubprocessTransport(["definitely-not-a-real-forge-binary"]).call("describe", {}, timeout=5)
     assert info.value.code == "FORGE-PROTO-SPAWN"
 
 
 def test_wrong_major_describe_allowed_without_protocol_check() -> None:
     resp = SubprocessTransport(bad_argv("wrong-major")).call(
-        "describe", {}, timeout=10, check_protocol=False)
+        "describe", {}, timeout=10, check_protocol=False
+    )
     assert resp.payload["protocols"] == ["forge/v9"]
 
 
@@ -1660,8 +1818,7 @@ def test_provider_env_is_scrubbed(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_cwd_is_honored(tmp_path: Path) -> None:
-    resp = SubprocessTransport(bad_argv("cwd-probe")).call(
-        "execute", {}, timeout=10, cwd=tmp_path)
+    resp = SubprocessTransport(bad_argv("cwd-probe")).call("execute", {}, timeout=10, cwd=tmp_path)
     assert Path(resp.payload["cwd"]).resolve() == tmp_path.resolve()
 
 
@@ -1739,8 +1896,13 @@ class TransportError(Exception):
 
 class ProviderTransport(Protocol):
     def call(
-        self, op: str, payload: dict[str, Any], *, timeout: float,
-        cwd: Path | None = None, check_protocol: bool = True,
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
     ) -> Response: ...
 
 
@@ -1749,7 +1911,10 @@ TransportFactory = Callable[[Sequence[str]], ProviderTransport]
 
 class SubprocessTransport:
     def __init__(
-        self, argv: Sequence[str], *, protocol: str = PROTOCOL_V1,
+        self,
+        argv: Sequence[str],
+        *,
+        protocol: str = PROTOCOL_V1,
         max_stdout: int = MAX_STDOUT_BYTES,
     ) -> None:
         if not argv:
@@ -1759,17 +1924,24 @@ class SubprocessTransport:
         self.max_stdout = max_stdout
 
     def call(
-        self, op: str, payload: dict[str, Any], *, timeout: float,
-        cwd: Path | None = None, check_protocol: bool = True,
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
     ) -> Response:
-        request = Request(protocol=self.protocol, op=op, request_id=new_request_id(),
-                          payload=payload)
+        request = Request(
+            protocol=self.protocol, op=op, request_id=new_request_id(), payload=payload
+        )
         stdout = self._run(op, canonical_json(to_dict(request)).encode("utf-8"), timeout, cwd)
         try:
             data = json.loads(stdout.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise TransportError("FORGE-PROTO-NOT-JSON", f"{op}: stdout is not JSON ({exc})") \
-                from exc
+            raise TransportError(
+                "FORGE-PROTO-NOT-JSON", f"{op}: stdout is not JSON ({exc})"
+            ) from exc
         try:
             response = from_dict(Response, data)
         except ContractError as exc:
@@ -1777,8 +1949,7 @@ class SubprocessTransport:
         if response.request_id != request.request_id:
             raise TransportError(
                 "FORGE-PROTO-MISMATCH",
-                f"{op}: response request_id {response.request_id!r} "
-                f"!= {request.request_id!r}",
+                f"{op}: response request_id {response.request_id!r} != {request.request_id!r}",
             )
         if check_protocol and response.protocol != self.protocol:
             raise TransportError(
@@ -1790,12 +1961,18 @@ class SubprocessTransport:
     def _run(self, op: str, stdin_bytes: bytes, timeout: float, cwd: Path | None) -> bytes:
         try:
             proc = subprocess.Popen(
-                [*self.argv, op], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, cwd=cwd, env=safe_env(), shell=False,
+                [*self.argv, op],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                env=safe_env(),
+                shell=False,
             )
         except OSError as exc:
-            raise TransportError("FORGE-PROTO-SPAWN", f"cannot start {self.argv[0]!r}: {exc}") \
-                from exc
+            raise TransportError(
+                "FORGE-PROTO-SPAWN", f"cannot start {self.argv[0]!r}: {exc}"
+            ) from exc
         if proc.stdin is None or proc.stdout is None or proc.stderr is None:
             proc.kill()
             raise TransportError("FORGE-PROTO-SPAWN", "provider pipes unavailable")
@@ -1835,17 +2012,20 @@ class SubprocessTransport:
             proc.wait()
             for thread in threads:
                 thread.join(timeout=5)
-            raise TransportError("FORGE-PROTO-TIMEOUT", f"{op}: no response within {timeout:g}s") \
-                from exc
+            raise TransportError(
+                "FORGE-PROTO-TIMEOUT", f"{op}: no response within {timeout:g}s"
+            ) from exc
         for thread in threads:
             thread.join(timeout=5)
         if oversize.is_set():
             raise TransportError(
-                "FORGE-PROTO-OVERSIZE", f"{op}: stdout exceeded {self.max_stdout} bytes")
+                "FORGE-PROTO-OVERSIZE", f"{op}: stdout exceeded {self.max_stdout} bytes"
+            )
         if returncode != 0:
             tail = redact_text(err.decode("utf-8", errors="replace").strip()[-500:])
             raise TransportError(
-                "FORGE-PROTO-EXIT", f"{op}: exit code {returncode}; stderr: {tail}")
+                "FORGE-PROTO-EXIT", f"{op}: exit code {returncode}; stderr: {tail}"
+            )
         return bytes(out)
 ```
 
@@ -1863,8 +2043,13 @@ from theforge.protocol.transport import (
 )
 
 __all__ = [
-    "SUPPORTED_PROTOCOLS", "ProviderTransport", "SubprocessTransport", "TransportError",
-    "TransportFactory", "choose_protocol", "major",
+    "SUPPORTED_PROTOCOLS",
+    "ProviderTransport",
+    "SubprocessTransport",
+    "TransportError",
+    "TransportFactory",
+    "choose_protocol",
+    "major",
 ]
 ```
 
@@ -1964,10 +2149,19 @@ def main() -> int:
     rid = "unknown"
 
     def reply(status, payload=None, error=None):
-        sys.stdout.write(json.dumps({
-            "protocol": "forge/v1", "kind": "Response", "request_id": rid,
-            "producer": producer, "status": status, "payload": payload or {}, "error": error,
-        }))
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "protocol": "forge/v1",
+                    "kind": "Response",
+                    "request_id": rid,
+                    "producer": producer,
+                    "status": status,
+                    "payload": payload or {},
+                    "error": error,
+                }
+            )
+        )
         return 0
 
     def err(code, detail, field=None):
@@ -1979,8 +2173,9 @@ def main() -> int:
     except (json.JSONDecodeError, KeyError, TypeError) as exc:
         return reply("error", error=err("FIXTURE-REQ-INVALID", str(exc)))
     if op != "describe" and req.get("protocol") != "forge/v1":
-        return reply("refused", error=err("FIXTURE-PROTO-UNSUPPORTED",
-                                          str(req.get("protocol")), "protocol"))
+        return reply(
+            "refused", error=err("FIXTURE-PROTO-UNSUPPORTED", str(req.get("protocol")), "protocol")
+        )
     if op == "describe":
         return reply("ok", manifest)
     if op == "health":
@@ -1991,16 +2186,32 @@ def main() -> int:
         if cap not in {c["id"] for c in manifest["capabilities"]}:
             return reply("refused", error=err("FIXTURE-CAP-UNSUPPORTED", str(cap), "capability"))
         files = [f["path"] for f in payload["context"]["files"]]
-        return reply("ok", {
-            "schema": "theforge/ExecutionResult/v1", "producer": producer,
-            "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",
-            "findings": [{"id": "f1", "title": f"{manifest['id']} handled "
-                                               f"{cap}:{payload.get('action')}",
-                          "severity": "info", "evidence_ids": ["e1"]}],
-            "evidence": [{"id": "e1", "epistemic": "observed", "subject": cap,
-                          "claim": f"received {len(files)} context files",
-                          "producer": producer}],
-        })
+        return reply(
+            "ok",
+            {
+                "schema": "theforge/ExecutionResult/v1",
+                "producer": producer,
+                "created_at": "1970-01-01T00:00:00.000000Z",
+                "status": "ok",
+                "findings": [
+                    {
+                        "id": "f1",
+                        "title": f"{manifest['id']} handled {cap}:{payload.get('action')}",
+                        "severity": "info",
+                        "evidence_ids": ["e1"],
+                    }
+                ],
+                "evidence": [
+                    {
+                        "id": "e1",
+                        "epistemic": "observed",
+                        "subject": cap,
+                        "claim": f"received {len(files)} context files",
+                        "producer": producer,
+                    }
+                ],
+            },
+        )
     return reply("refused", error=err("FIXTURE-OP-UNSUPPORTED", op, "op"))
 
 
@@ -2045,7 +2256,8 @@ PROVIDER_ARGVS = {
     "fixture-api": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api.json")),
 }
 pytestmark = pytest.mark.parametrize(
-    "argv", list(PROVIDER_ARGVS.values()), ids=list(PROVIDER_ARGVS))
+    "argv", list(PROVIDER_ARGVS.values()), ids=list(PROVIDER_ARGVS)
+)
 
 
 def raw(argv: list[str], op: str, body: bytes) -> tuple[int, dict[str, Any]]:
@@ -2054,8 +2266,15 @@ def raw(argv: list[str], op: str, body: bytes) -> tuple[int, dict[str, Any]]:
 
 
 def request(op: str, payload: dict[str, Any] | None = None, protocol: str = "forge/v1") -> bytes:
-    return json.dumps({"protocol": protocol, "kind": "Request", "op": op,
-                       "request_id": "r_conformance", "payload": payload or {}}).encode()
+    return json.dumps(
+        {
+            "protocol": protocol,
+            "kind": "Request",
+            "op": op,
+            "request_id": "r_conformance",
+            "payload": payload or {},
+        }
+    ).encode()
 
 
 def manifest_of(argv: list[str]) -> ForgeManifest:
@@ -2064,10 +2283,22 @@ def manifest_of(argv: list[str]) -> ForgeManifest:
 
 
 def execute_payload(root: Path, capability: str, action: str) -> dict[str, Any]:
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="conformance",
-                    workspace_root=str(root))
-    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
-                       task_id="t1", provider_id="x", root=str(root), budget_bytes=1024)
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent="conformance",
+        workspace_root=str(root),
+    )
+    pack = ContextPack(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="complete",
+        task_id="t1",
+        provider_id="x",
+        root=str(root),
+        budget_bytes=1024,
+    )
     return to_dict(ExecuteRequest(task=task, capability=capability, action=action, context=pack))
 
 
@@ -2132,8 +2363,9 @@ def test_echo_confirms_context_hashes(argv: list[str], tmp_path: Path) -> None:
 
     (tmp_path / "notes.txt").write_bytes(b"hello")
     payload = execute_payload(tmp_path, "demo.echo", "echo")
-    payload["context"]["files"] = [to_dict(ContextFile(
-        path="notes.txt", sha256=sha256_hex(b"hello"), bytes=5))]
+    payload["context"]["files"] = [
+        to_dict(ContextFile(path="notes.txt", sha256=sha256_hex(b"hello"), bytes=5))
+    ]
     _, data = raw(argv, "execute", request("execute", payload))
     result = from_dict(ExecutionResult, data["payload"])
     assert [e.epistemic for e in result.evidence] == ["confirmed"]
@@ -2200,17 +2432,24 @@ MANIFEST = ForgeManifest(
     domains=["demo"],
     capabilities=[
         Capability(
-            id="demo.echo", actions=["echo"], default_action="echo", state="supported",
+            id="demo.echo",
+            actions=["echo"],
+            default_action="echo",
+            state="supported",
             operation_class="read_only",
             description="Echo the task intent and confirm context file hashes.",
             signals=Signals(keywords=["echo", "eco", "demo"], file_globs=list(DOC_GLOBS)),
         ),
         Capability(
-            id="demo.inspect", actions=["inspect"], default_action="inspect",
-            state="supported", operation_class="read_only",
+            id="demo.inspect",
+            actions=["inspect"],
+            default_action="inspect",
+            state="supported",
+            operation_class="read_only",
             description="List context files with their sizes.",
-            signals=Signals(keywords=["inspect", "inspecionar", "listar"],
-                            file_globs=list(DOC_GLOBS)),
+            signals=Signals(
+                keywords=["inspect", "inspecionar", "listar"], file_globs=list(DOC_GLOBS)
+            ),
         ),
     ],
     limitations=["demonstration provider; performs no domain analysis"],
@@ -2218,33 +2457,60 @@ MANIFEST = ForgeManifest(
 
 
 def _respond(
-    request_id: str, status: ResponseStatus, *, payload: dict[str, Any] | None = None,
+    request_id: str,
+    status: ResponseStatus,
+    *,
+    payload: dict[str, Any] | None = None,
     error: ErrorInfo | None = None,
 ) -> dict[str, Any]:
-    return to_dict(Response(request_id=request_id, producer=PRODUCER, status=status,
-                            payload=payload or {}, error=error))
+    return to_dict(
+        Response(
+            request_id=request_id,
+            producer=PRODUCER,
+            status=status,
+            payload=payload or {},
+            error=error,
+        )
+    )
 
 
 def handle(op: str, raw: bytes) -> dict[str, Any]:
     try:
         data = json.loads(raw.decode("utf-8") or "{}")
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        return _respond("unknown", "error", error=ErrorInfo(
-            code="ECHO-REQ-INVALID", detail=f"request is not JSON: {exc}"))
+        return _respond(
+            "unknown",
+            "error",
+            error=ErrorInfo(code="ECHO-REQ-INVALID", detail=f"request is not JSON: {exc}"),
+        )
     request_id = str(data.get("request_id", "unknown")) if isinstance(data, dict) else "unknown"
     try:
         request = from_dict(Request, data)
     except ContractError as exc:
-        return _respond(request_id, "error",
-                        error=ErrorInfo(code="ECHO-REQ-INVALID", detail=str(exc)))
+        return _respond(
+            request_id, "error", error=ErrorInfo(code="ECHO-REQ-INVALID", detail=str(exc))
+        )
     if op != "describe" and request.protocol != PROTOCOL_V1:
-        return _respond(request_id, "refused", error=ErrorInfo(
-            code="ECHO-PROTO-UNSUPPORTED", detail=f"protocol {request.protocol!r} not supported",
-            field="protocol", unlock=f"use {PROTOCOL_V1}"))
+        return _respond(
+            request_id,
+            "refused",
+            error=ErrorInfo(
+                code="ECHO-PROTO-UNSUPPORTED",
+                detail=f"protocol {request.protocol!r} not supported",
+                field="protocol",
+                unlock=f"use {PROTOCOL_V1}",
+            ),
+        )
     if request.op != op:
-        return _respond(request_id, "error", error=ErrorInfo(
-            code="ECHO-REQ-INVALID", detail=f"envelope op {request.op!r} != invoked op {op!r}",
-            field="op"))
+        return _respond(
+            request_id,
+            "error",
+            error=ErrorInfo(
+                code="ECHO-REQ-INVALID",
+                detail=f"envelope op {request.op!r} != invoked op {op!r}",
+                field="op",
+            ),
+        )
     if op == "describe":
         return _respond(request_id, "ok", payload=to_dict(MANIFEST))
     if op == "health":
@@ -2252,23 +2518,39 @@ def handle(op: str, raw: bytes) -> dict[str, Any]:
         return _respond(request_id, "ok", payload=to_dict(report))
     if op == "execute":
         return _execute(request_id, request.payload)
-    return _respond(request_id, "refused", error=ErrorInfo(
-        code="ECHO-OP-UNSUPPORTED", detail=f"op {op!r} not supported", field="op",
-        unlock="ops: describe, health, execute"))
+    return _respond(
+        request_id,
+        "refused",
+        error=ErrorInfo(
+            code="ECHO-OP-UNSUPPORTED",
+            detail=f"op {op!r} not supported",
+            field="op",
+            unlock="ops: describe, health, execute",
+        ),
+    )
 
 
 def _execute(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     try:
         req = from_dict(ExecuteRequest, payload, "$.payload")
     except ContractError as exc:
-        return _respond(request_id, "error", error=ErrorInfo(
-            code="ECHO-REQ-INVALID", detail=str(exc), field="payload"))
+        return _respond(
+            request_id,
+            "error",
+            error=ErrorInfo(code="ECHO-REQ-INVALID", detail=str(exc), field="payload"),
+        )
     capability = MANIFEST.capability(req.capability)
     if capability is None or req.action not in capability.actions:
-        return _respond(request_id, "refused", error=ErrorInfo(
-            code="ECHO-CAP-UNSUPPORTED",
-            detail=f"{req.capability}:{req.action} not offered by echo-forge",
-            field="capability", unlock=UNLOCK_CAPABILITIES))
+        return _respond(
+            request_id,
+            "refused",
+            error=ErrorInfo(
+                code="ECHO-CAP-UNSUPPORTED",
+                detail=f"{req.capability}:{req.action} not offered by echo-forge",
+                field="capability",
+                unlock=UNLOCK_CAPABILITIES,
+            ),
+        )
     root = Path(req.task.workspace_root)
     evidence: list[Evidence] = []
     for index, item in enumerate(req.context.files, start=1):
@@ -2288,15 +2570,29 @@ def _execute(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
             epistemic, claim = "confirmed", "content hash matches context pack"
         else:
             epistemic, claim = "unresolved", "content hash differs from context pack"
-        evidence.append(Evidence(id=f"e{index}", epistemic=epistemic, subject=item.path,
-                                 claim=claim, producer=PRODUCER,
-                                 location=Location(path=item.path), hash=actual))
-    title = (f"echo: {req.task.intent}" if capability.id == "demo.echo"
-             else f"inspect: {len(req.context.files)} files")
+        evidence.append(
+            Evidence(
+                id=f"e{index}",
+                epistemic=epistemic,
+                subject=item.path,
+                claim=claim,
+                producer=PRODUCER,
+                location=Location(path=item.path),
+                hash=actual,
+            )
+        )
+    title = (
+        f"echo: {req.task.intent}"
+        if capability.id == "demo.echo"
+        else f"inspect: {len(req.context.files)} files"
+    )
     result = ExecutionResult(
-        producer=PRODUCER, created_at=utc_now(), status="ok",
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="ok",
         findings=[Finding(id="f1", title=title, evidence_ids=[e.id for e in evidence])],
-        evidence=evidence, limitations=list(MANIFEST.limitations),
+        evidence=evidence,
+        limitations=list(MANIFEST.limitations),
     )
     return _respond(request_id, "ok", payload=to_dict(result))
 ```
@@ -2368,9 +2664,11 @@ def test_project_overrides_user_and_expands_python(tmp_path: Path) -> None:
     forge = tmp_path / ".forge"
     (forge / "config").mkdir(parents=True)
     (user / "providers.toml").write_text(
-        '[[providers]]\nid = "x-forge"\nargv = ["x"]\ntrust = "trusted"\n', encoding="utf-8")
+        '[[providers]]\nid = "x-forge"\nargv = ["x"]\ntrust = "trusted"\n', encoding="utf-8"
+    )
     (forge / "config" / "providers.toml").write_text(
-        '[[providers]]\nid = "x-forge"\nargv = ["{python}", "x.py"]\n', encoding="utf-8")
+        '[[providers]]\nid = "x-forge"\nargv = ["{python}", "x.py"]\n', encoding="utf-8"
+    )
     entries = {e.id: e for e in resolve_entries(forge, user)}
     assert entries["x-forge"].source == "project"
     assert entries["x-forge"].trust == "unverified"
@@ -2450,8 +2748,14 @@ class ProviderEntry:
 
 
 def builtin_entries() -> list[ProviderEntry]:
-    return [ProviderEntry(id="echo-forge", argv=[sys.executable, "-m", "theforge.providers.echo"],
-                          trust="builtin", source="builtin")]
+    return [
+        ProviderEntry(
+            id="echo-forge",
+            argv=[sys.executable, "-m", "theforge.providers.echo"],
+            trust="builtin",
+            source="builtin",
+        )
+    ]
 
 
 def user_config_dir() -> Path:
@@ -2516,7 +2820,11 @@ from theforge.registry.config import (
 )
 
 __all__ = [
-    "ProviderEntry", "builtin_entries", "load_entries", "resolve_entries", "user_config_dir",
+    "ProviderEntry",
+    "builtin_entries",
+    "load_entries",
+    "resolve_entries",
+    "user_config_dir",
 ]
 ```
 
@@ -2632,8 +2940,11 @@ def test_corrupt_cache_is_discarded(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("mode", "state"),
-    [("wrong-major", "incompatible"), ("invalid-manifest", "invalid"),
-     ("describe-crash", "unreachable")],
+    [
+        ("wrong-major", "incompatible"),
+        ("invalid-manifest", "invalid"),
+        ("describe-crash", "unreachable"),
+    ],
 )
 def test_bad_providers_degrade(tmp_path: Path, mode: str, state: str) -> None:
     record = Registry(make_forge(tmp_path, [bad_entry(mode, "bad-a")])).get("bad-a")
@@ -2648,15 +2959,15 @@ def test_manifest_id_must_match_entry(tmp_path: Path) -> None:
 
 
 def test_blocked_is_never_spawned(tmp_path: Path) -> None:
-    entry = {"id": "nope-forge", "argv": ["definitely-not-a-real-forge-binary"],
-             "trust": "blocked"}
+    entry = {"id": "nope-forge", "argv": ["definitely-not-a-real-forge-binary"], "trust": "blocked"}
     record = Registry(make_forge(tmp_path, [entry])).get("nope-forge")
     assert record.state == "blocked" and not record.routable(allow_unverified=True)
 
 
 def test_unverified_routable_only_with_opt_in(tmp_path: Path) -> None:
-    record = Registry(make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified")])) \
-        .get("bad-a")
+    record = Registry(make_forge(tmp_path, [bad_entry("ok", "bad-a", trust="unverified")])).get(
+        "bad-a"
+    )
     assert not record.routable() and record.routable(allow_unverified=True)
 
 
@@ -2737,7 +3048,10 @@ class RegistryRecord:
 
 class Registry:
     def __init__(
-        self, forge_dir: Path | None, *, user_dir: Path | None = None,
+        self,
+        forge_dir: Path | None,
+        *,
+        user_dir: Path | None = None,
         transport_factory: TransportFactory = SubprocessTransport,
         timeout: float = DESCRIBE_TIMEOUT,
     ) -> None:
@@ -2777,10 +3091,12 @@ class Registry:
             return RegistryRecord(entry=entry, state="blocked", error="provider is blocked")
         try:
             response = self.transport_factory(entry.argv).call(
-                "describe", {}, timeout=self.timeout, check_protocol=False)
+                "describe", {}, timeout=self.timeout, check_protocol=False
+            )
         except TransportError as exc:
-            return RegistryRecord(entry=entry, state="unreachable",
-                                  error=f"{exc.code}: {exc.detail}")
+            return RegistryRecord(
+                entry=entry, state="unreachable", error=f"{exc.code}: {exc.detail}"
+            )
         if response.status != "ok":
             code = response.error.code if response.error else response.status
             return RegistryRecord(entry=entry, state="invalid", error=f"describe {code}")
@@ -2790,17 +3106,24 @@ class Registry:
             return RegistryRecord(entry=entry, state="invalid", error=str(exc))
         if manifest.id != entry.id:
             return RegistryRecord(
-                entry=entry, state="invalid",
-                error=f"manifest id {manifest.id!r} does not match registry entry {entry.id!r}")
+                entry=entry,
+                state="invalid",
+                error=f"manifest id {manifest.id!r} does not match registry entry {entry.id!r}",
+            )
         digest = sha256_of(to_dict(manifest))
         protocol = choose_protocol(manifest.protocols)
         if protocol is None:
             return RegistryRecord(
-                entry=entry, state="incompatible", manifest=manifest, manifest_sha256=digest,
+                entry=entry,
+                state="incompatible",
+                manifest=manifest,
+                manifest_sha256=digest,
                 error=f"no common protocol (offered {manifest.protocols}, "
-                      f"supported {list(SUPPORTED_PROTOCOLS)})")
-        return RegistryRecord(entry=entry, state="ready", manifest=manifest,
-                              manifest_sha256=digest, protocol=protocol)
+                f"supported {list(SUPPORTED_PROTOCOLS)})",
+            )
+        return RegistryRecord(
+            entry=entry, state="ready", manifest=manifest, manifest_sha256=digest, protocol=protocol
+        )
 
     def _cache_path(self, provider_id: str) -> Path | None:
         if self.forge_dir is None:
@@ -2861,29 +3184,43 @@ class HealthOutcome:
 
 
 def check_health(
-    record: RegistryRecord, *, transport_factory: TransportFactory = SubprocessTransport,
+    record: RegistryRecord,
+    *,
+    transport_factory: TransportFactory = SubprocessTransport,
     timeout: float = HEALTH_TIMEOUT,
 ) -> HealthOutcome:
     if record.state != "ready":
-        return HealthOutcome(status="error", error=ErrorInfo(
-            code="FORGE-PROVIDER-NOT-READY",
-            detail=f"{record.entry.id} is {record.state}: {record.error}"))
+        return HealthOutcome(
+            status="error",
+            error=ErrorInfo(
+                code="FORGE-PROVIDER-NOT-READY",
+                detail=f"{record.entry.id} is {record.state}: {record.error}",
+            ),
+        )
     try:
         response = transport_factory(record.entry.argv).call("health", {}, timeout=timeout)
     except TransportError as exc:
         return HealthOutcome(status="error", error=ErrorInfo(code=exc.code, detail=exc.detail))
     if response.status != "ok":
-        return HealthOutcome(status="error", error=response.error or ErrorInfo(
-            code="FORGE-HEALTH-FAILED", detail=f"health status {response.status}"))
+        return HealthOutcome(
+            status="error",
+            error=response.error
+            or ErrorInfo(code="FORGE-HEALTH-FAILED", detail=f"health status {response.status}"),
+        )
     try:
         report = from_dict(HealthReport, response.payload, "$.payload")
     except ContractError as exc:
-        return HealthOutcome(status="error",
-                             error=ErrorInfo(code="FORGE-PROTO-SCHEMA", detail=str(exc)))
+        return HealthOutcome(
+            status="error", error=ErrorInfo(code="FORGE-PROTO-SCHEMA", detail=str(exc))
+        )
     if report.status == "unavailable":
         failing = "; ".join(c.detail or c.name for c in report.checks if not c.ok)
-        return HealthOutcome(status="unavailable", error=ErrorInfo(
-            code="FORGE-HEALTH-UNAVAILABLE", detail=failing or "provider reports unavailable"))
+        return HealthOutcome(
+            status="unavailable",
+            error=ErrorInfo(
+                code="FORGE-HEALTH-UNAVAILABLE", detail=failing or "provider reports unavailable"
+            ),
+        )
     return HealthOutcome(status=report.status)
 ```
 
@@ -2903,8 +3240,15 @@ from theforge.registry.health import HealthOutcome, check_health
 from theforge.registry.registry import Registry, RegistryRecord
 
 __all__ = [
-    "HealthOutcome", "ProviderEntry", "Registry", "RegistryRecord", "builtin_entries",
-    "check_health", "load_entries", "resolve_entries", "user_config_dir",
+    "HealthOutcome",
+    "ProviderEntry",
+    "Registry",
+    "RegistryRecord",
+    "builtin_entries",
+    "check_health",
+    "load_entries",
+    "resolve_entries",
+    "user_config_dir",
 ]
 ```
 
@@ -2991,24 +3335,43 @@ def test_scan_symlink_escape(tmp_path: Path) -> None:
 
 
 def test_normalize_tokens() -> None:
-    assert normalize_tokens("Análise do Job está LENTO!") == ["analise", "do", "job", "esta",
-                                                              "lento"]
+    assert normalize_tokens("Análise do Job está LENTO!") == [
+        "analise",
+        "do",
+        "job",
+        "esta",
+        "lento",
+    ]
 
 
 def test_keyword_matches_multiword_and_order() -> None:
-    assert keyword_matches({"glue", "job", "lento"}, ["glue job", "spark", "lento"]) == \
-        ["glue job", "lento"]
+    assert keyword_matches({"glue", "job", "lento"}, ["glue job", "spark", "lento"]) == [
+        "glue job",
+        "lento",
+    ]
 
 
 def test_workspace_dependencies(tmp_path: Path) -> None:
-    write_file(tmp_path, "pyproject.toml",
-               '[project]\ndependencies = ["PySpark>=3.5", "boto3"]\n'
-               '[tool.poetry.dependencies]\npython = "^3.11"\nFastAPI = "*"\n')
+    write_file(
+        tmp_path,
+        "pyproject.toml",
+        '[project]\ndependencies = ["PySpark>=3.5", "boto3"]\n'
+        '[tool.poetry.dependencies]\npython = "^3.11"\nFastAPI = "*"\n',
+    )
     write_file(tmp_path, "requirements-dev.txt", "# c\n-r base.txt\naws_glue_libs==4\n\n")
-    write_file(tmp_path, "package.json",
-               '{"dependencies": {"express": "4"}, "devDependencies": {"Jest": "29"}}')
+    write_file(
+        tmp_path,
+        "package.json",
+        '{"dependencies": {"express": "4"}, "devDependencies": {"Jest": "29"}}',
+    )
     assert workspace_dependencies(tmp_path) == {
-        "pyspark", "boto3", "fastapi", "aws-glue-libs", "express", "jest"}
+        "pyspark",
+        "boto3",
+        "fastapi",
+        "aws-glue-libs",
+        "express",
+        "jest",
+    }
 
 
 def test_workspace_dependencies_tolerates_garbage(tmp_path: Path) -> None:
@@ -3019,8 +3382,10 @@ def test_workspace_dependencies_tolerates_garbage(tmp_path: Path) -> None:
 
 def test_glob_matches() -> None:
     files = ["api/openapi.yaml", "jobs/orders_glue_job.py"]
-    assert glob_matches(files, ["openapi.yaml", "*glue*.py", "*.scala"]) == \
-        ["openapi.yaml", "*glue*.py"]
+    assert glob_matches(files, ["openapi.yaml", "*glue*.py", "*.scala"]) == [
+        "openapi.yaml",
+        "*glue*.py",
+    ]
 ```
 
 - [ ] **Step 2: Ver falhar**
@@ -3253,45 +3618,91 @@ from theforge.registry import ProviderEntry, RegistryRecord
 from theforge.routing import route
 
 
-def cap(cid: str, *, actions: tuple[str, ...] = ("run",), kw: tuple[str, ...] = (),
-        globs: tuple[str, ...] = (), deps: tuple[str, ...] = (),
-        state: str = "supported") -> Capability:
-    return Capability(id=cid, actions=list(actions), default_action=actions[0],
-                      state=state, operation_class="read_only",
-                      signals=Signals(keywords=list(kw), file_globs=list(globs),
-                                      dependencies=list(deps)))
+def cap(
+    cid: str,
+    *,
+    actions: tuple[str, ...] = ("run",),
+    kw: tuple[str, ...] = (),
+    globs: tuple[str, ...] = (),
+    deps: tuple[str, ...] = (),
+    state: str = "supported",
+) -> Capability:
+    return Capability(
+        id=cid,
+        actions=list(actions),
+        default_action=actions[0],
+        state=state,
+        operation_class="read_only",
+        signals=Signals(keywords=list(kw), file_globs=list(globs), dependencies=list(deps)),
+    )
 
 
-def record(pid: str, caps: list[Capability], trust: str = "local",
-           state: str = "ready") -> RegistryRecord:
-    manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"],
-                             ops=["describe", "health", "execute"], capabilities=list(caps))
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust=trust),
-                          state=state, manifest=manifest,
-                          manifest_sha256="h", protocol="forge/v1")
+def record(
+    pid: str, caps: list[Capability], trust: str = "local", state: str = "ready"
+) -> RegistryRecord:
+    manifest = ForgeManifest(
+        id=pid,
+        version="1",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=list(caps),
+    )
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust=trust),
+        state=state,
+        manifest=manifest,
+        manifest_sha256="h",
+        protocol="forge/v1",
+    )
 
 
 def task(intent: str, **kw: object) -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent,
-                    workspace_root="/ws", **kw)
+    return TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent, workspace_root="/ws", **kw
+    )
 
 
-SPARK = record("spark-forge", [cap("spark.performance", actions=("diagnose", "optimize"),
-                                   kw=("glue", "lento", "performance"),
-                                   globs=("*glue*.py",), deps=("pyspark",))])
-API = record("api-forge", [cap("api.contract", actions=("review",),
-                               kw=("openapi", "contrato", "api"), globs=("openapi.yaml",))])
+SPARK = record(
+    "spark-forge",
+    [
+        cap(
+            "spark.performance",
+            actions=("diagnose", "optimize"),
+            kw=("glue", "lento", "performance"),
+            globs=("*glue*.py",),
+            deps=("pyspark",),
+        )
+    ],
+)
+API = record(
+    "api-forge",
+    [
+        cap(
+            "api.contract",
+            actions=("review",),
+            kw=("openapi", "contrato", "api"),
+            globs=("openapi.yaml",),
+        )
+    ],
+)
 
 
 def test_case_a_routes_to_spark() -> None:
-    d = route(task("analise esse Glue Job porque está lento"), [SPARK, API],
-              ["jobs/orders_glue_job.py"], {"pyspark"})
+    d = route(
+        task("analise esse Glue Job porque está lento"),
+        [SPARK, API],
+        ["jobs/orders_glue_job.py"],
+        {"pyspark"},
+    )
     assert d.status == "routed"
     assert (d.selected[0].provider, d.selected[0].action) == ("spark-forge", "diagnose")
     assert d.confidence.level == "high"
     assert d.candidates[0].rank_key == [3, 1, 1, 2]
     assert d.confidence.measured_signals == [
-        "dependencies:pyspark", "file_globs:*glue*.py", "keywords:glue,lento"]
+        "dependencies:pyspark",
+        "file_globs:*glue*.py",
+        "keywords:glue,lento",
+    ]
 
 
 def test_case_b_routes_to_api() -> None:
@@ -3319,46 +3730,57 @@ def test_explicit_capability_tie_breaks_by_trust_then_id() -> None:
     caps = SPARK.manifest.capabilities if SPARK.manifest else []
     trusted = record("zzz-forge", caps, trust="trusted")
     unverified = record("aaa-forge", caps, trust="unverified")
-    d = route(task("x", requested_capability="spark.performance"),
-              [SPARK, trusted, unverified], [], set(), allow_unverified=True)
+    d = route(
+        task("x", requested_capability="spark.performance"),
+        [SPARK, trusted, unverified],
+        [],
+        set(),
+        allow_unverified=True,
+    )
     assert d.selected[0].provider == "zzz-forge"
     assert [c.provider for c in d.candidates] == ["zzz-forge", "spark-forge", "aaa-forge"]
     assert "tie-break" in d.reason
 
 
 def test_explicit_unknown_capability() -> None:
-    assert route(task("x", requested_capability="zzz.nope"), [SPARK], [], set()).status == \
-        "no_route"
+    assert (
+        route(task("x", requested_capability="zzz.nope"), [SPARK], [], set()).status == "no_route"
+    )
 
 
 def test_requested_action_validated() -> None:
     with pytest.raises(UsageError, match="not offered"):
-        route(task("x", requested_capability="spark.performance", requested_action="delete"),
-              [SPARK], [], set())
+        route(
+            task("x", requested_capability="spark.performance", requested_action="delete"),
+            [SPARK],
+            [],
+            set(),
+        )
 
 
 def test_requested_action_honored() -> None:
-    d = route(task("x", requested_capability="spark.performance", requested_action="optimize"),
-              [SPARK], [], set())
+    d = route(
+        task("x", requested_capability="spark.performance", requested_action="optimize"),
+        [SPARK],
+        [],
+        set(),
+    )
     assert d.selected[0].action == "optimize"
 
 
 def test_unverified_excluded_by_default() -> None:
     rec = record("u-forge", [cap("demo.run")], trust="unverified")
-    assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == \
-        "no_route"
+    assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == "no_route"
 
 
 def test_unsupported_capability_never_routed() -> None:
     rec = record("u-forge", [cap("demo.run", state="unsupported")])
-    assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == \
-        "no_route"
+    assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == "no_route"
 
 
 def test_not_ready_records_skipped() -> None:
     rec = record("u-forge", [cap("demo.run")], state="incompatible")
-    assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == \
-        "no_route"
+    assert route(task("x", requested_capability="demo.run"), [rec], [], set()).status == "no_route"
 ```
 
 - [ ] **Step 2: Ver falhar**
@@ -3398,8 +3820,12 @@ MIN_SIGNAL_TYPES = 2
 
 
 def route(
-    task: TaskSpec, records: Sequence[RegistryRecord], files: list[str],
-    dependencies: set[str], *, allow_unverified: bool = False,
+    task: TaskSpec,
+    records: Sequence[RegistryRecord],
+    files: list[str],
+    dependencies: set[str],
+    *,
+    allow_unverified: bool = False,
 ) -> RoutingDecision:
     routable = [r for r in records if r.routable(allow_unverified)]
     if task.requested_capability:
@@ -3410,52 +3836,80 @@ def route(
 def resolve_action(task: TaskSpec, capability: Capability) -> str:
     action = task.requested_action or capability.default_action
     if action not in capability.actions:
-        raise UsageError(f"action {action!r} is not offered by {capability.id} "
-                         f"(actions: {', '.join(capability.actions)})")
+        raise UsageError(
+            f"action {action!r} is not offered by {capability.id} "
+            f"(actions: {', '.join(capability.actions)})"
+        )
     return action
 
 
 def _decision(
-    task: TaskSpec, *, status: str, reason: str, level: str,
-    candidates: Sequence[Candidate] = (), selected: Sequence[Selection] = (),
-    measured: Sequence[str] = (), unresolved: Sequence[str] = (),
+    task: TaskSpec,
+    *,
+    status: str,
+    reason: str,
+    level: str,
+    candidates: Sequence[Candidate] = (),
+    selected: Sequence[Selection] = (),
+    measured: Sequence[str] = (),
+    unresolved: Sequence[str] = (),
 ) -> RoutingDecision:
     return RoutingDecision(
-        producer=PRODUCER, created_at=utc_now(), status=status,  # type: ignore[arg-type]
-        task_id=task.id, candidates=list(candidates), selected=list(selected), reason=reason,
-        confidence=Confidence(level=level, measured_signals=list(measured),  # type: ignore[arg-type]
-                              unresolved=list(unresolved)),
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status=status,  # type: ignore[arg-type]
+        task_id=task.id,
+        candidates=list(candidates),
+        selected=list(selected),
+        reason=reason,
+        confidence=Confidence(
+            level=level,
+            measured_signals=list(measured),  # type: ignore[arg-type]
+            unresolved=list(unresolved),
+        ),
     )
 
 
-def _route_explicit(
-    task: TaskSpec, routable: list[RegistryRecord], cap_id: str
-) -> RoutingDecision:
+def _route_explicit(task: TaskSpec, routable: list[RegistryRecord], cap_id: str) -> RoutingDecision:
     matches: list[tuple[RegistryRecord, Capability]] = []
     for record in routable:
         capability = record.manifest.capability(cap_id) if record.manifest else None
         if capability is not None and capability.state != "unsupported":
             matches.append((record, capability))
     if not matches:
-        return _decision(task, status="no_route", level="low",
-                         reason=f"no routable provider declares capability {cap_id}",
-                         unresolved=[f"capability:{cap_id}"])
+        return _decision(
+            task,
+            status="no_route",
+            level="low",
+            reason=f"no routable provider declares capability {cap_id}",
+            unresolved=[f"capability:{cap_id}"],
+        )
     matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust], m[0].entry.id))
     record, capability = matches[0]
     action = resolve_action(task, capability)
-    candidates = [Candidate(provider=r.entry.id, capability=cap_id,
-                            rank_key=[TRUST_RANK[r.entry.trust]]) for r, _ in matches]
+    candidates = [
+        Candidate(provider=r.entry.id, capability=cap_id, rank_key=[TRUST_RANK[r.entry.trust]])
+        for r, _ in matches
+    ]
     reason = f"requested capability {cap_id}"
     if len(matches) > 1:
         reason += f"; {len(matches)} providers declare it, tie-break by trust then id"
-    return _decision(task, status="routed", level="high", reason=reason, candidates=candidates,
-                     selected=[Selection(provider=record.entry.id, capability=cap_id,
-                                         action=action)],
-                     measured=["requested_capability"])
+    return _decision(
+        task,
+        status="routed",
+        level="high",
+        reason=reason,
+        candidates=candidates,
+        selected=[Selection(provider=record.entry.id, capability=cap_id, action=action)],
+        measured=["requested_capability"],
+    )
 
 
 def _route_by_signals(
-    task: TaskSpec, routable: list[RegistryRecord], files: list[str], dependencies: set[str],
+    task: TaskSpec,
+    routable: list[RegistryRecord],
+    files: list[str],
+    dependencies: set[str],
 ) -> RoutingDecision:
     intent = set(normalize_tokens(task.intent))
     scored: list[tuple[Candidate, Capability]] = []
@@ -3473,7 +3927,8 @@ def _route_by_signals(
             if types == 0:
                 continue
             candidate = Candidate(
-                provider=record.entry.id, capability=capability.id,
+                provider=record.entry.id,
+                capability=capability.id,
                 matched=MatchedSignals(dependencies=deps, file_globs=globs, keywords=kws),
                 rank_key=[types, len(deps), len(globs), len(kws)],
             )
@@ -3481,33 +3936,59 @@ def _route_by_signals(
     scored.sort(key=lambda s: ([-k for k in s[0].rank_key], s[0].provider, s[0].capability))
     candidates = [s[0] for s in scored]
     if not scored:
-        return _decision(task, status="no_route", level="low",
-                         reason="no capability matched any signal", unresolved=["intent"])
+        return _decision(
+            task,
+            status="no_route",
+            level="low",
+            reason="no capability matched any signal",
+            unresolved=["intent"],
+        )
     top, capability = scored[0]
     measured = _measured(top.matched)
     issue: str | None = None
     if len(scored) > 1 and scored[1][0].rank_key == top.rank_key:
         other = scored[1][0]
-        issue = (f"tie between {top.provider}/{top.capability} and "
-                 f"{other.provider}/{other.capability} at rank {top.rank_key}")
+        issue = (
+            f"tie between {top.provider}/{top.capability} and "
+            f"{other.provider}/{other.capability} at rank {top.rank_key}"
+        )
     elif top.rank_key[0] < MIN_SIGNAL_TYPES:
-        issue = (f"only {top.rank_key[0]} signal type matched for "
-                 f"{top.provider}/{top.capability} (need {MIN_SIGNAL_TYPES})")
+        issue = (
+            f"only {top.rank_key[0]} signal type matched for "
+            f"{top.provider}/{top.capability} (need {MIN_SIGNAL_TYPES})"
+        )
     if issue is not None:
-        return _decision(task, status="ambiguous", level="low", reason=f"ambiguous: {issue}",
-                         candidates=candidates, measured=measured, unresolved=[issue])
+        return _decision(
+            task,
+            status="ambiguous",
+            level="low",
+            reason=f"ambiguous: {issue}",
+            candidates=candidates,
+            measured=measured,
+            unresolved=[issue],
+        )
     action = resolve_action(task, capability)
-    reason = (f"{top.provider} {top.capability} matched {top.rank_key[0]} signal types "
-              f"({'; '.join(measured)})")
-    return _decision(task, status="routed", level="high", reason=reason, candidates=candidates,
-                     selected=[Selection(provider=top.provider, capability=top.capability,
-                                         action=action)],
-                     measured=measured)
+    reason = (
+        f"{top.provider} {top.capability} matched {top.rank_key[0]} signal types "
+        f"({'; '.join(measured)})"
+    )
+    return _decision(
+        task,
+        status="routed",
+        level="high",
+        reason=reason,
+        candidates=candidates,
+        selected=[Selection(provider=top.provider, capability=top.capability, action=action)],
+        measured=measured,
+    )
 
 
 def _measured(matched: MatchedSignals) -> list[str]:
-    groups = (("dependencies", matched.dependencies), ("file_globs", matched.file_globs),
-              ("keywords", matched.keywords))
+    groups = (
+        ("dependencies", matched.dependencies),
+        ("file_globs", matched.file_globs),
+        ("keywords", matched.keywords),
+    )
     return [f"{name}:{','.join(hits)}" for name, hits in groups if hits]
 ```
 
@@ -3557,16 +4038,23 @@ from theforge.meta import PRODUCER
 
 
 def task(root: Path, profile: str = "balanced") -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="x",
-                    workspace_root=str(root), budget_profile=profile)
+    return TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent="x",
+        workspace_root=str(root),
+        budget_profile=profile,
+    )
 
 
 def test_pack_selects_by_glob_and_hashes(tmp_path: Path) -> None:
     write_file(tmp_path, "api/openapi.yaml", "openapi: 3.0.0\n")
     write_file(tmp_path, "api/main.py", "x=1\n")
     write_file(tmp_path, ".env", "A=1")
-    pack = build_context_pack(task(tmp_path), "api-forge", ["openapi.yaml", "*.yaml"],
-                              scan_workspace(tmp_path, ["."]))
+    pack = build_context_pack(
+        task(tmp_path), "api-forge", ["openapi.yaml", "*.yaml"], scan_workspace(tmp_path, ["."])
+    )
     assert [f.path for f in pack.files] == ["api/openapi.yaml"]
     item = pack.files[0]
     assert item.sha256 == hashlib.sha256(b"openapi: 3.0.0\n").hexdigest()
@@ -3579,16 +4067,18 @@ def test_pack_selects_by_glob_and_hashes(tmp_path: Path) -> None:
 def test_pack_orders_by_glob_hits_then_path(tmp_path: Path) -> None:
     for name in ("b.yaml", "a.yaml", "openapi.yaml"):
         write_file(tmp_path, name, "x")
-    pack = build_context_pack(task(tmp_path), "p", ["*.yaml", "openapi.yaml"],
-                              scan_workspace(tmp_path, ["."]))
+    pack = build_context_pack(
+        task(tmp_path), "p", ["*.yaml", "openapi.yaml"], scan_workspace(tmp_path, ["."])
+    )
     assert [f.path for f in pack.files] == ["openapi.yaml", "a.yaml", "b.yaml"]
 
 
 def test_pack_respects_budget(tmp_path: Path) -> None:
     write_file(tmp_path, "big.txt", "x" * 70_000)
     write_file(tmp_path, "small.txt", "0123456789")
-    pack = build_context_pack(task(tmp_path, "economy"), "p", ["*.txt"],
-                              scan_workspace(tmp_path, ["."]))
+    pack = build_context_pack(
+        task(tmp_path, "economy"), "p", ["*.txt"], scan_workspace(tmp_path, ["."])
+    )
     assert [f.path for f in pack.files] == ["small.txt"]
     assert ExcludedFile(path="big.txt", reason="budget") in pack.excluded
     assert pack.truncated and pack.status == "truncated"
@@ -3646,14 +4136,24 @@ def build_context_pack(
         except OSError:
             excluded.append(ExcludedFile(path=rel, reason="unreadable"))
             continue
-        files.append(ContextFile(path=rel, sha256=sha256_hex(data), bytes=len(data),
-                                 reason=f"glob:{','.join(hits)}"))
+        files.append(
+            ContextFile(
+                path=rel, sha256=sha256_hex(data), bytes=len(data), reason=f"glob:{','.join(hits)}"
+            )
+        )
         used += len(data)
     return ContextPack(
-        producer=PRODUCER, created_at=utc_now(),
-        status="truncated" if truncated else "complete", task_id=task.id,
-        provider_id=provider_id, root=str(scan.root), files=files, excluded=excluded,
-        budget_bytes=budget, used_bytes=used, truncated=truncated,
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="truncated" if truncated else "complete",
+        task_id=task.id,
+        provider_id=provider_id,
+        root=str(scan.root),
+        files=files,
+        excluded=excluded,
+        budget_bytes=budget,
+        used_bytes=used,
+        truncated=truncated,
     )
 ```
 
@@ -3704,8 +4204,9 @@ from theforge.state import find_forge_dir, init_workspace, require_forge_dir
 
 
 def make_task(intent: str = "eco password=hunter2xyz") -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent,
-                    workspace_root="/ws")
+    return TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent, workspace_root="/ws"
+    )
 
 
 def test_new_run_id_format() -> None:
@@ -3816,8 +4317,9 @@ class RunStore:
         path = self.run_dir(run_id) / f"{name}.json"
         tmp = path.with_suffix(".json.tmp")
         try:
-            tmp.write_text(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False),
-                           encoding="utf-8")
+            tmp.write_text(
+                json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False), encoding="utf-8"
+            )
             tmp.replace(path)
         except OSError as exc:
             raise PersistenceError(f"cannot write {path}: {exc}") from exc
@@ -3864,8 +4366,7 @@ from theforge.errors import PersistenceError, UsageError
 FORGE_DIR_NAME = ".forge"
 SUBDIRS = ("config", "registry", "runs", "cache")
 GITIGNORE = (
-    "# Managed by The Forge: only config/ is committable.\n"
-    "*\n!.gitignore\n!config/\n!config/**\n"
+    "# Managed by The Forge: only config/ is committable.\n*\n!.gitignore\n!config/\n!config/**\n"
 )
 PROVIDERS_TEMPLATE = """\
 # Providers for this workspace. Each entry: id, argv (list), trust.
@@ -3899,8 +4400,10 @@ def init_workspace(root: Path) -> list[str]:
             if not directory.exists():
                 directory.mkdir(parents=True)
                 created.append(directory.relative_to(root).as_posix())
-        files = ((forge_dir / ".gitignore", GITIGNORE),
-                 (forge_dir / "config" / "providers.toml", PROVIDERS_TEMPLATE))
+        files = (
+            (forge_dir / ".gitignore", GITIGNORE),
+            (forge_dir / "config" / "providers.toml", PROVIDERS_TEMPLATE),
+        )
         for path, content in files:
             if not path.exists():
                 path.write_text(content, encoding="utf-8")
@@ -3984,11 +4487,12 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
 def test_case_b_routes_to_api(tmp_path: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
     case_b(tmp_path)
-    out = forger(tmp_path).ask(AskRequest(intent="avalie esse contrato OpenAPI",
-                                          targets=["api"]))
+    out = forger(tmp_path).ask(AskRequest(intent="avalie esse contrato OpenAPI", targets=["api"]))
     assert out.status == "ok"
-    assert (out.decision.selected[0].provider, out.decision.selected[0].action) == \
-        ("fixture-api", "review")
+    assert (out.decision.selected[0].provider, out.decision.selected[0].action) == (
+        "fixture-api",
+        "review",
+    )
 
 
 def test_ambiguous_writes_receipt_only(tmp_path: Path) -> None:
@@ -4024,9 +4528,13 @@ def test_refused_is_reported(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("mode", "code"),
-    [("crash", "FORGE-PROTO-EXIT"), ("garbage", "FORGE-PROTO-NOT-JSON"),
-     ("oversize", "FORGE-PROTO-OVERSIZE"), ("mismatch", "FORGE-PROTO-MISMATCH"),
-     ("bad-result", "FORGE-PROTO-SCHEMA")],
+    [
+        ("crash", "FORGE-PROTO-EXIT"),
+        ("garbage", "FORGE-PROTO-NOT-JSON"),
+        ("oversize", "FORGE-PROTO-OVERSIZE"),
+        ("mismatch", "FORGE-PROTO-MISMATCH"),
+        ("bad-result", "FORGE-PROTO-SCHEMA"),
+    ],
 )
 def test_provider_failures_never_succeed(tmp_path: Path, mode: str, code: str) -> None:
     make_workspace(tmp_path, [bad_entry(mode, "bad-a")])
@@ -4041,13 +4549,16 @@ def test_provider_failures_never_succeed(tmp_path: Path, mode: str, code: str) -
 def test_timeout(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("timeout", "bad-a")])
     out = forger(tmp_path, execute_timeout=1.5).ask(
-        AskRequest(intent="run it", capability="bad.thing"))
+        AskRequest(intent="run it", capability="bad.thing")
+    )
     assert out.error is not None and out.error.code == "FORGE-PROTO-TIMEOUT"
 
 
 def test_unhealthy_primary_falls_back(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    make_workspace(
+        tmp_path,
+        [bad_entry("unhealthy", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
     assert out.status == "ok"
     assert out.decision.selected[0].provider == "bad-b"
@@ -4081,8 +4592,9 @@ def test_secrets_never_persisted(tmp_path: Path) -> None:
     write_file(tmp_path, "notes.txt", "token=abc123secretvalue\n")
     out = forger(tmp_path).ask(AskRequest(intent="eco password=hunter2xyz"))
     assert out.status == "ok"
-    blob = "".join(p.read_text(encoding="utf-8")
-                   for p in (tmp_path / ".forge" / "runs").rglob("*.json"))
+    blob = "".join(
+        p.read_text(encoding="utf-8") for p in (tmp_path / ".forge" / "runs").rglob("*.json")
+    )
     for secret in ("hunter2xyz", "abc123secretvalue", "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"):
         assert secret not in blob
 ```
@@ -4169,7 +4681,11 @@ class _Trace:
 
 class Forger:
     def __init__(
-        self, root: Path, registry: Registry, store: RunStore, *,
+        self,
+        root: Path,
+        registry: Registry,
+        store: RunStore,
+        *,
         transport_factory: TransportFactory = SubprocessTransport,
         execute_timeout: float | None = None,
     ) -> None:
@@ -4184,18 +4700,28 @@ class Forger:
         started = utc_now()
         self.store.create(run_id)
         task = TaskSpec(
-            producer=PRODUCER, created_at=started, id=run_id, intent=request.intent,
-            workspace_root=str(self.root), targets=list(request.targets),
-            budget_profile=request.profile, requested_capability=request.capability,
+            producer=PRODUCER,
+            created_at=started,
+            id=run_id,
+            intent=request.intent,
+            workspace_root=str(self.root),
+            targets=list(request.targets),
+            budget_profile=request.profile,
+            requested_capability=request.capability,
             requested_action=request.action,
         )
-        trace = _Trace(run_id=run_id, started_at=started,
-                       task_sha=self.store.write(run_id, "task", task))
+        trace = _Trace(
+            run_id=run_id, started_at=started, task_sha=self.store.write(run_id, "task", task)
+        )
         records = {r.entry.id: r for r in self.registry.records()}
         scan = scan_workspace(self.root, task.targets)
-        decision = route(task, list(records.values()), scan.files,
-                         workspace_dependencies(self.root),
-                         allow_unverified=request.allow_unverified)
+        decision = route(
+            task,
+            list(records.values()),
+            scan.files,
+            workspace_dependencies(self.root),
+            allow_unverified=request.allow_unverified,
+        )
         if decision.status != "routed":
             trace.routing_sha = self.store.write(run_id, "routing", decision)
             return self._finish(trace, decision, decision.status)
@@ -4212,34 +4738,50 @@ class Forger:
         pack = build_context_pack(task, record.entry.id, globs, scan)
         trace.context_sha = self.store.write(run_id, "context", pack)
 
-        payload = to_dict(ExecuteRequest(task=task, capability=selection.capability,
-                                         action=selection.action, context=pack))
+        payload = to_dict(
+            ExecuteRequest(
+                task=task, capability=selection.capability, action=selection.action, context=pack
+            )
+        )
         started_exec = time.perf_counter()
         try:
             response = self.transport_factory(record.entry.argv).call(
-                "execute", payload, timeout=self._timeout(task),
-                cwd=self.store.work_dir(run_id))
+                "execute", payload, timeout=self._timeout(task), cwd=self.store.work_dir(run_id)
+            )
         except TransportError as exc:
-            return self._finish(trace, decision, "provider_failure",
-                                error=ErrorInfo(code=exc.code, detail=exc.detail))
+            return self._finish(
+                trace,
+                decision,
+                "provider_failure",
+                error=ErrorInfo(code=exc.code, detail=exc.detail),
+            )
         duration_ms = (time.perf_counter() - started_exec) * 1000
 
         if response.status in ("refused", "error"):
             status: Outcome = "refused" if response.status == "refused" else "provider_failure"
-            error = response.error or ErrorInfo(code="FORGE-PROTO-SCHEMA",
-                                                detail="error response without error body")
+            error = response.error or ErrorInfo(
+                code="FORGE-PROTO-SCHEMA", detail="error response without error body"
+            )
             return self._finish(trace, decision, status, error=error)
         try:
             result = from_dict(ExecutionResult, response.payload, "$.payload")
         except ContractError as exc:
-            return self._finish(trace, decision, "provider_failure", error=ErrorInfo(
-                code="FORGE-PROTO-SCHEMA", detail=f"execute: {exc}"))
+            return self._finish(
+                trace,
+                decision,
+                "provider_failure",
+                error=ErrorInfo(code="FORGE-PROTO-SCHEMA", detail=f"execute: {exc}"),
+            )
         result_status: Literal["ok", "partial"] = "ok" if response.status == "ok" else "partial"
-        result = replace(result, status=result_status, metrics=Metrics(
-            duration_ms=Metric(value=round(duration_ms, 3), kind="measured"),
-            context_bytes=Metric(value=float(pack.used_bytes), kind="measured"),
-            tokens=Metric(value=None, kind="unknown"),
-        ))
+        result = replace(
+            result,
+            status=result_status,
+            metrics=Metrics(
+                duration_ms=Metric(value=round(duration_ms, 3), kind="measured"),
+                context_bytes=Metric(value=float(pack.used_bytes), kind="measured"),
+                tokens=Metric(value=None, kind="unknown"),
+            ),
+        )
         trace.result_sha = self.store.write(run_id, "result", result)
         return self._finish(trace, decision, result_status, result=result)
 
@@ -4260,18 +4802,24 @@ class Forger:
             if health.error is None:
                 if not tried:
                     return decision, record, None
-                capability = (record.manifest.capability(candidate.capability)
-                              if record.manifest else None)
+                capability = (
+                    record.manifest.capability(candidate.capability) if record.manifest else None
+                )
                 action = primary.action
                 if capability is not None and action not in capability.actions:
                     action = capability.default_action
                 switched = replace(
                     decision,
-                    selected=[Selection(provider=candidate.provider,
-                                        capability=candidate.capability, action=action)],
+                    selected=[
+                        Selection(
+                            provider=candidate.provider,
+                            capability=candidate.capability,
+                            action=action,
+                        )
+                    ],
                     fallbacks_used=tried,
                     reason=f"{decision.reason}; fallback to {candidate.provider} after "
-                           f"unhealthy {', '.join(tried)}",
+                    f"unhealthy {', '.join(tried)}",
                 )
                 return switched, record, None
             tried.append(f"{candidate.provider}:{health.error.code}")
@@ -4283,32 +4831,58 @@ class Forger:
         primary = decision.selected[0]
         key = (primary.provider, primary.capability)
         first = [c for c in decision.candidates if (c.provider, c.capability) == key]
-        rest = [c for c in decision.candidates
-                if (c.provider, c.capability) != key
-                and (len(c.rank_key) == 1 or c.rank_key[0] >= MIN_SIGNAL_TYPES)]
+        rest = [
+            c
+            for c in decision.candidates
+            if (c.provider, c.capability) != key
+            and (len(c.rank_key) == 1 or c.rank_key[0] >= MIN_SIGNAL_TYPES)
+        ]
         return first + rest
 
     def _finish(
-        self, trace: _Trace, decision: RoutingDecision, status: Outcome, *,
-        result: ExecutionResult | None = None, error: ErrorInfo | None = None,
+        self,
+        trace: _Trace,
+        decision: RoutingDecision,
+        status: Outcome,
+        *,
+        result: ExecutionResult | None = None,
+        error: ErrorInfo | None = None,
     ) -> AskOutcome:
         record = trace.record
         provider = None
         if record is not None and record.manifest is not None:
-            provider = ReceiptProvider(id=record.entry.id, version=record.manifest.version,
-                                       trust=record.entry.trust,
-                                       manifest_sha256=record.manifest_sha256)
+            provider = ReceiptProvider(
+                id=record.entry.id,
+                version=record.manifest.version,
+                trust=record.entry.trust,
+                manifest_sha256=record.manifest_sha256,
+            )
         receipt = ExecutionReceipt(
-            producer=PRODUCER, created_at=utc_now(), status=status, run_id=trace.run_id,
+            producer=PRODUCER,
+            created_at=utc_now(),
+            status=status,
+            run_id=trace.run_id,
             forge_version=VERSION,
-            inputs=ReceiptInputs(task_sha256=trace.task_sha, routing_sha256=trace.routing_sha,
-                                 context_sha256=trace.context_sha),
-            provider=provider, result_sha256=trace.result_sha, started_at=trace.started_at,
-            finished_at=utc_now(), error=error,
+            inputs=ReceiptInputs(
+                task_sha256=trace.task_sha,
+                routing_sha256=trace.routing_sha,
+                context_sha256=trace.context_sha,
+            ),
+            provider=provider,
+            result_sha256=trace.result_sha,
+            started_at=trace.started_at,
+            finished_at=utc_now(),
+            error=error,
         )
         self.store.write(trace.run_id, "receipt", receipt)
-        return AskOutcome(run_id=trace.run_id, status=status, decision=decision,
-                          receipt=receipt, result=result, error=error)
+        return AskOutcome(
+            run_id=trace.run_id,
+            status=status,
+            decision=decision,
+            receipt=receipt,
+            result=result,
+            error=error,
+        )
 ```
 
 - [ ] **Step 4: `src/theforge/forger/__init__.py`**
@@ -4370,9 +4944,10 @@ def test_doctor_uninitialized(tmp_path: Path) -> None:
 
 
 def test_doctor_missing_provider_warns(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [{"id": "ghost-forge",
-                               "argv": ["definitely-not-a-real-forge-binary"],
-                               "trust": "local"}])
+    make_workspace(
+        tmp_path,
+        [{"id": "ghost-forge", "argv": ["definitely-not-a-real-forge-binary"], "trust": "local"}],
+    )
     report = run_doctor(tmp_path, Registry(tmp_path / ".forge"), env={})
     checks = {c["name"]: c for c in report["checks"]}
     assert checks["workspace"]["status"] == "ok"
@@ -4434,7 +5009,10 @@ def _writable(directory: Path) -> bool:
 
 
 def run_doctor(
-    root: Path, registry: Registry, *, env: Mapping[str, str] | None = None,
+    root: Path,
+    registry: Registry,
+    *,
+    env: Mapping[str, str] | None = None,
     transport_factory: TransportFactory = SubprocessTransport,
 ) -> dict[str, Any]:
     environment = os.environ if env is None else env
@@ -4442,18 +5020,31 @@ def run_doctor(
     checks = [
         Check(name="os", status="ok", detail=f"{platform.system()} {platform.release()}"),
         Check(name="architecture", status="ok", detail=platform.machine() or "unknown"),
-        Check(name="python", status="ok" if sys.version_info >= (3, 11) else "fail",
-              detail=platform.python_version()),
+        Check(
+            name="python",
+            status="ok" if sys.version_info >= (3, 11) else "fail",
+            detail=platform.python_version(),
+        ),
         Check(name="git", status="ok" if git else "warn", detail=git or "not found on PATH"),
         Check(name="host", status="ok", detail=detect_host(environment)),
     ]
     forge_dir = registry.forge_dir
     if forge_dir is None:
-        checks.append(Check(name="workspace", status="warn",
-                            detail=f"{root} not initialized (run `theforge init`)"))
+        checks.append(
+            Check(
+                name="workspace",
+                status="warn",
+                detail=f"{root} not initialized (run `theforge init`)",
+            )
+        )
     else:
-        checks.append(Check(name="workspace", status="ok" if _writable(forge_dir) else "fail",
-                            detail=str(forge_dir)))
+        checks.append(
+            Check(
+                name="workspace",
+                status="ok" if _writable(forge_dir) else "fail",
+                detail=str(forge_dir),
+            )
+        )
     for record in registry.records():
         health = check_health(record, transport_factory=transport_factory)
         healthy = health.status in ("ok", "degraded")
@@ -4465,7 +5056,9 @@ def run_doctor(
             detail += f" {health.error.code}"
         checks.append(Check(name=f"provider:{record.entry.id}", status=status, detail=detail))
     return {
-        "schema": REPORT_SCHEMA, "forge_version": VERSION, "root": str(root),
+        "schema": REPORT_SCHEMA,
+        "forge_version": VERSION,
+        "root": str(root),
         "checks": [asdict(c) for c in checks],
         "healthy": all(c.status != "fail" for c in checks),
     }
@@ -4562,16 +5155,18 @@ def test_ask_exit_codes_and_explain(tmp_path: Path, capsys: pytest.CaptureFixtur
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY, bad_entry("refuse", "bad-a")])
     case_b(tmp_path)
     root = str(tmp_path)
-    code, out, _ = run(capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api",
-                       "--root", root, "--json")
+    code, out, _ = run(
+        capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api", "--root", root, "--json"
+    )
     data = json.loads(out)
     assert code == 0 and data["status"] == "ok"
     code, out, _ = run(capsys, "explain", data["run_id"], "--root", root)
     assert code == 0 and "fixture-api api.contract:review" in out
     code, _, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root)
     assert code == 4
-    code, _, err = run(capsys, "ask", "x", "--capability", "api.contract", "--action", "delete",
-                       "--root", root)
+    code, _, err = run(
+        capsys, "ask", "x", "--capability", "api.contract", "--action", "delete", "--root", root
+    )
     assert code == 2 and "not offered" in err
 
 
@@ -4593,8 +5188,7 @@ def test_persistence_failure_exit_5(tmp_path: Path, capsys: pytest.CaptureFixtur
     runs = tmp_path / ".forge" / "runs"
     runs.rmdir()
     runs.write_text("not a dir", encoding="utf-8")
-    code, _, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
-                       "--root", str(tmp_path))
+    code, _, err = run(capsys, "ask", "eco", "--capability", "demo.echo", "--root", str(tmp_path))
     assert code == 5 and "persistence error" in err
 
 
@@ -4646,29 +5240,35 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--json", action="store_true", help="machine-readable JSON output")
 
     parser = argparse.ArgumentParser(
-        prog="theforge", description="The Forge: one entry point, many specialists.")
+        prog="theforge", description="The Forge: one entry point, many specialists."
+    )
     parser.add_argument("--version", action="version", version=f"theforge {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("init", parents=[common], help="create .forge/ in the workspace") \
-        .set_defaults(handler=commands.cmd_init)
-    sub.add_parser("doctor", parents=[common], help="inspect host, workspace and providers") \
-        .set_defaults(handler=commands.cmd_doctor)
-    sub.add_parser("status", parents=[common], help="summarize workspace state") \
-        .set_defaults(handler=commands.cmd_status)
+    sub.add_parser("init", parents=[common], help="create .forge/ in the workspace").set_defaults(
+        handler=commands.cmd_init
+    )
+    sub.add_parser(
+        "doctor", parents=[common], help="inspect host, workspace and providers"
+    ).set_defaults(handler=commands.cmd_doctor)
+    sub.add_parser("status", parents=[common], help="summarize workspace state").set_defaults(
+        handler=commands.cmd_status
+    )
 
-    registry = sub.add_parser("registry", help="provider registry") \
-        .add_subparsers(dest="registry_command", required=True)
-    registry.add_parser("list", parents=[common]) \
-        .set_defaults(handler=commands.cmd_registry_list)
-    registry.add_parser("refresh", parents=[common]) \
-        .set_defaults(handler=commands.cmd_registry_refresh)
+    registry = sub.add_parser("registry", help="provider registry").add_subparsers(
+        dest="registry_command", required=True
+    )
+    registry.add_parser("list", parents=[common]).set_defaults(handler=commands.cmd_registry_list)
+    registry.add_parser("refresh", parents=[common]).set_defaults(
+        handler=commands.cmd_registry_refresh
+    )
     show = registry.add_parser("show", parents=[common])
     show.add_argument("provider_id")
     show.set_defaults(handler=commands.cmd_registry_show)
 
-    caps = sub.add_parser("capabilities", help="declared capabilities") \
-        .add_subparsers(dest="capabilities_command", required=True)
+    caps = sub.add_parser("capabilities", help="declared capabilities").add_subparsers(
+        dest="capabilities_command", required=True
+    )
     cap_list = caps.add_parser("list", parents=[common])
     cap_list.add_argument("--provider")
     cap_list.set_defaults(handler=commands.cmd_capabilities_list)
@@ -4676,10 +5276,12 @@ def build_parser() -> argparse.ArgumentParser:
     cap_search.add_argument("query")
     cap_search.set_defaults(handler=commands.cmd_capabilities_search)
 
-    providers = sub.add_parser("providers", help="provider operations") \
-        .add_subparsers(dest="providers_command", required=True)
-    providers.add_parser("health", parents=[common]) \
-        .set_defaults(handler=commands.cmd_providers_health)
+    providers = sub.add_parser("providers", help="provider operations").add_subparsers(
+        dest="providers_command", required=True
+    )
+    providers.add_parser("health", parents=[common]).set_defaults(
+        handler=commands.cmd_providers_health
+    )
 
     ask = sub.add_parser("ask", parents=[common], help="route a task to a specialist")
     ask.add_argument("intent")
@@ -4730,8 +5332,14 @@ from theforge.routing.signals import normalize_tokens
 from theforge.runs import ARTIFACTS, RunStore
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
 
-EXIT_BY_STATUS = {"ok": 0, "partial": 0, "ambiguous": 3, "no_route": 3, "refused": 4,
-                  "provider_failure": 4}
+EXIT_BY_STATUS = {
+    "ok": 0,
+    "partial": 0,
+    "ambiguous": 3,
+    "no_route": 3,
+    "refused": 4,
+    "provider_failure": 4,
+}
 
 
 def _root(args: argparse.Namespace) -> Path:
@@ -4741,8 +5349,9 @@ def _root(args: argparse.Namespace) -> Path:
     return root
 
 
-def _emit(args: argparse.Namespace, data: dict[str, Any],
-          text: Callable[[dict[str, Any]], str]) -> None:
+def _emit(
+    args: argparse.Namespace, data: dict[str, Any], text: Callable[[dict[str, Any]], str]
+) -> None:
     if args.json:
         print(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False))
     else:
@@ -4757,26 +5366,38 @@ def _warn(registry: Registry) -> None:
 def _summary(record: RegistryRecord) -> dict[str, Any]:
     manifest = record.manifest
     return {
-        "id": record.entry.id, "trust": record.entry.trust, "source": record.entry.source,
-        "state": record.state, "version": manifest.version if manifest else None,
-        "protocol": record.protocol, "error": record.error,
+        "id": record.entry.id,
+        "trust": record.entry.trust,
+        "source": record.entry.source,
+        "state": record.state,
+        "version": manifest.version if manifest else None,
+        "protocol": record.protocol,
+        "error": record.error,
         "capabilities": [c.id for c in manifest.capabilities] if manifest else [],
     }
 
 
-def _capability_rows(records: list[RegistryRecord],
-                     provider: str | None = None) -> list[dict[str, Any]]:
+def _capability_rows(
+    records: list[RegistryRecord], provider: str | None = None
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for record in records:
         if record.manifest is None or (provider and record.entry.id != provider):
             continue
         for cap in record.manifest.capabilities:
-            rows.append({
-                "provider": record.entry.id, "trust": record.entry.trust, "id": cap.id,
-                "actions": list(cap.actions), "default_action": cap.default_action,
-                "state": cap.state, "operation_class": cap.operation_class,
-                "description": cap.description, "keywords": list(cap.signals.keywords),
-            })
+            rows.append(
+                {
+                    "provider": record.entry.id,
+                    "trust": record.entry.trust,
+                    "id": cap.id,
+                    "actions": list(cap.actions),
+                    "default_action": cap.default_action,
+                    "state": cap.state,
+                    "operation_class": cap.operation_class,
+                    "description": cap.description,
+                    "keywords": list(cap.signals.keywords),
+                }
+            )
     return sorted(rows, key=lambda row: (row["id"], row["provider"]))
 
 
@@ -4801,8 +5422,13 @@ def cmd_status(args: argparse.Namespace) -> int:
     forge_dir = find_forge_dir(root)
     runs = RunStore(forge_dir).list_runs() if forge_dir else []
     cached = sorted(p.stem for p in (forge_dir / "registry").glob("*.json")) if forge_dir else []
-    data = {"root": str(root), "initialized": forge_dir is not None, "cached_providers": cached,
-            "runs": len(runs), "last_run": runs[-1] if runs else None}
+    data = {
+        "root": str(root),
+        "initialized": forge_dir is not None,
+        "cached_providers": cached,
+        "runs": len(runs),
+        "last_run": runs[-1] if runs else None,
+    }
     _emit(args, data, render.status)
     return 0
 
@@ -4827,9 +5453,12 @@ def cmd_registry_show(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     record = registry.get(args.provider_id)
     _warn(registry)
-    data = {**_summary(record), "argv": record.entry.argv,
-            "manifest": to_dict(record.manifest) if record.manifest else None,
-            "manifest_sha256": record.manifest_sha256}
+    data = {
+        **_summary(record),
+        "argv": record.entry.argv,
+        "manifest": to_dict(record.manifest) if record.manifest else None,
+        "manifest_sha256": record.manifest_sha256,
+    }
     _emit(args, data, render.provider_detail)
     return 0
 
@@ -4848,9 +5477,10 @@ def cmd_capabilities_search(args: argparse.Namespace) -> int:
         raise UsageError("empty search query")
     registry = Registry(find_forge_dir(_root(args)))
     rows = [
-        row for row in _capability_rows(registry.records())
-        if query <= set(normalize_tokens(" ".join([row["id"], row["description"],
-                                                    *row["keywords"]])))
+        row
+        for row in _capability_rows(registry.records())
+        if query
+        <= set(normalize_tokens(" ".join([row["id"], row["description"], *row["keywords"]])))
     ]
     _warn(registry)
     _emit(args, {"query": args.query, "capabilities": rows}, render.capabilities)
@@ -4862,9 +5492,14 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
     rows = []
     for record in registry.records():
         outcome = check_health(record)
-        rows.append({"id": record.entry.id, "trust": record.entry.trust,
-                     "status": outcome.status,
-                     "error": to_dict(outcome.error) if outcome.error else None})
+        rows.append(
+            {
+                "id": record.entry.id,
+                "trust": record.entry.trust,
+                "status": outcome.status,
+                "error": to_dict(outcome.error) if outcome.error else None,
+            }
+        )
     _warn(registry)
     _emit(args, {"providers": rows}, render.health)
     return 0 if all(row["status"] in ("ok", "degraded") for row in rows) else 1
@@ -4874,13 +5509,20 @@ def cmd_ask(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)
     registry = Registry(forge_dir)
-    outcome = Forger(root, registry, RunStore(forge_dir)).ask(AskRequest(
-        intent=args.intent, targets=args.targets or ["."], capability=args.capability,
-        action=args.action, profile=args.profile, allow_unverified=args.allow_unverified,
-    ))
+    outcome = Forger(root, registry, RunStore(forge_dir)).ask(
+        AskRequest(
+            intent=args.intent,
+            targets=args.targets or ["."],
+            capability=args.capability,
+            action=args.action,
+            profile=args.profile,
+            allow_unverified=args.allow_unverified,
+        )
+    )
     _warn(registry)
     data = {
-        "run_id": outcome.run_id, "status": outcome.status,
+        "run_id": outcome.run_id,
+        "status": outcome.status,
         "decision": to_dict(outcome.decision),
         "result": to_dict(outcome.result) if outcome.result else None,
         "error": to_dict(outcome.error) if outcome.error else None,
@@ -4915,8 +5557,9 @@ from typing import Any
 def init(data: dict[str, Any]) -> str:
     if not data["created"]:
         return f"{data['forge_dir']} already initialized"
-    return "\n".join([f"Initialized {data['forge_dir']}",
-                      *(f"  created {path}" for path in data["created"])])
+    return "\n".join(
+        [f"Initialized {data['forge_dir']}", *(f"  created {path}" for path in data["created"])]
+    )
 
 
 def doctor(data: dict[str, Any]) -> str:
@@ -4930,18 +5573,22 @@ def doctor(data: dict[str, Any]) -> str:
 def status(data: dict[str, Any]) -> str:
     if not data["initialized"]:
         return f"{data['root']}: not initialized (run `theforge init`)"
-    return "\n".join([
-        f"Workspace:  {data['root']}",
-        f"Providers:  {', '.join(data['cached_providers']) or 'none cached'}",
-        f"Runs:       {data['runs']} (last: {data['last_run'] or '-'})",
-    ])
+    return "\n".join(
+        [
+            f"Workspace:  {data['root']}",
+            f"Providers:  {', '.join(data['cached_providers']) or 'none cached'}",
+            f"Runs:       {data['runs']} (last: {data['last_run'] or '-'})",
+        ]
+    )
 
 
 def providers(data: dict[str, Any]) -> str:
     lines = []
     for p in data["providers"]:
-        line = (f"{p['id']:<20} {p['state']:<13} trust={p['trust']:<10} "
-                f"source={p['source']:<8} version={p['version'] or '-'}")
+        line = (
+            f"{p['id']:<20} {p['state']:<13} trust={p['trust']:<10} "
+            f"source={p['source']:<8} version={p['version'] or '-'}"
+        )
         if p["error"]:
             line += f"  error: {p['error']}"
         lines.append(line)
@@ -4949,13 +5596,17 @@ def providers(data: dict[str, Any]) -> str:
 
 
 def provider_detail(data: dict[str, Any]) -> str:
-    lines = [providers({"providers": [data]}),
-             f"argv:      {' '.join(data['argv'])}",
-             f"protocol:  {data['protocol'] or '-'}",
-             f"manifest:  {data['manifest_sha256'] or '-'}"]
+    lines = [
+        providers({"providers": [data]}),
+        f"argv:      {' '.join(data['argv'])}",
+        f"protocol:  {data['protocol'] or '-'}",
+        f"manifest:  {data['manifest_sha256'] or '-'}",
+    ]
     for cap in (data["manifest"] or {}).get("capabilities", []):
-        lines.append(f"  {cap['id']:<28} actions={','.join(cap['actions'])} "
-                     f"state={cap['state']} class={cap['operation_class']}")
+        lines.append(
+            f"  {cap['id']:<28} actions={','.join(cap['actions'])} "
+            f"state={cap['state']} class={cap['operation_class']}"
+        )
     return "\n".join(lines)
 
 
@@ -4965,8 +5616,9 @@ def capabilities(data: dict[str, Any]) -> str:
         return "no capabilities found"
     lines = []
     for c in rows:
-        line = f"{c['id']:<28} {c['provider']:<20} actions={','.join(c['actions'])} " \
-               f"state={c['state']}"
+        line = (
+            f"{c['id']:<28} {c['provider']:<20} actions={','.join(c['actions'])} state={c['state']}"
+        )
         if c["description"]:
             line += f"  - {c['description']}"
         lines.append(line)
@@ -4988,18 +5640,20 @@ def ask(data: dict[str, Any]) -> str:
     lines = [f"Run {data['run_id']}: {data['status']}"]
     if decision["selected"]:
         sel = decision["selected"][0]
-        lines.append(f"Selected:   {sel['provider']} {sel['capability']}:{sel['action']} "
-                     f"(confidence {decision['confidence']['level']})")
+        lines.append(
+            f"Selected:   {sel['provider']} {sel['capability']}:{sel['action']} "
+            f"(confidence {decision['confidence']['level']})"
+        )
     lines.append(f"Reason:     {decision['reason']}")
     if data["status"] in ("ambiguous", "no_route"):
         for cand in decision["candidates"]:
-            lines.append(f"  candidate {cand['provider']}/{cand['capability']} "
-                         f"rank={cand['rank_key']}")
+            lines.append(
+                f"  candidate {cand['provider']}/{cand['capability']} rank={cand['rank_key']}"
+            )
         lines.append("Hint:       pass --capability <id> (see `theforge capabilities list`)")
     result = data["result"]
     if result:
-        lines.append(f"Findings:   {len(result['findings'])}   "
-                     f"Evidence: {len(result['evidence'])}")
+        lines.append(f"Findings:   {len(result['findings'])}   Evidence: {len(result['evidence'])}")
         lines.extend(f"  [{f['severity']}] {f['title']}" for f in result["findings"])
     error = data["error"]
     if error:
@@ -5011,8 +5665,11 @@ def ask(data: dict[str, Any]) -> str:
 
 
 def _signals(matched: dict[str, list[str]]) -> str:
-    parts = [f"{key}[{','.join(hits)}]" for key in ("dependencies", "file_globs", "keywords")
-             if (hits := matched.get(key))]
+    parts = [
+        f"{key}[{','.join(hits)}]"
+        for key in ("dependencies", "file_globs", "keywords")
+        if (hits := matched.get(key))
+    ]
     return " ".join(parts) or "requested"
 
 
@@ -5024,39 +5681,56 @@ def explain(data: dict[str, Any]) -> str:
     receipt = data.get("receipt") or {}
     lines = [f"Run:         {data['run_id']}  status: {receipt.get('status', 'incomplete')}"]
     if task:
-        lines.append(f"Task:        \"{task['intent']}\" (targets: {', '.join(task['targets'])};"
-                     f" profile: {task['budget_profile']})")
+        lines.append(
+            f'Task:        "{task["intent"]}" (targets: {", ".join(task["targets"])};'
+            f" profile: {task['budget_profile']})"
+        )
     if routing:
         candidates = routing.get("candidates", [])
         if not candidates:
             lines.append("Candidates:  none")
         for index, cand in enumerate(candidates):
             label = "Candidates:" if index == 0 else ""
-            lines.append(f"{label:<13}{cand['provider']}/{cand['capability']}  "
-                         f"{_signals(cand['matched'])}  rank={cand['rank_key']}")
-        selected = ", ".join(f"{s['provider']} {s['capability']}:{s['action']} ({s['role']})"
-                             for s in routing.get("selected", [])) or "none"
+            lines.append(
+                f"{label:<13}{cand['provider']}/{cand['capability']}  "
+                f"{_signals(cand['matched'])}  rank={cand['rank_key']}"
+            )
+        selected = (
+            ", ".join(
+                f"{s['provider']} {s['capability']}:{s['action']} ({s['role']})"
+                for s in routing.get("selected", [])
+            )
+            or "none"
+        )
         lines.append(f"Selected:    {selected}   pattern: {routing['pattern']}")
         lines.append(f"Reason:      {routing['reason']}")
         conf = routing["confidence"]
-        lines.append(f"Confidence:  {conf['level']}   measured: {conf['measured_signals']}"
-                     f"   unresolved: {conf['unresolved']}")
+        lines.append(
+            f"Confidence:  {conf['level']}   measured: {conf['measured_signals']}"
+            f"   unresolved: {conf['unresolved']}"
+        )
         lines.append(f"Fallbacks:   {', '.join(routing.get('fallbacks_used', [])) or 'none'}")
     if context:
-        lines.append(f"Context:     {len(context['files'])} files, {context['used_bytes']}/"
-                     f"{context['budget_bytes']} bytes ({context['status']}); "
-                     f"excluded {len(context['excluded'])}")
+        lines.append(
+            f"Context:     {len(context['files'])} files, {context['used_bytes']}/"
+            f"{context['budget_bytes']} bytes ({context['status']}); "
+            f"excluded {len(context['excluded'])}"
+        )
     if result:
-        lines.append(f"Result:      {result['status']}: {len(result['findings'])} findings, "
-                     f"{len(result['evidence'])} evidence")
+        lines.append(
+            f"Result:      {result['status']}: {len(result['findings'])} findings, "
+            f"{len(result['evidence'])} evidence"
+        )
     error = receipt.get("error")
     if error:
         unlock = f" (unlock: {error['unlock']})" if error.get("unlock") else ""
         lines.append(f"Error:       {error['code']}: {error['detail']}{unlock}")
     if receipt:
         inputs = receipt["inputs"]
-        hashes = " ".join(f"{key.removesuffix('_sha256')}={(value or '-')[:12]}"
-                          for key, value in sorted(inputs.items()))
+        hashes = " ".join(
+            f"{key.removesuffix('_sha256')}={(value or '-')[:12]}"
+            for key, value in sorted(inputs.items())
+        )
         lines.append(f"Receipt:     {hashes} result={(receipt.get('result_sha256') or '-')[:12]}")
     return "\n".join(lines)
 ```
@@ -5119,9 +5793,14 @@ GOLDEN = Path(__file__).parent / "golden" / "explain_case_b.txt"
 
 def cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
-    return subprocess.run([sys.executable, "-m", "theforge", *args, "--root", str(root)],
-                          capture_output=True, text=True, encoding="utf-8", timeout=120,
-                          env=env)
+    return subprocess.run(
+        [sys.executable, "-m", "theforge", *args, "--root", str(root)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        env=env,
+    )
 
 
 def normalize(text: str) -> str:
@@ -5197,7 +5876,8 @@ def test_committed_schemas_match_contracts() -> None:
         path = SCHEMAS_DIR / f"{cls.__name__}.schema.json"
         committed = json.loads(path.read_text(encoding="utf-8"))
         assert committed == json_schema(cls), (
-            f"{path.name} is stale; run python -m theforge.contracts.schema schemas")
+            f"{path.name} is stale; run python -m theforge.contracts.schema schemas"
+        )
 
 
 def test_no_extra_schema_files() -> None:
@@ -5207,8 +5887,9 @@ def test_no_extra_schema_files() -> None:
 
 def test_real_instances_validate() -> None:
     Draft202012Validator(json_schema(ForgeManifest)).validate(to_dict(MANIFEST))
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t", intent="x",
-                    workspace_root="/ws")
+    task = TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t", intent="x", workspace_root="/ws"
+    )
     Draft202012Validator(json_schema(TaskSpec)).validate(to_dict(task))
     result = ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok")
     Draft202012Validator(json_schema(ExecutionResult)).validate(to_dict(result))
@@ -5257,8 +5938,17 @@ from theforge.contracts import (
 )
 
 EXPORTED: tuple[type[Any], ...] = (
-    ForgeManifest, TaskSpec, RoutingDecision, ContextPack, ExecutionResult, Evidence,
-    ExecutionReceipt, Request, Response, HealthReport, ExecuteRequest,
+    ForgeManifest,
+    TaskSpec,
+    RoutingDecision,
+    ContextPack,
+    ExecutionResult,
+    Evidence,
+    ExecutionReceipt,
+    Request,
+    Response,
+    HealthReport,
+    ExecuteRequest,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
@@ -5296,8 +5986,13 @@ def _type(tp: Any) -> dict[str, Any]:
         return {"type": "object", "additionalProperties": _type(args[1])}
     if isinstance(tp, type) and is_dataclass(tp):
         return _object(tp)
-    scalars: dict[Any, str] = {str: "string", int: "integer", float: "number",
-                               bool: "boolean", type(None): "null"}
+    scalars: dict[Any, str] = {
+        str: "string",
+        int: "integer",
+        float: "number",
+        bool: "boolean",
+        type(None): "null",
+    }
     if tp in scalars:
         return {"type": scalars[tp]}
     raise TypeError(f"unsupported annotation {tp!r}")
@@ -5308,8 +6003,11 @@ def export(directory: Path) -> list[Path]:
     written: list[Path] = []
     for cls in EXPORTED:
         path = directory / f"{cls.__name__}.schema.json"
-        path.write_text(json.dumps(json_schema(cls), indent=2, sort_keys=True) + "\n",
-                        encoding="utf-8", newline="\n")
+        path.write_text(
+            json.dumps(json_schema(cls), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         written.append(path)
     return written
 
@@ -5827,8 +6525,11 @@ def test_fresh_install(tmp_path: Path) -> None:
     assert (bin_dir / f"forge{suffix}").exists()
     workspace = tmp_path / "ws"
     workspace.mkdir()
-    out = subprocess.run([str(bin_dir / f"theforge{suffix}"), "doctor", "--json",
-                          "--root", str(workspace)], capture_output=True, text=True)
+    out = subprocess.run(
+        [str(bin_dir / f"theforge{suffix}"), "doctor", "--json", "--root", str(workspace)],
+        capture_output=True,
+        text=True,
+    )
     assert out.returncode == 0, out.stderr
     checks = {c["name"]: c for c in json.loads(out.stdout)["checks"]}
     assert checks["provider:echo-forge"]["status"] == "ok"

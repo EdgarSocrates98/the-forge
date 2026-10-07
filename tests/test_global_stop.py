@@ -11,15 +11,24 @@ from theforge.meta import PRODUCER
 
 def test_information_gain_never_invents_probability() -> None:
     assert expected_information_gain(StopSignals(candidate_unique_evidence=True)) == "low"
-    assert expected_information_gain(
-        StopSignals(other_unresolved=["x"], candidate_unique_evidence=True)
-    ) == "medium"
-    assert expected_information_gain(
-        StopSignals(critical_unresolved=["x"], candidate_unique_evidence=True)
-    ) == "high"
-    assert expected_information_gain(
-        StopSignals(other_unresolved=["x"], candidate_unique_evidence=False)
-    ) == "none"
+    assert (
+        expected_information_gain(
+            StopSignals(other_unresolved=["x"], candidate_unique_evidence=True)
+        )
+        == "medium"
+    )
+    assert (
+        expected_information_gain(
+            StopSignals(critical_unresolved=["x"], candidate_unique_evidence=True)
+        )
+        == "high"
+    )
+    assert (
+        expected_information_gain(
+            StopSignals(other_unresolved=["x"], candidate_unique_evidence=False)
+        )
+        == "none"
+    )
     assert expected_information_gain(StopSignals()) == "unknown"
 
 
@@ -52,12 +61,16 @@ def test_candidate_required_for_verification_is_high_gain() -> None:
 
 
 def test_policy_and_budget_stop_are_global_authority() -> None:
-    assert decide_global_stop(
-        "r1", StopSignals(policy_blocked=True, critical_unresolved=["x"])
-    ).action == "stop_policy"
-    assert decide_global_stop(
-        "r1", StopSignals(budget_exhausted=True, critical_unresolved=["x"])
-    ).action == "stop_budget_exhausted"
+    assert (
+        decide_global_stop("r1", StopSignals(policy_blocked=True, critical_unresolved=["x"])).action
+        == "stop_policy"
+    )
+    assert (
+        decide_global_stop(
+            "r1", StopSignals(budget_exhausted=True, critical_unresolved=["x"])
+        ).action
+        == "stop_budget_exhausted"
+    )
 
 
 def test_no_unknowns_stops_as_sufficient_evidence() -> None:
@@ -177,9 +190,7 @@ def test_property_mandatory_verification_never_stops_for_low_gain(
     remaining=st.integers(min_value=0, max_value=1_000_000),
     failures=st.integers(min_value=0, max_value=20),
 )
-def test_property_budget_exhaustion_is_global_ceiling(
-    remaining: int, failures: int
-) -> None:
+def test_property_budget_exhaustion_is_global_ceiling(remaining: int, failures: int) -> None:
     decision = decide_global_stop(
         "property-run",
         StopSignals(

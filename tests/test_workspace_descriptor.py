@@ -31,24 +31,33 @@ BUDGET_NOTE = "git: skipped: workspace git budget exhausted (20 s)"
 
 def _record(name: str, entry: dict[str, Any]) -> RegistryRecord:
     data = json.loads((PROVIDERS / name).read_text(encoding="utf-8"))
-    return RegistryRecord(entry=ProviderEntry(id=entry["id"], argv=["x"], trust="local"),
-                          state="ready", manifest=from_dict(ForgeManifest, data),
-                          manifest_sha256="0" * 64, protocol="forge/v1")
+    return RegistryRecord(
+        entry=ProviderEntry(id=entry["id"], argv=["x"], trust="local"),
+        state="ready",
+        manifest=from_dict(ForgeManifest, data),
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
 
 
 RECORDS = [_record("fixture-spark.json", SPARK_ENTRY), _record("fixture-api.json", API_ENTRY)]
 
 
 def _unavailable(_: Path) -> GitState:
-    return GitState(summary=GitSummary(available=False), changed=frozenset(),
-                    limitations=("git: not available",))
+    return GitState(
+        summary=GitSummary(available=False),
+        changed=frozenset(),
+        limitations=("git: not available",),
+    )
 
 
-def _describe(root: Path, records: list[RegistryRecord] | None = None,
-              **kw: Any) -> WorkspaceDescriptor:
+def _describe(
+    root: Path, records: list[RegistryRecord] | None = None, **kw: Any
+) -> WorkspaceDescriptor:
     kw.setdefault("git_reader", _unavailable)
-    return describe_workspace(root, RECORDS if records is None else records,
-                              scan_workspace(root, []), **kw)
+    return describe_workspace(
+        root, RECORDS if records is None else records, scan_workspace(root, []), **kw
+    )
 
 
 def _fake_repo(path: Path) -> Path:
@@ -59,9 +68,25 @@ def _fake_repo(path: Path) -> Path:
 def _git(repo: Path, *args: str) -> str:
     assert GIT is not None
     out = subprocess.run(
-        [GIT, "-c", "core.fsmonitor=false", "-c", "user.name=t", "-c", "user.email=t@t",
-         "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main", *args],
-        cwd=repo, capture_output=True, check=True, env={**os.environ, "LC_ALL": "C"})
+        [
+            GIT,
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "init.defaultBranch=main",
+            *args,
+        ],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+        env={**os.environ, "LC_ALL": "C"},
+    )
     return out.stdout.decode("utf-8", "replace")
 
 
@@ -71,7 +96,10 @@ def _snapshot(d: Path) -> dict[str, tuple[bool, int, bytes]]:
         st = p.lstat()
         is_dir = p.is_dir()
         snap[p.relative_to(d).as_posix()] = (
-            is_dir, st.st_mtime_ns, b"" if is_dir else p.read_bytes())
+            is_dir,
+            st.st_mtime_ns,
+            b"" if is_dir else p.read_bytes(),
+        )
     return snap
 
 
@@ -98,6 +126,7 @@ def cross(home: Path) -> Iterator[CrossWorkspace]:
 
 # --- real repositories ----------------------------------------------------------------------
 
+
 @requires_git
 def test_cross_workspace_two_independent_repositories(cross: CrossWorkspace) -> None:
     root = cross.root
@@ -114,8 +143,9 @@ def test_cross_workspace_two_independent_repositories(cross: CrossWorkspace) -> 
         assert info.git.branch == "main" and not info.git.detached
         assert info.git.dirty is False and info.git.changed_files == 0
     assert {r.name: _snapshot(r / ".git") for r in cross.repositories} == before
-    assert [(r.source, r.target, r.kind, r.epistemic, r.evidence)
-            for r in descriptor.relations] == [
+    assert [
+        (r.source, r.target, r.kind, r.epistemic, r.evidence) for r in descriptor.relations
+    ] == [
         (".", "data-pipeline", "contains", "observed", "data-pipeline/.git"),
         (".", "orders-api", "contains", "observed", "orders-api/.git"),
     ]
@@ -127,22 +157,49 @@ def test_cross_workspace_two_independent_repositories(cross: CrossWorkspace) -> 
 @requires_git
 def test_cross_workspace_technologies_with_evidence(cross: CrossWorkspace) -> None:
     descriptor = describe_workspace(cross.root, RECORDS, scan_workspace(cross.root, []))
-    techs = [(t.repository, t.name, t.source, t.evidence, t.matched_by)
-             for t in descriptor.technologies]
+    techs = [
+        (t.repository, t.name, t.source, t.evidence, t.matched_by) for t in descriptor.technologies
+    ]
     assert techs == [
-        ("data-pipeline", "data-engineering", "provider_signal",
-         "data-pipeline/jobs/daily_orders_job.py", ["fixture-spark/spark.performance"]),
-        ("data-pipeline", "pyspark", "dependency_manifest", "data-pipeline/requirements.txt",
-         ["fixture-spark/spark.performance"]),
-        ("orders-api", "api-engineering", "provider_signal", "orders-api/openapi.yaml",
-         ["fixture-api/api.contract"]),
-        ("orders-api", "fastapi", "dependency_manifest", "orders-api/requirements.txt",
-         ["fixture-api/api.contract"]),
+        (
+            "data-pipeline",
+            "data-engineering",
+            "provider_signal",
+            "data-pipeline/jobs/daily_orders_job.py",
+            ["fixture-spark/spark.performance"],
+        ),
+        (
+            "data-pipeline",
+            "pyspark",
+            "dependency_manifest",
+            "data-pipeline/requirements.txt",
+            ["fixture-spark/spark.performance"],
+        ),
+        (
+            "orders-api",
+            "api-engineering",
+            "provider_signal",
+            "orders-api/openapi.yaml",
+            ["fixture-api/api.contract"],
+        ),
+        (
+            "orders-api",
+            "fastapi",
+            "dependency_manifest",
+            "orders-api/requirements.txt",
+            ["fixture-api/api.contract"],
+        ),
     ]
     assert [r.dependency_files for r in descriptor.repositories] == [
-        ["data-pipeline/requirements.txt"], ["orders-api/requirements.txt"]]
-    assert descriptor.paths == ["data-pipeline", "data-pipeline/requirements.txt",
-                                "orders-api", "orders-api/requirements.txt"]
+        ["data-pipeline/requirements.txt"],
+        ["orders-api/requirements.txt"],
+    ]
+    assert descriptor.paths == [
+        "data-pipeline",
+        "data-pipeline/requirements.txt",
+        "orders-api",
+        "orders-api/requirements.txt",
+    ]
 
 
 @requires_git
@@ -159,7 +216,8 @@ def test_nested_repository_is_independent_and_contained(cross: CrossWorkspace) -
     info = descriptor.repositories[2]
     assert info.git == read_git_state(nested).summary
     assert ("orders-api", "orders-api/vendor/lib", "orders-api/vendor/lib/.git") in [
-        (r.source, r.target, r.evidence) for r in descriptor.relations]
+        (r.source, r.target, r.evidence) for r in descriptor.relations
+    ]
     assert repository_of(descriptor, "orders-api/vendor/lib/x.txt") == "orders-api/vendor/lib"
     assert repository_of(descriptor, "orders-api/app/main.py") == "orders-api"
     assert repository_of(descriptor, "README.md") is None
@@ -182,7 +240,8 @@ def test_detached_head_and_changed_count_match_wave_c(cross: CrossWorkspace) -> 
 
 
 def test_git_unavailable_is_unknown_with_limitation(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     _fake_repo(tmp_path / "a")
     monkeypatch.setattr(gitmod.shutil, "which", lambda _name: None)
     descriptor = describe_workspace(tmp_path, RECORDS, scan_workspace(tmp_path, []))
@@ -206,6 +265,7 @@ def test_failing_injected_reader_becomes_limitation(tmp_path: Path) -> None:
 
 # --- git budget -----------------------------------------------------------------------------
 
+
 def test_git_budget_exhausted_with_fake_clock(tmp_path: Path) -> None:
     for name in ("r1", "r2", "r3", "r4", "r5", "r6"):
         _fake_repo(tmp_path / name)
@@ -215,8 +275,11 @@ def test_git_budget_exhausted_with_fake_clock(tmp_path: Path) -> None:
     def slow(path: Path) -> GitState:
         queried.append(path.name)
         now[0] += 4.9  # just under the Wave C per-query budget
-        return GitState(summary=GitSummary(available=True, branch="main", dirty=False),
-                        changed=frozenset(), limitations=())
+        return GitState(
+            summary=GitSummary(available=True, branch="main", dirty=False),
+            changed=frozenset(),
+            limitations=(),
+        )
 
     descriptor = _describe(tmp_path, git_reader=slow, clock=lambda: now[0])
     assert queried == ["r1", "r2", "r3", "r4"]
@@ -224,8 +287,10 @@ def test_git_budget_exhausted_with_fake_clock(tmp_path: Path) -> None:
     infos = descriptor.repositories
     assert all(i.git is not None and i.limitations == [] for i in infos[:4])
     assert all(i.git is None and i.limitations == [BUDGET_NOTE] for i in infos[4:])
-    assert descriptor.unknowns == ["r5: git head/dirty state unknown",
-                                   "r6: git head/dirty state unknown"]
+    assert descriptor.unknowns == [
+        "r5: git head/dirty state unknown",
+        "r6: git head/dirty state unknown",
+    ]
 
 
 def test_fast_git_queries_every_repository(tmp_path: Path) -> None:
@@ -235,8 +300,7 @@ def test_fast_git_queries_every_repository(tmp_path: Path) -> None:
 
     def fast(_: Path) -> GitState:
         now[0] += 0.5
-        return GitState(summary=GitSummary(available=True), changed=frozenset(),
-                        limitations=())
+        return GitState(summary=GitSummary(available=True), changed=frozenset(), limitations=())
 
     descriptor = _describe(tmp_path, git_reader=fast, clock=lambda: now[0])
     assert all(i.git is not None for i in descriptor.repositories)
@@ -245,13 +309,15 @@ def test_fast_git_queries_every_repository(tmp_path: Path) -> None:
 def test_tiny_budget_skips_everything(tmp_path: Path) -> None:
     _fake_repo(tmp_path / "a")
     calls: list[Path] = []
-    info = _describe(tmp_path, git_reader=lambda p: calls.append(p) or _unavailable(p),
-                     git_budget_s=4.0).repositories[0]
+    info = _describe(
+        tmp_path, git_reader=lambda p: calls.append(p) or _unavailable(p), git_budget_s=4.0
+    ).repositories[0]
     assert calls == [] and info.git is None
     assert info.limitations == ["git: skipped: workspace git budget exhausted (4 s)"]
 
 
 # --- discovery ------------------------------------------------------------------------------
+
 
 def test_root_repository_depth_limit_and_ignored_dirs(tmp_path: Path) -> None:
     _fake_repo(tmp_path)
@@ -283,8 +349,7 @@ def test_symlinked_directory_is_not_followed(tmp_path: Path) -> None:
     assert [r.path for r in _describe(root).repositories] == ["real"]
 
 
-def test_repositories_truncated_at_limit(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_repositories_truncated_at_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for name in ("a", "b", "c"):
         _fake_repo(tmp_path / name)
     monkeypatch.setattr(describe, "MAX_REPOSITORIES", 2)
@@ -309,19 +374,25 @@ def test_root_not_a_repository_and_no_repositories(tmp_path: Path) -> None:
 
 # --- technologies ---------------------------------------------------------------------------
 
+
 def test_technologies_only_from_provider_declarations(tmp_path: Path) -> None:
     repo = _fake_repo(tmp_path / "svc")
     (repo / "requirements.txt").write_text("PySpark==3.5\nrequests\n", encoding="utf-8")
     (repo / "pyproject.toml").write_text(
-        '[project]\ndependencies = ["pyspark", "awsglue"]\n', encoding="utf-8")
+        '[project]\ndependencies = ["pyspark", "awsglue"]\n', encoding="utf-8"
+    )
     (repo / "readme.md").write_text("fastapi is mentioned here\n", encoding="utf-8")
     descriptor = _describe(tmp_path)
     techs = [(t.name, t.source, t.evidence) for t in descriptor.technologies]
     # requests is not declared by any provider; README content is never a signal.
-    assert techs == [("awsglue", "dependency_manifest", "svc/pyproject.toml"),
-                     ("pyspark", "dependency_manifest", "svc/pyproject.toml")]
+    assert techs == [
+        ("awsglue", "dependency_manifest", "svc/pyproject.toml"),
+        ("pyspark", "dependency_manifest", "svc/pyproject.toml"),
+    ]
     assert descriptor.repositories[0].dependency_files == [
-        "svc/pyproject.toml", "svc/requirements.txt"]
+        "svc/pyproject.toml",
+        "svc/requirements.txt",
+    ]
     assert _describe(tmp_path, records=[]).technologies == []
 
 
@@ -335,6 +406,7 @@ def test_files_belong_to_their_deepest_repository(tmp_path: Path) -> None:
 
 # --- explicit relations ---------------------------------------------------------------------
 
+
 def _workspace_toml(root: Path, text: str) -> None:
     config = root / ".forge" / "config"
     config.mkdir(parents=True, exist_ok=True)
@@ -344,7 +416,9 @@ def _workspace_toml(root: Path, text: str) -> None:
 def test_explicit_relations_valid_and_invalid(tmp_path: Path) -> None:
     for name in ("orders-api", "data-pipeline"):
         _fake_repo(tmp_path / name)
-    _workspace_toml(tmp_path, """
+    _workspace_toml(
+        tmp_path,
+        """
 [[relations]]
 source = "orders-api"
 target = "data-pipeline"
@@ -380,15 +454,18 @@ weight = 3
 source = 1
 target = "data-pipeline"
 kind = "depends_on"
-""")
+""",
+    )
     descriptor = _describe(tmp_path)
     explicit = [r for r in descriptor.relations if r.epistemic == "explicit"]
     assert [(r.source, r.kind, r.target, r.evidence) for r in explicit] == [
-        ("orders-api", "depends_on", "data-pipeline", ".forge/config/workspace.toml")]
+        ("orders-api", "depends_on", "data-pipeline", ".forge/config/workspace.toml")
+    ]
     warnings = descriptor.limitations
     assert len(warnings) == 5
-    assert all(w.startswith(f"{Codes.WORKSPACE_CONFIG}: .forge/config/workspace.toml: ")
-               for w in warnings)
+    assert all(
+        w.startswith(f"{Codes.WORKSPACE_CONFIG}: .forge/config/workspace.toml: ") for w in warnings
+    )
     assert "relations[2] ignored: target 'ghost' is not a repository" in warnings[0]
     assert "relations[3] ignored: kind 'contains'" in warnings[1]
     assert "relations[4] ignored: source and target are the same" in warnings[2]
@@ -425,7 +502,8 @@ def test_load_relations_edge_cases(tmp_path: Path) -> None:
 def test_symlinked_workspace_toml_is_never_followed(tmp_path: Path) -> None:
     outside = tmp_path / "outside.toml"
     outside.write_text(
-        '[[relations]]\nsource = "a"\ntarget = "b"\nkind = "depends_on"\n', encoding="utf-8")
+        '[[relations]]\nsource = "a"\ntarget = "b"\nkind = "depends_on"\n', encoding="utf-8"
+    )
     config = tmp_path / ".forge" / "config"
     config.mkdir(parents=True)
     try:

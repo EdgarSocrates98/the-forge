@@ -24,12 +24,13 @@ from theforge.contracts.types import (
 )
 
 HANDOFF_SCHEMA = "theforge/Handoff/v1"
-HandoffKind = Literal["evidence", "finding", "artifact", "decision",
-                      "constraint", "assumption", "verification"]
+HandoffKind = Literal[
+    "evidence", "finding", "artifact", "decision", "constraint", "assumption", "verification"
+]
 _NO_EPISTEMIC: frozenset[HandoffKind] = frozenset(
-    {"finding", "artifact", "constraint", "assumption"})
-_CLAIM_REQUIRED: frozenset[HandoffKind] = frozenset(
-    {"constraint", "assumption", "verification"})
+    {"finding", "artifact", "constraint", "assumption"}
+)
+_CLAIM_REQUIRED: frozenset[HandoffKind] = frozenset({"constraint", "assumption", "verification"})
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -62,8 +63,10 @@ class HandoffItem:
 
     def __post_init__(self) -> None:
         if len(self.claim) > MAX_CLAIM_CHARS:
-            raise ContractError(f"handoff item {self.id!r}: claim longer than "
-                                f"{MAX_CLAIM_CHARS} chars ({len(self.claim)})")
+            raise ContractError(
+                f"handoff item {self.id!r}: claim longer than "
+                f"{MAX_CLAIM_CHARS} chars ({len(self.claim)})"
+            )
         if self.kind == "evidence" and self.epistemic is None:
             raise ContractError(f"handoff evidence {self.id!r}: epistemic is required")
         if self.kind in _NO_EPISTEMIC and self.epistemic is not None:

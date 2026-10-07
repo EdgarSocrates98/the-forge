@@ -38,8 +38,7 @@ def _capability_projection(cap: Capability) -> dict[str, Any]:
         "aliases": sorted(cap.aliases),
         "deprecated": cap.deprecated,
         "replaced_by": cap.replaced_by,
-        "context": {"excerpts": cap.context.excerpts,
-                    "requests": cap.context.requests},
+        "context": {"excerpts": cap.context.excerpts, "requests": cap.context.requests},
         "accepts_handoff": cap.accepts_handoff,
         "proposes_plans": cap.proposes_plans,
         "resolves_ambiguity": cap.resolves_ambiguity,
@@ -57,37 +56,44 @@ def _capability_projection(cap: Capability) -> dict[str, Any]:
 
 def capability_fingerprint(manifest: ForgeManifest) -> str:
     """sha256 over the capability set only (order-independent)."""
-    projected = sorted((_capability_projection(c) for c in manifest.capabilities),
-                       key=lambda c: c["id"])
+    projected = sorted(
+        (_capability_projection(c) for c in manifest.capabilities), key=lambda c: c["id"]
+    )
     return sha256_of({"capabilities": projected})
 
 
 def surface_fingerprint(manifest: ForgeManifest) -> str:
     """sha256 over the whole declared operational surface."""
     execution = manifest.execution
-    return sha256_of({
-        "capabilities": capability_fingerprint(manifest),
-        "ops": sorted(manifest.ops),
-        "protocols": sorted(manifest.protocols),
-        "features": sorted(manifest.features),
-        "domains": sorted(manifest.domains),
-        "execution": {
-            "local": execution.local,
-            "offline": execution.offline,
-            "requires_network": execution.requires_network,
-            "deterministic": execution.deterministic,
-        },
-        "context_revalidation": manifest.context_revalidation,
-    })
+    return sha256_of(
+        {
+            "capabilities": capability_fingerprint(manifest),
+            "ops": sorted(manifest.ops),
+            "protocols": sorted(manifest.protocols),
+            "features": sorted(manifest.features),
+            "domains": sorted(manifest.domains),
+            "execution": {
+                "local": execution.local,
+                "offline": execution.offline,
+                "requires_network": execution.requires_network,
+                "deterministic": execution.deterministic,
+            },
+            "context_revalidation": manifest.context_revalidation,
+        }
+    )
 
 
-def surface_identity(manifest: ForgeManifest, *, protocol: str,
-                     recorded_at: str) -> ProviderSurfaceIdentity:
+def surface_identity(
+    manifest: ForgeManifest, *, protocol: str, recorded_at: str
+) -> ProviderSurfaceIdentity:
     """The versioned identity of ``manifest``'s surface as observed now."""
     return ProviderSurfaceIdentity(
-        provider_id=manifest.id, provider_version=manifest.version,
-        adapter_version=manifest.adapter_version, protocol_version=protocol,
+        provider_id=manifest.id,
+        provider_version=manifest.version,
+        adapter_version=manifest.adapter_version,
+        protocol_version=protocol,
         surface_fingerprint=surface_fingerprint(manifest),
         capability_fingerprint=capability_fingerprint(manifest),
         native_surface_fingerprint=manifest.native_surface_fingerprint,
-        recorded_at=recorded_at)
+        recorded_at=recorded_at,
+    )

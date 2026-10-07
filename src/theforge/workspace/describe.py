@@ -52,7 +52,10 @@ _Found = dict[tuple[str, str, TechSource], tuple[str, set[str]]]
 
 
 def describe_workspace(
-    root: Path, records: Sequence[RegistryRecord], scan: WorkspaceScan, *,
+    root: Path,
+    records: Sequence[RegistryRecord],
+    scan: WorkspaceScan,
+    *,
     git_reader: GitReader = read_git_state,
     clock: Callable[[], float] = time.monotonic,
     git_budget_s: float = WORKSPACE_GIT_BUDGET_S,
@@ -76,13 +79,15 @@ def describe_workspace(
     git = _read_git(root, paths, git_reader, clock, git_budget_s)
     reuse_tech = prior is not None and "technologies" in reusable
     reuse_depfiles = prior is not None and "dependency_files" in reusable
-    prior_depfiles = ({r.path: r.dependency_files for r in prior.repositories}
-                      if reuse_depfiles and prior is not None else {})
+    prior_depfiles = (
+        {r.path: r.dependency_files for r in prior.repositories}
+        if reuse_depfiles and prior is not None
+        else {}
+    )
     # Parsed dependency names are needed to recompute technologies, and to derive
     # dependency_files for any repository the snapshot did not cover.
     need_deps = not reuse_tech or any(p not in prior_depfiles for p in paths)
-    deps = ({p: dependencies_by_file(_abs(root, p)) for p in paths}
-            if need_deps else {})
+    deps = {p: dependencies_by_file(_abs(root, p)) for p in paths} if need_deps else {}
     repositories: list[RepositoryInfo] = []
     all_paths: set[str] = set(paths)
     for path in paths:
@@ -92,24 +97,35 @@ def describe_workspace(
         else:
             dependency_files = [_rel(root, f) for f in deps[path]]
         all_paths.update(dependency_files)
-        repositories.append(RepositoryInfo(
-            path=path, git=summary, dependency_files=sorted(dependency_files),
-            limitations=git_limitations))
+        repositories.append(
+            RepositoryInfo(
+                path=path,
+                git=summary,
+                dependency_files=sorted(dependency_files),
+                limitations=git_limitations,
+            )
+        )
         if summary is None or not summary.available or summary.dirty is None:
             unknowns.append(f"{path}: git head/dirty state unknown")
     relations = _contains_relations(paths)
     explicit, warnings = load_relations(_forge_dir(root), paths)
     limitations.extend(warnings)
     relations.extend(explicit)
-    technologies = (list(prior.technologies) if reuse_tech  # type: ignore[union-attr]
-                    else _technologies(root, paths, deps, records, scan))
+    technologies = (
+        list(prior.technologies)  # type: ignore[union-attr]
+        if reuse_tech
+        else _technologies(root, paths, deps, records, scan)
+    )
     return WorkspaceDescriptor(
-        producer=PRODUCER, created_at=utc_now(), root=str(root),
+        producer=PRODUCER,
+        created_at=utc_now(),
+        root=str(root),
         repositories=repositories,
         paths=sorted(all_paths, key=_path_key),
         technologies=technologies,
         relations=sorted(relations, key=lambda r: (r.source, r.kind, r.target)),
-        limitations=limitations, unknowns=unknowns,
+        limitations=limitations,
+        unknowns=unknowns,
     )
 
 
@@ -119,6 +135,7 @@ def repository_of(descriptor: WorkspaceDescriptor, path: str) -> str | None:
 
 
 # --- discovery ------------------------------------------------------------------------------
+
 
 def discover_repositories(root: Path, limitations: list[str] | None = None) -> list[str]:
     """Repository paths relative to ``root`` (``"."`` for the root), in path order."""
@@ -142,9 +159,9 @@ def _walk(directory: Path, parts: tuple[str, ...], found: list[str], notes: list
     try:
         with os.scandir(directory) as it:
             children = sorted(
-                (entry for entry in it if entry.name not in IGNORED_DIRS
-                 and _is_plain_dir(entry)),
-                key=lambda entry: entry.name)
+                (entry for entry in it if entry.name not in IGNORED_DIRS and _is_plain_dir(entry)),
+                key=lambda entry: entry.name,
+            )
     except OSError as exc:
         notes.append(f"workspace: cannot list {'/'.join(parts) or '.'} ({type(exc).__name__})")
         return
@@ -165,8 +182,12 @@ def _is_plain_dir(entry: os.DirEntry[str]) -> bool:
 
 # --- git ------------------------------------------------------------------------------------
 
+
 def _read_git(
-    root: Path, paths: Sequence[str], reader: GitReader, clock: Callable[[], float],
+    root: Path,
+    paths: Sequence[str],
+    reader: GitReader,
+    clock: Callable[[], float],
     budget_s: float,
 ) -> dict[str, tuple[GitSummary | None, list[str]]]:
     out: dict[str, tuple[GitSummary | None, list[str]]] = {}
@@ -176,8 +197,7 @@ def _read_git(
         if not exhausted and spent + GIT_TIMEOUT_S > budget_s:
             exhausted = True
         if exhausted:
-            out[path] = (None, [
-                f"git: skipped: workspace git budget exhausted ({budget_s:g} s)"])
+            out[path] = (None, [f"git: skipped: workspace git budget exhausted ({budget_s:g} s)"])
             continue
         started = clock()
         try:
@@ -192,9 +212,13 @@ def _read_git(
 
 # --- technologies ---------------------------------------------------------------------------
 
+
 def _technologies(
-    root: Path, paths: Sequence[str], deps: dict[str, dict[Path, set[str]]],
-    records: Sequence[RegistryRecord], scan: WorkspaceScan,
+    root: Path,
+    paths: Sequence[str],
+    deps: dict[str, dict[Path, set[str]]],
+    records: Sequence[RegistryRecord],
+    scan: WorkspaceScan,
 ) -> list[Technology]:
     declared: dict[str, set[str]] = {}  # normalized dependency -> {"provider/capability"}
     glob_signals: list[tuple[str, list[str], list[str]]] = []  # (who, names, globs)
@@ -226,22 +250,29 @@ def _technologies(
                 _add(found, (path, name, "dependency_manifest"), evidence, declared[name])
         repo_files = files_by_repo.get(path, [])
         for who, signal_names, globs in glob_signals:
-            hit = next((f for f in repo_files
-                        if any(PurePosixPath(_inside(path, f)).match(g) for g in globs)), None)
+            hit = next(
+                (
+                    f
+                    for f in repo_files
+                    if any(PurePosixPath(_inside(path, f)).match(g) for g in globs)
+                ),
+                None,
+            )
             if hit is None:
                 continue
             for name in signal_names:
                 _add(found, (path, name, "provider_signal"), hit, {who})
     return [
-        Technology(name=name, repository=repo, source=source,
-                   evidence=evidence, matched_by=sorted(who))
+        Technology(
+            name=name, repository=repo, source=source, evidence=evidence, matched_by=sorted(who)
+        )
         for (repo, name, source), (evidence, who) in sorted(
-            found.items(), key=lambda item: (_path_key(item[0][0]), item[0][1], item[0][2]))
+            found.items(), key=lambda item: (_path_key(item[0][0]), item[0][1], item[0][2])
+        )
     ]
 
 
-def _add(found: _Found, key: tuple[str, str, TechSource], evidence: str,
-         who: set[str]) -> None:
+def _add(found: _Found, key: tuple[str, str, TechSource], evidence: str, who: set[str]) -> None:
     current = found.get(key)
     if current is None:
         found[key] = (evidence, set(who))
@@ -252,15 +283,22 @@ def _add(found: _Found, key: tuple[str, str, TechSource], evidence: str,
 
 # --- relations ------------------------------------------------------------------------------
 
+
 def _contains_relations(paths: Sequence[str]) -> list[WorkspaceRelation]:
     relations: list[WorkspaceRelation] = []
     for path in paths:
         if path == ".":
             continue
         parent = _owner([p for p in paths if p != path], path) or "."
-        relations.append(WorkspaceRelation(
-            source=parent, target=path, kind="contains", epistemic="observed",
-            evidence=f"{path}/.git"))
+        relations.append(
+            WorkspaceRelation(
+                source=parent,
+                target=path,
+                kind="contains",
+                epistemic="observed",
+                evidence=f"{path}/.git",
+            )
+        )
     return relations
 
 
@@ -271,6 +309,7 @@ def _forge_dir(root: Path) -> Path | None:
 
 # --- paths ----------------------------------------------------------------------------------
 
+
 def _path_key(path: str) -> tuple[str, ...]:
     return () if path == "." else tuple(path.split("/"))
 
@@ -279,13 +318,14 @@ def _owner(repositories: Sequence[str], path: str) -> str | None:
     best: str | None = None
     for repo in repositories:
         if (repo == "." or path == repo or path.startswith(repo + "/")) and (
-                best is None or len(_path_key(repo)) > len(_path_key(best))):
+            best is None or len(_path_key(repo)) > len(_path_key(best))
+        ):
             best = repo
     return best
 
 
 def _inside(repo: str, path: str) -> str:
-    return path if repo == "." else path[len(repo) + 1:]
+    return path if repo == "." else path[len(repo) + 1 :]
 
 
 def _abs(root: Path, path: str) -> Path:

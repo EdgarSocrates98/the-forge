@@ -39,8 +39,10 @@ def live_unavailable_reason() -> str | None:
     if native_pkg.dispatcher_found():
         return None
     version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    return (f"sparkforge-aws is not importable with {sys.executable} (Python {version}); "
-            f"{INSTALL_HINT} in this interpreter")
+    return (
+        f"sparkforge-aws is not importable with {sys.executable} (Python {version}); "
+        f"{INSTALL_HINT} in this interpreter"
+    )
 
 
 @dataclass(frozen=True)
@@ -54,11 +56,15 @@ class Environment:
         """Why the recorded interpreter cannot run the Spark Forge AWS, or None."""
         match = _PYTHON_VERSION.fullmatch(self.python)
         if match is None or (int(match[1]), int(match[2])) < MIN_PYTHON:
-            return (f"recorded interpreter runs Python {self.python}; the Spark Forge AWS needs "
-                    f"Python >= {MIN_PYTHON[0]}.{MIN_PYTHON[1]}")
+            return (
+                f"recorded interpreter runs Python {self.python}; the Spark Forge AWS needs "
+                f"Python >= {MIN_PYTHON[0]}.{MIN_PYTHON[1]}"
+            )
         if self.specialist_version is None:
-            return (f"sparkforge-aws is not importable with the recorded interpreter "
-                    f"(Python {self.python}); {INSTALL_HINT} in it")
+            return (
+                f"sparkforge-aws is not importable with the recorded interpreter "
+                f"(Python {self.python}); {INSTALL_HINT} in it"
+            )
         return None
 
 
@@ -76,21 +82,23 @@ def load_environment(replay: Path) -> Environment | ReplayProblem:
     try:
         raw = path.read_text(encoding="utf-8")
     except OSError:
-        return ReplayProblem(REPLAY_MISSING,
-                             f"replay recording {ENVIRONMENT_FILE} not found in {replay}")
+        return ReplayProblem(
+            REPLAY_MISSING, f"replay recording {ENVIRONMENT_FILE} not found in {replay}"
+        )
     try:
         data = json.loads(raw)
     except ValueError:
         return ReplayProblem(REPLAY_INVALID, f"{ENVIRONMENT_FILE} is not valid JSON")
     if not isinstance(data, dict) or set(data) != {"python", "specialist_version"}:
-        return ReplayProblem(REPLAY_INVALID,
-                             f"{ENVIRONMENT_FILE} must hold exactly python and "
-                             "specialist_version")
+        return ReplayProblem(
+            REPLAY_INVALID, f"{ENVIRONMENT_FILE} must hold exactly python and specialist_version"
+        )
     python, version = data["python"], data["specialist_version"]
     if not isinstance(python, str) or not (version is None or isinstance(version, str)):
-        return ReplayProblem(REPLAY_INVALID,
-                             f"{ENVIRONMENT_FILE}: python must be a string and "
-                             "specialist_version a string or null")
+        return ReplayProblem(
+            REPLAY_INVALID,
+            f"{ENVIRONMENT_FILE}: python must be a string and specialist_version a string or null",
+        )
     return Environment(python=python, specialist_version=version)
 
 
@@ -116,23 +124,34 @@ def load_health(replay: Path) -> HealthRecording | ReplayProblem:
     try:
         raw = path.read_text(encoding="utf-8")
     except OSError:
-        return ReplayProblem(REPLAY_MISSING,
-                             f"replay recording {HEALTH_FILE} not found in {replay}")
+        return ReplayProblem(
+            REPLAY_MISSING, f"replay recording {HEALTH_FILE} not found in {replay}"
+        )
     try:
         data = json.loads(raw)
     except ValueError:
         return ReplayProblem(REPLAY_INVALID, f"{HEALTH_FILE} is not valid JSON")
-    if (not isinstance(data, dict) or not set(data) >= _HEALTH_KEYS
-            or not set(data) <= _HEALTH_KEYS | {"provenance"}):
-        return ReplayProblem(REPLAY_INVALID,
-                             f"{HEALTH_FILE} must hold dispatcher and specialist_version "
-                             "(and optionally provenance)")
+    if (
+        not isinstance(data, dict)
+        or not set(data) >= _HEALTH_KEYS
+        or not set(data) <= _HEALTH_KEYS | {"provenance"}
+    ):
+        return ReplayProblem(
+            REPLAY_INVALID,
+            f"{HEALTH_FILE} must hold dispatcher and specialist_version "
+            "(and optionally provenance)",
+        )
     dispatcher, version = data["dispatcher"], data["specialist_version"]
-    if (not isinstance(dispatcher, bool) or not (version is None or isinstance(version, str))
-            or not isinstance(data.get("provenance", ""), str)):
-        return ReplayProblem(REPLAY_INVALID,
-                             f"{HEALTH_FILE}: dispatcher must be a boolean, specialist_version "
-                             "a string or null and provenance a string")
+    if (
+        not isinstance(dispatcher, bool)
+        or not (version is None or isinstance(version, str))
+        or not isinstance(data.get("provenance", ""), str)
+    ):
+        return ReplayProblem(
+            REPLAY_INVALID,
+            f"{HEALTH_FILE}: dispatcher must be a boolean, specialist_version "
+            "a string or null and provenance a string",
+        )
     return HealthRecording(dispatcher=dispatcher, specialist_version=version)
 
 

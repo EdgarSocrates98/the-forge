@@ -16,8 +16,13 @@ from theforge.protocol.negotiate import major
 
 @pytest.mark.parametrize(
     ("offered", "expected"),
-    [(["forge/v1"], "forge/v1"), (["forge/v1", "forge/v2"], "forge/v1"),
-     (["forge/v9"], None), (["garbage"], None), ([], None)],
+    [
+        (["forge/v1"], "forge/v1"),
+        (["forge/v1", "forge/v2"], "forge/v1"),
+        (["forge/v9"], None),
+        (["garbage"], None),
+        ([], None),
+    ],
 )
 def test_choose_protocol(offered: list[str], expected: str | None) -> None:
     assert choose_protocol(offered) == expected
@@ -25,14 +30,26 @@ def test_choose_protocol(offered: list[str], expected: str | None) -> None:
 
 @pytest.mark.parametrize(
     ("offered", "expected"),
-    [(["forge/v1"], "forge/v1"), (["forge/v1", "forge/v2"], "forge/v1"),
-     (["forge/v2", "forge/v1"], "forge/v1"), (["forge/v2"], None),
-     (["forge/v1", "forge/v1"], "forge/v1"), (["other/1"], None),
-     (["forge/vX"], None), (["forge/v01"], None), (["forge/v0"], None),
-     (["forge/v1 "], None), ([" forge/v1"], None), (["forge/v1\n"], None),
-     (["FORGE/V1"], None), ([""], None), (["forge/v١"], None),
-     (["forge/v1000"], None), (["forge/v01", "forge/v1"], "forge/v1"),
-     (["garbage", "forge/v1", "forge/v1"], "forge/v1")],
+    [
+        (["forge/v1"], "forge/v1"),
+        (["forge/v1", "forge/v2"], "forge/v1"),
+        (["forge/v2", "forge/v1"], "forge/v1"),
+        (["forge/v2"], None),
+        (["forge/v1", "forge/v1"], "forge/v1"),
+        (["other/1"], None),
+        (["forge/vX"], None),
+        (["forge/v01"], None),
+        (["forge/v0"], None),
+        (["forge/v1 "], None),
+        ([" forge/v1"], None),
+        (["forge/v1\n"], None),
+        (["FORGE/V1"], None),
+        ([""], None),
+        (["forge/v١"], None),
+        (["forge/v1000"], None),
+        (["forge/v01", "forge/v1"], "forge/v1"),
+        (["garbage", "forge/v1", "forge/v1"], "forge/v1"),
+    ],
 )
 def test_choose_protocol_robust(offered: list[str], expected: str | None) -> None:
     assert choose_protocol(offered) == expected
@@ -46,9 +63,20 @@ def test_choose_protocol_ignores_non_strings(offered: list[object]) -> None:
 
 @pytest.mark.parametrize(
     ("protocol", "expected"),
-    [("forge/v1", 1), ("forge/v2", 2), ("forge/v999", 999), ("forge/v0", None),
-     ("forge/v01", None), ("forge/v1000", None), ("forge/v1\n", None), ("FORGE/V1", None),
-     ("forge/vX", None), ("", None), (None, None), (1, None)],
+    [
+        ("forge/v1", 1),
+        ("forge/v2", 2),
+        ("forge/v999", 999),
+        ("forge/v0", None),
+        ("forge/v01", None),
+        ("forge/v1000", None),
+        ("forge/v1\n", None),
+        ("FORGE/V1", None),
+        ("forge/vX", None),
+        ("", None),
+        (None, None),
+        (1, None),
+    ],
 )
 def test_major_strict(protocol: object, expected: int | None) -> None:
     assert major(protocol) == expected  # type: ignore[arg-type]
@@ -104,10 +132,15 @@ def _failure(mode: str, timeout: float = 10) -> TransportError:
 
 @pytest.mark.parametrize(
     ("mode", "code"),
-    [("crash", "FORGE-PROTO-EXIT"), ("garbage", "FORGE-PROTO-NOT-JSON"),
-     ("oversize", "FORGE-PROTO-OVERSIZE"), ("mismatch", "FORGE-PROTO-MISMATCH"),
-     ("wrong-major", "FORGE-PROTO-VERSION"), ("bad-envelope", "FORGE-PROTO-SCHEMA"),
-     ("wrong-op", "FORGE-PROTO-OP-MISMATCH")],
+    [
+        ("crash", "FORGE-PROTO-EXIT"),
+        ("garbage", "FORGE-PROTO-NOT-JSON"),
+        ("oversize", "FORGE-PROTO-OVERSIZE"),
+        ("mismatch", "FORGE-PROTO-MISMATCH"),
+        ("wrong-major", "FORGE-PROTO-VERSION"),
+        ("bad-envelope", "FORGE-PROTO-SCHEMA"),
+        ("wrong-op", "FORGE-PROTO-OP-MISMATCH"),
+    ],
 )
 def test_transport_failures(mode: str, code: str) -> None:
     assert _failure(mode).code == code
@@ -121,7 +154,8 @@ def test_unread_large_stdin_is_bounded_by_timeout() -> None:
     start = time.monotonic()
     with pytest.raises(TransportError) as info:
         SubprocessTransport(bad_argv("no-read")).call(
-            "execute", {"blob": "x" * 2_000_000}, timeout=2)
+            "execute", {"blob": "x" * 2_000_000}, timeout=2
+        )
     assert info.value.code == "FORGE-PROTO-TIMEOUT"
     assert time.monotonic() - start < 15
 
@@ -132,14 +166,14 @@ def test_crash_stderr_is_redacted() -> None:
 
 def test_spawn_failure() -> None:
     with pytest.raises(TransportError) as info:
-        SubprocessTransport(["definitely-not-a-real-forge-binary"]).call(
-            "describe", {}, timeout=5)
+        SubprocessTransport(["definitely-not-a-real-forge-binary"]).call("describe", {}, timeout=5)
     assert info.value.code == "FORGE-PROTO-SPAWN"
 
 
 def test_wrong_major_describe_allowed_without_protocol_check() -> None:
     resp = SubprocessTransport(bad_argv("wrong-major")).call(
-        "describe", {}, timeout=10, check_protocol=False)
+        "describe", {}, timeout=10, check_protocol=False
+    )
     assert resp.payload["protocols"] == ["forge/v9"]
 
 
@@ -152,8 +186,7 @@ def test_provider_env_is_scrubbed(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_cwd_is_honored(tmp_path: Path) -> None:
-    resp = SubprocessTransport(bad_argv("cwd-probe")).call(
-        "execute", {}, timeout=10, cwd=tmp_path)
+    resp = SubprocessTransport(bad_argv("cwd-probe")).call("execute", {}, timeout=10, cwd=tmp_path)
     assert Path(resp.payload["cwd"]).resolve() == tmp_path.resolve()
 
 
@@ -225,7 +258,8 @@ def test_timeout_kills_the_whole_provider_tree(tmp_path: Path) -> None:
         start = time.monotonic()
         with pytest.raises(TransportError) as info:
             SubprocessTransport(bad_argv("spawn-grandchild-timeout")).call(
-                "execute", {}, timeout=5, cwd=tmp_path)
+                "execute", {}, timeout=5, cwd=tmp_path
+            )
         assert info.value.code == "FORGE-PROTO-TIMEOUT"
         assert time.monotonic() - start < 25
         grandchild = _grandchild_pid(tmp_path, timeout=1)
@@ -249,7 +283,8 @@ def test_keyboard_interrupt_kills_the_whole_provider_tree(
     try:
         with pytest.raises(KeyboardInterrupt):
             SubprocessTransport(bad_argv("spawn-grandchild-timeout")).call(
-                "execute", {}, timeout=30, cwd=tmp_path)
+                "execute", {}, timeout=30, cwd=tmp_path
+            )
         grandchild = _grandchild_pid(tmp_path, timeout=1)
         assert wait_gone(grandchild), f"grandchild {grandchild} survived KeyboardInterrupt"
     finally:
@@ -262,7 +297,8 @@ def test_normal_exit_with_lingering_grandchild_returns_promptly(tmp_path: Path) 
     try:
         start = time.monotonic()
         resp = SubprocessTransport(bad_argv("exit-leave-grandchild")).call(
-            "execute", {}, timeout=10, cwd=tmp_path)
+            "execute", {}, timeout=10, cwd=tmp_path
+        )
         elapsed = time.monotonic() - start
         grandchild = _grandchild_pid(tmp_path, timeout=1)
         assert resp.status == "ok" and resp.op == "execute"
@@ -290,7 +326,8 @@ def test_without_job_object_lingering_grandchild_never_blocks_past_the_bound(
     try:
         start = time.monotonic()
         resp = SubprocessTransport(bad_argv("exit-leave-grandchild")).call(
-            "execute", {}, timeout=timeout, cwd=tmp_path)
+            "execute", {}, timeout=timeout, cwd=tmp_path
+        )
         elapsed = time.monotonic() - start
         grandchild = _grandchild_pid(tmp_path, timeout=1)
         assert resp.status == "ok" and resp.op == "execute"
@@ -307,9 +344,12 @@ _DEEP_CODES = {Codes.PROTO_NOT_JSON, Codes.PROTO_SCHEMA}
 
 @pytest.mark.parametrize(
     ("stdout", "codes"),
-    [(b"1" * 5000, {Codes.PROTO_NOT_JSON}), (b"[" * 100000, {Codes.PROTO_NOT_JSON}),
-     (b'{"request_id": ' + b"9" * 5000 + b"}", {Codes.PROTO_NOT_JSON}),
-     (b'{"payload": ' + b"[" * 100000 + b"]" * 100000 + b"}", _DEEP_CODES)],
+    [
+        (b"1" * 5000, {Codes.PROTO_NOT_JSON}),
+        (b"[" * 100000, {Codes.PROTO_NOT_JSON}),
+        (b'{"request_id": ' + b"9" * 5000 + b"}", {Codes.PROTO_NOT_JSON}),
+        (b'{"payload": ' + b"[" * 100000 + b"]" * 100000 + b"}", _DEEP_CODES),
+    ],
     ids=["huge-int", "deep-open", "huge-int-in-envelope", "deep-in-envelope"],
 )
 def test_undecodable_stdout_is_proto_not_json(

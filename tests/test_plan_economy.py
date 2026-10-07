@@ -41,44 +41,71 @@ TS = "2026-01-01T00:00:00Z"
 SHA = "a" * 64
 PROVIDERS = Path(__file__).parent / "fixtures" / "providers"
 
-SPARK_ECON_ENTRY = dict(SPARK_PLAN_ENTRY, argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-spark-econ.json")))
-API_ECON_ENTRY = dict(API_PLAN_ENTRY, argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-api-econ.json")))
+SPARK_ECON_ENTRY = dict(
+    SPARK_PLAN_ENTRY,
+    argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-econ.json")),
+)
+API_ECON_ENTRY = dict(
+    API_PLAN_ENTRY, argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api-econ.json"))
+)
 
-TASK = TaskSpec(producer=P, created_at=TS, id="t1", intent="bounded federation",
-                workspace_root=".", targets=["."])
+TASK = TaskSpec(
+    producer=P,
+    created_at=TS,
+    id="t1",
+    intent="bounded federation",
+    workspace_root=".",
+    targets=["."],
+)
 
 
 def _node(nid: str, provider: str = "p") -> PlanNode:
-    return PlanNode(id=nid, role="standalone", provider=provider,  # type: ignore[arg-type]
-                    capability="p.cap", action="act")
+    return PlanNode(
+        id=nid,
+        role="standalone",
+        provider=provider,  # type: ignore[arg-type]
+        capability="p.cap",
+        action="act",
+    )
 
 
-def _exec(nid: str, economy: dict[str, Any] | None = None,
-          status: str = "ok") -> NodeExecution:
+def _exec(nid: str, economy: dict[str, Any] | None = None, status: str = "ok") -> NodeExecution:
     node = _node(nid)
     valid = status in ("ok", "partial")
     # The provider emits JSON; the core parses it — build the result through
     # the same path (dict -> from_dict -> typed contract).
-    result = (from_dict(ExecutionResult,
-                        {"producer": {"id": "p", "version": "0"}, "created_at": TS,
-                         "status": "ok",
-                         **({"provider_economy": economy} if economy else {})})
-              if valid else None)
+    result = (
+        from_dict(
+            ExecutionResult,
+            {
+                "producer": {"id": "p", "version": "0"},
+                "created_at": TS,
+                "status": "ok",
+                **({"provider_economy": economy} if economy else {}),
+            },
+        )
+        if valid
+        else None
+    )
     return NodeExecution(
-        node=node, provider=Producer(id="p", version="0"), handoff=None, result=result,
+        node=node,
+        provider=Producer(id="p", version="0"),
+        handoff=None,
+        result=result,
         reached_execute=valid,
-        outcome=NodeOutcome(node=nid, status=status,  # type: ignore[arg-type]
-                            run_id=f"r-{nid}" if valid else None,
-                            receipt_sha256=SHA if valid else None,
-                            result_sha256=SHA if valid else None,
-                            blocked_by=None if status != "skipped" else "a"))
+        outcome=NodeOutcome(
+            node=nid,
+            status=status,  # type: ignore[arg-type]
+            run_id=f"r-{nid}" if valid else None,
+            receipt_sha256=SHA if valid else None,
+            result_sha256=SHA if valid else None,
+            blocked_by=None if status != "skipped" else "a",
+        ),
+    )
 
 
 def _receipt(**metrics: dict[str, Any]) -> dict[str, Any]:
-    return {"schema": "theforge/ProviderEconomyReceipt/v1", "provider": "p",
-            "run": "r1", **metrics}
+    return {"schema": "theforge/ProviderEconomyReceipt/v1", "provider": "p", "run": "r1", **metrics}
 
 
 # --- EconomyMetric / ProviderEconomyReceipt invariants (Phase 20) --------------------------
@@ -101,11 +128,19 @@ def test_economy_metric_measured_requires_a_value() -> None:
 
 
 def test_provider_economy_round_trip_on_result() -> None:
-    receipt = _receipt(context_bytes={"value": 512, "status": "measured"},
-                       provider_tokens={"status": "unresolved"})
-    result = from_dict(ExecutionResult,
-                       {"producer": {"id": "p", "version": "0"}, "created_at": TS,
-                        "status": "ok", "provider_economy": receipt}, strict=True)
+    receipt = _receipt(
+        context_bytes={"value": 512, "status": "measured"}, provider_tokens={"status": "unresolved"}
+    )
+    result = from_dict(
+        ExecutionResult,
+        {
+            "producer": {"id": "p", "version": "0"},
+            "created_at": TS,
+            "status": "ok",
+            "provider_economy": receipt,
+        },
+        strict=True,
+    )
     assert result.provider_economy is not None
     assert result.provider_economy.context_bytes.value == 512
     assert result.provider_economy.provider_tokens.status == "unresolved"
@@ -120,11 +155,15 @@ def test_compose_economy_is_none_without_receipts() -> None:
 
 
 def test_compose_economy_sums_compatible_values() -> None:
-    a = _receipt(context_bytes={"value": 100, "status": "measured"},
-                 wall_time_ms={"value": 10, "status": "measured"})
-    b = _receipt(context_bytes={"value": 50, "status": "measured"},
-                 wall_time_ms={"value": 5, "status": "estimated"},
-                 run="r2")
+    a = _receipt(
+        context_bytes={"value": 100, "status": "measured"},
+        wall_time_ms={"value": 10, "status": "measured"},
+    )
+    b = _receipt(
+        context_bytes={"value": 50, "status": "measured"},
+        wall_time_ms={"value": 5, "status": "estimated"},
+        run="r2",
+    )
     rollup = compose_economy("p1", [_exec("n1", a), _exec("n2", b)])
     assert rollup is not None and rollup.schema == ECONOMY_ROLLUP_SCHEMA
     assert [entry.node for entry in rollup.receipts] == ["n1", "n2"]
@@ -199,19 +238,33 @@ def _executor(root: Path, entries: list[dict[str, Any]]) -> tuple[PlanExecutor, 
 
 
 def _plan_file(path: Path, nodes: list[dict[str, Any]], pattern: str) -> Path:
-    path.write_text(json.dumps({"task_id": "from-file", "pattern": pattern,
-                                "source": "file", "profile": "max", "nodes": nodes}),
-                    encoding="utf-8")
+    path.write_text(
+        json.dumps(
+            {
+                "task_id": "from-file",
+                "pattern": pattern,
+                "source": "file",
+                "profile": "max",
+                "nodes": nodes,
+            }
+        ),
+        encoding="utf-8",
+    )
     return path
 
 
-def _file_node(nid: str, provider: str, capability: str, action: str,
-               *deps: str) -> dict[str, Any]:
-    node: dict[str, Any] = {"id": nid, "role": "standalone", "provider": provider,
-                            "capability": capability, "action": action}
+def _file_node(nid: str, provider: str, capability: str, action: str, *deps: str) -> dict[str, Any]:
+    node: dict[str, Any] = {
+        "id": nid,
+        "role": "standalone",
+        "provider": provider,
+        "capability": capability,
+        "action": action,
+    }
     if deps:
-        node["depends_on"] = [{"node": d, "epistemic": "explicit",
-                               "evidence": "plan file"} for d in deps]
+        node["depends_on"] = [
+            {"node": d, "epistemic": "explicit", "evidence": "plan file"} for d in deps
+        ]
         node["inputs"] = list(deps)
     return node
 
@@ -219,12 +272,17 @@ def _file_node(nid: str, provider: str, capability: str, action: str,
 def test_plan_rolls_up_provider_economy(tmp_path: Path) -> None:
     """Phase 21 e2e: two providers reporting economy produce the bound rollup."""
     executor, store = _executor(tmp_path, [SPARK_ECON_ENTRY, API_ECON_ENTRY])
-    plan_file = _plan_file(tmp_path / "plan.json", [
-        _file_node("n1", "fixture-spark", "spark.performance", "diagnose"),
-        _file_node("n2", "fixture-api", "api.contract", "review", "n1")],
-        "pipeline")
-    out = executor.run(PlanCommand(intent="bounded economy", profile="max",
-                                   plan_file=plan_file, execute=True))
+    plan_file = _plan_file(
+        tmp_path / "plan.json",
+        [
+            _file_node("n1", "fixture-spark", "spark.performance", "diagnose"),
+            _file_node("n2", "fixture-api", "api.contract", "review", "n1"),
+        ],
+        "pipeline",
+    )
+    out = executor.run(
+        PlanCommand(intent="bounded economy", profile="max", plan_file=plan_file, execute=True)
+    )
     assert out.status == "ok" and out.result is not None
 
     rollup = store.read_optional(out.run_id, "economy")
@@ -254,12 +312,17 @@ def test_plan_rolls_up_provider_economy(tmp_path: Path) -> None:
 def test_plan_links_the_native_trace_on_the_node_span(tmp_path: Path) -> None:
     """Phase 22 e2e: the node span carries ``native_trace_ref``, not the spans."""
     executor, store = _executor(tmp_path, [SPARK_ECON_ENTRY, API_PLAN_ENTRY])
-    plan_file = _plan_file(tmp_path / "plan.json", [
-        _file_node("n1", "fixture-spark", "spark.performance", "diagnose"),
-        _file_node("n2", "fixture-api", "api.contract", "review", "n1")],
-        "pipeline")
-    out = executor.run(PlanCommand(intent="trace federation", profile="max",
-                                   plan_file=plan_file, execute=True))
+    plan_file = _plan_file(
+        tmp_path / "plan.json",
+        [
+            _file_node("n1", "fixture-spark", "spark.performance", "diagnose"),
+            _file_node("n2", "fixture-api", "api.contract", "review", "n1"),
+        ],
+        "pipeline",
+    )
+    out = executor.run(
+        PlanCommand(intent="trace federation", profile="max", plan_file=plan_file, execute=True)
+    )
     assert out.status == "ok" and out.result is not None
 
     telemetry = store.read(out.run_id, "telemetry")
@@ -275,6 +338,7 @@ def test_plan_links_the_native_trace_on_the_node_span(tmp_path: Path) -> None:
     assert result["native_trace"]["critical_path"] == ["analyze", "emit"]
 
     from theforge.explain import build_explain_report
+
     report = build_explain_report(store, n1.run_id)
     assert report.result is not None and report.result.native_trace is not None
     assert report.result.native_trace.ref == "sparktrace://run-7"
@@ -283,11 +347,14 @@ def test_plan_links_the_native_trace_on_the_node_span(tmp_path: Path) -> None:
 def test_economy_absent_when_no_node_reports(tmp_path: Path) -> None:
     """No provider economy -> no artifact, no refs, no explain section."""
     executor, store = _executor(tmp_path, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
-    plan_file = _plan_file(tmp_path / "plan.json", [
-        _file_node("n1", "fixture-spark", "spark.performance", "diagnose")],
-        "pipeline")
-    out = executor.run(PlanCommand(intent="silent economy", profile="max",
-                                   plan_file=plan_file, execute=True))
+    plan_file = _plan_file(
+        tmp_path / "plan.json",
+        [_file_node("n1", "fixture-spark", "spark.performance", "diagnose")],
+        "pipeline",
+    )
+    out = executor.run(
+        PlanCommand(intent="silent economy", profile="max", plan_file=plan_file, execute=True)
+    )
     assert out.status == "ok" and out.result is not None
     assert out.result.economy_sha256 is None
     assert store.read_optional(out.run_id, "economy") is None

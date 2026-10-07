@@ -39,21 +39,35 @@ def cross() -> Iterator[CrossWorkspace]:
 
 
 def _children(store: RunStore, plan_run: str) -> list[str]:
-    return [run_id for run_id in store.list_runs()
-            if (store.read_optional(run_id, "receipt") or {}).get("parent_run") == plan_run]
+    return [
+        run_id
+        for run_id in store.list_runs()
+        if (store.read_optional(run_id, "receipt") or {}).get("parent_run") == plan_run
+    ]
 
 
 def _plan_file(path: Path, nodes: list[dict[str, Any]]) -> Path:
-    path.write_text(json.dumps({"task_id": "from-file", "pattern": "pipeline",
-                                "source": "file", "profile": "max", "nodes": nodes}),
-                    encoding="utf-8")
+    path.write_text(
+        json.dumps(
+            {
+                "task_id": "from-file",
+                "pattern": "pipeline",
+                "source": "file",
+                "profile": "max",
+                "nodes": nodes,
+            }
+        ),
+        encoding="utf-8",
+    )
     return path
 
 
 # --- plan ------------------------------------------------------------------------------------
 
+
 def test_plan_without_execute_exits_0_and_shows_the_plan(
-        cross: CrossWorkspace, capsys: pytest.CaptureFixture[str]) -> None:
+    cross: CrossWorkspace, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
     root = str(cross.root)
     code, out, err = run(capsys, "plan", PROOF_TASK, "--profile", "max", "--root", root)
@@ -74,10 +88,20 @@ def test_plan_without_execute_exits_0_and_shows_the_plan(
 
 
 def test_plan_execute_runs_the_proof_task_with_the_fixtures(
-        cross: CrossWorkspace, capsys: pytest.CaptureFixture[str]) -> None:
+    cross: CrossWorkspace, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
-    code, out, err = run(capsys, "plan", PROOF_TASK, "--profile", "max", "--execute",
-                         "--root", str(cross.root), "--json")
+    code, out, err = run(
+        capsys,
+        "plan",
+        PROOF_TASK,
+        "--profile",
+        "max",
+        "--execute",
+        "--root",
+        str(cross.root),
+        "--json",
+    )
     assert code == 0, err
     data = json.loads(out)
     assert data["status"] == "ok" and data["error"] is None
@@ -88,8 +112,7 @@ def test_plan_execute_runs_the_proof_task_with_the_fixtures(
     assert result["order"] == ["n1", "n2"]
     assert [(n["node"], n["status"]) for n in result["nodes"]] == [("n1", "ok"), ("n2", "ok")]
     store = RunStore(cross.root / ".forge")
-    assert sorted(_children(store, data["run_id"])) == sorted(n["run_id"]
-                                                              for n in result["nodes"])
+    assert sorted(_children(store, data["run_id"])) == sorted(n["run_id"] for n in result["nodes"])
     [handoff] = result["synthesis"]["handoffs"]
     assert (handoff["source"], handoff["target"]) == ("n1", "n2") and handoff["items"] > 0
     text = render.plan(data)
@@ -101,7 +124,8 @@ def test_plan_execute_runs_the_proof_task_with_the_fixtures(
 
 
 def test_plan_help_cites_the_intent_order_rule_and_the_plan_file(
-        capsys: pytest.CaptureFixture[str]) -> None:
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     with pytest.raises(SystemExit) as info:
         main(["plan", "--help"])
     out = capsys.readouterr().out
@@ -112,21 +136,40 @@ def test_plan_help_cites_the_intent_order_rule_and_the_plan_file(
 
 
 def test_plan_arguments_reach_the_executor(
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
-        capsys: pytest.CaptureFixture[str]) -> None:
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [])
     seen: list[PlanCommand] = []
 
     def fake_run(self: object, command: PlanCommand) -> PlanOutcome:
         seen.append(command)
-        return PlanOutcome(run_id="20260101T000000Z-deadbeef", status="planned", plan=None,
-                           result=None, error=None)
+        return PlanOutcome(
+            run_id="20260101T000000Z-deadbeef", status="planned", plan=None, result=None, error=None
+        )
 
     monkeypatch.setattr("theforge.cli.commands.PlanExecutor.run", fake_run)
-    code, _, err = run(capsys, "plan", "x y", "--profile", "economy", "--target", "a",
-                       "--target", "b", "--from", "p.json", "--execute", "--approve", "c.d",
-                       "--approve", "e.f", "--allow-unverified", "--debug",
-                       "--root", str(tmp_path))
+    code, _, err = run(
+        capsys,
+        "plan",
+        "x y",
+        "--profile",
+        "economy",
+        "--target",
+        "a",
+        "--target",
+        "b",
+        "--from",
+        "p.json",
+        "--execute",
+        "--approve",
+        "c.d",
+        "--approve",
+        "e.f",
+        "--allow-unverified",
+        "--debug",
+        "--root",
+        str(tmp_path),
+    )
     assert code == 0, err
     [command] = seen
     assert (command.intent, command.profile, command.targets) == ("x y", "economy", ["a", "b"])
@@ -136,7 +179,8 @@ def test_plan_arguments_reach_the_executor(
 
 
 def test_unreadable_plan_file_is_a_usage_error_exit_2(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     bad = tmp_path / "plan.json"
     bad.write_text("{not json", encoding="utf-8")
@@ -149,13 +193,24 @@ def test_unreadable_plan_file_is_a_usage_error_exit_2(
 
 
 def test_rejected_plan_exits_4_with_code_family_and_installation(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
-    plan_file = _plan_file(tmp_path / "plan.json", [
-        {"id": "n1", "role": "standalone", "provider": "ghost", "capability": "ghost.thing",
-         "action": "run"}])
-    code, out, _ = run(capsys, "plan", "ghost", "--from", str(plan_file), "--execute",
-                       "--root", str(tmp_path))
+    plan_file = _plan_file(
+        tmp_path / "plan.json",
+        [
+            {
+                "id": "n1",
+                "role": "standalone",
+                "provider": "ghost",
+                "capability": "ghost.thing",
+                "action": "run",
+            }
+        ],
+    )
+    code, out, _ = run(
+        capsys, "plan", "ghost", "--from", str(plan_file), "--execute", "--root", str(tmp_path)
+    )
     assert code == 4
     assert re.search(r"^Run \S+: refused$", out, re.MULTILINE)
     assert f"[{Codes.PLAN_CAPABILITY} · plan]" in out
@@ -164,9 +219,10 @@ def test_rejected_plan_exits_4_with_code_family_and_installation(
 
 # --- workspace show --------------------------------------------------------------------------
 
+
 def test_workspace_show_uses_cached_manifests_and_starts_no_provider(
-        cross: CrossWorkspace, monkeypatch: pytest.MonkeyPatch,
-        capsys: pytest.CaptureFixture[str]) -> None:
+    cross: CrossWorkspace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     forge = make_workspace(cross.root, [SPARK_PLAN_ENTRY])
     root = str(cross.root)
     assert run(capsys, "registry", "refresh", "--root", root)[0] == 0  # caches fixture-spark
@@ -182,8 +238,9 @@ def test_workspace_show_uses_cached_manifests_and_starts_no_provider(
     assert data["schema"] == "theforge/WorkspaceDescriptor/v1"
     assert {r["path"] for r in data["repositories"]} == {"data-pipeline", "orders-api"}
     assert any(t["repository"] == "data-pipeline" for t in data["technologies"])
-    assert any(note.startswith("provider fixture-api: no cached manifest")
-               for note in data["limitations"])
+    assert any(
+        note.startswith("provider fixture-api: no cached manifest") for note in data["limitations"]
+    )
     assert not any(note.startswith("provider fixture-spark:") for note in data["limitations"])
 
     code, out, _ = run(capsys, "workspace", "show", "--root", root)

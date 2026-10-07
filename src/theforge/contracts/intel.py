@@ -59,8 +59,7 @@ class ProjectIntel:
 
     def __post_init__(self) -> None:
         if self.schema != INTEL_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {INTEL_SCHEMA!r}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {INTEL_SCHEMA!r}")
         for name in self.fingerprints.__dataclass_fields__:
             value = getattr(self.fingerprints, name)
             if not isinstance(value, str):

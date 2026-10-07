@@ -52,8 +52,9 @@ from theforge.state import find_forge_dir, init_workspace, require_forge_dir
 
 
 def make_task(intent: str = "eco password=hunter2xyz") -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent,
-                    workspace_root="/ws")
+    return TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent, workspace_root="/ws"
+    )
 
 
 def test_new_run_id_format() -> None:
@@ -153,15 +154,22 @@ def _store_with_run(tmp_path: Path) -> tuple[RunStore, str]:
 
 
 def make_result() -> ExecutionResult:
-    return ExecutionResult(producer=Producer(id="echo", version="1.0.0"), created_at=utc_now(),
-                           status="ok")
+    return ExecutionResult(
+        producer=Producer(id="echo", version="1.0.0"), created_at=utc_now(), status="ok"
+    )
 
 
 def make_receipt(run_id: str, **overrides: Any) -> ExecutionReceipt:
     base: dict[str, Any] = {
-        "producer": PRODUCER, "created_at": utc_now(), "status": "ok", "run_id": run_id,
-        "forge_version": "0.1.0", "inputs": ReceiptInputs(task_sha256="a" * 64),
-        "result_sha256": None, "started_at": utc_now(), "finished_at": utc_now(),
+        "producer": PRODUCER,
+        "created_at": utc_now(),
+        "status": "ok",
+        "run_id": run_id,
+        "forge_version": "0.1.0",
+        "inputs": ReceiptInputs(task_sha256="a" * 64),
+        "result_sha256": None,
+        "started_at": utc_now(),
+        "finished_at": utc_now(),
     }
     base.update(overrides)
     return ExecutionReceipt(**base)
@@ -169,25 +177,61 @@ def make_receipt(run_id: str, **overrides: Any) -> ExecutionReceipt:
 
 def make_risk(run_id: str) -> RiskAssessment:
     levels: dict[str, Any] = dict.fromkeys(
-        ("read_only", "local_mutation", "external_read", "external_mutation", "destructive",
-         "credentials", "cross_account"), "no")
+        (
+            "read_only",
+            "local_mutation",
+            "external_read",
+            "external_mutation",
+            "destructive",
+            "credentials",
+            "cross_account",
+        ),
+        "no",
+    )
     return RiskAssessment(
-        producer=PRODUCER, created_at=utc_now(), run_id=run_id, provider_id="echo",
-        capability="echo.reflect", action="analyze", operation_class="read_only",
-        source="provider_declaration", dimensions=RiskDimensions(**levels),
-        policy=PolicyDecision(decision="allow", rule="default", reason="read only",
-                              approved=False),
+        producer=PRODUCER,
+        created_at=utc_now(),
+        run_id=run_id,
+        provider_id="echo",
+        capability="echo.reflect",
+        action="analyze",
+        operation_class="read_only",
+        source="provider_declaration",
+        dimensions=RiskDimensions(**levels),
+        policy=PolicyDecision(decision="allow", rule="default", reason="read only", approved=False),
         limitations=[OPERATION_CLASS_LIMITATION],
     )
 
 
 def test_risk_is_a_known_artifact_in_run_order() -> None:
-    assert ARTIFACTS == ("task", "workspace-descriptor", "routing", "plan", "installation",
-                         "risk", "handoff", "context", "context-r1", "context-r2", "result",
-                         "plan-state", "plan-result", "graph", "capability-graph",
-                         "semantic-proposal", "routing-proposal", "decision", "economy",
-                         "global-stop", "verification", "telemetry", "diagnostic",
-                         "complexity", "budget", "receipt")
+    assert ARTIFACTS == (
+        "task",
+        "workspace-descriptor",
+        "routing",
+        "plan",
+        "installation",
+        "risk",
+        "handoff",
+        "context",
+        "context-r1",
+        "context-r2",
+        "result",
+        "plan-state",
+        "plan-result",
+        "graph",
+        "capability-graph",
+        "semantic-proposal",
+        "routing-proposal",
+        "decision",
+        "economy",
+        "global-stop",
+        "verification",
+        "telemetry",
+        "diagnostic",
+        "complexity",
+        "budget",
+        "receipt",
+    )
     assert ARTIFACT_TYPES["complexity"] is ComplexityAssessment
     assert ARTIFACT_TYPES["budget"] is RunBudget
     assert ARTIFACT_TYPES["capability-graph"] is CapabilityGraph
@@ -208,13 +252,25 @@ def test_negotiation_round_and_telemetry_artifacts_are_typed() -> None:
 
 def make_telemetry(run_id: str) -> RunTelemetry:
     snapshot = ProfileSnapshot(
-        name="balanced", budget_bytes=262144, max_files=64,
+        name="balanced",
+        budget_bytes=262144,
+        max_files=64,
         tiers=["excerpt", "metadata", "reference", "requested"],
-        effective_tiers=["metadata", "reference"], negotiation_rounds=1, max_providers=1,
-        fallback=True, verification="conditional", execute_timeout_s=180.0)
-    return RunTelemetry(producer=PRODUCER, created_at=utc_now(), run_id=run_id,
-                        profile=snapshot, scan_ms=Metric(value=1.5, kind="measured"),
-                        limitations=["provider said password=hunter2xyz"])
+        effective_tiers=["metadata", "reference"],
+        negotiation_rounds=1,
+        max_providers=1,
+        fallback=True,
+        verification="conditional",
+        execute_timeout_s=180.0,
+    )
+    return RunTelemetry(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        run_id=run_id,
+        profile=snapshot,
+        scan_ms=Metric(value=1.5, kind="measured"),
+        limitations=["provider said password=hunter2xyz"],
+    )
 
 
 def test_telemetry_is_redacted_hashed_on_disk_and_reread_strictly(tmp_path: Path) -> None:
@@ -232,8 +288,16 @@ def test_telemetry_is_redacted_hashed_on_disk_and_reread_strictly(tmp_path: Path
 
 def test_negotiation_round_pack_round_trips_through_strict_read(tmp_path: Path) -> None:
     store, run_id = _store_with_run(tmp_path)
-    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
-                       task_id="t1", provider_id="echo", root=".", budget_bytes=10, round=1)
+    pack = ContextPack(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="complete",
+        task_id="t1",
+        provider_id="echo",
+        root=".",
+        budget_bytes=10,
+        round=1,
+    )
     for name in ("context-r1", "context-r2"):
         digest = store.write(run_id, name, pack)
         assert digest == sha256_of(store.read(run_id, name))
@@ -289,16 +353,31 @@ def test_cycle1_run_remains_readable(tmp_path: Path) -> None:
     store, run_id = _store_with_run(tmp_path)
     run = store.run_dir(run_id)
     producer = {"id": "theforge", "version": "0.1.0"}
-    task = {"schema": "theforge/TaskSpec/v1", "producer": producer, "created_at": TS,
-            "status": "created", "id": "t1", "intent": "eco", "workspace_root": "/ws"}
-    receipt = {"schema": "theforge/ExecutionReceipt/v1", "producer": producer,
-               "created_at": TS, "status": "provider_failure", "run_id": run_id,
-               "forge_version": "0.1.0",
-               "inputs": {"task_sha256": "a" * 64, "routing_sha256": None,
-                          "context_sha256": None},
-               "provider": None, "result_sha256": None, "started_at": TS, "finished_at": TS,
-               "error": {"code": "FORGE-PROTO-EXIT", "detail": "exit 1"},
-               "limitations": [], "unknowns": []}
+    task = {
+        "schema": "theforge/TaskSpec/v1",
+        "producer": producer,
+        "created_at": TS,
+        "status": "created",
+        "id": "t1",
+        "intent": "eco",
+        "workspace_root": "/ws",
+    }
+    receipt = {
+        "schema": "theforge/ExecutionReceipt/v1",
+        "producer": producer,
+        "created_at": TS,
+        "status": "provider_failure",
+        "run_id": run_id,
+        "forge_version": "0.1.0",
+        "inputs": {"task_sha256": "a" * 64, "routing_sha256": None, "context_sha256": None},
+        "provider": None,
+        "result_sha256": None,
+        "started_at": TS,
+        "finished_at": TS,
+        "error": {"code": "FORGE-PROTO-EXIT", "detail": "exit 1"},
+        "limitations": [],
+        "unknowns": [],
+    }
     (run / "task.json").write_text(json.dumps(task), encoding="utf-8")
     (run / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
     assert store.read(run_id, "receipt")["status"] == "provider_failure"
@@ -330,8 +409,9 @@ def test_success_receipt_with_mismatching_hash_is_refused(tmp_path: Path) -> Non
     store, run_id = _store_with_run(tmp_path)
     store.write(run_id, "result", make_result())
     with pytest.raises(IntegrityError) as exc:
-        store.write(run_id, "receipt",
-                    make_receipt(run_id, status="partial", result_sha256=H_OTHER))
+        store.write(
+            run_id, "receipt", make_receipt(run_id, status="partial", result_sha256=H_OTHER)
+        )
     assert exc.value.code == Codes.RECEIPT_INVALID
     assert store.read_optional(run_id, "receipt") is None
 
@@ -345,16 +425,21 @@ def test_success_receipt_without_persisted_result_is_refused(tmp_path: Path) -> 
 
 def test_failure_receipt_without_result_is_written(tmp_path: Path) -> None:
     store, run_id = _store_with_run(tmp_path)
-    receipt = make_receipt(run_id, status="refused",
-                           error=ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x"))
+    receipt = make_receipt(
+        run_id, status="refused", error=ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x")
+    )
     store.write(run_id, "receipt", receipt)
     assert store.read(run_id, "receipt")["status"] == "refused"
 
 
 def test_receipt_with_malformed_hash_is_refused(tmp_path: Path) -> None:
     store, run_id = _store_with_run(tmp_path)
-    bad = make_receipt(run_id, status="refused", inputs=ReceiptInputs(task_sha256="h"),
-                       error=ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x"))
+    bad = make_receipt(
+        run_id,
+        status="refused",
+        inputs=ReceiptInputs(task_sha256="h"),
+        error=ErrorInfo(code=Codes.RECEIPT_INVALID, detail="x"),
+    )
     with pytest.raises(IntegrityError) as exc:
         store.write(run_id, "receipt", bad)
     assert exc.value.code == Codes.RECEIPT_INVALID
@@ -371,47 +456,141 @@ H_A = "a" * 64
 
 
 def _wave_d_artifacts() -> dict[str, tuple[type, dict[str, Any]]]:
-    origin = {"plan_run": "p1", "node": "a", "run_id": "r1",
-              "provider": {"id": "spark", "version": "2.0"}}
+    origin = {
+        "plan_run": "p1",
+        "node": "a",
+        "run_id": "r1",
+        "provider": {"id": "spark", "version": "2.0"},
+    }
     return {
-        "plan": (ExecutionPlan, {
-            "producer": WP, "created_at": WTS, "status": "validated", "plan_run": "p1",
-            "task_id": "t1", "pattern": "route", "source": "decomposed", "profile": "max",
-            "nodes": [{"id": "a", "role": "standalone", "provider": "demo",
-                       "capability": "demo.echo", "action": "echo"}],
-            "limitations": [SECRET]}),
-        "plan-result": (PlanResult, {
-            "producer": WP, "created_at": WTS, "status": "ok", "plan_run": "p1",
-            "order": ["a"], "nodes": [{"node": "a", "status": "ok", "run_id": "r1",
-                                       "result_sha256": H_A}],
-            "synthesis": {"nodes": []}, "reproducibility": {"level": "unknown"},
-            "limitations": [SECRET]}),
-        "global-stop": (GlobalStopDecision, {
-            "producer": WP, "created_at": WTS, "run_id": "p1",
-            "action": "stop_sufficient_evidence", "information_gain": "unknown",
-            "reasons": [SECRET]}),
-        "workspace-descriptor": (WorkspaceDescriptor, {
-            "producer": WP, "created_at": WTS, "root": "/ws",
-            "repositories": [{"path": "."}], "limitations": [SECRET]}),
-        "graph": (WorkspaceGraph, {
-            "producer": WP, "created_at": WTS, "plan_run": "p1",
-            "nodes": [{"id": "workspace:.", "kind": "workspace"}], "limitations": [SECRET]}),
-        "installation": (InstallationPlan, {
-            "producer": WP, "created_at": WTS, "run_id": "p1",
-            "items": [{"provider": "spark", "state": "unavailable", "reason": SECRET,
-                       "suggested_action": "install java", "source": "health"}]}),
-        "handoff": (Handoff, {
-            "producer": WP, "created_at": WTS, "plan_run": "p1", "target_node": "b",
-            "items": [{"kind": "evidence", "id": "e1", "origin": origin,
-                       "epistemic": "inferred", "claim": SECRET}]}),
-        "verification": (VerificationResult, {
-            "producer": WP, "created_at": WTS, "run_id": "r1",
-            "self_report": {"status": "reported"}, "provider_evidence": {"status": "reported"},
-            "forge": {"status": "passed"}, "independent": {"status": "not_performed"},
-            "limitations": [SECRET]}),
-        "diagnostic": (Diagnostic, {
-            "producer": WP, "created_at": WTS, "stage": "cli:plan", "code": "FORGE-INTERNAL",
-            "family": "internal", "error_type": "RuntimeError", "message": SECRET}),
+        "plan": (
+            ExecutionPlan,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "status": "validated",
+                "plan_run": "p1",
+                "task_id": "t1",
+                "pattern": "route",
+                "source": "decomposed",
+                "profile": "max",
+                "nodes": [
+                    {
+                        "id": "a",
+                        "role": "standalone",
+                        "provider": "demo",
+                        "capability": "demo.echo",
+                        "action": "echo",
+                    }
+                ],
+                "limitations": [SECRET],
+            },
+        ),
+        "plan-result": (
+            PlanResult,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "status": "ok",
+                "plan_run": "p1",
+                "order": ["a"],
+                "nodes": [{"node": "a", "status": "ok", "run_id": "r1", "result_sha256": H_A}],
+                "synthesis": {"nodes": []},
+                "reproducibility": {"level": "unknown"},
+                "limitations": [SECRET],
+            },
+        ),
+        "global-stop": (
+            GlobalStopDecision,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "run_id": "p1",
+                "action": "stop_sufficient_evidence",
+                "information_gain": "unknown",
+                "reasons": [SECRET],
+            },
+        ),
+        "workspace-descriptor": (
+            WorkspaceDescriptor,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "root": "/ws",
+                "repositories": [{"path": "."}],
+                "limitations": [SECRET],
+            },
+        ),
+        "graph": (
+            WorkspaceGraph,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "plan_run": "p1",
+                "nodes": [{"id": "workspace:.", "kind": "workspace"}],
+                "limitations": [SECRET],
+            },
+        ),
+        "installation": (
+            InstallationPlan,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "run_id": "p1",
+                "items": [
+                    {
+                        "provider": "spark",
+                        "state": "unavailable",
+                        "reason": SECRET,
+                        "suggested_action": "install java",
+                        "source": "health",
+                    }
+                ],
+            },
+        ),
+        "handoff": (
+            Handoff,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "plan_run": "p1",
+                "target_node": "b",
+                "items": [
+                    {
+                        "kind": "evidence",
+                        "id": "e1",
+                        "origin": origin,
+                        "epistemic": "inferred",
+                        "claim": SECRET,
+                    }
+                ],
+            },
+        ),
+        "verification": (
+            VerificationResult,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "run_id": "r1",
+                "self_report": {"status": "reported"},
+                "provider_evidence": {"status": "reported"},
+                "forge": {"status": "passed"},
+                "independent": {"status": "not_performed"},
+                "limitations": [SECRET],
+            },
+        ),
+        "diagnostic": (
+            Diagnostic,
+            {
+                "producer": WP,
+                "created_at": WTS,
+                "stage": "cli:plan",
+                "code": "FORGE-INTERNAL",
+                "family": "internal",
+                "error_type": "RuntimeError",
+                "message": SECRET,
+            },
+        ),
     }
 
 
@@ -423,15 +602,12 @@ def test_wave_d_artifacts_are_known_and_typed() -> None:
 
 
 @pytest.mark.parametrize("name", sorted(_wave_d_artifacts()))
-def test_wave_d_artifact_is_redacted_hashed_and_reread_strictly(
-        tmp_path: Path, name: str) -> None:
+def test_wave_d_artifact_is_redacted_hashed_and_reread_strictly(tmp_path: Path, name: str) -> None:
     cls, data = _wave_d_artifacts()[name]
     store, run_id = _store_with_run(tmp_path)
     if name == "plan-result":
         stop_cls, stop_data = _wave_d_artifacts()["global-stop"]
-        stop_sha = store.write(
-            run_id, "global-stop", from_dict(stop_cls, stop_data, strict=True)
-        )
+        stop_sha = store.write(run_id, "global-stop", from_dict(stop_cls, stop_data, strict=True))
         data = {**data, "global_stop_sha256": stop_sha}
     digest = store.write(run_id, name, from_dict(cls, data, strict=True))
     text = (store.run_dir(run_id) / f"{name}.json").read_text("utf-8")
@@ -452,18 +628,14 @@ def _write_plan_run(store: RunStore, run_id: str) -> tuple[str, str, str, str]:
     plan_sha = store.write(run_id, "plan", from_dict(plan_cls, plan_data, strict=True))
     stop_cls, stop_data = artifacts["global-stop"]
     stop_data = {**stop_data, "run_id": run_id}
-    stop_sha = store.write(
-        run_id, "global-stop", from_dict(stop_cls, stop_data, strict=True)
-    )
+    stop_sha = store.write(run_id, "global-stop", from_dict(stop_cls, stop_data, strict=True))
     result_cls, result_data = artifacts["plan-result"]
     result_data = {
         **result_data,
         "plan_run": run_id,
         "global_stop_sha256": stop_sha,
     }
-    result_sha = store.write(
-        run_id, "plan-result", from_dict(result_cls, result_data, strict=True)
-    )
+    result_sha = store.write(run_id, "plan-result", from_dict(result_cls, result_data, strict=True))
     telemetry_sha = store.write(run_id, "telemetry", make_telemetry(run_id))
     return plan_sha, result_sha, telemetry_sha, stop_sha
 
@@ -503,33 +675,36 @@ def test_planned_receipt_without_plan_result_is_written(tmp_path: Path) -> None:
     plan_cls, plan_data = _wave_d_artifacts()["plan"]
     plan_sha = store.write(run_id, "plan", from_dict(plan_cls, plan_data, strict=True))
     telemetry_sha = store.write(run_id, "telemetry", make_telemetry(run_id))
-    receipt = make_plan_receipt(run_id, plan_sha, None, status="planned",
-                                telemetry_sha256=telemetry_sha)
+    receipt = make_plan_receipt(
+        run_id, plan_sha, None, status="planned", telemetry_sha256=telemetry_sha
+    )
     store.write(run_id, "receipt", receipt)
     assert store.read(run_id, "receipt")["status"] == "planned"
 
 
 @pytest.mark.parametrize("diverging", ["plan-result", "telemetry", "missing-plan-result"])
 def test_plan_receipt_with_diverging_hash_is_refused_without_writing(
-        tmp_path: Path, diverging: str) -> None:
+    tmp_path: Path, diverging: str
+) -> None:
     store, run_id = _store_with_run(tmp_path)
     plan_sha, result_sha, telemetry_sha, stop_sha = _write_plan_run(store, run_id)
     if diverging == "plan-result":
         receipt = make_plan_receipt(
-            run_id, plan_sha, H_OTHER, telemetry_sha256=telemetry_sha,
+            run_id,
+            plan_sha,
+            H_OTHER,
+            telemetry_sha256=telemetry_sha,
             global_stop_sha256=stop_sha,
         )
         field = "plan.plan_result_sha256"
     elif diverging == "telemetry":
         receipt = make_plan_receipt(
-            run_id, plan_sha, result_sha, telemetry_sha256=H_OTHER,
-            global_stop_sha256=stop_sha
+            run_id, plan_sha, result_sha, telemetry_sha256=H_OTHER, global_stop_sha256=stop_sha
         )
         field = "telemetry_sha256"
     else:
         receipt = make_plan_receipt(
-            run_id, plan_sha, None, telemetry_sha256=telemetry_sha,
-            global_stop_sha256=stop_sha
+            run_id, plan_sha, None, telemetry_sha256=telemetry_sha, global_stop_sha256=stop_sha
         )
         field = "plan.plan_result_sha256"
     with pytest.raises(IntegrityError) as exc:
@@ -553,8 +728,12 @@ def test_run_receipt_with_malformed_new_hash_is_refused(tmp_path: Path, field: s
     if field == "verification_sha256":
         bad = make_receipt(run_id, status="refused", error=error, verification_sha256="x")
     else:
-        bad = make_receipt(run_id, status="refused", error=error,
-                           inputs=ReceiptInputs(task_sha256=H_A, handoff_sha256="x"))
+        bad = make_receipt(
+            run_id,
+            status="refused",
+            error=error,
+            inputs=ReceiptInputs(task_sha256=H_A, handoff_sha256="x"),
+        )
     with pytest.raises(IntegrityError) as exc:
         store.write(run_id, "receipt", bad)
     assert exc.value.field == field
@@ -565,26 +744,45 @@ def test_run_receipt_ignores_plan_artifacts_and_telemetry(tmp_path: Path) -> Non
     store, run_id = _store_with_run(tmp_path)
     _write_plan_run(store, run_id)
     result_sha = store.write(run_id, "result", make_result())
-    store.write(run_id, "receipt", make_receipt(run_id, result_sha256=result_sha,
-                                                telemetry_sha256=H_OTHER))
+    store.write(
+        run_id, "receipt", make_receipt(run_id, result_sha256=result_sha, telemetry_sha256=H_OTHER)
+    )
 
 
-def test_run_written_in_previous_format_rereads_with_nothing_new_recorded(
-        tmp_path: Path) -> None:
+def test_run_written_in_previous_format_rereads_with_nothing_new_recorded(tmp_path: Path) -> None:
     store, run_id = _store_with_run(tmp_path)
-    receipt = {"schema": "theforge/ExecutionReceipt/v1", "producer": WP, "created_at": TS,
-               "status": "ok", "run_id": run_id, "forge_version": "0.3.0",
-               "inputs": {"task_sha256": H_A, "context_round_sha256": []},
-               "provider": {"id": "echo", "version": "1.0.0", "trust": "builtin"},
-               "result_sha256": H_A, "telemetry_sha256": H_A, "started_at": TS,
-               "finished_at": TS, "error": None, "limitations": [], "unknowns": []}
+    receipt = {
+        "schema": "theforge/ExecutionReceipt/v1",
+        "producer": WP,
+        "created_at": TS,
+        "status": "ok",
+        "run_id": run_id,
+        "forge_version": "0.3.0",
+        "inputs": {"task_sha256": H_A, "context_round_sha256": []},
+        "provider": {"id": "echo", "version": "1.0.0", "trust": "builtin"},
+        "result_sha256": H_A,
+        "telemetry_sha256": H_A,
+        "started_at": TS,
+        "finished_at": TS,
+        "error": None,
+        "limitations": [],
+        "unknowns": [],
+    }
     (store.run_dir(run_id) / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
     loaded = store.read_contract(run_id, "receipt", ExecutionReceipt)
     assert loaded.kind == "run" and loaded.plan is None
     assert loaded.verification_sha256 is None and loaded.reproducibility is None
     assert loaded.inputs.handoff_sha256 is None
-    for name in ("verification", "handoff", "plan", "plan-result", "graph",
-                 "workspace-descriptor", "installation", "diagnostic"):
+    for name in (
+        "verification",
+        "handoff",
+        "plan",
+        "plan-result",
+        "graph",
+        "workspace-descriptor",
+        "installation",
+        "diagnostic",
+    ):
         assert store.read_optional(run_id, name) is None
 
 
@@ -602,8 +800,9 @@ def _link(link: Path, target: Path, *, directory: bool = False) -> None:
     except OSError:
         pass
     if os.name == "nt" and directory:
-        made = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
-                              capture_output=True, check=False)
+        made = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True, check=False
+        )
         if made.returncode == 0 and os.path.lexists(link):
             return
     pytest.skip("symlinks not permitted on this platform")
@@ -611,10 +810,12 @@ def _link(link: Path, target: Path, *, directory: bool = False) -> None:
 
 def _assert_unreadable(store: RunStore, run_id: str, name: str = "task") -> None:
     """Every read path of the artifact is a controlled PERSIST_READ, never content."""
-    reads = (lambda: store.read_optional(run_id, name),
-             lambda: store.read(run_id, name),
-             lambda: store.persisted_sha256(run_id, name),
-             lambda: store.read_contract(run_id, name, ARTIFACT_TYPES[name]))
+    reads = (
+        lambda: store.read_optional(run_id, name),
+        lambda: store.read(run_id, name),
+        lambda: store.persisted_sha256(run_id, name),
+        lambda: store.read_contract(run_id, name, ARTIFACT_TYPES[name]),
+    )
     for read in reads:
         with pytest.raises(PersistenceError) as exc:
             read()

@@ -22,7 +22,8 @@ class LineRange:
     def __post_init__(self) -> None:
         if self.start < 1 or self.end < self.start:
             raise ContractError(
-                f"invalid line range {self.start}-{self.end}: expected 1 <= start <= end")
+                f"invalid line range {self.start}-{self.end}: expected 1 <= start <= end"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -41,8 +42,7 @@ class ContextFile:
         if self.tier == "excerpt" and self.lines is None:
             raise ContractError(f"context item {self.path!r}: tier excerpt requires lines")
         if self.tier == "reference" and self.lines is not None:
-            raise ContractError(
-                f"context item {self.path!r}: tier reference must not have lines")
+            raise ContractError(f"context item {self.path!r}: tier reference must not have lines")
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -34,11 +34,16 @@ class RunBudget:
 
     def __post_init__(self) -> None:
         if self.schema != BUDGET_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {BUDGET_SCHEMA!r}")
-        for name in ("context_bytes", "max_files", "provider_calls",
-                     "semantic_calls", "verification_calls", "max_parallelism",
-                     "negotiation_rounds"):
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {BUDGET_SCHEMA!r}")
+        for name in (
+            "context_bytes",
+            "max_files",
+            "provider_calls",
+            "semantic_calls",
+            "verification_calls",
+            "max_parallelism",
+            "negotiation_rounds",
+        ):
             value = getattr(self, name)
             if value < 0:
                 raise ContractError(f"budget {name} cannot be negative: {value}")

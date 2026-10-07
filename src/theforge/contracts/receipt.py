@@ -130,8 +130,9 @@ class ExecutionReceipt:
             if self.provider is not None:
                 raise ContractError("plan receipt: provider must be absent")
             if self.status in ("planned", "ok", "partial") and self.plan.plan_sha256 is None:
-                raise ContractError(f"plan receipt status {self.status!r}: "
-                                    "plan.plan_sha256 is required")
+                raise ContractError(
+                    f"plan receipt status {self.status!r}: plan.plan_sha256 is required"
+                )
         elif self.plan is not None:
             raise ContractError("run receipt: plan references are only for plan receipts")
         if self.status == "planned" and self.kind != "plan":

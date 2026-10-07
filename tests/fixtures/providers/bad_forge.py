@@ -27,8 +27,12 @@ GOOD_HASH = "0" * 64
 # for REQUESTED_PATH; -loop asks on every round; -undeclared asks without declaring
 # ``context.requests``; -invalid declares it but asks for zero items.
 REQUESTED_PATH = "req.txt"
-REQUEST_MODES = ("context-request", "context-request-loop", "context-request-undeclared",
-                 "context-request-invalid")
+REQUEST_MODES = (
+    "context-request",
+    "context-request-loop",
+    "context-request-undeclared",
+    "context-request-invalid",
+)
 
 # Context drift (TOCTOU). Both cover the *.txt files and answer one ``confirmed`` evidence per
 # ContextPack item: drift-report sets an Evidence.hash that is not the delivered content's;
@@ -38,9 +42,11 @@ DRIFT_HASH = "f" * 64
 MUTATION = b"changed during execution\n"
 # tokens-measured reports its own token count (kept) and duration/context bytes (overwritten
 # by the core's measurements).
-REPORTED_METRICS = {"tokens": {"value": 1234, "kind": "measured"},
-                    "duration_ms": {"value": 999999, "kind": "measured"},
-                    "context_bytes": {"value": 1, "kind": "measured"}}
+REPORTED_METRICS = {
+    "tokens": {"value": 1234, "kind": "measured"},
+    "duration_ms": {"value": 999999, "kind": "measured"},
+    "context_bytes": {"value": 1, "kind": "measured"},
+}
 
 
 # Cross-forge-foundation modes. artifact-tamper writes ARTIFACT_PATH in its work dir with
@@ -52,14 +58,20 @@ REPORTED_METRICS = {"tokens": {"value": 1234, "kind": "measured"},
 ARTIFACT_PATH = "out/report.txt"
 ORIGINAL = b"original report\n"
 TAMPERED = b"tampered report\n"
-STRICTER_ESTIMATE = {"context_needed": ["*.txt"], "operation_class": "local_mutation",
-                     "expected_artifacts": [ARTIFACT_PATH], "unknowns": [],
-                     "limitations": []}
+STRICTER_ESTIMATE = {
+    "context_needed": ["*.txt"],
+    "operation_class": "local_mutation",
+    "expected_artifacts": [ARTIFACT_PATH],
+    "unknowns": [],
+    "limitations": [],
+}
 
 
 def _evidence(eid, producer, **extra):
-    return dict({"id": eid, "epistemic": "observed", "subject": "s", "claim": "c",
-                 "producer": producer}, **extra)
+    return dict(
+        {"id": eid, "epistemic": "observed", "subject": "s", "claim": "c", "producer": producer},
+        **extra,
+    )
 
 
 def _finding(fid, *evidence_ids):
@@ -70,17 +82,20 @@ def _finding(fid, *evidence_ids):
 # (or, for bad-hash, the SHA-256 format): extra ExecutionResult fields per mode.
 INTEGRITY_MODES = {
     "dup-evidence": lambda p: {"evidence": [_evidence("e1", p), _evidence("e1", p)]},
-    "dup-finding": lambda p: {"evidence": [_evidence("e1", p)],
-                              "findings": [_finding("f1", "e1"), _finding("f1", "e1")]},
-    "dangling-ref": lambda p: {"evidence": [_evidence("e1", p)],
-                               "findings": [_finding("f1", "e1", "e-missing")]},
-    "artifact-absolute": lambda p: {"artifacts": [{"path": "/etc/passwd",
-                                                   "sha256": GOOD_HASH}]},
-    "artifact-traversal": lambda p: {"artifacts": [{"path": "out/../../escape.txt",
-                                                    "sha256": GOOD_HASH}]},
+    "dup-finding": lambda p: {
+        "evidence": [_evidence("e1", p)],
+        "findings": [_finding("f1", "e1"), _finding("f1", "e1")],
+    },
+    "dangling-ref": lambda p: {
+        "evidence": [_evidence("e1", p)],
+        "findings": [_finding("f1", "e1", "e-missing")],
+    },
+    "artifact-absolute": lambda p: {"artifacts": [{"path": "/etc/passwd", "sha256": GOOD_HASH}]},
+    "artifact-traversal": lambda p: {
+        "artifacts": [{"path": "out/../../escape.txt", "sha256": GOOD_HASH}]
+    },
     "bad-hash": lambda p: {"evidence": [_evidence("e1", p, hash="ABC123")]},
-    "bad-artifact-hash": lambda p: {"artifacts": [{"path": "out/report.txt",
-                                                   "sha256": "F" * 64}]},
+    "bad-artifact-hash": lambda p: {"artifacts": [{"path": "out/report.txt", "sha256": "F" * 64}]},
     "bad-timestamp": lambda p: {"created_at": "yesterday"},
 }
 
@@ -104,10 +119,12 @@ REFUSED_DETAIL = "specialist not importable token=supersecretvalue123 " + "z" * 
 
 def capability(cap_id, file_globs=(), operation_class="read_only", keywords=("bad",)):
     return {
-        "id": cap_id, "actions": ["run"], "default_action": "run",
-        "state": "supported", "operation_class": operation_class,
-        "signals": {"keywords": list(keywords), "file_globs": list(file_globs),
-                    "dependencies": []},
+        "id": cap_id,
+        "actions": ["run"],
+        "default_action": "run",
+        "state": "supported",
+        "operation_class": operation_class,
+        "signals": {"keywords": list(keywords), "file_globs": list(file_globs), "dependencies": []},
     }
 
 
@@ -135,10 +152,13 @@ def main() -> int:
 
     def reply(status, payload=None, error=None, request_id=None, reply_op=op, who=None):
         envelope = {
-            "protocol": proto, "request_id": request_id or rid,
+            "protocol": proto,
+            "request_id": request_id or rid,
             # wrong-kind answers execute with a Request envelope
             "kind": "Request" if mode == "wrong-kind" and op == "execute" else "Response",
-            "op": reply_op, "producer": who or producer, "status": status,
+            "op": reply_op,
+            "producer": who or producer,
+            "status": status,
             "payload": payload or {},
             "error": error,
         }
@@ -152,15 +172,27 @@ def main() -> int:
             sys.stderr.write("describe failed\n")
             return 3
         if mode == "describe-refused":
-            return reply("refused", error={"code": "BAD-NOT-INSTALLED", "detail": REFUSED_DETAIL,
-                                           "field": None, "unlock": "install the specialist"})
+            return reply(
+                "refused",
+                error={
+                    "code": "BAD-NOT-INSTALLED",
+                    "detail": REFUSED_DETAIL,
+                    "field": None,
+                    "unlock": "install the specialist",
+                },
+            )
         cap_id = "Bad Id" if mode == "invalid-manifest" else "bad.thing"
-        capabilities = [capability(
-            cap_id, operation_class=OPERATION_CLASSES.get(mode, "read_only"),
-            # wide-glob: a glob without any literal character matches (almost) every file
-            file_globs=["?*"] if mode == "wide-glob" else (),
-            keywords=[f"bad{i}" for i in range(SPAM_KEYWORDS)] if mode == "keyword-spam"
-            else ("bad",))]
+        capabilities = [
+            capability(
+                cap_id,
+                operation_class=OPERATION_CLASSES.get(mode, "read_only"),
+                # wide-glob: a glob without any literal character matches (almost) every file
+                file_globs=["?*"] if mode == "wide-glob" else (),
+                keywords=[f"bad{i}" for i in range(SPAM_KEYWORDS)]
+                if mode == "keyword-spam"
+                else ("bad",),
+            )
+        ]
         if mode == "excerpts":  # the capability accepts excerpts of the *.txt files
             capabilities[0]["signals"]["file_globs"] = ["*.txt"]
             capabilities[0]["context"] = {"excerpts": True, "requests": False}
@@ -169,8 +201,9 @@ def main() -> int:
         if mode in ("context-request", "context-request-loop", "context-request-invalid"):
             capabilities[0]["context"] = {"excerpts": False, "requests": True}
         if mode == "capability-spam":
-            capabilities += [capability(f"bad.spam{i}", keywords=["run", "it"])
-                             for i in range(SPAM_CAPABILITIES)]
+            capabilities += [
+                capability(f"bad.spam{i}", keywords=["run", "it"]) for i in range(SPAM_CAPABILITIES)
+            ]
         if mode == "describe-catch-all-glob":
             capabilities.append(capability("bad.greedy", ["**/*"]))
         if mode == "describe-only-catch-all-glob":
@@ -188,36 +221,65 @@ def main() -> int:
             other = capability("bad.other")
             other["aliases"] = ["bad.thing"]  # alias equal to another capability's id
             capabilities.append(other)
-        return reply("ok", {
-            "schema": "theforge/ForgeManifest/v1", "id": pid, "version": version,
-            "protocols": MANIFEST_PROTOCOLS.get(mode, [proto]),
-            "ops": ["describe", "health"] if mode == "no-execute-op"
-            else ["describe", "health", "execute", "plan"]
-            if mode in ("plan-error", "plan-estimate-stricter")
-            else ["describe", "health", "execute"],
-            "domains": ["test"], "capabilities": capabilities,
-            # describe-cwd-probe reports the working directory it was started in
-            "limitations": [f"cwd={os.getcwd()}"] if mode == "describe-cwd-probe"
-            else env_lines() if mode == "env-probe-full" else [],
-        }, who=impostor if mode == "describe-wrong-producer" else None)
+        return reply(
+            "ok",
+            {
+                "schema": "theforge/ForgeManifest/v1",
+                "id": pid,
+                "version": version,
+                "protocols": MANIFEST_PROTOCOLS.get(mode, [proto]),
+                "ops": ["describe", "health"]
+                if mode == "no-execute-op"
+                else ["describe", "health", "execute", "plan"]
+                if mode in ("plan-error", "plan-estimate-stricter")
+                else ["describe", "health", "execute"],
+                "domains": ["test"],
+                "capabilities": capabilities,
+                # describe-cwd-probe reports the working directory it was started in
+                "limitations": [f"cwd={os.getcwd()}"]
+                if mode == "describe-cwd-probe"
+                else env_lines()
+                if mode == "env-probe-full"
+                else [],
+            },
+            who=impostor if mode == "describe-wrong-producer" else None,
+        )
     if op == "health":
         if mode == "health-wrong-producer":
             return reply("ok", {"status": "ok", "checks": []}, who=impostor)
         if mode == "health-cwd-probe":
-            return reply("ok", {"status": "ok",
-                                "checks": [{"name": "cwd", "ok": True, "detail": os.getcwd()}]})
+            return reply(
+                "ok",
+                {"status": "ok", "checks": [{"name": "cwd", "ok": True, "detail": os.getcwd()}]},
+            )
         if mode == "env-probe-full":  # received variable names + the cwd it was started in
-            return reply("ok", {"status": "ok",
-                                "checks": [{"name": line, "ok": True} for line in env_lines()]
-                                + [{"name": "cwd", "ok": True, "detail": os.getcwd()}]})
+            return reply(
+                "ok",
+                {
+                    "status": "ok",
+                    "checks": [{"name": line, "ok": True} for line in env_lines()]
+                    + [{"name": "cwd", "ok": True, "detail": os.getcwd()}],
+                },
+            )
         if mode == "unhealthy":
-            return reply("ok", {"status": "unavailable",
-                                "checks": [{"name": "backend", "ok": False,
-                                            "detail": "backend down"}]})
+            return reply(
+                "ok",
+                {
+                    "status": "unavailable",
+                    "checks": [{"name": "backend", "ok": False, "detail": "backend down"}],
+                },
+            )
         return reply("ok", {"status": "ok", "checks": []})
     if op == "plan" and mode == "plan-error":
-        return reply("error", error={"code": "BAD-PLAN-FAILED", "detail": "cannot estimate",
-                                     "field": None, "unlock": None})
+        return reply(
+            "error",
+            error={
+                "code": "BAD-PLAN-FAILED",
+                "detail": "cannot estimate",
+                "field": None,
+                "unlock": None,
+            },
+        )
     if op == "plan" and mode == "plan-estimate-stricter":
         return reply("ok", STRICTER_ESTIMATE)
     if op == "execute":
@@ -227,12 +289,26 @@ def main() -> int:
             os.makedirs(os.path.dirname(ARTIFACT_PATH), exist_ok=True)
             with open(ARTIFACT_PATH, "wb") as fh:
                 fh.write(TAMPERED)
-            return reply("ok", dict(RESULT, producer=producer, artifacts=[
-                {"path": ARTIFACT_PATH, "sha256": hashlib.sha256(ORIGINAL).hexdigest()}]))
+            return reply(
+                "ok",
+                dict(
+                    RESULT,
+                    producer=producer,
+                    artifacts=[
+                        {"path": ARTIFACT_PATH, "sha256": hashlib.sha256(ORIGINAL).hexdigest()}
+                    ],
+                ),
+            )
         if mode == "handoff-accept":
             handoff = (request.get("payload") or {}).get("handoff") or {}
-            return reply("ok", dict(RESULT, producer=producer, limitations=[
-                f"handoff-items={len(handoff.get('items') or [])}"]))
+            return reply(
+                "ok",
+                dict(
+                    RESULT,
+                    producer=producer,
+                    limitations=[f"handoff-items={len(handoff.get('items') or [])}"],
+                ),
+            )
         if mode == "timeout":
             time.sleep(30)
         if mode == "crash":
@@ -268,20 +344,31 @@ def main() -> int:
         if mode == "mismatch":
             return reply("ok", dict(RESULT, producer=producer), request_id="nope")
         if mode == "bad-envelope":
-            sys.stdout.write(json.dumps({"protocol": "forge/v1", "kind": "Response",
-                                         "request_id": rid, "status": "ok"}))
+            sys.stdout.write(
+                json.dumps(
+                    {"protocol": "forge/v1", "kind": "Response", "request_id": rid, "status": "ok"}
+                )
+            )
             return 0
         if mode == "refuse":
-            return reply("refused", error={"code": "BAD-REFUSED", "detail": "refused on purpose",
-                                           "field": "capability",
-                                           "unlock": "try another capability"})
+            return reply(
+                "refused",
+                error={
+                    "code": "BAD-REFUSED",
+                    "detail": "refused on purpose",
+                    "field": "capability",
+                    "unlock": "try another capability",
+                },
+            )
         if mode == "bad-result":
             return reply("ok", {"status": "weird"})
         if mode == "env-probe":
             return reply("ok", {"env": sorted(os.environ)})
         if mode == "env-probe-full":  # valid result; received variable names and cwd as limitations
-            return reply("ok", dict(RESULT, producer=producer,
-                                    limitations=[*env_lines(), f"cwd={os.getcwd()}"]))
+            return reply(
+                "ok",
+                dict(RESULT, producer=producer, limitations=[*env_lines(), f"cwd={os.getcwd()}"]),
+            )
         if mode == "unknown-status":  # Response.status outside ok|partial|refused|error
             return reply("done", dict(RESULT, producer=producer))
         if mode == "cwd-probe":
@@ -298,12 +385,17 @@ def main() -> int:
             except (KeyError, TypeError):
                 context_round = 0
             if mode != "context-request" or context_round == 0:
-                items = [] if mode == "context-request-invalid" else [
-                    {"path": REQUESTED_PATH, "reason": "need the file"}]
-                return reply("ok", dict(RESULT, producer=producer,
-                                        context_request={"items": items}))
-            return reply("ok", dict(RESULT, producer=producer,
-                                    limitations=[f"round={context_round}"]))
+                items = (
+                    []
+                    if mode == "context-request-invalid"
+                    else [{"path": REQUESTED_PATH, "reason": "need the file"}]
+                )
+                return reply(
+                    "ok", dict(RESULT, producer=producer, context_request={"items": items})
+                )
+            return reply(
+                "ok", dict(RESULT, producer=producer, limitations=[f"round={context_round}"])
+            )
         if mode in ("drift-report", "mutate-context"):
             payload = request["payload"]
             evidence = []
@@ -322,8 +414,7 @@ def main() -> int:
         if mode in INTEGRITY_MODES:
             return reply("ok", dict(RESULT, producer=producer, **INTEGRITY_MODES[mode](producer)))
         return reply("ok", dict(RESULT, producer=producer))
-    return reply("refused", error={"code": "BAD-OP", "detail": op, "field": "op",
-                                   "unlock": None})
+    return reply("refused", error={"code": "BAD-OP", "detail": op, "field": "op", "unlock": None})
 
 
 if __name__ == "__main__":

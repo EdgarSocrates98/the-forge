@@ -45,21 +45,40 @@ class ProviderCapabilityPerformance:
     updated_at: str
 
     def __post_init__(self) -> None:
-        if self.runs < 0 or min(self.ok, self.partial, self.failed,
-                                self.verified_runs, self.evidence, self.artifacts,
-                                self.context_bytes, self.files_sent,
-                                self.files_cited) < 0 or self.duration_ms < 0:
-            raise ContractError(f"provider-performance {self.provider}/"
-                                f"{self.capability}: negative counter")
+        if (
+            self.runs < 0
+            or min(
+                self.ok,
+                self.partial,
+                self.failed,
+                self.verified_runs,
+                self.evidence,
+                self.artifacts,
+                self.context_bytes,
+                self.files_sent,
+                self.files_cited,
+            )
+            < 0
+            or self.duration_ms < 0
+        ):
+            raise ContractError(
+                f"provider-performance {self.provider}/{self.capability}: negative counter"
+            )
         if self.ok + self.partial + self.failed > self.runs:
-            raise ContractError(f"provider-performance {self.provider}/"
-                                f"{self.capability}: outcome counts exceed runs")
+            raise ContractError(
+                f"provider-performance {self.provider}/"
+                f"{self.capability}: outcome counts exceed runs"
+            )
         if self.files_cited > self.files_sent:
-            raise ContractError(f"provider-performance {self.provider}/"
-                                f"{self.capability}: files_cited exceeds files_sent")
+            raise ContractError(
+                f"provider-performance {self.provider}/"
+                f"{self.capability}: files_cited exceeds files_sent"
+            )
         if self.verified_runs > self.ok + self.partial:
-            raise ContractError(f"provider-performance {self.provider}/"
-                                f"{self.capability}: verified runs exceed delivered ones")
+            raise ContractError(
+                f"provider-performance {self.provider}/"
+                f"{self.capability}: verified runs exceed delivered ones"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -74,14 +93,15 @@ class ProviderPerformance:
     def __post_init__(self) -> None:
         if self.schema != PERFORMANCE_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {PERFORMANCE_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {PERFORMANCE_SCHEMA!r}"
+            )
         keys = [(e.provider, e.capability, e.surface) for e in self.entries]
         if len(keys) != len(set(keys)):
-            raise ContractError(
-                "provider-performance: duplicate provider/capability/surface")
+            raise ContractError("provider-performance: duplicate provider/capability/surface")
 
-    def score(self, provider: str, capability: str,
-              surface: str | None = None) -> tuple[float, float, float, int]:
+    def score(
+        self, provider: str, capability: str, surface: str | None = None
+    ) -> tuple[float, float, float, int]:
         """Measured-history key — higher is better, for tie-break only (H5).
 
         Ordered (verified-run rate, delivered rate, negated mean latency, runs):
@@ -94,12 +114,19 @@ class ProviderPerformance:
         surface fingerprint counts — a changed surface never inherits it, and a
         ``None`` argument matches only legacy entries that recorded no surface.
         """
-        entry = next((e for e in self.entries
-                      if e.provider == provider and e.capability == capability
-                      and e.surface == surface), None)
+        entry = next(
+            (
+                e
+                for e in self.entries
+                if e.provider == provider and e.capability == capability and e.surface == surface
+            ),
+            None,
+        )
         if entry is None or entry.runs <= 0:
             return (0.0, 0.0, 0.0, 0)
-        return (entry.verified_runs / entry.runs,
-                (entry.ok + entry.partial) / entry.runs,
-                -entry.duration_ms / entry.runs,
-                entry.runs)
+        return (
+            entry.verified_runs / entry.runs,
+            (entry.ok + entry.partial) / entry.runs,
+            -entry.duration_ms / entry.runs,
+            entry.runs,
+        )

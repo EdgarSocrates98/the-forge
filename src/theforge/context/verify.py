@@ -61,8 +61,9 @@ def provider_reported_drift(pack: ContextPack, result: ExecutionResult) -> froze
     return frozenset(drifted)
 
 
-def items_to_verify(pack: ContextPack, result: ExecutionResult,
-                    level: VerificationLevel) -> list[ContextFile]:
+def items_to_verify(
+    pack: ContextPack, result: ExecutionResult, level: VerificationLevel
+) -> list[ContextFile]:
     """minimal: none; conditional: items cited by confirmed/observed evidence; strong: all."""
     if level == "minimal":
         return []
@@ -129,17 +130,18 @@ def reverify(root: Path, items: Sequence[ContextFile]) -> frozenset[str]:
 
     Missing, unreadable, outside-root files and ranges past the end count as drift.
     """
-    return frozenset(item.path for item in items
-                     if _current_sha256(root, item) != item.sha256)
+    return frozenset(item.path for item in items if _current_sha256(root, item) != item.sha256)
 
 
-def check_drift(root: Path, pack: ContextPack, result: ExecutionResult,
-                level: VerificationLevel) -> DriftReport:
+def check_drift(
+    root: Path, pack: ContextPack, result: ExecutionResult, level: VerificationLevel
+) -> DriftReport:
     items = items_to_verify(pack, result, level)
     drifted = provider_reported_drift(pack, result) | reverify(root, items)
     limitations = (NOT_REVERIFIED_LIMITATION,) if level == "minimal" else ()
-    return DriftReport(drifted=tuple(sorted(drifted)), checked=len(items), level=level,
-                       limitations=limitations)
+    return DriftReport(
+        drifted=tuple(sorted(drifted)), checked=len(items), level=level, limitations=limitations
+    )
 
 
 def apply_drift(result: ExecutionResult, report: DriftReport) -> ExecutionResult:
@@ -152,11 +154,17 @@ def apply_drift(result: ExecutionResult, report: DriftReport) -> ExecutionResult
         return result
     drifted = set(report.drifted)
     evidence = [
-        replace(e, epistemic="unresolved",
-                limitations=[*e.limitations, f"{DRIFT_LIMITATION_PREFIX} was {e.epistemic}"])
-        if e.epistemic in _ASSERTIVE and _evidence_path(e) in drifted else e
+        replace(
+            e,
+            epistemic="unresolved",
+            limitations=[*e.limitations, f"{DRIFT_LIMITATION_PREFIX} was {e.epistemic}"],
+        )
+        if e.epistemic in _ASSERTIVE and _evidence_path(e) in drifted
+        else e
         for e in result.evidence
     ]
-    limitations = [*result.limitations,
-                   *(f"{DRIFT_LIMITATION_PREFIX} {path}" for path in report.drifted)]
+    limitations = [
+        *result.limitations,
+        *(f"{DRIFT_LIMITATION_PREFIX} {path}" for path in report.drifted),
+    ]
     return replace(result, status="partial", evidence=evidence, limitations=limitations)

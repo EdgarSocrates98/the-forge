@@ -34,7 +34,8 @@ def _warning(detail: str) -> str:
 
 
 def load_relations(
-    forge_dir: Path | None, repositories: Sequence[str],
+    forge_dir: Path | None,
+    repositories: Sequence[str],
 ) -> tuple[list[WorkspaceRelation], list[str]]:
     """Explicit relations and the warnings of ignored entries (both deterministic)."""
     if forge_dir is None:
@@ -50,14 +51,16 @@ def load_relations(
     except OSError as exc:
         return [], [_warning(f"unreadable, all relations ignored ({type(exc).__name__})")]
     if len(raw) > MAX_WORKSPACE_CONFIG_BYTES:
-        return [], [_warning(
-            f"larger than {MAX_WORKSPACE_CONFIG_BYTES} bytes, all relations ignored")]
+        return [], [
+            _warning(f"larger than {MAX_WORKSPACE_CONFIG_BYTES} bytes, all relations ignored")
+        ]
     try:
         data = tomllib.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
         return [], [_warning(f"malformed ({type(exc).__name__}), all relations ignored")]
-    warnings = [_warning(f"unknown key {key!r} ignored")
-                for key in sorted(data) if key != "relations"]
+    warnings = [
+        _warning(f"unknown key {key!r} ignored") for key in sorted(data) if key != "relations"
+    ]
     entries = data.get("relations", [])
     if not isinstance(entries, list):
         return [], [*warnings, _warning("'relations' must be an array of tables, all ignored")]
@@ -69,9 +72,16 @@ def load_relations(
             warnings.append(_warning(f"relations[{index}] ignored: {problem}"))
             continue
         key = (entry["source"], entry["kind"], entry["target"])
-        relations.setdefault(key, WorkspaceRelation(
-            source=entry["source"], target=entry["target"], kind="depends_on",
-            epistemic="explicit", evidence=RELATIONS_EVIDENCE))
+        relations.setdefault(
+            key,
+            WorkspaceRelation(
+                source=entry["source"],
+                target=entry["target"],
+                kind="depends_on",
+                epistemic="explicit",
+                evidence=RELATIONS_EVIDENCE,
+            ),
+        )
     return [relations[key] for key in sorted(relations)], warnings
 
 

@@ -58,8 +58,11 @@ _EPISTEMIC_ORDER: Final = ("confirmed", "observed", "inferred", "proposed", "unr
 def _self_report(response_status: str | None) -> VerificationCheck:
     if response_status is None:
         return VerificationCheck(status="not_performed", details=["no provider response"])
-    return VerificationCheck(status="reported", basis=["provider-status"],
-                             details=[f"provider status: {response_status}"])
+    return VerificationCheck(
+        status="reported",
+        basis=["provider-status"],
+        details=[f"provider status: {response_status}"],
+    )
 
 
 def _provider_evidence(result: ExecutionResult | None) -> VerificationCheck:
@@ -83,8 +86,9 @@ def _handoff_problems(result: ExecutionResult, handoff: Handoff | None) -> list[
     derivation itself is never new evidence.
     """
     if handoff is not None:
-        items = {(item.origin.provider.id, item.origin.run_id, item.id): item
-                 for item in handoff.items}
+        items = {
+            (item.origin.provider.id, item.origin.run_id, item.id): item for item in handoff.items
+        }
     else:
         items = {}
     problems: list[str] = []
@@ -94,30 +98,39 @@ def _handoff_problems(result: ExecutionResult, handoff: Handoff | None) -> list[
             continue
         item = items.get((source.provider, source.run_id, source.item))
         if item is None:
-            problems.append(f"evidence {evidence.id}: derived_from "
-                            f"{source.provider}/{source.run_id}/{source.item} is not in "
-                            "the delivered handoff")
+            problems.append(
+                f"evidence {evidence.id}: derived_from "
+                f"{source.provider}/{source.run_id}/{source.item} is not in "
+                "the delivered handoff"
+            )
             continue
         if (source.node is not None and source.node != item.origin.node) or (
-                source.plan_run is not None
-                and source.plan_run != item.origin.plan_run):
-            problems.append(f"evidence {evidence.id}: derived_from {source.item!r} names "
-                            "a different node/plan_run than the delivered handoff")
+            source.plan_run is not None and source.plan_run != item.origin.plan_run
+        ):
+            problems.append(
+                f"evidence {evidence.id}: derived_from {source.item!r} names "
+                "a different node/plan_run than the delivered handoff"
+            )
             continue
         if item.epistemic is not None and (
-                _EPISTEMIC_ORDER.index(evidence.epistemic)
-                < _EPISTEMIC_ORDER.index(item.epistemic)):
-            problems.append(f"evidence {evidence.id}: epistemic {item.epistemic} -> "
-                            f"{evidence.epistemic} upgrades the handoff item it derives "
-                            "from without new evidence")
+            _EPISTEMIC_ORDER.index(evidence.epistemic) < _EPISTEMIC_ORDER.index(item.epistemic)
+        ):
+            problems.append(
+                f"evidence {evidence.id}: epistemic {item.epistemic} -> "
+                f"{evidence.epistemic} upgrades the handoff item it derives "
+                "from without new evidence"
+            )
     return problems
 
 
 def artifact_problems(result: ExecutionResult, work_dir: Path) -> list[tuple[str, str]]:
     """Each declared artifact that does not verify, paired with the physical reason
     (escape, missing, link, not a regular file or hash mismatch)."""
-    return [(a.path, reason) for a in result.artifacts
-            if (reason := declared_artifact_problem(work_dir, a.path, a.sha256)) is not None]
+    return [
+        (a.path, reason)
+        for a in result.artifacts
+        if (reason := declared_artifact_problem(work_dir, a.path, a.sha256)) is not None
+    ]
 
 
 def diverged_artifacts(result: ExecutionResult, work_dir: Path) -> list[str]:
@@ -125,9 +138,13 @@ def diverged_artifacts(result: ExecutionResult, work_dir: Path) -> list[str]:
     return [path for path, _ in artifact_problems(result, work_dir)]
 
 
-def select_verifier(records: list[RegistryRecord], *, producer: RegistryRecord,
-                    capability: str, allow_unverified: bool = False
-                    ) -> tuple[RegistryRecord | None, str]:
+def select_verifier(
+    records: list[RegistryRecord],
+    *,
+    producer: RegistryRecord,
+    capability: str,
+    allow_unverified: bool = False,
+) -> tuple[RegistryRecord | None, str]:
     """Pick the independent verifier of ``producer``'s ``capability`` run.
 
     A provider qualifies when it is ``ready``, declares the ``verify`` op and a
@@ -145,8 +162,7 @@ def select_verifier(records: list[RegistryRecord], *, producer: RegistryRecord,
             continue
         if not any(target in cap.relations.can_verify for cap in manifest.capabilities):
             continue
-        if (record.entry.id == producer.entry.id
-                or record.entry.argv == producer.entry.argv):
+        if record.entry.id == producer.entry.id or record.entry.argv == producer.entry.argv:
             rejected.append(f"{record.entry.id}: same identity as the producer")
             continue
         if record.entry.trust == "blocked":
@@ -159,17 +175,22 @@ def select_verifier(records: list[RegistryRecord], *, producer: RegistryRecord,
     if candidates:
         return candidates[0], ""
     if rejected:
-        return None, (f"no independent verifier for {target} "
-                      f"({'; '.join(rejected)})")
-    return None, (f"no independent verifier for {target}: "
-                  "no provider declares can_verify")
+        return None, (f"no independent verifier for {target} ({'; '.join(rejected)})")
+    return None, (f"no independent verifier for {target}: no provider declares can_verify")
 
 
-def request_verdict(verifier: RegistryRecord, *, run_id: str, task: TaskSpec,
-                    capability: str, action: str, result: ExecutionResult,
-                    handoff: Handoff | None = None,
-                    transport_factory: TransportFactory = SubprocessTransport,
-                    timeout: float = 30.0) -> VerificationCheck:
+def request_verdict(
+    verifier: RegistryRecord,
+    *,
+    run_id: str,
+    task: TaskSpec,
+    capability: str,
+    action: str,
+    result: ExecutionResult,
+    handoff: Handoff | None = None,
+    transport_factory: TransportFactory = SubprocessTransport,
+    timeout: float = 30.0,
+) -> VerificationCheck:
     """Call the verifier's ``verify`` op; never raises.
 
     Envelope ``ok`` answers parse into the ``independent`` check verdict;
@@ -178,37 +199,60 @@ def request_verdict(verifier: RegistryRecord, *, run_id: str, task: TaskSpec,
     """
     assert verifier.manifest is not None
     basis = [f"verifier:{verifier.entry.id}"]
-    payload = to_dict(VerifyRequest(task=task, capability=capability, action=action,
-                                    run_id=run_id, result=result, handoff=handoff))
+    payload = to_dict(
+        VerifyRequest(
+            task=task,
+            capability=capability,
+            action=action,
+            run_id=run_id,
+            result=result,
+            handoff=handoff,
+        )
+    )
     try:
         with provider_cwd() as cwd:
             response = transport_factory(verifier.entry.argv).call(
-                VERIFY_OP, payload, timeout=timeout, cwd=Path(cwd))
+                VERIFY_OP, payload, timeout=timeout, cwd=Path(cwd)
+            )
     except TransportError as exc:
-        return VerificationCheck(status="not_performed", basis=basis,
-                                 details=[f"verify call failed: {exc.code}: {exc.detail}"])
-    mismatch = check_producer(response.producer, expected=Producer(
-        id=verifier.entry.id, version=verifier.manifest.version), field="$.producer")
+        return VerificationCheck(
+            status="not_performed",
+            basis=basis,
+            details=[f"verify call failed: {exc.code}: {exc.detail}"],
+        )
+    mismatch = check_producer(
+        response.producer,
+        expected=Producer(id=verifier.entry.id, version=verifier.manifest.version),
+        field="$.producer",
+    )
     if mismatch is not None:
-        return VerificationCheck(status="not_performed", basis=basis,
-                                 details=[f"verifier response: {mismatch.detail}"])
+        return VerificationCheck(
+            status="not_performed", basis=basis, details=[f"verifier response: {mismatch.detail}"]
+        )
     if response.status != "ok":
         error = response.error
         detail = f"{error.code}: {error.detail}" if error is not None else "no error detail"
-        return VerificationCheck(status="not_performed", basis=basis,
-                                 details=[f"verifier {response.status}: {detail}"])
+        return VerificationCheck(
+            status="not_performed", basis=basis, details=[f"verifier {response.status}: {detail}"]
+        )
     try:
         verdict = from_dict(VerifyVerdict, response.payload, "$.payload")
     except ContractError as exc:
-        return VerificationCheck(status="not_performed", basis=basis,
-                                 details=[f"malformed verdict: {exc}"])
-    return VerificationCheck(status=verdict.status, basis=[*basis, *verdict.basis],
-                             details=verdict.details)
+        return VerificationCheck(
+            status="not_performed", basis=basis, details=[f"malformed verdict: {exc}"]
+        )
+    return VerificationCheck(
+        status=verdict.status, basis=[*basis, *verdict.basis], details=verdict.details
+    )
 
 
-def _forge(result: ExecutionResult | None, drift: DriftReport | None, work_dir: Path,
-           expected: Producer, handoff: Handoff | None = None
-           ) -> tuple[VerificationCheck, list[str]]:
+def _forge(
+    result: ExecutionResult | None,
+    drift: DriftReport | None,
+    work_dir: Path,
+    expected: Producer,
+    handoff: Handoff | None = None,
+) -> tuple[VerificationCheck, list[str]]:
     if result is None:
         return VerificationCheck(status="not_performed", details=["no valid result"]), []
     basis = ["result-integrity", "producer"]
@@ -246,8 +290,10 @@ def _forge(result: ExecutionResult | None, drift: DriftReport | None, work_dir: 
         if problems:
             failed = True
             why = "; ".join(f"{path}: {reason}" for path, reason in problems)
-            details.append(f"artifact-hashes: failed ({len(problems)} of "
-                           f"{len(result.artifacts)} artifacts: {why})")
+            details.append(
+                f"artifact-hashes: failed ({len(problems)} of "
+                f"{len(result.artifacts)} artifacts: {why})"
+            )
             limitations.extend(f"{ARTIFACT_HASH_LIMITATION}: {path}" for path, _ in problems)
         else:
             details.append(f"artifact-hashes: passed ({len(result.artifacts)} artifacts)")
@@ -264,18 +310,22 @@ def _forge(result: ExecutionResult | None, drift: DriftReport | None, work_dir: 
         else:
             details.append(f"handoff-provenance: passed ({derived} derived evidence)")
 
-    check = VerificationCheck(status="failed" if failed else "passed", basis=basis,
-                              details=details)
+    check = VerificationCheck(status="failed" if failed else "passed", basis=basis, details=details)
     return check, limitations
 
 
-def build_verification(run_id: str, response_status: str | None,
-                       result: ExecutionResult | None, drift: DriftReport | None,
-                       work_dir: Path, *, expected: Producer,
-                       created_at: str | None = None,
-                       handoff: Handoff | None = None,
-                       independent: VerificationCheck | None = None
-                       ) -> VerificationResult:
+def build_verification(
+    run_id: str,
+    response_status: str | None,
+    result: ExecutionResult | None,
+    drift: DriftReport | None,
+    work_dir: Path,
+    *,
+    expected: Producer,
+    created_at: str | None = None,
+    handoff: Handoff | None = None,
+    independent: VerificationCheck | None = None,
+) -> VerificationResult:
     """The run's ``VerificationResult``.
 
     ``response_status`` is the provider's own status (``None`` when no response arrived);
@@ -287,10 +337,11 @@ def build_verification(run_id: str, response_status: str | None,
     """
     forge, limitations = _forge(result, drift, work_dir, expected, handoff)
     if independent is None:
-        independent = VerificationCheck(status="not_performed",
-                                        details=[NO_INDEPENDENT_VERIFIER])
+        independent = VerificationCheck(status="not_performed", details=[NO_INDEPENDENT_VERIFIER])
     return VerificationResult(
-        producer=PRODUCER, created_at=created_at or utc_now(), run_id=run_id,
+        producer=PRODUCER,
+        created_at=created_at or utc_now(),
+        run_id=run_id,
         self_report=_self_report(response_status),
         provider_evidence=_provider_evidence(result),
         forge=forge,

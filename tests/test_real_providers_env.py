@@ -20,8 +20,13 @@ import pytest
 import real_providers as rp
 from theforge.security.env import safe_env
 
-ALL_VARS = (rp.SPARK_PYTHON_VAR, rp.API_PYTHON_VAR, rp.DOCTORDATA_PYTHON_VAR,
-            rp.DOCTORAPI_PYTHON_VAR, rp.REQUIRED_VAR)
+ALL_VARS = (
+    rp.SPARK_PYTHON_VAR,
+    rp.API_PYTHON_VAR,
+    rp.DOCTORDATA_PYTHON_VAR,
+    rp.DOCTORAPI_PYTHON_VAR,
+    rp.REQUIRED_VAR,
+)
 
 
 def _ok_probe(python: Path, modules: Sequence[str]) -> str | None:
@@ -46,6 +51,7 @@ def interpreter(tmp_path: Path) -> Path:
 
 # --- the contract itself ------------------------------------------------------------------
 
+
 def test_contract_variable_names() -> None:
     assert rp.SPARK_PYTHON_VAR == "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON"
     assert rp.API_PYTHON_VAR == "THEFORGE_REAL_APIFORGE_PYTHON"
@@ -53,15 +59,29 @@ def test_contract_variable_names() -> None:
     assert rp.DOCTORAPI_PYTHON_VAR == "THEFORGE_REAL_DOCTORAPI_PYTHON"
     assert rp.REQUIRED_VAR == "THEFORGE_REAL_PROVIDERS_REQUIRED"
     assert rp.IMPORT_TIMEOUT == 60.0
-    assert {name: (spec.provider_id, spec.variable, spec.adapter_module, spec.specialist_module)
-            for name, spec in rp.FORGES.items()} == {
-        "spark": ("spark-forge-aws", rp.SPARK_PYTHON_VAR, "theforge_sparkforge_aws",
-                  "sparkforge_aws.adapters.tools"),
+    assert {
+        name: (spec.provider_id, spec.variable, spec.adapter_module, spec.specialist_module)
+        for name, spec in rp.FORGES.items()
+    } == {
+        "spark": (
+            "spark-forge-aws",
+            rp.SPARK_PYTHON_VAR,
+            "theforge_sparkforge_aws",
+            "sparkforge_aws.adapters.tools",
+        ),
         "api": ("api-forge", rp.API_PYTHON_VAR, "theforge_apiforge", "apiforge"),
-        "doctordata": ("forge-doctor-data", rp.DOCTORDATA_PYTHON_VAR,
-                       "theforge_doctordata", "forge_doctor_data"),
-        "doctorapi": ("forge-doctor-api", rp.DOCTORAPI_PYTHON_VAR,
-                      "theforge_doctorapi", "forge_doctor_api"),
+        "doctordata": (
+            "forge-doctor-data",
+            rp.DOCTORDATA_PYTHON_VAR,
+            "theforge_doctordata",
+            "forge_doctor_data",
+        ),
+        "doctorapi": (
+            "forge-doctor-api",
+            rp.DOCTORAPI_PYTHON_VAR,
+            "theforge_doctorapi",
+            "forge_doctor_api",
+        ),
     }
 
 
@@ -74,6 +94,7 @@ def test_documented_in_real_providers_doc() -> None:
 
 # --- check order and reasons --------------------------------------------------------------
 
+
 @pytest.mark.parametrize("value", [None, "", "   "])
 def test_missing_variable(value: str | None) -> None:
     environ = {} if value is None else {rp.API_PYTHON_VAR: value}
@@ -81,7 +102,8 @@ def test_missing_variable(value: str | None) -> None:
         rp.check_forge("api", environ, probe=_never_probe)
     assert info.value.reason == (
         "THEFORGE_REAL_APIFORGE_PYTHON not set (API Forge needs Python 3.12; "
-        "see docs/real-providers.md)")
+        "see docs/real-providers.md)"
+    )
 
 
 def test_missing_variable_spark_reason() -> None:
@@ -125,8 +147,9 @@ def test_non_python_file_rejected(tmp_path: Path, name: str) -> None:
     assert "does not name a Python interpreter" in info.value.reason
 
 
-@pytest.mark.parametrize("name", ["python", "python3", "python3.12", "Python.exe",
-                                  "python3.11.exe"])
+@pytest.mark.parametrize(
+    "name", ["python", "python3", "python3.12", "Python.exe", "python3.11.exe"]
+)
 def test_python_names_accepted(tmp_path: Path, name: str) -> None:
     path = tmp_path / name
     path.write_bytes(b"")
@@ -156,11 +179,14 @@ def test_import_failure(interpreter: Path) -> None:
 
 def test_all_prerequisites_met(interpreter: Path) -> None:
     forge = rp.check_forge("spark", {rp.SPARK_PYTHON_VAR: str(interpreter)}, probe=_ok_probe)
-    assert forge == rp.RealForge("spark-forge-aws", interpreter, "theforge_sparkforge_aws",
-                                 "sparkforge_aws.adapters.tools")
+    assert forge == rp.RealForge(
+        "spark-forge-aws", interpreter, "theforge_sparkforge_aws", "sparkforge_aws.adapters.tools"
+    )
     assert forge.argv() == [str(interpreter), "-m", "theforge_sparkforge_aws"]
     assert forge.argv("--assume-specialist-version", "9.9.9")[-2:] == [
-        "--assume-specialist-version", "9.9.9"]
+        "--assume-specialist-version",
+        "9.9.9",
+    ]
 
 
 def test_unknown_forge() -> None:
@@ -169,6 +195,7 @@ def test_unknown_forge() -> None:
 
 
 # --- skip vs fail -------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("required", [None, "", "0", "true", "yes"])
 def test_skips_with_reason_when_not_required(required: str | None) -> None:
@@ -198,7 +225,8 @@ def test_required_mode_passes_when_ready(interpreter: Path) -> None:
 
 
 def test_reads_process_environment_by_default(
-        interpreter: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    interpreter: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     for variable in ALL_VARS:
         monkeypatch.delenv(variable, raising=False)
     monkeypatch.setenv(rp.SPARK_PYTHON_VAR, str(interpreter))
@@ -211,6 +239,7 @@ def test_reads_process_environment_by_default(
 
 
 # --- the default import probe -------------------------------------------------------------
+
 
 def _fake_run(result: Any) -> Any:
     calls: list[dict[str, Any]] = []
@@ -226,62 +255,92 @@ def _fake_run(result: Any) -> Any:
 
 
 def test_probe_ok_runs_import_without_credentials(
-        interpreter: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    interpreter: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "s3cr3t")
     monkeypatch.setenv(rp.SPARK_PYTHON_VAR, str(interpreter))
     run = _fake_run((0, ""))
-    assert rp.probe_imports(interpreter, ["theforge_sparkforge_aws", "sparkforge.adapters.tools"],
-                            run=run) is None
+    assert (
+        rp.probe_imports(
+            interpreter, ["theforge_sparkforge_aws", "sparkforge.adapters.tools"], run=run
+        )
+        is None
+    )
     (call,) = run.calls
-    assert call["argv"] == [str(interpreter), "-c",
-                            "import theforge_sparkforge_aws, sparkforge.adapters.tools"]
+    assert call["argv"] == [
+        str(interpreter),
+        "-c",
+        "import theforge_sparkforge_aws, sparkforge.adapters.tools",
+    ]
     assert call["timeout"] == rp.IMPORT_TIMEOUT
     assert "AWS_SECRET_ACCESS_KEY" not in call["env"]
     assert not any(key.startswith("THEFORGE_REAL_") for key in call["env"])
 
 
 def test_probe_reports_last_stderr_line(interpreter: Path) -> None:
-    stderr = ("Traceback (most recent call last):\n  ...\n"
-              "ModuleNotFoundError: No module named 'apiforge'\n")
-    reason = rp.probe_imports(interpreter, ["theforge_apiforge", "apiforge"],
-                              run=_fake_run((1, stderr)))
-    assert reason == ("`import theforge_apiforge, apiforge` exited 1: "
-                      "ModuleNotFoundError: No module named 'apiforge'")
+    stderr = (
+        "Traceback (most recent call last):\n  ...\n"
+        "ModuleNotFoundError: No module named 'apiforge'\n"
+    )
+    reason = rp.probe_imports(
+        interpreter, ["theforge_apiforge", "apiforge"], run=_fake_run((1, stderr))
+    )
+    assert reason == (
+        "`import theforge_apiforge, apiforge` exited 1: "
+        "ModuleNotFoundError: No module named 'apiforge'"
+    )
 
 
 def test_probe_timeout(interpreter: Path) -> None:
-    reason = rp.probe_imports(interpreter, ["apiforge"],
-                              run=_fake_run(subprocess.TimeoutExpired("python", 60)))
+    reason = rp.probe_imports(
+        interpreter, ["apiforge"], run=_fake_run(subprocess.TimeoutExpired("python", 60))
+    )
     assert reason == "`import apiforge` did not finish in 60 s"
 
 
 def test_probe_spawn_error(interpreter: Path) -> None:
-    reason = rp.probe_imports(interpreter, ["apiforge"],
-                              run=_fake_run(PermissionError(13, "Access is denied")))
+    reason = rp.probe_imports(
+        interpreter, ["apiforge"], run=_fake_run(PermissionError(13, "Access is denied"))
+    )
     assert reason is not None and reason.startswith("`import apiforge` could not start: ")
     assert "Access is denied" in reason
 
 
 # --- registration in the isolated user providers.toml -------------------------------------
 
+
 def test_register_writes_isolated_user_providers_toml(
-        interpreter: Path, user_config_dir: Path) -> None:
-    spark = rp.RealForge("spark-forge-aws", interpreter, "theforge_sparkforge_aws",
-                         "sparkforge_aws.adapters.tools")
+    interpreter: Path, user_config_dir: Path
+) -> None:
+    spark = rp.RealForge(
+        "spark-forge-aws", interpreter, "theforge_sparkforge_aws", "sparkforge_aws.adapters.tools"
+    )
     api = rp.RealForge("api-forge", interpreter, "theforge_apiforge", "apiforge")
-    entries = rp.register(user_config_dir, spark.entry(),
-                          api.entry("--assume-specialist-version", "9.9.9"))
+    entries = rp.register(
+        user_config_dir, spark.entry(), api.entry("--assume-specialist-version", "9.9.9")
+    )
 
     path = user_config_dir / "providers.toml"
     text = path.read_text(encoding="utf-8")
     providers = tomllib.loads(text)["providers"]
     assert providers == entries
     assert providers == [
-        {"id": "spark-forge-aws", "argv": [str(interpreter), "-m", "theforge_sparkforge_aws"],
-         "trust": "trusted"},
-        {"id": "api-forge", "argv": [str(interpreter), "-m", "theforge_apiforge",
-                                     "--assume-specialist-version", "9.9.9"],
-         "trust": "trusted"},
+        {
+            "id": "spark-forge-aws",
+            "argv": [str(interpreter), "-m", "theforge_sparkforge_aws"],
+            "trust": "trusted",
+        },
+        {
+            "id": "api-forge",
+            "argv": [
+                str(interpreter),
+                "-m",
+                "theforge_apiforge",
+                "--assume-specialist-version",
+                "9.9.9",
+            ],
+            "trust": "trusted",
+        },
     ]
     # Nothing of the contract is handed to the provider: no env table, no variable names.
     assert all(set(entry) == {"id", "argv", "trust"} for entry in providers)

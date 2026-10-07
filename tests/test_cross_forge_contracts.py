@@ -36,28 +36,59 @@ def roundtrip(cls: type[Any], data: dict[str, Any]) -> Any:
 
 
 def descriptor_dict(**overrides: Any) -> dict[str, Any]:
-    git = {"available": True, "branch": None, "head": "c" * 40, "detached": True,
-           "dirty": True, "changed_files": 3, "state": ["rebase"]}
+    git = {
+        "available": True,
+        "branch": None,
+        "head": "c" * 40,
+        "detached": True,
+        "dirty": True,
+        "changed_files": 3,
+        "state": ["rebase"],
+    }
     data: dict[str, Any] = {
-        "producer": P, "created_at": TS, "root": "/ws",
+        "producer": P,
+        "created_at": TS,
+        "root": "/ws",
         "repositories": [
             {"path": ".", "dependency_files": [], "limitations": ["not a git repository"]},
-            {"path": "data-pipeline", "git": git,
-             "dependency_files": ["data-pipeline/requirements.txt"]},
+            {
+                "path": "data-pipeline",
+                "git": git,
+                "dependency_files": ["data-pipeline/requirements.txt"],
+            },
             {"path": "orders-api", "limitations": ["git-budget-exhausted"]},
         ],
         "paths": ["data-pipeline", "data-pipeline/requirements.txt", "orders-api"],
         "technologies": [
-            {"name": "pyspark", "repository": "data-pipeline", "source": "dependency_manifest",
-             "evidence": "data-pipeline/requirements.txt", "matched_by": ["spark/pyspark.x"]},
-            {"name": "api", "repository": "orders-api", "source": "provider_signal",
-             "evidence": "orders-api/openapi.yaml"},
+            {
+                "name": "pyspark",
+                "repository": "data-pipeline",
+                "source": "dependency_manifest",
+                "evidence": "data-pipeline/requirements.txt",
+                "matched_by": ["spark/pyspark.x"],
+            },
+            {
+                "name": "api",
+                "repository": "orders-api",
+                "source": "provider_signal",
+                "evidence": "orders-api/openapi.yaml",
+            },
         ],
         "relations": [
-            {"source": ".", "target": "data-pipeline", "kind": "contains",
-             "epistemic": "observed", "evidence": "data-pipeline/.git"},
-            {"source": "orders-api", "target": "data-pipeline", "kind": "depends_on",
-             "epistemic": "explicit", "evidence": ".forge/config/workspace.toml"},
+            {
+                "source": ".",
+                "target": "data-pipeline",
+                "kind": "contains",
+                "epistemic": "observed",
+                "evidence": "data-pipeline/.git",
+            },
+            {
+                "source": "orders-api",
+                "target": "data-pipeline",
+                "kind": "depends_on",
+                "epistemic": "explicit",
+                "evidence": ".forge/config/workspace.toml",
+            },
         ],
     }
     data.update(overrides)
@@ -101,15 +132,30 @@ def test_technology_and_relation_require_evidence() -> None:
 
 def graph_dict(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
-        "producer": P, "created_at": TS, "plan_run": "p1",
-        "nodes": [{"id": "workspace:.", "kind": "workspace"},
-                  {"id": "plan_node:spark", "kind": "plan_node", "label": "spark"},
-                  {"id": "plan_node:api", "kind": "plan_node"}],
+        "producer": P,
+        "created_at": TS,
+        "plan_run": "p1",
+        "nodes": [
+            {"id": "workspace:.", "kind": "workspace"},
+            {"id": "plan_node:spark", "kind": "plan_node", "label": "spark"},
+            {"id": "plan_node:api", "kind": "plan_node"},
+        ],
         "edges": [
-            {"source": "plan_node:spark", "target": "plan_node:api", "kind": "depends_on",
-             "epistemic": "inferred", "rule": "intent-order", "evidence": "keyword order"},
-            {"source": "workspace:.", "target": "plan_node:spark", "kind": "contains",
-             "epistemic": "explicit", "evidence": "plan file"},
+            {
+                "source": "plan_node:spark",
+                "target": "plan_node:api",
+                "kind": "depends_on",
+                "epistemic": "inferred",
+                "rule": "intent-order",
+                "evidence": "keyword order",
+            },
+            {
+                "source": "workspace:.",
+                "target": "plan_node:spark",
+                "kind": "contains",
+                "epistemic": "explicit",
+                "evidence": "plan file",
+            },
         ],
     }
     data.update(overrides)
@@ -133,8 +179,7 @@ def test_graph_edge_without_evidence_is_rejected() -> None:
 
 def test_inferred_graph_edge_without_rule_is_rejected() -> None:
     with pytest.raises(ContractError, match="rule"):
-        GraphEdge(source="a", target="b", kind="depends_on", epistemic="inferred",
-                  evidence="e")
+        GraphEdge(source="a", target="b", kind="depends_on", epistemic="inferred", evidence="e")
     data = graph_dict()
     del data["edges"][0]["rule"]
     with pytest.raises(ContractError, match="rule"):
@@ -143,8 +188,7 @@ def test_inferred_graph_edge_without_rule_is_rejected() -> None:
 
 def test_non_inferred_graph_edge_must_not_carry_a_rule() -> None:
     with pytest.raises(ContractError, match="rule"):
-        GraphEdge(source="a", target="b", kind="uses", epistemic="explicit", evidence="e",
-                  rule="r")
+        GraphEdge(source="a", target="b", kind="uses", epistemic="explicit", evidence="e", rule="r")
 
 
 # --- verification -----------------------------------------------------------------------
@@ -152,11 +196,15 @@ def test_non_inferred_graph_edge_must_not_carry_a_rule() -> None:
 
 def verification_dict(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
-        "producer": P, "created_at": TS, "run_id": "r1",
+        "producer": P,
+        "created_at": TS,
+        "run_id": "r1",
         "self_report": {"status": "reported", "details": ["status=ok"]},
         "provider_evidence": {"status": "reported", "basis": ["3 evidence items"]},
-        "forge": {"status": "passed",
-                  "basis": ["result-integrity", "context-reverification:conditional"]},
+        "forge": {
+            "status": "passed",
+            "basis": ["result-integrity", "context-reverification:conditional"],
+        },
         "independent": {"status": "not_performed"},
     }
     data.update(overrides)
@@ -173,15 +221,15 @@ def test_verification_rereads_strictly() -> None:
 @pytest.mark.parametrize("status", ["passed", "failed"])
 def test_provider_levels_can_never_be_verification(level: str, status: str) -> None:
     with pytest.raises(ContractError, match=level):
-        from_dict(VerificationResult, verification_dict(**{level: {"status": status}}),
-                  strict=True)
+        from_dict(VerificationResult, verification_dict(**{level: {"status": status}}), strict=True)
 
 
 @pytest.mark.parametrize("level", ["forge", "independent"])
 def test_forge_levels_are_never_self_reported(level: str) -> None:
     with pytest.raises(ContractError, match=level):
-        from_dict(VerificationResult, verification_dict(**{level: {"status": "reported"}}),
-                  strict=True)
+        from_dict(
+            VerificationResult, verification_dict(**{level: {"status": "reported"}}), strict=True
+        )
 
 
 def test_verification_rejects_wrong_schema() -> None:
@@ -194,10 +242,19 @@ def test_verification_rejects_wrong_schema() -> None:
 
 def installation_dict(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
-        "producer": P, "created_at": TS, "run_id": "p1",
-        "items": [{"provider": "spark", "state": "unavailable", "reason": "jvm missing",
-                   "suggested_action": "install java", "source": "health",
-                   "nodes": ["spark"]}],
+        "producer": P,
+        "created_at": TS,
+        "run_id": "p1",
+        "items": [
+            {
+                "provider": "spark",
+                "state": "unavailable",
+                "reason": "jvm missing",
+                "suggested_action": "install java",
+                "source": "health",
+                "nodes": ["spark"],
+            }
+        ],
     }
     data.update(overrides)
     return data
@@ -214,43 +271,90 @@ def test_installation_plan_without_items_is_rejected() -> None:
     with pytest.raises(ContractError, match="items"):
         from_dict(InstallationPlan, installation_dict(items=[]), strict=True)
     with pytest.raises(ContractError, match="items"):
-        InstallationPlan(producer=Producer(id="theforge", version="1"), created_at=TS,
-                         run_id="p1")
+        InstallationPlan(producer=Producer(id="theforge", version="1"), created_at=TS, run_id="p1")
 
 
 # --- explain ----------------------------------------------------------------------------
 
 
-PLAN = {"producer": P, "created_at": TS, "status": "validated", "plan_run": "p1",
-        "task_id": "t1", "pattern": "route", "source": "file", "profile": "economy",
-        "nodes": [{"id": "a", "role": "standalone", "provider": "demo",
-                   "capability": "demo.echo", "action": "echo"}]}
+PLAN = {
+    "producer": P,
+    "created_at": TS,
+    "status": "validated",
+    "plan_run": "p1",
+    "task_id": "t1",
+    "pattern": "route",
+    "source": "file",
+    "profile": "economy",
+    "nodes": [
+        {
+            "id": "a",
+            "role": "standalone",
+            "provider": "demo",
+            "capability": "demo.echo",
+            "action": "echo",
+        }
+    ],
+}
 
 
 def explain_dict(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
-        "producer": P, "created_at": TS, "run_id": "r1", "kind": "run", "status": "ok",
-        "intent": "x", "targets": ["."], "profile": "balanced",
-        "routing": {"status": "routed", "pattern": "route", "reason": "r", "confidence": "high",
-                    "signals": ["keyword:x"],
-                    "candidates": [{"provider": "demo", "capability": "demo.echo"}],
-                    "selected": [{"provider": "demo", "capability": "demo.echo",
-                                  "action": "echo"}],
-                    "fallbacks": [], "notes": ["capability-alias: a -> demo.echo"]},
-        "context": {"budget_bytes": 10, "used_bytes": 5, "files": 1, "excluded": 0,
-                    "truncated": False, "tier_bytes": {"reference": 5}, "rounds": 0,
-                    "unmatched": 2, "git": {"available": False}, "drift": ["a.py"]},
+        "producer": P,
+        "created_at": TS,
+        "run_id": "r1",
+        "kind": "run",
+        "status": "ok",
+        "intent": "x",
+        "targets": ["."],
+        "profile": "balanced",
+        "routing": {
+            "status": "routed",
+            "pattern": "route",
+            "reason": "r",
+            "confidence": "high",
+            "signals": ["keyword:x"],
+            "candidates": [{"provider": "demo", "capability": "demo.echo"}],
+            "selected": [{"provider": "demo", "capability": "demo.echo", "action": "echo"}],
+            "fallbacks": [],
+            "notes": ["capability-alias: a -> demo.echo"],
+        },
+        "context": {
+            "budget_bytes": 10,
+            "used_bytes": 5,
+            "files": 1,
+            "excluded": 0,
+            "truncated": False,
+            "tier_bytes": {"reference": 5},
+            "rounds": 0,
+            "unmatched": 2,
+            "git": {"available": False},
+            "drift": ["a.py"],
+        },
         "provider": {"id": "demo", "version": "1", "trust": "builtin"},
-        "result": {"status": "ok", "findings": [{"id": "f1", "title": "t"}],
-                   "evidence_by_epistemic": {"observed": 1}, "artifacts": 0,
-                   "duration_ms": {"value": 3.0, "kind": "measured"}},
-        "risk": {"anything": 1}, "telemetry": {"phases": {}},
+        "result": {
+            "status": "ok",
+            "findings": [{"id": "f1", "title": "t"}],
+            "evidence_by_epistemic": {"observed": 1},
+            "artifacts": 0,
+            "duration_ms": {"value": 3.0, "kind": "measured"},
+        },
+        "risk": {"anything": 1},
+        "telemetry": {"phases": {}},
         "verification": verification_dict(),
         "reproducibility": {"level": "unknown", "reasons": ["recorded before Wave D"]},
-        "integrity": {"checked": ["task", "result"],
-                      "divergences": [{"artifact": "work/out.json", "kind": "modified",
-                                       "expected": SHA, "actual": "c" * 64}],
-                      "unrecorded": ["telemetry"]},
+        "integrity": {
+            "checked": ["task", "result"],
+            "divergences": [
+                {
+                    "artifact": "work/out.json",
+                    "kind": "modified",
+                    "expected": SHA,
+                    "actual": "c" * 64,
+                }
+            ],
+            "unrecorded": ["telemetry"],
+        },
         "not_recorded": ["verification"],
         "artifacts": {"task": {"id": "t1"}, "context-r1": {"round": 1}},
     }
@@ -263,17 +367,29 @@ def test_explain_report_rereads_strictly() -> None:
     assert report.schema == EXPLAIN_SCHEMA
     assert report.integrity.divergences[0].kind == "modified"
     assert report.routing is not None and report.routing.notes == [
-        "capability-alias: a -> demo.echo"]
+        "capability-alias: a -> demo.echo"
+    ]
     assert report.artifacts["context-r1"] == {"round": 1}
 
 
 def test_minimal_plan_explain_report_rereads_strictly() -> None:
-    report = roundtrip(ExplainReport, {
-        "producer": P, "created_at": TS, "run_id": "p1", "kind": "plan", "status": None,
-        "reproducibility": {"level": "unknown"}, "integrity": {},
-        "plan": {"plan": PLAN, "installation": installation_dict(),
-                 "workspace_descriptor": descriptor_dict()},
-    })
+    report = roundtrip(
+        ExplainReport,
+        {
+            "producer": P,
+            "created_at": TS,
+            "run_id": "p1",
+            "kind": "plan",
+            "status": None,
+            "reproducibility": {"level": "unknown"},
+            "integrity": {},
+            "plan": {
+                "plan": PLAN,
+                "installation": installation_dict(),
+                "workspace_descriptor": descriptor_dict(),
+            },
+        },
+    )
     assert report.plan is not None and report.plan.result is None
     assert report.routing is None and report.integrity.checked == []
 
@@ -294,11 +410,18 @@ def test_explain_report_rejects_wrong_schema_and_unknown_kind() -> None:
 
 def diagnostic_dict(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
-        "producer": P, "created_at": TS, "stage": "cli:plan", "code": "FORGE-PLAN-FILE",
-        "family": "plan", "error_type": "UsageError", "message": "plan file unreadable",
+        "producer": P,
+        "created_at": TS,
+        "stage": "cli:plan",
+        "code": "FORGE-PLAN-FILE",
+        "family": "plan",
+        "error_type": "UsageError",
+        "message": "plan file unreadable",
         "causes": [{"type": "OSError", "message": "no such file"}],
-        "frames": [{"module": "theforge.cli.main", "function": "main", "line": 10},
-                   {"module": "theforge", "function": "<module>", "line": 1}],
+        "frames": [
+            {"module": "theforge.cli.main", "function": "main", "line": 10},
+            {"module": "theforge", "function": "<module>", "line": 1},
+        ],
     }
     data.update(overrides)
     return data

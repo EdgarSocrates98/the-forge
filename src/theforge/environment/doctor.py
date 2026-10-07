@@ -44,7 +44,10 @@ def _writable(directory: Path) -> bool:
 
 
 def run_doctor(
-    root: Path, registry: Registry, *, env: Mapping[str, str] | None = None,
+    root: Path,
+    registry: Registry,
+    *,
+    env: Mapping[str, str] | None = None,
     transport_factory: TransportFactory = SubprocessTransport,
 ) -> dict[str, Any]:
     environment = os.environ if env is None else env
@@ -52,18 +55,31 @@ def run_doctor(
     checks = [
         Check(name="os", status="ok", detail=f"{platform.system()} {platform.release()}"),
         Check(name="architecture", status="ok", detail=platform.machine() or "unknown"),
-        Check(name="python", status="ok" if sys.version_info >= (3, 11) else "fail",
-              detail=platform.python_version()),
+        Check(
+            name="python",
+            status="ok" if sys.version_info >= (3, 11) else "fail",
+            detail=platform.python_version(),
+        ),
         Check(name="git", status="ok" if git else "warn", detail=git or "not found on PATH"),
         Check(name="host", status="ok", detail=detect_host(environment)),
     ]
     forge_dir = registry.forge_dir
     if forge_dir is None:
-        checks.append(Check(name="workspace", status="warn",
-                            detail=f"{root} not initialized (run `theforge init`)"))
+        checks.append(
+            Check(
+                name="workspace",
+                status="warn",
+                detail=f"{root} not initialized (run `theforge init`)",
+            )
+        )
     else:
-        checks.append(Check(name="workspace", status="ok" if _writable(forge_dir) else "fail",
-                            detail=str(forge_dir)))
+        checks.append(
+            Check(
+                name="workspace",
+                status="ok" if _writable(forge_dir) else "fail",
+                detail=str(forge_dir),
+            )
+        )
     try:
         records = registry.records(persist=False)
     except (UsageError, PersistenceError) as exc:
@@ -84,7 +100,9 @@ def run_doctor(
             detail += f" {health.error.code}"
         checks.append(Check(name=f"provider:{record.entry.id}", status=status, detail=detail))
     return {
-        "schema": REPORT_SCHEMA, "forge_version": VERSION, "root": str(root),
+        "schema": REPORT_SCHEMA,
+        "forge_version": VERSION,
+        "root": str(root),
         "checks": [asdict(c) for c in checks],
         "healthy": all(c.status != "fail" for c in checks),
     }

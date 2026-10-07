@@ -41,28 +41,56 @@ TIMEOUT = 30.0
 
 
 def _git_toplevel(path: Path) -> Path:
-    out = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=path,
-                         capture_output=True, text=True, timeout=TIMEOUT, check=True)
+    out = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=path,
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT,
+        check=True,
+    )
     return Path(out.stdout.strip()).resolve()
 
 
 def _task(root: Path) -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t-1",
-                    intent="Projete um pipeline Spark que produza dados para uma API",
-                    workspace_root=str(root))
+    return TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t-1",
+        intent="Projete um pipeline Spark que produza dados para uma API",
+        workspace_root=str(root),
+    )
 
 
 def _handoff(count: int) -> Handoff:
-    origin = HandoffOrigin(plan_run="plan-1", node="n1", run_id="run-1",
-                           provider=Producer(id="fixture-spark", version="0.0.1"))
-    return Handoff(producer=PRODUCER, created_at=utc_now(), plan_run="plan-1", target_node="n2",
-                   items=[HandoffItem(kind="evidence", id=f"e{i}", origin=origin,
-                                      epistemic="observed", subject="job", claim="c")
-                          for i in range(1, count + 1)])
+    origin = HandoffOrigin(
+        plan_run="plan-1",
+        node="n1",
+        run_id="run-1",
+        provider=Producer(id="fixture-spark", version="0.0.1"),
+    )
+    return Handoff(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        plan_run="plan-1",
+        target_node="n2",
+        items=[
+            HandoffItem(
+                kind="evidence",
+                id=f"e{i}",
+                origin=origin,
+                epistemic="observed",
+                subject="job",
+                claim="c",
+            )
+            for i in range(1, count + 1)
+        ],
+    )
 
 
-def _call(argv: Sequence[str], op: str, payload: dict[str, Any],
-          cwd: Path | None = None) -> Response:
+def _call(
+    argv: Sequence[str], op: str, payload: dict[str, Any], cwd: Path | None = None
+) -> Response:
     return SubprocessTransport(argv).call(op, payload, timeout=TIMEOUT, cwd=cwd)
 
 
@@ -71,15 +99,23 @@ def _call(argv: Sequence[str], op: str, payload: dict[str, Any],
 
 def test_cross_fixture_is_a_non_repo_root_with_two_repositories() -> None:
     assert not (CROSS_FIXTURE / ".git").exists()
-    assert (CROSS_FIXTURE / "data-pipeline" / "requirements.txt").read_text(
-        encoding="utf-8").startswith("pyspark")
-    assert (CROSS_FIXTURE / "orders-api" / "requirements.txt").read_text(
-        encoding="utf-8").startswith("fastapi")
+    assert (
+        (CROSS_FIXTURE / "data-pipeline" / "requirements.txt")
+        .read_text(encoding="utf-8")
+        .startswith("pyspark")
+    )
+    assert (
+        (CROSS_FIXTURE / "orders-api" / "requirements.txt")
+        .read_text(encoding="utf-8")
+        .startswith("fastapi")
+    )
     assert (CROSS_FIXTURE / "orders-api" / "openapi.yaml").is_file()
     assert "from fastapi import" in (CROSS_FIXTURE / "orders-api" / "app" / "main.py").read_text(
-        encoding="utf-8")
-    assert "from pyspark" in (CROSS_FIXTURE / "data-pipeline" / "jobs"
-                              / "daily_orders_job.py").read_text(encoding="utf-8")
+        encoding="utf-8"
+    )
+    assert "from pyspark" in (
+        CROSS_FIXTURE / "data-pipeline" / "jobs" / "daily_orders_job.py"
+    ).read_text(encoding="utf-8")
 
 
 def test_mounted_workspace_without_git_is_a_plain_copy() -> None:
@@ -101,12 +137,23 @@ def test_mounted_workspace_has_two_independent_repositories() -> None:
         tops = {_git_toplevel(repo) for repo in ws.repositories}
         assert tops == {repo.resolve() for repo in ws.repositories}
         for repo in ws.repositories:
-            log = subprocess.run(["git", "log", "--oneline"], cwd=repo, capture_output=True,
-                                 text=True, timeout=TIMEOUT, check=True)
+            log = subprocess.run(
+                ["git", "log", "--oneline"],
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                timeout=TIMEOUT,
+                check=True,
+            )
             assert len(log.stdout.splitlines()) == 1
-            status = subprocess.run(["git", "status", "--porcelain"], cwd=repo,
-                                    capture_output=True, text=True, timeout=TIMEOUT,
-                                    check=True)
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                timeout=TIMEOUT,
+                check=True,
+            )
             assert status.stdout == ""  # everything committed
         base = ws.root.parent
     assert not base.exists()
@@ -115,10 +162,13 @@ def test_mounted_workspace_has_two_independent_repositories() -> None:
 # --- fixture provider: plan op and handoff echo --------------------------------------------
 
 
-@pytest.mark.parametrize(("entry", "capability", "action"), [
-    (SPARK_PLAN_ENTRY, "spark.performance", "diagnose"),
-    (API_PLAN_ENTRY, "api.contract", "review"),
-])
+@pytest.mark.parametrize(
+    ("entry", "capability", "action"),
+    [
+        (SPARK_PLAN_ENTRY, "spark.performance", "diagnose"),
+        (API_PLAN_ENTRY, "api.contract", "review"),
+    ],
+)
 def test_fixture_answers_plan_with_the_manifest_estimate(
     tmp_path: Path, entry: dict[str, Any], capability: str, action: str
 ) -> None:
@@ -142,8 +192,12 @@ def test_fixture_without_plan_op_refuses_plan(tmp_path: Path, entry: dict[str, A
 
 
 def _execute_payload(root: Path, handoff: Handoff | None) -> dict[str, Any]:
-    payload: dict[str, Any] = {"task": to_dict(_task(root)), "capability": "api.contract",
-                               "action": "review", "context": {"files": []}}
+    payload: dict[str, Any] = {
+        "task": to_dict(_task(root)),
+        "capability": "api.contract",
+        "action": "review",
+        "context": {"files": []},
+    }
     if handoff is not None:
         payload["handoff"] = to_dict(handoff)
     return payload
@@ -175,19 +229,18 @@ def test_bad_plan_error_declares_plan_and_fails_it() -> None:
 
 
 def test_bad_plan_estimate_is_stricter_than_declared() -> None:
-    manifest = from_dict(ForgeManifest,
-                         _call(bad_argv("plan-estimate-stricter"), "describe", {}).payload)
+    manifest = from_dict(
+        ForgeManifest, _call(bad_argv("plan-estimate-stricter"), "describe", {}).payload
+    )
     assert manifest.capabilities[0].operation_class == "read_only"
     response = _call(bad_argv("plan-estimate-stricter"), "plan", {})
     assert from_dict(PlanEstimate, response.payload).operation_class == "local_mutation"
 
 
 def test_bad_handoff_accept_declares_and_counts(tmp_path: Path) -> None:
-    manifest = from_dict(ForgeManifest,
-                         _call(bad_argv("handoff-accept"), "describe", {}).payload)
+    manifest = from_dict(ForgeManifest, _call(bad_argv("handoff-accept"), "describe", {}).payload)
     assert manifest.capabilities[0].accepts_handoff
-    response = _call(bad_argv("handoff-accept"), "execute",
-                     _execute_payload(tmp_path, _handoff(2)))
+    response = _call(bad_argv("handoff-accept"), "execute", _execute_payload(tmp_path, _handoff(2)))
     assert from_dict(ExecutionResult, response.payload).limitations == ["handoff-items=2"]
 
 
@@ -199,8 +252,13 @@ def test_bad_artifact_tamper_declares_a_hash_the_file_does_not_have(tmp_path: Pa
 
 
 def test_bad_internal_crash_dies_with_a_raw_traceback() -> None:
-    proc = subprocess.run([*bad_argv("internal-crash"), "execute"], input="{}",
-                          capture_output=True, text=True, timeout=TIMEOUT)
+    proc = subprocess.run(
+        [*bad_argv("internal-crash"), "execute"],
+        input="{}",
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT,
+    )
     assert proc.returncode != 0 and proc.stdout == ""
     assert "Traceback" in proc.stderr and "supersecretvalue123" in proc.stderr
 

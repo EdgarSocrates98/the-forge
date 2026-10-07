@@ -26,8 +26,15 @@ GLOBAL_ECONOMY_SCHEMA = "theforge/GlobalEconomyReceipt/v1"
 # Axes the global receipt aggregates, in canonical order. ``estimated`` is a
 # valid axis status but never produced by the v1 aggregator — the core does
 # not invent values; it is accepted on decode for forward compatibility.
-GLOBAL_AXES: Final = ("context_bytes", "provider_calls", "tool_calls",
-                      "semantic_calls", "tokens", "cost_usd", "wall_time_ms")
+GLOBAL_AXES: Final = (
+    "context_bytes",
+    "provider_calls",
+    "tool_calls",
+    "semantic_calls",
+    "tokens",
+    "cost_usd",
+    "wall_time_ms",
+)
 
 # History maturity states (§44): the same vocabulary ``negotiation.maturity``
 # uses, kept here so receipts and docs share one source of truth concept.
@@ -35,8 +42,7 @@ MaturityState = Literal["absent", "cold", "warming", "mature", "stale"]
 
 # Per-axis economy status (§45): exactly what was measured, never a hidden
 # zero. ``conflict`` preserves a disagreement instead of resolving it.
-EconomyAxisStatus = Literal[
-    "observed", "estimated", "unresolved", "conflict", "not_applicable"]
+EconomyAxisStatus = Literal["observed", "estimated", "unresolved", "conflict", "not_applicable"]
 
 # Verification recorded on an observation: the forge check's verdict, or
 # ``not_performed`` when the run never reached verification.
@@ -89,20 +95,31 @@ class ExecutionObservation:
     def __post_init__(self) -> None:
         if self.schema != EXECUTION_OBSERVATION_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected "
-                f"{EXECUTION_OBSERVATION_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {EXECUTION_OBSERVATION_SCHEMA!r}"
+            )
         for name in ("run_id", "provider", "capability"):
             if not getattr(self, name):
                 raise ContractError(f"observation: {name} must not be empty")
-        for name in ("context_bytes", "context_items", "context_items_cited",
-                     "provider_calls", "tool_calls", "semantic_calls",
-                     "tokens", "cost_usd", "wall_time_ms",
-                     "evidence_count", "artifact_count"):
+        for name in (
+            "context_bytes",
+            "context_items",
+            "context_items_cited",
+            "provider_calls",
+            "tool_calls",
+            "semantic_calls",
+            "tokens",
+            "cost_usd",
+            "wall_time_ms",
+            "evidence_count",
+            "artifact_count",
+        ):
             _nonneg(name, getattr(self, name))
-        if (self.context_items is not None and self.context_items_cited is not None
-                and self.context_items_cited > self.context_items):
-            raise ContractError(
-                "observation: context_items_cited exceeds context_items")
+        if (
+            self.context_items is not None
+            and self.context_items_cited is not None
+            and self.context_items_cited > self.context_items
+        ):
+            raise ContractError("observation: context_items_cited exceeds context_items")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -123,13 +140,11 @@ class EconomyAxis:
     def __post_init__(self) -> None:
         if self.status in ("observed", "estimated"):
             if not isinstance(self.value, (int, float)) or isinstance(self.value, bool):
-                raise ContractError(
-                    f"economy axis: status {self.status!r} requires a value")
+                raise ContractError(f"economy axis: status {self.status!r} requires a value")
             if self.value < 0:
                 raise ContractError("economy axis: value cannot be negative")
         elif self.value is not None:
-            raise ContractError(
-                f"economy axis: status {self.status!r} cannot carry a value")
+            raise ContractError(f"economy axis: status {self.status!r} cannot carry a value")
         if self.coverage < 0 or self.missing < 0:
             raise ContractError("economy axis: coverage/missing cannot be negative")
 
@@ -160,12 +175,12 @@ class GlobalEconomyReceipt:
     def __post_init__(self) -> None:
         if self.schema != GLOBAL_ECONOMY_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {GLOBAL_ECONOMY_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {GLOBAL_ECONOMY_SCHEMA!r}"
+            )
         if self.observations < 0 or self.runs < 0:
             raise ContractError("global economy: counts cannot be negative")
         if self.runs > self.observations:
             raise ContractError("global economy: runs exceed observations")
         unknown = set(self.axes) - set(GLOBAL_AXES)
         if unknown:
-            raise ContractError(
-                f"global economy: unknown axes {sorted(unknown)}")
+            raise ContractError(f"global economy: unknown axes {sorted(unknown)}")

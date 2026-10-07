@@ -28,7 +28,7 @@ SPAN_ATTRS_MAX = 16  # bounded attributes per span
 SPAN_ATTR_LEN = 120  # attribute keys/values are short strings
 
 NATIVE_TRACE_SUMMARY_MAX = 240  # a line, not a dump
-NATIVE_TRACE_PATH_MAX = 32   # critical-path stages; deeper detail stays native
+NATIVE_TRACE_PATH_MAX = 32  # critical-path stages; deeper detail stays native
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -50,19 +50,19 @@ class NativeTrace:
             raise ContractError("native_trace.ref must not be empty")
         check_ref(self.ref, field="native_trace.ref")
         if len(self.ref) > SPAN_ATTR_LEN:
-            raise ContractError(
-                f"native_trace.ref exceeds {SPAN_ATTR_LEN} chars")
+            raise ContractError(f"native_trace.ref exceeds {SPAN_ATTR_LEN} chars")
         if len(self.summary) > NATIVE_TRACE_SUMMARY_MAX:
-            raise ContractError(
-                f"native_trace.summary exceeds {NATIVE_TRACE_SUMMARY_MAX} chars")
+            raise ContractError(f"native_trace.summary exceeds {NATIVE_TRACE_SUMMARY_MAX} chars")
         if len(self.critical_path) > NATIVE_TRACE_PATH_MAX:
             raise ContractError(
-                f"native_trace.critical_path exceeds {NATIVE_TRACE_PATH_MAX} entries")
+                f"native_trace.critical_path exceeds {NATIVE_TRACE_PATH_MAX} entries"
+            )
         for stage in self.critical_path:
             if not isinstance(stage, str) or len(stage) > SPAN_ATTR_LEN:
                 raise ContractError(
                     f"native_trace.critical_path entries are strings "
-                    f"of at most {SPAN_ATTR_LEN} chars")
+                    f"of at most {SPAN_ATTR_LEN} chars"
+                )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -90,7 +90,8 @@ class Span:
         if not isinstance(self.name, str) or not 0 < len(self.name) <= SPAN_NAME_MAX:
             raise ContractError(
                 f"span {self.id!r}: name must be a non-empty string of at most "
-                f"{SPAN_NAME_MAX} chars")
+                f"{SPAN_NAME_MAX} chars"
+            )
         for name in ("start_ms", "duration_ms"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -98,14 +99,17 @@ class Span:
             if value < 0:
                 raise ContractError(f"span {self.id!r}: {name} cannot be negative")
         if len(self.attributes) > SPAN_ATTRS_MAX:
-            raise ContractError(
-                f"span {self.id!r}: attributes exceed {SPAN_ATTRS_MAX}")
+            raise ContractError(f"span {self.id!r}: attributes exceed {SPAN_ATTRS_MAX}")
         for key, value in self.attributes.items():
-            if not isinstance(key, str) or not isinstance(value, str) \
-                    or len(key) > SPAN_ATTR_LEN or len(value) > SPAN_ATTR_LEN:
+            if (
+                not isinstance(key, str)
+                or not isinstance(value, str)
+                or len(key) > SPAN_ATTR_LEN
+                or len(value) > SPAN_ATTR_LEN
+            ):
                 raise ContractError(
-                    f"span {self.id!r}: attributes are bounded strings "
-                    f"(<= {SPAN_ATTR_LEN} chars)")
+                    f"span {self.id!r}: attributes are bounded strings (<= {SPAN_ATTR_LEN} chars)"
+                )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -170,7 +174,8 @@ class RunTelemetry:
     def __post_init__(self) -> None:
         if self.schema != TELEMETRY_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {TELEMETRY_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {TELEMETRY_SCHEMA!r}"
+            )
         if len(self.spans) > MAX_SPANS:
             raise ContractError(f"telemetry: {len(self.spans)} spans exceed {MAX_SPANS}")
         seen: set[str] = set()
@@ -180,5 +185,5 @@ class RunTelemetry:
             seen.add(span.id)
             if span.parent is not None and span.parent not in seen:
                 raise ContractError(
-                    f"telemetry: span {span.id!r} parents unknown/forward span "
-                    f"{span.parent!r}")
+                    f"telemetry: span {span.id!r} parents unknown/forward span {span.parent!r}"
+                )

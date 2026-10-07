@@ -68,9 +68,11 @@ DETAIL_LIMIT = 500  # detail, field and unlock of a recognized AF-* message
 # ``AF-CODE: detail (field=<field>; unlock=<unlock>)``, as printed by the API Forge CLI; the
 # detail may itself contain parentheses, so the field/unlock suffix is matched at the end.
 # A message may span lines: its detail then runs up to the line that ends with the suffix.
-_AF_LINE = re.compile(r"(?P<code>AF-[A-Z0-9][A-Z0-9_-]*): (?P<detail>.*?)"
-                      r"(?: \(field=(?P<field>[^\n]*?); unlock=(?P<unlock>[^\n]*)\))?",
-                      re.DOTALL)
+_AF_LINE = re.compile(
+    r"(?P<code>AF-[A-Z0-9][A-Z0-9_-]*): (?P<detail>.*?)"
+    r"(?: \(field=(?P<field>[^\n]*?); unlock=(?P<unlock>[^\n]*)\))?",
+    re.DOTALL,
+)
 _AF_START = re.compile(r"AF-[A-Z0-9][A-Z0-9_-]*: ")
 _DRIVE = re.compile(r"^[A-Za-z]:")
 _FILE_ATTRIBUTE_REPARSE_POINT = 0x400  # Windows: symlinks, junctions and other links
@@ -87,6 +89,7 @@ class NativeCase:
 
 # --- native errors --------------------------------------------------------------------------
 
+
 def _af_line(stderr: str) -> re.Match[str] | None:
     """The last ``AF-*`` message of stderr (the CLI prints it last, after any other output).
 
@@ -99,7 +102,7 @@ def _af_line(stderr: str) -> re.Match[str] | None:
         if _AF_START.match(lines[start]) is None:
             continue
         for end in range(start, len(lines)):
-            match = _AF_LINE.fullmatch("\n".join(lines[start:end + 1]))
+            match = _AF_LINE.fullmatch("\n".join(lines[start : end + 1]))
             if match is not None and match["field"] is not None:
                 return match
         return _AF_LINE.fullmatch(lines[start])
@@ -108,13 +111,13 @@ def _af_line(stderr: str) -> re.Match[str] | None:
 
 def stderr_tail(stderr: str, limit: int = STDERR_TAIL) -> str:
     text = stderr.strip()
-    return text if len(text) <= limit else "..." + text[-(limit - 3):]
+    return text if len(text) <= limit else "..." + text[-(limit - 3) :]
 
 
 def _bounded(text: str | None, limit: int = DETAIL_LIMIT) -> str | None:
     if text is None or len(text) <= limit:
         return text
-    return text[:limit - 3] + "..."
+    return text[: limit - 3] + "..."
 
 
 def native_failure(exit_code: int, stderr: str) -> Reply:
@@ -122,11 +125,16 @@ def native_failure(exit_code: int, stderr: str) -> Reply:
     match = _af_line(stderr)
     if match is None:
         tail = stderr_tail(stderr)
-        detail = (f"apiforge exited with code {exit_code} without an AF-* error line; "
-                  f"stderr tail: {tail}" if tail
-                  else f"apiforge exited with code {exit_code} without output on stderr")
-        return fail(NATIVE_FAILURE, detail,
-                    unlock="inspect the API Forge installation (apiforge doctor) and rerun")
+        detail = (
+            f"apiforge exited with code {exit_code} without an AF-* error line; stderr tail: {tail}"
+            if tail
+            else f"apiforge exited with code {exit_code} without output on stderr"
+        )
+        return fail(
+            NATIVE_FAILURE,
+            detail,
+            unlock="inspect the API Forge installation (apiforge doctor) and rerun",
+        )
     code = match["code"]
     detail = _bounded(match["detail"]) or code
     field_name, unlock = _bounded(match["field"]), _bounded(match["unlock"])
@@ -136,6 +144,7 @@ def native_failure(exit_code: int, stderr: str) -> Reply:
 
 
 # --- case files -----------------------------------------------------------------------------
+
 
 def _parse(data: bytes) -> object:
     try:
@@ -147,7 +156,8 @@ def _parse(data: bytes) -> object:
 def _is_link(st: os.stat_result) -> bool:
     """A symlink, or on Windows any reparse point (junctions included)."""
     return stat.S_ISLNK(st.st_mode) or bool(
-        getattr(st, "st_file_attributes", 0) & _FILE_ATTRIBUTE_REPARSE_POINT)
+        getattr(st, "st_file_attributes", 0) & _FILE_ATTRIBUTE_REPARSE_POINT
+    )
 
 
 def read_case(cwd: Path, case_dir: str) -> NativeCase:
@@ -163,8 +173,9 @@ def read_case(cwd: Path, case_dir: str) -> NativeCase:
     except OSError:
         return NativeCase()
     if _is_link(top) or not stat.S_ISDIR(top.st_mode):
-        return NativeCase(limitations=(f"case directory {case_dir} is not a directory; "
-                                       "nothing attached",))
+        return NativeCase(
+            limitations=(f"case directory {case_dir} is not a directory; nothing attached",)
+        )
     pending = [(root, case_dir)]
     while pending:
         directory, rel_dir = pending.pop()
@@ -196,8 +207,9 @@ def read_case(cwd: Path, case_dir: str) -> NativeCase:
             if entry.name.endswith(".json") and rel_dir == case_dir:
                 documents[entry.name] = _parse(data)
     artifacts.sort(key=lambda item: item["path"])
-    return NativeCase(documents=documents, artifacts=tuple(artifacts),
-                      limitations=tuple(limitations))
+    return NativeCase(
+        documents=documents, artifacts=tuple(artifacts), limitations=tuple(limitations)
+    )
 
 
 def _items(document: object, key: str) -> list[Any] | None:
@@ -207,6 +219,7 @@ def _items(document: object, key: str) -> list[Any] | None:
 
 
 # --- translation ----------------------------------------------------------------------------
+
 
 def _clean(path: str) -> str | None:
     """A normalized relative POSIX path inside its base, or None."""
@@ -238,29 +251,31 @@ def workspace_path(raw: object, stage: StagedInput, project: str = "") -> str | 
     else:
         prefix = f"{STAGE_DIR}/"
         if value.startswith(prefix):
-            candidates.append(value[len(prefix):])
+            candidates.append(value[len(prefix) :])
         candidates.append(posixpath.join(project, value) if project else value)
         if project:
             candidates.append(value)  # relative to a native cwd at the stage root
     cleaned = [path for path in (_clean(candidate) for candidate in candidates) if path]
-    return next((path for path in cleaned if path in stage.files),
-                cleaned[0] if cleaned else None)
+    return next((path for path in cleaned if path in stage.files), cleaned[0] if cleaned else None)
 
 
 def _claim(kind: str, measures: object) -> str:
     text = kind
     if isinstance(measures, Mapping) and measures:
-        parts = ", ".join(f"{key}={json.dumps(measures[key], sort_keys=True, ensure_ascii=False)}"
-                          for key in sorted(measures, key=str))
+        parts = ", ".join(
+            f"{key}={json.dumps(measures[key], sort_keys=True, ensure_ascii=False)}"
+            for key in sorted(measures, key=str)
+        )
         text = f"{kind}: {parts}"
-    return text if len(text) <= CLAIM_LIMIT else text[:CLAIM_LIMIT - 3] + "..."
+    return text if len(text) <= CLAIM_LIMIT else text[: CLAIM_LIMIT - 3] + "..."
 
 
 _EPISTEMIC = ("confirmed", "observed", "inferred", "proposed", "unresolved")
 
 
-def _upstream_evidence(item: Mapping[str, Any], fact_id: str, kind: str,
-                       stage: StagedInput, limitations: list[str]) -> dict[str, Any] | None:
+def _upstream_evidence(
+    item: Mapping[str, Any], fact_id: str, kind: str, stage: StagedInput, limitations: list[str]
+) -> dict[str, Any] | None:
     """A case fact admitted through the upstream intake as Forge ``Evidence``.
 
     The provenance map written at intake becomes the evidence's ``derived_from``
@@ -274,41 +289,59 @@ def _upstream_evidence(item: Mapping[str, Any], fact_id: str, kind: str,
     if not isinstance(upstream, Mapping):
         limitations.append(f"upstream fact {fact_id} has no provenance map; skipped")
         return None
-    provenance = {key: upstream[key] for key in ("provider", "run_id", "node", "plan_run",
-                                                 "item") if isinstance(upstream.get(key), str)}
+    provenance = {
+        key: upstream[key]
+        for key in ("provider", "run_id", "node", "plan_run", "item")
+        if isinstance(upstream.get(key), str)
+    }
     if not all(key in provenance for key in ("provider", "run_id", "item")):
-        limitations.append(f"upstream fact {fact_id}: provenance lacks "
-                           "provider/run_id/item; skipped")
+        limitations.append(
+            f"upstream fact {fact_id}: provenance lacks provider/run_id/item; skipped"
+        )
         return None
     epistemic = upstream.get("epistemic")
     if not isinstance(epistemic, str) or epistemic not in _EPISTEMIC:
-        limitations.append(f"upstream fact {fact_id}: epistemic {epistemic!r} unknown, "
-                           "reported as inferred")
+        limitations.append(
+            f"upstream fact {fact_id}: epistemic {epistemic!r} unknown, reported as inferred"
+        )
         epistemic = "inferred"
     measures = item.get("measures")
     subject = measures.get("subject") if isinstance(measures, Mapping) else None
     claim = upstream.get("claim")
     location = upstream.get("location")
-    path = _clean(location["path"]) if isinstance(location, Mapping) and isinstance(
-        location.get("path"), str) else None
+    path = (
+        _clean(location["path"])
+        if isinstance(location, Mapping) and isinstance(location.get("path"), str)
+        else None
+    )
     line = location.get("line") if isinstance(location, Mapping) else None
     entry: dict[str, Any] = {
-        "id": fact_id, "epistemic": epistemic,
+        "id": fact_id,
+        "epistemic": epistemic,
         "subject": subject if isinstance(subject, str) and subject else kind,
         "claim": claim if isinstance(claim, str) and claim else _claim(kind, measures),
-        "hash": evidence_hash(path, item.get("source", {}).get("sha256")
-                              if isinstance(item.get("source"), Mapping) else None, stage),
+        "hash": evidence_hash(
+            path,
+            item.get("source", {}).get("sha256")
+            if isinstance(item.get("source"), Mapping)
+            else None,
+            stage,
+        ),
         "derived_from": provenance,
     }
     if path is not None:
-        entry["location"] = {"path": path,
-                             "line": line if isinstance(line, int)
-                             and not isinstance(line, bool) and line >= 1 else None}
+        entry["location"] = {
+            "path": path,
+            "line": line
+            if isinstance(line, int) and not isinstance(line, bool) and line >= 1
+            else None,
+        }
     return entry
 
 
-def _evidence(facts: list[Any], stage: StagedInput, project: str, epistemic: str,
-              limitations: list[str]) -> list[dict[str, Any]]:
+def _evidence(
+    facts: list[Any], stage: StagedInput, project: str, epistemic: str, limitations: list[str]
+) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     seen: set[str] = set()
     for item in facts:
@@ -332,24 +365,30 @@ def _evidence(facts: list[Any], stage: StagedInput, project: str, epistemic: str
         raw_path = source.get("path")
         path = workspace_path(raw_path, stage, project)
         entry: dict[str, Any] = {
-            "id": fact_id, "epistemic": epistemic, "subject": kind,
+            "id": fact_id,
+            "epistemic": epistemic,
+            "subject": kind,
             "claim": _claim(kind, item.get("measures")),
             "hash": evidence_hash(path, source.get("sha256"), stage),
         }
         line = source.get("line")
         if path is not None:
-            entry["location"] = {"path": path,
-                                 "line": line if isinstance(line, int)
-                                 and not isinstance(line, bool) and line >= 1 else None}
+            entry["location"] = {
+                "path": path,
+                "line": line
+                if isinstance(line, int) and not isinstance(line, bool) and line >= 1
+                else None,
+            }
         elif raw_path is not None:
-            limitations.append(f"evidence {fact_id}: native location {raw_path!r} is outside "
-                               "the workspace; no location")
+            limitations.append(
+                f"evidence {fact_id}: native location {raw_path!r} is outside "
+                "the workspace; no location"
+            )
         evidence.append(entry)
     return evidence
 
 
-def _findings(items: list[Any], present: set[str], limitations: list[str]
-              ) -> list[dict[str, Any]]:
+def _findings(items: list[Any], present: set[str], limitations: list[str]) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     seen: set[str] = set()
     omitted = 0
@@ -371,8 +410,9 @@ def _findings(items: list[Any], present: set[str], limitations: list[str]
         head = rule if isinstance(rule, str) and rule else "unknown rule"
         severity = item.get("severity")
         if severity not in SEVERITIES:
-            limitations.append(f"finding {finding_id}: unknown native severity {severity!r}, "
-                               "reported as info")
+            limitations.append(
+                f"finding {finding_id}: unknown native severity {severity!r}, reported as info"
+            )
             severity = "info"
         refs: list[str] = []
         raw_refs = item.get("evidence")
@@ -381,19 +421,31 @@ def _findings(items: list[Any], present: set[str], limitations: list[str]
                 if ref not in refs:
                     refs.append(ref)
             else:
-                limitations.append(f"finding {finding_id}: evidence {ref!r} is not in the "
-                                   "case facts; reference dropped")
-        findings.append({"id": finding_id,
-                         "title": f"{head}: {title}" if isinstance(title, str) and title
-                         else head,
-                         "severity": severity, "evidence_ids": refs})
+                limitations.append(
+                    f"finding {finding_id}: evidence {ref!r} is not in the "
+                    "case facts; reference dropped"
+                )
+        findings.append(
+            {
+                "id": finding_id,
+                "title": f"{head}: {title}" if isinstance(title, str) and title else head,
+                "severity": severity,
+                "evidence_ids": refs,
+            }
+        )
     if omitted:
         limitations.append(f"{omitted} native finding(s) with status {NOT_APPLICABLE} omitted")
     return findings
 
 
-def translate_case(case: NativeCase, stage: StagedInput, *, state: str = "supported",
-                   project: str = "", verb: str = "analyze") -> ResultDraft | Reply:
+def translate_case(
+    case: NativeCase,
+    stage: StagedInput,
+    *,
+    state: str = "supported",
+    project: str = "",
+    verb: str = "analyze",
+) -> ResultDraft | Reply:
     """The result draft of a case read by ``read_case``, or ``APIFORGE-ADAPTER-NATIVE-INVALID``
     when its findings or facts are missing or malformed.
 
@@ -404,23 +456,32 @@ def translate_case(case: NativeCase, stage: StagedInput, *, state: str = "suppor
     facts_doc = case.documents.get(FACTS_FILE)
     findings_items = _items(findings_doc, "findings")
     facts_items = _items(facts_doc, "facts")
-    problems = [name for name, items in ((FINDINGS_FILE, findings_items),
-                                         (FACTS_FILE, facts_items)) if items is None]
+    problems = [
+        name
+        for name, items in ((FINDINGS_FILE, findings_items), (FACTS_FILE, facts_items))
+        if items is None
+    ]
     if problems:
-        return fail(NATIVE_INVALID,
-                    f"apiforge {verb} left no readable {' or '.join(problems)} in its case "
-                    "directory",
-                    unlock="inspect the API Forge installation (apiforge doctor) and rerun")
+        return fail(
+            NATIVE_INVALID,
+            f"apiforge {verb} left no readable {' or '.join(problems)} in its case directory",
+            unlock="inspect the API Forge installation (apiforge doctor) and rerun",
+        )
     assert findings_items is not None and facts_items is not None
     limitations: list[str] = [*stage.limitations, *case.limitations]
     epistemic = "inferred" if state == "heuristic" else "observed"
     evidence = _evidence(facts_items, stage, project, epistemic, limitations)
     findings = _findings(findings_items, {entry["id"] for entry in evidence}, limitations)
-    return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
-                       evidence=evidence, artifacts=[dict(item) for item in case.artifacts],
-                       limitations=limitations,
-                       provider_receipt=_provider_receipt(case),
-                       native_output={"findings": findings_doc, "facts": facts_doc})
+    return ResultDraft(
+        provider_id=PROVIDER_ID,
+        version=VERSION,
+        findings=findings,
+        evidence=evidence,
+        artifacts=[dict(item) for item in case.artifacts],
+        limitations=limitations,
+        provider_receipt=_provider_receipt(case),
+        native_output={"findings": findings_doc, "facts": facts_doc},
+    )
 
 
 CASE_MANIFEST = "case.json"
@@ -435,8 +496,10 @@ def _provider_receipt(case: NativeCase) -> dict[str, str] | None:
     case_id = manifest.get("case_id") if isinstance(manifest, Mapping) else None
     if not isinstance(case_id, str) or not case_id:
         return None
-    hashed = next((item["sha256"] for item in case.artifacts
-                   if item["path"].endswith(f"/{CASE_MANIFEST}")), None)
+    hashed = next(
+        (item["sha256"] for item in case.artifacts if item["path"].endswith(f"/{CASE_MANIFEST}")),
+        None,
+    )
     if hashed is None:
         return None
     return {"ref": case_id, "sha256": hashed}

@@ -26,6 +26,7 @@ requires_git = pytest.mark.skipif(GIT is None, reason="git executable not found 
 
 # --- helpers -------------------------------------------------------------------------------
 
+
 @pytest.fixture
 def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Isolated global git config (HOME/USERPROFILE survive safe_env)."""
@@ -39,9 +40,22 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def _git(repo: Path, *args: str) -> str:
     assert GIT is not None
     out = subprocess.run(
-        [GIT, "-c", "core.fsmonitor=false", "-c", "user.name=t", "-c", "user.email=t@t",
-         "-c", "commit.gpgsign=false", *args],
-        cwd=repo, capture_output=True, check=True, env={**os.environ, "LC_ALL": "C"},
+        [
+            GIT,
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+            *args,
+        ],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+        env={**os.environ, "LC_ALL": "C"},
     )
     return out.stdout.decode("utf-8", "replace")
 
@@ -68,7 +82,10 @@ def _snapshot(d: Path) -> dict[str, tuple[bool, int, bytes]]:
             st = p.lstat()
             is_dir = p.is_dir()
             snap[p.relative_to(d).as_posix()] = (
-                is_dir, st.st_mtime_ns, b"" if is_dir else p.read_bytes())
+                is_dir,
+                st.st_mtime_ns,
+                b"" if is_dir else p.read_bytes(),
+            )
         except OSError:
             continue  # vanished mid-walk (a transient git lock file, for example)
     return snap
@@ -106,6 +123,7 @@ def _fail(stderr: str, code: int = 128) -> GitRun:
 
 
 # --- real repositories: read-only invariants -----------------------------------------------
+
 
 @requires_git
 def test_reads_branch_head_and_changed_files(tmp_path: Path, home: Path) -> None:
@@ -148,11 +166,13 @@ def test_global_fsmonitor_hook_is_never_run(tmp_path: Path, home: Path) -> None:
     repo = _init(tmp_path / "repo")
     marker = tmp_path / "marker"
     hook = tmp_path / "fsmon.sh"
-    hook.write_text(f'#!/bin/sh\necho hit > "{marker.as_posix()}"\nprintf "\\0"\n',
-                    encoding="utf-8", newline="\n")
+    hook.write_text(
+        f'#!/bin/sh\necho hit > "{marker.as_posix()}"\nprintf "\\0"\n',
+        encoding="utf-8",
+        newline="\n",
+    )
     hook.chmod(0o755)
-    (home / ".gitconfig").write_text(f"[core]\n\tfsmonitor = {hook.as_posix()}\n",
-                                     encoding="utf-8")
+    (home / ".gitconfig").write_text(f"[core]\n\tfsmonitor = {hook.as_posix()}\n", encoding="utf-8")
     _dirty_worktree(repo)
     state = read_git_state(repo)
     assert state.summary.dirty is True  # status ran (global scope is not refused)
@@ -168,11 +188,13 @@ def test_partial_clone_lazy_fetch_never_runs_repo_transport(tmp_path: Path, home
     loose.chmod(0o644)  # loose objects are read-only (Windows refuses to unlink them)
     loose.unlink()
     marker = tmp_path / "pwned"
-    for key, value in (("core.repositoryformatversion", "1"),
-                       ("extensions.partialClone", "origin"),
-                       ("remote.origin.promisor", "true"),
-                       ("remote.origin.url", f"ext::sh -c touch% {marker.as_posix()}"),
-                       ("protocol.ext.allow", "always")):
+    for key, value in (
+        ("core.repositoryformatversion", "1"),
+        ("extensions.partialClone", "origin"),
+        ("remote.origin.promisor", "true"),
+        ("remote.origin.url", f"ext::sh -c touch% {marker.as_posix()}"),
+        ("protocol.ext.allow", "always"),
+    ):
         _git(repo, "config", "--local", key, value)
     before = _snapshot(repo / ".git")
     state = read_git_state(repo)
@@ -182,14 +204,16 @@ def test_partial_clone_lazy_fetch_never_runs_repo_transport(tmp_path: Path, home
 
 
 @requires_git
-@pytest.mark.parametrize("key", ["core.fsmonitor", "filter.evil.clean", "filter.evil.smudge",
-                                 "filter.evil.process"])
+@pytest.mark.parametrize(
+    "key", ["core.fsmonitor", "filter.evil.clean", "filter.evil.smudge", "filter.evil.process"]
+)
 def test_local_executable_config_skips_status(tmp_path: Path, home: Path, key: str) -> None:
     repo = _init(tmp_path / "repo")
     marker = tmp_path / "marker"
     hook = tmp_path / "hook.sh"
-    hook.write_text(f'#!/bin/sh\necho hit > "{marker.as_posix()}"\ncat\n',
-                    encoding="utf-8", newline="\n")
+    hook.write_text(
+        f'#!/bin/sh\necho hit > "{marker.as_posix()}"\ncat\n', encoding="utf-8", newline="\n"
+    )
     hook.chmod(0o755)
     _git(repo, "config", "--local", key, hook.as_posix())
     (repo / ".gitattributes").write_text("* filter=evil\n", encoding="utf-8")
@@ -227,12 +251,19 @@ def test_detached_head(tmp_path: Path, home: Path) -> None:
 
 
 @requires_git
-@pytest.mark.parametrize(("marker", "expected"), [
-    ("MERGE_HEAD", "merge"), ("rebase-merge", "rebase"), ("rebase-apply", "rebase"),
-    ("CHERRY_PICK_HEAD", "cherry_pick"), ("BISECT_LOG", "bisect"),
-])
-def test_unusual_states_are_reported(tmp_path: Path, home: Path, marker: str,
-                                     expected: str) -> None:
+@pytest.mark.parametrize(
+    ("marker", "expected"),
+    [
+        ("MERGE_HEAD", "merge"),
+        ("rebase-merge", "rebase"),
+        ("rebase-apply", "rebase"),
+        ("CHERRY_PICK_HEAD", "cherry_pick"),
+        ("BISECT_LOG", "bisect"),
+    ],
+)
+def test_unusual_states_are_reported(
+    tmp_path: Path, home: Path, marker: str, expected: str
+) -> None:
     repo = _init(tmp_path / "repo")
     head = _git(repo, "rev-parse", "HEAD").strip()
     target = repo / ".git" / marker
@@ -284,8 +315,9 @@ def test_submodules_and_nested_repos_ignored(tmp_path: Path, home: Path) -> None
 def test_not_a_repository(home: Path) -> None:
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
-        probe = subprocess.run([str(GIT), "rev-parse", "--git-dir"], cwd=root,
-                               capture_output=True, check=False)
+        probe = subprocess.run(
+            [str(GIT), "rev-parse", "--git-dir"], cwd=root, capture_output=True, check=False
+        )
         if probe.returncode == 0:
             pytest.skip("system temp directory is inside a git repository")
         state = read_git_state(root)
@@ -302,6 +334,7 @@ def test_zero_budget_times_out_without_exception(tmp_path: Path, home: Path) -> 
 
 # --- absence and failure scenarios (no exception, limitation recorded) ----------------------
 
+
 def test_git_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gitmod.shutil, "which", lambda name: None)
     state = read_git_state(tmp_path)
@@ -315,16 +348,22 @@ def test_git_executable_unspawnable(tmp_path: Path) -> None:
     assert state.summary.available is False
 
 
-@pytest.mark.parametrize(("stderr", "expected"), [
-    ("fatal: not a git repository (or any of the parent directories): .git",
-     "git: not a repository"),
-    ("fatal: detected dubious ownership in repository at '/x'\nTo add an exception ...",
-     "git: repository not trusted by git (safe.directory)"),
-    ("fatal: this operation must be run in a work tree", "git: not a work tree"),
-    ("fatal: something odd", "git: rev-parse failed (exit 128)"),
-])
-def test_rev_parse_failures_become_limitations(tmp_path: Path, stderr: str,
-                                               expected: str) -> None:
+@pytest.mark.parametrize(
+    ("stderr", "expected"),
+    [
+        (
+            "fatal: not a git repository (or any of the parent directories): .git",
+            "git: not a repository",
+        ),
+        (
+            "fatal: detected dubious ownership in repository at '/x'\nTo add an exception ...",
+            "git: repository not trusted by git (safe.directory)",
+        ),
+        ("fatal: this operation must be run in a work tree", "git: not a work tree"),
+        ("fatal: something odd", "git: rev-parse failed (exit 128)"),
+    ],
+)
+def test_rev_parse_failures_become_limitations(tmp_path: Path, stderr: str, expected: str) -> None:
     runner = FakeRunner({"rev-parse --show-toplevel": _fail(stderr)})
     state = read_git_state(tmp_path, executable="git", runner=runner)
     assert state.limitations == (expected,)
@@ -333,8 +372,13 @@ def test_rev_parse_failures_become_limitations(tmp_path: Path, stderr: str,
 
 
 def test_timeout_becomes_limitation(tmp_path: Path) -> None:
-    runner = FakeRunner({"rev-parse --show-toplevel": GitRun(
-        returncode=-1, stdout=b"", stderr_tail="", timed_out=True)})
+    runner = FakeRunner(
+        {
+            "rev-parse --show-toplevel": GitRun(
+                returncode=-1, stdout=b"", stderr_tail="", timed_out=True
+            )
+        }
+    )
     state = read_git_state(tmp_path, executable="git", runner=runner, timeout_s=1.5)
     assert state.limitations == ("git: timed out after 1.5s",)
 
@@ -342,6 +386,7 @@ def test_timeout_becomes_limitation(tmp_path: Path) -> None:
 def test_runner_exception_becomes_limitation(tmp_path: Path) -> None:
     def boom(argv: Sequence[str], cwd: Path, timeout: float) -> GitRun:
         raise RuntimeError("boom")
+
     state = read_git_state(tmp_path, executable="git", runner=boom)
     assert state.summary.available is False
     assert state.limitations and state.limitations[0].startswith("git: failed")
@@ -362,8 +407,9 @@ def _repo_runner(tmp_path: Path, **overrides: GitRun) -> FakeRunner:
 
 
 def test_old_git_without_show_scope_refuses_status(tmp_path: Path) -> None:
-    runner = _repo_runner(tmp_path, config=_fail(
-        "error: unknown option `show-scope'\nusage: git config", code=129))
+    runner = _repo_runner(
+        tmp_path, config=_fail("error: unknown option `show-scope'\nusage: git config", code=129)
+    )
     state = read_git_state(tmp_path, executable="git", runner=runner)
     assert state.limitations == ("git: version too old for safe status",)
     assert not any(call[3] == "status" for call in runner.calls)
@@ -371,11 +417,11 @@ def test_old_git_without_show_scope_refuses_status(tmp_path: Path) -> None:
 
 
 def test_worktree_scope_key_refuses_status(tmp_path: Path) -> None:
-    runner = _repo_runner(tmp_path, config=_ok(
-        b"global\x00core.fsmonitor\n/g\x00worktree\x00filter.x.clean\nrun\x00"))
+    runner = _repo_runner(
+        tmp_path, config=_ok(b"global\x00core.fsmonitor\n/g\x00worktree\x00filter.x.clean\nrun\x00")
+    )
     state = read_git_state(tmp_path, executable="git", runner=runner)
-    assert state.limitations == ("git: status skipped: repository config defines "
-                                 "filter.x.clean",)
+    assert state.limitations == ("git: status skipped: repository config defines filter.x.clean",)
 
 
 def test_status_failure_and_timeout(tmp_path: Path) -> None:
@@ -383,23 +429,30 @@ def test_status_failure_and_timeout(tmp_path: Path) -> None:
     state = read_git_state(tmp_path, executable="git", runner=runner)
     assert state.limitations == ("git: status failed (exit 128)",)
     assert state.summary.available and state.summary.dirty is None
-    runner = _repo_runner(tmp_path, status=GitRun(
-        returncode=-1, stdout=b"", stderr_tail="", timed_out=True))
+    runner = _repo_runner(
+        tmp_path, status=GitRun(returncode=-1, stdout=b"", stderr_tail="", timed_out=True)
+    )
     state = read_git_state(tmp_path, executable="git", runner=runner, timeout_s=5.0)
     assert state.limitations == ("git: timed out after 5s",)
 
 
 def test_truncated_status_keeps_complete_entries(tmp_path: Path) -> None:
-    runner = _repo_runner(tmp_path, status=GitRun(
-        returncode=-1, stdout=b" M a.txt\x00?? b.t", stderr_tail="", timed_out=False,
-        truncated=True))
+    runner = _repo_runner(
+        tmp_path,
+        status=GitRun(
+            returncode=-1,
+            stdout=b" M a.txt\x00?? b.t",
+            stderr_tail="",
+            timed_out=False,
+            truncated=True,
+        ),
+    )
     state = read_git_state(tmp_path, executable="git", runner=runner)
     assert state.changed == frozenset({"a.txt"})
     assert any("truncated" in lim for lim in state.limitations)
 
 
-def test_changed_paths_capped_at_max_files(tmp_path: Path,
-                                           monkeypatch: pytest.MonkeyPatch) -> None:
+def test_changed_paths_capped_at_max_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gitmod, "MAX_FILES", 2)
     runner = _repo_runner(tmp_path, status=_ok(b"?? a\x00?? b\x00?? c\x00"))
     state = read_git_state(tmp_path, executable="git", runner=runner)
@@ -412,7 +465,12 @@ def test_every_call_is_hardened(tmp_path: Path) -> None:
     state = read_git_state(tmp_path, executable="git", runner=runner)
     assert state.changed == frozenset({"a.txt", "b.txt"})
     assert [c[3] for c in runner.calls] == [
-        "rev-parse", "symbolic-ref", "rev-parse", "config", "status"]
+        "rev-parse",
+        "symbolic-ref",
+        "rev-parse",
+        "config",
+        "status",
+    ]
     for argv in runner.calls:
         assert argv[:3] == ["git", "-c", "core.fsmonitor=false"]
         assert not any("safe.directory" in a for a in argv)
@@ -435,11 +493,16 @@ def test_git_env_is_minimal_and_without_credentials(monkeypatch: pytest.MonkeyPa
 
 
 def test_executable_config_keys_are_the_documented_set() -> None:
-    assert EXECUTABLE_CONFIG_KEYS == ("core.fsmonitor", "filter.*.clean", "filter.*.smudge",
-                                      "filter.*.process")
+    assert EXECUTABLE_CONFIG_KEYS == (
+        "core.fsmonitor",
+        "filter.*.clean",
+        "filter.*.smudge",
+        "filter.*.process",
+    )
 
 
 # --- default runner: process-tree kill on timeout ------------------------------------------
+
 
 def test_run_git_kills_on_timeout(tmp_path: Path) -> None:
     start = time.monotonic()

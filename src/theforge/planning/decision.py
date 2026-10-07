@@ -30,9 +30,13 @@ __all__ = ["DECISION_EVIDENCE_ID", "compose_decision"]
 DECISION_EVIDENCE_ID: Final = "decision"
 
 
-def compose_decision(task: TaskSpec, plan: ExecutionPlan,
-                     executions: Sequence[NodeExecution],
-                     *, created_at: str | None = None) -> DecisionRecord:
+def compose_decision(
+    task: TaskSpec,
+    plan: ExecutionPlan,
+    executions: Sequence[NodeExecution],
+    *,
+    created_at: str | None = None,
+) -> DecisionRecord:
     """The ``DecisionRecord`` of a debate plan, composed deterministically.
 
     Options are the proposer nodes in plan order; ``evidence`` names the items the
@@ -49,14 +53,20 @@ def compose_decision(task: TaskSpec, plan: ExecutionPlan,
 
     evidence: list[str] = []
     if referee is not None and referee.handoff is not None:
-        evidence = sorted({f"{item.origin.node}:{item.id}"
-                           for item in referee.handoff.items
-                           if item.origin.node in {o.node for o in options}})
+        evidence = sorted(
+            {
+                f"{item.origin.node}:{item.id}"
+                for item in referee.handoff.items
+                if item.origin.node in {o.node for o in options}
+            }
+        )
 
     tradeoffs = sorted(
         f"{e.node.id}: {f.id}: {f.title}"
-        for e in executions if e.node.role == "proposer" and e.result is not None
-        for f in e.result.findings)
+        for e in executions
+        if e.node.role == "proposer" and e.result is not None
+        for f in e.result.findings
+    )
 
     limitations: list[str] = []
     unknowns: list[str] = []
@@ -70,8 +80,9 @@ def compose_decision(task: TaskSpec, plan: ExecutionPlan,
     else:
         declared = [e for e in referee.result.evidence if e.id == DECISION_EVIDENCE_ID]
         if not declared:
-            limitations.append("debate: referee did not declare a decision "
-                               f"(evidence id {DECISION_EVIDENCE_ID!r})")
+            limitations.append(
+                f"debate: referee did not declare a decision (evidence id {DECISION_EVIDENCE_ID!r})"
+            )
             unknowns.append("no option was chosen: the referee declared none")
         else:
             declared.sort(key=lambda e: (e.claim, e.subject))
@@ -79,24 +90,33 @@ def compose_decision(task: TaskSpec, plan: ExecutionPlan,
             if pick.claim in {o.node for o in options}:
                 chosen, rationale = pick.claim, pick.subject
             else:
-                limitations.append(f"debate: referee chose {pick.claim!r}, which is not "
-                                   "a proposer node")
-                unknowns.append(f"no valid option was chosen: referee named "
-                                f"{pick.claim!r}")
+                limitations.append(
+                    f"debate: referee chose {pick.claim!r}, which is not a proposer node"
+                )
+                unknowns.append(f"no valid option was chosen: referee named {pick.claim!r}")
     confidence: Literal["high", "low", "unknown"] = (
-        "high" if chosen != "unresolved" and referee is not None
-        and referee.outcome.status == "ok"
-        else "low" if chosen != "unresolved" else "unknown")
+        "high"
+        if chosen != "unresolved" and referee is not None and referee.outcome.status == "ok"
+        else "low"
+        if chosen != "unresolved"
+        else "unknown"
+    )
     return DecisionRecord(
         producer=PRODUCER,
         created_at=created_at if created_at is not None else utc_now(),
-        plan_run=plan.plan_run, referee=referee_node.id if referee_node else "",
-        question=task.intent, options=options, evidence=evidence, tradeoffs=tradeoffs,
+        plan_run=plan.plan_run,
+        referee=referee_node.id if referee_node else "",
+        question=task.intent,
+        options=options,
+        evidence=evidence,
+        tradeoffs=tradeoffs,
         chosen=chosen,
-        rejected=[o.node for o in options if o.node != chosen] if chosen != "unresolved"
-        else [],
-        rationale=rationale, confidence=confidence,
-        unknowns=unknowns, limitations=limitations)
+        rejected=[o.node for o in options if o.node != chosen] if chosen != "unresolved" else [],
+        rationale=rationale,
+        confidence=confidence,
+        unknowns=unknowns,
+        limitations=limitations,
+    )
 
 
 def _option(execution: NodeExecution | None, node: PlanNode) -> DecisionOption:
@@ -105,14 +125,23 @@ def _option(execution: NodeExecution | None, node: PlanNode) -> DecisionOption:
     claim, position, evidence, risks = "", "", [], []
     if execution is not None and execution.result is not None:
         result = execution.result
-        claim = (f"status={execution.outcome.status} capability={node.capability} "
-                 f"action={node.action}")
+        claim = (
+            f"status={execution.outcome.status} capability={node.capability} action={node.action}"
+        )
         if result.findings:
             position = result.findings[0].title
         evidence = [e.id for e in result.evidence]
-        risks = [f"{f.id}: {f.title}" for f in result.findings
-                 if f.severity in ("high", "critical")]
-    return DecisionOption(node=node.id, provider=node.provider,
-                          capability=node.capability, status=status, run_id=run_id,
-                          claim=claim, position=position, evidence=evidence,
-                          risks=risks)
+        risks = [
+            f"{f.id}: {f.title}" for f in result.findings if f.severity in ("high", "critical")
+        ]
+    return DecisionOption(
+        node=node.id,
+        provider=node.provider,
+        capability=node.capability,
+        status=status,
+        run_id=run_id,
+        claim=claim,
+        position=position,
+        evidence=evidence,
+        risks=risks,
+    )

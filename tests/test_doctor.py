@@ -24,9 +24,10 @@ def test_doctor_uninitialized(tmp_path: Path) -> None:
 
 
 def test_doctor_missing_provider_warns(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [{"id": "ghost-forge",
-                               "argv": ["definitely-not-a-real-forge-binary"],
-                               "trust": "local"}])
+    make_workspace(
+        tmp_path,
+        [{"id": "ghost-forge", "argv": ["definitely-not-a-real-forge-binary"], "trust": "local"}],
+    )
     report = run_doctor(tmp_path, Registry(tmp_path / ".forge"), env={})
     checks = {c["name"]: c for c in report["checks"]}
     assert checks["workspace"]["status"] == "ok"

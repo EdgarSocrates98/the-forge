@@ -58,24 +58,43 @@ def test_scan_symlink_escape(tmp_path: Path) -> None:
 
 
 def test_normalize_tokens() -> None:
-    assert normalize_tokens("Análise do Job está LENTO!") == ["analise", "do", "job", "esta",
-                                                              "lento"]
+    assert normalize_tokens("Análise do Job está LENTO!") == [
+        "analise",
+        "do",
+        "job",
+        "esta",
+        "lento",
+    ]
 
 
 def test_keyword_matches_multiword_and_order() -> None:
-    assert keyword_matches({"glue", "job", "lento"}, ["glue job", "spark", "lento"]) == \
-        ["glue job", "lento"]
+    assert keyword_matches({"glue", "job", "lento"}, ["glue job", "spark", "lento"]) == [
+        "glue job",
+        "lento",
+    ]
 
 
 def test_workspace_dependencies(tmp_path: Path) -> None:
-    write_file(tmp_path, "pyproject.toml",
-               '[project]\ndependencies = ["PySpark>=3.5", "boto3"]\n'
-               '[tool.poetry.dependencies]\npython = "^3.11"\nFastAPI = "*"\n')
+    write_file(
+        tmp_path,
+        "pyproject.toml",
+        '[project]\ndependencies = ["PySpark>=3.5", "boto3"]\n'
+        '[tool.poetry.dependencies]\npython = "^3.11"\nFastAPI = "*"\n',
+    )
     write_file(tmp_path, "requirements-dev.txt", "# c\n-r base.txt\naws_glue_libs==4\n\n")
-    write_file(tmp_path, "package.json",
-               '{"dependencies": {"express": "4"}, "devDependencies": {"Jest": "29"}}')
+    write_file(
+        tmp_path,
+        "package.json",
+        '{"dependencies": {"express": "4"}, "devDependencies": {"Jest": "29"}}',
+    )
     assert workspace_dependencies(tmp_path) == {
-        "pyspark", "boto3", "fastapi", "aws-glue-libs", "express", "jest"}
+        "pyspark",
+        "boto3",
+        "fastapi",
+        "aws-glue-libs",
+        "express",
+        "jest",
+    }
 
 
 def test_workspace_dependencies_tolerates_garbage(tmp_path: Path) -> None:
@@ -86,8 +105,10 @@ def test_workspace_dependencies_tolerates_garbage(tmp_path: Path) -> None:
 
 def test_glob_matches() -> None:
     files = ["api/openapi.yaml", "jobs/orders_glue_job.py"]
-    assert glob_matches(files, ["openapi.yaml", "*glue*.py", "*.scala"]) == \
-        ["openapi.yaml", "*glue*.py"]
+    assert glob_matches(files, ["openapi.yaml", "*glue*.py", "*.scala"]) == [
+        "openapi.yaml",
+        "*glue*.py",
+    ]
 
 
 def test_scan_junction_escape(tmp_path: Path) -> None:
@@ -99,8 +120,9 @@ def test_scan_junction_escape(tmp_path: Path) -> None:
     outside.mkdir()
     (outside / "leak.txt").write_text("s")
     link = root / "jct"
-    result = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(outside)],
-                            capture_output=True, check=False)
+    result = subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(link), str(outside)], capture_output=True, check=False
+    )
     if result.returncode != 0 or not link.exists():
         pytest.skip("cannot create junction on this host")
     write_file(root, "ok.py")
@@ -129,12 +151,16 @@ def test_scan_max_files_is_global(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     scan = scan_workspace(tmp_path, ["a", "b"])
     assert len(scan.files) == 2
     assert [e for e in scan.excluded if e.reason == "max_files_reached"] == [
-        ExcludedFile(path="*", reason="max_files_reached")]
+        ExcludedFile(path="*", reason="max_files_reached")
+    ]
 
 
 def test_requirements_skip_urls(tmp_path: Path) -> None:
-    write_file(tmp_path, "requirements.txt",
-               "https://example.com/pkg.whl\ngit+https://github.com/x/y.git\nrequests==2\n")
+    write_file(
+        tmp_path,
+        "requirements.txt",
+        "https://example.com/pkg.whl\ngit+https://github.com/x/y.git\nrequests==2\n",
+    )
     assert workspace_dependencies(tmp_path) == {"requests"}
 
 

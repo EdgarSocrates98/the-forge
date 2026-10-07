@@ -97,8 +97,7 @@ def _read_bytes(path: Path) -> bytes:
 class FingerprintStore:
     """Per-run fingerprint cache for one workspace root. Never raises on cache problems."""
 
-    def __init__(self, root: Path, *, cache_dir: Path | None = None,
-                 enabled: bool = True) -> None:
+    def __init__(self, root: Path, *, cache_dir: Path | None = None, enabled: bool = True) -> None:
         self.root = root.resolve()
         self.root_key = self.root.as_posix()
         self.enabled = enabled
@@ -114,8 +113,7 @@ class FingerprintStore:
         if not enabled:
             return
         if _inside(self.path, self.root):
-            self.warnings.append(
-                f"fingerprint cache disabled: {self.path} is inside the workspace")
+            self.warnings.append(f"fingerprint cache disabled: {self.path} is inside the workspace")
             self.path = None
             return
         self._load()
@@ -143,19 +141,28 @@ class FingerprintStore:
         sha = hashlib.sha256(data).hexdigest()
         self.stats.files_hashed += 1
         self.stats.bytes_hashed += len(data)
-        if (self.enabled and _stat_key(before) == _stat_key(after)
-                and after.st_size == len(data)):
+        if self.enabled and _stat_key(before) == _stat_key(after) and after.st_size == len(data):
             self._entries[rel] = FingerprintEntry(
-                path=resolved.as_posix(), sha256=sha, size=after.st_size,
-                mtime_ns=after.st_mtime_ns, ctime_ns=after.st_ctime_ns, ino=after.st_ino,
-                dev=after.st_dev, recorded_ns=recorded_ns)
+                path=resolved.as_posix(),
+                sha256=sha,
+                size=after.st_size,
+                mtime_ns=after.st_mtime_ns,
+                ctime_ns=after.st_ctime_ns,
+                ino=after.st_ino,
+                dev=after.st_dev,
+                recorded_ns=recorded_ns,
+            )
         return Fingerprint(sha256=sha, size=len(data), reused=False)
 
     @staticmethod
     def _trusted(entry: FingerprintEntry, resolved: Path, st: os.stat_result) -> bool:
-        same = (entry.path == resolved.as_posix()
-                and (entry.size, entry.mtime_ns, entry.ctime_ns, entry.ino, entry.dev)
-                == _stat_key(st))
+        same = entry.path == resolved.as_posix() and (
+            entry.size,
+            entry.mtime_ns,
+            entry.ctime_ns,
+            entry.ino,
+            entry.dev,
+        ) == _stat_key(st)
         return same and entry.recorded_ns - entry.mtime_ns > RACY_WINDOW_NS
 
     # --- line ranges (never cached; counted as hashed) -----------------------------------
@@ -197,8 +204,11 @@ class FingerprintStore:
 
     # --- delta handoff (delta/v1) ----------------------------------------------------------
 
-    def changed_surface(self, current: Mapping[str, str], present: Collection[str],
-                        ) -> tuple[list[str], list[str]] | None:
+    def changed_surface(
+        self,
+        current: Mapping[str, str],
+        present: Collection[str],
+    ) -> tuple[list[str], list[str]] | None:
         """``(changed-or-new, removed)`` workspace-relative paths vs the loaded state.
 
         ``current`` maps the files this run actually hashed (the context pack) to
@@ -224,18 +234,21 @@ class FingerprintStore:
             item = {"rel": rel, **to_dict(entry)}
             if redact(item) != item:
                 self.warnings.append(
-                    f"fingerprint for {rel!r} not cached: it contains secret-shaped values")
+                    f"fingerprint for {rel!r} not cached: it contains secret-shaped values"
+                )
                 continue
             entries[rel] = entry
-        document = to_dict(FingerprintCache(schema=CACHE_SCHEMA, root=self.root_key,
-                                            entries=entries))
+        document = to_dict(
+            FingerprintCache(schema=CACHE_SCHEMA, root=self.root_key, entries=entries)
+        )
         try:
             if redact(document) != document:
                 # A redacted copy would never match on the strict re-read: refuse it.
                 path.unlink(missing_ok=True)
                 self.warnings.append(
                     f"fingerprint cache not written ({path}): redaction would alter it "
-                    "(secret-shaped workspace path)")
+                    "(secret-shaped workspace path)"
+                )
                 return
             path.parent.mkdir(parents=True, exist_ok=True)
             fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}-", suffix=".tmp")
@@ -314,7 +327,7 @@ def prefix_lines(resolved: Path, max_bytes: int) -> tuple[LineRange, str, int] |
         prefix = data  # whole file fits: an unterminated last line is complete
     else:
         cut = data.rfind(b"\n", 0, max_bytes)
-        prefix = data[:cut + 1] if cut >= 0 else b""
+        prefix = data[: cut + 1] if cut >= 0 else b""
     if not prefix:
         return None
     count = prefix.count(b"\n") + (0 if prefix.endswith(b"\n") else 1)

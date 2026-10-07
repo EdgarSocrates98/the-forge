@@ -18,12 +18,25 @@ from theforge.forger.telemetry import (
 from theforge.profiles import profile_for
 
 ALL_METRICS = (
-    "scan_ms", "routing_ms", "context_ms", "provider_ms",
-    "files_scanned", "files_selected", "files_hashed", "bytes_hashed",
-    "cache_hits", "cache_misses", "context_bytes",
-    "providers_executed", "fallbacks_used", "negotiation_rounds",
-    "semantic_planner_calls", "semantic_resolver_calls",
-    "files_cited", "evidence_returned", "findings_returned",
+    "scan_ms",
+    "routing_ms",
+    "context_ms",
+    "provider_ms",
+    "files_scanned",
+    "files_selected",
+    "files_hashed",
+    "bytes_hashed",
+    "cache_hits",
+    "cache_misses",
+    "context_bytes",
+    "providers_executed",
+    "fallbacks_used",
+    "negotiation_rounds",
+    "semantic_planner_calls",
+    "semantic_resolver_calls",
+    "files_cited",
+    "evidence_returned",
+    "findings_returned",
 )
 
 
@@ -38,8 +51,12 @@ class FakeClock:
 
 
 def _recorder(profile: str = "balanced", *ticks: float) -> TelemetryRecorder:
-    return TelemetryRecorder("run-1", profile_for(profile),  # type: ignore[arg-type]
-                             clock=FakeClock(*ticks), now=lambda: "2026-10-04T00:00:00.000000Z")
+    return TelemetryRecorder(
+        "run-1",
+        profile_for(profile),  # type: ignore[arg-type]
+        clock=FakeClock(*ticks),
+        now=lambda: "2026-10-04T00:00:00.000000Z",
+    )
 
 
 def _roundtrip(telemetry: RunTelemetry) -> RunTelemetry:
@@ -65,10 +82,20 @@ def test_run_interrupted_before_context_has_later_phases_unknown() -> None:
     assert tel.scan_ms == Metric(value=10.0, kind="measured")
     assert tel.routing_ms == Metric(value=2.5, kind="measured")
     assert tel.files_scanned == Metric(value=42.0, kind="measured")
-    for name in ("context_ms", "provider_ms", "files_selected", "files_hashed",
-                 "bytes_hashed", "cache_hits", "cache_misses", "context_bytes",
-                 "providers_executed", "fallbacks_used", "negotiation_rounds",
-                 "semantic_planner_calls"):
+    for name in (
+        "context_ms",
+        "provider_ms",
+        "files_selected",
+        "files_hashed",
+        "bytes_hashed",
+        "cache_hits",
+        "cache_misses",
+        "context_bytes",
+        "providers_executed",
+        "fallbacks_used",
+        "negotiation_rounds",
+        "semantic_planner_calls",
+    ):
         assert getattr(tel, name) == Metric(kind="unknown"), name
     assert tel.unknowns == sorted(set(ALL_METRICS) - {"scan_ms", "routing_ms", "files_scanned"})
     assert tel.provider_revalidation is None
@@ -94,18 +121,27 @@ def test_complete_run_has_every_metric_measured() -> None:
         pass
     with rec.phase("provider"):
         pass
-    for name, value in (("files_scanned", 10), ("files_selected", 3), ("files_hashed", 2),
-                        ("bytes_hashed", 900), ("cache_hits", 1), ("cache_misses", 2),
-                        ("context_bytes", 1200), ("providers_executed", 1),
-                        ("fallbacks_used", 0), ("negotiation_rounds", 1),
-                        ("semantic_planner_calls", 0), ("semantic_resolver_calls", 0),
-                        ("files_cited", 2),
-                        ("evidence_returned", 4), ("findings_returned", 2)):
+    for name, value in (
+        ("files_scanned", 10),
+        ("files_selected", 3),
+        ("files_hashed", 2),
+        ("bytes_hashed", 900),
+        ("cache_hits", 1),
+        ("cache_misses", 2),
+        ("context_bytes", 1200),
+        ("providers_executed", 1),
+        ("fallbacks_used", 0),
+        ("negotiation_rounds", 1),
+        ("semantic_planner_calls", 0),
+        ("semantic_resolver_calls", 0),
+        ("files_cited", 2),
+        ("evidence_returned", 4),
+        ("findings_returned", 2),
+    ):
         rec.count(name, value)
     rec.set_effective_tiers(["requested", "metadata", "reference"])
     rec.set_revalidation("hash")
-    rec.set_drift(DriftReport(drifted=("a.py", "b.py"), checked=3, level="strong",
-                              limitations=()))
+    rec.set_drift(DriftReport(drifted=("a.py", "b.py"), checked=3, level="strong", limitations=()))
 
     tel = rec.build()
 
@@ -183,8 +219,11 @@ def test_undeclared_revalidation_records_limitation_once() -> None:
 def test_drift_limitations_and_notes_go_into_telemetry() -> None:
     rec = _recorder("economy")
     rec.note("git: not a repository")
-    rec.set_drift(DriftReport(drifted=(), checked=0, level="minimal",
-                              limitations=(NOT_REVERIFIED_LIMITATION,)))
+    rec.set_drift(
+        DriftReport(
+            drifted=(), checked=0, level="minimal", limitations=(NOT_REVERIFIED_LIMITATION,)
+        )
+    )
     tel = rec.build()
     assert tel.verification_performed == "minimal"
     assert tel.context_drift == []

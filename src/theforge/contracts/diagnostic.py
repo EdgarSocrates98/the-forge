@@ -22,8 +22,9 @@ class DiagnosticFrame:
 
     def __post_init__(self) -> None:
         if self.module != _PACKAGE and not self.module.startswith(f"{_PACKAGE}."):
-            raise ContractError(f"diagnostic frame module {self.module!r} is outside "
-                                f"the {_PACKAGE} package")
+            raise ContractError(
+                f"diagnostic frame module {self.module!r} is outside the {_PACKAGE} package"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -49,10 +50,13 @@ class Diagnostic:
     def __post_init__(self) -> None:
         if self.schema != DIAGNOSTIC_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {DIAGNOSTIC_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {DIAGNOSTIC_SCHEMA!r}"
+            )
         expected = family_of(self.code)
         if self.family != expected:
-            raise ContractError(f"diagnostic family {self.family!r} does not match code "
-                                f"{self.code!r} (expected {expected!r})")
+            raise ContractError(
+                f"diagnostic family {self.family!r} does not match code "
+                f"{self.code!r} (expected {expected!r})"
+            )
         if self.hint is not None and self.hint != hint_of(self.code):
             raise ContractError(f"diagnostic hint does not match code {self.code!r}")

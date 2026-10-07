@@ -25,15 +25,21 @@ from theforge.contracts.types import SHA256_RE, check_sha256
 
 P = {"id": "p", "version": "1"}
 CAP = {
-    "id": "demo.echo", "actions": ["echo"], "default_action": "echo",
-    "state": "supported", "operation_class": "read_only",
+    "id": "demo.echo",
+    "actions": ["echo"],
+    "default_action": "echo",
+    "state": "supported",
+    "operation_class": "read_only",
 }
 
 
 def manifest_dict(**overrides: object) -> dict[str, object]:
     data: dict[str, object] = {
-        "id": "demo-forge", "version": "1.0.0", "protocols": ["forge/v1"],
-        "ops": ["describe", "health", "execute"], "capabilities": [dict(CAP)],
+        "id": "demo-forge",
+        "version": "1.0.0",
+        "protocols": ["forge/v1"],
+        "ops": ["describe", "health", "execute"],
+        "capabilities": [dict(CAP)],
     }
     data.update(overrides)
     return data
@@ -92,8 +98,12 @@ def test_response_ok_minimal() -> None:
 def test_routed_decision_requires_selection() -> None:
     with pytest.raises(ContractError, match="requires a selection"):
         RoutingDecision(
-            producer=Producer(id="p", version="1"), created_at="t", status="routed",
-            task_id="t", reason="r", confidence=Confidence(level="high"),
+            producer=Producer(id="p", version="1"),
+            created_at="t",
+            status="routed",
+            task_id="t",
+            reason="r",
+            confidence=Confidence(level="high"),
         )
 
 
@@ -104,7 +114,9 @@ def test_execution_result_metrics_default_unknown() -> None:
 
 def test_metric_int_coerced_to_float() -> None:
     data = {
-        "producer": P, "created_at": "t", "status": "ok",
+        "producer": P,
+        "created_at": "t",
+        "status": "ok",
         "metrics": {"duration_ms": {"value": 12, "kind": "measured"}},
     }
     assert from_dict(ExecutionResult, data).metrics.duration_ms.value == 12.0
@@ -121,17 +133,32 @@ _RC = {"id": "r", "version": "1", "trust": "local"}
 MINIMAL: dict[type, dict[str, object]] = {
     TaskSpec: {"producer": P, "created_at": "t", "id": "i", "intent": "x", "workspace_root": "."},
     RoutingDecision: {
-        "producer": P, "created_at": "t", "status": "no_route", "task_id": "t",
-        "reason": "r", "confidence": {"level": "low"},
+        "producer": P,
+        "created_at": "t",
+        "status": "no_route",
+        "task_id": "t",
+        "reason": "r",
+        "confidence": {"level": "low"},
     },
     ContextPack: {
-        "producer": P, "created_at": "t", "status": "complete", "task_id": "t",
-        "provider_id": "p", "root": ".", "budget_bytes": 1,
+        "producer": P,
+        "created_at": "t",
+        "status": "complete",
+        "task_id": "t",
+        "provider_id": "p",
+        "root": ".",
+        "budget_bytes": 1,
     },
     ExecutionResult: {"producer": P, "created_at": "t", "status": "ok"},
     ExecutionReceipt: {
-        "producer": P, "created_at": "t", "status": "ok", "run_id": "r", "forge_version": "1",
-        "inputs": {"task_sha256": "a"}, "started_at": "t", "finished_at": "t",
+        "producer": P,
+        "created_at": "t",
+        "status": "ok",
+        "run_id": "r",
+        "forge_version": "1",
+        "inputs": {"task_sha256": "a"},
+        "started_at": "t",
+        "finished_at": "t",
     },
 }
 
@@ -168,8 +195,14 @@ def _result_with(**extra: object) -> dict[str, object]:
 
 
 def _evidence(**extra: object) -> dict[str, object]:
-    return {"id": "e", "epistemic": "observed", "subject": "s", "claim": "c", "producer": P,
-            **extra}
+    return {
+        "id": "e",
+        "epistemic": "observed",
+        "subject": "s",
+        "claim": "c",
+        "producer": P,
+        **extra,
+    }
 
 
 @pytest.mark.parametrize("bad", BAD_SHAS)
@@ -196,13 +229,19 @@ def test_evidence_hash_format_enforced(bad: str) -> None:
 
 
 def test_valid_hashes_and_absent_evidence_hash_accepted() -> None:
-    r = from_dict(ExecutionResult, _result_with(
-        artifacts=[{"path": "a", "sha256": GOOD_SHA}],
-        evidence=[_evidence(), _evidence(id="e2", hash=GOOD_SHA)]))
+    r = from_dict(
+        ExecutionResult,
+        _result_with(
+            artifacts=[{"path": "a", "sha256": GOOD_SHA}],
+            evidence=[_evidence(), _evidence(id="e2", hash=GOOD_SHA)],
+        ),
+    )
     assert r.artifacts[0].sha256 == GOOD_SHA
     assert r.evidence[0].hash is None and r.evidence[1].hash == GOOD_SHA
-    pack = from_dict(ContextPack, {**MINIMAL[ContextPack],
-                                   "files": [{"path": "f", "sha256": GOOD_SHA, "bytes": 1}]})
+    pack = from_dict(
+        ContextPack,
+        {**MINIMAL[ContextPack], "files": [{"path": "f", "sha256": GOOD_SHA, "bytes": 1}]},
+    )
     assert pack.files[0].sha256 == GOOD_SHA
 
 
@@ -215,9 +254,13 @@ def test_check_sha256_helper() -> None:
 
 # --- provider receipt (nested receipt pointer) -------------------------------------------
 
+
 def test_provider_receipt_round_trip_on_result() -> None:
-    result = from_dict(ExecutionResult, _result_with(
-        provider_receipt={"ref": "case:abc123", "sha256": GOOD_SHA}), strict=True)
+    result = from_dict(
+        ExecutionResult,
+        _result_with(provider_receipt={"ref": "case:abc123", "sha256": GOOD_SHA}),
+        strict=True,
+    )
     assert result.provider_receipt is not None
     assert result.provider_receipt.ref == "case:abc123"
     assert result.provider_receipt.sha256 == GOOD_SHA
@@ -227,25 +270,29 @@ def test_provider_receipt_round_trip_on_result() -> None:
 @pytest.mark.parametrize("bad", BAD_SHAS)
 def test_provider_receipt_sha256_format_enforced(bad: str) -> None:
     with pytest.raises(ContractError, match=r"invalid sha256"):
-        from_dict(ExecutionResult,
-                  _result_with(provider_receipt={"ref": "case:x", "sha256": bad}))
+        from_dict(ExecutionResult, _result_with(provider_receipt={"ref": "case:x", "sha256": bad}))
 
 
 def test_provider_receipt_ref_must_not_be_empty() -> None:
     with pytest.raises(ContractError, match="provider_receipt.ref"):
-        from_dict(ExecutionResult,
-                  _result_with(provider_receipt={"ref": "", "sha256": GOOD_SHA}))
+        from_dict(ExecutionResult, _result_with(provider_receipt={"ref": "", "sha256": GOOD_SHA}))
 
 
 def test_provider_receipt_round_trip_on_receipt() -> None:
-    receipt = from_dict(ExecutionReceipt, {
-        "producer": P, "created_at": "2026-01-01T00:00:00.000000Z", "status": "ok",
-        "run_id": "r1", "forge_version": "0.2.0",
-        "inputs": {"task_sha256": GOOD_SHA},
-        "started_at": "2026-01-01T00:00:00.000000Z",
-        "finished_at": "2026-01-01T00:00:01.000000Z",
-        "provider_receipt": {"ref": "case:abc123", "sha256": GOOD_SHA},
-    })
+    receipt = from_dict(
+        ExecutionReceipt,
+        {
+            "producer": P,
+            "created_at": "2026-01-01T00:00:00.000000Z",
+            "status": "ok",
+            "run_id": "r1",
+            "forge_version": "0.2.0",
+            "inputs": {"task_sha256": GOOD_SHA},
+            "started_at": "2026-01-01T00:00:00.000000Z",
+            "finished_at": "2026-01-01T00:00:01.000000Z",
+            "provider_receipt": {"ref": "case:abc123", "sha256": GOOD_SHA},
+        },
+    )
     assert receipt.provider_receipt is not None
     assert receipt.provider_receipt.ref == "case:abc123"
 
@@ -261,15 +308,21 @@ def test_strict_mode_rejects_unknown_nested_field(cls: type) -> None:
 
 # --- Cycle 2 additive fields (task 1.4) -------------------------------------------------
 
-CYCLE1_CANDIDATE = {"provider": "p", "capability": "demo.echo",
-                    "matched": {"keywords": ["x"]}, "rank_key": [1, 0, 0]}
+CYCLE1_CANDIDATE = {
+    "provider": "p",
+    "capability": "demo.echo",
+    "matched": {"keywords": ["x"]},
+    "rank_key": [1, 0, 0],
+}
 
 
 def test_cycle1_response_without_op_still_parses() -> None:
     r = from_dict(Response, {"request_id": "r", "producer": P, "status": "ok"}, strict=True)
     assert r.op is None
-    assert from_dict(Response, {"request_id": "r", "producer": P, "status": "ok",
-                                "op": "execute"}).op == "execute"
+    assert (
+        from_dict(Response, {"request_id": "r", "producer": P, "status": "ok", "op": "execute"}).op
+        == "execute"
+    )
 
 
 def test_cycle1_candidate_defaults_to_supported_state() -> None:
@@ -281,8 +334,11 @@ def test_cycle1_candidate_defaults_to_supported_state() -> None:
 
 
 def test_cycle1_routing_decision_with_candidates_parses_strictly() -> None:
-    data = {**MINIMAL[RoutingDecision], "status": "ambiguous",
-            "candidates": [CYCLE1_CANDIDATE, {**CYCLE1_CANDIDATE, "provider": "q"}]}
+    data = {
+        **MINIMAL[RoutingDecision],
+        "status": "ambiguous",
+        "candidates": [CYCLE1_CANDIDATE, {**CYCLE1_CANDIDATE, "provider": "q"}],
+    }
     decision = from_dict(RoutingDecision, data, strict=True)
     assert [c.state for c in decision.candidates] == ["supported", "supported"]
 
@@ -292,15 +348,25 @@ def test_cycle1_receipt_parses_with_new_optional_fields_absent() -> None:
     receipt = from_dict(ExecutionReceipt, data, strict=True)
     assert receipt.inputs.risk_sha256 is None
     assert receipt.provider is not None
-    assert (receipt.provider.executable, receipt.provider.fingerprint,
-            receipt.provider.observed_version) == (None, None, None)
+    assert (
+        receipt.provider.executable,
+        receipt.provider.fingerprint,
+        receipt.provider.observed_version,
+    ) == (None, None, None)
 
 
 def test_receipt_carries_observed_identity_and_risk_hash() -> None:
-    provider = {**_RC, "executable": "/usr/bin/demo", "fingerprint": "f",
-                "observed_version": "1.2.3"}
-    data = {**MINIMAL[ExecutionReceipt], "provider": provider,
-            "inputs": {"task_sha256": GOOD_SHA, "risk_sha256": GOOD_SHA}}
+    provider = {
+        **_RC,
+        "executable": "/usr/bin/demo",
+        "fingerprint": "f",
+        "observed_version": "1.2.3",
+    }
+    data = {
+        **MINIMAL[ExecutionReceipt],
+        "provider": provider,
+        "inputs": {"task_sha256": GOOD_SHA, "risk_sha256": GOOD_SHA},
+    }
     receipt = from_dict(ExecutionReceipt, data, strict=True)
     assert receipt.inputs.risk_sha256 == GOOD_SHA
     assert receipt.provider is not None
@@ -308,18 +374,35 @@ def test_receipt_carries_observed_identity_and_risk_hash() -> None:
     assert receipt.provider.observed_version == "1.2.3"
 
 
-DIMENSIONS = {"read_only": "yes", "local_mutation": "no", "external_read": "no",
-              "external_mutation": "no", "destructive": "no", "credentials": "unknown",
-              "cross_account": "unknown"}
+DIMENSIONS = {
+    "read_only": "yes",
+    "local_mutation": "no",
+    "external_read": "no",
+    "external_mutation": "no",
+    "destructive": "no",
+    "credentials": "unknown",
+    "cross_account": "unknown",
+}
 
 
 def risk_dict(**overrides: object) -> dict[str, object]:
     data: dict[str, object] = {
-        "producer": P, "created_at": "t", "run_id": "r", "provider_id": "p",
-        "capability": "demo.echo", "action": "echo", "operation_class": "read_only",
-        "source": "provider_declaration", "dimensions": dict(DIMENSIONS),
-        "policy": {"decision": "allow", "rule": "default.read_only.builtin",
-                   "reason": "read_only", "approved": False, "unlock": None},
+        "producer": P,
+        "created_at": "t",
+        "run_id": "r",
+        "provider_id": "p",
+        "capability": "demo.echo",
+        "action": "echo",
+        "operation_class": "read_only",
+        "source": "provider_declaration",
+        "dimensions": dict(DIMENSIONS),
+        "policy": {
+            "decision": "allow",
+            "rule": "default.read_only.builtin",
+            "reason": "read_only",
+            "approved": False,
+            "unlock": None,
+        },
         "limitations": [OPERATION_CLASS_LIMITATION],
     }
     data.update(overrides)
@@ -333,7 +416,8 @@ def test_risk_assessment_parses_with_declarative_source() -> None:
     assert risk.dimensions.credentials == "unknown"
     assert risk.policy.decision == "allow" and risk.unknowns == []
     assert OPERATION_CLASS_LIMITATION == (
-        "operation_class is a provider declaration, not sandbox enforcement")
+        "operation_class is a provider declaration, not sandbox enforcement"
+    )
 
 
 @pytest.mark.parametrize("limitations", [[], ["something else"]])
@@ -343,18 +427,22 @@ def test_risk_assessment_requires_fixed_limitation(limitations: list[str]) -> No
 
 
 def test_risk_assessment_keeps_extra_limitations() -> None:
-    risk = from_dict(RiskAssessment, risk_dict(
-        limitations=["cwd is not a sandbox", OPERATION_CLASS_LIMITATION]))
+    risk = from_dict(
+        RiskAssessment, risk_dict(limitations=["cwd is not a sandbox", OPERATION_CLASS_LIMITATION])
+    )
     assert len(risk.limitations) == 2
 
 
-@pytest.mark.parametrize(("field_name", "value"), [
-    ("schema", "theforge/RiskAssessment/v2"),
-    ("source", "sandbox"),
-    ("operation_class", "nuke"),
-    ("dimensions", {**DIMENSIONS, "destructive": "maybe"}),
-    ("policy", {"decision": "perhaps", "rule": "r", "reason": "r", "approved": False}),
-])
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("schema", "theforge/RiskAssessment/v2"),
+        ("source", "sandbox"),
+        ("operation_class", "nuke"),
+        ("dimensions", {**DIMENSIONS, "destructive": "maybe"}),
+        ("policy", {"decision": "perhaps", "rule": "r", "reason": "r", "approved": False}),
+    ],
+)
 def test_risk_assessment_rejects_invalid_values(field_name: str, value: object) -> None:
     with pytest.raises(ContractError):
         from_dict(RiskAssessment, risk_dict(**{field_name: value}))
@@ -378,11 +466,20 @@ def test_risk_assessment_direct_construction_enforces_invariants() -> None:
 
 H = "a" * 64
 V1_CONTEXT_PACK: dict[str, object] = {
-    "schema": "theforge/ContextPack/v1", "producer": P, "created_at": "t",
-    "status": "complete", "task_id": "t", "provider_id": "p", "root": ".",
+    "schema": "theforge/ContextPack/v1",
+    "producer": P,
+    "created_at": "t",
+    "status": "complete",
+    "task_id": "t",
+    "provider_id": "p",
+    "root": ".",
     "files": [{"path": "src/app.py", "sha256": H, "bytes": 3, "reason": "glob:*.py"}],
     "excluded": [{"path": ".env", "reason": "budget"}],
-    "budget_bytes": 10, "used_bytes": 3, "truncated": False, "limitations": [], "unknowns": [],
+    "budget_bytes": 10,
+    "used_bytes": 3,
+    "truncated": False,
+    "limitations": [],
+    "unknowns": [],
 }
 
 
@@ -403,8 +500,16 @@ def test_context_literal_types_match_design() -> None:
     assert get_args(types.VerificationLevel) == ("minimal", "conditional", "strong")
     assert get_args(types.RevalidationStrategy) == ("hash", "core", "none")
     assert get_args(types.ExclusionReason) == (
-        "budget", "max_files", "tier_not_allowed", "secret", "outside_root",
-        "unreadable", "missing", "symlinked_dir", "max_files_reached")
+        "budget",
+        "max_files",
+        "tier_not_allowed",
+        "secret",
+        "outside_root",
+        "unreadable",
+        "missing",
+        "symlinked_dir",
+        "max_files_reached",
+    )
     assert types.DEPENDENCY_MANIFESTS == ("pyproject.toml", "requirements*.txt", "package.json")
 
 
@@ -432,17 +537,37 @@ def test_v2_context_pack_round_trips_strictly() -> None:
     data = {
         **V1_CONTEXT_PACK,
         "files": [
-            {"path": "src/app.py", "sha256": H, "bytes": 3, "tier": "reference",
-             "signals": ["capability_glob"]},
-            {"path": "src/big.py", "sha256": H, "bytes": 2, "tier": "excerpt",
-             "lines": {"start": 1, "end": 2}, "signals": ["intent_range"]},
+            {
+                "path": "src/app.py",
+                "sha256": H,
+                "bytes": 3,
+                "tier": "reference",
+                "signals": ["capability_glob"],
+            },
+            {
+                "path": "src/big.py",
+                "sha256": H,
+                "bytes": 2,
+                "tier": "excerpt",
+                "lines": {"start": 1, "end": 2},
+                "signals": ["intent_range"],
+            },
             {"path": "src/req.py", "sha256": H, "bytes": 0, "tier": "requested"},
         ],
         "excluded": [{"path": "x.py", "reason": "max_files", "signals": ["git_changed"]}],
-        "workspace": {"files_scanned": 4, "unmatched_files": 1,
-                      "dependency_files": ["pyproject.toml"],
-                      "git": {"available": True, "branch": "main", "head": "abc",
-                              "dirty": False, "changed_files": 0, "state": ["merge"]}},
+        "workspace": {
+            "files_scanned": 4,
+            "unmatched_files": 1,
+            "dependency_files": ["pyproject.toml"],
+            "git": {
+                "available": True,
+                "branch": "main",
+                "head": "abc",
+                "dirty": False,
+                "changed_files": 0,
+                "state": ["merge"],
+            },
+        },
         "tier_bytes": {"metadata": 0, "reference": 3, "excerpt": 2},
         "tokens": {"value": None, "kind": "unknown"},
         "round": 1,
@@ -460,8 +585,13 @@ def test_invalid_line_range_rejected(start: int, end: int) -> None:
 
     with pytest.raises(ContractError, match="line range"):
         LineRange(start=start, end=end)
-    item = {"path": "a.py", "sha256": H, "bytes": 1, "tier": "excerpt",
-            "lines": {"start": start, "end": end}}
+    item = {
+        "path": "a.py",
+        "sha256": H,
+        "bytes": 1,
+        "tier": "excerpt",
+        "lines": {"start": start, "end": end},
+    }
     with pytest.raises(ContractError, match="line range"):
         from_dict(ContextFile, item)
 
@@ -472,8 +602,9 @@ def test_excerpt_requires_lines_and_reference_forbids_them() -> None:
     with pytest.raises(ContractError, match="excerpt.*requires lines"):
         ContextFile(path="a.py", sha256=H, bytes=1, tier="excerpt")
     with pytest.raises(ContractError, match="reference.*must not have lines"):
-        ContextFile(path="a.py", sha256=H, bytes=1, tier="reference",
-                    lines=LineRange(start=1, end=1))
+        ContextFile(
+            path="a.py", sha256=H, bytes=1, tier="reference", lines=LineRange(start=1, end=1)
+        )
     ContextFile(path="a.py", sha256=H, bytes=1, tier="requested")
     ContextFile(path="a.py", sha256=H, bytes=1, tier="requested", lines=LineRange(start=2, end=2))
     with pytest.raises(ContractError, match="expected one of"):
@@ -487,18 +618,25 @@ def test_v1_manifest_rereads_strictly_with_context_defaults() -> None:
     assert m.context_revalidation is None
     assert m.capabilities[0].context == CapabilityContext()
     assert (m.capabilities[0].context.excerpts, m.capabilities[0].context.requests) == (
-        False, False)
+        False,
+        False,
+    )
 
 
 def test_manifest_declares_revalidation_and_capability_context() -> None:
     cap = {**CAP, "context": {"excerpts": True, "requests": True}}
-    m = from_dict(ForgeManifest, manifest_dict(capabilities=[cap], context_revalidation="hash"),
-                  strict=True)
+    m = from_dict(
+        ForgeManifest, manifest_dict(capabilities=[cap], context_revalidation="hash"), strict=True
+    )
     assert m.context_revalidation == "hash"
     assert m.capabilities[0].context.excerpts and m.capabilities[0].context.requests
     for strategy in ("core", "none"):
-        assert from_dict(ForgeManifest, manifest_dict(context_revalidation=strategy),
-                         strict=True).context_revalidation == strategy
+        assert (
+            from_dict(
+                ForgeManifest, manifest_dict(context_revalidation=strategy), strict=True
+            ).context_revalidation
+            == strategy
+        )
     with pytest.raises(ContractError, match="expected one of"):
         from_dict(ForgeManifest, manifest_dict(context_revalidation="sometimes"))
 
@@ -506,43 +644,75 @@ def test_manifest_declares_revalidation_and_capability_context() -> None:
 # --- context-intelligence-v2: context request, receipt fields, RunTelemetry (task 1.3) ------
 
 PROFILE_SNAPSHOT: dict[str, object] = {
-    "name": "balanced", "budget_bytes": 262144, "max_files": 64,
+    "name": "balanced",
+    "budget_bytes": 262144,
+    "max_files": 64,
     "tiers": ["excerpt", "metadata", "reference", "requested"],
-    "effective_tiers": ["metadata", "reference"], "negotiation_rounds": 1,
-    "max_providers": 1, "fallback": True, "verification": "conditional",
+    "effective_tiers": ["metadata", "reference"],
+    "negotiation_rounds": 1,
+    "max_providers": 1,
+    "fallback": True,
+    "verification": "conditional",
     "execute_timeout_s": 180.0,
 }
 TELEMETRY_BASE: dict[str, object] = {
-    "producer": P, "created_at": "t", "run_id": "20260101T000000Z-deadbeef",
+    "producer": P,
+    "created_at": "t",
+    "run_id": "20260101T000000Z-deadbeef",
     "profile": PROFILE_SNAPSHOT,
 }
 TELEMETRY_METRICS = (
-    "scan_ms", "routing_ms", "context_ms", "provider_ms", "files_scanned", "files_selected",
-    "files_hashed", "bytes_hashed", "cache_hits", "cache_misses", "context_bytes",
-    "providers_executed", "fallbacks_used", "negotiation_rounds",
+    "scan_ms",
+    "routing_ms",
+    "context_ms",
+    "provider_ms",
+    "files_scanned",
+    "files_selected",
+    "files_hashed",
+    "bytes_hashed",
+    "cache_hits",
+    "cache_misses",
+    "context_bytes",
+    "providers_executed",
+    "fallbacks_used",
+    "negotiation_rounds",
 )
 
 
 def test_execution_result_context_request_is_optional_and_structured() -> None:
     from theforge.contracts import ContextRequest, ContextRequestItem, LineRange
 
-    v1 = from_dict(ExecutionResult, {"producer": P, "created_at": "t", "status": "ok"},
-                   strict=True)
+    v1 = from_dict(ExecutionResult, {"producer": P, "created_at": "t", "status": "ok"}, strict=True)
     assert v1.context_request is None
-    data = {"producer": P, "created_at": "t", "status": "partial", "context_request": {
-        "items": [{"path": "src/a.py"},
-                  {"path": "src/b.py", "lines": {"start": 3, "end": 9}, "reason": "caller"}]}}
+    data = {
+        "producer": P,
+        "created_at": "t",
+        "status": "partial",
+        "context_request": {
+            "items": [
+                {"path": "src/a.py"},
+                {"path": "src/b.py", "lines": {"start": 3, "end": 9}, "reason": "caller"},
+            ]
+        },
+    }
     result = from_dict(ExecutionResult, data, strict=True)
-    assert result.context_request == ContextRequest(items=[
-        ContextRequestItem(path="src/a.py"),
-        ContextRequestItem(path="src/b.py", lines=LineRange(start=3, end=9), reason="caller"),
-    ])
+    assert result.context_request == ContextRequest(
+        items=[
+            ContextRequestItem(path="src/a.py"),
+            ContextRequestItem(path="src/b.py", lines=LineRange(start=3, end=9), reason="caller"),
+        ]
+    )
     assert result.context_request.items[0].lines is None
     assert result.context_request.items[0].reason == ""
     assert from_dict(ExecutionResult, to_dict(result), strict=True) == result
     with pytest.raises(ContractError, match="line range"):
-        from_dict(ExecutionResult, {**data, "context_request": {
-            "items": [{"path": "a.py", "lines": {"start": 4, "end": 2}}]}})
+        from_dict(
+            ExecutionResult,
+            {
+                **data,
+                "context_request": {"items": [{"path": "a.py", "lines": {"start": 4, "end": 2}}]},
+            },
+        )
     with pytest.raises(ContractError):
         from_dict(ExecutionResult, {**data, "context_request": {}})
 
@@ -559,8 +729,11 @@ def test_receipt_carries_telemetry_and_round_hashes_as_optional() -> None:
     old = from_dict(ExecutionReceipt, MINIMAL[ExecutionReceipt], strict=True)
     assert old.telemetry_sha256 is None
     assert old.inputs.context_round_sha256 == []
-    data = {**MINIMAL[ExecutionReceipt], "telemetry_sha256": "b" * 64,
-            "inputs": {"task_sha256": "a" * 64, "context_round_sha256": ["c" * 64, "d" * 64]}}
+    data = {
+        **MINIMAL[ExecutionReceipt],
+        "telemetry_sha256": "b" * 64,
+        "inputs": {"task_sha256": "a" * 64, "context_round_sha256": ["c" * 64, "d" * 64]},
+    }
     receipt = from_dict(ExecutionReceipt, data, strict=True)
     assert receipt.telemetry_sha256 == "b" * 64
     assert receipt.inputs.context_round_sha256 == ["c" * 64, "d" * 64]
@@ -589,15 +762,25 @@ def test_run_telemetry_full_ask_shape_round_trips_strictly() -> None:
     from theforge.contracts import RunTelemetry
 
     measured = {"value": 1.5, "kind": "measured"}
-    data = {**TELEMETRY_BASE, **dict.fromkeys(TELEMETRY_METRICS, measured),
-            "provider_revalidation": "undeclared", "verification_performed": "conditional",
-            "context_drift": ["src/a.py"], "limitations": ["l"], "unknowns": ["u"]}
+    data = {
+        **TELEMETRY_BASE,
+        **dict.fromkeys(TELEMETRY_METRICS, measured),
+        "provider_revalidation": "undeclared",
+        "verification_performed": "conditional",
+        "context_drift": ["src/a.py"],
+        "limitations": ["l"],
+        "unknowns": ["u"],
+    }
     telemetry = from_dict(RunTelemetry, data, strict=True)
     assert telemetry.provider_revalidation == "undeclared"
     assert from_dict(RunTelemetry, to_dict(telemetry), strict=True) == telemetry
     for strategy in ("hash", "core", "none"):
-        assert from_dict(RunTelemetry, {**data, "provider_revalidation": strategy},
-                         strict=True).provider_revalidation == strategy
+        assert (
+            from_dict(
+                RunTelemetry, {**data, "provider_revalidation": strategy}, strict=True
+            ).provider_revalidation
+            == strategy
+        )
     with pytest.raises(ContractError, match="expected one of"):
         from_dict(RunTelemetry, {**data, "provider_revalidation": "sometimes"})
     with pytest.raises(ContractError, match="expected one of"):
@@ -612,11 +795,14 @@ def test_run_telemetry_plan_run_shape_is_valid_and_rereads_strictly() -> None:
     from theforge.contracts import RunTelemetry
     from theforge.contracts.types import Metric
 
-    plan = {**TELEMETRY_BASE, "profile": {**PROFILE_SNAPSHOT, "effective_tiers": []},
-            "scan_ms": {"value": 12.5, "kind": "measured"},
-            "routing_ms": {"value": 3.25, "kind": "measured"},
-            "files_scanned": {"value": 40, "kind": "measured"},
-            "providers_executed": {"value": 3, "kind": "measured"}}
+    plan = {
+        **TELEMETRY_BASE,
+        "profile": {**PROFILE_SNAPSHOT, "effective_tiers": []},
+        "scan_ms": {"value": 12.5, "kind": "measured"},
+        "routing_ms": {"value": 3.25, "kind": "measured"},
+        "files_scanned": {"value": 40, "kind": "measured"},
+        "providers_executed": {"value": 3, "kind": "measured"},
+    }
     telemetry = from_dict(RunTelemetry, plan, strict=True)
     assert telemetry.providers_executed == Metric(value=3.0, kind="measured")
     assert telemetry.profile.effective_tiers == []

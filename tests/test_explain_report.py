@@ -24,8 +24,11 @@ from theforge.registry import Registry
 from theforge.runs import ARTIFACTS, RunStore
 
 PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
-SCHEMA = json.loads((Path(__file__).resolve().parents[1] / "schemas"
-                     / "ExplainReport.schema.json").read_text(encoding="utf-8"))
+SCHEMA = json.loads(
+    (Path(__file__).resolve().parents[1] / "schemas" / "ExplainReport.schema.json").read_text(
+        encoding="utf-8"
+    )
+)
 
 
 def _forger(root: Path, entries: list[dict[str, Any]]) -> tuple[Forger, RunStore]:
@@ -50,8 +53,11 @@ def _rewrite(store: RunStore, run_id: str, name: str, change: Any) -> None:
 
 
 def _snapshot(directory: Path) -> dict[str, tuple[bytes, int]]:
-    return {str(p.relative_to(directory)): (p.read_bytes(), p.stat().st_mtime_ns)
-            for p in sorted(directory.rglob("*")) if p.is_file()}
+    return {
+        str(p.relative_to(directory)): (p.read_bytes(), p.stat().st_mtime_ns)
+        for p in sorted(directory.rglob("*"))
+        if p.is_file()
+    }
 
 
 def _valid(report: ExplainReport) -> dict[str, Any]:
@@ -75,8 +81,7 @@ def test_ask_run_report_has_every_section(tmp_path: Path) -> None:
     assert report.intent == "eco" and report.targets == ["."] and report.profile
     routing = report.routing
     assert routing is not None and routing.status == "routed"
-    assert [(s.provider, s.capability) for s in routing.selected] == [
-        ("echo-forge", "demo.echo")]
+    assert [(s.provider, s.capability) for s in routing.selected] == [("echo-forge", "demo.echo")]
     assert routing.candidates and routing.reason and routing.confidence in ("high", "low")
     context = report.context
     assert context is not None and context.files >= 1 and context.budget_bytes > 0
@@ -95,8 +100,16 @@ def test_ask_run_report_has_every_section(tmp_path: Path) -> None:
     assert report.integrity == verify_run_hashes(store, run)
     assert report.integrity.divergences == []
     assert report.not_recorded == []
-    for name in ("task", "routing", "context", "result", "risk", "telemetry",
-                 "verification", "receipt"):
+    for name in (
+        "task",
+        "routing",
+        "context",
+        "result",
+        "risk",
+        "telemetry",
+        "verification",
+        "receipt",
+    ):
         assert report.artifacts[name] == store.read(run, name)
     _valid(report)
 
@@ -106,8 +119,10 @@ def test_routing_signals_come_from_the_selected_candidate(tmp_path: Path) -> Non
 
     def matched(data: dict[str, Any]) -> None:
         data["candidates"][0]["matched"] = {"keywords": ["eco"], "file_globs": ["*.txt"]}
-        data["limitations"] = ["capability-alias: 'echo' resolved to 'demo.echo' (echo)",
-                               "something else"]
+        data["limitations"] = [
+            "capability-alias: 'echo' resolved to 'demo.echo' (echo)",
+            "something else",
+        ]
 
     _rewrite(store, run, "routing", matched)
     routing = build_explain_report(store, run).routing
@@ -141,8 +156,7 @@ def test_failed_run_has_error_with_family_and_no_result(tmp_path: Path) -> None:
     _valid(report)
 
 
-def test_older_run_lists_not_recorded_sections_and_unknown_reproducibility(
-        tmp_path: Path) -> None:
+def test_older_run_lists_not_recorded_sections_and_unknown_reproducibility(tmp_path: Path) -> None:
     store, run = _echo_run(tmp_path)
 
     def older(data: dict[str, Any]) -> None:
@@ -154,11 +168,9 @@ def test_older_run_lists_not_recorded_sections_and_unknown_reproducibility(
     for name in ("telemetry", "verification", "risk"):
         (store.run_dir(run) / f"{name}.json").unlink()
     report = build_explain_report(store, run)
-    assert report.reproducibility == ReproducibilityInfo(level="unknown",
-                                                         reasons=["not recorded"])
+    assert report.reproducibility == ReproducibilityInfo(level="unknown", reasons=["not recorded"])
     assert report.telemetry is None and report.verification is None and report.risk is None
-    assert set(report.not_recorded) == {"risk", "telemetry", "verification",
-                                        "reproducibility"}
+    assert set(report.not_recorded) == {"risk", "telemetry", "verification", "reproducibility"}
     assert report.integrity.divergences == []
     assert report.routing is not None and report.result is not None
     _valid(report)
@@ -195,7 +207,8 @@ def test_unknown_or_invalid_run(tmp_path: Path) -> None:
 
 
 def test_report_writes_nothing_and_starts_no_provider(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     store, run = _echo_run(tmp_path)
     before = _snapshot(store.runs_dir)
 
@@ -207,11 +220,9 @@ def test_report_writes_nothing_and_starts_no_provider(
     assert _snapshot(store.runs_dir) == before
 
 
-def test_plan_run_report_has_plan_nodes_handoffs_and_plan_telemetry(
-        cross: CrossWorkspace) -> None:
+def test_plan_run_report_has_plan_nodes_handoffs_and_plan_telemetry(cross: CrossWorkspace) -> None:
     forger, store = _forger(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
-    out = PlanExecutor(forger).run(PlanCommand(intent=PROOF_TASK, profile="max",
-                                               execute=True))
+    out = PlanExecutor(forger).run(PlanCommand(intent=PROOF_TASK, profile="max", execute=True))
     assert out.status == "ok", out.error
     before = _snapshot(store.runs_dir)
     report = build_explain_report(store, out.run_id)
@@ -257,8 +268,7 @@ def test_plan_run_report_has_plan_nodes_handoffs_and_plan_telemetry(
     assert _snapshot(store.runs_dir) == before
 
 
-def test_planned_only_plan_run_lists_plan_result_as_not_recorded(
-        cross: CrossWorkspace) -> None:
+def test_planned_only_plan_run_lists_plan_result_as_not_recorded(cross: CrossWorkspace) -> None:
     forger, store = _forger(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
     out = PlanExecutor(forger).run(PlanCommand(intent=PROOF_TASK, profile="max"))
     assert out.status == "planned", out.error
@@ -273,23 +283,42 @@ def test_planned_only_plan_run_lists_plan_result_as_not_recorded(
 def test_refused_plan_run_surfaces_the_installation_items(tmp_path: Path) -> None:
     """A plan refused for an invalid provider: the explain report carries the installation
     section verbatim, checks its recorded hash and writes nothing (cross-forge 6.1/6.2)."""
-    forger, store = _forger(tmp_path, [bad_entry("invalid-manifest", "bad-i"),
-                                       SPARK_PLAN_ENTRY])
+    forger, store = _forger(tmp_path, [bad_entry("invalid-manifest", "bad-i"), SPARK_PLAN_ENTRY])
     plan_file = tmp_path / "plan.json"
-    plan_file.write_text(json.dumps({
-        "task_id": "from-file", "pattern": "pipeline", "source": "file",
-        "profile": "max",
-        "nodes": [
-            {"id": "n1", "role": "standalone", "provider": "fixture-spark",
-             "capability": "spark.performance", "action": "diagnose"},
-            {"id": "n2", "role": "consumer", "provider": "bad-i",
-             "capability": "bad.thing", "action": "run",
-             "depends_on": [{"node": "n1", "epistemic": "explicit",
-                             "evidence": "plan file"}],
-             "inputs": ["n1"]}]}), encoding="utf-8")
-    out = PlanExecutor(forger).run(PlanCommand(intent="spark then invalid",
-                                               profile="max", plan_file=plan_file,
-                                               execute=True))
+    plan_file.write_text(
+        json.dumps(
+            {
+                "task_id": "from-file",
+                "pattern": "pipeline",
+                "source": "file",
+                "profile": "max",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "role": "standalone",
+                        "provider": "fixture-spark",
+                        "capability": "spark.performance",
+                        "action": "diagnose",
+                    },
+                    {
+                        "id": "n2",
+                        "role": "consumer",
+                        "provider": "bad-i",
+                        "capability": "bad.thing",
+                        "action": "run",
+                        "depends_on": [
+                            {"node": "n1", "epistemic": "explicit", "evidence": "plan file"}
+                        ],
+                        "inputs": ["n1"],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = PlanExecutor(forger).run(
+        PlanCommand(intent="spark then invalid", profile="max", plan_file=plan_file, execute=True)
+    )
     assert out.status == "refused"
     before = _snapshot(store.runs_dir)
     report = build_explain_report(store, out.run_id)
@@ -301,7 +330,11 @@ def test_refused_plan_run_surfaces_the_installation_items(tmp_path: Path) -> Non
     assert installation is not None and installation.planning_only is True
     (item,) = installation.items
     assert (item.provider, item.state, item.source, item.nodes) == (
-        "bad-i", "invalid", "registry", ["n2"])
+        "bad-i",
+        "invalid",
+        "registry",
+        ["n2"],
+    )
     assert item.reason
     assert report.artifacts["installation"] == store.read(out.run_id, "installation")
     assert "installation" in report.integrity.checked

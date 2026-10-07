@@ -60,8 +60,11 @@ class _Recording:
 
     def by_op(self, op: str, provider: str = "bad-a") -> list[Response]:
         # other configured providers (e.g. the built-in echo) are described too; skip them
-        return [response for name, response in self.responses
-                if name == op and response.producer.id == provider]
+        return [
+            response
+            for name, response in self.responses
+            if name == op and response.producer.id == provider
+        ]
 
 
 class _RecordingTransport:
@@ -69,10 +72,18 @@ class _RecordingTransport:
         self.owner = owner
         self.inner = SubprocessTransport(argv)
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
-        response = self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                                   check_protocol=check_protocol)
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
+        response = self.inner.call(
+            op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol
+        )
         self.owner.responses.append((op, response))
         return response
 
@@ -80,8 +91,12 @@ class _RecordingTransport:
 def _ask(root: Path, mode: str) -> tuple[AskOutcome, _Recording]:
     forge = make_workspace(root, [bad_entry(mode, "bad-a")])
     recording = _Recording()
-    forger = Forger(root, Registry(forge, transport_factory=recording), RunStore(forge),
-                    transport_factory=recording)
+    forger = Forger(
+        root,
+        Registry(forge, transport_factory=recording),
+        RunStore(forge),
+        transport_factory=recording,
+    )
     outcome = forger.ask(AskRequest(intent="run it", capability="bad.thing"))
     return outcome, recording
 
@@ -95,8 +110,11 @@ def _probe_lines(op: str, response: Response) -> list[str]:
 
 def _received_names(op: str, response: Response) -> set[str]:
     # Windows env names are case-insensitive: compare upper-cased names everywhere.
-    return {line.removeprefix("env:").upper() for line in _probe_lines(op, response)
-            if line.startswith("env:")}
+    return {
+        line.removeprefix("env:").upper()
+        for line in _probe_lines(op, response)
+        if line.startswith("env:")
+    }
 
 
 @pytest.fixture
@@ -163,8 +181,9 @@ def test_health_and_execute_run_in_forge_controlled_cwds(
     _assert_not_caller_cwd(health_cwd, tmp_path)
     _assert_forge_temp_cwd(health_cwd)
 
-    [execute_cwd] = [line.removeprefix("cwd=") for line in outcome.result.limitations
-                     if line.startswith("cwd=")]
+    [execute_cwd] = [
+        line.removeprefix("cwd=") for line in outcome.result.limitations if line.startswith("cwd=")
+    ]
     _assert_not_caller_cwd(execute_cwd, tmp_path)
     work_dir = RunStore(tmp_path / ".forge").work_dir(outcome.run_id)
     assert Path(execute_cwd).resolve() == work_dir.resolve()

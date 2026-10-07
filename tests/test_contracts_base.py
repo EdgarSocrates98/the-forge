@@ -25,8 +25,13 @@ class Outer:
 
 def test_roundtrip() -> None:
     obj = Outer(
-        kind="a", inner=Inner(name="x", size=2), items=[Inner(name="y")],
-        note="n", ratio=0.5, flag=True, extra={"k": [1]},
+        kind="a",
+        inner=Inner(name="x", size=2),
+        items=[Inner(name="y")],
+        note="n",
+        ratio=0.5,
+        flag=True,
+        extra={"k": [1]},
     )
     assert from_dict(Outer, to_dict(obj)) == obj
 
@@ -124,8 +129,12 @@ def test_strict_rejects_unknown_field_inside_list_items() -> None:
 
 
 def test_strict_accepts_known_fields_and_free_form_dicts() -> None:
-    obj = Outer(kind="b", inner=Inner(name="x"), items=[Inner(name="y", size=1)],
-                extra={"anything": {"goes": 1}})
+    obj = Outer(
+        kind="b",
+        inner=Inner(name="x"),
+        items=[Inner(name="y", size=1)],
+        extra={"anything": {"goes": 1}},
+    )
     assert from_dict(Outer, to_dict(obj), strict=True) == obj
 
 

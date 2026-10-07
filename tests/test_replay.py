@@ -39,8 +39,9 @@ class _Spy:
         return SubprocessTransport(argv)
 
 
-def _forger(root: Path, entries: list[dict[str, Any]],
-            spy: _Spy | None = None) -> tuple[Forger, RunStore]:
+def _forger(
+    root: Path, entries: list[dict[str, Any]], spy: _Spy | None = None
+) -> tuple[Forger, RunStore]:
     forge = make_workspace(root, entries)
     store = RunStore(forge)
     kwargs: dict[str, Any] = {"transport_factory": spy} if spy is not None else {}
@@ -53,21 +54,24 @@ def _echo(root: Path) -> tuple[Forger, RunStore, str, _Spy]:
     write_file(root, "notes.txt", "hello\n")
     # ``reproducible`` needs conditional verification; auto resolves this trivial
     # task to economy (minimal), so these replay tests pin balanced explicitly.
-    out = forger.ask(AskRequest(intent="eco", capability="demo.echo",
-                                profile="balanced"))
+    out = forger.ask(AskRequest(intent="eco", capability="demo.echo", profile="balanced"))
     assert out.status == "ok", out.error
     assert out.receipt.reproducibility is not None
     assert out.receipt.reproducibility.level == "reproducible"
     spy = _Spy()
-    spied = Forger(root, Registry(root / ".forge", transport_factory=spy), store,
-                   transport_factory=spy)
+    spied = Forger(
+        root, Registry(root / ".forge", transport_factory=spy), store, transport_factory=spy
+    )
     return spied, store, out.run_id, spy
 
 
 def _snapshot(store: RunStore, run_id: str) -> dict[str, bytes]:
     run_dir = store.run_dir(run_id)
-    return {path.relative_to(run_dir).as_posix(): path.read_bytes()
-            for path in sorted(run_dir.rglob("*")) if path.is_file()}
+    return {
+        path.relative_to(run_dir).as_posix(): path.read_bytes()
+        for path in sorted(run_dir.rglob("*"))
+        if path.is_file()
+    }
 
 
 def _set_receipt(store: RunStore, run_id: str, **changes: Any) -> None:
@@ -83,6 +87,7 @@ def _refused(forger: Forger, store: RunStore, run_id: str) -> ReplayRefused:
 
 # --- modes ------------------------------------------------------------------------------------
 
+
 def test_unknown_mode_and_unknown_run_are_rejected(tmp_path: Path) -> None:
     forger, store, run, spy = _echo(tmp_path)
     with pytest.raises(UsageError):
@@ -94,8 +99,10 @@ def test_unknown_mode_and_unknown_run_are_rejected(tmp_path: Path) -> None:
 
 # --- render (14.6) ----------------------------------------------------------------------------
 
+
 def test_render_reads_only_the_run_never_the_workspace_nor_providers(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     forger, store, run, spy = _echo(tmp_path)
     before = _snapshot(store, run)
     first = replay(forger, store, run, "render", created_at=FIXED_AT)
@@ -128,6 +135,7 @@ def test_render_carries_the_integrity_divergences(tmp_path: Path) -> None:
 
 # --- verify (14.7) ----------------------------------------------------------------------------
 
+
 def test_verify_without_change_has_no_divergence_and_writes_nothing(tmp_path: Path) -> None:
     forger, store, run, spy = _echo(tmp_path)
     before = _snapshot(store, run)
@@ -154,10 +162,13 @@ def test_verify_combines_hash_and_context_divergences(tmp_path: Path) -> None:
     write_file(tmp_path, "notes.txt", "changed\n")
     out = replay(forger, store, run, "verify")
     assert [(d.artifact, d.kind) for d in out.divergences] == [
-        ("telemetry", "missing"), ("workspace/notes.txt", "modified")]
+        ("telemetry", "missing"),
+        ("workspace/notes.txt", "modified"),
+    ]
 
 
 # --- execute (14.8) ---------------------------------------------------------------------------
+
 
 def test_execute_creates_a_new_linked_run_with_the_same_result(tmp_path: Path) -> None:
     forger, store, run, spy = _echo(tmp_path)
@@ -191,6 +202,7 @@ def test_execute_without_an_original_result_is_no_result(tmp_path: Path) -> None
 
 # --- refusals (14.9): nothing starts, the original stays intact -------------------------------
 
+
 def test_unknown_reproducibility_is_refused(tmp_path: Path) -> None:
     forger, store, run, spy = _echo(tmp_path)
     _set_receipt(store, run, reproducibility=None)
@@ -205,8 +217,13 @@ def test_non_reproducible_run_is_refused_with_its_reasons(tmp_path: Path) -> Non
     forger, store, run, spy = _echo(tmp_path)
     receipt = store.read_contract(run, "receipt", ExecutionReceipt)
     assert receipt.reproducibility is not None
-    _set_receipt(store, run, reproducibility=replace(
-        receipt.reproducibility, level="non_reproducible", reasons=["requires network"]))
+    _set_receipt(
+        store,
+        run,
+        reproducibility=replace(
+            receipt.reproducibility, level="non_reproducible", reasons=["requires network"]
+        ),
+    )
     refused = _refused(forger, store, run)
     assert refused.reasons == ("reproducibility is non_reproducible (requires network)",)
     assert spy.calls == []
@@ -261,13 +278,15 @@ def test_changed_provider_version_or_identity_is_refused(tmp_path: Path) -> None
     receipt = store.read_contract(run, "receipt", ExecutionReceipt)
     assert receipt.provider is not None
     version = receipt.provider.version
-    _set_receipt(store, run, provider=replace(receipt.provider, version="9.9.9",
-                                              fingerprint="0" * 64))
+    _set_receipt(
+        store, run, provider=replace(receipt.provider, version="9.9.9", fingerprint="0" * 64)
+    )
     refused = _refused(forger, store, run)
     assert refused.code == Codes.REPLAY_NOT_REPRODUCIBLE
     assert refused.reasons == (
         f"provider echo-forge version changed: 9.9.9 -> {version}",
-        "provider echo-forge identity changed (executable fingerprint)")
+        "provider echo-forge identity changed (executable fingerprint)",
+    )
     assert spy.calls == []
 
 
@@ -288,14 +307,17 @@ def cross() -> Iterator[CrossWorkspace]:
 
 def test_plan_and_plan_node_runs_are_unsupported(cross: CrossWorkspace) -> None:
     forger, store = _forger(cross.root, [SPARK_PLAN_ENTRY, API_PLAN_ENTRY])
-    out = PlanExecutor(forger).run(PlanCommand(intent=PROOF_TASK, profile="max",
-                                               execute=True))
+    out = PlanExecutor(forger).run(PlanCommand(intent=PROOF_TASK, profile="max", execute=True))
     assert out.status == "ok", out.error
     node_run = store.read_contract(out.run_id, "plan-result", PlanResult).nodes[0].run_id
     assert node_run is not None
     spy = _Spy()
-    spied = Forger(cross.root, Registry(cross.root / ".forge", transport_factory=spy), store,
-                   transport_factory=spy)
+    spied = Forger(
+        cross.root,
+        Registry(cross.root / ".forge", transport_factory=spy),
+        store,
+        transport_factory=spy,
+    )
     before = {run: _snapshot(store, run) for run in (out.run_id, node_run)}
     for run in (out.run_id, node_run):
         refused = _refused(spied, store, run)

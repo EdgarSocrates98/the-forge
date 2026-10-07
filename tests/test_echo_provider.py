@@ -24,17 +24,36 @@ from theforge.meta import PRODUCER
 from theforge.providers.echo import provider
 
 
-def execute_body(root: Path, files: list[ContextFile], action: str = "echo",
-                 capability: str = "demo.echo") -> bytes:
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="echo test",
-                    workspace_root=str(root))
-    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
-                       task_id="t1", provider_id="x", root=str(root), budget_bytes=1024,
-                       files=files)
-    payload = to_dict(ExecuteRequest(task=task, capability=capability, action=action,
-                                     context=pack))
-    return json.dumps({"protocol": "forge/v1", "kind": "Request", "op": "execute",
-                       "request_id": "r_echo", "payload": payload}).encode()
+def execute_body(
+    root: Path, files: list[ContextFile], action: str = "echo", capability: str = "demo.echo"
+) -> bytes:
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent="echo test",
+        workspace_root=str(root),
+    )
+    pack = ContextPack(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="complete",
+        task_id="t1",
+        provider_id="x",
+        root=str(root),
+        budget_bytes=1024,
+        files=files,
+    )
+    payload = to_dict(ExecuteRequest(task=task, capability=capability, action=action, context=pack))
+    return json.dumps(
+        {
+            "protocol": "forge/v1",
+            "kind": "Request",
+            "op": "execute",
+            "request_id": "r_echo",
+            "payload": payload,
+        }
+    ).encode()
 
 
 def run(root: Path, path: str, content: bytes) -> dict[str, Any]:
@@ -88,7 +107,8 @@ def test_absolute_path_outside_is_unresolved(tmp_path: Path) -> None:
 
 
 def test_internal_failure_returns_error_response(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     def boom(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
         raise RuntimeError("kaboom")
 
@@ -104,8 +124,9 @@ MANIFEST_PRODUCER = Producer(id=provider.MANIFEST.id, version=provider.MANIFEST.
 
 
 def envelope(op: str) -> bytes:
-    return json.dumps({"protocol": "forge/v1", "kind": "Request", "op": op,
-                       "request_id": "r_echo", "payload": {}}).encode()
+    return json.dumps(
+        {"protocol": "forge/v1", "kind": "Request", "op": op, "request_id": "r_echo", "payload": {}}
+    ).encode()
 
 
 @pytest.mark.parametrize("op", ["describe", "health", "teleport"])
@@ -125,8 +146,12 @@ def test_execute_result_passes_integrity(tmp_path: Path, capability: str) -> Non
     (tmp_path / "notes.txt").write_bytes(b"hello")
     entry = ContextFile(path="notes.txt", sha256=sha256_hex(b"hello"), bytes=5)
     action = provider.MANIFEST.capability(capability).default_action  # type: ignore[union-attr]
-    resp = from_dict(Response, provider.handle(
-        "execute", execute_body(tmp_path, [entry], action=action, capability=capability)))
+    resp = from_dict(
+        Response,
+        provider.handle(
+            "execute", execute_body(tmp_path, [entry], action=action, capability=capability)
+        ),
+    )
     assert resp.op == "execute" and resp.status == "ok"
     assert check_producer(resp.producer, expected=MANIFEST_PRODUCER, field="producer") is None
     result = from_dict(ExecutionResult, resp.payload)

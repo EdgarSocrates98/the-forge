@@ -66,16 +66,18 @@ def test_ask_exit_codes_and_explain(tmp_path: Path, capsys: pytest.CaptureFixtur
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY, bad_entry("refuse", "bad-a")])
     case_b(tmp_path)
     root = str(tmp_path)
-    code, out, _ = run(capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api",
-                       "--root", root, "--json")
+    code, out, _ = run(
+        capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api", "--root", root, "--json"
+    )
     data = json.loads(out)
     assert code == 0 and data["status"] == "ok"
     code, out, _ = run(capsys, "explain", data["run_id"], "--root", root)
     assert code == 0 and "fixture-api api.contract:review" in out
     code, _, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root)
     assert code == 4
-    code, _, err = run(capsys, "ask", "x", "--capability", "api.contract", "--action", "delete",
-                       "--root", root)
+    code, _, err = run(
+        capsys, "ask", "x", "--capability", "api.contract", "--action", "delete", "--root", root
+    )
     assert code == 2 and "not offered" in err
 
 
@@ -93,7 +95,8 @@ def test_explain_errors(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
 
 
 def test_explain_reads_run_without_round_or_telemetry_artifacts(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """10.5: a run written before context-r*/telemetry existed stays readable."""
     make_workspace(tmp_path, [])
     run_id = "20260101T000000Z-deadbeef"
@@ -101,16 +104,37 @@ def test_explain_reads_run_without_round_or_telemetry_artifacts(
     run_dir.mkdir(parents=True)
     producer = {"id": "theforge", "version": "0.1.0"}
     ts = "2026-01-01T00:00:00.000000Z"
-    (run_dir / "task.json").write_text(json.dumps({
-        "schema": "theforge/TaskSpec/v1", "producer": producer, "created_at": ts,
-        "status": "created", "id": "t1", "intent": "eco", "workspace_root": "/ws"}),
-        encoding="utf-8")
+    (run_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "schema": "theforge/TaskSpec/v1",
+                "producer": producer,
+                "created_at": ts,
+                "status": "created",
+                "id": "t1",
+                "intent": "eco",
+                "workspace_root": "/ws",
+            }
+        ),
+        encoding="utf-8",
+    )
     task_sha256 = RunStore(tmp_path / ".forge").persisted_sha256(run_id, "task")
-    (run_dir / "receipt.json").write_text(json.dumps({
-        "schema": "theforge/ExecutionReceipt/v1", "producer": producer, "created_at": ts,
-        "status": "no_route", "run_id": run_id, "forge_version": "0.1.0",
-        "inputs": {"task_sha256": task_sha256}, "started_at": ts, "finished_at": ts}),
-        encoding="utf-8")
+    (run_dir / "receipt.json").write_text(
+        json.dumps(
+            {
+                "schema": "theforge/ExecutionReceipt/v1",
+                "producer": producer,
+                "created_at": ts,
+                "status": "no_route",
+                "run_id": run_id,
+                "forge_version": "0.1.0",
+                "inputs": {"task_sha256": task_sha256},
+                "started_at": ts,
+                "finished_at": ts,
+            }
+        ),
+        encoding="utf-8",
+    )
     root = str(tmp_path)
     code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
     data = json.loads(out)
@@ -125,33 +149,44 @@ def test_explain_reads_run_without_round_or_telemetry_artifacts(
 
 
 def test_explain_receipt_line_lists_negotiation_round_hashes() -> None:
-    out = render.explain({"run_id": "x", "receipt": {"status": "ok", "inputs": {
-        "task_sha256": "a" * 64, "context_round_sha256": ["b" * 64, "c" * 64]}}})
+    out = render.explain(
+        {
+            "run_id": "x",
+            "receipt": {
+                "status": "ok",
+                "inputs": {"task_sha256": "a" * 64, "context_round_sha256": ["b" * 64, "c" * 64]},
+            },
+        }
+    )
     assert f"context_round={'b' * 12},{'c' * 12}" in out
 
 
 def test_provider_receipt_flows_from_result_to_receipt_and_explain(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Phase 37/38: a result's provider-native receipt pointer lands on the run
     receipt and on the explain provider section — ref + hash, never content."""
     manifest = json.loads((PROVIDERS / "fixture-api.json").read_text(encoding="utf-8"))
     manifest["provider_receipt"] = {"ref": "case:feedface", "sha256": "d" * 64}
     path = tmp_path / "api-receipt.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
-    entry = {"id": "fixture-api",
-             "argv": fixture_argv("fixture_forge.py", str(path)), "trust": "local"}
+    entry = {
+        "id": "fixture-api",
+        "argv": fixture_argv("fixture_forge.py", str(path)),
+        "trust": "local",
+    }
     make_workspace(tmp_path, [entry])
     case_b(tmp_path)
     root = str(tmp_path)
-    code, out, _ = run(capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api",
-                       "--root", root, "--json")
+    code, out, _ = run(
+        capsys, "ask", "avalie esse contrato OpenAPI", "--target", "api", "--root", root, "--json"
+    )
     data = json.loads(out)
     assert code == 0 and data["status"] == "ok"
     code, out, _ = run(capsys, "explain", data["run_id"], "--root", root, "--json")
     report = json.loads(out)
     assert code == 0
-    assert report["artifacts"]["receipt"]["provider_receipt"] == manifest[
-        "provider_receipt"]
+    assert report["artifacts"]["receipt"]["provider_receipt"] == manifest["provider_receipt"]
     assert report["provider"]["provider_receipt"]["ref"] == "case:feedface"
 
 
@@ -160,8 +195,7 @@ def test_persistence_failure_exit_5(tmp_path: Path, capsys: pytest.CaptureFixtur
     runs = tmp_path / ".forge" / "runs"
     runs.rmdir()
     runs.write_text("not a dir", encoding="utf-8")
-    code, _, err = run(capsys, "ask", "eco", "--capability", "demo.echo",
-                       "--root", str(tmp_path))
+    code, _, err = run(capsys, "ask", "eco", "--capability", "demo.echo", "--root", str(tmp_path))
     assert code == 5 and "persistence error" in err
 
 
@@ -175,8 +209,8 @@ def test_status_and_doctor(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -
 
 
 def test_unexpected_exception_exits_70_without_traceback(
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
-        capsys: pytest.CaptureFixture[str]) -> None:
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     def boom(args: object) -> int:
         raise ValueError("boom")
 
@@ -186,13 +220,21 @@ def test_unexpected_exception_exits_70_without_traceback(
     assert "internal error: ValueError: boom" in err and "Traceback" not in err
 
 
-@pytest.mark.parametrize(("exc", "code", "text"), [
-    (KeyboardInterrupt(), 130, "interrupted"),
-    (BrokenPipeError(), 1, ""),
-])
+@pytest.mark.parametrize(
+    ("exc", "code", "text"),
+    [
+        (KeyboardInterrupt(), 130, "interrupted"),
+        (BrokenPipeError(), 1, ""),
+    ],
+)
 def test_interrupt_and_broken_pipe(
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str],
-        exc: BaseException, code: int, text: str) -> None:
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    exc: BaseException,
+    code: int,
+    text: str,
+) -> None:
     def raiser(args: object) -> int:
         raise exc
 
@@ -202,44 +244,75 @@ def test_interrupt_and_broken_pipe(
 
 
 def test_render_strips_terminal_escapes() -> None:
-    out = render.capabilities({"capabilities": [{
-        "id": "a.b", "provider": "p", "actions": ["x"], "state": "ready",
-        "description": "evil\x1b[31mred"}]})
+    out = render.capabilities(
+        {
+            "capabilities": [
+                {
+                    "id": "a.b",
+                    "provider": "p",
+                    "actions": ["x"],
+                    "state": "ready",
+                    "description": "evil\x1b[31mred",
+                }
+            ]
+        }
+    )
     assert "\x1b" not in out and "evil?[31mred" in out
-    data = {"run_id": "r", "status": "ok", "decision": {
-        "selected": [], "reason": "why", "confidence": {"level": "high"}, "candidates": []},
+    data = {
+        "run_id": "r",
+        "status": "ok",
+        "decision": {
+            "selected": [],
+            "reason": "why",
+            "confidence": {"level": "high"},
+            "candidates": [],
+        },
         "result": {"findings": [{"severity": "low", "title": "bell\x07"}], "evidence": []},
-        "error": None}
+        "error": None,
+    }
     assert "\x07" not in render.ask(data)
 
 
 def test_explain_tolerates_partial_run() -> None:
-    out = render.explain({"run_id": "x", "task": {"intent": "i"},
-                          "receipt": {"status": "ok"}})
+    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "receipt": {"status": "ok"}})
     assert "Run:" in out and "i" in out
 
 
 def test_ask_policy_refusal_exits_4_with_unlock(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
     root = str(tmp_path)
     code, out, err = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root)
     assert code == 4
     assert "--approve bad.thing" in out and "Traceback" not in out + err
-    code, out, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root,
-                       "--json")
+    code, out, _ = run(
+        capsys, "ask", "run it", "--capability", "bad.thing", "--root", root, "--json"
+    )
     data = json.loads(out)
     assert code == 4 and data["status"] == "refused"
     assert data["error"]["unlock"] == "--approve bad.thing"
 
 
 def test_ask_approve_is_repeatable_and_unlocks(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
     root = str(tmp_path)
-    code, out, err = run(capsys, "ask", "run it", "--capability", "bad.thing",
-                         "--approve", "demo.echo", "--approve", "bad.thing",
-                         "--root", root, "--json")
+    code, out, err = run(
+        capsys,
+        "ask",
+        "run it",
+        "--capability",
+        "bad.thing",
+        "--approve",
+        "demo.echo",
+        "--approve",
+        "bad.thing",
+        "--root",
+        root,
+        "--json",
+    )
     assert code == 0, err
     run_id = json.loads(out)["run_id"]
     code, out, _ = run(capsys, "explain", run_id, "--root", root, "--json")
@@ -254,11 +327,11 @@ def test_ask_approve_is_repeatable_and_unlocks(
 
 
 def test_explain_shows_refused_policy_decision(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
     root = str(tmp_path)
-    _, out, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root,
-                    "--json")
+    _, out, _ = run(capsys, "ask", "run it", "--capability", "bad.thing", "--root", root, "--json")
     run_id = json.loads(out)["run_id"]
     code, out, _ = run(capsys, "explain", run_id, "--root", root)
     assert code == 0 and "Policy:      ask" in out
@@ -267,30 +340,56 @@ def test_explain_shows_refused_policy_decision(
 
 def test_explain_text_shows_each_candidate_state() -> None:
     """3.8: the capability state of every candidate is visible in the text explain."""
-    out = render.explain({"run_id": "x", "receipt": {"status": "ok"}, "routing": {
-        "candidates": [
-            {"provider": "a", "capability": "a.run", "state": "heuristic", "rank_key": [2]},
-            {"provider": "b", "capability": "b.run", "state": "unresolved", "rank_key": [2]},
-            {"provider": "c", "capability": "c.run", "rank_key": [1]},  # cycle-1 artifact
-        ],
-        "selected": [], "reason": "r", "confidence": {"level": "low"}}})
+    out = render.explain(
+        {
+            "run_id": "x",
+            "receipt": {"status": "ok"},
+            "routing": {
+                "candidates": [
+                    {"provider": "a", "capability": "a.run", "state": "heuristic", "rank_key": [2]},
+                    {
+                        "provider": "b",
+                        "capability": "b.run",
+                        "state": "unresolved",
+                        "rank_key": [2],
+                    },
+                    {"provider": "c", "capability": "c.run", "rank_key": [1]},  # cycle-1 artifact
+                ],
+                "selected": [],
+                "reason": "r",
+                "confidence": {"level": "low"},
+            },
+        }
+    )
     lines = [line for line in out.splitlines() if "rank=" in line]
     assert "state=heuristic" in lines[0] and "state=unresolved" in lines[1]
     assert "state=supported" in lines[2]  # Candidate.state defaults to supported
 
 
 def test_explain_without_risk_artifact_is_graceful() -> None:
-    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "risk": None,
-                          "receipt": {"status": "ok"}})
+    out = render.explain(
+        {"run_id": "x", "task": {"intent": "i"}, "risk": None, "receipt": {"status": "ok"}}
+    )
     assert "Risk:        not recorded" in out and "Policy:" not in out
 
 
 def test_ask_policy_deny_exits_4_even_with_approve(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [bad_entry("destructive", "bad-d", trust="trusted")])
     root = str(tmp_path)
-    code, out, err = run(capsys, "ask", "run it", "--capability", "bad.thing",
-                         "--approve", "bad.thing", "--root", root, "--json")
+    code, out, err = run(
+        capsys,
+        "ask",
+        "run it",
+        "--capability",
+        "bad.thing",
+        "--approve",
+        "bad.thing",
+        "--root",
+        root,
+        "--json",
+    )
     data = json.loads(out)
     assert code == 4 and data["status"] == "refused" and data["result"] is None
     assert data["error"]["code"] == "FORGE-POLICY-DENIED" and "Traceback" not in err
@@ -309,16 +408,30 @@ def _alias_entry(tmp_path: Path) -> dict[str, object]:
     base = manifest["capabilities"][0]
     manifest["capabilities"] = [
         base,
-        {**base, "id": "api.legacy", "aliases": ["api.blueprint"], "deprecated": True,
-         "replaced_by": "api.contract", "description": "Old contract review",
-         "signals": {"keywords": ["legacy"]}},
-        {**base, "id": "api.old", "deprecated": True, "description": "Older review",
-         "signals": {"keywords": ["older"]}},
+        {
+            **base,
+            "id": "api.legacy",
+            "aliases": ["api.blueprint"],
+            "deprecated": True,
+            "replaced_by": "api.contract",
+            "description": "Old contract review",
+            "signals": {"keywords": ["legacy"]},
+        },
+        {
+            **base,
+            "id": "api.old",
+            "deprecated": True,
+            "description": "Older review",
+            "signals": {"keywords": ["older"]},
+        },
     ]
     path = tmp_path / "alias-api.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
-    return {"id": "alias-api", "argv": fixture_argv("fixture_forge.py", str(path)),
-            "trust": "local"}
+    return {
+        "id": "alias-api",
+        "argv": fixture_argv("fixture_forge.py", str(path)),
+        "trust": "local",
+    }
 
 
 def test_capabilities_list_shows_aliases_deprecation_and_overlap(
@@ -346,8 +459,9 @@ def test_capabilities_list_shows_aliases_deprecation_and_overlap(
         "no replacement declared",
     ]
     # declared_by spans every provider even when the listing is filtered.
-    _, out, err = run(capsys, "capabilities", "list", "--provider", "fixture-api",
-                      "--root", root, "--json")
+    _, out, err = run(
+        capsys, "capabilities", "list", "--provider", "fixture-api", "--root", root, "--json"
+    )
     [only] = json.loads(out)["capabilities"]
     assert only["declared_by"] == ["alias-api", "fixture-api"] and err == ""
 
@@ -370,12 +484,16 @@ def test_capabilities_search_matches_alias(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     make_workspace(tmp_path, [API_ENTRY, _alias_entry(tmp_path)])
-    code, out, err = run(capsys, "capabilities", "search", "blueprint",
-                         "--root", str(tmp_path), "--json")
+    code, out, err = run(
+        capsys, "capabilities", "search", "blueprint", "--root", str(tmp_path), "--json"
+    )
     assert code == 0
     [row] = json.loads(out)["capabilities"]
-    assert (row["id"], row["provider"], row["aliases"]) == ("api.legacy", "alias-api",
-                                                           ["api.blueprint"])
+    assert (row["id"], row["provider"], row["aliases"]) == (
+        "api.legacy",
+        "alias-api",
+        ["api.blueprint"],
+    )
     assert row["deprecated"] is True and row["declared_by"] == ["alias-api"]
     assert err.splitlines() == [
         "theforge: warning: capability 'api.legacy' (alias-api) is deprecated; "
@@ -389,50 +507,95 @@ def test_capabilities_search_matches_alias(
 # reading the sections from ``artifacts.context``, ``artifacts.context-r*`` and
 # ``artifacts.telemetry``.
 
+
 def _metric(value: float | None, kind: str = "measured") -> dict[str, Any]:
     return {"value": value, "kind": kind if value is not None else "unknown"}
 
 
 def _v2_pack(round_: int = 0) -> dict[str, Any]:
     files: list[dict[str, Any]] = [
-        {"path": "pyproject.toml", "sha256": "a" * 64, "bytes": 10, "tier": "reference",
-         "signals": ["dependency_manifest"]},
-        {"path": "notes.txt", "sha256": "b" * 64, "bytes": 16, "tier": "excerpt",
-         "lines": {"start": 2, "end": 3}, "signals": ["glob:*.txt", "intent_path"]},
+        {
+            "path": "pyproject.toml",
+            "sha256": "a" * 64,
+            "bytes": 10,
+            "tier": "reference",
+            "signals": ["dependency_manifest"],
+        },
+        {
+            "path": "notes.txt",
+            "sha256": "b" * 64,
+            "bytes": 16,
+            "tier": "excerpt",
+            "lines": {"start": 2, "end": 3},
+            "signals": ["glob:*.txt", "intent_path"],
+        },
     ]
     if round_:
-        files.append({"path": "req.txt", "sha256": "c" * 64, "bytes": 30,
-                      "tier": "requested", "signals": []})
-    return {"status": "complete", "files": files, "budget_bytes": 1000,
-            "used_bytes": 26 + (30 if round_ else 0), "round": round_,
-            "excluded": [{"path": ".env", "reason": "secret", "signals": []},
-                         {"path": "big.txt", "reason": "budget", "signals": ["glob:*.txt"]}],
-            "tier_bytes": {"metadata": 0, "reference": 10, "excerpt": 16},
-            "limitations": [],
-            "workspace": {"files_scanned": 20, "unmatched_files": 17, "git": {
-                "available": True, "branch": "main", "head": "d" * 40, "dirty": True,
-                "changed_files": 2, "state": []}}}
+        files.append(
+            {"path": "req.txt", "sha256": "c" * 64, "bytes": 30, "tier": "requested", "signals": []}
+        )
+    return {
+        "status": "complete",
+        "files": files,
+        "budget_bytes": 1000,
+        "used_bytes": 26 + (30 if round_ else 0),
+        "round": round_,
+        "excluded": [
+            {"path": ".env", "reason": "secret", "signals": []},
+            {"path": "big.txt", "reason": "budget", "signals": ["glob:*.txt"]},
+        ],
+        "tier_bytes": {"metadata": 0, "reference": 10, "excerpt": 16},
+        "limitations": [],
+        "workspace": {
+            "files_scanned": 20,
+            "unmatched_files": 17,
+            "git": {
+                "available": True,
+                "branch": "main",
+                "head": "d" * 40,
+                "dirty": True,
+                "changed_files": 2,
+                "state": [],
+            },
+        },
+    }
 
 
 def _telemetry(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
         "profile": {"name": "max", "effective_tiers": ["metadata", "reference", "excerpt"]},
-        "scan_ms": _metric(12.4), "routing_ms": _metric(3), "context_ms": _metric(4),
-        "provider_ms": _metric(120), "files_scanned": _metric(20),
-        "files_selected": _metric(2), "cache_hits": _metric(1), "cache_misses": _metric(2),
-        "context_bytes": _metric(56), "providers_executed": _metric(1),
-        "fallbacks_used": _metric(0), "negotiation_rounds": _metric(1),
-        "verification_performed": "core", "context_drift": ["notes.txt"],
-        "unknowns": []}
+        "scan_ms": _metric(12.4),
+        "routing_ms": _metric(3),
+        "context_ms": _metric(4),
+        "provider_ms": _metric(120),
+        "files_scanned": _metric(20),
+        "files_selected": _metric(2),
+        "cache_hits": _metric(1),
+        "cache_misses": _metric(2),
+        "context_bytes": _metric(56),
+        "providers_executed": _metric(1),
+        "fallbacks_used": _metric(0),
+        "negotiation_rounds": _metric(1),
+        "verification_performed": "core",
+        "context_drift": ["notes.txt"],
+        "unknowns": [],
+    }
     data.update(overrides)
     return data
 
 
 def test_explain_context_and_telemetry_sections_text_contract() -> None:
     """Text output contract (4.4): every context/telemetry section and its content."""
-    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "context": _v2_pack(),
-                          "context-r1": _v2_pack(1), "telemetry": _telemetry(),
-                          "receipt": {"status": "partial"}})
+    out = render.explain(
+        {
+            "run_id": "x",
+            "task": {"intent": "i"},
+            "context": _v2_pack(),
+            "context-r1": _v2_pack(1),
+            "telemetry": _telemetry(),
+            "receipt": {"status": "partial"},
+        }
+    )
     for heading in render.EXPLAIN_CONTEXT_SECTIONS:
         assert any(line.startswith(heading) for line in out.splitlines()), heading
     assert "effective: metadata, reference, excerpt" in out
@@ -452,10 +615,18 @@ def test_explain_context_and_telemetry_sections_text_contract() -> None:
 
 
 def test_explain_telemetry_shows_unknown_metrics_as_unknown() -> None:
-    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "receipt": {"status": "ok"},
-                          "telemetry": _telemetry(provider_ms=_metric(None),
-                                                  cache_hits=_metric(None),
-                                                  unknowns=["provider_ms", "cache_hits"])})
+    out = render.explain(
+        {
+            "run_id": "x",
+            "task": {"intent": "i"},
+            "receipt": {"status": "ok"},
+            "telemetry": _telemetry(
+                provider_ms=_metric(None),
+                cache_hits=_metric(None),
+                unknowns=["provider_ms", "cache_hits"],
+            ),
+        }
+    )
     [telemetry] = [line for line in out.splitlines() if line.startswith("Telemetry:")]
     assert "provider=unknown" in telemetry and "cache=unknown/2" in telemetry
 
@@ -464,9 +635,14 @@ def test_explain_git_limitation_and_drift_from_receipt() -> None:
     pack = _v2_pack()
     pack["workspace"]["git"] = {"available": False}
     pack["limitations"] = ["git: not a repository"]
-    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "context": pack,
-                          "receipt": {"status": "partial",
-                                      "limitations": ["context-drift: notes.txt"]}})
+    out = render.explain(
+        {
+            "run_id": "x",
+            "task": {"intent": "i"},
+            "context": pack,
+            "receipt": {"status": "partial", "limitations": ["context-drift: notes.txt"]},
+        }
+    )
     assert "Git:         unavailable (git: not a repository)" in out
     assert "Drift:       notes.txt" in out
     assert "Rounds:      none" in out and "Telemetry:   not recorded" in out
@@ -474,11 +650,20 @@ def test_explain_git_limitation_and_drift_from_receipt() -> None:
 
 def test_explain_v1_context_pack_without_v2_fields_still_renders() -> None:
     """10.5: an old pack (no tiers, workspace or signals) and no telemetry still render."""
-    out = render.explain({"run_id": "x", "task": {"intent": "i"}, "receipt": {"status": "ok"},
-                          "context": {"status": "complete", "budget_bytes": 10, "used_bytes": 5,
-                                      "files": [{"path": "a.py", "sha256": "a" * 64,
-                                                 "bytes": 5, "reason": "glob"}],
-                                      "excluded": []}})
+    out = render.explain(
+        {
+            "run_id": "x",
+            "task": {"intent": "i"},
+            "receipt": {"status": "ok"},
+            "context": {
+                "status": "complete",
+                "budget_bytes": 10,
+                "used_bytes": 5,
+                "files": [{"path": "a.py", "sha256": "a" * 64, "bytes": 5, "reason": "glob"}],
+                "excluded": [],
+            },
+        }
+    )
     assert "Tiers:       not recorded" in out
     assert "reference a.py  signals: glob" in out
     assert "Excluded:    none" in out and "unmatched (no_signal): unknown" in out
@@ -487,7 +672,8 @@ def test_explain_v1_context_pack_without_v2_fields_still_renders() -> None:
 
 
 def test_ask_then_explain_shows_context_and_telemetry_sections(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Done-when of 4.5 (text output contract): ``ask`` then ``explain`` show every
     context/telemetry section in the text, and ``explain --json`` carries the telemetry."""
     make_workspace(tmp_path, [bad_entry("context-request", "bad-a")])
@@ -495,8 +681,18 @@ def test_ask_then_explain_shows_context_and_telemetry_sections(
     write_file(tmp_path, "pyproject.toml", "[project]\n")
     write_file(tmp_path, ".env", "TOKEN=x\n")
     root = str(tmp_path)
-    code, out, err = run(capsys, "ask", "run it ghost.txt", "--capability", "bad.thing",
-                         "--profile", "max", "--root", root, "--json")
+    code, out, err = run(
+        capsys,
+        "ask",
+        "run it ghost.txt",
+        "--capability",
+        "bad.thing",
+        "--profile",
+        "max",
+        "--root",
+        root,
+        "--json",
+    )
     assert code == 0, err
     run_id = json.loads(out)["run_id"]
     code, out, _ = run(capsys, "explain", run_id, "--root", root)

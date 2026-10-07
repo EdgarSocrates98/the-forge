@@ -12,6 +12,8 @@ CONTEXT_RECOMMENDATION_SCHEMA = "theforge/ContextBudgetRecommendation/v1"
 STRATEGY_EXPERIMENT_SCHEMA = "theforge/StrategyExperiment/v1"
 
 HistoryMaturity = Literal["absent", "cold", "warming", "mature", "stale"]
+
+
 def _require_int(name: str, value: object, *, positive: bool = False) -> None:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ContractError(f"{name} must be an integer")
@@ -104,9 +106,7 @@ class ContextBudgetRecommendation:
 
     def __post_init__(self) -> None:
         if self.schema != CONTEXT_RECOMMENDATION_SCHEMA:
-            raise ContractError(
-                f"context recommendation: unsupported schema {self.schema!r}"
-            )
+            raise ContractError(f"context recommendation: unsupported schema {self.schema!r}")
         _require_int(
             "context recommendation: current_budget_bytes",
             self.current_budget_bytes,
@@ -118,9 +118,7 @@ class ContextBudgetRecommendation:
             positive=True,
         )
         if self.suggested_budget_bytes >= self.current_budget_bytes:
-            raise ContractError(
-                "context recommendation: suggestion must reduce the current budget"
-            )
+            raise ContractError("context recommendation: suggestion must reduce the current budget")
         if not self.basis:
             raise ContractError("context recommendation: basis must not be empty")
 
@@ -154,14 +152,16 @@ class StrategyExperiment:
     def __post_init__(self) -> None:
         if self.schema != STRATEGY_EXPERIMENT_SCHEMA:
             raise ContractError(f"strategy experiment: unsupported schema {self.schema!r}")
-        if not all((
-            self.experiment_id,
-            self.capability,
-            self.champion,
-            self.challenger,
-            self.champion_surface,
-            self.challenger_surface,
-        )):
+        if not all(
+            (
+                self.experiment_id,
+                self.capability,
+                self.champion,
+                self.challenger,
+                self.champion_surface,
+                self.challenger_surface,
+            )
+        ):
             raise ContractError("strategy experiment: identity fields must not be empty")
         if self.champion == self.challenger:
             raise ContractError("strategy experiment: champion and challenger must differ")
@@ -176,33 +176,23 @@ class StrategyExperiment:
             positive=True,
         )
         if self.minimum_verified_runs > self.minimum_runs:
-            raise ContractError(
-                "strategy experiment: minimum_verified_runs exceeds minimum_runs"
-            )
+            raise ContractError("strategy experiment: minimum_verified_runs exceeds minimum_runs")
         _require_int("strategy experiment: observations", self.observations)
         _require_int(
             "strategy experiment: verified_observations",
             self.verified_observations,
         )
         if self.verified_observations > self.observations:
-            raise ContractError(
-                "strategy experiment: verified observations exceed observations"
-            )
+            raise ContractError("strategy experiment: verified observations exceed observations")
         if not self.operator_approval_required:
             raise ContractError("strategy experiment: promotion requires operator approval")
         if self.approval_sha256 is not None:
             check_sha256(self.approval_sha256, field="approval_sha256")
-        governed_states = {
-            "eligible_for_review", "promoted", "rejected", "stale", "cancelled"
-        }
+        governed_states = {"eligible_for_review", "promoted", "rejected", "stale", "cancelled"}
         if self.state in governed_states and not self.reasons:
-            raise ContractError(
-                f"strategy experiment: state {self.state!r} requires reasons"
-            )
+            raise ContractError(f"strategy experiment: state {self.state!r} requires reasons")
         if self.state == "promoted" and self.approval_sha256 is None:
-            raise ContractError(
-                "strategy experiment: promoted state requires approval_sha256"
-            )
+            raise ContractError("strategy experiment: promoted state requires approval_sha256")
         timestamps: dict[str, datetime] = {}
         for name in ("discovery_before", "evaluation_after"):
             raw = getattr(self, name)

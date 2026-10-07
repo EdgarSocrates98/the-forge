@@ -52,16 +52,32 @@ from theforge.security.redact import redact
 T = TypeVar("T")
 
 # Wave B routing notes, kept verbatim in RoutingSection.notes.
-ROUTING_NOTE_PREFIXES: Final = ("capability-alias", "capability-deprecated",
-                                "capability-overlap")
+ROUTING_NOTE_PREFIXES: Final = ("capability-alias", "capability-deprecated", "capability-overlap")
 UNREADABLE_PREFIX: Final = "explain-unreadable:"
 _DRIFT_PREFIX: Final = "context-drift:"
 _ROUNDS: Final = ("context-r1", "context-r2")
 _SIGNAL_KINDS: Final = ("dependencies", "file_globs", "keywords")
-RUN_SECTIONS: Final = ("task", "routing", "context", "provider", "result", "risk",
-                       "telemetry", "verification", "reproducibility")
-PLAN_SECTIONS: Final = ("task", "routing", "plan", "workspace-descriptor", "plan-result",
-                        "graph", "telemetry", "reproducibility")
+RUN_SECTIONS: Final = (
+    "task",
+    "routing",
+    "context",
+    "provider",
+    "result",
+    "risk",
+    "telemetry",
+    "verification",
+    "reproducibility",
+)
+PLAN_SECTIONS: Final = (
+    "task",
+    "routing",
+    "plan",
+    "workspace-descriptor",
+    "plan-result",
+    "graph",
+    "telemetry",
+    "reproducibility",
+)
 _PLAN_ARTIFACTS: Final = ("plan", "plan-result", "workspace-descriptor", "graph")
 NOT_RECORDED_REASON: Final = "not recorded"
 
@@ -104,12 +120,16 @@ def _routing(decision: RoutingDecision) -> RoutingSection:
                 if (signal := f"{kind}:{hit}") not in signals:
                     signals.append(signal)
     return RoutingSection(
-        status=decision.status, pattern=decision.pattern, reason=decision.reason,
-        confidence=decision.confidence.level, signals=signals,
-        candidates=list(decision.candidates), selected=list(decision.selected),
+        status=decision.status,
+        pattern=decision.pattern,
+        reason=decision.reason,
+        confidence=decision.confidence.level,
+        signals=signals,
+        candidates=list(decision.candidates),
+        selected=list(decision.selected),
         fallbacks=list(decision.fallbacks_used),
-        notes=[note for note in decision.limitations
-               if note.startswith(ROUTING_NOTE_PREFIXES)])
+        notes=[note for note in decision.limitations if note.startswith(ROUTING_NOTE_PREFIXES)],
+    )
 
 
 def _drift(telemetry: dict[str, Any] | None, receipt: ExecutionReceipt | None) -> list[str]:
@@ -118,27 +138,39 @@ def _drift(telemetry: dict[str, Any] | None, receipt: ExecutionReceipt | None) -
         return [str(path) for path in telemetry.get("context_drift") or []]
     if receipt is None:
         return []
-    return [note.removeprefix(_DRIFT_PREFIX).strip() for note in receipt.limitations
-            if note.startswith(_DRIFT_PREFIX)]
+    return [
+        note.removeprefix(_DRIFT_PREFIX).strip()
+        for note in receipt.limitations
+        if note.startswith(_DRIFT_PREFIX)
+    ]
 
 
 def _context(pack: ContextPack, rounds: int, drift: list[str]) -> ContextSection:
     workspace = pack.workspace
     return ContextSection(
-        budget_bytes=pack.budget_bytes, used_bytes=pack.used_bytes, files=len(pack.files),
-        excluded=len(pack.excluded), truncated=pack.truncated,
-        tier_bytes=dict(pack.tier_bytes), rounds=rounds,
+        budget_bytes=pack.budget_bytes,
+        used_bytes=pack.used_bytes,
+        files=len(pack.files),
+        excluded=len(pack.excluded),
+        truncated=pack.truncated,
+        tier_bytes=dict(pack.tier_bytes),
+        rounds=rounds,
         unmatched=workspace.unmatched_files if workspace else None,
-        git=workspace.git if workspace else None, drift=drift)
+        git=workspace.git if workspace else None,
+        drift=drift,
+    )
 
 
 def _result(result: ExecutionResult) -> ResultSection:
     by_epistemic = Counter(evidence.epistemic for evidence in result.evidence)
-    return ResultSection(status=result.status, findings=list(result.findings),
-                         evidence_by_epistemic=dict(sorted(by_epistemic.items())),
-                         artifacts=len(result.artifacts),
-                         duration_ms=result.metrics.duration_ms,
-                         native_trace=result.native_trace)
+    return ResultSection(
+        status=result.status,
+        findings=list(result.findings),
+        evidence_by_epistemic=dict(sorted(by_epistemic.items())),
+        artifacts=len(result.artifacts),
+        duration_ms=result.metrics.duration_ms,
+        native_trace=result.native_trace,
+    )
 
 
 def _plan(found: _Artifacts) -> PlanSection | None:
@@ -160,8 +192,9 @@ def _plan(found: _Artifacts) -> PlanSection | None:
     )
 
 
-def build_explain_report(store: RunStore, run_id: str, *,
-                         created_at: str | None = None) -> ExplainReport:
+def build_explain_report(
+    store: RunStore, run_id: str, *, created_at: str | None = None
+) -> ExplainReport:
     """The ``ExplainReport`` of run ``run_id``; reads only, never starts a provider.
 
     Raises ``ValueError`` for a malformed run id and ``LookupError`` for an unknown run.
@@ -176,24 +209,42 @@ def build_explain_report(store: RunStore, run_id: str, *,
     pack = found.typed("context", ContextPack)
     result = found.typed("result", ExecutionResult)
     verification = found.typed("verification", VerificationResult)
-    for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic",
-                 "decision", "economy", "global-stop", "plan-state"):
+    for name in (
+        "risk",
+        "telemetry",
+        *_ROUNDS,
+        "handoff",
+        "graph",
+        "diagnostic",
+        "decision",
+        "economy",
+        "global-stop",
+        "plan-state",
+    ):
         found.typed(name, ARTIFACT_TYPES[name])  # drop the ones that do not parse
     plan = _plan(found)
     telemetry = found.raw.get("telemetry")
-    is_plan = (receipt.kind == "plan" if receipt is not None
-               else any(name in found.raw for name in _PLAN_ARTIFACTS))
+    is_plan = (
+        receipt.kind == "plan"
+        if receipt is not None
+        else any(name in found.raw for name in _PLAN_ARTIFACTS)
+    )
     rounds = sum(1 for name in _ROUNDS if name in found.raw)
     error = receipt.error if receipt is not None else None
     reproducibility = receipt.reproducibility if receipt is not None else None
 
     sections: dict[str, bool] = {
-        "receipt": receipt is not None, "task": task is not None,
-        "routing": decision is not None, "context": pack is not None,
+        "receipt": receipt is not None,
+        "task": task is not None,
+        "routing": decision is not None,
+        "context": pack is not None,
         "provider": receipt is not None and receipt.provider is not None,
-        "result": result is not None, "risk": "risk" in found.raw,
-        "telemetry": telemetry is not None, "verification": verification is not None,
-        "reproducibility": reproducibility is not None, "plan": plan is not None,
+        "result": result is not None,
+        "risk": "risk" in found.raw,
+        "telemetry": telemetry is not None,
+        "verification": verification is not None,
+        "reproducibility": reproducibility is not None,
+        "plan": plan is not None,
         "workspace-descriptor": plan is not None and plan.workspace_descriptor is not None,
         "plan-result": plan is not None and plan.result is not None,
         "graph": "graph" in found.raw,
@@ -204,7 +255,9 @@ def build_explain_report(store: RunStore, run_id: str, *,
 
     provider = receipt.provider if receipt is not None else None
     return ExplainReport(
-        producer=PRODUCER, created_at=created_at or utc_now(), run_id=run_id,
+        producer=PRODUCER,
+        created_at=created_at or utc_now(),
+        run_id=run_id,
         kind="plan" if is_plan else "run",
         status=receipt.status if receipt is not None else None,
         intent=task.intent if task else None,
@@ -212,27 +265,38 @@ def build_explain_report(store: RunStore, run_id: str, *,
         profile=task.budget_profile if task else None,
         routing=_routing(decision) if decision else None,
         context=(_context(pack, rounds, _drift(telemetry, receipt)) if pack else None),
-        provider=(ProviderSection(id=provider.id, version=provider.version,
-                                  trust=provider.trust,
-                                  observed_version=provider.observed_version,
-                                  fingerprint=provider.fingerprint,
-                                  surface_fingerprint=provider.surface_fingerprint,
-                                  native_surface_fingerprint=(
-                                      provider.native_surface_fingerprint),
-                                  provider_receipt=receipt.provider_receipt
-                                  if receipt is not None else None)
-                  if provider is not None else None),
+        provider=(
+            ProviderSection(
+                id=provider.id,
+                version=provider.version,
+                trust=provider.trust,
+                observed_version=provider.observed_version,
+                fingerprint=provider.fingerprint,
+                surface_fingerprint=provider.surface_fingerprint,
+                native_surface_fingerprint=(provider.native_surface_fingerprint),
+                provider_receipt=receipt.provider_receipt if receipt is not None else None,
+            )
+            if provider is not None
+            else None
+        ),
         result=_result(result) if result else None,
-        risk=found.raw.get("risk"), telemetry=telemetry, verification=verification,
-        reproducibility=reproducibility or ReproducibilityInfo(
-            level="unknown", reasons=[NOT_RECORDED_REASON]), plan=plan,
+        risk=found.raw.get("risk"),
+        telemetry=telemetry,
+        verification=verification,
+        reproducibility=reproducibility
+        or ReproducibilityInfo(level="unknown", reasons=[NOT_RECORDED_REASON]),
+        plan=plan,
         parent_run=receipt.parent_run if receipt else None,
         replay_of=receipt.replay_of if receipt else None,
         resumed_from=receipt.resumed_from if receipt else None,
-        error=error, error_family=family_of(error.code) if error else None,
+        error=error,
+        error_family=family_of(error.code) if error else None,
         integrity=verify_run_hashes(store, run_id),
-        limitations=[*(receipt.limitations if receipt else []),
-                     *(f"{UNREADABLE_PREFIX} {name}" for name in found.unreadable)],
+        limitations=[
+            *(receipt.limitations if receipt else []),
+            *(f"{UNREADABLE_PREFIX} {name}" for name in found.unreadable),
+        ],
         unknowns=list(receipt.unknowns) if receipt else [],
-        not_recorded=not_recorded, artifacts=dict(found.raw))
-
+        not_recorded=not_recorded,
+        artifacts=dict(found.raw),
+    )

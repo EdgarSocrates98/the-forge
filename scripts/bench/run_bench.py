@@ -98,12 +98,23 @@ SCHEMA: Final = "theforge-bench/v1"
 REPO: Final = Path(__file__).resolve().parents[2]
 FIXTURE_PROVIDERS: Final = REPO / "tests" / "fixtures" / "providers"
 MEASUREMENTS: Final = (
-    "cli_startup", "registry_cold", "registry_warm", "scan_1k", "scan_10k", "routing_10k",
-    "context_1k_cold", "context_1k_warm", "context_10k_cold", "context_10k_warm",
+    "cli_startup",
+    "registry_cold",
+    "registry_warm",
+    "scan_1k",
+    "scan_10k",
+    "routing_10k",
+    "context_1k_cold",
+    "context_1k_warm",
+    "context_10k_cold",
+    "context_10k_warm",
     "persist_run",
     # Cycle 3 surfaces (Wave W): the capability graph build, the warm incremental
     # refresh that feeds it, plan validation, replay verification and explain.
-    "graph_build", "graph_refresh_warm", "plan_validate", "replay_verify",
+    "graph_build",
+    "graph_refresh_warm",
+    "plan_validate",
+    "replay_verify",
     "explain_build",
 )
 DEFAULT_RUNS: Final = 10
@@ -142,18 +153,21 @@ class Regression:
 
 # --- measuring -------------------------------------------------------------------------------
 
+
 def summarize(name: str, samples_ns: list[int]) -> Measurement:
     """Median and nearest-rank p90 of ``samples_ns``, in milliseconds (3 decimals)."""
     if not samples_ns:
         raise ValueError("at least one sample is required")
     ms = sorted(s / 1_000_000 for s in samples_ns)
     p90 = ms[math.ceil(0.9 * len(ms)) - 1]
-    return Measurement(name=name, median_ms=round(statistics.median(ms), 3),
-                       p90_ms=round(p90, 3), runs=len(ms))
+    return Measurement(
+        name=name, median_ms=round(statistics.median(ms), 3), p90_ms=round(p90, 3), runs=len(ms)
+    )
 
 
-def measure(name: str, fn: Callable[[], object], runs: int, *,
-            setup: Callable[[], object] | None = None) -> Measurement:
+def measure(
+    name: str, fn: Callable[[], object], runs: int, *, setup: Callable[[], object] | None = None
+) -> Measurement:
     """Time ``fn`` ``runs`` times; ``setup`` runs before each repetition and is not timed."""
     if runs < 1:
         raise ValueError(f"runs must be >= 1, got {runs}")
@@ -169,11 +183,13 @@ def measure(name: str, fn: Callable[[], object], runs: int, *,
 
 # --- output, budgets -------------------------------------------------------------------------
 
+
 def _git(*args: str) -> subprocess.CompletedProcess[str] | None:
     """Run a read-only git command in the repository; ``None`` when git is unavailable."""
     try:
-        return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True,
-                              timeout=10, check=False)
+        return subprocess.run(
+            ["git", *args], cwd=REPO, capture_output=True, text=True, timeout=10, check=False
+        )
     except (OSError, subprocess.SubprocessError):
         return None
 
@@ -198,7 +214,7 @@ def collect_origin() -> dict[str, str | bool | None]:
     """Where and when the measurement was taken (no host name or user data)."""
     return {
         "machine": f"{platform.machine() or 'unknown'}; {os.cpu_count() or '?'} cpus; "
-                   f"{platform.processor() or 'unknown cpu'}",
+        f"{platform.processor() or 'unknown cpu'}",
         "os": platform.platform(),
         "python": f"{platform.python_implementation()} {platform.python_version()}",
         "date": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -215,8 +231,9 @@ def _result_entry(m: Measurement) -> dict[str, Any]:
     return entry
 
 
-def build_report(results: Mapping[str, Measurement],
-                 origin: Mapping[str, str | bool | None]) -> dict[str, Any]:
+def build_report(
+    results: Mapping[str, Measurement], origin: Mapping[str, str | bool | None]
+) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
         "origin": dict(origin),
@@ -234,18 +251,25 @@ def _load_object(path: Path) -> dict[str, Any]:
 def _load_report(path: Path) -> dict[str, Any]:
     data = _load_object(path)
     if data.get("schema") != SCHEMA:
-        raise ValueError(f"{path}: unsupported schema {data.get('schema')!r}, "
-                         f"expected {SCHEMA!r}")
+        raise ValueError(f"{path}: unsupported schema {data.get('schema')!r}, expected {SCHEMA!r}")
     return data
 
 
 def load_results(path: Path) -> dict[str, Measurement]:
-    return {name: Measurement(
-                name=name, median_ms=float(r["median_ms"]), p90_ms=float(r["p90_ms"]),
-                runs=int(r["runs"]),
-                hashing=({k: int(v) for k, v in r["hashing"].items()}
-                         if r.get("hashing") is not None else None))
-            for name, r in _load_report(path)["results"].items()}
+    return {
+        name: Measurement(
+            name=name,
+            median_ms=float(r["median_ms"]),
+            p90_ms=float(r["p90_ms"]),
+            runs=int(r["runs"]),
+            hashing=(
+                {k: int(v) for k, v in r["hashing"].items()}
+                if r.get("hashing") is not None
+                else None
+            ),
+        )
+        for name, r in _load_report(path)["results"].items()
+    }
 
 
 def derive_budgets(baseline: Path, factor: float = DEFAULT_FACTOR) -> dict[str, Budget]:
@@ -254,33 +278,53 @@ def derive_budgets(baseline: Path, factor: float = DEFAULT_FACTOR) -> dict[str, 
         raise ValueError(f"factor must be >= 1.0, got {factor}")
     head = _load_report(baseline).get("origin", {}).get("git_head") or "unknown HEAD"
     origin = f"{baseline.as_posix()} @ {head}"
-    return {name: Budget(budget_ms=round(m.median_ms * factor, 3), baseline_ms=m.median_ms,
-                         factor=factor, origin=origin)
-            for name, m in load_results(baseline).items()}
+    return {
+        name: Budget(
+            budget_ms=round(m.median_ms * factor, 3),
+            baseline_ms=m.median_ms,
+            factor=factor,
+            origin=origin,
+        )
+        for name, m in load_results(baseline).items()
+    }
 
 
 def budgets_document(budgets: Mapping[str, Budget]) -> dict[str, Any]:
-    return {name: {"budget_ms": b.budget_ms, "baseline_ms": b.baseline_ms,
-                   "factor": b.factor, "origin": b.origin}
-            for name, b in budgets.items()}
+    return {
+        name: {
+            "budget_ms": b.budget_ms,
+            "baseline_ms": b.baseline_ms,
+            "factor": b.factor,
+            "origin": b.origin,
+        }
+        for name, b in budgets.items()
+    }
 
 
 def load_budgets(path: Path) -> dict[str, Budget]:
-    return {name: Budget(budget_ms=float(b["budget_ms"]), baseline_ms=float(b["baseline_ms"]),
-                         factor=float(b["factor"]), origin=str(b["origin"]))
-            for name, b in _load_object(path).items()}
+    return {
+        name: Budget(
+            budget_ms=float(b["budget_ms"]),
+            baseline_ms=float(b["baseline_ms"]),
+            factor=float(b["factor"]),
+            origin=str(b["origin"]),
+        )
+        for name, b in _load_object(path).items()
+    }
 
 
-def compare_budgets(results: Mapping[str, Measurement],
-                    budgets: Mapping[str, Budget]) -> list[Regression]:
+def compare_budgets(
+    results: Mapping[str, Measurement], budgets: Mapping[str, Budget]
+) -> list[Regression]:
     """Every measurement whose median is above its budget (unbudgeted ones are skipped)."""
-    return [Regression(name=name, median_ms=m.median_ms, budget_ms=budgets[name].budget_ms)
-            for name, m in results.items()
-            if name in budgets and m.median_ms > budgets[name].budget_ms]
+    return [
+        Regression(name=name, median_ms=m.median_ms, budget_ms=budgets[name].budget_ms)
+        for name, m in results.items()
+        if name in budgets and m.median_ms > budgets[name].budget_ms
+    ]
 
 
-def missing_budgets(results: Mapping[str, Measurement],
-                    budgets: Mapping[str, Budget]) -> list[str]:
+def missing_budgets(results: Mapping[str, Measurement], budgets: Mapping[str, Budget]) -> list[str]:
     return [name for name in results if name not in budgets]
 
 
@@ -295,6 +339,7 @@ def _check(results: Mapping[str, Measurement], budgets: Mapping[str, Budget]) ->
 
 
 # --- the procedure ---------------------------------------------------------------------------
+
 
 @contextlib.contextmanager
 def _isolated_env(config_dir: Path, cache_dir: Path) -> Iterator[None]:
@@ -318,15 +363,26 @@ def _write_providers(config_dir: Path) -> None:
     lines: list[str] = []
     for pid in ("fixture-spark", "fixture-api"):
         argv = [sys.executable, str(script), str(FIXTURE_PROVIDERS / f"{pid}.json")]
-        lines += ["[[providers]]", f"id = {json.dumps(pid)}", f"argv = {json.dumps(argv)}",
-                  'trust = "local"', ""]
+        lines += [
+            "[[providers]]",
+            f"id = {json.dumps(pid)}",
+            f"argv = {json.dumps(argv)}",
+            'trust = "local"',
+            "",
+        ]
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "providers.toml").write_text("\n".join(lines), encoding="utf-8")
 
 
 def _task(root: Path, intent: str) -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id=new_run_id(), intent=intent,
-                    workspace_root=str(root), budget_profile=PROFILE)
+    return TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id=new_run_id(),
+        intent=intent,
+        workspace_root=str(root),
+        budget_profile=PROFILE,
+    )
 
 
 def _scan(root: Path, expected: int) -> WorkspaceScan:
@@ -339,31 +395,45 @@ def _scan(root: Path, expected: int) -> WorkspaceScan:
 def _telemetry(run_id: str) -> RunTelemetry:
     p = PROFILES[PROFILE]
     snapshot = ProfileSnapshot(
-        name=p.name, budget_bytes=p.budget_bytes, max_files=p.max_files, tiers=sorted(p.tiers),
-        effective_tiers=[], negotiation_rounds=p.negotiation_rounds,
-        max_providers=p.max_providers, fallback=p.fallback, verification=p.verification,
-        execute_timeout_s=p.execute_timeout_s)
-    return RunTelemetry(producer=PRODUCER, created_at=utc_now(), run_id=run_id,
-                        profile=snapshot)
+        name=p.name,
+        budget_bytes=p.budget_bytes,
+        max_files=p.max_files,
+        tiers=sorted(p.tiers),
+        effective_tiers=[],
+        negotiation_rounds=p.negotiation_rounds,
+        max_providers=p.max_providers,
+        fallback=p.fallback,
+        verification=p.verification,
+        execute_timeout_s=p.execute_timeout_s,
+    )
+    return RunTelemetry(producer=PRODUCER, created_at=utc_now(), run_id=run_id, profile=snapshot)
 
 
-def _recorded_run(root: Path, registry: Registry,
-                  ) -> tuple[RunStore, str, dict[str, object]]:
+def _recorded_run(
+    root: Path,
+    registry: Registry,
+) -> tuple[RunStore, str, dict[str, object]]:
     """One real echo run; returns its store, run id and the artifacts ``persist_run`` rewrites."""
     root.mkdir(parents=True)
     init_workspace(root)
     (root / "notes.md").write_text("# Notes\n\nbenchmark run\n", encoding="utf-8")
     store = RunStore(root / ".forge")
     outcome = Forger(root, registry, store).ask(
-        AskRequest(intent="echo the notes", capability="demo.echo", profile=PROFILE))
+        AskRequest(intent="echo the notes", capability="demo.echo", profile=PROFILE)
+    )
     if outcome.status != "ok":
         raise RuntimeError(f"echo run for persist_run ended {outcome.status}: {outcome.error}")
     run = outcome.run_id
-    types: dict[str, type] = {"task": TaskSpec, "routing": RoutingDecision,
-                              "context": ContextPack, "result": ExecutionResult,
-                              "receipt": ExecutionReceipt}
-    artifacts: dict[str, object] = {name: store.read_contract(run, name, cls)
-                                    for name, cls in types.items()}
+    types: dict[str, type] = {
+        "task": TaskSpec,
+        "routing": RoutingDecision,
+        "context": ContextPack,
+        "result": ExecutionResult,
+        "receipt": ExecutionReceipt,
+    }
+    artifacts: dict[str, object] = {
+        name: store.read_contract(run, name, cls) for name, cls in types.items()
+    }
     artifacts["telemetry"] = _telemetry(run)  # the Forger does not write telemetry yet
     return store, run, artifacts
 
@@ -376,8 +446,9 @@ def _backdate(root: Path) -> None:
             os.utime(path, ns=(past, past))
 
 
-def context_step(task: TaskSpec, scan: WorkspaceScan, cache_dir: Path, *,
-                 enabled: bool) -> tuple[ContextPack, HashStats]:
+def context_step(
+    task: TaskSpec, scan: WorkspaceScan, cache_dir: Path, *, enabled: bool
+) -> tuple[ContextPack, HashStats]:
     """The context step of a run without git: open the store, build the pack, save."""
     store = FingerprintStore(scan.root, cache_dir=cache_dir, enabled=enabled)
     pack = build_context_pack(task, "echo-forge", list(DOC_GLOBS), scan, fingerprints=store)
@@ -388,12 +459,17 @@ def context_step(task: TaskSpec, scan: WorkspaceScan, cache_dir: Path, *,
 
 
 def hashing_of(stats: HashStats) -> dict[str, int]:
-    return {"files_hashed": stats.files_hashed, "bytes_hashed": stats.bytes_hashed,
-            "cache_hits": stats.hits, "cache_misses": stats.misses}
+    return {
+        "files_hashed": stats.files_hashed,
+        "bytes_hashed": stats.bytes_hashed,
+        "cache_hits": stats.hits,
+        "cache_misses": stats.misses,
+    }
 
 
-def check_context_cache(label: str, cold: tuple[ContextPack, HashStats],
-                        warm: tuple[ContextPack, HashStats]) -> None:
+def check_context_cache(
+    label: str, cold: tuple[ContextPack, HashStats], warm: tuple[ContextPack, HashStats]
+) -> None:
     """The warm pack equals the cold one and re-read no whole file (11.x, 5.1)."""
     (cold_pack, cold_stats), (warm_pack, warm_stats) = cold, warm
     references = sum(1 for f in warm_pack.files if f.tier == "reference")
@@ -408,10 +484,14 @@ def check_context_cache(label: str, cold: tuple[ContextPack, HashStats],
         problems.append(f"warm run hit {warm_stats.hits} for {references} reference item(s)")
     excerpts = len(warm_pack.files) - references  # line ranges are never cached
     if warm_stats.files_hashed != excerpts:
-        problems.append(f"warm run hashed {warm_stats.files_hashed} file(s) for "
-                        f"{excerpts} excerpt(s)")
+        problems.append(
+            f"warm run hashed {warm_stats.files_hashed} file(s) for {excerpts} excerpt(s)"
+        )
     if (warm_pack.files, warm_pack.excluded, warm_pack.used_bytes) != (
-            cold_pack.files, cold_pack.excluded, cold_pack.used_bytes):
+        cold_pack.files,
+        cold_pack.excluded,
+        cold_pack.used_bytes,
+    ):
         problems.append("warm pack differs from the cold pack")
     if problems:
         raise RuntimeError(f"context_{label}: " + "; ".join(problems))
@@ -422,30 +502,43 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
     _write_providers(config_dir)
     results: dict[str, Measurement] = {}
 
-    def record(name: str, fn: Callable[[], object], *,
-               setup: Callable[[], object] | None = None) -> None:
+    def record(
+        name: str, fn: Callable[[], object], *, setup: Callable[[], object] | None = None
+    ) -> None:
         results[name] = measure(name, fn, runs, setup=setup)
         log(f"{name}: median {results[name].median_ms} ms, p90 {results[name].p90_ms} ms")
 
     with _isolated_env(config_dir, cache_root / "env"):
         env = dict(os.environ)
-        record("cli_startup", lambda: subprocess.run(
-            [sys.executable, "-m", "theforge", "--help"], env=env, capture_output=True,
-            check=True, timeout=60))
+        record(
+            "cli_startup",
+            lambda: subprocess.run(
+                [sys.executable, "-m", "theforge", "--help"],
+                env=env,
+                capture_output=True,
+                check=True,
+                timeout=60,
+            ),
+        )
 
         cold_dirs = iter(cache_root / f"cold-{i}" for i in range(runs))
         cold: list[Path] = []
-        record("registry_cold",
-               lambda: Registry(None, user_dir=config_dir, cache_dir=cold[-1]).records(),
-               setup=lambda: cold.append(next(cold_dirs)))
+        record(
+            "registry_cold",
+            lambda: Registry(None, user_dir=config_dir, cache_dir=cold[-1]).records(),
+            setup=lambda: cold.append(next(cold_dirs)),
+        )
         warm = Registry(None, user_dir=config_dir, cache_dir=cache_root / "warm")
         records = warm.records()
         if any(r.manifest is None for r in records):
-            raise RuntimeError("a benchmark provider failed to describe: "
-                               + ", ".join(r.entry.id for r in records if r.manifest is None))
-        record("registry_warm",
-               lambda: Registry(None, user_dir=config_dir,
-                                cache_dir=cache_root / "warm").records())
+            raise RuntimeError(
+                "a benchmark provider failed to describe: "
+                + ", ".join(r.entry.id for r in records if r.manifest is None)
+            )
+        record(
+            "registry_warm",
+            lambda: Registry(None, user_dir=config_dir, cache_dir=cache_root / "warm").records(),
+        )
 
         ws: dict[str, Path] = {}
         for label, count in (("1k", 1_000), ("10k", 10_000)):
@@ -472,9 +565,14 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
                 if enabled:
                     context_step(task, scan, fp_dir, enabled=True)  # prime the cache, untimed
 
-                def step(task: TaskSpec = task, scan: WorkspaceScan = scan,
-                         fp_dir: Path = fp_dir, enabled: bool = enabled, mode: str = mode,
-                         last: dict[str, tuple[ContextPack, HashStats]] = last) -> None:
+                def step(
+                    task: TaskSpec = task,
+                    scan: WorkspaceScan = scan,
+                    fp_dir: Path = fp_dir,
+                    enabled: bool = enabled,
+                    mode: str = mode,
+                    last: dict[str, tuple[ContextPack, HashStats]] = last,
+                ) -> None:
                     last[mode] = context_step(task, scan, fp_dir, enabled=enabled)
 
                 name = f"context_{label}_{mode}"
@@ -499,32 +597,44 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
         # replay verification and explain — all deterministic paths; the semantic
         # planner is measured separately by run_runs_bench.py (semantic_calls).
         descriptor = describe_workspace(ws["10k"], list(records), scans["10k"])
-        record("graph_build",
-               lambda: build_capability_graph(list(records), descriptor))
+        record("graph_build", lambda: build_capability_graph(list(records), descriptor))
 
         intel_root = tmp / "ws-intel"
         generate_workspace(intel_root, 1_000, seed=SEED)
         init_workspace(intel_root)
         intel_scan = _scan(intel_root, 1_000)
         refresh_intel(intel_root, intel_scan, list(records))  # prime the snapshot, untimed
-        record("graph_refresh_warm",
-               lambda: refresh_intel(intel_root, intel_scan, list(records)))
+        record("graph_refresh_warm", lambda: refresh_intel(intel_root, intel_scan, list(records)))
 
         plan = ExecutionPlan(
-            producer=PRODUCER, created_at=utc_now(), status="validated",
-            plan_run="bench-plan", task_id="bench-task", pattern="pipeline",
-            source="file", profile="max",
-            nodes=[PlanNode(id=f"n{i}", role="standalone",
-                            provider="echo-forge", capability="demo.echo",
-                            action="echo",
-                            depends_on=[PlanDependency(node=f"n{i - 1}",
-                                                       epistemic="explicit",
-                                                       evidence="bench")]
-                            if i else [])
-                   for i in range(32)])
-        record("plan_validate",
-               lambda: check_plan(plan, {r.entry.id: r for r in records},
-                                  PROFILES["max"]))
+            producer=PRODUCER,
+            created_at=utc_now(),
+            status="validated",
+            plan_run="bench-plan",
+            task_id="bench-task",
+            pattern="pipeline",
+            source="file",
+            profile="max",
+            nodes=[
+                PlanNode(
+                    id=f"n{i}",
+                    role="standalone",
+                    provider="echo-forge",
+                    capability="demo.echo",
+                    action="echo",
+                    depends_on=[
+                        PlanDependency(node=f"n{i - 1}", epistemic="explicit", evidence="bench")
+                    ]
+                    if i
+                    else [],
+                )
+                for i in range(32)
+            ],
+        )
+        record(
+            "plan_validate",
+            lambda: check_plan(plan, {r.entry.id: r for r in records}, PROFILES["max"]),
+        )
 
         record("replay_verify", lambda: verify_run_hashes(store, run_id))
         record("explain_build", lambda: build_explain_report(store, run_id))
@@ -532,6 +642,7 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
 
 
 # --- command line ----------------------------------------------------------------------------
+
 
 def _emit(document: Mapping[str, Any], out: Path | None) -> None:
     text = json.dumps(document, indent=2) + "\n"
@@ -544,18 +655,29 @@ def _emit(document: Mapping[str, Any], out: Path | None) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="The Forge benchmark (baseline and budgets).")
-    parser.add_argument("--quick", action="store_true",
-                        help=f"{QUICK_RUNS} repetitions per measurement "
-                             f"(default {DEFAULT_RUNS})")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help=f"{QUICK_RUNS} repetitions per measurement (default {DEFAULT_RUNS})",
+    )
     parser.add_argument("--runs", type=int, help="repetitions per measurement")
     parser.add_argument("--out", type=Path, help="write the results JSON here (else stdout)")
     parser.add_argument("--check", type=Path, help="budgets JSON; exit 1 on any regression")
-    parser.add_argument("--results", type=Path,
-                        help="check this results JSON instead of measuring (needs --check)")
-    parser.add_argument("--budgets-from", type=Path, metavar="BASELINE",
-                        help="write budgets derived from this results JSON instead of measuring")
-    parser.add_argument("--factor", type=float, default=DEFAULT_FACTOR,
-                        help=f"budget = factor x baseline median (default {DEFAULT_FACTOR})")
+    parser.add_argument(
+        "--results", type=Path, help="check this results JSON instead of measuring (needs --check)"
+    )
+    parser.add_argument(
+        "--budgets-from",
+        type=Path,
+        metavar="BASELINE",
+        help="write budgets derived from this results JSON instead of measuring",
+    )
+    parser.add_argument(
+        "--factor",
+        type=float,
+        default=DEFAULT_FACTOR,
+        help=f"budget = factor x baseline median (default {DEFAULT_FACTOR})",
+    )
     args = parser.parse_args(argv)
     if args.budgets_from is not None:
         if args.results is not None or args.check is not None:
@@ -574,8 +696,7 @@ def main(argv: list[str] | None = None) -> int:
     runs = args.runs or (QUICK_RUNS if args.quick else DEFAULT_RUNS)
     if runs < 1:
         parser.error("--runs must be >= 1")
-    with tempfile.TemporaryDirectory(prefix="theforge-bench-",
-                                     ignore_cleanup_errors=True) as tmp:
+    with tempfile.TemporaryDirectory(prefix="theforge-bench-", ignore_cleanup_errors=True) as tmp:
         results = run_procedure(Path(tmp), runs, lambda line: print(line, file=sys.stderr))
     _emit(build_report(results, collect_origin()), args.out)
     return _check(results, load_budgets(args.check)) if args.check is not None else 0

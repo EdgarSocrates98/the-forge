@@ -74,8 +74,8 @@ class SignatureRef:
 class RuntimeRequirements:
     """What the provider needs at runtime, as declared by the publisher."""
 
-    python: str | None = None          # e.g. ">=3.11"
-    offline: bool | None = None        # None = undeclared
+    python: str | None = None  # e.g. ">=3.11"
+    offline: bool | None = None  # None = undeclared
     requires_network: bool | None = None
     requires_credentials: bool | None = None
 
@@ -97,7 +97,7 @@ class ForgeRegistryEntry:
     technologies: list[str] = field(default_factory=list)
     platforms: list[str] = field(default_factory=list)
     runtime: RuntimeRequirements | None = None
-    hashes: dict[str, str] = field(default_factory=dict)   # name -> sha256 hex
+    hashes: dict[str, str] = field(default_factory=dict)  # name -> sha256 hex
     signatures: list[SignatureRef] = field(default_factory=list)
     dependencies: list[str] = field(default_factory=list)  # pinned "name==ver"
     source_repository: str | None = None
@@ -109,24 +109,26 @@ class ForgeRegistryEntry:
     def __post_init__(self) -> None:
         if self.schema != REGISTRY_ENTRY_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {REGISTRY_ENTRY_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {REGISTRY_ENTRY_SCHEMA!r}"
+            )
         if not PROVIDER_ID.match(self.provider):
             raise ContractError(f"registry entry: invalid provider id {self.provider!r}")
         if parse_semver(self.version) is None:
             raise ContractError(
-                f"registry entry {self.provider!r}: version {self.version!r} is not "
-                "SemVer 2.0.0")
-        if self.manifest_sha256 is not None and not SHA256_RE.fullmatch(
-                self.manifest_sha256):
+                f"registry entry {self.provider!r}: version {self.version!r} is not SemVer 2.0.0"
+            )
+        if self.manifest_sha256 is not None and not SHA256_RE.fullmatch(self.manifest_sha256):
             raise ContractError("registry entry: manifest_sha256 must be a sha256 hex")
         for name, digest in self.hashes.items():
             if not SHA256_RE.fullmatch(digest):
                 raise ContractError(
-                    f"registry entry {self.provider!r}: hash {name!r} is not sha256")
+                    f"registry entry {self.provider!r}: hash {name!r} is not sha256"
+                )
         for platform in self.platforms:
             if not re.fullmatch(PLATFORM_RE_SRC, platform):
                 raise ContractError(
-                    f"registry entry {self.provider!r}: invalid platform {platform!r}")
+                    f"registry entry {self.provider!r}: invalid platform {platform!r}"
+                )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -155,11 +157,11 @@ class RegistryDocument:
     def __post_init__(self) -> None:
         if self.schema != REGISTRY_DOCUMENT_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {REGISTRY_DOCUMENT_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {REGISTRY_DOCUMENT_SCHEMA!r}"
+            )
         keys = [(e.provider, e.version) for e in self.entries]
         if len(set(keys)) != len(keys):
-            raise ContractError(
-                "registry document: duplicate provider@version entries")
+            raise ContractError("registry document: duplicate provider@version entries")
 
 
 REMOTE_CANDIDATE_SCHEMA = "theforge/RemoteProviderCandidate/v1"
@@ -181,8 +183,8 @@ class RemoteProviderCandidate:
 
     schema: str = REMOTE_CANDIDATE_SCHEMA
     # Where the claim came from.
-    source: str                       # configured source id (registries.toml)
-    registry: str                     # declared registry identity id
+    source: str  # configured source id (registries.toml)
+    registry: str  # declared registry identity id
     registry_url: str | None = None
     # What is claimed.
     provider: str
@@ -209,13 +211,14 @@ class RemoteProviderCandidate:
     def __post_init__(self) -> None:
         if self.schema != REMOTE_CANDIDATE_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {REMOTE_CANDIDATE_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {REMOTE_CANDIDATE_SCHEMA!r}"
+            )
         if not PROVIDER_ID.match(self.provider):
             raise ContractError(f"remote candidate: invalid provider id {self.provider!r}")
         if parse_semver(self.version) is None:
             raise ContractError(
-                f"remote candidate {self.provider!r}: version {self.version!r} is not "
-                "SemVer 2.0.0")
+                f"remote candidate {self.provider!r}: version {self.version!r} is not SemVer 2.0.0"
+            )
         if not self.source:
             raise ContractError("remote candidate: source must not be empty")
         if not self.registry:

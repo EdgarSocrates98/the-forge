@@ -134,8 +134,9 @@ def test_unprintable_exception_message_does_not_break_the_diagnostic() -> None:
 
 def test_diagnostic_round_trips_strictly_and_is_redacted_by_the_contract_view() -> None:
     exc = _raise_inside_theforge()
-    diagnostic = build_diagnostic(exc, stage="s", code=Codes.INTERNAL,
-                                  created_at="2026-10-04T00:00:00.000000Z")
+    diagnostic = build_diagnostic(
+        exc, stage="s", code=Codes.INTERNAL, created_at="2026-10-04T00:00:00.000000Z"
+    )
     assert diagnostic.created_at == "2026-10-04T00:00:00.000000Z"
     again = from_dict(Diagnostic, json.loads(_dump(diagnostic)), strict=True)
     assert again == diagnostic
@@ -149,5 +150,6 @@ def test_secret_in_stage_is_redacted() -> None:
 @pytest.mark.parametrize("bad", ["", "theforgex.mod"])
 def test_contract_still_rejects_foreign_frames(bad: str) -> None:
     from theforge.contracts import DiagnosticFrame
+
     with pytest.raises(ContractError):
         DiagnosticFrame(module=bad, function="f", line=1)

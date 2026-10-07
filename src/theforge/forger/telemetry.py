@@ -39,11 +39,21 @@ Phase = Literal["scan", "routing", "context", "provider"]
 
 PHASES: Final[tuple[Phase, ...]] = get_args(Phase)
 COUNTERS: Final[tuple[str, ...]] = (
-    "files_scanned", "files_selected", "files_hashed", "bytes_hashed",
-    "cache_hits", "cache_misses", "context_bytes",
-    "providers_executed", "fallbacks_used", "negotiation_rounds",
-    "semantic_planner_calls", "semantic_resolver_calls",
-    "files_cited", "evidence_returned", "findings_returned",
+    "files_scanned",
+    "files_selected",
+    "files_hashed",
+    "bytes_hashed",
+    "cache_hits",
+    "cache_misses",
+    "context_bytes",
+    "providers_executed",
+    "fallbacks_used",
+    "negotiation_rounds",
+    "semantic_planner_calls",
+    "semantic_resolver_calls",
+    "files_cited",
+    "evidence_returned",
+    "findings_returned",
 )
 REVALIDATION_UNDECLARED_LIMITATION: Final = "provider-revalidation-undeclared"
 
@@ -74,9 +84,14 @@ class SpanHandle:
 
 
 class TelemetryRecorder:
-    def __init__(self, run_id: str, profile: ContextProfile, *,
-                 clock: Callable[[], float] = perf_counter,
-                 now: Callable[[], str] = utc_now) -> None:
+    def __init__(
+        self,
+        run_id: str,
+        profile: ContextProfile,
+        *,
+        clock: Callable[[], float] = perf_counter,
+        now: Callable[[], str] = utc_now,
+    ) -> None:
         self._run_id = run_id
         self._profile = profile
         self._clock = clock
@@ -94,8 +109,9 @@ class TelemetryRecorder:
         self._span_seq = 0
 
     @contextmanager
-    def phase(self, name: Phase, *, span_name: str | None = None,
-              parent: str | None = None, **attrs: str) -> Iterator[None]:
+    def phase(
+        self, name: Phase, *, span_name: str | None = None, parent: str | None = None, **attrs: str
+    ) -> Iterator[None]:
         """Time the block (also when it raises), add it to the phase total and
         record it as a trace span — ``span_name`` overrides the displayed name
         (``provider:<id>``, ``negotiation``…) while the metric keeps its name."""
@@ -110,8 +126,7 @@ class TelemetryRecorder:
                 self._phase_ms[name] = self._phase_ms.get(name, 0.0) + handle.duration_ms
 
     @contextmanager
-    def span(self, name: str, *, parent: str | None = None,
-             **attrs: str) -> Iterator[SpanHandle]:
+    def span(self, name: str, *, parent: str | None = None, **attrs: str) -> Iterator[SpanHandle]:
         """Record one trace span around the block; the handle's ``attrs`` is the
         late-bound attribute bag. A raising block leaves a ``status="error"``
         span behind — the trace records that it happened and that it failed."""
@@ -135,10 +150,17 @@ class TelemetryRecorder:
             handle.duration_ms = (self._clock() - start) * 1000.0
             attributes = {**{k: str(v) for k, v in attrs.items()}, **handle.attrs}
             with self._span_lock:
-                self._spans.append(Span(
-                    id=span_id, name=name, start_ms=round((start - t0) * 1000.0, 3),
-                    duration_ms=round(handle.duration_ms, 3), parent=parent,
-                    status=status, attributes=attributes))
+                self._spans.append(
+                    Span(
+                        id=span_id,
+                        name=name,
+                        start_ms=round((start - t0) * 1000.0, 3),
+                        duration_ms=round(handle.duration_ms, 3),
+                        parent=parent,
+                        status=status,
+                        attributes=attributes,
+                    )
+                )
 
     def count(self, name: str, value: int) -> None:
         """Add ``value`` to the counter ``name`` (a counter field of RunTelemetry)."""
@@ -196,20 +218,33 @@ class TelemetryRecorder:
     def build(self) -> RunTelemetry:
         p = self._profile
         snapshot = ProfileSnapshot(
-            name=p.name, budget_bytes=p.budget_bytes, max_files=p.max_files,
-            tiers=_ordered_tiers(p.tiers), effective_tiers=list(self._effective_tiers),
-            negotiation_rounds=p.negotiation_rounds, max_providers=p.max_providers,
-            fallback=p.fallback, verification=p.verification,
+            name=p.name,
+            budget_bytes=p.budget_bytes,
+            max_files=p.max_files,
+            tiers=_ordered_tiers(p.tiers),
+            effective_tiers=list(self._effective_tiers),
+            negotiation_rounds=p.negotiation_rounds,
+            max_providers=p.max_providers,
+            fallback=p.fallback,
+            verification=p.verification,
             execute_timeout_s=p.execute_timeout_s,
         )
         metrics = {name: self._metric(name) for name in _METRICS}
         return RunTelemetry(
-            producer=PRODUCER, created_at=self._now(), run_id=self._run_id, profile=snapshot,
-            scan_ms=metrics["scan_ms"], routing_ms=metrics["routing_ms"],
-            context_ms=metrics["context_ms"], provider_ms=metrics["provider_ms"],
-            files_scanned=metrics["files_scanned"], files_selected=metrics["files_selected"],
-            files_hashed=metrics["files_hashed"], bytes_hashed=metrics["bytes_hashed"],
-            cache_hits=metrics["cache_hits"], cache_misses=metrics["cache_misses"],
+            producer=PRODUCER,
+            created_at=self._now(),
+            run_id=self._run_id,
+            profile=snapshot,
+            scan_ms=metrics["scan_ms"],
+            routing_ms=metrics["routing_ms"],
+            context_ms=metrics["context_ms"],
+            provider_ms=metrics["provider_ms"],
+            files_scanned=metrics["files_scanned"],
+            files_selected=metrics["files_selected"],
+            files_hashed=metrics["files_hashed"],
+            bytes_hashed=metrics["bytes_hashed"],
+            cache_hits=metrics["cache_hits"],
+            cache_misses=metrics["cache_misses"],
             context_bytes=metrics["context_bytes"],
             providers_executed=metrics["providers_executed"],
             fallbacks_used=metrics["fallbacks_used"],

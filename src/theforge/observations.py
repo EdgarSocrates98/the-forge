@@ -66,8 +66,10 @@ def environment_fingerprint() -> str:
     *class*, not a host identity: it groups comparable histories without
     tracking machines. Stable across interpreter patch updates.
     """
-    raw = (f"{platform.system()}/{platform.machine()}/"
-           f"python-{sys.version_info.major}.{sys.version_info.minor}")
+    raw = (
+        f"{platform.system()}/{platform.machine()}/"
+        f"python-{sys.version_info.major}.{sys.version_info.minor}"
+    )
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
@@ -132,19 +134,16 @@ def load_observations(root: Path) -> tuple[list[ExecutionObservation], str | Non
             observations.append(from_dict(ExecutionObservation, data))
         except (ValueError, ContractError):
             skipped += 1
-    warning = (f"metrics: skipped {skipped} malformed observation(s)"
-               if skipped else None)
+    warning = f"metrics: skipped {skipped} malformed observation(s)" if skipped else None
     return observations, warning
 
 
 def _axis_value(observation: ExecutionObservation, axis: str) -> float | None:
     value: Any = getattr(observation, axis)
-    return float(value) if isinstance(value, (int, float)) \
-        and not isinstance(value, bool) else None
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
 
-def _history_maturity(performance: ProviderPerformance | None
-                      ) -> dict[str, MaturityState]:
+def _history_maturity(performance: ProviderPerformance | None) -> dict[str, MaturityState]:
     """Per-(provider, capability, surface) history state (§43-44).
 
     Entries whose surface is not the newest recorded for their
@@ -173,8 +172,7 @@ def _history_maturity(performance: ProviderPerformance | None
         if (entry.updated_at, entry.surface or "") < newest[pair]:
             states[label] = "stale"
         else:
-            states[label] = maturity(
-                performance, entry.provider, entry.capability, entry.surface)
+            states[label] = maturity(performance, entry.provider, entry.capability, entry.surface)
     return dict(sorted(states.items()))
 
 
@@ -205,13 +203,12 @@ def build_global_receipt(
             for axis in GLOBAL_AXES:
                 a, b = _axis_value(first, axis), _axis_value(other, axis)
                 if a != b:
-                    conflicts.append(
-                        f"{run_id} {provider}/{capability} {axis}: {a} vs {b}")
+                    conflicts.append(f"{run_id} {provider}/{capability} {axis}: {a} vs {b}")
                     conflicted_axes.add(axis)
             if other.status != first.status:
                 conflicts.append(
-                    f"{run_id} {provider}/{capability} status: "
-                    f"{first.status} vs {other.status}")
+                    f"{run_id} {provider}/{capability} status: {first.status} vs {other.status}"
+                )
         counted.append(first)
     conflicts.sort()
 
@@ -225,25 +222,33 @@ def build_global_receipt(
             axes[axis] = EconomyAxis(
                 status="conflict",
                 coverage=sum(v is not None for v in values),
-                missing=sum(v is None for v in values))
+                missing=sum(v is None for v in values),
+            )
             continue
         values = [_axis_value(o, axis) for o in counted]
         missing = sum(v is None for v in values)
         if missing:
             axes[axis] = EconomyAxis(
-                status="unresolved",
-                coverage=len(values) - missing, missing=missing)
+                status="unresolved", coverage=len(values) - missing, missing=missing
+            )
         else:
             axes[axis] = EconomyAxis(
                 status="observed",
                 value=sum(v for v in values if v is not None),
-                coverage=len(values))
+                coverage=len(values),
+            )
 
     families = sorted({o.task_family for o in counted if o.task_family})
     return GlobalEconomyReceipt(
-        producer=PRODUCER, created_at=utc_now(),
-        observations=len(counted), runs=len({o.run_id for o in counted}),
-        axes=axes, maturity=_history_maturity(performance),
-        task_families=families, conflicts=conflicts,
-        limitations=list(dict.fromkeys(
-            limitation for o in counted for limitation in o.limitations)))
+        producer=PRODUCER,
+        created_at=utc_now(),
+        observations=len(counted),
+        runs=len({o.run_id for o in counted}),
+        axes=axes,
+        maturity=_history_maturity(performance),
+        task_families=families,
+        conflicts=conflicts,
+        limitations=list(
+            dict.fromkeys(limitation for o in counted for limitation in o.limitations)
+        ),
+    )

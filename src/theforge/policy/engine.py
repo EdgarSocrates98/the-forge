@@ -22,20 +22,26 @@ Source = Literal["default", "user", "project"]
 
 SEVERITY: Final[Mapping[str, int]] = MappingProxyType({"allow": 0, "ask": 1, "deny": 2})
 
-DEFAULT_RULES: Final[Mapping[str, Rule]] = MappingProxyType({
-    "read_only": "allow",
-    "local_mutation.builtin": "allow",
-    "local_mutation.trusted": "allow",
-    "local_mutation.local": "ask",
-    "local_mutation.unverified": "ask",
-    "external_read": "ask",
-    "external_mutation": "ask",
-    "destructive": "deny",
-})
+DEFAULT_RULES: Final[Mapping[str, Rule]] = MappingProxyType(
+    {
+        "read_only": "allow",
+        "local_mutation.builtin": "allow",
+        "local_mutation.trusted": "allow",
+        "local_mutation.local": "ask",
+        "local_mutation.unverified": "ask",
+        "external_read": "ask",
+        "external_mutation": "ask",
+        "destructive": "deny",
+    }
+)
 
 # Order in which dimensions are inspected; ties keep the first one (deterministic `rule`).
 _DIMENSIONS: Final = (
-    "read_only", "local_mutation", "external_read", "external_mutation", "destructive"
+    "read_only",
+    "local_mutation",
+    "external_read",
+    "external_mutation",
+    "destructive",
 )
 # Fallback for a rule key absent from the config (e.g. an unknown trust level): most restrictive.
 _MISSING_RULE: Final[Rule] = "deny"
@@ -144,7 +150,8 @@ def _read_rules(path: Path, label: str, warnings: list[str]) -> dict[str, Rule]:
         if key in seen:
             warnings.append(
                 f"{label} policy {path}: rule {key!r} set more than once "
-                "(flattened duplicate); the last value wins")
+                "(flattened duplicate); the last value wins"
+            )
         seen.add(key)
     rules: dict[str, Rule] = {}
     for key, value in entries:

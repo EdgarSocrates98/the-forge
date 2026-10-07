@@ -43,19 +43,25 @@ def _tool_entry(spec: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_snapshot(tools: Mapping[str, Mapping[str, Any]], specialist_version: str, *,
-                   today: str | None = None, previous: Mapping[str, Any] | None = None
-                   ) -> dict[str, Any]:
+def build_snapshot(
+    tools: Mapping[str, Mapping[str, Any]],
+    specialist_version: str,
+    *,
+    today: str | None = None,
+    previous: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """The snapshot of ``tools`` (``TOOLS`` of the Spark Forge AWS): annotations and required
     arguments per tool. ``recorded_at`` is kept from ``previous`` when nothing else changed."""
     surface = {name: _tool_entry(spec) for name, spec in sorted(tools.items())}
     recorded_at = today or _today()
-    if (previous is not None and previous.get("tools") == surface
-            and previous.get("specialist_version") == specialist_version
-            and isinstance(previous.get("recorded_at"), str)):
+    if (
+        previous is not None
+        and previous.get("tools") == surface
+        and previous.get("specialist_version") == specialist_version
+        and isinstance(previous.get("recorded_at"), str)
+    ):
         recorded_at = previous["recorded_at"]
-    return {"recorded_at": recorded_at, "specialist_version": specialist_version,
-            "tools": surface}
+    return {"recorded_at": recorded_at, "specialist_version": specialist_version, "tools": surface}
 
 
 def render(data: Mapping[str, Any]) -> str:
@@ -67,16 +73,17 @@ def environment() -> dict[str, Any]:
     """The replay ``environment.json`` of this interpreter (``{python, specialist_version}``)."""
     from theforge_sparkforge_aws.native_pkg import installed_version
 
-    return {"python": platform.python_version(),
-            "specialist_version": str(installed_version())}
+    return {"python": platform.python_version(), "specialist_version": str(installed_version())}
 
 
 def health_probes() -> dict[str, Any]:
     """The replay ``health.json`` of this interpreter: the native probes health makes
     (``{dispatcher, specialist_version}``), with the dispatcher found but never imported."""
     observation = health.observe_live()
-    return {"dispatcher": observation.dispatcher,
-            "specialist_version": observation.specialist_version}
+    return {
+        "dispatcher": observation.dispatcher,
+        "specialist_version": observation.specialist_version,
+    }
 
 
 def _read(path: Path) -> dict[str, Any] | None:
@@ -87,8 +94,10 @@ def _read(path: Path) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-def classify_drift(packaged: Mapping[str, Any], fresh: Mapping[str, Any],
-                   ) -> tuple[str, list[str]]:
+def classify_drift(
+    packaged: Mapping[str, Any],
+    fresh: Mapping[str, Any],
+) -> tuple[str, list[str]]:
     """``none`` | ``additive`` | ``breaking`` drift of ``fresh`` over ``packaged``.
 
     A tool that disappeared or whose recorded attributes changed (annotations or
@@ -100,12 +109,17 @@ def classify_drift(packaged: Mapping[str, Any], fresh: Mapping[str, Any],
     old = dict(old) if isinstance(old, Mapping) else {}
     new = dict(new) if isinstance(new, Mapping) else {}
     breaking = [f"tool removed: {name}" for name in sorted(set(old) - set(new))]
-    breaking += [f"tool changed: {name}: {old[name]} -> {new[name]}"
-                 for name in sorted(set(old) & set(new)) if old[name] != new[name]]
+    breaking += [
+        f"tool changed: {name}: {old[name]} -> {new[name]}"
+        for name in sorted(set(old) & set(new))
+        if old[name] != new[name]
+    ]
     notes = [f"tool added: {name}" for name in sorted(set(new) - set(old))]
     if packaged.get("specialist_version") != fresh.get("specialist_version"):
-        notes.append(f"specialist version {packaged.get('specialist_version')} -> "
-                     f"{fresh.get('specialist_version')}")
+        notes.append(
+            f"specialist version {packaged.get('specialist_version')} -> "
+            f"{fresh.get('specialist_version')}"
+        )
     if breaking:
         return "breaking", [*breaking, *notes]
     return ("additive" if notes else "none"), notes
@@ -132,16 +146,28 @@ def _write(path: Path, data: Mapping[str, Any]) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m theforge_sparkforge_aws.record",
-        description="Re-record the Spark Forge AWS tool snapshot from the installed specialist.")
-    parser.add_argument("--output", type=Path, default=SNAPSHOT_PATH,
-                        help="snapshot file to write (default: the packaged native_catalog.json); "
-                             "with --check, the recorded snapshot to compare against")
-    parser.add_argument("--check", action="store_true",
-                        help="do not write; classify drift of the live tool surface over the "
-                             "recorded snapshot (none|additive|breaking; exit 1 on breaking)")
-    parser.add_argument("--environment", type=Path, default=None, metavar="DIR",
-                        help="also write DIR/environment.json and DIR/health.json for a "
-                             "replay scenario")
+        description="Re-record the Spark Forge AWS tool snapshot from the installed specialist.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=SNAPSHOT_PATH,
+        help="snapshot file to write (default: the packaged native_catalog.json); "
+        "with --check, the recorded snapshot to compare against",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="do not write; classify drift of the live tool surface over the "
+        "recorded snapshot (none|additive|breaking; exit 1 on breaking)",
+    )
+    parser.add_argument(
+        "--environment",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="also write DIR/environment.json and DIR/health.json for a replay scenario",
+    )
     args = parser.parse_args(argv)
     reason = live_unavailable_reason()
     if reason is not None:
@@ -150,13 +176,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     from theforge_sparkforge_aws.native_pkg import import_tools, installed_version
 
     tools_surface, _call_tool = import_tools()
-    snapshot = build_snapshot(tools_surface, str(installed_version()),
-                              previous=_read(args.output))
+    snapshot = build_snapshot(tools_surface, str(installed_version()), previous=_read(args.output))
     if args.check:
         return _check(args.output, snapshot)
     _write(args.output, snapshot)
-    print(f"record: {len(snapshot['tools'])} tools of sparkforge "
-          f"{snapshot['specialist_version']} -> {args.output}")
+    print(
+        f"record: {len(snapshot['tools'])} tools of sparkforge "
+        f"{snapshot['specialist_version']} -> {args.output}"
+    )
     if args.environment is not None:
         target = args.environment / ENVIRONMENT_FILE
         _write(target, environment())

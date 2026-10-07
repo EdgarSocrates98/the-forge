@@ -34,9 +34,14 @@ def _failed(detail: str) -> tuple[None, str]:
 
 
 def request_estimate(
-    record: RegistryRecord, task: TaskSpec, capability: str, action: str, *,
+    record: RegistryRecord,
+    task: TaskSpec,
+    capability: str,
+    action: str,
+    *,
     transport_factory: TransportFactory = SubprocessTransport,
-    timeout: float = PLAN_TIMEOUT, allow_unverified: bool = False,
+    timeout: float = PLAN_TIMEOUT,
+    allow_unverified: bool = False,
 ) -> tuple[PlanEstimate | None, str | None]:
     """``(estimate, None)`` on success, ``(None, limitation)`` otherwise; never raises."""
     manifest = record.manifest
@@ -47,18 +52,22 @@ def request_estimate(
     if record.entry.trust == "blocked":
         return _failed(f"{Codes.PROVIDER_BLOCKED}: {record.entry.id} is blocked")
     if record.entry.trust == "unverified" and not allow_unverified:
-        return _failed(f"{Codes.PROVIDER_UNTRUSTED}: {record.entry.id} is unverified "
-                       "and was not executed")
+        return _failed(
+            f"{Codes.PROVIDER_UNTRUSTED}: {record.entry.id} is unverified and was not executed"
+        )
     payload = to_dict(PlanRequest(task=task, capability=capability, action=action))
     try:
         with provider_cwd() as cwd:
             response = transport_factory(record.entry.argv).call(
-                PLAN_OP, payload, timeout=timeout, cwd=Path(cwd))
+                PLAN_OP, payload, timeout=timeout, cwd=Path(cwd)
+            )
     except TransportError as exc:
         return _failed(f"{exc.code}: {exc.detail}")
     violation = check_producer(
-        response.producer, expected=Producer(id=record.entry.id, version=manifest.version),
-        field="$.producer")
+        response.producer,
+        expected=Producer(id=record.entry.id, version=manifest.version),
+        field="$.producer",
+    )
     if violation is not None:
         return _failed(f"{violation.code}: {violation.detail}")
     if response.status != "ok":

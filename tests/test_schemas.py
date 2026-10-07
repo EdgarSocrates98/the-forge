@@ -34,7 +34,8 @@ def test_committed_schemas_match_contracts() -> None:
         path = SCHEMAS_DIR / f"{cls.__name__}.schema.json"
         committed = json.loads(path.read_text(encoding="utf-8"))
         assert committed == json_schema(cls), (
-            f"{path.name} is stale; run python -m theforge.contracts.schema schemas")
+            f"{path.name} is stale; run python -m theforge.contracts.schema schemas"
+        )
 
 
 def test_no_extra_schema_files() -> None:
@@ -44,8 +45,9 @@ def test_no_extra_schema_files() -> None:
 
 def test_real_instances_validate() -> None:
     Draft202012Validator(json_schema(ForgeManifest)).validate(to_dict(MANIFEST))
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t", intent="x",
-                    workspace_root="/ws")
+    task = TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t", intent="x", workspace_root="/ws"
+    )
     Draft202012Validator(json_schema(TaskSpec)).validate(to_dict(task))
     result = ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok")
     Draft202012Validator(json_schema(ExecutionResult)).validate(to_dict(result))
@@ -74,8 +76,17 @@ def _object_nodes(node: object) -> list[dict[str, object]]:
 
 def test_closed_schemas_are_core_only_artifacts() -> None:
     assert RoutingDecision in CLOSED_SCHEMAS and ExecutionReceipt in CLOSED_SCHEMAS
-    for open_cls in (ForgeManifest, ExecutionResult, Evidence, Response, HealthReport,
-                     TaskSpec, ContextPack, ExecuteRequest, Request):
+    for open_cls in (
+        ForgeManifest,
+        ExecutionResult,
+        Evidence,
+        Response,
+        HealthReport,
+        TaskSpec,
+        ContextPack,
+        ExecuteRequest,
+        Request,
+    ):
         assert open_cls not in CLOSED_SCHEMAS
 
 
@@ -91,10 +102,19 @@ def test_closed_schemas_reject_additional_properties_recursively() -> None:
 
 
 def test_closed_schema_validation_rejects_unknown_key() -> None:
-    receipt = from_dict(ExecutionReceipt, {
-        "producer": {"id": "p", "version": "1"}, "created_at": "t", "status": "ok",
-        "run_id": "r", "forge_version": "1", "inputs": {"task_sha256": "a" * 64},
-        "started_at": "t", "finished_at": "t"})
+    receipt = from_dict(
+        ExecutionReceipt,
+        {
+            "producer": {"id": "p", "version": "1"},
+            "created_at": "t",
+            "status": "ok",
+            "run_id": "r",
+            "forge_version": "1",
+            "inputs": {"task_sha256": "a" * 64},
+            "started_at": "t",
+            "finished_at": "t",
+        },
+    )
     data = to_dict(receipt)
     validator = Draft202012Validator(json_schema(ExecutionReceipt))
     validator.validate(data)
@@ -105,8 +125,16 @@ def test_closed_schema_validation_rejects_unknown_key() -> None:
 def test_hash_fields_carry_sha256_pattern() -> None:
     result = to_dict(ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok"))
     result["artifacts"] = [{"path": "a", "sha256": "ABC"}]
-    result["evidence"] = [{"id": "e", "epistemic": "observed", "subject": "s", "claim": "c",
-                           "producer": {"id": "p", "version": "1"}, "hash": "xyz"}]
+    result["evidence"] = [
+        {
+            "id": "e",
+            "epistemic": "observed",
+            "subject": "s",
+            "claim": "c",
+            "producer": {"id": "p", "version": "1"},
+            "hash": "xyz",
+        }
+    ]
     errors = list(Draft202012Validator(json_schema(ExecutionResult)).iter_errors(result))
     assert len(errors) == 2
     pack = json_schema(ContextPack)
@@ -115,16 +143,37 @@ def test_hash_fields_carry_sha256_pattern() -> None:
 
 
 def _risk_assessment() -> RiskAssessment:
-    return from_dict(RiskAssessment, {
-        "producer": {"id": "p", "version": "1"}, "created_at": utc_now(), "run_id": "r",
-        "provider_id": "p", "capability": "demo.echo", "action": "echo",
-        "operation_class": "local_mutation", "source": "provider_declaration",
-        "dimensions": {"read_only": "no", "local_mutation": "yes", "external_read": "no",
-                       "external_mutation": "no", "destructive": "no",
-                       "credentials": "unknown", "cross_account": "unknown"},
-        "policy": {"decision": "ask", "rule": "default.local_mutation.trusted",
-                   "reason": "local mutation", "approved": True, "unlock": "--approve"},
-        "limitations": [OPERATION_CLASS_LIMITATION], "unknowns": ["credentials"]})
+    return from_dict(
+        RiskAssessment,
+        {
+            "producer": {"id": "p", "version": "1"},
+            "created_at": utc_now(),
+            "run_id": "r",
+            "provider_id": "p",
+            "capability": "demo.echo",
+            "action": "echo",
+            "operation_class": "local_mutation",
+            "source": "provider_declaration",
+            "dimensions": {
+                "read_only": "no",
+                "local_mutation": "yes",
+                "external_read": "no",
+                "external_mutation": "no",
+                "destructive": "no",
+                "credentials": "unknown",
+                "cross_account": "unknown",
+            },
+            "policy": {
+                "decision": "ask",
+                "rule": "default.local_mutation.trusted",
+                "reason": "local mutation",
+                "approved": True,
+                "unlock": "--approve",
+            },
+            "limitations": [OPERATION_CLASS_LIMITATION],
+            "unknowns": ["credentials"],
+        },
+    )
 
 
 def test_risk_assessment_is_exported_and_closed() -> None:
@@ -153,7 +202,11 @@ def test_new_optional_fields_published_in_schemas() -> None:
     assert "op" not in json_schema(Response)["required"]
     candidate = json_schema(RoutingDecision)["properties"]["candidates"]["items"]
     assert candidate["properties"]["state"]["enum"] == [
-        "supported", "heuristic", "unresolved", "unsupported"]
+        "supported",
+        "heuristic",
+        "unresolved",
+        "unsupported",
+    ]
     assert "state" not in candidate["required"]
 
 
@@ -163,13 +216,13 @@ def test_capability_alias_and_deprecation_fields_published_as_optional() -> None
     assert capability["properties"]["aliases"] == {"type": "array", "items": {"type": "string"}}
     assert capability["properties"]["deprecated"] == {"type": "boolean"}
     assert capability["properties"]["replaced_by"] == {
-        "anyOf": [{"type": "string"}, {"type": "null"}]}
+        "anyOf": [{"type": "string"}, {"type": "null"}]
+    }
     assert not {"aliases", "deprecated", "replaced_by"} & set(capability["required"])
     validator = Draft202012Validator(published)
     data = to_dict(MANIFEST)
     validator.validate(data)
-    data["capabilities"][0].update(
-        aliases=["demo.say"], deprecated=True, replaced_by="demo.shout")
+    data["capabilities"][0].update(aliases=["demo.say"], deprecated=True, replaced_by="demo.shout")
     validator.validate(data)
     data["capabilities"][0]["deprecated"] = "yes"
     assert len(list(validator.iter_errors(data))) == 1
@@ -177,12 +230,27 @@ def test_capability_alias_and_deprecation_fields_published_as_optional() -> None
 
 def test_context_v2_instances_validate_against_published_schemas() -> None:
     v2_pack = {
-        "producer": {"id": "p", "version": "1"}, "created_at": "t", "status": "complete",
-        "task_id": "t", "provider_id": "p", "root": ".", "budget_bytes": 10, "used_bytes": 3,
-        "files": [{"path": "a.py", "sha256": "a" * 64, "bytes": 3, "tier": "excerpt",
-                   "lines": {"start": 1, "end": 2}, "signals": ["intent_path"]}],
+        "producer": {"id": "p", "version": "1"},
+        "created_at": "t",
+        "status": "complete",
+        "task_id": "t",
+        "provider_id": "p",
+        "root": ".",
+        "budget_bytes": 10,
+        "used_bytes": 3,
+        "files": [
+            {
+                "path": "a.py",
+                "sha256": "a" * 64,
+                "bytes": 3,
+                "tier": "excerpt",
+                "lines": {"start": 1, "end": 2},
+                "signals": ["intent_path"],
+            }
+        ],
         "workspace": {"files_scanned": 1, "unmatched_files": 0},
-        "tier_bytes": {"metadata": 0, "excerpt": 3}, "round": 0,
+        "tier_bytes": {"metadata": 0, "excerpt": 3},
+        "round": 0,
     }
     pack = from_dict(ContextPack, v2_pack, strict=True)
     Draft202012Validator(json_schema(ContextPack)).validate(to_dict(pack))
@@ -190,18 +258,29 @@ def test_context_v2_instances_validate_against_published_schemas() -> None:
     manifest["context_revalidation"] = "hash"
     manifest["capabilities"][0]["context"] = {"excerpts": True, "requests": False}
     Draft202012Validator(json_schema(ForgeManifest)).validate(
-        to_dict(from_dict(ForgeManifest, manifest, strict=True)))
+        to_dict(from_dict(ForgeManifest, manifest, strict=True))
+    )
     bad = {**manifest, "context_revalidation": "sometimes"}
     assert list(Draft202012Validator(json_schema(ForgeManifest)).iter_errors(bad))
 
 
 def _telemetry() -> dict[str, object]:
     return {
-        "producer": {"id": "theforge", "version": "1"}, "created_at": "t",
+        "producer": {"id": "theforge", "version": "1"},
+        "created_at": "t",
         "run_id": "20260101T000000Z-deadbeef",
-        "profile": {"name": "max", "budget_bytes": 1, "max_files": 1, "tiers": ["metadata"],
-                    "effective_tiers": [], "negotiation_rounds": 2, "max_providers": 4,
-                    "fallback": True, "verification": "strong", "execute_timeout_s": 600.0},
+        "profile": {
+            "name": "max",
+            "budget_bytes": 1,
+            "max_files": 1,
+            "tiers": ["metadata"],
+            "effective_tiers": [],
+            "negotiation_rounds": 2,
+            "max_providers": 4,
+            "fallback": True,
+            "verification": "strong",
+            "execute_timeout_s": 600.0,
+        },
         "scan_ms": {"value": 1.0, "kind": "measured"},
         "providers_executed": {"value": 2, "kind": "measured"},
     }
@@ -252,23 +331,48 @@ def test_wave_d_contracts_are_exported_open_only_when_they_cross_the_protocol() 
         WorkspaceDescriptor,
         WorkspaceGraph,
     )
+
     for open_cls in (Handoff, PlanRequest, PlanEstimate):
         assert open_cls in EXPORTED and open_cls not in CLOSED_SCHEMAS
-    for closed_cls in (ExecutionPlan, PlanResult, WorkspaceDescriptor, WorkspaceGraph,
-                       VerificationResult, InstallationPlan, ExplainReport, Diagnostic):
+    for closed_cls in (
+        ExecutionPlan,
+        PlanResult,
+        WorkspaceDescriptor,
+        WorkspaceGraph,
+        VerificationResult,
+        InstallationPlan,
+        ExplainReport,
+        Diagnostic,
+    ):
         assert closed_cls in EXPORTED and closed_cls in CLOSED_SCHEMAS
     receipt = json_schema(ExecutionReceipt)["properties"]
     assert receipt["kind"] == {"enum": ["run", "plan"]}
-    assert {"parent_run", "plan_node", "replay_of", "verification_sha256", "reproducibility",
-            "plan"} <= set(receipt)
+    assert {
+        "parent_run",
+        "plan_node",
+        "replay_of",
+        "verification_sha256",
+        "reproducibility",
+        "plan",
+    } <= set(receipt)
 
 
 def test_plan_receipt_validates_against_published_schema() -> None:
     published = json.loads((SCHEMAS_DIR / "ExecutionReceipt.schema.json").read_text("utf-8"))
-    receipt = from_dict(ExecutionReceipt, {
-        "producer": {"id": "p", "version": "1"}, "created_at": "t", "status": "planned",
-        "run_id": "r", "forge_version": "1", "inputs": {"task_sha256": "a" * 64},
-        "started_at": "t", "finished_at": "t", "kind": "plan",
-        "plan": {"plan_sha256": "a" * 64},
-        "reproducibility": {"level": "unknown", "reasons": ["planned only"]}})
+    receipt = from_dict(
+        ExecutionReceipt,
+        {
+            "producer": {"id": "p", "version": "1"},
+            "created_at": "t",
+            "status": "planned",
+            "run_id": "r",
+            "forge_version": "1",
+            "inputs": {"task_sha256": "a" * 64},
+            "started_at": "t",
+            "finished_at": "t",
+            "kind": "plan",
+            "plan": {"plan_sha256": "a" * 64},
+            "reproducibility": {"level": "unknown", "reasons": ["planned only"]},
+        },
+    )
     Draft202012Validator(published).validate(to_dict(receipt))

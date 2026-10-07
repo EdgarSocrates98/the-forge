@@ -138,5 +138,4 @@ class ExplainReport:
 
     def __post_init__(self) -> None:
         if self.schema != EXPLAIN_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {EXPLAIN_SCHEMA!r}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {EXPLAIN_SCHEMA!r}")

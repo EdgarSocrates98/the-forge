@@ -62,27 +62,49 @@ class ForgeSpec:
 
 
 FORGES: dict[str, ForgeSpec] = {
-    "spark": ForgeSpec("spark", "Spark Forge AWS", "spark-forge-aws", SPARK_PYTHON_VAR,
-                       "theforge_sparkforge_aws", "sparkforge_aws.adapters.tools",
-                       "Spark Forge AWS needs an interpreter with sparkforge-aws and "
-                       "theforge-sparkforge-aws-adapter",
-                       "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE",
-                       specialist_alternatives=("sparkforge.adapters.tools",)),
-    "api": ForgeSpec("api", "API Forge", "api-forge", API_PYTHON_VAR,
-                     "theforge_apiforge", "apiforge",
-                     "API Forge needs Python 3.12"),
-    "doctordata": ForgeSpec("doctordata", "Forge Doctor Data", "forge-doctor-data",
-                            DOCTORDATA_PYTHON_VAR, "theforge_doctordata",
-                            "forge_doctor_data",
-                            "Forge Doctor Data needs an interpreter with "
-                            "forge-doctor-data and theforge-doctordata-adapter",
-                            "DOCTORDATA-ADAPTER-UNAVAILABLE"),
-    "doctorapi": ForgeSpec("doctorapi", "Forge Doctor API", "forge-doctor-api",
-                           DOCTORAPI_PYTHON_VAR, "theforge_doctorapi",
-                           "forge_doctor_api",
-                           "Forge Doctor API needs an interpreter with "
-                           "forge-doctor-api and theforge-doctorapi-adapter",
-                           "DOCTORAPI-ADAPTER-UNAVAILABLE"),
+    "spark": ForgeSpec(
+        "spark",
+        "Spark Forge AWS",
+        "spark-forge-aws",
+        SPARK_PYTHON_VAR,
+        "theforge_sparkforge_aws",
+        "sparkforge_aws.adapters.tools",
+        "Spark Forge AWS needs an interpreter with sparkforge-aws and "
+        "theforge-sparkforge-aws-adapter",
+        "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE",
+        specialist_alternatives=("sparkforge.adapters.tools",),
+    ),
+    "api": ForgeSpec(
+        "api",
+        "API Forge",
+        "api-forge",
+        API_PYTHON_VAR,
+        "theforge_apiforge",
+        "apiforge",
+        "API Forge needs Python 3.12",
+    ),
+    "doctordata": ForgeSpec(
+        "doctordata",
+        "Forge Doctor Data",
+        "forge-doctor-data",
+        DOCTORDATA_PYTHON_VAR,
+        "theforge_doctordata",
+        "forge_doctor_data",
+        "Forge Doctor Data needs an interpreter with "
+        "forge-doctor-data and theforge-doctordata-adapter",
+        "DOCTORDATA-ADAPTER-UNAVAILABLE",
+    ),
+    "doctorapi": ForgeSpec(
+        "doctorapi",
+        "Forge Doctor API",
+        "forge-doctor-api",
+        DOCTORAPI_PYTHON_VAR,
+        "theforge_doctorapi",
+        "forge_doctor_api",
+        "Forge Doctor API needs an interpreter with "
+        "forge-doctor-api and theforge-doctorapi-adapter",
+        "DOCTORAPI-ADAPTER-UNAVAILABLE",
+    ),
 }
 
 
@@ -112,14 +134,25 @@ def missing_variable_reason(name: str) -> str:
     return f"{spec.variable} not set ({spec.needs}; see {DOC})"
 
 
-def probe_imports(python: Path, modules: Sequence[str], *,
-                  run: Callable[..., Any] = subprocess.run,
-                  timeout: float = IMPORT_TIMEOUT) -> str | None:
+def probe_imports(
+    python: Path,
+    modules: Sequence[str],
+    *,
+    run: Callable[..., Any] = subprocess.run,
+    timeout: float = IMPORT_TIMEOUT,
+) -> str | None:
     """Run ``import <modules>`` in ``python`` with the core's credential-free environment."""
     statement = f"import {', '.join(modules)}"
     try:
-        proc = run([str(python), "-c", statement], capture_output=True, text=True,
-                   timeout=timeout, env=safe_env(), stdin=subprocess.DEVNULL, check=False)
+        proc = run(
+            [str(python), "-c", statement],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=safe_env(),
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
     except subprocess.TimeoutExpired:
         return f"`{statement}` did not finish in {timeout:g} s"
     except OSError as exc:
@@ -140,12 +173,14 @@ def validate_interpreter(variable: str, value: str) -> Path:
     python = Path(value).expanduser()
     if not python.is_absolute():
         raise ForgeUnavailable(
-            f"{variable}={value} is not an absolute path to an interpreter (see {DOC})")
+            f"{variable}={value} is not an absolute path to an interpreter (see {DOC})"
+        )
     python = Path(os.path.normpath(python))
     if not _INTERPRETER_NAME.fullmatch(python.name):
         raise ForgeUnavailable(
             f"{variable}={value} does not name a Python interpreter "
-            f"(expected python, python3, python3.x, optionally .exe; see {DOC})")
+            f"(expected python, python3, python3.x, optionally .exe; see {DOC})"
+        )
     if not python.exists():
         raise ForgeUnavailable(f"{variable}={value} does not exist (see {DOC})")
     if not python.is_file():
@@ -153,8 +188,9 @@ def validate_interpreter(variable: str, value: str) -> Path:
     return python
 
 
-def check_forge(name: str, environ: Mapping[str, str] | None = None, *,
-                probe: ImportProbe = probe_imports) -> RealForge:
+def check_forge(
+    name: str, environ: Mapping[str, str] | None = None, *, probe: ImportProbe = probe_imports
+) -> RealForge:
     """The configured real Forge ``name``, or ``ForgeUnavailable`` with the first failed check."""
     spec = FORGES[name]
     env = os.environ if environ is None else environ
@@ -171,18 +207,22 @@ def check_forge(name: str, environ: Mapping[str, str] | None = None, *,
     if failure is not None:
         raise ForgeUnavailable(
             f"{spec.label} not importable with {python}: {failure} "
-            f"(set {spec.variable} to an interpreter with both installed; see {DOC})")
+            f"(set {spec.variable} to an interpreter with both installed; see {DOC})"
+        )
     return RealForge(spec.provider_id, python, spec.adapter_module, spec.specialist_module)
 
 
 def is_required(environ: Mapping[str, str] | None = None) -> bool:
     env = os.environ if environ is None else environ
-    return (env.get(REQUIRED_VAR, "").strip() == "1"
-            or env.get(ECOSYSTEM_REQUIRED_VAR, "").strip() == "1")
+    return (
+        env.get(REQUIRED_VAR, "").strip() == "1"
+        or env.get(ECOSYSTEM_REQUIRED_VAR, "").strip() == "1"
+    )
 
 
-def require_forge(name: str, environ: Mapping[str, str] | None = None, *,
-                  probe: ImportProbe = probe_imports) -> RealForge:
+def require_forge(
+    name: str, environ: Mapping[str, str] | None = None, *, probe: ImportProbe = probe_imports
+) -> RealForge:
     """``check_forge`` for a test: skip with the reason, or fail it in required mode."""
     try:
         return check_forge(name, environ, probe=probe)
@@ -199,13 +239,19 @@ def register(config_dir: Path, *entries: dict[str, Any]) -> list[dict[str, Any]]
 
     Each entry is ``id``/``argv``/``trust`` only: nothing of this contract reaches a provider.
     """
-    listed = [{"id": e["id"], "argv": list(e["argv"]), "trust": e.get("trust", "trusted")}
-              for e in entries]
+    listed = [
+        {"id": e["id"], "argv": list(e["argv"]), "trust": e.get("trust", "trusted")}
+        for e in entries
+    ]
     lines: list[str] = []
     for entry in listed:
-        lines += ["[[providers]]", f"id = {json.dumps(entry['id'])}",
-                  f"argv = {json.dumps(entry['argv'])}", f"trust = {json.dumps(entry['trust'])}",
-                  ""]
+        lines += [
+            "[[providers]]",
+            f"id = {json.dumps(entry['id'])}",
+            f"argv = {json.dumps(entry['argv'])}",
+            f"trust = {json.dumps(entry['trust'])}",
+            "",
+        ]
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "providers.toml").write_text("\n".join(lines), encoding="utf-8")
     return listed
@@ -220,9 +266,18 @@ ID_KEYS = {"id", "fact_id", "finding_id", "case_id"}
 
 def run_native(argv: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     """A command in a specialist interpreter with the core's credential-free environment."""
-    proc = subprocess.run(argv, cwd=cwd, env=safe_env(), capture_output=True, text=True,
-                          encoding="utf-8", errors="replace", timeout=NATIVE_TIMEOUT,
-                          stdin=subprocess.DEVNULL, check=False)
+    proc = subprocess.run(
+        argv,
+        cwd=cwd,
+        env=safe_env(),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=NATIVE_TIMEOUT,
+        stdin=subprocess.DEVNULL,
+        check=False,
+    )
     assert proc.returncode == 0, (argv, proc.stdout, proc.stderr)
     return proc
 

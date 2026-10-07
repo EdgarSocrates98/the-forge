@@ -55,5 +55,6 @@ def blocked_by(node: str, plan: ExecutionPlan, failed: Mapping[str, str]) -> str
             continue
         ancestors.add(current)
         stack.extend(deps[current])
-    return next((nid for nid in topological_order(plan)
-                 if nid in ancestors and nid in failed), None)
+    return next(
+        (nid for nid in topological_order(plan) if nid in ancestors and nid in failed), None
+    )

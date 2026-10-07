@@ -61,8 +61,13 @@ def synthesize(plan: ExecutionPlan, executions: Sequence[NodeExecution]) -> Synt
         limitations.extend(_prefixed(execution.node.id, _node_limitations(execution)))
         if execution.result is not None:
             unknowns.extend(_prefixed(execution.node.id, execution.result.unknowns))
-    return Synthesis(nodes=nodes, handoffs=handoffs, failures=failures,
-                     limitations=limitations, unknowns=unknowns)
+    return Synthesis(
+        nodes=nodes,
+        handoffs=handoffs,
+        failures=failures,
+        limitations=limitations,
+        unknowns=unknowns,
+    )
 
 
 def _node(execution: NodeExecution) -> SynthesisNode:
@@ -74,10 +79,16 @@ def _node(execution: NodeExecution) -> SynthesisNode:
             # Counted under its original status: the synthesis never upgrades it.
             counts[evidence.epistemic] = counts.get(evidence.epistemic, 0) + 1
         findings = copy.deepcopy(list(result.findings))
-    return SynthesisNode(node=node.id, provider=node.provider, capability=node.capability,
-                         action=node.action, status=outcome.status, run_id=outcome.run_id,
-                         findings=findings,
-                         evidence_by_epistemic={k: counts[k] for k in sorted(counts)})
+    return SynthesisNode(
+        node=node.id,
+        provider=node.provider,
+        capability=node.capability,
+        action=node.action,
+        status=outcome.status,
+        run_id=outcome.run_id,
+        findings=findings,
+        evidence_by_epistemic={k: counts[k] for k in sorted(counts)},
+    )
 
 
 def _handoffs(execution: NodeExecution) -> list[SynthesisHandoff]:
@@ -88,9 +99,15 @@ def _handoffs(execution: NodeExecution) -> list[SynthesisHandoff]:
     per_source: dict[str, int] = {}
     for item in handoff.items:
         per_source[item.origin.node] = per_source.get(item.origin.node, 0) + 1
-    return [SynthesisHandoff(source=source, target=execution.node.id,
-                             items=per_source.get(source, 0), truncated=handoff.truncated)
-            for source in execution.node.inputs]
+    return [
+        SynthesisHandoff(
+            source=source,
+            target=execution.node.id,
+            items=per_source.get(source, 0),
+            truncated=handoff.truncated,
+        )
+        for source in execution.node.inputs
+    ]
 
 
 def _failure(execution: NodeExecution) -> str | None:

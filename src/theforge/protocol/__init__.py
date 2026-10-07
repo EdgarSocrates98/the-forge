@@ -9,6 +9,11 @@ from theforge.protocol.transport import (
 )
 
 __all__ = [
-    "SUPPORTED_PROTOCOLS", "ProviderTransport", "SubprocessTransport", "TransportError",
-    "TransportFactory", "choose_protocol", "major",
+    "SUPPORTED_PROTOCOLS",
+    "ProviderTransport",
+    "SubprocessTransport",
+    "TransportError",
+    "TransportFactory",
+    "choose_protocol",
+    "major",
 ]

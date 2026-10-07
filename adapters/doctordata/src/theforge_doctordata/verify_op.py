@@ -39,11 +39,11 @@ from theforge_doctordata._shell import (
 )
 from theforge_doctordata.backend import UNAVAILABLE, UNLOCK
 
-EPISTEMIC: Final = frozenset(
-    {"confirmed", "observed", "inferred", "proposed", "unresolved"})
+EPISTEMIC: Final = frozenset({"confirmed", "observed", "inferred", "proposed", "unresolved"})
 SEVERITY: Final = frozenset({"info", "low", "medium", "high", "critical"})
-HANDOFF_KINDS: Final = frozenset({"evidence", "finding", "artifact", "decision",
-                                  "constraint", "assumption", "verification"})
+HANDOFF_KINDS: Final = frozenset(
+    {"evidence", "finding", "artifact", "decision", "constraint", "assumption", "verification"}
+)
 _NO_EPISTEMIC: Final = frozenset({"finding", "artifact", "constraint", "assumption"})
 _CLAIM_REQUIRED: Final = frozenset({"constraint", "assumption", "verification"})
 SHA256: Final = re.compile(r"^[0-9a-f]{64}$")
@@ -68,9 +68,13 @@ def audit_result(result: object, failures: list[str]) -> None:
         failures.append("result: not an object")
         return
     producer = result.get("producer")
-    if not (isinstance(producer, Mapping)
-            and isinstance(producer.get("id"), str) and producer["id"]
-            and isinstance(producer.get("version"), str) and producer["version"]):
+    if not (
+        isinstance(producer, Mapping)
+        and isinstance(producer.get("id"), str)
+        and producer["id"]
+        and isinstance(producer.get("version"), str)
+        and producer["version"]
+    ):
         failures.append("result.producer: id/version missing or not strings")
     if result.get("status") not in ("ok", "partial"):
         failures.append(f"result.status: {result.get('status')!r} not in ok|partial")
@@ -89,19 +93,24 @@ def audit_result(result: object, failures: list[str]) -> None:
         else:
             evidence_ids.add(eid)
         if item.get("epistemic") not in EPISTEMIC:
-            failures.append(f"evidence {eid!r}: epistemic {item.get('epistemic')!r} "
-                            "not in the closed set")
+            failures.append(
+                f"evidence {eid!r}: epistemic {item.get('epistemic')!r} not in the closed set"
+            )
         location = item.get("location")
         if item.get("hash") is not None:
             if location is None:
-                failures.append(f"evidence {eid!r}: hash without location "
-                                "(hash binds only to ContextPack content)")
+                failures.append(
+                    f"evidence {eid!r}: hash without location "
+                    "(hash binds only to ContextPack content)"
+                )
             elif not SHA256.match(str(item["hash"])):
                 failures.append(f"evidence {eid!r}: hash is not a lowercase sha256")
-        if location is not None and not (isinstance(location, Mapping)
-                                         and _path_ok(location.get("path"))):
-            failures.append(f"evidence {eid!r}: location path {location!r} is not "
-                            "a contained relative path")
+        if location is not None and not (
+            isinstance(location, Mapping) and _path_ok(location.get("path"))
+        ):
+            failures.append(
+                f"evidence {eid!r}: location path {location!r} is not a contained relative path"
+            )
 
     finding_ids: set[str] = set()
     findings = result.get("findings")
@@ -117,8 +126,9 @@ def audit_result(result: object, failures: list[str]) -> None:
         else:
             finding_ids.add(fid)
         if item.get("severity") not in SEVERITY:
-            failures.append(f"finding {fid!r}: severity {item.get('severity')!r} "
-                            "not in the closed set")
+            failures.append(
+                f"finding {fid!r}: severity {item.get('severity')!r} not in the closed set"
+            )
         refs = item.get("evidence_ids")
         if not isinstance(refs, list) or not refs:
             failures.append(f"finding {fid!r}: no evidence_ids")
@@ -133,11 +143,9 @@ def audit_result(result: object, failures: list[str]) -> None:
             failures.append(f"artifacts[{index}]: not an object")
             continue
         if not _path_ok(item.get("path")):
-            failures.append(f"artifact {item.get('path')!r}: not a contained "
-                            "relative path")
+            failures.append(f"artifact {item.get('path')!r}: not a contained relative path")
         if not (isinstance(item.get("sha256"), str) and SHA256.match(item["sha256"])):
-            failures.append(f"artifact {item.get('path')!r}: sha256 missing or not "
-                            "lowercase hex")
+            failures.append(f"artifact {item.get('path')!r}: sha256 missing or not lowercase hex")
 
 
 def audit_handoff(handoff: object, failures: list[str]) -> None:
@@ -146,8 +154,7 @@ def audit_handoff(handoff: object, failures: list[str]) -> None:
         failures.append("handoff: not an object")
         return
     if handoff.get("schema") != "theforge/Handoff/v1":
-        failures.append(f"handoff.schema: {handoff.get('schema')!r} "
-                        "!= theforge/Handoff/v1")
+        failures.append(f"handoff.schema: {handoff.get('schema')!r} != theforge/Handoff/v1")
     seen: set[str] = set()
     items = handoff.get("items")
     for index, item in enumerate(items if isinstance(items, list) else []):
@@ -163,8 +170,7 @@ def audit_handoff(handoff: object, failures: list[str]) -> None:
             seen.add(iid)
         kind = item.get("kind")
         if kind not in HANDOFF_KINDS:
-            failures.append(f"handoff item {iid!r}: kind {kind!r} not in the "
-                            "closed set")
+            failures.append(f"handoff item {iid!r}: kind {kind!r} not in the closed set")
             continue
         if kind == "evidence" and item.get("epistemic") is None:
             failures.append(f"handoff evidence {iid!r}: epistemic is required")
@@ -175,26 +181,28 @@ def audit_handoff(handoff: object, failures: list[str]) -> None:
         if kind == "artifact" and not SHA256.match(str(item.get("hash"))):
             failures.append(f"handoff artifact {iid!r}: hash is required (sha256)")
         if isinstance(item.get("claim"), str) and len(item["claim"]) > MAX_CLAIM_CHARS:
-            failures.append(f"handoff {kind} {iid!r}: claim over {MAX_CLAIM_CHARS} "
-                            "chars")
+            failures.append(f"handoff {kind} {iid!r}: claim over {MAX_CLAIM_CHARS} chars")
         origin = item.get("origin")
-        if not (isinstance(origin, Mapping)
-                and isinstance(origin.get("run_id"), str) and origin["run_id"]
-                and isinstance(origin.get("provider"), Mapping)
-                and isinstance(origin["provider"].get("id"), str)
-                and origin["provider"]["id"]):
+        if not (
+            isinstance(origin, Mapping)
+            and isinstance(origin.get("run_id"), str)
+            and origin["run_id"]
+            and isinstance(origin.get("provider"), Mapping)
+            and isinstance(origin["provider"].get("id"), str)
+            and origin["provider"]["id"]
+        ):
             failures.append(f"handoff {kind} {iid!r}: origin missing provider/run_id")
 
 
 def verdict_payload(payload: object) -> dict[str, Any] | Reply:
     """The ``VerifyVerdict`` for a ``VerifyRequest`` payload (or a refused Reply)."""
     if not isinstance(payload, Mapping):
-        return refuse(REQUEST_INVALID, "verify payload must be an object",
-                      field="payload")
+        return refuse(REQUEST_INVALID, "verify payload must be an object", field="payload")
     result = payload.get("result")
     if not isinstance(result, Mapping):
-        return refuse(REQUEST_INVALID, "verify payload.result must be an object",
-                      field="payload.result")
+        return refuse(
+            REQUEST_INVALID, "verify payload.result must be an object", field="payload.result"
+        )
     checks = ["result-coherence"]
     failures: list[str] = []
     audit_result(result, failures)
@@ -206,13 +214,16 @@ def verdict_payload(payload: object) -> dict[str, Any] | Reply:
         details = [f"{name}: audited" for name in checks] + sorted(failures)
     else:
         details = [f"{name}: passed" for name in checks]
-    return {"status": "passed" if not failures else "failed",
-            "details": details,
-            "basis": ["forge-doctor-data/coherence-audit"]}
+    return {
+        "status": "passed" if not failures else "failed",
+        "details": details,
+        "basis": ["forge-doctor-data/coherence-audit"],
+    }
 
 
 def handler(options: AdapterOptions, gate: EnvGate) -> OpHandler:
     """The verify-op handler; ``gate`` is the adapter's environment problem probe."""
+
     def handle(request: Request, cwd: Path) -> Reply:
         problem = gate(options)
         if isinstance(problem, Reply):
@@ -223,4 +234,5 @@ def handler(options: AdapterOptions, gate: EnvGate) -> OpHandler:
         if isinstance(verdict, Reply):
             return verdict
         return Reply(status="ok", payload=verdict)
+
     return handle

@@ -104,20 +104,40 @@ def _skip(check_id: str, detail: str) -> ConformanceCheck:
 
 
 def _execute_payload(
-    root: Path, capability: str, action: str, *, files: list[ContextFile] | None = None,
+    root: Path,
+    capability: str,
+    action: str,
+    *,
+    files: list[ContextFile] | None = None,
     handoff: Handoff | None = None,
 ) -> dict[str, Any]:
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t_conformance",
-                    intent="conformance probe", workspace_root=str(root))
-    pack = ContextPack(producer=PRODUCER, created_at=utc_now(), status="complete",
-                       task_id="t_conformance", provider_id="conformance",
-                       root=str(root), files=files or [], budget_bytes=1024 * 1024)
-    return to_dict(ExecuteRequest(
-        task=task, capability=capability, action=action, context=pack, handoff=handoff))
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t_conformance",
+        intent="conformance probe",
+        workspace_root=str(root),
+    )
+    pack = ContextPack(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="complete",
+        task_id="t_conformance",
+        provider_id="conformance",
+        root=str(root),
+        files=files or [],
+        budget_bytes=1024 * 1024,
+    )
+    return to_dict(
+        ExecuteRequest(
+            task=task, capability=capability, action=action, context=pack, handoff=handoff
+        )
+    )
 
 
-def _call(transport: Any, op: str, payload: dict[str, Any], timeout: float,
-          cwd: Path | None = None) -> tuple[Response | None, str | None]:
+def _call(
+    transport: Any, op: str, payload: dict[str, Any], timeout: float, cwd: Path | None = None
+) -> tuple[Response | None, str | None]:
     """``(response, None)`` or ``(None, failure detail)`` — never raises."""
     try:
         return transport.call(op, payload, timeout=timeout, cwd=cwd), None
@@ -126,19 +146,22 @@ def _call(transport: Any, op: str, payload: dict[str, Any], timeout: float,
 
 
 def _result_of(
-    response: Response, expected: Producer,
+    response: Response,
+    expected: Producer,
 ) -> tuple[ExecutionResult | None, str | None]:
     """Parse + integrity-check an ``execute`` payload; ``(result, failure)``."""
     if response.status not in ("ok", "partial"):
-        detail = (f"{response.error.code}: {response.error.detail}"
-                  if response.error else "no error detail")
+        detail = (
+            f"{response.error.code}: {response.error.detail}"
+            if response.error
+            else "no error detail"
+        )
         return None, f"execute {response.status}: {detail}"
     try:
         result = from_dict(ExecutionResult, response.payload, "$.payload")
     except ContractError as exc:
         return None, f"payload is not an ExecutionResult: {exc}"
-    violation = check_producer(
-        result.producer, expected=expected, field="$.payload.producer")
+    violation = check_producer(result.producer, expected=expected, field="$.payload.producer")
     if violation is not None:
         return None, f"{violation.code}: {violation.detail}"
     stamp = check_timestamp(result.created_at, field="created_at")
@@ -150,7 +173,8 @@ def _result_of(
         return None, f"result integrity: {exc}"
     for evidence in result.evidence:
         violation = check_producer(
-            evidence.producer, expected=expected, field="$.payload.evidence[].producer")
+            evidence.producer, expected=expected, field="$.payload.evidence[].producer"
+        )
         if violation is not None:
             return None, f"{violation.code}: {violation.detail}"
         if evidence.hash is not None and not SHA256_RE.fullmatch(evidence.hash):
@@ -163,7 +187,9 @@ def _result_of(
 
 
 def check_provider(
-    argv: Sequence[str], *, timeout: float = EXECUTE_TIMEOUT,
+    argv: Sequence[str],
+    *,
+    timeout: float = EXECUTE_TIMEOUT,
     transport_factory: TransportFactory = SubprocessTransport,
 ) -> ConformanceReport:
     """Run the full conformance battery against one provider argv.
@@ -198,10 +224,13 @@ def check_provider(
                     problems.append(f"ops missing {missing}")
                 if response.producer.id != manifest.id:
                     problems.append(
-                        f"envelope producer {response.producer.id!r} != manifest id "
-                        f"{manifest.id!r}")
-                checks.append(_fail("describe", "; ".join(problems)) if problems
-                              else _ok("describe", f"{manifest.id} {manifest.version}"))
+                        f"envelope producer {response.producer.id!r} != manifest id {manifest.id!r}"
+                    )
+                checks.append(
+                    _fail("describe", "; ".join(problems))
+                    if problems
+                    else _ok("describe", f"{manifest.id} {manifest.version}")
+                )
                 checks.append(_feature_consistency(manifest))
 
     # --- health -------------------------------------------------------------
@@ -214,9 +243,11 @@ def check_provider(
         assert response is not None
         try:
             report = from_dict(HealthReport, response.payload, "$.payload")
-            checks.append(_ok("health", f"status {report.status}")
-                          if report.status in ("ok", "degraded")
-                          else _fail("health", f"status {report.status}"))
+            checks.append(
+                _ok("health", f"status {report.status}")
+                if report.status in ("ok", "degraded")
+                else _fail("health", f"status {report.status}")
+            )
         except ContractError as exc:
             checks.append(_fail("health", f"payload: {exc}"))
 
@@ -229,9 +260,13 @@ def check_provider(
 
     checks.append(_check_protocol_edges(argv, timeout))
     checks.append(_check_producer_identity(transport, manifest))
-    checks.append(_ok("timeout",
-                      f"every call bounded (describe/health {HEALTH_TIMEOUT:g}s, "
-                      f"execute {timeout:g}s); a hang fails its own check"))
+    checks.append(
+        _ok(
+            "timeout",
+            f"every call bounded (describe/health {HEALTH_TIMEOUT:g}s, "
+            f"execute {timeout:g}s); a hang fails its own check",
+        )
+    )
     return ConformanceReport(argv=list(argv), checks=checks)
 
 
@@ -244,13 +279,12 @@ def _feature_consistency(manifest: ForgeManifest) -> ConformanceCheck:
     (a newer provider may declare them for a newer core).
     """
     implied = implied_features(manifest)
-    missing = sorted(f for f in manifest.features if f in _FEATURE_BACKING
-                     and f not in implied)
-    unknown = sorted(f for f in manifest.features
-                     if f not in KNOWN_FEATURES and FEATURE_ID_RE.match(f))
+    missing = sorted(f for f in manifest.features if f in _FEATURE_BACKING and f not in implied)
+    unknown = sorted(
+        f for f in manifest.features if f not in KNOWN_FEATURES and FEATURE_ID_RE.match(f)
+    )
     if missing:
-        return _fail("features", "declared without backing surface: "
-                     + ", ".join(missing))
+        return _fail("features", "declared without backing surface: " + ", ".join(missing))
     detail = f"{len(manifest.features)} declared, {len(implied)} implied"
     if unknown:
         detail += f"; forward-declared: {', '.join(unknown)}"
@@ -263,7 +297,9 @@ _FEATURE_BACKING = frozenset({HANDOFF, VERIFY, PLAN_PROPOSAL, RESOLVE})
 
 
 def _behavior_checks(
-    transport: Any, manifest: ForgeManifest, timeout: float,
+    transport: Any,
+    manifest: ForgeManifest,
+    timeout: float,
 ) -> list[ConformanceCheck]:
     """execute / context / handoff / artifacts / replay-determinism, given a
     manifest that parsed — capabilities drive what is exercised."""
@@ -282,11 +318,16 @@ def _behavior_checks(
         (root / "conformance-note.md").write_bytes(b"# conformance\nline two\n")
         whole = b"# conformance\nline two\n"
         first_line = b"# conformance\n"
-        reference = ContextFile(path="conformance-note.md", sha256=sha256_hex(whole),
-                                bytes=len(whole))
-        excerpt = ContextFile(path="conformance-note.md",
-                              sha256=sha256_hex(first_line), bytes=len(first_line),
-                              tier="excerpt", lines=LineRange(start=1, end=1))
+        reference = ContextFile(
+            path="conformance-note.md", sha256=sha256_hex(whole), bytes=len(whole)
+        )
+        excerpt = ContextFile(
+            path="conformance-note.md",
+            sha256=sha256_hex(first_line),
+            bytes=len(first_line),
+            tier="excerpt",
+            lines=LineRange(start=1, end=1),
+        )
 
         # --- execute (every declared capability) ----------------------------
         if not has_execution:
@@ -294,15 +335,17 @@ def _behavior_checks(
         else:
             failures: list[str] = []
             for capability in has_execution:
-                workdir = Path(tempfile.mkdtemp(
-                    prefix="theforge-conformance-work-", dir=workspace))
-                files = [excerpt] if (wants_excerpt and capability.context.excerpts) \
-                    else [reference]
+                workdir = Path(tempfile.mkdtemp(prefix="theforge-conformance-work-", dir=workspace))
+                files = (
+                    [excerpt] if (wants_excerpt and capability.context.excerpts) else [reference]
+                )
                 response, failure = _call(
-                    transport, "execute",
-                    _execute_payload(root, capability.id, capability.default_action,
-                                     files=files),
-                    timeout, cwd=workdir)
+                    transport,
+                    "execute",
+                    _execute_payload(root, capability.id, capability.default_action, files=files),
+                    timeout,
+                    cwd=workdir,
+                )
                 if failure is not None:
                     failures.append(f"{capability.id}: {failure}")
                     continue
@@ -315,17 +358,27 @@ def _behavior_checks(
                 results.append(result)
                 for artifact in result.artifacts:
                     artifacts_seen.append((artifact, workdir))
-            checks.append(_fail("execute", "; ".join(failures)) if failures else _ok(
-                "execute", f"{len(results)} capability(ies) returned valid results"))
+            checks.append(
+                _fail("execute", "; ".join(failures))
+                if failures
+                else _ok("execute", f"{len(results)} capability(ies) returned valid results")
+            )
 
         # --- context ---------------------------------------------------------
         if not has_execution:
             checks.append(_skip("context", "manifest declares no capabilities"))
         else:
-            checks.append(_ok(
-                "context", "reference tier exercised"
-                + ("; excerpt tier exercised" if wants_excerpt else
-                   " (no capability declares excerpts)")))
+            checks.append(
+                _ok(
+                    "context",
+                    "reference tier exercised"
+                    + (
+                        "; excerpt tier exercised"
+                        if wants_excerpt
+                        else " (no capability declares excerpts)"
+                    ),
+                )
+            )
 
         # --- handoff ---------------------------------------------------------
         if not accepts_handoff:
@@ -333,55 +386,71 @@ def _behavior_checks(
         else:
             capability = next(c for c in manifest.capabilities if c.accepts_handoff)
             handoff = Handoff(
-                producer=PRODUCER, created_at=utc_now(), plan_run="plan_conformance",
+                producer=PRODUCER,
+                created_at=utc_now(),
+                plan_run="plan_conformance",
                 target_node="n1",
-                items=[HandoffItem(
-                    kind="decision", id="outcome",
-                    origin=HandoffOrigin(plan_run="plan_conformance", node="n0",
-                                         run_id="run_conformance",
-                                         provider=Producer(id="origin", version="0.0.0")),
-                    claim="conformance probe decision")])
-            workdir = Path(tempfile.mkdtemp(
-                prefix="theforge-conformance-work-", dir=workspace))
+                items=[
+                    HandoffItem(
+                        kind="decision",
+                        id="outcome",
+                        origin=HandoffOrigin(
+                            plan_run="plan_conformance",
+                            node="n0",
+                            run_id="run_conformance",
+                            provider=Producer(id="origin", version="0.0.0"),
+                        ),
+                        claim="conformance probe decision",
+                    )
+                ],
+            )
+            workdir = Path(tempfile.mkdtemp(prefix="theforge-conformance-work-", dir=workspace))
             response, failure = _call(
-                transport, "execute",
-                _execute_payload(root, capability.id, capability.default_action,
-                                 handoff=handoff),
-                timeout, cwd=workdir)
+                transport,
+                "execute",
+                _execute_payload(root, capability.id, capability.default_action, handoff=handoff),
+                timeout,
+                cwd=workdir,
+            )
             if failure is not None:
                 checks.append(_fail("handoff", failure))
             else:
                 assert response is not None
                 _, problem = _result_of(response, expected)
-                checks.append(_fail("handoff", problem) if problem is not None
-                              else _ok("handoff", f"{capability.id} accepted a handoff"))
+                checks.append(
+                    _fail("handoff", problem)
+                    if problem is not None
+                    else _ok("handoff", f"{capability.id} accepted a handoff")
+                )
 
         # --- refusal surface ---------------------------------------------------
         failures = []
-        workdir = Path(tempfile.mkdtemp(prefix="theforge-conformance-work-",
-                                        dir=workspace))
+        workdir = Path(tempfile.mkdtemp(prefix="theforge-conformance-work-", dir=workspace))
         response, failure = _call(
-            transport, "execute",
-            _execute_payload(root, "zz.unknown", "run"), timeout, cwd=workdir)
+            transport, "execute", _execute_payload(root, "zz.unknown", "run"), timeout, cwd=workdir
+        )
         if failure is not None:
             failures.append(f"unknown capability: {failure}")
-        elif response is not None and (
-                response.status != "refused" or response.error is None):
+        elif response is not None and (response.status != "refused" or response.error is None):
             failures.append("unknown capability is not refused with an error")
         if has_execution:
             capability = has_execution[0]
             response, failure = _call(
-                transport, "execute",
+                transport,
+                "execute",
                 _execute_payload(root, capability.id, "zz-not-an-action"),
-                timeout, cwd=workdir)
+                timeout,
+                cwd=workdir,
+            )
             if failure is not None:
                 failures.append(f"unknown action: {failure}")
-            elif response is not None and (
-                    response.status != "refused" or response.error is None):
+            elif response is not None and (response.status != "refused" or response.error is None):
                 failures.append("unknown action is not refused with an error")
-        checks.append(_fail("refusals", "; ".join(failures)) if failures
-                      else _ok("refusals",
-                               "unknown capability and unknown action refused"))
+        checks.append(
+            _fail("refusals", "; ".join(failures))
+            if failures
+            else _ok("refusals", "unknown capability and unknown action refused")
+        )
 
         # --- artifacts -------------------------------------------------------
         if not artifacts_seen:
@@ -396,24 +465,23 @@ def _behavior_checks(
                         failures.append(f"{artifact.path}: escapes the work directory")
                         continue
                     if not resolved.is_file():
-                        failures.append(f"{artifact.path}: not present in the work "
-                                        "directory")
+                        failures.append(f"{artifact.path}: not present in the work directory")
                         continue
                     digest = sha256_hex(resolved.read_bytes())
                 except OSError as exc:
                     failures.append(f"{artifact.path}: {exc}")
                     continue
                 if digest != artifact.sha256:
-                    failures.append(f"{artifact.path}: sha256 diverges from the "
-                                    "declared hash")
-            checks.append(_fail("artifacts", "; ".join(failures)) if failures
-                          else _ok("artifacts",
-                                   f"{len(artifacts_seen)} artifact(s) verified on disk"))
+                    failures.append(f"{artifact.path}: sha256 diverges from the declared hash")
+            checks.append(
+                _fail("artifacts", "; ".join(failures))
+                if failures
+                else _ok("artifacts", f"{len(artifacts_seen)} artifact(s) verified on disk")
+            )
 
     # --- replay-determinism ---------------------------------------------------
     if not deterministic:
-        checks.append(_skip("replay-determinism",
-                            "no capability declares execution.deterministic"))
+        checks.append(_skip("replay-determinism", "no capability declares execution.deterministic"))
     else:
         failures = []
         with tempfile.TemporaryDirectory(prefix="theforge-conformance-") as workspace:
@@ -421,41 +489,55 @@ def _behavior_checks(
             for capability in deterministic:
                 payload = _execute_payload(root, capability.id, capability.default_action)
                 first, failure = _call(
-                    transport, "execute", payload, timeout,
-                    cwd=Path(tempfile.mkdtemp(prefix="work-", dir=workspace)))
+                    transport,
+                    "execute",
+                    payload,
+                    timeout,
+                    cwd=Path(tempfile.mkdtemp(prefix="work-", dir=workspace)),
+                )
                 if failure is not None:
                     failures.append(f"{capability.id}: {failure}")
                     continue
                 second, failure = _call(
-                    transport, "execute", payload, timeout,
-                    cwd=Path(tempfile.mkdtemp(prefix="work-", dir=workspace)))
+                    transport,
+                    "execute",
+                    payload,
+                    timeout,
+                    cwd=Path(tempfile.mkdtemp(prefix="work-", dir=workspace)),
+                )
                 if failure is not None:
                     failures.append(f"{capability.id}: {failure}")
                     continue
                 assert first is not None and second is not None
                 if first.status != second.status:
-                    failures.append(
-                        f"{capability.id}: status {first.status} != {second.status}")
+                    failures.append(f"{capability.id}: status {first.status} != {second.status}")
                     continue
                 a, b = dict(first.payload), dict(second.payload)
                 a.pop("created_at", None)
                 b.pop("created_at", None)
                 if a != b:
-                    failures.append(f"{capability.id}: identical request produced "
-                                    "different results")
-        checks.append(_fail("replay-determinism", "; ".join(failures)) if failures
-                      else _ok("replay-determinism",
-                               f"{len(deterministic)} deterministic capability(ies) "
-                               "replayed identically"))
+                    failures.append(
+                        f"{capability.id}: identical request produced different results"
+                    )
+        checks.append(
+            _fail("replay-determinism", "; ".join(failures))
+            if failures
+            else _ok(
+                "replay-determinism",
+                f"{len(deterministic)} deterministic capability(ies) replayed identically",
+            )
+        )
     return checks
 
 
-def _raw(argv: Sequence[str], op: str, body: bytes,
-         timeout: float) -> tuple[int, dict[str, Any]] | None:
+def _raw(
+    argv: Sequence[str], op: str, body: bytes, timeout: float
+) -> tuple[int, dict[str, Any]] | None:
     """Raw probe for malformed inputs — the transport refuses to send them."""
     try:
-        proc = subprocess.run([*argv, op], input=body, capture_output=True,
-                              timeout=timeout, env=safe_env())
+        proc = subprocess.run(
+            [*argv, op], input=body, capture_output=True, timeout=timeout, env=safe_env()
+        )
     except subprocess.TimeoutExpired:
         return None
     except OSError:
@@ -467,15 +549,23 @@ def _raw(argv: Sequence[str], op: str, body: bytes,
     return proc.returncode, data if isinstance(data, dict) else {}
 
 
-def _raw_request(op: str, payload: dict[str, Any] | None = None,
-                 protocol: str = PROTOCOL_V1) -> bytes:
-    return json.dumps({"protocol": protocol, "kind": "Request", "op": op,
-                       "request_id": "r_conformance",
-                       "payload": payload or {}}).encode()
+def _raw_request(
+    op: str, payload: dict[str, Any] | None = None, protocol: str = PROTOCOL_V1
+) -> bytes:
+    return json.dumps(
+        {
+            "protocol": protocol,
+            "kind": "Request",
+            "op": op,
+            "request_id": "r_conformance",
+            "payload": payload or {},
+        }
+    ).encode()
 
 
 def _check_protocol_edges(
-    argv: Sequence[str], timeout: float,
+    argv: Sequence[str],
+    timeout: float,
 ) -> ConformanceCheck:
     """Malformed-protocol battery: invalid JSON, unknown op, foreign protocol
     and the request_id/op echoes — all must be governed failures, never a
@@ -507,13 +597,19 @@ def _check_protocol_edges(
         if raw[1].get("op") not in (None, "describe"):
             failures.append("op is not echoed")
 
-    return _fail("malformed-protocol", "; ".join(failures)) if failures \
-        else _ok("malformed-protocol",
-                 "invalid JSON, unknown op, foreign protocol and echoes all governed")
+    return (
+        _fail("malformed-protocol", "; ".join(failures))
+        if failures
+        else _ok(
+            "malformed-protocol",
+            "invalid JSON, unknown op, foreign protocol and echoes all governed",
+        )
+    )
 
 
 def _check_producer_identity(
-    transport: Any, manifest: ForgeManifest | None,
+    transport: Any,
+    manifest: ForgeManifest | None,
 ) -> ConformanceCheck:
     if manifest is None:
         return _skip("producer-identity", "no manifest")
@@ -525,9 +621,11 @@ def _check_producer_identity(
             failures.append(f"{op}: {failure}")
             continue
         assert response is not None
-        violation = check_producer(response.producer, expected=expected,
-                                   field=f"{op}.producer")
+        violation = check_producer(response.producer, expected=expected, field=f"{op}.producer")
         if violation is not None:
             failures.append(f"{op}: {violation.detail}")
-    return _fail("producer-identity", "; ".join(failures)) if failures \
+    return (
+        _fail("producer-identity", "; ".join(failures))
+        if failures
         else _ok("producer-identity", "envelope producer matches the manifest")
+    )

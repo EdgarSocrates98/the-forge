@@ -81,7 +81,10 @@ def test_requires_network_forces_external_read() -> None:
 @pytest.mark.parametrize("op", DIMENSIONS)
 def test_default_table(op: str, trust: str) -> None:
     decision = evaluate(
-        dimensions=_dims(op), trust=trust, config=DEFAULTS, approved=False  # type: ignore[arg-type]
+        dimensions=_dims(op),
+        trust=trust,
+        config=DEFAULTS,
+        approved=False,  # type: ignore[arg-type]
     )
     assert decision.decision == EXPECTED[op][trust]
     assert decision.approved is False
@@ -92,7 +95,9 @@ def test_default_table(op: str, trust: str) -> None:
 
 def test_read_only_with_network_asks_via_external_read() -> None:
     decision = evaluate(
-        dimensions=_dims("read_only", network=True), trust="builtin", config=DEFAULTS,
+        dimensions=_dims("read_only", network=True),
+        trust="builtin",
+        config=DEFAULTS,
         approved=False,
     )
     assert decision.decision == "ask"
@@ -101,7 +106,9 @@ def test_read_only_with_network_asks_via_external_read() -> None:
 
 def test_most_severe_dimension_wins() -> None:
     decision = evaluate(
-        dimensions=_dims("destructive", network=True), trust="builtin", config=DEFAULTS,
+        dimensions=_dims("destructive", network=True),
+        trust="builtin",
+        config=DEFAULTS,
         approved=True,
     )
     assert decision.decision == "deny"
@@ -124,7 +131,10 @@ def test_ask_without_approval_has_unlock_hint() -> None:
     )
     assert generic.unlock == "--approve"
     specific = evaluate(
-        dimensions=_dims("external_read"), trust="local", config=DEFAULTS, approved=False,
+        dimensions=_dims("external_read"),
+        trust="local",
+        config=DEFAULTS,
+        approved=False,
         capability="data.collect",
     )
     assert specific.unlock == "--approve data.collect"
@@ -133,7 +143,9 @@ def test_ask_without_approval_has_unlock_hint() -> None:
 @pytest.mark.parametrize("trust", TRUSTS)
 def test_deny_resists_approval(trust: str) -> None:
     decision = evaluate(
-        dimensions=_dims("destructive"), trust=trust, config=DEFAULTS,  # type: ignore[arg-type]
+        dimensions=_dims("destructive"),
+        trust=trust,
+        config=DEFAULTS,  # type: ignore[arg-type]
         approved=True,
     )
     assert decision.decision == "deny"
@@ -152,7 +164,9 @@ def test_allow_does_not_record_approval() -> None:
 @pytest.mark.parametrize("trust", ("blocked", "mystery"))
 def test_unknown_trust_is_most_restrictive_for_local_mutation(trust: str) -> None:
     decision = evaluate(
-        dimensions=_dims("local_mutation"), trust=trust, config=DEFAULTS,  # type: ignore[arg-type]
+        dimensions=_dims("local_mutation"),
+        trust=trust,
+        config=DEFAULTS,  # type: ignore[arg-type]
         approved=False,
     )
     assert decision.decision == "deny"
@@ -161,8 +175,13 @@ def test_unknown_trust_is_most_restrictive_for_local_mutation(trust: str) -> Non
 
 def test_no_active_dimension_is_denied_defensively() -> None:
     dims = RiskDimensions(
-        read_only="no", local_mutation="no", external_read="no", external_mutation="no",
-        destructive="no", credentials="unknown", cross_account="unknown",
+        read_only="no",
+        local_mutation="no",
+        external_read="no",
+        external_mutation="no",
+        destructive="no",
+        credentials="unknown",
+        cross_account="unknown",
     )
     decision = evaluate(dimensions=dims, trust="builtin", config=DEFAULTS, approved=True)
     assert decision.decision == "deny"
@@ -224,8 +243,7 @@ def test_project_policy_cannot_loosen(tmp_path: Path) -> None:
 def test_flattened_duplicate_rule_warns_and_last_wins(tmp_path: Path) -> None:
     _write(
         tmp_path / "u" / "policy.toml",
-        '[rules]\n"local_mutation.local" = "deny"\n'
-        '[rules.local_mutation]\nlocal = "ask"\n',
+        '[rules]\n"local_mutation.local" = "deny"\n[rules.local_mutation]\nlocal = "ask"\n',
     )
     warnings: list[str] = []
     config = load_policy(user_dir=tmp_path / "u", forge_dir=tmp_path / "f", warnings=warnings)
@@ -249,7 +267,7 @@ def test_project_cannot_loosen_below_user_tightening(tmp_path: Path) -> None:
     [
         '[rules]\nunknown_key = "allow"\n',
         '[rules]\nread_only = "maybe"\n',
-        '[rules]\nread_only = 3\n',
+        "[rules]\nread_only = 3\n",
         'rules = "allow"\n',
         "this is = not toml [",
     ],
@@ -302,9 +320,7 @@ def test_user_policy_accepts_dotted_and_subtable_forms(tmp_path: Path, body: str
         '[rules.local_mutation]\nlocal = "deny"\nbuiltin = "allow"\nunverified = "allow"\n',
     ],
 )
-def test_project_policy_dotted_and_subtable_forms_only_tighten(
-    tmp_path: Path, body: str
-) -> None:
+def test_project_policy_dotted_and_subtable_forms_only_tighten(tmp_path: Path, body: str) -> None:
     _write(tmp_path / "f" / "config" / "policy.toml", body)
     warnings: list[str] = []
     config = load_policy(user_dir=tmp_path / "u", forge_dir=tmp_path / "f", warnings=warnings)
@@ -372,7 +388,10 @@ def test_policy_config_is_immutable() -> None:
 
 def test_build_risk_assessment_records_declarative_source() -> None:
     capability = Capability(
-        id="data.collect", actions=["run"], default_action="run", state="supported",
+        id="data.collect",
+        actions=["run"],
+        default_action="run",
+        state="supported",
         operation_class="read_only",
     )
     dims = _dims("read_only", network=True)
@@ -380,8 +399,12 @@ def test_build_risk_assessment_records_declarative_source() -> None:
         dimensions=dims, trust="builtin", config=DEFAULTS, approved=False, capability=capability.id
     )
     risk = build_risk_assessment(
-        run_id="r1", provider_id="echo", capability=capability, action="run",
-        dimensions=dims, decision=decision,
+        run_id="r1",
+        provider_id="echo",
+        capability=capability,
+        action="run",
+        dimensions=dims,
+        decision=decision,
     )
     assert risk.schema == "theforge/RiskAssessment/v1"
     assert risk.producer == PRODUCER

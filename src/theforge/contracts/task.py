@@ -39,9 +39,13 @@ class TaskSpec:
             raise ContractError(f"unsupported schema {self.schema!r}, expected {TASK_SCHEMA!r}")
         if not self.intent.strip():
             raise ContractError("task intent must not be empty")
-        if (self.requirement is not None and self.requested_capability is not None
-                and self.requirement.capability != self.requested_capability):
+        if (
+            self.requirement is not None
+            and self.requested_capability is not None
+            and self.requirement.capability != self.requested_capability
+        ):
             raise ContractError(
                 "task requirement capability "
                 f"{self.requirement.capability!r} != requested_capability "
-                f"{self.requested_capability!r}")
+                f"{self.requested_capability!r}"
+            )

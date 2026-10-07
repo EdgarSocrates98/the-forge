@@ -73,8 +73,13 @@ def in_window(version: str, window: str) -> bool | None:
     found = _parse(version)
     if found is None:
         return None
-    compare = {">=": found.__ge__, "<=": found.__le__, "==": found.__eq__,
-               ">": found.__gt__, "<": found.__lt__}
+    compare = {
+        ">=": found.__ge__,
+        "<=": found.__le__,
+        "==": found.__eq__,
+        ">": found.__gt__,
+        "<": found.__lt__,
+    }
     return all(compare[op](bound) for op, bound in clauses)
 
 
@@ -89,19 +94,32 @@ def cli_found() -> bool:
 
 def _cli_check(found: bool, where: str) -> Check:
     if found:
-        return _check("cli", True, f"{CLI_MODULE} found with {where} (not imported; the native "
-                                   "doctor is not run)")
-    return _check("cli", False, f"{CLI_MODULE}, the CLI entry point the adapter runs, is not "
-                                f"importable with {where}; reinstall apiforge "
-                                f"{SUPPORTED_SPECIALIST} in this interpreter")
+        return _check(
+            "cli",
+            True,
+            f"{CLI_MODULE} found with {where} (not imported; the native doctor is not run)",
+        )
+    return _check(
+        "cli",
+        False,
+        f"{CLI_MODULE}, the CLI entry point the adapter runs, is not "
+        f"importable with {where}; reinstall apiforge "
+        f"{SUPPORTED_SPECIALIST} in this interpreter",
+    )
 
 
 def _live_environment() -> tuple[list[Check], str | None]:
     """(python and import checks, installed API Forge version)."""
     running = f"{sys.version_info[0]}.{sys.version_info[1]}"
     if (sys.version_info[0], sys.version_info[1]) != REQUIRED_PYTHON:
-        return [_check("python", False, f"API Forge requires Python {REQUIRED}; this adapter "
-                                        f"runs on {running} at {sys.executable}")], None
+        return [
+            _check(
+                "python",
+                False,
+                f"API Forge requires Python {REQUIRED}; this adapter "
+                f"runs on {running} at {sys.executable}",
+            )
+        ], None
     checks = [_check("python", True, f"Python {running} at {sys.executable}")]
     version: object = None
     if importlib.util.find_spec("apiforge") is not None:
@@ -110,10 +128,15 @@ def _live_environment() -> tuple[list[Check], str | None]:
         except Exception:  # an installed but broken package is not importable
             version = None
     if not isinstance(version, str):
-        checks.append(_check("import", False,
-                             f"apiforge is not importable with {sys.executable} (Python "
-                             f"{running}); install apiforge {SUPPORTED_SPECIALIST} in this "
-                             "interpreter"))
+        checks.append(
+            _check(
+                "import",
+                False,
+                f"apiforge is not importable with {sys.executable} (Python "
+                f"{running}); install apiforge {SUPPORTED_SPECIALIST} in this "
+                "interpreter",
+            )
+        )
         return checks, None
     checks.append(_check("import", True, f"apiforge {version} importable"))
     return checks, version
@@ -122,16 +145,26 @@ def _live_environment() -> tuple[list[Check], str | None]:
 def _replay_environment(environment: Mapping[str, Any]) -> tuple[list[Check], str | None]:
     python = environment["python"]
     if ".".join(python.split(".")[:2]) != REQUIRED:
-        return [_check("python", False,
-                       f"API Forge requires Python {REQUIRED}; the replay environment "
-                       f"({ENVIRONMENT_FILE}) records Python {python}")], None
+        return [
+            _check(
+                "python",
+                False,
+                f"API Forge requires Python {REQUIRED}; the replay environment "
+                f"({ENVIRONMENT_FILE}) records Python {python}",
+            )
+        ], None
     checks = [_check("python", True, f"Python {python} (replay {ENVIRONMENT_FILE})")]
     version = environment.get("specialist_version")
     if version is None:
-        checks.append(_check("import", False,
-                             f"apiforge is not importable in the replay environment "
-                             f"({ENVIRONMENT_FILE}, Python {python}); install apiforge "
-                             f"{SUPPORTED_SPECIALIST}"))
+        checks.append(
+            _check(
+                "import",
+                False,
+                f"apiforge is not importable in the replay environment "
+                f"({ENVIRONMENT_FILE}, Python {python}); install apiforge "
+                f"{SUPPORTED_SPECIALIST}",
+            )
+        )
         return checks, None
     checks.append(_check("import", True, f"apiforge {version} (replay {ENVIRONMENT_FILE})"))
     return checks, version
@@ -161,8 +194,9 @@ def health_reply(options: AdapterOptions) -> Reply:
         if options.replay is None:
             cli = _cli_check(cli_found(), f"{sys.executable}")
         else:
-            cli = _cli_check(bool(read_health(options.replay)["cli"]),
-                             f"the replay interpreter ({HEALTH_FILE})")
+            cli = _cli_check(
+                bool(read_health(options.replay)["cli"]), f"the replay interpreter ({HEALTH_FILE})"
+            )
     except ReplayError as exc:
         return fail(exc.code, exc.detail, field="replay")
     assumed = options.assume_specialist_version

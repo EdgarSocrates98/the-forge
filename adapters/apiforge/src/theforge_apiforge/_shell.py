@@ -81,11 +81,22 @@ _READ_CHUNK = 64 * 1024
 _REAP_SECONDS = 5.0
 # Credential-shaped names never reach a native process (same rules as the core's provider
 # environment, applied again here to what the core sent and to the adapter's adjustments).
-CREDENTIAL_PATTERNS = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
-    r"^AWS_", r"(^|_)TOKEN(_|$)", r"SECRET", r"PASS(WORD|WD)", r"API_?KEY", r"ACCESS_?KEY",
-    r"CREDENTIAL", r"^SSH_AUTH_SOCK$", r"^(AZURE|ARM|GH|CLOUDSDK|ACTIONS)_",
-    r"^(KUBECONFIG|DOCKER_CONFIG|NETRC)$", r"_PROXY$",
-))
+CREDENTIAL_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"^AWS_",
+        r"(^|_)TOKEN(_|$)",
+        r"SECRET",
+        r"PASS(WORD|WD)",
+        r"API_?KEY",
+        r"ACCESS_?KEY",
+        r"CREDENTIAL",
+        r"^SSH_AUTH_SOCK$",
+        r"^(AZURE|ARM|GH|CLOUDSDK|ACTIONS)_",
+        r"^(KUBECONFIG|DOCKER_CONFIG|NETRC)$",
+        r"_PROXY$",
+    )
+)
 _URL_USERINFO = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[^/?#\s@]+@")
 
 # Serialized ExecutionResult bytes returned inline: half the core transport's 8 MiB stdout cap.
@@ -157,19 +168,16 @@ class _Invalid(Exception):
         self.request_id = request_id
 
 
-def _error(code: str, detail: str, field_name: str | None, unlock: str | None
-           ) -> dict[str, Any]:
+def _error(code: str, detail: str, field_name: str | None, unlock: str | None) -> dict[str, Any]:
     return {"code": code, "detail": detail, "field": field_name, "unlock": unlock}
 
 
-def refuse(code: str, detail: str, *, field: str | None = None,
-           unlock: str | None = None) -> Reply:
+def refuse(code: str, detail: str, *, field: str | None = None, unlock: str | None = None) -> Reply:
     """A ``refused`` reply with a structured error."""
     return Reply(status="refused", error=_error(code, detail, field, unlock))
 
 
-def fail(code: str, detail: str, *, field: str | None = None,
-         unlock: str | None = None) -> Reply:
+def fail(code: str, detail: str, *, field: str | None = None, unlock: str | None = None) -> Reply:
     """An ``error`` reply with a structured error."""
     return Reply(status="error", error=_error(code, detail, field, unlock))
 
@@ -246,8 +254,11 @@ def _verify(item: object, root: Path | None) -> tuple[str, bytes | None, str | N
     if not resolved.is_relative_to(root):  # lexically contained: only a symlink escapes
         return path, None, SKIP_SYMLINK
     raw_size = item.get("bytes")
-    declared = (raw_size if isinstance(raw_size, int) and not isinstance(raw_size, bool)
-                and raw_size >= 0 else None)
+    declared = (
+        raw_size
+        if isinstance(raw_size, int) and not isinstance(raw_size, bool) and raw_size >= 0
+        else None
+    )
     sized = declared is not None
     # Never read more than the declared size (or MAX_UNSIZED_BYTES without one), plus one
     # byte to notice a file that grew between stat and read.
@@ -285,9 +296,11 @@ def stage_context(payload: Mapping[str, Any], cwd: Path) -> StagedInput:
     if not isinstance(context, Mapping) or not isinstance(items, list):
         return StagedInput(root=stage)
     raw_root = context.get("root")
-    root = (Path(raw_root).resolve()
-            if isinstance(raw_root, str) and raw_root and Path(raw_root).is_absolute()
-            else None)
+    root = (
+        Path(raw_root).resolve()
+        if isinstance(raw_root, str) and raw_root and Path(raw_root).is_absolute()
+        else None
+    )
     files: dict[str, str] = {}
     limitations: list[str] = []
     for item in items:
@@ -319,27 +332,31 @@ def evidence_hash(path: str | None, native_hash: object, stage: StagedInput) -> 
         return None
     value = native_hash
     if value.startswith(_NATIVE_HASH_PREFIX):
-        value = value[len(_NATIVE_HASH_PREFIX):]
+        value = value[len(_NATIVE_HASH_PREFIX) :]
     if _SHA256_RE.fullmatch(value) is None or value != verified:
         return None
     return verified
 
 
 def _matches(path: str, pattern: str) -> bool:
-    return (fnmatch.fnmatchcase(path, pattern)
-            or fnmatch.fnmatchcase(PurePosixPath(path).name, pattern))
+    return fnmatch.fnmatchcase(path, pattern) or fnmatch.fnmatchcase(
+        PurePosixPath(path).name, pattern
+    )
 
 
-def select_inputs(stage: StagedInput, required: Mapping[str, Sequence[str]]
-                  ) -> dict[str, list[str]]:
+def select_inputs(
+    stage: StagedInput, required: Mapping[str, Sequence[str]]
+) -> dict[str, list[str]]:
     """Input name -> staged paths (sorted) matching any of its globs (path or file name)."""
-    return {name: [path for path in sorted(stage.files)
-                   if any(_matches(path, glob) for glob in globs)]
-            for name, globs in required.items()}
+    return {
+        name: [path for path in sorted(stage.files) if any(_matches(path, glob) for glob in globs)]
+        for name, globs in required.items()
+    }
 
 
-def no_input(stage: StagedInput, required: Mapping[str, Sequence[str]], *,
-             provider_id: str, version: str) -> ResultDraft | None:
+def no_input(
+    stage: StagedInput, required: Mapping[str, Sequence[str]], *, provider_id: str, version: str
+) -> ResultDraft | None:
     """A partial draft without findings when a required input has no staged file, else None.
 
     Decided before the specialist (or a replay recording) is consulted.
@@ -348,10 +365,17 @@ def no_input(stage: StagedInput, required: Mapping[str, Sequence[str]], *,
     missing = [name for name in required if not selected[name]]
     if not missing:
         return None
-    limitations = [*stage.limitations,
-                   *(f"no input: expected {', '.join(required[name])}" for name in missing)]
-    return ResultDraft(provider_id=provider_id, version=version, limitations=limitations,
-                       unknowns=[f"input:{name}" for name in missing], partial=True)
+    limitations = [
+        *stage.limitations,
+        *(f"no input: expected {', '.join(required[name])}" for name in missing),
+    ]
+    return ResultDraft(
+        provider_id=provider_id,
+        version=version,
+        limitations=limitations,
+        unknowns=[f"input:{name}" for name in missing],
+        partial=True,
+    )
 
 
 def utc_now() -> str:
@@ -361,8 +385,9 @@ def utc_now() -> str:
 
 def _dumps(value: object) -> bytes:
     """``value`` as the response serializes it (compact, sorted keys, UTF-8)."""
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
-                      allow_nan=False).encode("utf-8")
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    ).encode("utf-8")
 
 
 def inline_size(payload: Mapping[str, Any]) -> int:
@@ -371,12 +396,13 @@ def inline_size(payload: Mapping[str, Any]) -> int:
 
 
 def _truncation(kept: int, total: int) -> str:
-    return (f"output truncated: {kept} of {total} findings inline; "
-            f"full native output in artifact {SPILL_PATH}")
+    return (
+        f"output truncated: {kept} of {total} findings inline; "
+        f"full native output in artifact {SPILL_PATH}"
+    )
 
 
-def _truncated(payload: Mapping[str, Any], kept: int, spill: Mapping[str, str]
-               ) -> dict[str, Any]:
+def _truncated(payload: Mapping[str, Any], kept: int, spill: Mapping[str, str]) -> dict[str, Any]:
     """``payload`` with its first ``kept`` findings, the evidence they reference (native
     order), the spill artifact, ``partial`` status and the truncation limitation."""
     findings = payload["findings"][:kept]
@@ -387,8 +413,7 @@ def _truncated(payload: Mapping[str, Any], kept: int, spill: Mapping[str, str]
         "findings": findings,
         "evidence": [item for item in payload["evidence"] if item.get("id") in referenced],
         "artifacts": [*payload["artifacts"], dict(spill)],
-        "limitations": [*payload["limitations"],
-                        _truncation(kept, len(payload["findings"]))],
+        "limitations": [*payload["limitations"], _truncation(kept, len(payload["findings"]))],
     }
 
 
@@ -396,15 +421,17 @@ def _spill(result: ResultDraft, payload: Mapping[str, Any], cwd: Path) -> Reply:
     """Keep the most findings (native order) that fit in INLINE_LIMIT and write the complete
     native output to ``<cwd>/native/full-output.json``, declared as an artifact."""
     native = result.native_output
-    data = (bytes(native) if isinstance(native, (bytes, bytearray))
-            else _dumps(payload if native is None else native))
+    data = (
+        bytes(native)
+        if isinstance(native, (bytes, bytearray))
+        else _dumps(payload if native is None else native)
+    )
     # The artifact entry has a fixed size (path and a 64-hex sha256), so the hash is
     # computed before deciding what fits and the file is written only once it does.
     spill = {"path": SPILL_PATH, "sha256": hashlib.sha256(data).hexdigest()}
     total = len(payload["findings"])
     if inline_size(_truncated(payload, 0, spill)) > INLINE_LIMIT:
-        return fail(OUTPUT_TOO_LARGE,
-                    f"result exceeds {INLINE_LIMIT} bytes even without findings")
+        return fail(OUTPUT_TOO_LARGE, f"result exceeds {INLINE_LIMIT} bytes even without findings")
     low, high = 0, total  # the size grows with the findings kept: largest prefix that fits
     while low < high:
         middle = (low + high + 1) // 2
@@ -418,9 +445,12 @@ def _spill(result: ResultDraft, payload: Mapping[str, Any], cwd: Path) -> Reply:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
     truncated = _truncated(payload, low, spill)
-    return Reply(status="partial", payload=truncated,
-                 limitations=list(truncated["limitations"]),
-                 unknowns=list(truncated["unknowns"]))
+    return Reply(
+        status="partial",
+        payload=truncated,
+        limitations=list(truncated["limitations"]),
+        unknowns=list(truncated["unknowns"]),
+    )
 
 
 def finalize(result: ResultDraft, cwd: Path) -> Reply:
@@ -458,8 +488,12 @@ def finalize(result: ResultDraft, cwd: Path) -> Reply:
         payload["native_trace"] = dict(result.native_trace)
     if inline_size(payload) > INLINE_LIMIT:
         return _spill(result, payload, cwd)
-    return Reply(status=status, payload=payload, limitations=list(result.limitations),
-                 unknowns=list(result.unknowns))
+    return Reply(
+        status=status,
+        payload=payload,
+        limitations=list(result.limitations),
+        unknowns=list(result.unknowns),
+    )
 
 
 def native_timeout(payload: Mapping[str, Any]) -> float:
@@ -483,18 +517,21 @@ def _env_allowed(name: str, value: str) -> bool:
     return not is_credential_name(name) and _URL_USERINFO.search(value) is None
 
 
-def native_env(adjustments: Mapping[str, str], base: Mapping[str, str] | None = None
-               ) -> dict[str, str]:
+def native_env(
+    adjustments: Mapping[str, str], base: Mapping[str, str] | None = None
+) -> dict[str, str]:
     """The environment of a native process: ``base`` (the environment received from the
     core, ``os.environ`` by default) with the adapter's ``adjustments`` applied (names
     compared case-insensitively). Credential-shaped names and values carrying URL userinfo
     are dropped from both, so an adjustment can never add a credential."""
     source = os.environ if base is None else base
     adjusted = {name.upper() for name in adjustments}
-    env = {name: value for name, value in source.items()
-           if name.upper() not in adjusted and _env_allowed(name, value)}
-    env.update({name: value for name, value in adjustments.items()
-                if _env_allowed(name, value)})
+    env = {
+        name: value
+        for name, value in source.items()
+        if name.upper() not in adjusted and _env_allowed(name, value)
+    }
+    env.update({name: value for name, value in adjustments.items() if _env_allowed(name, value)})
     return env
 
 
@@ -518,10 +555,11 @@ class NativeTimeout(Exception):
 
     def reply(self) -> Reply:
         """The structured ``ADAPTER-NATIVE-TIMEOUT`` error."""
-        return fail(NATIVE_TIMEOUT,
-                    f"native process exceeded {self.timeout:g} s and was stopped with its "
-                    "child processes",
-                    unlock="retry with a larger budget profile (economy < balanced < max)")
+        return fail(
+            NATIVE_TIMEOUT,
+            f"native process exceeded {self.timeout:g} s and was stopped with its child processes",
+            unlock="retry with a larger budget profile (economy < balanced < max)",
+        )
 
 
 class _CappedReader:
@@ -588,9 +626,17 @@ if sys.platform == "win32":
         ]
 
     class _IoCounters(ctypes.Structure):
-        _fields_ = [(name, ctypes.c_uint64) for name in (
-            "ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
-            "ReadTransferCount", "WriteTransferCount", "OtherTransferCount")]
+        _fields_ = [
+            (name, ctypes.c_uint64)
+            for name in (
+                "ReadOperationCount",
+                "WriteOperationCount",
+                "OtherOperationCount",
+                "ReadTransferCount",
+                "WriteTransferCount",
+                "OtherTransferCount",
+            )
+        ]
 
     class _ExtendedLimit(ctypes.Structure):
         _fields_ = [
@@ -607,7 +653,11 @@ if sys.platform == "win32":
     _kernel32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
     _kernel32.CreateJobObjectW.restype = wintypes.HANDLE
     _kernel32.SetInformationJobObject.argtypes = [
-        wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+        wintypes.HANDLE,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+    ]
     _kernel32.SetInformationJobObject.restype = wintypes.BOOL
     _kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
     _kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
@@ -626,8 +676,9 @@ if sys.platform == "win32":
             return None
         info = _ExtendedLimit()
         info.BasicLimitInformation.LimitFlags = _JOB_LIMIT_KILL_ON_JOB_CLOSE
-        if not _kernel32.SetInformationJobObject(job, _JOB_EXTENDED_LIMIT_INFORMATION,
-                                                 ctypes.byref(info), ctypes.sizeof(info)):
+        if not _kernel32.SetInformationJobObject(
+            job, _JOB_EXTENDED_LIMIT_INFORMATION, ctypes.byref(info), ctypes.sizeof(info)
+        ):
             _kernel32.CloseHandle(job)
             return None
         return job
@@ -636,15 +687,23 @@ if sys.platform == "win32":
         if job:
             _kernel32.CloseHandle(job)  # KILL_ON_JOB_CLOSE ends anything still in the job
 
-    def _spawn(argv: Sequence[str], cwd: Path, env: Mapping[str, str]
-               ) -> tuple[subprocess.Popen[bytes], int | None]:
+    def _spawn(
+        argv: Sequence[str], cwd: Path, env: Mapping[str, str]
+    ) -> tuple[subprocess.Popen[bytes], int | None]:
         """Start suspended, join a kill-on-close Job Object, then resume: children the
         native process starts are in the job before it runs any code."""
         job = _create_job()
         try:
             proc = subprocess.Popen(
-                list(argv), cwd=cwd, env=dict(env), shell=False, stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=_CREATE_SUSPENDED)
+                list(argv),
+                cwd=cwd,
+                env=dict(env),
+                shell=False,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                creationflags=_CREATE_SUSPENDED,
+            )
         except BaseException:
             _release(job)
             raise
@@ -672,16 +731,22 @@ if sys.platform == "win32":
         if not terminated and proc.poll() is None:
             # Fallback without a job: recursive kill by PID while the root still exists.
             with contextlib.suppress(OSError, subprocess.SubprocessError):
-                subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)],
-                               stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL, timeout=_REAP_SECONDS, check=False)
+                subprocess.run(
+                    ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=_REAP_SECONDS,
+                    check=False,
+                )
         if proc.poll() is None:
             with contextlib.suppress(OSError):
                 proc.kill()
         _reap(proc)
 
-    def _terminate_guard(active: list[subprocess.Popen[bytes]]
-                         ) -> contextlib.AbstractContextManager[None]:
+    def _terminate_guard(
+        active: list[subprocess.Popen[bytes]],
+    ) -> contextlib.AbstractContextManager[None]:
         # The native job is nested in the core's job: when the core ends the adapter's job,
         # the native tree goes with it.
         return contextlib.nullcontext()
@@ -692,12 +757,20 @@ else:
     def _release(job: int | None) -> None:
         return None
 
-    def _spawn(argv: Sequence[str], cwd: Path, env: Mapping[str, str]
-               ) -> tuple[subprocess.Popen[bytes], int | None]:
+    def _spawn(
+        argv: Sequence[str], cwd: Path, env: Mapping[str, str]
+    ) -> tuple[subprocess.Popen[bytes], int | None]:
         """The native process leads a new session: its children share its process group."""
         proc = subprocess.Popen(
-            list(argv), cwd=cwd, env=dict(env), shell=False, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+            list(argv),
+            cwd=cwd,
+            env=dict(env),
+            shell=False,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
         return proc, None
 
     def _kill_tree(proc: subprocess.Popen[bytes], job: int | None) -> None:
@@ -738,9 +811,15 @@ else:
             signal.signal(signal.SIGTERM, restore)
 
 
-def run_native(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str], timeout: float,
-               stdout_cap: int = NATIVE_STDOUT_CAP, stderr_cap: int = NATIVE_STDERR_CAP
-               ) -> NativeOutcome:
+def run_native(
+    argv: Sequence[str],
+    *,
+    cwd: Path,
+    env: Mapping[str, str],
+    timeout: float,
+    stdout_cap: int = NATIVE_STDOUT_CAP,
+    stderr_cap: int = NATIVE_STDERR_CAP,
+) -> NativeOutcome:
     """Run a native process without a shell in ``cwd``.
 
     ``env`` holds the adapter's explicit adjustments to the environment received from the
@@ -775,9 +854,13 @@ def run_native(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str], timeou
             err.finish(_REAP_SECONDS)
     if timed_out:
         raise NativeTimeout(timeout)
-    return NativeOutcome(returncode=proc.returncode, stdout=bytes(out.data),
-                         stderr=bytes(err.data), stdout_truncated=out.truncated,
-                         stderr_truncated=err.truncated)
+    return NativeOutcome(
+        returncode=proc.returncode,
+        stdout=bytes(out.data),
+        stderr=bytes(err.data),
+        stdout_truncated=out.truncated,
+        stderr_truncated=err.truncated,
+    )
 
 
 def _is_link(st: os.stat_result) -> bool:
@@ -882,9 +965,14 @@ def _is_regular_artifact(cwd: str, parts: tuple[str, ...]) -> bool:
     return True
 
 
-def _reduce(directory: str, prefix: tuple[str, ...], kept: set[tuple[str, ...]],
-            parents: set[tuple[str, ...]], preserve: Collection[str],
-            failures: list[str]) -> None:
+def _reduce(
+    directory: str,
+    prefix: tuple[str, ...],
+    kept: set[tuple[str, ...]],
+    parents: set[tuple[str, ...]],
+    preserve: Collection[str],
+    failures: list[str],
+) -> None:
     try:
         names = sorted(os.listdir(directory))
     except OSError:
@@ -913,8 +1001,9 @@ def _reduce(directory: str, prefix: tuple[str, ...], kept: set[tuple[str, ...]],
         _purge(path, "/".join(rel), failures)
 
 
-def cleanup_workdir(cwd: Path, keep: Collection[str], *, preserve: Collection[str] = ()
-                    ) -> tuple[str, ...]:
+def cleanup_workdir(
+    cwd: Path, keep: Collection[str], *, preserve: Collection[str] = ()
+) -> tuple[str, ...]:
     """Reduce ``cwd`` to the artifact paths in ``keep`` (and their parent directories).
 
     ``stage/`` and every other file, directory or link are removed; links are removed, never
@@ -930,8 +1019,9 @@ def cleanup_workdir(cwd: Path, keep: Collection[str], *, preserve: Collection[st
     contained = _contained_parts(keep)
     # Declared artifacts present before the reduction (possibly through a link) must still
     # be regular files afterwards; one behind a link (or under stage/) is gone.
-    present = sorted(path for path, parts in contained.items()
-                     if os.path.lexists(os.path.join(root, *parts)))
+    present = sorted(
+        path for path, parts in contained.items() if os.path.lexists(os.path.join(root, *parts))
+    )
     kept = _kept_parts(contained)
     parents = {parts[:index] for parts in kept for index in range(1, len(parts))}
     failures: list[str] = []
@@ -940,8 +1030,11 @@ def cleanup_workdir(cwd: Path, keep: Collection[str], *, preserve: Collection[st
     notes = [f"{CLEANUP_INCOMPLETE}{path}" for path in failures[:CLEANUP_REPORT_LIMIT]]
     if len(failures) > CLEANUP_REPORT_LIMIT:
         notes.append(f"{CLEANUP_INCOMPLETE}{len(failures) - CLEANUP_REPORT_LIMIT} more entries")
-    notes.extend(f"{CLEANUP_REMOVED}{path}" for path in present
-                 if not _is_regular_artifact(root, contained[path]))
+    notes.extend(
+        f"{CLEANUP_REMOVED}{path}"
+        for path in present
+        if not _is_regular_artifact(root, contained[path])
+    )
     return tuple(notes)
 
 
@@ -958,8 +1051,11 @@ def _declared_artifacts(reply: Reply) -> list[str]:
     artifacts = reply.payload.get("artifacts")
     if not isinstance(artifacts, list):
         return []
-    return [item["path"] for item in artifacts
-            if isinstance(item, Mapping) and isinstance(item.get("path"), str)]
+    return [
+        item["path"]
+        for item in artifacts
+        if isinstance(item, Mapping) and isinstance(item.get("path"), str)
+    ]
 
 
 def _after_execute(reply: Reply, cwd: Path, preexisting: frozenset[str]) -> Reply:
@@ -978,8 +1074,7 @@ def _after_execute(reply: Reply, cwd: Path, preexisting: frozenset[str]) -> Repl
         if any(note.startswith(CLEANUP_REMOVED) for note in notes):
             status = "partial"  # a result never claims ok with a declared artifact missing
             payload["status"] = status
-    return replace(reply, status=status, payload=payload,
-                   limitations=[*reply.limitations, *notes])
+    return replace(reply, status=status, payload=payload, limitations=[*reply.limitations, *notes])
 
 
 def parse_options(args: Sequence[str]) -> AdapterOptions:
@@ -997,8 +1092,10 @@ def parse_options(args: Sequence[str]) -> AdapterOptions:
         values[name] = args[index + 1]
         index += 2
     replay = values.get(OPTION_REPLAY)
-    return AdapterOptions(replay=None if replay is None else Path(replay),
-                          assume_specialist_version=values.get(OPTION_ASSUME_VERSION))
+    return AdapterOptions(
+        replay=None if replay is None else Path(replay),
+        assume_specialist_version=values.get(OPTION_ASSUME_VERSION),
+    )
 
 
 MAX_REQUEST_DEPTH = 256
@@ -1037,8 +1134,9 @@ def parse_request(raw: bytes, op: str) -> Request:
     if data.get("kind") != "Request":
         raise _Invalid("kind must be 'Request'", "kind", request_id)
     if data.get("op") != op:
-        raise _Invalid(f"request op {data.get('op')!r} differs from invoked op {op!r}", "op",
-                       request_id)
+        raise _Invalid(
+            f"request op {data.get('op')!r} differs from invoked op {op!r}", "op", request_id
+        )
     protocol = data.get("protocol")
     if not isinstance(protocol, str):
         raise _Invalid("protocol must be a string", "protocol", request_id)
@@ -1048,8 +1146,9 @@ def parse_request(raw: bytes, op: str) -> Request:
     return Request(op=op, request_id=request_id, protocol=protocol, payload=payload)
 
 
-def _declared_actions(handlers: Mapping[str, HandlerFactory], options: AdapterOptions,
-                      request: Request, cwd: Path) -> dict[str, list[str]] | Reply:
+def _declared_actions(
+    handlers: Mapping[str, HandlerFactory], options: AdapterOptions, request: Request, cwd: Path
+) -> dict[str, list[str]] | Reply:
     """Capability id -> actions from this adapter's own ``describe``.
 
     A describe that is not ``ok`` is returned as is: its error (e.g. the specialist is not
@@ -1058,8 +1157,9 @@ def _declared_actions(handlers: Mapping[str, HandlerFactory], options: AdapterOp
     factory = handlers.get("describe")
     if factory is None:
         return {}
-    probe = Request(op="describe", request_id=request.request_id, protocol=request.protocol,
-                    payload={})
+    probe = Request(
+        op="describe", request_id=request.request_id, protocol=request.protocol, payload={}
+    )
     reply = factory(options)(probe, cwd)
     if not isinstance(reply, Reply):
         raise TypeError("handler did not return a Reply")
@@ -1073,35 +1173,46 @@ def _declared_actions(handlers: Mapping[str, HandlerFactory], options: AdapterOp
     return declared
 
 
-def _check_execute(handlers: Mapping[str, HandlerFactory], options: AdapterOptions,
-                   request: Request, cwd: Path) -> Reply | None:
+def _check_execute(
+    handlers: Mapping[str, HandlerFactory], options: AdapterOptions, request: Request, cwd: Path
+) -> Reply | None:
     declared = _declared_actions(handlers, options, request, cwd)
     if isinstance(declared, Reply):
         return declared
     capability = request.payload.get("capability")
     if not isinstance(capability, str) or capability not in declared:
-        return refuse(CAPABILITY_UNSUPPORTED,
-                      f"capability {capability!r} is not declared by this provider",
-                      field="capability")
+        return refuse(
+            CAPABILITY_UNSUPPORTED,
+            f"capability {capability!r} is not declared by this provider",
+            field="capability",
+        )
     action = request.payload.get("action")
     if not isinstance(action, str) or action not in declared[capability]:
-        return refuse(ACTION_UNSUPPORTED,
-                      f"action {action!r} is not declared for capability {capability!r}",
-                      field="action")
+        return refuse(
+            ACTION_UNSUPPORTED,
+            f"action {action!r} is not declared for capability {capability!r}",
+            field="action",
+        )
     return None
 
 
-def dispatch(op: str, options: AdapterOptions, request: Request,
-             handlers: Mapping[str, HandlerFactory], cwd: Path) -> Reply:
+def dispatch(
+    op: str,
+    options: AdapterOptions,
+    request: Request,
+    handlers: Mapping[str, HandlerFactory],
+    cwd: Path,
+) -> Reply:
     """Apply the protocol gates and run the op handler."""
     factory = handlers.get(op)
     if factory is None:
-        return refuse(OP_UNSUPPORTED, f"op {op!r} is not supported by this provider",
-                      field="op")
+        return refuse(OP_UNSUPPORTED, f"op {op!r} is not supported by this provider", field="op")
     if op != "describe" and request.protocol != PROTOCOL:
-        return refuse(PROTOCOL_UNSUPPORTED,
-                      f"protocol {request.protocol!r} is not supported; expected {PROTOCOL!r}",
-                      field="protocol")
+        return refuse(
+            PROTOCOL_UNSUPPORTED,
+            f"protocol {request.protocol!r} is not supported; expected {PROTOCOL!r}",
+            field="protocol",
+        )
     if op == "execute":
         refusal = _check_execute(handlers, options, request, cwd)
         if refusal is not None:
@@ -1112,8 +1223,9 @@ def dispatch(op: str, options: AdapterOptions, request: Request,
     return reply
 
 
-def envelope(*, op: str, request_id: str, provider_id: str, version: str,
-             reply: Reply) -> dict[str, Any]:
+def envelope(
+    *, op: str, request_id: str, provider_id: str, version: str, reply: Reply
+) -> dict[str, Any]:
     """The response envelope for ``reply``."""
     return {
         "protocol": PROTOCOL,
@@ -1138,8 +1250,9 @@ def _internal(exc: BaseException) -> Reply:
     return fail(INTERNAL, type(exc).__name__)
 
 
-def _reply_for(argv: Sequence[str], raw: bytes, op: str,
-               handlers: Mapping[str, HandlerFactory], cwd: Path) -> tuple[str, Reply]:
+def _reply_for(
+    argv: Sequence[str], raw: bytes, op: str, handlers: Mapping[str, HandlerFactory], cwd: Path
+) -> tuple[str, Reply]:
     """(request id, reply) for one invocation; never raises for handler failures."""
     request_id = UNKNOWN_REQUEST_ID
     try:
@@ -1161,8 +1274,15 @@ def _reply_for(argv: Sequence[str], raw: bytes, op: str,
         return request_id, _internal(exc)
 
 
-def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
-            handlers: Mapping[str, HandlerFactory], cwd: Path) -> bytes:
+def respond(
+    argv: Sequence[str],
+    raw: bytes,
+    *,
+    provider_id: str,
+    version: str,
+    handlers: Mapping[str, HandlerFactory],
+    cwd: Path,
+) -> bytes:
     """The encoded response for one invocation (never raises for handler failures).
 
     After an ``execute``, whatever its outcome, the cwd is reduced to the artifacts of the
@@ -1173,8 +1293,11 @@ def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
     request_id, reply = _reply_for(argv, raw, op, handlers, cwd)
 
     def encode(answer: Reply) -> bytes:
-        return _encode(envelope(op=op, request_id=request_id, provider_id=provider_id,
-                                version=version, reply=answer))
+        return _encode(
+            envelope(
+                op=op, request_id=request_id, provider_id=provider_id, version=version, reply=answer
+            )
+        )
 
     body: bytes | None
     try:
@@ -1188,9 +1311,15 @@ def respond(argv: Sequence[str], raw: bytes, *, provider_id: str, version: str,
     return encode(reply) if body is None else body
 
 
-def serve(*, provider_id: str, version: str, handlers: Mapping[str, HandlerFactory],
-          argv: Sequence[str] | None = None, stdin: BinaryIO | None = None,
-          stdout: BinaryIO | None = None) -> int:
+def serve(
+    *,
+    provider_id: str,
+    version: str,
+    handlers: Mapping[str, HandlerFactory],
+    argv: Sequence[str] | None = None,
+    stdin: BinaryIO | None = None,
+    stdout: BinaryIO | None = None,
+) -> int:
     """Answer one Forge Protocol v1 call; always returns exit code 0."""
     args = list(sys.argv[1:] if argv is None else argv)
     source = sys.stdin.buffer if stdin is None else stdin
@@ -1199,7 +1328,10 @@ def serve(*, provider_id: str, version: str, handlers: Mapping[str, HandlerFacto
         raw = source.read()
     except Exception:  # an unreadable stdin is an invalid request
         raw = b""
-    sink.write(respond(args, raw, provider_id=provider_id, version=version,
-                       handlers=handlers, cwd=Path.cwd()))
+    sink.write(
+        respond(
+            args, raw, provider_id=provider_id, version=version, handlers=handlers, cwd=Path.cwd()
+        )
+    )
     sink.flush()
     return 0

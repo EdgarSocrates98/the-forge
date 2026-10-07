@@ -150,14 +150,20 @@ def test_relative_argv_script_resolved_against_config_dir(
     script.write_text("print('x')\n", encoding="utf-8")
     (user / "local.py").write_text("print('y')\n", encoding="utf-8")
     path = _write_toml(
-        user, '["{python}", "providers/forge.py", "local.py", "-m", "pkg.mod", "x.py"]')
+        user, '["{python}", "providers/forge.py", "local.py", "-m", "pkg.mod", "x.py"]'
+    )
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.chdir(elsewhere)
     entry = load_entries(path, "user")[0]
     assert entry.argv == [
-        sys.executable, str(script.resolve()), str((user / "local.py").resolve()),
-        "-m", "pkg.mod", "x.py"]
+        sys.executable,
+        str(script.resolve()),
+        str((user / "local.py").resolve()),
+        "-m",
+        "pkg.mod",
+        "x.py",
+    ]
     assert Path(entry.argv[1]).is_absolute() and Path(entry.argv[1]).is_file()
 
 
