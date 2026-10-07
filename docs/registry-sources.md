@@ -43,24 +43,58 @@ usuário (mesma precedência de `providers.toml`).
 ```toml
 [[sources]]
 id = "team-mirror"
-kind = "local-file"          # ou "http" (cliente chega na Wave D)
+kind = "local-file"          # ou "http"
 path = "registry.json"       # relativo ao diretório do registries.toml
 enabled = true               # opt-in: default desabilitado
 
 [[sources]]
 id = "public-registry"
 kind = "http"
-url = "https://registry.example"
+url = "https://registry.example/index.json"   # URL do RegistryDocument
 enabled = false              # remoto nunca surpreende (air-gapped por default)
-max_age_s = 3600             # freshness budget para documentos em cache
+max_age_s = 3600             # freshness budget do cache (default 3600)
+timeout_s = 10               # espera limitada por request (default 10)
 ```
 
 - `id` — identificador da fonte (`[a-zA-Z0-9_-]+`).
 - `kind` — `local-file` (documento JSON; mirrors, catálogos vendored, feeds
-  air-gapped) ou `http` (Wave D: cliente read-only com cache e freshness).
+  air-gapped) ou `http` (cliente read-only com cache e freshness — Wave D).
 - `enabled` — **default `false`**: uma fonte configurada não faz nada até ser
   habilitada explicitamente.
-- `max_age_s` — freshness budget do cache (Wave D).
+- `max_age_s` — freshness budget: cache mais novo que isso nem dispara fetch.
+- `timeout_s` — bounded wait por request HTTP.
+
+## Fonte `http` (read-only)
+
+`HttpRegistrySource` faz um `GET` condicional e honesto sobre freshness:
+
+```text
+cache fresh (age ≤ max_age_s)  →  ok, from_cache — sem rede
+cache stale/ausente            →  GET (If-None-Match quando há etag)
+   ├─ 200 → valida + grava cache → ok
+   ├─ 304 → refresh retrieved_at → ok (cache renovado)
+   └─ erro/timeout/não-200 → cache? stale (marcado) : unavailable
+```
+
+Regras de segurança do cliente:
+
+- **URL `https://` obrigatória** — `http://` só para hosts loopback
+  (`127.0.0.1`, `::1`, `localhost`: mirrors locais e testes). Redirects são
+  revalidados no URL final.
+- **Body limitado** a 8 MiB; decode tolerante (forward-compat) + validação de
+  contrato — lixo remoto vira `invalid`, nunca crash.
+- **Cache verificado por integridade**: o envelope guarda `url`, `retrieved_at`,
+  `etag` e `body_sha256`; na leitura o sha do corpo é recomputado — cache
+  adulterado é simplesmente ignorado (§21).
+- **`THEFORGE_NO_NETWORK=1`** desliga toda leitura remota independente de
+  `enabled` — o kill-switch para ambientes air-gapped.
+- ETag enviado como `If-None-Match`; `304` renova o freshness sem
+  re-download (eficiência — não chamamos o registry repetidamente).
+
+Todo read remoto carrega proveniência no `SourceRead`: `freshness`
+(`fresh`/`stale`/`unknown`), `from_cache`, `retrieved_at`, `etag`,
+`body_sha256` — e `status="stale"` quando o documento servido expirou o
+budget. Stale nunca é silenciosamente fresh.
 
 ## Leitura
 
@@ -71,8 +105,9 @@ fonte, na ordem configurada:
 |---|---|
 | `ok` | documento decodificado (`read.document`) |
 | `disabled` | fonte existe mas está `enabled = false` — reportada, nunca lida |
-| `unavailable` | fonte inalcançável (arquivo ausente, rede, kind não implementado) |
-| `invalid` | conteúdo não é um `RegistryDocument` válido |
+| `stale` | cache servido após expirar o freshness budget — marcado, nunca silencioso |
+| `unavailable` | fonte inalcançável (arquivo ausente, rede, sem cache) |
+| `invalid` | conteúdo não é um `RegistryDocument` válido (ou url insegura) |
 
 Uma fonte indisponível é **dado**, não exceção: o core continua funcionando
 offline com o que estiver instalado.
@@ -86,7 +121,7 @@ de entradas.
 ```text
 local (authoritative): 4 installed providers
 feed                 local-file  ok           entries=12 registry=team-mirror
-public-registry      http        disabled
+public-registry      http        stale        entries=12 registry=public (cache) retrieved=2026-01-01T10:00:00.000000Z  public-registry: fetch failed: TimeoutError; cached document from ... is stale
 ```
 
 ## `local_document`
@@ -103,5 +138,6 @@ instalados (`state == "ready"`) como `ForgeRegistryEntry`: capabilities não
 - Fonte **não** decide trust — `trust` continua só em `providers.toml`.
 - Fonte **não** instala — Wave F define `InstallationPlan` com aprovação.
 - Fonte **não** executa — descoberta remota (Wave E) nunca dispara provider.
-- `http` é declarável mas inerte até a Wave D — ler retorna `unavailable`.
+- O cliente `http` é read-only: nenhum `POST`/mutation, nenhum download de
+  pacote — só o documento de metadata.
 - Popularidade/downloads/stars nunca são evidência de engenharia.

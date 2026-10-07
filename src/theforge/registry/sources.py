@@ -31,7 +31,10 @@ import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
+
+if TYPE_CHECKING:
+    from theforge.registry.remote import Fetcher
 
 from theforge.contracts import ContractError, from_dict
 from theforge.contracts.canonical import utc_now
@@ -74,8 +77,9 @@ class SourceSpec:
     kind: SourceKind
     enabled: bool = False  # opt-in: a configured source does nothing until enabled
     path: str | None = None   # local-file: JSON document path (config-relative)
-    url: str | None = None    # http: base URL (Wave D)
+    url: str | None = None    # http: document URL (Wave D client)
     max_age_s: int | None = None  # freshness budget for cached remote documents
+    timeout_s: int | None = None  # http: bounded wait per request (default 10)
 
     def __post_init__(self) -> None:
         if not self.id or not self.id.replace("-", "").replace("_", "").isalnum():
@@ -87,6 +91,9 @@ class SourceSpec:
         if self.max_age_s is not None and self.max_age_s <= 0:
             raise ContractError(
                 f"registry source {self.id!r}: max_age_s must be positive")
+        if self.timeout_s is not None and self.timeout_s <= 0:
+            raise ContractError(
+                f"registry source {self.id!r}: timeout_s must be positive")
 
 
 def load_source_specs(forge_dir: Path | None, user_dir: Path | None = None,
@@ -151,12 +158,20 @@ class RegistrySource(Protocol):
 
 @dataclass(frozen=True, kw_only=True)
 class SourceRead:
-    """One source attempted: the document or the explicit reason it is absent."""
+    """One source attempted: the document or the explicit reason it is absent.
+    Freshness metadata travels with remote reads — stale is never silently
+    fresh (§21)."""
 
     spec: SourceSpec
-    status: Literal["ok", "disabled", "unavailable", "invalid"]
+    status: Literal["ok", "disabled", "unavailable", "invalid", "stale"]
     document: RegistryDocument | None = None
     detail: str | None = None
+    # Remote-read provenance (None for local-file reads).
+    freshness: Literal["fresh", "stale", "unknown"] = "unknown"
+    from_cache: bool = False
+    retrieved_at: str | None = None
+    etag: str | None = None
+    body_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -187,9 +202,13 @@ class FileRegistrySource:
         return SourceRead(spec=self.spec, status="ok", document=document)
 
 
-def read_sources(specs: Sequence[SourceSpec]) -> list[SourceRead]:
+def read_sources(specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = None,
+                 cache_dir: Path | None = None) -> list[SourceRead]:
     """Read every *enabled* source, in spec order; disabled ones are reported
-    as ``disabled`` so the UX can say a source exists but is off (§20)."""
+    as ``disabled`` so the UX can say a source exists but is off (§20).
+
+    ``fetcher``/``cache_dir`` exist for tests and embeddings — production
+    callers leave them None (urllib transport, user cache dir)."""
     reads: list[SourceRead] = []
     for spec in specs:
         if not spec.enabled:
@@ -198,11 +217,10 @@ def read_sources(specs: Sequence[SourceSpec]) -> list[SourceRead]:
         source: RegistrySource
         if spec.kind == "local-file":
             source = FileRegistrySource(spec=spec)
-        else:  # http — the Wave D client; absent until implemented
-            reads.append(SourceRead(
-                spec=spec, status="unavailable",
-                detail=f"{spec.id}: http registry sources are not implemented yet"))
-            continue
+        else:  # http — read-only remote client (Wave D)
+            from theforge.registry.remote import HttpRegistrySource
+            source = HttpRegistrySource(spec=spec, fetcher=fetcher,
+                                        cache_dir=cache_dir)
         reads.append(source.read())
     return reads
 

@@ -212,6 +212,9 @@ def cmd_registry_sources(args: argparse.Namespace) -> int:
         "status": read.status, "detail": read.detail,
         "entries": len(read.document.entries) if read.document else None,
         "registry": read.document.registry.id if read.document else None,
+        "freshness": read.freshness, "from_cache": read.from_cache,
+        "retrieved_at": read.retrieved_at, "etag": read.etag,
+        "body_sha256": read.body_sha256,
     } for read in read_sources(specs)]
     _emit(args, {"local_entries": len(local.entries), "sources": sources},
           render.registry_sources)

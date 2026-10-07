@@ -146,6 +146,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_requirement_routing.py": ("unit", "integration"),
     # cycle-4 registry sources
     "test_registry_sources.py": ("unit", "contract", "security"),
+    "test_registry_remote.py": ("unit", "security"),
 }
 
 

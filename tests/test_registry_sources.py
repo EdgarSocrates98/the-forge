@@ -241,12 +241,13 @@ def test_read_sources_reports_disabled(tmp_path: Path) -> None:
     assert reads[0].document is None
 
 
-def test_read_sources_http_not_implemented(tmp_path: Path) -> None:
+def test_read_sources_http_unavailable_offline(tmp_path: Path) -> None:
+    """Enabled http source + no cache + blocked network → unavailable (not a
+    crash): the core treats a dead source as data (§20)."""
     spec = SourceSpec(id="remote", kind="http", url="https://reg.example",
                       enabled=True)
-    reads = read_sources([spec])
+    reads = read_sources([spec], cache_dir=tmp_path / "cache")
     assert reads[0].status == "unavailable"
-    assert "not implemented" in (reads[0].detail or "")
 
 
 def test_read_sources_order(tmp_path: Path) -> None:
@@ -254,7 +255,7 @@ def test_read_sources_order(tmp_path: Path) -> None:
     specs = [file_spec(tmp_path, id="a", enabled=False),
              file_spec(tmp_path, id="b"),
              SourceSpec(id="c", kind="http", url="https://x", enabled=True)]
-    reads = read_sources(specs)
+    reads = read_sources(specs, cache_dir=tmp_path / "cache")
     assert [(r.spec.id, r.status) for r in reads] == [
         ("a", "disabled"), ("b", "ok"), ("c", "unavailable")]
 
