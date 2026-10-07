@@ -16,3 +16,18 @@ required for independent verification.
 
 Safety ordering: policy/budget/user constraints and mandatory verification
 always dominate economy.
+
+
+## Terminal plan semantics
+
+Ausência de próximo nó no plano não significa `no_expected_gain`. No fechamento
+terminal o core usa ganho `unknown` quando ainda existem incógnitas, porque não há
+um candidato concreto sendo avaliado. Portanto:
+
+- sem incógnitas e com verificação satisfeita: `stop_sufficient_evidence`;
+- com verificação obrigatória pendente: `continue`;
+- com incógnitas restantes e nenhum candidato concreto: `continue` + ganho
+  `unknown`.
+
+`stop_no_expected_gain` fica reservado para uma decisão em que um candidato real
+tenha sido avaliado e não ofereça evidência incremental declarada.
