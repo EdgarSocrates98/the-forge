@@ -1,6 +1,6 @@
 # ADR 0045 — Information Gain Model
 
-Status: Accepted
+- Status: aceito (2026-10-07)
 
 ## Decision
 
