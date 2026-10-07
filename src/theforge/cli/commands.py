@@ -7,7 +7,7 @@ import sys
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, cast
 
 from theforge.adaptive import build_context_roi, recommend_context_budget
 from theforge.cli import render
@@ -34,6 +34,7 @@ from theforge.registry import (
     read_sources,
 )
 from theforge.routing.signals import normalize_tokens
+from theforge.contracts.types import BudgetProfile
 from theforge.runs import RunStore
 from theforge.security.redact import redact
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
@@ -273,7 +274,7 @@ def cmd_economy_report(args: argparse.Namespace) -> int:
         if latest is not None and latest.profile in ("economy", "balanced", "max"):
             recommendation = recommend_context_budget(
                 roi,
-                current_budget_bytes=profile_for(latest.profile).budget_bytes,
+                current_budget_bytes=profile_for(cast(BudgetProfile, latest.profile)).budget_bytes,
             )
         roi_rows.append({
             "roi": to_dict(roi),
