@@ -122,13 +122,43 @@ def advance_experiment(
     experiment: StrategyExperiment,
     evaluation: list[ExecutionObservation],
 ) -> StrategyExperiment:
-    """Advance a shadow experiment without ever auto-promoting it."""
-    comparable = [
+    """Advance a shadow experiment without ever auto-promoting it.
+
+    When evaluation_after is set, observations at or before that canonical
+    timestamp are hypothesis/discovery history and cannot count as evaluation.
+    """
+    if experiment.state in ("promoted", "rejected", "stale", "cancelled"):
+        return experiment
+
+    scoped = [
         item
         for item in evaluation
         if item.capability == experiment.capability
         and (experiment.task_family is None or item.task_family == experiment.task_family)
         and (
+            experiment.evaluation_after is None
+            or item.created_at > experiment.evaluation_after
+        )
+    ]
+    if any(
+        item.provider == experiment.champion
+        and item.surface_fingerprint not in (None, experiment.champion_surface)
+        for item in scoped
+    ) or any(
+        item.provider == experiment.challenger
+        and item.surface_fingerprint not in (None, experiment.challenger_surface)
+        for item in scoped
+    ):
+        return replace(
+            experiment,
+            state="stale",
+            reasons=[*experiment.reasons, "provider surface changed during experiment"],
+        )
+
+    comparable = [
+        item
+        for item in scoped
+        if (
             (
                 item.provider == experiment.champion
                 and item.surface_fingerprint == experiment.champion_surface
@@ -139,21 +169,6 @@ def advance_experiment(
             )
         )
     ]
-    if any(
-        item.provider == experiment.champion
-        and item.surface_fingerprint not in (None, experiment.champion_surface)
-        for item in evaluation
-    ) or any(
-        item.provider == experiment.challenger
-        and item.surface_fingerprint not in (None, experiment.challenger_surface)
-        for item in evaluation
-    ):
-        return replace(
-            experiment,
-            state="stale",
-            reasons=[*experiment.reasons, "provider surface changed during experiment"],
-        )
-
     verified = sum(1 for item in comparable if item.verification == "passed")
     observations = len(comparable)
     state: ExperimentState = "observing"
@@ -174,7 +189,6 @@ def advance_experiment(
         verified_observations=verified,
         reasons=reasons,
     )
-
 
 def comparative_context_median(
     observations: list[ExecutionObservation], provider: str
