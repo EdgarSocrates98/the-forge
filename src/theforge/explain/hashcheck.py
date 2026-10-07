@@ -110,11 +110,11 @@ class _Check:
             self.compare(f"{prefix}work/{artifact.path}", artifact.sha256, actual, present)
 
     def nodes(
-            self,
-            run_id: str,
-            prefix: str,
-            depth: int,
-            expected_global_stop: str | None,
+        self,
+        run_id: str,
+        prefix: str,
+        depth: int,
+        expected_global_stop: str | None,
     ) -> None:
         try:
             result = self.store.read_contract(run_id, "plan-result", PlanResult)
