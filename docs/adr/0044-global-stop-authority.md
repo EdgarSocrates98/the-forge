@@ -1,6 +1,6 @@
 # ADR 0044 — Global Stop Authority
 
-Status: Accepted
+- Status: aceito (2026-10-07)
 
 ## Context
 
