@@ -56,7 +56,8 @@
       "items": {
         "type": "string"
       },
-      "type": "array"
+      "type": "array",
+      "minItems": 1
     },
     "run_id": {
       "type": "string"
@@ -82,7 +83,8 @@
     "created_at",
     "run_id",
     "action",
-    "information_gain"
+    "information_gain",
+    "reasons"
   ],
   "title": "GlobalStopDecision",
   "type": "object"
