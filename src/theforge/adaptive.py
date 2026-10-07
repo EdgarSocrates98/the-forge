@@ -158,12 +158,13 @@ def advance_experiment(
     if experiment.state in ("promoted", "rejected", "stale", "cancelled"):
         return experiment
 
+    cutoff = experiment.evaluation_after or experiment.discovery_before
     scoped = [
         item
         for item in evaluation
         if item.capability == experiment.capability
         and item.task_family == experiment.task_family
-        and _after_cutoff(item.created_at, experiment.evaluation_after)
+        and _after_cutoff(item.created_at, cutoff)
     ]
     if any(
         item.provider == experiment.champion
