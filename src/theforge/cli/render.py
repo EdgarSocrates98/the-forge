@@ -876,7 +876,8 @@ def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | Non
                   decision: dict[str, Any] | None = None,
                   semantic_proposal: dict[str, Any] | None = None,
                   capability_graph: dict[str, Any] | None = None,
-                  economy: dict[str, Any] | None = None) -> list[str]:
+                  economy: dict[str, Any] | None = None,
+                  global_stop: dict[str, Any] | None = None) -> list[str]:
     """Plan, node states with their runs, handoffs, synthesis, workspace and installation."""
     lines: list[str] = []
     if capability_graph:
@@ -912,6 +913,12 @@ def plan_sections(plan_data: dict[str, Any] | None, result: dict[str, Any] | Non
         lines += _decision_lines(decision)
     if economy:
         lines += _economy_lines(economy)
+    if global_stop:
+        action = _clean(global_stop.get("action", "unresolved"))
+        gain = _clean(global_stop.get("information_gain", "unknown"))
+        lines.append(f"Global stop:  {action}  information_gain={gain}")
+        lines += _labelled("  reasons:", _list(global_stop.get("reasons")))
+        lines += _labelled("  unresolved:", _list(global_stop.get("unresolved")))
     if descriptor:
         repositories = [_clean(r.get("path", "?")) for r in descriptor.get("repositories") or []]
         lines.append(f"Workspace:   {len(repositories)} repositories "
@@ -969,7 +976,8 @@ def report_sections(report: dict[str, Any]) -> list[str]:
                                artifacts.get("decision"),
                                artifacts.get("semantic-proposal"),
                                artifacts.get("capability-graph"),
-                               section.get("economy"))
+                               section.get("economy"),
+                               section.get("global_stop"))
     if report.get("error"):
         lines.append(f"Error family: {_clean(report.get('error_family') or 'provider code')}")
     lines += _labelled("Limitations:", _list(report.get("limitations")))
