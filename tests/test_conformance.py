@@ -30,8 +30,8 @@ PROVIDER_ARGVS = {
     "fixture-api": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api.json")),
     # Real adapters in replay mode (healthy `default` scenario): no network, no credentials and
     # no sibling repos; execute with an empty or non-matching context takes the "no input" path.
-    "spark-forge-replay": [sys.executable, "-m", "theforge_sparkforge", "--replay",
-                           str(FIXTURES / "native" / "sparkforge" / "default")],
+    "spark-forge-aws-replay": [sys.executable, "-m", "theforge_sparkforge_aws", "--replay",
+                           str(FIXTURES / "native" / "sparkforge_aws" / "default")],
     "api-forge-replay": [sys.executable, "-m", "theforge_apiforge", "--replay",
                          str(FIXTURES / "native" / "apiforge" / "default")],
 }

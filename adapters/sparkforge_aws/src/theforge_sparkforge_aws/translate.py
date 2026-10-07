@@ -1,4 +1,4 @@
-"""Translation of Spark Forge native outputs and errors into Forge Protocol v1 results.
+"""Translation of Spark Forge AWS native outputs and errors into Forge Protocol v1 results.
 
 Facts become ``Evidence``: the native ``id``, ``epistemic = observed``, the fact ``kind`` as
 subject, a summary of its ``measures`` as claim (at most ``CLAIM_LIMIT`` characters), the
@@ -32,8 +32,8 @@ from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from theforge_sparkforge import PROVIDER_ID, VERSION
-from theforge_sparkforge._shell import (
+from theforge_sparkforge_aws import PROVIDER_ID, VERSION
+from theforge_sparkforge_aws._shell import (
     Reply,
     ResultDraft,
     StagedInput,
@@ -70,7 +70,7 @@ def spark_error(native: Mapping[str, Any]) -> Reply:
     typed = isinstance(raw_code, str) and _ERROR_CODE.fullmatch(raw_code) is not None
     code = f"{CODE_PREFIX}{raw_code}" if typed else TOOL_ERROR
     approval = native.get("required_approval")
-    unlock = (f"grant the Spark Forge approval {approval!r} and run again"
+    unlock = (f"grant the Spark Forge AWS approval {approval!r} and run again"
               if isinstance(approval, str) and approval else None)
     exit_code = native.get("exit_code")
     if typed or (exit_code == REFUSAL_EXIT_CODE and not isinstance(exit_code, bool)):
@@ -79,8 +79,8 @@ def spark_error(native: Mapping[str, Any]) -> Reply:
 
 
 def unknown_tool(tool: str, detail: str | None = None) -> Reply:
-    """The refusal of a tool the installed Spark Forge does not know (``KeyError``)."""
-    return refuse(TOOL_UNKNOWN, detail or f"the Spark Forge has no tool {tool!r}",
+    """The refusal of a tool the installed Spark Forge AWS does not know (``KeyError``)."""
+    return refuse(TOOL_UNKNOWN, detail or f"the Spark Forge AWS has no tool {tool!r}",
                   unlock="install a sparkforge-aws release inside the supported window")
 
 
@@ -182,7 +182,7 @@ def _unresolved(tool: str, page: Mapping[str, Any]) -> str | None:
         if isinstance(entry, Mapping):
             shown.append(f"{entry.get('file')}:{entry.get('line')} {entry.get('reason')}")
     suffix = f": {'; '.join(shown)}" if shown else ""
-    return f"{tool}: {count} item(s) unresolved by the Spark Forge{suffix}"
+    return f"{tool}: {count} item(s) unresolved by the Spark Forge AWS{suffix}"
 
 
 def _upstream_entry(item: Mapping[str, Any], fact_id: str, page: Mapping[str, Any],

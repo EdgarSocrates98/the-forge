@@ -272,7 +272,7 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
   "created_at": "…", "plan_run": "…", "target_node": "n2",
   "items": [{"kind": "evidence", "id": "e1", "epistemic": "observed",
              "origin": {"plan_run": "…", "node": "n1", "run_id": "…",
-                        "provider": {"id": "spark-forge", "version": "0.5.0"}},
+                        "provider": {"id": "spark-forge-aws", "version": "0.5.0"}},
              "subject": "…", "claim": "…", "location": {"path": "jobs/x.py", "line": 3},
              "hash": null}],
   "truncated": false, "dropped": 0, "limitations": []}}
@@ -305,7 +305,7 @@ Um nó que depende de outros recebe, no campo opcional `handoff` do `ExecuteRequ
 - `execution.deterministic` (padrão `null`, não declarado): `true` diz que as mesmas entradas produzem o mesmo resultado. É condição necessária para o run ser `reproducible`; `null` ou `false` nunca resultam em `reproducible` ([ADR 0019](adr/0019-error-taxonomy-and-reproducibility.md)).
 - `plan` em `ops`: o provider responde à [operação `plan`](#operação-plan).
 
-Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 32 KiB — são truncados com limitação, itens malformados são pulados com limitação), e `pyspark.static-analysis` do Spark Forge declara `accepts_handoff` com `relations.consumes: ["data.diagnostic-evidence"]`, traduzindo os itens a `sparkforge/upstream-facts/v1` (`--file upstream=upstream-facts.json`, auditado pelo `filters_applied.upstream` da saída). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. `api.change-control` não declara: recebe o handoff e o run do nó registra `handoff-use-undeclared`.
+Nos adapters reais: `api.analyze` do API Forge declara `accepts_handoff` e consome os itens como *facts* de upstream (`--upstream`, `apiforge/upstream-facts/v1`; itens acima dos limites do intake — 32 itens, 32 KiB — são truncados com limitação, itens malformados são pulados com limitação), e `pyspark.static-analysis` do Spark Forge AWS declara `accepts_handoff` com `relations.consumes: ["data.diagnostic-evidence"]`, traduzindo os itens a `sparkforge/upstream-facts/v1` (`--file upstream=upstream-facts.json`, auditado pelo `filters_applied.upstream` da saída). Quando o especialista instalado não expõe a entrada, o adapter degrada a `ok`/`partial` com a limitação de consumo ausente — nunca finge ter lido. `api.change-control` não declara: recebe o handoff e o run do nó registra `handoff-use-undeclared`.
 
 ### Delta (`delta/v1`)
 Um provider cujo manifest declara `delta/v1` recebe, no campo opcional `delta` do `ExecuteRequest`, um `DeltaRequest` — a dica incremental de um run **subsequente** sobre o mesmo workspace:
@@ -395,7 +395,7 @@ Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de pu
 | `FORGE-CONTEXT-REQUEST-INVALID` | context | `context_request` com 0 itens ou mais de 64 (`provider_failure`) |
 
 ## Códigos dos adapters reais
-Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-location.md)) respondem com códigos próprios, que não são `FORGE-*` e não ficam em `codes.py`. Convenção: `ADAPTER-<X>` para a mecânica comum (`_shell.py`, igual nos dois), `<FORGE>-ADAPTER-<X>` para falhas originadas no adapter e `<FORGE>-<X>` (sem `ADAPTER`) só para erros nativos mapeados. Códigos `AF-*` do API Forge passam intactos, com `field` e `unlock`.
+Os adapters de Spark Forge AWS e API Forge ([ADR 0014](adr/0014-provider-adapter-location.md)) respondem com códigos próprios, que não são `FORGE-*` e não ficam em `codes.py`. Convenção: `ADAPTER-<X>` para a mecânica comum (`_shell.py`, igual nos dois), `<FORGE>-ADAPTER-<X>` para falhas originadas no adapter e `<FORGE>-<X>` (sem `ADAPTER`) só para erros nativos mapeados. Códigos `AF-*` do API Forge passam intactos, com `field` e `unlock`.
 
 | Código | Status | Causa |
 |---|---|---|
@@ -407,7 +407,7 @@ Os adapters de Spark Forge e API Forge ([ADR 0014](adr/0014-provider-adapter-loc
 | `ADAPTER-NATIVE-TIMEOUT` | `error` | a chamada nativa passou de 85% do timeout de execute do perfil; a árvore nativa é encerrada |
 | `ADAPTER-OUTPUT-TOO-LARGE` | `error` | o resultado passa de 4 MiB mesmo sem nenhum finding inline; nada é gravado |
 | `ADAPTER-REPLAY-MISSING` / `ADAPTER-REPLAY-INVALID` | `error` | em `--replay`, um arquivo do cenário (gravação da ação, `environment.json` ou `health.json`) não existe ou é inválido |
-| `SPARKFORGE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12; nos Doctors, Python < 3.11) |
+| `SPARKFORGE_AWS-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12; nos Doctors, Python < 3.11) |
 | `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` / `DOCTORDATA-ADAPTER-SNAPSHOT-INVALID` / `DOCTORAPI-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
 | `SPARKFORGE-ADAPTER-NATIVE-FAILED` | `error` | o processo filho nativo saiu com código ≠ 0 ou com stdout truncado |
 | `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` / `DOCTORDATA-ADAPTER-NATIVE-INVALID` / `DOCTORAPI-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |

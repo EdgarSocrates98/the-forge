@@ -1,10 +1,10 @@
-"""Spark Forge adapter (real-provider-integration 4.1-4.4): manifest derived from the recorded
+"""Spark Forge AWS adapter (real-provider-integration 4.1-4.4): manifest derived from the recorded
 native tool surface, the capability table, describe and health with and without ``--replay``,
 the replay layout, the snapshot re-recording, and the translation of real recorded execute
 outputs and native errors (plus the execute recording helper), and execute with the replay
 backend and the live backend (over a stand-in ``sparkforge`` package).
 
-The dev interpreter does not have the Spark Forge installed: describe there must be refused
+The dev interpreter does not have the Spark Forge AWS installed: describe there must be refused
 with an actionable reason, and every manifest check runs in replay (``environment.json`` stands
 in for the import check, the packaged ``native_catalog.json`` is the tool surface).
 """
@@ -23,8 +23,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 import pytest
-from theforge_sparkforge import SUPPORTED_SPECIALIST, backend, catalog, record
-from theforge_sparkforge._shell import (
+from theforge_sparkforge_aws import SUPPORTED_SPECIALIST, backend, catalog, record
+from theforge_sparkforge_aws._shell import (
     Reply,
     ResultDraft,
     StagedInput,
@@ -47,9 +47,9 @@ from theforge.contracts.taxonomy import validate_taxonomy
 from theforge.contracts.types import is_catch_all_glob
 
 REPO = Path(__file__).parents[1]
-PACKAGE = REPO / "adapters" / "sparkforge" / "src" / "theforge_sparkforge"
+PACKAGE = REPO / "adapters" / "sparkforge_aws" / "src" / "theforge_sparkforge_aws"
 SNAPSHOT = PACKAGE / "native_catalog.json"
-NATIVE = REPO / "tests" / "fixtures" / "native" / "sparkforge"
+NATIVE = REPO / "tests" / "fixtures" / "native" / "sparkforge_aws"
 DEFAULT = NATIVE / "default"
 SCENARIOS = NATIVE / "scenarios"
 
@@ -83,13 +83,13 @@ def _request(op: str, payload: dict[str, Any] | None = None) -> bytes:
 
 
 def _call(op: str, *options: str, payload: dict[str, Any] | None = None) -> Response:
-    argv = [sys.executable, "-m", "theforge_sparkforge", *options, op]
+    argv = [sys.executable, "-m", "theforge_sparkforge_aws", *options, op]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:  # never the repo
         out = subprocess.run(argv, input=_request(op, payload), capture_output=True,
                              timeout=60, cwd=cwd)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.3.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge-aws", "0.3.0")
     assert response.request_id == f"req-{op}"
     return response
 
@@ -119,7 +119,7 @@ def snapshot() -> dict[str, Any]:
 # --- describe in replay -------------------------------------------------------------------
 
 def test_replay_describe_manifest_passes_taxonomy_and_limits(manifest: ForgeManifest) -> None:
-    assert manifest.id == "spark-forge"
+    assert manifest.id == "spark-forge-aws"
     assert manifest.version == "0.3.0"
     assert manifest.protocols == ["forge/v1"]
     assert set(manifest.ops) == {"describe", "health", "execute"}
@@ -292,13 +292,13 @@ def test_missing_tool_or_unfillable_argument_is_not_declared(snapshot: dict[str,
 # --- describe without the specialist ------------------------------------------------------
 
 def test_describe_without_sparkforge_is_refused_with_actionable_reason() -> None:
-    from theforge_sparkforge import native_pkg
+    from theforge_sparkforge_aws import native_pkg
     if native_pkg.dispatcher_found():
-        pytest.skip("the Spark Forge is importable in this interpreter")
+        pytest.skip("the Spark Forge AWS is importable in this interpreter")
     response = _call("describe")
     assert response.status == "refused"
     assert response.error is not None
-    assert response.error.code == "SPARKFORGE-ADAPTER-UNAVAILABLE"
+    assert response.error.code == "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE"
     assert "sparkforge-aws is not importable" in response.error.detail
     assert f"Python {sys.version_info.major}.{sys.version_info.minor}" in response.error.detail
     assert "sparkforge-aws >=0.5,<0.6" in response.error.detail
@@ -306,20 +306,22 @@ def test_describe_without_sparkforge_is_refused_with_actionable_reason() -> None
 
 
 def test_execute_without_sparkforge_surfaces_the_describe_refusal() -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
-        pytest.skip("the Spark Forge is importable in this interpreter")
+    if (importlib.util.find_spec("sparkforge_aws") is not None
+            or importlib.util.find_spec("sparkforge") is not None):
+        pytest.skip("the Spark Forge AWS is importable in this interpreter")
     response = _call("execute", payload={"task": {"intent": "x"},
                                          "capability": "pyspark.static-analysis",
                                          "action": "pyspark", "context": {"files": []}})
     assert response.status == "refused"
-    assert response.error is not None and response.error.code == "SPARKFORGE-ADAPTER-UNAVAILABLE"
+    assert (response.error is not None
+            and response.error.code == "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE")
 
 
 def test_replay_environment_replaces_the_import_check() -> None:
     response = _describe_replay(SCENARIOS / "specialist-missing")
     assert response.status == "refused"
     assert response.error is not None
-    assert response.error.code == "SPARKFORGE-ADAPTER-UNAVAILABLE"
+    assert response.error.code == "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE"
     assert "recorded" in response.error.detail and "3.11" in response.error.detail
 
 
@@ -448,11 +450,11 @@ def test_record_check_classifies_drift() -> None:
 
 
 def test_record_without_sparkforge_fails_with_reason_and_writes_nothing(tmp_path: Path) -> None:
-    from theforge_sparkforge import native_pkg
+    from theforge_sparkforge_aws import native_pkg
     if native_pkg.dispatcher_found():
-        pytest.skip("the Spark Forge is importable in this interpreter")
+        pytest.skip("the Spark Forge AWS is importable in this interpreter")
     target = tmp_path / "native_catalog.json"
-    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record",
+    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge_aws.record",
                           "--output", str(target)], capture_output=True, timeout=60,
                          cwd=tmp_path)
     assert out.returncode != 0
@@ -465,8 +467,8 @@ def test_record_without_sparkforge_fails_with_reason_and_writes_nothing(tmp_path
                                      '"tools": {"t": {"annotations": {}, "required": [1]}}}'])
 def test_corrupt_snapshot_is_a_structured_adapter_error(tmp_path: Path, content: str,
                                                         monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import __main__ as entry
-    from theforge_sparkforge._shell import AdapterOptions, Request
+    from theforge_sparkforge_aws import __main__ as entry
+    from theforge_sparkforge_aws._shell import AdapterOptions, Request
 
     corrupt = tmp_path / "native_catalog.json"
     corrupt.write_text(content, encoding="utf-8")
@@ -599,8 +601,8 @@ def test_replay_health_with_malformed_recording_is_a_structured_error(tmp_path: 
 def test_health_with_an_unreadable_snapshot_is_unavailable(tmp_path: Path,
                                                            monkeypatch: pytest.MonkeyPatch
                                                            ) -> None:
-    from theforge_sparkforge import __main__ as entry
-    from theforge_sparkforge._shell import AdapterOptions, Request
+    from theforge_sparkforge_aws import __main__ as entry
+    from theforge_sparkforge_aws._shell import AdapterOptions, Request
 
     monkeypatch.setattr(catalog, "load_snapshot", lambda: "native_catalog.json is unreadable")
     request = Request(op="health", request_id="r", protocol=PROTOCOL_V1, payload={})
@@ -613,8 +615,9 @@ def test_health_with_an_unreadable_snapshot_is_unavailable(tmp_path: Path,
 
 
 def test_live_health_without_sparkforge_is_unavailable_with_reason() -> None:
-    if importlib.util.find_spec("sparkforge") is not None:
-        pytest.skip("the Spark Forge is importable in this interpreter")
+    if (importlib.util.find_spec("sparkforge_aws") is not None
+            or importlib.util.find_spec("sparkforge") is not None):
+        pytest.skip("the Spark Forge AWS is importable in this interpreter")
     report = _health()
     assert report.status == "unavailable"
     reason = _failing(report)
@@ -624,7 +627,7 @@ def test_live_health_without_sparkforge_is_unavailable_with_reason() -> None:
 
 
 def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import health, native_pkg
+    from theforge_sparkforge_aws import health, native_pkg
 
     seen: list[str] = []
 
@@ -642,7 +645,7 @@ def test_live_health_never_imports_the_dispatcher(monkeypatch: pytest.MonkeyPatc
 
 def test_live_health_checks_the_pre_rename_dispatcher_too(
         monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import health, native_pkg
+    from theforge_sparkforge_aws import health, native_pkg
 
     def fake_find_spec(name: str) -> object:
         if name.startswith("sparkforge_aws."):
@@ -679,7 +682,7 @@ def _fake_specialist(monkeypatch: pytest.MonkeyPatch, package: str,
 
 
 def test_import_tools_prefers_the_renamed_package(monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import native_pkg
+    from theforge_sparkforge_aws import native_pkg
 
     _fake_specialist(monkeypatch, "sparkforge_aws", "new")
     _fake_specialist(monkeypatch, "sparkforge", "old")
@@ -689,7 +692,7 @@ def test_import_tools_prefers_the_renamed_package(monkeypatch: pytest.MonkeyPatc
 
 def test_import_tools_falls_back_to_the_legacy_package(
         monkeypatch: pytest.MonkeyPatch) -> None:
-    from theforge_sparkforge import native_pkg
+    from theforge_sparkforge_aws import native_pkg
 
     _fake_specialist(monkeypatch, "sparkforge", "old")
     tools, _call = native_pkg.import_tools()
@@ -700,7 +703,7 @@ def test_import_tools_falls_back_to_the_legacy_package(
     ("0.5.0", True), ("0.5.10", True), ("0.5.9", True), ("0.6.0", False), ("0.4.99", False),
     ("1.0.0", False), ("0.5", False), ("v0.5.0", False), ("0.5.0-rc1", False), ("", False)])
 def test_supported_window_is_a_semver_range(version: str, inside: bool) -> None:
-    from theforge_sparkforge import health
+    from theforge_sparkforge_aws import health
 
     assert health.in_window(version, SUPPORTED_SPECIALIST) is inside
 
@@ -717,15 +720,16 @@ def test_recorded_health_scenarios_are_in_canonical_form() -> None:
 def test_record_writes_the_health_probes_of_this_interpreter() -> None:
     probes = record.health_probes()
     assert set(probes) == {"dispatcher", "specialist_version"}
-    if importlib.util.find_spec("sparkforge") is None:
-        assert probes == {"dispatcher": False, "specialist_version": None}
+    if (importlib.util.find_spec("sparkforge_aws") is None
+                and importlib.util.find_spec("sparkforge") is None):
+            assert probes == {"dispatcher": False, "specialist_version": None}
 
 
 def test_live_interpreter_version_ignores_a_prerelease_suffix(
         monkeypatch: pytest.MonkeyPatch) -> None:
     import platform
 
-    from theforge_sparkforge import health
+    from theforge_sparkforge_aws import health
 
     monkeypatch.setattr(platform, "python_version", lambda: "3.13.0rc1")
     observation = health.observe_live()
@@ -745,7 +749,7 @@ class _BrokenSparkforge:
 @pytest.mark.parametrize(("metadata", "expected"), [("0.5.2", "0.5.2"), (None, None)])
 def test_broken_sparkforge_version_falls_back_to_metadata(
         monkeypatch: pytest.MonkeyPatch, metadata: str | None, expected: str | None) -> None:
-    from theforge_sparkforge import health, native_pkg
+    from theforge_sparkforge_aws import health, native_pkg
 
     def fake_metadata(name: str) -> str:
         assert name == "sparkforge-aws"
@@ -776,7 +780,7 @@ ANALYZE_TOOL, JUDGE_TOOL = "sparkforge_analyze_pyspark", "sparkforge_judge"
 OUTPUT_RECORDING = DEFAULT / f"{CAPABILITY}.{ACTION}.json"
 ERROR_SCENARIO = SCENARIOS / "native-error"
 ERROR_RECORDING = ERROR_SCENARIO / f"{CAPABILITY}.{ACTION}.error.json"
-PRODUCER = {"id": "spark-forge", "version": "0.3.0"}
+PRODUCER = {"id": "spark-forge-aws", "version": "0.3.0"}
 # Machine-specific fragments a portable recording never contains: a drive path (raw or JSON-
 # escaped; a URL scheme is followed by a second slash), a user directory, a temp directory.
 MACHINE_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:(?:\\|/(?!/))|/Users/|/home/|AppData|/tmp/",
@@ -803,7 +807,7 @@ def _staged(tmp_path: Path) -> StagedInput:
 
 
 def _translate(recorded: dict[str, Any], stage: StagedInput) -> Any:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     return translate.translate_recording(recorded, stage)
 
@@ -918,7 +922,7 @@ def test_full_and_summary_fact_shapes_translate_alike(tmp_path: Path) -> None:
 
 
 def test_location_is_remapped_to_the_workspace(tmp_path: Path) -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     stage = StagedInput(root=tmp_path, files={"jobs/orders_job.py": "a" * 64})
     assert translate.workspace_path("orders_job.py", "jobs", stage) == "jobs/orders_job.py"
@@ -977,7 +981,7 @@ def test_repeated_rule_ids_are_numbered_in_native_order(tmp_path: Path) -> None:
                                                   ("P2", "medium"), ("P3", "low"),
                                                   ("P4", "info")])
 def test_native_severity_map(native: str, expected: str) -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     assert translate.SEVERITY[native] == expected
 
@@ -997,7 +1001,7 @@ def _refusal(reply: Any) -> Response:
 
 
 def test_recorded_native_error_becomes_a_sparkforge_refusal() -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     native = json.loads(ERROR_RECORDING.read_text(encoding="utf-8"))
     assert set(native) >= {"error", "exit_code"}
@@ -1009,7 +1013,7 @@ def test_recorded_native_error_becomes_a_sparkforge_refusal() -> None:
 
 
 def test_native_error_recording_is_replayed_through_translation(tmp_path: Path) -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     native = json.loads(ERROR_RECORDING.read_text(encoding="utf-8"))
     response = _refusal(translate.translate_spark(native, None, StagedInput(root=tmp_path),
@@ -1018,7 +1022,7 @@ def test_native_error_recording_is_replayed_through_translation(tmp_path: Path) 
 
 
 def test_typed_native_error_keeps_its_code_and_unlock() -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     native = {"error": "chamada recusada pela cadeia de autorizacao: approval",
               "exit_code": 2, "error_code": "UNAUTHORIZED", "required_approval": "write"}
@@ -1030,7 +1034,7 @@ def test_typed_native_error_keeps_its_code_and_unlock() -> None:
 
 
 def test_untyped_native_failure_outside_the_refusal_exit_is_an_error() -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     response = _refusal(translate.spark_error({"error": "boom", "exit_code": 1}))
     assert response.status == "error" and response.error is not None
@@ -1038,7 +1042,7 @@ def test_untyped_native_failure_outside_the_refusal_exit_is_an_error() -> None:
 
 
 def test_judge_error_is_a_sparkforge_refusal(tmp_path: Path) -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     recorded = _recorded()
     judged = {"error": "facts[0] esta sem o campo obrigatorio 'subject'.", "exit_code": 2}
@@ -1050,7 +1054,7 @@ def test_judge_error_is_a_sparkforge_refusal(tmp_path: Path) -> None:
 
 
 def test_unknown_tool_is_a_structured_refusal() -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     response = _refusal(translate.unknown_tool("sparkforge_nope"))
     assert response.status == "refused" and response.error is not None
@@ -1061,7 +1065,7 @@ def test_unknown_tool_is_a_structured_refusal() -> None:
 @pytest.mark.parametrize("native", [[], {"items": "x"}, {"total_count": 1}])
 def test_malformed_native_output_is_a_structured_adapter_error(tmp_path: Path,
                                                                native: Any) -> None:
-    from theforge_sparkforge import translate
+    from theforge_sparkforge_aws import translate
 
     response = _refusal(translate.translate_spark(native, None, StagedInput(root=tmp_path),
                                                   tool=ANALYZE_TOOL))
@@ -1095,7 +1099,7 @@ _ACCEPTED = frozenset({"path", "kind", "limit", "cursor", "detail_level"})
 
 
 def test_recording_helper_records_the_tool_output_and_the_chained_judge() -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     output = {"items": [{"id": "f_1", "kind": "pyspark.udf"}], "next_cursor": None}
     judged = {"items": [], "next_cursor": None}
@@ -1120,7 +1124,7 @@ def test_recording_helper_records_the_tool_output_and_the_chained_judge() -> Non
 
 
 def test_recording_helper_writes_a_native_error_as_the_error_recording() -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     error = {"error": "Caminho nao encontrado para analise: stage/jobs/missing_job.py",
              "exit_code": 2}
@@ -1135,7 +1139,7 @@ def test_recording_helper_writes_a_native_error_as_the_error_recording() -> None
 
 
 def test_recording_helper_refuses_a_recording_with_machine_paths() -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     def leaky(cwd: Path) -> dict[str, Any]:
         return {"items": [], "next_cursor": None, "root": str(cwd)}
@@ -1148,7 +1152,7 @@ def test_recording_helper_refuses_a_recording_with_machine_paths() -> None:
 
 
 def test_recording_helper_rejects_an_undeclared_action_or_escaping_argument() -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     call = _fake_call({}, [])
     with pytest.raises(record_execute.RecordingError, match="action"):
@@ -1161,10 +1165,10 @@ def test_recording_helper_rejects_an_undeclared_action_or_escaping_argument() ->
 
 
 def test_recording_helper_without_sparkforge_fails_and_writes_nothing(tmp_path: Path) -> None:
-    from theforge_sparkforge import native_pkg
+    from theforge_sparkforge_aws import native_pkg
     if native_pkg.dispatcher_found():
-        pytest.skip("the Spark Forge is importable in this interpreter")
-    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.record_execute",
+        pytest.skip("the Spark Forge AWS is importable in this interpreter")
+    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge_aws.record_execute",
                           "--workspace", str(WORKSPACE), "--capability", CAPABILITY,
                           "--action", ACTION, "--arg", "path=jobs", "--out", str(tmp_path)],
                          capture_output=True, timeout=60, cwd=tmp_path)
@@ -1175,7 +1179,7 @@ def test_recording_helper_without_sparkforge_fails_and_writes_nothing(tmp_path: 
 
 def test_recording_helper_rejects_a_missing_file_or_overlapping_workspace(
         tmp_path: Path) -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     check = record_execute.check_workspace
     with pytest.raises(record_execute.RecordingError, match="does not exist"):
@@ -1196,7 +1200,7 @@ def test_recording_helper_rejects_a_missing_file_or_overlapping_workspace(
 
 
 def test_recording_helper_never_copies_nor_follows_links(tmp_path: Path) -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     workspace = tmp_path / "ws"
     shutil.copytree(WORKSPACE, workspace)
@@ -1239,12 +1243,12 @@ def _execute(cwd: Path, *options: str, capability: str = CAPABILITY, action: str
                **_context(root, WORKSPACE_FILES if files is None else files)}
     if handoff is not None:
         payload["handoff"] = handoff
-    argv = [sys.executable, "-m", "theforge_sparkforge", *options, "execute"]
+    argv = [sys.executable, "-m", "theforge_sparkforge_aws", *options, "execute"]
     out = subprocess.run(argv, input=_request("execute", payload), capture_output=True,
                          timeout=180, cwd=cwd, env=env)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
-    assert (response.producer.id, response.producer.version) == ("spark-forge", "0.3.0")
+    assert (response.producer.id, response.producer.version) == ("spark-forge-aws", "0.3.0")
     return response
 
 
@@ -1542,14 +1546,14 @@ def test_live_native_failures_are_structured_and_leave_nothing(
                                   "a/../../x"])
 def test_native_call_refuses_file_arguments_outside_the_stage(tmp_path: Path,
                                                               path: str) -> None:
-    from theforge_sparkforge import native_call
+    from theforge_sparkforge_aws import native_call
 
     with pytest.raises(native_call.CallError):
         native_call.staged_path(path, tmp_path)
 
 
 def test_native_call_maps_stage_relative_paths(tmp_path: Path) -> None:
-    from theforge_sparkforge import native_call
+    from theforge_sparkforge_aws import native_call
 
     assert native_call.staged_path(".", tmp_path) == "stage"
     assert native_call.staged_path("jobs", tmp_path) == "stage/jobs"
@@ -1558,7 +1562,7 @@ def test_native_call_maps_stage_relative_paths(tmp_path: Path) -> None:
 
 def test_native_call_cli_refuses_an_escaping_file_before_importing_the_specialist(
         tmp_path: Path) -> None:
-    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge.native_call",
+    out = subprocess.run([sys.executable, "-m", "theforge_sparkforge_aws.native_call",
                           "--tool", ANALYZE_TOOL, "--file", "path=../outside"],
                          capture_output=True, timeout=60, cwd=tmp_path)
     assert out.returncode == 2
@@ -1572,14 +1576,14 @@ def test_native_call_cli_refuses_an_escaping_file_before_importing_the_specialis
 ])
 def test_directory_binding_takes_the_deepest_common_staged_directory(
         matches: list[str], expected: str) -> None:
-    from theforge_sparkforge import execute
+    from theforge_sparkforge_aws import execute
 
     binding = catalog.ArgBinding(arg="path", globs=("*.py",), directory=True)
     assert execute.bound_files(binding, matches) == ({"path": expected}, [])
 
 
 def test_file_binding_takes_the_first_match_and_notes_the_rest() -> None:
-    from theforge_sparkforge import execute
+    from theforge_sparkforge_aws import execute
 
     binding = catalog.ArgBinding(arg="path", globs=("*.jsonl",))
     files, notes = execute.bound_files(binding, ["a.jsonl", "b.jsonl"])
@@ -1620,7 +1624,7 @@ def _handoff_item(**over: Any) -> dict[str, Any]:
 
 
 def test_translate_handoff_maps_each_item_to_a_foreign_fact() -> None:
-    from theforge_sparkforge import handoff as upstream
+    from theforge_sparkforge_aws import handoff as upstream
 
     document, notes = upstream.translate_handoff(_handoff(_handoff_item()))
     assert notes == []
@@ -1640,7 +1644,7 @@ def test_translate_handoff_maps_each_item_to_a_foreign_fact() -> None:
 
 
 def test_translate_handoff_is_deterministic_and_bounded() -> None:
-    from theforge_sparkforge import handoff as upstream
+    from theforge_sparkforge_aws import handoff as upstream
 
     items = [_handoff_item(id=f"ev#{n}", claim=f"claim {n}") for n in range(130)]
     document, notes = upstream.translate_handoff(_handoff(*items))
@@ -1651,7 +1655,7 @@ def test_translate_handoff_is_deterministic_and_bounded() -> None:
 
 
 def test_translate_handoff_skips_malformed_items_with_a_limitation() -> None:
-    from theforge_sparkforge import handoff as upstream
+    from theforge_sparkforge_aws import handoff as upstream
 
     document, notes = upstream.translate_handoff(
         _handoff(_handoff_item(), {"kind": "evidence", "id": ""}, "not-a-mapping"))
@@ -1690,7 +1694,7 @@ def test_live_execute_feeds_the_handoff_to_the_native_intake(tmp_path: Path) -> 
 
 def test_live_execute_reports_a_handoff_the_specialist_did_not_consume(
         tmp_path: Path) -> None:
-    env, _ = _fake_sparkforge(tmp_path, "old")  # a Spark Forge without the intake ignores it
+    env, _ = _fake_sparkforge(tmp_path, "old")  # a Spark Forge AWS without the intake ignores it
     cwd = _run_dir(tmp_path)
     result = _result(_execute(cwd, env=env, handoff=_handoff(_handoff_item())))
     assert any("handoff delivered but not consumed" in n and "upstream intake" in n
@@ -1734,7 +1738,7 @@ def test_replay_with_a_handoff_reports_the_recording_did_not_consume_it(
 
 
 def test_recording_helper_feeds_a_handoff_through_the_native_intake(tmp_path: Path) -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     staged: list[Path] = []
     output = {"items": [], "next_cursor": None}
@@ -1754,7 +1758,7 @@ def test_recording_helper_feeds_a_handoff_through_the_native_intake(tmp_path: Pa
 
 
 def test_recording_helper_refuses_a_handoff_on_a_capability_without_intake() -> None:
-    from theforge_sparkforge import record_execute
+    from theforge_sparkforge_aws import record_execute
 
     with pytest.raises(record_execute.RecordingError, match="upstream intake"):
         record_execute.record_action(_fake_call({}, []), workspace=WORKSPACE,

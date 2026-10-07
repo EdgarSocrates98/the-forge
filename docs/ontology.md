@@ -38,7 +38,7 @@ do emissor nele:
 | Doctor Data `evidence_kind="observed"`/`source_record` | `observed` | `confidence` nativa vai para `limitations` |
 | Doctor Data `evidence_kind="derived"` | `inferred` | idem |
 | Doctor API `Evidence` + `Confidence` | `observed` (scan) ou `inferred` (derived) | `native confidence: {high,medium,low,unknown}` preservado verbatim em `limitations`; `UNKNOWN` nunca vira finding sem `unknowns` |
-| Spark Forge `Fact` (extracted) | `observed` | severity/contagem de facts preservadas |
+| Spark Forge AWS `Fact` (extracted) | `observed` | severity/contagem de facts preservadas |
 | Especialista `proposal`/`estimate`/`debate` | `proposed` | — |
 | Verifier op | `confirmed` | — |
 

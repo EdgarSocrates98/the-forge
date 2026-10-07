@@ -3,7 +3,7 @@
 Only this test harness reads the variables below, to build the ``argv`` registered in the
 isolated user ``providers.toml`` of a test. They never reach a provider: the entry carries only
 ``id``/``argv``/``trust`` and the core's environment allowlist is unchanged. The variables are
-``THEFORGE_REAL_{SPARKFORGE,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``.
+``THEFORGE_REAL_{SPARKFORGE_AWS,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``.
 
 Per Forge, in this order, each with an explicit reason: the variable is set, it names an
 existing interpreter (absolute path), and ``<python> -c "import <adapter>, <specialist>"``
@@ -27,7 +27,7 @@ import pytest
 
 from theforge.security.env import safe_env
 
-SPARK_PYTHON_VAR = "THEFORGE_REAL_SPARKFORGE_PYTHON"
+SPARK_PYTHON_VAR = "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON"
 API_PYTHON_VAR = "THEFORGE_REAL_APIFORGE_PYTHON"
 DOCTORDATA_PYTHON_VAR = "THEFORGE_REAL_DOCTORDATA_PYTHON"
 DOCTORAPI_PYTHON_VAR = "THEFORGE_REAL_DOCTORAPI_PYTHON"
@@ -62,10 +62,11 @@ class ForgeSpec:
 
 
 FORGES: dict[str, ForgeSpec] = {
-    "spark": ForgeSpec("spark", "Spark Forge", "spark-forge", SPARK_PYTHON_VAR,
-                       "theforge_sparkforge", "sparkforge_aws.adapters.tools",
-                       "Spark Forge needs an interpreter with sparkforge-aws and "
-                       "theforge-sparkforge-adapter",
+    "spark": ForgeSpec("spark", "Spark Forge AWS", "spark-forge-aws", SPARK_PYTHON_VAR,
+                       "theforge_sparkforge_aws", "sparkforge_aws.adapters.tools",
+                       "Spark Forge AWS needs an interpreter with sparkforge-aws and "
+                       "theforge-sparkforge-aws-adapter",
+                       "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE",
                        specialist_alternatives=("sparkforge.adapters.tools",)),
     "api": ForgeSpec("api", "API Forge", "api-forge", API_PYTHON_VAR,
                      "theforge_apiforge", "apiforge",

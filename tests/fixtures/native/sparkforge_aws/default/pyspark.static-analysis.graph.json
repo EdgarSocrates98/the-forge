@@ -77,7 +77,7 @@
           "import_count": 0,
           "unresolved_count": 0
         },
-        "provenance_ref": "e9f02133f62390ce",
+        "provenance_ref": "83a56517a5eb3c5e",
         "subject": {
           "col": 0,
           "file": "orders_job.py",
@@ -90,9 +90,9 @@
     ],
     "next_cursor": null,
     "provenance": {
-      "e9f02133f62390ce": {
+      "83a56517a5eb3c5e": {
         "artifact": "orders_job.py",
-        "artifact_sha256": "1f4cac611ad614f6e1c77e2cc52dc7a2fe51239b06e10b7ff22c6534402a44d1",
+        "artifact_sha256": "ae5417750b90b1ce8e6f5d8010e2a7dc12c7b42393962499dcb264f6e087e567",
         "extractor": "graph@0.1.0"
       }
     },

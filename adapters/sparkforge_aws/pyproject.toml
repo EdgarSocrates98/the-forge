@@ -3,16 +3,16 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "theforge-sparkforge-adapter"
+name = "theforge-sparkforge-aws-adapter"
 version = "0.3.0"
-description = "Forge Protocol v1 provider adapter that exposes the Spark Forge to The Forge."
+description = "Forge Protocol v1 provider adapter that exposes the Spark Forge AWS to The Forge."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = []
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/theforge_sparkforge"]
+packages = ["src/theforge_sparkforge_aws"]
 
 [tool.ruff]
 extend = "../../pyproject.toml"

@@ -1,16 +1,17 @@
-"""Entry point: ``python -m theforge_sparkforge [options] <op>``, request on stdin, reply on stdout.
+"""Entry point: ``python -m theforge_sparkforge_aws [options] <op>``, request on stdin,
+reply on stdout.
 
 The common shell (``_shell.py``) owns the Forge Protocol v1 envelope, the adapter options and
 the protocol, capability and action gates.
 
-``describe`` never imports the Spark Forge tool surface (seconds to load): it checks that
+``describe`` never imports the Spark Forge AWS tool surface (seconds to load): it checks that
 a tool surface is importable (``find_spec``: ``sparkforge_aws.adapters.tools``, or
 ``sparkforge.adapters.tools`` on pre-rename installs) and derives the manifest from the
 capability table (``catalog.py``) crossed with the recorded snapshot (``native_catalog.json``). With
 ``--replay <dir>`` the import check is replaced by the scenario's ``environment.json``.
 
 ``health`` (``health.py``) checks the interpreter, the dispatcher (``find_spec``, never
-imported), the Spark Forge version against ``SUPPORTED_SPECIALIST`` (or the version given with
+imported), the Spark Forge AWS version against ``SUPPORTED_SPECIALIST`` (or the version given with
 ``--assume-specialist-version``) and the snapshot, without network, credentials or the native
 ``doctor``; with ``--replay`` it reads ``environment.json`` and ``health.json``.
 
@@ -26,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from theforge_sparkforge import (
+from theforge_sparkforge_aws import (
     PROVIDER_ID,
     SUPPORTED_SPECIALIST,
     VERSION,
@@ -35,7 +36,7 @@ from theforge_sparkforge import (
     execute,
     health,
 )
-from theforge_sparkforge._shell import (
+from theforge_sparkforge_aws._shell import (
     PROTOCOL,
     AdapterOptions,
     HandlerFactory,
@@ -53,7 +54,7 @@ DOMAINS = ["data-engineering"]
 # The adapter verifies the sha256 of every ContextPack file it stages and the specialist reads
 # only those copies (context-intelligence-v2 optional field; cores without it ignore it).
 CONTEXT_REVALIDATION = "hash"
-UNAVAILABLE = "SPARKFORGE-ADAPTER-UNAVAILABLE"
+UNAVAILABLE = "SPARKFORGE_AWS-ADAPTER-UNAVAILABLE"
 SNAPSHOT_INVALID = "SPARKFORGE-ADAPTER-SNAPSHOT-INVALID"
 
 
@@ -81,18 +82,18 @@ def manifest(exposure: catalog.Exposure) -> dict[str, Any]:
 
 
 def _availability(options: AdapterOptions) -> Reply | None:
-    """A refusal (or replay error) when the Spark Forge cannot be used, else None."""
+    """A refusal (or replay error) when the Spark Forge AWS cannot be used, else None."""
     if options.replay is None:
         reason = backend.live_unavailable_reason()
         unlock = (f"install sparkforge-aws >=0.5,<0.6 with {sys.executable} -m pip, or "
-                  "register the adapter with the Spark Forge's own interpreter")
+                  "register the adapter with the Spark Forge AWS's own interpreter")
     else:
         environment = backend.load_environment(options.replay)
         if isinstance(environment, backend.ReplayProblem):
             return fail(environment.code, environment.detail, field="replay")
         reason = environment.unavailable_reason()
         unlock = ("record the scenario with an interpreter that has sparkforge-aws: "
-                  "python -m theforge_sparkforge.record --environment <dir>")
+                  "python -m theforge_sparkforge_aws.record --environment <dir>")
     if reason is None:
         return None
     return refuse(UNAVAILABLE, reason, unlock=unlock)
@@ -106,7 +107,7 @@ def _describe(options: AdapterOptions) -> OpHandler:
         snapshot = catalog.load_snapshot()
         if isinstance(snapshot, str):
             return fail(SNAPSHOT_INVALID, snapshot,
-                        unlock="reinstall theforge-sparkforge-adapter")
+                        unlock="reinstall theforge-sparkforge-aws-adapter")
         return Reply(status="ok", payload=manifest(catalog.derive(snapshot)))
     return handle
 

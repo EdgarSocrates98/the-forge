@@ -1,4 +1,4 @@
-"""Execute of the Spark Forge adapter: the live and replay backends of one declared action.
+"""Execute of the Spark Forge AWS adapter: the live and replay backends of one declared action.
 
 The common flow: ``stage_context`` copies the verified ContextPack files to ``<cwd>/stage/``;
 the action's binding (``catalog.py``) names the native file argument and its globs. Without a
@@ -10,7 +10,7 @@ limitation).
 
 - Live backend: ``native_call`` runs in a child process of the adapter's interpreter (the Spark
   Forge's own) through ``run_native``: process cwd = the execute cwd, repository = ``stage/...``,
-  bounded by the profile's native timeout. The Spark Forge state (``.sparkforge/traces.db``,
+  bounded by the profile's native timeout. The Spark Forge AWS state (``.sparkforge/traces.db``,
   written during the call and at exit, and caches under the analyzed repository) therefore
   lives under the execute cwd, and the shell's workdir cleanup removes it with ``stage/``
   after the translation: only the spill artifact, when there is one, remains.
@@ -35,8 +35,8 @@ from dataclasses import replace
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from theforge_sparkforge import PROVIDER_ID, VERSION, backend, catalog, translate
-from theforge_sparkforge._shell import (
+from theforge_sparkforge_aws import PROVIDER_ID, VERSION, backend, catalog, translate
+from theforge_sparkforge_aws._shell import (
     STAGE_DIR,
     AdapterOptions,
     NativeOutcome,
@@ -52,11 +52,11 @@ from theforge_sparkforge._shell import (
     select_inputs,
     stage_context,
 )
-from theforge_sparkforge.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
+from theforge_sparkforge_aws.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
 
-NATIVE_MODULE = "theforge_sparkforge.native_call"
+NATIVE_MODULE = "theforge_sparkforge_aws.native_call"
 NATIVE_FAILED = "SPARKFORGE-ADAPTER-NATIVE-FAILED"
-# The child prints ASCII JSON; whatever the Spark Forge prints goes to its stderr as UTF-8.
+# The child prints ASCII JSON; whatever the Spark Forge AWS prints goes to its stderr as UTF-8.
 NATIVE_ENV = {"PYTHONIOENCODING": "utf-8"}
 STDERR_SHOWN = 300
 _RECORDING_KEYS = {"tool", "arguments", "output", "judge"}
@@ -107,7 +107,7 @@ def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *,
     """The limitation a call owes when the delivered handoff was not consumed.
 
     Live, consumption shows under ``output.filters_applied.upstream`` (an older
-    Spark Forge ignores the argument silently — the audit, not a crash, reports
+    Spark Forge AWS ignores the argument silently — the audit, not a crash, reports
     the gap). In replay no specialist runs: the evidence is the recorded
     ``arguments.upstream``. A recording that consumed a handoff this request
     does not carry is reported too — its foreign facts are not this run's.
@@ -121,7 +121,7 @@ def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *,
         if consumed or (not live and recorded_arg):
             return []
         if live:
-            return ["handoff delivered but not consumed: the installed Spark Forge has "
+            return ["handoff delivered but not consumed: the installed Spark Forge AWS has "
                     "no upstream intake on analyze pyspark "
                     "(filters_applied.upstream absent)"]
         return ["handoff delivered but not consumed: the recorded run of this action "
@@ -191,7 +191,7 @@ def _replay_recording(replay: Path, capability: str, action: str,
         expected = backend.expected_recording(capability, action)
         return fail(backend.REPLAY_MISSING,
                     f"replay recording {expected} not found in {replay}", field="replay",
-                    unlock="record it with python -m theforge_sparkforge.record_execute")
+                    unlock="record it with python -m theforge_sparkforge_aws.record_execute")
     try:
         data = json.loads(found.path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -231,7 +231,7 @@ def _live_recording(payload: Mapping[str, Any], cwd: Path, tool: str,
                else "wrote more output than the adapter reads")
         tail = _stderr_tail(outcome.stderr)
         return workspace_detail(fail(NATIVE_FAILED,
-                                     f"the Spark Forge call of {tool} {why}"
+                                     f"the Spark Forge AWS call of {tool} {why}"
                                      + (f": {tail}" if tail else "")))
     try:
         data = json.loads(outcome.stdout)

@@ -18,7 +18,7 @@ PYTHONS = ["3.11", "3.12", "3.13", "3.14"]
 OSES = ["ubuntu-latest", "windows-latest"]
 # Offline suite installs the core and both real-provider adapters editable (real-provider 3.1).
 INSTALL_WITH_ADAPTERS = (
-    "python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge"
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge"
 )
 
 
@@ -308,8 +308,8 @@ def _step_running(job: dict[str, Any], fragment: str) -> dict[str, Any]:
 def test_real_providers_builds_one_venv_per_specialist_with_its_adapter() -> None:
     job = _real_job()
     for venv, python_id, sibling, adapter, probe in (
-        (".venv-spark", "py311", "./siblings/spark-forge-aws", "./adapters/sparkforge",
-         "import sparkforge_aws.adapters.tools, theforge_sparkforge"),
+        (".venv-spark-aws", "py311", "./siblings/spark-forge-aws", "./adapters/sparkforge_aws",
+         "import sparkforge_aws.adapters.tools, theforge_sparkforge_aws"),
         (".venv-api", "py312", "./siblings/api-forge", "./adapters/apiforge",
          "import apiforge, theforge_apiforge"),
         (".venv-dd", "py311", "./siblings/forge-doctor-data", "./adapters/doctordata",
@@ -331,7 +331,7 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
     job = _real_job()
     lines = _run_lines(job)
     exports = {
-        "THEFORGE_REAL_SPARKFORGE_PYTHON=$PWD/.venv-spark/bin/python",
+        "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=$PWD/.venv-spark-aws/bin/python",
         "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python",
         "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python",
         "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python",
@@ -343,12 +343,12 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
         index = _index_of(export_lines, f'echo "{expected}" >> "$GITHUB_ENV"')
         assert index >= 0
     # the contract is exported after all four venvs exist and before the real tests run
-    for venv in (".venv-api", ".venv-spark", ".venv-dd", ".venv-da"):
+    for venv in (".venv-api", ".venv-spark-aws", ".venv-dd", ".venv-da"):
         assert _index_of(lines, f"-m venv {venv}") < _index_of(lines, "$GITHUB_ENV")
     assert _index_of(lines, "$GITHUB_ENV") < _index_of(lines, "-m pytest")
     # the variables match the committed contract of tests/real_providers.py
     contract = (REPO / "tests" / "real_providers.py").read_text(encoding="utf-8")
-    for name in ("THEFORGE_REAL_SPARKFORGE_PYTHON", "THEFORGE_REAL_APIFORGE_PYTHON",
+    for name in ("THEFORGE_REAL_SPARKFORGE_AWS_PYTHON", "THEFORGE_REAL_APIFORGE_PYTHON",
                  "THEFORGE_REAL_DOCTORDATA_PYTHON", "THEFORGE_REAL_DOCTORAPI_PYTHON",
                  "THEFORGE_REAL_PROVIDERS_REQUIRED"):
         assert f'"{name}"' in contract, name
@@ -375,7 +375,7 @@ def test_drift_workflow_is_scheduled_manual_hardened_and_off_gate() -> None:
 def test_drift_workflow_checks_each_specialist_surface_without_writing() -> None:
     job = _single_job(DRIFT_WORKFLOW)
     lines = _run_lines(job)
-    for venv, adapter in ((".venv-spark", "theforge_sparkforge"),
+    for venv, adapter in ((".venv-spark-aws", "theforge_sparkforge_aws"),
                           (".venv-api", "theforge_apiforge"),
                           (".venv-dd", "theforge_doctordata"),
                           (".venv-da", "theforge_doctorapi")):
@@ -400,7 +400,7 @@ def test_release_compat_runs_conformance_per_specialist_venv() -> None:
     job = _single_job(RELEASE_COMPAT_WORKFLOW)
     lines = _run_lines(job)
     assert _index_of(lines, "python -m pip install .") >= 0
-    for venv, adapter in ((".venv-spark", "theforge_sparkforge"),
+    for venv, adapter in ((".venv-spark-aws", "theforge_sparkforge_aws"),
                           (".venv-api", "theforge_apiforge"),
                           (".venv-dd", "theforge_doctordata"),
                           (".venv-da", "theforge_doctorapi")):

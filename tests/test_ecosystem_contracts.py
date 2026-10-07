@@ -11,7 +11,7 @@ delivery — is proved at both engineer boundaries.
 Flows covered:
   1. Doctor Data bundle  -> The Forge  (data.scan result + native/handoff.json)
   2. Doctor API bundle   -> The Forge  (api.diagnose result + native/handoff.json)
-  3. Forge handoff       -> Spark Forge (pyspark.static-analysis consumes it)
+  3. Forge handoff       -> Spark Forge AWS (pyspark.static-analysis consumes it)
   4. Forge handoff       -> API Forge   (api.analyze consumes it)
   5. Spark receipt       -> The Forge   (ExecutionReceipt + hash chain)
   6. API receipt         -> The Forge   (provider_receipt bound + hash chain)
@@ -47,8 +47,8 @@ def _replay(adapter: str, scenario: str = "default") -> list[str]:
 # The entry id must equal the manifest's declared provider id.
 DD_ENTRY = {"id": "forge-doctor-data", "argv": _replay("doctordata"), "trust": "local"}
 DA_ENTRY = {"id": "forge-doctor-api", "argv": _replay("doctorapi"), "trust": "local"}
-SPARK_ENTRY = {"id": "spark-forge", "argv": _replay("sparkforge"), "trust": "local"}
-SPARK_CROSS = {"id": "spark-forge", "argv": _replay("sparkforge", "scenarios/cross"),
+SPARK_ENTRY = {"id": "spark-forge-aws", "argv": _replay("sparkforge_aws"), "trust": "local"}
+SPARK_CROSS = {"id": "spark-forge-aws", "argv": _replay("sparkforge_aws", "scenarios/cross"),
                "trust": "local"}
 API_ENTRY = {"id": "api-forge", "argv": _replay("apiforge"), "trust": "local"}
 API_CROSS = {"id": "api-forge", "argv": _replay("apiforge", "scenarios/cross"),
@@ -154,7 +154,7 @@ def _assert_handoff_consumed(store: RunStore, plan_run: str, consumer_run: str,
 def test_forge_handoff_enters_spark_forge(cross: CrossWorkspace) -> None:
     out, store = _run(cross.root, [DD_ENTRY, SPARK_CROSS], [
         _node("n1", "forge-doctor-data", "data.scan", "analyze"),
-        _node("n2", "spark-forge", "pyspark.static-analysis", "pyspark", "n1")])
+        _node("n2", "spark-forge-aws", "pyspark.static-analysis", "pyspark", "n1")])
     assert out.status == "ok"
     spark_run = _child(out, "n2")
 
@@ -190,7 +190,7 @@ def test_spark_receipt_enters_the_forge(tmp_path: Path) -> None:
     (tmp_path / "jobs" / "job.py").write_text("import pyspark\n", encoding="utf-8")
     (tmp_path / "requirements.txt").write_text("pyspark\n", encoding="utf-8")
     out, store = _run(tmp_path, [SPARK_ENTRY],
-                      [_node("n1", "spark-forge", "pyspark.static-analysis", "pyspark")])
+                      [_node("n1", "spark-forge-aws", "pyspark.static-analysis", "pyspark")])
     assert out.status == "ok"
     run_id = _child(out, "n1")
 
@@ -230,7 +230,7 @@ def test_final_ecosystem_proof_chain(cross: CrossWorkspace) -> None:
     receipts -> explain -> trace, for both domains at once."""
     out, store = _run(cross.root, [DD_ENTRY, DA_ENTRY, SPARK_CROSS, API_CROSS], [
         _node("n1", "forge-doctor-data", "data.scan", "analyze"),
-        _node("n2", "spark-forge", "pyspark.static-analysis", "pyspark", "n1"),
+        _node("n2", "spark-forge-aws", "pyspark.static-analysis", "pyspark", "n1"),
         _node("n3", "forge-doctor-api", "api.diagnose", "analyze"),
         _node("n4", "api-forge", "api.analyze", "analyze", "n3"),
     ])

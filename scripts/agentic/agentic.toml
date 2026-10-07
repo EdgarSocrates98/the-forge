@@ -69,11 +69,11 @@ begin = "<!-- theforge:invariants:begin -->"
 end = "<!-- theforge:invariants:end -->"
 required = [
     "src/theforge", "adapters/", "stdlib", "Python >= 3.11", "Python >= 3.10",
-    "Forge Protocol", "import sparkforge", "nunca importam `theforge`", "domínio",
+    "Forge Protocol", "import sparkforge_aws", "nunca importam `theforge`", "domínio",
     "ambiguous", "sem LLM", "ExecutionResult",
     "security.redact", ".forge/runs/<id>/work/", "Credenciais nunca chegam ao env dos providers",
     "theforge/<Name>/v1", "python -m theforge.contracts.schema schemas",
-    "python -m pip install -e .[dev] -e ./adapters/sparkforge -e ./adapters/apiforge",
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge",
     "python -m pytest", "python -m pytest -m slow", "ruff check .", "mypy",
 ]
 

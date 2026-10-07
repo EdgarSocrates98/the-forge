@@ -63,11 +63,12 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-mypy_path = "src:adapters/sparkforge/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src"
-files = ["src", "scripts", "adapters/sparkforge/src", "adapters/apiforge/src",
+mypy_path = "src:adapters/sparkforge_aws/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src"
+files = ["src", "scripts", "adapters/sparkforge_aws/src", "adapters/apiforge/src",
          "adapters/doctordata/src", "adapters/doctorapi/src"]
 
 [[tool.mypy.overrides]]
 # The specialists are installed only in their own interpreters, never in the core env.
-module = ["sparkforge.*", "apiforge.*", "forge_doctor_data.*", "forge_doctor_api.*"]
+module = ["sparkforge_aws.*", "sparkforge.*", "apiforge.*", "forge_doctor_data.*",
+          "forge_doctor_api.*"]
 ignore_missing_imports = true

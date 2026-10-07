@@ -76,7 +76,8 @@ class Adapter:
         return {"id": self.provider_id, "argv": [*argv, *options], "trust": "local"}
 
 
-SPARK = Adapter("spark-forge", "theforge_sparkforge", FIXTURES / "native" / "sparkforge",
+SPARK = Adapter("spark-forge-aws", "theforge_sparkforge_aws",
+                FIXTURES / "native" / "sparkforge_aws",
                 FIXTURES / "workspaces" / "spark", "pyspark.static-analysis", "pyspark",
                 ">=0.5.0,<0.6.0")
 API = Adapter("api-forge", "theforge_apiforge", FIXTURES / "native" / "apiforge",
@@ -138,7 +139,7 @@ def _health_report(entry: dict[str, Any]) -> HealthReport:
 
 def _large_spark_scenario(directory: Path, copies: int = 1000) -> None:
     """The default Spark recording widened past the inline limit (fresh ids per copy)."""
-    from theforge_sparkforge import record
+    from theforge_sparkforge_aws import record
 
     _copy_health(SPARK, directory)
     name = f"{SPARK.capability}.{SPARK.action}.json"
@@ -186,7 +187,7 @@ def test_both_adapters_in_replay_are_ready_and_healthy_in_the_registry(
         tmp_path: Path) -> None:
     root = _workspace(tmp_path, SPARK, [SPARK.entry(SPARK.default), API.entry(API.default)])
     records = {r.entry.id: r for r in Registry(root / ".forge").records()}
-    assert {"api-forge", "spark-forge"} <= set(records)
+    assert {"api-forge", "spark-forge-aws"} <= set(records)
     for adapter in (SPARK, API):
         record = records[adapter.provider_id]
         assert record.state == "ready", record.error
@@ -206,7 +207,7 @@ def test_missing_specialist_is_invalid_with_reason(tmp_path: Path, name: str) ->
     record = Registry(root / ".forge").get(adapter.provider_id)
     assert record.state == "invalid" and record.manifest is None
     assert not record.routable()
-    prefix = adapter.provider_id.replace("-", "").upper()
+    prefix = adapter.module.removeprefix("theforge_").upper()
     assert record.error is not None
     assert record.error.startswith(f"describe refused {prefix}-ADAPTER-UNAVAILABLE: ")
     reason = record.error.split(": ", 1)[1]
@@ -224,7 +225,7 @@ def test_missing_specialist_is_invalid_with_reason(tmp_path: Path, name: str) ->
 def _input_globs(name: str) -> dict[str, set[str]]:
     """Capability -> every glob an action input of the adapter's catalog reads from stage/."""
     if name == "spark":
-        from theforge_sparkforge import catalog as spark_catalog
+        from theforge_sparkforge_aws import catalog as spark_catalog
 
         return {spec.id: {glob for binding in spec.bindings.values() for glob in binding.globs}
                 for spec in spark_catalog.CAPABILITIES}

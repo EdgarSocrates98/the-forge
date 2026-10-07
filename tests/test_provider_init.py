@@ -47,7 +47,7 @@ def test_init_rejects_invalid_capability_id(tmp_path: Path) -> None:
 
 
 def test_default_capability_derives_from_the_provider_id(tmp_path: Path) -> None:
-    result = init_provider(tmp_path / "spark", "spark-forge")
+    result = init_provider(tmp_path / "spark", "spark-forge-aws")
     assert result.capability == "spark.describe"
     result = init_provider(tmp_path / "x", "acme-forge", capability="api.contract")
     assert result.capability == "api.contract"

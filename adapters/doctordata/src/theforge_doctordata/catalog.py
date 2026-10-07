@@ -73,11 +73,11 @@ CONTRACT_GLOBS = ("*.json",)
 DIAGNOSTIC_EVIDENCE = "data.diagnostic-evidence"
 # Runs of the sibling data engineer this Doctor audits through the ``verify`` op.
 # The audit is structural (findings↔evidence coherence, hashes, handoff
-# invariants), so every capability the spark-forge adapter may expose qualifies;
+# invariants), so every capability the spark-forge-aws adapter may expose qualifies;
 # a ref that stops resolving after a surface change is recorded by the graph as
 # an unresolved target, never dropped silently.
 VERIFIES: tuple[str, ...] = tuple(
-    f"spark-forge/{cap}" for cap in (
+    f"spark-forge-aws/{cap}" for cap in (
         "pyspark.static-analysis", "spark.runtime-analysis", "streaming.analysis",
         "glue.analysis", "emr.analysis", "athena.analysis", "iceberg.analysis",
         "parquet.footer-analysis", "terraform.analysis", "orchestration.analysis",

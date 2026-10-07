@@ -1,4 +1,4 @@
-"""Tiny PySpark job used as an example workspace for the Spark Forge adapter."""
+"""Tiny PySpark job used as an example workspace for the Spark Forge AWS adapter."""
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F

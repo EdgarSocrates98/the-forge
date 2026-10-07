@@ -387,18 +387,18 @@ def test_verify_payload_is_bounded_and_redacted(tmp_path: Path) -> None:
 
 DOCTOR_FIXTURES = Path(__file__).parent / "fixtures" / "native"
 # Producer fixtures that stand in under the real provider ids, so the Doctors'
-# declared can_verify refs resolve: spark-forge/pyspark.static-analysis is
+# declared can_verify refs resolve: spark-forge-aws/pyspark.static-analysis is
 # audited by forge-doctor-data, api-forge/api.analyze by forge-doctor-api.
 SPARKFORGE_ENTRY = {
-    "id": "spark-forge",
+    "id": "spark-forge-aws",
     "argv": fixture_argv("fixture_forge.py",
-                         str(PROVIDERS / "fixture-sparkforge.json")),
+                         str(PROVIDERS / "fixture-sparkforge-aws.json")),
     "trust": "local",
 }
 SPARKFORGE_HASH_ENTRY = {
-    "id": "spark-forge",
+    "id": "spark-forge-aws",
     "argv": fixture_argv("fixture_forge.py",
-                         str(PROVIDERS / "fixture-sparkforge-hash.json")),
+                         str(PROVIDERS / "fixture-sparkforge-aws-hash.json")),
     "trust": "local",
 }
 APIFORGE_ENTRY = {
@@ -426,12 +426,12 @@ HAS_DOCTORAPI = importlib.util.find_spec("theforge_doctorapi") is not None
 @pytest.mark.skipif(not HAS_DOCTORDATA,
                     reason="theforge_doctordata adapter is not installed")
 def test_real_doctor_data_verifies_a_spark_run(tmp_path: Path) -> None:
-    """Phase 14/16: Spark Forge run -> Doctor Data ``verify`` op -> passed."""
+    """Phase 14/16: Spark Forge AWS run -> Doctor Data ``verify`` op -> passed."""
     make_workspace(tmp_path, [SPARKFORGE_ENTRY, DOCTORDATA_ENTRY])
     case_a(tmp_path)
     forger, store = _forger(tmp_path)
     out = forger.ask(AskRequest(
-        intent="analise esse Glue Job porque está lento", provider="spark-forge",
+        intent="analise esse Glue Job porque está lento", provider="spark-forge-aws",
         capability="pyspark.static-analysis", action="pyspark"))
     assert out.status == "ok" and out.verification is not None
     check = out.verification.independent
@@ -451,7 +451,7 @@ def test_real_doctor_data_fails_unverifiable_evidence(tmp_path: Path) -> None:
     case_a(tmp_path)
     forger, _ = _forger(tmp_path)
     out = forger.ask(AskRequest(
-        intent="analise esse Glue Job porque está lento", provider="spark-forge",
+        intent="analise esse Glue Job porque está lento", provider="spark-forge-aws",
         capability="pyspark.static-analysis", action="pyspark"))
     assert out.verification is not None
     check = out.verification.independent

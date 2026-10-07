@@ -48,7 +48,7 @@ sintético determinístico), fora da suíte offline.
 python scripts/bench/run_context_economy.py [--runs N] [--out PATH]
 ```
 
-- Braços: `direct` (Spark Forge e API Forge com `targets: ["."]`) e `mesh`
+- Braços: `direct` (Spark Forge AWS e API Forge com `targets: ["."]`) e `mesh`
   (`forge-doctor-data` sobre `["."]`, depois Spark e API delimitados aos seus
   domínios — `jobs`/`requirements.txt` e `api`/`src` — com `inputs` no doctor).
 - Tudo roda em `specialist-replay` (terminologia em [real-providers.md](real-providers.md#níveis-de-real)): adapters reais em subprocesso, saída nativa gravada. O relatório declara `provider_mode`.

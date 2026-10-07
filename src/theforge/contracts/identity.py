@@ -1,7 +1,7 @@
 """ProviderSurfaceIdentity: the versioned identity of a provider surface (cycle 3.1).
 
 ``version`` alone is not identity: a provider can keep ``manifest.version`` while
-its declared surface changes underneath (observed with sparkforge 0.5.0 and
+its declared surface changes underneath (observed with sparkforge-aws 0.5.0 and
 apiforge 0.1.0 during the cycle-3.1 audit). The identity pairs the declared
 versions with two deterministic fingerprints computed by the core from the
 manifest in use — never with timestamps, paths or machine-specific values:

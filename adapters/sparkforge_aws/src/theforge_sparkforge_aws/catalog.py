@@ -1,4 +1,4 @@
-"""Capability table of the Spark Forge adapter: capability -> actions -> native tools, routing
+"""Capability table of the Spark Forge AWS adapter: capability -> actions -> native tools, routing
 signals, argument bindings and the reasons a native tool is not exposed.
 
 Origin: audit of the ``sparkforge-aws`` 0.5 tool surface (2026-10-03). An action is the tool
@@ -34,7 +34,7 @@ ANALYZE_PREFIX = "analyze_"
 UNMAPPED_REASON = "not mapped to a capability by this adapter version"
 
 # Why a catalogued tool has no binding.
-FACTS_INPUT = "consumes facts produced by another Spark Forge analyzer, not a workspace file"
+FACTS_INPUT = "consumes facts produced by another Spark Forge AWS analyzer, not a workspace file"
 NO_CONVENTION = ("reads a dump with no native file name or directory convention, so no "
                  "workspace file can be bound to it")
 DISCRIMINATOR = ("requires the dump vocabulary in 'artifact', which workspace files do not "
@@ -68,7 +68,7 @@ class CapabilitySpec:
     """One capability: its actions ``(action, native tool)`` in declaration order.
 
     ``accepts_handoff``: the first action's native tool admits a translated
-    ``theforge/Handoff/v1`` (``theforge_sparkforge.handoff`` -> the specialist's
+    ``theforge/Handoff/v1`` (``theforge_sparkforge_aws.handoff`` -> the specialist's
     upstream-facts document). ``consumes`` names the artifact types that intake
     consumes — the capability-graph edges.
     """
@@ -182,7 +182,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     CapabilitySpec(
         id="glue.analysis",
         description=("Saved AWS Glue evidence: Data Catalog resource-link topology collected "
-                     "by the Spark Forge."),
+                     "by the Spark Forge AWS."),
         actions=_actions(_analyze("glue_job_runs"), _analyze("catalog_schema"),
                          _analyze("glue_resource_link"), _tool("glue_dependency_audit")),
         signals=SignalsSpec(keywords=("glue", "resource link", "glue catalog", "data catalog"),
@@ -292,7 +292,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
         bindings={_analyze("lakeformation_grants"): _path(_artifacts("lakeformation")),
                   _analyze("iam_access"): _path(_artifacts("iam_access"))},
         unbound={_tool("lakeformation_access_graph"): FACTS_INPUT,
-                 _tool("lakeformation_matrix"): ("answers from the Spark Forge's own version "
+                 _tool("lakeformation_matrix"): ("answers from the Spark Forge AWS's own version "
                                                  "matrix; it takes no workspace file"),
                  _tool("lakeformation_architect"): ("takes the architecture declaration as a "
                                                     "JSON argument, not a workspace file")},
@@ -330,7 +330,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="migration.assessment",
-        description="Release and migration assessment from the Spark Forge's version matrices.",
+        description="Release and migration assessment from the Spark Forge AWS's version matrices.",
         actions=_actions(_tool("migration_assess"), _tool("release_describe"),
                          _tool("release_diff"), _tool("controlm_describe")),
         signals=SignalsSpec(keywords=("migration", "release", "upgrade")),
@@ -359,7 +359,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
                  _tool("capacity"): FACTS_INPUT, _tool("finops"): FACTS_INPUT,
                  _tool("tune"): FACTS_INPUT, _tool("gain"): FACTS_INPUT,
                  _tool("simulate"): FACTS_INPUT,
-                 _tool("economy_report"): ("reads the Spark Forge run ledger by 'run_id', not "
+                 _tool("economy_report"): ("reads the Spark Forge AWS run ledger by 'run_id', not "
                                            "workspace files")},
     ),
 )
@@ -376,7 +376,7 @@ UNCATALOGUED: tuple[tuple[tuple[str, ...], str], ...] = (
       _tool("decision_*"), _tool("next_step"), _tool("playbook"), _tool("proof"),
       _tool("receipt_*"), _tool("report_*"), _tool("resume"), _tool("runtime_detect"),
       _tool("sdd_*")),
-     "works on Spark Forge case, run, report or session state, not on workspace inputs"),
+     "works on Spark Forge AWS case, run, report or session state, not on workspace inputs"),
     ((_tool("context_*"), _tool("doctor_agentic"), _tool("knowledge_*"), _tool("pack_list"),
       _tool("policy_explain"), _tool("telemetry_export")),
      "host and agent plumbing (context gateway, doctor, knowledge, packs, policy, "
@@ -384,7 +384,7 @@ UNCATALOGUED: tuple[tuple[tuple[str, ...], str], ...] = (
 )
 OPEN_WORLD_REASON = ("call AWS APIs over the network and write collection artifacts "
                      "(openWorldHint)")
-WRITER_REASON = ("write local Spark Forge state (case, debate, receipts, sandbox, code index) "
+WRITER_REASON = ("write local Spark Forge AWS state (case, debate, receipts, sandbox, code index) "
                  "into the repository (readOnlyHint false)")
 
 
@@ -450,7 +450,7 @@ def exclusion(tool: str, binding: ArgBinding | None, unbound: str | None,
     tools: Mapping[str, Any] = snapshot["tools"]
     entry = tools.get(tool)
     if not isinstance(entry, Mapping):
-        return (f"not in the recorded Spark Forge {snapshot['specialist_version']} tool "
+        return (f"not in the recorded Spark Forge AWS {snapshot['specialist_version']} tool "
                 "surface")
     if _hint(entry, "readOnlyHint") is not True:
         return "writes local state (readOnlyHint is not true)"
@@ -512,7 +512,7 @@ def derive(snapshot: Mapping[str, Any]) -> Exposure:
     """Manifest capabilities and limitations from the table and a recorded snapshot."""
     tools: Mapping[str, Any] = snapshot["tools"]
     capabilities: list[dict[str, Any]] = []
-    limitations = [f"capabilities derived from the recorded Spark Forge "
+    limitations = [f"capabilities derived from the recorded Spark Forge AWS "
                    f"{snapshot['specialist_version']} tool surface (native_catalog.json, "
                    f"recorded {snapshot['recorded_at']})"]
     catalogued: set[str] = set()

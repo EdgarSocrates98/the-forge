@@ -1,13 +1,13 @@
-"""Native boundary of the Spark Forge adapter: the replay layout (``--replay <dir>``).
+"""Native boundary of the Spark Forge AWS adapter: the replay layout (``--replay <dir>``).
 
 A replay directory is one complete scenario: ``environment.json`` (``{python,
 specialist_version}``, which replaces the interpreter and import checks of describe and
 health), ``health.json`` (``{dispatcher, specialist_version}``: the native probes of health)
 and the execute recordings ``<capability>.<action>.json`` (native
 output) or ``<capability>.<action>.error.json`` (native error). When both recordings exist for
-an action, the error recording wins. ``tests/fixtures/native/sparkforge/default/`` is the
+an action, the error recording wins. ``tests/fixtures/native/sparkforge_aws/default/`` is the
 healthy scenario used by the offline conformance; every other outcome lives in
-``tests/fixtures/native/sparkforge/scenarios/<name>/``. In replay the specialist is never
+``tests/fixtures/native/sparkforge_aws/scenarios/<name>/``. In replay the specialist is never
 called and no result is invented.
 """
 
@@ -19,7 +19,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from theforge_sparkforge import native_pkg
+from theforge_sparkforge_aws import native_pkg
 
 ENVIRONMENT_FILE = "environment.json"
 HEALTH_FILE = "health.json"
@@ -31,10 +31,10 @@ _PYTHON_VERSION = re.compile(r"(\d+)\.(\d+)(?:\.\d+)?")
 
 
 def live_unavailable_reason() -> str | None:
-    """Why the Spark Forge cannot be used from this interpreter, or None if importable.
+    """Why the Spark Forge AWS cannot be used from this interpreter, or None if importable.
 
     Uses ``find_spec`` only, via the shared resolver (``sparkforge_aws`` after the
-    rename, ``sparkforge`` before it): nothing of the Spark Forge is imported.
+    rename, ``sparkforge`` before it): nothing of the Spark Forge AWS is imported.
     """
     if native_pkg.dispatcher_found():
         return None
@@ -45,16 +45,16 @@ def live_unavailable_reason() -> str | None:
 
 @dataclass(frozen=True)
 class Environment:
-    """The recorded interpreter: Python version and Spark Forge version (None: absent)."""
+    """The recorded interpreter: Python version and Spark Forge AWS version (None: absent)."""
 
     python: str
     specialist_version: str | None
 
     def unavailable_reason(self) -> str | None:
-        """Why the recorded interpreter cannot run the Spark Forge, or None."""
+        """Why the recorded interpreter cannot run the Spark Forge AWS, or None."""
         match = _PYTHON_VERSION.fullmatch(self.python)
         if match is None or (int(match[1]), int(match[2])) < MIN_PYTHON:
-            return (f"recorded interpreter runs Python {self.python}; the Spark Forge needs "
+            return (f"recorded interpreter runs Python {self.python}; the Spark Forge AWS needs "
                     f"Python >= {MIN_PYTHON[0]}.{MIN_PYTHON[1]}")
         if self.specialist_version is None:
             return (f"sparkforge-aws is not importable with the recorded interpreter "
@@ -98,7 +98,7 @@ def load_environment(replay: Path) -> Environment | ReplayProblem:
 class HealthRecording:
     """The native probes of health recorded in ``health.json``: whether a dispatcher
     (``sparkforge_aws.adapters.tools``, or pre-rename ``sparkforge.adapters.tools``) was
-    found and the Spark Forge version read (None: none).
+    found and the Spark Forge AWS version read (None: none).
 
     An optional ``provenance`` string marks a recording derived by hand from a real one.
     """

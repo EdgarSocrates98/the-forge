@@ -85,7 +85,7 @@ def test_plan_file_lives_outside_the_workspace(economy: ModuleType,
 def test_both_arms_run_end_to_end(economy: ModuleType, tmp_path: Path,
                                   monkeypatch: pytest.MonkeyPatch) -> None:
     for module in ("theforge_doctordata", "theforge_doctorapi",
-                   "theforge_sparkforge", "theforge_apiforge"):
+                   "theforge_sparkforge_aws", "theforge_apiforge"):
         pytest.importorskip(module)
     monkeypatch.setattr(economy, "WORKSPACE_FILES", 24)
     monkeypatch.setattr(economy, "DEFAULT_RUNS", 1)
