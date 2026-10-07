@@ -4,9 +4,11 @@
 artifact. When measured complexity outranks an explicitly requested profile
 (``--profile economy`` on a ``high`` task), the elastic bounds — context bytes,
 files and negotiation rounds — promote **one profile step** (economy→balanced→
-max), never beyond ``max`` and never on the fields that widen blast radius
-(provider count, wall time, parallelism). ``auto`` needs no promotion: the
-complexity assessment already selects the profile itself.
+max), never beyond ``max`` and never on the profile fields that widen blast
+radius (provider count, wall time, parallelism). ``auto`` needs no promotion:
+the complexity assessment already selects the profile itself. A plan retry policy
+is separate explicit configuration: its worst-case execute-call reserve is
+recorded in the resulting budget adjustments.
 """
 
 from dataclasses import replace
@@ -41,8 +43,9 @@ def resolve_budget(
     plan_nodes: int = 0,
     retry_attempts: int = 1,
     assessment: ComplexityAssessment | None = None,
-                   producer: Producer = PRODUCER,
-                   created_at: str | None = None) -> tuple[ContextProfile, RunBudget]:
+    producer: Producer = PRODUCER,
+    created_at: str | None = None,
+) -> tuple[ContextProfile, RunBudget]:
     """``(effective profile, RunBudget)`` — the profile possibly promoted one step.
 
     ``assessment`` is the run's ComplexityAssessment; promotion applies only to
