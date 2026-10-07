@@ -35,7 +35,7 @@ class GlobalStopDecision:
     run_id: str
     action: StopAction
     information_gain: InformationGain
-    reasons: list[str] = field(default_factory=list)
+    reasons: list[str] = field(metadata={"min_items": 1})
     unresolved: list[str] = field(default_factory=list)
     budget_remaining: float | None = None
     verification_required: bool = False
