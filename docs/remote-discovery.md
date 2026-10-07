@@ -21,14 +21,27 @@ hashes, aprovação.
 
 ```text
 theforge capabilities discover --capability security.scan
-theforge capabilities discover --requirement req.json [--remote] [--json]
+theforge capabilities discover --requirement req.json [--remote] \
+    [--profile economy|balanced|max] [--json]
 ```
 
 - `--capability` monta um requirement mínimo; `--requirement` carrega o
   documento completo (actions, technologies, offline, platforms…).
 - `--remote` força a consulta mesmo quando um provider local já satisfaz —
   útil para comparar fit antes de trocar de fornecedor.
+- `--profile` (Wave G) controla quando a consulta remota acontece
+  (§48): `economy` só quando nenhum provider local declara a capability,
+  `balanced` (default) só quando nada local satisfaz `FULL`, `max`
+  sempre compara claims remotos.
 - Exit code 0 sempre: descoberta é informação, não veredito de execução.
+
+## Economia da descoberta (§47)
+
+O report mede o próprio custo: `registry_calls` (fontes que serviram
+documento), `metadata_bytes` (bytes consumidos — inclui cache) e
+`network_ms` (latência real de rede; `null` quando só cache/local-file).
+Consultas repetidas usam o cache fresco — `freshness`/`from_cache` em cada
+candidato mostram o que foi rede e o que foi disco.
 
 ## Saída (texto)
 

@@ -447,6 +447,29 @@ SEEDS: dict[str, dict[str, Any]] = {
         "approval": {"required": True, "granted": False},
         "limitations": ["l"],
     },
+    # economy observations (cycle 4, wave G)
+    "ExecutionObservation": {
+        "producer": P, "created_at": "t", "run_id": "r1",
+        "provider": "echo-forge", "capability": "data.pipeline",
+        "status": "ok", "task_family": "migration",
+        "surface_fingerprint": SHA, "environment_fingerprint": "0123abcd",
+        "profile": "balanced", "complexity": "medium",
+        "context_bytes": 128, "context_items": 3, "context_items_cited": 1,
+        "provider_calls": 1, "tool_calls": 2, "semantic_calls": 0,
+        "tokens": 512, "cost_usd": 0.001, "wall_time_ms": 42.0,
+        "verification": "passed", "evidence_count": 2, "artifact_count": 1,
+        "limitations": ["l"],
+    },
+    "GlobalEconomyReceipt": {
+        "producer": P, "created_at": "t", "observations": 2, "runs": 2,
+        "axes": {a: {"status": "observed", "value": 1.0, "coverage": 2}
+                 for a in ("context_bytes", "provider_calls", "tool_calls",
+                           "semantic_calls", "tokens", "cost_usd",
+                           "wall_time_ms")},
+        "maturity": {"echo-forge/data.pipeline@abc": "cold"},
+        "task_families": ["migration"], "conflicts": ["r1 p/c tokens: 1 vs 2"],
+        "limitations": ["l"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

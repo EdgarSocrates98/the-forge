@@ -43,8 +43,9 @@ class DiscoveryReport:
     """Outcome of remote discovery for one requirement — data, never action."""
 
     requirement: CapabilityRequirement
+    profile: str = "balanced"              # the policy that decided remote consult
     # Local side: best negotiation state among installed providers.
-    local_state: str                       # FULL / PARTIAL / UNSUPPORTED / ...
+    local_state: str = "UNSUPPORTED"       # FULL / PARTIAL / UNSUPPORTED / ...
     local_provider: str | None = None
     satisfied_locally: bool = False
     # Remote side.
@@ -53,6 +54,12 @@ class DiscoveryReport:
     sources_skipped: list[str] = field(default_factory=list)   # disabled/unavailable
     entries_scanned: int = 0
     entries_excluded: list[str] = field(default_factory=list)  # "provider@ver: reason"
+    # Discovery economy (§47): what the lookup itself cost — reads that served
+    # a document, bytes of metadata consumed, real network latency (``None``
+    # when no fetch hit the network: cached and local reads cost none).
+    registry_calls: int = 0
+    metadata_bytes: int = 0
+    network_ms: float | None = None
     limitations: list[str] = field(default_factory=list)
 
 
@@ -165,16 +172,45 @@ def _version_key(candidate: RemoteProviderCandidate) -> tuple[int, int, int]:
     return (parsed.major, parsed.minor, parsed.patch) if parsed else (0, 0, 0)
 
 
+DiscoveryProfile = Literal["economy", "balanced", "max"]
+
+
+def _remote_wanted(profile: DiscoveryProfile, local_state: str,
+                   satisfied: bool, force_remote: bool) -> tuple[bool, str | None]:
+    """Whether remote sources should be consulted under ``profile`` (§48).
+
+    ``economy`` pays a remote read only when nothing local exists at all (or
+    the caller explicitly asks); ``balanced`` consults when no local provider
+    fully satisfies the requirement; ``max`` always looks, so a satisfying
+    local provider can still be compared against remote claims.
+    """
+    if force_remote:
+        return True, None
+    if profile == "max":
+        return True, None
+    if profile == "economy":
+        # Nothing local can serve the requirement: no provider declares the
+        # capability, or the only claimant is hard-incompatible.
+        needed = local_state in ("UNSUPPORTED", "INCOMPATIBLE")
+        return needed, (None if needed else
+                        "economy profile: local capability exists — remote "
+                        "sources not consulted")
+    needed = not satisfied
+    return needed, (None if needed else
+                    "local provider satisfies the requirement — remote "
+                    "sources not consulted")
+
+
 def discover(requirement: CapabilityRequirement,
              records: Sequence[RegistryRecord], *,
              specs: Sequence[SourceSpec] | None = None,
              forge_dir: Path | None = None, force_remote: bool = False,
+             profile: DiscoveryProfile = "balanced",
              performance: ProviderPerformance | None = None,
              **source_kwargs: Any) -> DiscoveryReport:
     """Local-first discovery: negotiate installed providers; consult enabled
-    sources only when nothing local fully satisfies the requirement (or
-    ``force_remote``). ``source_kwargs`` forwards fetcher/cache_dir to
-    ``read_sources`` (tests)."""
+    sources under the ``profile`` policy (or ``force_remote``).
+    ``source_kwargs`` forwards fetcher/cache_dir to ``read_sources`` (tests)."""
     local_results = negotiate_all(requirement, list(records),
                                   performance=performance)
     top = local_results[0] if local_results else None
@@ -187,11 +223,15 @@ def discover(requirement: CapabilityRequirement,
     entries_excluded: list[str] = []
     limitations: list[str] = []
     entries_scanned = 0
+    registry_calls = 0
+    metadata_bytes = 0
+    network_ms: float | None = None
 
-    if satisfied and not force_remote:
-        limitations.append(
-            "local provider satisfies the requirement — remote sources not "
-            "consulted")
+    wanted, why_not = _remote_wanted(profile, local_state, satisfied,
+                                     force_remote)
+    if not wanted:
+        assert why_not is not None
+        limitations.append(why_not)
     else:
         if specs is None:
             specs = load_source_specs(forge_dir, warnings=limitations)
@@ -208,6 +248,10 @@ def discover(requirement: CapabilityRequirement,
                     f"{read.detail or 'no document'}")
                 continue
             sources_consulted.append(read.spec.id)
+            registry_calls += 1
+            metadata_bytes += read.bytes_received
+            if read.latency_ms is not None:
+                network_ms = (network_ms or 0.0) + read.latency_ms
             if read.status == "stale":
                 limitations.append(
                     f"source {read.spec.id}: document is stale ({read.detail})")
@@ -230,9 +274,10 @@ def discover(requirement: CapabilityRequirement,
         0 if c.fit == "declared" else 1,
         c.provider, tuple(-n for n in _version_key(c)), c.registry))
     return DiscoveryReport(
-        requirement=requirement, local_state=local_state,
+        requirement=requirement, profile=profile, local_state=local_state,
         local_provider=top.provider if top else None,
         satisfied_locally=satisfied, candidates=candidates,
         sources_consulted=sources_consulted, sources_skipped=sources_skipped,
         entries_scanned=entries_scanned, entries_excluded=entries_excluded,
-        limitations=limitations)
+        registry_calls=registry_calls, metadata_bytes=metadata_bytes,
+        network_ms=network_ms, limitations=limitations)

@@ -148,6 +148,12 @@ class TelemetryRecorder:
             raise ValueError(f"counter {name!r} cannot be negative: {value}")
         self._counters[name] = self._counters.get(name, 0) + value
 
+    def counter(self, name: str) -> int:
+        """Current value of counter ``name`` (``0`` when never counted)."""
+        if name not in COUNTERS:
+            raise ValueError(f"unknown counter {name!r}")
+        return self._counters.get(name, 0)
+
     def elapsed_ms(self, phase: Phase) -> float | None:
         """Accumulated milliseconds of ``phase``; None when it never ran."""
         if phase not in PHASES:

@@ -260,3 +260,48 @@ def test_cli_discover_json(tmp_path: Path, user_config_dir: Path,
     assert data["satisfied_locally"] is False
     assert data["action_taken"] is False
     assert data["candidates"] == []
+
+
+# ── discovery profiles + economy (wave G, §47-48) ────────────────────────────
+
+def test_profile_economy_skips_remote_when_capability_exists(tmp_path: Path) -> None:
+    specs = [file_source(tmp_path, "feed", entry("remote-x"))]
+    # A local claimant still counts as "the capability exists" — economy pays
+    # a remote read only when *nothing* local can serve the requirement.
+    report = discover(req("data.pipeline"), [record("local-p", ["data.pipeline"])],
+                      specs=specs, profile="economy")
+    assert report.local_state == "FULL"
+    assert report.registry_calls == 0 and report.sources_consulted == []
+    assert any("economy profile" in lim for lim in report.limitations)
+
+
+def test_profile_economy_consults_when_nothing_local(tmp_path: Path) -> None:
+    specs = [file_source(tmp_path, "feed", entry("remote-x"))]
+    report = discover(req(), [record("local-p", ["other.cap"])],
+                      specs=specs, profile="economy")
+    assert report.local_state == "UNSUPPORTED"
+    assert report.sources_consulted == ["feed"] and report.registry_calls == 1
+
+
+def test_profile_max_consults_despite_local_full(tmp_path: Path) -> None:
+    specs = [file_source(tmp_path, "feed",
+                         entry("remote-x", capabilities=["data.pipeline"]))]
+    report = discover(req("data.pipeline"), [record("local-p", ["data.pipeline"])],
+                      specs=specs, profile="max")
+    assert report.satisfied_locally
+    assert report.sources_consulted == ["feed"] and report.candidates
+
+
+def test_profile_default_balanced_skips_when_satisfied(tmp_path: Path) -> None:
+    specs = [file_source(tmp_path, "feed", entry("remote-x"))]
+    report = discover(req("data.pipeline"), [record("local-p", ["data.pipeline"])],
+                      specs=specs)  # default profile
+    assert report.satisfied_locally and report.registry_calls == 0
+
+
+def test_discovery_economy_fields(tmp_path: Path) -> None:
+    spec = file_source(tmp_path, "feed", entry("remote-x"))
+    report = discover(req(), [], specs=[spec])
+    assert report.registry_calls == 1
+    assert report.metadata_bytes > 0
+    assert report.network_ms is None  # local-file: no network latency

@@ -126,6 +126,29 @@ def registry_sources(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def economy_report(data: dict[str, Any]) -> str:
+    lines = [f"economy: {data['observations']} observation(s) "
+             f"across {data['runs']} run(s)"]
+    for name in sorted(data["axes"]):
+        axis = data["axes"][name]
+        line = f"  {name:<16} {_clean(axis['status'])}"
+        if axis["value"] is not None:
+            line += f" = {axis['value']:g}"
+        line += f"  ({axis['coverage']} observed, {axis['missing']} unknown)"
+        lines.append(line)
+    if data["maturity"]:
+        lines.append("history maturity:")
+        for key, state in data["maturity"].items():
+            lines.append(f"  {_clean(key):<44} {_clean(state)}")
+    for conflict in data["conflicts"]:
+        lines.append(f"conflict: {_clean(conflict)}")
+    for family in data["task_families"]:
+        lines.append(f"task family: {_clean(family)}")
+    for limitation in data["limitations"]:
+        lines.append(f"note: {_clean(limitation)}")
+    return "\n".join(lines)
+
+
 def capabilities(data: dict[str, Any]) -> str:
     rows = data["capabilities"]
     if not rows:
@@ -220,6 +243,13 @@ def discovery(data: dict[str, Any]) -> str:
         lines.append("Remote candidates: none")
     for excluded in data.get("entries_excluded", []):
         lines.append(f"excluded: {_clean(excluded)}")
+    if data.get("profile"):
+        economy = (f"discovery economy: profile={_clean(data['profile'])} "
+                   f"registry_calls={data.get('registry_calls', 0)} "
+                   f"metadata_bytes={data.get('metadata_bytes', 0)}")
+        if data.get("network_ms") is not None:
+            economy += f" network_ms={data['network_ms']:.1f}"
+        lines.append(economy)
     for lim in data.get("limitations", []):
         lines.append(f"note: {_clean(lim)}")
     lines.append("No action was taken.")

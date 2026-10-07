@@ -67,6 +67,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | remote registry client: read-only, cache verificado | [0035](0035-remote-registry-client.md) | `cycle-4` |
 | remote discovery: fit honesto, sem instalação | [0036](0036-remote-discovery.md) | `cycle-4` |
 | InstallationPlan v2: plano gated, execução fora do escopo | [0037](0037-installation-plan-v2.md) | `cycle-4` |
+| observações de execução: grão atômico, axes nunca-silenciosos | [0038](0038-economy-observations.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

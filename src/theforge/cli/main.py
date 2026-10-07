@@ -74,6 +74,13 @@ def build_parser() -> argparse.ArgumentParser:
                         help="configured registry sources (untrusted metadata; "
                              "the local installed registry stays authoritative)") \
         .set_defaults(handler=commands.cmd_registry_sources)
+
+    economy = sub.add_parser("economy", help="measured execution economy") \
+        .add_subparsers(dest="economy_command", required=True)
+    economy.add_parser("report", parents=[common],
+                       help="aggregate recorded execution observations into a "
+                            "global economy receipt (read-only, offline)") \
+        .set_defaults(handler=commands.cmd_economy_report)
     show = registry.add_parser("show", parents=[common])
     show.add_argument("provider_id")
     show.set_defaults(handler=commands.cmd_registry_show)
@@ -106,6 +113,11 @@ def build_parser() -> argparse.ArgumentParser:
     cap_discover.add_argument("--remote", action="store_true",
                               help="consult remote sources even when a local "
                                    "provider fully satisfies the requirement")
+    cap_discover.add_argument(
+        "--profile", choices=["economy", "balanced", "max"], default="balanced",
+        help="how eagerly remote sources are consulted: economy only when no "
+             "local capability exists, balanced when nothing fully satisfies "
+             "the requirement (default), max always compares remote claims")
     cap_discover.set_defaults(handler=commands.cmd_capabilities_discover)
 
     install = sub.add_parser("install", help="governed provider installation") \

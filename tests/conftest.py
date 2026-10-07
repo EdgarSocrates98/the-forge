@@ -149,6 +149,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_registry_remote.py": ("unit", "security"),
     "test_remote_discovery.py": ("unit", "integration"),
     "test_install_plan.py": ("unit", "security", "integration"),
+    "test_observations.py": ("unit", "contract", "integration"),
 }
 
 

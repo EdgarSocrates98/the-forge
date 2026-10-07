@@ -53,8 +53,10 @@ from theforge.contracts import (
     ContextRequest,
     ContractError,
     DeltaRequest,
+    EconomyMetric,
     ErrorInfo,
     ExecuteRequest,
+    ExecutionObservation,
     ExecutionReceipt,
     ExecutionResult,
     IntegrityError,
@@ -82,6 +84,7 @@ from theforge.contracts.integrity import (
     validate_context_request,
     validate_result,
 )
+from theforge.contracts.observation import ObservationVerification
 from theforge.contracts.types import (
     OperationClass,
     Outcome,
@@ -110,6 +113,7 @@ from theforge.forger.verification import (
 from theforge.intel import record_decision, refresh_intel
 from theforge.meta import PRODUCER, VERSION
 from theforge.metrics import load_performance, record_performance
+from theforge.observations import environment_fingerprint, record_observation
 from theforge.planning.estimate import stricter_decision
 from theforge.policy import assess_dimensions, build_risk_assessment, evaluate, load_policy
 from theforge.profiles import (
@@ -230,6 +234,7 @@ class _Trace:
     handoff: Handoff | None = None  # as persisted: exactly what the provider receives
     handoff_sha: str | None = None
     complexity_sha: str | None = None  # ComplexityAssessment: --profile auto, or a promotion
+    complexity_level: str | None = None  # the measured level, for the run's observation
     complexity_config: ComplexityConfig | None = None  # the loaded policy of an auto run
     budget_sha: str | None = None  # RunBudget, written once the profile resolves
     # RoutingProposal of the semantic resolver, when an ambiguous decision was
@@ -476,6 +481,7 @@ class Forger:
                         user_dir=self.registry.user_dir or user_config_dir(),
                         forge_dir=self.root / ".forge", warnings=promo_warnings))
                 trace.limitations.extend(promo_warnings)
+            trace.complexity_level = assessment.level
             effective, budget = resolve_budget(profile, run_id=run_id,
                                                assessment=assessment)
             if effective is not profile:
@@ -1216,6 +1222,65 @@ class Forger:
             duration_ms=trace.telemetry.elapsed_ms("provider") or 0.0)
         if warning is not None:
             trace.limitations.append(warning)
+        warning = record_observation(self.root, self._observation(
+            trace, record, capability, status, result, files_cited))
+        if warning is not None:
+            trace.limitations.append(warning)
+
+    @staticmethod
+    def _observation(trace: _Trace, record: RegistryRecord, capability: Capability,
+                     status: Outcome, result: ExecutionResult | None,
+                     files_cited: int) -> ExecutionObservation:
+        """The run's atomic economy record (Cycle 4, Wave G).
+
+        Forge-measured fields are always present; provider-reported economy
+        keeps ``None`` when the receipt did not measure it — unknown is never
+        written as zero. ``provider_calls`` counts this execute (1): the
+        provider's internal call graph belongs to its own receipt.
+        """
+        pack = trace.last_pack
+        economy = result.provider_economy if result is not None else None
+
+        def metric(name: str) -> float | None:
+            if economy is None:
+                return None
+            value: EconomyMetric = getattr(economy, name)
+            if value.status not in ("measured", "estimated"):
+                return None
+            return value.value
+
+        task_requirement = trace.task.requirement
+        semantic = (trace.telemetry.counter("semantic_planner_calls")
+                    + trace.telemetry.counter("semantic_resolver_calls"))
+        verification: ObservationVerification = "not_performed"
+        if trace.verification is not None:
+            forge_status = trace.verification.forge.status
+            if forge_status in ("passed", "failed"):
+                verification = forge_status
+        tool_calls = metric("tool_calls")
+        tokens = metric("provider_tokens")
+        return ExecutionObservation(
+            producer=PRODUCER, created_at=utc_now(), run_id=trace.run_id,
+            provider=record.entry.id, capability=capability.id,
+            status=status,
+            task_family=task_requirement.task_family if task_requirement else None,
+            surface_fingerprint=(record.surface.surface_fingerprint
+                                 if record.surface else None),
+            environment_fingerprint=environment_fingerprint(),
+            profile=trace.profile.name if trace.profile else None,
+            complexity=trace.complexity_level,
+            context_bytes=pack.used_bytes if pack is not None else None,
+            context_items=len(pack.files) if pack is not None else None,
+            context_items_cited=files_cited if pack is not None else None,
+            provider_calls=1,
+            tool_calls=int(tool_calls) if tool_calls is not None else None,
+            semantic_calls=semantic,
+            tokens=int(tokens) if tokens is not None else None,
+            cost_usd=metric("cost_usd"),
+            wall_time_ms=trace.telemetry.elapsed_ms("provider"),
+            verification=verification,
+            evidence_count=len(result.evidence) if result is not None else 0,
+            artifact_count=len(result.artifacts) if result is not None else 0)
 
     def _record_decisions(self, trace: _Trace, decision: RoutingDecision) -> None:
         """The reusable decisions of this run into the project memory (I3).

@@ -16,6 +16,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -143,7 +144,12 @@ class CachedDocument:
     retrieved_at: str
     etag: str | None
     body_sha256: str
+    body: str
     document: RegistryDocument
+
+    @property
+    def body_bytes(self) -> int:
+        return len(self.body.encode("utf-8"))
 
 
 class HttpRegistrySource:
@@ -189,8 +195,10 @@ class HttpRegistrySource:
                 return SourceRead(spec=spec, status="ok", document=cached.document,
                                   freshness="fresh", from_cache=True,
                                   retrieved_at=cached.retrieved_at,
-                                  etag=cached.etag, body_sha256=cached.body_sha256)
+                                  etag=cached.etag, body_sha256=cached.body_sha256,
+                                  bytes_received=cached.body_bytes)
 
+        started = time.monotonic()
         try:
             response = self._fetcher(
                 spec.url,
@@ -201,13 +209,16 @@ class HttpRegistrySource:
         except Exception as exc:  # noqa: BLE001 — any transport failure is data
             return self._degraded(spec, cached,
                                   f"fetch failed: {type(exc).__name__}")
+        latency_ms = (time.monotonic() - started) * 1000.0
 
         if response.status == 304 and cached is not None:
             self._touch_cache(cached)
             return SourceRead(spec=spec, status="ok", document=cached.document,
                               freshness="fresh", from_cache=True,
                               retrieved_at=now, etag=cached.etag,
-                              body_sha256=cached.body_sha256)
+                              body_sha256=cached.body_sha256,
+                              bytes_received=cached.body_bytes,
+                              latency_ms=latency_ms)
         if response.status != 200:
             return self._degraded(spec, cached, f"HTTP {response.status}")
         if len(response.body) > MAX_BODY_BYTES:
@@ -227,7 +238,8 @@ class HttpRegistrySource:
                           body=text)
         return SourceRead(spec=spec, status="ok", document=document,
                           freshness="fresh", retrieved_at=now, etag=etag,
-                          body_sha256=body_sha)
+                          body_sha256=body_sha, bytes_received=len(response.body),
+                          latency_ms=latency_ms)
 
     def _degraded(self, spec: SourceSpec, cached: CachedDocument | None,
                   why: str) -> SourceRead:
@@ -237,6 +249,7 @@ class HttpRegistrySource:
                               freshness="stale", from_cache=True,
                               retrieved_at=cached.retrieved_at,
                               etag=cached.etag, body_sha256=cached.body_sha256,
+                              bytes_received=cached.body_bytes,
                               detail=f"{spec.id}: {why}; cached document from "
                                      f"{cached.retrieved_at} is stale")
         return SourceRead(spec=spec, status="unavailable",
@@ -253,7 +266,7 @@ class HttpRegistrySource:
                           freshness="fresh" if fresh else "stale",
                           from_cache=True, retrieved_at=cached.retrieved_at,
                           etag=cached.etag, body_sha256=cached.body_sha256,
-                          detail=None if fresh else
+                          bytes_received=cached.body_bytes, detail=None if fresh else
                           f"{spec.id}: {note}; cached document is stale")
 
     def _load_cache(self) -> CachedDocument | None:
@@ -284,7 +297,8 @@ class HttpRegistrySource:
         etag = raw.get("etag")
         return CachedDocument(retrieved_at=retrieved_at,
                               etag=etag if isinstance(etag, str) else None,
-                              body_sha256=body_sha, document=document)
+                              body_sha256=body_sha, body=body,
+                              document=document)
 
     def _write_cache(self, *, retrieved_at: str, etag: str | None,
                      body_sha: str, body: str) -> None:

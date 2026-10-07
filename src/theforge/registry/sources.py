@@ -172,6 +172,11 @@ class SourceRead:
     retrieved_at: str | None = None
     etag: str | None = None
     body_sha256: str | None = None
+    # Discovery economy (§47): bytes of metadata this read consumed and the
+    # network latency it paid (``None`` when no network fetch happened —
+    # cached and local reads report the bytes, not a latency).
+    bytes_received: int = 0
+    latency_ms: float | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -185,7 +190,8 @@ class FileRegistrySource:
         assert self.spec.path is not None  # enforced by SourceSpec
         path = Path(self.spec.path)
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            body = path.read_bytes()
+            data = json.loads(body.decode("utf-8"))
         except OSError as exc:
             return SourceRead(spec=self.spec, status="unavailable",
                               detail=f"{self.spec.id}: {exc.strerror or exc}")
@@ -199,7 +205,8 @@ class FileRegistrySource:
         except ContractError as exc:
             return SourceRead(spec=self.spec, status="invalid",
                               detail=f"{self.spec.id}: {redact_text(str(exc))}")
-        return SourceRead(spec=self.spec, status="ok", document=document)
+        return SourceRead(spec=self.spec, status="ok", document=document,
+                          bytes_received=len(body))
 
 
 def read_sources(specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = None,

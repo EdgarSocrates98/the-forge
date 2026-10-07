@@ -109,6 +109,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Registry sources](docs/registry-sources.md) (local autoritativo; fontes configuradas = metadata não-confiável)
 - [Remote discovery](docs/remote-discovery.md) (candidatos por requirement; discovery ≠ instalação)
 - [Provider distribution](docs/provider-distribution.md) (InstallationPlan/v2: plano gated, pinned, rollback)
+- [Economy observations](docs/economy-observations.md) (ExecutionObservation/v1, GlobalEconomyReceipt, maturidade por surface)
 - [Desenvolvimento com agentes](docs/agentic.md)
 - [Índice de ADRs](docs/adr/README.md)
 - [Relatório do Cycle 3.1](docs/reports/cycle-3.1.md) (fechamento; [waves](docs/reports/cycle-3.1-audit.md) documentadas uma a uma)

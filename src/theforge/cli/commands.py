@@ -22,6 +22,7 @@ from theforge.forger.replay import replay
 from theforge.intel import load_decisions
 from theforge.metrics import load_performance
 from theforge.negotiation import negotiate_all
+from theforge.observations import build_global_receipt, load_observations
 from theforge.registry import (
     Registry,
     RegistryRecord,
@@ -221,6 +222,20 @@ def cmd_registry_sources(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_economy_report(args: argparse.Namespace) -> int:
+    """Global economy receipt (cycle 4, wave G): aggregates the recorded
+    execution observations into a per-axis view — observed, unresolved,
+    conflict — plus per-key history maturity. Read-only, offline."""
+    root = _root(args)
+    observations, obs_warning = load_observations(root)
+    performance, perf_warning = load_performance(root)
+    receipt = build_global_receipt(observations, performance)
+    data = to_dict(receipt)
+    data["limitations"] += [w for w in (obs_warning, perf_warning) if w]
+    _emit(args, data, render.economy_report)
+    return 0
+
+
 def cmd_capabilities_list(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     rows = _capability_rows(registry.records(), args.provider)
@@ -289,7 +304,8 @@ def cmd_capabilities_discover(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(root))
     performance, perf_warning = load_performance(root)
     report = discover(requirement, registry.records(), forge_dir=find_forge_dir(root),
-                      force_remote=args.remote, performance=performance)
+                      force_remote=args.remote, profile=args.profile,
+                      performance=performance)
     _warn(registry)
     if perf_warning:
         print(f"theforge: warning: {perf_warning}", file=sys.stderr)
@@ -303,6 +319,10 @@ def cmd_capabilities_discover(args: argparse.Namespace) -> int:
         "sources_skipped": report.sources_skipped,
         "entries_scanned": report.entries_scanned,
         "entries_excluded": report.entries_excluded,
+        "profile": report.profile,
+        "registry_calls": report.registry_calls,
+        "metadata_bytes": report.metadata_bytes,
+        "network_ms": report.network_ms,
         "limitations": report.limitations,
         "action_taken": False,
     }, render.discovery)

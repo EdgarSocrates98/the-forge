@@ -23,12 +23,14 @@ from theforge.contracts import (
     EconomyRollup,
     Evidence,
     ExecuteRequest,
+    ExecutionObservation,
     ExecutionPlan,
     ExecutionReceipt,
     ExecutionResult,
     ExplainReport,
     ForgeManifest,
     ForgeRegistryEntry,
+    GlobalEconomyReceipt,
     Handoff,
     HealthReport,
     InstallationPlan,
@@ -84,6 +86,8 @@ EXPORTED: tuple[type[Any], ...] = (
     ForgeRegistryEntry, RegistryDocument, RemoteProviderCandidate,
     # governed install planning (cycle 4, wave F)
     InstallationPlanV2,
+    # economy observations (cycle 4, wave G)
+    ExecutionObservation, GlobalEconomyReceipt,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -101,6 +105,8 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     CapabilityNegotiationResult,
     # the v2 install plan is a core-produced document — never remote input.
     InstallationPlanV2,
+    # observations are core-produced; the global receipt is a core-composed view.
+    ExecutionObservation, GlobalEconomyReceipt,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

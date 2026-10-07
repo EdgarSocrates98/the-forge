@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "axes": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "coverage": {
+            "type": "integer"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "observed",
+              "estimated",
+              "unresolved",
+              "conflict",
+              "not_applicable"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "conflicts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "maturity": {
+      "additionalProperties": {
+        "enum": [
+          "absent",
+          "cold",
+          "warming",
+          "mature",
+          "stale"
+        ]
+      },
+      "type": "object"
+    },
+    "observations": {
+      "type": "integer"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "runs": {
+      "type": "integer"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "task_families": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "observations",
+    "runs"
+  ],
+  "title": "GlobalEconomyReceipt",
+  "type": "object"
+}

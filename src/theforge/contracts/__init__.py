@@ -78,6 +78,11 @@ from theforge.contracts.negotiation import (
     CapabilityOffer,
     CapabilityRequirement,
 )
+from theforge.contracts.observation import (
+    EconomyAxis,
+    ExecutionObservation,
+    GlobalEconomyReceipt,
+)
 from theforge.contracts.performance import (
     PERFORMANCE_SCHEMA,
     ProviderCapabilityPerformance,
@@ -193,6 +198,7 @@ __all__ = [
     "InstallationPlan", "InstallationPlanV2", "InstallStep",
     "IntegrityError", "IntelFingerprints",
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "MetricStatus",
+    "EconomyAxis", "ExecutionObservation", "GlobalEconomyReceipt",
     "NativeTrace", "NodeEconomy", "NodeOutcome",
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",
