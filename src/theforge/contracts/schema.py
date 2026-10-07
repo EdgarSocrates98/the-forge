@@ -35,6 +35,8 @@ from theforge.contracts import (
     HealthReport,
     InstallationPlan,
     InstallationPlanV2,
+    McpRegistryDocument,
+    McpServerEntry,
     PlanEstimate,
     PlanRequest,
     PlanResult,
@@ -88,6 +90,8 @@ EXPORTED: tuple[type[Any], ...] = (
     InstallationPlanV2,
     # economy observations (cycle 4, wave G)
     ExecutionObservation, GlobalEconomyReceipt,
+    # mcp registry awareness (cycle 4, wave J)
+    McpRegistryDocument, McpServerEntry,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open

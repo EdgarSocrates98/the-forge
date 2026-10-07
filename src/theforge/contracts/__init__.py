@@ -109,6 +109,14 @@ from theforge.contracts.plan import (
     SemanticPlanProposal,
     Synthesis,
 )
+from theforge.contracts.mcp import (
+    MCP_DOCUMENT_SCHEMA,
+    MCP_SERVER_SCHEMA,
+    McpPackage,
+    McpRegistryDocument,
+    McpRemote,
+    McpServerEntry,
+)
 from theforge.contracts.receipt import ExecutionReceipt, PlanRefs, ReceiptInputs, ReceiptProvider
 from theforge.contracts.registry import (
     REGISTRY_DOCUMENT_SCHEMA,
@@ -200,6 +208,8 @@ __all__ = [
     "IntegrityError", "IntelFingerprints",
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "MetricStatus",
     "EconomyAxis", "ExecutionObservation", "GlobalEconomyReceipt",
+    "MCP_DOCUMENT_SCHEMA", "MCP_SERVER_SCHEMA", "McpPackage",
+    "McpRegistryDocument", "McpRemote", "McpServerEntry",
     "NativeTrace", "NodeEconomy", "NodeOutcome",
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",

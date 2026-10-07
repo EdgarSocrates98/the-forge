@@ -54,6 +54,12 @@
             "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
             "type": "string"
           },
+          "mcp_requires": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "offer": {
             "anyOf": [
               {

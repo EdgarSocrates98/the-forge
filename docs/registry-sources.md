@@ -43,7 +43,7 @@ usuário (mesma precedência de `providers.toml`).
 ```toml
 [[sources]]
 id = "team-mirror"
-kind = "local-file"          # ou "http" / "a2a"
+kind = "local-file"          # ou "http" / "a2a" / "mcp"
 path = "registry.json"       # relativo ao diretório do registries.toml
 enabled = true               # opt-in: default desabilitado
 
@@ -58,9 +58,12 @@ timeout_s = 10               # espera limitada por request (default 10)
 
 - `id` — identificador da fonte (`[a-zA-Z0-9_-]+`).
 - `kind` — `local-file` (documento JSON; mirrors, catálogos vendored, feeds
-  air-gapped), `http` (cliente read-only com cache e freshness — Wave D) ou
+  air-gapped), `http` (cliente read-only com cache e freshness — Wave D),
   `a2a` (Agent Card remoto convertido em `RegistryDocument` — Wave I,
-  experimental; ver [a2a-bridge.md](a2a-bridge.md)).
+  experimental; ver [a2a-bridge.md](a2a-bridge.md)) ou `mcp` (listagem do
+  MCP Registry oficial — Wave J; tooling metadata, **não** provider:
+  `read_sources` a devolve `skipped`, lida via `read_mcp_sources` —
+  ver [interoperability-mcp.md](interoperability-mcp.md)).
 - `enabled` — **default `false`**: uma fonte configurada não faz nada até ser
   habilitada explicitamente.
 - `max_age_s` — freshness budget: cache mais novo que isso nem dispara fetch.

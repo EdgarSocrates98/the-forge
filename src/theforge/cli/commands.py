@@ -319,6 +319,8 @@ def cmd_capabilities_discover(args: argparse.Namespace) -> int:
         "sources_skipped": report.sources_skipped,
         "entries_scanned": report.entries_scanned,
         "entries_excluded": report.entries_excluded,
+        "mcp_tooling": [to_dict(n) for n in report.mcp_tooling],
+        "mcp_dependencies": [to_dict(d) for d in report.mcp_dependencies],
         "profile": report.profile,
         "registry_calls": report.registry_calls,
         "metadata_bytes": report.metadata_bytes,

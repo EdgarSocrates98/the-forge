@@ -447,6 +447,23 @@ SEEDS: dict[str, dict[str, Any]] = {
         "approval": {"required": True, "granted": False},
         "limitations": ["l"],
     },
+    # mcp registry awareness (cycle 4, wave J)
+    "McpServerEntry": {
+        "name": "io.github.acme/filesystem", "title": "Filesystem",
+        "description": "file tools", "version": "1.0.0",
+        "remotes": [{"type": "streamable-http",
+                     "url": "https://mcp.example/sse",
+                     "headers": ["Authorization"]}],
+        "packages": [{"registry_type": "npm",
+                      "identifier": "@acme/fs", "version": "1.0.0"}],
+        "requires_network": True, "requires_credentials": True,
+        "limitations": ["l"],
+    },
+    "McpRegistryDocument": {
+        "source_id": "mcp-hub", "produced_at": "2026-01-01T00:00:00Z",
+        "entries": [{"name": "io.github.acme/filesystem"}],
+        "next_cursor": "abc", "limitations": ["l"],
+    },
     # economy observations (cycle 4, wave G)
     "ExecutionObservation": {
         "producer": P, "created_at": "t", "run_id": "r1",

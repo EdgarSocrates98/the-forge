@@ -241,6 +241,25 @@ def discovery(data: dict[str, Any]) -> str:
                 lines.append(f"     limitation: {_clean(lim)}")
     elif not data["satisfied_locally"]:
         lines.append("Remote candidates: none")
+    # MCP tooling (§68): a separate section — servers are never providers.
+    for dep in data.get("mcp_dependencies", []):
+        lines.append(f"mcp dependency: {_clean(dep['name'])} "
+                     f"(declared by {_clean(dep['declared_by'])}) — "
+                     f"{_clean(dep['availability'])}")
+    for note in data.get("mcp_tooling", []):
+        policy = []
+        if note.get("requires_network"):
+            policy.append("network")
+        if note.get("requires_credentials"):
+            policy.append("credentials")
+        suffix = f" [{', '.join(policy)}]" if policy else ""
+        lines.append(f"mcp tooling: {_clean(note['name'])}"
+                     f"{(' ' + _clean(note['version'])) if note.get('version') else ''}"
+                     f" (source={_clean(note['source'])}, tooling — not a "
+                     f"provider){suffix}")
+        if note.get("matched_terms"):
+            lines.append(f"     matched: "
+                         f"{', '.join(_clean(t) for t in note['matched_terms'])}")
     for excluded in data.get("entries_excluded", []):
         lines.append(f"excluded: {_clean(excluded)}")
     if data.get("profile"):

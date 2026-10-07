@@ -65,8 +65,8 @@ __all__ = [
 REGISTRIES_FILE = "registries.toml"
 LOCAL_REGISTRY_ID = "local"
 
-SOURCE_KINDS = ("local-file", "http", "a2a")
-SourceKind = Literal["local-file", "http", "a2a"]
+SOURCE_KINDS = ("local-file", "http", "a2a", "mcp")
+SourceKind = Literal["local-file", "http", "a2a", "mcp"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -77,7 +77,7 @@ class SourceSpec:
     kind: SourceKind
     enabled: bool = False  # opt-in: a configured source does nothing until enabled
     path: str | None = None   # local-file: JSON document path (config-relative)
-    url: str | None = None    # http: document URL; a2a: agent card URL
+    url: str | None = None    # http: document URL; a2a: card; mcp: /servers
     max_age_s: int | None = None  # freshness budget for cached remote documents
     timeout_s: int | None = None  # http: bounded wait per request (default 10)
 
@@ -86,7 +86,7 @@ class SourceSpec:
             raise ContractError(f"registry source: invalid id {self.id!r}")
         if self.kind == "local-file" and not self.path:
             raise ContractError(f"registry source {self.id!r}: local-file requires 'path'")
-        if self.kind in ("http", "a2a") and not self.url:
+        if self.kind in ("http", "a2a", "mcp") and not self.url:
             raise ContractError(
                 f"registry source {self.id!r}: {self.kind} requires 'url'")
         if self.max_age_s is not None and self.max_age_s <= 0:
@@ -164,7 +164,10 @@ class SourceRead:
     fresh (§21)."""
 
     spec: SourceSpec
-    status: Literal["ok", "disabled", "unavailable", "invalid", "stale"]
+    # ``skipped`` covers kinds this reader does not serve (``mcp`` sources are
+    # tooling metadata — read via read_mcp_sources, never provider candidates).
+    status: Literal["ok", "disabled", "unavailable", "invalid", "stale",
+                    "skipped"]
     document: RegistryDocument | None = None
     detail: str | None = None
     # Remote-read provenance (None for local-file reads).
@@ -225,6 +228,14 @@ def read_sources(specs: Sequence[SourceSpec], *, fetcher: "Fetcher | None" = Non
         source: RegistrySource
         if spec.kind == "local-file":
             source = FileRegistrySource(spec=spec)
+        elif spec.kind == "mcp":
+            # MCP server metadata is tooling, not provider metadata — it is
+            # read through registry.mcp.read_mcp_sources instead (§68).
+            reads.append(SourceRead(
+                spec=spec, status="skipped",
+                detail=f"{spec.id}: mcp source — tooling registry, not a "
+                       "provider registry"))
+            continue
         else:  # http / a2a — read-only remote clients (Waves D and I)
             from theforge.registry.remote import A2ACardSource, HttpRegistrySource
             cls = A2ACardSource if spec.kind == "a2a" else HttpRegistrySource

@@ -11,6 +11,7 @@ from theforge.registry.config import (
 from theforge.registry.discovery import DiscoveryReport, discover, evaluate_entry
 from theforge.registry.health import HealthOutcome, check_health
 from theforge.registry.identity import ProviderFingerprint, fingerprint
+from theforge.registry.mcp import McpRegistrySource, McpSourceRead, read_mcp_sources
 from theforge.registry.registry import Registry, RegistryRecord, RevalidationOutcome
 from theforge.registry.remote import (
     FetchResponse,
@@ -33,12 +34,13 @@ from theforge.registry.surface import (
 
 __all__ = [
     "DiscoveryReport", "FetchResponse", "FileRegistrySource", "HealthOutcome",
-    "HttpRegistrySource",
+    "HttpRegistrySource", "McpRegistrySource", "McpSourceRead",
     "ProviderEntry", "ProviderFingerprint", "Registry", "RegistryRecord",
     "RevalidationOutcome", "SourceRead", "SourceSpec",
     "builtin_entries", "capability_fingerprint", "check_health", "discover",
     "evaluate_entry", "fingerprint",
     "load_entries", "load_source_specs", "local_document", "network_disabled",
-    "read_sources", "resolve_entries", "surface_fingerprint", "surface_identity",
+    "read_mcp_sources", "read_sources", "resolve_entries",
+    "surface_fingerprint", "surface_identity",
     "user_cache_dir", "user_config_dir",
 ]

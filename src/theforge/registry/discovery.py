@@ -23,6 +23,7 @@ from theforge.contracts.registry import (
 )
 from theforge.contracts.semver import parse_semver
 from theforge.negotiation import negotiate_all
+from theforge.registry.mcp import read_mcp_sources
 from theforge.registry.registry import RegistryRecord
 from theforge.registry.sources import (
     SourceRead,
@@ -33,9 +34,41 @@ from theforge.registry.sources import (
 
 __all__ = [
     "DiscoveryReport",
+    "McpDependency",
+    "McpToolingNote",
     "discover",
     "evaluate_entry",
 ]
+
+MAX_MCP_NOTES = 10  # §71 progressive discovery: bounded tool listings
+
+
+@dataclass(frozen=True, kw_only=True)
+class McpToolingNote:
+    """An MCP server whose declared metadata may serve tooling needs —
+    deliberately *not* a ``RemoteProviderCandidate``: MCP servers provide
+    tools, they are never Forge providers (§68)."""
+
+    source: str
+    name: str
+    version: str | None
+    matched_terms: list[str]
+    requires_network: bool
+    requires_credentials: bool
+    remotes: list[str]      # "type url"
+    packages: list[str]     # "registryType:identifier"
+    limitations: list[str]
+
+
+@dataclass(frozen=True, kw_only=True)
+class McpDependency:
+    """A capability's declared MCP dependency (§70) with availability
+    detection — ``listed`` means a configured MCP source serves the name,
+    never that the Forge installed or trusts it."""
+
+    name: str
+    declared_by: str               # "provider/capability"
+    availability: Literal["listed", "unlisted"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -60,6 +93,10 @@ class DiscoveryReport:
     registry_calls: int = 0
     metadata_bytes: int = 0
     network_ms: float | None = None
+    # MCP awareness (§69-72): tooling candidates and declared provider deps.
+    # Separate from ``candidates`` — an MCP server is never a provider.
+    mcp_tooling: list[McpToolingNote] = field(default_factory=list)
+    mcp_dependencies: list[McpDependency] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
 
 
@@ -241,6 +278,8 @@ def discover(requirement: CapabilityRequirement,
             if read.status == "disabled":
                 sources_skipped.append(read.spec.id)
                 continue
+            if read.status == "skipped":
+                continue  # mcp sources are tooling reads, handled below
             if read.document is None or read.status == "invalid":
                 sources_skipped.append(read.spec.id)
                 limitations.append(
@@ -268,6 +307,79 @@ def discover(requirement: CapabilityRequirement,
                 candidates.append(_entry_to_candidate(
                     read, entry, fit, matched, missing, unknowns))
 
+    # MCP awareness (§68-72): provider deps + tooling candidates — a
+    # separate object type, never mixed into provider ``candidates``.
+    mcp_tooling: list[McpToolingNote] = []
+    mcp_dependencies: list[McpDependency] = []
+    declared_deps: dict[str, str] = {}   # server name -> "provider/capability"
+    for result in local_results:
+        if result.state not in ("FULL", "PARTIAL"):
+            continue
+        record = next((r for r in records
+                       if r.entry.id == result.provider), None)
+        manifest = record.manifest if record else None
+        for cap in (manifest.capabilities if manifest else ()):
+            if cap.id == requirement.capability:
+                for dep in cap.mcp_requires:
+                    declared_deps.setdefault(dep, f"{result.provider}/{cap.id}")
+    # MCP reads obey the same profile gate as provider sources; but the
+    # dependency listing needs specs loaded even when remote was not wanted.
+    if specs is None and (requirement.technologies or declared_deps):
+        specs = load_source_specs(forge_dir, warnings=limitations)
+    mcp_specs = [s for s in (specs or []) if s.kind == "mcp" and s.enabled]
+    # Dependency detection is worth a read even when the profile gates
+    # provider-candidate discovery; technology hints pay a fetch only when
+    # remote consultation was wanted anyway.
+    mcp_wanted = bool(declared_deps) or (wanted and
+                                         bool(requirement.technologies))
+    if mcp_specs and mcp_wanted:
+        tech_terms = {t.lower() for t in requirement.technologies}
+        listed_names: set[str] = set()
+        for mcp_read in read_mcp_sources(mcp_specs, **source_kwargs):
+            if mcp_read.document is None:
+                if mcp_read.status != "disabled":
+                    limitations.append(
+                        f"mcp source {mcp_read.spec.id}: {mcp_read.status} — "
+                        f"{mcp_read.detail or 'no document'}")
+                continue
+            registry_calls += 1
+            metadata_bytes += mcp_read.bytes_received
+            if mcp_read.latency_ms is not None:
+                network_ms = (network_ms or 0.0) + mcp_read.latency_ms
+            if mcp_read.status == "stale":
+                limitations.append(
+                    f"mcp source {mcp_read.spec.id}: document is stale "
+                    f"({mcp_read.detail})")
+            for mcp_entry in mcp_read.document.entries:
+                listed_names.add(mcp_entry.name)
+                haystack = f"{mcp_entry.name} {mcp_entry.title or ''} " \
+                           f"{mcp_entry.description or ''}".lower()
+                hit = sorted(t for t in tech_terms if t in haystack)
+                if hit:
+                    mcp_tooling.append(McpToolingNote(
+                        source=mcp_read.spec.id, name=mcp_entry.name,
+                        version=mcp_entry.version, matched_terms=hit,
+                        requires_network=mcp_entry.requires_network,
+                        requires_credentials=mcp_entry.requires_credentials,
+                        remotes=sorted(f"{r.type} {r.url}"
+                                       for r in mcp_entry.remotes),
+                        packages=sorted(f"{p.registry_type}:{p.identifier}"
+                                        for p in mcp_entry.packages),
+                        limitations=list(mcp_entry.limitations)))
+        for dep, by in sorted(declared_deps.items()):
+            mcp_dependencies.append(McpDependency(
+                name=dep, declared_by=by,
+                availability="listed" if dep in listed_names else "unlisted"))
+    elif declared_deps:
+        for dep, by in sorted(declared_deps.items()):
+            mcp_dependencies.append(McpDependency(
+                name=dep, declared_by=by, availability="unlisted"))
+        if any(s.kind == "mcp" for s in (specs or [])):
+            limitations.append("mcp sources configured but disabled — "
+                               "dependency availability unknown")
+    mcp_tooling.sort(key=lambda n: (n.name, n.source))
+    mcp_tooling = mcp_tooling[:MAX_MCP_NOTES]
+
     # Deterministic order: declared > partial, then provider, then newest
     # version, then registry — popularity never orders candidates (§34).
     candidates.sort(key=lambda c: (
@@ -280,4 +392,5 @@ def discover(requirement: CapabilityRequirement,
         sources_consulted=sources_consulted, sources_skipped=sources_skipped,
         entries_scanned=entries_scanned, entries_excluded=entries_excluded,
         registry_calls=registry_calls, metadata_bytes=metadata_bytes,
-        network_ms=network_ms, limitations=limitations)
+        network_ms=network_ms, mcp_tooling=mcp_tooling,
+        mcp_dependencies=mcp_dependencies, limitations=limitations)

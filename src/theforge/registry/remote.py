@@ -139,8 +139,24 @@ def _age_s(retrieved_at: str, now: str) -> float | None:
 
 
 @dataclass(frozen=True, kw_only=True)
+class CacheEnvelope:
+    """A verified cache envelope — raw body only; each source type decodes
+    it through its own ``_decode`` (registry documents and MCP pages share
+    the same integrity/freshness discipline)."""
+
+    retrieved_at: str
+    etag: str | None
+    body_sha256: str
+    body: str
+
+    @property
+    def body_bytes(self) -> int:
+        return len(self.body.encode("utf-8"))
+
+
+@dataclass(frozen=True, kw_only=True)
 class CachedDocument:
-    """A cache envelope after integrity verification."""
+    """A cache envelope after integrity verification + document decode."""
 
     retrieved_at: str
     etag: str | None
@@ -151,6 +167,65 @@ class CachedDocument:
     @property
     def body_bytes(self) -> int:
         return len(self.body.encode("utf-8"))
+
+
+def read_envelope(cache_path: Path, source_id: str,
+                  url: str | None) -> CacheEnvelope | None:
+    """Verified envelope read: url match + sha256 of the stored body —
+    a tampered cache file is simply absent. Document decode stays with the
+    caller so every source kind re-checks the *raw* cached body."""
+    try:
+        if cache_path.stat().st_size > MAX_BODY_BYTES * 2:
+            return None
+        raw = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if (not isinstance(raw, dict) or raw.get("kind") != CACHE_KIND
+            or raw.get("source_id") != source_id
+            or raw.get("url") != url):
+        return None
+    body = raw.get("body")
+    body_sha = raw.get("body_sha256")
+    retrieved_at = raw.get("retrieved_at")
+    if not isinstance(body, str) or not isinstance(body_sha, str) \
+            or not isinstance(retrieved_at, str):
+        return None
+    if hashlib.sha256(body.encode("utf-8")).hexdigest() != body_sha:
+        return None  # poisoned cache: integrity failure → treat as absent
+    etag = raw.get("etag")
+    return CacheEnvelope(retrieved_at=retrieved_at,
+                         etag=etag if isinstance(etag, str) else None,
+                         body_sha256=body_sha, body=body)
+
+
+def write_envelope(cache_path: Path, *, source_id: str, url: str,
+                   retrieved_at: str, etag: str | None, body_sha: str,
+                   body: str) -> None:
+    envelope = {"kind": CACHE_KIND, "source_id": source_id,
+                "url": url, "retrieved_at": retrieved_at,
+                "etag": etag, "body_sha256": body_sha, "body": body}
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = cache_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(envelope, indent=1, sort_keys=True),
+                       encoding="utf-8")
+        tmp.replace(cache_path)
+    except OSError:
+        pass  # cache is an optimization; a failed write never fails the read
+
+
+def touch_envelope(cache_path: Path, *, clock: Callable[[], str]) -> None:
+    """304: refresh retrieved_at so the freshness budget restarts."""
+    raw: dict[str, object] = {}
+    try:
+        raw = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if isinstance(raw, dict):
+        raw["retrieved_at"] = clock()
+        with contextlib.suppress(OSError):
+            cache_path.write_text(
+                json.dumps(raw, indent=1, sort_keys=True), encoding="utf-8")
 
 
 class HttpRegistrySource:
@@ -284,61 +359,28 @@ class HttpRegistrySource:
                           f"{spec.id}: {note}; cached document is stale")
 
     def _load_cache(self) -> CachedDocument | None:
-        """Verified cache read: url match + sha256 of the stored body, then a
-        fresh tolerant decode — a tampered cache file is simply absent."""
-        try:
-            if self._cache_path.stat().st_size > MAX_BODY_BYTES * 2:
-                return None
-            raw = json.loads(self._cache_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        """Verified cache read: integrity envelope, then a fresh decode of
+        the raw body — a tampered cache file is simply absent."""
+        envelope = read_envelope(self._cache_path, self.spec.id, self.spec.url)
+        if envelope is None:
             return None
-        if (not isinstance(raw, dict) or raw.get("kind") != CACHE_KIND
-                or raw.get("source_id") != self.spec.id
-                or raw.get("url") != self.spec.url):
-            return None
-        body = raw.get("body")
-        body_sha = raw.get("body_sha256")
-        retrieved_at = raw.get("retrieved_at")
-        if not isinstance(body, str) or not isinstance(body_sha, str) \
-                or not isinstance(retrieved_at, str):
-            return None
-        if hashlib.sha256(body.encode("utf-8")).hexdigest() != body_sha:
-            return None  # poisoned cache: integrity failure → treat as absent
-        document, error = self._decode(body)
+        document, error = self._decode(envelope.body)
         if error is not None or document is None:
             return None
-        etag = raw.get("etag")
-        return CachedDocument(retrieved_at=retrieved_at,
-                              etag=etag if isinstance(etag, str) else None,
-                              body_sha256=body_sha, body=body,
-                              document=document)
+        return CachedDocument(retrieved_at=envelope.retrieved_at,
+                              etag=envelope.etag, body_sha256=envelope.body_sha256,
+                              body=envelope.body, document=document)
 
     def _write_cache(self, *, retrieved_at: str, etag: str | None,
                      body_sha: str, body: str) -> None:
-        envelope = {"kind": CACHE_KIND, "source_id": self.spec.id,
-                    "url": self.spec.url, "retrieved_at": retrieved_at,
-                    "etag": etag, "body_sha256": body_sha, "body": body}
-        try:
-            self._cache_dir.mkdir(parents=True, exist_ok=True)
-            tmp = self._cache_path.with_suffix(".tmp")
-            tmp.write_text(json.dumps(envelope, indent=1, sort_keys=True),
-                           encoding="utf-8")
-            tmp.replace(self._cache_path)
-        except OSError:
-            pass  # cache is an optimization; a failed write never fails the read
+        assert self.spec.url is not None
+        write_envelope(self._cache_path, source_id=self.spec.id,
+                       url=self.spec.url, retrieved_at=retrieved_at,
+                       etag=etag, body_sha=body_sha, body=body)
 
     def _touch_cache(self, cached: CachedDocument) -> None:
         """304: refresh retrieved_at so the freshness budget restarts."""
-        raw: dict[str, object] = {}
-        try:
-            raw = json.loads(self._cache_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return
-        if isinstance(raw, dict):
-            raw["retrieved_at"] = self._clock()
-            with contextlib.suppress(OSError):
-                self._cache_path.write_text(
-                    json.dumps(raw, indent=1, sort_keys=True), encoding="utf-8")
+        touch_envelope(self._cache_path, clock=self._clock)
 
 
 class A2ACardSource(HttpRegistrySource):

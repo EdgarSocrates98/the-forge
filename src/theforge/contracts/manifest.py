@@ -37,6 +37,9 @@ class CapabilityContext:
 # Artifact/evidence type identifier (e.g. "code-analysis-evidence"); free of any
 # domain registry: a provider declares what it produces/consumes, the graph links.
 ARTIFACT_TYPE_ID = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$")
+# MCP server names as declared by the official registry (e.g.
+# "io.github.org/server") — same loose pattern as contracts/mcp.py.
+MCP_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$")
 # Capability reference: "<capability>" (same provider) or "<provider>/<capability>".
 CAPABILITY_REF = re.compile(
     r"^([a-z][a-z0-9-]*/)?[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
@@ -103,10 +106,18 @@ class Capability:
     # Richer self-description for capability negotiation v2 (additive): None =
     # legacy mode — the negotiator answers demands from the plain fields only.
     offer: "CapabilityOffer | None" = None
+    # Cycle 4/Wave J (additive): declared MCP tooling dependencies — official
+    # registry server names (e.g. "io.github.org/server"). The Forge may
+    # *detect* availability; it never installs or configures MCP servers.
+    mcp_requires: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):
             raise ContractError(f"invalid capability id {self.id!r}")
+        for dep in self.mcp_requires:
+            if not MCP_NAME_RE.match(dep):
+                raise ContractError(
+                    f"capability {self.id}: invalid mcp_requires name {dep!r}")
         if not self.actions:
             raise ContractError(f"capability {self.id}: actions must not be empty")
         if self.default_action not in self.actions:
