@@ -54,7 +54,7 @@ not a green run, until a runner executes actual steps.
 
 Static/mechanical checks performed against the branch include:
 
-- README documentation-index checker covers every root `docs/*.md` file;
+- README documentation-index check currently resolves all 28/28 root `docs/*.md` files;
 - ADR index checker covers every numbered ADR and rejects duplicate numbers;
 - ADR 0044–0048 use the required `- Status:` marker;
 - package and runtime versions both report 0.2.1;
