@@ -599,9 +599,9 @@ class PlanExecutor:
             economy_sha = self.forger.store.write(trace.run_id, "economy", economy)
             trace.economy_sha = economy_sha
         # Global continuation is a core decision, never a provider instruction.
-        # At this terminal point there is no remaining planned candidate, so any
-        # unresolved question has no expected gain inside this plan; callers may
-        # create a new plan instead of silently extending the current one.
+        # At terminalization there is no concrete next candidate to evaluate:
+        # unresolved questions therefore keep information gain unknown instead
+        # of being mislabeled as zero gain.
         unresolved = sorted(
             set(plan.unknowns).union(
                 unknown
