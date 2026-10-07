@@ -23,6 +23,7 @@ from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.codes import Codes
 from theforge.contracts.plan import PlanNodeState, PlanState
 from theforge.contracts.receipt import ExecutionReceipt
+from theforge.contracts.telemetry import RunTelemetry
 from theforge.contracts.types import Producer
 from theforge.errors import UsageError
 from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
@@ -301,6 +302,8 @@ def test_retry_policy_drives_a_second_attempt(tmp_path: Path) -> None:
     receipt = store.read_contract(out.run_id, "receipt", ExecutionReceipt)
     assert any("node flaky: retried 1x (attempt runs:" in n
                for n in receipt.limitations)
+    telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
+    assert telemetry.providers_executed.value == 2
 
 
 def test_retry_is_off_by_default(tmp_path: Path) -> None:
