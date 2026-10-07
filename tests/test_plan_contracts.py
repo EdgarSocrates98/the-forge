@@ -385,6 +385,7 @@ def test_plan_receipt_requires_plan_refs_and_no_provider() -> None:
     planned = roundtrip(ExecutionReceipt, receipt_dict(
         kind="plan", status="planned", plan={"plan_sha256": SHA}))
     assert planned.plan is not None and planned.plan.plan_result_sha256 is None
+    assert planned.plan.global_stop_sha256 is None
     assert roundtrip(ExecutionReceipt, receipt_dict(kind="plan", plan=refs)).kind == "plan"
     with pytest.raises(ContractError, match="plan references are required"):
         from_dict(ExecutionReceipt, receipt_dict(kind="plan"), strict=True)
