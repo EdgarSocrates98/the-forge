@@ -132,6 +132,30 @@ def test_budget_plan_run_shape() -> None:
     assert economy_budget.semantic_calls == 0
 
 
+def test_plan_budget_explicitly_reserves_retry_ceiling() -> None:
+    _, budget = resolve_budget(
+        profile_for("max"),
+        run_id="plan-retry",
+        plan_nodes=2,
+        retry_attempts=3,
+    )
+    assert budget.provider_calls == 6
+    assert any(
+        "retry reserve provider_calls 2→6" in item
+        for item in budget.adjustments
+    )
+
+
+def test_budget_rejects_invalid_retry_ceiling() -> None:
+    with pytest.raises(ValueError, match="retry_attempts"):
+        resolve_budget(
+            profile_for("balanced"),
+            run_id="bad-retry",
+            plan_nodes=1,
+            retry_attempts=0,
+        )
+
+
 def test_budget_rejects_negative_bounds() -> None:
     with pytest.raises(ContractError):
         RunBudget(producer=P, created_at="t", run_id="r", profile="economy",
