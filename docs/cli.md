@@ -12,6 +12,7 @@
 | `registry show <id>` | manifest, argv e hash | 0 / 2 se desconhecido |
 | `capabilities list [--provider id]` | capabilities declaradas, com aliases, depreciação (`replaced_by`) e `declared_by`; aviso em stderr para cada depreciada | 0 |
 | `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
+| `capabilities negotiate --requirement <req.json>` | negocia um `CapabilityRequirement/v1` contra os manifests em cache: resultado dimensional por provider (`FULL`/`PARTIAL`/`UNSUPPORTED`/`INCOMPATIBLE`/`UNRESOLVED`), offline, sem disparar providers — [capability-negotiation.md](capability-negotiation.md) | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
 | `provider init <dir> --id <provider-id> [--capability <id>]` | escreve o scaffold de provider (manifest, esqueleto stdlib, teste de conformidade, README) num diretório novo ou vazio; nada é instalado nem registrado | 0 / 2 |
 | `provider check [--json] -- <argv>...` | bateria de conformidade do Forge Protocol sobre um argv qualquer ([kit](provider-authoring.md#certificação)) | 0 / 1 / 2 |

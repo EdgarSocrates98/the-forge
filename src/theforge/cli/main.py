@@ -82,6 +82,13 @@ def build_parser() -> argparse.ArgumentParser:
     cap_search = caps.add_parser("search", parents=[common])
     cap_search.add_argument("query")
     cap_search.set_defaults(handler=commands.cmd_capabilities_search)
+    cap_negotiate = caps.add_parser(
+        "negotiate", parents=[common],
+        help="negotiate a CapabilityRequirement against the registered manifests "
+             "(offline, deterministic, machine-readable with --json)")
+    cap_negotiate.add_argument("--requirement", required=True, metavar="REQ_JSON",
+                               help="a theforge/CapabilityRequirement/v1 JSON document")
+    cap_negotiate.set_defaults(handler=commands.cmd_capabilities_negotiate)
 
     graph = sub.add_parser(
         "graph", parents=[common],

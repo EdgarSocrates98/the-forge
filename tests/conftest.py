@@ -141,6 +141,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_root_hygiene.py": ("unit",),
     # cycle-3.1 surface identity / feature negotiation
     "test_surface_identity.py": ("unit", "contract", "integration"),
+    # cycle-4 capability negotiation v2
+    "test_negotiation.py": ("unit", "contract", "integration"),
 }
 
 

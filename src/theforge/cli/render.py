@@ -131,6 +131,30 @@ def capabilities(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def negotiation(data: dict[str, Any]) -> str:
+    results = data["results"]
+    if not results:
+        return "no providers to negotiate with"
+    req = data["requirement"]
+    lines = [f"requirement: {_clean(req['capability'])}"
+             + (f" actions={_clean(','.join(req['required_actions']))}"
+                if req.get('required_actions') else "")
+             + (f" tech={_clean(','.join(req['technologies']))}"
+                if req.get('technologies') else "")]
+    for r in results:
+        dims = " ".join(f"{k.split('_')[0]}={v}" for k, v in sorted(r["dimensions"].items())
+                        if v not in ("not_applicable",))
+        lines.append(f"{r['state']:<12} {_clean(r['provider']):<22} "
+                     f"{_clean(r.get('capability') or '-'):<28} {dims}")
+        if r.get("history") not in (None, "absent"):
+            lines.append(f"             history={r['history']}")
+        for item in r.get("missing", []) + r.get("policy_conflicts", []):
+            lines.append(f"             - {_clean(item)}")
+        for note in r.get("limitations", []):
+            lines.append(f"             ~ {_clean(note)}")
+    return "\n".join(lines)
+
+
 # Relation edge kinds in display order; the mechanical structure edges
 # (has_capability, has_action, in_domain) are listed last — they derive from
 # the manifest boilerplate, not from declared intent.

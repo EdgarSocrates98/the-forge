@@ -11,7 +11,8 @@ from typing import Any, Final
 
 from theforge.cli import render
 from theforge.context import scan_workspace
-from theforge.contracts import to_dict
+from theforge.contracts import CapabilityRequirement, to_dict
+from theforge.contracts.base import ContractError, from_dict
 from theforge.contracts.codes import Codes, family_of
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
@@ -19,6 +20,8 @@ from theforge.explain import build_explain_report
 from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
 from theforge.forger.replay import replay
 from theforge.intel import load_decisions
+from theforge.metrics import load_performance
+from theforge.negotiation import negotiate_all
 from theforge.registry import Registry, RegistryRecord, check_health
 from theforge.routing.signals import normalize_tokens
 from theforge.runs import RunStore
@@ -208,6 +211,26 @@ def cmd_capabilities_search(args: argparse.Namespace) -> int:
     _warn(registry)
     _warn_deprecated(rows)
     _emit(args, {"query": args.query, "capabilities": rows}, render.capabilities)
+    return 0
+
+
+def cmd_capabilities_negotiate(args: argparse.Namespace) -> int:
+    """``capabilities negotiate --requirement <req.json>`` — deterministic v2
+    negotiation over the registered manifests (offline, cache only)."""
+    path = Path(args.requirement)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        requirement = from_dict(CapabilityRequirement, data)
+    except (OSError, json.JSONDecodeError, ContractError) as exc:
+        raise UsageError(f"invalid capability requirement {path}: {exc}") from exc
+    registry = Registry(find_forge_dir(_root(args)))
+    performance, perf_warning = load_performance(_root(args))
+    results = negotiate_all(requirement, registry.records(), performance=performance)
+    _warn(registry)
+    if perf_warning:
+        print(f"theforge: warning: {perf_warning}", file=sys.stderr)
+    _emit(args, {"requirement": to_dict(requirement),
+                 "results": [to_dict(r) for r in results]}, render.negotiation)
     return 0
 
 

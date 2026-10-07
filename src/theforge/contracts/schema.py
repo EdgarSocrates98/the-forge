@@ -12,6 +12,9 @@ from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hin
 
 from theforge.contracts import (
     CapabilityGraph,
+    CapabilityNegotiationResult,
+    CapabilityOffer,
+    CapabilityRequirement,
     ComplexityAssessment,
     ContextPack,
     DecisionMemory,
@@ -71,6 +74,8 @@ EXPORTED: tuple[type[Any], ...] = (
     ProviderSurfaceIdentity,
     # economy federation (cycle 3.1, wave F)
     EconomyRollup,
+    # capability negotiation v2 (cycle 4, wave A)
+    CapabilityRequirement, CapabilityOffer, CapabilityNegotiationResult,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -83,6 +88,9 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
     CapabilityGraph, DecisionRecord, PlanState, RunBudget, ProviderPerformance,
     ProjectIntel, DecisionMemory, ProviderSurfaceIdentity, EconomyRollup,
+    # negotiation results are core-produced artifacts; the requirement and the
+    # offer travel (manifest embeds the offer, CLI accepts the requirement).
+    CapabilityNegotiationResult,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

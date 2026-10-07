@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass, field
 
 from theforge.contracts.base import ContractError
+from theforge.contracts.negotiation import CapabilityOffer
 from theforge.contracts.types import (
     FEATURE_ID_RE,
     SHA256_RE,
@@ -99,6 +100,9 @@ class Capability:
     resolves_ambiguity: bool = False
     # Optional declared relationships feeding the capability graph (v1 additive).
     relations: CapabilityRelations = field(default_factory=CapabilityRelations)
+    # Richer self-description for capability negotiation v2 (additive): None =
+    # legacy mode — the negotiator answers demands from the plain fields only.
+    offer: "CapabilityOffer | None" = None
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):

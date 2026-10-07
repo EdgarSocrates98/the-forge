@@ -66,6 +66,11 @@ from theforge.contracts.manifest import (
     ForgeManifest,
     Signals,
 )
+from theforge.contracts.negotiation import (
+    CapabilityNegotiationResult,
+    CapabilityOffer,
+    CapabilityRequirement,
+)
 from theforge.contracts.performance import (
     PERFORMANCE_SCHEMA,
     ProviderCapabilityPerformance,
@@ -150,7 +155,8 @@ __all__ = [
     "PROTOCOL_V1", "RESOLVE_REQUEST_SCHEMA", "ROUTING_PROPOSAL_SCHEMA", "Artifact",
     "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
-    "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
+    "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityNegotiationResult",
+    "CapabilityOffer", "CapabilityRelations", "CapabilityRequirement",
     "ComplexityAssessment",
     "ComplexityDimension",
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",

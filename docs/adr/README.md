@@ -62,6 +62,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | modos avançados de execução e `DecisionRecord` | [0030](0030-execution-modes.md) | `cycle-3` |
 | contratos compartilhados: schema repo, sem kernel | [0031](0031-shared-contracts.md) | `cycle-3.1` |
 | A2A/MCP opcionais no nível do provider | [0032](0032-external-protocol-interop.md) | `cycle-3.1` |
+| negociação de capability: dimensional, gated, sem score | [0033](0033-capability-negotiation-v2.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

@@ -353,6 +353,37 @@ SEEDS: dict[str, dict[str, Any]] = {
         "surface_fingerprint": SHA, "capability_fingerprint": SHA,
         "native_surface_fingerprint": SHA, "recorded_at": "t",
     },
+    # capability negotiation v2 (cycle 4)
+    "CapabilityRequirement": {
+        "capability": "data.streaming.analysis",
+        "required_actions": ["inspect"], "task_family": "data.spark.performance",
+        "technologies": ["kafka"], "input_artifact_types": ["code-bundle"],
+        "required_output_types": ["finding"], "required_evidence": ["finding"],
+        "verification_level": "strong", "operation_class_ceiling": "read_only",
+        "offline_required": True, "network_allowed": False,
+        "credentials_allowed": False, "mutation_allowed": False,
+        "platform_constraints": ["windows"], "runtime_constraints": ["py311"],
+        "protocol_features": ["handoff/v1"], "handoff_required": True,
+        "trace_required": True, "economy_required": True, "graph_required": True,
+        "minimum_trust": "local",
+    },
+    "CapabilityOffer": {
+        "technologies": ["kafka"], "produces_evidence": ["finding"],
+        "consumes_artifact_types": ["code-bundle"],
+        "produces_artifact_types": ["finding"], "features": ["handoff/v1"],
+        "offline": True, "read_only": True, "network_required": False,
+        "credentials_required": False, "limitations": ["l"],
+    },
+    "CapabilityNegotiationResult": {
+        "producer": P, "created_at": "t",
+        "requirement": {"capability": "data.streaming.analysis"},
+        "provider": "data-forge", "state": "PARTIAL", "capability": "data.streaming",
+        "dimensions": {"capability_match": "full", "technology_match": "partial"},
+        "history": "warming",
+        "matched": ["capability:data.streaming"], "missing": ["technology:kafka"],
+        "limitations": ["l"], "policy_conflicts": ["trust:local"],
+        "surface_fingerprint": SHA, "evidence": ["e"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))
