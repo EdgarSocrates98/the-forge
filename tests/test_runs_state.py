@@ -186,8 +186,8 @@ def test_risk_is_a_known_artifact_in_run_order() -> None:
                          "risk", "handoff", "context", "context-r1", "context-r2", "result",
                          "plan-state", "plan-result", "graph", "capability-graph",
                          "semantic-proposal", "routing-proposal", "decision", "economy",
-                         "verification", "telemetry", "diagnostic", "complexity",
-                         "budget", "receipt")
+                         "global-stop", "verification", "telemetry", "diagnostic",
+                         "complexity", "budget", "receipt")
     assert ARTIFACT_TYPES["complexity"] is ComplexityAssessment
     assert ARTIFACT_TYPES["budget"] is RunBudget
     assert ARTIFACT_TYPES["capability-graph"] is CapabilityGraph

@@ -85,6 +85,7 @@ def test_unknown_measurements_remain_a_limitation() -> None:
         provider="spark",
         capability="data.performance",
         surface_fingerprint="s1",
+        task_family="data.spark.performance",
     )
     assert roi.runs == 3
     assert roi.measured_runs == 2
@@ -99,6 +100,7 @@ def test_roi_recommendation_is_advisory_and_conservative() -> None:
         provider="spark",
         capability="data.performance",
         surface_fingerprint="s1",
+        task_family="data.spark.performance",
     )
     rec = recommend_context_budget(roi, current_budget_bytes=200_000)
     assert rec is not None
@@ -119,6 +121,7 @@ def test_unverified_history_never_recommends_context_reduction() -> None:
         provider="spark",
         capability="data.performance",
         surface_fingerprint="s1",
+        task_family="data.spark.performance",
     )
     assert roi.maturity == "mature"
     assert roi.verified_runs < roi.runs
@@ -131,6 +134,7 @@ def test_high_utilization_does_not_recommend_reduction() -> None:
         provider="spark",
         capability="data.performance",
         surface_fingerprint="s1",
+        task_family="data.spark.performance",
     )
     assert recommend_context_budget(roi, current_budget_bytes=200_000) is None
 
@@ -141,6 +145,7 @@ def test_cold_history_never_recommends() -> None:
         provider="spark",
         capability="data.performance",
         surface_fingerprint="s1",
+        task_family="data.spark.performance",
     )
     assert recommend_context_budget(roi, current_budget_bytes=200_000) is None
 

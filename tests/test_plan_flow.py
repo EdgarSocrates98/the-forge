@@ -28,7 +28,7 @@ from theforge.contracts import (
     Response,
     RunTelemetry,
 )
-from theforge.contracts.codes import Codes
+from theforge.contracts.codes import Codes, family_of
 from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
 from theforge.contracts.installation import InstallationPlan
@@ -144,14 +144,20 @@ def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
         stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
         assert stop.run_id == out.run_id
         assert out.result.global_stop_sha256 == receipt.plan.global_stop_sha256
-        if stop.verification_required and not stop.verification_satisfied:
+        policy_blocked = any(
+            n.error is not None and family_of(n.error.code) == "policy"
+            for n in out.result.nodes
+        )
+        if policy_blocked:
+            assert stop.action == "stop_policy"
+        elif stop.verification_required and not stop.verification_satisfied:
             assert stop.action == "continue"
+        elif stop.unresolved:
+            assert stop.action in (
+                "continue", "stop_repeated_failure", "stop_budget_exhausted")
+            assert stop.information_gain == "unknown"
         else:
-            if stop.unresolved:
-                assert stop.action == "continue"
-                assert stop.information_gain == "unknown"
-            else:
-                assert stop.action == "stop_sufficient_evidence"
+            assert stop.action == "stop_sufficient_evidence"
     assert receipt.inputs.routing_sha256 == store.persisted_sha256(out.run_id, "routing")
     store.read_contract(out.run_id, "workspace-descriptor", WorkspaceDescriptor)
     store.read_contract(out.run_id, "graph", WorkspaceGraph)
