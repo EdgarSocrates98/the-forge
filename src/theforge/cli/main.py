@@ -93,6 +93,20 @@ def build_parser() -> argparse.ArgumentParser:
     cap_negotiate.add_argument("--requirement", required=True, metavar="REQ_JSON",
                                help="a theforge/CapabilityRequirement/v1 JSON document")
     cap_negotiate.set_defaults(handler=commands.cmd_capabilities_negotiate)
+    cap_discover = caps.add_parser(
+        "discover", parents=[common],
+        help="remote discovery by requirement: negotiates installed providers "
+             "first, then consults enabled registry sources — reports "
+             "RemoteProviderCandidate metadata, never installs (§22-26)")
+    discover_req = cap_discover.add_mutually_exclusive_group(required=True)
+    discover_req.add_argument("--requirement", metavar="REQ_JSON",
+                              help="a theforge/CapabilityRequirement/v1 JSON document")
+    discover_req.add_argument("--capability", metavar="CAP",
+                              help="shortcut: minimal requirement for a capability id")
+    cap_discover.add_argument("--remote", action="store_true",
+                              help="consult remote sources even when a local "
+                                   "provider fully satisfies the requirement")
+    cap_discover.set_defaults(handler=commands.cmd_capabilities_discover)
 
     graph = sub.add_parser(
         "graph", parents=[common],

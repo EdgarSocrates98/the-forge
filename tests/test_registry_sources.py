@@ -90,9 +90,13 @@ def test_entry_rejects_wrong_schema() -> None:
                            provider="acme-forge", version="1.0.0")
 
 
-def test_document_rejects_duplicate_providers() -> None:
+def test_document_rejects_duplicate_provider_versions() -> None:
+    # Same provider twice at the SAME version is a contradiction; different
+    # versions of one provider are normal registry content.
     with pytest.raises(ContractError):
         document(entry(provider="dup-forge"), entry(provider="dup-forge"))
+    document(entry(provider="dup-forge", version="1.0.0"),
+             entry(provider="dup-forge", version="2.0.0"))
     document(entry(provider="a-forge"), entry(provider="b-forge"))
 
 

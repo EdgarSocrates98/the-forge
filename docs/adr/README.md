@@ -65,6 +65,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | negociação de capability: dimensional, gated, sem score | [0033](0033-capability-negotiation-v2.md) | `cycle-4` |
 | registry sources: abstração de origem, local autoritativo | [0034](0034-registry-sources.md) | `cycle-4` |
 | remote registry client: read-only, cache verificado | [0035](0035-remote-registry-client.md) | `cycle-4` |
+| remote discovery: fit honesto, sem instalação | [0036](0036-remote-discovery.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

@@ -275,6 +275,40 @@ def cmd_capabilities_negotiate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_capabilities_discover(args: argparse.Namespace) -> int:
+    """``capabilities discover`` — missing-capability UX (§26): local
+    negotiation first; enabled registry sources only when needed (or
+    ``--remote``). Reports candidates as metadata and stops — no install."""
+    from theforge.registry.discovery import discover
+    if args.requirement:
+        requirement = _load_requirement(args.requirement)
+    else:
+        requirement = CapabilityRequirement(capability=args.capability)
+    assert requirement is not None
+    root = _root(args)
+    registry = Registry(find_forge_dir(root))
+    performance, perf_warning = load_performance(root)
+    report = discover(requirement, registry.records(), forge_dir=find_forge_dir(root),
+                      force_remote=args.remote, performance=performance)
+    _warn(registry)
+    if perf_warning:
+        print(f"theforge: warning: {perf_warning}", file=sys.stderr)
+    _emit(args, {
+        "requirement": to_dict(requirement),
+        "local_state": report.local_state,
+        "local_provider": report.local_provider,
+        "satisfied_locally": report.satisfied_locally,
+        "candidates": [to_dict(c) for c in report.candidates],
+        "sources_consulted": report.sources_consulted,
+        "sources_skipped": report.sources_skipped,
+        "entries_scanned": report.entries_scanned,
+        "entries_excluded": report.entries_excluded,
+        "limitations": report.limitations,
+        "action_taken": False,
+    }, render.discovery)
+    return 0
+
+
 def cmd_providers_health(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     rows = []

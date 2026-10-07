@@ -319,6 +319,12 @@
               }
             ]
           },
+          "technologies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "version": {
             "type": "string"
           }

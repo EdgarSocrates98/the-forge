@@ -8,6 +8,7 @@ from theforge.registry.config import (
     user_cache_dir,
     user_config_dir,
 )
+from theforge.registry.discovery import DiscoveryReport, discover, evaluate_entry
 from theforge.registry.health import HealthOutcome, check_health
 from theforge.registry.identity import ProviderFingerprint, fingerprint
 from theforge.registry.registry import Registry, RegistryRecord, RevalidationOutcome
@@ -31,10 +32,12 @@ from theforge.registry.surface import (
 )
 
 __all__ = [
-    "FetchResponse", "FileRegistrySource", "HealthOutcome", "HttpRegistrySource",
+    "DiscoveryReport", "FetchResponse", "FileRegistrySource", "HealthOutcome",
+    "HttpRegistrySource",
     "ProviderEntry", "ProviderFingerprint", "Registry", "RegistryRecord",
     "RevalidationOutcome", "SourceRead", "SourceSpec",
-    "builtin_entries", "capability_fingerprint", "check_health", "fingerprint",
+    "builtin_entries", "capability_fingerprint", "check_health", "discover",
+    "evaluate_entry", "fingerprint",
     "load_entries", "load_source_specs", "local_document", "network_disabled",
     "read_sources", "resolve_entries", "surface_fingerprint", "surface_identity",
     "user_cache_dir", "user_config_dir",

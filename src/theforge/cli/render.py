@@ -174,6 +174,58 @@ def negotiation(data: dict[str, Any]) -> str:
 # Relation edge kinds in display order; the mechanical structure edges
 # (has_capability, has_action, in_domain) are listed last — they derive from
 # the manifest boilerplate, not from declared intent.
+def discovery(data: dict[str, Any]) -> str:
+    """Missing-capability UX (§26): local verdict, remote candidates, and the
+    explicit no-action line."""
+    lines = []
+    capability = (data.get("requirement") or {}).get("capability", "?")
+    if data["satisfied_locally"]:
+        lines.append(f"local: FULL — {_clean(data['local_provider'])} satisfies "
+                     f"'{_clean(capability)}'")
+    else:
+        lines.append(f"local: {_clean(data['local_state'])} — no installed provider "
+                     f"fully satisfies '{_clean(capability)}'")
+    candidates = data.get("candidates", [])
+    if candidates:
+        lines.append("Remote candidates:")
+        for i, c in enumerate(candidates, 1):
+            head = (f"  {i}. {_clean(c['provider'])} {_clean(c['version'])} "
+                    f"(source={_clean(c['source'])} registry={_clean(c['registry'])} "
+                    f"{_clean(c['freshness'])}) — fit={_clean(c['fit'])}")
+            lines.append(head)
+            detail_bits = []
+            if c.get("missing"):
+                detail_bits.append("missing: " + ", ".join(c["missing"]))
+            if c.get("unknowns"):
+                detail_bits.append("unverified: " + ", ".join(c["unknowns"]))
+            if detail_bits:
+                lines.append(f"     {'; '.join(_clean(b) for b in detail_bits)}")
+            sig = {"none": "unsigned", "declared": "signature declared (unverified)",
+                   "verified": "signature verified"}[c.get("signature_state", "none")]
+            pub = c.get("publisher") or {}
+            dist = c.get("distribution") or {}
+            provenance = []
+            if pub.get("id"):
+                provenance.append(f"publisher={_clean(pub['id'])}")
+            if dist.get("kind"):
+                ref = dist["kind"]
+                if dist.get("package") and dist.get("version"):
+                    ref += f" {_clean(dist['package'])}=={_clean(dist['version'])}"
+                provenance.append(f"distribution={_clean(ref)}")
+            provenance.append(sig)
+            lines.append(f"     {'; '.join(provenance)}")
+            for lim in c.get("limitations", []):
+                lines.append(f"     limitation: {_clean(lim)}")
+    elif not data["satisfied_locally"]:
+        lines.append("Remote candidates: none")
+    for excluded in data.get("entries_excluded", []):
+        lines.append(f"excluded: {_clean(excluded)}")
+    for lim in data.get("limitations", []):
+        lines.append(f"note: {_clean(lim)}")
+    lines.append("No action was taken.")
+    return "\n".join(lines)
+
+
 _GRAPH_EDGE_ORDER = ("produces", "consumes", "requires", "complements",
                      "conflicts", "can_verify", "can_review", "relevant_to",
                      "uses_technology", "in_domain", "has_capability",

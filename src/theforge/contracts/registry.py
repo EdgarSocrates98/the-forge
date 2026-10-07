@@ -94,6 +94,7 @@ class ForgeRegistryEntry:
     distribution: DistributionRef | None = None
     protocols: list[str] = field(default_factory=list)
     capabilities: list[str] = field(default_factory=list)
+    technologies: list[str] = field(default_factory=list)
     platforms: list[str] = field(default_factory=list)
     runtime: RuntimeRequirements | None = None
     hashes: dict[str, str] = field(default_factory=dict)   # name -> sha256 hex
@@ -154,6 +155,67 @@ class RegistryDocument:
         if self.schema != REGISTRY_DOCUMENT_SCHEMA:
             raise ContractError(
                 f"unsupported schema {self.schema!r}, expected {REGISTRY_DOCUMENT_SCHEMA!r}")
-        ids = [e.provider for e in self.entries]
-        if len(set(ids)) != len(ids):
-            raise ContractError("registry document: duplicate provider entries")
+        keys = [(e.provider, e.version) for e in self.entries]
+        if len(set(keys)) != len(keys):
+            raise ContractError(
+                "registry document: duplicate provider@version entries")
+
+
+REMOTE_CANDIDATE_SCHEMA = "theforge/RemoteProviderCandidate/v1"
+
+SIGNATURE_STATE = Literal["none", "declared", "verified"]
+CANDIDATE_FIT = Literal["declared", "partial", "unknown"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class RemoteProviderCandidate:
+    """A remote provider version that *declares* a capability relevant to a
+    requirement (theforge/RemoteProviderCandidate/v1).
+
+    Trust boundary (§18, §25): a candidate is *unverified metadata*. Fit is
+    coarse by design — ``declared`` means the entry lists the capability id,
+    never that the provider satisfies the full requirement; remote claims can
+    never produce FULL. Discovery ends here; installation is a separate,
+    approval-gated plan (Wave F)."""
+
+    schema: str = REMOTE_CANDIDATE_SCHEMA
+    # Where the claim came from.
+    source: str                       # configured source id (registries.toml)
+    registry: str                     # declared registry identity id
+    registry_url: str | None = None
+    # What is claimed.
+    provider: str
+    version: str
+    publisher: PublisherIdentity | None = None
+    distribution: DistributionRef | None = None
+    manifest_sha256: str | None = None
+    signature_state: SIGNATURE_STATE = "none"
+    # How fresh the claim is (§21).
+    freshness: Literal["fresh", "stale", "unknown"] = "unknown"
+    retrieved_at: str | None = None
+    # Fit against the requirement: coarse, honest, dimensioned.
+    fit: CANDIDATE_FIT = "unknown"
+    matched: list[str] = field(default_factory=list)
+    missing: list[str] = field(default_factory=list)
+    unknowns: list[str] = field(default_factory=list)
+    # Declared surface (for planning/verification later).
+    protocols: list[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
+    platforms: list[str] = field(default_factory=list)
+    runtime: RuntimeRequirements | None = None
+    limitations: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != REMOTE_CANDIDATE_SCHEMA:
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {REMOTE_CANDIDATE_SCHEMA!r}")
+        if not PROVIDER_ID.match(self.provider):
+            raise ContractError(f"remote candidate: invalid provider id {self.provider!r}")
+        if parse_semver(self.version) is None:
+            raise ContractError(
+                f"remote candidate {self.provider!r}: version {self.version!r} is not "
+                "SemVer 2.0.0")
+        if not self.source:
+            raise ContractError("remote candidate: source must not be empty")
+        if not self.registry:
+            raise ContractError("remote candidate: registry must not be empty")

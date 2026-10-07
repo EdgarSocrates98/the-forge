@@ -7,16 +7,6 @@
       },
       "type": "array"
     },
-    "description": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
     "distribution": {
       "anyOf": [
         {
@@ -90,20 +80,18 @@
         }
       ]
     },
-    "hashes": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+    "fit": {
+      "enum": [
+        "declared",
+        "partial",
+        "unknown"
+      ]
     },
-    "license": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+    "freshness": {
+      "enum": [
+        "fresh",
+        "stale",
+        "unknown"
       ]
     },
     "limitations": {
@@ -122,15 +110,17 @@
         }
       ]
     },
-    "manifest_url": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
+    "matched": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "missing": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
     },
     "platforms": {
       "items": {
@@ -205,7 +195,20 @@
         }
       ]
     },
-    "released_at": {
+    "registry": {
+      "type": "string"
+    },
+    "registry_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "retrieved_at": {
       "anyOf": [
         {
           "type": "string"
@@ -271,52 +274,17 @@
     "schema": {
       "type": "string"
     },
-    "security_contact": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+    "signature_state": {
+      "enum": [
+        "none",
+        "declared",
+        "verified"
       ]
     },
-    "signatures": {
-      "items": {
-        "properties": {
-          "algorithm": {
-            "type": "string"
-          },
-          "key_id": {
-            "type": "string"
-          },
-          "signature": {
-            "type": "string"
-          },
-          "signed": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "key_id",
-          "algorithm",
-          "signature"
-        ],
-        "type": "object"
-      },
-      "type": "array"
+    "source": {
+      "type": "string"
     },
-    "source_repository": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "technologies": {
+    "unknowns": {
       "items": {
         "type": "string"
       },
@@ -327,9 +295,11 @@
     }
   },
   "required": [
+    "source",
+    "registry",
     "provider",
     "version"
   ],
-  "title": "ForgeRegistryEntry",
+  "title": "RemoteProviderCandidate",
   "type": "object"
 }

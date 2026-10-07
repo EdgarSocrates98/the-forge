@@ -411,6 +411,22 @@ SEEDS: dict[str, dict[str, Any]] = {
         "entries": [{"provider": "acme-forge", "version": "1.2.3"}],
         "limitations": ["l"],
     },
+    "RemoteProviderCandidate": {
+        "source": "feed", "registry": "test-registry",
+        "registry_url": "https://reg.example",
+        "provider": "acme-forge", "version": "1.2.3",
+        "publisher": {"id": "acme"},
+        "distribution": {"kind": "pip-package", "package": "acme-forge",
+                         "version": "1.2.3", "sha256": SHA},
+        "manifest_sha256": SHA, "signature_state": "declared",
+        "freshness": "fresh", "retrieved_at": "2026-01-01T00:00:00Z",
+        "fit": "declared", "matched": ["capability:data.pipeline"],
+        "missing": [], "unknowns": ["required_actions:remote-undeclared"],
+        "protocols": ["forge/v1"], "capabilities": ["data.pipeline"],
+        "platforms": ["any"],
+        "runtime": {"offline": True, "requires_network": False},
+        "limitations": ["l"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))
