@@ -1,11 +1,14 @@
 """Remote validation classification stays evidence-honest."""
 
+import json
+
 from scripts.ci.classify_remote_validation import (
     NOT_RUN,
     REMOTE_BLOCKED,
     REMOTE_FAILED,
     REMOTE_VERIFIED,
     classify,
+    main,
 )
 
 
@@ -92,3 +95,26 @@ def test_skipped_required_job_is_not_remote_verified() -> None:
     })
     assert result["state"] == REMOTE_BLOCKED
     assert "windows" in result["blocked_jobs"]
+
+
+def test_require_verified_exit_code(tmp_path) -> None:
+    blocked = tmp_path / "blocked.json"
+    blocked.write_text(
+        json.dumps({"jobs": [job("linux", "failure", steps=None)]}),
+        encoding="utf-8",
+    )
+    green = tmp_path / "green.json"
+    green.write_text(
+        json.dumps({
+            "jobs": [
+                job(
+                    "linux",
+                    "success",
+                    steps=[{"name": "pytest", "conclusion": "success"}],
+                )
+            ]
+        }),
+        encoding="utf-8",
+    )
+    assert main([str(blocked), "--require-verified"]) == 1
+    assert main([str(green), "--require-verified"]) == 0
