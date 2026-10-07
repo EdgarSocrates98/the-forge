@@ -48,8 +48,17 @@ class GlobalStopDecision:
             )
         if not self.run_id:
             raise ContractError("global stop: run_id must not be empty")
+        if not self.reasons:
+            raise ContractError("global stop: reasons must not be empty")
         if self.budget_remaining is not None and self.budget_remaining < 0:
             raise ContractError("global stop: budget_remaining cannot be negative")
+        if (
+            self.action == "stop_no_expected_gain"
+            and self.information_gain != "none"
+        ):
+            raise ContractError(
+                "global stop: stop_no_expected_gain requires information_gain='none'"
+            )
         if self.action == "stop_sufficient_evidence" and self.unresolved:
             raise ContractError(
                 "global stop: sufficient-evidence stop cannot retain unresolved items"
