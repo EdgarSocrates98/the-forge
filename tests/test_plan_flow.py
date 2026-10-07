@@ -143,7 +143,11 @@ def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
         )
         stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
         assert stop.run_id == out.run_id
-        assert stop.action in ("stop_sufficient_evidence", "stop_no_expected_gain")
+        assert out.result.global_stop_sha256 == receipt.plan.global_stop_sha256
+        if stop.verification_required and not stop.verification_satisfied:
+            assert stop.action == "continue"
+        else:
+            assert stop.action in ("stop_sufficient_evidence", "stop_no_expected_gain")
     assert receipt.inputs.routing_sha256 == store.persisted_sha256(out.run_id, "routing")
     store.read_contract(out.run_id, "workspace-descriptor", WorkspaceDescriptor)
     store.read_contract(out.run_id, "graph", WorkspaceGraph)
