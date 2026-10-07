@@ -25,6 +25,16 @@
         }
       ]
     },
+    "global_stop_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "limitations": {
       "items": {
         "type": "string"
