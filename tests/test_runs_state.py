@@ -469,12 +469,12 @@ def _write_plan_run(store: RunStore, run_id: str) -> tuple[str, str, str, str]:
 
 
 def make_plan_receipt(
-        run_id: str,
-        plan_sha: str,
-        plan_result: str | None,
-        *,
-        global_stop_sha256: str | None = None,
-        **overrides: Any,
+    run_id: str,
+    plan_sha: str,
+    plan_result: str | None,
+    *,
+    global_stop_sha256: str | None = None,
+    **overrides: Any,
 ) -> ExecutionReceipt:
     refs = PlanRefs(
         plan_sha256=plan_sha,
@@ -517,7 +517,7 @@ def test_plan_receipt_with_diverging_hash_is_refused_without_writing(
     if diverging == "plan-result":
         receipt = make_plan_receipt(
             run_id, plan_sha, H_OTHER, telemetry_sha256=telemetry_sha,
-            global_stop_sha256=stop_sha
+            global_stop_sha256=stop_sha,
         )
         field = "plan.plan_result_sha256"
     elif diverging == "telemetry":
