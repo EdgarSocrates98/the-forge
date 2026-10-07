@@ -219,6 +219,51 @@ def test_challenger_quality_regression_blocks_review() -> None:
     assert any("verification rate is worse" in reason for reason in result.reasons)
 
 
+def test_holdout_uses_temporal_not_lexical_ordering() -> None:
+    result = advance_experiment(
+        experiment(
+            evaluation_after="2026-10-07T12:00:00Z",
+            minimum_runs=2,
+            minimum_verified_runs=2,
+        ),
+        [
+            # 11:30 -01:00 == 12:30Z, so it is after the cutoff despite
+            # the local clock string looking earlier than 12:00.
+            eval_obs(
+                "after-offset-a",
+                "spark-a",
+                "sa",
+                created_at="2026-10-07T11:30:00-01:00",
+            ),
+            eval_obs(
+                "after-offset-b",
+                "spark-b",
+                "sb",
+                created_at="2026-10-07T11:31:00-01:00",
+            ),
+        ],
+    )
+    assert result.observations == 2
+    assert result.state == "eligible_for_review"
+
+
+def test_malformed_historical_timestamp_is_not_evaluation_evidence() -> None:
+    result = advance_experiment(
+        experiment(
+            evaluation_after="2026-10-07T12:00:00Z",
+            minimum_runs=2,
+            minimum_verified_runs=2,
+        ),
+        [
+            eval_obs("bad", "spark-a", "sa", created_at="not-a-time"),
+            eval_obs("good-a", "spark-a", "sa"),
+            eval_obs("good-b", "spark-b", "sb"),
+        ],
+    )
+    assert result.observations == 2
+    assert result.state == "eligible_for_review"
+
+
 def test_surface_change_invalidates_experiment() -> None:
     result = advance_experiment(
         experiment(),
