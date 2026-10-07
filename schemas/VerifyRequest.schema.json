@@ -655,6 +655,29 @@
           ],
           "type": "object"
         },
+        "provider_receipt": {
+          "anyOf": [
+            {
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^[0-9a-f]{64}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "schema": {
           "type": "string"
         },

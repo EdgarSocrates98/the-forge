@@ -112,3 +112,36 @@ Phase 37 (nested receipts, contrato aditivo).
   `readOnlyHint`). Gravações do cenário `cross` regravadas com o engine novo.
 - **Gates**: `pytest -m real_provider` 3/3 (live, quatro venvs), suíte offline
   completa verde, ruff + mypy limpos.
+
+## E.4 — hierarquia do planner + recibos aninhados (Phases 36/37/38)
+
+- **Phase 36 (hierarquia)**: já era estrutural — o planner só conhece
+  capabilities declaradas no manifest (`check_plan` rejeita capability/ação
+  inventada; o proposal semântico é rejeitado se citar nome fora do catálogo).
+  Nós de plano são *boundary*: referenciam a capability do provider, nunca
+  internals do especialista. Documentado em `docs/architecture.md`.
+- **Phase 37 (nested receipts)**: novo contrato `theforge/ProviderReceipt/v1`
+  (`ref`, `sha256` 64-hex minúsculo, validado no `__post_init__`). Campo
+  aditivo `provider_receipt` em `ExecutionResult` — cores antigos degradam
+  em silêncio, runs antigos sem o campo continuam legíveis. O adapter passa a
+  emitir o recibo nativo do especialista (apiforge: `case.json` —
+  `ref=case_id`, `sha256` do manifesto persistido) via `ResultDraft` no
+  `_shell.py` compartilhado (os quatro `_shell.py` permanecem idênticos).
+- **Phase 38 (nested explain)**: o orchestrator propaga `provider_receipt`
+  do resultado ao `ExecutionReceipt` (prova no receipt do run, não só no
+  payload do resultado); `explain` expõe `provider.provider_receipt` no
+  relatório e imprime `Native rcpt: <ref> sha256=<12>` no render de texto —
+  o drill-down para o recibo nativo do provider.
+- **Schema parity**: `schemas/` regerados
+  (`python -m theforge.contracts.schema schemas`) — `ExecutionResult`,
+  `ExecutionReceipt`, `ExplainReport`, `VerifyRequest` carregam o campo
+  aditivo; teste de paridade verde.
+- **Fixture**: `fixture_forge` ganhou a alavanca `provider_receipt` (emite
+  `{ref, sha256}` quando setado no provider-descriptor) para os testes e2e.
+- **Testes**: contrato (parse + rejeição de sha256 malformado + ausência
+  compatível), adapter apiforge (replay emite o recibo nativo do
+  `case.json`), e2e CLI (run → receipt carrega `provider_receipt` → explain
+  expõe), render de texto (`Native rcpt`).
+- **Docs**: `docs/protocol.md` (campo aditivo + seção de receipt) e
+  `docs/architecture.md` (fronteira do planner + recibo aninhado)
+  atualizados.

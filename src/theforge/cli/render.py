@@ -504,6 +504,10 @@ def explain(data: dict[str, Any]) -> str:
         lines.append(f"Result:      {_clean(result.get('status', '?'))}: "
                      f"{len(result.get('findings') or [])} findings, "
                      f"{len(result.get('evidence') or [])} evidence")
+    provider_receipt = (data.get("provider") or {}).get("provider_receipt")
+    if provider_receipt:  # nested receipt: the provider-native run record to drill into
+        lines.append(f"Native rcpt: {_clean(provider_receipt.get('ref', '?'))}  "
+                     f"sha256={_clean(provider_receipt.get('sha256', '?'))[:12]}")
     error = receipt.get("error")
     if error:
         unlock = f" (unlock: {_clean(error['unlock'])})" if error.get("unlock") else ""

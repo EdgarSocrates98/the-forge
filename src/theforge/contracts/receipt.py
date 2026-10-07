@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
+from theforge.contracts.result import ProviderReceipt
 from theforge.contracts.types import ErrorInfo, Outcome, Producer, TrustLevel
 from theforge.contracts.verification import ReproducibilityInfo
 
@@ -105,6 +106,9 @@ class ExecutionReceipt:
     # the rest re-executed (per-node ``reused`` on the plan result).
     resumed_from: str | None = None
     verification_sha256: str | None = None  # on-disk hash of the VerificationResult
+    # The provider-native run receipt the result pointed at (ref + hash; the
+    # content itself stays with the specialist). None when the result carried none.
+    provider_receipt: ProviderReceipt | None = None
     reproducibility: ReproducibilityInfo | None = None  # None => unknown (older runs)
     plan: PlanRefs | None = None  # required exactly when kind == "plan"
 

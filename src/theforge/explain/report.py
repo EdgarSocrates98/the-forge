@@ -207,7 +207,9 @@ def build_explain_report(store: RunStore, run_id: str, *,
                                   fingerprint=provider.fingerprint,
                                   surface_fingerprint=provider.surface_fingerprint,
                                   native_surface_fingerprint=(
-                                      provider.native_surface_fingerprint))
+                                      provider.native_surface_fingerprint),
+                                  provider_receipt=receipt.provider_receipt
+                                  if receipt is not None else None)
                   if provider is not None else None),
         result=_result(result) if result else None,
         risk=found.raw.get("risk"), telemetry=telemetry, verification=verification,

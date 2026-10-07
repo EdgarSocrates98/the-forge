@@ -500,6 +500,7 @@
         "id",
         "native_surface_fingerprint",
         "observed_version",
+        "provider_receipt",
         "surface_fingerprint",
         "trust",
         "version"
@@ -508,6 +509,16 @@
         "id",
         "trust",
         "version"
+      ]
+    },
+    "provider.provider_receipt": {
+      "properties": [
+        "ref",
+        "sha256"
+      ],
+      "required": [
+        "ref",
+        "sha256"
       ]
     },
     "reproducibility": {

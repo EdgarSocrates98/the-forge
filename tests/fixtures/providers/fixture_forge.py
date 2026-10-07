@@ -43,6 +43,7 @@ def main() -> int:
     cite = bool(manifest.pop("cite", False))  # test-only: e1 cites context file 1
     evhash = manifest.pop("hash_evidence", None)  # test-only: e1 carries a bare sha256
     findings = manifest.pop("findings", None)  # test-only: replace f1 findings
+    provider_receipt = manifest.pop("provider_receipt", None)  # test-only result field
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
     resolution = manifest.pop("resolution", None)  # test-only RoutingProposal
@@ -132,14 +133,17 @@ def main() -> int:
                     else [{"id": "f1", "title": f"{manifest['id']} handled "
                                                 f"{cap}:{payload.get('action')}",
                            "severity": "info"}])
-        return reply("ok", {
+        result = {
             "schema": "theforge/ExecutionResult/v1", "producer": producer,
             "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",
             "findings": [{**f, "evidence_ids": f.get("evidence_ids")
                               or [e["id"] for e in evidence]}
                          for f in declared],
             "evidence": evidence,
-        })
+        }
+        if isinstance(provider_receipt, dict):  # test-only: a native receipt pointer
+            result["provider_receipt"] = provider_receipt
+        return reply("ok", result)
     return reply("refused", error=err("FIXTURE-OP-UNSUPPORTED", op, "op"))
 
 

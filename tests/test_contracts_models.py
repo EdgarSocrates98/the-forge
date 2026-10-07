@@ -213,6 +213,43 @@ def test_check_sha256_helper() -> None:
         check_sha256("ABC", field="x")
 
 
+# --- provider receipt (nested receipt pointer) -------------------------------------------
+
+def test_provider_receipt_round_trip_on_result() -> None:
+    result = from_dict(ExecutionResult, _result_with(
+        provider_receipt={"ref": "case:abc123", "sha256": GOOD_SHA}), strict=True)
+    assert result.provider_receipt is not None
+    assert result.provider_receipt.ref == "case:abc123"
+    assert result.provider_receipt.sha256 == GOOD_SHA
+    assert from_dict(ExecutionResult, _result_with()).provider_receipt is None
+
+
+@pytest.mark.parametrize("bad", BAD_SHAS)
+def test_provider_receipt_sha256_format_enforced(bad: str) -> None:
+    with pytest.raises(ContractError, match=r"invalid sha256"):
+        from_dict(ExecutionResult,
+                  _result_with(provider_receipt={"ref": "case:x", "sha256": bad}))
+
+
+def test_provider_receipt_ref_must_not_be_empty() -> None:
+    with pytest.raises(ContractError, match="provider_receipt.ref"):
+        from_dict(ExecutionResult,
+                  _result_with(provider_receipt={"ref": "", "sha256": GOOD_SHA}))
+
+
+def test_provider_receipt_round_trip_on_receipt() -> None:
+    receipt = from_dict(ExecutionReceipt, {
+        "producer": P, "created_at": "2026-01-01T00:00:00.000000Z", "status": "ok",
+        "run_id": "r1", "forge_version": "0.2.0",
+        "inputs": {"task_sha256": GOOD_SHA},
+        "started_at": "2026-01-01T00:00:00.000000Z",
+        "finished_at": "2026-01-01T00:00:01.000000Z",
+        "provider_receipt": {"ref": "case:abc123", "sha256": GOOD_SHA},
+    })
+    assert receipt.provider_receipt is not None
+    assert receipt.provider_receipt.ref == "case:abc123"
+
+
 @pytest.mark.parametrize("cls", list(MINIMAL))
 def test_strict_mode_rejects_unknown_nested_field(cls: type) -> None:
     data = {**MINIMAL[cls], "producer": {**P, "future": 1}}

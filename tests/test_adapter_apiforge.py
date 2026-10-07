@@ -1587,6 +1587,20 @@ def test_replay_execute_without_handoff_drops_recorded_upstream(tmp_path: Path) 
                 if f["source"].get("extractor") == "theforge/handoff"]
 
 
+def test_execute_carries_the_native_case_receipt(tmp_path: Path) -> None:
+    """Phase 37 nested receipt: the result points at the provider's own run record —
+    ``case_id`` verbatim plus the sha256 of the manifest file it wrote (already an
+    artifact of the run). Never the contents."""
+    cwd = tmp_path / "work"
+    response, data = _execute(cwd, _execute_payload("api.analyze"), SCENARIOS / "cross")
+    assert response.status == "ok", response.error
+    result = _result(response, data, cwd)
+    assert result.provider_receipt is not None
+    assert result.provider_receipt.ref == "case:cff8bff8a5345118"
+    hashed = {a.path: a.sha256 for a in result.artifacts}
+    assert result.provider_receipt.sha256 == hashed["case/case.json"]
+
+
 # --- execute recorder (Cycle 2.1 Wave G) --------------------------------------
 
 from theforge_apiforge import record_execute  # noqa: E402

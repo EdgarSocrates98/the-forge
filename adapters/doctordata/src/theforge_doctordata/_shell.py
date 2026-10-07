@@ -198,6 +198,9 @@ class ResultDraft:
     limitations: Sequence[str] = ()
     unknowns: Sequence[str] = ()
     partial: bool = False
+    # The provider-native run receipt pointer ({ref, sha256}), when the
+    # specialist wrote one the run can drill into. Never its contents.
+    provider_receipt: Mapping[str, str] | None = None
     # The complete native output, written to the spill artifact when the result is above
     # INLINE_LIMIT: bytes as is, anything else as JSON; None spills the complete result.
     native_output: object = None
@@ -441,6 +444,8 @@ def finalize(result: ResultDraft, cwd: Path) -> Reply:
         "limitations": list(result.limitations),
         "unknowns": list(result.unknowns),
     }
+    if result.provider_receipt is not None:
+        payload["provider_receipt"] = dict(result.provider_receipt)
     if inline_size(payload) > INLINE_LIMIT:
         return _spill(result, payload, cwd)
     return Reply(status=status, payload=payload, limitations=list(result.limitations),

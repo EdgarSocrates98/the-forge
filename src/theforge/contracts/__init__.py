@@ -102,6 +102,7 @@ from theforge.contracts.result import (
     Location,
     Metric,
     Metrics,
+    ProviderReceipt,
 )
 from theforge.contracts.risk import (
     OPERATION_CLASS_LIMITATION,
@@ -157,7 +158,7 @@ __all__ = [
     "PlanRequest", "PlanResult", "PlanState",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ProjectIntel",
     "ProposalChoice", "ProviderCapabilityPerformance", "ProviderPerformance",
-    "ProviderSurfaceIdentity",
+    "ProviderReceipt", "ProviderSurfaceIdentity",
     "ReceiptInputs",
     "ReceiptProvider", "RememberedDecision", "RepositoryInfo", "ReproducibilityInfo",
     "Request", "ResolveCandidate", "ResolveRequest", "Response",

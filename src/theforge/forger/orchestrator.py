@@ -1252,6 +1252,7 @@ class Forger:
             plan_node=node.node if node is not None else None,
             replay_of=trace.request.replay_of,
             verification_sha256=trace.verification_sha,
+            provider_receipt=result.provider_receipt if result is not None else None,
             reproducibility=self._reproducibility(trace, status),
         )
         self.store.write(trace.run_id, "receipt", receipt)

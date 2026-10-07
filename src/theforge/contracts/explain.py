@@ -12,7 +12,7 @@ from theforge.contracts.base import ContractError
 from theforge.contracts.context import GitSummary
 from theforge.contracts.installation import InstallationPlan
 from theforge.contracts.plan import ExecutionPlan, PlanResult
-from theforge.contracts.result import Finding
+from theforge.contracts.result import Finding, ProviderReceipt
 from theforge.contracts.routing import Candidate, Selection
 from theforge.contracts.types import ErrorInfo, Metric, Producer
 from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
@@ -74,6 +74,9 @@ class ProviderSection:
     fingerprint: str | None = None
     surface_fingerprint: str | None = None
     native_surface_fingerprint: str | None = None
+    # The provider-native receipt/explain pointer of this run (nested explain
+    # drill-down), copied from the run receipt. None when the run carried none.
+    provider_receipt: ProviderReceipt | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
