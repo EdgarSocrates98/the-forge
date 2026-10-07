@@ -19,6 +19,7 @@ from helpers import (
     SPARK_PLAN_ENTRY,
     make_workspace,
 )
+from theforge.contracts import GlobalStopDecision
 from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.codes import Codes
 from theforge.contracts.plan import PlanNodeState, PlanState
@@ -307,10 +308,12 @@ def test_retry_policy_drives_a_second_attempt(tmp_path: Path) -> None:
     budget = store.read(out.run_id, "budget")
     assert budget["provider_calls"] == 3
     assert any("retry reserve" in item for item in budget["adjustments"])
+    stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
+    assert stop.action == "stop_sufficient_evidence"
 
 
 def test_retry_is_off_by_default(tmp_path: Path) -> None:
-    executor, _ = _executor(tmp_path, [FLAKY_ENTRY])
+    executor, store = _executor(tmp_path, [FLAKY_ENTRY])
     plan_file = _plan_file(tmp_path / "plan.json", [
         _node("flaky", "fixture-flaky", "flaky.thing", "run")])
     out = _run(executor, plan_file)
@@ -318,6 +321,13 @@ def test_retry_is_off_by_default(tmp_path: Path) -> None:
     node = out.result.nodes[0]
     assert node.status == "provider_failure" and node.attempts == 1
     assert node.error is not None and node.error.code == Codes.PROTO_EXIT
+    telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
+    assert telemetry.providers_executed.value == 1
+    budget = store.read(out.run_id, "budget")
+    assert budget["provider_calls"] == 1
+    stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
+    assert stop.action == "stop_budget_exhausted"
+    assert "node:flaky:provider_failure" in stop.unresolved
 
 
 def test_retry_never_retries_a_refusal(tmp_path: Path) -> None:
