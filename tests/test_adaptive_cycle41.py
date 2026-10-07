@@ -17,7 +17,7 @@ def obs(
     *,
     provider: str = "spark",
     surface: str = "s1",
-    family: str = "data.spark.performance",
+    family: str | None = "data.spark.performance",
     items: int | None = 10,
     cited: int | None = 1,
     bytes_: int | None = 1000,
@@ -61,6 +61,21 @@ def test_roi_never_crosses_surface_or_family() -> None:
     assert roi.maturity == "cold"
     assert roi.delivered_runs == 2
     assert roi.verified_runs == 2
+
+
+def test_none_task_family_never_wildcards_named_families() -> None:
+    roi = build_context_roi(
+        [
+            obs("unscoped", family=None),
+            obs("named", family="data.spark.performance"),
+        ],
+        provider="spark",
+        capability="data.performance",
+        surface_fingerprint="s1",
+        task_family=None,
+    )
+    assert roi.runs == 1
+    assert roi.measured_runs == 1
 
 
 def test_unknown_measurements_remain_a_limitation() -> None:
