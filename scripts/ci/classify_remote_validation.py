@@ -85,6 +85,11 @@ def classify(payload: Any) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("jobs_json", type=Path)
+    parser.add_argument(
+        "--require-verified",
+        action="store_true",
+        help="return exit 1 unless the classified state is REMOTE_VERIFIED",
+    )
     args = parser.parse_args(argv)
     try:
         payload = json.loads(args.jobs_json.read_text(encoding="utf-8"))
@@ -93,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"validation-classifier: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(result, sort_keys=True))
+    if args.require_verified and result["state"] != REMOTE_VERIFIED:
+        return 1
     return 0
 
 
