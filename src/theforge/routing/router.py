@@ -62,6 +62,7 @@ def route(
     else:
         decision = _route_by_signals(task, routable, sorted(set(files)), dependencies,
                                      performance=performance)
+    decision = _with_shadow(decision, allowed, performance)
     excluded = sorted({r.entry.id for r in allowed
                        if not _executes(r) and _relevant(r, task, decision)})
     if not excluded:
@@ -148,6 +149,35 @@ def _overlap_notes(declared: Sequence[tuple[str, Capability]], suffix: str = "")
         by_id.setdefault(capability.id, set()).add(provider)
     return [f"capability-overlap: {cid!r} declared by {', '.join(sorted(providers))}{suffix}"
             for cid, providers in by_id.items() if len(providers) > 1]
+
+
+def _with_shadow(decision: RoutingDecision, allowed: Sequence[RegistryRecord],
+                 performance: ProviderPerformance | None) -> RoutingDecision:
+    """Attach the history-preferred challenger, advisory only (Wave H).
+
+    Rivals are the candidates for the *selected* capability minus the selected
+    provider; surfaces come from each provider's own record so the comparison
+    never crosses a surface boundary.
+    """
+    if decision.status != "routed" or len(decision.selected) != 1 \
+            or performance is None:
+        return decision
+    from theforge.strategy import shadow_recommendation
+    selection = decision.selected[0]
+    surfaces = {r.entry.id: (r.surface.surface_fingerprint if r.surface else None)
+                for r in allowed}
+    rivals = {c.provider: surfaces.get(c.provider)
+              for c in decision.candidates
+              if c.capability == selection.capability
+              and c.provider != selection.provider}
+    shadow = shadow_recommendation(
+        performance, selected_provider=selection.provider,
+        capability=selection.capability,
+        selected_surface=surfaces.get(selection.provider),
+        rival_surfaces=rivals)
+    if shadow is None:
+        return decision
+    return replace(decision, shadow=shadow)
 
 
 def _perf_desc(performance: ProviderPerformance | None, record: RegistryRecord,

@@ -436,6 +436,47 @@
       },
       "type": "array"
     },
+    "shadow": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "advisory": {
+              "enum": [
+                true
+              ]
+            },
+            "capability": {
+              "type": "string"
+            },
+            "evidence": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "maturity": {
+              "enum": [
+                "warming",
+                "mature"
+              ]
+            },
+            "provider": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "capability",
+            "maturity"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "status": {
       "enum": [
         "routed",

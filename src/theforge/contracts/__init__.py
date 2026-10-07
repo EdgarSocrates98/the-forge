@@ -156,6 +156,7 @@ from theforge.contracts.routing import (
     MatchedSignals,
     RoutingDecision,
     Selection,
+    ShadowRecommendation,
 )
 from theforge.contracts.task import TaskSpec
 from theforge.contracts.telemetry import NativeTrace, ProfileSnapshot, RunTelemetry, Span
@@ -214,6 +215,7 @@ __all__ = [
     "Request", "ResolveCandidate", "ResolveRequest", "Response", "RollbackStrategy",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RoutingProposal",
     "RunBudget", "RunTelemetry", "SURFACE_IDENTITY_SCHEMA", "Selection",
+    "ShadowRecommendation",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals", "Span",
     "RuntimeRequirements",

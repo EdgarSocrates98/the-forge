@@ -407,6 +407,11 @@ def ask(data: dict[str, Any]) -> str:
                      f"{_clean(sel['capability'])}:{_clean(sel['action'])} "
                      f"(confidence {_clean(decision['confidence']['level'])})")
     lines.append(f"Reason:     {_clean(decision['reason'])}")
+    shadow = decision.get("shadow")
+    if shadow:
+        lines.append(f"Shadow:     {_clean(shadow['provider'])} preferred by "
+                     f"measured history ({_clean(shadow['maturity'])}, advisory — "
+                     f"{_clean('; '.join(shadow['evidence']))})")
     negotiation = decision.get("negotiation") or []
     if negotiation:
         lines.append("Fit:")
