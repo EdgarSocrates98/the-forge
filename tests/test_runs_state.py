@@ -468,9 +468,19 @@ def _write_plan_run(store: RunStore, run_id: str) -> tuple[str, str, str, str]:
     return plan_sha, result_sha, telemetry_sha, stop_sha
 
 
-def make_plan_receipt(run_id: str, plan_sha: str, plan_result: str | None,
-                      **overrides: Any) -> ExecutionReceipt:
-    refs = PlanRefs(plan_sha256=plan_sha, plan_result_sha256=plan_result)
+def make_plan_receipt(
+        run_id: str,
+        plan_sha: str,
+        plan_result: str | None,
+        *,
+        global_stop_sha256: str | None = None,
+        **overrides: Any,
+) -> ExecutionReceipt:
+    refs = PlanRefs(
+        plan_sha256=plan_sha,
+        plan_result_sha256=plan_result,
+        global_stop_sha256=global_stop_sha256,
+    )
     return make_receipt(run_id, kind="plan", plan=refs, **overrides)
 
 
