@@ -89,7 +89,10 @@ class _Check:
         if receipt.result_sha256 is not None:
             self.work_artifacts(run_id, prefix)
         if receipt.kind == "plan":
-            self.nodes(run_id, prefix, depth)
+            expected_stop = (
+                receipt.plan.global_stop_sha256 if receipt.plan is not None else None
+            )
+            self.nodes(run_id, prefix, depth, expected_stop)
 
     def work_artifacts(self, run_id: str, prefix: str) -> None:
         try:
@@ -105,11 +108,26 @@ class _Check:
             present = lexical.is_relative_to(work) and os.path.lexists(lexical)
             self.compare(f"{prefix}work/{artifact.path}", artifact.sha256, actual, present)
 
-    def nodes(self, run_id: str, prefix: str, depth: int) -> None:
+    def nodes(
+            self,
+            run_id: str,
+            prefix: str,
+            depth: int,
+            expected_global_stop: str | None,
+    ) -> None:
         try:
             result = self.store.read_contract(run_id, "plan-result", PlanResult)
         except (LookupError, PersistenceError, ContractError):
             return  # absent (plan not executed) or already a divergence of ``plan-result``
+        if expected_global_stop is not None:
+            self.compare(
+                f"{prefix}plan-result.global_stop_sha256",
+                expected_global_stop,
+                result.global_stop_sha256,
+                True,
+            )
+        elif result.global_stop_sha256 is not None:
+            self.unrecorded.append(f"{prefix}plan-result.global_stop_sha256")
         for outcome in result.nodes:
             child = outcome.run_id
             if child is None or outcome.receipt_sha256 is None:
