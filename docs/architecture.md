@@ -179,6 +179,68 @@ Cada run que resolve um perfil grava o artefato `budget` (`RunBudget/v1`, schema
 - **Histórico medido (`.forge/metrics/provider-performance.json`).** Todo run que tentou `execute` atualiza o `ProviderPerformance/v1` do provider+capability: runs, desfechos (`ok`/`partial`/failed), runs com a checagem `forge` aprovada, evidências, artifacts, bytes e arquivos enviados, arquivos citados e latência total. Arquivo malformado falha fechado (ignorado + limitação); escrita falha vira limitação, nunca erro do run.
 - **Tie-break secundário (H5).** O histórico só fala depois de trust, policy, compatibilidade e sinais: no routing explícito ordena candidatos de mesmo trust antes do id; no routing por sinais resolve só o empate de `rank_key` — um único vencedor estrito, com a nota `performance-tie-break:` nas limitações. Sem história, com história igual ou abaixo do piso de sinais, a decisão continua `ambiguous`. Não existe ranking subjetivo de "melhor agente".
 
+
+### Controle global, ROI e experimentação (Cycle 4.1)
+
+O control plane global mantém três responsabilidades novas sem invadir os
+planners internos dos especialistas:
+
+- **Global Stop / Information Gain.** O core produz
+  `GlobalStopDecision/v1` a partir de sinais observáveis. Policy, budget e
+  verificação obrigatória têm precedência sobre economia. Providers podem
+  reportar fatos, mas não podem ordenar `continue`/`stop` no plano global.
+  Nesta versão a decisão está integrada ao fechamento do plano e é persistida,
+  hash-bound no receipt e exibida por `explain`; early-stop arbitrário de nós
+  já planejados continua deliberadamente desabilitado até haver semântica
+  explícita de nós opcionais.
+- **Context ROI.** `ExecutionObservation/v1` fornece bytes/itens entregues e
+  itens citados. `ContextROI/v1` agrega somente provider + capability +
+  surface + task-family comparáveis. A utilização é uma observação, não uma
+  prova causal. `ContextBudgetRecommendation/v1` é somente advisory e nunca
+  altera automaticamente os profiles canônicos.
+- **Experimentos governados.** `StrategyExperiment/v1` separa hipótese e
+  avaliação por holdout temporal opcional. Champion e challenger precisam ter
+  observações dos dois braços; o challenger não pode degradar verificação nem
+  taxa de entrega e precisa melhorar ao menos um eixo econômico medido sem
+  regredir outro. O máximo que o core produz é
+  `eligible_for_review`: promoção continua exigindo decisão humana/policy.
+
+A ordem de autoridade permanece:
+
+```text
+policy / trust / compatibility
+        ↓
+risk + mandatory verification
+        ↓
+information gain
+        ↓
+observed history / Context ROI
+        ↓
+economy
+        ↓
+deterministic tie-break
+```
+
+O histórico nunca cruza uma mudança de `surface_fingerprint` silenciosamente.
+
+### Trace federation
+
+O trace global continua sendo `RunTelemetry.spans`. Providers podem anexar
+um `NativeTrace` bounded (ref opaca + summary + critical path) ao
+`ExecutionResult`; o span do nó guarda apenas `native_trace_ref`. O core
+não resolve `file://`, HTTP, paths ou outros refs executáveis, não importa
+spans internos e não cria um segundo backend de tracing. Assim:
+
+```text
+The Forge trace
+  └─ node/provider span
+       └─ opaque native trace ref
+```
+
+`trace` responde o que aconteceu; `explain` responde por que a decisão foi
+tomada.
+
+
 ### Inteligência do projeto
 
 Memória técnica incremental em `.forge/intel/` — nunca memória conversacional ([ADR 0023](adr/0023-project-intelligence.md)).
