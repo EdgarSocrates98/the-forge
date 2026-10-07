@@ -422,3 +422,41 @@ def test_recommendation_cannot_increase_budget() -> None:
             maturity="warming",
             basis=["x"],
         )
+
+
+def test_adaptive_contracts_reject_boolean_numeric_values() -> None:
+    with pytest.raises(ContractError, match="runs must be an integer"):
+        from theforge.contracts import ContextROI
+
+        ContextROI(
+            producer=PRODUCER,
+            created_at="t",
+            provider="p",
+            capability="c",
+            surface_fingerprint="s",
+            task_family=None,
+            runs=True,
+            measured_runs=0,
+            delivered_bytes=0,
+            delivered_items=0,
+            cited_items=0,
+            utilization_ratio=None,
+            maturity="cold",
+        )
+
+    with pytest.raises(ContractError, match="current_budget_bytes must be an integer"):
+        ContextBudgetRecommendation(
+            producer=PRODUCER,
+            created_at="t",
+            provider="p",
+            capability="c",
+            surface_fingerprint="s",
+            task_family=None,
+            current_budget_bytes=True,
+            suggested_budget_bytes=1,
+            maturity="warming",
+            basis=["x"],
+        )
+
+    with pytest.raises(ContractError, match="minimum_runs must be an integer"):
+        experiment(minimum_runs=True)
