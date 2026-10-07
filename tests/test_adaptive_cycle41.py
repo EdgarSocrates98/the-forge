@@ -128,11 +128,15 @@ def experiment(**over: object) -> StrategyExperiment:
 
 
 def eval_obs(
-    run: str, provider: str, surface: str, verified: str = "passed"
+    run: str,
+    provider: str,
+    surface: str,
+    verified: str = "passed",
+    created_at: str = "2026-10-07T13:00:00Z",
 ) -> ExecutionObservation:
     return ExecutionObservation(
         producer=PRODUCER,
-        created_at="t",
+        created_at=created_at,
         run_id=run,
         provider=provider,
         capability="data.performance",
@@ -163,6 +167,28 @@ def test_experiment_becomes_reviewable_but_never_auto_promotes() -> None:
     assert result.verified_observations == 4
     assert result.state != "promoted"
 
+
+def test_time_holdout_excludes_hypothesis_history() -> None:
+    result = advance_experiment(
+        experiment(
+            evaluation_after="2026-10-07T12:00:00Z",
+            minimum_runs=2,
+            minimum_verified_runs=2,
+        ),
+        [
+            eval_obs(
+                "before",
+                "spark-a",
+                "sa",
+                created_at="2026-10-07T11:59:59Z",
+            ),
+            eval_obs("after-a", "spark-a", "sa"),
+            eval_obs("after-b", "spark-b", "sb"),
+        ],
+    )
+    assert result.observations == 2
+    assert result.verified_observations == 2
+    assert result.state == "eligible_for_review"
 
 def test_surface_change_invalidates_experiment() -> None:
     result = advance_experiment(
