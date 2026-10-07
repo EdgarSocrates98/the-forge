@@ -71,7 +71,7 @@ O provider recebe só as variáveis abaixo (`ALLOWED_ENV` em `security/env.py`),
 - Os adapters reais repassam ao especialista o ambiente recebido do core, sem nomes com cara de credencial, e só acrescentam `APIFORGE_CACHE=off` (API Forge) e `PYTHONIOENCODING=utf-8` (processo filho do Spark Forge AWS). As variáveis `THEFORGE_REAL_*` são lidas só pelo harness de teste ([real-providers.md](real-providers.md)).
 
 ## Exceção: `.forge/runs/<id>/work/`
-A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-state`, `plan-result`, `graph`, `capability-graph`, `semantic-proposal`, `routing-proposal`, `decision`, `verification`, `telemetry`, `diagnostic`, `complexity`, `budget`, `receipt`), para os caches do registry e de fingerprints de contexto, para o histórico de performance (`.forge/metrics/provider-performance.json`) e para a inteligência do projeto (`.forge/intel/project.json`, `.forge/intel/decisions.json` — ambos relidos estritamente e ignorados com nota quando malformados). **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
+A invariante "tudo que o core persiste passa por `security.redact`" vale para os artefatos do run (`task`, `workspace-descriptor`, `routing`, `plan`, `installation`, `risk`, `handoff`, `context`, `context-r1`, `context-r2`, `result`, `plan-state`, `plan-result`, `graph`, `capability-graph`, `semantic-proposal`, `routing-proposal`, `decision`, `economy`, `global-stop`, `verification`, `telemetry`, `diagnostic`, `complexity`, `budget`, `receipt`), para os caches do registry e de fingerprints de contexto, para o histórico de performance (`.forge/metrics/provider-performance.json`) e para a inteligência do projeto (`.forge/intel/project.json`, `.forge/intel/decisions.json` — ambos relidos estritamente e ignorados com nota quando malformados). **`.forge/runs/<id>/work/` fica fora dela**: é o cwd do `execute`, e o que está ali foi escrito pelo provider, não pelo core, e **não é redigido**. O core não conhece o formato desses arquivos e não os reescreve.
 
 - Os adapters reais deixam em `work/` **só os artifacts declarados** em `artifacts[]` (por exemplo a saída nativa completa `native/full-output.json` quando o resultado passa de 4 MiB, e os arquivos de caso do API Forge). Em todo desfecho (`ok`, `partial`, `refused`, `error`, timeout), `cleanup_workdir` apaga `stage/`, o estado nativo (`.sparkforge/`, `traces.db`, `.apiforge/`, caches) e todo o resto. Uma remoção que falha vira a limitação `workdir cleanup incomplete: <path>`.
 - Esses artifacts podem conter trechos do código analisado. Trate `work/` com a mesma sensibilidade do workspace e não o publique.
@@ -225,3 +225,15 @@ Decisão: **carregar metadado de assinatura hoje, verificar por verificador exte
 ### Registries de organização
 
 Catálogos privados e ambientes air-gapped são suportados pelo mesmo mecanismo de fontes: `kind: "local-file"` para catálogo versionado no repositório da organização (sem rede), ou `http` apontando para o registry interno — ambos read-only, explícitos e desabilitáveis. Nenhum catálogo corporativo precisa de tratamento especial: a fronteira de trust é a mesma.
+
+
+## Ameaças do controle adaptativo (Cycle 4.1)
+
+| Ameaça | Mitigação |
+|---|---|
+| Provider tenta decidir o stop global | Provider output é dado; somente o core produz `GlobalStopDecision/v1`. O receipt do plano ancora o hash do artefato. |
+| Provider declara artificialmente “sem ganho” | Information gain é calculado pelo core a partir de unknowns, capability/verification e policy; texto do provider não é instrução de controle. |
+| Poisoning de ROI | Context ROI é escopado por provider + capability + surface fingerprint + task family; métricas ausentes permanecem unknown/limitation e história fria não recomenda redução. |
+| História antiga após mudança de provider | Mudança de `surface_fingerprint` separa a série histórica e marca experimentos incompatíveis como `stale`. |
+| Auto-promoção de challenger | `StrategyExperiment/v1` exige aprovação de operador/policy; Cycle 4.1 não promove automaticamente. |
+| Native trace como caminho/URL | `NativeTrace.ref` é opaco; schemes dereferenceáveis/reservados e traversal são rejeitados e o core nunca abre/faz fetch do ref. |
