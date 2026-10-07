@@ -42,3 +42,7 @@ theforge economy experiment --spec experiment.json --json
 It evaluates the spec against local `ExecutionObservation` history only.
 It never changes routing, budgets, profiles or provider trust, and it never
 promotes automatically.
+
+
+Task family é comparada exatamente, inclusive o estado não resolvido (`None`).
+Um experimento não pode misturar silenciosamente famílias distintas.
