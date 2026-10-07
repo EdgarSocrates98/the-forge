@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Final
 
+from theforge.adaptive import build_context_roi, recommend_context_budget
 from theforge.cli import render
 from theforge.context import scan_workspace
 from theforge.contracts import CapabilityRequirement, to_dict
@@ -23,6 +24,7 @@ from theforge.intel import load_decisions
 from theforge.metrics import load_performance
 from theforge.negotiation import negotiate_all
 from theforge.observations import build_global_receipt, load_observations
+from theforge.profiles import profile_for
 from theforge.registry import (
     Registry,
     RegistryRecord,
@@ -232,6 +234,56 @@ def cmd_economy_report(args: argparse.Namespace) -> int:
     receipt = build_global_receipt(observations, performance)
     data = to_dict(receipt)
     data["limitations"] += [w for w in (obs_warning, perf_warning) if w]
+
+    # Context ROI is a read-only advisory view over the same observation stream.
+    # It is scoped by provider/capability/surface/task-family and never changes
+    # routing or budgets. Rows are bounded to keep a long-lived workspace report
+    # compact; JSON clients can inspect the exact contract payloads.
+    keys = sorted({
+        (
+            item.provider,
+            item.capability,
+            item.surface_fingerprint,
+            item.task_family,
+        )
+        for item in observations
+        if item.surface_fingerprint is not None
+    }, key=lambda key: tuple("" if part is None else part for part in key))
+    max_roi_rows = 128
+    roi_rows: list[dict[str, Any]] = []
+    for provider, capability, surface, family in keys[:max_roi_rows]:
+        assert surface is not None
+        roi = build_context_roi(
+            observations,
+            provider=provider,
+            capability=capability,
+            surface_fingerprint=surface,
+            task_family=family,
+        )
+        comparable = [
+            item
+            for item in observations
+            if item.provider == provider
+            and item.capability == capability
+            and item.surface_fingerprint == surface
+            and (family is None or item.task_family == family)
+        ]
+        latest = max(comparable, key=lambda item: item.created_at) if comparable else None
+        recommendation = None
+        if latest is not None and latest.profile in ("economy", "balanced", "max"):
+            recommendation = recommend_context_budget(
+                roi,
+                current_budget_bytes=profile_for(latest.profile).budget_bytes,
+            )
+        roi_rows.append({
+            "roi": to_dict(roi),
+            "recommendation": to_dict(recommendation) if recommendation else None,
+        })
+    if len(keys) > max_roi_rows:
+        data["limitations"].append(
+            f"context ROI rows truncated: {len(keys)} groups, showing {max_roi_rows}"
+        )
+    data["context_roi"] = roi_rows
     _emit(args, data, render.economy_report)
     return 0
 
