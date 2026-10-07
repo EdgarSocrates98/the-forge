@@ -302,6 +302,10 @@ class PlanResult:
     # On-disk hash of the EconomyRollup the run composed from node economy
     # receipts (None when no node reported provider economy).
     economy_sha256: str | None = None
+    # Hash of the core-owned GlobalStopDecision for this completed plan.
+    # The receipt remains the trust anchor; this additive link makes PlanResult
+    # self-contained for consumers that inspect the plan result directly.
+    global_stop_sha256: str | None = None
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
 
@@ -313,6 +317,8 @@ class PlanResult:
             check_sha256(self.decision_sha256, field="decision_sha256")
         if self.economy_sha256 is not None:
             check_sha256(self.economy_sha256, field="economy_sha256")
+        if self.global_stop_sha256 is not None:
+            check_sha256(self.global_stop_sha256, field="global_stop_sha256")
 
 
 @dataclass(frozen=True, kw_only=True)
