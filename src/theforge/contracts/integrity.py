@@ -377,6 +377,29 @@ def _over_limit(cap_id: str, field: str, items: list[str], limit: int) -> Violat
     )
 
 
+
+def validate_plan_result_links(
+    result: PlanResult,
+    *,
+    global_stop_sha256: str | None,
+) -> None:
+    """Bind a newly persisted PlanResult to its core-owned stop artifact."""
+    violations: list[Violation] = []
+    if global_stop_sha256 is None:
+        violations.append(Violation(
+            Codes.PLAN_INVALID,
+            "plan result requires a persisted global-stop artifact",
+            "global_stop_sha256",
+        ))
+    elif result.global_stop_sha256 != global_stop_sha256:
+        violations.append(Violation(
+            Codes.PLAN_INVALID,
+            "plan result global_stop_sha256 does not match the persisted global-stop hash",
+            "global_stop_sha256",
+        ))
+    _raise_if_any(violations)
+
+
 def validate_manifest_limits(manifest: ForgeManifest) -> tuple[Violation, ...]:
     """Return manifest-limit violations (all ``Codes.MANIFEST_LIMITS``); never raises.
 
