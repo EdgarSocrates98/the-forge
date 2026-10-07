@@ -15,6 +15,7 @@ from theforge.context import scan_workspace
 from theforge.contracts import CapabilityRequirement, to_dict
 from theforge.contracts.base import ContractError, from_dict
 from theforge.contracts.codes import Codes, family_of
+from theforge.contracts.types import BudgetProfile
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
 from theforge.explain import build_explain_report
@@ -34,7 +35,6 @@ from theforge.registry import (
     read_sources,
 )
 from theforge.routing.signals import normalize_tokens
-from theforge.contracts.types import BudgetProfile
 from theforge.runs import RunStore
 from theforge.security.redact import redact
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
