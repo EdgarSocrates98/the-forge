@@ -17,8 +17,18 @@ from theforge.meta import PRODUCER
 
 
 def _timestamp(value: str) -> datetime:
-    """Parse the contract-validated ISO-8601 timestamp for temporal comparison."""
+    """Parse a contract timestamp for temporal comparison."""
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def _after_cutoff(value: str, cutoff: str | None) -> bool:
+    """Malformed historical timestamps are not evaluation evidence."""
+    if cutoff is None:
+        return True
+    try:
+        return _timestamp(value) > _timestamp(cutoff)
+    except (TypeError, ValueError):
+        return False
 
 
 def _maturity(runs: int) -> HistoryMaturity:
@@ -143,10 +153,7 @@ def advance_experiment(
         for item in evaluation
         if item.capability == experiment.capability
         and (experiment.task_family is None or item.task_family == experiment.task_family)
-        and (
-            experiment.evaluation_after is None
-            or _timestamp(item.created_at) > _timestamp(experiment.evaluation_after)
-        )
+        and _after_cutoff(item.created_at, experiment.evaluation_after)
     ]
     if any(
         item.provider == experiment.champion
