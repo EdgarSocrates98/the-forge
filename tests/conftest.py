@@ -158,6 +158,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # cycle-4.1 global control / adaptive learning
     "test_global_stop.py": ("unit", "contract", "security"),
     "test_adaptive_cycle41.py": ("unit", "contract"),
+    "test_adaptive_cli.py": ("e2e", "integration", "contract"),
 }
 
 
