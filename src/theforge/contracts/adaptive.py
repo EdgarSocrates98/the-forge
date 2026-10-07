@@ -12,7 +12,7 @@ CONTEXT_RECOMMENDATION_SCHEMA = "theforge/ContextBudgetRecommendation/v1"
 STRATEGY_EXPERIMENT_SCHEMA = "theforge/StrategyExperiment/v1"
 
 HistoryMaturity = Literal["absent", "cold", "warming", "mature", "stale"]
-def _require_int(name: str, value: object, *, positive: bool = false) -> None:
+def _require_int(name: str, value: object, *, positive: bool = False) -> None:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ContractError(f"{name} must be an integer")
     if positive and value <= 0:
