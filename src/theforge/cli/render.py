@@ -140,6 +140,27 @@ def economy_report(data: dict[str, Any]) -> str:
         lines.append("history maturity:")
         for key, state in data["maturity"].items():
             lines.append(f"  {_clean(key):<44} {_clean(state)}")
+    roi_rows = data.get("context_roi") or []
+    if roi_rows:
+        lines.append("context ROI:")
+        for row in roi_rows:
+            roi = row.get("roi") or {}
+            family = roi.get("task_family") or "*"
+            utilization = roi.get("utilization_ratio")
+            ratio = "unknown" if utilization is None else f"{float(utilization):.3f}"
+            lines.append(
+                f"  {_clean(roi.get('provider', '?'))}/"
+                f"{_clean(roi.get('capability', '?'))} "
+                f"surface={_clean(str(roi.get('surface_fingerprint', '?'))[:12])} "
+                f"family={_clean(family)} runs={roi.get('runs', 0)} "
+                f"maturity={_clean(roi.get('maturity', '?'))} utilization={ratio}"
+            )
+            recommendation = row.get("recommendation")
+            if recommendation:
+                lines.append(
+                    f"    advisory budget: {recommendation['current_budget_bytes']} -> "
+                    f"{recommendation['suggested_budget_bytes']} bytes"
+                )
     for conflict in data["conflicts"]:
         lines.append(f"conflict: {_clean(conflict)}")
     for family in data["task_families"]:
