@@ -22,7 +22,12 @@ from helpers import (
     bad_entry,
     make_workspace,
 )
-from theforge.contracts import ExecutionReceipt, Response, RunTelemetry
+from theforge.contracts import (
+    ExecutionReceipt,
+    GlobalStopDecision,
+    Response,
+    RunTelemetry,
+)
 from theforge.contracts.codes import Codes
 from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
@@ -41,8 +46,16 @@ from theforge.registry import Registry
 from theforge.runs import RunStore
 
 PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
-PLAN_ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "graph", "telemetry",
-                  "receipt")
+PLAN_ARTIFACTS = (
+    "task",
+    "workspace-descriptor",
+    "routing",
+    "plan",
+    "graph",
+    "global-stop",
+    "telemetry",
+    "receipt",
+)
 
 
 class _Spy:
@@ -124,6 +137,13 @@ def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
     assert receipt.plan.workspace_descriptor_sha256 == store.persisted_sha256(
         out.run_id, "workspace-descriptor")
     assert receipt.plan.plan_sha256 == store.persisted_sha256(out.run_id, "plan")
+    if out.result is not None:
+        assert receipt.plan.global_stop_sha256 == store.persisted_sha256(
+            out.run_id, "global-stop"
+        )
+        stop = store.read_contract(out.run_id, "global-stop", GlobalStopDecision)
+        assert stop.run_id == out.run_id
+        assert stop.action in ("stop_sufficient_evidence", "stop_no_expected_gain")
     assert receipt.inputs.routing_sha256 == store.persisted_sha256(out.run_id, "routing")
     store.read_contract(out.run_id, "workspace-descriptor", WorkspaceDescriptor)
     store.read_contract(out.run_id, "graph", WorkspaceGraph)
@@ -143,6 +163,10 @@ def _assert_closed(store: RunStore, out: PlanOutcome) -> ExecutionReceipt:
     else:
         assert telemetry.profile.name == requested
     _assert_explained(store, out)  # every closed plan run explains without divergence (8.1)
+    if out.result is not None:
+        report = build_explain_report(store, out.run_id)
+        assert report.plan is not None and report.plan.global_stop is not None
+        assert report.plan.global_stop.run_id == out.run_id
     return receipt
 
 
