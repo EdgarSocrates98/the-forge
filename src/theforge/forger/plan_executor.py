@@ -701,8 +701,8 @@ class PlanExecutor:
         reproducibility levels for downstream nodes, and the provider counter."""
         trace.executions.append(execution)
         outcome = execution.outcome
-        if execution.reached_execute:
-            trace.telemetry.count("providers_executed", 1)
+        if execution.execute_calls:
+            trace.telemetry.count("providers_executed", execution.execute_calls)
         if execution.result is None:
             failed[outcome.node] = outcome.status
             return
@@ -796,6 +796,7 @@ class PlanExecutor:
         # by retry.toml; every attempt is a real child run with its own receipt.
         policy = trace.retry_policy
         attempt = 0
+        execute_calls = 0
         while True:
             attempt += 1
             asked = self.forger.ask(AskRequest(
@@ -805,6 +806,8 @@ class PlanExecutor:
                 provider=node.provider, node=binding, debug=command.debug,
                 requirement=_node_requirement(command.requirement, node,
                                               trace.records)))
+            if self._reached_execute(asked):
+                execute_calls += 1
             if asked.status != "provider_failure" or attempt >= policy.max_attempts \
                     or not retryable(policy, asked.error.code if asked.error else None):
                 break
@@ -812,7 +815,7 @@ class PlanExecutor:
             # (emitted in plan order at synthesis).
             trace.retry_notes.setdefault(node.id, []).append(asked.run_id)
             time.sleep(retry_backoff(policy, attempt))
-        reached = self._reached_execute(asked)
+        reached = execute_calls > 0
         child = asked.run_id
         result = (store.read_contract(child, "result", ExecutionResult)
                   if asked.status in _VALID else None)
@@ -829,6 +832,7 @@ class PlanExecutor:
         return NodeExecution(
             node=node, outcome=outcome, result=result, handoff=delivered,
             verification=verification, reached_execute=reached,
+            execute_calls=execute_calls,
             provider=Producer(id=provider.id, version=provider.version) if provider else None)
 
     def _reached_execute(self, asked: AskOutcome) -> bool:
