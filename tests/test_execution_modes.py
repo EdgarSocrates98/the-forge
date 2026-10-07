@@ -17,9 +17,11 @@ import pytest
 
 from helpers import (
     API_DEBATE_ENTRY,
+    API_DOMAIN_ENTRY,
     API_PLAN_ENTRY,
     REFEREE_ENTRY,
     SPARK_DEBATE_ENTRY,
+    SPARK_DOMAIN_ENTRY,
     SPARK_PLAN_ENTRY,
     bad_entry,
     make_workspace,
@@ -420,6 +422,85 @@ def test_debate_e2e_cites_both_positions(tmp_path: Path) -> None:
     assert "keep the transformation in the Spark pipeline" in text
     assert "move the transformation into the API layer" in text
     assert "Decision:    n1" in text
+
+
+def test_debate_e2e_hierarchical_domain_verdicts(tmp_path: Path) -> None:
+    """Cycle 3.1 phases 39-40 — the hierarchical debate. Each proposer already
+    resolved its *internal* debate and surfaces only the domain verdict
+    (evidence ``id="decision"``, the projection of its own DecisionRecord).
+    The referee weighs the two domain verdicts; the core composes one
+    cross-domain record whose options stay at provider-node granularity —
+    the specialists' internals are never replayed as plan nodes."""
+    executor, store = _executor(tmp_path, [SPARK_DOMAIN_ENTRY, API_DOMAIN_ENTRY,
+                                           REFEREE_ENTRY])
+    plan_file = _plan_file(tmp_path / "plan.json", [
+        _file_node("n1", "fixture-spark-domain", "spark.performance", "diagnose",
+                   role="proposer"),
+        _file_node("n2", "fixture-api-domain", "api.contract", "review",
+                   role="proposer"),
+        _file_node("ref", "fixture-referee", "judge.decide", "decide", "n1", "n2",
+                   role="referee")], "debate")
+    out = executor.run(PlanCommand(
+        intent="essa transformação deve ficar no pipeline Spark ou na API?",
+        profile="max", plan_file=plan_file, execute=True))
+    assert out.status == "ok" and out.result is not None
+
+    # The referee's handoff carried each domain verdict verbatim — epistemic
+    # status and claim exactly as the specialist decided internally.
+    ref_run = out.result.nodes[-1].run_id
+    assert ref_run is not None
+    handoff = store.read(ref_run, "handoff")
+    verdicts = {item["origin"]["node"]: item for item in handoff["items"]
+                if item["kind"] == "evidence" and item["id"] == "decision"}
+    assert set(verdicts) == {"n1", "n2"}
+    assert verdicts["n1"]["epistemic"] == "confirmed"
+    assert verdicts["n1"]["claim"] == "data-side transformation"
+    assert verdicts["n1"]["origin"]["provider"]["id"] == "fixture-spark-domain"
+    assert verdicts["n2"]["claim"] == "api-side transformation"
+    assert verdicts["n2"]["origin"]["provider"]["id"] == "fixture-api-domain"
+
+    decision = store.read(out.run_id, "decision")
+    assert decision["schema"] == "theforge/DecisionRecord/v1"
+    # Cross-domain: the two options are the two domains — one per provider node.
+    options = {o["node"]: o for o in decision["options"]}
+    assert set(options) == {"n1", "n2"}
+    assert options["n1"]["provider"] == "fixture-spark-domain"
+    assert options["n2"]["provider"] == "fixture-api-domain"
+    # The option cites the domain verdict as part of its evidence; the record's
+    # evidence list names the verdict items handed to the referee by origin.
+    assert "decision" in options["n1"]["evidence"]
+    assert "decision" in options["n2"]["evidence"]
+    assert "n1:decision" in decision["evidence"]
+    assert "n2:decision" in decision["evidence"]
+    # Nothing below node granularity enters the record: no internal role or
+    # sub-option appears as an option, a rejection, or the choice.
+    assert decision["chosen"] == "n1" and decision["rejected"] == ["n2"]
+    assert all(o["node"] in {"n1", "n2"} for o in decision["options"])
+    _assert_closed(store, out.run_id, "ok")
+
+
+def test_debate_e2e_single_provider_slate_is_refused(tmp_path: Path) -> None:
+    """Phase 39 enforced end to end: proposers on one provider are that
+    specialist's internal disagreement — the plan is refused before any node
+    runs, with the boundary as the reason."""
+    executor, store = _executor(tmp_path, [SPARK_PLAN_ENTRY, REFEREE_ENTRY])
+    plan_file = _plan_file(tmp_path / "plan.json", [
+        _file_node("n1", "fixture-spark", "spark.performance", "diagnose",
+                   role="proposer"),
+        _file_node("n2", "fixture-spark", "spark.performance", "review",
+                   role="proposer"),
+        _file_node("ref", "fixture-referee", "judge.decide", "decide", "n1", "n2",
+                   role="referee")], "debate")
+    out = executor.run(PlanCommand(intent="internal spark disagreement",
+                                   profile="max", plan_file=plan_file,
+                                   execute=True))
+    assert out.status == "refused"
+    assert out.result is None  # rejected before any node ran
+    assert out.error is not None and out.error.code == "FORGE-PLAN-INVALID"
+    assert "cross-domain boundary" in out.error.detail
+    assert out.plan is not None
+    assert any("cross-domain boundary" in v.detail for v in out.plan.violations)
+    assert store.read_optional(out.run_id, "decision") is None
 
 
 def test_delegate_e2e_runs_independent_specialists(tmp_path: Path) -> None:

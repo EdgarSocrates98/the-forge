@@ -470,6 +470,17 @@ def validate_plan_structure(plan: ExecutionPlan) -> list[PlanViolation]:
             add(Codes.PLAN_INVALID, None,
                 f"pattern 'debate' requires at least two proposer nodes "
                 f"(role='proposer'), plan has {len(proposers)}")
+        # The decision boundary: debate is the cross-domain instrument. When every
+        # proposer is the same provider the disagreement is internal to one domain
+        # and belongs to that specialist's own planning — never replayed as nodes.
+        proposer_providers = sorted(
+            {n.provider for n in plan.nodes if n.role == "proposer"})
+        if len(proposers) >= 2 and len(proposer_providers) < 2:
+            add(Codes.PLAN_INVALID, None,
+                "pattern 'debate' is the cross-domain boundary: proposers must "
+                f"span at least two distinct providers (plan has only "
+                f"{proposer_providers[0]!r}); an internal disagreement is decided "
+                "by the specialist, not replayed at plan level")
         for oid in others:
             add(Codes.PLAN_INVALID, oid,
                 f"pattern 'debate': node {oid!r} has role outside proposer/referee")

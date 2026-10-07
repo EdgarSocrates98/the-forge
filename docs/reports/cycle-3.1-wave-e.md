@@ -145,3 +145,29 @@ Phase 37 (nested receipts, contrato aditivo).
 - **Docs**: `docs/protocol.md` (campo aditivo + seção de receipt) e
   `docs/architecture.md` (fronteira do planner + recibo aninhado)
   atualizados.
+
+## E.5 — fronteira de decisão cross-domain + debate hierárquico (Phases 39/40)
+
+- **Phase 39 (fronteira explícita)**: `debate` é o instrumento
+  cross-domain do core — `validate_plan_structure` agora exige que os
+  `proposer` cubram ≥2 providers distintos. Uma slate inteira num só
+  provider é a discordância *interna* do especialista: rejeitada com
+  `FORGE-PLAN-INVALID` antes de qualquer execução ("an internal
+  disagreement is decided by the specialist, not replayed at plan
+  level"). A regra é estrutural (pura, sem registry), vale para planos
+  de arquivo, decomposição e proposta semântica — e bloqueia o abuso de
+  "authority escalation" em que um provider ganharia vozes múltiplas num
+  debate de nível de plano. `docs/{architecture,cli,errors}.md`
+  documentam a fronteira.
+- **Phase 40 (debate hierárquico)**: prova e2e —
+  `fixture-spark-domain`/`fixture-api-domain` carregam evidence
+  `id="decision"` com o *veredito interno* do domínio (a projeção do
+  DecisionRecord próprio do especialista). O referee recebe os dois
+  vereditos verbatim no handoff (epistemic `confirmed`, claim e
+  provenance intactos); o core compõe um único `DecisionRecord`
+  cross-domain cujos `options` permanecem na granularidade provider/nó —
+  internals do especialista nunca viram nós. Teste simétrico cobre a
+  recusa e2e de slate mono-provider (plano `refused`, nenhum run de nó,
+  nenhum artefato `decision`).
+- **Gates**: `test_plan_validation` + `test_execution_modes` +
+  `test_plan_contracts` + `test_runs_bench` verdes; ruff/mypy limpos.

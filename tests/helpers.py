@@ -55,6 +55,15 @@ SPARK_DEBATE_ENTRY = dict(SPARK_PLAN_ENTRY, argv=fixture_argv(
     "fixture_forge.py", str(PROVIDERS / "fixture-spark-debate.json")))
 API_DEBATE_ENTRY = dict(API_PLAN_ENTRY, argv=fixture_argv(
     "fixture_forge.py", str(PROVIDERS / "fixture-api-debate.json")))
+# Hierarchical-debate variants: each proposer additionally emits evidence
+# ``id="decision"`` — the verdict of its own *internal* debate (the domain's
+# DecisionRecord projected as a claim), which the referee receives verbatim.
+SPARK_DOMAIN_ENTRY = dict(SPARK_PLAN_ENTRY, id="fixture-spark-domain",
+                          argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-spark-domain.json")))
+API_DOMAIN_ENTRY = dict(API_PLAN_ENTRY, id="fixture-api-domain",
+                        argv=fixture_argv(
+    "fixture_forge.py", str(PROVIDERS / "fixture-api-domain.json")))
 # A referee provider for ``debate`` plans: its manifest's test-only ``decision`` key
 # makes ``execute`` emit the convention evidence (id="decision", claim=<node id>).
 REFEREE_ENTRY = {
