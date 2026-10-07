@@ -1,6 +1,6 @@
 # ADR 0048 — Adaptive Strategy Experiments
 
-Status: Accepted
+- Status: aceito (2026-10-07)
 
 ## Decision
 
