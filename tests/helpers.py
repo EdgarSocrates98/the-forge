@@ -107,6 +107,14 @@ CITE_ENTRY = {
     "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-cite.json")),
     "trust": "local",
 }
+# Same capability as fixture-spark but the manifest declares
+# ``execution.requires_network``: requirement-driven routing rejects it when
+# the task forbids network (reality proof / requirement-routing fixture).
+SPARK_NET_ENTRY = {
+    "id": "fixture-spark-net",
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-net.json")),
+    "trust": "local",
+}
 # A second spark executor with the same capability id and signals as
 # fixture-spark: on a spark workspace both score identically, so deterministic
 # routing ends ``ambiguous`` — the semantic-resolver test setup.

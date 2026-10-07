@@ -19,6 +19,7 @@ from dataclasses import dataclass, replace
 from theforge.contracts import (
     Candidate,
     Capability,
+    CapabilityNegotiationResult,
     Confidence,
     MatchedSignals,
     ProviderPerformance,
@@ -30,6 +31,7 @@ from theforge.contracts.canonical import utc_now
 from theforge.contracts.types import TRUST_RANK, is_catch_all_glob
 from theforge.errors import UsageError
 from theforge.meta import PRODUCER
+from theforge.negotiation import negotiate_all
 from theforge.registry import RegistryRecord
 from theforge.routing.signals import glob_matches, normalize_dep, normalize_tokens
 
@@ -51,12 +53,16 @@ def route(
         key=lambda r: (r.entry.id, r.manifest_sha256 or ""),
     )
     routable = [r for r in allowed if _executes(r)]
-    if task.requested_capability:
-        decision = _route_explicit(task, routable, task.requested_capability,
+    requested = task.requested_capability
+    if requested is None and task.requirement is not None:
+        requested = task.requirement.capability
+    if requested:
+        decision = _route_explicit(task, routable, requested,
                                    performance=performance)
     else:
         decision = _route_by_signals(task, routable, sorted(set(files)), dependencies,
                                      performance=performance)
+    decision = _with_shadow(decision, allowed, performance)
     excluded = sorted({r.entry.id for r in allowed
                        if not _executes(r) and _relevant(r, task, decision)})
     if not excluded:
@@ -77,9 +83,11 @@ def resolve_action(task: TaskSpec, capability: Capability) -> str:
 def _relevant(record: RegistryRecord, task: TaskSpec, decision: RoutingDecision) -> bool:
     """Whether a provider excluded for lacking ``execute`` is worth a note: it declares the
     requested capability, or (signal path) nothing was routed and it might have matched."""
-    if task.requested_capability:
+    requested = task.requested_capability or (
+        task.requirement.capability if task.requirement is not None else None)
+    if requested:
         manifest = record.manifest
-        return manifest is not None and manifest.resolve(task.requested_capability) is not None
+        return manifest is not None and manifest.resolve(requested) is not None
     return decision.status != "routed"
 
 
@@ -93,10 +101,12 @@ def _decision(
     candidates: Sequence[Candidate] = (), selected: Sequence[Selection] = (),
     measured: Sequence[str] = (), unresolved: Sequence[str] = (),
     limitations: Sequence[str] = (),
+    negotiation: Sequence[CapabilityNegotiationResult] = (),
 ) -> RoutingDecision:
     return RoutingDecision(
         producer=PRODUCER, created_at=utc_now(), status=status,  # type: ignore[arg-type]
-        task_id=task.id, candidates=list(candidates), selected=list(selected), reason=reason,
+        task_id=task.id, candidates=list(candidates), selected=list(selected),
+        negotiation=list(negotiation), reason=reason,
         confidence=Confidence(level=level, measured_signals=list(measured),  # type: ignore[arg-type]
                               unresolved=list(unresolved)),
         limitations=list(limitations),
@@ -141,6 +151,35 @@ def _overlap_notes(declared: Sequence[tuple[str, Capability]], suffix: str = "")
             for cid, providers in by_id.items() if len(providers) > 1]
 
 
+def _with_shadow(decision: RoutingDecision, allowed: Sequence[RegistryRecord],
+                 performance: ProviderPerformance | None) -> RoutingDecision:
+    """Attach the history-preferred challenger, advisory only (Wave H).
+
+    Rivals are the candidates for the *selected* capability minus the selected
+    provider; surfaces come from each provider's own record so the comparison
+    never crosses a surface boundary.
+    """
+    if decision.status != "routed" or len(decision.selected) != 1 \
+            or performance is None:
+        return decision
+    from theforge.strategy import shadow_recommendation
+    selection = decision.selected[0]
+    surfaces = {r.entry.id: (r.surface.surface_fingerprint if r.surface else None)
+                for r in allowed}
+    rivals = {c.provider: surfaces.get(c.provider)
+              for c in decision.candidates
+              if c.capability == selection.capability
+              and c.provider != selection.provider}
+    shadow = shadow_recommendation(
+        performance, selected_provider=selection.provider,
+        capability=selection.capability,
+        selected_surface=surfaces.get(selection.provider),
+        rival_surfaces=rivals)
+    if shadow is None:
+        return decision
+    return replace(decision, shadow=shadow)
+
+
 def _perf_desc(performance: ProviderPerformance | None, record: RegistryRecord,
                capability: str) -> tuple[float, ...]:
     """Negated measured-history key: sorts ascending within a larger sort key (H5).
@@ -173,6 +212,9 @@ def _route_explicit(
         return _decision(task, status="no_route", level="low",
                          reason=f"no routable provider declares capability {requested}",
                          unresolved=[f"capability:{requested}"])
+    if task.requirement is not None:
+        return _route_by_requirement(task, matches, requested,
+                                     performance=performance)
     # Trust dominates; measured history only orders equals, then id (H5).
     matches.sort(key=lambda m: (TRUST_RANK[m[0].entry.trust],
                                 _perf_desc(performance, m[0], m[1].id),
@@ -204,6 +246,85 @@ def _route_explicit(
                                          action=action)],
                      measured=["requested_capability"], unresolved=unresolved,
                      limitations=sorted(set(notes)))
+
+
+def _route_by_requirement(
+    task: TaskSpec, matches: list[tuple[RegistryRecord, Capability]], requested: str, *,
+    performance: ProviderPerformance | None = None,
+) -> RoutingDecision:
+    """Fit selection (cycle 4): declarers negotiated against ``task.requirement``.
+
+    ``negotiate_all`` already orders by state → dimensions → history →
+    fingerprint → id; only FULL/PARTIAL offers are selectable — a hard-gate
+    failure (INCOMPATIBLE) is never ranked back in, and the full result set
+    rides on ``decision.negotiation`` so explain can say *why* (§14).
+    """
+    requirement = task.requirement
+    assert requirement is not None  # caller guarantees
+    by_provider = {r.entry.id: (r, c) for r, c in matches}
+    results = negotiate_all(requirement, [r for r, _ in matches],
+                            performance=performance)
+    declared = [(r.entry.id, c) for r, c in matches]
+    notes = _deprecation_notes(declared) + _overlap_notes(
+        declared, "; ranked by negotiation fit")
+    viable = [res for res in results if res.state in ("FULL", "PARTIAL")]
+    dim_rank = {"none": 0, "unknown": 1, "partial": 2, "full": 3, "not_applicable": 4}
+
+    def rank_key(res: CapabilityNegotiationResult) -> list[int]:
+        order = {"INCOMPATIBLE": 0, "UNRESOLVED": 1, "UNSUPPORTED": 2,
+                 "PARTIAL": 3, "FULL": 4}[res.state]
+        hist = {"absent": 0, "stale": 0, "cold": 1, "warming": 2, "mature": 3}[res.history]
+        return [order, *(dim_rank[v] for v in res.dimensions.values()), hist]
+
+    candidates = [
+        Candidate(provider=res.provider,
+                  capability=res.capability or requirement.capability,
+                  state=(by_provider[res.provider][1].state
+                         if res.provider in by_provider else "supported"),
+                  rank_key=rank_key(res))
+        for res in viable]
+    targets = {res.capability for res in viable}
+    if len(targets) > 1:
+        # Same alias-divergence rule as the plain explicit path: providers
+        # resolving the request to different capabilities is ambiguity, never
+        # a fit tie-break between unrelated capabilities.
+        issue = (f"capability-alias: {requested!r} resolves to different "
+                 f"capabilities: {', '.join(sorted(t for t in targets if t))}")
+        return _decision(task, status="ambiguous", level="low",
+                         reason=f"ambiguous: {issue}",
+                         candidates=candidates, measured=["requested_capability"],
+                         unresolved=[issue], limitations=sorted(set(notes)),
+                         negotiation=results)
+    if not viable:
+        top = results[0]
+        conflicts = top.policy_conflicts + top.missing
+        detail = f"; best {top.provider} is {top.state}" + (
+            f" ({', '.join(conflicts)})" if conflicts else "")
+        return _decision(
+            task, status="no_route", level="low",
+            reason=f"no provider fits requirement for {requested!r}{detail}",
+            unresolved=[f"capability:{requested}"],
+            limitations=sorted(set(notes)), negotiation=results)
+    top = viable[0]
+    record, capability = by_provider[top.provider]
+    action = resolve_action(task, capability)
+    reason = (f"requested capability {requested}; {len(matches)} declarer(s) negotiated, "
+              f"best fit {top.state}")
+    if len(viable) > 1:
+        reason += f" over {viable[1].provider} ({viable[1].state})"
+    if top.state == "PARTIAL":
+        notes.append(f"partial fit: {top.provider} missing "
+                     f"{', '.join(top.missing) or 'undeclared demands'}")
+    level, unresolved = _state_confidence(capability)
+    if top.state == "PARTIAL":
+        level = "low"
+        unresolved = [*unresolved, *top.missing]
+    return _decision(task, status="routed", level=level, reason=reason,
+                     candidates=candidates, measured=["requested_capability"],
+                     selected=[Selection(provider=record.entry.id,
+                                         capability=capability.id, action=action)],
+                     unresolved=unresolved, limitations=sorted(set(notes)),
+                     negotiation=results)
 
 
 @dataclass(frozen=True)

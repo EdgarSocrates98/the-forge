@@ -12,6 +12,9 @@ from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hin
 
 from theforge.contracts import (
     CapabilityGraph,
+    CapabilityNegotiationResult,
+    CapabilityOffer,
+    CapabilityRequirement,
     ComplexityAssessment,
     ContextPack,
     DecisionMemory,
@@ -20,14 +23,20 @@ from theforge.contracts import (
     EconomyRollup,
     Evidence,
     ExecuteRequest,
+    ExecutionObservation,
     ExecutionPlan,
     ExecutionReceipt,
     ExecutionResult,
     ExplainReport,
     ForgeManifest,
+    ForgeRegistryEntry,
+    GlobalEconomyReceipt,
     Handoff,
     HealthReport,
     InstallationPlan,
+    InstallationPlanV2,
+    McpRegistryDocument,
+    McpServerEntry,
     PlanEstimate,
     PlanRequest,
     PlanResult,
@@ -35,6 +44,8 @@ from theforge.contracts import (
     ProjectIntel,
     ProviderPerformance,
     ProviderSurfaceIdentity,
+    RegistryDocument,
+    RemoteProviderCandidate,
     Request,
     ResolveRequest,
     Response,
@@ -71,6 +82,16 @@ EXPORTED: tuple[type[Any], ...] = (
     ProviderSurfaceIdentity,
     # economy federation (cycle 3.1, wave F)
     EconomyRollup,
+    # capability negotiation v2 (cycle 4, wave A)
+    CapabilityRequirement, CapabilityOffer, CapabilityNegotiationResult,
+    # registry metadata (cycle 4, wave C/E)
+    ForgeRegistryEntry, RegistryDocument, RemoteProviderCandidate,
+    # governed install planning (cycle 4, wave F)
+    InstallationPlanV2,
+    # economy observations (cycle 4, wave G)
+    ExecutionObservation, GlobalEconomyReceipt,
+    # mcp registry awareness (cycle 4, wave J)
+    McpRegistryDocument, McpServerEntry,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -83,6 +104,13 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     InstallationPlan, ExplainReport, Diagnostic, ComplexityAssessment,
     CapabilityGraph, DecisionRecord, PlanState, RunBudget, ProviderPerformance,
     ProjectIntel, DecisionMemory, ProviderSurfaceIdentity, EconomyRollup,
+    # negotiation results are core-produced artifacts; the requirement and the
+    # offer travel (manifest embeds the offer, CLI accepts the requirement).
+    CapabilityNegotiationResult,
+    # the v2 install plan is a core-produced document — never remote input.
+    InstallationPlanV2,
+    # observations are core-produced; the global receipt is a core-composed view.
+    ExecutionObservation, GlobalEconomyReceipt,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

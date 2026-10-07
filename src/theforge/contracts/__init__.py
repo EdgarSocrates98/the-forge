@@ -55,7 +55,14 @@ from theforge.contracts.explain import ExplainReport
 from theforge.contracts.graph import GraphEdge, GraphNode, WorkspaceGraph
 from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
 from theforge.contracts.identity import SURFACE_IDENTITY_SCHEMA, ProviderSurfaceIdentity
-from theforge.contracts.installation import InstallationItem, InstallationPlan
+from theforge.contracts.installation import (
+    InstallApproval,
+    InstallationItem,
+    InstallationPlan,
+    InstallationPlanV2,
+    InstallStep,
+    RollbackStrategy,
+)
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
 from theforge.contracts.manifest import (
@@ -65,6 +72,24 @@ from theforge.contracts.manifest import (
     ExecutionInfo,
     ForgeManifest,
     Signals,
+)
+from theforge.contracts.mcp import (
+    MCP_DOCUMENT_SCHEMA,
+    MCP_SERVER_SCHEMA,
+    McpPackage,
+    McpRegistryDocument,
+    McpRemote,
+    McpServerEntry,
+)
+from theforge.contracts.negotiation import (
+    CapabilityNegotiationResult,
+    CapabilityOffer,
+    CapabilityRequirement,
+)
+from theforge.contracts.observation import (
+    EconomyAxis,
+    ExecutionObservation,
+    GlobalEconomyReceipt,
 )
 from theforge.contracts.performance import (
     PERFORMANCE_SCHEMA,
@@ -93,6 +118,19 @@ from theforge.contracts.plan import (
     Synthesis,
 )
 from theforge.contracts.receipt import ExecutionReceipt, PlanRefs, ReceiptInputs, ReceiptProvider
+from theforge.contracts.registry import (
+    REGISTRY_DOCUMENT_SCHEMA,
+    REGISTRY_ENTRY_SCHEMA,
+    REMOTE_CANDIDATE_SCHEMA,
+    DistributionRef,
+    ForgeRegistryEntry,
+    PublisherIdentity,
+    RegistryDocument,
+    RegistryIdentity,
+    RemoteProviderCandidate,
+    RuntimeRequirements,
+    SignatureRef,
+)
 from theforge.contracts.resolve import (
     RESOLVE_REQUEST_SCHEMA,
     ROUTING_PROPOSAL_SCHEMA,
@@ -126,6 +164,7 @@ from theforge.contracts.routing import (
     MatchedSignals,
     RoutingDecision,
     Selection,
+    ShadowRecommendation,
 )
 from theforge.contracts.task import TaskSpec
 from theforge.contracts.telemetry import NativeTrace, ProfileSnapshot, RunTelemetry, Span
@@ -150,33 +189,47 @@ __all__ = [
     "PROTOCOL_V1", "RESOLVE_REQUEST_SCHEMA", "ROUTING_PROPOSAL_SCHEMA", "Artifact",
     "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
     "CapNodeKind",
-    "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityRelations",
+    "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityNegotiationResult",
+    "CapabilityOffer", "CapabilityRelations", "CapabilityRequirement",
     "ComplexityAssessment",
     "ComplexityDimension",
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
     "ContextRequestItem", "ContractError", "DecisionKind", "DecisionMemory",
     "DecisionOption", "DecisionRecord", "DeltaRequest", "Diagnostic",
-    "DiagnosticCause", "DiagnosticFrame", "EconomyMetric", "EconomyRollup",
+    "DiagnosticCause", "DiagnosticFrame", "DistributionRef", "EconomyMetric",
+    "EconomyRollup",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",
     "ExecutionInfo", "ExecutionPlan",
     "ExecutionReceipt", "ExecutionResult", "ExplainReport", "Finding", "ForgeManifest",
+    "ForgeRegistryEntry",
     "GitSummary", "GraphEdge", "GraphNode", "Handoff", "HandoffItem", "HandoffOrigin",
-    "HealthCheck", "HealthReport", "InstallationItem", "InstallationPlan",
+    "HealthCheck", "HealthReport", "InstallApproval", "InstallationItem",
+    "InstallationPlan", "InstallationPlanV2", "InstallStep",
     "IntegrityError", "IntelFingerprints",
     "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "MetricStatus",
+    "EconomyAxis", "ExecutionObservation", "GlobalEconomyReceipt",
+    "MCP_DOCUMENT_SCHEMA", "MCP_SERVER_SCHEMA", "McpPackage",
+    "McpRegistryDocument", "McpRemote", "McpServerEntry",
     "NativeTrace", "NodeEconomy", "NodeOutcome",
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ProjectIntel",
     "ProposalChoice", "ProviderCapabilityPerformance", "ProviderEconomyReceipt",
+    "PublisherIdentity",
     "ProviderPerformance", "ProviderReceipt", "ProviderSurfaceIdentity",
     "ReceiptInputs",
-    "ReceiptProvider", "RememberedDecision", "RepositoryInfo", "ReproducibilityInfo",
-    "Request", "ResolveCandidate", "ResolveRequest", "Response",
+    "ReceiptProvider", "RegistryDocument", "RegistryIdentity",
+    "REGISTRY_DOCUMENT_SCHEMA", "REGISTRY_ENTRY_SCHEMA", "REMOTE_CANDIDATE_SCHEMA",
+    "RememberedDecision", "RemoteProviderCandidate", "RepositoryInfo",
+    "ReproducibilityInfo",
+    "Request", "ResolveCandidate", "ResolveRequest", "Response", "RollbackStrategy",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RoutingProposal",
     "RunBudget", "RunTelemetry", "SURFACE_IDENTITY_SCHEMA", "Selection",
+    "ShadowRecommendation",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals", "Span",
+    "RuntimeRequirements",
+    "SignatureRef",
     "Synthesis", "TaskSpec", "Technology", "VerificationCheck", "VerificationResult",
     "VerifyRequest", "VerifyVerdict", "Violation",
     "WorkspaceDescriptor", "WorkspaceGraph", "WorkspaceRelation", "WorkspaceSummary", "from_dict",

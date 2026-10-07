@@ -62,6 +62,17 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | modos avançados de execução e `DecisionRecord` | [0030](0030-execution-modes.md) | `cycle-3` |
 | contratos compartilhados: schema repo, sem kernel | [0031](0031-shared-contracts.md) | `cycle-3.1` |
 | A2A/MCP opcionais no nível do provider | [0032](0032-external-protocol-interop.md) | `cycle-3.1` |
+| negociação de capability: dimensional, gated, sem score | [0033](0033-capability-negotiation-v2.md) | `cycle-4` |
+| registry sources: abstração de origem, local autoritativo | [0034](0034-registry-sources.md) | `cycle-4` |
+| remote registry client: read-only, cache verificado | [0035](0035-remote-registry-client.md) | `cycle-4` |
+| remote discovery: fit honesto, sem instalação | [0036](0036-remote-discovery.md) | `cycle-4` |
+| InstallationPlan v2: plano gated, execução fora do escopo | [0037](0037-installation-plan-v2.md) | `cycle-4` |
+| observações de execução: grão atômico, axes nunca-silenciosos | [0038](0038-economy-observations.md) | `cycle-4` |
+| shadow champion/challenger: recomendação por história, nunca promoção | [0039](0039-shadow-recommendation.md) | `cycle-4` |
+| A2A bridge: documentos, remoto nunca provider local | [0040](0040-a2a-bridge.md) | `cycle-4` |
+| MCP awareness: tooling ≠ provider, detecção nunca instalação | [0041](0041-mcp-registry-awareness.md) | `cycle-4` |
+| forge-contracts: auditoria empírica reafirma não extrair | [0042](0042-forge-contracts-audit.md) | `cycle-4` |
+| security hardening: threat model supply-chain + assinatura externa | [0043](0043-security-hardening.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
 
 ## Novo ADR

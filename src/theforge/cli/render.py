@@ -110,6 +110,45 @@ def provider_detail(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def registry_sources(data: dict[str, Any]) -> str:
+    lines = [f"local (authoritative): {data['local_entries']} installed providers"]
+    for s in data["sources"]:
+        line = f"{_clean(s['id']):<20} {_clean(s['kind']):<11} {_clean(s['status']):<12}"
+        if s["entries"] is not None:
+            line += f" entries={s['entries']} registry={_clean(s['registry'] or '-')}"
+        if s.get("from_cache"):
+            line += " (cache)"
+        if s.get("retrieved_at"):
+            line += f" retrieved={_clean(s['retrieved_at'])}"
+        if s["detail"]:
+            line += f"  {_clean(s['detail'])}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def economy_report(data: dict[str, Any]) -> str:
+    lines = [f"economy: {data['observations']} observation(s) "
+             f"across {data['runs']} run(s)"]
+    for name in sorted(data["axes"]):
+        axis = data["axes"][name]
+        line = f"  {name:<16} {_clean(axis['status'])}"
+        if axis["value"] is not None:
+            line += f" = {axis['value']:g}"
+        line += f"  ({axis['coverage']} observed, {axis['missing']} unknown)"
+        lines.append(line)
+    if data["maturity"]:
+        lines.append("history maturity:")
+        for key, state in data["maturity"].items():
+            lines.append(f"  {_clean(key):<44} {_clean(state)}")
+    for conflict in data["conflicts"]:
+        lines.append(f"conflict: {_clean(conflict)}")
+    for family in data["task_families"]:
+        lines.append(f"task family: {_clean(family)}")
+    for limitation in data["limitations"]:
+        lines.append(f"note: {_clean(limitation)}")
+    return "\n".join(lines)
+
+
 def capabilities(data: dict[str, Any]) -> str:
     rows = data["capabilities"]
     if not rows:
@@ -131,9 +170,148 @@ def capabilities(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def negotiation(data: dict[str, Any]) -> str:
+    results = data["results"]
+    if not results:
+        return "no providers to negotiate with"
+    req = data["requirement"]
+    lines = [f"requirement: {_clean(req['capability'])}"
+             + (f" actions={_clean(','.join(req['required_actions']))}"
+                if req.get('required_actions') else "")
+             + (f" tech={_clean(','.join(req['technologies']))}"
+                if req.get('technologies') else "")]
+    for r in results:
+        dims = " ".join(f"{k.split('_')[0]}={v}" for k, v in sorted(r["dimensions"].items())
+                        if v not in ("not_applicable",))
+        lines.append(f"{r['state']:<12} {_clean(r['provider']):<22} "
+                     f"{_clean(r.get('capability') or '-'):<28} {dims}")
+        if r.get("history") not in (None, "absent"):
+            lines.append(f"             history={r['history']}")
+        for item in r.get("missing", []) + r.get("policy_conflicts", []):
+            lines.append(f"             - {_clean(item)}")
+        for note in r.get("limitations", []):
+            lines.append(f"             ~ {_clean(note)}")
+    return "\n".join(lines)
+
+
 # Relation edge kinds in display order; the mechanical structure edges
 # (has_capability, has_action, in_domain) are listed last — they derive from
 # the manifest boilerplate, not from declared intent.
+def discovery(data: dict[str, Any]) -> str:
+    """Missing-capability UX (§26): local verdict, remote candidates, and the
+    explicit no-action line."""
+    lines = []
+    capability = (data.get("requirement") or {}).get("capability", "?")
+    if data["satisfied_locally"]:
+        lines.append(f"local: FULL — {_clean(data['local_provider'])} satisfies "
+                     f"'{_clean(capability)}'")
+    else:
+        lines.append(f"local: {_clean(data['local_state'])} — no installed provider "
+                     f"fully satisfies '{_clean(capability)}'")
+    candidates = data.get("candidates", [])
+    if candidates:
+        lines.append("Remote candidates:")
+        for i, c in enumerate(candidates, 1):
+            head = (f"  {i}. {_clean(c['provider'])} {_clean(c['version'])} "
+                    f"(source={_clean(c['source'])} registry={_clean(c['registry'])} "
+                    f"{_clean(c['freshness'])}) — fit={_clean(c['fit'])}")
+            lines.append(head)
+            detail_bits = []
+            if c.get("missing"):
+                detail_bits.append("missing: " + ", ".join(c["missing"]))
+            if c.get("unknowns"):
+                detail_bits.append("unverified: " + ", ".join(c["unknowns"]))
+            if detail_bits:
+                lines.append(f"     {'; '.join(_clean(b) for b in detail_bits)}")
+            sig = {"none": "unsigned", "declared": "signature declared (unverified)",
+                   "verified": "signature verified"}[c.get("signature_state", "none")]
+            pub = c.get("publisher") or {}
+            dist = c.get("distribution") or {}
+            provenance = []
+            if pub.get("id"):
+                provenance.append(f"publisher={_clean(pub['id'])}")
+            if dist.get("kind"):
+                ref = dist["kind"]
+                if dist.get("package") and dist.get("version"):
+                    ref += f" {_clean(dist['package'])}=={_clean(dist['version'])}"
+                provenance.append(f"distribution={_clean(ref)}")
+            provenance.append(sig)
+            lines.append(f"     {'; '.join(provenance)}")
+            for lim in c.get("limitations", []):
+                lines.append(f"     limitation: {_clean(lim)}")
+    elif not data["satisfied_locally"]:
+        lines.append("Remote candidates: none")
+    # MCP tooling (§68): a separate section — servers are never providers.
+    for dep in data.get("mcp_dependencies", []):
+        lines.append(f"mcp dependency: {_clean(dep['name'])} "
+                     f"(declared by {_clean(dep['declared_by'])}) — "
+                     f"{_clean(dep['availability'])}")
+    for note in data.get("mcp_tooling", []):
+        policy = []
+        if note.get("requires_network"):
+            policy.append("network")
+        if note.get("requires_credentials"):
+            policy.append("credentials")
+        suffix = f" [{', '.join(policy)}]" if policy else ""
+        lines.append(f"mcp tooling: {_clean(note['name'])}"
+                     f"{(' ' + _clean(note['version'])) if note.get('version') else ''}"
+                     f" (source={_clean(note['source'])}, tooling — not a "
+                     f"provider){suffix}")
+        if note.get("matched_terms"):
+            lines.append(f"     matched: "
+                         f"{', '.join(_clean(t) for t in note['matched_terms'])}")
+    for excluded in data.get("entries_excluded", []):
+        lines.append(f"excluded: {_clean(excluded)}")
+    if data.get("profile"):
+        economy = (f"discovery economy: profile={_clean(data['profile'])} "
+                   f"registry_calls={data.get('registry_calls', 0)} "
+                   f"metadata_bytes={data.get('metadata_bytes', 0)}")
+        if data.get("network_ms") is not None:
+            economy += f" network_ms={data['network_ms']:.1f}"
+        lines.append(economy)
+    for lim in data.get("limitations", []):
+        lines.append(f"note: {_clean(lim)}")
+    lines.append("No action was taken.")
+    return "\n".join(lines)
+
+
+def install_plan(data: dict[str, Any]) -> str:
+    p = data["plan"]
+    lines = [
+        f"install plan (v2, planning_only={p['planning_only']}): "
+        f"{_clean(p['provider'])} {_clean(p['version'])}",
+        f"  source={_clean(p['source'])} registry={_clean(p.get('registry') or '-')}",
+        f"  distribution: {_clean(p['distribution'].get('kind') or '-')}"
+        + (f" {_clean(p['distribution']['package'])}=={_clean(p['distribution']['version'])}"
+           if p['distribution'].get('package') else ""),
+        f"  environment: {_clean(p['environment'])}",
+        f"  expected hashes: {len(p['expected_hashes'])}  "
+        f"signature: {_clean('declared' if p.get('signature') else 'none')}",
+    ]
+    if p.get("dependencies"):
+        lines.append(f"  dependencies: {_clean(', '.join(p['dependencies']))}")
+    if p.get("permissions"):
+        lines.append(f"  permissions: {_clean(', '.join(p['permissions']))}")
+    lines.append("  stages:")
+    for step in p["steps"]:
+        lines.append(f"    [pending] {_clean(step['stage']):<22} "
+                     f"{_clean(step['description'])}")
+    approval = p["approval"]
+    lines.append(f"  approval: required={approval['required']} "
+                 f"granted={approval['granted']}"
+                 + (f" by={_clean(approval['granted_by'])}"
+                    if approval.get("granted_by") else ""))
+    rb = p["rollback"]
+    lines.append(f"  rollback: {_clean(rb['action'])}"
+                 + (f" (previous {_clean(rb['previous_version'])})"
+                    if rb.get("previous_version") else ""))
+    for lim in p.get("limitations", []):
+        lines.append(f"  limitation: {_clean(lim)}")
+    lines.append("No action was taken — the plan is a document; execution is a "
+                 "separate milestone.")
+    return "\n".join(lines)
+
+
 _GRAPH_EDGE_ORDER = ("produces", "consumes", "requires", "complements",
                      "conflicts", "can_verify", "can_review", "relevant_to",
                      "uses_technology", "in_domain", "has_capability",
@@ -248,6 +426,18 @@ def ask(data: dict[str, Any]) -> str:
                      f"{_clean(sel['capability'])}:{_clean(sel['action'])} "
                      f"(confidence {_clean(decision['confidence']['level'])})")
     lines.append(f"Reason:     {_clean(decision['reason'])}")
+    shadow = decision.get("shadow")
+    if shadow:
+        lines.append(f"Shadow:     {_clean(shadow['provider'])} preferred by "
+                     f"measured history ({_clean(shadow['maturity'])}, advisory — "
+                     f"{_clean('; '.join(shadow['evidence']))})")
+    negotiation = decision.get("negotiation") or []
+    if negotiation:
+        lines.append("Fit:")
+        for res in negotiation:
+            gaps = [*_list(res.get("missing")), *_list(res.get("policy_conflicts"))]
+            lines.append(f"  {_clean(res['provider'])}: {_clean(res['state'])}"
+                         + (f" ({_clean(', '.join(gaps))})" if gaps else ""))
     if data["status"] in ("ambiguous", "no_route"):
         for cand in decision["candidates"]:
             lines.append(f"  candidate {_clean(cand['provider'])}/{_clean(cand['capability'])} "

@@ -11,7 +11,8 @@ from typing import Any, Final
 
 from theforge.cli import render
 from theforge.context import scan_workspace
-from theforge.contracts import to_dict
+from theforge.contracts import CapabilityRequirement, to_dict
+from theforge.contracts.base import ContractError, from_dict
 from theforge.contracts.codes import Codes, family_of
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
@@ -19,7 +20,17 @@ from theforge.explain import build_explain_report
 from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
 from theforge.forger.replay import replay
 from theforge.intel import load_decisions
-from theforge.registry import Registry, RegistryRecord, check_health
+from theforge.metrics import load_performance
+from theforge.negotiation import negotiate_all
+from theforge.observations import build_global_receipt, load_observations
+from theforge.registry import (
+    Registry,
+    RegistryRecord,
+    check_health,
+    load_source_specs,
+    local_document,
+    read_sources,
+)
 from theforge.routing.signals import normalize_tokens
 from theforge.runs import RunStore
 from theforge.security.redact import redact
@@ -186,6 +197,45 @@ def cmd_registry_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_registry_sources(args: argparse.Namespace) -> int:
+    """Registry sources (cycle 4, wave C): the local installed registry is the
+    authoritative source; configured sources are untrusted metadata only."""
+    forge_dir = find_forge_dir(_root(args))
+    warnings: list[str] = []
+    specs = load_source_specs(forge_dir, warnings=warnings)
+    for warning in warnings:
+        print(f"theforge: warning: {warning}", file=sys.stderr)
+    registry = Registry(forge_dir)
+    local = local_document(registry.records())
+    _warn(registry)
+    sources = [{
+        "id": read.spec.id, "kind": read.spec.kind, "enabled": read.spec.enabled,
+        "status": read.status, "detail": read.detail,
+        "entries": len(read.document.entries) if read.document else None,
+        "registry": read.document.registry.id if read.document else None,
+        "freshness": read.freshness, "from_cache": read.from_cache,
+        "retrieved_at": read.retrieved_at, "etag": read.etag,
+        "body_sha256": read.body_sha256,
+    } for read in read_sources(specs)]
+    _emit(args, {"local_entries": len(local.entries), "sources": sources},
+          render.registry_sources)
+    return 0
+
+
+def cmd_economy_report(args: argparse.Namespace) -> int:
+    """Global economy receipt (cycle 4, wave G): aggregates the recorded
+    execution observations into a per-axis view — observed, unresolved,
+    conflict — plus per-key history maturity. Read-only, offline."""
+    root = _root(args)
+    observations, obs_warning = load_observations(root)
+    performance, perf_warning = load_performance(root)
+    receipt = build_global_receipt(observations, performance)
+    data = to_dict(receipt)
+    data["limitations"] += [w for w in (obs_warning, perf_warning) if w]
+    _emit(args, data, render.economy_report)
+    return 0
+
+
 def cmd_capabilities_list(args: argparse.Namespace) -> int:
     registry = Registry(find_forge_dir(_root(args)))
     rows = _capability_rows(registry.records(), args.provider)
@@ -208,6 +258,87 @@ def cmd_capabilities_search(args: argparse.Namespace) -> int:
     _warn(registry)
     _warn_deprecated(rows)
     _emit(args, {"query": args.query, "capabilities": rows}, render.capabilities)
+    return 0
+
+
+def _load_requirement(path_arg: str | None) -> CapabilityRequirement | None:
+    """``--requirement REQ.json``: a ``CapabilityRequirement/v1`` document, or
+    ``None`` when the flag was not given."""
+    if path_arg is None:
+        return None
+    path = Path(path_arg)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return from_dict(CapabilityRequirement, data)
+    except (OSError, json.JSONDecodeError, ContractError) as exc:
+        raise UsageError(f"invalid capability requirement {path}: {exc}") from exc
+
+
+def cmd_capabilities_negotiate(args: argparse.Namespace) -> int:
+    """``capabilities negotiate --requirement <req.json>`` — deterministic v2
+    negotiation over the registered manifests (offline, cache only)."""
+    requirement = _load_requirement(args.requirement)
+    assert requirement is not None  # --requirement is required on this command
+    registry = Registry(find_forge_dir(_root(args)))
+    performance, perf_warning = load_performance(_root(args))
+    results = negotiate_all(requirement, registry.records(), performance=performance)
+    _warn(registry)
+    if perf_warning:
+        print(f"theforge: warning: {perf_warning}", file=sys.stderr)
+    _emit(args, {"requirement": to_dict(requirement),
+                 "results": [to_dict(r) for r in results]}, render.negotiation)
+    return 0
+
+
+def cmd_capabilities_discover(args: argparse.Namespace) -> int:
+    """``capabilities discover`` — missing-capability UX (§26): local
+    negotiation first; enabled registry sources only when needed (or
+    ``--remote``). Reports candidates as metadata and stops — no install."""
+    from theforge.registry.discovery import discover
+    if args.requirement:
+        requirement = _load_requirement(args.requirement)
+    else:
+        requirement = CapabilityRequirement(capability=args.capability)
+    assert requirement is not None
+    root = _root(args)
+    registry = Registry(find_forge_dir(root))
+    performance, perf_warning = load_performance(root)
+    report = discover(requirement, registry.records(), forge_dir=find_forge_dir(root),
+                      force_remote=args.remote, profile=args.profile,
+                      performance=performance)
+    _warn(registry)
+    if perf_warning:
+        print(f"theforge: warning: {perf_warning}", file=sys.stderr)
+    _emit(args, {
+        "requirement": to_dict(requirement),
+        "local_state": report.local_state,
+        "local_provider": report.local_provider,
+        "satisfied_locally": report.satisfied_locally,
+        "candidates": [to_dict(c) for c in report.candidates],
+        "sources_consulted": report.sources_consulted,
+        "sources_skipped": report.sources_skipped,
+        "entries_scanned": report.entries_scanned,
+        "entries_excluded": report.entries_excluded,
+        "mcp_tooling": [to_dict(n) for n in report.mcp_tooling],
+        "mcp_dependencies": [to_dict(d) for d in report.mcp_dependencies],
+        "profile": report.profile,
+        "registry_calls": report.registry_calls,
+        "metadata_bytes": report.metadata_bytes,
+        "network_ms": report.network_ms,
+        "limitations": report.limitations,
+        "action_taken": False,
+    }, render.discovery)
+    return 0
+
+
+def cmd_install_plan(args: argparse.Namespace) -> int:
+    """``install plan`` — deterministic InstallationPlan/v2 from a configured
+    source's entry (§27-30). Plan-only: emits the document, executes nothing."""
+    from theforge.registry.install_plan import build_install_plan
+    result = build_install_plan(args.provider, args.version, args.source,
+                                forge_dir=find_forge_dir(_root(args)),
+                                approve=args.approve)
+    _emit(args, {"plan": to_dict(result.plan)}, render.install_plan)
     return 0
 
 
@@ -302,10 +433,18 @@ def cmd_ask(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)
     registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
+    requirement = _load_requirement(args.requirement)
+    capability = args.capability
+    if (requirement is not None and capability is not None
+            and capability != requirement.capability):
+        raise UsageError(
+            f"--capability {capability!r} disagrees with the requirement's "
+            f"capability {requirement.capability!r}")
     outcome = Forger(root, registry, RunStore(forge_dir)).ask(AskRequest(
-        intent=args.intent, targets=args.targets or ["."], capability=args.capability,
+        intent=args.intent, targets=args.targets or ["."], capability=capability,
         action=args.action, profile=args.profile, allow_unverified=args.allow_unverified,
-        approvals=frozenset(args.approvals or ()), debug=args.debug,
+        approvals=frozenset(args.approvals or ()), provider=args.use,
+        requirement=requirement, debug=args.debug,
     ))
     _warn(registry)
     # Redacted for display: an internal error's text is raw in memory (decision reason too).
@@ -348,7 +487,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         intent=args.intent, targets=args.targets or ["."], profile=args.profile,
         plan_file=Path(args.plan_file) if args.plan_file else None, execute=args.execute,
         approvals=frozenset(args.approvals or ()), allow_unverified=args.allow_unverified,
-        debug=args.debug,
+        requirement=_load_requirement(args.requirement), debug=args.debug,
     ))
     _warn(registry)
     # Redacted for display: an internal error's text is raw in memory.

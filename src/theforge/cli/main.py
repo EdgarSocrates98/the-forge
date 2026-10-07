@@ -70,6 +70,17 @@ def build_parser() -> argparse.ArgumentParser:
         .set_defaults(handler=commands.cmd_registry_list)
     registry.add_parser("refresh", parents=[common]) \
         .set_defaults(handler=commands.cmd_registry_refresh)
+    registry.add_parser("sources", parents=[common],
+                        help="configured registry sources (untrusted metadata; "
+                             "the local installed registry stays authoritative)") \
+        .set_defaults(handler=commands.cmd_registry_sources)
+
+    economy = sub.add_parser("economy", help="measured execution economy") \
+        .add_subparsers(dest="economy_command", required=True)
+    economy.add_parser("report", parents=[common],
+                       help="aggregate recorded execution observations into a "
+                            "global economy receipt (read-only, offline)") \
+        .set_defaults(handler=commands.cmd_economy_report)
     show = registry.add_parser("show", parents=[common])
     show.add_argument("provider_id")
     show.set_defaults(handler=commands.cmd_registry_show)
@@ -82,6 +93,48 @@ def build_parser() -> argparse.ArgumentParser:
     cap_search = caps.add_parser("search", parents=[common])
     cap_search.add_argument("query")
     cap_search.set_defaults(handler=commands.cmd_capabilities_search)
+    cap_negotiate = caps.add_parser(
+        "negotiate", parents=[common],
+        help="negotiate a CapabilityRequirement against the registered manifests "
+             "(offline, deterministic, machine-readable with --json)")
+    cap_negotiate.add_argument("--requirement", required=True, metavar="REQ_JSON",
+                               help="a theforge/CapabilityRequirement/v1 JSON document")
+    cap_negotiate.set_defaults(handler=commands.cmd_capabilities_negotiate)
+    cap_discover = caps.add_parser(
+        "discover", parents=[common],
+        help="remote discovery by requirement: negotiates installed providers "
+             "first, then consults enabled registry sources — reports "
+             "RemoteProviderCandidate metadata, never installs (§22-26)")
+    discover_req = cap_discover.add_mutually_exclusive_group(required=True)
+    discover_req.add_argument("--requirement", metavar="REQ_JSON",
+                              help="a theforge/CapabilityRequirement/v1 JSON document")
+    discover_req.add_argument("--capability", metavar="CAP",
+                              help="shortcut: minimal requirement for a capability id")
+    cap_discover.add_argument("--remote", action="store_true",
+                              help="consult remote sources even when a local "
+                                   "provider fully satisfies the requirement")
+    cap_discover.add_argument(
+        "--profile", choices=["economy", "balanced", "max"], default="balanced",
+        help="how eagerly remote sources are consulted: economy only when no "
+             "local capability exists, balanced when nothing fully satisfies "
+             "the requirement (default), max always compares remote claims")
+    cap_discover.set_defaults(handler=commands.cmd_capabilities_discover)
+
+    install = sub.add_parser("install", help="governed provider installation") \
+        .add_subparsers(dest="install_command", required=True)
+    install_plan = install.add_parser(
+        "plan", parents=[common],
+        help="build a deterministic InstallationPlan/v2 for a remote candidate "
+             "(plan-only: nothing is downloaded or installed)")
+    install_plan.add_argument("--provider", required=True)
+    install_plan.add_argument("--version", required=True,
+                              help="pinned SemVer — never 'latest'")
+    install_plan.add_argument("--source", required=True,
+                              help="registry source id from registries.toml")
+    install_plan.add_argument("--approve", action="store_true",
+                              help="record the approval gate as granted "
+                                   "(plan still does not execute)")
+    install_plan.set_defaults(handler=commands.cmd_install_plan)
 
     graph = sub.add_parser(
         "graph", parents=[common],
@@ -125,6 +178,11 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("intent")
     ask.add_argument("--capability")
     ask.add_argument("--action")
+    ask.add_argument("--requirement", metavar="REQ_JSON",
+                     help="CapabilityRequirement/v1 JSON: negotiate provider fit "
+                          "(see docs/capability-negotiation.md)")
+    ask.add_argument("--use", metavar="PROVIDER", dest="use",
+                     help="pin a provider (policy/protocol gates still apply)")
     ask.add_argument("--profile", choices=["auto", "economy", "balanced", "max"],
                      default="auto",
                      help="budget profile; auto lets the complexity engine decide")
@@ -142,6 +200,9 @@ def build_parser() -> argparse.ArgumentParser:
                       default="auto",
                       help="budget profile; auto lets the complexity engine decide")
     plan.add_argument("--target", dest="targets", action="append")
+    plan.add_argument("--requirement", metavar="REQ_JSON",
+                      help="CapabilityRequirement/v1 JSON: negotiate provider fit "
+                           "for the demanded capability")
     plan.add_argument("--from", dest="plan_file", metavar="FILE",
                       help="explicit plan file (fixes the node order); default: decompose "
                            "the intent")

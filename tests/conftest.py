@@ -141,6 +141,20 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_root_hygiene.py": ("unit",),
     # cycle-3.1 surface identity / feature negotiation
     "test_surface_identity.py": ("unit", "contract", "integration"),
+    # cycle-4 capability negotiation v2
+    "test_negotiation.py": ("unit", "contract", "integration"),
+    "test_requirement_routing.py": ("unit", "integration"),
+    # cycle-4 registry sources
+    "test_registry_sources.py": ("unit", "contract", "security"),
+    "test_registry_remote.py": ("unit", "security"),
+    "test_remote_discovery.py": ("unit", "integration"),
+    "test_install_plan.py": ("unit", "security", "integration"),
+    "test_observations.py": ("unit", "contract", "integration"),
+    "test_strategy.py": ("unit", "contract", "integration"),
+    "test_a2a_bridge.py": ("unit", "contract", "security", "integration"),
+    "test_mcp_awareness.py": ("unit", "contract", "security", "integration"),
+    "test_adversarial_cycle4.py": ("security", "unit", "integration"),
+    "test_reality_proofs.py": ("e2e", "integration"),
 }
 
 
