@@ -111,6 +111,8 @@ def recommend_context_budget(
         return None
     if roi.utilization_ratio is None or roi.measured_runs < 3:
         return None
+    if roi.measured_runs != roi.runs:
+        return None
     if roi.delivered_runs != roi.runs or roi.verified_runs != roi.runs:
         return None
     if not 0 < floor_ratio < 1:
