@@ -2,7 +2,7 @@
 source of the matrix and must cover the versions the code actually ships.
 
 Checked: a row exists for the current ``theforge.__version__``; that row lists the versions of
-both adapters as declared in their ``pyproject.toml``; each adapter's ``SUPPORTED_SPECIALIST``
+all four adapters as declared in their ``pyproject.toml``; each adapter's ``SUPPORTED_SPECIALIST``
 equals the specialist window in that row; the row's Forge Protocol major is supported by the
 core. Every failure names the missing or mismatched version and cites the maintenance rule.
 """
