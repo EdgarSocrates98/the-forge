@@ -272,6 +272,13 @@ def ask(data: dict[str, Any]) -> str:
                      f"{_clean(sel['capability'])}:{_clean(sel['action'])} "
                      f"(confidence {_clean(decision['confidence']['level'])})")
     lines.append(f"Reason:     {_clean(decision['reason'])}")
+    negotiation = decision.get("negotiation") or []
+    if negotiation:
+        lines.append("Fit:")
+        for res in negotiation:
+            gaps = [*_list(res.get("missing")), *_list(res.get("policy_conflicts"))]
+            lines.append(f"  {_clean(res['provider'])}: {_clean(res['state'])}"
+                         + (f" ({_clean(', '.join(gaps))})" if gaps else ""))
     if data["status"] in ("ambiguous", "no_route"):
         for cand in decision["candidates"]:
             lines.append(f"  candidate {_clean(cand['provider'])}/{_clean(cand['capability'])} "

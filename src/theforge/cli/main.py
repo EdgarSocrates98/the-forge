@@ -132,6 +132,11 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("intent")
     ask.add_argument("--capability")
     ask.add_argument("--action")
+    ask.add_argument("--requirement", metavar="REQ_JSON",
+                     help="CapabilityRequirement/v1 JSON: negotiate provider fit "
+                          "(see docs/capability-negotiation.md)")
+    ask.add_argument("--use", metavar="PROVIDER", dest="use",
+                     help="pin a provider (policy/protocol gates still apply)")
     ask.add_argument("--profile", choices=["auto", "economy", "balanced", "max"],
                      default="auto",
                      help="budget profile; auto lets the complexity engine decide")
@@ -149,6 +154,9 @@ def build_parser() -> argparse.ArgumentParser:
                       default="auto",
                       help="budget profile; auto lets the complexity engine decide")
     plan.add_argument("--target", dest="targets", action="append")
+    plan.add_argument("--requirement", metavar="REQ_JSON",
+                      help="CapabilityRequirement/v1 JSON: negotiate provider fit "
+                           "for the demanded capability")
     plan.add_argument("--from", dest="plan_file", metavar="FILE",
                       help="explicit plan file (fixes the node order); default: decompose "
                            "the intent")

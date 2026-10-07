@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
+from theforge.contracts.negotiation import CapabilityNegotiationResult
 from theforge.contracts.types import CapabilityState, PlanPattern, Producer
 
 ROUTING_SCHEMA = "theforge/RoutingDecision/v1"
@@ -50,6 +51,10 @@ class RoutingDecision:
     candidates: list[Candidate] = field(default_factory=list)
     selected: list[Selection] = field(default_factory=list)
     pattern: PlanPattern = "route"  # additive: decisions recorded without it are "route"
+    # Cycle 4 (additive): the per-provider negotiation results when the task
+    # carried a CapabilityRequirement — the raw dimensions behind the choice,
+    # including the rejected offers (§14); empty when no requirement applied.
+    negotiation: list[CapabilityNegotiationResult] = field(default_factory=list)
     reason: str
     confidence: Confidence
     fallbacks_used: list[str] = field(default_factory=list)

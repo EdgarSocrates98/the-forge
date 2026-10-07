@@ -72,11 +72,37 @@ nunca `INCOMPATIBLE` por ausência de declaração.
 
 ```bash
 theforge capabilities negotiate --requirement req.json [--root DIR] [--json]
+theforge ask "diagnose this job" --requirement req.json [--use PROVIDER]
+theforge plan "build the pipeline" --requirement req.json
 ```
 
-`req.json` é um `CapabilityRequirement/v1`. Lê o registro local em cache — não
-dispara providers, não faz rede. Saída `--json`: `{requirement, results[]}`
-ordenada deterministicamente (estado → dimensões → história → fingerprint → id).
+`req.json` é um `CapabilityRequirement/v1`. `capabilities negotiate` lê o
+registro local em cache — não dispara providers, não faz rede. Saída `--json`:
+`{requirement, results[]}` ordenada deterministicamente (estado → dimensões →
+história → fingerprint → id).
+
+## Routing e planning
+
+Quando a task carrega um `requirement`, o router troca o desempate
+trust/história/id pela **ordenação de negociação**: só `FULL`/`PARTIAL` são
+selecionáveis, `INCOMPATIBLE`/`UNRESOLVED`/`UNSUPPORTED` ficam fora de
+`candidates` mas **permanecem em `decision.negotiation`** — a explicação do
+"por que não" é parte do contrato, não log descartável. Vencedor `PARTIAL`
+rota com `confidence: low` e seus `missing` em `unresolved`; alias que resolve
+para capabilities diferentes continua `ambiguous` (a divergência não é fit).
+
+- `theforge ask --requirement req.json` — o requirement vai no `TaskSpec`
+  persistido (replay reproduz a mesma negociação) e cada resultado é gravado
+  no artefato `routing` do run (`decision.negotiation`).
+- `theforge ask --use PROVIDER` — pin de provider (§91): só vale se o provider
+  for candidato negociável; um `INCOMPATIBLE` pinado cai em `no_route` com o
+  estado e os conflitos nomeados — nenhum pin sobrevive a hard gate.
+- `theforge plan --requirement req.json` — decomposição usa a seleção por fit;
+  nós filhos recebem o requirement **canonicalizado** só quando o capability do
+  nó resolve ao mesmo id no manifest do provider do nó (uma demanda por
+  capability nunca contamina nós de outras capabilities). Em plan file
+  (`--from`), `check_plan` vira gate de negociação: nó pinado `INCOMPATIBLE` é
+  violação; `PARTIAL` vira limitation do plano, não violação.
 
 ## Ranking
 
@@ -89,5 +115,5 @@ INCOMPATIBLE) → tupla de dimensões (ordem canônica) → `history`
 - `platform_constraints`, `runtime_constraints` e `task_family` viajam no
   contrato mas ainda não têm gate — declarados, avaliados como `unknown` quando
   exigidos contra ofertas sem declaração correspondente.
-- A negociação não executa nada: é a camada de seleção pré-routing (Wave B a
-  integra no `route`/`plan`).
+- `capabilities negotiate` não executa nada; `ask --requirement`/`plan
+  --requirement` executam o selecionado normalmente depois do fit.

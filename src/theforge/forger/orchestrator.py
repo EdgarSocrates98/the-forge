@@ -47,6 +47,7 @@ from theforge.context.verify import DRIFT_LIMITATION_PREFIX, DriftReport, apply_
 from theforge.contracts import (
     Candidate,
     Capability,
+    CapabilityRequirement,
     Confidence,
     ContextPack,
     ContextRequest,
@@ -178,6 +179,9 @@ class AskRequest:
     targets: list[str] = field(default_factory=lambda: ["."])
     capability: str | None = None
     action: str | None = None
+    # Cycle 4 (additive): fit demand negotiated at routing; ``capability`` is
+    # derived from it when not given directly (TaskSpec requires agreement).
+    requirement: CapabilityRequirement | None = None
     # ``auto``: the complexity engine picks the effective profile after routing and
     # records the decision as the run's ComplexityAssessment artifact.
     profile: ProfileRequest = "auto"
@@ -345,8 +349,11 @@ class Forger:
         task = TaskSpec(
             producer=PRODUCER, created_at=started, id=run_id, intent=request.intent,
             workspace_root=str(self.root), targets=list(request.targets),
-            budget_profile=request.profile, requested_capability=request.capability,
-            requested_action=request.action,
+            budget_profile=request.profile,
+            requested_capability=request.capability or (
+                request.requirement.capability
+                if request.requirement is not None else None),
+            requested_action=request.action, requirement=request.requirement,
             constraints={"plan": {"run": node.plan_run, "node": node.node}} if node else {},
         )
         # The complexity policy is loaded once per auto run (never raises; problems
@@ -1014,9 +1021,16 @@ class Forger:
                 action = wanted if wanted in capability.actions else None
         if candidate is None or action is None:
             target = task.requested_capability or "this task"
+            # §91: a pin never overrides hard gates — when the negotiation ran,
+            # name the exact outcome instead of a generic "not routable".
+            neg = next((n for n in decision.negotiation if n.provider == pinned), None)
+            why = (f" — negotiated {neg.state}"
+                   + (f" ({', '.join(neg.policy_conflicts + neg.missing)})"
+                      if neg.policy_conflicts or neg.missing else "")
+                   if neg is not None else "")
             pinned_decision = replace(
                 decision, status="no_route", selected=[],
-                reason=f"pinned provider {pinned} is not routable for {target}")
+                reason=f"pinned provider {pinned} is not routable for {target}{why}")
         else:
             pinned_decision = replace(
                 decision, status="routed",

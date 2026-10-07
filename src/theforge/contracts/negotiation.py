@@ -62,6 +62,8 @@ class CapabilityRequirement:
     """
 
     schema: str = REQUIREMENT_SCHEMA
+    # Optional caller id, echoed back in results for audit correlation.
+    id: str | None = None
     capability: str
     required_actions: list[str] = field(default_factory=list)
     task_family: str | None = None

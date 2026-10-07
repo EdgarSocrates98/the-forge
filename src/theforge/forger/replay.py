@@ -225,7 +225,8 @@ def _reexecute(forger: Forger, store: RunStore, run_id: str, *,
         intent=task.intent, targets=list(task.targets), capability=task.requested_capability,
         action=task.requested_action, profile=task.budget_profile,
         allow_unverified=allow_unverified, approvals=approvals,
-        provider=receipt.provider.id, replay_of=run_id))
+        provider=receipt.provider.id, replay_of=run_id,
+        requirement=task.requirement))
     return ReplayReport(mode="execute", run_id=run_id, new_run=outcome.run_id,
                         comparison=_compare(store, run_id, outcome.run_id))
 

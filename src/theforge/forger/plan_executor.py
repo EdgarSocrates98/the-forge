@@ -38,6 +38,7 @@ from theforge.complexity import ComplexityConfig, assess, load_complexity_config
 from theforge.context import scan_workspace
 from theforge.context.scan import WorkspaceScan
 from theforge.contracts import (
+    CapabilityRequirement,
     Confidence,
     ContractError,
     ErrorInfo,
@@ -153,6 +154,9 @@ class PlanCommand:
     profile: ProfileRequest = "auto"
     plan_file: Path | None = None  # plan --from FILE; None: decompose the intent
     execute: bool = False  # False: plan only (outcome ``planned``)
+    # Cycle 4: fit demand negotiated at routing and re-checked per node whose
+    # capability resolves to it (canonicalized into node child tasks).
+    requirement: CapabilityRequirement | None = None
     # ``theforge resume``: the plan run to continue — its task and plan are reused
     # verbatim (byte-identical hashes) and intact prior nodes are re-hydrated
     # instead of re-executed (forger.resume).
@@ -274,7 +278,10 @@ class PlanExecutor:
         task = prior_task if prior_task is not None else TaskSpec(
             producer=PRODUCER, created_at=started, id=run_id, intent=command.intent,
             workspace_root=str(self.forger.root), targets=list(command.targets),
-            budget_profile=command.profile)
+            budget_profile=command.profile,
+            requested_capability=(command.requirement.capability
+                                  if command.requirement is not None else None),
+            requirement=command.requirement)
         # The complexity policy of an auto run: loaded once, never raises.
         config = None
         config_warnings: list[str] = []
@@ -408,7 +415,8 @@ class PlanExecutor:
             trace.profile = profile
             trace.telemetry.set_profile(profile)
             trace.prior = prior_outcomes(self.forger.store, command.resume_run)
-            plan = checked_plan(stored, records, profile)
+            plan = checked_plan(stored, records, profile,
+                                requirement=task.requirement)
             return _Planned(_resume_decision(task, plan, command.resume_run), plan,
                             "refused")
         if command.plan_file is not None:
@@ -422,7 +430,8 @@ class PlanExecutor:
             profile = profile_for(profile_name)
             trace.profile = profile
             trace.telemetry.set_profile(profile)
-            plan = checked_plan(replace(loaded, task_id=task.id), records, profile)
+            plan = checked_plan(replace(loaded, task_id=task.id), records, profile,
+                                requirement=task.requirement)
             return _Planned(_file_decision(task, plan), plan, "refused")
         decision = route(task, list(records.values()), scan.files,
                          decomposition_dependencies(self.forger.root, descriptor),
@@ -503,7 +512,9 @@ class PlanExecutor:
         for node in plan.nodes:
             node_task = replace(trace.task, targets=list(node.targets),
                                 requested_capability=node.capability,
-                                requested_action=node.action)
+                                requested_action=node.action,
+                                requirement=_node_requirement(
+                                    trace.command.requirement, node, trace.records))
             estimate, note = request_estimate(
                 trace.records[node.provider], node_task, node.capability, node.action,
                 transport_factory=self.forger.transport_factory,
@@ -751,7 +762,9 @@ class PlanExecutor:
                 intent=trace.task.intent, targets=list(node.targets),
                 capability=node.capability, action=node.action, profile=command.profile,
                 allow_unverified=command.allow_unverified, approvals=command.approvals,
-                provider=node.provider, node=binding, debug=command.debug))
+                provider=node.provider, node=binding, debug=command.debug,
+                requirement=_node_requirement(command.requirement, node,
+                                              trace.records)))
             if asked.status != "provider_failure" or attempt >= policy.max_attempts \
                     or not retryable(policy, asked.error.code if asked.error else None):
                 break
@@ -955,6 +968,31 @@ def _file_decision(task: TaskSpec, plan: ExecutionPlan) -> RoutingDecision:
                   for i, n in enumerate(plan.nodes)],
         reason=f"plan file ({plan.status}): {len(plan.nodes)} nodes: {chain}",
         confidence=Confidence(level="high" if plan.status == "validated" else "low"))
+
+
+def _node_requirement(requirement: CapabilityRequirement | None, node: PlanNode,
+                      records: Mapping[str, RegistryRecord]
+                      ) -> CapabilityRequirement | None:
+    """The plan task's requirement scoped to one node (cycle 4).
+
+    Only a node whose capability resolves — in its own provider's manifest — to
+    the same capability the requirement asks for inherits it, canonicalized so
+    the child ``TaskSpec`` invariant (``requirement.capability`` ==
+    ``requested_capability``) holds under aliases. Other nodes get ``None``:
+    a per-capability demand must not contaminate unrelated routing.
+    """
+    if requirement is None:
+        return None
+    record = records.get(node.provider)
+    manifest = record.manifest if record is not None else None
+    if manifest is None:
+        return None
+    node_resolved = manifest.resolve(node.capability)
+    req_resolved = manifest.resolve(requirement.capability)
+    if (node_resolved is None or req_resolved is None
+            or node_resolved[0].id != req_resolved[0].id):
+        return None
+    return replace(requirement, capability=node_resolved[0].id)
 
 
 def _node_state(execution: NodeExecution) -> NodePlanState:

@@ -103,6 +103,16 @@
         "handoff_required": {
           "type": "boolean"
         },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "input_artifact_types": {
           "items": {
             "type": "string"

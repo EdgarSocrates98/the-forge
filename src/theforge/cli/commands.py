@@ -214,15 +214,24 @@ def cmd_capabilities_search(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_requirement(path_arg: str | None) -> CapabilityRequirement | None:
+    """``--requirement REQ.json``: a ``CapabilityRequirement/v1`` document, or
+    ``None`` when the flag was not given."""
+    if path_arg is None:
+        return None
+    path = Path(path_arg)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return from_dict(CapabilityRequirement, data)
+    except (OSError, json.JSONDecodeError, ContractError) as exc:
+        raise UsageError(f"invalid capability requirement {path}: {exc}") from exc
+
+
 def cmd_capabilities_negotiate(args: argparse.Namespace) -> int:
     """``capabilities negotiate --requirement <req.json>`` — deterministic v2
     negotiation over the registered manifests (offline, cache only)."""
-    path = Path(args.requirement)
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        requirement = from_dict(CapabilityRequirement, data)
-    except (OSError, json.JSONDecodeError, ContractError) as exc:
-        raise UsageError(f"invalid capability requirement {path}: {exc}") from exc
+    requirement = _load_requirement(args.requirement)
+    assert requirement is not None  # --requirement is required on this command
     registry = Registry(find_forge_dir(_root(args)))
     performance, perf_warning = load_performance(_root(args))
     results = negotiate_all(requirement, registry.records(), performance=performance)
@@ -325,10 +334,18 @@ def cmd_ask(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)
     registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
+    requirement = _load_requirement(args.requirement)
+    capability = args.capability
+    if (requirement is not None and capability is not None
+            and capability != requirement.capability):
+        raise UsageError(
+            f"--capability {capability!r} disagrees with the requirement's "
+            f"capability {requirement.capability!r}")
     outcome = Forger(root, registry, RunStore(forge_dir)).ask(AskRequest(
-        intent=args.intent, targets=args.targets or ["."], capability=args.capability,
+        intent=args.intent, targets=args.targets or ["."], capability=capability,
         action=args.action, profile=args.profile, allow_unverified=args.allow_unverified,
-        approvals=frozenset(args.approvals or ()), debug=args.debug,
+        approvals=frozenset(args.approvals or ()), provider=args.use,
+        requirement=requirement, debug=args.debug,
     ))
     _warn(registry)
     # Redacted for display: an internal error's text is raw in memory (decision reason too).
@@ -371,7 +388,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         intent=args.intent, targets=args.targets or ["."], profile=args.profile,
         plan_file=Path(args.plan_file) if args.plan_file else None, execute=args.execute,
         approvals=frozenset(args.approvals or ()), allow_unverified=args.allow_unverified,
-        debug=args.debug,
+        requirement=_load_requirement(args.requirement), debug=args.debug,
     ))
     _warn(registry)
     # Redacted for display: an internal error's text is raw in memory.
