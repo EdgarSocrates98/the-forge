@@ -32,7 +32,11 @@ from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.installation import InstallationPlan
-from theforge.contracts.integrity import validate_plan_result, validate_plan_result_links, validate_receipt
+from theforge.contracts.integrity import (
+    validate_plan_result,
+    validate_plan_result_links,
+    validate_receipt,
+)
 from theforge.contracts.plan import (
     DecisionRecord,
     ExecutionPlan,
