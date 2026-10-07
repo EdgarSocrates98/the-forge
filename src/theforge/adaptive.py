@@ -55,6 +55,8 @@ def build_context_roi(
     cited_items = sum(item.context_items_cited or 0 for item in measured)
     utilization = (cited_items / delivered_items) if delivered_items else None
     limitations: list[str] = []
+    if task_family is None and comparable:
+        limitations.append("task family is unscoped; comparable runs may span families")
     if len(measured) < len(comparable):
         limitations.append("some comparable runs lack complete context measurements")
     if not comparable:
