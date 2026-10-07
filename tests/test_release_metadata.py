@@ -1,8 +1,8 @@
 """Release metadata must not drift across package and documentation surfaces."""
 
-from pathlib import Path
 import re
 import tomllib
+from pathlib import Path
 
 import theforge
 
