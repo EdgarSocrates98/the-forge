@@ -623,6 +623,7 @@ class PlanExecutor:
             StopSignals(
                 other_unresolved=unresolved,
                 candidate_unique_evidence=False,
+                verification_required=bool(valid_executions),
                 verification_satisfied=verification_satisfied,
             ),
         )
