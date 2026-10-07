@@ -222,6 +222,38 @@ def test_plan_run_checks_its_refs_telemetry_and_every_node_run(
 
 
 
+def test_joint_plan_result_receipt_tamper_cannot_hide_global_stop_link(
+        cross: CrossWorkspace) -> None:
+    store, plan_run, _ = _plan_run(cross.root)
+    result_path = store.run_dir(plan_run) / "plan-result.json"
+    receipt_path = store.run_dir(plan_run) / "receipt.json"
+
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    result["global_stop_sha256"] = "f" * 64
+    result_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    forged_result_sha = store.persisted_sha256(plan_run, "plan-result")
+    assert forged_result_sha is not None
+
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["plan"]["plan_result_sha256"] = forged_result_sha
+    receipt_path.write_text(
+        json.dumps(receipt, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    report = verify_run_hashes(store, plan_run)
+    divergence = next(
+        item
+        for item in report.divergences
+        if item.artifact == "plan-result.global_stop_sha256"
+    )
+    assert divergence.kind == "modified"
+    assert divergence.expected != divergence.actual
+
+
 def test_plan_run_detects_tampered_global_stop(cross: CrossWorkspace) -> None:
     store, plan_run, _ = _plan_run(cross.root)
     receipt = store.read_contract(plan_run, "receipt", ExecutionReceipt)
