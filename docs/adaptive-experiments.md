@@ -14,3 +14,31 @@ promoted, rejected, stale, cancelled.
 Cycle 4.1 never automatically promotes a challenger. Surface drift invalidates
 the experiment. Evaluation must be separated from the observations used to form
 the hypothesis when possible, preferably with a deterministic time cut-off.
+
+
+## Eligibility for review
+
+A challenger does not become reviewable merely because enough runs exist.
+Cycle 4.1 requires all of the following:
+
+- both champion and challenger have evaluation observations;
+- the holdout cut-off excludes hypothesis history when configured;
+- the challenger verification rate is not worse than the champion;
+- the challenger delivered-result rate is not worse than the champion;
+- at least one comparable measured economy axis improves (context bytes,
+  wall time or cost);
+- no other comparable measured economy axis regresses;
+- both provider surfaces still match the experiment contract.
+
+Unknown metrics stay unknown. An experiment with no measured economy gain
+remains `observing` rather than manufacturing a win.
+
+The CLI surface is read-only:
+
+```bash
+theforge economy experiment --spec experiment.json --json
+```
+
+It evaluates the spec against local `ExecutionObservation` history only.
+It never changes routing, budgets, profiles or provider trust, and it never
+promotes automatically.
