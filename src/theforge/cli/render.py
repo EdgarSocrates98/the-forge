@@ -1023,7 +1023,7 @@ def plan(data: dict[str, Any]) -> str:
     lines += plan_sections(data.get("plan"), data.get("result"), None,
                            data.get("installation"), data.get("decision"),
                            data.get("semantic_proposal"), data.get("capability_graph"),
-                           data.get("economy"))
+                           data.get("economy"), data.get("global_stop"))
     error = data.get("error")
     if error:
         lines.append(f"Error:       {_clean(error['code'])}: {_detail(error['detail'])} "
