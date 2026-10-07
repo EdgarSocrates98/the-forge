@@ -46,3 +46,11 @@ promotes automatically.
 
 Task family é comparada exatamente, inclusive o estado não resolvido (`None`).
 Um experimento não pode misturar silenciosamente famílias distintas.
+
+
+### Holdout temporal
+
+`evaluation_after` é o corte explícito preferido. Se `evaluation_after` estiver
+ausente e `discovery_before` existir, o core usa `discovery_before` como
+corte mínimo da avaliação. Runs no corpus de descoberta/hipótese não contam como
+evidência de validação.
