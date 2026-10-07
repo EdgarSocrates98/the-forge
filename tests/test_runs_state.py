@@ -19,6 +19,7 @@ from theforge.contracts import (
     ExecutionReceipt,
     ExecutionResult,
     Handoff,
+    GlobalStopDecision,
     InstallationPlan,
     IntegrityError,
     Metric,
@@ -385,6 +386,10 @@ def _wave_d_artifacts() -> dict[str, tuple[type, dict[str, Any]]]:
                                        "result_sha256": H_A}],
             "synthesis": {"nodes": []}, "reproducibility": {"level": "unknown"},
             "limitations": [SECRET]}),
+        "global-stop": (GlobalStopDecision, {
+            "producer": WP, "created_at": WTS, "run_id": "p1",
+            "action": "stop_sufficient_evidence", "information_gain": "unknown",
+            "reasons": [SECRET]}),
         "workspace-descriptor": (WorkspaceDescriptor, {
             "producer": WP, "created_at": WTS, "root": "/ws",
             "repositories": [{"path": "."}], "limitations": [SECRET]}),
@@ -422,6 +427,12 @@ def test_wave_d_artifact_is_redacted_hashed_and_reread_strictly(
         tmp_path: Path, name: str) -> None:
     cls, data = _wave_d_artifacts()[name]
     store, run_id = _store_with_run(tmp_path)
+    if name == "plan-result":
+        stop_cls, stop_data = _wave_d_artifacts()["global-stop"]
+        stop_sha = store.write(
+            run_id, "global-stop", from_dict(stop_cls, stop_data, strict=True)
+        )
+        data = {**data, "global_stop_sha256": stop_sha}
     digest = store.write(run_id, name, from_dict(cls, data, strict=True))
     text = (store.run_dir(run_id) / f"{name}.json").read_text("utf-8")
     assert "hunter2xyz" not in text and "password=[REDACTED]" in text
@@ -435,15 +446,26 @@ def test_wave_d_artifact_is_redacted_hashed_and_reread_strictly(
         store.read_contract(run_id, name, cls)
 
 
-def _write_plan_run(store: RunStore, run_id: str) -> tuple[str, str, str]:
+def _write_plan_run(store: RunStore, run_id: str) -> tuple[str, str, str, str]:
     artifacts = _wave_d_artifacts()
     plan_cls, plan_data = artifacts["plan"]
     plan_sha = store.write(run_id, "plan", from_dict(plan_cls, plan_data, strict=True))
+    stop_cls, stop_data = artifacts["global-stop"]
+    stop_data = {**stop_data, "run_id": run_id}
+    stop_sha = store.write(
+        run_id, "global-stop", from_dict(stop_cls, stop_data, strict=True)
+    )
     result_cls, result_data = artifacts["plan-result"]
-    result_sha = store.write(run_id, "plan-result",
-                             from_dict(result_cls, result_data, strict=True))
+    result_data = {
+        **result_data,
+        "plan_run": run_id,
+        "global_stop_sha256": stop_sha,
+    }
+    result_sha = store.write(
+        run_id, "plan-result", from_dict(result_cls, result_data, strict=True)
+    )
     telemetry_sha = store.write(run_id, "telemetry", make_telemetry(run_id))
-    return plan_sha, result_sha, telemetry_sha
+    return plan_sha, result_sha, telemetry_sha, stop_sha
 
 
 def make_plan_receipt(run_id: str, plan_sha: str, plan_result: str | None,
@@ -454,8 +476,14 @@ def make_plan_receipt(run_id: str, plan_sha: str, plan_result: str | None,
 
 def test_plan_receipt_matching_disk_is_written_and_reread(tmp_path: Path) -> None:
     store, run_id = _store_with_run(tmp_path)
-    plan_sha, result_sha, telemetry_sha = _write_plan_run(store, run_id)
-    receipt = make_plan_receipt(run_id, plan_sha, result_sha, telemetry_sha256=telemetry_sha)
+    plan_sha, result_sha, telemetry_sha, stop_sha = _write_plan_run(store, run_id)
+    receipt = make_plan_receipt(
+        run_id,
+        plan_sha,
+        result_sha,
+        telemetry_sha256=telemetry_sha,
+        global_stop_sha256=stop_sha,
+    )
     store.write(run_id, "receipt", receipt)
     assert store.read_contract(run_id, "receipt", ExecutionReceipt) == receipt
 
@@ -475,15 +503,24 @@ def test_planned_receipt_without_plan_result_is_written(tmp_path: Path) -> None:
 def test_plan_receipt_with_diverging_hash_is_refused_without_writing(
         tmp_path: Path, diverging: str) -> None:
     store, run_id = _store_with_run(tmp_path)
-    plan_sha, result_sha, telemetry_sha = _write_plan_run(store, run_id)
+    plan_sha, result_sha, telemetry_sha, stop_sha = _write_plan_run(store, run_id)
     if diverging == "plan-result":
-        receipt = make_plan_receipt(run_id, plan_sha, H_OTHER, telemetry_sha256=telemetry_sha)
+        receipt = make_plan_receipt(
+            run_id, plan_sha, H_OTHER, telemetry_sha256=telemetry_sha,
+            global_stop_sha256=stop_sha
+        )
         field = "plan.plan_result_sha256"
     elif diverging == "telemetry":
-        receipt = make_plan_receipt(run_id, plan_sha, result_sha, telemetry_sha256=H_OTHER)
+        receipt = make_plan_receipt(
+            run_id, plan_sha, result_sha, telemetry_sha256=H_OTHER,
+            global_stop_sha256=stop_sha
+        )
         field = "telemetry_sha256"
     else:
-        receipt = make_plan_receipt(run_id, plan_sha, None, telemetry_sha256=telemetry_sha)
+        receipt = make_plan_receipt(
+            run_id, plan_sha, None, telemetry_sha256=telemetry_sha,
+            global_stop_sha256=stop_sha
+        )
         field = "plan.plan_result_sha256"
     with pytest.raises(IntegrityError) as exc:
         store.write(run_id, "receipt", receipt)
