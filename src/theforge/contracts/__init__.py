@@ -31,6 +31,15 @@ from theforge.contracts.decisions import (
     RememberedDecision,
 )
 from theforge.contracts.diagnostic import Diagnostic, DiagnosticCause, DiagnosticFrame
+from theforge.contracts.economy import (
+    ECONOMY_RECEIPT_SCHEMA,
+    ECONOMY_ROLLUP_SCHEMA,
+    EconomyMetric,
+    EconomyRollup,
+    MetricStatus,
+    NodeEconomy,
+    ProviderEconomyReceipt,
+)
 from theforge.contracts.envelope import (
     PROTOCOL_V1,
     ExecuteRequest,
@@ -118,7 +127,7 @@ from theforge.contracts.routing import (
     Selection,
 )
 from theforge.contracts.task import TaskSpec
-from theforge.contracts.telemetry import ProfileSnapshot, RunTelemetry, Span
+from theforge.contracts.telemetry import NativeTrace, ProfileSnapshot, RunTelemetry, Span
 from theforge.contracts.types import ErrorInfo, Producer
 from theforge.contracts.verification import (
     ReproducibilityInfo,
@@ -135,7 +144,7 @@ from theforge.contracts.workspace import (
 
 __all__ = [
     "BUDGET_SCHEMA", "CAPABILITY_GRAPH_SCHEMA", "COMPLEXITY_SCHEMA", "DECISION_SCHEMA",
-    "DECISIONS_SCHEMA", "INTEL_SCHEMA",
+    "DECISIONS_SCHEMA", "ECONOMY_RECEIPT_SCHEMA", "ECONOMY_ROLLUP_SCHEMA", "INTEL_SCHEMA",
     "OPERATION_CLASS_LIMITATION", "PERFORMANCE_SCHEMA", "PLAN_STATE_SCHEMA",
     "PROTOCOL_V1", "RESOLVE_REQUEST_SCHEMA", "ROUTING_PROPOSAL_SCHEMA", "Artifact",
     "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
@@ -146,19 +155,20 @@ __all__ = [
     "ComplexityLevel", "Confidence", "ContextFile", "ContextPack", "ContextRequest",
     "ContextRequestItem", "ContractError", "DecisionKind", "DecisionMemory",
     "DecisionOption", "DecisionRecord", "Diagnostic",
-    "DiagnosticCause", "DiagnosticFrame",
+    "DiagnosticCause", "DiagnosticFrame", "EconomyMetric", "EconomyRollup",
     "ErrorInfo", "Evidence", "EvidenceSource", "ExcludedFile", "ExecuteRequest",
     "ExecutionInfo", "ExecutionPlan",
     "ExecutionReceipt", "ExecutionResult", "ExplainReport", "Finding", "ForgeManifest",
     "GitSummary", "GraphEdge", "GraphNode", "Handoff", "HandoffItem", "HandoffOrigin",
     "HealthCheck", "HealthReport", "InstallationItem", "InstallationPlan",
     "IntegrityError", "IntelFingerprints",
-    "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "NodeOutcome",
+    "LineRange", "Location", "MatchedSignals", "Metric", "Metrics", "MetricStatus",
+    "NativeTrace", "NodeEconomy", "NodeOutcome",
     "PlanDependency", "PlanEstimate", "PlanNode", "PlanNodeState", "PlanRefs",
     "PlanRequest", "PlanResult", "PlanState",
     "PlanViolation", "PolicyDecision", "Producer", "ProfileSnapshot", "ProjectIntel",
-    "ProposalChoice", "ProviderCapabilityPerformance", "ProviderPerformance",
-    "ProviderReceipt", "ProviderSurfaceIdentity",
+    "ProposalChoice", "ProviderCapabilityPerformance", "ProviderEconomyReceipt",
+    "ProviderPerformance", "ProviderReceipt", "ProviderSurfaceIdentity",
     "ReceiptInputs",
     "ReceiptProvider", "RememberedDecision", "RepositoryInfo", "ReproducibilityInfo",
     "Request", "ResolveCandidate", "ResolveRequest", "Response",

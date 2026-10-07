@@ -201,6 +201,12 @@ class ResultDraft:
     # The provider-native run receipt pointer ({ref, sha256}), when the
     # specialist wrote one the run can drill into. Never its contents.
     provider_receipt: Mapping[str, str] | None = None
+    # The provider's internal economy summary (ProviderEconomyReceipt fields),
+    # when it keeps its own accounting; per-metric status, never hidden zeros.
+    provider_economy: Mapping[str, Any] | None = None
+    # The native trace pointer ({ref, summary, critical_path}), when the
+    # specialist records internal traces; expansion stays on-demand.
+    native_trace: Mapping[str, Any] | None = None
     # The complete native output, written to the spill artifact when the result is above
     # INLINE_LIMIT: bytes as is, anything else as JSON; None spills the complete result.
     native_output: object = None
@@ -446,6 +452,10 @@ def finalize(result: ResultDraft, cwd: Path) -> Reply:
     }
     if result.provider_receipt is not None:
         payload["provider_receipt"] = dict(result.provider_receipt)
+    if result.provider_economy is not None:
+        payload["provider_economy"] = dict(result.provider_economy)
+    if result.native_trace is not None:
+        payload["native_trace"] = dict(result.native_trace)
     if inline_size(payload) > INLINE_LIMIT:
         return _spill(result, payload, cwd)
     return Reply(status=status, payload=payload, limitations=list(result.limitations),

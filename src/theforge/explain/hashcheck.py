@@ -149,6 +149,7 @@ def _recorded(receipt: ExecutionReceipt) -> dict[str, str | None]:
         "plan-result": refs.plan_result_sha256 if refs else None,
         "plan-state": refs.plan_state_sha256 if refs else None,
         "decision": refs.decision_sha256 if refs else None,
+        "economy": refs.economy_sha256 if refs else None,
     }
     for index, name in enumerate(_ROUNDS):
         hashes[name] = rounds[index] if index < len(rounds) else None

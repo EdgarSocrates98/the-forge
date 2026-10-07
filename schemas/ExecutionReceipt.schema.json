@@ -189,6 +189,16 @@
                 }
               ]
             },
+            "economy_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "graph_sha256": {
               "anyOf": [
                 {

@@ -75,6 +75,9 @@ class PlanRefs:
     semantic_proposal_sha256: str | None = None
     # On-disk hash of the DecisionRecord a ``debate`` plan produced (None otherwise).
     decision_sha256: str | None = None
+    # On-disk hash of the EconomyRollup composed from node provider-economy
+    # receipts (None when no node reported economy).
+    economy_sha256: str | None = None
     # On-disk hash of the run's final PlanState snapshot (None when the run never
     # reached a validated plan, or in runs older than the scheduler states).
     plan_state_sha256: str | None = None

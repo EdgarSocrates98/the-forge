@@ -44,6 +44,8 @@ def main() -> int:
     evhash = manifest.pop("hash_evidence", None)  # test-only: e1 carries a bare sha256
     findings = manifest.pop("findings", None)  # test-only: replace f1 findings
     provider_receipt = manifest.pop("provider_receipt", None)  # test-only result field
+    provider_economy = manifest.pop("provider_economy", None)  # test-only result field
+    native_trace = manifest.pop("native_trace", None)  # test-only result field
     verdict = manifest.pop("verdict", {"status": "passed"})  # test-only VerifyVerdict
     verify_status = manifest.pop("verify_status", "ok")  # test-only envelope status
     resolution = manifest.pop("resolution", None)  # test-only RoutingProposal
@@ -143,6 +145,10 @@ def main() -> int:
         }
         if isinstance(provider_receipt, dict):  # test-only: a native receipt pointer
             result["provider_receipt"] = provider_receipt
+        if isinstance(provider_economy, dict):  # test-only: economy summary
+            result["provider_economy"] = provider_economy
+        if isinstance(native_trace, dict):  # test-only: native trace pointer
+            result["native_trace"] = native_trace
         return reply("ok", result)
     return reply("refused", error=err("FIXTURE-OP-UNSUPPORTED", op, "op"))
 

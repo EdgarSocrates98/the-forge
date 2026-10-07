@@ -30,6 +30,7 @@ from theforge.contracts import (
 from theforge.contracts.base import ContractError
 from theforge.contracts.canonical import utc_now
 from theforge.contracts.codes import family_of
+from theforge.contracts.economy import EconomyRollup
 from theforge.contracts.explain import (
     ContextSection,
     PlanSection,
@@ -135,7 +136,8 @@ def _result(result: ExecutionResult) -> ResultSection:
     return ResultSection(status=result.status, findings=list(result.findings),
                          evidence_by_epistemic=dict(sorted(by_epistemic.items())),
                          artifacts=len(result.artifacts),
-                         duration_ms=result.metrics.duration_ms)
+                         duration_ms=result.metrics.duration_ms,
+                         native_trace=result.native_trace)
 
 
 def _plan(found: _Artifacts) -> PlanSection | None:
@@ -143,10 +145,11 @@ def _plan(found: _Artifacts) -> PlanSection | None:
     result = found.typed("plan-result", PlanResult)
     descriptor = found.typed("workspace-descriptor", WorkspaceDescriptor)
     installation = found.typed("installation", InstallationPlan)
+    economy = found.typed("economy", EconomyRollup)
     if plan is None:
         return None
     return PlanSection(plan=plan, result=result, workspace_descriptor=descriptor,
-                       installation=installation)
+                       installation=installation, economy=economy)
 
 
 def build_explain_report(store: RunStore, run_id: str, *,
@@ -166,7 +169,7 @@ def build_explain_report(store: RunStore, run_id: str, *,
     result = found.typed("result", ExecutionResult)
     verification = found.typed("verification", VerificationResult)
     for name in ("risk", "telemetry", *_ROUNDS, "handoff", "graph", "diagnostic",
-                 "decision", "plan-state"):
+                 "decision", "economy", "plan-state"):
         found.typed(name, ARTIFACT_TYPES[name])  # drop the ones that do not parse
     plan = _plan(found)
     telemetry = found.raw.get("telemetry")

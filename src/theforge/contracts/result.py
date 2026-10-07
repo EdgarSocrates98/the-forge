@@ -5,6 +5,8 @@ from typing import Literal
 
 from theforge.contracts.base import ContractError
 from theforge.contracts.context import LineRange
+from theforge.contracts.economy import ProviderEconomyReceipt
+from theforge.contracts.telemetry import NativeTrace
 from theforge.contracts.types import (
     SHA256_RE,
     Epistemic,
@@ -16,7 +18,7 @@ from theforge.contracts.types import (
 
 __all__ = ["RESULT_SCHEMA", "Artifact", "ContextRequest", "ContextRequestItem", "Evidence",
            "EvidenceSource", "ExecutionResult", "Finding", "Location", "Metric", "Metrics",
-           "ProviderReceipt"]
+           "NativeTrace", "ProviderEconomyReceipt", "ProviderReceipt"]
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
 
@@ -137,6 +139,13 @@ class ExecutionResult:
     # Provider-native run receipt (ref + hash, never the content); nested-receipt
     # drill-down — the run receipt copies it as is.
     provider_receipt: ProviderReceipt | None = None
+    # The provider's internal economy for this execution, summarized
+    # (ProviderEconomyReceipt/v1); a plan run aggregates them into the
+    # EconomyRollup. None when the provider does not report economy.
+    provider_economy: ProviderEconomyReceipt | None = None
+    # Bounded pointer to the provider's internal trace (ref + summary, never the
+    # spans); the run's node span links to it via ``native_trace_ref``.
+    native_trace: NativeTrace | None = None
 
     def __post_init__(self) -> None:
         if self.schema != RESULT_SCHEMA:

@@ -20,6 +20,42 @@ SPAN_NAME_MAX = 80  # span names are short labels: "routing", "provider:<id>"…
 SPAN_ATTRS_MAX = 16  # bounded attributes per span
 SPAN_ATTR_LEN = 120  # attribute keys/values are short strings
 
+NATIVE_TRACE_SUMMARY_MAX = 240  # a line, not a dump
+NATIVE_TRACE_PATH_MAX = 32   # critical-path stages; deeper detail stays native
+
+
+@dataclass(frozen=True, kw_only=True)
+class NativeTrace:
+    """A pointer plus bounded summary of the provider's internal trace (Wave F).
+
+    Trace federation keeps internal spans inside the specialist: the provider
+    returns ``ref`` (its native trace identity, e.g. an agentops run id) and a
+    short ``summary``/``critical_path``; the node span carries only the
+    ``native_trace_ref`` link. Expansion is on-demand, never imported whole.
+    """
+
+    ref: str
+    summary: str = ""
+    critical_path: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.ref:
+            raise ContractError("native_trace.ref must not be empty")
+        if len(self.ref) > SPAN_ATTR_LEN:
+            raise ContractError(
+                f"native_trace.ref exceeds {SPAN_ATTR_LEN} chars")
+        if len(self.summary) > NATIVE_TRACE_SUMMARY_MAX:
+            raise ContractError(
+                f"native_trace.summary exceeds {NATIVE_TRACE_SUMMARY_MAX} chars")
+        if len(self.critical_path) > NATIVE_TRACE_PATH_MAX:
+            raise ContractError(
+                f"native_trace.critical_path exceeds {NATIVE_TRACE_PATH_MAX} entries")
+        for stage in self.critical_path:
+            if not isinstance(stage, str) or len(stage) > SPAN_ATTR_LEN:
+                raise ContractError(
+                    f"native_trace.critical_path entries are strings "
+                    f"of at most {SPAN_ATTR_LEN} chars")
+
 
 @dataclass(frozen=True, kw_only=True)
 class Span:
