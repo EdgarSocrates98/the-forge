@@ -37,7 +37,9 @@ class GlobalStopDecision:
     information_gain: InformationGain
     reasons: list[str] = field(metadata={"min_items": 1})
     unresolved: list[str] = field(default_factory=list)
-    budget_remaining: float | None = None
+    # Remaining provider execute-call slots in the plan budget; None when no
+    # comparable plan-call budget is available.
+    budget_remaining: int | None = None
     verification_required: bool = False
     verification_satisfied: bool = False
 
