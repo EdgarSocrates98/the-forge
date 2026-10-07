@@ -37,10 +37,12 @@ intake. Behavior is unchanged. Commit
 - API Forge CI — SUCCESS;
 - API change control — SUCCESS.
 
+API Forge main closure commit: `4a7356e9bba8cb5177d5632b5b2106ae52d37c3c`.
+
 ## Remote validation
 
 GitHub Actions runs for The Forge currently terminate without job steps in the
-observed environment. The observed Cycle 4.1 run `37648665064` produced all
+observed environment. The latest observed Cycle 4.1 run `37669972394` produced all
 10 expected Linux/Windows test/package jobs, but every job returned with
 `steps = null`. Treat this as `REMOTE_BLOCKED`, not a code/test failure and
 not a green run, until a runner executes actual steps.
