@@ -13,9 +13,9 @@ from typing import Any, Final, TypeVar
 from theforge.contracts import (
     ContextPack,
     EconomyRollup,
-    GlobalStopDecision,
     ExecutionReceipt,
     ExecutionResult,
+    GlobalStopDecision,
     RiskAssessment,
     RoutingDecision,
     RunTelemetry,

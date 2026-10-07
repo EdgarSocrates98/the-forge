@@ -16,8 +16,8 @@ from theforge.contracts import (
 )
 from theforge.contracts import types as T
 from theforge.contracts.codes import Codes
-from theforge.contracts.integrity import validate_plan_result_links
 from theforge.contracts.handoff import HANDOFF_SCHEMA, Handoff, HandoffItem, HandoffOrigin
+from theforge.contracts.integrity import validate_plan_result_links
 from theforge.contracts.plan import (
     PLAN_RESULT_SCHEMA,
     PLAN_SCHEMA,

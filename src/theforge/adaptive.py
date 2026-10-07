@@ -3,7 +3,6 @@
 from dataclasses import replace
 from datetime import datetime
 from statistics import median
-from typing import Literal, cast
 
 from theforge.contracts.adaptive import (
     ContextBudgetRecommendation,
@@ -134,7 +133,7 @@ def recommend_context_budget(
         task_family=roi.task_family,
         current_budget_bytes=current_budget_bytes,
         suggested_budget_bytes=suggested,
-        maturity=cast(Literal["warming", "mature"], roi.maturity),
+        maturity=roi.maturity,
         basis=[
             f"{roi.measured_runs} measured comparable runs",
             f"{roi.verified_runs}/{roi.runs} comparable runs forge-verified",

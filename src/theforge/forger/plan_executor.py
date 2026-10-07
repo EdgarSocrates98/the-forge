@@ -37,7 +37,6 @@ from theforge.capability_graph import build_capability_graph
 from theforge.complexity import ComplexityConfig, assess, load_complexity_config, task_inputs
 from theforge.context import scan_workspace
 from theforge.context.scan import WorkspaceScan
-from theforge.control import StopSignals, decide_global_stop
 from theforge.contracts import (
     CapabilityRequirement,
     Confidence,
@@ -84,6 +83,7 @@ from theforge.contracts.types import (
 )
 from theforge.contracts.verification import ReproducibilityInfo, VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
+from theforge.control import StopSignals, decide_global_stop
 from theforge.diagnostics import build_diagnostic
 from theforge.economy import resolve_budget
 from theforge.errors import PersistenceError, UsageError

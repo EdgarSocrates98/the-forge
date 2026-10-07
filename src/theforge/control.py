@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 
 from theforge.contracts.canonical import utc_now
-from theforge.contracts.control import GlobalStopDecision, InformationGain
+from theforge.contracts.control import GlobalStopDecision, InformationGain, StopAction
 from theforge.meta import PRODUCER
 
 
@@ -56,6 +56,7 @@ def decide_global_stop(run_id: str, signals: StopSignals) -> GlobalStopDecision:
     gain = expected_information_gain(signals)
     unresolved = [*signals.critical_unresolved, *signals.other_unresolved]
 
+    action: StopAction
     if signals.policy_blocked:
         action = "stop_policy"
         reasons = ["global policy blocks the next execution"]

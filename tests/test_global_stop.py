@@ -1,7 +1,8 @@
 """Cycle 4.1 global stop / information-gain invariants."""
 
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from theforge.contracts import ContractError, GlobalStopDecision, from_dict, to_dict
 from theforge.control import StopSignals, decide_global_stop, expected_information_gain

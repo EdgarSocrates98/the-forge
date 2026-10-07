@@ -10,8 +10,6 @@ from pathlib import Path
 from typing import Any, Final, cast
 
 from theforge.adaptive import advance_experiment, build_context_roi, recommend_context_budget
-
-_EXPERIMENT_SPEC_BYTES = 64 * 1024
 from theforge.cli import render
 from theforge.context import scan_workspace
 from theforge.contracts import CapabilityRequirement, StrategyExperiment, to_dict
@@ -41,6 +39,8 @@ from theforge.runs import RunStore
 from theforge.security.redact import redact
 from theforge.state import find_forge_dir, init_workspace, require_forge_dir
 from theforge.workspace import describe_workspace
+
+_EXPERIMENT_SPEC_BYTES = 64 * 1024
 
 EXIT_BY_STATUS = {"ok": 0, "partial": 0, "planned": 0, "ambiguous": 3, "no_route": 3,
                   "refused": 4, "provider_failure": 4}

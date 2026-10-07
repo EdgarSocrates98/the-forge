@@ -13,7 +13,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 REMOTE_VERIFIED = "REMOTE_VERIFIED"
 REMOTE_BLOCKED = "REMOTE_BLOCKED"
@@ -30,7 +30,7 @@ def _jobs(payload: Any) -> list[dict[str, Any]]:
         raise ValueError("payload must be a jobs object or a list of jobs")
     if not all(isinstance(job, dict) for job in jobs):
         raise ValueError("jobs must contain JSON objects")
-    return jobs
+    return cast(list[dict[str, Any]], jobs)
 
 
 def classify(payload: Any) -> dict[str, Any]:
