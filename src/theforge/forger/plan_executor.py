@@ -36,6 +36,7 @@ from typing import Final
 from theforge.capability_graph import build_capability_graph
 from theforge.complexity import ComplexityConfig, assess, load_complexity_config, task_inputs
 from theforge.context import scan_workspace
+from theforge.control import StopSignals, decide_global_stop
 from theforge.context.scan import WorkspaceScan
 from theforge.contracts import (
     CapabilityRequirement,
@@ -194,6 +195,7 @@ class _PlanTrace:
     decision_sha: str | None = None  # DecisionRecord of a debate plan, when produced
     decision_record: DecisionRecord | None = None  # the object, for decision memory (I3)
     economy_sha: str | None = None  # EconomyRollup, when any node reported economy
+    global_stop_sha: str | None = None  # terminal GlobalStopDecision (Cycle 4.1)
     routing_sha: str | None = None
     plan: ExecutionPlan | None = None
     plan_sha: str | None = None
@@ -596,6 +598,30 @@ class PlanExecutor:
         if economy is not None:
             economy_sha = self.forger.store.write(trace.run_id, "economy", economy)
             trace.economy_sha = economy_sha
+        # Global continuation is a core decision, never a provider instruction.
+        # At this terminal point there is no remaining planned candidate, so any
+        # unresolved question has no expected gain inside this plan; callers may
+        # create a new plan instead of silently extending the current one.
+        unresolved = sorted({
+            *plan.unknowns,
+            *(unknown
+              for execution in trace.executions
+              if execution.result is not None
+              for unknown in execution.result.unknowns),
+        })
+        stop = decide_global_stop(
+            trace.run_id,
+            StopSignals(
+                other_unresolved=unresolved,
+                candidate_unique_evidence=False,
+                verification_satisfied=all(
+                    execution.verification is None
+                    or execution.verification.forge.status == "passed"
+                    for execution in trace.executions
+                ),
+            ),
+        )
+        trace.global_stop_sha = self.forger.store.write(trace.run_id, "global-stop", stop)
         result = PlanResult(
             producer=PRODUCER, created_at=utc_now(), status=status, plan_run=trace.run_id,
             order=order, nodes=outcomes, synthesis=synthesize(plan, trace.executions),
@@ -899,6 +925,7 @@ class PlanExecutor:
                           semantic_proposal_sha256=trace.semantic_proposal_sha,
                           decision_sha256=trace.decision_sha,
                           economy_sha256=trace.economy_sha,
+                          global_stop_sha256=trace.global_stop_sha,
                           plan_state_sha256=trace.plan_state_sha,
                           plan_result_sha256=trace.plan_result_sha))
         store.write(trace.run_id, "receipt", receipt)
