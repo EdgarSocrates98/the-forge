@@ -24,6 +24,14 @@ class StopSignals:
     repeated_failures: int = 0
     repeated_failure_limit: int = 2
 
+    def __post_init__(self) -> None:
+        if self.repeated_failures < 0:
+            raise ValueError("stop signals: repeated_failures cannot be negative")
+        if self.repeated_failure_limit <= 0:
+            raise ValueError("stop signals: repeated_failure_limit must be positive")
+        if self.budget_remaining is not None and self.budget_remaining < 0:
+            raise ValueError("stop signals: budget_remaining cannot be negative")
+
 
 def expected_information_gain(signals: StopSignals) -> InformationGain:
     """Classify expected incremental value without invented probabilities."""
