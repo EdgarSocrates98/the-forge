@@ -155,6 +155,9 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_mcp_awareness.py": ("unit", "contract", "security", "integration"),
     "test_adversarial_cycle4.py": ("security", "unit", "integration"),
     "test_reality_proofs.py": ("e2e", "integration"),
+    # cycle-4.1 global control / adaptive learning
+    "test_global_stop.py": ("unit", "contract", "security"),
+    "test_adaptive_cycle41.py": ("unit", "contract"),
 }
 
 
