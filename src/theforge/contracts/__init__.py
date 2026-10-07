@@ -1,5 +1,10 @@
 """Versioned Forge contracts (v1)."""
 
+from theforge.contracts.adaptive import (
+    ContextBudgetRecommendation,
+    ContextROI,
+    StrategyExperiment,
+)
 from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.budget import BUDGET_SCHEMA, RunBudget
 from theforge.contracts.capability_graph import (
@@ -16,6 +21,7 @@ from theforge.contracts.complexity import (
     ComplexityDimension,
     ComplexityLevel,
 )
+from theforge.contracts.control import GlobalStopDecision
 from theforge.contracts.context import (
     ContextFile,
     ContextPack,
@@ -187,7 +193,7 @@ __all__ = [
     "DECISIONS_SCHEMA", "ECONOMY_RECEIPT_SCHEMA", "ECONOMY_ROLLUP_SCHEMA", "INTEL_SCHEMA",
     "OPERATION_CLASS_LIMITATION", "PERFORMANCE_SCHEMA", "PLAN_STATE_SCHEMA",
     "PROTOCOL_V1", "RESOLVE_REQUEST_SCHEMA", "ROUTING_PROPOSAL_SCHEMA", "Artifact",
-    "Candidate", "CapEdge", "CapEdgeKind", "CapNode",
+    "Candidate", "CapEdge", "CapEdgeKind", "CapNode", "ContextBudgetRecommendation", "ContextROI",
     "CapNodeKind",
     "Capability", "CapabilityContext", "CapabilityGraph", "CapabilityNegotiationResult",
     "CapabilityOffer", "CapabilityRelations", "CapabilityRequirement",
@@ -225,7 +231,7 @@ __all__ = [
     "Request", "ResolveCandidate", "ResolveRequest", "Response", "RollbackStrategy",
     "RiskAssessment", "RiskDimensions", "RoutingDecision", "RoutingProposal",
     "RunBudget", "RunTelemetry", "SURFACE_IDENTITY_SCHEMA", "Selection",
-    "ShadowRecommendation",
+    "ShadowRecommendation", "StrategyExperiment",
     "SemanticPlanDependency", "SemanticPlanNode", "SemanticPlanOption",
     "SemanticPlanProposal", "Signals", "Span",
     "RuntimeRequirements",
