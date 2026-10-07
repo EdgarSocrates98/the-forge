@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any, Final, cast
 
 from theforge.adaptive import advance_experiment, build_context_roi, recommend_context_budget
+
+_EXPERIMENT_SPEC_BYTES = 64 * 1024
 from theforge.cli import render
 from theforge.context import scan_workspace
 from theforge.contracts import CapabilityRequirement, StrategyExperiment, to_dict
@@ -318,6 +320,11 @@ def cmd_economy_experiment(args: argparse.Namespace) -> int:
     root = _root(args)
     path = Path(args.spec)
     try:
+        size = path.stat().st_size
+        if size > _EXPERIMENT_SPEC_BYTES:
+            raise UsageError(
+                f"strategy experiment {path} exceeds {_EXPERIMENT_SPEC_BYTES} bytes"
+            )
         payload = json.loads(path.read_text(encoding="utf-8"))
         experiment = from_dict(StrategyExperiment, payload, strict=True)
     except (OSError, json.JSONDecodeError, ContractError) as exc:
