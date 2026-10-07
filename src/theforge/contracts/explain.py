@@ -11,6 +11,7 @@ from typing import Any, Literal
 from theforge.contracts.base import ContractError
 from theforge.contracts.context import GitSummary
 from theforge.contracts.economy import EconomyRollup
+from theforge.contracts.control import GlobalStopDecision
 from theforge.contracts.installation import InstallationPlan
 from theforge.contracts.plan import ExecutionPlan, PlanResult
 from theforge.contracts.result import Finding, ProviderReceipt
@@ -101,6 +102,7 @@ class PlanSection:
     installation: InstallationPlan | None = None
     # The cross-provider EconomyRollup (None when no node reported economy).
     economy: EconomyRollup | None = None
+    global_stop: GlobalStopDecision | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
