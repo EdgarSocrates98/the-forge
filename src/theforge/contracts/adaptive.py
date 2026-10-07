@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import Producer
+from theforge.contracts.types import SHA256_RE, Producer, check_sha256
 
 CONTEXT_ROI_SCHEMA = "theforge/ContextROI/v1"
 CONTEXT_RECOMMENDATION_SCHEMA = "theforge/ContextBudgetRecommendation/v1"
@@ -122,6 +122,10 @@ class StrategyExperiment:
     observations: int = 0
     verified_observations: int = 0
     reasons: list[str] = field(default_factory=list)
+    approval_sha256: str | None = field(
+        default=None,
+        metadata={"pattern": SHA256_RE.pattern},
+    )
     operator_approval_required: Literal[True] = True
 
     def __post_init__(self) -> None:
@@ -152,6 +156,19 @@ class StrategyExperiment:
             )
         if not self.operator_approval_required:
             raise ContractError("strategy experiment: promotion requires operator approval")
+        if self.approval_sha256 is not None:
+            check_sha256(self.approval_sha256, field="approval_sha256")
+        governed_states = {
+            "eligible_for_review", "promoted", "rejected", "stale", "cancelled"
+        }
+        if self.state in governed_states and not self.reasons:
+            raise ContractError(
+                f"strategy experiment: state {self.state!r} requires reasons"
+            )
+        if self.state == "promoted" and self.approval_sha256 is None:
+            raise ContractError(
+                "strategy experiment: promoted state requires approval_sha256"
+            )
         timestamps: dict[str, datetime] = {}
         for name in ("discovery_before", "evaluation_after"):
             raw = getattr(self, name)
