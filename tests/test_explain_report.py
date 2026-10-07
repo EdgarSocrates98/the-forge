@@ -222,7 +222,8 @@ def test_plan_run_report_has_plan_nodes_handoffs_and_plan_telemetry(
     assert plan.result is not None and plan.workspace_descriptor is not None
     assert plan.global_stop is not None
     assert plan.global_stop.run_id == out.run_id
-    assert plan.global_stop.action in ("stop_sufficient_evidence", "stop_no_expected_gain")
+    assert plan.global_stop.action == "stop_sufficient_evidence"
+    assert plan.global_stop.unresolved == []
     assert [n.status for n in plan.result.nodes] == ["ok", "ok"]
     assert all(n.run_id for n in plan.result.nodes)
     assert plan.result.synthesis.handoffs
