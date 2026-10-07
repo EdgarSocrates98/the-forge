@@ -47,6 +47,7 @@ from theforge.contracts import (
     ExecutionResult,
     ReceiptInputs,
     RoutingDecision,
+    RunBudget,
     RunTelemetry,
     Selection,
     TaskSpec,
@@ -208,6 +209,7 @@ class _PlanTrace:
     profile: ContextProfile | None = None  # the effective profile, once resolved in _plan
     performance: ProviderPerformance | None = None  # measured history, tie-break only (H5)
     budget_sha: str | None = None  # RunBudget, written once the profile resolves
+    budget: RunBudget | None = None  # typed budget used by terminal global control
     resumed_from: str | None = None  # the plan run being resumed, when any
     prior: dict[str, NodeOutcome] | None = None  # its recorded node outcomes
     # Resume invalidation reasons by node — written from worker threads, emitted
@@ -374,8 +376,13 @@ class PlanExecutor:
         # RunBudget (H1): what the resolved profile allowed this plan run to spend.
         # The plan's structure is already fixed — no promotion here; each node run
         # records and promotes its own budget inside ``ask``.
-        _, budget = resolve_budget(trace.profile or profile, run_id=trace.run_id,
-                                   plan_nodes=len(plan.nodes) if plan is not None else 0)
+        _, budget = resolve_budget(
+            trace.profile or profile,
+            run_id=trace.run_id,
+            plan_nodes=len(plan.nodes) if plan is not None else 0,
+            retry_attempts=trace.retry_policy.max_attempts,
+        )
+        trace.budget = budget
         trace.budget_sha = store.write(trace.run_id, "budget", budget)
         if plan is not None and plan.status == "validated":
             trace.stage = "plan:estimate"
@@ -623,6 +630,12 @@ class PlanExecutor:
             and execution.verification.forge.status == "passed"
             for execution in valid_executions
         )
+        execute_calls = sum(execution.execute_calls for execution in trace.executions)
+        budget_exhausted = bool(
+            unresolved
+            and trace.budget is not None
+            and execute_calls >= trace.budget.provider_calls
+        )
         stop = decide_global_stop(
             trace.run_id,
             StopSignals(
@@ -630,6 +643,12 @@ class PlanExecutor:
                 # No concrete next candidate exists at terminalization; that
                 # absence is not evidence of zero information gain.
                 candidate_unique_evidence=None,
+                budget_exhausted=budget_exhausted,
+                budget_remaining=(
+                    float(max(0, trace.budget.provider_calls - execute_calls))
+                    if trace.budget is not None
+                    else None
+                ),
                 verification_required=bool(valid_executions),
                 verification_satisfied=verification_satisfied,
             ),
