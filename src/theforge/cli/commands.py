@@ -267,18 +267,36 @@ def cmd_economy_report(args: argparse.Namespace) -> int:
             if item.provider == provider
             and item.capability == capability
             and item.surface_fingerprint == surface
-            and (family is None or item.task_family == family)
+            and item.task_family == family
         ]
-        latest = max(comparable, key=lambda item: item.created_at) if comparable else None
+        known_profiles = {
+            item.profile
+            for item in comparable
+            if item.profile in ("economy", "balanced", "max")
+        }
+        profile_complete = bool(comparable) and all(
+            item.profile in ("economy", "balanced", "max") for item in comparable
+        )
         recommendation = None
-        if latest is not None and latest.profile in ("economy", "balanced", "max"):
+        recommendation_limitation = None
+        if profile_complete and len(known_profiles) == 1:
+            profile_name = next(iter(known_profiles))
+            assert profile_name is not None
             recommendation = recommend_context_budget(
                 roi,
-                current_budget_bytes=profile_for(cast(BudgetProfile, latest.profile)).budget_bytes,
+                current_budget_bytes=profile_for(
+                    cast(BudgetProfile, profile_name)
+                ).budget_bytes,
+            )
+        elif comparable:
+            recommendation_limitation = (
+                "context budget recommendation requires one known profile "
+                "across every comparable run"
             )
         roi_rows.append({
             "roi": to_dict(roi),
             "recommendation": to_dict(recommendation) if recommendation else None,
+            "recommendation_limitation": recommendation_limitation,
         })
     if len(keys) > max_roi_rows:
         data["limitations"].append(
