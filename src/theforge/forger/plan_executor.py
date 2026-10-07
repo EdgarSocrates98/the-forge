@@ -634,6 +634,7 @@ class PlanExecutor:
                                             if o.reproducibility is not None]),
             decision_sha256=decision_sha,
             economy_sha256=economy_sha,
+            global_stop_sha256=trace.global_stop_sha,
             limitations=decision_notes, unknowns=decision_unknowns)
         validate_plan_result(result)
         trace.plan_result_sha = self.forger.store.write(trace.run_id, "plan-result", result)
