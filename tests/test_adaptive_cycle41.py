@@ -228,6 +228,16 @@ def test_surface_change_invalidates_experiment() -> None:
     assert "surface changed" in result.reasons[-1]
 
 
+def test_experiment_rejects_invalid_holdout_timestamps() -> None:
+    with pytest.raises(ContractError, match="ISO-8601"):
+        experiment(evaluation_after="not-a-time")
+    with pytest.raises(ContractError, match="cannot precede"):
+        experiment(
+            discovery_before="2026-10-07T13:00:00Z",
+            evaluation_after="2026-10-07T12:00:00Z",
+        )
+
+
 def test_experiment_requires_distinct_strategies() -> None:
     with pytest.raises(ContractError, match="must differ"):
         experiment(challenger="spark-a")
