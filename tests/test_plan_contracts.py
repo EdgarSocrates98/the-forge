@@ -425,7 +425,15 @@ def test_parent_run_and_plan_node_go_together() -> None:
 
 
 def test_plan_result_global_stop_hash_is_validated() -> None:
-    result = _result(global_stop_sha256="a" * 64)
+    result = from_dict(
+        PlanResult,
+        plan_result_dict(global_stop_sha256="a" * 64),
+        strict=True,
+    )
     assert result.global_stop_sha256 == "a" * 64
     with pytest.raises(ContractError, match="global_stop_sha256"):
-        _result(global_stop_sha256="not-a-sha")
+        from_dict(
+            PlanResult,
+            plan_result_dict(global_stop_sha256="not-a-sha"),
+            strict=True,
+        )
