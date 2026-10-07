@@ -124,8 +124,11 @@ def advance_experiment(
 ) -> StrategyExperiment:
     """Advance a shadow experiment without ever auto-promoting it.
 
-    When evaluation_after is set, observations at or before that canonical
-    timestamp are hypothesis/discovery history and cannot count as evaluation.
+    Eligibility is deliberately stronger than sample-count maturity:
+    both arms must be observed, challenger verification/delivery must not
+    regress, and at least one comparable economy metric must improve without
+    another measured economy metric regressing. Missing measurements remain
+    unresolved rather than becoming an invented win.
     """
     if experiment.state in ("promoted", "rejected", "stale", "cancelled"):
         return experiment
@@ -155,32 +158,89 @@ def advance_experiment(
             reasons=[*experiment.reasons, "provider surface changed during experiment"],
         )
 
-    comparable = [
-        item
-        for item in scoped
-        if (
-            (
-                item.provider == experiment.champion
-                and item.surface_fingerprint == experiment.champion_surface
-            )
-            or (
-                item.provider == experiment.challenger
-                and item.surface_fingerprint == experiment.challenger_surface
-            )
-        )
+    champion = [
+        item for item in scoped
+        if item.provider == experiment.champion
+        and item.surface_fingerprint == experiment.champion_surface
     ]
+    challenger = [
+        item for item in scoped
+        if item.provider == experiment.challenger
+        and item.surface_fingerprint == experiment.challenger_surface
+    ]
+    comparable = [*champion, *challenger]
     verified = sum(1 for item in comparable if item.verification == "passed")
     observations = len(comparable)
     state: ExperimentState = "observing"
     reasons = list(experiment.reasons)
-    if (
+
+    if observations == 0:
+        state = "shadow"
+    elif not champion or not challenger:
+        reasons.append("both champion and challenger require observed evaluation runs")
+    elif (
         observations >= experiment.minimum_runs
         and verified >= experiment.minimum_verified_runs
     ):
-        state = "eligible_for_review"
-        reasons.append("minimum evaluation observations satisfied; operator review required")
-    elif observations == 0:
-        state = "shadow"
+        champion_verified = sum(
+            1 for item in champion if item.verification == "passed"
+        ) / len(champion)
+        challenger_verified = sum(
+            1 for item in challenger if item.verification == "passed"
+        ) / len(challenger)
+        champion_delivered = sum(
+            1 for item in champion if item.status in ("ok", "partial")
+        ) / len(champion)
+        challenger_delivered = sum(
+            1 for item in challenger if item.status in ("ok", "partial")
+        ) / len(challenger)
+
+        if challenger_verified < champion_verified:
+            reasons.append(
+                "challenger verification rate is worse than champion"
+            )
+        elif challenger_delivered < champion_delivered:
+            reasons.append(
+                "challenger delivered-result rate is worse than champion"
+            )
+        else:
+            improved: list[str] = []
+            regressed: list[str] = []
+            for metric in ("context_bytes", "wall_time_ms", "cost_usd"):
+                champion_values = [
+                    float(value)
+                    for item in champion
+                    if (value := getattr(item, metric)) is not None
+                ]
+                challenger_values = [
+                    float(value)
+                    for item in challenger
+                    if (value := getattr(item, metric)) is not None
+                ]
+                if not champion_values or not challenger_values:
+                    continue
+                incumbent = float(median(champion_values))
+                candidate = float(median(challenger_values))
+                if candidate < incumbent:
+                    improved.append(metric)
+                elif candidate > incumbent:
+                    regressed.append(metric)
+            if regressed:
+                reasons.append(
+                    "challenger regresses measured economy axes: "
+                    + ", ".join(regressed)
+                )
+            elif not improved:
+                reasons.append(
+                    "no measured economy improvement yet; keep experiment observing"
+                )
+            else:
+                state = "eligible_for_review"
+                reasons.append(
+                    "quality gates held and challenger improved: "
+                    + ", ".join(improved)
+                    + "; operator review required"
+                )
 
     return replace(
         experiment,
