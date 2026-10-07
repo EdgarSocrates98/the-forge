@@ -54,14 +54,16 @@ not a green run, until a runner executes actual steps.
 
 Static/mechanical checks performed against the branch include:
 
-- all 27 root `docs/*.md` files are linked by README;
-- all 48 ADR files are indexed;
+- README documentation-index checker covers every root `docs/*.md` file;
+- ADR index checker covers every numbered ADR and rejects duplicate numbers;
 - ADR 0044–0048 use the required `- Status:` marker;
 - package and runtime versions both report 0.2.1;
 - compatibility matrix contains a 0.2.1 row;
 - all four new contracts are present in EXPORTED/CLOSED_SCHEMAS and have
   committed schema files;
-- modified Python files were inspected for line length/trailing whitespace.
+- modified Python files were inspected for line length/trailing whitespace;
+- release metadata is bound across package/runtime/README/CHANGELOG, with an
+  evidence-based release checklist.
 
 ## Intentionally deferred
 
