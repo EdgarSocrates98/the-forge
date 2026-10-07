@@ -32,7 +32,7 @@ from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.installation import InstallationPlan
-from theforge.contracts.integrity import validate_receipt
+from theforge.contracts.integrity import validate_plan_result, validate_plan_result_links, validate_receipt
 from theforge.contracts.plan import (
     DecisionRecord,
     ExecutionPlan,
@@ -203,6 +203,16 @@ class RunStore:
         raises ``IntegrityError`` and nothing is written.
         """
         path = self._artifact_path(run_id, name)
+        if name == "plan-result":
+            if not isinstance(contract, PlanResult):
+                raise TypeError(
+                    f"plan-result artifact must be a PlanResult, got {type(contract).__name__}"
+                )
+            validate_plan_result(contract)
+            validate_plan_result_links(
+                contract,
+                global_stop_sha256=self.persisted_sha256(run_id, "global-stop"),
+            )
         if name == "receipt":
             if not isinstance(contract, ExecutionReceipt):
                 raise TypeError(f"receipt artifact must be an ExecutionReceipt, "
