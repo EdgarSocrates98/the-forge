@@ -43,13 +43,14 @@ Os 67 contratos exportados (`contracts/schema.py::EXPORTED`) se dividem em três
 ## Matriz de compatibilidade
 Fonte única. As colunas dos especialistas mostram a janela `SUPPORTED_SPECIALIST` de cada adapter.
 
-| The Forge | Forge Protocol | theforge-sparkforge-aws-adapter | sparkforge-aws | theforge-apiforge-adapter | apiforge | theforge-doctordata-adapter | forge-doctor-data | theforge-doctorapi-adapter | forge-doctor-api | Suporte até |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 0.1.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | — | — | — | — | lançamento de 0.3.0 |
-| 0.2.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | lançamento de 0.4.0 |
-| 0.2.1 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | lançamento de 0.4.0 |
-| 0.3.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | lançamento de 0.5.0 |
-| 0.4.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | lançamento de 0.6.0 |
+| The Forge | Forge Protocol | theforge-sparkforge-aws-adapter | sparkforge-aws | theforge-apiforge-adapter | apiforge | theforge-doctordata-adapter | forge-doctor-data | theforge-doctorapi-adapter | forge-doctor-api | theforge-sparkforge-azure-adapter | sparkforge-azure | theforge-platformforge-adapter | platformforge | Suporte até |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0.1.0 | `forge/v1` | 0.1.0 | `>=0.5.0,<0.6.0` | 0.1.0 | `>=0.1.0,<0.2.0` | — | — | — | — | — | — | — | — | lançamento de 0.3.0 |
+| 0.2.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | — | — | — | — | lançamento de 0.4.0 |
+| 0.2.1 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | — | — | — | — | lançamento de 0.4.0 |
+| 0.3.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | — | — | — | — | lançamento de 0.5.0 |
+| 0.4.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | lançamento de 0.6.0 |
+| 0.5.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | lançamento de 0.7.0 |
 
 ## Identidade de superfície
 `version` não é identidade: a mesma versão pode carregar uma superfície diferente (observado em sparkforge-aws 0.5.0 e apiforge 0.1.0). O contrato `theforge/ProviderSurfaceIdentity/v1` pareia as versões declaradas com dois fingerprints determinísticos que o core computa do manifest em uso:
