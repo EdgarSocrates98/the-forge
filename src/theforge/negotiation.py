@@ -12,7 +12,7 @@ gate; a clean ``FULL`` against a provider with no history still beats an
 ``INCOMPATIBLE`` with perfect history (§9, §90).
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from theforge.contracts import (
@@ -31,6 +31,7 @@ from theforge.contracts.negotiation import (
     HistoryMaturity,
     NegotiationState,
 )
+from theforge.contracts.strategy import StrategyPolicy
 from theforge.contracts.types import TRUST_RANK
 from theforge.meta import PRODUCER
 from theforge.registry.registry import RegistryRecord
@@ -376,11 +377,15 @@ def negotiate_all(
     records: list[RegistryRecord],
     *,
     performance: ProviderPerformance | None = None,
+    policies: Sequence[StrategyPolicy] = (),
 ) -> list[CapabilityNegotiationResult]:
     """Every record negotiated, sorted best-first deterministically.
 
     Order: state rank → per-dimension match tuple → history maturity →
-    surface fingerprint → provider id. No score arithmetic: lexicographic.
+    promoted-policy preference → surface fingerprint → provider id. No score
+    arithmetic: lexicographic. A ``StrategyPolicy`` reorders candidates only
+    inside its exact scope (capability + surface + task family); it can never
+    lift an INCOMPATIBLE or unsupported provider — the hard gates already ran.
     """
     results = [negotiate(requirement, r, performance=performance) for r in records]
     dims = (
@@ -393,12 +398,28 @@ def negotiate_all(
         "artifact_match",
         "feature_match",
     )
+    # Policy preference ladder per surface scope; evaluated lazily per result.
+    from theforge.learning import preferred_providers
+
+    def _policy_rank(result: CapabilityNegotiationResult) -> int:
+        ladder = preferred_providers(
+            policies,
+            capability=requirement.capability,
+            surface_fingerprint=result.surface_fingerprint,
+            task_family=requirement.task_family,
+        )
+        try:
+            return ladder.index(result.provider)
+        except ValueError:
+            return len(ladder) + 1  # out-of-scope is neutral-worst, never 0
+
     return sorted(
         results,
         key=lambda r: (
             -_STATE_RANK[r.state],
             tuple(-_DIM_ORDER[r.dimensions.get(d, "unknown")] for d in dims),
             -_HISTORY_RANK[r.history],
+            _policy_rank(r),
             r.surface_fingerprint or "",
             r.provider,
         ),
