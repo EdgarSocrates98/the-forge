@@ -7,7 +7,7 @@ simulates as ``unknown``, never as benign. ``cost`` stays ``unknown``: there is
 no measured cost model, and the contract forbids invented numbers.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Literal
 
 from theforge.capability_graph import artifact_verifiers, verified_by
@@ -16,9 +16,10 @@ from theforge.contracts.canonical import sha256_of, utc_now
 from theforge.contracts.capability_graph import CapabilityGraph
 from theforge.contracts.plan import ExecutionPlan, PlanNode
 from theforge.contracts.strategy import PlanSimulation, SimulatedNode
-from theforge.contracts.targets import DataClassification
+from theforge.contracts.targets import DataClassification, ExecutionTarget
 from theforge.meta import PRODUCER
 from theforge.registry import RegistryRecord
+from theforge.targets import negotiate_target, requirement_of
 
 # Highest data sensitivity wins the plan's classification; an unclassified
 # node leaves the plan ``unknown`` (unknown != public).
@@ -83,9 +84,14 @@ def simulate_plan(
     records: Mapping[str, RegistryRecord],
     *,
     graph: CapabilityGraph | None = None,
+    targets: Sequence[ExecutionTarget] | None = None,
     created_at: str | None = None,
 ) -> PlanSimulation:
-    """The declared footprint of ``plan`` — deterministic over the same inputs."""
+    """The declared footprint of ``plan`` — deterministic over the same inputs.
+
+    ``targets`` (Wave J): when given, each node negotiates its execution target
+    against them — the selected id lands on the SimulatedNode and a node with
+    no candidate is a limitation, never an invented placement."""
     nodes: list[SimulatedNode] = []
     limitations: list[str] = []
     classifications: list[str] = []
@@ -94,13 +100,24 @@ def simulate_plan(
         record = records.get(node.provider)
         manifest = record.manifest if record else None
         resolved = manifest.resolve(node.capability) if manifest is not None else None
+        target_id: str | None = node.required_locality
+        if targets is not None:
+            negotiation = negotiate_target(
+                node.provider, node.capability, requirement_of(node), targets
+            )
+            target_id = negotiation.selected
+            if negotiation.selected is None:
+                limitations.append(
+                    f"node {node.id}: no execution target admits the requirement "
+                    f"(refusals: {negotiation.refusals})"
+                )
         if manifest is None or resolved is None:
             nodes.append(
                 SimulatedNode(
                     node=node.id,
                     provider=node.provider,
                     capability=node.capability,
-                    execution_target=node.required_locality,
+                    execution_target=target_id,
                 )
             )
             limitations.append(
@@ -117,7 +134,7 @@ def simulate_plan(
                     node=node.id,
                     provider=node.provider,
                     capability=capability.id,
-                    execution_target=node.required_locality,
+                    execution_target=target_id,
                     network=_network(
                         manifest.execution.local,
                         manifest.execution.offline,

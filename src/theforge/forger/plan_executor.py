@@ -129,6 +129,7 @@ from theforge.registry.health import HealthOutcome
 from theforge.routing import route
 from theforge.runs import new_run_id
 from theforge.simulation import simulate_plan
+from theforge.targets import load_targets
 
 __all__ = ["PLAN_TELEMETRY_LIMITATION", "PlanCommand", "PlanExecutor", "PlanOutcome", "plan_status"]
 
@@ -1102,12 +1103,21 @@ class PlanExecutor:
     ) -> tuple[str | None, list[str]]:
         """The pre-execution footprint (Wave G). Never blocks the receipt."""
         try:
+            targets, target_warnings = load_targets(
+                forge_dir=self.forger.root / ".forge",
+                user_dir=self.forger.registry.user_dir or user_config_dir(),
+            )
             simulation = simulate_plan(
-                plan, trace.records, graph=trace.capability_graph, created_at=trace.started_at
+                plan,
+                trace.records,
+                graph=trace.capability_graph,
+                targets=targets,
+                created_at=trace.started_at,
             )
             trace.simulation_sha = self.forger.store.write(trace.run_id, "simulation", simulation)
             return trace.simulation_sha, [
-                f"simulation: {item}" for item in simulation.limitations
+                *(f"targets: {item}" for item in target_warnings),
+                *(f"simulation: {item}" for item in simulation.limitations),
             ]
         except PersistenceError:
             raise
