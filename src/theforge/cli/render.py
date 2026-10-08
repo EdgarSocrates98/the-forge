@@ -1417,6 +1417,109 @@ def memory_summary(data: dict[str, Any]) -> str:
     )
 
 
+def memory_import(data: dict[str, Any]) -> str:
+    count = data.get("imported", 0)
+    return "\n".join(
+        [
+            f"Imported {count} entr{'y' if count == 1 else 'ies'}",
+            *_labelled("Limitations:", _list(data.get("limitations"))),
+        ]
+    )
+
+
+def _dicts(values: object) -> list[dict[str, Any]]:
+    return [v for v in values if isinstance(v, dict)] if isinstance(values, list) else []
+
+
+def memory_patterns(data: dict[str, Any]) -> str:
+    patterns = _dicts(data.get("patterns"))
+    lines = [
+        f"  {_clean(p.get('error_family'))}"
+        f"  provider={_clean(p.get('provider') or '-')}"
+        f"  capability={_clean(p.get('capability') or '-')}"
+        f"  seen={_clean(p.get('occurrences'))}x"
+        + (f"  resolved_by={len(_list(p.get('resolved_by')))}" if p.get("resolved_by") else "")
+        for p in patterns
+    ]
+    return "\n".join(
+        [
+            f"Failure patterns: {data.get('count', 0)}",
+            *lines,
+            *_labelled("Limitations:", _list(data.get("limitations"))),
+        ]
+    )
+
+
+def targets_list(data: dict[str, Any]) -> str:
+    rows = [
+        f"  {_clean(t.get('id'))}"
+        f"  type={_clean(t.get('type'))}"
+        f"  trust={_clean(t.get('trust'))}"
+        f"  health={_clean(t.get('health'))}"
+        f"  network={_clean(t.get('network'))}"
+        f"  data={','.join(_list(t.get('data_classes')))}"
+        + (f"  region={_clean(t['region'])}" if t.get("region") else "")
+        for t in _dicts(data.get("targets"))
+    ]
+    return "\n".join(
+        [
+            f"Execution targets: {data.get('count', 0)}",
+            *rows,
+            *_labelled("Warnings:", _list(data.get("warnings"))),
+        ]
+    )
+
+
+def targets_negotiate(data: dict[str, Any]) -> str:
+    refusals = data.get("refusals") or {}
+    return "\n".join(
+        [
+            f"Target negotiation: {data.get('provider', '?')}/{data.get('capability', '?')}",
+            f"  selected: {_clean(data.get('selected') or 'none')}",
+            f"  candidates: {', '.join(_list(data.get('candidates'))) or 'none'}",
+            *(
+                [f"  refused {_clean(tid)}: {_clean(reason)}" for tid, reason in refusals.items()]
+                if isinstance(refusals, dict)
+                else []
+            ),
+            *_labelled("Warnings:", _list(data.get("warnings"))),
+        ]
+    )
+
+
+def remote_policy(data: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"Remote policy: {_clean(data.get('policy_ref') or 'none (deny-all)')}",
+            f"  file: {_clean(data.get('policy_file') or 'absent')}",
+            f"  allowed targets: {', '.join(_list(data.get('allowed_target_ids'))) or 'none'}",
+            f"  allowed identities: {', '.join(_list(data.get('allowed_identity_refs'))) or 'any'}",
+            f"  data ceiling: {_clean(data.get('max_data_classification'))}"
+            f"  require_healthy: {bool(data.get('require_healthy', True))}",
+        ]
+    )
+
+
+def remote_check(data: dict[str, Any]) -> str:
+    rows = [
+        f"  {_clean(e.get('target'))}: {_clean(e.get('decision'))}"
+        + "".join(f"\n    - {_clean(r)}" for r in _list(e.get("reasons")))
+        for e in _dicts(data.get("evaluations"))
+    ]
+    return "\n".join(
+        [
+            f"Remote check (policy {_clean(data.get('policy_ref') or 'deny-all')}):",
+            *(rows or ["  no remote targets declared"]),
+            *(
+                [f"  skipped (not remote): {', '.join(_list(data.get('skipped')))}"]
+                if data.get("skipped")
+                else []
+            ),
+            *_labelled("Warnings:", _list(data.get("warnings"))),
+        ]
+    )
+
+
 def trace(data: dict[str, Any]) -> str:
     """The run's local trace (Wave J): *what happened* — spans in start order,
     nested by parent. ``explain`` answers why; ``trace`` answers what."""

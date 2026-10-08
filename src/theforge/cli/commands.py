@@ -15,6 +15,7 @@ from theforge.context import scan_workspace
 from theforge.contracts import CapabilityRequirement, StrategyExperiment, to_dict
 from theforge.contracts.base import ContractError, from_dict
 from theforge.contracts.codes import Codes, family_of
+from theforge.contracts.targets import TargetRequirement
 from theforge.contracts.types import BudgetProfile
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
@@ -800,8 +801,9 @@ def cmd_workspace_show(args: argparse.Namespace) -> int:
 
 def cmd_memory(args: argparse.Namespace) -> int:
     """``theforge memory``: the engineering memory under ``.forge/memory/``
-    (Cycle 5). Read-only except ``learn``/``summarize``; a missing memory is
-    empty memory, not an error; malformed entries are skipped, not fatal."""
+    (Cycle 5). Read-only except ``learn``/``summarize``/``import``; a missing
+    memory is empty memory, not an error; malformed entries are skipped, not
+    fatal."""
     from theforge import memory as memory_store
 
     root = _root(args)
@@ -839,6 +841,25 @@ def cmd_memory(args: argparse.Namespace) -> int:
         }
         _emit(args, redact(data), render.memory_summary)
         return 0
+    if args.memory_command == "import":
+        raw = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
+        payload = json.loads(raw)
+        items = payload.get("entries", payload) if isinstance(payload, dict) else payload
+        if not isinstance(items, list):
+            raise UsageError("memory import expects a JSON list or a pack with an 'entries' list")
+        count, warning = memory_store.import_entries(root, items)
+        data = {"imported": count, "limitations": [warning] if warning else []}
+        _emit(args, redact(data), render.memory_import)
+        return 0
+    if args.memory_command == "patterns":
+        patterns, warning = memory_store.failure_patterns(root)
+        data = {
+            "patterns": [to_dict(p) for p in patterns],
+            "count": len(patterns),
+            "limitations": [warning] if warning else [],
+        }
+        _emit(args, redact(data), render.memory_patterns)
+        return 0
     # default: list — structured query over the entry store
     query = memory_store.MemoryQuery(
         kind=args.kind,
@@ -859,6 +880,98 @@ def cmd_memory(args: argparse.Namespace) -> int:
         data["limitations"] = [*data["limitations"], warning]
     _emit(args, redact(data), render.memory)
     return 0
+
+
+def cmd_targets(args: argparse.Namespace) -> int:
+    """``theforge targets``: the declared execution-target layer (Cycle 5).
+    Read-only and offline — listing never probes health and negotiating is a
+    dry run of the same function the planner uses."""
+    from theforge import targets as target_store
+    from theforge.registry.config import user_config_dir
+
+    root = _root(args)
+    targets, warnings = target_store.load_targets(
+        forge_dir=find_forge_dir(root),
+        user_dir=user_config_dir(),
+    )
+    if args.targets_command == "negotiate":
+        requirement = _target_requirement(args)
+        negotiation = target_store.negotiate_target(
+            args.provider, args.capability, requirement, targets
+        )
+        data = to_dict(negotiation)
+        data["warnings"] = warnings
+        _emit(args, redact(data), render.targets_negotiate)
+        return 0 if negotiation.selected else 4
+    data = {
+        "targets": [to_dict(t) for t in targets],
+        "count": len(targets),
+        "warnings": warnings,
+    }
+    _emit(args, redact(data), render.targets_list)
+    return 0
+
+
+def cmd_remote(args: argparse.Namespace) -> int:
+    """``theforge remote``: the deny-by-default remote trust layer (Cycle 5).
+    Inspection only — there is no transport; ``check`` evaluates the declared
+    remote targets against the effective policy for a requirement."""
+    from theforge import remote as remote_store
+    from theforge import targets as target_store
+    from theforge.registry.config import user_config_dir
+
+    root = _root(args)
+    forge_dir = find_forge_dir(root)
+    policy_path = forge_dir / "config" / remote_store.POLICY_FILE if forge_dir else None
+    policy = remote_store.load_policy(policy_path)
+    if args.remote_command == "check":
+        targets, warnings = target_store.load_targets(
+            forge_dir=forge_dir,
+            user_dir=user_config_dir(),
+        )
+        requirement = _target_requirement(args)
+        evaluations = [
+            {
+                "target": t.id,
+                "decision": decision,
+                "reasons": reasons,
+            }
+            for t in targets
+            if t.type in ("remote-forge", "a2a-agent")
+            for decision, reasons in [remote_store.evaluate_remote_policy(t, requirement, policy)]
+        ]
+        check_data: dict[str, Any] = {
+            "policy_ref": policy.policy_ref,
+            "evaluations": evaluations,
+            "warnings": warnings,
+            "skipped": [t.id for t in targets if t.type not in ("remote-forge", "a2a-agent")],
+        }
+        _emit(args, redact(check_data), render.remote_check)
+        return 0
+    data: dict[str, Any] = {
+        "policy_file": str(policy_path) if policy_path and policy_path.is_file() else None,
+        "policy_ref": policy.policy_ref,
+        "allowed_target_ids": policy.allowed_target_ids,
+        "allowed_identity_refs": policy.allowed_identity_refs,
+        "max_data_classification": policy.max_data_classification,
+        "require_healthy": policy.require_healthy,
+    }
+    _emit(args, redact(data), render.remote_policy)
+    return 0
+
+
+def _target_requirement(args: argparse.Namespace) -> TargetRequirement:
+    try:
+        return TargetRequirement(
+            data_classification=args.data_classification,
+            locality=args.locality,
+            network=args.network,
+            runtime=args.runtime,
+            region=args.region,
+            isolation_required=args.isolated,
+        )
+    except ContractError as exc:
+        raise UsageError(str(exc)) from exc
 
 
 def cmd_decisions(args: argparse.Namespace) -> int:

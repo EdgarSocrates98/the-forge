@@ -69,3 +69,18 @@ verificação — divergências são violações nomeadas, nunca toleradas.
 
 **Não existe transporte no core** — o modelo é o contrato; um futuro
 conector remoto consome request + receipt por essa porta.
+
+## CLI
+
+```text
+theforge targets list                       # alvos declarados (user+project)
+theforge targets negotiate --provider p --capability x.y \
+    --locality local-or-remote --data-classification internal
+theforge remote policy                      # política efetiva (ausente = deny-all)
+theforge remote check --data-classification internal
+```
+
+`targets negotiate` roda o mesmo `negotiate_target` do planner (dry-run;
+exit 4 quando nenhum alvo serve). `remote check` avalia cada alvo remoto
+declarado contra a política e mostra `allow`/`deny` com as razões — inspeção
+pura, nada executa.

@@ -298,3 +298,44 @@ class TestCLI:
         args = parser.parse_args(["memory", "export", "--root", str(tmp_path), "--json"])
         assert args.handler(args) == 0
         assert json.loads(capsys.readouterr().out)["count"] == 0
+
+    def test_import_cli_refuses_project_scope(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from theforge.cli.main import build_parser
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        parser = build_parser()
+        pack = tmp_path / "pack.json"
+        private = make_entry(subject="private", claim="x")
+        shared = make_entry(
+            subject="shared",
+            claim="y",
+            scope="portable",
+            origin_project_class="internal",
+            redaction="no code",
+        )
+        pack.write_text(json.dumps([to_dict(private), to_dict(shared)]), encoding="utf-8")
+        args = parser.parse_args(["memory", "import", str(pack), "--root", str(tmp_path), "--json"])
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["imported"] == 1
+        assert any("refused 1" in lim for lim in out["limitations"])
+        entries, _ = memory_store.load_entries(tmp_path)
+        assert {e.subject for e in entries} == {"shared"}
+
+    def test_patterns_cli(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        from theforge.cli.main import build_parser
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        memory_store.record_entry(
+            tmp_path,
+            make_entry(kind="failure", subject="boom", claim="x", tags=("policy",)),
+        )
+        parser = build_parser()
+        args = parser.parse_args(["memory", "patterns", "--root", str(tmp_path), "--json"])
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["count"] == 1 and out["patterns"][0]["error_family"] == "policy"

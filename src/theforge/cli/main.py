@@ -431,7 +431,73 @@ def build_parser() -> argparse.ArgumentParser:
     )
     memory_summary.add_argument("--coverage", default="")
     memory_summary.set_defaults(handler=commands.cmd_memory)
+    memory_import = memory.add_parser(
+        "import",
+        parents=[common],
+        help="import portable/organization entries (project/workspace are refused)",
+    )
+    memory_import.add_argument("file", help="JSON entry list or memory pack ('-' reads stdin)")
+    memory_import.set_defaults(handler=commands.cmd_memory)
+    memory_patterns = memory.add_parser(
+        "patterns",
+        parents=[common],
+        help="failure-pattern rollup over recorded failure entries",
+    )
+    memory_patterns.set_defaults(handler=commands.cmd_memory)
+
+    targets = sub.add_parser(
+        "targets", help="declared execution targets (targets.toml)"
+    ).add_subparsers(dest="targets_command", required=True)
+    targets.add_parser(
+        "list",
+        parents=[common],
+        help="declared targets, merged user+project (project wins per id)",
+    ).set_defaults(handler=commands.cmd_targets)
+    targets_negotiate = targets.add_parser(
+        "negotiate",
+        parents=[common],
+        help="dry-run provider×target negotiation for a requirement",
+    )
+    targets_negotiate.add_argument("--provider", required=True)
+    targets_negotiate.add_argument("--capability", required=True)
+    _add_requirement_args(targets_negotiate)
+    targets_negotiate.set_defaults(handler=commands.cmd_targets)
+
+    remote = sub.add_parser(
+        "remote", help="remote-execution trust layer (remote-policy.toml)"
+    ).add_subparsers(dest="remote_command", required=True)
+    remote.add_parser(
+        "policy",
+        parents=[common],
+        help="the effective remote policy (absent file = deny-all)",
+    ).set_defaults(handler=commands.cmd_remote)
+    remote_check = remote.add_parser(
+        "check",
+        parents=[common],
+        help="evaluate each declared remote target against the policy",
+    )
+    _add_requirement_args(remote_check, locality_default="local-or-remote")
+    remote_check.set_defaults(handler=commands.cmd_remote)
     return parser
+
+
+def _add_requirement_args(
+    parser: argparse.ArgumentParser, *, locality_default: str = "local"
+) -> None:
+    parser.add_argument(
+        "--data-classification",
+        default="unknown",
+        choices=["public", "internal", "confidential", "restricted", "unknown"],
+    )
+    parser.add_argument(
+        "--locality",
+        default=locality_default,
+        choices=["local", "local-or-remote", "isolated"],
+    )
+    parser.add_argument("--network", default="any", choices=["none", "egress", "required", "any"])
+    parser.add_argument("--runtime")
+    parser.add_argument("--region")
+    parser.add_argument("--isolated", action="store_true", help="force locality 'isolated'")
 
 
 def _tolerate_unencodable_output() -> None:

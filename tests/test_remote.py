@@ -4,6 +4,8 @@ gate, fully-bound requests, and replay binding on receipts.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from theforge.contracts import ContractError, ExecutionTarget, TargetRequirement
@@ -219,3 +221,109 @@ class TestPolicyLoad:
         assert pol.policy_ref == "org-forge:p1"
         assert pol.allowed_target_ids == ["ci"]
         assert pol.max_data_classification == "public"
+
+
+class TestCLI:
+    def _workspace(self, tmp_path: Path) -> None:
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        config = tmp_path / ".forge" / "config"
+        config.mkdir(parents=True, exist_ok=True)
+        (config / "targets.toml").write_text(
+            '[[targets]]\nid = "ci"\ntype = "remote-forge"\nnetwork = "egress"\n'
+            'identity_ref = "org-forge:ci"\ntrust = "verified"\n'
+            'data_classes = ["public", "internal"]\nhealth = "healthy"\n',
+            encoding="utf-8",
+        )
+        (config / "remote-policy.toml").write_text(
+            '[remote.policy]\npolicy_ref = "org-forge:policy/remote.v1"\n'
+            'allowed_target_ids = ["ci"]\n',
+            encoding="utf-8",
+        )
+
+    def test_policy_shows_effective(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import json
+
+        from theforge.cli.main import build_parser
+
+        self._workspace(tmp_path)
+        args = build_parser().parse_args(["remote", "policy", "--root", str(tmp_path), "--json"])
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["policy_ref"] == "org-forge:policy/remote.v1"
+        assert out["allowed_target_ids"] == ["ci"]
+
+    def test_check_allows_and_denies_with_reasons(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import json
+
+        from theforge.cli.main import build_parser
+
+        self._workspace(tmp_path)
+        args = build_parser().parse_args(
+            [
+                "remote",
+                "check",
+                "--root",
+                str(tmp_path),
+                "--data-classification",
+                "internal",
+                "--json",
+            ]
+        )
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["evaluations"] == [{"target": "ci", "decision": "allow", "reasons": []}]
+        # a confidential requirement is denied by the policy ceiling
+        args = build_parser().parse_args(
+            [
+                "remote",
+                "check",
+                "--root",
+                str(tmp_path),
+                "--data-classification",
+                "confidential",
+                "--json",
+            ]
+        )
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["evaluations"][0]["decision"] == "deny"
+        assert any("confidential" in r for r in out["evaluations"][0]["reasons"])
+
+    def test_absent_policy_denies_all(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import json
+
+        from theforge.cli.main import build_parser
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        config = tmp_path / ".forge" / "config"
+        config.mkdir(parents=True, exist_ok=True)
+        (config / "targets.toml").write_text(
+            '[[targets]]\nid = "ci"\ntype = "remote-forge"\nnetwork = "egress"\n'
+            'identity_ref = "org-forge:ci"\ntrust = "verified"\n'
+            'data_classes = ["public"]\n',
+            encoding="utf-8",
+        )
+        args = build_parser().parse_args(
+            [
+                "remote",
+                "check",
+                "--root",
+                str(tmp_path),
+                "--data-classification",
+                "public",
+                "--json",
+            ]
+        )
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["evaluations"][0]["decision"] == "deny"
+        assert any("allowed_target_ids" in r for r in out["evaluations"][0]["reasons"])
