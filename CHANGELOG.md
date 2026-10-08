@@ -8,6 +8,27 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### Agentic Ecosystem benchmarks (prompt `prompt_evo_engenharia_agentica` §87-90, §100)
+
+Fechamento do gap agentic: a série A01–A15 não existia — os benchmarks B01–B25
+cobrem os ciclos 5/5.1, não o prompt agentic.
+
+#### Added
+
+- `scripts/bench/run_agentic.py` — suíte A01–A15 offline sobre os seis
+  adapters em replay: routing por capability, composições cross-domain,
+  ambiguidade com resolver contido em propose→validate, plano de instalação
+  staged, injeção de provider/resolver rejeitada, economia de contexto.
+  Documento `theforge-agentic-scenarios/v1` publica `routing_metrics` com os
+  contadores §88-89 medidos (requests / deterministic_resolved /
+  agentic_fallback_needed / accepted / rejected / unnecessary_invocations).
+- `docs/reports/agentic-ecosystem.md` + `agentic-scenarios.json` — relatório
+  final §100 com tabela de especialistas, tabela de agents, resultados
+  A01–A15, economia de contexto, segurança adversarial e veredicto
+  `AGENTIC_ECOSYSTEM_COMPLETE_REMOTE_BLOCKED`.
+- `tests/test_bench.py` — contratos da suíte A (códigos A01–A15 em ordem,
+  chaves dos contadores §89).
+
 ### Ecosystem Expansion Validation (cycle 5.1, prompt `prompt_evo_cycle5.1.md`)
 
 O ecossistema prova 4→6 especialistas sem condicional por provider no core:

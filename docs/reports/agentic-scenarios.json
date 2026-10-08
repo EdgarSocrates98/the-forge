@@ -1,0 +1,253 @@
+{
+  "benchmark": "agentic-ecosystem-scenarios",
+  "commit_sha": "c592b9f487af8208db5ab0c29fa740405693b783",
+  "environment": {
+    "date": "2026-10-08T11:49:16Z",
+    "forge_version": "0.4.0",
+    "git_dirty": true,
+    "git_head": "c592b9f487af8208db5ab0c29fa740405693b783",
+    "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "os": "Windows-10-10.0.26300-SP0",
+    "python": "CPython 3.11.15"
+  },
+  "evidence_note": "adapter replay fixtures (tests/fixtures/native) \u2014 conformance evidence, not live specialist execution; resolver paths exercised through proposal_selection/resolve_candidates (propose\u2192validate)",
+  "results": {
+    "A01": {
+      "benchmark": "single specialist AWS",
+      "evidence": [
+        {
+          "fallbacks": [],
+          "selected": [
+            "spark-forge-aws"
+          ]
+        }
+      ],
+      "median_ms": 0.158,
+      "p90_ms": 0.263,
+      "status": "pass"
+    },
+    "A02": {
+      "benchmark": "single specialist Azure",
+      "evidence": [
+        {
+          "fallbacks": [],
+          "selected": [
+            "spark-forge-azure"
+          ]
+        }
+      ],
+      "median_ms": 0.12,
+      "p90_ms": 0.139,
+      "status": "pass"
+    },
+    "A03": {
+      "benchmark": "API specialist",
+      "evidence": [
+        {
+          "fallbacks": [],
+          "selected": [
+            "api-forge"
+          ]
+        }
+      ],
+      "median_ms": 0.182,
+      "p90_ms": 0.228,
+      "status": "pass"
+    },
+    "A04": {
+      "benchmark": "Platform specialist",
+      "evidence": [
+        {
+          "fallbacks": [],
+          "selected": [
+            "platform-forge"
+          ]
+        }
+      ],
+      "median_ms": 0.161,
+      "p90_ms": 0.237,
+      "status": "pass"
+    },
+    "A05": {
+      "benchmark": "API + Platform composition",
+      "evidence": [
+        {
+          "providers": [
+            "api-forge",
+            "platform-forge"
+          ],
+          "violations": 0
+        }
+      ],
+      "median_ms": 0.061,
+      "p90_ms": 0.098,
+      "status": "pass"
+    },
+    "A06": {
+      "benchmark": "Spark Azure + Platform composition",
+      "evidence": [
+        {
+          "providers": [
+            "spark-forge-azure",
+            "platform-forge"
+          ],
+          "violations": 0
+        }
+      ],
+      "median_ms": 0.065,
+      "p90_ms": 0.101,
+      "status": "pass"
+    },
+    "A07": {
+      "benchmark": "Spark AWS + Doctor Data chain",
+      "evidence": [
+        {
+          "order": [
+            "forge-doctor-data/data.scan",
+            "spark-forge-aws/pyspark.static-analysis"
+          ],
+          "violations": 0
+        }
+      ],
+      "median_ms": 0.113,
+      "p90_ms": 0.178,
+      "status": "pass"
+    },
+    "A08": {
+      "benchmark": "ambiguous Spark + bounded resolver",
+      "evidence": [
+        {
+          "accepted": "forge-doctor-data/data.scan",
+          "offered": [
+            "forge-doctor-data/data.scan",
+            "spark-forge-aws/pyspark.static-analysis"
+          ],
+          "rejected": "resolver picked platform-forge/iac.analyze, which was not among the routing-eligible candidates"
+        }
+      ],
+      "median_ms": 0.82,
+      "p90_ms": 1.081,
+      "status": "pass"
+    },
+    "A09": {
+      "benchmark": "specialist missing -> install plan",
+      "evidence": [
+        {
+          "approval_required": true,
+          "no_route": true,
+          "rollback_existing": "restore-previous",
+          "rollback_fresh": "remove-new",
+          "stages": [
+            "plan",
+            "approval",
+            "download",
+            "verify",
+            "isolated-install",
+            "provider-check",
+            "surface-fingerprint",
+            "health"
+          ]
+        }
+      ],
+      "median_ms": 0.165,
+      "p90_ms": 0.284,
+      "status": "pass"
+    },
+    "A10": {
+      "benchmark": "specialist broken",
+      "evidence": [
+        {
+          "named_in_limitations": true,
+          "plan_violations": 1
+        }
+      ],
+      "median_ms": 0.554,
+      "p90_ms": 0.729,
+      "status": "pass"
+    },
+    "A11": {
+      "benchmark": "skill/surface stale detection",
+      "evidence": [
+        {
+          "drifted_surface_detected": true
+        }
+      ],
+      "median_ms": 0.097,
+      "p90_ms": 0.185,
+      "status": "pass"
+    },
+    "A12": {
+      "benchmark": "provider/resolver injection",
+      "evidence": [
+        {
+          "injection_rejected": "resolver picked 'evil-forge', which is not a registered provider",
+          "resolver_refused": [
+            "blocked",
+            "unverified"
+          ],
+          "self_claim_inert": true
+        }
+      ],
+      "median_ms": 0.815,
+      "p90_ms": 0.942,
+      "status": "pass"
+    },
+    "A13": {
+      "benchmark": "multi-domain task",
+      "evidence": [
+        {
+          "providers": 3,
+          "violations": 0
+        }
+      ],
+      "median_ms": 0.102,
+      "p90_ms": 0.195,
+      "status": "pass"
+    },
+    "A14": {
+      "benchmark": "unnecessary subagent prevention",
+      "evidence": [
+        {
+          "resolver_elected": false,
+          "routed": 4,
+          "unnecessary_invocations": 0
+        }
+      ],
+      "median_ms": 0.384,
+      "p90_ms": 0.606,
+      "status": "pass"
+    },
+    "A15": {
+      "benchmark": "context economy",
+      "evidence": [
+        {
+          "delivered_bytes": 31340,
+          "resolver_candidates": 2,
+          "resolver_payload_bytes": 237,
+          "savings_ratio": 0.3342,
+          "store_bytes": 47068
+        }
+      ],
+      "median_ms": 13.379,
+      "p90_ms": 20.27,
+      "status": "pass"
+    }
+  },
+  "routing_metrics": {
+    "agentic_accepted": 1,
+    "agentic_fallback_needed": 3,
+    "agentic_rejected": 2,
+    "deterministic_resolved": 8,
+    "requests": 11,
+    "unnecessary_invocations": 0
+  },
+  "schema": "theforge-agentic-scenarios/v1",
+  "specialist_shas": {
+    "api-forge": "unknown",
+    "forge-doctor-api": "unknown",
+    "forge-doctor-data": "unknown",
+    "platform-forge": "unknown",
+    "spark-forge-aws": "unknown",
+    "spark-forge-azure": "unknown"
+  }
+}

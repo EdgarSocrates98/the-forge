@@ -401,3 +401,28 @@ def test_budgets_from_cli_writes_a_file_check_accepts(
     assert "REGRESSION scan_1k: median 15.5 ms > budget 15.0 ms" in capsys.readouterr().out
     with pytest.raises(SystemExit):
         bench.main(["--budgets-from", str(baseline), "--check", str(out)])
+
+
+# --- agentic scenario suite (A01–A15, §87-90) ----------------------------------------------------
+
+
+@pytest.fixture
+def agentic(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    monkeypatch.syspath_prepend(str(BENCH))
+    return importlib.import_module("run_agentic")
+
+
+def test_agentic_suite_declares_a01_to_a15(agentic: ModuleType) -> None:
+    codes = [code for code, _name, _fn in agentic.SCENARIOS]
+    assert codes == [f"A{i:02d}" for i in range(1, 16)]
+
+
+def test_agentic_counters_cover_section_89(agentic: ModuleType) -> None:
+    assert set(agentic.COUNTERS) == {
+        "requests",
+        "deterministic_resolved",
+        "agentic_fallback_needed",
+        "agentic_accepted",
+        "agentic_rejected",
+        "unnecessary_invocations",
+    }
