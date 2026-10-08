@@ -7,7 +7,7 @@ Forge — a camada agentic inteira, num mapa.
 
 | Peça | Onde | Decisão |
 |---|---|---|
-| Conhecimento de bootstrap | `forge-knowledge/*.json` + `theforge knowledge` | [ADR 0052](adr/0052-forge-knowledge-layer.md) · [doc](forge-knowledge.md) |
+| Conhecimento de bootstrap | `forge-knowledge/*.json` + `theforge knowledge` (`check` = freshness vs. registry ao vivo) | [ADR 0052](adr/0052-forge-knowledge-layer.md) · [doc](forge-knowledge.md) |
 | Skills de ecossistema | `agentic/skills/` → `.claude/` `.agents/` `.devin/` | [ADR 0053](adr/0053-skill-vs-capability.md) · [doc](skills.md) |
 | Agentes especializados | `agentic/agents/` → `.codex/agents/` | [ADR 0054](adr/0054-agent-authority-model.md) · [doc](agents.md) |
 | Auditoria de assets | `scripts/agentic/audit_assets.py` + `agentic.toml` | [ADR 0056](adr/0056-agentic-host-adaptation.md) · [doc](agentic.md) |

@@ -7,6 +7,7 @@ each one is exercised on the real repository and on a deliberately broken tempor
 Requirements: 7.1 (``docs/errors.md`` canonical), 7.2, 7.3, 7.5, 7.6, 8.3, 8.4, 9.2, 9.4, 9.5, 10.4.
 """
 
+import argparse
 import os
 import re
 import shutil
@@ -348,6 +349,19 @@ def exit_code_problems(root: Path) -> list[str]:
     return problems
 
 
+def cli_coverage_problems(root: Path) -> list[str]:
+    """Every top-level CLI verb must appear as a `verb`-prefixed row in the
+    docs/cli.md summary table — the drift gate for new commands."""
+    doc = read_md(root / "docs" / "cli.md")
+    parser = cli_main.build_parser()
+    sub = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
+    return [
+        f"docs/cli.md: no `| `{verb}` row in the command table"
+        for verb in sorted(sub.choices)
+        if not re.search(rf"^\|\s*`{re.escape(verb)}[ `]", doc, re.MULTILINE)
+    ]
+
+
 def adr_problems(root: Path) -> list[str]:
     problems = []
     adr_dir = root / "docs" / "adr"
@@ -441,6 +455,10 @@ def test_exit_codes_tables() -> None:
     assert exit_code_problems(REPO) == []
 
 
+def test_cli_verbs_documented() -> None:
+    assert cli_coverage_problems(REPO) == []
+
+
 def test_adr_index() -> None:
     assert adr_problems(REPO) == []
 
@@ -522,6 +540,15 @@ def test_link_check_flags_kiro_even_in_historical_records(docs_copy: Path) -> No
         ),
     )
     assert any("unversioned local asset" in problem for problem in found), found
+
+
+def test_cli_coverage_detects_undocumented_verb(docs_copy: Path) -> None:
+    found = _new_problems(
+        docs_copy,
+        cli_coverage_problems,
+        lambda: _edit(docs_copy / "docs/cli.md", "| `decisions` |", "| `removed` |"),
+    )
+    assert any("decisions" in problem for problem in found), found
 
 
 def test_readme_index_detects_unindexed_doc(docs_copy: Path) -> None:

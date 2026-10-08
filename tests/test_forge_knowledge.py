@@ -165,3 +165,109 @@ def test_contract_rejects_arbitrary_installer() -> None:
 def test_default_dir_is_repo_forge_knowledge() -> None:
     assert DEFAULT_KNOWLEDGE_DIR == REPO / "forge-knowledge"
     assert DEFAULT_KNOWLEDGE_DIR.is_dir()
+
+
+# --- ``theforge knowledge check`` (freshness vs. the live registry, §51-52) ---
+
+
+def _manifest(path: Path, pid: str, version: str) -> Path:
+    manifest = {
+        "schema": "theforge/ForgeManifest/v1",
+        "id": pid,
+        "version": version,
+        "protocols": ["forge/v1"],
+        "ops": ["describe", "health"],
+        "capabilities": [
+            {
+                "id": "demo.echo",
+                "actions": ["review"],
+                "default_action": "review",
+                "state": "supported",
+                "operation_class": "read_only",
+            }
+        ],
+    }
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    return path
+
+
+def _entry(pid: str, manifest: Path) -> dict:
+    import sys
+
+    from helpers import PROVIDERS
+
+    return {
+        "id": pid,
+        "argv": [sys.executable, str(PROVIDERS / "fixture_forge.py"), str(manifest)],
+        "trust": "local",
+    }
+
+
+def _check(capsys: pytest.CaptureFixture[str], root: Path) -> dict[str, dict]:
+    from theforge.cli.main import main
+
+    code = main(["knowledge", "check", "--root", str(root), "--json"])
+    out, _ = capsys.readouterr()
+    assert code == 0
+    return {p["id"]: p for p in json.loads(out)["packages"]}
+
+
+def test_knowledge_check_fresh_and_not_installed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from helpers import make_workspace
+
+    make_workspace(
+        tmp_path,
+        [_entry("api-forge", _manifest(tmp_path / "apiforge.json", "api-forge", "0.3.0"))],
+    )
+    rows = _check(capsys, tmp_path)
+    api = rows["api-forge"]
+    assert api["status"] == "fresh"
+    assert api["version"] == "match" and api["installed_version"] == "0.3.0"
+    assert rows["spark-forge-aws"]["status"] == "not_installed"
+
+
+def test_knowledge_check_version_drift(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from helpers import make_workspace
+
+    make_workspace(
+        tmp_path,
+        [_entry("api-forge", _manifest(tmp_path / "apiforge.json", "api-forge", "9.9.9"))],
+    )
+    api = _check(capsys, tmp_path)["api-forge"]
+    assert api["status"] == "drift"
+    assert api["version"] == "drift" and api["installed_version"] == "9.9.9"
+
+
+def test_knowledge_check_surface_drift(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from helpers import make_workspace
+
+    # platform-forge's package records a measured surface fingerprint; a fixture
+    # manifest cannot reproduce it, so version matches but surface drifts.
+    make_workspace(
+        tmp_path,
+        [
+            _entry(
+                "platform-forge",
+                _manifest(tmp_path / "pf.json", "platform-forge", "0.1.0"),
+            )
+        ],
+    )
+    pf = _check(capsys, tmp_path)["platform-forge"]
+    assert pf["status"] == "drift"
+    assert pf["version"] == "match" and pf["surface"] == "drift"
+
+
+def test_knowledge_check_unavailable(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from helpers import bad_entry, make_workspace
+
+    make_workspace(tmp_path, [bad_entry("describe-refused", "spark-forge-aws")])
+    rows = _check(capsys, tmp_path)
+    assert rows["spark-forge-aws"]["status"] == "unavailable"

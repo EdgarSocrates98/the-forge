@@ -74,7 +74,7 @@ Os Forges reais entram por seis adapters em `adapters/`, instalados no interpret
 - **Troca**: evidência tipada com proveniência via `Handoff` — nunca prompts repetidos nem estado interno sincronizado.
 - **Adicionar um Forge**: `theforge provider init` + [provider-authoring](docs/provider-authoring.md).
 - Visão das relações declaradas: `theforge graph --mesh`.
-- **Camada agentic**: `forge-knowledge/` (bootstrap metadata — nunca verdade de runtime, [doc](docs/forge-knowledge.md)), skills `forge-*` canônicas renderizadas por host ([doc](docs/skills.md)) e oito agentes especializados com autoridade fechada ([doc](docs/agents.md)). `theforge knowledge list/show` e `theforge agents list/show` expõem os dois registries.
+- **Camada agentic**: `forge-knowledge/` (bootstrap metadata — nunca verdade de runtime, [doc](docs/forge-knowledge.md)), skills `forge-*` canônicas renderizadas por host ([doc](docs/skills.md)) e oito agentes especializados com autoridade fechada ([doc](docs/agents.md)). `theforge knowledge list/show/check` e `theforge agents list/show` expõem os dois registries — `check` confronta o freshness recordado com o registry ao vivo.
 
 ## Exit codes
 
@@ -128,6 +128,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Installation orchestration](docs/installation-orchestration.md) (knowledge → plano → aprovação → verificação)
 - [Cross-forge orchestration](docs/cross-forge-orchestration.md) (produces→consumes, produtor≠verificador)
 - [Agentic ecosystem](docs/agentic-ecosystem.md) (mapa da camada agentic: knowledge + skills + agents + auditoria)
+- [Loop Factory](docs/loop-factory.md) (fila operacional de specs: `factory/` onde a pasta é o estado; grill gate humano, archive só com aceite)
 - [Reality manifests](docs/reality/README.md) (estado real dos especialistas: SHAs, surfaces, drift)
 - [Feature freeze](docs/feature-freeze.md) (Cycle 5.1: arquitetura congelada, dogfooding a seguir)
 - [Dogfooding](docs/dogfooding.md) (uso em projetos reais + taxonomia de observações)

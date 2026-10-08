@@ -173,6 +173,22 @@ def knowledge_detail(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def knowledge_check(data: dict[str, Any]) -> str:
+    lines = []
+    for p in data["packages"]:
+        line = f"{_clean(p['id']):<20} {_clean(p['status']):<13}"
+        if p["installed_version"] is not None:
+            line += (
+                f" tested={_clean(p['tested_version'] or '-'):<8} "
+                f"installed={_clean(p['installed_version']):<8} "
+                f"version={_clean(p['version'])} surface={_clean(p['surface'])}"
+            )
+        if p["detail"]:
+            line += f"  ({_clean(p['detail'])})"
+        lines.append(line)
+    return "\n".join(lines) or "no forge knowledge packages"
+
+
 def agents_list(data: dict[str, Any]) -> str:
     lines = []
     for a in data["agents"]:

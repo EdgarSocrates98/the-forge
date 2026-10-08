@@ -312,6 +312,62 @@ def cmd_knowledge_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_knowledge_check(args: argparse.Namespace) -> int:
+    """Freshness of authored packages against the live registry (§51-52):
+    ``tested_version``/``tested_surface`` vs. the recorded surface identity.
+    Read-only; drift is information, never a failure (exit 0)."""
+    from theforge.knowledge import load_all
+
+    registry = Registry(find_forge_dir(_root(args)))
+    records = {r.entry.id: r for r in registry.records()}
+    _warn(registry)
+    rows = []
+    for p in load_all().values():
+        record = records.get(p.id)
+        row: dict[str, Any] = {
+            "id": p.id,
+            "family": p.family,
+            "tested_version": p.tested_version,
+            "tested_surface": p.tested_surface,
+            "installed_version": None,
+            "surface_fingerprint": None,
+            "version": "unrecorded",
+            "surface": "unrecorded",
+            "status": "untested",
+            "detail": "no tested_version recorded",
+        }
+        if record is None:
+            row["status"] = "not_installed"
+            row["detail"] = "no registry entry"
+        elif record.state != "ready" or record.surface is None:
+            row["status"] = "unavailable"
+            row["detail"] = f"registry state: {record.state}"
+        else:
+            row["installed_version"] = record.surface.provider_version
+            row["surface_fingerprint"] = record.surface.surface_fingerprint
+            if p.tested_version is not None:
+                row["version"] = (
+                    "match" if record.surface.provider_version == p.tested_version else "drift"
+                )
+            if p.tested_surface is not None:
+                row["surface"] = (
+                    "match"
+                    if record.surface.surface_fingerprint == p.tested_surface
+                    else "drift"
+                )
+            if "drift" in (row["version"], row["surface"]):
+                row["status"] = "drift"
+                row["detail"] = "recorded values differ from the live record"
+            elif p.tested_version is not None:
+                row["status"] = "fresh"
+                row["detail"] = ""
+            elif row["surface"] == "match":
+                row["detail"] = "surface matches; tested_version unrecorded"
+        rows.append(row)
+    _emit(args, {"packages": rows}, render.knowledge_check)
+    return 0
+
+
 def cmd_agents_list(args: argparse.Namespace) -> int:
     """Specialized agent registry (§18-32, §43-50): canonical specs with the
     closed authority model — propose/classify/advise/execute-approved."""
