@@ -15,9 +15,7 @@ def _forge_literals(path: Path) -> list[tuple[int, str]]:
     return [
         (node.lineno, node.value)
         for node in ast.walk(tree)
-        if isinstance(node, ast.Constant)
-        and isinstance(node.value, str)
-        and "FORGE-" in node.value
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and "FORGE-" in node.value
     ]
 
 

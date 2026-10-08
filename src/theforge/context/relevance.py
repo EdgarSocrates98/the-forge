@@ -35,7 +35,8 @@ GLOB_PREFIX: Final = "glob:"
 
 # Range suffixes: ":N", ":N-M", ":LN-LM", "#LN" and "#LN-LM".
 _REF: Final = re.compile(
-    r"^(?P<path>.+?)(?::L?(?P<a>\d+)(?:-L?(?P<b>\d+))?|#L(?P<c>\d+)(?:-L(?P<d>\d+))?)?$")
+    r"^(?P<path>.+?)(?::L?(?P<a>\d+)(?:-L?(?P<b>\d+))?|#L(?P<c>\d+)(?:-L(?P<d>\d+))?)?$"
+)
 _EXT: Final = re.compile(r"\.[A-Za-z][A-Za-z0-9_-]*$")
 _DRIVE: Final = re.compile(r"^[A-Za-z]:")
 _LEADING: Final = "\"'`([{<*"
@@ -80,8 +81,11 @@ def parse_intent_refs(intent: str, scan: WorkspaceScan) -> IntentRefs:
         paths.add(path)
         if lines is not None:
             prev = ranges.get(path)
-            ranges[path] = lines if prev is None else LineRange(
-                start=min(prev.start, lines.start), end=max(prev.end, lines.end))
+            ranges[path] = (
+                lines
+                if prev is None
+                else LineRange(start=min(prev.start, lines.start), end=max(prev.end, lines.end))
+            )
     return IntentRefs(
         paths=frozenset(paths),
         ranges=MappingProxyType(dict(sorted(ranges.items()))),
@@ -90,8 +94,11 @@ def parse_intent_refs(intent: str, scan: WorkspaceScan) -> IntentRefs:
 
 
 def rank_candidates(
-    task: TaskSpec, globs: Sequence[str], scan: WorkspaceScan,
-    changed: frozenset[str], refs: IntentRefs,
+    task: TaskSpec,
+    globs: Sequence[str],
+    scan: WorkspaceScan,
+    changed: frozenset[str],
+    refs: IntentRefs,
 ) -> tuple[list[RankedFile], int]:
     """Return (candidates in fixed priority order, number of scanned files with no signal)."""
     targets = sorted({t for t in (_normalize_target(t, scan.root) for t in task.targets) if t})
@@ -118,8 +125,15 @@ def rank_candidates(
             signals.append(SIGNAL_DEPENDENCY)
         if not signals:
             continue
-        key = (not intent, not target_hits, not glob_hits, not git, -len(glob_hits),
-               not dependency, rel)
+        key = (
+            not intent,
+            not target_hits,
+            not glob_hits,
+            not git,
+            -len(glob_hits),
+            not dependency,
+            rel,
+        )
         keyed.append((key, RankedFile(path=rel, signals=tuple(signals), lines=lines)))
     keyed.sort(key=lambda item: item[0])
     return [ranked for _, ranked in keyed], len(files) - len(keyed)
@@ -151,10 +165,11 @@ def _line_range(start: str | None, end: str | None) -> LineRange | None:
 
 
 def _rejection(
-    path: str, files: frozenset[str], excluded: Mapping[str, str],
+    path: str,
+    files: frozenset[str],
+    excluded: Mapping[str, str],
 ) -> ExclusionReason | None:
-    if (path.startswith(("/", "~")) or _DRIVE.match(path)
-            or ".." in path.split("/")):
+    if path.startswith(("/", "~")) or _DRIVE.match(path) or ".." in path.split("/"):
         return "outside_root"
     if is_secret_name(path.rsplit("/", 1)[-1]) or excluded.get(path) == "secret":
         return "secret"

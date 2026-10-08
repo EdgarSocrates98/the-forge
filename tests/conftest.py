@@ -155,6 +155,12 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_mcp_awareness.py": ("unit", "contract", "security", "integration"),
     "test_adversarial_cycle4.py": ("security", "unit", "integration"),
     "test_reality_proofs.py": ("e2e", "integration"),
+    # cycle-4.1 global control / adaptive learning
+    "test_global_stop.py": ("unit", "contract", "security"),
+    "test_adaptive_cycle41.py": ("unit", "contract"),
+    "test_adaptive_cli.py": ("e2e", "integration", "contract"),
+    "test_release_metadata.py": ("unit", "contract"),
+    "test_remote_validation_classifier.py": ("unit", "contract"),
 }
 
 
@@ -254,8 +260,10 @@ _GUARDS: dict[str, tuple[Any, Callable[..., Any]]] = {
     "connect_ex": (socket.socket, _guarded_connect_ex),
     "create_connection": (socket, _guarded_create_connection),
     "getaddrinfo": (socket, _guarded_getaddrinfo),
-    **{name: (socket, _resolver_guard(name))
-       for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr")},
+    **{
+        name: (socket, _resolver_guard(name))
+        for name in ("gethostbyname", "gethostbyname_ex", "gethostbyaddr")
+    },
 }
 
 

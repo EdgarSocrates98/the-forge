@@ -49,9 +49,19 @@ def test_cache_lives_in_user_cache_dir_not_forge(tmp_path: Path) -> None:
     assert files[0].is_relative_to(Path(os.environ["THEFORGE_CACHE_DIR"]))
     doc = json.loads(files[0].read_text(encoding="utf-8"))
     assert doc["schema"] == "theforge/RegistryCache/v2"
-    assert set(doc) == {"schema", "entry", "entry_digest", "fingerprint", "state", "manifest",
-                        "manifest_sha256", "protocol", "written_at",
-                        "surface_fingerprint", "capability_fingerprint"}
+    assert set(doc) == {
+        "schema",
+        "entry",
+        "entry_digest",
+        "fingerprint",
+        "state",
+        "manifest",
+        "manifest_sha256",
+        "protocol",
+        "written_at",
+        "surface_fingerprint",
+        "capability_fingerprint",
+    }
     assert files[0].name == f"fixture-spark-{doc['entry_digest'][:12]}.json"
 
 
@@ -74,8 +84,10 @@ def test_cache_hit_avoids_describe(tmp_path: Path) -> None:
 def test_script_mtime_change_forces_new_describe(tmp_path: Path) -> None:
     script = tmp_path / "fixture_forge.py"
     shutil.copy(PROVIDERS / "fixture_forge.py", script)
-    entry = {**SPARK_ENTRY, "argv": [SPARK_ENTRY["argv"][0], str(script),
-                                     str(PROVIDERS / "fixture-spark.json")]}
+    entry = {
+        **SPARK_ENTRY,
+        "argv": [SPARK_ENTRY["argv"][0], str(script), str(PROVIDERS / "fixture-spark.json")],
+    }
     forge = _forge(tmp_path, [entry])
     Registry(forge).refresh()
     counting = _Counting()
@@ -84,8 +96,11 @@ def test_script_mtime_change_forces_new_describe(tmp_path: Path) -> None:
     st = script.stat()
     os.utime(script, ns=(st.st_atime_ns, st.st_mtime_ns + 5_000_000_000))
     counting = _Counting()
-    record = next(r for r in Registry(forge, transport_factory=counting).records()
-                  if r.entry.id == "fixture-spark")
+    record = next(
+        r
+        for r in Registry(forge, transport_factory=counting).records()
+        if r.entry.id == "fixture-spark"
+    )
     assert record.state == "ready"
     assert counting.calls == 1  # echo-forge stays cached; only fixture-spark re-described
 
@@ -257,6 +272,7 @@ def test_cache_without_schema_or_v1_is_discarded(tmp_path: Path) -> None:
 
 # --- revalidation before the final routing decision (4.3, task 3.6) -------------------------
 
+
 class _CountingStore(RunStore):
     def __init__(self, forge_dir: Path) -> None:
         super().__init__(forge_dir)
@@ -289,11 +305,14 @@ def test_tampered_cache_of_non_selected_provider_is_detected_before_decision(
     tampered = {r.entry.id: r for r in Registry(forge, transport_factory=_boom).records()}
     assert tampered["fixture-api"].manifest is not None
     assert tampered["fixture-api"].manifest.capabilities[0].signals.dependencies == [
-        "pyspark", "awsglue"]
+        "pyspark",
+        "awsglue",
+    ]
 
     store = _CountingStore(forge)
     out = Forger(tmp_path, Registry(forge), store).ask(
-        AskRequest(intent="analise esse Glue Job porque está lento"))
+        AskRequest(intent="analise esse Glue Job porque está lento")
+    )
     assert out.status == "ok"
     assert out.decision.selected[0].provider == "fixture-spark"
     assert "registry-revalidated: fixture-api" in out.decision.limitations
@@ -318,8 +337,11 @@ def test_tampered_extra_capability_of_selected_provider_is_rediscovered_before_e
     Registry(forge).refresh()
     path = _cache_files("fixture-spark")[0]
     doc = json.loads(path.read_text(encoding="utf-8"))
-    injected = {**doc["manifest"]["capabilities"][0], "id": "spark.injected",
-                "operation_class": "local_mutation"}
+    injected = {
+        **doc["manifest"]["capabilities"][0],
+        "id": "spark.injected",
+        "operation_class": "local_mutation",
+    }
     doc["manifest"]["capabilities"].append(injected)
     doc["manifest_sha256"] = sha256_of(doc["manifest"])
     # the surface fingerprints must be recomputed too: a consistent tamper is
@@ -331,12 +353,12 @@ def test_tampered_extra_capability_of_selected_provider_is_rediscovered_before_e
     # the tampered cache is internally consistent: records() serves it without describing
     tampered = Registry(forge, transport_factory=_boom).get("fixture-spark")
     assert tampered.manifest is not None
-    assert [c.id for c in tampered.manifest.capabilities] == ["spark.performance",
-                                                              "spark.injected"]
+    assert [c.id for c in tampered.manifest.capabilities] == ["spark.performance", "spark.injected"]
 
     store = _CountingStore(forge)
     out = Forger(tmp_path, Registry(forge), store).ask(
-        AskRequest(intent="analise esse Glue Job porque está lento"))
+        AskRequest(intent="analise esse Glue Job porque está lento")
+    )
     assert out.status == "ok"
     assert out.decision.selected[0].provider == "fixture-spark"
     assert out.decision.selected[0].capability == "spark.performance"
@@ -414,7 +436,8 @@ def test_receipt_records_identity_matching_the_cache(tmp_path: Path) -> None:
     assert cached["fingerprint"] == expected.digest
     store = RunStore(forge)
     out = Forger(tmp_path, Registry(forge), store).ask(
-        AskRequest(intent="analise esse Glue Job porque está lento"))
+        AskRequest(intent="analise esse Glue Job porque está lento")
+    )
     assert out.status == "ok"
     provider = out.receipt.provider
     assert provider is not None and provider.id == "fixture-spark"
@@ -425,7 +448,10 @@ def test_receipt_records_identity_matching_the_cache(tmp_path: Path) -> None:
     assert provider.manifest_sha256 == cached["manifest_sha256"]
     persisted = store.read(out.run_id, "receipt")["provider"]
     assert (persisted["executable"], persisted["fingerprint"], persisted["observed_version"]) == (
-        expected.executable, expected.digest, "0.0.1")
+        expected.executable,
+        expected.digest,
+        "0.0.1",
+    )
 
 
 def _symlinked_legacy(forge: Path, tmp_path: Path) -> tuple[Path, Path]:
@@ -494,8 +520,10 @@ def test_concurrent_readers_never_see_a_torn_entry(tmp_path: Path) -> None:
         except BaseException as exc:  # noqa: BLE001 - surfaced by the assertion below
             errors.append(exc)
 
-    threads = [threading.Thread(target=write),
-               *(threading.Thread(target=read, args=(r,)) for r in readers)]
+    threads = [
+        threading.Thread(target=write),
+        *(threading.Thread(target=read, args=(r,)) for r in readers),
+    ]
     for thread in threads:
         thread.start()
     for thread in threads:
@@ -524,9 +552,15 @@ print(json.dumps(registry.warnings))
 def test_concurrent_writer_processes_leave_a_valid_entry(tmp_path: Path) -> None:
     forge = _forge(tmp_path, [SPARK_ENTRY])
     Registry(forge).refresh()
-    procs = [subprocess.Popen([sys.executable, "-c", _WRITER_SCRIPT, str(forge), "40"],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-             for _ in range(3)]
+    procs = [
+        subprocess.Popen(
+            [sys.executable, "-c", _WRITER_SCRIPT, str(forge), "40"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        for _ in range(3)
+    ]
     outputs = [p.communicate(timeout=120) for p in procs]
     for proc, (out, err) in zip(procs, outputs, strict=True):
         assert proc.returncode == 0, err
@@ -552,25 +586,33 @@ def _secret_provider(tmp_path: Path, *, in_argv: bool, in_manifest: bool) -> dic
     folder.mkdir()
     path = folder / "manifest.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
-    return {"id": "secret-forge", "trust": "local",
-            "argv": [sys.executable, str(PROVIDERS / "fixture_forge.py"), str(path)]}
+    return {
+        "id": "secret-forge",
+        "trust": "local",
+        "argv": [sys.executable, str(PROVIDERS / "fixture_forge.py"), str(path)],
+    }
 
 
-@pytest.mark.parametrize(("in_argv", "in_manifest"), [(True, False), (False, True)],
-                         ids=["argv", "manifest"])
+@pytest.mark.parametrize(
+    ("in_argv", "in_manifest"), [(True, False), (False, True)], ids=["argv", "manifest"]
+)
 def test_secret_shaped_values_are_never_written_to_the_cache(
     tmp_path: Path, in_argv: bool, in_manifest: bool
 ) -> None:
-    forge = _forge(tmp_path, [SPARK_ENTRY,
-                              _secret_provider(tmp_path, in_argv=in_argv,
-                                               in_manifest=in_manifest)])
+    forge = _forge(
+        tmp_path,
+        [SPARK_ENTRY, _secret_provider(tmp_path, in_argv=in_argv, in_manifest=in_manifest)],
+    )
     registry = Registry(forge)
     records = {r.entry.id: r for r in registry.refresh()}
     assert records["secret-forge"].state == "ready"  # still usable, just not cached
     assert _cache_files("secret-forge") == []
     assert _cache_files("fixture-spark")  # ordinary providers keep their cache
-    leaked = [p.name for p in user_cache_dir().rglob("*")
-              if p.is_file() and _SECRET.encode() in p.read_bytes()]
+    leaked = [
+        p.name
+        for p in user_cache_dir().rglob("*")
+        if p.is_file() and _SECRET.encode() in p.read_bytes()
+    ]
     assert leaked == []
     assert any("secret-forge" in w and "not cached" in w for w in registry.warnings)
 
@@ -596,8 +638,9 @@ def test_cache_entry_with_pre_context_v2_manifest_hash_is_discarded_and_regenera
     path = _cache_files("fixture-spark")[0]
     doc = json.loads(path.read_text(encoding="utf-8"))
     old = {k: v for k, v in doc["manifest"].items() if k != "context_revalidation"}
-    old["capabilities"] = [{k: v for k, v in c.items() if k != "context"}
-                           for c in old["capabilities"]]
+    old["capabilities"] = [
+        {k: v for k, v in c.items() if k != "context"} for c in old["capabilities"]
+    ]
     assert old != doc["manifest"]
     doc["manifest"] = old
     doc["manifest_sha256"] = sha256_of(old)
@@ -606,8 +649,10 @@ def test_cache_entry_with_pre_context_v2_manifest_hash_is_discarded_and_regenera
     registry = Registry(forge, transport_factory=counting)
     assert registry.get("fixture-spark").state == "ready"
     assert counting.calls == 1
-    assert any("fixture-spark" in w and "discarded" in w and "manifest hash" in w
-               for w in registry.warnings)
+    assert any(
+        "fixture-spark" in w and "discarded" in w and "manifest hash" in w
+        for w in registry.warnings
+    )
     regenerated = json.loads(_cache_files("fixture-spark")[0].read_text(encoding="utf-8"))
     assert "context_revalidation" in regenerated["manifest"]
     assert regenerated["manifest_sha256"] == sha256_of(regenerated["manifest"])
@@ -623,7 +668,9 @@ def test_cached_records_never_start_a_provider(tmp_path: Path) -> None:
     assert counting.calls == 0
     # echo-forge (builtin) and fixture-spark were cached by refresh; fixture-api never was.
     assert [(r.entry.id, r.state) for r in records] == [
-        ("echo-forge", "ready"), ("fixture-spark", "ready")]
+        ("echo-forge", "ready"),
+        ("fixture-spark", "ready"),
+    ]
     assert all(r.manifest is not None for r in records)
     assert not _cache_files("fixture-api")  # nothing described, nothing written
     again = Registry(forge, transport_factory=_boom).cached_records()

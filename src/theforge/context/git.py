@@ -34,13 +34,22 @@ from theforge.security.env import safe_env
 from theforge.security.redact import redact_text
 
 __all__ = [
-    "EXECUTABLE_CONFIG_KEYS", "GIT_TIMEOUT_S", "GitRun", "GitRunner", "GitState", "git_env",
-    "read_git_state", "run_git",
+    "EXECUTABLE_CONFIG_KEYS",
+    "GIT_TIMEOUT_S",
+    "GitRun",
+    "GitRunner",
+    "GitState",
+    "git_env",
+    "read_git_state",
+    "run_git",
 ]
 
 GIT_TIMEOUT_S = 5.0
 EXECUTABLE_CONFIG_KEYS: tuple[str, ...] = (
-    "core.fsmonitor", "filter.*.clean", "filter.*.smudge", "filter.*.process",
+    "core.fsmonitor",
+    "filter.*.clean",
+    "filter.*.smudge",
+    "filter.*.process",
 )
 MAX_GIT_STDOUT = 64 * 1024  # rev-parse / symbolic-ref / config
 MAX_STATUS_STDOUT = 8 * 1024 * 1024  # status: enough for MAX_FILES paths, then truncated
@@ -81,21 +90,28 @@ class GitState:
 
 def git_env() -> dict[str, str]:
     env = safe_env()
-    env.update({
-        "GIT_OPTIONAL_LOCKS": "0",
-        "GIT_TERMINAL_PROMPT": "0",
-        "GIT_PAGER": "cat",
-        "LC_ALL": "C",
-        "GIT_NO_LAZY_FETCH": "1",  # git >= 2.44: never fetch missing objects on demand
-        "GIT_ALLOW_PROTOCOL": "none",  # any git: deny every transport (no remote helper runs)
-    })
+    env.update(
+        {
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_PAGER": "cat",
+            "LC_ALL": "C",
+            "GIT_NO_LAZY_FETCH": "1",  # git >= 2.44: never fetch missing objects on demand
+            "GIT_ALLOW_PROTOCOL": "none",  # any git: deny every transport (no remote helper runs)
+        }
+    )
     return env
 
 
 # --- default runner (protocol.proctree) -----------------------------------------------------
 
+
 def run_git(
-    argv: Sequence[str], cwd: Path, timeout: float, *, max_stdout: int = MAX_STATUS_STDOUT,
+    argv: Sequence[str],
+    cwd: Path,
+    timeout: float,
+    *,
+    max_stdout: int = MAX_STATUS_STDOUT,
 ) -> GitRun:
     """Run ``argv`` with the hardened env; kill the whole tree on timeout or oversize.
 
@@ -153,8 +169,13 @@ def run_git(
         proctree.join_threads(threads, _JOIN_SECONDS)
     stderr = redact_text(bytes(err).decode("utf-8", "replace")).strip()[-_STDERR_TAIL_CHARS:]
     returncode = proc.returncode if proc.returncode is not None else -1
-    return GitRun(returncode=returncode, stdout=bytes(out), stderr_tail=stderr,
-                  timed_out=timed_out, truncated=oversize.is_set())
+    return GitRun(
+        returncode=returncode,
+        stdout=bytes(out),
+        stderr_tail=stderr,
+        timed_out=timed_out,
+        truncated=oversize.is_set(),
+    )
 
 
 def _default_runner(argv: Sequence[str], cwd: Path, timeout: float) -> GitRun:
@@ -163,6 +184,7 @@ def _default_runner(argv: Sequence[str], cwd: Path, timeout: float) -> GitRun:
 
 
 # --- query ----------------------------------------------------------------------------------
+
 
 class _Stop(Exception):
     """Ends the query with a limitation (internal control flow)."""
@@ -194,7 +216,10 @@ class _Session:
 
 
 def read_git_state(
-    root: Path, *, executable: str | None = None, runner: GitRunner | None = None,
+    root: Path,
+    *,
+    executable: str | None = None,
+    runner: GitRunner | None = None,
     timeout_s: float = GIT_TIMEOUT_S,
 ) -> GitState:
     try:
@@ -212,8 +237,9 @@ def read_git_state(
 
 
 def _unavailable(limitation: str) -> GitState:
-    return GitState(summary=GitSummary(available=False), changed=frozenset(),
-                    limitations=(limitation,))
+    return GitState(
+        summary=GitSummary(available=False), changed=frozenset(), limitations=(limitation,)
+    )
 
 
 def _query(s: _Session) -> GitState:
@@ -243,9 +269,12 @@ def _query(s: _Session) -> GitState:
     except _Stop as stop:
         limitations.append(stop.limitation)
     summary = GitSummary(
-        available=True, branch=branch, head=head,
+        available=True,
+        branch=branch,
+        head=head,
         detached=branch is None and head is not None,
-        dirty=dirty, changed_files=None if dirty is None else len(changed),
+        dirty=dirty,
+        changed_files=None if dirty is None else len(changed),
         state=states,
     )
     return GitState(summary=summary, changed=changed, limitations=tuple(limitations))
@@ -309,8 +338,14 @@ def _is_executable_key(key: str) -> bool:
 
 
 def _status(s: _Session, toplevel: Path) -> tuple[bool | None, frozenset[str], list[str]]:
-    run = s.run("status", "--porcelain=v1", "-z", "--untracked-files=all",
-                "--ignore-submodules=all", "--no-renames")
+    run = s.run(
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--ignore-submodules=all",
+        "--no-renames",
+    )
     limitations: list[str] = []
     if run.truncated:
         limitations.append("git: changed files truncated (status output too large)")
@@ -345,9 +380,10 @@ def _root_prefix(root: Path, toplevel: Path) -> tuple[str, ...] | None:
     top_parts = toplevel.resolve().parts
     norm = os.path.normcase
     if len(root_parts) < len(top_parts) or any(
-            norm(a) != norm(b) for a, b in zip(root_parts, top_parts, strict=False)):
+        norm(a) != norm(b) for a, b in zip(root_parts, top_parts, strict=False)
+    ):
         return None
-    return root_parts[len(top_parts):]
+    return root_parts[len(top_parts) :]
 
 
 def _relative_to_root(path: str, prefix: tuple[str, ...] | None) -> str | None:
@@ -359,7 +395,7 @@ def _relative_to_root(path: str, prefix: tuple[str, ...] | None) -> str | None:
     norm = os.path.normcase
     if any(norm(a) != norm(b) for a, b in zip(parts, prefix, strict=False)):
         return None
-    return "/".join(parts[len(prefix):])
+    return "/".join(parts[len(prefix) :])
 
 
 def _decode(raw: bytes) -> str:

@@ -41,21 +41,35 @@ from theforge.registry import Registry
 from theforge.runs import RunStore
 
 NATIVE = Path(__file__).parent / "fixtures" / "native"
-SCENARIOS = {"spark-forge-aws": ("theforge_sparkforge_aws",
-                                  NATIVE / "sparkforge_aws" / "scenarios" / "cross"),
-             "api-forge": ("theforge_apiforge", NATIVE / "apiforge" / "scenarios" / "cross")}
+SCENARIOS = {
+    "spark-forge-aws": (
+        "theforge_sparkforge_aws",
+        NATIVE / "sparkforge_aws" / "scenarios" / "cross",
+    ),
+    "api-forge": ("theforge_apiforge", NATIVE / "apiforge" / "scenarios" / "cross"),
+}
 PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
-EXPECTED_NODES = [("n1", "spark-forge-aws", "pyspark.static-analysis", "pyspark"),
-                  ("n2", "api-forge", "api.analyze", "analyze")]
+EXPECTED_NODES = [
+    ("n1", "spark-forge-aws", "pyspark.static-analysis", "pyspark"),
+    ("n2", "api-forge", "api.analyze", "analyze"),
+]
 # Native evidence ids of the specialists: Spark Forge AWS facts, API Forge facts, and the
 # upstream-derived ids the API Forge adapter mints for consumed handoff items.
-NATIVE_ID = {"spark-forge-aws": re.compile(r"f_[0-9a-f]{6}"),
-             "api-forge": re.compile(r"(?:fact|upstream):[0-9a-f]{16}")}
+NATIVE_ID = {
+    "spark-forge-aws": re.compile(r"f_[0-9a-f]{6}"),
+    "api-forge": re.compile(r"(?:fact|upstream):[0-9a-f]{16}"),
+}
 
 
 def _entries() -> list[dict[str, Any]]:
-    return [{"id": pid, "argv": [sys.executable, "-m", module, "--replay", str(scenario)],
-             "trust": "local"} for pid, (module, scenario) in SCENARIOS.items()]
+    return [
+        {
+            "id": pid,
+            "argv": [sys.executable, "-m", module, "--replay", str(scenario)],
+            "trust": "local",
+        }
+        for pid, (module, scenario) in SCENARIOS.items()
+    ]
 
 
 class _Spy:
@@ -72,10 +86,18 @@ class _SpyTransport:
     def __init__(self, spy: _Spy, argv: Sequence[str]) -> None:
         self.spy, self.inner = spy, SubprocessTransport(argv)
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
-        response = self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                                   check_protocol=check_protocol)
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
+        response = self.inner.call(
+            op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol
+        )
         self.spy.calls.append((response.producer.id, op, payload))
         return response
 
@@ -107,11 +129,15 @@ def test_cross_scenarios_are_complete() -> None:
         scenario = SCENARIOS[pid][1]
         recordings = sorted(p.name for p in scenario.glob(f"{capability}.{action}*.json"))
         assert recordings == [f"{capability}.{action}.json"], (scenario, recordings)
-    api = json.loads((SCENARIOS["api-forge"][1] / "api.analyze.analyze.json")
-                     .read_text(encoding="utf-8"))
+    api = json.loads(
+        (SCENARIOS["api-forge"][1] / "api.analyze.analyze.json").read_text(encoding="utf-8")
+    )
     assert api["provenance"] == "recorded"  # re-recorded by record_execute (cycle 3.1)
-    spark = json.loads((SCENARIOS["spark-forge-aws"][1] / "pyspark.static-analysis.pyspark.json")
-                       .read_text(encoding="utf-8"))
+    spark = json.loads(
+        (SCENARIOS["spark-forge-aws"][1] / "pyspark.static-analysis.pyspark.json").read_text(
+            encoding="utf-8"
+        )
+    )
     assert "provenance" not in spark  # recorded by record_execute from the real Spark Forge AWS
     assert spark["arguments"]["path"] == "data-pipeline/jobs"
 
@@ -123,10 +149,11 @@ def test_proof_task_decomposes_into_spark_then_api(proof: tuple[Any, RunStore, _
     assert plan.source == "decomposed" and plan.pattern == "pipeline"
     assert [(n.id, n.provider, n.capability, n.action) for n in plan.nodes] == EXPECTED_NODES
     assert [d.node for d in plan.nodes[1].depends_on] == ["n1"]
-    executes = [(pid, payload["capability"]) for pid, op, payload in spy.calls
-                if op == "execute"]
-    assert executes == [("spark-forge-aws", "pyspark.static-analysis"),
-                        ("api-forge", "api.analyze")]
+    executes = [(pid, payload["capability"]) for pid, op, payload in spy.calls if op == "execute"]
+    assert executes == [
+        ("spark-forge-aws", "pyspark.static-analysis"),
+        ("api-forge", "api.analyze"),
+    ]
 
 
 def test_handoff_is_delivered_and_consumed(proof: tuple[Any, RunStore, _Spy]) -> None:
@@ -139,11 +166,13 @@ def test_handoff_is_delivered_and_consumed(proof: tuple[Any, RunStore, _Spy]) ->
     assert handoff["items"] and not handoff["truncated"]
     assert {item["origin"]["node"] for item in handoff["items"]} == {"n1"}
     assert {item["origin"]["provider"]["id"] for item in handoff["items"]} == {"spark-forge-aws"}
-    (api_execute,) = [payload for pid, op, payload in spy.calls
-                      if op == "execute" and pid == "api-forge"]
+    (api_execute,) = [
+        payload for pid, op, payload in spy.calls if op == "execute" and pid == "api-forge"
+    ]
     assert api_execute["handoff"] == handoff  # delivered == persisted
-    (spark_execute,) = [payload for pid, op, payload in spy.calls
-                        if op == "execute" and pid == "spark-forge-aws"]
+    (spark_execute,) = [
+        payload for pid, op, payload in spy.calls if op == "execute" and pid == "spark-forge-aws"
+    ]
     assert spark_execute.get("handoff") is None  # n1 has no input
     # api.analyze declares accepts_handoff: no undeclared-use limitation, and the consumed
     # items surface in the node's result as upstream-derived evidence with provenance.
@@ -152,8 +181,11 @@ def test_handoff_is_delivered_and_consumed(proof: tuple[Any, RunStore, _Spy]) ->
     assert not [n for n in receipt.limitations if n.startswith(HANDOFF_UNDECLARED_LIMITATION)]
     first = store.read_contract(n1.run_id, "receipt", ExecutionReceipt)
     assert not [n for n in first.limitations if n.startswith(HANDOFF_UNDECLARED_LIMITATION)]
-    consumed = [e for e in store.read_contract(n2.run_id, "result", ExecutionResult).evidence
-                if e.derived_from is not None]
+    consumed = [
+        e
+        for e in store.read_contract(n2.run_id, "result", ExecutionResult).evidence
+        if e.derived_from is not None
+    ]
     assert consumed
     for entry in consumed:
         source = entry.derived_from
@@ -177,12 +209,15 @@ def test_verification_passes_handoff_provenance(proof: tuple[Any, RunStore, _Spy
 
 
 def test_synthesis_references_both_runs_with_native_evidence_ids(
-        proof: tuple[Any, RunStore, _Spy]) -> None:
+    proof: tuple[Any, RunStore, _Spy],
+) -> None:
     out, store, _ = proof
     result = store.read_contract(out.run_id, "plan-result", PlanResult)
     synthesis = result.synthesis
     assert [(s.node, s.provider, s.status) for s in synthesis.nodes] == [
-        ("n1", "spark-forge-aws", "ok"), ("n2", "api-forge", "ok")]
+        ("n1", "spark-forge-aws", "ok"),
+        ("n2", "api-forge", "ok"),
+    ]
     assert [(h.source, h.target) for h in synthesis.handoffs] == [("n1", "n2")]
     for node in synthesis.nodes:
         assert node.run_id is not None

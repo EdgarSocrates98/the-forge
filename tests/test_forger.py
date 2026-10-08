@@ -55,8 +55,16 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
     # Negotiation rounds are optional; telemetry is written in every run and verification in
     # every run that executed a provider. Plan-run, handoff and diagnostic artifacts (Wave D)
     # are not written by this ask run.
-    ask_artifacts = ("task", "routing", "risk", "context", "result", "verification",
-                     "telemetry", "receipt")
+    ask_artifacts = (
+        "task",
+        "routing",
+        "risk",
+        "context",
+        "result",
+        "verification",
+        "telemetry",
+        "receipt",
+    )
     assert set(ask_artifacts) <= set(ARTIFACTS)
     for name in ask_artifacts:
         assert store.read_optional(out.run_id, name) is not None
@@ -77,11 +85,12 @@ def test_case_a_end_to_end(tmp_path: Path) -> None:
 def test_case_b_routes_to_api(tmp_path: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
     case_b(tmp_path)
-    out = forger(tmp_path).ask(AskRequest(intent="avalie esse contrato OpenAPI",
-                                          targets=["api"]))
+    out = forger(tmp_path).ask(AskRequest(intent="avalie esse contrato OpenAPI", targets=["api"]))
     assert out.status == "ok"
-    assert (out.decision.selected[0].provider, out.decision.selected[0].action) == \
-        ("fixture-api", "review")
+    assert (out.decision.selected[0].provider, out.decision.selected[0].action) == (
+        "fixture-api",
+        "review",
+    )
 
 
 def test_ambiguous_writes_receipt_only(tmp_path: Path) -> None:
@@ -126,29 +135,40 @@ def test_requested_capability_without_execute_op_is_refused_with_code(tmp_path: 
     assert store.read(out.run_id, "receipt")["status"] == "refused"
     for artifact in ("context", "risk", "result"):  # refused before policy and execute
         assert store.read_optional(out.run_id, artifact) is None
-    assert any("bad-a" in note and "execute" in note
-               for note in store.read(out.run_id, "routing")["limitations"])
+    assert any(
+        "bad-a" in note and "execute" in note
+        for note in store.read(out.run_id, "routing")["limitations"]
+    )
 
 
-@pytest.mark.parametrize(("executing", "trust"), [
-    ("ok", "unverified"),   # an executing declarer exists, unlockable by --allow-unverified
-    ("describe-crash", "local"),  # an executing provider that is not ready (unreachable)
-])
+@pytest.mark.parametrize(
+    ("executing", "trust"),
+    [
+        ("ok", "unverified"),  # an executing declarer exists, unlockable by --allow-unverified
+        ("describe-crash", "local"),  # an executing provider that is not ready (unreachable)
+    ],
+)
 def test_op_unsupported_is_not_blamed_when_another_provider_may_execute(
     tmp_path: Path, executing: str, trust: str
 ) -> None:
     """2.1 refusal fires only when no other provider can be the one that executes."""
-    make_workspace(tmp_path, [bad_entry(executing, "bad-exec", trust=trust),
-                              bad_entry("no-execute-op", "bad-noexec")])
+    make_workspace(
+        tmp_path,
+        [bad_entry(executing, "bad-exec", trust=trust), bad_entry("no-execute-op", "bad-noexec")],
+    )
     out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing"))
     assert out.status == "no_route" and out.error is None
 
 
 @pytest.mark.parametrize(
     ("mode", "code"),
-    [("crash", "FORGE-PROTO-EXIT"), ("garbage", "FORGE-PROTO-NOT-JSON"),
-     ("oversize", "FORGE-PROTO-OVERSIZE"), ("mismatch", "FORGE-PROTO-MISMATCH"),
-     ("bad-result", "FORGE-PROTO-SCHEMA")],
+    [
+        ("crash", "FORGE-PROTO-EXIT"),
+        ("garbage", "FORGE-PROTO-NOT-JSON"),
+        ("oversize", "FORGE-PROTO-OVERSIZE"),
+        ("mismatch", "FORGE-PROTO-MISMATCH"),
+        ("bad-result", "FORGE-PROTO-SCHEMA"),
+    ],
 )
 def test_provider_failures_never_succeed(tmp_path: Path, mode: str, code: str) -> None:
     make_workspace(tmp_path, [bad_entry(mode, "bad-a")])
@@ -163,17 +183,21 @@ def test_provider_failures_never_succeed(tmp_path: Path, mode: str, code: str) -
 def test_timeout(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("timeout", "bad-a")])
     out = forger(tmp_path, execute_timeout=1.5).ask(
-        AskRequest(intent="run it", capability="bad.thing"))
+        AskRequest(intent="run it", capability="bad.thing")
+    )
     assert out.error is not None and out.error.code == "FORGE-PROTO-TIMEOUT"
 
 
 def test_unhealthy_primary_falls_back(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    make_workspace(
+        tmp_path,
+        [bad_entry("unhealthy", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     # fallback is a profile mechanic: auto resolves this trivial run to economy
     # (fallback disabled), so the test pins balanced.
-    out = forger(tmp_path).ask(AskRequest(intent="run it", capability="bad.thing",
-                                          profile="balanced"))
+    out = forger(tmp_path).ask(
+        AskRequest(intent="run it", capability="bad.thing", profile="balanced")
+    )
     assert out.status == "ok"
     assert out.decision.selected[0].provider == "bad-b"
     assert out.decision.fallbacks_used == ["bad-a:FORGE-HEALTH-UNAVAILABLE"]
@@ -206,8 +230,9 @@ def test_secrets_never_persisted(tmp_path: Path) -> None:
     write_file(tmp_path, "notes.txt", "token=abc123secretvalue\n")
     out = forger(tmp_path).ask(AskRequest(intent="eco password=hunter2xyz"))
     assert out.status == "ok"
-    blob = "".join(p.read_text(encoding="utf-8")
-                   for p in (tmp_path / ".forge" / "runs").rglob("*.json"))
+    blob = "".join(
+        p.read_text(encoding="utf-8") for p in (tmp_path / ".forge" / "runs").rglob("*.json")
+    )
     for secret in ("hunter2xyz", "abc123secretvalue", "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"):
         assert secret not in blob
 
@@ -231,12 +256,18 @@ class _ExplodingTransport:
     def __init__(self, inner: ProviderTransport) -> None:
         self.inner = inner
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
         if op == "execute":
             raise ValueError("boom")
-        return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                               check_protocol=check_protocol)
+        return self.inner.call(op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol)
 
 
 def test_unexpected_exception_becomes_provider_failure(tmp_path: Path) -> None:
@@ -266,24 +297,46 @@ def test_wrong_producer_is_rejected(tmp_path: Path) -> None:
     assert store.read(out.run_id, "receipt")["status"] == "provider_failure"
 
 
-def _rec(pid: str, actions: tuple[str, ...], trust: str,
-         cap_id: str = "bad.thing") -> RegistryRecord:
-    cap = Capability(id=cap_id, actions=list(actions), default_action=actions[0],
-                     state="supported", operation_class="read_only",
-                     signals=Signals(keywords=["bad"]))
-    manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"],
-                             ops=["describe", "health", "execute"], capabilities=[cap])
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust=trust), state="ready",
-                          manifest=manifest, manifest_sha256="0" * 64, protocol="forge/v1")
+def _rec(
+    pid: str, actions: tuple[str, ...], trust: str, cap_id: str = "bad.thing"
+) -> RegistryRecord:
+    cap = Capability(
+        id=cap_id,
+        actions=list(actions),
+        default_action=actions[0],
+        state="supported",
+        operation_class="read_only",
+        signals=Signals(keywords=["bad"]),
+    )
+    manifest = ForgeManifest(
+        id=pid,
+        version="1",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=[cap],
+    )
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust=trust),
+        state="ready",
+        manifest=manifest,
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
 
 
 def _fallback_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, action: str | None
 ) -> tuple[Forger, TaskSpec, RoutingDecision, dict[str, RegistryRecord]]:
     records = {"a": _rec("a", ("run", "other"), "trusted"), "b": _rec("b", ("run",), "local")}
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="x",
-                    workspace_root=str(tmp_path), requested_capability="bad.thing",
-                    requested_action=action)
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent="x",
+        workspace_root=str(tmp_path),
+        requested_capability="bad.thing",
+        requested_action=action,
+    )
     decision = route(task, list(records.values()), [], set())
     assert decision.selected[0].provider == "a"
 
@@ -317,6 +370,7 @@ def test_fallback_substitutes_default_action_when_none_requested(
 
 # --- revalidation, final routing and same-capability fallback (task 3.6) ---------------------
 
+
 class _ScriptedRegistry(Registry):
     """Registry whose revalidation answers from a script instead of describing again."""
 
@@ -333,8 +387,14 @@ class _ScriptedRegistry(Registry):
             status = self.statuses.get(pid, "fresh")
             record = self._in_use[pid]
             if status == "unreachable":
-                record = replace(record, state="unreachable", manifest=None,
-                                 manifest_sha256=None, protocol=None, error="gone")
+                record = replace(
+                    record,
+                    state="unreachable",
+                    manifest=None,
+                    manifest_sha256=None,
+                    protocol=None,
+                    error="gone",
+                )
             outcomes.append(RevalidationOutcome(status=status, record=record))  # type: ignore[arg-type]
         return outcomes
 
@@ -374,7 +434,8 @@ def test_ambiguous_decision_is_revalidated(tmp_path: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
     registry = _ScriptedRegistry(tmp_path / ".forge", {})
     out = Forger(tmp_path, registry, RunStore(tmp_path / ".forge")).ask(
-        AskRequest(intent="performance da api"))
+        AskRequest(intent="performance da api")
+    )
     assert out.status == "ambiguous"
     assert registry.revalidated == [["fixture-api", "fixture-spark"]]
 
@@ -407,7 +468,8 @@ def test_unreachable_candidate_is_removed_from_redone_decision(tmp_path: Path) -
     # 2 vs 2 types is a tie until fixture-api turns out unreachable.
     intent = "glue job da api"
     first = Forger(tmp_path, _ScriptedRegistry(forge, {}), RunStore(forge)).ask(
-        AskRequest(intent=intent))
+        AskRequest(intent=intent)
+    )
     assert first.status == "ambiguous"
     registry = _ScriptedRegistry(forge, {"fixture-api": "unreachable"})
     out = Forger(tmp_path, registry, RunStore(forge)).ask(AskRequest(intent=intent))
@@ -421,22 +483,25 @@ def test_no_route_skips_revalidation(tmp_path: Path) -> None:
     make_workspace(tmp_path, [])
     registry = _ScriptedRegistry(tmp_path / ".forge", {})
     out = Forger(tmp_path, registry, RunStore(tmp_path / ".forge")).ask(
-        AskRequest(intent="bom dia"))
+        AskRequest(intent="bom dia")
+    )
     assert out.status == "no_route"
     assert registry.revalidated == []
 
 
 def test_fallback_routing_written_once_with_fallbacks(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    make_workspace(
+        tmp_path,
+        [bad_entry("unhealthy", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     forge = tmp_path / ".forge"
     store = _CountingStore(forge)
     out = Forger(tmp_path, Registry(forge), store).ask(
-        AskRequest(intent="run it", capability="bad.thing", profile="balanced"))
+        AskRequest(intent="run it", capability="bad.thing", profile="balanced")
+    )
     assert out.status == "ok"
     assert store.writes.count("routing") == 1
-    assert store.read(out.run_id, "routing")["fallbacks_used"] == [
-        "bad-a:FORGE-HEALTH-UNAVAILABLE"]
+    assert store.read(out.run_id, "routing")["fallbacks_used"] == ["bad-a:FORGE-HEALTH-UNAVAILABLE"]
 
 
 def _cand(pid: str, cap: str, types: int) -> Candidate:
@@ -445,10 +510,19 @@ def _cand(pid: str, cap: str, types: int) -> Candidate:
 
 def _signal_decision(candidates: list[Candidate], action: str = "run") -> RoutingDecision:
     return RoutingDecision(
-        producer=PRODUCER, created_at=utc_now(), status="routed", task_id="t1",
-        candidates=candidates, reason="r", confidence=Confidence(level="high"),
-        selected=[Selection(provider=candidates[0].provider,
-                            capability=candidates[0].capability, action=action)])
+        producer=PRODUCER,
+        created_at=utc_now(),
+        status="routed",
+        task_id="t1",
+        candidates=candidates,
+        reason="r",
+        confidence=Confidence(level="high"),
+        selected=[
+            Selection(
+                provider=candidates[0].provider, capability=candidates[0].capability, action=action
+            )
+        ],
+    )
 
 
 def _signal_forger(
@@ -460,8 +534,9 @@ def _signal_forger(
         return HealthOutcome(status="ok")
 
     monkeypatch.setattr("theforge.forger.orchestrator.check_health", fake_health)
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="x",
-                    workspace_root=str(tmp_path))
+    task = TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id="t1", intent="x", workspace_root=str(tmp_path)
+    )
     forge = tmp_path / ".forge"
     return Forger(tmp_path, Registry(forge), RunStore(forge)), task
 
@@ -469,11 +544,14 @@ def _signal_forger(
 def test_fallback_never_crosses_capability_or_takes_weak_candidates(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    records = {"a": _rec("a", ("run",), "trusted"),
-               "b": _rec("b", ("run",), "local", cap_id="other.cap"),
-               "c": _rec("c", ("run",), "local")}
-    decision = _signal_decision([_cand("a", "bad.thing", 3), _cand("b", "other.cap", 2),
-                                 _cand("c", "bad.thing", 1)])
+    records = {
+        "a": _rec("a", ("run",), "trusted"),
+        "b": _rec("b", ("run",), "local", cap_id="other.cap"),
+        "c": _rec("c", ("run",), "local"),
+    }
+    decision = _signal_decision(
+        [_cand("a", "bad.thing", 3), _cand("b", "other.cap", 2), _cand("c", "bad.thing", 1)]
+    )
     forge_, task = _signal_forger(tmp_path, monkeypatch, {"a"})
     final, record, error = forge_._select_healthy(task, decision, records)
     assert record is None
@@ -485,11 +563,14 @@ def test_fallback_never_crosses_capability_or_takes_weak_candidates(
 def test_fallback_takes_strong_same_capability_candidate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    records = {"a": _rec("a", ("run",), "trusted"),
-               "b": _rec("b", ("run",), "local", cap_id="other.cap"),
-               "d": _rec("d", ("run",), "local")}
-    decision = _signal_decision([_cand("a", "bad.thing", 3), _cand("b", "other.cap", 2),
-                                 _cand("d", "bad.thing", 2)])
+    records = {
+        "a": _rec("a", ("run",), "trusted"),
+        "b": _rec("b", ("run",), "local", cap_id="other.cap"),
+        "d": _rec("d", ("run",), "local"),
+    }
+    decision = _signal_decision(
+        [_cand("a", "bad.thing", 3), _cand("b", "other.cap", 2), _cand("d", "bad.thing", 2)]
+    )
     forge_, task = _signal_forger(tmp_path, monkeypatch, {"a"})
     final, record, _ = forge_._select_healthy(task, decision, records)
     assert record is not None and record.entry.id == "d"
@@ -501,8 +582,9 @@ def test_fallback_requires_the_resolved_action(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     records = {"a": _rec("a", ("other", "run"), "trusted"), "b": _rec("b", ("run",), "local")}
-    decision = _signal_decision([_cand("a", "bad.thing", 3), _cand("b", "bad.thing", 2)],
-                                action="other")
+    decision = _signal_decision(
+        [_cand("a", "bad.thing", 3), _cand("b", "bad.thing", 2)], action="other"
+    )
     forge_, task = _signal_forger(tmp_path, monkeypatch, {"a"})
     final, record, _ = forge_._select_healthy(task, decision, records)
     assert record is None
@@ -527,27 +609,34 @@ def test_selected_provider_without_execute_op_is_refused(
 
     def fake_route(task: TaskSpec, *_: object, **__: object) -> RoutingDecision:
         return RoutingDecision(
-            producer=PRODUCER, created_at=utc_now(), status="routed", task_id=task.id,
-            candidates=[_cand("n", "bad.thing", 1)], reason="forced",
+            producer=PRODUCER,
+            created_at=utc_now(),
+            status="routed",
+            task_id=task.id,
+            candidates=[_cand("n", "bad.thing", 1)],
+            reason="forced",
             confidence=Confidence(level="high"),
-            selected=[Selection(provider="n", capability="bad.thing", action="run")])
+            selected=[Selection(provider="n", capability="bad.thing", action="run")],
+        )
 
     def boom_factory(argv: Sequence[str]) -> ProviderTransport:
         raise AssertionError("no process may start")
 
     monkeypatch.setattr("theforge.forger.orchestrator.route", fake_route)
-    monkeypatch.setattr("theforge.forger.orchestrator.check_health",
-                        lambda record, **_: HealthOutcome(status="ok"))
+    monkeypatch.setattr(
+        "theforge.forger.orchestrator.check_health", lambda record, **_: HealthOutcome(status="ok")
+    )
     forge = tmp_path / ".forge"
-    out = Forger(tmp_path, _Fixed(forge), RunStore(forge),
-                 transport_factory=boom_factory).ask(
-        AskRequest(intent="x", capability="bad.thing"))
+    out = Forger(tmp_path, _Fixed(forge), RunStore(forge), transport_factory=boom_factory).ask(
+        AskRequest(intent="x", capability="bad.thing")
+    )
     assert out.status == "refused" and out.result is None
     assert out.error is not None and out.error.code == Codes.PROTO_OP_UNSUPPORTED
     assert RunStore(forge).read_optional(out.run_id, "context") is None
 
 
 # --- policy, risk and provider identity (task 3.7) --------------------------------------------
+
 
 class _OpRecorder:
     """Transport factory that records every op started, so tests can prove no execute ran."""
@@ -564,11 +653,17 @@ class _RecordingTransport:
         self.ops = ops
         self.inner = SubprocessTransport(argv)
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
         self.ops.append(op)
-        return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                               check_protocol=check_protocol)
+        return self.inner.call(op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol)
 
 
 def _policy_forger(tmp_path: Path) -> tuple[Forger, _OpRecorder, RunStore]:
@@ -600,8 +695,9 @@ def test_local_mutation_with_local_trust_is_refused_without_approval(tmp_path: P
 def test_local_mutation_with_local_trust_runs_with_approval(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
     forger_, recorder, store = _policy_forger(tmp_path)
-    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing",
-                                 approvals=frozenset({"bad.thing"})))
+    out = forger_.ask(
+        AskRequest(intent="run it", capability="bad.thing", approvals=frozenset({"bad.thing"}))
+    )
     assert out.status == "ok" and out.result is not None
     assert "execute" in recorder.ops
     risk = store.read(out.run_id, "risk")
@@ -612,8 +708,9 @@ def test_local_mutation_with_local_trust_runs_with_approval(tmp_path: Path) -> N
 def test_approval_for_another_capability_does_not_unlock(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("mutating", "bad-m", trust="local")])
     forger_, recorder, _ = _policy_forger(tmp_path)
-    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing",
-                                 approvals=frozenset({"demo.echo"})))
+    out = forger_.ask(
+        AskRequest(intent="run it", capability="bad.thing", approvals=frozenset({"demo.echo"}))
+    )
     assert out.status == "refused"
     assert out.error is not None and out.error.code == Codes.POLICY_APPROVAL_REQUIRED
     assert "execute" not in recorder.ops
@@ -632,8 +729,9 @@ def test_local_mutation_with_trusted_provider_is_allowed(tmp_path: Path) -> None
 def test_destructive_is_denied_even_with_approval(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("destructive", "bad-d", trust="trusted")])
     forger_, recorder, store = _policy_forger(tmp_path)
-    out = forger_.ask(AskRequest(intent="run it", capability="bad.thing",
-                                 approvals=frozenset({"bad.thing"})))
+    out = forger_.ask(
+        AskRequest(intent="run it", capability="bad.thing", approvals=frozenset({"bad.thing"}))
+    )
     assert out.status == "refused" and out.result is None
     assert out.error is not None and out.error.code == Codes.POLICY_DENIED
     assert "destructive" in out.error.detail
@@ -650,7 +748,8 @@ def test_read_only_echo_receipt_records_identity_and_risk(tmp_path: Path) -> Non
     forge = tmp_path / ".forge"
     registry = Registry(forge)
     out = Forger(tmp_path, registry, RunStore(forge)).ask(
-        AskRequest(intent="eco", capability="demo.echo"))
+        AskRequest(intent="eco", capability="demo.echo")
+    )
     assert out.status == "ok"
     store = RunStore(forge)
     risk = store.read(out.run_id, "risk")
@@ -704,13 +803,25 @@ def test_policy_warnings_become_receipt_limitations(tmp_path: Path) -> None:
 
 # --- aliases, deprecation and overlap in persisted decisions (task 2.2) -----------------------
 
-def _alias_rec(pid: str, cap_id: str, trust: str, *, aliases: Sequence[str] = (),
-               deprecated: bool = False, replaced_by: str | None = None,
-               execute: bool = True) -> RegistryRecord:
+
+def _alias_rec(
+    pid: str,
+    cap_id: str,
+    trust: str,
+    *,
+    aliases: Sequence[str] = (),
+    deprecated: bool = False,
+    replaced_by: str | None = None,
+    execute: bool = True,
+) -> RegistryRecord:
     base = _rec(pid, ("run",), trust, cap_id=cap_id)
     assert base.manifest is not None
-    capability = replace(base.manifest.capabilities[0], aliases=list(aliases),
-                         deprecated=deprecated, replaced_by=replaced_by)
+    capability = replace(
+        base.manifest.capabilities[0],
+        aliases=list(aliases),
+        deprecated=deprecated,
+        replaced_by=replaced_by,
+    )
     ops = ["describe", "health", "execute"] if execute else ["describe", "health"]
     return replace(base, manifest=replace(base.manifest, capabilities=[capability], ops=ops))
 
@@ -735,11 +846,11 @@ def _fixed_forger(
         def call(self, op: str, payload: dict[str, Any], **_: object) -> Response:
             raise TransportError(Codes.PROTO_EXIT, "down")
 
-    monkeypatch.setattr("theforge.forger.orchestrator.check_health",
-                        lambda record, **_: HealthOutcome(status="ok"))
+    monkeypatch.setattr(
+        "theforge.forger.orchestrator.check_health", lambda record, **_: HealthOutcome(status="ok")
+    )
     forge = tmp_path / ".forge"
-    return Forger(tmp_path, _Fixed(forge), RunStore(forge),
-                  transport_factory=lambda argv: _Down())  # type: ignore[arg-type,return-value]
+    return Forger(tmp_path, _Fixed(forge), RunStore(forge), transport_factory=lambda argv: _Down())  # type: ignore[arg-type,return-value]
 
 
 def _persisted(tmp_path: Path, run_id: str) -> dict[str, Any]:
@@ -753,18 +864,22 @@ def test_persisted_explicit_decision_resolves_alias_and_prefers_canonical(
     canon = _alias_rec("canon", "data.quality", "local")
     aliased = _alias_rec("aliased", "data.checks", "trusted", aliases=["data.quality"])
     out = _fixed_forger(tmp_path, monkeypatch, [aliased, canon]).ask(
-        AskRequest(intent="x", capability="data.quality"))
+        AskRequest(intent="x", capability="data.quality")
+    )
     routing = _persisted(tmp_path, out.run_id)
     assert routing["selected"][0]["provider"] == "canon"
     assert routing["selected"][0]["capability"] == "data.quality"
 
     alias_only = _fixed_forger(tmp_path / "w2", monkeypatch, [aliased]).ask(
-        AskRequest(intent="x", capability="data.quality"))
+        AskRequest(intent="x", capability="data.quality")
+    )
     routing = _persisted(tmp_path / "w2", alias_only.run_id)
     selected = routing["selected"][0]
     assert (selected["provider"], selected["capability"]) == ("aliased", "data.checks")
-    assert "capability-alias: 'data.quality' resolved to 'data.checks' (aliased)" \
+    assert (
+        "capability-alias: 'data.quality' resolved to 'data.checks' (aliased)"
         in routing["limitations"]
+    )
     task = RunStore(tmp_path / "w2" / ".forge").read(alias_only.run_id, "task")
     assert task["requested_capability"] == "data.quality"
 
@@ -775,13 +890,18 @@ def test_persisted_explicit_decision_notes_deprecation_and_overlap(
     a = _alias_rec("a", "data.quality", "trusted", deprecated=True, replaced_by="data.q2")
     b = _alias_rec("b", "data.quality", "local")
     out = _fixed_forger(tmp_path, monkeypatch, [a, b]).ask(
-        AskRequest(intent="x", capability="data.quality"))
+        AskRequest(intent="x", capability="data.quality")
+    )
     routing = _persisted(tmp_path, out.run_id)
     assert routing["confidence"]["level"] == "high"
-    assert "capability-deprecated: 'data.quality' (a) is deprecated; replaced_by 'data.q2'" \
+    assert (
+        "capability-deprecated: 'data.quality' (a) is deprecated; replaced_by 'data.q2'"
         in routing["limitations"]
-    assert "capability-overlap: 'data.quality' declared by a, b; tie-break trust, " \
+    )
+    assert (
+        "capability-overlap: 'data.quality' declared by a, b; tie-break trust, "
         "history, id" in routing["limitations"]
+    )
 
 
 def test_persisted_signal_decision_notes_overlap(
@@ -793,18 +913,20 @@ def test_persisted_signal_decision_notes_overlap(
     routing = _persisted(tmp_path, out.run_id)
     assert out.status == "ambiguous"
     assert "capability-overlap: 'bad.thing' declared by a, b" in routing["limitations"]
-    assert "capability-deprecated: 'bad.thing' (b) is deprecated; no replacement declared" \
+    assert (
+        "capability-deprecated: 'bad.thing' (b) is deprecated; no replacement declared"
         in routing["limitations"]
+    )
 
 
 def test_alias_requested_without_execute_is_refused_with_code(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """2.1 refusal also covers a capability requested by its alias."""
-    no_exec = _alias_rec("aliased", "data.checks", "local", aliases=["data.quality"],
-                         execute=False)
+    no_exec = _alias_rec("aliased", "data.checks", "local", aliases=["data.quality"], execute=False)
     out = _fixed_forger(tmp_path, monkeypatch, [no_exec]).ask(
-        AskRequest(intent="x", capability="data.quality"))
+        AskRequest(intent="x", capability="data.quality")
+    )
     assert out.status == "refused" and out.result is None
     assert out.error is not None and out.error.code == Codes.PROTO_OP_UNSUPPORTED
     assert "aliased" in out.error.detail

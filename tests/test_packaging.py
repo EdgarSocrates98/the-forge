@@ -31,14 +31,15 @@ def _run_script(
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(script), *map(str, args)],
-        capture_output=True, text=True, timeout=timeout,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
 
 
 def _write_pyproject(path: Path, dependencies: str) -> Path:
     path.write_text(
-        '[project]\nname = "theforge"\nversion = "0.1.0"\n'
-        f"dependencies = {dependencies}\n",
+        f'[project]\nname = "theforge"\nversion = "0.1.0"\ndependencies = {dependencies}\n',
         encoding="utf-8",
     )
     return path
@@ -82,8 +83,10 @@ def test_zero_deps_gate_rejects_declared_runtime_dependency(tmp_path: Path) -> N
 
 def test_zero_deps_gate_rejects_unmarked_wheel_requirement(tmp_path: Path) -> None:
     pyproject = _write_pyproject(tmp_path / "pyproject.toml", "[]")
-    wheel = _fake_wheel(tmp_path / "theforge-0.1.0-py3-none-any.whl",
-                        ['pytest>=8.0; extra == "dev"', 'requests; python_version >= "3.11"'])
+    wheel = _fake_wheel(
+        tmp_path / "theforge-0.1.0-py3-none-any.whl",
+        ['pytest>=8.0; extra == "dev"', 'requests; python_version >= "3.11"'],
+    )
     out = _run_script(ZERO_DEPS, "--pyproject", pyproject, wheel)
     assert out.returncode != 0
     assert "requests" in out.stderr
@@ -92,8 +95,10 @@ def test_zero_deps_gate_rejects_unmarked_wheel_requirement(tmp_path: Path) -> No
 
 def test_zero_deps_gate_accepts_extra_only_wheel_requirements(tmp_path: Path) -> None:
     pyproject = _write_pyproject(tmp_path / "pyproject.toml", "[]")
-    wheel = _fake_wheel(tmp_path / "theforge-0.1.0-py3-none-any.whl",
-                        ['pytest>=8.0; extra == "dev"', "mypy>=1.10 ; extra=='dev'"])
+    wheel = _fake_wheel(
+        tmp_path / "theforge-0.1.0-py3-none-any.whl",
+        ['pytest>=8.0; extra == "dev"', "mypy>=1.10 ; extra=='dev'"],
+    )
     out = _run_script(ZERO_DEPS, "--pyproject", pyproject, wheel)
     assert out.returncode == 0, out.stdout + out.stderr
 
@@ -112,14 +117,19 @@ def _fresh_install_module() -> Any:
     return module
 
 
-@pytest.mark.parametrize(("change", "needle"), [
-    ({"requires": ["requests>=2.0"]}, "runtime requirements"),
-    ({"requires": ["pytest; extra=='dev'", "requests; python_version>'3'"]}, "runtime"),
-    ({"console_scripts": {"theforge": "x:y", "forge": "theforge.cli.main:main"}},
-     "entry points"),
-    ({"direct_url": '{"url": "file:///w", "dir_info": {"editable": true}}'}, "editable"),
-    ({"module_file": "REPO"}, "not the fresh venv"),
-])
+@pytest.mark.parametrize(
+    ("change", "needle"),
+    [
+        ({"requires": ["requests>=2.0"]}, "runtime requirements"),
+        ({"requires": ["pytest; extra=='dev'", "requests; python_version>'3'"]}, "runtime"),
+        (
+            {"console_scripts": {"theforge": "x:y", "forge": "theforge.cli.main:main"}},
+            "entry points",
+        ),
+        ({"direct_url": '{"url": "file:///w", "dir_info": {"editable": true}}'}, "editable"),
+        ({"module_file": "REPO"}, "not the fresh venv"),
+    ],
+)
 def test_fresh_install_metadata_check_rejects_bad_installs(
     tmp_path: Path, change: dict[str, Any], needle: str
 ) -> None:
@@ -129,10 +139,14 @@ def test_fresh_install_metadata_check_rejects_bad_installs(
     # path is only compared, never created.
     venv = Path(tempfile.gettempdir()) / f"theforge-probe-{tmp_path.name}" / "venv"
     probe: dict[str, Any] = {
-        "name": "theforge", "version": "1.2.3", "requires_python": ">=3.11",
+        "name": "theforge",
+        "version": "1.2.3",
+        "requires_python": ">=3.11",
         "requires": ["pytest; extra == 'dev'", "ruff; extra=='dev'"],
-        "console_scripts": {"theforge": "theforge.cli.main:main",
-                            "forge": "theforge.cli.main:main"},
+        "console_scripts": {
+            "theforge": "theforge.cli.main:main",
+            "forge": "theforge.cli.main:main",
+        },
         "module_file": str(venv / "Lib" / "site-packages" / "theforge" / "__init__.py"),
         "direct_url": '{"url": "file:///w.whl", "archive_info": {}}',
     }
@@ -152,9 +166,20 @@ def test_fresh_install_metadata_check_rejects_bad_installs(
 def built_wheel(tmp_path_factory: pytest.TempPathFactory) -> Path:
     dist = tmp_path_factory.mktemp("dist")
     subprocess.run(
-        [sys.executable, "-m", "pip", "wheel", "--no-deps", "--quiet",
-         "--disable-pip-version-check", "--wheel-dir", str(dist), str(REPO)],
-        check=True, timeout=600,
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--no-deps",
+            "--quiet",
+            "--disable-pip-version-check",
+            "--wheel-dir",
+            str(dist),
+            str(REPO),
+        ],
+        check=True,
+        timeout=600,
     )
     wheels = sorted(dist.glob("theforge-*.whl"))
     assert len(wheels) == 1, wheels
@@ -195,8 +220,14 @@ def test_ci_gates_fail_on_artificial_runtime_dependency(built_wheel: Path, tmp_p
 
 
 AGENTIC_SDIST_EXCLUDES = (
-    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave",
-    "/CLAUDE.md", "/AGENTS.md",
+    "/.claude",
+    "/.agents",
+    "/.devin",
+    "/.codex",
+    "/.kiro",
+    "/.tokensave",
+    "/CLAUDE.md",
+    "/AGENTS.md",
 )
 
 
@@ -221,7 +252,9 @@ def built_sdist(tmp_path_factory: pytest.TempPathFactory) -> Path:
     dist = tmp_path_factory.mktemp("sdist")
     subprocess.run(
         [sys.executable, "-m", "build", "--sdist", "--outdir", str(dist), str(REPO)],
-        check=True, timeout=600, capture_output=True,
+        check=True,
+        timeout=600,
+        capture_output=True,
     )
     sdists = sorted(dist.glob("theforge-*.tar.gz"))
     assert len(sdists) == 1, sdists

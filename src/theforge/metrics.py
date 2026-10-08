@@ -25,8 +25,7 @@ from theforge.contracts.performance import (
 from theforge.meta import PRODUCER
 from theforge.security.redact import redact
 
-__all__ = ["load_performance", "record_performance",
-           "METRICS_DIR", "PERFORMANCE_FILE"]
+__all__ = ["load_performance", "record_performance", "METRICS_DIR", "PERFORMANCE_FILE"]
 
 METRICS_DIR = "metrics"
 PERFORMANCE_FILE = "provider-performance.json"
@@ -59,9 +58,18 @@ def load_performance(root: Path) -> tuple[ProviderPerformance | None, str | None
 
 
 def record_performance(
-    root: Path, provider: str, capability: str, *,
-    status: str, verified: bool, evidence: int, artifacts: int,
-    context_bytes: int, files_sent: int, files_cited: int, duration_ms: float,
+    root: Path,
+    provider: str,
+    capability: str,
+    *,
+    status: str,
+    verified: bool,
+    evidence: int,
+    artifacts: int,
+    context_bytes: int,
+    files_sent: int,
+    files_cited: int,
+    duration_ms: float,
     surface: str | None = None,
 ) -> str | None:
     """Fold one executed run into the store; returns a warning on failure.
@@ -75,15 +83,30 @@ def record_performance(
     """
     try:
         store, warning = load_performance(root)
-        entries = {} if store is None else {
-            (e.provider, e.capability, e.surface): e for e in store.entries}
+        entries = (
+            {}
+            if store is None
+            else {(e.provider, e.capability, e.surface): e for e in store.entries}
+        )
         key = (provider, capability, surface)
         old = entries.get(key)
         base = old or ProviderCapabilityPerformance(
-            provider=provider, capability=capability, runs=0, ok=0, partial=0,
-            failed=0, verified_runs=0, evidence=0, artifacts=0, context_bytes=0,
-            files_sent=0, files_cited=0, duration_ms=0.0, updated_at=utc_now(),
-            surface=surface)
+            provider=provider,
+            capability=capability,
+            runs=0,
+            ok=0,
+            partial=0,
+            failed=0,
+            verified_runs=0,
+            evidence=0,
+            artifacts=0,
+            context_bytes=0,
+            files_sent=0,
+            files_cited=0,
+            duration_ms=0.0,
+            updated_at=utc_now(),
+            surface=surface,
+        )
         entries[key] = replace(
             base,
             runs=base.runs + 1,
@@ -97,10 +120,11 @@ def record_performance(
             files_sent=base.files_sent + max(0, files_sent),
             files_cited=base.files_cited + max(0, min(files_cited, files_sent)),
             duration_ms=base.duration_ms + max(0.0, duration_ms),
-            updated_at=utc_now())
+            updated_at=utc_now(),
+        )
         snapshot = ProviderPerformance(
-            producer=PRODUCER, created_at=utc_now(),
-            entries=[entries[k] for k in sorted(entries)])
+            producer=PRODUCER, created_at=utc_now(), entries=[entries[k] for k in sorted(entries)]
+        )
         data = to_dict(snapshot)
         if redact(data) != data:  # refuse rather than persist a silently altered file
             return "metrics: not written (redaction would alter it)"

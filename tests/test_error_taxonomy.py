@@ -62,8 +62,21 @@ def test_every_code_has_exactly_one_known_family() -> None:
 
 
 def test_family_set_is_the_documented_one() -> None:
-    documented = {"protocol", "registry", "routing", "plan", "context", "provider", "policy",
-                  "persistence", "security", "workspace", "replay", "usage", "internal"}
+    documented = {
+        "protocol",
+        "registry",
+        "routing",
+        "plan",
+        "context",
+        "provider",
+        "policy",
+        "persistence",
+        "security",
+        "workspace",
+        "replay",
+        "usage",
+        "internal",
+    }
     assert set(get_args(ErrorFamily)) == documented
 
 
@@ -71,53 +84,68 @@ def test_routing_has_no_codes() -> None:
     assert "routing" not in set(CODE_FAMILIES.values())
 
 
-@pytest.mark.parametrize(("code", "family"), [
-    (Codes.PROVIDER_BLOCKED, "security"),
-    (Codes.PROVIDER_UNTRUSTED, "security"),
-    (Codes.PROVIDER_NOT_READY, "provider"),
-    (Codes.MANIFEST_VERSION, "registry"),
-    (Codes.MANIFEST_TAXONOMY, "registry"),
-    (Codes.MANIFEST_LIMITS, "registry"),
-    (Codes.REGISTRY_MANIFEST_CHANGED, "registry"),
-    (Codes.CONTEXT_REQUEST_LIMIT, "context"),
-    (Codes.RECEIPT_INVALID, "persistence"),
-    (Codes.RESULT_ARTIFACT_HASH, "provider"),
-    (Codes.PERSIST_DIVERGENCE, "persistence"),
-    (Codes.PLAN_FILE, "plan"),
-    (Codes.WORKSPACE_GRAPH_EDGE, "workspace"),
-    (Codes.REPLAY_NOT_REPRODUCIBLE, "replay"),
-    (Codes.USAGE, "usage"),
-    (Codes.INTERNAL, "internal"),
-])
+@pytest.mark.parametrize(
+    ("code", "family"),
+    [
+        (Codes.PROVIDER_BLOCKED, "security"),
+        (Codes.PROVIDER_UNTRUSTED, "security"),
+        (Codes.PROVIDER_NOT_READY, "provider"),
+        (Codes.MANIFEST_VERSION, "registry"),
+        (Codes.MANIFEST_TAXONOMY, "registry"),
+        (Codes.MANIFEST_LIMITS, "registry"),
+        (Codes.REGISTRY_MANIFEST_CHANGED, "registry"),
+        (Codes.CONTEXT_REQUEST_LIMIT, "context"),
+        (Codes.RECEIPT_INVALID, "persistence"),
+        (Codes.RESULT_ARTIFACT_HASH, "provider"),
+        (Codes.PERSIST_DIVERGENCE, "persistence"),
+        (Codes.PLAN_FILE, "plan"),
+        (Codes.WORKSPACE_GRAPH_EDGE, "workspace"),
+        (Codes.REPLAY_NOT_REPRODUCIBLE, "replay"),
+        (Codes.USAGE, "usage"),
+        (Codes.INTERNAL, "internal"),
+    ],
+)
 def test_family_of_known_codes(code: str, family: str) -> None:
     assert family_of(code) == family
 
 
-@pytest.mark.parametrize("code", [
-    "AF-X", "AF-CLI-INTERNAL", "SPARKFORGE-TOOL-ERROR", "SPARKFORGE-ADAPTER-NATIVE-FAILED",
-    "APIFORGE-ADAPTER-NATIVE-INVALID", "ADAPTER-INTERNAL", "FORGE-NOT-A-CODE", "",
-])
+@pytest.mark.parametrize(
+    "code",
+    [
+        "AF-X",
+        "AF-CLI-INTERNAL",
+        "SPARKFORGE-TOOL-ERROR",
+        "SPARKFORGE-ADAPTER-NATIVE-FAILED",
+        "APIFORGE-ADAPTER-NATIVE-INVALID",
+        "ADAPTER-INTERNAL",
+        "FORGE-NOT-A-CODE",
+        "",
+    ],
+)
 def test_native_and_unknown_codes_have_no_family(code: str) -> None:
     assert family_of(code) is None
 
 
-@pytest.mark.parametrize(("name", "value"), [
-    ("PLAN_INVALID", "FORGE-PLAN-INVALID"),
-    ("PLAN_CAPABILITY", "FORGE-PLAN-CAPABILITY"),
-    ("PLAN_LIMIT", "FORGE-PLAN-LIMIT"),
-    ("PLAN_PATTERN_RESERVED", "FORGE-PLAN-PATTERN-RESERVED"),
-    ("PLAN_FILE", "FORGE-PLAN-FILE"),
-    ("PLAN_DEPENDENCY_FAILED", "FORGE-PLAN-DEPENDENCY-FAILED"),
-    ("PLAN_ESTIMATE", "FORGE-PLAN-ESTIMATE"),
-    ("WORKSPACE_CONFIG", "FORGE-WORKSPACE-CONFIG"),
-    ("WORKSPACE_GRAPH_EDGE", "FORGE-WORKSPACE-GRAPH-EDGE"),
-    ("PERSIST_WRITE", "FORGE-PERSIST-WRITE"),
-    ("PERSIST_READ", "FORGE-PERSIST-READ"),
-    ("PERSIST_DIVERGENCE", "FORGE-PERSIST-DIVERGENCE"),
-    ("RESULT_ARTIFACT_HASH", "FORGE-RESULT-ARTIFACT-HASH"),
-    ("REPLAY_NOT_REPRODUCIBLE", "FORGE-REPLAY-NOT-REPRODUCIBLE"),
-    ("REPLAY_UNSUPPORTED", "FORGE-REPLAY-UNSUPPORTED"),
-])
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("PLAN_INVALID", "FORGE-PLAN-INVALID"),
+        ("PLAN_CAPABILITY", "FORGE-PLAN-CAPABILITY"),
+        ("PLAN_LIMIT", "FORGE-PLAN-LIMIT"),
+        ("PLAN_PATTERN_RESERVED", "FORGE-PLAN-PATTERN-RESERVED"),
+        ("PLAN_FILE", "FORGE-PLAN-FILE"),
+        ("PLAN_DEPENDENCY_FAILED", "FORGE-PLAN-DEPENDENCY-FAILED"),
+        ("PLAN_ESTIMATE", "FORGE-PLAN-ESTIMATE"),
+        ("WORKSPACE_CONFIG", "FORGE-WORKSPACE-CONFIG"),
+        ("WORKSPACE_GRAPH_EDGE", "FORGE-WORKSPACE-GRAPH-EDGE"),
+        ("PERSIST_WRITE", "FORGE-PERSIST-WRITE"),
+        ("PERSIST_READ", "FORGE-PERSIST-READ"),
+        ("PERSIST_DIVERGENCE", "FORGE-PERSIST-DIVERGENCE"),
+        ("RESULT_ARTIFACT_HASH", "FORGE-RESULT-ARTIFACT-HASH"),
+        ("REPLAY_NOT_REPRODUCIBLE", "FORGE-REPLAY-NOT-REPRODUCIBLE"),
+        ("REPLAY_UNSUPPORTED", "FORGE-REPLAY-UNSUPPORTED"),
+    ],
+)
 def test_new_wave_d_codes_are_declared(name: str, value: str) -> None:
     assert getattr(Codes, name) == value
 
@@ -153,11 +181,15 @@ def test_protocol_md_links_errors_md() -> None:
 def test_protocol_md_has_no_competing_full_table() -> None:
     """protocol.md keeps a short table (manifest/context-request codes); the list is errors.md."""
     text = PROTOCOL_MD.read_text(encoding="utf-8")
-    tabled = {m.group(1) for line in text.splitlines()
-              if (m := re.match(r"^\|\s*`(FORGE-[A-Z0-9-]+)`", line))}
+    tabled = {
+        m.group(1)
+        for line in text.splitlines()
+        if (m := re.match(r"^\|\s*`(FORGE-[A-Z0-9-]+)`", line))
+    }
     assert tabled, "protocol.md lost its short code table"
-    assert all(code.startswith(("FORGE-MANIFEST-", "FORGE-CONTEXT-REQUEST-"))
-               for code in tabled), sorted(tabled)
+    assert all(code.startswith(("FORGE-MANIFEST-", "FORGE-CONTEXT-REQUEST-")) for code in tabled), (
+        sorted(tabled)
+    )
 
 
 @pytest.mark.parametrize("doc", _doc_files(), ids=lambda p: p.relative_to(ROOT).as_posix())
@@ -178,8 +210,7 @@ def test_doc_tables_agree_on_family(doc: Path) -> None:
         codes = [cell for cell in cells if cell in canonical]
         families = [cell for cell in cells if cell in FAMILIES]
         if codes and families:
-            conflicts += [(code, families[0]) for code in codes
-                          if canonical[code] != families[0]]
+            conflicts += [(code, families[0]) for code in codes if canonical[code] != families[0]]
     assert conflicts == []
 
 

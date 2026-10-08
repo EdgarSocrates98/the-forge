@@ -58,11 +58,20 @@ def main() -> int:
     rid = "unknown"
 
     def reply(status, payload=None, error=None):
-        sys.stdout.write(json.dumps({
-            "protocol": "forge/v1", "kind": "Response", "request_id": rid,
-            "op": op, "producer": producer, "status": status, "payload": payload or {},
-            "error": error,
-        }))
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "protocol": "forge/v1",
+                    "kind": "Response",
+                    "request_id": rid,
+                    "op": op,
+                    "producer": producer,
+                    "status": status,
+                    "payload": payload or {},
+                    "error": error,
+                }
+            )
+        )
         return 0
 
     def err(code, detail, field=None):
@@ -74,25 +83,28 @@ def main() -> int:
     except (json.JSONDecodeError, KeyError, TypeError) as exc:
         return reply("error", error=err("FIXTURE-REQ-INVALID", str(exc)))
     if op != "describe" and req.get("protocol") != "forge/v1":
-        return reply("refused", error=err("FIXTURE-PROTO-UNSUPPORTED",
-                                          str(req.get("protocol")), "protocol"))
+        return reply(
+            "refused", error=err("FIXTURE-PROTO-UNSUPPORTED", str(req.get("protocol")), "protocol")
+        )
     if op == "describe":
         return reply("ok", manifest)
     if op == "health":
         if unhealthy:
-            return reply("ok", {"status": "unavailable",
-                                "checks": [{"name": "fixture", "ok": False,
-                                            "detail": "backend down"}]})
+            return reply(
+                "ok",
+                {
+                    "status": "unavailable",
+                    "checks": [{"name": "fixture", "ok": False, "detail": "backend down"}],
+                },
+            )
         return reply("ok", {"status": "ok", "checks": [{"name": "fixture", "ok": True}]})
     if op == "verify" and "verify" in manifest["ops"]:
         if verify_status != "ok":
-            return reply(verify_status,
-                         error=err("FIXTURE-VERIFY", f"verifier {verify_status}"))
+            return reply(verify_status, error=err("FIXTURE-VERIFY", f"verifier {verify_status}"))
         return reply("ok", verdict)
     if op == "resolve" and "resolve" in manifest["ops"]:
         if resolve_status != "ok":
-            return reply(resolve_status,
-                         error=err("FIXTURE-RESOLVE", f"resolver {resolve_status}"))
+            return reply(resolve_status, error=err("FIXTURE-RESOLVE", f"resolver {resolve_status}"))
         return reply("ok", resolution if resolution is not None else {})
     if op == "execute" or (op == "plan" and "plan" in manifest["ops"]):
         payload = req.get("payload") or {}
@@ -102,15 +114,19 @@ def main() -> int:
         capability = next(c for c in manifest["capabilities"] if c["id"] == cap)
         action = payload.get("action")
         if action not in capability.get("actions", []):
-            return reply("refused", error=err("FIXTURE-ACTION-UNSUPPORTED", str(action),
-                                              "action"))
+            return reply("refused", error=err("FIXTURE-ACTION-UNSUPPORTED", str(action), "action"))
         if op == "plan":
             if payload.get("purpose") == "proposal":
                 return reply("ok", proposal if proposal is not None else {})
             return reply("ok", estimate)
         files = [f["path"] for f in (payload.get("context") or {}).get("files") or []]
-        first = {"id": "e1", "epistemic": "observed", "subject": cap,
-                 "claim": f"received {len(files)} context files", "producer": producer}
+        first = {
+            "id": "e1",
+            "epistemic": "observed",
+            "subject": cap,
+            "claim": f"received {len(files)} context files",
+            "producer": producer,
+        }
         if cite and files:  # test-only: the evidence cites a sent file (context ROI)
             first["location"] = {"path": files[0]}
         if evhash:  # test-only: a hash with no location — contract-legal, unverifiable
@@ -118,26 +134,42 @@ def main() -> int:
         evidence = [first]
         handoff = payload.get("handoff")
         if isinstance(handoff, dict):
-            evidence.append({"id": "e2", "epistemic": "observed", "subject": "handoff",
-                             "claim": f"received {len(handoff.get('items') or [])} "
-                                      "handoff items",
-                             "producer": producer})
+            evidence.append(
+                {
+                    "id": "e2",
+                    "epistemic": "observed",
+                    "subject": "handoff",
+                    "claim": f"received {len(handoff.get('items') or [])} handoff items",
+                    "producer": producer,
+                }
+            )
         delta = payload.get("delta")  # delta/v1 echo: what the request hinted
         if isinstance(delta, dict):
-            evidence.append({"id": "delta", "epistemic": "observed", "subject": "delta",
-                             "claim": f"delta baseline={delta.get('baseline_ref')!r} "
-                                      f"changed={len(delta.get('changed_files') or [])} "
-                                      f"({', '.join(delta.get('changed_files') or [])})",
-                             "producer": producer})
+            evidence.append(
+                {
+                    "id": "delta",
+                    "epistemic": "observed",
+                    "subject": "delta",
+                    "claim": f"delta baseline={delta.get('baseline_ref')!r} "
+                    f"changed={len(delta.get('changed_files') or [])} "
+                    f"({', '.join(delta.get('changed_files') or [])})",
+                    "producer": producer,
+                }
+            )
         if isinstance(evidence_extra, list):  # test-only: caller-authored items
             for item in evidence_extra:
                 if isinstance(item, dict):
                     evidence.append({**item, "producer": producer})
         if isinstance(decision, dict):  # referee convention: id="decision", claim=node
-            evidence.append({"id": "decision", "epistemic": "confirmed",
-                             "subject": str(decision.get("subject") or "fixture decision"),
-                             "claim": str(decision.get("claim") or ""),
-                             "producer": producer})
+            evidence.append(
+                {
+                    "id": "decision",
+                    "epistemic": "confirmed",
+                    "subject": str(decision.get("subject") or "fixture decision"),
+                    "claim": str(decision.get("claim") or ""),
+                    "producer": producer,
+                }
+            )
         if op == "execute" and flaky:
             root = Path((payload.get("task") or {}).get("workspace_root") or ".")
             marker = Path(root) / ".forge" / f"flaky-{manifest['id']}.count"
@@ -145,16 +177,26 @@ def main() -> int:
             if seen < int(flaky):  # transient failure: retryable exit, no reply
                 marker.write_text(str(seen + 1), encoding="utf-8")
                 return 3
-        declared = (findings if isinstance(findings, list)
-                    else [{"id": "f1", "title": f"{manifest['id']} handled "
-                                                f"{cap}:{payload.get('action')}",
-                           "severity": "info"}])
+        declared = (
+            findings
+            if isinstance(findings, list)
+            else [
+                {
+                    "id": "f1",
+                    "title": f"{manifest['id']} handled {cap}:{payload.get('action')}",
+                    "severity": "info",
+                }
+            ]
+        )
         result = {
-            "schema": "theforge/ExecutionResult/v1", "producer": producer,
-            "created_at": "1970-01-01T00:00:00.000000Z", "status": "ok",
-            "findings": [{**f, "evidence_ids": f.get("evidence_ids")
-                              or [e["id"] for e in evidence]}
-                         for f in declared],
+            "schema": "theforge/ExecutionResult/v1",
+            "producer": producer,
+            "created_at": "1970-01-01T00:00:00.000000Z",
+            "status": "ok",
+            "findings": [
+                {**f, "evidence_ids": f.get("evidence_ids") or [e["id"] for e in evidence]}
+                for f in declared
+            ],
             "evidence": evidence,
         }
         if isinstance(provider_receipt, dict):  # test-only: a native receipt pointer

@@ -58,10 +58,22 @@ _DRIVE = re.compile(r"^[A-Za-z]:")
 CLAIM_LIMIT = 500
 ERRORS_SHOWN = 10
 ARTIFACT_PATH = "native/handoff.json"
-_SEVERITY = {"INFO": "info", "LOW": "low", "MEDIUM": "medium", "HIGH": "high",
-             "CRITICAL": "critical"}
-_REF_SECTIONS = ("breaking_changes", "clients_affected", "runtime_regressions",
-                 "security_candidates", "reliability_signals", "operations", "contracts")
+_SEVERITY = {
+    "INFO": "info",
+    "LOW": "low",
+    "MEDIUM": "medium",
+    "HIGH": "high",
+    "CRITICAL": "critical",
+}
+_REF_SECTIONS = (
+    "breaking_changes",
+    "clients_affected",
+    "runtime_regressions",
+    "security_candidates",
+    "reliability_signals",
+    "operations",
+    "contracts",
+)
 
 
 def _clean(path: str) -> str | None:
@@ -80,25 +92,30 @@ def workspace_path(raw: object, stage: StagedInput) -> str | None:
     value = raw.replace("\\", "/")
     if value.startswith("/") or _DRIVE.match(value):
         try:
-            return PurePosixPath(value).relative_to(
-                PurePosixPath(stage.root.resolve().as_posix())).as_posix()
+            return (
+                PurePosixPath(value)
+                .relative_to(PurePosixPath(stage.root.resolve().as_posix()))
+                .as_posix()
+            )
         except ValueError:
             return None
     return _clean(value)
 
 
 def _clip(text: str, limit: int = CLAIM_LIMIT) -> str:
-    return text if len(text) <= limit else text[:limit - 3] + "..."
+    return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
-def _unknown(item: Mapping[str, Any], prefix: str, unknowns: list[str],
-             limitations: list[str]) -> None:
+def _unknown(
+    item: Mapping[str, Any], prefix: str, unknowns: list[str], limitations: list[str]
+) -> None:
     subject = item.get("subject")
     missing = item.get("missing")
     resolution = item.get("resolution")
     if not all(isinstance(v, str) and v for v in (subject, missing, resolution)):
-        limitations.append(f"{prefix or 'bundle'}: unknown fact without "
-                           "subject/missing/resolution; skipped")
+        limitations.append(
+            f"{prefix or 'bundle'}: unknown fact without subject/missing/resolution; skipped"
+        )
         return
     entry = f"{prefix}{subject}: {missing} (resolve: {resolution})"
     unknowns.append(_clip(entry))
@@ -119,14 +136,17 @@ def _location(item: Mapping[str, Any], stage: StagedInput) -> dict[str, Any] | N
     if path is None:
         return None
     line = loc.get("line")
-    return {"path": path,
-            "line": line if isinstance(line, int) and not isinstance(line, bool)
-            and line >= 1 else None}
+    return {
+        "path": path,
+        "line": line
+        if isinstance(line, int) and not isinstance(line, bool) and line >= 1
+        else None,
+    }
 
 
-def _findings(items: list[Any], stage: StagedInput, limitations: list[str],
-              unknowns: list[str]
-              ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _findings(
+    items: list[Any], stage: StagedInput, limitations: list[str], unknowns: list[str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     findings: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -144,8 +164,9 @@ def _findings(items: list[Any], stage: StagedInput, limitations: list[str],
         severity = item.get("severity")
         mapped = _SEVERITY.get(severity) if isinstance(severity, str) else None
         if mapped is None:
-            limitations.append(f"finding {finding_id}: unknown native severity "
-                               f"{severity!r}, reported as info")
+            limitations.append(
+                f"finding {finding_id}: unknown native severity {severity!r}, reported as info"
+            )
             mapped = "info"
         confidence = item.get("confidence")
         caveats: list[str] = []
@@ -159,34 +180,50 @@ def _findings(items: list[Any], stage: StagedInput, limitations: list[str],
         entries = native_evidence if isinstance(native_evidence, list) else []
         if not entries:
             description = item.get("description")
-            evidence.append({
-                "id": f"{finding_id}#e0", "epistemic": "observed",
-                "subject": str(item.get("evidence_kind") or finding_id),
-                "claim": _clip(description if isinstance(description, str) and description
-                               else head),
-                **({"location": location} if location else {}),
-                **({"hash": stage.files[location["path"]]}
-                   if location and location["path"] in stage.files else {}),
-                **({"limitations": caveats} if caveats else {}),
-            })
+            evidence.append(
+                {
+                    "id": f"{finding_id}#e0",
+                    "epistemic": "observed",
+                    "subject": str(item.get("evidence_kind") or finding_id),
+                    "claim": _clip(
+                        description if isinstance(description, str) and description else head
+                    ),
+                    **({"location": location} if location else {}),
+                    **(
+                        {"hash": stage.files[location["path"]]}
+                        if location and location["path"] in stage.files
+                        else {}
+                    ),
+                    **({"limitations": caveats} if caveats else {}),
+                }
+            )
             refs.append(f"{finding_id}#e0")
         for e_index, entry_raw in enumerate(entries):
             if not isinstance(entry_raw, Mapping):
-                limitations.append(f"finding {finding_id}: evidence #{e_index} is not an "
-                                   "object; skipped")
+                limitations.append(
+                    f"finding {finding_id}: evidence #{e_index} is not an object; skipped"
+                )
                 continue
             summary = entry_raw.get("summary")
             source = entry_raw.get("source")
             kind = entry_raw.get("kind")
-            claim = f"{source}: {summary}" if isinstance(source, str) and source \
-                and isinstance(summary, str) and summary else (
-                summary if isinstance(summary, str) and summary else str(source or kind
-                                                                          or "evidence"))
+            claim = (
+                f"{source}: {summary}"
+                if isinstance(source, str) and source and isinstance(summary, str) and summary
+                else (
+                    summary
+                    if isinstance(summary, str) and summary
+                    else str(source or kind or "evidence")
+                )
+            )
             ev_id = f"{finding_id}#e{e_index}"
             epistemic = "inferred" if kind == "DERIVED" else "observed"
-            entry: dict[str, Any] = {"id": ev_id, "epistemic": epistemic,
-                                     "subject": str(kind or "evidence"),
-                                     "claim": _clip(claim)}
+            entry: dict[str, Any] = {
+                "id": ev_id,
+                "epistemic": epistemic,
+                "subject": str(kind or "evidence"),
+                "claim": _clip(claim),
+            }
             if location is not None:
                 entry["location"] = location
                 if location["path"] in stage.files:
@@ -199,15 +236,16 @@ def _findings(items: list[Any], stage: StagedInput, limitations: list[str],
             if isinstance(unknown, Mapping):
                 _unknown(unknown, f"{finding_id}:", unknowns, limitations)
             else:
-                limitations.append(f"finding {finding_id}: unknown fact is not an "
-                                   "object; skipped")
-        findings.append({"id": finding_id, "title": _clip(head), "severity": mapped,
-                         "evidence_ids": refs})
+                limitations.append(f"finding {finding_id}: unknown fact is not an object; skipped")
+        findings.append(
+            {"id": finding_id, "title": _clip(head), "severity": mapped, "evidence_ids": refs}
+        )
     return findings, evidence
 
 
-def _capabilities(items: list[Any], limitations: list[str],
-                  unknowns: list[str]) -> list[dict[str, Any]]:
+def _capabilities(
+    items: list[Any], limitations: list[str], unknowns: list[str]
+) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     seen: set[str] = set()
     for item in items:
@@ -220,8 +258,14 @@ def _capabilities(items: list[Any], limitations: list[str],
         seen.add(name)
         status = item.get("status")
         status = status if isinstance(status, str) and status else "unknown"
-        evidence.append({"id": f"capability:{name}", "epistemic": "observed",
-                         "subject": name, "claim": _clip(f"capability {name}: {status}")})
+        evidence.append(
+            {
+                "id": f"capability:{name}",
+                "epistemic": "observed",
+                "subject": name,
+                "claim": _clip(f"capability {name}: {status}"),
+            }
+        )
         if status != "detected":
             unknowns.append(f"capability:{name}: status {status}")
     return evidence
@@ -237,18 +281,25 @@ def _external_references(items: list[Any], limitations: list[str]) -> list[dict[
         target_domain = item.get("target_domain")
         target_ref = item.get("target_ref")
         relation = item.get("relation")
-        claim = (f"{source_id} {relation} {target_domain}:{target_ref}"
-                 if all(isinstance(v, str) for v in
-                        (source_id, relation, target_domain, target_ref))
-                 else f"external reference #{index} (fields incomplete; see artifact)")
-        evidence.append({"id": f"external:{index}", "epistemic": "observed",
-                         "subject": str(target_domain or "external"),
-                         "claim": _clip(claim)})
+        claim = (
+            f"{source_id} {relation} {target_domain}:{target_ref}"
+            if all(isinstance(v, str) for v in (source_id, relation, target_domain, target_ref))
+            else f"external reference #{index} (fields incomplete; see artifact)"
+        )
+        evidence.append(
+            {
+                "id": f"external:{index}",
+                "epistemic": "observed",
+                "subject": str(target_domain or "external"),
+                "claim": _clip(claim),
+            }
+        )
     return evidence
 
 
-def _remediations(items: list[Any], stage: StagedInput,
-                  limitations: list[str]) -> list[dict[str, Any]]:
+def _remediations(
+    items: list[Any], stage: StagedInput, limitations: list[str]
+) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     for index, item in enumerate(items):
         if not isinstance(item, Mapping):
@@ -265,9 +316,12 @@ def _remediations(items: list[Any], stage: StagedInput,
                 claim += f" on {target}"
         if isinstance(justification, str) and justification:
             claim += f" - {_clip(justification, 200)}"
-        entry: dict[str, Any] = {"id": f"remediation:{index}", "epistemic": "proposed",
-                                 "subject": str(finding_id or target or "remediation"),
-                                 "claim": _clip(claim)}
+        entry: dict[str, Any] = {
+            "id": f"remediation:{index}",
+            "epistemic": "proposed",
+            "subject": str(finding_id or target or "remediation"),
+            "claim": _clip(claim),
+        }
         location = _location(item, stage)
         if location is not None:
             entry["location"] = location
@@ -277,8 +331,7 @@ def _remediations(items: list[Any], stage: StagedInput,
     return evidence
 
 
-def _ref_sections(bundle: Mapping[str, Any], limitations: list[str]
-                  ) -> list[dict[str, Any]]:
+def _ref_sections(bundle: Mapping[str, Any], limitations: list[str]) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     for section in _REF_SECTIONS:
         items = bundle.get(section)
@@ -290,17 +343,22 @@ def _ref_sections(bundle: Mapping[str, Any], limitations: list[str]
         for index, item in enumerate(items):
             claim = item if isinstance(item, str) else None
             if claim is None:
-                limitations.append(f"bundle {section}[{index}] is not a string ref; "
-                                   "kept in the artifact only")
+                limitations.append(
+                    f"bundle {section}[{index}] is not a string ref; kept in the artifact only"
+                )
                 continue
-            evidence.append({"id": f"{section}:{index}", "epistemic": "inferred",
-                             "subject": section.replace("_", "-"),
-                             "claim": _clip(claim)})
+            evidence.append(
+                {
+                    "id": f"{section}:{index}",
+                    "epistemic": "inferred",
+                    "subject": section.replace("_", "-"),
+                    "claim": _clip(claim),
+                }
+            )
     return evidence
 
 
-def _envelope_evidence(document: Mapping[str, Any],
-                       limitations: list[str]) -> list[dict[str, Any]]:
+def _envelope_evidence(document: Mapping[str, Any], limitations: list[str]) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     handoff = document.get("handoff")
     if isinstance(handoff, Mapping) and handoff:
@@ -308,90 +366,125 @@ def _envelope_evidence(document: Mapping[str, Any],
         refs: list[Any] = raw_refs if isinstance(raw_refs, list) else []
         raw_unknowns = handoff.get("unknowns")
         unknown_refs: list[Any] = raw_unknowns if isinstance(raw_unknowns, list) else []
-        claim = (f"handoff {handoff.get('handoff_id', '?')} "
-                 f"(analysis_rev {handoff.get('analysis_rev') or 'none'}): "
-                 f"{len(refs)} typed refs, {len(unknown_refs)} unknown refs; "
-                 f"envelope in artifact {ARTIFACT_PATH}")
-        entry: dict[str, Any] = {"id": "handoff-envelope", "epistemic": "observed",
-                                 "subject": "handoff", "claim": _clip(claim)}
+        claim = (
+            f"handoff {handoff.get('handoff_id', '?')} "
+            f"(analysis_rev {handoff.get('analysis_rev') or 'none'}): "
+            f"{len(refs)} typed refs, {len(unknown_refs)} unknown refs; "
+            f"envelope in artifact {ARTIFACT_PATH}"
+        )
+        entry: dict[str, Any] = {
+            "id": "handoff-envelope",
+            "epistemic": "observed",
+            "subject": "handoff",
+            "claim": _clip(claim),
+        }
         evidence.append(entry)
     manifest = document.get("manifest")
     if isinstance(manifest, Mapping) and manifest:
         domains = manifest.get("domains")
         domains = [str(d) for d in domains] if isinstance(domains, list) else []
-        evidence.append({
-            "id": "diagnostic-manifest", "epistemic": "observed",
-            "subject": "diagnostic-manifest",
-            "claim": _clip(
-                f"manifest: domains {domains or '[]'}, "
-                f"{manifest.get('entity_count', '?')} entities, "
-                f"{manifest.get('finding_count', '?')} findings, "
-                f"{manifest.get('unknown_count', '?')} unknowns; "
-                f"detail in artifact {ARTIFACT_PATH}")})
+        evidence.append(
+            {
+                "id": "diagnostic-manifest",
+                "epistemic": "observed",
+                "subject": "diagnostic-manifest",
+                "claim": _clip(
+                    f"manifest: domains {domains or '[]'}, "
+                    f"{manifest.get('entity_count', '?')} entities, "
+                    f"{manifest.get('finding_count', '?')} findings, "
+                    f"{manifest.get('unknown_count', '?')} unknowns; "
+                    f"detail in artifact {ARTIFACT_PATH}"
+                ),
+            }
+        )
     return evidence
 
 
-def _bundle_meta(bundle: Mapping[str, Any],
-                 limitations: list[str]) -> list[dict[str, Any]]:
+def _bundle_meta(bundle: Mapping[str, Any], limitations: list[str]) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     edges = bundle.get("graph_edges")
     if isinstance(edges, list) and edges:
-        evidence.append({"id": "service-graph", "epistemic": "observed",
-                         "subject": "service-graph",
-                         "claim": _clip(f"service graph: {len(edges)} edges; complete "
-                                        f"graph in artifact {ARTIFACT_PATH}")})
+        evidence.append(
+            {
+                "id": "service-graph",
+                "epistemic": "observed",
+                "subject": "service-graph",
+                "claim": _clip(
+                    f"service graph: {len(edges)} edges; complete graph in artifact {ARTIFACT_PATH}"
+                ),
+            }
+        )
     domain_hashes = bundle.get("domain_sha256")
     if isinstance(domain_hashes, list) and domain_hashes:
-        names = sorted(str(p[0]) for p in domain_hashes
-                       if isinstance(p, list) and p and isinstance(p[0], str))
-        evidence.append({"id": "domain-hashes", "epistemic": "observed",
-                         "subject": "domain-hashes",
-                         "claim": _clip(f"content-addressed domains: {names}; hashes in "
-                                        f"artifact {ARTIFACT_PATH}")})
+        names = sorted(
+            str(p[0]) for p in domain_hashes if isinstance(p, list) and p and isinstance(p[0], str)
+        )
+        evidence.append(
+            {
+                "id": "domain-hashes",
+                "epistemic": "observed",
+                "subject": "domain-hashes",
+                "claim": _clip(
+                    f"content-addressed domains: {names}; hashes in artifact {ARTIFACT_PATH}"
+                ),
+            }
+        )
     delta = bundle.get("delta")
     if isinstance(delta, Mapping) and delta:
+
         def _n(key: str) -> int | None:
             value = delta.get(key)
             if isinstance(value, int):
                 return value
             return len(value) if isinstance(value, list) else None
+
         parts: list[str] = []
-        for key, label in (("findings_added", "+{} findings"),
-                           ("findings_removed", "-{} findings"),
-                           ("findings_changed", "~{} findings"),
-                           ("operations_added", "+{} ops"),
-                           ("operations_removed", "-{} ops"),
-                           ("graph_entities_added", "+{} entities"),
-                           ("graph_entities_removed", "-{} entities"),
-                           ("unknowns_added", "+{} unknowns"),
-                           ("unknowns_removed", "-{} unknowns")):
+        for key, label in (
+            ("findings_added", "+{} findings"),
+            ("findings_removed", "-{} findings"),
+            ("findings_changed", "~{} findings"),
+            ("operations_added", "+{} ops"),
+            ("operations_removed", "-{} ops"),
+            ("graph_entities_added", "+{} entities"),
+            ("graph_entities_removed", "-{} entities"),
+            ("unknowns_added", "+{} unknowns"),
+            ("unknowns_removed", "-{} unknowns"),
+        ):
             count = _n(key)
             if count:
                 parts.append(label.format(count))
         baseline = delta.get("baseline_ref")
-        head = (f"delta vs {baseline}" if isinstance(baseline, str) and baseline
-                else "delta context")
-        claim = (f"{head}: {', '.join(parts)}" if parts
-                 else f"{head}: no changes")
-        evidence.append({"id": "delta", "epistemic": "inferred",
-                         "subject": "delta",
-                         "claim": _clip(f"{claim}; detail in artifact {ARTIFACT_PATH}")})
+        head = f"delta vs {baseline}" if isinstance(baseline, str) and baseline else "delta context"
+        claim = f"{head}: {', '.join(parts)}" if parts else f"{head}: no changes"
+        evidence.append(
+            {
+                "id": "delta",
+                "epistemic": "inferred",
+                "subject": "delta",
+                "claim": _clip(f"{claim}; detail in artifact {ARTIFACT_PATH}"),
+            }
+        )
     return evidence
 
 
-def translate_bundle(document: Mapping[str, Any], stage: StagedInput,
-                     artifact_hash: str) -> ResultDraft | Reply:
+def translate_bundle(
+    document: Mapping[str, Any], stage: StagedInput, artifact_hash: str
+) -> ResultDraft | Reply:
     """The result draft of an ``api.diagnose`` bridge document, or
     ``DOCTORAPI-ADAPTER-NATIVE-INVALID`` when it does not carry a bundle."""
     bundle = document.get("bundle")
     if not isinstance(bundle, Mapping):
-        return fail(NATIVE_INVALID,
-                    "the bridge document has no 'bundle' object",
-                    unlock="inspect the forge-doctor-api installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            "the bridge document has no 'bundle' object",
+            unlock="inspect the forge-doctor-api installation and rerun",
+        )
     if not isinstance(bundle.get("findings"), list):
-        return fail(NATIVE_INVALID,
-                    "the ApiHandoffBundle field 'findings' is missing or not an array",
-                    unlock="inspect the forge-doctor-api installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            "the ApiHandoffBundle field 'findings' is missing or not an array",
+            unlock="inspect the forge-doctor-api installation and rerun",
+        )
     limitations: list[str] = list(stage.limitations)
     unknowns: list[str] = []
     findings, evidence = _findings(bundle["findings"], stage, limitations, unknowns)
@@ -404,21 +497,25 @@ def translate_bundle(document: Mapping[str, Any], stage: StagedInput,
     caps = document.get("capabilities")
     if isinstance(caps, list) and not bundle.get("capabilities"):
         evidence += _capabilities(caps, limitations, unknowns)
-    evidence += _external_references(bundle.get("external_references") or [],
-                                   limitations)
-    evidence += _remediations(bundle.get("remediation_candidates") or [], stage,
-                              limitations)
+    evidence += _external_references(bundle.get("external_references") or [], limitations)
+    evidence += _remediations(bundle.get("remediation_candidates") or [], stage, limitations)
     evidence += _ref_sections(bundle, limitations)
     evidence += _bundle_meta(bundle, limitations)
     evidence += _envelope_evidence(document, limitations)
-    return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
-                       evidence=evidence, artifacts=[{
-                           "path": ARTIFACT_PATH, "sha256": artifact_hash}],
-                       limitations=limitations, unknowns=unknowns)
+    return ResultDraft(
+        provider_id=PROVIDER_ID,
+        version=VERSION,
+        findings=findings,
+        evidence=evidence,
+        artifacts=[{"path": ARTIFACT_PATH, "sha256": artifact_hash}],
+        limitations=limitations,
+        unknowns=unknowns,
+    )
 
 
-def translate_verdict(verdict: Mapping[str, Any], stage: StagedInput, payload_path: str,
-                      artifact_hash: str) -> ResultDraft | Reply:
+def translate_verdict(
+    verdict: Mapping[str, Any], stage: StagedInput, payload_path: str, artifact_hash: str
+) -> ResultDraft | Reply:
     """The result draft of an ``api.verify`` strict-parse + integrity verdict.
 
     The evidence ``hash`` binds to the staged payload's verified sha256 - the content the
@@ -428,10 +525,11 @@ def translate_verdict(verdict: Mapping[str, Any], stage: StagedInput, payload_pa
     kind = verdict.get("kind")
     integrity = verdict.get("integrity")
     if type(valid) is not bool or not (kind is None or isinstance(kind, str)):
-        return fail(NATIVE_INVALID,
-                    "the verify verdict is malformed ('valid' must be boolean, 'kind' a "
-                    "string or null)",
-                    unlock="inspect the forge-doctor-api installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            "the verify verdict is malformed ('valid' must be boolean, 'kind' a string or null)",
+            unlock="inspect the forge-doctor-api installation and rerun",
+        )
     limitations: list[str] = list(stage.limitations)
     payload_hash = stage.files.get(payload_path)
     errors = [str(e) for e in verdict.get("errors") or ()][:ERRORS_SHOWN]
@@ -444,27 +542,45 @@ def translate_verdict(verdict: Mapping[str, Any], stage: StagedInput, payload_pa
         claim = f"payload {payload_path} parses as {kind}"
         if integrity == "ok":
             claim += "; handoff_id integrity verified"
-        evidence.append({"id": f"verify:{kind}", "epistemic": "observed",
-                         "subject": str(kind), "claim": _clip(claim),
-                         "location": {"path": payload_path},
-                         "hash": payload_hash})
+        evidence.append(
+            {
+                "id": f"verify:{kind}",
+                "epistemic": "observed",
+                "subject": str(kind),
+                "claim": _clip(claim),
+                "location": {"path": payload_path},
+                "hash": payload_hash,
+            }
+        )
     else:
         caveats = [f"integrity: {integrity}"] if integrity == "mismatch" else []
-        evidence.append({
-            "id": "verify:invalid", "epistemic": "observed",
-            "subject": str(kind or "unknown"),
-            "claim": _clip(f"payload {payload_path} is not a valid {kind or 'doctor-api'} "
-                           f"document"
-                           + (f": {'; '.join(errors)}" if errors else "")),
-            "location": {"path": payload_path},
-            "hash": payload_hash,
-            **({"limitations": caveats} if caveats else {}),
-        })
-        findings.append({"id": f"verify:{kind or 'unknown'}",
-                         "title": "doctor-api document verification failed"
-                                  + (f" ({kind})" if kind else ""),
-                         "severity": "high", "evidence_ids": ["verify:invalid"]})
-    return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
-                       evidence=evidence, artifacts=[{
-                           "path": ARTIFACT_PATH, "sha256": artifact_hash}],
-                       limitations=limitations)
+        evidence.append(
+            {
+                "id": "verify:invalid",
+                "epistemic": "observed",
+                "subject": str(kind or "unknown"),
+                "claim": _clip(
+                    f"payload {payload_path} is not a valid {kind or 'doctor-api'} "
+                    f"document" + (f": {'; '.join(errors)}" if errors else "")
+                ),
+                "location": {"path": payload_path},
+                "hash": payload_hash,
+                **({"limitations": caveats} if caveats else {}),
+            }
+        )
+        findings.append(
+            {
+                "id": f"verify:{kind or 'unknown'}",
+                "title": "doctor-api document verification failed" + (f" ({kind})" if kind else ""),
+                "severity": "high",
+                "evidence_ids": ["verify:invalid"],
+            }
+        )
+    return ResultDraft(
+        provider_id=PROVIDER_ID,
+        version=VERSION,
+        findings=findings,
+        evidence=evidence,
+        artifacts=[{"path": ARTIFACT_PATH, "sha256": artifact_hash}],
+        limitations=limitations,
+    )

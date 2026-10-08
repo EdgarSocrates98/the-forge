@@ -36,8 +36,12 @@ REPO = Path(__file__).parents[1]
 DOC = REPO / "docs" / "capabilities.md"
 ADR = REPO / "docs" / "adr" / "0017-capability-taxonomy.md"
 NATIVE = REPO / "tests" / "fixtures" / "native"
-ADAPTERS = {"spark-forge-aws": "sparkforge_aws", "api-forge": "apiforge",
-            "forge-doctor-data": "doctordata", "forge-doctor-api": "doctorapi"}
+ADAPTERS = {
+    "spark-forge-aws": "sparkforge_aws",
+    "api-forge": "apiforge",
+    "forge-doctor-data": "doctordata",
+    "forge-doctor-api": "doctorapi",
+}
 
 EXPOSED_HEADER = "| Provider | Capability | Ações | Origem nativa |"
 EXCLUDED_HEADER = "| Provider | Capability | Ação | Origem nativa | Motivo |"
@@ -45,10 +49,8 @@ NONE = "—"
 TICKED = re.compile(r"`([^`]+)`")
 
 # Limitation shapes of the adapters' describe (every one names what is not exposed).
-ACTION_LIMITATION = re.compile(
-    r"^action '([^']+)' of '([^']+)' not exposed \(([^)]+)\): (.+)$")
-CAPABILITY_LIMITATION = re.compile(
-    r"^capability '([^']+)'(?: \([^)]*\))? not exposed: (.+)$")
+ACTION_LIMITATION = re.compile(r"^action '([^']+)' of '([^']+)' not exposed \(([^)]+)\): (.+)$")
+CAPABILITY_LIMITATION = re.compile(r"^capability '([^']+)'(?: \([^)]*\))? not exposed: (.+)$")
 GROUP_LIMITATION = re.compile(r"^not exposed: ([^:]+): (.+)$")
 
 
@@ -57,18 +59,32 @@ class Exclusion:
     provider: str
     capability: str | None
     action: str | None
-    origin: frozenset[str]   # native tools of a group; empty for capability/action rows
+    origin: frozenset[str]  # native tools of a group; empty for capability/action rows
     reason: str
 
 
 # --- describe in replay ---------------------------------------------------------------------
 
+
 def _describe(provider: str) -> dict[str, Any]:
     forge = ADAPTERS[provider]
-    request = json.dumps({"protocol": PROTOCOL_V1, "kind": "Request", "op": "describe",
-                          "request_id": "req-catalog", "payload": {}}).encode()
-    argv = [sys.executable, "-m", f"theforge_{forge}", "--replay",
-            str(NATIVE / forge / "default"), "describe"]
+    request = json.dumps(
+        {
+            "protocol": PROTOCOL_V1,
+            "kind": "Request",
+            "op": "describe",
+            "request_id": "req-catalog",
+            "payload": {},
+        }
+    ).encode()
+    argv = [
+        sys.executable,
+        "-m",
+        f"theforge_{forge}",
+        "--replay",
+        str(NATIVE / forge / "default"),
+        "describe",
+    ]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:  # never the repo
         out = subprocess.run(argv, input=request, capture_output=True, timeout=120, cwd=cwd)
     assert out.returncode == 0, out.stderr
@@ -85,8 +101,11 @@ def manifests() -> dict[str, dict[str, Any]]:
 
 
 def exposed_of(manifests: dict[str, dict[str, Any]]) -> dict[tuple[str, str], tuple[str, ...]]:
-    return {(provider, cap["id"]): tuple(cap["actions"])
-            for provider, payload in manifests.items() for cap in payload["capabilities"]}
+    return {
+        (provider, cap["id"]): tuple(cap["actions"])
+        for provider, payload in manifests.items()
+        for cap in payload["capabilities"]
+    }
 
 
 def exclusions_of(manifests: dict[str, dict[str, Any]]) -> set[Exclusion]:
@@ -108,10 +127,11 @@ def exclusions_of(manifests: dict[str, dict[str, Any]]) -> set[Exclusion]:
 
 # --- catalog tables of docs/capabilities.md -------------------------------------------------
 
+
 def _table(text: str, header: str) -> Iterator[list[str]]:
     lines = text.splitlines()
     assert lines.count(header) == 1, f"table header not found exactly once: {header}"
-    start = lines.index(header) + 2   # skip the separator row
+    start = lines.index(header) + 2  # skip the separator row
     for line in lines[start:]:
         if not line.startswith("|"):
             break
@@ -147,17 +167,24 @@ def parse_excluded(text: str) -> set[Exclusion]:
     return rows
 
 
-def catalog_drift(catalogued: dict[tuple[str, str], tuple[str, ...]],
-                  exposed: dict[tuple[str, str], tuple[str, ...]]) -> list[str]:
+def catalog_drift(
+    catalogued: dict[tuple[str, str], tuple[str, ...]],
+    exposed: dict[tuple[str, str], tuple[str, ...]],
+) -> list[str]:
     """Differences between the catalogued and the exposed capabilities (empty = in sync)."""
-    problems = [f"{p}/{c} is exposed but not in docs/capabilities.md"
-                for p, c in sorted(exposed.keys() - catalogued.keys())]
-    problems += [f"{p}/{c} is catalogued but not exposed"
-                 for p, c in sorted(catalogued.keys() - exposed.keys())]
-    problems += [f"{p}/{c}: catalogued actions {list(catalogued[p, c])} != exposed "
-                 f"{list(exposed[p, c])}"
-                 for p, c in sorted(catalogued.keys() & exposed.keys())
-                 if catalogued[p, c] != exposed[p, c]]
+    problems = [
+        f"{p}/{c} is exposed but not in docs/capabilities.md"
+        for p, c in sorted(exposed.keys() - catalogued.keys())
+    ]
+    problems += [
+        f"{p}/{c} is catalogued but not exposed"
+        for p, c in sorted(catalogued.keys() - exposed.keys())
+    ]
+    problems += [
+        f"{p}/{c}: catalogued actions {list(catalogued[p, c])} != exposed {list(exposed[p, c])}"
+        for p, c in sorted(catalogued.keys() & exposed.keys())
+        if catalogued[p, c] != exposed[p, c]
+    ]
     return problems
 
 
@@ -168,15 +195,18 @@ def doc() -> str:
 
 # --- the catalog matches the describe -------------------------------------------------------
 
+
 def test_every_exposed_capability_is_catalogued_with_its_actions(
-        doc: str, manifests: dict[str, dict[str, Any]]) -> None:
+    doc: str, manifests: dict[str, dict[str, Any]]
+) -> None:
     exposed = exposed_of(manifests)
-    assert len(exposed) == 21   # 15 Spark Forge AWS + 2 API Forge + 4 Doctors
+    assert len(exposed) == 21  # 15 Spark Forge AWS + 2 API Forge + 4 Doctors
     assert catalog_drift(parse_exposed(doc), exposed) == []
 
 
 def test_every_exclusion_is_catalogued_with_the_describe_reason(
-        doc: str, manifests: dict[str, dict[str, Any]]) -> None:
+    doc: str, manifests: dict[str, dict[str, Any]]
+) -> None:
     from_describe = exclusions_of(manifests)
     catalogued = parse_excluded(doc)
     assert from_describe - catalogued == set(), "not exposed in describe, missing in the doc"
@@ -185,32 +215,38 @@ def test_every_exclusion_is_catalogued_with_the_describe_reason(
 
 
 def test_an_uncatalogued_capability_is_detected(
-        doc: str, manifests: dict[str, dict[str, Any]]) -> None:
+    doc: str, manifests: dict[str, dict[str, Any]]
+) -> None:
     exposed = exposed_of(manifests)
     catalogued = parse_exposed(doc)
     missing = dict(catalogued)
     del missing["spark-forge-aws", "pyspark.static-analysis"]
     assert catalog_drift(missing, exposed) == [
-        "spark-forge-aws/pyspark.static-analysis is exposed but not in docs/capabilities.md"]
+        "spark-forge-aws/pyspark.static-analysis is exposed but not in docs/capabilities.md"
+    ]
 
     extra = dict(exposed)
     extra["api-forge", "api.provenance"] = ("provenance",)
     assert catalog_drift(catalogued, extra) == [
-        "api-forge/api.provenance is exposed but not in docs/capabilities.md"]
+        "api-forge/api.provenance is exposed but not in docs/capabilities.md"
+    ]
 
 
 def test_a_catalogued_capability_not_exposed_or_with_other_actions_is_detected(
-        doc: str, manifests: dict[str, dict[str, Any]]) -> None:
+    doc: str, manifests: dict[str, dict[str, Any]]
+) -> None:
     exposed = exposed_of(manifests)
     catalogued = dict(parse_exposed(doc))
     catalogued["spark-forge-aws", "migration.assessment"] = ("migration-assess",)
     catalogued["api-forge", "api.analyze"] = ("analyze", "diff")
     assert catalog_drift(catalogued, exposed) == [
         "spark-forge-aws/migration.assessment is catalogued but not exposed",
-        "api-forge/api.analyze: catalogued actions ['analyze', 'diff'] != exposed ['analyze']"]
+        "api-forge/api.analyze: catalogued actions ['analyze', 'diff'] != exposed ['analyze']",
+    ]
 
 
 # --- the documented rules match the mechanical rules ----------------------------------------
+
 
 def test_mechanical_rules_table_matches_the_code(doc: str) -> None:
     rules = "\n".join("|".join(row) for row in _table(doc, "| Regra | Valor |"))
@@ -222,8 +258,16 @@ def test_mechanical_rules_table_matches_the_code(doc: str) -> None:
 
 
 def test_doc_covers_the_rules_and_links_the_adr(doc: str) -> None:
-    for section in ("Namespace", "Subject", "Granularidade", "Ações", "Sobreposição",
-                    "Versionamento", "Depreciação", "Aliases"):
+    for section in (
+        "Namespace",
+        "Subject",
+        "Granularidade",
+        "Ações",
+        "Sobreposição",
+        "Versionamento",
+        "Depreciação",
+        "Aliases",
+    ):
         assert re.search(rf"^## {section}\b", doc, re.MULTILINE), section
     assert "adr/0017-capability-taxonomy.md" in doc
     assert ADR.is_file()

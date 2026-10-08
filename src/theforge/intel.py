@@ -44,9 +44,18 @@ from theforge.state import FORGE_DIR_NAME
 from theforge.workspace.describe import describe_workspace, discover_repositories
 
 __all__ = [
-    "INTEL_DIR", "INTEL_FILE", "DECISIONS_FILE", "IntelValidity",
-    "compute_fingerprints", "freshness", "load_intel", "load_decisions",
-    "record_decision", "refresh_intel", "save_intel", "stale_sections",
+    "INTEL_DIR",
+    "INTEL_FILE",
+    "DECISIONS_FILE",
+    "IntelValidity",
+    "compute_fingerprints",
+    "freshness",
+    "load_intel",
+    "load_decisions",
+    "record_decision",
+    "refresh_intel",
+    "save_intel",
+    "stale_sections",
 ]
 
 INTEL_DIR = "intel"
@@ -79,6 +88,7 @@ def _decisions_path(root: Path) -> Path:
 
 # --- fingerprints ---------------------------------------------------------------------------
 
+
 def _dependency_files(root: Path, repos: Sequence[str]) -> list[Path]:
     """Every dependency manifest directly under each repository, scan-style."""
     found: list[Path] = []
@@ -93,7 +103,9 @@ def _dependency_files(root: Path, repos: Sequence[str]) -> list[Path]:
 
 
 def compute_fingerprints(
-    root: Path, scan_files: Sequence[str], repos: Sequence[str],
+    root: Path,
+    scan_files: Sequence[str],
+    repos: Sequence[str],
     records: Sequence[tuple[str, str, str | None]],
 ) -> IntelFingerprints:
     """Content digests of the descriptor's inputs — no git, no manifest parsing.
@@ -104,12 +116,10 @@ def compute_fingerprints(
     dep_parts: list[str] = []
     for path in _dependency_files(root, repos):
         try:
-            dep_parts.append(f"{path.relative_to(root).as_posix()}:"
-                             f"{sha256_hex(path.read_bytes())}")
+            dep_parts.append(f"{path.relative_to(root).as_posix()}:{sha256_hex(path.read_bytes())}")
         except OSError:
             dep_parts.append(f"{path.relative_to(root).as_posix()}:unreadable")
-    manifest_parts = sorted(f"{pid}:{state}:{sha or '-'}"
-                            for pid, state, sha in records)
+    manifest_parts = sorted(f"{pid}:{state}:{sha or '-'}" for pid, state, sha in records)
     toml = root / FORGE_DIR_NAME / "config" / "workspace.toml"
     try:
         relations = sha256_hex(toml.read_bytes()) if toml.is_file() else ""
@@ -125,7 +135,9 @@ def compute_fingerprints(
 
 
 def freshness(
-    intel: ProjectIntel, scan_files: Sequence[str], repos: Sequence[str],
+    intel: ProjectIntel,
+    scan_files: Sequence[str],
+    repos: Sequence[str],
     records: Sequence[tuple[str, str, str | None]],
 ) -> tuple[IntelValidity, list[str]]:
     """Read-time verdict: ``(validity, stale sections)`` — never stored (I2).
@@ -135,18 +147,22 @@ def freshness(
     recomputed (the honest answer to "cannot confirm freshness").
     """
     try:
-        current = compute_fingerprints(
-            Path(intel.root), scan_files, repos, records)
+        current = compute_fingerprints(Path(intel.root), scan_files, repos, records)
     except OSError:
         return "unknown", ["fingerprints-uncomputable"]
-    stale = sorted({section
-                    for section, inputs in _SECTION_INPUTS.items()
-                    for name in inputs
-                    if getattr(current, name) != getattr(intel.fingerprints, name)})
+    stale = sorted(
+        {
+            section
+            for section, inputs in _SECTION_INPUTS.items()
+            for name in inputs
+            if getattr(current, name) != getattr(intel.fingerprints, name)
+        }
+    )
     return ("current", []) if not stale else ("stale", stale)
 
 
 # --- store ------------------------------------------------------------------------------------
+
 
 def _load(path: Path, cls: type, label: str) -> tuple[object | None, str | None]:
     try:
@@ -171,8 +187,7 @@ def _write(path: Path, obj: object) -> str | None:
         return f"intel: {path.name} not written (redaction would alter it)"
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}-",
-                                   suffix=".tmp")
+        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}-", suffix=".tmp")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 handle.write(json.dumps(data, indent=2, sort_keys=True))
@@ -202,7 +217,11 @@ def load_decisions(root: Path) -> tuple[DecisionMemory | None, str | None]:
 
 
 def record_decision(
-    root: Path, kind: DecisionKind, subject: str, choice: str, basis: str,
+    root: Path,
+    kind: DecisionKind,
+    subject: str,
+    choice: str,
+    basis: str,
     run_id: str,
 ) -> str | None:
     """Fold one reusable decision into the memory; returns a warning on failure.
@@ -219,22 +238,37 @@ def record_decision(
         now = utc_now()
         existing = next((e for e in entries if e.id == ident), None)
         if existing is not None:
-            trail = [r for r in existing.runs if r != run_id][-MAX_RUN_TRAIL + 1:]
+            trail = [r for r in existing.runs if r != run_id][-MAX_RUN_TRAIL + 1 :]
             trail.append(run_id)
             entries[entries.index(existing)] = replace(
-                existing, updated_at=now,
-                corroborations=existing.corroborations + 1, runs=trail)
+                existing, updated_at=now, corroborations=existing.corroborations + 1, runs=trail
+            )
         else:
-            entries.append(RememberedDecision(
-                id=ident, kind=kind, subject=subject, choice=choice, basis=basis,
-                created_at=now, updated_at=now, corroborations=1, runs=[run_id]))
+            entries.append(
+                RememberedDecision(
+                    id=ident,
+                    kind=kind,
+                    subject=subject,
+                    choice=choice,
+                    basis=basis,
+                    created_at=now,
+                    updated_at=now,
+                    corroborations=1,
+                    runs=[run_id],
+                )
+            )
         if len(entries) > MAX_DECISIONS:
             entries.sort(key=lambda e: e.updated_at, reverse=True)
             del entries[MAX_DECISIONS:]
         entries.sort(key=lambda e: e.id)
-        problem = _write(_decisions_path(root), DecisionMemory(
-            producer=PRODUCER, created_at=memory.created_at
-            if memory is not None else now, entries=entries))
+        problem = _write(
+            _decisions_path(root),
+            DecisionMemory(
+                producer=PRODUCER,
+                created_at=memory.created_at if memory is not None else now,
+                entries=entries,
+            ),
+        )
         return problem or warning  # a prior read problem still surfaces once
     except (OSError, ContractError, ValueError) as exc:
         return f"intel: decision not recorded: {exc}"
@@ -242,16 +276,23 @@ def record_decision(
 
 # --- incremental refresh (I1) -------------------------------------------------------------------
 
+
 def stale_sections(prior: ProjectIntel, current: IntelFingerprints) -> list[str]:
     """The descriptor sections whose inputs changed since ``prior``."""
-    return sorted({section
-                   for section, inputs in _SECTION_INPUTS.items()
-                   for name in inputs
-                   if getattr(current, name) != getattr(prior.fingerprints, name)})
+    return sorted(
+        {
+            section
+            for section, inputs in _SECTION_INPUTS.items()
+            for name in inputs
+            if getattr(current, name) != getattr(prior.fingerprints, name)
+        }
+    )
 
 
 def refresh_intel(
-    root: Path, scan: WorkspaceScan, records: list[RegistryRecord],
+    root: Path,
+    scan: WorkspaceScan,
+    records: list[RegistryRecord],
 ) -> tuple[ProjectIntel, list[str]]:
     """Describe the workspace, reusing still-fresh sections of the snapshot (I1).
 
@@ -284,18 +325,26 @@ def refresh_intel(
         # Only the genuinely expensive sections are reuse candidates; ``paths``,
         # repositories and relations cost a walk plus a bounded TOML read and are
         # always recomputed (``stale`` still reports them — that is the point).
-        reusable = frozenset(s for s in ("technologies", "dependency_files")
-                             if s not in stale)
+        reusable = frozenset(s for s in ("technologies", "dependency_files") if s not in stale)
         if stale:
             notes.append(f"intel: stale sections recomputed: {', '.join(sorted(stale))}")
-    descriptor = describe_workspace(root, records, scan, prior=prior.descriptor
-                                    if prior is not None else None,
-                                    reusable=reusable)
+    descriptor = describe_workspace(
+        root,
+        records,
+        scan,
+        prior=prior.descriptor if prior is not None else None,
+        reusable=reusable,
+    )
     reused = sorted(reusable) if prior is not None else []
     intel = ProjectIntel(
-        producer=PRODUCER, created_at=prior.created_at if prior is not None else utc_now(),
-        updated_at=utc_now(), root=str(root.resolve()), fingerprints=fingerprints,
-        descriptor=descriptor, reused=reused)
+        producer=PRODUCER,
+        created_at=prior.created_at if prior is not None else utc_now(),
+        updated_at=utc_now(),
+        root=str(root.resolve()),
+        fingerprints=fingerprints,
+        descriptor=descriptor,
+        reused=reused,
+    )
     problem = save_intel(root, intel)
     if problem is not None:
         notes.append(problem)

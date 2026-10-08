@@ -31,8 +31,10 @@ def test_report_schema_and_provider_mode(economy: ModuleType) -> None:
 
 
 def test_every_observable_metric_is_compared(economy: ModuleType) -> None:
-    arms = {"direct": {key: 10.0 for key in economy.METRICS},
-            "mesh": {key: 4.0 for key in economy.METRICS}}
+    arms = {
+        "direct": {key: 10.0 for key in economy.METRICS},
+        "mesh": {key: 4.0 for key in economy.METRICS},
+    }
     report = economy.build_report(arms, {})
     assert set(report["comparison"]) == set(economy.METRICS)
     entry = report["comparison"]["context_bytes"]
@@ -55,21 +57,25 @@ def test_mesh_arm_is_observe_then_bounded_engineers(economy: ModuleType) -> None
 # --- workspace and plan isolation -------------------------------------------------------------
 
 
-def test_seed_workspace_is_deterministic(economy: ModuleType,
-                                          tmp_path: Path) -> None:
+def test_seed_workspace_is_deterministic(economy: ModuleType, tmp_path: Path) -> None:
     economy._seed_workspace(tmp_path / "a")
     economy._seed_workspace(tmp_path / "b")
-    snap = {p.relative_to(tmp_path / "a").as_posix(): p.read_bytes()
-            for p in sorted((tmp_path / "a").rglob("*")) if p.is_file()}
-    other = {p.relative_to(tmp_path / "b").as_posix(): p.read_bytes()
-             for p in sorted((tmp_path / "b").rglob("*")) if p.is_file()}
+    snap = {
+        p.relative_to(tmp_path / "a").as_posix(): p.read_bytes()
+        for p in sorted((tmp_path / "a").rglob("*"))
+        if p.is_file()
+    }
+    other = {
+        p.relative_to(tmp_path / "b").as_posix(): p.read_bytes()
+        for p in sorted((tmp_path / "b").rglob("*"))
+        if p.is_file()
+    }
     assert snap == other
     assert len(snap) == economy.WORKSPACE_FILES + len(economy.DOMAIN_FILES)
     assert "jobs/orders_glue_job.py" in snap and "api/openapi.yaml" in snap
 
 
-def test_plan_file_lives_outside_the_workspace(economy: ModuleType,
-                                               tmp_path: Path) -> None:
+def test_plan_file_lives_outside_the_workspace(economy: ModuleType, tmp_path: Path) -> None:
     workspace = tmp_path / "ws"
     workspace.mkdir()
     economy._seed_workspace(workspace)
@@ -82,10 +88,15 @@ def test_plan_file_lives_outside_the_workspace(economy: ModuleType,
 # --- smoke: both arms end to end (replay adapters, offline) ------------------------------------
 
 
-def test_both_arms_run_end_to_end(economy: ModuleType, tmp_path: Path,
-                                  monkeypatch: pytest.MonkeyPatch) -> None:
-    for module in ("theforge_doctordata", "theforge_doctorapi",
-                   "theforge_sparkforge_aws", "theforge_apiforge"):
+def test_both_arms_run_end_to_end(
+    economy: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for module in (
+        "theforge_doctordata",
+        "theforge_doctorapi",
+        "theforge_sparkforge_aws",
+        "theforge_apiforge",
+    ):
         pytest.importorskip(module)
     monkeypatch.setattr(economy, "WORKSPACE_FILES", 24)
     monkeypatch.setattr(economy, "DEFAULT_RUNS", 1)
@@ -93,15 +104,15 @@ def test_both_arms_run_end_to_end(economy: ModuleType, tmp_path: Path,
     config_dir, cache_dir = tmp_path / "config", tmp_path / "cache"
     with economy._isolated_env(config_dir, cache_dir):
         economy._write_providers(config_dir)
-        arms = {name: economy.run_arm(tmp_path, name, nodes, 1)
-                for name, nodes in economy.ARMS.items()}
+        arms = {
+            name: economy.run_arm(tmp_path, name, nodes, 1) for name, nodes in economy.ARMS.items()
+        }
 
     direct, mesh = arms["direct"], arms["mesh"]
     # The mesh premise: the observer scans once, the engineers rescan nothing.
     assert direct["files_scanned"] > mesh["files_scanned"]
     downstream = [r for r in mesh["runs"] if r["provider"] != "forge-doctor-data"]
-    assert downstream and all(
-        r["files_scanned"] == r["context_files"] for r in downstream)
+    assert downstream and all(r["files_scanned"] == r["context_files"] for r in downstream)
     assert mesh["provider_calls"] == direct["provider_calls"] + 1
     assert mesh["handoff_bytes"] > 0 and direct["handoff_bytes"] == 0
     # Unmeasurable dimensions stay explicit nulls, never zero.

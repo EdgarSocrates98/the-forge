@@ -40,10 +40,29 @@ from pathlib import Path
 from typing import Any
 
 __all__ = [
-    "DEFAULT_CONFIG", "DEFAULT_ROOT", "FAILING", "GIT_TIMEOUT_S", "Accepted", "AgenticConfig",
-    "AgenticConfigError", "AgenticGitError", "AuditReport", "Finding", "FindingKind",
-    "HostConfig", "HostOnly", "InstallPlaceholder", "Invariants", "MovedRule", "SkillProfile",
-    "audit", "load_config", "main", "normalize_text", "profile_skill", "read_text",
+    "DEFAULT_CONFIG",
+    "DEFAULT_ROOT",
+    "FAILING",
+    "GIT_TIMEOUT_S",
+    "Accepted",
+    "AgenticConfig",
+    "AgenticConfigError",
+    "AgenticGitError",
+    "AuditReport",
+    "Finding",
+    "FindingKind",
+    "HostConfig",
+    "HostOnly",
+    "InstallPlaceholder",
+    "Invariants",
+    "MovedRule",
+    "SkillProfile",
+    "audit",
+    "load_config",
+    "main",
+    "normalize_text",
+    "profile_skill",
+    "read_text",
     "tracked_files",
 ]
 
@@ -61,6 +80,7 @@ class AgenticGitError(Exception):
 
 
 # --- configuration -------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class HostConfig:
@@ -124,10 +144,19 @@ class AgenticConfig:
     moved_rules: tuple[MovedRule, ...] | None
 
 
-_TOP_KEYS = frozenset({
-    "hosts", "reference", "install_placeholders", "host_only", "accepted", "invariants",
-    "budgets", "pointers", "moved_rules",
-})
+_TOP_KEYS = frozenset(
+    {
+        "hosts",
+        "reference",
+        "install_placeholders",
+        "host_only",
+        "accepted",
+        "invariants",
+        "budgets",
+        "pointers",
+        "moved_rules",
+    }
+)
 
 
 def _fail(key: str, problem: str) -> AgenticConfigError:
@@ -141,7 +170,10 @@ def _table(value: object, key: str) -> dict[str, Any]:
 
 
 def _check_keys(
-    table: Mapping[str, object], key: str, *, required: frozenset[str],
+    table: Mapping[str, object],
+    key: str,
+    *,
+    required: frozenset[str],
     optional: frozenset[str] = frozenset(),
 ) -> None:
     for name in sorted(table):
@@ -191,18 +223,23 @@ def _parse_hosts(raw: object) -> tuple[HostConfig, ...]:
     for name in sorted(table):
         key = f"hosts.{name}"
         host = _table(table[name], key)
-        _check_keys(host, key, required=frozenset({"skills_dir", "instructions"}),
-                    optional=frozenset({"host_metadata", "asset_dirs"}))
+        _check_keys(
+            host,
+            key,
+            required=frozenset({"skills_dir", "instructions"}),
+            optional=frozenset({"host_metadata", "asset_dirs"}),
+        )
         skills_dir = _text(host["skills_dir"], f"{key}.skills_dir").strip("/")
-        asset_dirs = _texts(host.get("asset_dirs", [skills_dir.split("/")[0]]),
-                            f"{key}.asset_dirs")
-        hosts.append(HostConfig(
-            name=name,
-            skills_dir=skills_dir,
-            instructions=_texts(host["instructions"], f"{key}.instructions"),
-            host_metadata=_texts(host.get("host_metadata", []), f"{key}.host_metadata"),
-            asset_dirs=tuple(sorted({d.strip("/") for d in asset_dirs})),
-        ))
+        asset_dirs = _texts(host.get("asset_dirs", [skills_dir.split("/")[0]]), f"{key}.asset_dirs")
+        hosts.append(
+            HostConfig(
+                name=name,
+                skills_dir=skills_dir,
+                instructions=_texts(host["instructions"], f"{key}.instructions"),
+                host_metadata=_texts(host.get("host_metadata", []), f"{key}.host_metadata"),
+                asset_dirs=tuple(sorted({d.strip("/") for d in asset_dirs})),
+            )
+        )
     return tuple(hosts)
 
 
@@ -239,11 +276,13 @@ def _parse_host_only(raw: object, hosts: frozenset[str]) -> tuple[HostOnly, ...]
     for index, entry in enumerate(_entries(raw, "host_only")):
         key = f"host_only[{index}]"
         _check_keys(entry, key, required=frozenset({"path", "host", "reason"}))
-        items.append(HostOnly(
-            path=_text(entry["path"], f"{key}.path"),
-            host=_host_name(entry["host"], f"{key}.host", hosts),
-            reason=_text(entry["reason"], f"{key}.reason", reason=True),
-        ))
+        items.append(
+            HostOnly(
+                path=_text(entry["path"], f"{key}.path"),
+                host=_host_name(entry["host"], f"{key}.host", hosts),
+                reason=_text(entry["reason"], f"{key}.reason", reason=True),
+            )
+        )
     return tuple(items)
 
 
@@ -251,18 +290,21 @@ def _parse_accepted(raw: object, hosts: frozenset[str]) -> tuple[Accepted, ...]:
     items: list[Accepted] = []
     for index, entry in enumerate(_entries(raw, "accepted")):
         key = f"accepted[{index}]"
-        _check_keys(entry, key,
-                    required=frozenset({"skill", "element", "hosts", "value", "reason"}))
+        _check_keys(
+            entry, key, required=frozenset({"skill", "element", "hosts", "value", "reason"})
+        )
         names = _texts(entry["hosts"], f"{key}.hosts")
         if not names:
             raise _fail(f"{key}.hosts", "must name at least one host")
-        items.append(Accepted(
-            skill=_text(entry["skill"], f"{key}.skill"),
-            element=_text(entry["element"], f"{key}.element"),
-            hosts=tuple(sorted(_host_name(n, f"{key}.hosts", hosts) for n in names)),
-            value=_text(entry["value"], f"{key}.value"),
-            reason=_text(entry["reason"], f"{key}.reason", reason=True),
-        ))
+        items.append(
+            Accepted(
+                skill=_text(entry["skill"], f"{key}.skill"),
+                element=_text(entry["element"], f"{key}.element"),
+                hosts=tuple(sorted(_host_name(n, f"{key}.hosts", hosts) for n in names)),
+                value=_text(entry["value"], f"{key}.value"),
+                reason=_text(entry["reason"], f"{key}.reason", reason=True),
+            )
+        )
     return tuple(items)
 
 
@@ -287,8 +329,10 @@ def _parse_budgets(raw: object) -> dict[str, int]:
 
 
 def _parse_pointers(raw: object) -> dict[str, tuple[str, ...]]:
-    return {path: _texts(value, f"pointers.{path}")
-            for path, value in sorted(_table(raw, "pointers").items())}
+    return {
+        path: _texts(value, f"pointers.{path}")
+        for path, value in sorted(_table(raw, "pointers").items())
+    }
 
 
 def _parse_moved_rules(raw: object) -> tuple[MovedRule, ...]:
@@ -296,11 +340,13 @@ def _parse_moved_rules(raw: object) -> tuple[MovedRule, ...]:
     for index, entry in enumerate(_entries(raw, "moved_rules")):
         key = f"moved_rules[{index}]"
         _check_keys(entry, key, required=frozenset({"anchor", "from", "to"}))
-        rules.append(MovedRule(
-            anchor=_text(entry["anchor"], f"{key}.anchor"),
-            source=_text(entry["from"], f"{key}.from"),
-            target=_text(entry["to"], f"{key}.to"),
-        ))
+        rules.append(
+            MovedRule(
+                anchor=_text(entry["anchor"], f"{key}.anchor"),
+                source=_text(entry["from"], f"{key}.from"),
+                target=_text(entry["to"], f"{key}.to"),
+            )
+        )
     return tuple(rules)
 
 
@@ -335,6 +381,7 @@ def load_config(path: Path) -> AgenticConfig:
 
 # --- text ----------------------------------------------------------------------------------
 
+
 def normalize_text(text: str) -> str:
     """Normalize line endings to LF (Windows CRLF checkouts compare equal to Linux ones)."""
     return text.replace("\r\n", "\n")
@@ -347,6 +394,7 @@ def read_text(repo: Path, relpath: str) -> str:
 
 # --- tracked inventory ---------------------------------------------------------------------
 
+
 def _git_env(repo: Path) -> dict[str, str]:
     """Minimal environment: no inherited ``GIT_*``, no system config, never prompt or lock."""
     env = {"PATH": os.environ.get("PATH", os.defpath)}
@@ -355,14 +403,16 @@ def _git_env(repo: Path) -> dict[str, str]:
             value = os.environ.get(name)
             if value:
                 env[name] = value
-    env.update({
-        "GIT_CONFIG_NOSYSTEM": "1",
-        "GIT_OPTIONAL_LOCKS": "0",
-        "GIT_TERMINAL_PROMPT": "0",
-        "LC_ALL": "C",
-        # Never discover a repository above ``repo``: the inventory is the checkout's own.
-        "GIT_CEILING_DIRECTORIES": str(repo.resolve().parent),
-    })
+    env.update(
+        {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+            "LC_ALL": "C",
+            # Never discover a repository above ``repo``: the inventory is the checkout's own.
+            "GIT_CEILING_DIRECTORIES": str(repo.resolve().parent),
+        }
+    )
     return env
 
 
@@ -377,8 +427,13 @@ def tracked_files(repo: Path) -> frozenset[str]:
     argv = [git, "-c", "core.fsmonitor=false", "ls-files", "-z", "--cached"]
     try:
         proc = subprocess.run(
-            argv, cwd=repo, env=_git_env(repo), stdin=subprocess.DEVNULL,
-            capture_output=True, timeout=GIT_TIMEOUT_S, check=False,
+            argv,
+            cwd=repo,
+            env=_git_env(repo),
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            timeout=GIT_TIMEOUT_S,
+            check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise AgenticGitError(f"git ls-files failed in {repo}: {exc}") from None
@@ -394,32 +449,35 @@ def tracked_files(repo: Path) -> frozenset[str]:
 
 # --- findings and report -------------------------------------------------------------------
 
+
 class FindingKind(StrEnum):
-    HOST_SYNTAX = "host-syntax"            # text differs, semantic profile equal (tolerated)
-    ACCEPTED = "accepted"                  # divergence registered with a reason
-    DRIFT = "drift"                        # an element of the semantic profile diverges
-    MISSING_SKILL = "missing-skill"        # an equivalent skill is missing in a host
-    SUPPORT_DRIFT = "support-drift"        # support file diverges (between hosts or reference)
-    HOST_ONLY = "host-only"                # declared host-only asset (informative)
+    HOST_SYNTAX = "host-syntax"  # text differs, semantic profile equal (tolerated)
+    ACCEPTED = "accepted"  # divergence registered with a reason
+    DRIFT = "drift"  # an element of the semantic profile diverges
+    MISSING_SKILL = "missing-skill"  # an equivalent skill is missing in a host
+    SUPPORT_DRIFT = "support-drift"  # support file diverges (between hosts or reference)
+    HOST_ONLY = "host-only"  # declared host-only asset (informative)
     HOST_ONLY_UNDECLARED = "host-only-undeclared"
-    STALE_ACCEPTED = "stale-accepted"      # accepted entry without a matching divergence
-    INVARIANTS = "invariants"              # invariants block missing, divergent or w/o anchor
-    BUDGET = "budget"                      # instruction file above its size budget
-    MOVED_RULE = "moved-rule"              # moved rule absent from its declared target
-    POINTER = "pointer"                    # mandatory pointer absent from an instruction file
+    STALE_ACCEPTED = "stale-accepted"  # accepted entry without a matching divergence
+    INVARIANTS = "invariants"  # invariants block missing, divergent or w/o anchor
+    BUDGET = "budget"  # instruction file above its size budget
+    MOVED_RULE = "moved-rule"  # moved rule absent from its declared target
+    POINTER = "pointer"  # mandatory pointer absent from an instruction file
 
 
 FAILING: frozenset[FindingKind] = frozenset(FindingKind) - {
-    FindingKind.HOST_SYNTAX, FindingKind.ACCEPTED, FindingKind.HOST_ONLY,
+    FindingKind.HOST_SYNTAX,
+    FindingKind.ACCEPTED,
+    FindingKind.HOST_ONLY,
 }
 
 
 @dataclass(frozen=True, order=True)
 class Finding:
     kind: FindingKind
-    subject: str                 # skill (kiro-x) or repository path
-    hosts: tuple[str, ...]       # sorted
-    element: str                 # "name" | "paths" | "skills" | "phases" | "support" | ...
+    subject: str  # skill (kiro-x) or repository path
+    hosts: tuple[str, ...]  # sorted
+    element: str  # "name" | "paths" | "skills" | "phases" | "support" | ...
     detail: str
 
     @property
@@ -433,9 +491,9 @@ class Finding:
 
 @dataclass(frozen=True)
 class AuditReport:
-    findings: tuple[Finding, ...]                     # totally ordered
-    skills: tuple[tuple[str, tuple[str, ...]], ...]   # (skill, hosts where it exists), sorted
-    hosts: tuple[str, ...]                            # every declared host, sorted
+    findings: tuple[Finding, ...]  # totally ordered
+    skills: tuple[tuple[str, tuple[str, ...]], ...]  # (skill, hosts where it exists), sorted
+    hosts: tuple[str, ...]  # every declared host, sorted
 
     def failing(self) -> tuple[Finding, ...]:
         return tuple(f for f in self.findings if f.failing)
@@ -456,8 +514,9 @@ class AuditReport:
                 continue
             label = "FAIL" if kind in FAILING else "info"
             lines += ["", f"{kind} ({len(group)}, {label}):"]
-            lines += [f"  {f.subject} [{','.join(f.hosts) or '-'}] {f.element}: {f.detail}"
-                      for f in group]
+            lines += [
+                f"  {f.subject} [{','.join(f.hosts) or '-'}] {f.element}: {f.detail}" for f in group
+            ]
         failing = len(self.failing())
         lines += ["", f"{failing} failing finding(s)" if failing else "no failing findings"]
         return "\n".join(lines) + "\n"
@@ -467,8 +526,14 @@ class AuditReport:
             "hosts": list(self.hosts),
             "skills": [{"name": name, "hosts": list(present)} for name, present in self.skills],
             "findings": [
-                {"kind": str(f.kind), "subject": f.subject, "hosts": list(f.hosts),
-                 "element": f.element, "detail": f.detail, "failing": f.failing}
+                {
+                    "kind": str(f.kind),
+                    "subject": f.subject,
+                    "hosts": list(f.hosts),
+                    "element": f.element,
+                    "detail": f.detail,
+                    "failing": f.failing,
+                }
                 for f in self.findings
             ],
             "failing": len(self.failing()),
@@ -478,12 +543,13 @@ class AuditReport:
 
 # --- semantic profile ----------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class SkillProfile:
     name: str
-    paths: frozenset[str]          # .kiro/..., rules/..., templates/... normalized
-    skill_refs: frozenset[str]     # other kiro-* skills referenced, without invocation prefix
-    phases: frozenset[str]         # spec.json phase values cited
+    paths: frozenset[str]  # .kiro/..., rules/..., templates/... normalized
+    skill_refs: frozenset[str]  # other kiro-* skills referenced, without invocation prefix
+    phases: frozenset[str]  # spec.json phase values cited
     support_files: frozenset[str]  # paths relative to the skill dir, without host metadata
 
 
@@ -515,7 +581,7 @@ def profile_skill(skill_md: str, support_files: frozenset[str]) -> SkillProfile:
     frontmatter = _FRONTMATTER.match(text)
     name_match = _NAME.search(frontmatter.group(1)) if frontmatter else None
     name = name_match.group(1) if name_match else ""
-    body = text[frontmatter.end():] if frontmatter else text
+    body = text[frontmatter.end() :] if frontmatter else text
     paths = frozenset(p for p in (_normalize_path(m.group(0)) for m in _PATH.finditer(body)) if p)
     refs = frozenset(f"kiro-{m.group(1).rstrip('-')}" for m in _SKILL_REF.finditer(body))
     return SkillProfile(
@@ -542,11 +608,12 @@ _PROFILE_ELEMENTS = ("name", "paths", "skills", "phases", "support")
 
 # --- audit ---------------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class _Divergence:
     skill: str
     element: str
-    hosts: tuple[str, ...]   # hosts holding ``value``
+    hosts: tuple[str, ...]  # hosts holding ``value``
     value: str
     absent: tuple[str, ...]  # hosts of the skill without ``value``
 
@@ -582,8 +649,9 @@ class _Auditor:
             text = placeholder.pattern.sub(placeholder.replacement, text)
         return text
 
-    def add(self, kind: FindingKind, subject: str, hosts: Iterable[str], element: str,
-            detail: str) -> None:
+    def add(
+        self, kind: FindingKind, subject: str, hosts: Iterable[str], element: str, detail: str
+    ) -> None:
         self.findings.add(Finding(kind, subject, tuple(sorted(set(hosts))), element, detail))
 
     # skills and host directories ------------------------------------------------------------
@@ -599,27 +667,39 @@ class _Auditor:
             for path in self.files:
                 if not path.startswith(prefix) or self.host_only_entry(path) is not None:
                     continue
-                skill, sep, rel = path[len(prefix):].partition("/")
+                skill, sep, rel = path[len(prefix) :].partition("/")
                 if sep and rel and skill.startswith("kiro-"):
                     found.setdefault(skill, {}).setdefault(host.name, set()).add(rel)
-        return {skill: {h: frozenset(rels) for h, rels in by_host.items()}
-                for skill, by_host in found.items()}
+        return {
+            skill: {h: frozenset(rels) for h, rels in by_host.items()}
+            for skill, by_host in found.items()
+        }
 
     def check_host_dirs(self, skills: _SkillFiles) -> None:
-        owned = {f"{self.hosts[h].skills_dir}/{skill}/{rel}"
-                 for skill, by_host in skills.items()
-                 for h, rels in by_host.items() for rel in rels}
+        owned = {
+            f"{self.hosts[h].skills_dir}/{skill}/{rel}"
+            for skill, by_host in skills.items()
+            for h, rels in by_host.items()
+            for rel in rels
+        }
         for entry in self.config.host_only:
             if any(_under(path, entry.path) for path in self.files):
-                self.add(FindingKind.HOST_ONLY, entry.path, [entry.host], "host-only",
-                         entry.reason)
+                self.add(FindingKind.HOST_ONLY, entry.path, [entry.host], "host-only", entry.reason)
         for path in sorted(self.files - owned):
             # The skills_dir is always a host directory, even if asset_dirs omits it.
-            hosts = [h.name for h in self.config.hosts
-                     if any(_under(path, d) for d in (*h.asset_dirs, h.skills_dir))]
+            hosts = [
+                h.name
+                for h in self.config.hosts
+                if any(_under(path, d) for d in (*h.asset_dirs, h.skills_dir))
+            ]
             if hosts and self.host_only_entry(path) is None:
-                self.add(FindingKind.HOST_ONLY_UNDECLARED, path, hosts, "host-only",
-                         "not part of an equivalent skill and not declared in [[host_only]]")
+                self.add(
+                    FindingKind.HOST_ONLY_UNDECLARED,
+                    path,
+                    hosts,
+                    "host-only",
+                    "not part of an equivalent skill and not declared in [[host_only]]",
+                )
 
     # equivalent skills ----------------------------------------------------------------------
 
@@ -632,9 +712,13 @@ class _Auditor:
             by_host = skills[skill]
             missing = [h for h in self.hosts if h not in by_host]
             if missing:
-                self.add(FindingKind.MISSING_SKILL, skill, missing, "skill",
-                         f"missing in {', '.join(missing)}; present in "
-                         f"{', '.join(sorted(by_host))}")
+                self.add(
+                    FindingKind.MISSING_SKILL,
+                    skill,
+                    missing,
+                    "skill",
+                    f"missing in {', '.join(missing)}; present in {', '.join(sorted(by_host))}",
+                )
             texts: dict[str, str] = {}
             elements: dict[str, dict[str, frozenset[str]]] = {}
             for host in sorted(by_host):
@@ -648,13 +732,19 @@ class _Auditor:
             found = self.divergences(skill, elements)
             divergences += found
             if not found and len(set(texts.values())) > 1:
-                self.add(FindingKind.HOST_SYNTAX, skill, by_host, "SKILL.md",
-                         "text differs between hosts; semantic profile is equal")
+                self.add(
+                    FindingKind.HOST_SYNTAX,
+                    skill,
+                    by_host,
+                    "SKILL.md",
+                    "text differs between hosts; semantic profile is equal",
+                )
         return divergences
 
     @staticmethod
-    def divergences(skill: str, elements: dict[str, dict[str, frozenset[str]]]
-                    ) -> list[_Divergence]:
+    def divergences(
+        skill: str, elements: dict[str, dict[str, frozenset[str]]]
+    ) -> list[_Divergence]:
         found: list[_Divergence] = []
         hosts = sorted(elements)
         for element in _PROFILE_ELEMENTS:
@@ -674,29 +764,43 @@ class _Auditor:
             entry = accepted.get(key)
             if entry is not None:
                 matched.add(key)
-                self.add(FindingKind.ACCEPTED, d.skill, d.hosts, d.element,
-                         f"{d.value!r}: {entry.reason}")
+                self.add(
+                    FindingKind.ACCEPTED,
+                    d.skill,
+                    d.hosts,
+                    d.element,
+                    f"{d.value!r}: {entry.reason}",
+                )
             else:
-                self.add(FindingKind.DRIFT, d.skill, d.hosts, d.element,
-                         f"{d.value!r} only in {', '.join(d.hosts)}; "
-                         f"absent in {', '.join(d.absent)}")
+                self.add(
+                    FindingKind.DRIFT,
+                    d.skill,
+                    d.hosts,
+                    d.element,
+                    f"{d.value!r} only in {', '.join(d.hosts)}; absent in {', '.join(d.absent)}",
+                )
         for key, entry in accepted.items():
             if key not in matched:
-                self.add(FindingKind.STALE_ACCEPTED, entry.skill, entry.hosts, entry.element,
-                         f"{entry.value!r} matches no current divergence; remove this "
-                         "[[accepted]] entry")
+                self.add(
+                    FindingKind.STALE_ACCEPTED,
+                    entry.skill,
+                    entry.hosts,
+                    entry.element,
+                    f"{entry.value!r} matches no current divergence; remove this "
+                    "[[accepted]] entry",
+                )
 
     # support files --------------------------------------------------------------------------
 
     def compare_support(self, skills: _SkillFiles) -> None:
         for skill in sorted(skills):
             by_host = skills[skill]
-            rels = frozenset[str]().union(
-                *(self.support_rels(h, r) for h, r in by_host.items()))
+            rels = frozenset[str]().union(*(self.support_rels(h, r) for h, r in by_host.items()))
             for rel in sorted(rels):
                 contents = {
                     h: self.placeholders(self.read(f"{self.hosts[h].skills_dir}/{skill}/{rel}"))
-                    for h in sorted(by_host) if rel in by_host[h]
+                    for h in sorted(by_host)
+                    if rel in by_host[h]
                 }
                 self.compare_support_file(f"{skill}/{rel}", rel, contents)
 
@@ -706,8 +810,13 @@ class _Auditor:
             for host, content in contents.items():
                 groups.setdefault(content, []).append(host)
             detail = " | ".join(sorted("+".join(g) for g in groups.values()))
-            self.add(FindingKind.SUPPORT_DRIFT, subject, contents, "hosts",
-                     f"content differs between hosts: {detail}")
+            self.add(
+                FindingKind.SUPPORT_DRIFT,
+                subject,
+                contents,
+                "hosts",
+                f"content differs between hosts: {detail}",
+            )
         head, _, filename = rel.partition("/")
         reference_dir = self.config.reference_rules_dir
         if reference_dir is None or head != "rules" or "/" in filename:
@@ -718,8 +827,13 @@ class _Auditor:
         expected = self.placeholders(self.read(reference))
         differing = [h for h, content in contents.items() if content != expected]
         if differing:
-            self.add(FindingKind.SUPPORT_DRIFT, subject, differing, "reference",
-                     f"differs from {reference} beyond install placeholders")
+            self.add(
+                FindingKind.SUPPORT_DRIFT,
+                subject,
+                differing,
+                "reference",
+                f"differs from {reference} beyond install placeholders",
+            )
 
     # instruction files ----------------------------------------------------------------------
 
@@ -735,58 +849,94 @@ class _Auditor:
                 continue
             size = len(self.read(path).encode("utf-8"))
             if size > budget:
-                self.add(FindingKind.BUDGET, path, self.readers(path), "size",
-                         f"{size} bytes > budget {budget} bytes")
+                self.add(
+                    FindingKind.BUDGET,
+                    path,
+                    self.readers(path),
+                    "size",
+                    f"{size} bytes > budget {budget} bytes",
+                )
         for path, anchors in sorted((self.config.pointers or {}).items()):
             if path not in self.files:
-                self.add(FindingKind.POINTER, path, self.readers(path), "pointer",
-                         "file not found")
+                self.add(FindingKind.POINTER, path, self.readers(path), "pointer", "file not found")
                 continue
             text = _ws(self.read(path))
             for anchor in anchors:
                 if _ws(anchor) not in text:
-                    self.add(FindingKind.POINTER, path, self.readers(path), "pointer",
-                             f"missing pointer {anchor!r}")
+                    self.add(
+                        FindingKind.POINTER,
+                        path,
+                        self.readers(path),
+                        "pointer",
+                        f"missing pointer {anchor!r}",
+                    )
         for rule in self.config.moved_rules or ():
             moved = f"{rule.anchor!r} (moved from {rule.source})"
             if rule.target not in self.files:
-                self.add(FindingKind.MOVED_RULE, rule.target, self.readers(rule.source),
-                         "moved-rule", f"{moved}: target not found")
+                self.add(
+                    FindingKind.MOVED_RULE,
+                    rule.target,
+                    self.readers(rule.source),
+                    "moved-rule",
+                    f"{moved}: target not found",
+                )
             elif _ws(rule.anchor) not in _ws(self.read(rule.target)):
-                self.add(FindingKind.MOVED_RULE, rule.target, self.readers(rule.source),
-                         "moved-rule", f"{moved} is absent from {rule.target}")
+                self.add(
+                    FindingKind.MOVED_RULE,
+                    rule.target,
+                    self.readers(rule.source),
+                    "moved-rule",
+                    f"{moved} is absent from {rule.target}",
+                )
 
     def check_invariants(self, invariants: Invariants) -> None:
         blocks: dict[str, str] = {}
         for path in sorted({p for h in self.config.hosts for p in h.instructions}):
             if path not in self.files:
-                self.add(FindingKind.INVARIANTS, path, self.readers(path), "block",
-                         "file not found")
+                self.add(
+                    FindingKind.INVARIANTS, path, self.readers(path), "block", "file not found"
+                )
                 continue
             text = self.read(path)
             start = text.find(invariants.begin)
             end = text.find(invariants.end, start + len(invariants.begin)) if start >= 0 else -1
             if end < 0:
-                self.add(FindingKind.INVARIANTS, path, self.readers(path), "block",
-                         f"missing block delimited by {invariants.begin!r} and "
-                         f"{invariants.end!r}")
+                self.add(
+                    FindingKind.INVARIANTS,
+                    path,
+                    self.readers(path),
+                    "block",
+                    f"missing block delimited by {invariants.begin!r} and {invariants.end!r}",
+                )
                 continue
-            block = text[start + len(invariants.begin):end].strip("\n")
+            block = text[start + len(invariants.begin) : end].strip("\n")
             blocks[path] = block
             for anchor in invariants.required:
                 if _ws(anchor) not in _ws(block):
-                    self.add(FindingKind.INVARIANTS, path, self.readers(path), "anchor",
-                             f"missing invariant {anchor!r}")
+                    self.add(
+                        FindingKind.INVARIANTS,
+                        path,
+                        self.readers(path),
+                        "anchor",
+                        f"missing invariant {anchor!r}",
+                    )
         for path, block in blocks.items():
             other = next((o for o in sorted(blocks) if blocks[o] != block), None)
             if other is None:
                 continue
             mine, theirs = block.split("\n"), blocks[other].split("\n")
-            index = next((i for i, (a, b) in enumerate(zip(mine, theirs, strict=False))
-                          if a != b), min(len(mine), len(theirs)))
+            index = next(
+                (i for i, (a, b) in enumerate(zip(mine, theirs, strict=False)) if a != b),
+                min(len(mine), len(theirs)),
+            )
             line = mine[index] if index < len(mine) else "<end of block>"
-            self.add(FindingKind.INVARIANTS, path, self.readers(path), "divergent",
-                     f"block differs from {other} at line {index + 1}: {line!r}")
+            self.add(
+                FindingKind.INVARIANTS,
+                path,
+                self.readers(path),
+                "divergent",
+                f"block differs from {other} at line {index + 1}: {line!r}",
+            )
 
     def run(self) -> AuditReport:
         skills = self.skill_files()
@@ -814,6 +964,7 @@ def audit(repo: Path, config: AgenticConfig, files: frozenset[str] | None = None
 
 # --- command line --------------------------------------------------------------------------
 
+
 def _write(stream: Any, text: str) -> None:
     """UTF-8 and LF on every platform, whatever the console encoding (deterministic output)."""
     stream.flush()
@@ -825,12 +976,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="audit_assets",
         description="Audit drift between the agentic assets (Kiro skills, host instructions) "
-                    "of each host.",
+        "of each host.",
     )
-    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT,
-                        help="repository root (default: this repository)")
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG,
-                        help="audit configuration (default: the versioned agentic.toml)")
+    parser.add_argument(
+        "--root", type=Path, default=DEFAULT_ROOT, help="repository root (default: this repository)"
+    )
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG,
+        help="audit configuration (default: the versioned agentic.toml)",
+    )
     parser.add_argument("--json", action="store_true", help="emit the report as JSON")
     args = parser.parse_args(argv)
     try:

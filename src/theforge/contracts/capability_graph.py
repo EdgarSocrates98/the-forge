@@ -20,26 +20,53 @@ from theforge.contracts.types import EdgeEpistemic, Producer
 CAPABILITY_GRAPH_SCHEMA = "theforge/CapabilityGraph/v1"
 
 CapNodeKind = Literal[
-    "provider", "capability", "action", "artifact_type", "technology",
-    "repository", "domain",
+    "provider",
+    "capability",
+    "action",
+    "artifact_type",
+    "technology",
+    "repository",
+    "domain",
 ]
 CapEdgeKind = Literal[
     # derived from the manifest itself
-    "has_capability", "has_action", "in_domain",
+    "has_capability",
+    "has_action",
+    "in_domain",
     # declared by capability.relations
-    "produces", "consumes", "requires", "complements", "conflicts",
-    "can_verify", "can_review",
+    "produces",
+    "consumes",
+    "requires",
+    "complements",
+    "conflicts",
+    "can_verify",
+    "can_review",
     # observed by the workspace descriptor
-    "uses_technology", "relevant_to",
+    "uses_technology",
+    "relevant_to",
 ]
 _CAP_NODE_KINDS: tuple[CapNodeKind, ...] = (
-    "provider", "capability", "action", "artifact_type", "technology",
-    "repository", "domain",
+    "provider",
+    "capability",
+    "action",
+    "artifact_type",
+    "technology",
+    "repository",
+    "domain",
 )
 _CAP_EDGE_KINDS: tuple[CapEdgeKind, ...] = (
-    "has_capability", "has_action", "in_domain", "produces", "consumes",
-    "requires", "complements", "conflicts", "can_verify", "can_review",
-    "uses_technology", "relevant_to",
+    "has_capability",
+    "has_action",
+    "in_domain",
+    "produces",
+    "consumes",
+    "requires",
+    "complements",
+    "conflicts",
+    "can_verify",
+    "can_review",
+    "uses_technology",
+    "relevant_to",
 )
 
 
@@ -56,7 +83,8 @@ class CapNode:
             raise ContractError(f"capability graph node kind {self.kind!r} unknown")
         if not self.id.startswith(f"{self.kind}:"):
             raise ContractError(
-                f"capability graph node id {self.id!r} must start with {self.kind!r}:")
+                f"capability graph node id {self.id!r} must start with {self.kind!r}:"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -96,14 +124,15 @@ class CapabilityGraph:
     def __post_init__(self) -> None:
         if self.schema != CAPABILITY_GRAPH_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {CAPABILITY_GRAPH_SCHEMA}")
+                f"unsupported schema {self.schema!r}, expected {CAPABILITY_GRAPH_SCHEMA}"
+            )
         ids = [n.id for n in self.nodes]
         dups = sorted({i for i in ids if ids.count(i) > 1})
         if dups:
             raise ContractError(f"capability graph: duplicate node ids {dups}")
         known = set(ids)
-        dangling = sorted(({e.source for e in self.edges}
-                           | {e.target for e in self.edges}) - known)
+        dangling = sorted(({e.source for e in self.edges} | {e.target for e in self.edges}) - known)
         if dangling:
             raise ContractError(
-                f"capability graph: edges point at nodes not in the graph {dangling}")
+                f"capability graph: edges point at nodes not in the graph {dangling}"
+            )

@@ -34,6 +34,7 @@ pytestmark = pytest.mark.unit
 
 # --- the hint table is total and coherent ------------------------------------------
 
+
 def test_every_code_has_exactly_one_hint() -> None:
     """``CODE_HINTS`` covers exactly the taxonomy codes — like ``CODE_FAMILIES``."""
     assert set(CODE_HINTS) == set(CODE_FAMILIES)
@@ -55,11 +56,17 @@ def test_hints_are_actionable_not_restatements() -> None:
 
 # --- the hint reaches the user-facing surfaces --------------------------------------
 
+
 def _cli(*argv: str, cwd: Path = ROOT) -> subprocess.CompletedProcess:
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
-    return subprocess.run([sys.executable, "-m", "theforge", *argv],
-                          capture_output=True, text=True, encoding="utf-8",
-                          env=env, cwd=cwd)
+    return subprocess.run(
+        [sys.executable, "-m", "theforge", *argv],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+        cwd=cwd,
+    )
 
 
 def test_cli_error_line_carries_code_family_and_hint(tmp_path: Path) -> None:
@@ -72,9 +79,12 @@ def test_cli_error_line_carries_code_family_and_hint(tmp_path: Path) -> None:
 
 
 def test_diagnostic_carries_the_same_hint() -> None:
-    diag = build_diagnostic(UsageError("run x has no resumable plan"),
-                            stage="cli:resume", code=Codes.USAGE,
-                            created_at="2026-10-04T00:00:00.000000Z")
+    diag = build_diagnostic(
+        UsageError("run x has no resumable plan"),
+        stage="cli:resume",
+        code=Codes.USAGE,
+        created_at="2026-10-04T00:00:00.000000Z",
+    )
     assert diag.hint == hint_of(Codes.USAGE)
     data = to_dict(diag)
     assert data["hint"] == hint_of(Codes.USAGE)
@@ -83,22 +93,37 @@ def test_diagnostic_carries_the_same_hint() -> None:
 
 def test_diagnostic_hint_must_match_the_code() -> None:
     with pytest.raises(ContractError):
-        Diagnostic(producer=PRODUCER, created_at="t", stage="cli:x",
-                   code=Codes.USAGE, family="usage", hint="wrong hint",
-                   error_type="E", message="m")
+        Diagnostic(
+            producer=PRODUCER,
+            created_at="t",
+            stage="cli:x",
+            code=Codes.USAGE,
+            family="usage",
+            hint="wrong hint",
+            error_type="E",
+            message="m",
+        )
 
 
 # --- the nine spec modes map to real codes and surfaces ------------------------------
+
 
 def test_planner_unavailable_is_a_limitation_never_an_exception() -> None:
     """A planner that cannot run degrades to a `proposal: FORGE-*` limitation."""
     dead = RegistryRecord(
         entry=ProviderEntry(id="ghost", argv=["x"], trust="local"),
-        state="unreachable", manifest=None, error="spawn failed")
-    cap = Capability(id="x.y", actions=["run"], default_action="run",
-                     state="supported", operation_class="read_only")
-    task = TaskSpec(producer=PRODUCER, created_at="t", id="t", intent="i",
-                    workspace_root=".")
+        state="unreachable",
+        manifest=None,
+        error="spawn failed",
+    )
+    cap = Capability(
+        id="x.y",
+        actions=["run"],
+        default_action="run",
+        state="supported",
+        operation_class="read_only",
+    )
+    task = TaskSpec(producer=PRODUCER, created_at="t", id="t", intent="i", workspace_root=".")
     proposal, limitation = request_proposal(dead, cap, task, [], "amb")
     assert proposal is None
     assert limitation is not None and Codes.PLAN_ESTIMATE in limitation
@@ -109,15 +134,24 @@ def test_failure_modes_document_maps_to_real_codes() -> None:
     text = DOC.read_text(encoding="utf-8")
     cited = set(re.findall(r"FORGE-[A-Z][A-Z0-9*-]+", text))
     for wildcard in {c[:-1] for c in cited if c.endswith("*")}:
-        assert any(code.startswith(wildcard) for code in CODE_FAMILIES), \
+        assert any(code.startswith(wildcard) for code in CODE_FAMILIES), (
             f"doc cites family {wildcard}* but no code matches"
+        )
     unknown = {c for c in cited if not c.endswith("*")} - set(CODE_FAMILIES)
     assert not unknown, f"doc cites unknown codes: {sorted(unknown)}"
 
 
 def test_every_spec_mode_is_present_in_the_doc() -> None:
     text = DOC.read_text(encoding="utf-8").lower()
-    for mode in ("provider failed", "planner unavailable", "planner invalid",
-                 "verifier unavailable", "budget exhausted", "context exhausted",
-                 "partial evidence", "handoff incomplete", "resume incompatible"):
+    for mode in (
+        "provider failed",
+        "planner unavailable",
+        "planner invalid",
+        "verifier unavailable",
+        "budget exhausted",
+        "context exhausted",
+        "partial evidence",
+        "handoff incomplete",
+        "resume incompatible",
+    ):
         assert mode in text, f"failure-semantics.md is missing mode {mode!r}"

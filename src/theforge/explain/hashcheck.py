@@ -8,7 +8,8 @@ with the artifact as it is on disk now, using the same digest ``RunStore.write``
   ``telemetry_sha256``, ``verification_sha256``, and every ``result.artifacts[]`` re-hashed
   under the run's ``work/`` directory (reported as ``work/<path>``);
 - ``kind="plan"``: the same inputs and telemetry plus the ``PlanRefs`` (plan, workspace
-  descriptor, graph, installation, plan-result) and, for every ``NodeOutcome`` with a run,
+  descriptor, graph, installation, plan-result, global-stop), the internal
+  ``PlanResult.global_stop_sha256`` relation, and, for every ``NodeOutcome`` with a run,
   the node's receipt against ``receipt_sha256`` (``<run>/receipt``) and that node run
   verified in turn (its entries prefixed with ``<run>/``).
 
@@ -55,12 +56,15 @@ class _Check:
     def compare(self, label: str, expected: str, actual: str | None, present: bool) -> None:
         self.checked.append(label)
         if actual is None:
-            self.divergences.append(Divergence(
-                artifact=label, kind="unreadable" if present else "missing",
-                expected=expected))
+            self.divergences.append(
+                Divergence(
+                    artifact=label, kind="unreadable" if present else "missing", expected=expected
+                )
+            )
         elif actual != expected:
-            self.divergences.append(Divergence(artifact=label, kind="modified",
-                                               expected=expected, actual=actual))
+            self.divergences.append(
+                Divergence(artifact=label, kind="modified", expected=expected, actual=actual)
+            )
 
     def receipt(self, run_id: str, prefix: str) -> ExecutionReceipt | None:
         label = f"{prefix}receipt"
@@ -83,13 +87,15 @@ class _Check:
                 self.compare(label, expected, actual, present)
             elif present:
                 self.unrecorded.append(label)
-        for extra, expected in enumerate(receipt.inputs.context_round_sha256[len(_ROUNDS):],
-                                         start=len(_ROUNDS) + 1):
+        for extra, expected in enumerate(
+            receipt.inputs.context_round_sha256[len(_ROUNDS) :], start=len(_ROUNDS) + 1
+        ):
             self.compare(f"{prefix}context-r{extra}", expected, None, False)
         if receipt.result_sha256 is not None:
             self.work_artifacts(run_id, prefix)
         if receipt.kind == "plan":
-            self.nodes(run_id, prefix, depth)
+            expected_stop = receipt.plan.global_stop_sha256 if receipt.plan is not None else None
+            self.nodes(run_id, prefix, depth, expected_stop)
 
     def work_artifacts(self, run_id: str, prefix: str) -> None:
         try:
@@ -105,11 +111,26 @@ class _Check:
             present = lexical.is_relative_to(work) and os.path.lexists(lexical)
             self.compare(f"{prefix}work/{artifact.path}", artifact.sha256, actual, present)
 
-    def nodes(self, run_id: str, prefix: str, depth: int) -> None:
+    def nodes(
+        self,
+        run_id: str,
+        prefix: str,
+        depth: int,
+        expected_global_stop: str | None,
+    ) -> None:
         try:
             result = self.store.read_contract(run_id, "plan-result", PlanResult)
         except (LookupError, PersistenceError, ContractError):
             return  # absent (plan not executed) or already a divergence of ``plan-result``
+        if expected_global_stop is not None:
+            self.compare(
+                f"{prefix}plan-result.global_stop_sha256",
+                expected_global_stop,
+                result.global_stop_sha256,
+                True,
+            )
+        elif result.global_stop_sha256 is not None:
+            self.unrecorded.append(f"{prefix}plan-result.global_stop_sha256")
         for outcome in result.nodes:
             child = outcome.run_id
             if child is None or outcome.receipt_sha256 is None:
@@ -150,6 +171,7 @@ def _recorded(receipt: ExecutionReceipt) -> dict[str, str | None]:
         "plan-state": refs.plan_state_sha256 if refs else None,
         "decision": refs.decision_sha256 if refs else None,
         "economy": refs.economy_sha256 if refs else None,
+        "global-stop": refs.global_stop_sha256 if refs else None,
     }
     for index, name in enumerate(_ROUNDS):
         hashes[name] = rounds[index] if index < len(rounds) else None
@@ -164,5 +186,6 @@ def verify_run_hashes(store: RunStore, run_id: str, *, depth: int = 0) -> Integr
     """
     check = _Check(store)
     check.run(run_id, "", depth)
-    return IntegrityReport(checked=check.checked, divergences=check.divergences,
-                           unrecorded=check.unrecorded)
+    return IntegrityReport(
+        checked=check.checked, divergences=check.divergences, unrecorded=check.unrecorded
+    )

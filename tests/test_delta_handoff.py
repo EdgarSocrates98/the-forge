@@ -20,14 +20,17 @@ from theforge.runs import RunStore
 
 DELTA_ENTRY = {
     "id": "fixture-delta",
-    "argv": fixture_argv("fixture_forge.py",
-                         str(Path(__file__).parent / "fixtures" / "providers"
-                             / "fixture-delta.json")),
+    "argv": fixture_argv(
+        "fixture_forge.py",
+        str(Path(__file__).parent / "fixtures" / "providers" / "fixture-delta.json"),
+    ),
     "trust": "local",
 }
 
-WORKSPACE = {"jobs/orders_glue_job.py": "df = spark.read.parquet('s3://b/orders')\n",
-             "requirements.txt": "pyspark==3.5.1\n"}
+WORKSPACE = {
+    "jobs/orders_glue_job.py": "df = spark.read.parquet('s3://b/orders')\n",
+    "requirements.txt": "pyspark==3.5.1\n",
+}
 
 
 def _workspace(root: Path) -> None:
@@ -37,13 +40,13 @@ def _workspace(root: Path) -> None:
 
 def _forger(root: Path) -> Forger:
     forge = root / ".forge"
-    return Forger(root, Registry(forge), RunStore(forge),
-                  transport_factory=SubprocessTransport)
+    return Forger(root, Registry(forge), RunStore(forge), transport_factory=SubprocessTransport)
 
 
 def _run(root: Path) -> Any:
-    out = _forger(root).ask(AskRequest(intent="diagnose the glue job",
-                                       capability="spark.performance"))
+    out = _forger(root).ask(
+        AskRequest(intent="diagnose the glue job", capability="spark.performance")
+    )
     assert out.status == "ok", out.error
     return out
 
@@ -57,6 +60,7 @@ def _delta_evidence(root: Path, run_id: str) -> dict[str, Any] | None:
 
 
 # --- contract ---------------------------------------------------------------------------------
+
 
 def test_delta_request_rejects_non_relative_paths() -> None:
     for bad in ("../escape.txt", "/abs/path.py", "C:\\\\win.py", "", "a\\\\b.py"):
@@ -74,6 +78,7 @@ def test_delta_request_bounds_and_default_baseline() -> None:
 
 
 # --- fingerprint changed surface --------------------------------------------------------------
+
 
 def test_changed_surface_is_none_on_a_cold_cache(tmp_path: Path) -> None:
     store = FingerprintStore(tmp_path)
@@ -101,11 +106,11 @@ def test_changed_surface_buckets_added_modified_removed(tmp_path: Path) -> None:
         assert fp is not None
         current[rel] = fp.sha256
     present = {"keep.py", "mod.py", "new.py"}
-    assert second.changed_surface(current, present) == (["mod.py", "new.py"],
-                                                        ["gone.py"])
+    assert second.changed_surface(current, present) == (["mod.py", "new.py"], ["gone.py"])
 
 
 # --- execute payload --------------------------------------------------------------------------
+
 
 def test_first_run_sends_no_delta_then_second_run_does(tmp_path: Path) -> None:
     make_workspace(tmp_path, [DELTA_ENTRY])
@@ -113,8 +118,7 @@ def test_first_run_sends_no_delta_then_second_run_does(tmp_path: Path) -> None:
     first = _run(tmp_path)
     assert _delta_evidence(tmp_path, first.run_id) is None  # cold cache: no baseline
 
-    write_file(tmp_path, "jobs/orders_glue_job.py",
-               "df = spark.read.parquet('s3://b/orders2')\n")
+    write_file(tmp_path, "jobs/orders_glue_job.py", "df = spark.read.parquet('s3://b/orders2')\n")
     write_file(tmp_path, "jobs/new_job.py", "df = spark.read.json('s3://b/n')\n")
     second = _run(tmp_path)
     delta = _delta_evidence(tmp_path, second.run_id)
@@ -153,6 +157,9 @@ def test_disabled_cache_means_no_delta(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_fixture_manifest_declares_delta() -> None:
-    manifest = json.loads((Path(__file__).parent / "fixtures" / "providers"
-                           / "fixture-delta.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (Path(__file__).parent / "fixtures" / "providers" / "fixture-delta.json").read_text(
+            encoding="utf-8"
+        )
+    )
     assert manifest["features"] == ["delta/v1"]

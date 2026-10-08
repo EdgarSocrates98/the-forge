@@ -9,8 +9,7 @@ FORGE_DIR_NAME = ".forge"
 SUBDIRS = ("config", "runs", "cache")
 LEGACY_REGISTRY_DIR = "registry"
 GITIGNORE = (
-    "# Managed by The Forge: only config/ is committable.\n"
-    "*\n!.gitignore\n!config/\n!config/**\n"
+    "# Managed by The Forge: only config/ is committable.\n*\n!.gitignore\n!config/\n!config/**\n"
 )
 PROVIDERS_TEMPLATE = """\
 # Providers declared by this workspace. Each entry: id, argv (list).
@@ -50,8 +49,10 @@ def init_workspace(root: Path, warnings: list[str] | None = None) -> list[str]:
             if not directory.exists():
                 directory.mkdir(parents=True)
                 created.append(directory.relative_to(root).as_posix())
-        files = ((forge_dir / ".gitignore", GITIGNORE),
-                 (forge_dir / "config" / "providers.toml", PROVIDERS_TEMPLATE))
+        files = (
+            (forge_dir / ".gitignore", GITIGNORE),
+            (forge_dir / "config" / "providers.toml", PROVIDERS_TEMPLATE),
+        )
         for path, content in files:
             if not path.exists():
                 path.write_text(content, encoding="utf-8")
@@ -72,5 +73,6 @@ def remove_legacy_cache(legacy: Path) -> str | None:
             return None
     except OSError as exc:
         return f"cannot remove legacy registry cache {legacy}: {exc}"
-    return (f"removed legacy registry cache {legacy}; the cache now lives in the user "
-            "cache directory")
+    return (
+        f"removed legacy registry cache {legacy}; the cache now lives in the user cache directory"
+    )

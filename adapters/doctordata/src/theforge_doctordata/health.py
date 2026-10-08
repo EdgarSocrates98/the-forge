@@ -37,8 +37,11 @@ from theforge_doctordata.backend import (
 # The public boundary module the adapter drives (``accept_request``).
 BOUNDARY_MODULE = "forge_doctor_data.core.forger"
 _FINAL = 1_000_000  # a release compares above every rc of the same X.Y.Z
-_VERSION = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
-                      r"(?:(?:rc|\.rc|rc\.|-rc)\.?(0|[1-9][0-9]*))?", re.ASCII)
+_VERSION = re.compile(
+    r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+    r"(?:(?:rc|\.rc|rc\.|-rc)\.?(0|[1-9][0-9]*))?",
+    re.ASCII,
+)
 _CLAUSE = re.compile(r"(>=|<=|==|>|<)\s*(\S+)")
 
 Check = dict[str, Any]
@@ -71,8 +74,13 @@ def in_window(version: str, window: str) -> bool | None:
     found = _parse(version)
     if found is None:
         return None
-    compare = {">=": found.__ge__, "<=": found.__le__, "==": found.__eq__,
-               ">": found.__gt__, "<": found.__lt__}
+    compare = {
+        ">=": found.__ge__,
+        "<=": found.__le__,
+        "==": found.__eq__,
+        ">": found.__gt__,
+        "<": found.__lt__,
+    }
     return all(compare[op](bound) for op, bound in clauses)
 
 
@@ -86,34 +94,46 @@ def boundary_found() -> bool:
 
 def _boundary_check(found: bool, where: str) -> Check:
     if found:
-        return _check("boundary", True, f"{BOUNDARY_MODULE} found with {where} "
-                                        "(not imported)")
-    return _check("boundary", False,
-                  f"{BOUNDARY_MODULE}, the public boundary the adapter drives, is not "
-                  f"importable with {where}; reinstall forge-doctor-data "
-                  f"{SUPPORTED_SPECIALIST} in this interpreter")
+        return _check("boundary", True, f"{BOUNDARY_MODULE} found with {where} (not imported)")
+    return _check(
+        "boundary",
+        False,
+        f"{BOUNDARY_MODULE}, the public boundary the adapter drives, is not "
+        f"importable with {where}; reinstall forge-doctor-data "
+        f"{SUPPORTED_SPECIALIST} in this interpreter",
+    )
 
 
 def _live_environment() -> tuple[list[Check], str | None]:
     """(python and import checks, installed Forge Doctor Data version)."""
     running = f"{sys.version_info[0]}.{sys.version_info[1]}"
     if (sys.version_info[0], sys.version_info[1]) < REQUIRED_PYTHON:
-        return [_check("python", False, f"Forge Doctor Data requires Python {REQUIRED}; "
-                                        f"this adapter runs on {running} at "
-                                        f"{sys.executable}")], None
+        return [
+            _check(
+                "python",
+                False,
+                f"Forge Doctor Data requires Python {REQUIRED}; "
+                f"this adapter runs on {running} at "
+                f"{sys.executable}",
+            )
+        ], None
     checks = [_check("python", True, f"Python {running} at {sys.executable}")]
     version: object = None
     if importlib.util.find_spec("forge_doctor_data") is not None:
         try:
-            version = getattr(importlib.import_module("forge_doctor_data"),
-                              "__version__", None)
+            version = getattr(importlib.import_module("forge_doctor_data"), "__version__", None)
         except Exception:  # an installed but broken package is not importable
             version = None
     if not isinstance(version, str):
-        checks.append(_check("import", False,
-                             f"forge_doctor_data is not importable with {sys.executable} "
-                             f"(Python {running}); install forge-doctor-data "
-                             f"{SUPPORTED_SPECIALIST} in this interpreter"))
+        checks.append(
+            _check(
+                "import",
+                False,
+                f"forge_doctor_data is not importable with {sys.executable} "
+                f"(Python {running}); install forge-doctor-data "
+                f"{SUPPORTED_SPECIALIST} in this interpreter",
+            )
+        )
         return checks, None
     checks.append(_check("import", True, f"forge_doctor_data {version} importable"))
     return checks, version
@@ -127,29 +147,38 @@ def _replay_environment(environment: Mapping[str, Any]) -> tuple[list[Check], st
     except (ValueError, IndexError):
         parsed = False
     if not parsed:
-        return [_check("python", False,
-                       f"Forge Doctor Data requires Python {REQUIRED}; the replay "
-                       f"environment ({ENVIRONMENT_FILE}) records Python {python}")], None
+        return [
+            _check(
+                "python",
+                False,
+                f"Forge Doctor Data requires Python {REQUIRED}; the replay "
+                f"environment ({ENVIRONMENT_FILE}) records Python {python}",
+            )
+        ], None
     checks = [_check("python", True, f"Python {python} (replay {ENVIRONMENT_FILE})")]
     version = environment.get("specialist_version")
     if version is None:
-        checks.append(_check("import", False,
-                             f"forge_doctor_data is not importable in the replay "
-                             f"environment ({ENVIRONMENT_FILE}, Python {python}); install "
-                             f"forge-doctor-data {SUPPORTED_SPECIALIST}"))
+        checks.append(
+            _check(
+                "import",
+                False,
+                f"forge_doctor_data is not importable in the replay "
+                f"environment ({ENVIRONMENT_FILE}, Python {python}); install "
+                f"forge-doctor-data {SUPPORTED_SPECIALIST}",
+            )
+        )
         return checks, None
-    checks.append(_check("import", True,
-                         f"forge_doctor_data {version} (replay {ENVIRONMENT_FILE})"))
+    checks.append(
+        _check("import", True, f"forge_doctor_data {version} (replay {ENVIRONMENT_FILE})")
+    )
     return checks, version
 
 
 def _version_check(found: str, assumed: bool) -> Check:
     source = " (version assumed by --assume-specialist-version)" if assumed else ""
     if in_window(found, SUPPORTED_SPECIALIST):
-        return _check("version", True, f"found {found}, within "
-                                       f"{SUPPORTED_SPECIALIST}{source}")
-    return _check("version", False, f"found {found}, supported "
-                                    f"{SUPPORTED_SPECIALIST}{source}")
+        return _check("version", True, f"found {found}, within {SUPPORTED_SPECIALIST}{source}")
+    return _check("version", False, f"found {found}, supported {SUPPORTED_SPECIALIST}{source}")
 
 
 def _report(status: str, checks: Sequence[Check]) -> Reply:
@@ -169,8 +198,10 @@ def health_reply(options: AdapterOptions) -> Reply:
         if options.replay is None:
             boundary = _boundary_check(boundary_found(), f"{sys.executable}")
         else:
-            boundary = _boundary_check(bool(read_health(options.replay)["boundary"]),
-                                     f"the replay interpreter ({HEALTH_FILE})")
+            boundary = _boundary_check(
+                bool(read_health(options.replay)["boundary"]),
+                f"the replay interpreter ({HEALTH_FILE})",
+            )
     except ReplayError as exc:
         return fail(exc.code, exc.detail, field="replay")
     assumed = options.assume_specialist_version

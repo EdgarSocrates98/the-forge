@@ -76,16 +76,29 @@ class Adapter:
         return {"id": self.provider_id, "argv": [*argv, *options], "trust": "local"}
 
 
-SPARK = Adapter("spark-forge-aws", "theforge_sparkforge_aws",
-                FIXTURES / "native" / "sparkforge_aws",
-                FIXTURES / "workspaces" / "spark", "pyspark.static-analysis", "pyspark",
-                ">=0.5.0,<0.6.0")
-API = Adapter("api-forge", "theforge_apiforge", FIXTURES / "native" / "apiforge",
-              FIXTURES / "workspaces" / "api", "api.analyze", "analyze", ">=0.1.0,<0.2.0")
+SPARK = Adapter(
+    "spark-forge-aws",
+    "theforge_sparkforge_aws",
+    FIXTURES / "native" / "sparkforge_aws",
+    FIXTURES / "workspaces" / "spark",
+    "pyspark.static-analysis",
+    "pyspark",
+    ">=0.5.0,<0.6.0",
+)
+API = Adapter(
+    "api-forge",
+    "theforge_apiforge",
+    FIXTURES / "native" / "apiforge",
+    FIXTURES / "workspaces" / "api",
+    "api.analyze",
+    "analyze",
+    ">=0.1.0,<0.2.0",
+)
 ADAPTERS = {"spark": SPARK, "api": API}
 
 
 # --- helpers ------------------------------------------------------------------------------
+
 
 def _workspace(tmp_path: Path, adapter: Adapter, entries: list[dict[str, Any]]) -> Path:
     """A copy of the adapter's example workspace with ``entries`` in the user providers.toml."""
@@ -95,13 +108,18 @@ def _workspace(tmp_path: Path, adapter: Adapter, entries: list[dict[str, Any]]) 
     return root
 
 
-def _ask(root: Path, adapter: Adapter, capability: str | None = None,
-         action: str | None = None) -> tuple[AskOutcome, RunStore]:
+def _ask(
+    root: Path, adapter: Adapter, capability: str | None = None, action: str | None = None
+) -> tuple[AskOutcome, RunStore]:
     forge = root / ".forge"
     store = RunStore(forge)
-    outcome = Forger(root, Registry(forge), store).ask(AskRequest(
-        intent="analyze this workspace", capability=capability or adapter.capability,
-        action=action or adapter.action))
+    outcome = Forger(root, Registry(forge), store).ask(
+        AskRequest(
+            intent="analyze this workspace",
+            capability=capability or adapter.capability,
+            action=action or adapter.action,
+        )
+    )
     return outcome, store
 
 
@@ -112,13 +130,18 @@ def _left_in(directory: Path) -> set[str]:
 def _assert_work_holds_only_artifacts(store: RunStore, outcome: AskOutcome) -> None:
     """The run's ``work/`` holds exactly the ``artifacts[]`` paths (and their parents)."""
     paths = {a.path for a in outcome.result.artifacts} if outcome.result is not None else set()
-    parents = {parent.as_posix() for path in paths for parent in PurePosixPath(path).parents
-               if parent.as_posix() != "."}
+    parents = {
+        parent.as_posix()
+        for path in paths
+        for parent in PurePosixPath(path).parents
+        if parent.as_posix() != "."
+    }
     assert _left_in(store.work_dir(outcome.run_id)) == paths | parents
 
 
-def _assert_receipt(store: RunStore, outcome: AskOutcome, status: str,
-                    code: str | None = None) -> dict[str, Any]:
+def _assert_receipt(
+    store: RunStore, outcome: AskOutcome, status: str, code: str | None = None
+) -> dict[str, Any]:
     receipt = store.read(outcome.run_id, "receipt")
     assert outcome.status == status and receipt["status"] == status, outcome.error
     if code is None:
@@ -131,8 +154,7 @@ def _assert_receipt(store: RunStore, outcome: AskOutcome, status: str,
 def _health_report(entry: dict[str, Any]) -> HealthReport:
     """The adapter's own health reply (the core's ``check_health`` keeps only the status)."""
     with provider_cwd() as cwd:
-        response = SubprocessTransport(entry["argv"]).call("health", {}, timeout=60,
-                                                           cwd=Path(cwd))
+        response = SubprocessTransport(entry["argv"]).call("health", {}, timeout=60, cwd=Path(cwd))
     assert response.status == "ok", response.error
     return from_dict(HealthReport, response.payload, "$.payload")
 
@@ -150,8 +172,9 @@ def _large_spark_scenario(directory: Path, copies: int = 1000) -> None:
     for n in range(copies):
         renamed = {item["id"]: f"{item['id']}_{n}" for item in facts}
         many_facts.extend({**item, "id": renamed[item["id"]]} for item in facts)
-        many_findings.extend({**item, "evidence": [renamed[ref] for ref in item["evidence"]]}
-                             for item in judged)
+        many_findings.extend(
+            {**item, "evidence": [renamed[ref] for ref in item["evidence"]]} for item in judged
+        )
     recorded["output"]["items"] = many_facts
     recorded["output"]["returned_count"] = recorded["output"]["total_count"] = len(many_facts)
     recorded["judge"]["output"]["items"] = many_findings
@@ -166,8 +189,10 @@ def _large_api_scenario(directory: Path, count: int = 3000) -> None:
     recorded = json.loads((API.default / name).read_text(encoding="utf-8"))
     findings = recorded["case_files"]["findings.json"]["findings"]
     base = findings[0]
-    findings[:] = [{**copy.deepcopy(base), "finding_id": f"finding:{n:06d}",
-                    "title": f"{n} " + "t" * 1500} for n in range(count)]
+    findings[:] = [
+        {**copy.deepcopy(base), "finding_id": f"finding:{n:06d}", "title": f"{n} " + "t" * 1500}
+        for n in range(count)
+    ]
     recorded["provenance"] = "derived"
     (directory / name).write_text(json.dumps(recorded), encoding="utf-8", newline="\n")
 
@@ -183,8 +208,8 @@ LARGE = {"spark": _large_spark_scenario, "api": _large_api_scenario}
 
 # --- registry state -----------------------------------------------------------------------
 
-def test_both_adapters_in_replay_are_ready_and_healthy_in_the_registry(
-        tmp_path: Path) -> None:
+
+def test_both_adapters_in_replay_are_ready_and_healthy_in_the_registry(tmp_path: Path) -> None:
     root = _workspace(tmp_path, SPARK, [SPARK.entry(SPARK.default), API.entry(API.default)])
     records = {r.entry.id: r for r in Registry(root / ".forge").records()}
     assert {"api-forge", "spark-forge-aws"} <= set(records)
@@ -222,17 +247,22 @@ def test_missing_specialist_is_invalid_with_reason(tmp_path: Path, name: str) ->
 
 # --- runs through the Forger --------------------------------------------------------------
 
+
 def _input_globs(name: str) -> dict[str, set[str]]:
     """Capability -> every glob an action input of the adapter's catalog reads from stage/."""
     if name == "spark":
         from theforge_sparkforge_aws import catalog as spark_catalog
 
-        return {spec.id: {glob for binding in spec.bindings.values() for glob in binding.globs}
-                for spec in spark_catalog.CAPABILITIES}
+        return {
+            spec.id: {glob for binding in spec.bindings.values() for glob in binding.globs}
+            for spec in spark_catalog.CAPABILITIES
+        }
     from theforge_apiforge import catalog as api_catalog
 
-    return {capability: {glob for item in spec.inputs for glob in item.globs}
-            for capability, spec in api_catalog.VERB_MAP.items()}
+    return {
+        capability: {glob for item in spec.inputs for glob in item.globs}
+        for capability, spec in api_catalog.VERB_MAP.items()
+    }
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
@@ -260,11 +290,14 @@ DEFAULT_RUNS = [
 ]
 
 
-@pytest.mark.parametrize(("adapter", "capability", "action", "inputs"), DEFAULT_RUNS,
-                         ids=[f"{c}.{a}" for _, c, a, _ in DEFAULT_RUNS])
+@pytest.mark.parametrize(
+    ("adapter", "capability", "action", "inputs"),
+    DEFAULT_RUNS,
+    ids=[f"{c}.{a}" for _, c, a, _ in DEFAULT_RUNS],
+)
 def test_default_scenario_run_ends_with_a_valid_result(
-        tmp_path: Path, adapter: Adapter, capability: str, action: str,
-        inputs: set[str]) -> None:
+    tmp_path: Path, adapter: Adapter, capability: str, action: str, inputs: set[str]
+) -> None:
     root = _workspace(tmp_path, adapter, [adapter.entry(adapter.default)])
     outcome, store = _ask(root, adapter, capability, action)
     assert outcome.status in ("ok", "partial"), outcome.error
@@ -290,7 +323,8 @@ NATIVE_ERRORS = [
 
 @pytest.mark.parametrize(("name", "scenario", "status", "code"), NATIVE_ERRORS)
 def test_recorded_native_error_is_preserved_through_to_the_receipt(
-        tmp_path: Path, name: str, scenario: str, status: str, code: str) -> None:
+    tmp_path: Path, name: str, scenario: str, status: str, code: str
+) -> None:
     adapter = ADAPTERS[name]
     root = _workspace(tmp_path, adapter, [adapter.entry(adapter.scenario(scenario))])
     outcome, store = _ask(root, adapter)
@@ -302,7 +336,8 @@ def test_recorded_native_error_is_preserved_through_to_the_receipt(
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_large_output_is_a_partial_result_with_the_persisted_artifact(
-        tmp_path: Path, name: str) -> None:
+    tmp_path: Path, name: str
+) -> None:
     adapter = ADAPTERS[name]
     scenario = tmp_path / "large"
     LARGE[name](scenario)
@@ -330,7 +365,8 @@ VERSION_SKEW = {
 
 @pytest.mark.parametrize("name", sorted(VERSION_SKEW))
 def test_specialist_outside_the_window_is_degraded_with_version_and_window(
-        tmp_path: Path, name: str) -> None:
+    tmp_path: Path, name: str
+) -> None:
     adapter = ADAPTERS[name]
     scenario, found = VERSION_SKEW[name]
     replay, options = scenario()
@@ -343,8 +379,9 @@ def test_specialist_outside_the_window_is_degraded_with_version_and_window(
     report = _health_report(entry)
     assert report.status == "degraded"
     failing = [check.detail for check in report.checks if not check.ok]
-    assert any(f"{found}, supported {adapter.supported}" in (detail or "")
-               for detail in failing), report
+    assert any(f"{found}, supported {adapter.supported}" in (detail or "") for detail in failing), (
+        report
+    )
 
 
 def test_degraded_provider_still_runs_and_records_the_run(tmp_path: Path) -> None:
@@ -370,10 +407,12 @@ def _hashed_evidence_drift(pack: dict[str, Any], result: ExecutionResult) -> lis
     items: dict[str, set[str]] = {}
     for item in pack["files"]:
         items.setdefault(item["path"], set()).add(item["sha256"])
-    return sorted(f"{e.id}: {e.location.path if e.location else None} hash {e.hash}"
-                  for e in result.evidence
-                  if e.hash is not None
-                  and (e.location is None or e.hash not in items.get(e.location.path, set())))
+    return sorted(
+        f"{e.id}: {e.location.path if e.location else None} hash {e.hash}"
+        for e in result.evidence
+        if e.hash is not None
+        and (e.location is None or e.hash not in items.get(e.location.path, set()))
+    )
 
 
 def _assert_no_reported_drift(store: RunStore, outcome: AskOutcome) -> None:
@@ -390,11 +429,14 @@ def _assert_no_reported_drift(store: RunStore, outcome: AskOutcome) -> None:
     assert telemetry["provider_revalidation"] == "hash"
 
 
-@pytest.mark.parametrize(("adapter", "capability", "action", "inputs"), DEFAULT_RUNS,
-                         ids=[f"{c}.{a}" for _, c, a, _ in DEFAULT_RUNS])
+@pytest.mark.parametrize(
+    ("adapter", "capability", "action", "inputs"),
+    DEFAULT_RUNS,
+    ids=[f"{c}.{a}" for _, c, a, _ in DEFAULT_RUNS],
+)
 def test_hashed_evidence_equals_the_context_pack_item_of_its_path(
-        tmp_path: Path, adapter: Adapter, capability: str, action: str,
-        inputs: set[str]) -> None:
+    tmp_path: Path, adapter: Adapter, capability: str, action: str, inputs: set[str]
+) -> None:
     root = _workspace(tmp_path, adapter, [adapter.entry(adapter.default)])
     outcome, store = _ask(root, adapter, capability, action)
     assert outcome.status in ("ok", "partial"), outcome.error
@@ -414,7 +456,8 @@ def test_raw_describe_declares_hash_revalidation(name: str) -> None:
     adapter = ADAPTERS[name]
     with provider_cwd() as cwd:
         response = SubprocessTransport(adapter.entry(adapter.default)["argv"]).call(
-            "describe", {}, timeout=60, cwd=Path(cwd))
+            "describe", {}, timeout=60, cwd=Path(cwd)
+        )
     assert response.status == "ok", response.error
     assert response.payload["context_revalidation"] == "hash"
 
@@ -422,18 +465,25 @@ def test_raw_describe_declares_hash_revalidation(name: str) -> None:
 # The recorded native hash fields, rewritten to a divergent value in a tampered recording.
 _DIVERGENT = hashlib.sha256(b"tampered native hash").hexdigest()
 # An adapter that copies every native hash into Evidence.hash (breaks the common rule).
-_PASS_THROUGH = ("import sys, runpy, {module}.translate as t; "
-                 "t.evidence_hash = lambda path, native, stage: native "
-                 "if path in stage.files else None; "
-                 "sys.argv[0] = {module!r}; runpy.run_module({module!r}, run_name='__main__')")
+_PASS_THROUGH = (
+    "import sys, runpy, {module}.translate as t; "
+    "t.evidence_hash = lambda path, native, stage: native "
+    "if path in stage.files else None; "
+    "sys.argv[0] = {module!r}; runpy.run_module({module!r}, run_name='__main__')"
+)
 
 
 def _tampered_scenario(adapter: Adapter, directory: Path) -> set[str]:
     """The default scenario with every native hash of a workspace input made divergent;
     returns the workspace paths whose recorded hash was rewritten."""
     shutil.copytree(adapter.default, directory)
-    hashes = {hashlib.sha256(path.read_bytes()).hexdigest(): path.relative_to(
-        adapter.workspace).as_posix() for path in adapter.workspace.rglob("*") if path.is_file()}
+    hashes = {
+        hashlib.sha256(path.read_bytes()).hexdigest(): path.relative_to(
+            adapter.workspace
+        ).as_posix()
+        for path in adapter.workspace.rglob("*")
+        if path.is_file()
+    }
     name = f"{adapter.capability}.{adapter.action}.json"
     text = (directory / name).read_text(encoding="utf-8")
     tampered = {path for digest, path in hashes.items() if digest in text}
@@ -445,8 +495,7 @@ def _tampered_scenario(adapter: Adapter, directory: Path) -> set[str]:
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
-def test_divergent_native_hash_is_never_copied_into_evidence(
-        tmp_path: Path, name: str) -> None:
+def test_divergent_native_hash_is_never_copied_into_evidence(tmp_path: Path, name: str) -> None:
     adapter = ADAPTERS[name]
     _tampered_scenario(adapter, tmp_path / "tampered")
     root = _workspace(tmp_path, adapter, [adapter.entry(tmp_path / "tampered")])
@@ -460,13 +509,22 @@ def test_divergent_native_hash_is_never_copied_into_evidence(
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_drift_check_fails_when_a_divergent_native_hash_is_copied(
-        tmp_path: Path, name: str) -> None:
+    tmp_path: Path, name: str
+) -> None:
     """Negative control: an adapter that copied the tampered native hash would be caught."""
     adapter = ADAPTERS[name]
     tampered = _tampered_scenario(adapter, tmp_path / "tampered")
-    entry = {"id": adapter.provider_id, "trust": "local",
-             "argv": [sys.executable, "-c", _PASS_THROUGH.format(module=adapter.module),
-                      "--replay", str(tmp_path / "tampered")]}
+    entry = {
+        "id": adapter.provider_id,
+        "trust": "local",
+        "argv": [
+            sys.executable,
+            "-c",
+            _PASS_THROUGH.format(module=adapter.module),
+            "--replay",
+            str(tmp_path / "tampered"),
+        ],
+    }
     root = _workspace(tmp_path, adapter, [entry])
     outcome, store = _ask(root, adapter)
     assert outcome.status in ("ok", "partial"), outcome.error
@@ -493,8 +551,9 @@ def _proof_workspace(tmp_path: Path) -> Path:
         return root
     requirements: list[str] = []
     for source in (SPARK.workspace, API.workspace):
-        shutil.copytree(source, root, dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("requirements*.txt"))
+        shutil.copytree(
+            source, root, dirs_exist_ok=True, ignore=shutil.ignore_patterns("requirements*.txt")
+        )
         requirements += (source / "requirements.txt").read_text(encoding="utf-8").splitlines()
     (root / "requirements.txt").write_text("\n".join(requirements) + "\n", encoding="utf-8")
     return root
@@ -517,11 +576,19 @@ def test_proof_task_routes_one_best_capability_per_provider(tmp_path: Path, scop
     are then non-discriminating); ``registry``: every routable record, built-ins included."""
     root = _proof_workspace(tmp_path)
     make_workspace(root, [SPARK.entry(SPARK.default), API.entry(API.default)])
-    records = [r for r in Registry(root / ".forge").records()
-               if scope == "registry" or r.entry.id in PROOF_BEST]
+    records = [
+        r
+        for r in Registry(root / ".forge").records()
+        if scope == "registry" or r.entry.id in PROOF_BEST
+    ]
     assert {r.entry.id for r in records if r.routable()} >= set(PROOF_BEST), records
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="proof-task",
-                    intent=PROOF_TASK, workspace_root=str(root))
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="proof-task",
+        intent=PROOF_TASK,
+        workspace_root=str(root),
+    )
     decision = route(task, records, scan_workspace(root, []).files, _proof_dependencies(root))
     by_provider: dict[str, list[Candidate]] = {}
     for candidate in decision.candidates:
@@ -537,7 +604,8 @@ def test_proof_task_routes_one_best_capability_per_provider(tmp_path: Path, scop
         assert [c.capability for c in best] == [capability], (provider, candidates)
         assert top >= MIN_SIGNAL_TYPES, (provider, best[0].matched)
         assert best[0].matched.keywords, (provider, best[0].matched)
-        first_keyword[provider] = min(tokens.index(keyword.split(" ")[0])
-                                      for keyword in best[0].matched.keywords)
+        first_keyword[provider] = min(
+            tokens.index(keyword.split(" ")[0]) for keyword in best[0].matched.keywords
+        )
     # The intent names Spark before the API: the plan's node order relies on it.
     assert first_keyword[SPARK.provider_id] < first_keyword[API.provider_id], first_keyword

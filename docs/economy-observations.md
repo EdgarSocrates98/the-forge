@@ -85,3 +85,21 @@ ou `local-file`). `--profile` controla a ansiedade da consulta remota:
 - `balanced` (default) — remote só quando nada local satisfaz `FULL`
 - `max` — sempre consulta: compara claims remotos mesmo com fit local FULL
 - `--remote` — força a consulta sob qualquer profile
+
+
+## Plan retries e budget global
+
+A observação atômica de um child run continua registrando `provider_calls = 1`
+quando aquele run alcança `execute`. No plan run, porém, retries são contabilizados
+individualmente:
+
+- `RunBudget.provider_calls = plan_nodes × retry.max_attempts` — teto autorizado;
+- `RunTelemetry.providers_executed` — chamadas `execute` realmente realizadas;
+- a reserva extra aparece em `RunBudget.adjustments`;
+- se ainda houver gaps unresolved e o gasto real atingir o teto, o
+  `GlobalStopDecision` usa `stop_budget_exhausted`;
+- se a execução já resolveu e verificou o trabalho, consumir o teto não substitui
+  `stop_sufficient_evidence`.
+
+Assim retry deixa de ser custo invisível sem transformar reserva de pior caso em
+gasto observado.

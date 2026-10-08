@@ -69,8 +69,11 @@ def _resolve_baseline(root: Path, ref: str) -> tuple[Any | None, str]:
         return None, effective
 
 
-def _diagnose(target: str, delta_baseline: str | None, delta_changed: str | None,
-              ) -> dict[str, Any]:
+def _diagnose(
+    target: str,
+    delta_baseline: str | None,
+    delta_changed: str | None,
+) -> dict[str, Any]:
     from forge_doctor_api.core.context import ProjectContext
     from forge_doctor_api.handoff.boundary import DoctorBoundary
     from forge_doctor_api.handoff.protocol import RequestDelta, build_request
@@ -91,7 +94,8 @@ def _diagnose(target: str, delta_baseline: str | None, delta_changed: str | None
             raise _BridgeRefuse("--delta-changed-files must be a JSON array of strings")
         changed = tuple(sorted(raw))
         baseline, resolved_ref = _resolve_baseline(
-            root, delta_baseline if delta_baseline is not None else "")
+            root, delta_baseline if delta_baseline is not None else ""
+        )
         delta = RequestDelta(baseline_ref=resolved_ref, changed_files=changed)
     request = build_request(target=str(root), delta=delta)
     bundle = boundary.handle(request, baseline=baseline)
@@ -101,7 +105,8 @@ def _diagnose(target: str, delta_baseline: str | None, delta_changed: str | None
         raise _BridgeRefuse(
             "boundary emitted divergent identities: bundle handoff_id "
             f"{bundle.handoff_id!r} != envelope handoff_id "
-            f"{envelope.get('handoff_id')!r}")
+            f"{envelope.get('handoff_id')!r}"
+        )
     return {
         "bundle": bundle.to_dict(),
         "handoff": envelope,
@@ -131,8 +136,7 @@ def _verify(path: str) -> dict[str, Any]:
             bundle = None
             errors.append(f"{type(exc).__name__}: {exc}")
         if bundle is not None and bundle.handoff_version == 2:
-            integrity = "ok" if bundle.handoff_id == bundle.body_sha256() \
-                else INTEGRITY_MISMATCH
+            integrity = "ok" if bundle.handoff_id == bundle.body_sha256() else INTEGRITY_MISMATCH
             if integrity == INTEGRITY_MISMATCH:
                 errors.append("handoff_id does not equal the recomputed body sha256")
     elif keys & ENVELOPE_KEYS:
@@ -145,11 +149,12 @@ def _verify(path: str) -> dict[str, Any]:
             errors.append(str(exc))
     else:
         kind = None
-        errors.append("payload is neither an ApiHandoffBundle (needs one of "
-                      f"{sorted(BUNDLE_KEYS)}) nor a ForgeHandoff envelope (needs one of "
-                      f"{sorted(ENVELOPE_KEYS)})")
-    return {"valid": not errors, "kind": kind, "errors": sorted(errors),
-            "integrity": integrity}
+        errors.append(
+            "payload is neither an ApiHandoffBundle (needs one of "
+            f"{sorted(BUNDLE_KEYS)}) nor a ForgeHandoff envelope (needs one of "
+            f"{sorted(ENVELOPE_KEYS)})"
+        )
+    return {"valid": not errors, "kind": kind, "errors": sorted(errors), "integrity": integrity}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -157,17 +162,25 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     diag = sub.add_parser("diagnose", help="DoctorBoundary handle + endpoint_dict")
     diag.add_argument("--target", required=True)
-    diag.add_argument("--delta-baseline", default=None,
-                      help="snapshot ref the delta diffs against (''/latest = newest)")
-    diag.add_argument("--delta-changed-files", default=None,
-                      help="JSON array of workspace-relative changed paths (hint)")
+    diag.add_argument(
+        "--delta-baseline",
+        default=None,
+        help="snapshot ref the delta diffs against (''/latest = newest)",
+    )
+    diag.add_argument(
+        "--delta-changed-files",
+        default=None,
+        help="JSON array of workspace-relative changed paths (hint)",
+    )
     ver = sub.add_parser("verify", help="strict-parse + integrity check of a document")
     ver.add_argument("--file", required=True)
     args = parser.parse_args(argv)
     try:
-        document = (_diagnose(args.target, args.delta_baseline,
-                              args.delta_changed_files)
-                    if args.command == "diagnose" else _verify(args.file))
+        document = (
+            _diagnose(args.target, args.delta_baseline, args.delta_changed_files)
+            if args.command == "diagnose"
+            else _verify(args.file)
+        )
     except _BridgeRefuse as exc:
         return _fail(REQUEST_INVALID, str(exc), 2)
     except Exception as exc:  # noqa: BLE001 - the adapter maps the type+message only

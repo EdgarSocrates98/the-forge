@@ -576,6 +576,102 @@
                 }
               ]
             },
+            "global_stop": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "action": {
+                      "enum": [
+                        "continue",
+                        "stop_sufficient_evidence",
+                        "stop_budget_exhausted",
+                        "stop_policy",
+                        "stop_no_expected_gain",
+                        "stop_repeated_failure",
+                        "stop_user_constraint",
+                        "unresolved"
+                      ]
+                    },
+                    "budget_remaining": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "information_gain": {
+                      "enum": [
+                        "high",
+                        "medium",
+                        "low",
+                        "none",
+                        "unknown"
+                      ]
+                    },
+                    "producer": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "version"
+                      ],
+                      "type": "object"
+                    },
+                    "reasons": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "schema": {
+                      "type": "string"
+                    },
+                    "unresolved": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "verification_required": {
+                      "type": "boolean"
+                    },
+                    "verification_satisfied": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "producer",
+                    "created_at",
+                    "run_id",
+                    "action",
+                    "information_gain",
+                    "reasons"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "installation": {
               "anyOf": [
                 {
@@ -944,6 +1040,16 @@
                       ]
                     },
                     "economy_sha256": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "global_stop_sha256": {
                       "anyOf": [
                         {
                           "type": "string"

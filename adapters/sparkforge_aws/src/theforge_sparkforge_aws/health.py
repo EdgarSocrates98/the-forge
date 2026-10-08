@@ -62,8 +62,14 @@ def in_window(version: str, window: str) -> bool:
         if match is None or bound is None:
             return False
         op = match[1]
-        holds = {">=": found >= bound, "<=": found <= bound, ">": found > bound,
-                 "<": found < bound, "==": found == bound, "!=": found != bound}[op]
+        holds = {
+            ">=": found >= bound,
+            "<=": found <= bound,
+            ">": found > bound,
+            "<": found < bound,
+            "==": found == bound,
+            "!=": found != bound,
+        }[op]
         if not holds:
             return False
     return True
@@ -73,10 +79,12 @@ def observe_live() -> Observation:
     """The native side of this interpreter, without importing the dispatcher."""
     dispatcher = native_pkg.dispatcher_found()
     python = ".".join(str(part) for part in sys.version_info[:3])  # no pre-release suffix
-    return Observation(interpreter=f"{sys.executable}", python=python,
-                       dispatcher=dispatcher,
-                       specialist_version=native_pkg.installed_version() if dispatcher
-                       else None)
+    return Observation(
+        interpreter=f"{sys.executable}",
+        python=python,
+        dispatcher=dispatcher,
+        specialist_version=native_pkg.installed_version() if dispatcher else None,
+    )
 
 
 def _python_ok(python: str) -> bool:
@@ -88,21 +96,26 @@ def _check(name: str, ok: bool, detail: str) -> dict[str, Any]:
     return {"name": name, "ok": ok, "detail": detail}
 
 
-def report(observation: Observation, *, window: str, assumed: str | None,
-           snapshot_problem: str | None) -> dict[str, Any]:
+def report(
+    observation: Observation, *, window: str, assumed: str | None, snapshot_problem: str | None
+) -> dict[str, Any]:
     """The ``HealthReport`` payload of an observation."""
     where = f"{observation.interpreter} (Python {observation.python})"
     floor = f"{MIN_PYTHON[0]}.{MIN_PYTHON[1]}"
     python_ok = _python_ok(observation.python)
     interpreter = _check(
-        "interpreter", python_ok,
-        f"{where}" if python_ok else f"{where}; the Spark Forge AWS needs Python >= {floor}")
+        "interpreter",
+        python_ok,
+        f"{where}" if python_ok else f"{where}; the Spark Forge AWS needs Python >= {floor}",
+    )
     dispatcher = _check(
-        "dispatcher", observation.dispatcher,
+        "dispatcher",
+        observation.dispatcher,
         f"a tool surface ({DISPATCHER}) is importable with {where} (found, not imported)"
-        if observation.dispatcher else
-        f"the Spark Forge AWS is not importable with {where}: none of {DISPATCHER} found; "
-        f"{INSTALL_HINT} in that interpreter")
+        if observation.dispatcher
+        else f"the Spark Forge AWS is not importable with {where}: none of {DISPATCHER} found; "
+        f"{INSTALL_HINT} in that interpreter",
+    )
     version = assumed if assumed is not None else observation.specialist_version
     if version is None:
         detail = f"found no sparkforge-aws version, supported {window}"
@@ -114,9 +127,13 @@ def report(observation: Observation, *, window: str, assumed: str | None,
             installed = observation.specialist_version or "unknown"
             detail += f" (assumed by --assume-specialist-version; installed {installed})"
     specialist = _check("specialist-version", version_ok, detail)
-    snapshot = _check("snapshot", snapshot_problem is None,
-                      "native_catalog.json is present and readable"
-                      if snapshot_problem is None else snapshot_problem)
+    snapshot = _check(
+        "snapshot",
+        snapshot_problem is None,
+        "native_catalog.json is present and readable"
+        if snapshot_problem is None
+        else snapshot_problem,
+    )
     if not (python_ok and observation.dispatcher and snapshot_problem is None):
         status = "unavailable"
     elif not version_ok:

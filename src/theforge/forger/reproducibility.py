@@ -23,14 +23,22 @@ from theforge.contracts.verification import ReproducibilityInfo, VerificationRes
 _EXTERNAL_CLASSES: Final = frozenset({"external_read", "external_mutation", "destructive"})
 # Least reproducible first: combine_levels keeps the lowest rank.
 _RANK: Final[dict[Reproducibility, int]] = {
-    "non_reproducible": 0, "unknown": 1, "partially_reproducible": 2, "reproducible": 3}
+    "non_reproducible": 0,
+    "unknown": 1,
+    "partially_reproducible": 2,
+    "reproducible": 3,
+}
 NO_EXECUTION: Final = "no provider execution"
 ALL_CONDITIONS_MET: Final = "all reproducibility conditions met"
 NO_NODES: Final = "no node to combine"
 
 
-def _external(manifest: ForgeManifest | None, capability: Capability | None,
-              drift: DriftReport | None, upstream: Sequence[Reproducibility]) -> list[str]:
+def _external(
+    manifest: ForgeManifest | None,
+    capability: Capability | None,
+    drift: DriftReport | None,
+    upstream: Sequence[Reproducibility],
+) -> list[str]:
     reasons: list[str] = []
     if manifest is not None:
         execution = manifest.execution
@@ -49,22 +57,30 @@ def _external(manifest: ForgeManifest | None, capability: Capability | None,
     return reasons
 
 
-def _unmet(manifest: ForgeManifest | None, capability: Capability | None,
-           fingerprint: str | None, context_sha256: str | None, drift: DriftReport | None,
-           verification: VerificationResult | None, status: Outcome,
-           upstream: Sequence[Reproducibility]) -> list[str]:
+def _unmet(
+    manifest: ForgeManifest | None,
+    capability: Capability | None,
+    fingerprint: str | None,
+    context_sha256: str | None,
+    drift: DriftReport | None,
+    verification: VerificationResult | None,
+    status: Outcome,
+    upstream: Sequence[Reproducibility],
+) -> list[str]:
     reasons: list[str] = []
     if manifest is None:
         reasons.append("provider manifest not recorded")
     elif manifest.execution.deterministic is not True:
         declared = manifest.execution.deterministic
-        reasons.append("provider does not declare deterministic execution"
-                       if declared is None else "provider declares non-deterministic execution")
+        reasons.append(
+            "provider does not declare deterministic execution"
+            if declared is None
+            else "provider declares non-deterministic execution"
+        )
     if capability is None:
         reasons.append("capability not recorded")
     elif capability.operation_class != "read_only":
-        reasons.append(f"capability operation class is {capability.operation_class}, "
-                       "not read_only")
+        reasons.append(f"capability operation class is {capability.operation_class}, not read_only")
     if fingerprint is None:
         reasons.append("provider fingerprint not recorded")
     if context_sha256 is None:
@@ -84,17 +100,25 @@ def _unmet(manifest: ForgeManifest | None, capability: Capability | None,
     return reasons
 
 
-def assess_run(*, executed: bool, manifest: ForgeManifest | None,
-               capability: Capability | None, fingerprint: str | None,
-               context_sha256: str | None, drift: DriftReport | None,
-               verification: VerificationResult | None, status: Outcome,
-               upstream: Sequence[Reproducibility]) -> ReproducibilityInfo:
+def assess_run(
+    *,
+    executed: bool,
+    manifest: ForgeManifest | None,
+    capability: Capability | None,
+    fingerprint: str | None,
+    context_sha256: str | None,
+    drift: DriftReport | None,
+    verification: VerificationResult | None,
+    status: Outcome,
+    upstream: Sequence[Reproducibility],
+) -> ReproducibilityInfo:
     """Reproducibility of one run; ``upstream`` = levels of the nodes it got handoff from."""
     if not executed:
         return ReproducibilityInfo(level="unknown", reasons=[f"{NO_EXECUTION} ({status})"])
     external = _external(manifest, capability, drift, upstream)
-    unmet = _unmet(manifest, capability, fingerprint, context_sha256, drift, verification,
-                   status, upstream)
+    unmet = _unmet(
+        manifest, capability, fingerprint, context_sha256, drift, verification, status, upstream
+    )
     if external:
         return ReproducibilityInfo(level="non_reproducible", reasons=external + unmet)
     if unmet:

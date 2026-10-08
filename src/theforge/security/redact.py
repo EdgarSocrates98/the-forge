@@ -15,8 +15,10 @@ _KEY = (
 )
 
 _PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"),
-     REDACTED),
+    (
+        re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"),
+        REDACTED,
+    ),
     (re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"), REDACTED),
     (re.compile(r"\bghp_[A-Za-z0-9]{36}\b"), REDACTED),
     (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{22,}\b"), REDACTED),
@@ -24,20 +26,37 @@ _PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}"), REDACTED),
     (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/-]{20,}=*"), REDACTED),
     # URL credentials: scheme://user:password@host
-    (re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://[^\s:/@]+:)(?!\[REDACTED\]@)[^\s/@]+(@)"),
-     r"\1" + REDACTED + r"\2"),
+    (
+        re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://[^\s:/@]+:)(?!\[REDACTED\]@)[^\s/@]+(@)"),
+        r"\1" + REDACTED + r"\2",
+    ),
     # Quoted values (may contain spaces): "password": "x y", token = 'x'.
-    (re.compile(_KEY + r"""(["']?\s*[:=]\s*)(["'])(?!\[REDACTED\]\3)(?:(?!\3)[^\n])*\3"""),
-     r"\1\2\3" + REDACTED + r"\3"),
+    (
+        re.compile(_KEY + r"""(["']?\s*[:=]\s*)(["'])(?!\[REDACTED\]\3)(?:(?!\3)[^\n])*\3"""),
+        r"\1\2\3" + REDACTED + r"\3",
+    ),
     # Unquoted values.
-    (re.compile(_KEY + r"""(["']?\s*[:=]\s*)(["']?)(?!\[REDACTED\])[^\s'",;]+"""),
-     r"\1\2\3" + REDACTED),
+    (
+        re.compile(_KEY + r"""(["']?\s*[:=]\s*)(["']?)(?!\[REDACTED\])[^\s'",;]+"""),
+        r"\1\2\3" + REDACTED,
+    ),
 )
 
-SENSITIVE_KEYS = frozenset({
-    "password", "passwd", "secret", "token", "api_key", "apikey", "authorization",
-    "access_key", "secret_key", "client_secret", "aws_secret_access_key",
-})
+SENSITIVE_KEYS = frozenset(
+    {
+        "password",
+        "passwd",
+        "secret",
+        "token",
+        "api_key",
+        "apikey",
+        "authorization",
+        "access_key",
+        "secret_key",
+        "client_secret",
+        "aws_secret_access_key",
+    }
+)
 
 
 def redact_text(text: str) -> str:

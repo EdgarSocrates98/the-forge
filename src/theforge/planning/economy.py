@@ -24,25 +24,33 @@ from theforge.planning.execution import NodeExecution
 __all__ = ["compose_economy"]
 
 
-def compose_economy(plan_run: str, executions: Sequence[NodeExecution],
-                    *, created_at: str | None = None) -> EconomyRollup | None:
+def compose_economy(
+    plan_run: str, executions: Sequence[NodeExecution], *, created_at: str | None = None
+) -> EconomyRollup | None:
     """The plan run's ``EconomyRollup``, or None when no node reported economy.
 
     ``receipts`` keeps each reporting node's provider accounting verbatim, in
     plan order; ``totals`` aggregates each metric under the never-silent rules.
     """
-    receipts = [NodeEconomy(node=e.node.id, receipt=e.result.provider_economy)
-                for e in executions
-                if e.result is not None and e.result.provider_economy is not None]
+    receipts = [
+        NodeEconomy(node=e.node.id, receipt=e.result.provider_economy)
+        for e in executions
+        if e.result is not None and e.result.provider_economy is not None
+    ]
     if not receipts:
         return None
     conflicts = _conflicts(receipts)
     limitations: list[str] = []
-    totals = {name: _total(name, receipts, conflicts, limitations)
-              for name in ECONOMY_METRICS}
-    return EconomyRollup(producer=PRODUCER, created_at=created_at or utc_now(),
-                         plan_run=plan_run, receipts=receipts, totals=totals,
-                         conflicts=conflicts, limitations=limitations)
+    totals = {name: _total(name, receipts, conflicts, limitations) for name in ECONOMY_METRICS}
+    return EconomyRollup(
+        producer=PRODUCER,
+        created_at=created_at or utc_now(),
+        plan_run=plan_run,
+        receipts=receipts,
+        totals=totals,
+        conflicts=conflicts,
+        limitations=limitations,
+    )
 
 
 def _conflicts(receipts: Sequence[NodeEconomy]) -> list[str]:
@@ -62,35 +70,48 @@ def _conflicts(receipts: Sequence[NodeEconomy]) -> list[str]:
         if len(group) < 2:
             continue
         for name in ECONOMY_METRICS:
-            values = {getattr(receipt, name).value for receipt in group
-                      if getattr(receipt, name).status in ("measured", "estimated")}
+            values = {
+                getattr(receipt, name).value
+                for receipt in group
+                if getattr(receipt, name).status in ("measured", "estimated")
+            }
             if len(values) > 1:
                 conflicts.append(
                     f"{provider} run {run}: conflicting {name} "
-                    f"({', '.join(str(v) for v in sorted(values))})")
+                    f"({', '.join(str(v) for v in sorted(values))})"
+                )
     return conflicts
 
 
-def _total(name: str, receipts: Sequence[NodeEconomy],
-           conflicts: Sequence[str], limitations: list[str]) -> EconomyMetric:
+def _total(
+    name: str, receipts: Sequence[NodeEconomy], conflicts: Sequence[str], limitations: list[str]
+) -> EconomyMetric:
     """One metric rolled up: sum compatible values; unresolved blocks the sum."""
-    measured = [entry for entry in receipts
-                if getattr(entry.receipt, name).status in ("measured", "estimated")]
-    blocked = [entry.node for entry in receipts
-               if getattr(entry.receipt, name).status == "unresolved"]
+    measured = [
+        entry
+        for entry in receipts
+        if getattr(entry.receipt, name).status in ("measured", "estimated")
+    ]
+    blocked = [
+        entry.node for entry in receipts if getattr(entry.receipt, name).status == "unresolved"
+    ]
     conflicted = any(name in conflict for conflict in conflicts)
     if not measured:
         # Nobody measured it — everything is not_applicable and/or unresolved.
-        return EconomyMetric(
-            status="unresolved" if blocked or conflicted else "not_applicable")
+        return EconomyMetric(status="unresolved" if blocked or conflicted else "not_applicable")
     if blocked or conflicted:
-        why = f"unresolved for node(s) {', '.join(blocked)}" if blocked \
+        why = (
+            f"unresolved for node(s) {', '.join(blocked)}"
+            if blocked
             else "conflicting sources (see conflicts)"
+        )
         limitations.append(f"{name}: not summed — {why}")
         return EconomyMetric(status="unresolved")
     return EconomyMetric(
         value=sum(getattr(entry.receipt, name).value or 0.0 for entry in measured),
-        status=("measured"
-                if all(getattr(entry.receipt, name).status == "measured"
-                       for entry in measured)
-                else "estimated"))
+        status=(
+            "measured"
+            if all(getattr(entry.receipt, name).status == "measured" for entry in measured)
+            else "estimated"
+        ),
+    )

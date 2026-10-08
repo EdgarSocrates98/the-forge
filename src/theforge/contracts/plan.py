@@ -99,8 +99,9 @@ class ExecutionPlan:
         if self.schema != PLAN_SCHEMA:
             raise ContractError(f"unsupported schema {self.schema!r}, expected {PLAN_SCHEMA!r}")
         if (self.status == "validated") == bool(self.violations):
-            raise ContractError(f"plan status {self.status!r} does not match "
-                                f"{len(self.violations)} violations")
+            raise ContractError(
+                f"plan status {self.status!r} does not match {len(self.violations)} violations"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -185,7 +186,8 @@ class SemanticPlanProposal:
     def __post_init__(self) -> None:
         if self.schema != SEMANTIC_PLAN_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {SEMANTIC_PLAN_SCHEMA}")
+                f"unsupported schema {self.schema!r}, expected {SEMANTIC_PLAN_SCHEMA}"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -239,14 +241,16 @@ PLAN_STATE_SCHEMA = "theforge/PlanState/v1"
 # Reachable run states: planned (never executed), running, completed, partial,
 # failed. ``paused``/``cancelled`` are declared for a future scheduler and are
 # never written today.
-PlanRunState = Literal["planned", "running", "paused", "partial", "failed",
-                       "completed", "cancelled"]
+PlanRunState = Literal[
+    "planned", "running", "paused", "partial", "failed", "completed", "cancelled"
+]
 # Reachable node states: pending (deps unmet), ready (deps met, not yet started —
 # a snapshot may catch it), running (child run in flight; a crash leaves this),
 # succeeded (valid result: ok/partial), failed, skipped (blocked_by), cancelled
 # (declared, never written today).
-NodePlanState = Literal["pending", "ready", "running", "succeeded", "failed",
-                        "skipped", "cancelled"]
+NodePlanState = Literal[
+    "pending", "ready", "running", "succeeded", "failed", "skipped", "cancelled"
+]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -283,8 +287,7 @@ class PlanState:
 
     def __post_init__(self) -> None:
         if self.schema != PLAN_STATE_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {PLAN_STATE_SCHEMA}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {PLAN_STATE_SCHEMA}")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -302,17 +305,24 @@ class PlanResult:
     # On-disk hash of the EconomyRollup the run composed from node economy
     # receipts (None when no node reported provider economy).
     economy_sha256: str | None = None
+    # Hash of the core-owned GlobalStopDecision for this completed plan.
+    # The receipt remains the trust anchor; this additive link makes PlanResult
+    # self-contained for consumers that inspect the plan result directly.
+    global_stop_sha256: str | None = None
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.schema != PLAN_RESULT_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {PLAN_RESULT_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {PLAN_RESULT_SCHEMA!r}"
+            )
         if self.decision_sha256 is not None:
             check_sha256(self.decision_sha256, field="decision_sha256")
         if self.economy_sha256 is not None:
             check_sha256(self.economy_sha256, field="economy_sha256")
+        if self.global_stop_sha256 is not None:
+            check_sha256(self.global_stop_sha256, field="global_stop_sha256")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -365,12 +375,9 @@ class DecisionRecord:
 
     def __post_init__(self) -> None:
         if self.schema != DECISION_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {DECISION_SCHEMA!r}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {DECISION_SCHEMA!r}")
         option_ids = {o.node for o in self.options}
         if self.chosen != "unresolved" and self.chosen not in option_ids:
-            raise ContractError(
-                f"decision chosen {self.chosen!r} is not a proposer node")
+            raise ContractError(f"decision chosen {self.chosen!r} is not a proposer node")
         if self.chosen != "unresolved" and set(self.rejected) != option_ids - {self.chosen}:
-            raise ContractError(
-                "decision rejected must be exactly the options not chosen")
+            raise ContractError("decision rejected must be exactly the options not chosen")

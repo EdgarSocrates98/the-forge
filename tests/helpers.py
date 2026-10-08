@@ -37,10 +37,12 @@ API_ENTRY = {
 }
 # Same providers whose manifests also declare the ``plan`` op (answered with the manifest
 # fixture's ``estimate``), for cross-forge-foundation plan flows.
-SPARK_PLAN_ENTRY = dict(SPARK_ENTRY, argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-spark-plan.json")))
-API_PLAN_ENTRY = dict(API_ENTRY, argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-api-plan.json")))
+SPARK_PLAN_ENTRY = dict(
+    SPARK_ENTRY, argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-plan.json"))
+)
+API_PLAN_ENTRY = dict(
+    API_ENTRY, argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api-plan.json"))
+)
 # A planner provider: capability ``planner.compose`` declares ``proposes_plans``
 # and its ``plan`` op answers the test-only ``proposal`` payload of its manifest.
 PLANNER_ENTRY = {
@@ -51,19 +53,27 @@ PLANNER_ENTRY = {
 # Debate variants: same fixture providers whose manifests carry a test-only
 # ``findings`` list — a stated proposal (first finding title) plus a risk —
 # so a debate e2e cites real positions instead of the mechanical f1 line.
-SPARK_DEBATE_ENTRY = dict(SPARK_PLAN_ENTRY, argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-spark-debate.json")))
-API_DEBATE_ENTRY = dict(API_PLAN_ENTRY, argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-api-debate.json")))
+SPARK_DEBATE_ENTRY = dict(
+    SPARK_PLAN_ENTRY,
+    argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-debate.json")),
+)
+API_DEBATE_ENTRY = dict(
+    API_PLAN_ENTRY,
+    argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api-debate.json")),
+)
 # Hierarchical-debate variants: each proposer additionally emits evidence
 # ``id="decision"`` — the verdict of its own *internal* debate (the domain's
 # DecisionRecord projected as a claim), which the referee receives verbatim.
-SPARK_DOMAIN_ENTRY = dict(SPARK_PLAN_ENTRY, id="fixture-spark-domain",
-                          argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-spark-domain.json")))
-API_DOMAIN_ENTRY = dict(API_PLAN_ENTRY, id="fixture-api-domain",
-                        argv=fixture_argv(
-    "fixture_forge.py", str(PROVIDERS / "fixture-api-domain.json")))
+SPARK_DOMAIN_ENTRY = dict(
+    SPARK_PLAN_ENTRY,
+    id="fixture-spark-domain",
+    argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-spark-domain.json")),
+)
+API_DOMAIN_ENTRY = dict(
+    API_PLAN_ENTRY,
+    id="fixture-api-domain",
+    argv=fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-api-domain.json")),
+)
 # A referee provider for ``debate`` plans: its manifest's test-only ``decision`` key
 # makes ``execute`` emit the convention evidence (id="decision", claim=<node id>).
 REFEREE_ENTRY = {
@@ -88,16 +98,14 @@ VERIFIER_ENTRY = {
 }
 VERIFIER_FAIL_ENTRY = {
     "id": "fixture-verifier-fail",
-    "argv": fixture_argv("fixture_forge.py",
-                         str(PROVIDERS / "fixture-verifier-fail.json")),
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-verifier-fail.json")),
     "trust": "local",
 }
 # A provider that declares can_verify on its own capability — the producer is never
 # its own independent verifier, so the run records not_performed (same identity).
 SELFVERIFY_ENTRY = {
     "id": "fixture-selfverify",
-    "argv": fixture_argv("fixture_forge.py",
-                         str(PROVIDERS / "fixture-selfverify.json")),
+    "argv": fixture_argv("fixture_forge.py", str(PROVIDERS / "fixture-selfverify.json")),
     "trust": "local",
 }
 # A provider whose first evidence item cites a sent context file (``cite`` key):
@@ -133,9 +141,7 @@ RESOLVER_ENTRY = {
 }
 
 
-def write_providers(
-    forge_dir: Path, entries: list[dict[str, Any]], *, scope: str = "user"
-) -> None:
+def write_providers(forge_dir: Path, entries: list[dict[str, Any]], *, scope: str = "user") -> None:
     lines: list[str] = []
     for entry in entries:
         lines += [
@@ -172,7 +178,8 @@ def case_a(root: Path) -> None:
 
 def case_b(root: Path) -> None:
     write_file(
-        root, "api/openapi.yaml",
+        root,
+        "api/openapi.yaml",
         "openapi: 3.0.0\ninfo:\n  title: Orders\n  version: 1.0.0\npaths: {}\n",
     )
 
@@ -218,8 +225,12 @@ def force_kill(pid: int) -> None:
     if sys.platform == "win32":
         # os.kill on Windows can raise SystemError for some processes; taskkill is reliable.
         with contextlib.suppress(OSError, subprocess.SubprocessError):
-            subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], capture_output=True,
-                           timeout=30, check=False)
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
         return
     with contextlib.suppress(OSError):
         os.kill(pid, 9)

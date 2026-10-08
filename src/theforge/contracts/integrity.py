@@ -45,8 +45,7 @@ _SUCCESS = ("ok", "partial")
 _TIERS: frozenset[str] = frozenset(get_args(Tier))
 # Outcomes a PlanResult may carry: the plan was executed (a planned, ambiguous or no_route
 # plan run has no PlanResult, only a receipt).
-_PLAN_RESULT_STATUSES: frozenset[str] = frozenset({"ok", "partial", "refused",
-                                                    "provider_failure"})
+_PLAN_RESULT_STATUSES: frozenset[str] = frozenset({"ok", "partial", "refused", "provider_failure"})
 
 
 @dataclass(frozen=True)
@@ -158,11 +157,13 @@ def validate_result(result: ExecutionResult, *, expected: Producer) -> None:
     for i, finding in enumerate(result.findings):
         for j, ref in enumerate(finding.evidence_ids):
             if ref not in known:
-                violations.append(Violation(
-                    Codes.RESULT_DANGLING_EVIDENCE,
-                    f"finding {finding.id!r} references unknown evidence id {ref!r}",
-                    f"findings[{i}].evidence_ids[{j}]",
-                ))
+                violations.append(
+                    Violation(
+                        Codes.RESULT_DANGLING_EVIDENCE,
+                        f"finding {finding.id!r} references unknown evidence id {ref!r}",
+                        f"findings[{i}].evidence_ids[{j}]",
+                    )
+                )
     for i, artifact in enumerate(result.artifacts):
         if (v := check_artifact_path(artifact.path)) is not None:
             violations.append(replace(v, field=f"artifacts[{i}].path"))
@@ -173,18 +174,22 @@ def validate_context_pack(pack: ContextPack) -> None:
     """Order: used vs budget, used vs sum of files, tier bytes, file paths, round."""
     violations: list[Violation] = []
     if pack.used_bytes > pack.budget_bytes:
-        violations.append(Violation(
-            Codes.CONTEXT_BYTES,
-            f"used_bytes {pack.used_bytes} exceeds budget_bytes {pack.budget_bytes}",
-            "used_bytes",
-        ))
+        violations.append(
+            Violation(
+                Codes.CONTEXT_BYTES,
+                f"used_bytes {pack.used_bytes} exceeds budget_bytes {pack.budget_bytes}",
+                "used_bytes",
+            )
+        )
     total = sum(f.bytes for f in pack.files)
     if pack.used_bytes != total:
-        violations.append(Violation(
-            Codes.CONTEXT_BYTES,
-            f"used_bytes {pack.used_bytes} differs from sum of file bytes {total}",
-            "used_bytes",
-        ))
+        violations.append(
+            Violation(
+                Codes.CONTEXT_BYTES,
+                f"used_bytes {pack.used_bytes} differs from sum of file bytes {total}",
+                "used_bytes",
+            )
+        )
     violations.extend(_tier_bytes_violations(pack))
     for i, file in enumerate(pack.files):
         if (problem := _path_problem(file.path)) is not None:
@@ -192,9 +197,7 @@ def validate_context_pack(pack: ContextPack) -> None:
                 Violation(Codes.CONTEXT_PATH, f"{problem}: {file.path!r}", f"files[{i}].path")
             )
     if pack.round < 0:
-        violations.append(Violation(
-            Codes.PROTO_SCHEMA, f"round {pack.round} is negative", "round"
-        ))
+        violations.append(Violation(Codes.PROTO_SCHEMA, f"round {pack.round} is negative", "round"))
     _raise_if_any(violations)
 
 
@@ -208,28 +211,35 @@ def _tier_bytes_violations(pack: ContextPack) -> list[Violation]:
     violations: list[Violation] = []
     for tier, count in pack.tier_bytes.items():
         if tier not in _TIERS:
-            violations.append(Violation(
-                Codes.CONTEXT_BYTES, f"unknown tier {tier!r}", f"tier_bytes.{tier}"
-            ))
+            violations.append(
+                Violation(Codes.CONTEXT_BYTES, f"unknown tier {tier!r}", f"tier_bytes.{tier}")
+            )
         elif count < 0:
-            violations.append(Violation(
-                Codes.CONTEXT_BYTES, f"tier {tier!r} has negative bytes {count}",
-                f"tier_bytes.{tier}",
-            ))
+            violations.append(
+                Violation(
+                    Codes.CONTEXT_BYTES,
+                    f"tier {tier!r} has negative bytes {count}",
+                    f"tier_bytes.{tier}",
+                )
+            )
     metadata = pack.tier_bytes.get("metadata", 0)
     if metadata != 0:
-        violations.append(Violation(
-            Codes.CONTEXT_BYTES,
-            f"metadata tier must carry 0 bytes, got {metadata}",
-            "tier_bytes.metadata",
-        ))
+        violations.append(
+            Violation(
+                Codes.CONTEXT_BYTES,
+                f"metadata tier must carry 0 bytes, got {metadata}",
+                "tier_bytes.metadata",
+            )
+        )
     total = sum(pack.tier_bytes.values())
     if not violations and total != pack.used_bytes:
-        violations.append(Violation(
-            Codes.CONTEXT_BYTES,
-            f"sum of tier_bytes {total} differs from used_bytes {pack.used_bytes}",
-            "tier_bytes",
-        ))
+        violations.append(
+            Violation(
+                Codes.CONTEXT_BYTES,
+                f"sum of tier_bytes {total} differs from used_bytes {pack.used_bytes}",
+                "tier_bytes",
+            )
+        )
     return violations
 
 
@@ -240,16 +250,25 @@ def validate_context_request(request: ContextRequest) -> None:
     """
     count = len(request.items)
     if not 1 <= count <= MAX_CONTEXT_REQUEST_ITEMS:
-        _raise_if_any([Violation(
-            Codes.CONTEXT_REQUEST_INVALID,
-            f"context request has {count} items, expected 1..{MAX_CONTEXT_REQUEST_ITEMS}",
-            "items",
-        )])
+        _raise_if_any(
+            [
+                Violation(
+                    Codes.CONTEXT_REQUEST_INVALID,
+                    f"context request has {count} items, expected 1..{MAX_CONTEXT_REQUEST_ITEMS}",
+                    "items",
+                )
+            ]
+        )
 
 
-def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
-                     plan_result_sha256: str | None = None,
-                     telemetry_sha256: str | None = None) -> None:
+def validate_receipt(
+    receipt: ExecutionReceipt,
+    *,
+    result_sha256: str | None,
+    plan_result_sha256: str | None = None,
+    telemetry_sha256: str | None = None,
+    global_stop_sha256: str | None = None,
+) -> None:
     """Order: hash formats, timestamps, then consistency with what is on disk.
 
     ``result_sha256`` is the hash of the persisted result (None when none was persisted).
@@ -267,36 +286,46 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
         ("inputs.context_sha256", receipt.inputs.context_sha256),
         ("inputs.risk_sha256", receipt.inputs.risk_sha256),
         ("inputs.handoff_sha256", receipt.inputs.handoff_sha256),
-        ("provider.manifest_sha256",
-         receipt.provider.manifest_sha256 if receipt.provider is not None else None),
-        ("provider.surface_fingerprint",
-         receipt.provider.surface_fingerprint if receipt.provider is not None else None),
-        ("provider.native_surface_fingerprint",
-         receipt.provider.native_surface_fingerprint
-         if receipt.provider is not None else None),
+        (
+            "provider.manifest_sha256",
+            receipt.provider.manifest_sha256 if receipt.provider is not None else None,
+        ),
+        (
+            "provider.surface_fingerprint",
+            receipt.provider.surface_fingerprint if receipt.provider is not None else None,
+        ),
+        (
+            "provider.native_surface_fingerprint",
+            receipt.provider.native_surface_fingerprint if receipt.provider is not None else None,
+        ),
         ("result_sha256", receipt.result_sha256),
         ("telemetry_sha256", receipt.telemetry_sha256),
         ("verification_sha256", receipt.verification_sha256),
     ]
     if plan is not None:
-        hashes.extend([
-            ("plan.plan_sha256", plan.plan_sha256),
-            ("plan.workspace_descriptor_sha256", plan.workspace_descriptor_sha256),
-            ("plan.graph_sha256", plan.graph_sha256),
-            ("plan.installation_sha256", plan.installation_sha256),
-            ("plan.plan_result_sha256", plan.plan_result_sha256),
-        ])
+        hashes.extend(
+            [
+                ("plan.plan_sha256", plan.plan_sha256),
+                ("plan.workspace_descriptor_sha256", plan.workspace_descriptor_sha256),
+                ("plan.graph_sha256", plan.graph_sha256),
+                ("plan.installation_sha256", plan.installation_sha256),
+                ("plan.plan_result_sha256", plan.plan_result_sha256),
+                ("plan.global_stop_sha256", plan.global_stop_sha256),
+            ]
+        )
     hashes.extend(
         (f"inputs.context_round_sha256[{i}]", value)
         for i, value in enumerate(receipt.inputs.context_round_sha256)
     )
     for name, value in hashes:
         if value is not None and SHA256_RE.fullmatch(value) is None:
-            violations.append(Violation(
-                Codes.RECEIPT_INVALID,
-                f"invalid sha256 {value!r}, expected 64 lowercase hex chars",
-                name,
-            ))
+            violations.append(
+                Violation(
+                    Codes.RECEIPT_INVALID,
+                    f"invalid sha256 {value!r}, expected 64 lowercase hex chars",
+                    name,
+                )
+            )
     for name, ts in (
         ("created_at", receipt.created_at),
         ("started_at", receipt.started_at),
@@ -305,54 +334,85 @@ def validate_receipt(receipt: ExecutionReceipt, *, result_sha256: str | None,
         if (v := check_timestamp(ts, field=name)) is not None:
             violations.append(replace(v, code=Codes.RECEIPT_INVALID))
     if plan is not None:
-        violations.extend(_plan_receipt_violations(
-            receipt, plan.plan_result_sha256, plan_result_sha256=plan_result_sha256,
-            telemetry_sha256=telemetry_sha256))
+        violations.extend(
+            _plan_receipt_violations(
+                receipt,
+                plan.plan_result_sha256,
+                plan_result_sha256=plan_result_sha256,
+                telemetry_sha256=telemetry_sha256,
+                global_stop_sha256=global_stop_sha256,
+            )
+        )
     elif receipt.status in _SUCCESS:
         if receipt.result_sha256 is None:
-            violations.append(Violation(
-                Codes.RECEIPT_INVALID,
-                f"receipt status {receipt.status!r} requires result_sha256",
-                "result_sha256",
-            ))
+            violations.append(
+                Violation(
+                    Codes.RECEIPT_INVALID,
+                    f"receipt status {receipt.status!r} requires result_sha256",
+                    "result_sha256",
+                )
+            )
         elif result_sha256 is None:
-            violations.append(Violation(
-                Codes.RECEIPT_INVALID,
-                f"receipt status {receipt.status!r} but no persisted result",
-                "result_sha256",
-            ))
+            violations.append(
+                Violation(
+                    Codes.RECEIPT_INVALID,
+                    f"receipt status {receipt.status!r} but no persisted result",
+                    "result_sha256",
+                )
+            )
         elif receipt.result_sha256 != result_sha256:
-            violations.append(Violation(
-                Codes.RECEIPT_INVALID,
-                "result_sha256 does not match the persisted result hash",
-                "result_sha256",
-            ))
+            violations.append(
+                Violation(
+                    Codes.RECEIPT_INVALID,
+                    "result_sha256 does not match the persisted result hash",
+                    "result_sha256",
+                )
+            )
     _raise_if_any(violations)
 
 
-def _plan_receipt_violations(receipt: ExecutionReceipt, recorded: str | None, *,
-                             plan_result_sha256: str | None,
-                             telemetry_sha256: str | None) -> list[Violation]:
+def _plan_receipt_violations(
+    receipt: ExecutionReceipt,
+    recorded: str | None,
+    *,
+    plan_result_sha256: str | None,
+    telemetry_sha256: str | None,
+    global_stop_sha256: str | None,
+) -> list[Violation]:
     """Plan receipt vs disk: required plan result, plan-result and telemetry hashes."""
     violations: list[Violation] = []
     if receipt.status in _SUCCESS and recorded is None:
-        violations.append(Violation(
-            Codes.RECEIPT_INVALID,
-            f"plan receipt status {receipt.status!r} requires plan.plan_result_sha256",
-            "plan.plan_result_sha256",
-        ))
+        violations.append(
+            Violation(
+                Codes.RECEIPT_INVALID,
+                f"plan receipt status {receipt.status!r} requires plan.plan_result_sha256",
+                "plan.plan_result_sha256",
+            )
+        )
     elif recorded != plan_result_sha256:
-        violations.append(Violation(
-            Codes.RECEIPT_INVALID,
-            "plan.plan_result_sha256 does not match the persisted plan-result hash",
-            "plan.plan_result_sha256",
-        ))
+        violations.append(
+            Violation(
+                Codes.RECEIPT_INVALID,
+                "plan.plan_result_sha256 does not match the persisted plan-result hash",
+                "plan.plan_result_sha256",
+            )
+        )
     if receipt.telemetry_sha256 != telemetry_sha256:
-        violations.append(Violation(
-            Codes.RECEIPT_INVALID,
-            "telemetry_sha256 does not match the persisted telemetry hash",
-            "telemetry_sha256",
-        ))
+        violations.append(
+            Violation(
+                Codes.RECEIPT_INVALID,
+                "telemetry_sha256 does not match the persisted telemetry hash",
+                "telemetry_sha256",
+            )
+        )
+    if receipt.plan is not None and receipt.plan.global_stop_sha256 != global_stop_sha256:
+        violations.append(
+            Violation(
+                Codes.RECEIPT_INVALID,
+                "plan.global_stop_sha256 does not match the persisted global-stop hash",
+                "plan.global_stop_sha256",
+            )
+        )
     return violations
 
 
@@ -365,6 +425,32 @@ def _over_limit(cap_id: str, field: str, items: list[str], limit: int) -> Violat
         f"capability {cap_id!r} declares {len(items)} {name} (max {limit})",
         field,
     )
+
+
+def validate_plan_result_links(
+    result: PlanResult,
+    *,
+    global_stop_sha256: str | None,
+) -> None:
+    """Bind a newly persisted PlanResult to its core-owned stop artifact."""
+    violations: list[Violation] = []
+    if global_stop_sha256 is None:
+        violations.append(
+            Violation(
+                Codes.PLAN_INVALID,
+                "plan result requires a persisted global-stop artifact",
+                "global_stop_sha256",
+            )
+        )
+    elif result.global_stop_sha256 != global_stop_sha256:
+        violations.append(
+            Violation(
+                Codes.PLAN_INVALID,
+                "plan result global_stop_sha256 does not match the persisted global-stop hash",
+                "global_stop_sha256",
+            )
+        )
+    _raise_if_any(violations)
 
 
 def validate_manifest_limits(manifest: ForgeManifest) -> tuple[Violation, ...]:
@@ -381,25 +467,32 @@ def validate_manifest_limits(manifest: ForgeManifest) -> tuple[Violation, ...]:
     violations: list[Violation] = []
     count = len(manifest.capabilities)
     if count > MAX_CAPABILITIES:
-        violations.append(Violation(
-            Codes.MANIFEST_LIMITS,
-            f"manifest {manifest.id} declares {count} capabilities (max {MAX_CAPABILITIES})",
-            "capabilities",
-        ))
+        violations.append(
+            Violation(
+                Codes.MANIFEST_LIMITS,
+                f"manifest {manifest.id} declares {count} capabilities (max {MAX_CAPABILITIES})",
+                "capabilities",
+            )
+        )
     if len(manifest.features) > MAX_FEATURES:
-        violations.append(Violation(
-            Codes.MANIFEST_LIMITS,
-            f"manifest {manifest.id} declares {len(manifest.features)} features "
-            f"(max {MAX_FEATURES})",
-            "features",
-        ))
+        violations.append(
+            Violation(
+                Codes.MANIFEST_LIMITS,
+                f"manifest {manifest.id} declares {len(manifest.features)} features "
+                f"(max {MAX_FEATURES})",
+                "features",
+            )
+        )
     for i, cap in enumerate(manifest.capabilities):
         where = f"capabilities[{i}]"
         if not cap.actions:
-            violations.append(Violation(
-                Codes.MANIFEST_LIMITS, f"capability {cap.id!r} declares no actions",
-                f"{where}.actions",
-            ))
+            violations.append(
+                Violation(
+                    Codes.MANIFEST_LIMITS,
+                    f"capability {cap.id!r} declares no actions",
+                    f"{where}.actions",
+                )
+            )
         checks: list[tuple[str, list[str], int]] = [
             ("actions", cap.actions, MAX_ACTIONS),
             ("signals.keywords", cap.signals.keywords, MAX_KEYWORDS),
@@ -410,11 +503,13 @@ def validate_manifest_limits(manifest: ForgeManifest) -> tuple[Violation, ...]:
                 violations.append(v)
         for j, glob in enumerate(cap.signals.file_globs):
             if is_catch_all_glob(glob):
-                violations.append(Violation(
-                    Codes.MANIFEST_LIMITS,
-                    f"capability {cap.id!r} declares catch-all file glob {glob!r}",
-                    f"{where}.signals.file_globs[{j}]",
-                ))
+                violations.append(
+                    Violation(
+                        Codes.MANIFEST_LIMITS,
+                        f"capability {cap.id!r} declares catch-all file glob {glob!r}",
+                        f"{where}.signals.file_globs[{j}]",
+                    )
+                )
         deps = cap.signals.dependencies
         dep_field = f"{where}.signals.dependencies"
         if (v := _over_limit(cap.id, dep_field, deps, MAX_DEPENDENCIES)) is not None:
@@ -445,9 +540,12 @@ def validate_plan_structure(plan: ExecutionPlan) -> list[PlanViolation]:
     if count == 0:
         add(Codes.PLAN_INVALID, None, "plan has no nodes")
     if plan.pattern not in EXECUTABLE_PATTERNS:
-        add(Codes.PLAN_PATTERN_RESERVED, None,
+        add(
+            Codes.PLAN_PATTERN_RESERVED,
+            None,
             f"pattern {plan.pattern!r} is reserved and not executed "
-            f"(executable: {', '.join(sorted(EXECUTABLE_PATTERNS))})")
+            f"(executable: {', '.join(sorted(EXECUTABLE_PATTERNS))})",
+        )
     if plan.pattern == "route" and count > 1:
         add(Codes.PLAN_INVALID, None, f"pattern 'route' allows one node, plan has {count}")
     if plan.pattern == "delegate":
@@ -455,52 +553,75 @@ def validate_plan_structure(plan: ExecutionPlan) -> list[PlanViolation]:
         # hand off to each other — no dependencies and no inputs.
         for node in plan.nodes:
             if node.depends_on or node.inputs:
-                add(Codes.PLAN_INVALID, node.id,
+                add(
+                    Codes.PLAN_INVALID,
+                    node.id,
                     f"pattern 'delegate': node {node.id!r} must not declare "
-                    "depends_on/inputs (subtasks are independent)")
+                    "depends_on/inputs (subtasks are independent)",
+                )
     if plan.pattern == "debate":
         proposers = [n.id for n in plan.nodes if n.role == "proposer"]
         referees = [n for n in plan.nodes if n.role == "referee"]
         others = [n.id for n in plan.nodes if n.role not in ("proposer", "referee")]
         if len(referees) != 1:
-            add(Codes.PLAN_INVALID, None,
+            add(
+                Codes.PLAN_INVALID,
+                None,
                 f"pattern 'debate' requires exactly one referee node (role='referee'), "
-                f"plan has {len(referees)}")
+                f"plan has {len(referees)}",
+            )
         if len(proposers) < 2:
-            add(Codes.PLAN_INVALID, None,
+            add(
+                Codes.PLAN_INVALID,
+                None,
                 f"pattern 'debate' requires at least two proposer nodes "
-                f"(role='proposer'), plan has {len(proposers)}")
+                f"(role='proposer'), plan has {len(proposers)}",
+            )
         # The decision boundary: debate is the cross-domain instrument. When every
         # proposer is the same provider the disagreement is internal to one domain
         # and belongs to that specialist's own planning — never replayed as nodes.
-        proposer_providers = sorted(
-            {n.provider for n in plan.nodes if n.role == "proposer"})
+        proposer_providers = sorted({n.provider for n in plan.nodes if n.role == "proposer"})
         if len(proposers) >= 2 and len(proposer_providers) < 2:
-            add(Codes.PLAN_INVALID, None,
+            add(
+                Codes.PLAN_INVALID,
+                None,
                 "pattern 'debate' is the cross-domain boundary: proposers must "
                 f"span at least two distinct providers (plan has only "
                 f"{proposer_providers[0]!r}); an internal disagreement is decided "
-                "by the specialist, not replayed at plan level")
+                "by the specialist, not replayed at plan level",
+            )
         for oid in others:
-            add(Codes.PLAN_INVALID, oid,
-                f"pattern 'debate': node {oid!r} has role outside proposer/referee")
+            add(
+                Codes.PLAN_INVALID,
+                oid,
+                f"pattern 'debate': node {oid!r} has role outside proposer/referee",
+            )
         if len(referees) == 1:
             deps = {d.node for d in referees[0].depends_on}
             missing = [p for p in proposers if p not in deps]
             if missing:
-                add(Codes.PLAN_INVALID, referees[0].id,
+                add(
+                    Codes.PLAN_INVALID,
+                    referees[0].id,
                     f"referee {referees[0].id!r} must depend on every proposer "
-                    f"(missing: {', '.join(sorted(missing))})")
+                    f"(missing: {', '.join(sorted(missing))})",
+                )
             missing_inputs = [p for p in proposers if p not in referees[0].inputs]
             if missing_inputs:
-                add(Codes.PLAN_INVALID, referees[0].id,
+                add(
+                    Codes.PLAN_INVALID,
+                    referees[0].id,
                     f"referee {referees[0].id!r} must list every proposer in inputs "
-                    f"(missing: {', '.join(sorted(missing_inputs))})")
+                    f"(missing: {', '.join(sorted(missing_inputs))})",
+                )
             for node in plan.nodes:
                 if node.role != "referee" and node.depends_on:
-                    add(Codes.PLAN_INVALID, node.id,
+                    add(
+                        Codes.PLAN_INVALID,
+                        node.id,
                         f"pattern 'debate': proposer {node.id!r} must be independent "
-                        "(no depends_on)")
+                        "(no depends_on)",
+                    )
     ids = {n.id for n in plan.nodes}
     seen: set[str] = set()
     for node in plan.nodes:
@@ -508,24 +629,39 @@ def validate_plan_structure(plan: ExecutionPlan) -> list[PlanViolation]:
             add(Codes.PLAN_INVALID, node.id, f"duplicate node id {node.id!r}")
         seen.add(node.id)
         if PLAN_NODE_ID.fullmatch(node.id) is None:
-            add(Codes.PLAN_INVALID, node.id,
-                f"invalid node id {node.id!r} (expected {PLAN_NODE_ID.pattern})")
+            add(
+                Codes.PLAN_INVALID,
+                node.id,
+                f"invalid node id {node.id!r} (expected {PLAN_NODE_ID.pattern})",
+            )
         dep_ids: list[str] = []
         for dep in node.depends_on:
             if dep.node not in ids:
-                add(Codes.PLAN_INVALID, node.id,
-                    f"node {node.id!r} depends on missing node {dep.node!r}")
+                add(
+                    Codes.PLAN_INVALID,
+                    node.id,
+                    f"node {node.id!r} depends on missing node {dep.node!r}",
+                )
             if dep.node in dep_ids:
-                add(Codes.PLAN_INVALID, node.id,
-                    f"node {node.id!r} declares the dependency on {dep.node!r} twice")
+                add(
+                    Codes.PLAN_INVALID,
+                    node.id,
+                    f"node {node.id!r} declares the dependency on {dep.node!r} twice",
+                )
             dep_ids.append(dep.node)
             if dep.epistemic == "inferred" and not dep.rule:
-                add(Codes.PLAN_INVALID, node.id,
-                    f"inferred dependency of {node.id!r} on {dep.node!r} has no rule")
+                add(
+                    Codes.PLAN_INVALID,
+                    node.id,
+                    f"inferred dependency of {node.id!r} on {dep.node!r} has no rule",
+                )
         outside = [i for i in node.inputs if i not in dep_ids]
         if outside:
-            add(Codes.PLAN_INVALID, node.id,
-                f"node {node.id!r} inputs not in depends_on: {', '.join(outside)}")
+            add(
+                Codes.PLAN_INVALID,
+                node.id,
+                f"node {node.id!r} inputs not in depends_on: {', '.join(outside)}",
+            )
     cyclic = _cyclic_nodes(plan)
     if cyclic:
         add(Codes.PLAN_INVALID, cyclic[0], f"dependency cycle among: {', '.join(cyclic)}")
@@ -562,21 +698,30 @@ def validate_handoff(handoff: Handoff) -> None:
     violations: list[Violation] = []
     count = len(handoff.items)
     if count > MAX_HANDOFF_ITEMS:
-        violations.append(Violation(
-            Codes.PLAN_LIMIT, f"handoff has {count} items (max {MAX_HANDOFF_ITEMS})", "items"))
+        violations.append(
+            Violation(
+                Codes.PLAN_LIMIT, f"handoff has {count} items (max {MAX_HANDOFF_ITEMS})", "items"
+            )
+        )
     for i, item in enumerate(handoff.items):
         if len(item.claim) > MAX_CLAIM_CHARS:
-            violations.append(Violation(
-                Codes.PLAN_LIMIT,
-                f"handoff item {item.id!r}: claim has {len(item.claim)} chars "
-                f"(max {MAX_CLAIM_CHARS})",
-                f"items[{i}].claim",
-            ))
+            violations.append(
+                Violation(
+                    Codes.PLAN_LIMIT,
+                    f"handoff item {item.id!r}: claim has {len(item.claim)} chars "
+                    f"(max {MAX_CLAIM_CHARS})",
+                    f"items[{i}].claim",
+                )
+            )
     size = len(canonical_json(to_dict(handoff)).encode("utf-8"))
     if size > MAX_HANDOFF_BYTES:
-        violations.append(Violation(
-            Codes.PLAN_LIMIT,
-            f"handoff canonical JSON has {size} bytes (max {MAX_HANDOFF_BYTES})", None))
+        violations.append(
+            Violation(
+                Codes.PLAN_LIMIT,
+                f"handoff canonical JSON has {size} bytes (max {MAX_HANDOFF_BYTES})",
+                None,
+            )
+        )
     _raise_if_any(violations)
 
 
@@ -616,39 +761,50 @@ def validate_plan_result(result: PlanResult) -> None:
     """
     violations: list[Violation] = []
     if result.status not in _PLAN_RESULT_STATUSES:
-        violations.append(Violation(
-            Codes.PLAN_INVALID,
-            f"plan result status {result.status!r} is not an execution outcome "
-            f"({', '.join(sorted(_PLAN_RESULT_STATUSES))})",
-            "status",
-        ))
+        violations.append(
+            Violation(
+                Codes.PLAN_INVALID,
+                f"plan result status {result.status!r} is not an execution outcome "
+                f"({', '.join(sorted(_PLAN_RESULT_STATUSES))})",
+                "status",
+            )
+        )
     node_ids = [n.node for n in result.nodes]
     for i, node in enumerate(result.nodes):
         where = f"nodes[{i}]"
         if result.status == "ok" and node.status != "ok":
-            violations.append(Violation(
-                Codes.PLAN_INVALID,
-                f"plan result is 'ok' but node {node.node!r} is {node.status!r}",
-                f"{where}.status",
-            ))
+            violations.append(
+                Violation(
+                    Codes.PLAN_INVALID,
+                    f"plan result is 'ok' but node {node.node!r} is {node.status!r}",
+                    f"{where}.status",
+                )
+            )
         elif result.status == "ok" and node.result_sha256 is None:
-            violations.append(Violation(
-                Codes.PLAN_INVALID,
-                f"plan result is 'ok' but node {node.node!r} has no result_sha256",
-                f"{where}.result_sha256",
-            ))
-        if node.status == "skipped" and (node.blocked_by not in node_ids
-                                         or node.blocked_by == node.node):
-            violations.append(Violation(
-                Codes.PLAN_INVALID,
-                f"skipped node {node.node!r} needs another node of the plan as blocker, "
-                f"got {node.blocked_by!r}",
-                f"{where}.blocked_by",
-            ))
+            violations.append(
+                Violation(
+                    Codes.PLAN_INVALID,
+                    f"plan result is 'ok' but node {node.node!r} has no result_sha256",
+                    f"{where}.result_sha256",
+                )
+            )
+        if node.status == "skipped" and (
+            node.blocked_by not in node_ids or node.blocked_by == node.node
+        ):
+            violations.append(
+                Violation(
+                    Codes.PLAN_INVALID,
+                    f"skipped node {node.node!r} needs another node of the plan as blocker, "
+                    f"got {node.blocked_by!r}",
+                    f"{where}.blocked_by",
+                )
+            )
     if sorted(result.order) != sorted(node_ids) or len(set(node_ids)) != len(node_ids):
-        violations.append(Violation(
-            Codes.PLAN_INVALID,
-            f"order {result.order} is not a permutation of the nodes {node_ids}",
-            "order",
-        ))
+        violations.append(
+            Violation(
+                Codes.PLAN_INVALID,
+                f"order {result.order} is not a permutation of the nodes {node_ids}",
+                "order",
+            )
+        )
     _raise_if_any(violations)

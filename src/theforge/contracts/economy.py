@@ -19,9 +19,16 @@ from typing import Final, Literal
 from theforge.contracts.base import ContractError
 from theforge.contracts.types import Producer
 
-__all__ = ["ECONOMY_METRICS", "ECONOMY_RECEIPT_SCHEMA", "ECONOMY_ROLLUP_SCHEMA",
-           "EconomyMetric", "EconomyRollup", "MetricStatus", "NodeEconomy",
-           "ProviderEconomyReceipt"]
+__all__ = [
+    "ECONOMY_METRICS",
+    "ECONOMY_RECEIPT_SCHEMA",
+    "ECONOMY_ROLLUP_SCHEMA",
+    "EconomyMetric",
+    "EconomyRollup",
+    "MetricStatus",
+    "NodeEconomy",
+    "ProviderEconomyReceipt",
+]
 
 ECONOMY_RECEIPT_SCHEMA = "theforge/ProviderEconomyReceipt/v1"
 ECONOMY_ROLLUP_SCHEMA = "theforge/EconomyRollup/v1"
@@ -32,8 +39,14 @@ MetricStatus = Literal["measured", "estimated", "unresolved", "not_applicable"]
 
 # The metric names a ProviderEconomyReceipt carries, in canonical order; the
 # rollup's ``totals`` uses them as keys.
-ECONOMY_METRICS: Final = ("context_bytes", "tool_calls", "model_calls",
-                          "provider_tokens", "cost_usd", "wall_time_ms")
+ECONOMY_METRICS: Final = (
+    "context_bytes",
+    "tool_calls",
+    "model_calls",
+    "provider_tokens",
+    "cost_usd",
+    "wall_time_ms",
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -52,12 +65,12 @@ class EconomyMetric:
         if self.status in ("measured", "estimated"):
             if isinstance(self.value, bool) or not isinstance(self.value, (int, float)):
                 raise ContractError(
-                    f"economy metric: status {self.status!r} requires a numeric value")
+                    f"economy metric: status {self.status!r} requires a numeric value"
+                )
             if self.value < 0:
                 raise ContractError("economy metric: value cannot be negative")
         elif self.value is not None:
-            raise ContractError(
-                f"economy metric: status {self.status!r} cannot carry a value")
+            raise ContractError(f"economy metric: status {self.status!r} cannot carry a value")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -85,8 +98,8 @@ class ProviderEconomyReceipt:
     def __post_init__(self) -> None:
         if self.schema != ECONOMY_RECEIPT_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected "
-                f"{ECONOMY_RECEIPT_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {ECONOMY_RECEIPT_SCHEMA!r}"
+            )
         if not self.provider:
             raise ContractError("provider economy: provider must not be empty")
 
@@ -126,6 +139,7 @@ class EconomyRollup:
     def __post_init__(self) -> None:
         if self.schema != ECONOMY_ROLLUP_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {ECONOMY_ROLLUP_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {ECONOMY_ROLLUP_SCHEMA!r}"
+            )
         if not self.plan_run:
             raise ContractError("economy rollup: plan_run must not be empty")

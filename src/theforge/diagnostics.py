@@ -22,8 +22,9 @@ _PACKAGE = "theforge"
 _PACKAGE_DIR = Path(__file__).resolve().parent
 
 
-def build_diagnostic(exc: BaseException, *, stage: str, code: str,
-                     created_at: str | None = None) -> Diagnostic:
+def build_diagnostic(
+    exc: BaseException, *, stage: str, code: str, created_at: str | None = None
+) -> Diagnostic:
     """Build the redacted ``Diagnostic`` of ``exc``; ``family`` is ``family_of(code)``."""
     return Diagnostic(
         producer=PRODUCER,
@@ -34,8 +35,10 @@ def build_diagnostic(exc: BaseException, *, stage: str, code: str,
         hint=hint_of(code),
         error_type=type(exc).__name__,
         message=_message(exc),
-        causes=[DiagnosticCause(type=type(cause).__name__, message=_message(cause))
-                for cause in _causes(exc)],
+        causes=[
+            DiagnosticCause(type=type(cause).__name__, message=_message(cause))
+            for cause in _causes(exc)
+        ],
         frames=_frames(exc),
     )
 
@@ -71,8 +74,9 @@ def _frames(exc: BaseException) -> list[DiagnosticFrame]:
         module = _module_of(summary.filename)
         if module is None:
             continue
-        frames.append(DiagnosticFrame(module=module, function=summary.name,
-                                      line=summary.lineno or 0))
+        frames.append(
+            DiagnosticFrame(module=module, function=summary.name, line=summary.lineno or 0)
+        )
     return frames
 
 

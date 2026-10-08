@@ -41,9 +41,7 @@ from theforge.registry.surface import (
 from theforge.security.redact import redact, redact_text
 from theforge.state import LEGACY_REGISTRY_DIR, remove_legacy_cache
 
-RecordState = Literal[
-    "ready", "incompatible", "invalid", "unreachable", "blocked", "untrusted"
-]
+RecordState = Literal["ready", "incompatible", "invalid", "unreachable", "blocked", "untrusted"]
 CACHE_SCHEMA: Final = "theforge/RegistryCache/v2"
 DESCRIBE_TIMEOUT = 10.0
 ROUTABLE_TRUST = frozenset({"builtin", "trusted", "local"})
@@ -106,9 +104,14 @@ def provider_cwd() -> tempfile.TemporaryDirectory[str]:
 
 class Registry:
     def __init__(
-        self, forge_dir: Path | None, *, user_dir: Path | None = None,
-        cache_dir: Path | None = None, transport_factory: TransportFactory = SubprocessTransport,
-        timeout: float = DESCRIBE_TIMEOUT, allow_unverified: bool = False,
+        self,
+        forge_dir: Path | None,
+        *,
+        user_dir: Path | None = None,
+        cache_dir: Path | None = None,
+        transport_factory: TransportFactory = SubprocessTransport,
+        timeout: float = DESCRIBE_TIMEOUT,
+        allow_unverified: bool = False,
     ) -> None:
         self.forge_dir = forge_dir
         self.user_dir = user_dir
@@ -176,9 +179,12 @@ class Registry:
             status: Literal["fresh", "changed", "unreachable"]
             if fresh.state == "unreachable":
                 status = "unreachable"
-            elif (in_use is not None and fresh.state == in_use.state
-                  and fresh.manifest_sha256 == in_use.manifest_sha256
-                  and fresh.protocol == in_use.protocol):
+            elif (
+                in_use is not None
+                and fresh.state == in_use.state
+                and fresh.manifest_sha256 == in_use.manifest_sha256
+                and fresh.protocol == in_use.protocol
+            ):
                 status = "fresh"
             else:
                 status = "changed"
@@ -195,47 +201,60 @@ class Registry:
             try:
                 path.unlink(missing_ok=True)
             except OSError as exc:
-                self._warn(
-                    f"registry cache for {provider_id} not removed ({path}): {exc}")
+                self._warn(f"registry cache for {provider_id} not removed ({path}): {exc}")
 
     def _describe(self, entry: ProviderEntry) -> RegistryRecord:
         if entry.trust == "blocked":
             return RegistryRecord(entry=entry, state="blocked", error="provider is blocked")
         if entry.trust == "unverified" and not self.allow_unverified:
             return RegistryRecord(
-                entry=entry, state="untrusted",
+                entry=entry,
+                state="untrusted",
                 error="provider is unverified and was not executed; trust it in your user "
-                      "providers.toml or pass --allow-unverified")
+                "providers.toml or pass --allow-unverified",
+            )
         try:
             with provider_cwd() as cwd:
                 response = self.transport_factory(entry.argv).call(
-                    "describe", {}, timeout=self.timeout, cwd=Path(cwd), check_protocol=False)
+                    "describe", {}, timeout=self.timeout, cwd=Path(cwd), check_protocol=False
+                )
         except TransportError as exc:
-            return RegistryRecord(entry=entry, state="unreachable",
-                                  error=f"{exc.code}: {exc.detail}")
+            return RegistryRecord(
+                entry=entry, state="unreachable", error=f"{exc.code}: {exc.detail}"
+            )
         if response.status != "ok":
-            return RegistryRecord(entry=entry, state="invalid",
-                                  error=_describe_failure(response.status, response.error))
+            return RegistryRecord(
+                entry=entry,
+                state="invalid",
+                error=_describe_failure(response.status, response.error),
+            )
         try:
             manifest = from_dict(ForgeManifest, response.payload, "$.payload")
         except ContractError as exc:
             return RegistryRecord(entry=entry, state="invalid", error=str(exc))
         if manifest.id != entry.id:
             return RegistryRecord(
-                entry=entry, state="invalid",
-                error=f"manifest id {manifest.id!r} does not match registry entry {entry.id!r}")
+                entry=entry,
+                state="invalid",
+                error=f"manifest id {manifest.id!r} does not match registry entry {entry.id!r}",
+            )
         violation = check_producer(
-            response.producer, expected=Producer(id=entry.id, version=manifest.version),
-            field="$.producer")
+            response.producer,
+            expected=Producer(id=entry.id, version=manifest.version),
+            field="$.producer",
+        )
         if violation is not None:
-            return RegistryRecord(entry=entry, state="invalid",
-                                  error=f"{violation.code}: {violation.detail}")
+            return RegistryRecord(
+                entry=entry, state="invalid", error=f"{violation.code}: {violation.detail}"
+            )
         if parse_semver(manifest.version) is None:
             return RegistryRecord(
-                entry=entry, state="invalid",
+                entry=entry,
+                state="invalid",
                 error=f"{Codes.MANIFEST_VERSION}: version "
-                      f"{redact_text(manifest.version)[:MAX_ECHOED_VALUE]!r} is not SemVer 2.0.0 "
-                      "(MAJOR.MINOR.PATCH)")
+                f"{redact_text(manifest.version)[:MAX_ECHOED_VALUE]!r} is not SemVer 2.0.0 "
+                "(MAJOR.MINOR.PATCH)",
+            )
         limited = self._apply_manifest_rules(manifest)
         if isinstance(limited, str):
             return RegistryRecord(entry=entry, state="invalid", error=limited)
@@ -244,13 +263,21 @@ class Registry:
         protocol = choose_protocol(manifest.protocols)
         if protocol is None:
             return RegistryRecord(
-                entry=entry, state="incompatible", manifest=manifest, manifest_sha256=digest,
+                entry=entry,
+                state="incompatible",
+                manifest=manifest,
+                manifest_sha256=digest,
                 error=f"no common protocol (offered {manifest.protocols}, "
-                      f"supported {list(SUPPORTED_PROTOCOLS)})")
-        return RegistryRecord(entry=entry, state="ready", manifest=manifest,
-                              manifest_sha256=digest, protocol=protocol,
-                              surface=surface_identity(manifest, protocol=protocol,
-                                                       recorded_at=utc_now()))
+                f"supported {list(SUPPORTED_PROTOCOLS)})",
+            )
+        return RegistryRecord(
+            entry=entry,
+            state="ready",
+            manifest=manifest,
+            manifest_sha256=digest,
+            protocol=protocol,
+            surface=surface_identity(manifest, protocol=protocol, recorded_at=utc_now()),
+        )
 
     def _apply_manifest_rules(self, manifest: ForgeManifest) -> ForgeManifest | str:
         """Exclude capabilities over the limits or off the taxonomy, with a warning (1.9, 5.2).
@@ -274,12 +301,15 @@ class Registry:
         kept = [c for i, c in enumerate(manifest.capabilities) if i not in excluded]
         if not kept:
             code, first = next(iter(excluded.values()))
-            return (f"{code}: every capability of {manifest.id} was excluded by the "
-                    f"manifest rules ({first})")
+            return (
+                f"{code}: every capability of {manifest.id} was excluded by the "
+                f"manifest rules ({first})"
+            )
         for index, (code, detail) in sorted(excluded.items()):
             self._warn(
                 f"{manifest.id}: capability {manifest.capabilities[index].id!r} excluded "
-                f"({code}: {detail})")
+                f"({code}: {detail})"
+            )
         return replace(manifest, capabilities=kept)
 
     def cached_records(self) -> list[RegistryRecord]:
@@ -309,17 +339,18 @@ class Registry:
         registry_dir = self.cache_dir / "registry"
         prefix = f"{entry.id}-"
         try:
-            names = [p for p in registry_dir.iterdir()
-                     if p.name.startswith(prefix) and p.name.endswith(".json")
-                     and p != keep]
+            names = [
+                p
+                for p in registry_dir.iterdir()
+                if p.name.startswith(prefix) and p.name.endswith(".json") and p != keep
+            ]
         except OSError:
             return
         for stale in names:
             try:
                 stale.unlink()
             except OSError as exc:
-                self._warn(
-                    f"stale registry cache for {entry.id} not removed ({stale}): {exc}")
+                self._warn(f"stale registry cache for {entry.id} not removed ({stale}): {exc}")
 
     def _remove_legacy_cache(self) -> None:
         if self.forge_dir is None:
@@ -332,22 +363,33 @@ class Registry:
     def _write_cache(self, record: RegistryRecord) -> None:
         path = self._cache_path(record.entry)
         try:
-            if (record.state != "ready" or record.entry.trust == "unverified"
-                    or record.manifest is None or record.manifest_sha256 is None
-                    or record.protocol is None):
+            if (
+                record.state != "ready"
+                or record.entry.trust == "unverified"
+                or record.manifest is None
+                or record.manifest_sha256 is None
+                or record.protocol is None
+            ):
                 path.unlink(missing_ok=True)
                 self._prune_stale(record.entry, keep=None)
                 return
             cached = RegistryCacheEntry(
-                schema=CACHE_SCHEMA, entry=record.entry,
+                schema=CACHE_SCHEMA,
+                entry=record.entry,
                 entry_digest=sha256_of(to_dict(record.entry)),
-                fingerprint=fingerprint(record.entry).digest, state="ready",
-                manifest=record.manifest, manifest_sha256=record.manifest_sha256,
-                protocol=record.protocol, written_at=utc_now(),
+                fingerprint=fingerprint(record.entry).digest,
+                state="ready",
+                manifest=record.manifest,
+                manifest_sha256=record.manifest_sha256,
+                protocol=record.protocol,
+                written_at=utc_now(),
                 surface_fingerprint=record.surface.surface_fingerprint
-                if record.surface is not None else None,
+                if record.surface is not None
+                else None,
                 capability_fingerprint=record.surface.capability_fingerprint
-                if record.surface is not None else None)
+                if record.surface is not None
+                else None,
+            )
             document = to_dict(cached)
             if redact(document) != document:
                 # Persisted data must pass through redaction, but the cache is re-read
@@ -355,8 +397,10 @@ class Registry:
                 # never match. Secret-shaped values therefore disable caching instead.
                 path.unlink(missing_ok=True)
                 self._prune_stale(record.entry, keep=None)
-                self._warn(f"registry cache for {record.entry.id} not cached: its entry or "
-                           "manifest contains secret-shaped values (described on every use)")
+                self._warn(
+                    f"registry cache for {record.entry.id} not cached: its entry or "
+                    "manifest contains secret-shaped values (described on every use)"
+                )
                 return
             path.parent.mkdir(parents=True, exist_ok=True)
             fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}-", suffix=".tmp")
@@ -370,8 +414,7 @@ class Registry:
                 raise
             self._prune_stale(record.entry, keep=path)
         except OSError as exc:
-            self._warn(
-                f"registry cache for {record.entry.id} not written ({path}): {exc}")
+            self._warn(f"registry cache for {record.entry.id} not written ({path}): {exc}")
 
     def _read_cache(self, entry: ProviderEntry) -> RegistryRecord | None:
         if entry.trust == "unverified":
@@ -390,24 +433,32 @@ class Registry:
                 raise ValueError("manifest hash mismatch")
             if cached.manifest.id != entry.id:
                 raise ValueError("manifest id does not match registry entry")
-            if cached.surface_fingerprint is not None and \
-                    cached.surface_fingerprint != surface_fingerprint(cached.manifest):
+            if (
+                cached.surface_fingerprint is not None
+                and cached.surface_fingerprint != surface_fingerprint(cached.manifest)
+            ):
                 raise ValueError("cached surface fingerprint does not match the manifest")
-            if cached.capability_fingerprint is not None and \
-                    cached.capability_fingerprint != capability_fingerprint(cached.manifest):
+            if (
+                cached.capability_fingerprint is not None
+                and cached.capability_fingerprint != capability_fingerprint(cached.manifest)
+            ):
                 raise ValueError("cached capability fingerprint does not match the manifest")
             protocol = choose_protocol(cached.manifest.protocols)
             if protocol is None or protocol != cached.protocol:
                 raise ValueError("cached protocol does not match negotiated protocol")
-            return RegistryRecord(entry=entry, state="ready", manifest=cached.manifest,
-                                  manifest_sha256=cached.manifest_sha256, protocol=protocol,
-                                  surface=surface_identity(
-                                      cached.manifest, protocol=protocol,
-                                      recorded_at=cached.written_at))
+            return RegistryRecord(
+                entry=entry,
+                state="ready",
+                manifest=cached.manifest,
+                manifest_sha256=cached.manifest_sha256,
+                protocol=protocol,
+                surface=surface_identity(
+                    cached.manifest, protocol=protocol, recorded_at=cached.written_at
+                ),
+            )
         except (OSError, ValueError) as exc:
             self._warn(f"registry cache for {entry.id} discarded: {exc}")
             return None
-
 
 
 def _unknown(provider_id: str) -> UsageError:
@@ -428,5 +479,5 @@ def _capability_index(field: str | None) -> int | None:
     prefix = "capabilities["
     if field is None or not field.startswith(prefix):
         return None
-    number, sep, _ = field[len(prefix):].partition("]")
+    number, sep, _ = field[len(prefix) :].partition("]")
     return int(number) if sep and number.isdigit() else None

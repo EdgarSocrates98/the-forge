@@ -18,8 +18,10 @@ from theforge.contracts.explain import EXPLAIN_SCHEMA
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_FILE = ROOT / "schemas" / "ExplainReport.schema.json"
 GOLDEN = Path(__file__).parent / "golden" / "explain_report_fields.json"
-UPDATE_HINT = ("additive change to ExplainReport v1: review it and refresh the golden with "
-               "`UPDATE_GOLDEN=1 python -m pytest tests/test_explain_evolution.py`")
+UPDATE_HINT = (
+    "additive change to ExplainReport v1: review it and refresh the golden with "
+    "`UPDATE_GOLDEN=1 python -m pytest tests/test_explain_evolution.py`"
+)
 
 Shape = dict[str, dict[str, list[str]]]
 
@@ -62,10 +64,16 @@ def removals(golden: Shape, current: Shape) -> list[str]:
         if now is None:
             lost.append(f"object {label} was removed")
             continue
-        lost += [f"field {label}.{name} was removed or renamed"
-                 for name in entry["properties"] if name not in now["properties"]]
-        lost += [f"field {label}.{name} is no longer required"
-                 for name in entry["required"] if name not in now["required"]]
+        lost += [
+            f"field {label}.{name} was removed or renamed"
+            for name in entry["properties"]
+            if name not in now["properties"]
+        ]
+        lost += [
+            f"field {label}.{name} is no longer required"
+            for name in entry["required"]
+            if name not in now["required"]
+        ]
     return lost
 
 
@@ -88,7 +96,8 @@ def test_published_report_fields_are_never_removed_nor_renamed() -> None:
     lost = removals(_golden(), _current())
     assert not lost, (
         f"{EXPLAIN_SCHEMA} must only grow additively (req. 11.5); a removal, rename or "
-        "required -> optional change needs a new schema version:\n  " + "\n  ".join(lost))
+        "required -> optional change needs a new schema version:\n  " + "\n  ".join(lost)
+    )
 
 
 def test_golden_lists_every_current_field() -> None:
@@ -111,13 +120,14 @@ def test_walker_detects_a_removed_a_renamed_and_an_optional_field() -> None:
     schema["required"].remove("run_id")
     schema["properties"]["added_later"] = {"type": "string"}
     lost = removals(golden, object_fields(schema))
-    assert lost == ["field <report>.run_id is no longer required",
-                    "field integrity.checked was removed or renamed",
-                    "field producer.version was removed or renamed"]
+    assert lost == [
+        "field <report>.run_id is no longer required",
+        "field integrity.checked was removed or renamed",
+        "field producer.version was removed or renamed",
+    ]
 
 
 def test_nullable_object_alternatives_keep_the_field_path() -> None:
     shape = _current()
     assert "context.git" in shape and "available" in shape["context.git"]["required"]
-    assert "plan.result.nodes[]" in shape and "run_id" in shape["plan.result.nodes[]"][
-        "properties"]
+    assert "plan.result.nodes[]" in shape and "run_id" in shape["plan.result.nodes[]"]["properties"]

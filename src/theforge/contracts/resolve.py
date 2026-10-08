@@ -48,7 +48,8 @@ class ResolveRequest:
     def __post_init__(self) -> None:
         if self.schema != RESOLVE_REQUEST_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {RESOLVE_REQUEST_SCHEMA}")
+                f"unsupported schema {self.schema!r}, expected {RESOLVE_REQUEST_SCHEMA}"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -61,8 +62,7 @@ class ProposalChoice:
 
     def __post_init__(self) -> None:
         if not self.provider or not self.capability:
-            raise ContractError(
-                "routing proposal choice requires a provider and a capability")
+            raise ContractError("routing proposal choice requires a provider and a capability")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -88,4 +88,5 @@ class RoutingProposal:
     def __post_init__(self) -> None:
         if self.schema != ROUTING_PROPOSAL_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {ROUTING_PROPOSAL_SCHEMA}")
+                f"unsupported schema {self.schema!r}, expected {ROUTING_PROPOSAL_SCHEMA}"
+            )

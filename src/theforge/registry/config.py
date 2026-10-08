@@ -32,8 +32,14 @@ class ProviderEntry:
 
 
 def builtin_entries() -> list[ProviderEntry]:
-    return [ProviderEntry(id="echo-forge", argv=[sys.executable, "-m", "theforge.providers.echo"],
-                          trust="builtin", source="builtin")]
+    return [
+        ProviderEntry(
+            id="echo-forge",
+            argv=[sys.executable, "-m", "theforge.providers.echo"],
+            trust="builtin",
+            source="builtin",
+        )
+    ]
 
 
 def user_config_dir() -> Path:
@@ -87,7 +93,8 @@ def _resolve_argv(argv: list[object], base: Path, where: str) -> list[object]:
         elif is_path:
             raise UsageError(
                 f"{where}: argv entry {arg!r} is not a file "
-                f"(relative paths are resolved against {base})")
+                f"(relative paths are resolved against {base})"
+            )
         else:
             resolved.append(arg)
     return resolved
@@ -115,7 +122,9 @@ def load_entries(
         if isinstance(raw.get("argv"), list):
             raw["argv"] = _resolve_argv(
                 [sys.executable if a == PYTHON_PLACEHOLDER else a for a in raw["argv"]],
-                path.parent, f"{path}: providers[{index}]")
+                path.parent,
+                f"{path}: providers[{index}]",
+            )
         try:
             entry = from_dict(ProviderEntry, raw, f"{path.name}.providers[{index}]")
         except ContractError as exc:
@@ -125,7 +134,8 @@ def load_entries(
                 warnings.append(
                     f"{path}: providers[{index}] ({entry.id}): trust {entry.trust!r} ignored; "
                     "project providers are always 'unverified' "
-                    "(trust them in your user providers.toml)")
+                    "(trust them in your user providers.toml)"
+                )
             entry = replace(entry, trust="unverified")
         entries.append(entry)
     return entries
@@ -147,12 +157,14 @@ def resolve_entries(
         for entry in load_entries(path, source, warnings):
             if entry.id in reserved:
                 raise UsageError(
-                    f"{path}: provider id {entry.id!r} is reserved for a builtin provider")
+                    f"{path}: provider id {entry.id!r} is reserved for a builtin provider"
+                )
             if entry.id in merged:
                 if warnings is not None:
                     warnings.append(
                         f"{path}: provider {entry.id!r} ignored; "
-                        "already defined in user providers.toml")
+                        "already defined in user providers.toml"
+                    )
                 continue
             merged[entry.id] = entry
     return sorted(merged.values(), key=lambda e: e.id)

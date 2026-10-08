@@ -77,8 +77,13 @@ def _relative(path: str) -> str:
     """A workspace-relative POSIX path, normalized, or RecordingError."""
     value = path.replace("\\", "/")
     normalized = posixpath.normpath(value) if value else ""
-    if (not value or value.startswith("/") or _DRIVE.match(value)
-            or normalized == ".." or normalized.startswith("../")):
+    if (
+        not value
+        or value.startswith("/")
+        or _DRIVE.match(value)
+        or normalized == ".."
+        or normalized.startswith("../")
+    ):
         raise RecordingError(f"argument path {path!r} must be workspace-relative")
     return normalized
 
@@ -89,7 +94,8 @@ def _is_link(path: str) -> bool:
     except OSError:
         return True
     return stat.S_ISLNK(st.st_mode) or bool(
-        getattr(st, "st_file_attributes", 0) & _FILE_ATTRIBUTE_REPARSE_POINT)
+        getattr(st, "st_file_attributes", 0) & _FILE_ATTRIBUTE_REPARSE_POINT
+    )
 
 
 def _skip_links(directory: str, names: list[str]) -> set[str]:
@@ -105,14 +111,12 @@ def check_workspace(workspace: Path, out: Path | None = None) -> Path:
     except OSError as exc:
         raise RecordingError(f"workspace {workspace} does not exist") from exc
     if _is_link(str(workspace)):
-        raise RecordingError(f"workspace {workspace} must be an existing directory, "
-                             "not a link")
+        raise RecordingError(f"workspace {workspace} must be an existing directory, not a link")
     if not resolved.is_dir():
         raise RecordingError(f"workspace {workspace} must be an existing directory")
     if out is not None:
         target = out.resolve()
-        if (target == resolved or target.is_relative_to(resolved)
-                or resolved.is_relative_to(target)):
+        if target == resolved or target.is_relative_to(resolved) or resolved.is_relative_to(target):
             raise RecordingError(f"workspace {workspace} and output {out} must not overlap")
     return resolved
 
@@ -131,8 +135,10 @@ def _check_portable(data: Mapping[str, Any], roots: Sequence[Path]) -> None:
     for form in _machine_paths(roots):
         # JSON escapes backslashes: look for both the raw and the escaped form.
         if form in text or form.replace("\\", "\\\\") in text:
-            raise RecordingError(f"the recording would carry a machine path ({form}); "
-                                 "pass workspace-relative arguments")
+            raise RecordingError(
+                f"the recording would carry a machine path ({form}); "
+                "pass workspace-relative arguments"
+            )
 
 
 def _case_files(directory: Path) -> dict[str, Any]:
@@ -147,8 +153,9 @@ def _case_files(directory: Path) -> dict[str, Any]:
             try:
                 files[rel] = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
-                raise RecordingError(f"case file {rel} is not a readable JSON document: "
-                                     f"{exc}") from exc
+                raise RecordingError(
+                    f"case file {rel} is not a readable JSON document: {exc}"
+                ) from exc
         else:
             try:
                 files[rel] = path.read_text(encoding="utf-8")
@@ -160,14 +167,21 @@ def _case_files(directory: Path) -> dict[str, Any]:
 def _specialist_version() -> str:
     try:
         from importlib.metadata import version
+
         return version("apiforge")
     except Exception:  # noqa: BLE001 - version is provenance text, never a failure
         return "unknown"
 
 
-def record_action(*, workspace: Path, capability: str, action: str,
-                  arguments: Mapping[str, str], handoff: Path | None = None,
-                  run: Run = run_native) -> tuple[str, dict[str, Any]]:
+def record_action(
+    *,
+    workspace: Path,
+    capability: str,
+    action: str,
+    arguments: Mapping[str, str],
+    handoff: Path | None = None,
+    run: Run = run_native,
+) -> tuple[str, dict[str, Any]]:
     """Run the capability's verb over a temporary copy of ``workspace`` and return the
     recording ``(file name, data)``.
 
@@ -183,12 +197,14 @@ def record_action(*, workspace: Path, capability: str, action: str,
     names = {item.name for item in spec.inputs}
     unknown = [name for name in arguments if name not in names]
     if unknown:
-        raise RecordingError(f"unknown input(s) {sorted(unknown)} for {capability}; "
-                             f"expected one of {sorted(names)}")
+        raise RecordingError(
+            f"unknown input(s) {sorted(unknown)} for {capability}; expected one of {sorted(names)}"
+        )
     missing = [name for name in names if name not in arguments]
     if missing:
-        raise RecordingError(f"missing input(s) {sorted(missing)} for {capability}: "
-                             "pass each as --arg NAME=PATH")
+        raise RecordingError(
+            f"missing input(s) {sorted(missing)} for {capability}: pass each as --arg NAME=PATH"
+        )
     relative = {name: _relative(value) for name, value in arguments.items()}
     selected = {item.name: [relative[item.name]] for item in spec.inputs}
     document = None
@@ -196,8 +212,9 @@ def record_action(*, workspace: Path, capability: str, action: str,
         try:
             document = json.loads(handoff.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
-            raise RecordingError(f"handoff {handoff}: not a readable JSON document "
-                                 f"({exc})") from exc
+            raise RecordingError(
+                f"handoff {handoff}: not a readable JSON document ({exc})"
+            ) from exc
         if not isinstance(document, dict):
             raise RecordingError(f"handoff {handoff}: must be a JSON object")
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -213,19 +230,27 @@ def record_action(*, workspace: Path, capability: str, action: str,
         notes: list[str] = []
         if document is not None:
             if spec.upstream is None:
-                raise RecordingError(f"{capability} has no upstream intake: the handoff "
-                                     "would not be consumed")
+                raise RecordingError(
+                    f"{capability} has no upstream intake: the handoff would not be consumed"
+                )
             upstream, notes = translate_handoff(document)
             call.cwd.mkdir(parents=True, exist_ok=True)
             (call.cwd / UPSTREAM_FILE).write_text(
                 json.dumps(upstream, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-                encoding="utf-8")
+                encoding="utf-8",
+            )
             argv += [spec.upstream, UPSTREAM_FILE]
-        outcome = run([sys.executable, "-c", CLI, *argv], cwd=call.cwd,
-                      env=dict(NATIVE_ENV), timeout=RECORD_TIMEOUT)
+        outcome = run(
+            [sys.executable, "-c", CLI, *argv],
+            cwd=call.cwd,
+            env=dict(NATIVE_ENV),
+            timeout=RECORD_TIMEOUT,
+        )
         if outcome.returncode != 0:
-            data = {"exit_code": outcome.returncode,
-                    "stderr": outcome.stderr.decode("utf-8", "replace")}
+            data = {
+                "exit_code": outcome.returncode,
+                "stderr": outcome.stderr.decode("utf-8", "replace"),
+            }
             name = f"{capability}.{action}.error.json"
         else:
             notes += relativize_outputs(root, spec)
@@ -241,10 +266,12 @@ def record_action(*, workspace: Path, capability: str, action: str,
             data = {
                 # Absolute --out-dir values become <cwd>-relative in the recording.
                 "argv": [_portable_arg(token, root) for token in argv],
-                "assembled_from": (f"recorded by theforge_apiforge.record_execute: apiforge "
-                                   f"{version} {spec.argv[0]} {action} on Python "
-                                   f"{sys.version_info[0]}.{sys.version_info[1]}."
-                                   f"{sys.version_info[2]} ({sys.platform})"),
+                "assembled_from": (
+                    f"recorded by theforge_apiforge.record_execute: apiforge "
+                    f"{version} {spec.argv[0]} {action} on Python "
+                    f"{sys.version_info[0]}.{sys.version_info[1]}."
+                    f"{sys.version_info[2]} ({sys.platform})"
+                ),
                 "case_dir": spec.output_dir,
                 "case_files": _case_files(case_dir),
                 "exit_code": 0,
@@ -265,7 +292,7 @@ def _portable_arg(token: str, run_root: Path) -> str:
     resolved = run_root.resolve()
     for form in (str(resolved), resolved.as_posix()):
         if token.startswith(form):
-            rest = token[len(form):].lstrip("\\/")
+            rest = token[len(form) :].lstrip("\\/")
             return "<cwd>" if not rest else f"<cwd>/{rest.replace(os.sep, '/')}"
     return token
 
@@ -280,19 +307,37 @@ def _parse_arg(value: str) -> tuple[str, str]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m theforge_apiforge.record_execute",
-        description="Record the native output of one API Forge action for replay.")
-    parser.add_argument("--workspace", type=Path, required=True,
-                        help="workspace to copy (never modified)")
+        description="Record the native output of one API Forge action for replay.",
+    )
+    parser.add_argument(
+        "--workspace", type=Path, required=True, help="workspace to copy (never modified)"
+    )
     parser.add_argument("--capability", required=True)
     parser.add_argument("--action", required=True)
-    parser.add_argument("--arg", dest="args", type=_parse_arg, action="append", default=[],
-                        metavar="NAME=PATH",
-                        help="verb input, as NAME=workspace-relative-path")
-    parser.add_argument("--handoff", type=Path, default=None, metavar="FILE",
-                        help="theforge/Handoff/v1 document to feed through the upstream "
-                             "intake, as the adapter does live")
-    parser.add_argument("--out", type=Path, required=True, metavar="SCENARIO_DIR",
-                        help="replay scenario directory to write the recording into")
+    parser.add_argument(
+        "--arg",
+        dest="args",
+        type=_parse_arg,
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="verb input, as NAME=workspace-relative-path",
+    )
+    parser.add_argument(
+        "--handoff",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="theforge/Handoff/v1 document to feed through the upstream "
+        "intake, as the adapter does live",
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        metavar="SCENARIO_DIR",
+        help="replay scenario directory to write the recording into",
+    )
     args = parser.parse_args(argv)
     problem = live_environment_problem()
     if problem is not None:
@@ -301,9 +346,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     out = args.out.resolve()
     try:
         workspace = check_workspace(args.workspace.absolute(), out)
-        name, data = record_action(workspace=workspace, capability=args.capability,
-                                   action=args.action, arguments=dict(args.args),
-                                   handoff=args.handoff)
+        name, data = record_action(
+            workspace=workspace,
+            capability=args.capability,
+            action=args.action,
+            arguments=dict(args.args),
+            handoff=args.handoff,
+        )
     except RecordingError as exc:
         print(f"record_execute: {exc}", file=sys.stderr)
         return 2

@@ -2029,6 +2029,18 @@
       "title": "PySpark usage"
     },
     {
+      "category": "sql",
+      "check_id": "SQL000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "34c6100caf55f14d",
+      "message": "no SQL statements parsed (2 skipped as unparseable)",
+      "severity": "info",
+      "tags": [],
+      "title": "SQL surface"
+    },
+    {
       "category": "search",
       "check_id": "SRCH000",
       "confidence": "high",
@@ -2158,7 +2170,7 @@
   ],
   "summary": {
     "errors": 0,
-    "info": 19,
+    "info": 20,
     "passed": 50,
     "warnings": 5
   },

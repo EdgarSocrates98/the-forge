@@ -33,15 +33,17 @@ from theforge.registry.sources import (
 )
 
 
-def entry(provider: str = "acme-forge", version: str = "1.2.3",
-          **kw: object) -> ForgeRegistryEntry:
+def entry(provider: str = "acme-forge", version: str = "1.2.3", **kw: object) -> ForgeRegistryEntry:
     return ForgeRegistryEntry(provider=provider, version=version, **kw)
 
 
 def document(*entries: ForgeRegistryEntry, **kw: object) -> RegistryDocument:
     return RegistryDocument(
         registry=RegistryIdentity(id="test-registry", url="https://reg.example"),
-        produced_at="2026-01-01T00:00:00Z", entries=list(entries), **kw)
+        produced_at="2026-01-01T00:00:00Z",
+        entries=list(entries),
+        **kw,
+    )
 
 
 def write_doc(path: Path, data: object) -> None:
@@ -51,11 +53,11 @@ def write_doc(path: Path, data: object) -> None:
 def file_spec(tmp_path: Path, **kw: object) -> SourceSpec:
     kw.setdefault("id", "mirror")
     kw.setdefault("enabled", True)
-    return SourceSpec(kind="local-file",
-                      path=str(tmp_path / "registry.json"), **kw)
+    return SourceSpec(kind="local-file", path=str(tmp_path / "registry.json"), **kw)
 
 
 # ── contract validation ────────────────────────────────────────────────────
+
 
 def test_entry_validates_provider_id() -> None:
     with pytest.raises(ContractError):
@@ -86,8 +88,9 @@ def test_entry_validates_platform_format() -> None:
 
 def test_entry_rejects_wrong_schema() -> None:
     with pytest.raises(ContractError):
-        ForgeRegistryEntry(schema="theforge/ForgeRegistryEntry/v2",
-                           provider="acme-forge", version="1.0.0")
+        ForgeRegistryEntry(
+            schema="theforge/ForgeRegistryEntry/v2", provider="acme-forge", version="1.0.0"
+        )
 
 
 def test_document_rejects_duplicate_provider_versions() -> None:
@@ -95,8 +98,9 @@ def test_document_rejects_duplicate_provider_versions() -> None:
     # versions of one provider are normal registry content.
     with pytest.raises(ContractError):
         document(entry(provider="dup-forge"), entry(provider="dup-forge"))
-    document(entry(provider="dup-forge", version="1.0.0"),
-             entry(provider="dup-forge", version="2.0.0"))
+    document(
+        entry(provider="dup-forge", version="1.0.0"), entry(provider="dup-forge", version="2.0.0")
+    )
     document(entry(provider="a-forge"), entry(provider="b-forge"))
 
 
@@ -109,23 +113,28 @@ def test_identities_require_id() -> None:
 
 def test_entry_round_trip_full() -> None:
     e = entry(
-        publisher=PublisherIdentity(id="acme", organization="Acme",
-                                    repository="https://github.com/acme/x",
-                                    key_id="key-1"),
-        description="does things", manifest_url="https://reg.example/m.json",
+        publisher=PublisherIdentity(
+            id="acme", organization="Acme", repository="https://github.com/acme/x", key_id="key-1"
+        ),
+        description="does things",
+        manifest_url="https://reg.example/m.json",
         manifest_sha256="a" * 64,
-        distribution=DistributionRef(kind="pip-package", package="acme-forge",
-                                     version="1.2.3", sha256="b" * 64),
-        protocols=["forge/v1"], capabilities=["data.pipeline"],
+        distribution=DistributionRef(
+            kind="pip-package", package="acme-forge", version="1.2.3", sha256="b" * 64
+        ),
+        protocols=["forge/v1"],
+        capabilities=["data.pipeline"],
         platforms=["any"],
-        runtime=RuntimeRequirements(python=">=3.11", offline=True,
-                                    requires_network=False,
-                                    requires_credentials=False),
-        signatures=[SignatureRef(key_id="key-1", algorithm="ed25519",
-                                 signature="sig")],
-        source_repository="https://github.com/acme/x", license="Apache-2.0",
-        security_contact="sec@acme.example", released_at="2026-01-01T00:00:00Z",
-        limitations=["no windows support"])
+        runtime=RuntimeRequirements(
+            python=">=3.11", offline=True, requires_network=False, requires_credentials=False
+        ),
+        signatures=[SignatureRef(key_id="key-1", algorithm="ed25519", signature="sig")],
+        source_repository="https://github.com/acme/x",
+        license="Apache-2.0",
+        security_contact="sec@acme.example",
+        released_at="2026-01-01T00:00:00Z",
+        limitations=["no windows support"],
+    )
     decoded = from_dict(ForgeRegistryEntry, to_dict(e), "$")
     assert decoded == e
 
@@ -140,6 +149,7 @@ def test_document_tolerates_unknown_fields() -> None:
 
 
 # ── SourceSpec / load_source_specs ──────────────────────────────────────────
+
 
 def test_spec_validation() -> None:
     with pytest.raises(ContractError):
@@ -161,17 +171,19 @@ def test_load_specs_user_and_project(tmp_path: Path) -> None:
     user_dir = tmp_path / "user"
     user_dir.mkdir()
     (user_dir / "registries.toml").write_text(
-        '[[sources]]\nid = "shared"\nkind = "local-file"\npath = "a.json"\n'
-        'enabled = true\n', encoding="utf-8")
+        '[[sources]]\nid = "shared"\nkind = "local-file"\npath = "a.json"\nenabled = true\n',
+        encoding="utf-8",
+    )
     forge = tmp_path / "proj" / ".forge" / "config"
     forge.mkdir(parents=True)
     (forge / "registries.toml").write_text(
         '[[sources]]\nid = "shared"\nkind = "local-file"\npath = "evil.json"\n'
         '[[sources]]\nid = "project-only"\nkind = "local-file"\n'
-        'path = "b.json"\n', encoding="utf-8")
+        'path = "b.json"\n',
+        encoding="utf-8",
+    )
     warnings: list[str] = []
-    specs = load_source_specs(tmp_path / "proj" / ".forge", user_dir=user_dir,
-                              warnings=warnings)
+    specs = load_source_specs(tmp_path / "proj" / ".forge", user_dir=user_dir, warnings=warnings)
     assert [s.id for s in specs] == ["project-only", "shared"]
     shared = next(s for s in specs if s.id == "shared")
     # The project file cannot override a user-defined source id.
@@ -199,16 +211,17 @@ def test_load_specs_bad_entry(tmp_path: Path) -> None:
     user_dir = tmp_path / "u"
     user_dir.mkdir()
     (user_dir / "registries.toml").write_text(
-        '[[sources]]\nid = "x"\nkind = "local-file"\n', encoding="utf-8")
+        '[[sources]]\nid = "x"\nkind = "local-file"\n', encoding="utf-8"
+    )
     with pytest.raises(UsageError, match="path"):
         load_source_specs(None, user_dir=user_dir)
 
 
 # ── FileRegistrySource / read_sources ───────────────────────────────────────
 
+
 def test_file_source_reads_document(tmp_path: Path) -> None:
-    write_doc(tmp_path / "registry.json", to_dict(document(
-        entry(capabilities=["data.pipeline"]))))
+    write_doc(tmp_path / "registry.json", to_dict(document(entry(capabilities=["data.pipeline"]))))
     read = FileRegistrySource(spec=file_spec(tmp_path)).read()
     assert read.status == "ok"
     assert read.document is not None
@@ -248,42 +261,65 @@ def test_read_sources_reports_disabled(tmp_path: Path) -> None:
 def test_read_sources_http_unavailable_offline(tmp_path: Path) -> None:
     """Enabled http source + no cache + blocked network → unavailable (not a
     crash): the core treats a dead source as data (§20)."""
-    spec = SourceSpec(id="remote", kind="http", url="https://reg.example",
-                      enabled=True)
+    spec = SourceSpec(id="remote", kind="http", url="https://reg.example", enabled=True)
     reads = read_sources([spec], cache_dir=tmp_path / "cache")
     assert reads[0].status == "unavailable"
 
 
 def test_read_sources_order(tmp_path: Path) -> None:
     write_doc(tmp_path / "registry.json", to_dict(document(entry())))
-    specs = [file_spec(tmp_path, id="a", enabled=False),
-             file_spec(tmp_path, id="b"),
-             SourceSpec(id="c", kind="http", url="https://x", enabled=True)]
+    specs = [
+        file_spec(tmp_path, id="a", enabled=False),
+        file_spec(tmp_path, id="b"),
+        SourceSpec(id="c", kind="http", url="https://x", enabled=True),
+    ]
     reads = read_sources(specs, cache_dir=tmp_path / "cache")
     assert [(r.spec.id, r.status) for r in reads] == [
-        ("a", "disabled"), ("b", "ok"), ("c", "unavailable")]
+        ("a", "disabled"),
+        ("b", "ok"),
+        ("c", "unavailable"),
+    ]
 
 
 # ── local_document: the installed registry as a source ──────────────────────
 
-def make_record(pid: str, cap_ids: list[str], *, state: str = "ready",
-                sha: str = "0" * 64, trust: str = "local") -> RegistryRecord:
-    caps = [Capability(id=c, actions=["run"], default_action="run",
-                       state="supported", operation_class="read_only",
-                       signals=Signals()) for c in cap_ids]
-    manifest = ForgeManifest(id=pid, version="2.0.0", protocols=["forge/v1"],
-                             ops=["describe", "health"], capabilities=caps,
-                             execution=ExecutionInfo(offline=True,
-                                                     requires_network=False),
-                             limitations=["beta surface"])
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust=trust),
-                          state=state, manifest=manifest, manifest_sha256=sha,
-                          protocol="forge/v1")
+
+def make_record(
+    pid: str, cap_ids: list[str], *, state: str = "ready", sha: str = "0" * 64, trust: str = "local"
+) -> RegistryRecord:
+    caps = [
+        Capability(
+            id=c,
+            actions=["run"],
+            default_action="run",
+            state="supported",
+            operation_class="read_only",
+            signals=Signals(),
+        )
+        for c in cap_ids
+    ]
+    manifest = ForgeManifest(
+        id=pid,
+        version="2.0.0",
+        protocols=["forge/v1"],
+        ops=["describe", "health"],
+        capabilities=caps,
+        execution=ExecutionInfo(offline=True, requires_network=False),
+        limitations=["beta surface"],
+    )
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust=trust),
+        state=state,
+        manifest=manifest,
+        manifest_sha256=sha,
+        protocol="forge/v1",
+    )
 
 
 def test_local_document_projects_ready_records() -> None:
-    doc = local_document([make_record("one-forge", ["a.b", "c.d"]),
-                          make_record("two-forge", ["x.y"])])
+    doc = local_document(
+        [make_record("one-forge", ["a.b", "c.d"]), make_record("two-forge", ["x.y"])]
+    )
     assert doc.registry.id == "local"
     assert [e.provider for e in doc.entries] == ["one-forge", "two-forge"]
     e = doc.entries[0]
@@ -301,32 +337,55 @@ def test_local_document_skips_non_ready() -> None:
 
 
 def test_local_document_excludes_unsupported_capabilities() -> None:
-    caps = [Capability(id="ok.cap", actions=["run"], default_action="run",
-                       state="supported", operation_class="read_only",
-                       signals=Signals()),
-            Capability(id="gone.cap", actions=["run"], default_action="run",
-                       state="unsupported", operation_class="read_only",
-                       signals=Signals())]
-    manifest = ForgeManifest(id="p-forge", version="1.0.0",
-                             protocols=["forge/v1"], ops=["describe", "health"],
-                             capabilities=caps)
-    rec = RegistryRecord(entry=ProviderEntry(id="p-forge", argv=["x"]),
-                         state="ready", manifest=manifest,
-                         manifest_sha256="0" * 64, protocol="forge/v1")
+    caps = [
+        Capability(
+            id="ok.cap",
+            actions=["run"],
+            default_action="run",
+            state="supported",
+            operation_class="read_only",
+            signals=Signals(),
+        ),
+        Capability(
+            id="gone.cap",
+            actions=["run"],
+            default_action="run",
+            state="unsupported",
+            operation_class="read_only",
+            signals=Signals(),
+        ),
+    ]
+    manifest = ForgeManifest(
+        id="p-forge",
+        version="1.0.0",
+        protocols=["forge/v1"],
+        ops=["describe", "health"],
+        capabilities=caps,
+    )
+    rec = RegistryRecord(
+        entry=ProviderEntry(id="p-forge", argv=["x"]),
+        state="ready",
+        manifest=manifest,
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
     doc = local_document([rec])
     assert doc.entries[0].capabilities == ["ok.cap"]
 
 
 # ── CLI surface ─────────────────────────────────────────────────────────────
 
-def test_cli_registry_sources(tmp_path: Path, user_config_dir: Path,
-                              capsys: pytest.CaptureFixture[str]) -> None:
+
+def test_cli_registry_sources(
+    tmp_path: Path, user_config_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     write_doc(user_config_dir / "feed.json", to_dict(document(entry())))
     (user_config_dir / "registries.toml").write_text(
         '[[sources]]\nid = "feed"\nkind = "local-file"\npath = "feed.json"\n'
-        'enabled = true\n'
+        "enabled = true\n"
         '[[sources]]\nid = "off"\nkind = "http"\nurl = "https://x"\n',
-        encoding="utf-8")
+        encoding="utf-8",
+    )
     code = main(["registry", "sources", "--root", str(tmp_path), "--json"])
     out = capsys.readouterr().out
     assert code == 0
@@ -337,8 +396,9 @@ def test_cli_registry_sources(tmp_path: Path, user_config_dir: Path,
     assert by_id["off"]["status"] == "disabled"
 
 
-def test_cli_registry_sources_text(tmp_path: Path, user_config_dir: Path,
-                                   capsys: pytest.CaptureFixture[str]) -> None:
+def test_cli_registry_sources_text(
+    tmp_path: Path, user_config_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     code = main(["registry", "sources", "--root", str(tmp_path)])
     out = capsys.readouterr().out
     assert code == 0

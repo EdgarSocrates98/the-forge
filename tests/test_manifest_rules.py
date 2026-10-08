@@ -102,8 +102,11 @@ def test_manifest_rule_codes_are_registered() -> None:
 # --- Capability aliases and deprecation (reqs 5.5, 5.6) -------------------------------------
 
 _CAP = {
-    "id": "demo.echo", "actions": ["echo"], "default_action": "echo",
-    "state": "supported", "operation_class": "read_only",
+    "id": "demo.echo",
+    "actions": ["echo"],
+    "default_action": "echo",
+    "state": "supported",
+    "operation_class": "read_only",
 }
 
 
@@ -112,9 +115,16 @@ def _cap(cap_id: str, **extra: object) -> dict[str, object]:
 
 
 def _manifest(*caps: dict[str, object]) -> ForgeManifest:
-    return from_dict(ForgeManifest, {
-        "id": "demo-forge", "version": "1.0.0", "protocols": ["forge/v1"],
-        "ops": ["describe", "health", "execute"], "capabilities": list(caps)})
+    return from_dict(
+        ForgeManifest,
+        {
+            "id": "demo-forge",
+            "version": "1.0.0",
+            "protocols": ["forge/v1"],
+            "ops": ["describe", "health", "execute"],
+            "capabilities": list(caps),
+        },
+    )
 
 
 def test_cycle1_capability_without_new_fields_gets_defaults() -> None:
@@ -125,8 +135,14 @@ def test_cycle1_capability_without_new_fields_gets_defaults() -> None:
 
 
 def test_capability_parses_aliases_and_deprecation() -> None:
-    capability = _manifest(_cap("demo.echo", aliases=["demo.say", "demo.repeat"],
-                                deprecated=True, replaced_by="demo.shout")).capabilities[0]
+    capability = _manifest(
+        _cap(
+            "demo.echo",
+            aliases=["demo.say", "demo.repeat"],
+            deprecated=True,
+            replaced_by="demo.shout",
+        )
+    ).capabilities[0]
     assert capability.aliases == ["demo.say", "demo.repeat"]
     assert capability.deprecated is True
     assert capability.replaced_by == "demo.shout"
@@ -141,15 +157,24 @@ def test_replaced_by_may_point_to_capability_of_another_provider() -> None:
     ("caps", "message"),
     [
         ((_cap("demo.echo", aliases=["demo.say", "demo.say"]),), "duplicate capability aliases"),
-        ((_cap("demo.echo", aliases=["demo.say"]), _cap("demo.ping", aliases=["demo.say"])),
-         "duplicate capability aliases"),
+        (
+            (_cap("demo.echo", aliases=["demo.say"]), _cap("demo.ping", aliases=["demo.say"])),
+            "duplicate capability aliases",
+        ),
         ((_cap("demo.echo", aliases=["demo.echo"]),), "alias equal to capability id"),
-        ((_cap("demo.echo", aliases=["demo.ping"]), _cap("demo.ping")),
-         "alias equal to capability id"),
+        (
+            (_cap("demo.echo", aliases=["demo.ping"]), _cap("demo.ping")),
+            "alias equal to capability id",
+        ),
         ((_cap("demo.echo", replaced_by="demo.echo"),), "replaced_by equal to its own id"),
     ],
-    ids=["dup-alias-same-cap", "dup-alias-across-caps", "alias-equals-own-id",
-         "alias-equals-other-id", "replaced-by-self"],
+    ids=[
+        "dup-alias-same-cap",
+        "dup-alias-across-caps",
+        "alias-equals-own-id",
+        "alias-equals-other-id",
+        "replaced-by-self",
+    ],
 )
 def test_alias_and_replacement_collisions_invalidate_manifest(
     caps: tuple[dict[str, object], ...], message: str
@@ -159,8 +184,12 @@ def test_alias_and_replacement_collisions_invalidate_manifest(
 
 
 def test_wrong_types_for_new_fields_are_contract_errors() -> None:
-    for extra in ({"aliases": "demo.say"}, {"aliases": [1]}, {"deprecated": "yes"},
-                  {"replaced_by": 3}):
+    for extra in (
+        {"aliases": "demo.say"},
+        {"aliases": [1]},
+        {"deprecated": "yes"},
+        {"replaced_by": 3},
+    ):
         with pytest.raises(ContractError):
             _manifest(_cap("demo.echo", **extra))
 
@@ -196,10 +225,26 @@ def _fields(violations: tuple[Violation, ...]) -> list[str | None]:
 
 @pytest.mark.parametrize(
     "cap_id",
-    ["demo.echo", "demo.echo.fast", f"{'a' * 32}.b", f"ab.{'b' * 30}.{'c' * 30}",
-     f"{'a' * 31}.{'b' * 32}", "spark.performance", "api.contract", "my-ns.sub-ject"],
-    ids=["two-segments", "three-segments", "segment-at-32", "id-at-64-three-segments",
-         "id-at-64-two-segments", "spark-fixture", "api-fixture", "hyphenated"],
+    [
+        "demo.echo",
+        "demo.echo.fast",
+        f"{'a' * 32}.b",
+        f"ab.{'b' * 30}.{'c' * 30}",
+        f"{'a' * 31}.{'b' * 32}",
+        "spark.performance",
+        "api.contract",
+        "my-ns.sub-ject",
+    ],
+    ids=[
+        "two-segments",
+        "three-segments",
+        "segment-at-32",
+        "id-at-64-three-segments",
+        "id-at-64-two-segments",
+        "spark-fixture",
+        "api-fixture",
+        "hyphenated",
+    ],
 )
 def test_taxonomy_accepts_valid_capability_ids(cap_id: str) -> None:
     assert len(cap_id) <= 64
@@ -219,9 +264,17 @@ def test_taxonomy_accepts_valid_capability_ids(cap_id: str) -> None:
         ("utils.echo", "generic"),
         ("demo.echo.default", "generic"),
     ],
-    ids=["four-segments", "namespace-too-long", "subject-too-long", "id-too-long",
-         "reserved-forge", "reserved-theforge", "generic-subject", "generic-namespace",
-         "generic-qualifier"],
+    ids=[
+        "four-segments",
+        "namespace-too-long",
+        "subject-too-long",
+        "id-too-long",
+        "reserved-forge",
+        "reserved-theforge",
+        "generic-subject",
+        "generic-namespace",
+        "generic-qualifier",
+    ],
 )
 def test_taxonomy_rejects_invalid_capability_ids(cap_id: str, fragment: str) -> None:
     violations = _taxonomy(_cap(cap_id))
@@ -240,9 +293,25 @@ def test_every_generic_segment_is_rejected_in_any_position(segment: str) -> None
 
 def test_generic_and_reserved_sets_match_the_design_table() -> None:
     assert frozenset({"forge", "theforge"}) == RESERVED_NAMESPACES
-    assert frozenset({
-        "all", "any", "misc", "general", "generic", "default", "other", "stuff",
-        "tool", "tools", "util", "utils"}) == GENERIC_SEGMENTS
+    assert (
+        frozenset(
+            {
+                "all",
+                "any",
+                "misc",
+                "general",
+                "generic",
+                "default",
+                "other",
+                "stuff",
+                "tool",
+                "tools",
+                "util",
+                "utils",
+            }
+        )
+        == GENERIC_SEGMENTS
+    )
 
 
 def test_reserved_word_outside_namespace_and_generic_substrings_are_allowed() -> None:
@@ -251,7 +320,8 @@ def test_reserved_word_outside_namespace_and_generic_substrings_are_allowed() ->
 
 
 @pytest.mark.parametrize(
-    "action", ["echo", "a", "dry-run", "v2", "a" + "b" * 31],
+    "action",
+    ["echo", "a", "dry-run", "v2", "a" + "b" * 31],
     ids=["word", "single-char", "hyphen", "digit", "at-32"],
 )
 def test_taxonomy_accepts_valid_actions(action: str) -> None:
@@ -259,19 +329,30 @@ def test_taxonomy_accepts_valid_actions(action: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "action", ["Echo", "2run", "-run", "dry_run", "run now", "a" + "b" * 32, "", "açao"],
-    ids=["uppercase", "leading-digit", "leading-hyphen", "underscore", "space", "at-33",
-         "empty", "non-ascii"],
+    "action",
+    ["Echo", "2run", "-run", "dry_run", "run now", "a" + "b" * 32, "", "açao"],
+    ids=[
+        "uppercase",
+        "leading-digit",
+        "leading-hyphen",
+        "underscore",
+        "space",
+        "at-33",
+        "empty",
+        "non-ascii",
+    ],
 )
 def test_taxonomy_rejects_invalid_actions(action: str) -> None:
     violations = _taxonomy(_cap("demo.echo", actions=["echo", action], default_action="echo"))
     assert [(v.code, v.field) for v in violations] == [
-        (Codes.MANIFEST_TAXONOMY, "capabilities[0].actions[1]")]
+        (Codes.MANIFEST_TAXONOMY, "capabilities[0].actions[1]")
+    ]
     assert "demo.echo" in violations[0].detail and repr(action) in violations[0].detail
 
 
 @pytest.mark.parametrize(
-    "alias", ["demo.say", "demo.say.loud", "other-ns.echo"],
+    "alias",
+    ["demo.say", "demo.say.loud", "other-ns.echo"],
     ids=["two-segments", "three-segments", "other-namespace"],
 )
 def test_taxonomy_accepts_valid_aliases(alias: str) -> None:
@@ -280,21 +361,41 @@ def test_taxonomy_accepts_valid_aliases(alias: str) -> None:
 
 @pytest.mark.parametrize(
     "alias",
-    ["Demo.Say", "say", "demo..say", "demo.say.x.y", f"{'a' * 33}.say",
-     f"{'a' * 32}.{'b' * 32}.c", "forge.say", "demo.tools", "demo_say.x"],
-    ids=["uppercase", "single-segment", "empty-segment", "four-segments", "segment-too-long",
-         "id-too-long", "reserved", "generic", "underscore"],
+    [
+        "Demo.Say",
+        "say",
+        "demo..say",
+        "demo.say.x.y",
+        f"{'a' * 33}.say",
+        f"{'a' * 32}.{'b' * 32}.c",
+        "forge.say",
+        "demo.tools",
+        "demo_say.x",
+    ],
+    ids=[
+        "uppercase",
+        "single-segment",
+        "empty-segment",
+        "four-segments",
+        "segment-too-long",
+        "id-too-long",
+        "reserved",
+        "generic",
+        "underscore",
+    ],
 )
 def test_taxonomy_rejects_invalid_aliases(alias: str) -> None:
     violations = _taxonomy(_cap("demo.echo", aliases=["demo.ok", alias]))
     assert violations
     assert {(v.code, v.field) for v in violations} == {
-        (Codes.MANIFEST_TAXONOMY, "capabilities[0].aliases[1]")}
+        (Codes.MANIFEST_TAXONOMY, "capabilities[0].aliases[1]")
+    }
     assert repr(alias) in violations[0].detail and "demo.echo" in violations[0].detail
 
 
 @pytest.mark.parametrize(
-    "target", ["demo.shout", "other.echo.v2", "forge.echo", "demo.misc"],
+    "target",
+    ["demo.shout", "other.echo.v2", "forge.echo", "demo.misc"],
     ids=["same-provider", "other-provider", "reserved-is-format-only", "generic-is-format-only"],
 )
 def test_taxonomy_accepts_replaced_by_in_id_format(target: str) -> None:
@@ -302,24 +403,45 @@ def test_taxonomy_accepts_replaced_by_in_id_format(target: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "target", ["shout", "Demo.Shout", "demo.shout.x.y", f"{'a' * 33}.b",
-               f"{'a' * 32}.{'b' * 32}.c", "", "demo shout"],
-    ids=["single-segment", "uppercase", "four-segments", "segment-too-long", "id-too-long",
-         "empty", "space"],
+    "target",
+    [
+        "shout",
+        "Demo.Shout",
+        "demo.shout.x.y",
+        f"{'a' * 33}.b",
+        f"{'a' * 32}.{'b' * 32}.c",
+        "",
+        "demo shout",
+    ],
+    ids=[
+        "single-segment",
+        "uppercase",
+        "four-segments",
+        "segment-too-long",
+        "id-too-long",
+        "empty",
+        "space",
+    ],
 )
 def test_taxonomy_rejects_replaced_by_off_id_format(target: str) -> None:
     violations = _taxonomy(_cap("demo.echo", deprecated=True, replaced_by=target))
     assert violations
     assert {(v.code, v.field) for v in violations} == {
-        (Codes.MANIFEST_TAXONOMY, "capabilities[0].replaced_by")}
+        (Codes.MANIFEST_TAXONOMY, "capabilities[0].replaced_by")
+    }
     assert repr(target) in violations[0].detail and "demo.echo" in violations[0].detail
 
 
 def test_taxonomy_violation_order_is_deterministic() -> None:
     caps = (
         _cap("demo.ok"),
-        _cap("demo.misc", actions=["Bad", "ok", "_x"], default_action="ok",
-             aliases=["fine.alias", "forge.alias"], replaced_by="nope"),
+        _cap(
+            "demo.misc",
+            actions=["Bad", "ok", "_x"],
+            default_action="ok",
+            aliases=["fine.alias", "forge.alias"],
+            replaced_by="nope",
+        ),
         _cap("acme.utils.x.y", aliases=["Bad"]),
     )
     violations = _taxonomy(*caps)
@@ -355,7 +477,11 @@ def _bad_forge_manifest(mode: str) -> ForgeManifest:
     proc = subprocess.run(
         [*bad_argv(mode, "bad-forge"), "describe"],
         input=json.dumps({"protocol": "forge/v1", "request_id": "r1", "op": "describe"}),
-        capture_output=True, text=True, timeout=30, check=True)
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
     return from_dict(ForgeManifest, json.loads(proc.stdout)["payload"])
 
 
@@ -376,8 +502,15 @@ def test_fixture_provider_capabilities_are_on_taxonomy(path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "mode", ["ok", "describe-catch-all-glob", "describe-only-catch-all-glob",
-             "describe-too-many-capabilities", "capability-spam"])
+    "mode",
+    [
+        "ok",
+        "describe-catch-all-glob",
+        "describe-only-catch-all-glob",
+        "describe-too-many-capabilities",
+        "capability-spam",
+    ],
+)
 def test_bad_forge_default_capabilities_are_on_taxonomy(mode: str) -> None:
     manifest = _bad_forge_manifest(mode)
     assert manifest.capabilities

@@ -217,8 +217,15 @@ def test_utc_timestamps_accepted(value: str) -> None:
 
 @pytest.mark.parametrize(
     "value",
-    ["", "t", "yesterday", "2026-13-01T00:00:00Z", "2026-01-01T00:00:00",
-     "2026-01-01T00:00:00+02:00", "2026-01-01"],
+    [
+        "",
+        "t",
+        "yesterday",
+        "2026-13-01T00:00:00Z",
+        "2026-01-01T00:00:00",
+        "2026-01-01T00:00:00+02:00",
+        "2026-01-01",
+    ],
 )
 def test_malformed_or_non_utc_timestamps_rejected(value: str) -> None:
     v = check_timestamp(value, field="created_at")
@@ -499,21 +506,32 @@ FIXTURES = Path(__file__).parent / "fixtures" / "providers"
 
 def cap(i: int = 0, **signals: list[str]) -> Capability:
     return Capability(
-        id=f"demo.cap{i}", actions=["run"], default_action="run",
-        state="supported", operation_class="read_only", signals=Signals(**signals),
+        id=f"demo.cap{i}",
+        actions=["run"],
+        default_action="run",
+        state="supported",
+        operation_class="read_only",
+        signals=Signals(**signals),
     )
 
 
 def manifest_of(*caps: Capability) -> ForgeManifest:
     return ForgeManifest(
-        id="demo", version="1.0.0", protocols=["forge/v1"],
-        ops=["describe", "health", "execute"], capabilities=list(caps),
+        id="demo",
+        version="1.0.0",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=list(caps),
     )
 
 
 def test_limits_are_defined_in_contract_types() -> None:
     assert (MAX_CAPABILITIES, MAX_KEYWORDS, MAX_GLOBS, MAX_DEPENDENCIES, MAX_ACTIONS) == (
-        256, 64, 32, 32, 16,
+        256,
+        64,
+        32,
+        32,
+        16,
     )
     assert {"*", "**", "**/*", "*.*", "**/*.*"} <= CATCH_ALL_GLOBS
 
@@ -537,10 +555,30 @@ def test_exactly_max_capabilities_is_allowed() -> None:
 
 
 @pytest.mark.parametrize(
-    "glob", ["*", "**", "**/*", "*.*", "**/*.*", "./*", "./**/*", " * ",
-             # no literal alphanumeric character: still matches (almost) any file (2.8 gap)
-             "?*", "**/?*", "*?", "?", "*.?", "./?*", "**/**", "[!.]*", "[a-z]*", "**/[a-z0-9]*",
-             "*.[a-z]*", ""],
+    "glob",
+    [
+        "*",
+        "**",
+        "**/*",
+        "*.*",
+        "**/*.*",
+        "./*",
+        "./**/*",
+        " * ",
+        # no literal alphanumeric character: still matches (almost) any file (2.8 gap)
+        "?*",
+        "**/?*",
+        "*?",
+        "?",
+        "*.?",
+        "./?*",
+        "**/**",
+        "[!.]*",
+        "[a-z]*",
+        "**/[a-z0-9]*",
+        "*.[a-z]*",
+        "",
+    ],
 )
 def test_catch_all_glob_rejected_per_capability(glob: str) -> None:
     m = manifest_of(cap(0, file_globs=["*.md"]), cap(1, file_globs=["*.md", glob]))
@@ -551,9 +589,27 @@ def test_catch_all_glob_rejected_per_capability(glob: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "glob", ["*.md", "*.txt", "*.scala", "*.py", "*_job.py", "*glue*.py", "openapi.yaml",
-             "**/*.py", "src/**/*", "?*.md", "src/?*", "Dockerfile", "**/[Mm]akefile",
-             "*.[ch]pp", "*.[ch]", "**/*.[ch]", "*.[cC]", "*.é"],
+    "glob",
+    [
+        "*.md",
+        "*.txt",
+        "*.scala",
+        "*.py",
+        "*_job.py",
+        "*glue*.py",
+        "openapi.yaml",
+        "**/*.py",
+        "src/**/*",
+        "?*.md",
+        "src/?*",
+        "Dockerfile",
+        "**/[Mm]akefile",
+        "*.[ch]pp",
+        "*.[ch]",
+        "**/*.[ch]",
+        "*.[cC]",
+        "*.é",
+    ],
 )
 def test_specific_globs_allowed(glob: str) -> None:
     assert is_catch_all_glob(glob) is False
@@ -584,8 +640,13 @@ def test_too_many_globs_or_dependencies_rejected(signals: dict[str, list[str]], 
 
 def test_too_many_actions_rejected() -> None:
     actions = [f"a{i}" for i in range(MAX_ACTIONS + 1)]
-    c = Capability(id="demo.many", actions=actions, default_action="a0",
-                   state="supported", operation_class="read_only")
+    c = Capability(
+        id="demo.many",
+        actions=actions,
+        default_action="a0",
+        state="supported",
+        operation_class="read_only",
+    )
     violations = validate_manifest_limits(manifest_of(c))
     assert [(v.code, v.field) for v in violations] == [
         (Codes.MANIFEST_LIMITS, "capabilities[0].actions")
@@ -594,8 +655,13 @@ def test_too_many_actions_rejected() -> None:
 
 def test_capability_without_actions_rejected_at_construction() -> None:
     with pytest.raises(ContractError):
-        Capability(id="demo.none", actions=[], default_action="run",
-                   state="supported", operation_class="read_only")
+        Capability(
+            id="demo.none",
+            actions=[],
+            default_action="run",
+            state="supported",
+            operation_class="read_only",
+        )
 
 
 def test_capability_without_actions_reported_not_crashing() -> None:
@@ -630,7 +696,11 @@ def test_fixture_manifests_within_limits(name: str) -> None:
 def test_bad_forge_default_manifest_within_limits() -> None:
     proc = subprocess.run(
         [sys.executable, str(FIXTURES / "bad_forge.py"), "default", "describe"],
-        input="{}", capture_output=True, text=True, timeout=30, check=True,
+        input="{}",
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
     )
     payload = json.loads(proc.stdout)["payload"]
     assert validate_manifest_limits(from_dict(ForgeManifest, payload)) == ()

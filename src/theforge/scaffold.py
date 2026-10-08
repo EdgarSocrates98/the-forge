@@ -127,7 +127,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 '''
 
-_MANIFEST_JSON = '''\
+_MANIFEST_JSON = """\
 {{
   "schema": "theforge/ForgeManifest/v1",
   "id": "{id}",
@@ -158,7 +158,7 @@ _MANIFEST_JSON = '''\
     "signals are placeholders: declare keywords/globs that actually discriminate"
   ]
 }}
-'''
+"""
 
 _TEST_CONFORMANCE = '''\
 """Conformance gate for {id}: drives the shipped kit.
@@ -182,7 +182,7 @@ def test_protocol_conformance() -> None:
                        if c.status == "fail"]
 '''
 
-_README = '''\
+_README = """\
 # {id}
 
 Provider do Forge Protocol v1 gerado por `theforge provider init`.
@@ -219,7 +219,7 @@ theforge provider check -- "{python}" "{provider_py}"
 ```
 
 Guia completo: `docs/provider-authoring.md` do repositório The Forge.
-'''
+"""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -240,7 +240,8 @@ def _default_capability(provider_id: str) -> str:
     if not namespace or not namespace[0].isalpha():
         raise UsageError(
             f"cannot derive a capability namespace from provider id {provider_id!r}; "
-            "pass --capability <namespace.subject>")
+            "pass --capability <namespace.subject>"
+        )
     return f"{namespace}.describe"
 
 
@@ -252,37 +253,41 @@ def _error_prefix(provider_id: str) -> str:
 
 
 def init_provider(
-    directory: Path, provider_id: str, *, capability: str | None = None,
+    directory: Path,
+    provider_id: str,
+    *,
+    capability: str | None = None,
 ) -> ScaffoldResult:
     """Write the scaffold under ``directory``; refuses to overwrite anything."""
     if not PROVIDER_ID.match(provider_id):
-        raise UsageError(
-            f"invalid provider id {provider_id!r}: expected {PROVIDER_ID.pattern}")
+        raise UsageError(f"invalid provider id {provider_id!r}: expected {PROVIDER_ID.pattern}")
     capability = capability or _default_capability(provider_id)
     if not CAPABILITY_ID.match(capability):
-        raise UsageError(
-            f"invalid capability id {capability!r}: expected {CAPABILITY_ID.pattern}")
+        raise UsageError(f"invalid capability id {capability!r}: expected {CAPABILITY_ID.pattern}")
     directory = directory.resolve()
     if directory.exists() and any(directory.iterdir()):
         raise UsageError(
-            f"{directory} is not empty: provider init only writes into an empty "
-            "or new directory")
+            f"{directory} is not empty: provider init only writes into an empty or new directory"
+        )
     directory.mkdir(parents=True, exist_ok=True)
     prefix = _error_prefix(provider_id)
     provider_py = directory / "provider.py"
     files = {
         provider_py: _PROVIDER_PY.format(id=provider_id, prefix=prefix),
         directory / "manifest.json": _MANIFEST_JSON.format(
-            id=provider_id, capability=capability,
-            keyword=capability.split(".")[0]),
+            id=provider_id, capability=capability, keyword=capability.split(".")[0]
+        ),
         directory / "test_conformance.py": _TEST_CONFORMANCE.format(id=provider_id),
         directory / "README.md": _README.format(
-            id=provider_id, python=sys.executable,
-            provider_py=provider_py),
+            id=provider_id, python=sys.executable, provider_py=provider_py
+        ),
     }
     for path, content in files.items():
         path.write_text(content, encoding="utf-8", newline="\n")
     return ScaffoldResult(
-        directory=directory, files=list(files),
+        directory=directory,
+        files=list(files),
         argv=[sys.executable, str(provider_py)],
-        provider_id=provider_id, capability=capability)
+        provider_id=provider_id,
+        capability=capability,
+    )

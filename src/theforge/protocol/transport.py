@@ -40,8 +40,13 @@ class TransportError(Exception):
 
 class ProviderTransport(Protocol):
     def call(
-        self, op: str, payload: dict[str, Any], *, timeout: float,
-        cwd: Path | None = None, check_protocol: bool = True,
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
     ) -> Response: ...
 
 
@@ -50,7 +55,10 @@ TransportFactory = Callable[[Sequence[str]], ProviderTransport]
 
 class SubprocessTransport:
     def __init__(
-        self, argv: Sequence[str], *, protocol: str = PROTOCOL_V1,
+        self,
+        argv: Sequence[str],
+        *,
+        protocol: str = PROTOCOL_V1,
         max_stdout: int = MAX_STDOUT_BYTES,
     ) -> None:
         if not argv:
@@ -60,17 +68,22 @@ class SubprocessTransport:
         self.max_stdout = max_stdout
 
     def call(
-        self, op: str, payload: dict[str, Any], *, timeout: float,
-        cwd: Path | None = None, check_protocol: bool = True,
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
     ) -> Response:
-        request = Request(protocol=self.protocol, op=op, request_id=new_request_id(),
-                          payload=payload)
+        request = Request(
+            protocol=self.protocol, op=op, request_id=new_request_id(), payload=payload
+        )
         stdout = self._run(op, canonical_json(to_dict(request)).encode("utf-8"), timeout, cwd)
         try:
             data = json.loads(stdout.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise TransportError(Codes.PROTO_NOT_JSON, f"{op}: stdout is not JSON ({exc})") \
-                from exc
+            raise TransportError(Codes.PROTO_NOT_JSON, f"{op}: stdout is not JSON ({exc})") from exc
         except (ValueError, RecursionError) as exc:
             # Integer literals past the int-digit limit or nesting past the recursion limit:
             # valid-looking JSON that cannot be decoded safely. The payload is not echoed.
@@ -86,12 +99,12 @@ class SubprocessTransport:
         if response.request_id != request.request_id:
             raise TransportError(
                 Codes.PROTO_MISMATCH,
-                f"{op}: response request_id {response.request_id!r} "
-                f"!= {request.request_id!r}",
+                f"{op}: response request_id {response.request_id!r} != {request.request_id!r}",
             )
         if response.op is not None and response.op != op:
             raise TransportError(
-                Codes.PROTO_OP_MISMATCH, f"{op}: response op {response.op!r} != {op!r}")
+                Codes.PROTO_OP_MISMATCH, f"{op}: response op {response.op!r} != {op!r}"
+            )
         if check_protocol and response.protocol != self.protocol:
             raise TransportError(
                 Codes.PROTO_VERSION,
@@ -101,11 +114,13 @@ class SubprocessTransport:
 
     def _run(self, op: str, stdin_bytes: bytes, timeout: float, cwd: Path | None) -> bytes:
         try:
-            sp = proctree.spawn([*self.argv, op], cwd=cwd if cwd is not None else Path.cwd(),
-                                env=safe_env())
+            sp = proctree.spawn(
+                [*self.argv, op], cwd=cwd if cwd is not None else Path.cwd(), env=safe_env()
+            )
         except OSError as exc:
-            raise TransportError(Codes.PROTO_SPAWN, f"cannot start {self.argv[0]!r}: {exc}") \
-                from exc
+            raise TransportError(
+                Codes.PROTO_SPAWN, f"cannot start {self.argv[0]!r}: {exc}"
+            ) from exc
         proc = sp.proc
         out = bytearray()
         err = _StderrTail(MAX_STDERR_BYTES)
@@ -139,10 +154,8 @@ class SubprocessTransport:
             # closing a pipe under a pending read blocks (Windows) or races fd reuse (POSIX),
             # and the thread's reference keeps garbage collection from closing it early.
             pairs = [
-                (proc.stdout, threading.Thread(target=pump_out, args=(proc.stdout,),
-                                               daemon=True)),
-                (proc.stderr, threading.Thread(target=pump_err, args=(proc.stderr,),
-                                               daemon=True)),
+                (proc.stdout, threading.Thread(target=pump_out, args=(proc.stdout,), daemon=True)),
+                (proc.stderr, threading.Thread(target=pump_err, args=(proc.stderr,), daemon=True)),
                 (proc.stdin, threading.Thread(target=feed_in, args=(proc.stdin,), daemon=True)),
             ]
             for _, thread in pairs:
@@ -152,22 +165,26 @@ class SubprocessTransport:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TransportError(
-                        Codes.PROTO_TIMEOUT, f"{op}: no response within {timeout:g}s")
+                        Codes.PROTO_TIMEOUT, f"{op}: no response within {timeout:g}s"
+                    )
                 if proctree.wait_slice(proc, min(remaining, _POLL_SECONDS)):
                     break
             if oversize.is_set():
                 raise TransportError(
-                    Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
+                    Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes"
+                )
             # The root exited: end descendants that may still hold the pipes, then drain.
             _end_tree(sp)
             proctree.join_threads((t for _, t in pairs), _JOIN_SECONDS)
             if oversize.is_set():  # the last chunks may arrive after the root exited
                 raise TransportError(
-                    Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes")
+                    Codes.PROTO_OVERSIZE, f"{op}: stdout exceeded {self.max_stdout} bytes"
+                )
             if proc.returncode != 0:
                 raise TransportError(
                     Codes.PROTO_EXIT,
-                    f"{op}: exit code {proc.returncode}; stderr: {err.redacted_tail()}")
+                    f"{op}: exit code {proc.returncode}; stderr: {err.redacted_tail()}",
+                )
             return bytes(out)
         finally:
             # Any exit path (timeout, oversize, KeyboardInterrupt, errors): end the whole tree.

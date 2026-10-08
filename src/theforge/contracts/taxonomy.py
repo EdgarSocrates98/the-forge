@@ -19,10 +19,22 @@ MAX_SEGMENTS = 3
 MAX_SEGMENT_LEN = 32
 MAX_ID_LEN = 64
 RESERVED_NAMESPACES = frozenset({"forge", "theforge"})
-GENERIC_SEGMENTS = frozenset({
-    "all", "any", "misc", "general", "generic", "default", "other", "stuff",
-    "tool", "tools", "util", "utils",
-})
+GENERIC_SEGMENTS = frozenset(
+    {
+        "all",
+        "any",
+        "misc",
+        "general",
+        "generic",
+        "default",
+        "other",
+        "stuff",
+        "tool",
+        "tools",
+        "util",
+        "utils",
+    }
+)
 ACTION = re.compile(r"[a-z][a-z0-9-]{0,31}", re.ASCII)
 
 
@@ -36,11 +48,12 @@ def _id_format_problems(name: object) -> list[str]:
     problems: list[str] = []
     segments = name.split(".")
     if not MIN_SEGMENTS <= len(segments) <= MAX_SEGMENTS:
-        problems.append(
-            f"has {len(segments)} segments (expected {MIN_SEGMENTS} to {MAX_SEGMENTS})")
+        problems.append(f"has {len(segments)} segments (expected {MIN_SEGMENTS} to {MAX_SEGMENTS})")
     problems.extend(
         f"segment {seg!r} is {len(seg)} characters long (max {MAX_SEGMENT_LEN})"
-        for seg in segments if len(seg) > MAX_SEGMENT_LEN)
+        for seg in segments
+        if len(seg) > MAX_SEGMENT_LEN
+    )
     if len(name) > MAX_ID_LEN:
         problems.append(f"is {len(name)} characters long (max {MAX_ID_LEN})")
     return problems
@@ -54,8 +67,7 @@ def _id_problems(name: object) -> list[str]:
     segments = name.split(".")
     if segments[0] in RESERVED_NAMESPACES:
         problems.append(f"uses reserved namespace {segments[0]!r}")
-    problems.extend(
-        f"uses generic segment {seg!r}" for seg in segments if seg in GENERIC_SEGMENTS)
+    problems.extend(f"uses generic segment {seg!r}" for seg in segments if seg in GENERIC_SEGMENTS)
     return problems
 
 
@@ -70,9 +82,11 @@ def validate_taxonomy(manifest: ForgeManifest) -> tuple[Violation, ...]:
 
     def add(cap_id: str, what: str, value: object, problems: list[str], field: str) -> None:
         violations.extend(
-            Violation(Codes.MANIFEST_TAXONOMY,
-                      f"capability {cap_id!r}: {what} {value!r} {problem}", field)
-            for problem in problems)
+            Violation(
+                Codes.MANIFEST_TAXONOMY, f"capability {cap_id!r}: {what} {value!r} {problem}", field
+            )
+            for problem in problems
+        )
 
     for i, cap in enumerate(manifest.capabilities):
         where = f"capabilities[{i}]"
@@ -81,9 +95,19 @@ def validate_taxonomy(manifest: ForgeManifest) -> tuple[Violation, ...]:
             add(cap.id, "alias", alias, _id_problems(alias), f"{where}.aliases[{j}]")
         for k, action in enumerate(cap.actions):
             if type(action) is not str or not ACTION.fullmatch(action):
-                add(cap.id, "action", action, [f"does not match {ACTION.pattern}"],
-                    f"{where}.actions[{k}]")
+                add(
+                    cap.id,
+                    "action",
+                    action,
+                    [f"does not match {ACTION.pattern}"],
+                    f"{where}.actions[{k}]",
+                )
         if cap.replaced_by is not None:
-            add(cap.id, "replaced_by", cap.replaced_by, _id_format_problems(cap.replaced_by),
-                f"{where}.replaced_by")
+            add(
+                cap.id,
+                "replaced_by",
+                cap.replaced_by,
+                _id_format_problems(cap.replaced_by),
+                f"{where}.replaced_by",
+            )
     return tuple(violations)

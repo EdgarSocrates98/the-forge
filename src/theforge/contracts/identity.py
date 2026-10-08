@@ -44,8 +44,9 @@ class ProviderSurfaceIdentity:
 
     def __post_init__(self) -> None:
         if self.schema != SURFACE_IDENTITY_SCHEMA:
-            raise ContractError(f"unsupported schema {self.schema!r}, "
-                                f"expected {SURFACE_IDENTITY_SCHEMA!r}")
+            raise ContractError(
+                f"unsupported schema {self.schema!r}, expected {SURFACE_IDENTITY_SCHEMA!r}"
+            )
         if not self.provider_id:
             raise ContractError("surface identity: provider_id must not be empty")
         if not self.provider_version:
@@ -53,5 +54,4 @@ class ProviderSurfaceIdentity:
         check_sha256(self.surface_fingerprint, field="surface_fingerprint")
         check_sha256(self.capability_fingerprint, field="capability_fingerprint")
         if self.native_surface_fingerprint is not None:
-            check_sha256(self.native_surface_fingerprint,
-                         field="native_surface_fingerprint")
+            check_sha256(self.native_surface_fingerprint, field="native_surface_fingerprint")

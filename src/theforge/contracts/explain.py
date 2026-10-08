@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from theforge.contracts.base import ContractError
 from theforge.contracts.context import GitSummary
+from theforge.contracts.control import GlobalStopDecision
 from theforge.contracts.economy import EconomyRollup
 from theforge.contracts.installation import InstallationPlan
 from theforge.contracts.plan import ExecutionPlan, PlanResult
@@ -101,6 +102,7 @@ class PlanSection:
     installation: InstallationPlan | None = None
     # The cross-provider EconomyRollup (None when no node reported economy).
     economy: EconomyRollup | None = None
+    global_stop: GlobalStopDecision | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -136,5 +138,4 @@ class ExplainReport:
 
     def __post_init__(self) -> None:
         if self.schema != EXPLAIN_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {EXPLAIN_SCHEMA!r}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {EXPLAIN_SCHEMA!r}")

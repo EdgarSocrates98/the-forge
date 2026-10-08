@@ -92,8 +92,13 @@ class Invocation:
 
 def _contained(value: str) -> str | None:
     """A normalized relative POSIX path inside its base, or None."""
-    if not value or "\\" in value or "\x00" in value or value.startswith("/") or (
-            len(value) > 1 and value[1] == ":"):
+    if (
+        not value
+        or "\\" in value
+        or "\x00" in value
+        or value.startswith("/")
+        or (len(value) > 1 and value[1] == ":")
+    ):
         return None
     normalized = posixpath.normpath(value)
     if normalized == ".." or normalized.startswith("../"):
@@ -108,10 +113,10 @@ def _selection_notes(spec: VerbSpec, selected: Mapping[str, list[str]]) -> list[
         if item.stage_root or len(paths) < 2:
             continue
         shown = ", ".join(paths[:CANDIDATES_SHOWN])
-        more = f" and {len(paths) - CANDIDATES_SHOWN} more" if len(
-            paths) > CANDIDATES_SHOWN else ""
-        notes.append(f"input {item.name}: {len(paths)} candidates ({shown}{more}); "
-                     f"using {paths[0]}")
+        more = f" and {len(paths) - CANDIDATES_SHOWN} more" if len(paths) > CANDIDATES_SHOWN else ""
+        notes.append(
+            f"input {item.name}: {len(paths)} candidates ({shown}{more}); using {paths[0]}"
+        )
     return notes
 
 
@@ -128,12 +133,13 @@ def _bundle_project(stage: StagedInput, path: str, name: str) -> str | Reply:
     for key in BUNDLE_PATH_FIELDS:
         value = bundle.get(key)
         if isinstance(value, str) and _contained(value) is None:
-            return refuse(INPUT_OUTSIDE,
-                          f"{name} {path}: {key} {value!r} is not a relative path inside "
-                          "the workspace",
-                          field=f"{name}.{key}",
-                          unlock=f"make {key} a workspace-relative path in the bundle and "
-                                 "include that file in the context")
+            return refuse(
+                INPUT_OUTSIDE,
+                f"{name} {path}: {key} {value!r} is not a relative path inside the workspace",
+                field=f"{name}.{key}",
+                unlock=f"make {key} a workspace-relative path in the bundle and "
+                "include that file in the context",
+            )
     project = bundle.get("project")
     normalized = _contained(project) if isinstance(project, str) else None
     return "" if normalized in (None, ".") else str(normalized)
@@ -146,8 +152,9 @@ def _argument(item: InputSpec, path: str, native_cwd: str) -> str:
     return STAGE_DIR if item.stage_root else f"{STAGE_DIR}/{path}"
 
 
-def invocation(spec: VerbSpec, selected: Mapping[str, list[str]], stage: StagedInput,
-               cwd: Path) -> Invocation | Reply:
+def invocation(
+    spec: VerbSpec, selected: Mapping[str, list[str]], stage: StagedInput, cwd: Path
+) -> Invocation | Reply:
     """How the verb runs over the selected staged inputs, or a refusal."""
     project = ""
     if spec.bundle_input is not None:
@@ -163,8 +170,7 @@ def invocation(spec: VerbSpec, selected: Mapping[str, list[str]], stage: StagedI
     run_cwd = cwd.resolve()
     # The API Forge rejects any '..' in --out-dir: from the stage root the output directory
     # is given as an absolute path under the execute cwd.
-    out_dir = (spec.output_dir if spec.native_cwd == "."
-               else str(run_cwd / spec.output_dir))
+    out_dir = spec.output_dir if spec.native_cwd == "." else str(run_cwd / spec.output_dir)
     argv = (*spec.argv[:split], *inputs, OUT_DIR_FLAG, out_dir, *spec.argv[split:])
     return Invocation(argv=argv, cwd=run_cwd / spec.native_cwd, project=project)
 
@@ -173,8 +179,7 @@ def _replay_invalid(name: str, detail: str) -> Reply:
     return fail(REPLAY_INVALID, f"replay recording {name}: {detail}", field="replay")
 
 
-def _write_case(recording: Mapping[str, Any], spec: VerbSpec, cwd: Path, name: str
-                ) -> Reply | None:
+def _write_case(recording: Mapping[str, Any], spec: VerbSpec, cwd: Path, name: str) -> Reply | None:
     """Write a native recording's case files under the execute cwd (None when done)."""
     if recording.get("exit_code") != 0:
         return _replay_invalid(name, "a native recording must have exit_code 0")
@@ -213,28 +218,30 @@ def _write_case(recording: Mapping[str, Any], spec: VerbSpec, cwd: Path, name: s
         for depth in range(1, len(parts)):
             ancestor = "/".join(parts[:depth])
             if ancestor in seen:
-                return _replay_invalid(name, f"case files {seen[ancestor]!r} and {raw!r} "
-                                             "conflict")
+                return _replay_invalid(name, f"case files {seen[ancestor]!r} and {raw!r} conflict")
     for target, data in written:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
     return None
 
 
-def replay_verb(directory: Path, capability: str, action: str, spec: VerbSpec,
-                cwd: Path) -> Reply | None:
+def replay_verb(
+    directory: Path, capability: str, action: str, spec: VerbSpec, cwd: Path
+) -> Reply | None:
     """The recorded outcome of an action: a reply for a failure or a missing/invalid
     recording, None once the recorded case is written."""
     backend = ReplayBackend(directory)
     found = backend.recording(capability, action)
     if found is None:
         expected = backend.expected(capability, action)
-        return fail(REPLAY_MISSING,
-                    f"replay recording {expected} not found in {directory}; the specialist "
-                    "is never called in replay",
-                    field="replay",
-                    unlock=f"record {expected} (or {capability}.{action}.error.json) in the "
-                           "replay scenario")
+        return fail(
+            REPLAY_MISSING,
+            f"replay recording {expected} not found in {directory}; the specialist "
+            "is never called in replay",
+            field="replay",
+            unlock=f"record {expected} (or {capability}.{action}.error.json) in the "
+            "replay scenario",
+        )
     kind, path = found
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -246,8 +253,10 @@ def replay_verb(directory: Path, capability: str, action: str, spec: VerbSpec,
         exit_code = data.get("exit_code")
         stderr = data.get("stderr")
         if type(exit_code) is not int or exit_code == 0 or not isinstance(stderr, str):
-            return _replay_invalid(path.name, "an error recording needs a non-zero integer "
-                                              "'exit_code' and a string 'stderr'")
+            return _replay_invalid(
+                path.name,
+                "an error recording needs a non-zero integer 'exit_code' and a string 'stderr'",
+            )
         return native_failure(exit_code, stderr)
     return _write_case(data, spec, cwd, path.name)
 
@@ -258,14 +267,16 @@ def _upstream_supported() -> bool:
     try:
         import importlib
         import inspect
+
         module = importlib.import_module("apiforge.application.analyze")
         return "upstream" in inspect.signature(module.analyze_project).parameters
     except Exception:  # noqa: BLE001 - any import/shape problem means "not supported"
         return False
 
 
-def _upstream_invocation(call: Invocation, payload: Mapping[str, Any],
-                         spec: VerbSpec) -> tuple[Invocation, list[str]]:
+def _upstream_invocation(
+    call: Invocation, payload: Mapping[str, Any], spec: VerbSpec
+) -> tuple[Invocation, list[str]]:
     """Translate a delivered handoff into the verb's upstream-facts input file.
 
     Returns ``call`` unchanged plus a limitation when the payload carries no handoff or
@@ -277,13 +288,15 @@ def _upstream_invocation(call: Invocation, payload: Mapping[str, Any],
     if not isinstance(payload.get("handoff"), Mapping):
         return call, []
     if not _upstream_supported():
-        return call, ["handoff delivered but not consumed: the installed apiforge has no "
-                      "upstream intake (analyze_project lacks the 'upstream' parameter)"]
+        return call, [
+            "handoff delivered but not consumed: the installed apiforge has no "
+            "upstream intake (analyze_project lacks the 'upstream' parameter)"
+        ]
     document, notes = translate_handoff(payload["handoff"])
     call.cwd.mkdir(parents=True, exist_ok=True)
     (call.cwd / UPSTREAM_FILE).write_text(
-        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-        encoding="utf-8")
+        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     return replace(call, argv=(*call.argv, spec.upstream, UPSTREAM_FILE)), notes
 
 
@@ -297,8 +310,9 @@ def _upstream_replay(spec: VerbSpec, payload: Mapping[str, Any], cwd: Path) -> l
     """
     if spec.upstream is None:
         return []
-    directory = cwd / spec.output_dir / spec.case_subdir if spec.case_subdir \
-        else cwd / spec.output_dir
+    directory = (
+        cwd / spec.output_dir / spec.case_subdir if spec.case_subdir else cwd / spec.output_dir
+    )
     facts_path = directory / "facts.json"
     try:
         case = json.loads(facts_path.read_text(encoding="utf-8"))
@@ -307,10 +321,15 @@ def _upstream_replay(spec: VerbSpec, payload: Mapping[str, Any], cwd: Path) -> l
     facts = case.get("facts") if isinstance(case, dict) else None
     if not isinstance(facts, list):
         return []
-    native = [fact for fact in facts
-              if not (isinstance(fact, Mapping)
-                      and isinstance(fact.get("source"), Mapping)
-                      and fact["source"].get("extractor") == UPSTREAM_EXTRACTOR)]
+    native = [
+        fact
+        for fact in facts
+        if not (
+            isinstance(fact, Mapping)
+            and isinstance(fact.get("source"), Mapping)
+            and fact["source"].get("extractor") == UPSTREAM_EXTRACTOR
+        )
+    ]
     notes: list[str] = []
     upstream: list[Any] = []
     if isinstance(payload.get("handoff"), Mapping):
@@ -319,16 +338,21 @@ def _upstream_replay(spec: VerbSpec, payload: Mapping[str, Any], cwd: Path) -> l
     if len(native) == len(facts) and not upstream:
         return notes
     case["facts"] = [*native, *upstream]
-    facts_path.write_text(json.dumps(case, indent=2, sort_keys=True,
-                                     ensure_ascii=False) + "\n", encoding="utf-8")
+    facts_path.write_text(
+        json.dumps(case, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     return notes
 
 
 def live_verb(call: Invocation, payload: Mapping[str, Any], *, run: Run) -> Reply | None:
     """Run the verb; a reply for a native failure, None when it succeeded."""
     call.cwd.mkdir(parents=True, exist_ok=True)
-    outcome = run([sys.executable, "-c", CLI, *call.argv], cwd=call.cwd, env=dict(NATIVE_ENV),
-                  timeout=native_timeout(payload))
+    outcome = run(
+        [sys.executable, "-c", CLI, *call.argv],
+        cwd=call.cwd,
+        env=dict(NATIVE_ENV),
+        timeout=native_timeout(payload),
+    )
     if outcome.returncode != 0:
         return native_failure(outcome.returncode, outcome.stderr.decode("utf-8", "replace"))
     return None
@@ -340,10 +364,12 @@ def _absolute_forms(run_cwd: Path) -> list[re.Pattern[str]]:
     flags = re.IGNORECASE if os.name == "nt" else 0
     patterns = []
     for prefix in dict.fromkeys((str(run_cwd), run_cwd.as_posix())):
-        for text, sep in ((prefix.replace("\\", "\\\\"), r"(?:\\\\|/)"),
-                          (prefix, r"[\\/]")):
-            patterns.append(re.compile(
-                re.escape(text) + rf"(?!{_COMPONENT})(?P<rest>(?:{sep}{_COMPONENT}*)*)", flags))
+        for text, sep in ((prefix.replace("\\", "\\\\"), r"(?:\\\\|/)"), (prefix, r"[\\/]")):
+            patterns.append(
+                re.compile(
+                    re.escape(text) + rf"(?!{_COMPONENT})(?P<rest>(?:{sep}{_COMPONENT}*)*)", flags
+                )
+            )
     return patterns
 
 
@@ -371,8 +397,9 @@ def relativize_outputs(cwd: Path, spec: VerbSpec) -> list[str]:
             except (OSError, UnicodeDecodeError):
                 continue
             texts[path.relative_to(run_cwd).as_posix()] = (path, data, text)
-    hashed = {digest for _path, _data, text in texts.values()
-              for digest in _SHA256_HEX.findall(text)}
+    hashed = {
+        digest for _path, _data, text in texts.values() for digest in _SHA256_HEX.findall(text)
+    }
     patterns = _absolute_forms(run_cwd)
     notes: list[str] = []
     for rel, (path, data, text) in sorted(texts.items()):
@@ -382,8 +409,10 @@ def relativize_outputs(cwd: Path, spec: VerbSpec) -> list[str]:
         if rewritten == text:
             continue
         if hashlib.sha256(data).hexdigest() in hashed:
-            notes.append(f"case file {rel} embeds absolute run paths but a native manifest "
-                         "hashes it; left as is")
+            notes.append(
+                f"case file {rel} embeds absolute run paths but a native manifest "
+                "hashes it; left as is"
+            )
             continue
         path.write_bytes(rewritten.encode("utf-8"))
     return notes
@@ -394,8 +423,9 @@ def _state(capability: str) -> str:
         records = load_snapshot()["capabilities"]
     except SnapshotError:
         return "supported"
-    state = next((item["state"] for item in records if item["capability_id"] == capability),
-                 "supported")
+    state = next(
+        (item["state"] for item in records if item["capability_id"] == capability), "supported"
+    )
     return str(state)
 
 
@@ -412,8 +442,9 @@ def _case(spec: VerbSpec, cwd: Path) -> NativeCase:
     return replace(output, documents=documents)
 
 
-def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
-                  run: Run = run_native) -> Reply:
+def execute_reply(
+    options: AdapterOptions, request: Request, cwd: Path, *, run: Run = run_native
+) -> Reply:
     """The ``execute`` reply for a declared capability and action (the shell checked both)."""
     payload = request.payload
     capability = str(payload.get("capability"))
@@ -439,8 +470,13 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
     if failure is not None:
         return failure
     rewritten = relativize_outputs(cwd, spec)
-    draft = translate_case(_case(spec, cwd), stage, state=_state(capability),
-                           project=call.project, verb=_verb_name(spec))
+    draft = translate_case(
+        _case(spec, cwd),
+        stage,
+        state=_state(capability),
+        project=call.project,
+        verb=_verb_name(spec),
+    )
     if isinstance(draft, Reply):
         return draft
     notes = [*_selection_notes(spec, selected), *upstream_notes, *rewritten]
@@ -452,4 +488,5 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
 def handler(options: AdapterOptions, *, run: Run = run_native) -> OpHandler:
     def handle(request: Request, cwd: Path) -> Reply:
         return execute_reply(options, request, cwd, run=run)
+
     return handle

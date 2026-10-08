@@ -24,19 +24,38 @@ def test_table_covers_every_budget_profile_in_order() -> None:
 def test_table_values_match_the_design() -> None:
     economy, balanced, maximum = (PROFILES[n] for n in ORDER)
     assert economy == ContextProfile(
-        name="economy", budget_bytes=65_536, max_files=16,
-        tiers=frozenset({"metadata", "reference"}), negotiation_rounds=0, max_providers=1,
-        fallback=False, verification="minimal", execute_timeout_s=60.0)
+        name="economy",
+        budget_bytes=65_536,
+        max_files=16,
+        tiers=frozenset({"metadata", "reference"}),
+        negotiation_rounds=0,
+        max_providers=1,
+        fallback=False,
+        verification="minimal",
+        execute_timeout_s=60.0,
+    )
     assert balanced == ContextProfile(
-        name="balanced", budget_bytes=262_144, max_files=64,
+        name="balanced",
+        budget_bytes=262_144,
+        max_files=64,
         tiers=frozenset({"metadata", "reference", "excerpt", "requested"}),
-        negotiation_rounds=1, max_providers=1, fallback=True, verification="conditional",
-        execute_timeout_s=180.0)
+        negotiation_rounds=1,
+        max_providers=1,
+        fallback=True,
+        verification="conditional",
+        execute_timeout_s=180.0,
+    )
     assert maximum == ContextProfile(
-        name="max", budget_bytes=1_048_576, max_files=256,
+        name="max",
+        budget_bytes=1_048_576,
+        max_files=256,
         tiers=frozenset({"metadata", "reference", "excerpt", "requested"}),
-        negotiation_rounds=2, max_providers=4, fallback=True, verification="strong",
-        execute_timeout_s=600.0)
+        negotiation_rounds=2,
+        max_providers=4,
+        fallback=True,
+        verification="strong",
+        execute_timeout_s=600.0,
+    )
 
 
 def test_budget_and_max_files_strictly_grow_from_economy_to_max() -> None:

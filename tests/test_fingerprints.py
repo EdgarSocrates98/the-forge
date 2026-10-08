@@ -76,8 +76,7 @@ def _no_read(monkeypatch: pytest.MonkeyPatch) -> None:
 # --- reuse (5.1) ----------------------------------------------------------------------------
 
 
-def test_hit_reuses_hash_without_reading_content(
-        ws: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_hit_reuses_hash_without_reading_content(ws: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     resolved = _populate(ws)
     _no_read(monkeypatch)
     store = FingerprintStore(ws)  # loads the cache document before any read is forbidden
@@ -181,9 +180,11 @@ def test_racy_boundary_and_future_mtime(ws: Path) -> None:
     cache = _cache_file(ws)
     doc = json.loads(cache.read_text(encoding="utf-8"))
     entry = doc["entries"]["a.py"]
-    for recorded, reused in ((entry["mtime_ns"] + RACY_WINDOW_NS, False),
-                             (entry["mtime_ns"] - 1, False),  # clock went backwards
-                             (entry["mtime_ns"] + RACY_WINDOW_NS + 1, True)):
+    for recorded, reused in (
+        (entry["mtime_ns"] + RACY_WINDOW_NS, False),
+        (entry["mtime_ns"] - 1, False),  # clock went backwards
+        (entry["mtime_ns"] + RACY_WINDOW_NS + 1, True),
+    ):
         entry["recorded_ns"] = recorded
         cache.write_text(json.dumps(doc), encoding="utf-8")
         got = FingerprintStore(ws).file("a.py", resolved)
@@ -204,7 +205,8 @@ def test_racy_miss_rerecords_so_a_later_run_hits(ws: Path) -> None:
 
 
 def test_file_changing_during_read_is_hashed_but_not_recorded(
-        ws: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    ws: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     resolved = _write(ws, "a.py", b"one\n")
     real = fp._read_bytes
 
@@ -233,21 +235,33 @@ def test_missing_cache_is_silent(ws: Path) -> None:
     assert store.warnings == []
 
 
-@pytest.mark.parametrize("mutate", [
-    pytest.param(lambda d: "{not json", id="malformed-json"),
-    pytest.param(lambda d: [], id="not-an-object"),
-    pytest.param(lambda d: {**d, "schema": "theforge/FingerprintCache/v9"}, id="unknown-version"),
-    pytest.param(lambda d: {**d, "root": d["root"] + "-elsewhere"}, id="other-root"),
-    pytest.param(lambda d: {**d, "sneaky": True}, id="unknown-field"),
-    pytest.param(lambda d: {**d, "entries": {"a.py": {**d["entries"]["a.py"], "size": "1"}}},
-                 id="wrong-type"),
-    pytest.param(lambda d: {**d, "entries": {"a.py": {**d["entries"]["a.py"], "sha256": "zz"}}},
-                 id="bad-hash"),
-    pytest.param(lambda d: {**d, "entries": {"a.py": {**d["entries"]["a.py"], "size": -1}}},
-                 id="negative-size"),
-])
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(lambda d: "{not json", id="malformed-json"),
+        pytest.param(lambda d: [], id="not-an-object"),
+        pytest.param(
+            lambda d: {**d, "schema": "theforge/FingerprintCache/v9"}, id="unknown-version"
+        ),
+        pytest.param(lambda d: {**d, "root": d["root"] + "-elsewhere"}, id="other-root"),
+        pytest.param(lambda d: {**d, "sneaky": True}, id="unknown-field"),
+        pytest.param(
+            lambda d: {**d, "entries": {"a.py": {**d["entries"]["a.py"], "size": "1"}}},
+            id="wrong-type",
+        ),
+        pytest.param(
+            lambda d: {**d, "entries": {"a.py": {**d["entries"]["a.py"], "sha256": "zz"}}},
+            id="bad-hash",
+        ),
+        pytest.param(
+            lambda d: {**d, "entries": {"a.py": {**d["entries"]["a.py"], "size": -1}}},
+            id="negative-size",
+        ),
+    ],
+)
 def test_invalid_cache_is_discarded_with_warning(
-        ws: Path, mutate: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    ws: Path, mutate: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
     resolved = _populate(ws)
     cache = _cache_file(ws)
     doc = mutate(json.loads(cache.read_text(encoding="utf-8")))
@@ -351,8 +365,7 @@ def test_entry_altered_by_redaction_is_not_written(ws: Path) -> None:
     assert any("not cached" in w for w in store.warnings)
 
 
-def test_document_altered_by_redaction_is_refused_and_old_copy_removed(
-        tmp_path: Path) -> None:
+def test_document_altered_by_redaction_is_refused_and_old_copy_removed(tmp_path: Path) -> None:
     root = tmp_path / "token=abcdef123"
     root.mkdir()
     resolved = _write(root, "a.py", b"x")
@@ -395,16 +408,21 @@ def test_disabled_store_never_reads_nor_writes_cache(ws: Path) -> None:
 
 
 _FILES = st.dictionaries(
-    st.sampled_from(["a.py", "b.txt", "pkg/c.py", "pkg/d.md"]),
-    st.binary(max_size=64), min_size=1)
+    st.sampled_from(["a.py", "b.txt", "pkg/c.py", "pkg/d.md"]), st.binary(max_size=64), min_size=1
+)
 
 
-@settings(max_examples=40, deadline=None, database=None, derandomize=True,
-          suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=40,
+    deadline=None,
+    database=None,
+    derandomize=True,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 @given(rounds=st.lists(_FILES, min_size=1, max_size=4), aged=st.booleans())
 def test_property_cache_on_or_off_yields_identical_hashes(
-        tmp_path_factory: pytest.TempPathFactory, rounds: list[dict[str, bytes]],
-        aged: bool) -> None:
+    tmp_path_factory: pytest.TempPathFactory, rounds: list[dict[str, bytes]], aged: bool
+) -> None:
     root = tmp_path_factory.mktemp("prop")
     cache_base = tmp_path_factory.mktemp("prop-cache")
     for files in rounds:
@@ -474,12 +492,17 @@ def test_prefix_lines_none_when_first_line_does_not_fit(tmp_path: Path) -> None:
     assert prefix_lines(tmp_path / "missing.txt", 10) is None
 
 
-@settings(max_examples=80, deadline=None, database=None, derandomize=True,
-          suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(data=st.binary(max_size=80),
-       budget=st.integers(min_value=0, max_value=100))
+@settings(
+    max_examples=80,
+    deadline=None,
+    database=None,
+    derandomize=True,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(data=st.binary(max_size=80), budget=st.integers(min_value=0, max_value=100))
 def test_property_prefix_agrees_with_hash_lines(
-        tmp_path_factory: pytest.TempPathFactory, data: bytes, budget: int) -> None:
+    tmp_path_factory: pytest.TempPathFactory, data: bytes, budget: int
+) -> None:
     path = tmp_path_factory.mktemp("pfx") / "f.bin"
     path.write_bytes(data)
     got = prefix_lines(path, budget)

@@ -63,18 +63,24 @@ def describe(options: AdapterOptions) -> OpHandler:
         try:
             snapshot = load_snapshot()
         except SnapshotError as exc:
-            return fail(SNAPSHOT_INVALID, str(exc),
-                        unlock="reinstall the adapter or re-record the snapshot with "
-                               "python -m theforge_apiforge.record")
-        return Reply(status="ok",
-                     payload=manifest_payload(snapshot, provider_id=PROVIDER_ID,
-                                              version=VERSION))
+            return fail(
+                SNAPSHOT_INVALID,
+                str(exc),
+                unlock="reinstall the adapter or re-record the snapshot with "
+                "python -m theforge_apiforge.record",
+            )
+        return Reply(
+            status="ok",
+            payload=manifest_payload(snapshot, provider_id=PROVIDER_ID, version=VERSION),
+        )
+
     return handle
 
 
 def health(options: AdapterOptions) -> OpHandler:
     def handle(request: Request, cwd: Path) -> Reply:
         return health_reply(options)
+
     return handle
 
 

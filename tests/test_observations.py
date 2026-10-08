@@ -30,21 +30,38 @@ from theforge.observations import (
 
 
 def obs(**kw: object) -> ExecutionObservation:
-    base = dict(producer=PRODUCER, created_at="2026-01-01T00:00:00Z",
-                run_id="r1", provider="echo-forge", capability="data.pipeline",
-                status="ok")
+    base = dict(
+        producer=PRODUCER,
+        created_at="2026-01-01T00:00:00Z",
+        run_id="r1",
+        provider="echo-forge",
+        capability="data.pipeline",
+        status="ok",
+    )
     base.update(kw)
     return ExecutionObservation(**base)  # type: ignore[arg-type]
 
 
-def perf_entry(provider: str, capability: str, runs: int,
-               surface: str | None, updated: str
-               ) -> ProviderCapabilityPerformance:
+def perf_entry(
+    provider: str, capability: str, runs: int, surface: str | None, updated: str
+) -> ProviderCapabilityPerformance:
     return ProviderCapabilityPerformance(
-        provider=provider, capability=capability, runs=runs,
-        ok=runs, partial=0, failed=0, verified_runs=0, evidence=0,
-        artifacts=0, context_bytes=0, files_sent=0, files_cited=0,
-        duration_ms=0.0, surface=surface, updated_at=updated)
+        provider=provider,
+        capability=capability,
+        runs=runs,
+        ok=runs,
+        partial=0,
+        failed=0,
+        verified_runs=0,
+        evidence=0,
+        artifacts=0,
+        context_bytes=0,
+        files_sent=0,
+        files_cited=0,
+        duration_ms=0.0,
+        surface=surface,
+        updated_at=updated,
+    )
 
 
 # ---------- contract ----------
@@ -87,13 +104,16 @@ class TestContract:
     def test_receipt_rejects_unknown_axis(self) -> None:
         with pytest.raises(ContractError, match="unknown axes"):
             GlobalEconomyReceipt(
-                producer=PRODUCER, created_at="t", observations=1, runs=1,
-                axes={"mystery": EconomyAxis(status="observed", value=1.0)})
+                producer=PRODUCER,
+                created_at="t",
+                observations=1,
+                runs=1,
+                axes={"mystery": EconomyAxis(status="observed", value=1.0)},
+            )
 
     def test_receipt_runs_cannot_exceed_observations(self) -> None:
         with pytest.raises(ContractError, match="runs exceed"):
-            GlobalEconomyReceipt(
-                producer=PRODUCER, created_at="t", observations=1, runs=2)
+            GlobalEconomyReceipt(producer=PRODUCER, created_at="t", observations=1, runs=2)
 
 
 # ---------- environment fingerprint ----------
@@ -133,15 +153,12 @@ class TestStore:
         assert len(observations) == 1
         assert warning is not None and "skipped 2" in warning
 
-    def test_compaction_keeps_newest(self, tmp_path: Path,
-                                     monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            "theforge.observations.MAX_OBSERVATIONS_BYTES", 4 * 1024)
+    def test_compaction_keeps_newest(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("theforge.observations.MAX_OBSERVATIONS_BYTES", 4 * 1024)
         big = "x" * 400
         warnings = []
         for i in range(60):
-            warnings.append(record_observation(
-                tmp_path, obs(run_id=f"r{i:03}", limitations=[big])))
+            warnings.append(record_observation(tmp_path, obs(run_id=f"r{i:03}", limitations=[big])))
         observations, _ = load_observations(tmp_path)
         assert observations[-1].run_id == "r059"
         assert len(observations) < 60
@@ -163,9 +180,9 @@ class TestStore:
 # ---------- global receipt ----------
 
 
-def receipt_for(observations: list[ExecutionObservation],
-                performance: ProviderPerformance | None = None
-                ) -> GlobalEconomyReceipt:
+def receipt_for(
+    observations: list[ExecutionObservation], performance: ProviderPerformance | None = None
+) -> GlobalEconomyReceipt:
     return build_global_receipt(observations, performance)
 
 
@@ -177,10 +194,12 @@ class TestGlobalReceipt:
         assert all(a.status == "not_applicable" for a in receipt.axes.values())
 
     def test_fully_measured_axis_is_observed_sum(self) -> None:
-        receipt = receipt_for([
-            obs(run_id="r1", tokens=100, wall_time_ms=10.0),
-            obs(run_id="r2", tokens=50, wall_time_ms=20.0, provider="b-forge"),
-        ])
+        receipt = receipt_for(
+            [
+                obs(run_id="r1", tokens=100, wall_time_ms=10.0),
+                obs(run_id="r2", tokens=50, wall_time_ms=20.0, provider="b-forge"),
+            ]
+        )
         assert receipt.axes["tokens"].status == "observed"
         assert receipt.axes["tokens"].value == 150
         assert receipt.axes["tokens"].coverage == 2
@@ -202,10 +221,12 @@ class TestGlobalReceipt:
         assert receipt.conflicts == []
 
     def test_conflicting_observations_are_preserved(self) -> None:
-        receipt = receipt_for([
-            obs(tokens=100, wall_time_ms=5.0),
-            obs(tokens=300, wall_time_ms=5.0),
-        ])
+        receipt = receipt_for(
+            [
+                obs(tokens=100, wall_time_ms=5.0),
+                obs(tokens=300, wall_time_ms=5.0),
+            ]
+        )
         assert receipt.axes["tokens"].status == "conflict"
         assert receipt.axes["tokens"].value is None
         assert any("tokens: 100.0 vs 300.0" in c for c in receipt.conflicts)
@@ -217,40 +238,48 @@ class TestGlobalReceipt:
         assert any("status:" in c for c in receipt.conflicts)
 
     def test_task_families_sorted_distinct(self) -> None:
-        receipt = receipt_for([
-            obs(run_id="r1", task_family="data.migration"),
-            obs(run_id="r2", task_family="data.audit"),
-            obs(run_id="r3"),
-        ])
+        receipt = receipt_for(
+            [
+                obs(run_id="r1", task_family="data.migration"),
+                obs(run_id="r2", task_family="data.audit"),
+                obs(run_id="r3"),
+            ]
+        )
         assert receipt.task_families == ["data.audit", "data.migration"]
 
     def test_maturity_from_performance_store(self) -> None:
         performance = ProviderPerformance(
-            producer=PRODUCER, created_at="t", entries=[
-                perf_entry("p1", "data.pipeline", 10, "s-new",
-                           "2026-01-02T00:00:00Z"),
-                perf_entry("p1", "data.pipeline", 8, "s-old",
-                           "2026-01-01T00:00:00Z"),
-            ])
+            producer=PRODUCER,
+            created_at="t",
+            entries=[
+                perf_entry("p1", "data.pipeline", 10, "s-new", "2026-01-02T00:00:00Z"),
+                perf_entry("p1", "data.pipeline", 8, "s-old", "2026-01-01T00:00:00Z"),
+            ],
+        )
         receipt = receipt_for([obs()], performance)
         assert receipt.maturity["p1/data.pipeline@s-new"] == "mature"
         assert receipt.maturity["p1/data.pipeline@s-old"] == "stale"
 
     def test_maturity_states_by_runs(self) -> None:
         performance = ProviderPerformance(
-            producer=PRODUCER, created_at="t", entries=[
+            producer=PRODUCER,
+            created_at="t",
+            entries=[
                 perf_entry("p1", "c1", 1, "s", "2026-01-01T00:00:00Z"),
                 perf_entry("p2", "c1", 4, "s", "2026-01-01T00:00:00Z"),
-            ])
+            ],
+        )
         receipt = receipt_for([obs()], performance)
         assert receipt.maturity["p1/c1@s"] == "cold"
         assert receipt.maturity["p2/c1@s"] == "warming"
 
     def test_limitations_merged_distinct(self) -> None:
-        receipt = receipt_for([
-            obs(run_id="r1", limitations=["a", "b"]),
-            obs(run_id="r2", limitations=["b", "c"]),
-        ])
+        receipt = receipt_for(
+            [
+                obs(run_id="r1", limitations=["a", "b"]),
+                obs(run_id="r2", limitations=["b", "c"]),
+            ]
+        )
         assert receipt.limitations == ["a", "b", "c"]
 
     def test_deterministic_order(self) -> None:
@@ -262,6 +291,7 @@ class TestGlobalReceipt:
 
     def test_serialization_roundtrip(self) -> None:
         from theforge.contracts.base import from_dict, to_dict
+
         receipt = receipt_for([obs(tokens=7, task_family="data.audit")])
         again = from_dict(GlobalEconomyReceipt, to_dict(receipt), strict=True)
         assert again == receipt
@@ -282,11 +312,11 @@ class TestE2E:
         case_a(tmp_path)
         forge = tmp_path / ".forge"
         requirement = CapabilityRequirement(
-            id="req-1", capability="spark.performance",
-            task_family="data.migration")
+            id="req-1", capability="spark.performance", task_family="data.migration"
+        )
         out = Forger(tmp_path, Registry(forge), RunStore(forge)).ask(
-            AskRequest(intent="analise esse glue job lento",
-                       requirement=requirement))
+            AskRequest(intent="analise esse glue job lento", requirement=requirement)
+        )
         assert out.status == "ok"
 
         observations, warning = load_observations(tmp_path)
@@ -315,24 +345,96 @@ class TestE2E:
         cmd_economy_report(_args_at(tmp_path, json_=False))
         cmd_economy_report(_args_at(tmp_path, json_=True))
 
+    def test_economy_report_exposes_context_roi_and_advisory(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from theforge.cli.commands import cmd_economy_report
+
+        for i in range(8):
+            record_observation(
+                tmp_path,
+                obs(
+                    run_id=f"roi-{i}",
+                    task_family="data.audit",
+                    surface_fingerprint="surface-a",
+                    profile="balanced",
+                    context_bytes=1_000,
+                    context_items=10,
+                    context_items_cited=1,
+                    verification="passed",
+                ),
+            )
+        assert cmd_economy_report(_args_at(tmp_path, json_=True)) == 0
+        payload = json.loads(capsys.readouterr().out)
+        (row,) = payload["context_roi"]
+        assert row["roi"]["maturity"] == "mature"
+        assert row["roi"]["utilization_ratio"] == pytest.approx(0.1)
+        recommendation = row["recommendation"]
+        assert recommendation is not None
+        assert recommendation["advisory"] is True
+        assert recommendation["current_budget_bytes"] == 262_144
+        assert recommendation["suggested_budget_bytes"] == 131_072
+
+    def test_economy_report_does_not_mix_profiles_for_roi_advice(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from theforge.cli.commands import cmd_economy_report
+
+        base = dict(
+            task_family="data.audit",
+            surface_fingerprint="surface-1",
+            context_bytes=100,
+            context_items=10,
+            context_items_cited=1,
+            verification="passed",
+        )
+        for index, profile in enumerate(
+            [
+                "economy",
+                "balanced",
+                "economy",
+                "balanced",
+                "economy",
+                "balanced",
+                "economy",
+                "balanced",
+            ]
+        ):
+            record_observation(
+                tmp_path,
+                obs(run_id=f"mixed-{index}", profile=profile, **base),
+            )
+        cmd_economy_report(_args_at(tmp_path, json_=True))
+        payload = json.loads(capsys.readouterr().out)
+        rows = payload["context_roi"]
+        assert len(rows) == 1
+        assert rows[0]["recommendation"] is None
+        assert "one known profile" in rows[0]["recommendation_limitation"]
+
     def test_discovery_report_carries_economy(self, tmp_path: Path) -> None:
         from theforge.contracts.negotiation import CapabilityRequirement
         from theforge.registry.discovery import discover
         from theforge.registry.sources import SourceSpec
 
         document = tmp_path / "reg.json"
-        document.write_text(json.dumps({
-            "schema": "theforge/RegistryDocument/v1",
-            "registry": {"id": "feed", "name": "Feed",
-                         "url": "https://reg.example"},
-            "produced_at": "2026-01-01T00:00:00Z",
-            "entries": [],
-        }), encoding="utf-8")
-        spec = SourceSpec(id="feed", kind="local-file", enabled=True,
-                          path=str(document))
+        document.write_text(
+            json.dumps(
+                {
+                    "schema": "theforge/RegistryDocument/v1",
+                    "registry": {"id": "feed", "name": "Feed", "url": "https://reg.example"},
+                    "produced_at": "2026-01-01T00:00:00Z",
+                    "entries": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        spec = SourceSpec(id="feed", kind="local-file", enabled=True, path=str(document))
         report = discover(
             CapabilityRequirement(id="r", capability="data.pipeline"),
-            [], specs=[spec], forge_dir=tmp_path)
+            [],
+            specs=[spec],
+            forge_dir=tmp_path,
+        )
         assert report.registry_calls == 1
         assert report.metadata_bytes == document.stat().st_size
         assert report.network_ms is None  # local-file reads pay no latency

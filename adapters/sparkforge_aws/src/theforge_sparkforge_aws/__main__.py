@@ -85,15 +85,19 @@ def _availability(options: AdapterOptions) -> Reply | None:
     """A refusal (or replay error) when the Spark Forge AWS cannot be used, else None."""
     if options.replay is None:
         reason = backend.live_unavailable_reason()
-        unlock = (f"install sparkforge-aws >=0.5,<0.6 with {sys.executable} -m pip, or "
-                  "register the adapter with the Spark Forge AWS's own interpreter")
+        unlock = (
+            f"install sparkforge-aws >=0.5,<0.6 with {sys.executable} -m pip, or "
+            "register the adapter with the Spark Forge AWS's own interpreter"
+        )
     else:
         environment = backend.load_environment(options.replay)
         if isinstance(environment, backend.ReplayProblem):
             return fail(environment.code, environment.detail, field="replay")
         reason = environment.unavailable_reason()
-        unlock = ("record the scenario with an interpreter that has sparkforge-aws: "
-                  "python -m theforge_sparkforge_aws.record --environment <dir>")
+        unlock = (
+            "record the scenario with an interpreter that has sparkforge-aws: "
+            "python -m theforge_sparkforge_aws.record --environment <dir>"
+        )
     if reason is None:
         return None
     return refuse(UNAVAILABLE, reason, unlock=unlock)
@@ -106,9 +110,11 @@ def _describe(options: AdapterOptions) -> OpHandler:
             return unavailable
         snapshot = catalog.load_snapshot()
         if isinstance(snapshot, str):
-            return fail(SNAPSHOT_INVALID, snapshot,
-                        unlock="reinstall theforge-sparkforge-aws-adapter")
+            return fail(
+                SNAPSHOT_INVALID, snapshot, unlock="reinstall theforge-sparkforge-aws-adapter"
+            )
         return Reply(status="ok", payload=manifest(catalog.derive(snapshot)))
+
     return handle
 
 
@@ -123,9 +129,11 @@ def _observation(options: AdapterOptions) -> health.Observation | Reply:
     if isinstance(recorded, backend.ReplayProblem):
         return fail(recorded.code, recorded.detail, field="replay")
     return health.Observation(
-        interpreter="the recorded interpreter", python=environment.python,
+        interpreter="the recorded interpreter",
+        python=environment.python,
         dispatcher=recorded.dispatcher and environment.specialist_version is not None,
-        specialist_version=recorded.specialist_version)
+        specialist_version=recorded.specialist_version,
+    )
 
 
 def _health(options: AdapterOptions) -> OpHandler:
@@ -134,10 +142,14 @@ def _health(options: AdapterOptions) -> OpHandler:
         if isinstance(observation, Reply):
             return observation
         snapshot = catalog.load_snapshot()
-        payload = health.report(observation, window=SUPPORTED_SPECIALIST,
-                                assumed=options.assume_specialist_version,
-                                snapshot_problem=snapshot if isinstance(snapshot, str) else None)
+        payload = health.report(
+            observation,
+            window=SUPPORTED_SPECIALIST,
+            assumed=options.assume_specialist_version,
+            snapshot_problem=snapshot if isinstance(snapshot, str) else None,
+        )
         return Reply(status="ok", payload=payload)
+
     return handle
 
 

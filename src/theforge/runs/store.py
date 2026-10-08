@@ -15,6 +15,7 @@ from theforge.contracts import (
     EconomyRollup,
     ExecutionReceipt,
     ExecutionResult,
+    GlobalStopDecision,
     RiskAssessment,
     RoutingDecision,
     RunTelemetry,
@@ -31,7 +32,11 @@ from theforge.contracts.diagnostic import Diagnostic
 from theforge.contracts.graph import WorkspaceGraph
 from theforge.contracts.handoff import Handoff
 from theforge.contracts.installation import InstallationPlan
-from theforge.contracts.integrity import validate_receipt
+from theforge.contracts.integrity import (
+    validate_plan_result,
+    validate_plan_result_links,
+    validate_receipt,
+)
 from theforge.contracts.plan import (
     DecisionRecord,
     ExecutionPlan,
@@ -54,12 +59,34 @@ RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 # installation, plan-result and graph belong to plan runs; handoff to plan node runs;
 # verification and diagnostic (--debug) to any run. ``workspace-descriptor`` is the
 # multi-repo WorkspaceDescriptor, distinct from the ContextPack workspace summary.
-ARTIFACTS = ("task", "workspace-descriptor", "routing", "plan", "installation", "risk",
-             "handoff", "context", "context-r1", "context-r2", "result", "plan-state",
-             "plan-result", "graph", "capability-graph", "semantic-proposal",
-             "routing-proposal", "decision", "economy",
-             "verification", "telemetry", "diagnostic", "complexity", "budget",
-             "receipt")
+ARTIFACTS = (
+    "task",
+    "workspace-descriptor",
+    "routing",
+    "plan",
+    "installation",
+    "risk",
+    "handoff",
+    "context",
+    "context-r1",
+    "context-r2",
+    "result",
+    "plan-state",
+    "plan-result",
+    "graph",
+    "capability-graph",
+    "semantic-proposal",
+    "routing-proposal",
+    "decision",
+    "economy",
+    "global-stop",
+    "verification",
+    "telemetry",
+    "diagnostic",
+    "complexity",
+    "budget",
+    "receipt",
+)
 ARTIFACT_TYPES: Final[dict[str, type]] = {
     "task": TaskSpec,
     "workspace-descriptor": WorkspaceDescriptor,
@@ -81,6 +108,7 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
     "plan-result": PlanResult,
     "decision": DecisionRecord,
     "economy": EconomyRollup,
+    "global-stop": GlobalStopDecision,
     "graph": WorkspaceGraph,
     "verification": VerificationResult,
     "telemetry": RunTelemetry,
@@ -144,8 +172,9 @@ class RunStore:
         base = Path(os.path.realpath(self.runs_dir))
         real = Path(os.path.realpath(path))
         if real != base and base not in real.parents:
-            raise PersistenceError(f"{path} resolves outside the runs directory",
-                                   code=Codes.PERSIST_READ)
+            raise PersistenceError(
+                f"{path} resolves outside the runs directory", code=Codes.PERSIST_READ
+            )
         return path
 
     def _artifact_file(self, run_id: str, name: str) -> Path | None:
@@ -163,7 +192,8 @@ class RunStore:
         if not stat.S_ISREG(st.st_mode):
             raise PersistenceError(
                 f"cannot read {path}: artifact {name!r} is not a regular file",
-                code=Codes.PERSIST_READ)
+                code=Codes.PERSIST_READ,
+            )
         return self._contained(path)
 
     @staticmethod
@@ -178,12 +208,12 @@ class RunStore:
         try:
             fd = os.open(path, flags)
         except OSError as exc:
-            raise PersistenceError(f"cannot read {path}: {exc}",
-                                   code=Codes.PERSIST_READ) from exc
+            raise PersistenceError(f"cannot read {path}: {exc}", code=Codes.PERSIST_READ) from exc
         try:
             if not stat.S_ISREG(os.fstat(fd).st_mode):
-                raise PersistenceError(f"cannot read {path}: not a regular file",
-                                       code=Codes.PERSIST_READ)
+                raise PersistenceError(
+                    f"cannot read {path}: not a regular file", code=Codes.PERSIST_READ
+                )
             with os.fdopen(fd, "rb") as fh:
                 fd = -1
                 return fh.read()
@@ -201,17 +231,35 @@ class RunStore:
         raises ``IntegrityError`` and nothing is written.
         """
         path = self._artifact_path(run_id, name)
+        if name == "plan-result":
+            if not isinstance(contract, PlanResult):
+                raise TypeError(
+                    f"plan-result artifact must be a PlanResult, got {type(contract).__name__}"
+                )
+            validate_plan_result(contract)
+            validate_plan_result_links(
+                contract,
+                global_stop_sha256=self.persisted_sha256(run_id, "global-stop"),
+            )
         if name == "receipt":
             if not isinstance(contract, ExecutionReceipt):
-                raise TypeError(f"receipt artifact must be an ExecutionReceipt, "
-                                f"got {type(contract).__name__}")
+                raise TypeError(
+                    f"receipt artifact must be an ExecutionReceipt, got {type(contract).__name__}"
+                )
             plan_kind = contract.kind == "plan"
             validate_receipt(
-                contract, result_sha256=self.persisted_sha256(run_id, "result"),
-                plan_result_sha256=(self.persisted_sha256(run_id, "plan-result")
-                                    if plan_kind else None),
-                telemetry_sha256=(self.persisted_sha256(run_id, "telemetry")
-                                  if plan_kind else None))
+                contract,
+                result_sha256=self.persisted_sha256(run_id, "result"),
+                plan_result_sha256=(
+                    self.persisted_sha256(run_id, "plan-result") if plan_kind else None
+                ),
+                telemetry_sha256=(
+                    self.persisted_sha256(run_id, "telemetry") if plan_kind else None
+                ),
+                global_stop_sha256=(
+                    self.persisted_sha256(run_id, "global-stop") if plan_kind else None
+                ),
+            )
         data = redact(to_dict(contract))
         text = json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False)
         tmp = path.with_suffix(".json.tmp")
@@ -221,8 +269,10 @@ class RunStore:
             pass  # absent is fine; the write creates it
         else:
             if not stat.S_ISREG(st.st_mode):
-                raise PersistenceError(f"cannot write {path}: artifact {name!r} exists and "
-                                       f"is not a regular file", code=Codes.PERSIST_WRITE)
+                raise PersistenceError(
+                    f"cannot write {path}: artifact {name!r} exists and is not a regular file",
+                    code=Codes.PERSIST_WRITE,
+                )
         self._contained(path)
         try:
             tmp.write_text(text, encoding="utf-8")
@@ -251,11 +301,11 @@ class RunStore:
         except PersistenceError:
             raise
         except ValueError as exc:  # JSON/Unicode decode errors are ValueErrors
-            raise PersistenceError(f"cannot read {path}: {exc}",
-                                   code=Codes.PERSIST_READ) from exc
+            raise PersistenceError(f"cannot read {path}: {exc}", code=Codes.PERSIST_READ) from exc
         if not isinstance(loaded, dict):
-            raise PersistenceError(f"cannot read {path}: expected a JSON object",
-                                   code=Codes.PERSIST_READ)
+            raise PersistenceError(
+                f"cannot read {path}: expected a JSON object", code=Codes.PERSIST_READ
+            )
         return loaded
 
     def read_contract(self, run_id: str, name: str, cls: type[T]) -> T:

@@ -86,8 +86,9 @@ def test_freshness_current_then_stale_on_changed_inputs(tmp_path: Path) -> None:
     assert validity == "current" and stale == []
     # A changed dependency manifest is observable: depfiles fingerprint moves.
     write_file(tmp_path, "requirements.txt", "pyspark==3.5.0\npandas==2.0\n")
-    validity, stale = freshness(intel, scan_workspace(tmp_path, []).files,
-                                _repos(tmp_path), records)
+    validity, stale = freshness(
+        intel, scan_workspace(tmp_path, []).files, _repos(tmp_path), records
+    )
     assert validity == "stale" and "technologies" in stale
 
 
@@ -96,8 +97,8 @@ def test_freshness_never_silent_on_new_files(tmp_path: Path) -> None:
     intel, _ = _refresh(tmp_path)
     write_file(tmp_path, "new_job.py", "y = 2")
     validity, stale = freshness(
-        intel, scan_workspace(tmp_path, []).files, _repos(tmp_path),
-        _rows(_records(tmp_path)))
+        intel, scan_workspace(tmp_path, []).files, _repos(tmp_path), _rows(_records(tmp_path))
+    )
     assert validity == "stale"  # files_sha moved — the snapshot is not "current"
 
 
@@ -160,8 +161,9 @@ def test_refresh_reused_still_matches_plain(tmp_path: Path) -> None:
     assert second.reused  # something was reused
     plain = describe_workspace(tmp_path, _records(tmp_path), scan_workspace(tmp_path, []))
     assert second.descriptor.technologies == plain.technologies
-    assert {r.path: r.dependency_files for r in second.descriptor.repositories} == \
-        {r.path: r.dependency_files for r in plain.repositories}
+    assert {r.path: r.dependency_files for r in second.descriptor.repositories} == {
+        r.path: r.dependency_files for r in plain.repositories
+    }
 
 
 def test_snapshot_from_another_root_is_not_reused(tmp_path: Path) -> None:
@@ -181,10 +183,20 @@ def test_snapshot_from_another_root_is_not_reused(tmp_path: Path) -> None:
 
 
 def test_record_decision_creates_and_dedupes(tmp_path: Path) -> None:
-    assert record_decision(tmp_path, "routing", "spark.performance",
-                           "fixture-spark", "matched 2 signal types", "run-1") is None
-    again = record_decision(tmp_path, "routing", "spark.performance",
-                            "fixture-spark", "matched 2 signal types", "run-2")
+    assert (
+        record_decision(
+            tmp_path,
+            "routing",
+            "spark.performance",
+            "fixture-spark",
+            "matched 2 signal types",
+            "run-1",
+        )
+        is None
+    )
+    again = record_decision(
+        tmp_path, "routing", "spark.performance", "fixture-spark", "matched 2 signal types", "run-2"
+    )
     assert again is None
     memory, warning = load_decisions(tmp_path)
     assert warning is None and memory is not None
@@ -211,15 +223,18 @@ def test_decision_memory_bounded(tmp_path: Path) -> None:
 def test_malformed_decisions_fail_closed(tmp_path: Path) -> None:
     path = tmp_path / INTEL / "decisions.json"
     path.parent.mkdir(parents=True)
-    path.write_text('{"schema": "theforge/DecisionMemory/v1", "entries": ['
-                    '{"id": "x", "id2": "y"}]}', encoding="utf-8")
+    path.write_text(
+        '{"schema": "theforge/DecisionMemory/v1", "entries": [{"id": "x", "id2": "y"}]}',
+        encoding="utf-8",
+    )
     memory, warning = load_decisions(tmp_path)
     assert memory is None and warning is not None
 
 
 def test_decision_contract_rejects_duplicates() -> None:
-    entry = RememberedDecision(id="x", kind="routing", subject="c", choice="p",
-                               basis="b", created_at="t", updated_at="t")
+    entry = RememberedDecision(
+        id="x", kind="routing", subject="c", choice="p", basis="b", created_at="t", updated_at="t"
+    )
     with pytest.raises(ContractError):
         DecisionMemory(producer=P, created_at="t", entries=[entry, entry])
 
@@ -227,8 +242,7 @@ def test_decision_contract_rejects_duplicates() -> None:
 def test_intel_roundtrips_strict(tmp_path: Path) -> None:
     _workspace(tmp_path)
     intel, _ = _refresh(tmp_path)
-    assert from_dict(ProjectIntel,
-                     json.loads(json.dumps(to_dict(intel))), strict=True) == intel
+    assert from_dict(ProjectIntel, json.loads(json.dumps(to_dict(intel))), strict=True) == intel
 
 
 # --- e2e -----------------------------------------------------------------------------
@@ -244,22 +258,36 @@ def test_plan_run_writes_project_intel(tmp_path: Path) -> None:
     store = RunStore(forge)
     executor = PlanExecutor(Forger(tmp_path, Registry(forge), store))
     plan_file = tmp_path / "plan.json"
-    plan_file.write_text(json.dumps({
-        "task_id": "from-file", "pattern": "pipeline", "source": "file",
-        "profile": "balanced",
-        "nodes": [{"id": "n1", "role": "standalone", "provider": "fixture-spark",
-                   "capability": "spark.performance", "action": "diagnose"}],
-    }), encoding="utf-8")
-    out = executor.run(PlanCommand(intent="spec", profile="balanced",
-                                   plan_file=plan_file, execute=True))
+    plan_file.write_text(
+        json.dumps(
+            {
+                "task_id": "from-file",
+                "pattern": "pipeline",
+                "source": "file",
+                "profile": "balanced",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "role": "standalone",
+                        "provider": "fixture-spark",
+                        "capability": "spark.performance",
+                        "action": "diagnose",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = executor.run(
+        PlanCommand(intent="spec", profile="balanced", plan_file=plan_file, execute=True)
+    )
     assert out.result is not None
     intel, warning = load_intel(tmp_path)
     assert warning is None and intel is not None
     assert intel.capability_graph_sha is not None  # the run's graph, referenced
     # The run's descriptor artifact is the same descriptor the intel cached.
     run_dir = tmp_path / ".forge" / "runs" / out.run_id
-    descriptor = json.loads(
-        (run_dir / "workspace-descriptor.json").read_text(encoding="utf-8"))
+    descriptor = json.loads((run_dir / "workspace-descriptor.json").read_text(encoding="utf-8"))
     assert to_dict(intel.descriptor) == descriptor
 
 
@@ -267,7 +295,8 @@ def test_ask_run_records_routing_decision(tmp_path: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     write_file(tmp_path, "jobs_glue.py", "x = 1")
     out = _forger(tmp_path).ask(
-        AskRequest(intent="analise esse glue job lento", profile="balanced"))
+        AskRequest(intent="analise esse glue job lento", profile="balanced")
+    )
     assert out.status == "ok"
     memory, warning = load_decisions(tmp_path)
     assert warning is None and memory is not None
@@ -283,14 +312,29 @@ def test_plan_run_records_pattern_decision(tmp_path: Path) -> None:
     store = RunStore(forge)
     executor = PlanExecutor(Forger(tmp_path, Registry(forge), store))
     plan_file = tmp_path / "plan.json"
-    plan_file.write_text(json.dumps({
-        "task_id": "from-file", "pattern": "pipeline", "source": "file",
-        "profile": "balanced",
-        "nodes": [{"id": "n1", "role": "standalone", "provider": "fixture-spark",
-                   "capability": "spark.performance", "action": "diagnose"}],
-    }), encoding="utf-8")
-    out = executor.run(PlanCommand(intent="spec", profile="balanced",
-                                   plan_file=plan_file, execute=True))
+    plan_file.write_text(
+        json.dumps(
+            {
+                "task_id": "from-file",
+                "pattern": "pipeline",
+                "source": "file",
+                "profile": "balanced",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "role": "standalone",
+                        "provider": "fixture-spark",
+                        "capability": "spark.performance",
+                        "action": "diagnose",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = executor.run(
+        PlanCommand(intent="spec", profile="balanced", plan_file=plan_file, execute=True)
+    )
     assert out.result is not None
     memory, _ = load_decisions(tmp_path)
     assert memory is not None

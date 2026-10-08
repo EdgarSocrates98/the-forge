@@ -35,24 +35,34 @@ _REGISTRY_STATES: Final = frozenset({"invalid", "unreachable", "incompatible"})
 _HEALTH_STATUSES: Final = frozenset({"unavailable", "error"})
 
 
-def build_installation_plan(run_id: str, plan: ExecutionPlan | None,
-                            records: Mapping[str, RegistryRecord],
-                            health: Mapping[str, HealthOutcome], *,
-                            created_at: str | None = None) -> InstallationPlan | None:
+def build_installation_plan(
+    run_id: str,
+    plan: ExecutionPlan | None,
+    records: Mapping[str, RegistryRecord],
+    health: Mapping[str, HealthOutcome],
+    *,
+    created_at: str | None = None,
+) -> InstallationPlan | None:
     """The run's ``InstallationPlan``, already redacted, or ``None`` when nothing is missing."""
-    items = [item for provider, nodes in _candidates(plan, records).items()
-             if (item := _item(provider, nodes, records.get(provider),
-                               health.get(provider))) is not None]
+    items = [
+        item
+        for provider, nodes in _candidates(plan, records).items()
+        if (item := _item(provider, nodes, records.get(provider), health.get(provider))) is not None
+    ]
     if not items:
         return None
-    built = InstallationPlan(producer=PRODUCER,
-                             created_at=created_at if created_at is not None else utc_now(),
-                             run_id=run_id, items=items)
+    built = InstallationPlan(
+        producer=PRODUCER,
+        created_at=created_at if created_at is not None else utc_now(),
+        run_id=run_id,
+        items=items,
+    )
     return from_dict(InstallationPlan, redact(to_dict(built)), strict=True)
 
 
-def _candidates(plan: ExecutionPlan | None,
-                records: Mapping[str, RegistryRecord]) -> dict[str, list[str]]:
+def _candidates(
+    plan: ExecutionPlan | None, records: Mapping[str, RegistryRecord]
+) -> dict[str, list[str]]:
     if plan is None:
         return {provider: [] for provider in sorted(records)}
     by_provider: dict[str, list[str]] = {}
@@ -61,19 +71,38 @@ def _candidates(plan: ExecutionPlan | None,
     return by_provider
 
 
-def _item(provider: str, nodes: list[str], record: RegistryRecord | None,
-          outcome: HealthOutcome | None) -> InstallationItem | None:
+def _item(
+    provider: str, nodes: list[str], record: RegistryRecord | None, outcome: HealthOutcome | None
+) -> InstallationItem | None:
     if record is None:
         detail = f"{provider} is not registered; add it to providers.toml"
-        return InstallationItem(provider=provider, state=ABSENT_STATE, reason=detail,
-                                suggested_action=detail, source="registry", nodes=nodes)
+        return InstallationItem(
+            provider=provider,
+            state=ABSENT_STATE,
+            reason=detail,
+            suggested_action=detail,
+            source="registry",
+            nodes=nodes,
+        )
     if record.state in _REGISTRY_STATES:
         detail = record.error or f"{provider} is {record.state}"
-        return InstallationItem(provider=provider, state=record.state, reason=detail,
-                                suggested_action=detail, source="registry", nodes=nodes)
+        return InstallationItem(
+            provider=provider,
+            state=record.state,
+            reason=detail,
+            suggested_action=detail,
+            source="registry",
+            nodes=nodes,
+        )
     if outcome is not None and outcome.status in _HEALTH_STATUSES:
         detail = outcome.error.detail if outcome.error else f"health {outcome.status}"
         action = (outcome.error.unlock if outcome.error else None) or detail
-        return InstallationItem(provider=provider, state="unavailable", reason=detail,
-                                suggested_action=action, source="health", nodes=nodes)
+        return InstallationItem(
+            provider=provider,
+            state="unavailable",
+            reason=detail,
+            suggested_action=action,
+            source="health",
+            nodes=nodes,
+        )
     return None

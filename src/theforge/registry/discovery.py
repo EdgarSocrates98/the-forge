@@ -54,8 +54,8 @@ class McpToolingNote:
     matched_terms: list[str]
     requires_network: bool
     requires_credentials: bool
-    remotes: list[str]      # "type url"
-    packages: list[str]     # "registryType:identifier"
+    remotes: list[str]  # "type url"
+    packages: list[str]  # "registryType:identifier"
     limitations: list[str]
 
 
@@ -66,7 +66,7 @@ class McpDependency:
     never that the Forge installed or trusts it."""
 
     name: str
-    declared_by: str               # "provider/capability"
+    declared_by: str  # "provider/capability"
     availability: Literal["listed", "unlisted"]
 
 
@@ -75,15 +75,15 @@ class DiscoveryReport:
     """Outcome of remote discovery for one requirement — data, never action."""
 
     requirement: CapabilityRequirement
-    profile: str = "balanced"              # the policy that decided remote consult
+    profile: str = "balanced"  # the policy that decided remote consult
     # Local side: best negotiation state among installed providers.
-    local_state: str = "UNSUPPORTED"       # FULL / PARTIAL / UNSUPPORTED / ...
+    local_state: str = "UNSUPPORTED"  # FULL / PARTIAL / UNSUPPORTED / ...
     local_provider: str | None = None
     satisfied_locally: bool = False
     # Remote side.
     candidates: list[RemoteProviderCandidate] = field(default_factory=list)
     sources_consulted: list[str] = field(default_factory=list)
-    sources_skipped: list[str] = field(default_factory=list)   # disabled/unavailable
+    sources_skipped: list[str] = field(default_factory=list)  # disabled/unavailable
     entries_scanned: int = 0
     entries_excluded: list[str] = field(default_factory=list)  # "provider@ver: reason"
     # Discovery economy (§47): what the lookup itself cost — reads that served
@@ -99,10 +99,9 @@ class DiscoveryReport:
     limitations: list[str] = field(default_factory=list)
 
 
-def evaluate_entry(requirement: CapabilityRequirement,
-                   entry: ForgeRegistryEntry
-                   ) -> tuple[Literal["declared", "partial", "unknown"],
-                              list[str], list[str], list[str], str | None]:
+def evaluate_entry(
+    requirement: CapabilityRequirement, entry: ForgeRegistryEntry
+) -> tuple[Literal["declared", "partial", "unknown"], list[str], list[str], list[str], str | None]:
     """Coarse fit of a remote *claim* against a requirement.
 
     Returns (fit, matched, missing, unknowns, incompatible_reason).
@@ -119,31 +118,56 @@ def evaluate_entry(requirement: CapabilityRequirement,
     if requirement.capability in entry.capabilities:
         matched.append(f"capability:{requirement.capability}")
     else:
-        return "unknown", matched, [f"capability:{requirement.capability}"], \
-            unknowns, None  # not a candidate at all — no reason to report
+        return (
+            "unknown",
+            matched,
+            [f"capability:{requirement.capability}"],
+            unknowns,
+            None,
+        )  # not a candidate at all — no reason to report
 
     runtime = entry.runtime
     if requirement.offline_required and runtime and runtime.requires_network:
-        return "unknown", matched, missing, unknowns, \
-            "requires_network conflicts with offline_required"
+        return (
+            "unknown",
+            matched,
+            missing,
+            unknowns,
+            "requires_network conflicts with offline_required",
+        )
     if not requirement.network_allowed and runtime and runtime.requires_network:
-        return "unknown", matched, missing, unknowns, \
-            "requires_network conflicts with network_allowed=false"
-    if not requirement.credentials_allowed and runtime \
-            and runtime.requires_credentials:
-        return "unknown", matched, missing, unknowns, \
-            "requires_credentials conflicts with credentials_allowed=false"
+        return (
+            "unknown",
+            matched,
+            missing,
+            unknowns,
+            "requires_network conflicts with network_allowed=false",
+        )
+    if not requirement.credentials_allowed and runtime and runtime.requires_credentials:
+        return (
+            "unknown",
+            matched,
+            missing,
+            unknowns,
+            "requires_credentials conflicts with credentials_allowed=false",
+        )
 
     # Platform constraints: "any" satisfies everything; empty = undeclared.
     if requirement.platform_constraints:
         if not entry.platforms:
             unknowns.append("platforms:undeclared")
-        elif "any" in entry.platforms or \
-                set(requirement.platform_constraints) & set(entry.platforms):
+        elif "any" in entry.platforms or set(requirement.platform_constraints) & set(
+            entry.platforms
+        ):
             matched.append("platform")
         else:
-            return "unknown", matched, missing, unknowns, \
-                f"platforms {entry.platforms} miss {requirement.platform_constraints}"
+            return (
+                "unknown",
+                matched,
+                missing,
+                unknowns,
+                f"platforms {entry.platforms} miss {requirement.platform_constraints}",
+            )
 
     # Declared technologies (§23 filter).
     if requirement.technologies:
@@ -172,8 +196,7 @@ def evaluate_entry(requirement: CapabilityRequirement,
 
     # Remote claims top out at "declared": every unverifiable dimension degrades
     # the entry to "partial" — remote metadata can never prove FULL.
-    fit: Literal["declared", "partial"] = \
-        "declared" if not missing and not unknowns else "partial"
+    fit: Literal["declared", "partial"] = "declared" if not missing and not unknowns else "partial"
     return fit, matched, missing, unknowns, None
 
 
@@ -182,23 +205,36 @@ def _signature_state(signatures: list[SignatureRef]) -> Literal["none", "declare
     return "declared" if signatures else "none"
 
 
-def _entry_to_candidate(read: SourceRead, entry: ForgeRegistryEntry,
-                        fit: Literal["declared", "partial", "unknown"],
-                        matched: list[str], missing: list[str],
-                        unknowns: list[str]) -> RemoteProviderCandidate:
+def _entry_to_candidate(
+    read: SourceRead,
+    entry: ForgeRegistryEntry,
+    fit: Literal["declared", "partial", "unknown"],
+    matched: list[str],
+    missing: list[str],
+    unknowns: list[str],
+) -> RemoteProviderCandidate:
     document = read.document
     assert document is not None
     return RemoteProviderCandidate(
-        source=read.spec.id, registry=document.registry.id,
+        source=read.spec.id,
+        registry=document.registry.id,
         registry_url=document.registry.url,
-        provider=entry.provider, version=entry.version,
-        publisher=entry.publisher, distribution=entry.distribution,
+        provider=entry.provider,
+        version=entry.version,
+        publisher=entry.publisher,
+        distribution=entry.distribution,
         manifest_sha256=entry.manifest_sha256,
         signature_state=_signature_state(entry.signatures),
-        freshness=read.freshness, retrieved_at=read.retrieved_at,
-        fit=fit, matched=matched, missing=missing, unknowns=unknowns,
-        protocols=list(entry.protocols), capabilities=list(entry.capabilities),
-        platforms=list(entry.platforms), runtime=entry.runtime,
+        freshness=read.freshness,
+        retrieved_at=read.retrieved_at,
+        fit=fit,
+        matched=matched,
+        missing=missing,
+        unknowns=unknowns,
+        protocols=list(entry.protocols),
+        capabilities=list(entry.capabilities),
+        platforms=list(entry.platforms),
+        runtime=entry.runtime,
         limitations=list(entry.limitations),
     )
 
@@ -211,8 +247,9 @@ def _version_key(candidate: RemoteProviderCandidate) -> tuple[int, int, int]:
 DiscoveryProfile = Literal["economy", "balanced", "max"]
 
 
-def _remote_wanted(profile: DiscoveryProfile, local_state: str,
-                   satisfied: bool, force_remote: bool) -> tuple[bool, str | None]:
+def _remote_wanted(
+    profile: DiscoveryProfile, local_state: str, satisfied: bool, force_remote: bool
+) -> tuple[bool, str | None]:
     """Whether remote sources should be consulted under ``profile`` (§48).
 
     ``economy`` pays a remote read only when nothing local exists at all (or
@@ -228,30 +265,38 @@ def _remote_wanted(profile: DiscoveryProfile, local_state: str,
         # Nothing local can serve the requirement: no provider declares the
         # capability, or the only claimant is hard-incompatible.
         needed = local_state in ("UNSUPPORTED", "INCOMPATIBLE")
-        return needed, (None if needed else
-                        "economy profile: local capability exists — remote "
-                        "sources not consulted")
+        return needed, (
+            None
+            if needed
+            else "economy profile: local capability exists — remote sources not consulted"
+        )
     needed = not satisfied
-    return needed, (None if needed else
-                    "local provider satisfies the requirement — remote "
-                    "sources not consulted")
+    return needed, (
+        None
+        if needed
+        else "local provider satisfies the requirement — remote sources not consulted"
+    )
 
 
-def discover(requirement: CapabilityRequirement,
-             records: Sequence[RegistryRecord], *,
-             specs: Sequence[SourceSpec] | None = None,
-             forge_dir: Path | None = None, force_remote: bool = False,
-             profile: DiscoveryProfile = "balanced",
-             performance: ProviderPerformance | None = None,
-             **source_kwargs: Any) -> DiscoveryReport:
+def discover(
+    requirement: CapabilityRequirement,
+    records: Sequence[RegistryRecord],
+    *,
+    specs: Sequence[SourceSpec] | None = None,
+    forge_dir: Path | None = None,
+    force_remote: bool = False,
+    profile: DiscoveryProfile = "balanced",
+    performance: ProviderPerformance | None = None,
+    **source_kwargs: Any,
+) -> DiscoveryReport:
     """Local-first discovery: negotiate installed providers; consult enabled
     sources under the ``profile`` policy (or ``force_remote``).
     ``source_kwargs`` forwards fetcher/cache_dir to ``read_sources`` (tests)."""
     # Lazy import: ``theforge.negotiation`` imports ``theforge.registry``
     # submodules — keeping this here breaks the import cycle either way.
     from theforge.negotiation import negotiate_all
-    local_results = negotiate_all(requirement, list(records),
-                                  performance=performance)
+
+    local_results = negotiate_all(requirement, list(records), performance=performance)
     top = local_results[0] if local_results else None
     local_state = top.state if top else "UNSUPPORTED"
     satisfied = local_state == "FULL"
@@ -266,8 +311,7 @@ def discover(requirement: CapabilityRequirement,
     metadata_bytes = 0
     network_ms: float | None = None
 
-    wanted, why_not = _remote_wanted(profile, local_state, satisfied,
-                                     force_remote)
+    wanted, why_not = _remote_wanted(profile, local_state, satisfied, force_remote)
     if not wanted:
         assert why_not is not None
         limitations.append(why_not)
@@ -285,8 +329,8 @@ def discover(requirement: CapabilityRequirement,
             if read.document is None or read.status == "invalid":
                 sources_skipped.append(read.spec.id)
                 limitations.append(
-                    f"source {read.spec.id}: {read.status} — "
-                    f"{read.detail or 'no document'}")
+                    f"source {read.spec.id}: {read.status} — {read.detail or 'no document'}"
+                )
                 continue
             sources_consulted.append(read.spec.id)
             registry_calls += 1
@@ -294,33 +338,28 @@ def discover(requirement: CapabilityRequirement,
             if read.latency_ms is not None:
                 network_ms = (network_ms or 0.0) + read.latency_ms
             if read.status == "stale":
-                limitations.append(
-                    f"source {read.spec.id}: document is stale ({read.detail})")
+                limitations.append(f"source {read.spec.id}: document is stale ({read.detail})")
             for entry in read.document.entries:
                 entries_scanned += 1
-                fit, matched, missing, unknowns, incompatible = evaluate_entry(
-                    requirement, entry)
+                fit, matched, missing, unknowns, incompatible = evaluate_entry(requirement, entry)
                 if incompatible is not None:
-                    entries_excluded.append(
-                        f"{entry.provider}@{entry.version}: {incompatible}")
+                    entries_excluded.append(f"{entry.provider}@{entry.version}: {incompatible}")
                     continue
                 if fit == "unknown":
                     continue  # does not declare the capability
-                candidates.append(_entry_to_candidate(
-                    read, entry, fit, matched, missing, unknowns))
+                candidates.append(_entry_to_candidate(read, entry, fit, matched, missing, unknowns))
 
     # MCP awareness (§68-72): provider deps + tooling candidates — a
     # separate object type, never mixed into provider ``candidates``.
     mcp_tooling: list[McpToolingNote] = []
     mcp_dependencies: list[McpDependency] = []
-    declared_deps: dict[str, str] = {}   # server name -> "provider/capability"
+    declared_deps: dict[str, str] = {}  # server name -> "provider/capability"
     for result in local_results:
         if result.state not in ("FULL", "PARTIAL"):
             continue
-        record = next((r for r in records
-                       if r.entry.id == result.provider), None)
+        record = next((r for r in records if r.entry.id == result.provider), None)
         manifest = record.manifest if record else None
-        for cap in (manifest.capabilities if manifest else ()):
+        for cap in manifest.capabilities if manifest else ():
             if cap.id == requirement.capability:
                 for dep in cap.mcp_requires:
                     declared_deps.setdefault(dep, f"{result.provider}/{cap.id}")
@@ -332,8 +371,7 @@ def discover(requirement: CapabilityRequirement,
     # Dependency detection is worth a read even when the profile gates
     # provider-candidate discovery; technology hints pay a fetch only when
     # remote consultation was wanted anyway.
-    mcp_wanted = bool(declared_deps) or (wanted and
-                                         bool(requirement.technologies))
+    mcp_wanted = bool(declared_deps) or (wanted and bool(requirement.technologies))
     if mcp_specs and mcp_wanted:
         tech_terms = {t.lower() for t in requirement.technologies}
         listed_names: set[str] = set()
@@ -342,7 +380,8 @@ def discover(requirement: CapabilityRequirement,
                 if mcp_read.status != "disabled":
                     limitations.append(
                         f"mcp source {mcp_read.spec.id}: {mcp_read.status} — "
-                        f"{mcp_read.detail or 'no document'}")
+                        f"{mcp_read.detail or 'no document'}"
+                    )
                 continue
             registry_calls += 1
             metadata_bytes += mcp_read.bytes_received
@@ -350,49 +389,76 @@ def discover(requirement: CapabilityRequirement,
                 network_ms = (network_ms or 0.0) + mcp_read.latency_ms
             if mcp_read.status == "stale":
                 limitations.append(
-                    f"mcp source {mcp_read.spec.id}: document is stale "
-                    f"({mcp_read.detail})")
+                    f"mcp source {mcp_read.spec.id}: document is stale ({mcp_read.detail})"
+                )
             for mcp_entry in mcp_read.document.entries:
                 listed_names.add(mcp_entry.name)
-                haystack = f"{mcp_entry.name} {mcp_entry.title or ''} " \
-                           f"{mcp_entry.description or ''}".lower()
+                haystack = (
+                    f"{mcp_entry.name} {mcp_entry.title or ''} "
+                    f"{mcp_entry.description or ''}".lower()
+                )
                 hit = sorted(t for t in tech_terms if t in haystack)
                 if hit:
-                    mcp_tooling.append(McpToolingNote(
-                        source=mcp_read.spec.id, name=mcp_entry.name,
-                        version=mcp_entry.version, matched_terms=hit,
-                        requires_network=mcp_entry.requires_network,
-                        requires_credentials=mcp_entry.requires_credentials,
-                        remotes=sorted(f"{r.type} {r.url}"
-                                       for r in mcp_entry.remotes),
-                        packages=sorted(f"{p.registry_type}:{p.identifier}"
-                                        for p in mcp_entry.packages),
-                        limitations=list(mcp_entry.limitations)))
+                    mcp_tooling.append(
+                        McpToolingNote(
+                            source=mcp_read.spec.id,
+                            name=mcp_entry.name,
+                            version=mcp_entry.version,
+                            matched_terms=hit,
+                            requires_network=mcp_entry.requires_network,
+                            requires_credentials=mcp_entry.requires_credentials,
+                            remotes=sorted(f"{r.type} {r.url}" for r in mcp_entry.remotes),
+                            packages=sorted(
+                                f"{p.registry_type}:{p.identifier}" for p in mcp_entry.packages
+                            ),
+                            limitations=list(mcp_entry.limitations),
+                        )
+                    )
         for dep, by in sorted(declared_deps.items()):
-            mcp_dependencies.append(McpDependency(
-                name=dep, declared_by=by,
-                availability="listed" if dep in listed_names else "unlisted"))
+            mcp_dependencies.append(
+                McpDependency(
+                    name=dep,
+                    declared_by=by,
+                    availability="listed" if dep in listed_names else "unlisted",
+                )
+            )
     elif declared_deps:
         for dep, by in sorted(declared_deps.items()):
-            mcp_dependencies.append(McpDependency(
-                name=dep, declared_by=by, availability="unlisted"))
+            mcp_dependencies.append(
+                McpDependency(name=dep, declared_by=by, availability="unlisted")
+            )
         if any(s.kind == "mcp" for s in (specs or [])):
-            limitations.append("mcp sources configured but disabled — "
-                               "dependency availability unknown")
+            limitations.append(
+                "mcp sources configured but disabled — dependency availability unknown"
+            )
     mcp_tooling.sort(key=lambda n: (n.name, n.source))
     mcp_tooling = mcp_tooling[:MAX_MCP_NOTES]
 
     # Deterministic order: declared > partial, then provider, then newest
     # version, then registry — popularity never orders candidates (§34).
-    candidates.sort(key=lambda c: (
-        0 if c.fit == "declared" else 1,
-        c.provider, tuple(-n for n in _version_key(c)), c.registry))
+    candidates.sort(
+        key=lambda c: (
+            0 if c.fit == "declared" else 1,
+            c.provider,
+            tuple(-n for n in _version_key(c)),
+            c.registry,
+        )
+    )
     return DiscoveryReport(
-        requirement=requirement, profile=profile, local_state=local_state,
+        requirement=requirement,
+        profile=profile,
+        local_state=local_state,
         local_provider=top.provider if top else None,
-        satisfied_locally=satisfied, candidates=candidates,
-        sources_consulted=sources_consulted, sources_skipped=sources_skipped,
-        entries_scanned=entries_scanned, entries_excluded=entries_excluded,
-        registry_calls=registry_calls, metadata_bytes=metadata_bytes,
-        network_ms=network_ms, mcp_tooling=mcp_tooling,
-        mcp_dependencies=mcp_dependencies, limitations=limitations)
+        satisfied_locally=satisfied,
+        candidates=candidates,
+        sources_consulted=sources_consulted,
+        sources_skipped=sources_skipped,
+        entries_scanned=entries_scanned,
+        entries_excluded=entries_excluded,
+        registry_calls=registry_calls,
+        metadata_bytes=metadata_bytes,
+        network_ms=network_ms,
+        mcp_tooling=mcp_tooling,
+        mcp_dependencies=mcp_dependencies,
+        limitations=limitations,
+    )

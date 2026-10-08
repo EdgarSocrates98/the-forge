@@ -10,7 +10,7 @@
 # skipping. See docs/real-providers.md.
 #
 # Secret hygiene: SIBLING_REPOS_TOKEN (read access to the sibling repos) is referenced only by
-# the two sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
+# the four sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
 name: ecosystem-real
 
 on:
@@ -108,8 +108,7 @@ jobs:
       - name: Install the core (editable, dev extras, adapters)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge \
-            -e ./adapters/doctordata -e ./adapters/doctorapi
+          python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi
 
       - name: Spark Forge AWS venv (3.11, sparkforge-aws + adapter)
         env:

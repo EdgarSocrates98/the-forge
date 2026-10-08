@@ -41,8 +41,7 @@ ARTIFACT_TYPE_ID = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$")
 # "io.github.org/server") — same loose pattern as contracts/mcp.py.
 MCP_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$")
 # Capability reference: "<capability>" (same provider) or "<provider>/<capability>".
-CAPABILITY_REF = re.compile(
-    r"^([a-z][a-z0-9-]*/)?[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
+CAPABILITY_REF = re.compile(r"^([a-z][a-z0-9-]*/)?[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -68,13 +67,14 @@ class CapabilityRelations:
             for value in getattr(self, name):
                 if not ARTIFACT_TYPE_ID.match(value):
                     raise ContractError(
-                        f"capability relations.{name}: invalid artifact type {value!r}")
-        for name in ("requires", "complements", "conflicts", "can_verify",
-                     "can_review"):
+                        f"capability relations.{name}: invalid artifact type {value!r}"
+                    )
+        for name in ("requires", "complements", "conflicts", "can_verify", "can_review"):
             for value in getattr(self, name):
                 if not CAPABILITY_REF.match(value):
                     raise ContractError(
-                        f"capability relations.{name}: invalid capability ref {value!r}")
+                        f"capability relations.{name}: invalid capability ref {value!r}"
+                    )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -116,8 +116,7 @@ class Capability:
             raise ContractError(f"invalid capability id {self.id!r}")
         for dep in self.mcp_requires:
             if not MCP_NAME_RE.match(dep):
-                raise ContractError(
-                    f"capability {self.id}: invalid mcp_requires name {dep!r}")
+                raise ContractError(f"capability {self.id}: invalid mcp_requires name {dep!r}")
         if not self.actions:
             raise ContractError(f"capability {self.id}: actions must not be empty")
         if self.default_action not in self.actions:
@@ -187,9 +186,11 @@ class ForgeManifest:
         if dup_features:
             raise ContractError(f"manifest {self.id}: duplicate features {dup_features}")
         if self.native_surface_fingerprint is not None and not SHA256_RE.fullmatch(
-                self.native_surface_fingerprint):
+            self.native_surface_fingerprint
+        ):
             raise ContractError(
-                f"manifest {self.id}: native_surface_fingerprint is not a sha256 digest")
+                f"manifest {self.id}: native_surface_fingerprint is not a sha256 digest"
+            )
 
     def capability(self, capability_id: str) -> Capability | None:
         return next((c for c in self.capabilities if c.id == capability_id), None)

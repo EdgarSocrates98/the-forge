@@ -13,9 +13,19 @@ from theforge.contracts.result import ExecutionResult
 from theforge.contracts.task import TaskSpec
 from theforge.contracts.types import ErrorInfo, HealthStatus, Producer, ResponseStatus
 
-__all__ = ["PROTOCOL_V1", "DeltaRequest", "ExecuteRequest", "HealthCheck", "HealthReport",
-           "PlanEstimate", "PlanRequest", "Request", "Response", "VerifyRequest",
-           "new_request_id"]
+__all__ = [
+    "PROTOCOL_V1",
+    "DeltaRequest",
+    "ExecuteRequest",
+    "HealthCheck",
+    "HealthReport",
+    "PlanEstimate",
+    "PlanRequest",
+    "Request",
+    "Response",
+    "VerifyRequest",
+    "new_request_id",
+]
 
 PROTOCOL_V1 = "forge/v1"
 DELTA_MAX_CHANGED_FILES = 256
@@ -88,17 +98,20 @@ class DeltaRequest:
 
     def __post_init__(self) -> None:
         if len(self.baseline_ref) > _DELTA_REF_MAX:
-            raise ContractError(
-                f"delta baseline_ref exceeds {_DELTA_REF_MAX} characters")
+            raise ContractError(f"delta baseline_ref exceeds {_DELTA_REF_MAX} characters")
         if len(self.changed_files) > DELTA_MAX_CHANGED_FILES:
-            raise ContractError(
-                f"delta changed_files exceeds {DELTA_MAX_CHANGED_FILES} entries")
+            raise ContractError(f"delta changed_files exceeds {DELTA_MAX_CHANGED_FILES} entries")
         for path in self.changed_files:
-            if not isinstance(path, str) or not path or path.startswith("/") \
-                    or ".." in PurePosixPath(path).parts or "\\" in path:
+            if (
+                not isinstance(path, str)
+                or not path
+                or path.startswith("/")
+                or ".." in PurePosixPath(path).parts
+                or "\\" in path
+            ):
                 raise ContractError(
-                    f"delta changed_files entry {path!r}: expected a "
-                    "workspace-relative POSIX path")
+                    f"delta changed_files entry {path!r}: expected a workspace-relative POSIX path"
+                )
 
 
 @dataclass(frozen=True, kw_only=True)

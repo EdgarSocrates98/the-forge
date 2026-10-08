@@ -40,19 +40,26 @@ NATIVE = Path(__file__).parent / "fixtures" / "native"
 
 
 def _replay(adapter: str, scenario: str = "default") -> list[str]:
-    return [sys.executable, "-m", f"theforge_{adapter}", "--replay",
-            str(NATIVE / adapter / scenario)]
+    return [
+        sys.executable,
+        "-m",
+        f"theforge_{adapter}",
+        "--replay",
+        str(NATIVE / adapter / scenario),
+    ]
 
 
 # The entry id must equal the manifest's declared provider id.
 DD_ENTRY = {"id": "forge-doctor-data", "argv": _replay("doctordata"), "trust": "local"}
 DA_ENTRY = {"id": "forge-doctor-api", "argv": _replay("doctorapi"), "trust": "local"}
 SPARK_ENTRY = {"id": "spark-forge-aws", "argv": _replay("sparkforge_aws"), "trust": "local"}
-SPARK_CROSS = {"id": "spark-forge-aws", "argv": _replay("sparkforge_aws", "scenarios/cross"),
-               "trust": "local"}
+SPARK_CROSS = {
+    "id": "spark-forge-aws",
+    "argv": _replay("sparkforge_aws", "scenarios/cross"),
+    "trust": "local",
+}
 API_ENTRY = {"id": "api-forge", "argv": _replay("apiforge"), "trust": "local"}
-API_CROSS = {"id": "api-forge", "argv": _replay("apiforge", "scenarios/cross"),
-             "trust": "local"}
+API_CROSS = {"id": "api-forge", "argv": _replay("apiforge", "scenarios/cross"), "trust": "local"}
 
 
 @pytest.fixture
@@ -67,28 +74,44 @@ def _executor(root: Path, entries: list[dict[str, Any]]) -> tuple[PlanExecutor, 
     return PlanExecutor(Forger(root, Registry(forge), store)), store
 
 
-def _node(nid: str, provider: str, capability: str, action: str,
-          *deps: str) -> dict[str, Any]:
-    node: dict[str, Any] = {"id": nid, "role": "standalone", "provider": provider,
-                            "capability": capability, "action": action}
+def _node(nid: str, provider: str, capability: str, action: str, *deps: str) -> dict[str, Any]:
+    node: dict[str, Any] = {
+        "id": nid,
+        "role": "standalone",
+        "provider": provider,
+        "capability": capability,
+        "action": action,
+    }
     if deps:
-        node["depends_on"] = [{"node": d, "epistemic": "explicit",
-                               "evidence": "contract test"} for d in deps]
+        node["depends_on"] = [
+            {"node": d, "epistemic": "explicit", "evidence": "contract test"} for d in deps
+        ]
         node["inputs"] = list(deps)
     return node
 
 
-def _run(root: Path, entries: list[dict[str, Any]], nodes: list[dict[str, Any]],
-         *, profile: str = "max") -> tuple[Any, RunStore]:
+def _run(
+    root: Path, entries: list[dict[str, Any]], nodes: list[dict[str, Any]], *, profile: str = "max"
+) -> tuple[Any, RunStore]:
     executor, store = _executor(root, entries)
     plan = root / "plan.json"
-    plan.write_text(json.dumps({"task_id": "t", "pattern": "pipeline", "source": "file",
-                                # The file must carry a real BudgetProfile; the
-                                # command profile (possibly "auto") wins anyway.
-                                "profile": "max", "nodes": nodes}),
-                    encoding="utf-8")
-    out = executor.run(PlanCommand(intent="ecosystem contract", profile=profile,
-                                   plan_file=plan, execute=True))
+    plan.write_text(
+        json.dumps(
+            {
+                "task_id": "t",
+                "pattern": "pipeline",
+                "source": "file",
+                # The file must carry a real BudgetProfile; the
+                # command profile (possibly "auto") wins anyway.
+                "profile": "max",
+                "nodes": nodes,
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = executor.run(
+        PlanCommand(intent="ecosystem contract", profile=profile, plan_file=plan, execute=True)
+    )
     return out, store
 
 
@@ -102,8 +125,9 @@ def _child(out: Any, nid: str) -> str:
 
 
 def test_doctor_data_bundle_enters_the_forge(tmp_path: Path) -> None:
-    out, store = _run(tmp_path, [DD_ENTRY],
-                      [_node("n1", "forge-doctor-data", "data.scan", "analyze")])
+    out, store = _run(
+        tmp_path, [DD_ENTRY], [_node("n1", "forge-doctor-data", "data.scan", "analyze")]
+    )
     assert out.status == "ok"
     run_id = _child(out, "n1")
 
@@ -120,8 +144,9 @@ def test_doctor_data_bundle_enters_the_forge(tmp_path: Path) -> None:
 
 
 def test_doctor_api_bundle_enters_the_forge(tmp_path: Path) -> None:
-    out, store = _run(tmp_path, [DA_ENTRY],
-                      [_node("n1", "forge-doctor-api", "api.diagnose", "analyze")])
+    out, store = _run(
+        tmp_path, [DA_ENTRY], [_node("n1", "forge-doctor-api", "api.diagnose", "analyze")]
+    )
     assert out.status == "ok"
     run_id = _child(out, "n1")
 
@@ -134,8 +159,9 @@ def test_doctor_api_bundle_enters_the_forge(tmp_path: Path) -> None:
 # --- 3/4. Forge handoff -> specialist ----------------------------------------------------------
 
 
-def _assert_handoff_consumed(store: RunStore, plan_run: str, consumer_run: str,
-                             producer_id: str) -> Handoff:
+def _assert_handoff_consumed(
+    store: RunStore, plan_run: str, consumer_run: str, producer_id: str
+) -> Handoff:
     """The delivered handoff is a valid Handoff artifact, anchored on the
     consumer's receipt, and the recorded call consumed it (no audit limitation)."""
     receipt = store.read(consumer_run, "receipt")
@@ -152,9 +178,14 @@ def _assert_handoff_consumed(store: RunStore, plan_run: str, consumer_run: str,
 
 
 def test_forge_handoff_enters_spark_forge(cross: CrossWorkspace) -> None:
-    out, store = _run(cross.root, [DD_ENTRY, SPARK_CROSS], [
-        _node("n1", "forge-doctor-data", "data.scan", "analyze"),
-        _node("n2", "spark-forge-aws", "pyspark.static-analysis", "pyspark", "n1")])
+    out, store = _run(
+        cross.root,
+        [DD_ENTRY, SPARK_CROSS],
+        [
+            _node("n1", "forge-doctor-data", "data.scan", "analyze"),
+            _node("n2", "spark-forge-aws", "pyspark.static-analysis", "pyspark", "n1"),
+        ],
+    )
     assert out.status == "ok"
     spark_run = _child(out, "n2")
 
@@ -163,22 +194,33 @@ def test_forge_handoff_enters_spark_forge(cross: CrossWorkspace) -> None:
     # Every item carries the producer's evidence id — provenance, not raw text.
     assert all(item.id for item in handoff.items)
     # Consumption left upstream-derived evidence on the specialist's result.
-    consumed = [e["id"] for e in store.read(spark_run, "result")["evidence"]
-                if e["id"].startswith("upstream:")]
+    consumed = [
+        e["id"]
+        for e in store.read(spark_run, "result")["evidence"]
+        if e["id"].startswith("upstream:")
+    ]
     assert consumed
 
 
 def test_forge_handoff_enters_api_forge(cross: CrossWorkspace) -> None:
-    out, store = _run(cross.root, [DA_ENTRY, API_CROSS], [
-        _node("n1", "forge-doctor-api", "api.diagnose", "analyze"),
-        _node("n2", "api-forge", "api.analyze", "analyze", "n1")])
+    out, store = _run(
+        cross.root,
+        [DA_ENTRY, API_CROSS],
+        [
+            _node("n1", "forge-doctor-api", "api.diagnose", "analyze"),
+            _node("n2", "api-forge", "api.analyze", "analyze", "n1"),
+        ],
+    )
     assert out.status == "ok"
     api_run = _child(out, "n2")
 
     _assert_handoff_consumed(store, out.run_id, api_run, "forge-doctor-api")
     assert verify_run_hashes(store, api_run).divergences == []
-    consumed = [e["id"] for e in store.read(api_run, "result")["evidence"]
-                if e["id"].startswith("upstream:")]
+    consumed = [
+        e["id"]
+        for e in store.read(api_run, "result")["evidence"]
+        if e["id"].startswith("upstream:")
+    ]
     assert consumed
 
 
@@ -189,8 +231,11 @@ def test_spark_receipt_enters_the_forge(tmp_path: Path) -> None:
     (tmp_path / "jobs").mkdir()
     (tmp_path / "jobs" / "job.py").write_text("import pyspark\n", encoding="utf-8")
     (tmp_path / "requirements.txt").write_text("pyspark\n", encoding="utf-8")
-    out, store = _run(tmp_path, [SPARK_ENTRY],
-                      [_node("n1", "spark-forge-aws", "pyspark.static-analysis", "pyspark")])
+    out, store = _run(
+        tmp_path,
+        [SPARK_ENTRY],
+        [_node("n1", "spark-forge-aws", "pyspark.static-analysis", "pyspark")],
+    )
     assert out.status == "ok"
     run_id = _child(out, "n1")
 
@@ -208,8 +253,7 @@ def test_api_receipt_enters_the_forge(tmp_path: Path) -> None:
     (tmp_path / "openapi.yaml").write_text("openapi: 3.0.0\n", encoding="utf-8")
     (tmp_path / "app.py").write_text("import fastapi\n", encoding="utf-8")
     (tmp_path / "requirements.txt").write_text("fastapi\n", encoding="utf-8")
-    out, store = _run(tmp_path, [API_ENTRY],
-                      [_node("n1", "api-forge", "api.analyze", "analyze")])
+    out, store = _run(tmp_path, [API_ENTRY], [_node("n1", "api-forge", "api.analyze", "analyze")])
     assert out.status == "ok"
     run_id = _child(out, "n1")
 
@@ -228,12 +272,16 @@ def test_final_ecosystem_proof_chain(cross: CrossWorkspace) -> None:
     """The full mesh chain offline (specialist-replay): task -> complexity ->
     capability graph -> observe -> engineer -> verify -> synthesis ->
     receipts -> explain -> trace, for both domains at once."""
-    out, store = _run(cross.root, [DD_ENTRY, DA_ENTRY, SPARK_CROSS, API_CROSS], [
-        _node("n1", "forge-doctor-data", "data.scan", "analyze"),
-        _node("n2", "spark-forge-aws", "pyspark.static-analysis", "pyspark", "n1"),
-        _node("n3", "forge-doctor-api", "api.diagnose", "analyze"),
-        _node("n4", "api-forge", "api.analyze", "analyze", "n3"),
-    ])
+    out, store = _run(
+        cross.root,
+        [DD_ENTRY, DA_ENTRY, SPARK_CROSS, API_CROSS],
+        [
+            _node("n1", "forge-doctor-data", "data.scan", "analyze"),
+            _node("n2", "spark-forge-aws", "pyspark.static-analysis", "pyspark", "n1"),
+            _node("n3", "forge-doctor-api", "api.diagnose", "analyze"),
+            _node("n4", "api-forge", "api.analyze", "analyze", "n3"),
+        ],
+    )
     assert out.status == "ok"
     plan_run = out.run_id
     receipt = store.read(plan_run, "receipt")
@@ -244,23 +292,26 @@ def test_final_ecosystem_proof_chain(cross: CrossWorkspace) -> None:
     # decomposed runs — a plan file fixes its profile, by design).
     refs = store.read(plan_run, "plan-result")
     assert refs is not None
-    for name in ("task", "workspace-descriptor", "capability-graph",
-                 "routing", "budget", "telemetry"):
+    for name in (
+        "task",
+        "workspace-descriptor",
+        "capability-graph",
+        "routing",
+        "budget",
+        "telemetry",
+    ):
         assert store.read_optional(plan_run, name) is not None, name
 
     runs = {n: _child(out, n) for n in ("n1", "n2", "n3", "n4")}
 
     # observe -> engineer: each engineer consumed its doctor's evidence.
-    dd_handoff = _assert_handoff_consumed(store, plan_run, runs["n2"],
-                                          "forge-doctor-data")
-    da_handoff = _assert_handoff_consumed(store, plan_run, runs["n4"],
-                                          "forge-doctor-api")
+    dd_handoff = _assert_handoff_consumed(store, plan_run, runs["n2"], "forge-doctor-data")
+    da_handoff = _assert_handoff_consumed(store, plan_run, runs["n4"], "forge-doctor-api")
     assert dd_handoff.items and da_handoff.items
 
     # engineer -> verify: the independent verification of each engineer ran
     # against the OTHER domain's doctor (can_verify edges, declared).
-    for nid, verifier_id in (("n2", "forge-doctor-data"),
-                             ("n4", "forge-doctor-api")):
+    for nid, verifier_id in (("n2", "forge-doctor-data"), ("n4", "forge-doctor-api")):
         verification = store.read_optional(runs[nid], "verification")
         assert verification is not None, nid
         basis = json.dumps(verification)
@@ -270,8 +321,7 @@ def test_final_ecosystem_proof_chain(cross: CrossWorkspace) -> None:
     # receipts: every run carries provider identity + fingerprints; the whole
     # run set (plan + children + verifies) verifies byte-for-byte (Phase 58).
     for nid, run_id in runs.items():
-        child = from_dict(ExecutionReceipt, store.read(run_id, "receipt"),
-                          strict=True)
+        child = from_dict(ExecutionReceipt, store.read(run_id, "receipt"), strict=True)
         assert child.parent_run == plan_run and child.plan_node == nid
         assert child.provider is not None
         assert child.provider.fingerprint and child.provider.manifest_sha256

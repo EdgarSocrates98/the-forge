@@ -49,33 +49,60 @@ H2 = "b" * 64
 
 
 def ev(eid: str, epistemic: str = "observed", claim: str = "c", **kw: object) -> Evidence:
-    return Evidence(id=eid, epistemic=epistemic, subject=f"s-{eid}", claim=claim,  # type: ignore[arg-type]
-                    producer=SPARK, **kw)  # type: ignore[arg-type]
+    return Evidence(
+        id=eid,
+        epistemic=epistemic,
+        subject=f"s-{eid}",
+        claim=claim,  # type: ignore[arg-type]
+        producer=SPARK,
+        **kw,
+    )  # type: ignore[arg-type]
 
 
-def result(producer: Producer = SPARK, *, findings: list[Finding] | None = None,
-           evidence: list[Evidence] | None = None,
-           artifacts: list[Artifact] | None = None) -> ExecutionResult:
-    return ExecutionResult(producer=producer, created_at=CREATED, status="ok",
-                           findings=findings or [], evidence=evidence or [],
-                           artifacts=artifacts or [], limitations=["full output never crosses"],
-                           unknowns=["raw stdout"])
+def result(
+    producer: Producer = SPARK,
+    *,
+    findings: list[Finding] | None = None,
+    evidence: list[Evidence] | None = None,
+    artifacts: list[Artifact] | None = None,
+) -> ExecutionResult:
+    return ExecutionResult(
+        producer=producer,
+        created_at=CREATED,
+        status="ok",
+        findings=findings or [],
+        evidence=evidence or [],
+        artifacts=artifacts or [],
+        limitations=["full output never crosses"],
+        unknowns=["raw stdout"],
+    )
 
 
-def source(node: str, res: ExecutionResult, provider: Producer = SPARK,
-           status: str = "ok") -> SourceResult:
-    return SourceResult(node=node, run_id=f"run-{node}", provider=provider,
-                        status=status, capability="pyspark.static-analysis",  # type: ignore[arg-type]
-                        action="analyze", result=res)
+def source(
+    node: str, res: ExecutionResult, provider: Producer = SPARK, status: str = "ok"
+) -> SourceResult:
+    return SourceResult(
+        node=node,
+        run_id=f"run-{node}",
+        provider=provider,
+        status=status,
+        capability="pyspark.static-analysis",  # type: ignore[arg-type]
+        action="analyze",
+        result=res,
+    )
 
 
 def target(*inputs: str, deps: tuple[str, ...] | None = None) -> PlanNode:
     on = deps if deps is not None else inputs
-    return PlanNode(id="consumer", role="consumer", provider="fixture-api",
-                    capability="api.analyze", action="analyze",
-                    depends_on=[PlanDependency(node=n, epistemic="explicit", evidence="plan file")
-                                for n in on],
-                    inputs=list(inputs))
+    return PlanNode(
+        id="consumer",
+        role="consumer",
+        provider="fixture-api",
+        capability="api.analyze",
+        action="analyze",
+        depends_on=[PlanDependency(node=n, epistemic="explicit", evidence="plan file") for n in on],
+        inputs=list(inputs),
+    )
 
 
 def build(tgt: PlanNode, *sources: SourceResult) -> Handoff:
@@ -89,17 +116,25 @@ def keys(h: Handoff) -> list[tuple[str, str, str]]:
 
 
 def test_no_inputs_returns_none() -> None:
-    assert build_handoff(PLAN_RUN, target(), [source("spark", result())],
-                         created_at=CREATED) is None
+    assert (
+        build_handoff(PLAN_RUN, target(), [source("spark", result())], created_at=CREATED) is None
+    )
 
 
 def test_items_from_declared_input_with_order_and_provenance() -> None:
     res = result(
-        findings=[Finding(id="f-low", title="low thing", severity="low", evidence_ids=["e2"]),
-                  Finding(id="f-high", title="high thing", severity="high",
-                          evidence_ids=["e3", "missing"])],
-        evidence=[ev("e1", "confirmed"), ev("e2", "unresolved"), ev("e3", "inferred"),
-                  ev("e4", "observed", location=Location(path="jobs/a.py", line=3), hash=H1)],
+        findings=[
+            Finding(id="f-low", title="low thing", severity="low", evidence_ids=["e2"]),
+            Finding(
+                id="f-high", title="high thing", severity="high", evidence_ids=["e3", "missing"]
+            ),
+        ],
+        evidence=[
+            ev("e1", "confirmed"),
+            ev("e2", "unresolved"),
+            ev("e3", "inferred"),
+            ev("e4", "observed", location=Location(path="jobs/a.py", line=3), hash=H1),
+        ],
         artifacts=[Artifact(path="z.json", sha256=H1), Artifact(path="a.json", sha256=H2)],
     )
     h = build(target("spark"), source("spark", res))
@@ -109,10 +144,15 @@ def test_items_from_declared_input_with_order_and_provenance() -> None:
     assert h.limitations == []
     assert [(k, i) for _, k, i in keys(h)] == [
         ("decision", "outcome"),
-        ("finding", "f-high"), ("finding", "f-low"),
+        ("finding", "f-high"),
+        ("finding", "f-low"),
         # referenced by kept findings (finding order), then the rest by epistemic and id
-        ("evidence", "e3"), ("evidence", "e2"), ("evidence", "e1"), ("evidence", "e4"),
-        ("artifact", "a.json"), ("artifact", "z.json"),
+        ("evidence", "e3"),
+        ("evidence", "e2"),
+        ("evidence", "e1"),
+        ("evidence", "e4"),
+        ("artifact", "a.json"),
+        ("artifact", "z.json"),
         ("constraint", "constraint:0"),  # source limitation "full output never crosses"
     ]
     for item in h.items:
@@ -125,7 +165,11 @@ def test_items_from_declared_input_with_order_and_provenance() -> None:
     by_id = {i.id: i for i in h.items}
     # original epistemic status preserved, never upgraded
     assert {e: by_id[e].epistemic for e in ("e1", "e2", "e3", "e4")} == {
-        "e1": "confirmed", "e2": "unresolved", "e3": "inferred", "e4": "observed"}
+        "e1": "confirmed",
+        "e2": "unresolved",
+        "e3": "inferred",
+        "e4": "observed",
+    }
     assert by_id["e4"].location == Location(path="jobs/a.py", line=3) and by_id["e4"].hash == H1
     assert by_id["e1"].subject == "s-e1" and by_id["e1"].claim == "c"
     assert by_id["f-high"].severity == "high" and by_id["f-high"].claim == "high thing"
@@ -170,8 +214,9 @@ def test_duplicate_source_for_a_node_is_rejected() -> None:
 
 
 def test_no_file_content_nor_full_output() -> None:
-    res = result(evidence=[ev("e1", claim="short")],
-                 artifacts=[Artifact(path="report.json", sha256=H1)])
+    res = result(
+        evidence=[ev("e1", claim="short")], artifacts=[Artifact(path="report.json", sha256=H1)]
+    )
     h = build(target("spark"), source("spark", res))
     blob = canonical_json(to_dict(h))
     # limitations cross as redacted, capped constraint items (evidence bus);
@@ -181,9 +226,21 @@ def test_no_file_content_nor_full_output() -> None:
     assert constraint.claim == "full output never crosses"
     artifact = [i for i in h.items if i.kind == "artifact"][0]
     assert artifact.claim == "" and artifact.subject == ""
-    assert set(to_dict(artifact)) == {"kind", "id", "origin", "epistemic", "subject", "claim",
-                                      "location", "hash", "severity", "evidence_ids",
-                                      "derived_from", "also_from", "artifact_type"}
+    assert set(to_dict(artifact)) == {
+        "kind",
+        "id",
+        "origin",
+        "epistemic",
+        "subject",
+        "claim",
+        "location",
+        "hash",
+        "severity",
+        "evidence_ids",
+        "derived_from",
+        "also_from",
+        "artifact_type",
+    }
 
 
 def test_long_claims_are_capped_with_marker() -> None:
@@ -216,8 +273,7 @@ def test_truncation_by_item_count_is_deterministic() -> None:
 def test_truncation_priority_across_sources_and_epistemic() -> None:
     first = result(evidence=[ev(f"a{i:03d}", "unresolved") for i in range(MAX_HANDOFF_ITEMS)])
     second = result(API, evidence=[ev("b-confirmed", "confirmed")])
-    h = build(target("spark", "api"), source("spark", first),
-              source("api", second, provider=API))
+    h = build(target("spark", "api"), source("spark", first), source("api", second, provider=API))
     # the first input fills the budget: the second source is dropped entirely
     # (its identical constraint merges into the first source's, which is dropped too)
     assert {i.origin.node for i in h.items} == {"spark"}
@@ -226,8 +282,12 @@ def test_truncation_priority_across_sources_and_epistemic() -> None:
 
 def test_truncation_by_bytes_stays_under_the_limit() -> None:
     claim = "y" * MAX_CLAIM_CHARS
-    evidence = [Evidence(id=f"e{i:03d}", epistemic="observed", subject="s" * 1000, claim=claim,
-                         producer=SPARK) for i in range(MAX_HANDOFF_ITEMS - 1)]
+    evidence = [
+        Evidence(
+            id=f"e{i:03d}", epistemic="observed", subject="s" * 1000, claim=claim, producer=SPARK
+        )
+        for i in range(MAX_HANDOFF_ITEMS - 1)
+    ]
     h = build(target("spark"), source("spark", result(evidence=evidence)))
     size = len(canonical_json(to_dict(h)).encode("utf-8"))
     assert size <= MAX_HANDOFF_BYTES
@@ -238,27 +298,38 @@ def test_truncation_by_bytes_stays_under_the_limit() -> None:
 
 
 def test_permutations_of_inputs_give_the_same_handoff() -> None:
-    res = result(findings=[Finding(id="f2", title="b", severity="medium"),
-                           Finding(id="f1", title="a", severity="medium")],
-                 evidence=[ev("e2", "proposed"), ev("e1", "proposed"), ev("e0", "confirmed")],
-                 artifacts=[Artifact(path="b", sha256=H1), Artifact(path="a", sha256=H2)])
+    res = result(
+        findings=[
+            Finding(id="f2", title="b", severity="medium"),
+            Finding(id="f1", title="a", severity="medium"),
+        ],
+        evidence=[ev("e2", "proposed"), ev("e1", "proposed"), ev("e0", "confirmed")],
+        artifacts=[Artifact(path="b", sha256=H1), Artifact(path="a", sha256=H2)],
+    )
     baseline = build(target("spark"), source("spark", res))
-    for f, e, a in itertools.product(itertools.permutations(res.findings),
-                                     itertools.permutations(res.evidence),
-                                     itertools.permutations(res.artifacts)):
+    for f, e, a in itertools.product(
+        itertools.permutations(res.findings),
+        itertools.permutations(res.evidence),
+        itertools.permutations(res.artifacts),
+    ):
         perm = replace(res, findings=list(f), evidence=list(e), artifacts=list(a))
         assert build(target("spark"), source("spark", perm)) == baseline
 
 
-@pytest.mark.parametrize("secret", [
-    "password=hunter2-very-secret",
-    "token: abcdefghijklmnop",
-    "sk-" + "A" * 30,
-    "ghp_" + "b" * 36,
-])
+@pytest.mark.parametrize(
+    "secret",
+    [
+        "password=hunter2-very-secret",
+        "token: abcdefghijklmnop",
+        "sk-" + "A" * 30,
+        "ghp_" + "b" * 36,
+    ],
+)
 def test_secret_in_claim_is_redacted(secret: str) -> None:
-    res = result(findings=[Finding(id="f", title=f"leaked {secret} here")],
-                 evidence=[ev("e", claim=f"config has {secret} inside")])
+    res = result(
+        findings=[Finding(id="f", title=f"leaked {secret} here")],
+        evidence=[ev("e", claim=f"config has {secret} inside")],
+    )
     h = build(target("spark"), source("spark", res))
     blob = canonical_json(to_dict(h))
     assert REDACTED in blob
@@ -284,10 +355,19 @@ def test_secret_near_claim_cap_is_not_leaked_by_truncation() -> None:
 def test_secret_in_subject_and_path_is_redacted() -> None:
     password = secrets.token_hex(6)  # random per run: a redaction fixture, not a credential
     secret_url = f"https://user:{password}@example.com/x"
-    res = result(evidence=[Evidence(id="e", epistemic="observed", subject=secret_url,
-                                    claim="c", producer=SPARK,
-                                    location=Location(path="api_key=abcdef123"))],
-                 artifacts=[Artifact(path="out/token=zyxw9876.json", sha256=H1)])
+    res = result(
+        evidence=[
+            Evidence(
+                id="e",
+                epistemic="observed",
+                subject=secret_url,
+                claim="c",
+                producer=SPARK,
+                location=Location(path="api_key=abcdef123"),
+            )
+        ],
+        artifacts=[Artifact(path="out/token=zyxw9876.json", sha256=H1)],
+    )
     h = build(target("spark"), source("spark", res))
     blob = canonical_json(to_dict(h))
     assert password not in blob and "abcdef123" not in blob and "zyxw9876" not in blob
@@ -295,32 +375,56 @@ def test_secret_in_subject_and_path_is_redacted() -> None:
 
 # --- evidence bus (Cycle 3 Wave D) ---------------------------------------------------
 
-def _records(spark_produces: tuple[str, ...] = (), api_consumes: tuple[str, ...] = (),
-             ) -> dict[str, RegistryRecord]:
+
+def _records(
+    spark_produces: tuple[str, ...] = (),
+    api_consumes: tuple[str, ...] = (),
+) -> dict[str, RegistryRecord]:
     def rec(pid: str, cap_id: str, produces: list[str], consumes: list[str]) -> RegistryRecord:
-        cap = Capability(id=cap_id, actions=["run"], default_action="run",
-                         state="supported", operation_class="read_only",
-                         relations=CapabilityRelations(produces=produces, consumes=consumes))
-        manifest = ForgeManifest(id=pid, version="0.1", protocols=["forge/v1"],
-                                 ops=["describe", "health", "execute"], capabilities=[cap])
-        return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
-                              state="ready", manifest=manifest)
-    return {"fixture-spark": rec("fixture-spark", "pyspark.static-analysis",
-                                 list(spark_produces), []),
-            "fixture-api": rec("fixture-api", "api.analyze", [], list(api_consumes))}
+        cap = Capability(
+            id=cap_id,
+            actions=["run"],
+            default_action="run",
+            state="supported",
+            operation_class="read_only",
+            relations=CapabilityRelations(produces=produces, consumes=consumes),
+        )
+        manifest = ForgeManifest(
+            id=pid,
+            version="0.1",
+            protocols=["forge/v1"],
+            ops=["describe", "health", "execute"],
+            capabilities=[cap],
+        )
+        return RegistryRecord(
+            entry=ProviderEntry(id=pid, argv=["x"], trust="local"), state="ready", manifest=manifest
+        )
+
+    return {
+        "fixture-spark": rec("fixture-spark", "pyspark.static-analysis", list(spark_produces), []),
+        "fixture-api": rec("fixture-api", "api.analyze", [], list(api_consumes)),
+    }
 
 
 def _verification() -> VerificationResult:
     def check(status: str) -> VerificationCheck:
         return VerificationCheck(status=status)  # type: ignore[arg-type]
-    return VerificationResult(producer=PRODUCER, created_at=CREATED, run_id="run-spark",
-                              self_report=check("reported"), provider_evidence=check("reported"),
-                              forge=check("passed"), independent=check("not_performed"))
+
+    return VerificationResult(
+        producer=PRODUCER,
+        created_at=CREATED,
+        run_id="run-spark",
+        self_report=check("reported"),
+        provider_evidence=check("reported"),
+        forge=check("passed"),
+        independent=check("not_performed"),
+    )
 
 
 def test_evidence_provenance_chain_is_carried() -> None:
-    upstream = EvidenceSource(provider="fixture-spark", run_id="run-older", item="e0",
-                              node="n0", plan_run="plan-run-0")
+    upstream = EvidenceSource(
+        provider="fixture-spark", run_id="run-older", item="e0", node="n0", plan_run="plan-run-0"
+    )
     res = result(evidence=[ev("e1", derived_from=upstream)])
     h = build(target("spark"), source("spark", res))
     item = [i for i in h.items if i.kind == "evidence"][0]
@@ -328,8 +432,7 @@ def test_evidence_provenance_chain_is_carried() -> None:
 
 
 def test_identical_items_merge_keeping_every_origin() -> None:
-    same = Evidence(id="e", epistemic="observed", subject="s", claim="c", producer=SPARK,
-                    hash=H1)
+    same = Evidence(id="e", epistemic="observed", subject="s", claim="c", producer=SPARK, hash=H1)
     a = source("spark", result(evidence=[same]))
     b = source("api", result(API, evidence=[same]), provider=API)
     h = build(target("spark", "api"), a, b)
@@ -349,8 +452,9 @@ def test_verification_item_reports_how_the_source_was_verified() -> None:
     h = build(target("spark"), src)
     item = [i for i in h.items if i.kind == "verification"][0]
     assert item.epistemic == "observed" and item.origin.node == "spark"
-    assert item.claim == ("forge=passed independent=not_performed self_report=reported "
-                          "provider_evidence=reported")
+    assert item.claim == (
+        "forge=passed independent=not_performed self_report=reported provider_evidence=reported"
+    )
     # no verification artifact -> no item at all
     h2 = build(target("spark"), source("spark", result()))
     assert not [i for i in h2.items if i.kind == "verification"]
@@ -378,28 +482,34 @@ def test_new_kinds_require_a_claim() -> None:
 def test_consumer_needs_filter_declaredly_irrelevant_artifacts() -> None:
     records = _records(spark_produces=("report.summary",), api_consumes=("report.full",))
     res = result(artifacts=[Artifact(path="out/summary.json", sha256=H1)])
-    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
-                      created_at=CREATED, records=records)
+    h = build_handoff(
+        PLAN_RUN, target("spark"), [source("spark", res)], created_at=CREATED, records=records
+    )
     assert h is not None
     assert not [i for i in h.items if i.kind == "artifact"]
-    assert h.limitations == ["handoff-filtered: spark:out/summary.json (artifact type "
-                             "report.summary not consumed by api.analyze)"]
+    assert h.limitations == [
+        "handoff-filtered: spark:out/summary.json (artifact type "
+        "report.summary not consumed by api.analyze)"
+    ]
 
 
 def test_consumer_needs_keep_matching_and_untyped_artifacts() -> None:
     records = _records(spark_produces=("report.full",), api_consumes=("report.full",))
     res = result(artifacts=[Artifact(path="out/full.json", sha256=H1)])
-    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
-                      created_at=CREATED, records=records)
+    h = build_handoff(
+        PLAN_RUN, target("spark"), [source("spark", res)], created_at=CREATED, records=records
+    )
     assert h is not None
     artifact = [i for i in h.items if i.kind == "artifact"][0]
     assert artifact.artifact_type == "report.full"
     assert h.limitations == []
     # unambiguous typing: two produces -> type unknown -> kept (never guess)
-    records2 = _records(spark_produces=("report.full", "report.summary"),
-                        api_consumes=("other.type",))
-    h2 = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
-                       created_at=CREATED, records=records2)
+    records2 = _records(
+        spark_produces=("report.full", "report.summary"), api_consumes=("other.type",)
+    )
+    h2 = build_handoff(
+        PLAN_RUN, target("spark"), [source("spark", res)], created_at=CREATED, records=records2
+    )
     assert h2 is not None
     artifact2 = [i for i in h2.items if i.kind == "artifact"][0]
     assert artifact2.artifact_type is None and h2.limitations == []
@@ -407,8 +517,7 @@ def test_consumer_needs_keep_matching_and_untyped_artifacts() -> None:
 
 def test_without_records_no_filtering_no_typing() -> None:
     res = result(artifacts=[Artifact(path="out/x.json", sha256=H1)])
-    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)],
-                      created_at=CREATED)
+    h = build_handoff(PLAN_RUN, target("spark"), [source("spark", res)], created_at=CREATED)
     assert h is not None
     artifact = [i for i in h.items if i.kind == "artifact"][0]
     assert artifact.artifact_type is None and h.limitations == []

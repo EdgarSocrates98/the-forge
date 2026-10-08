@@ -56,11 +56,11 @@ Comparison = Literal["same", "different", "no-result"]
 
 MODES: Final = get_args(ReplayMode)
 REEXECUTABLE: Final[frozenset[Reproducibility]] = frozenset(
-    {"reproducible", "partially_reproducible"})
+    {"reproducible", "partially_reproducible"}
+)
 _CONTEXT_ARTIFACTS: Final = ("context", "context-r1", "context-r2")
 # Artifacts a re-execute reads or depends on: an integrity divergence refuses it (14.9).
-_REPLAY_INPUTS: Final = frozenset({"receipt", "task", "routing", "handoff",
-                                   *_CONTEXT_ARTIFACTS})
+_REPLAY_INPUTS: Final = frozenset({"receipt", "task", "routing", "handoff", *_CONTEXT_ARTIFACTS})
 # Result fields compared by ``execute``; created_at and metrics are volatile (14.8).
 _COMPARED: Final = ("status", "findings", "evidence", "artifacts", "limitations", "unknowns")
 
@@ -75,9 +75,16 @@ class ReplayReport:
     comparison: Comparison | None = None  # execute
 
 
-def replay(forger: Forger, store: RunStore, run_id: str, mode: str, *,
-           approvals: frozenset[str] = frozenset(), allow_unverified: bool = False,
-           created_at: str | None = None) -> ReplayReport:
+def replay(
+    forger: Forger,
+    store: RunStore,
+    run_id: str,
+    mode: str,
+    *,
+    approvals: frozenset[str] = frozenset(),
+    allow_unverified: bool = False,
+    created_at: str | None = None,
+) -> ReplayReport:
     """Replay run ``run_id`` in ``mode`` (``render``, ``verify`` or ``execute``).
 
     ``approvals`` and ``allow_unverified`` come from the command line of the replay (they
@@ -91,13 +98,17 @@ def replay(forger: Forger, store: RunStore, run_id: str, mode: str, *,
         raise LookupError(f"unknown run {run_id}")
     if mode == "render":
         report = build_explain_report(store, run_id, created_at=created_at)
-        return ReplayReport(mode="render", run_id=run_id, report=report,
-                            divergences=list(report.integrity.divergences))
+        return ReplayReport(
+            mode="render",
+            run_id=run_id,
+            report=report,
+            divergences=list(report.integrity.divergences),
+        )
     if mode == "verify":
-        return ReplayReport(mode="verify", run_id=run_id,
-                            divergences=reverify_run(store, run_id, forger.root))
-    return _reexecute(forger, store, run_id, approvals=approvals,
-                      allow_unverified=allow_unverified)
+        return ReplayReport(
+            mode="verify", run_id=run_id, divergences=reverify_run(store, run_id, forger.root)
+        )
+    return _reexecute(forger, store, run_id, approvals=approvals, allow_unverified=allow_unverified)
 
 
 def reverify_run(store: RunStore, run_id: str, root: Path) -> list[Divergence]:
@@ -139,31 +150,37 @@ def _changed_context(store: RunStore, run_id: str, root: Path) -> list[str]:
     return sorted(reverify(root, items))
 
 
-def _context_divergences(store: RunStore, run_id: str, root: Path,
-                         prefix: str) -> list[Divergence]:
+def _context_divergences(store: RunStore, run_id: str, root: Path, prefix: str) -> list[Divergence]:
     try:
         changed = _changed_context(store, run_id, root)
     except ValueError:  # a node run id that is not a run id: no such run directory
         return []
-    return [Divergence(artifact=f"{prefix}workspace/{path}",
-                       kind="modified" if resolve_inside(root, root / path) else "missing")
-            for path in changed]
+    return [
+        Divergence(
+            artifact=f"{prefix}workspace/{path}",
+            kind="modified" if resolve_inside(root, root / path) else "missing",
+        )
+        for path in changed
+    ]
 
 
-def _refusal(forger: Forger, store: RunStore, run_id: str,
-             receipt: ExecutionReceipt) -> list[str]:
+def _refusal(forger: Forger, store: RunStore, run_id: str, receipt: ExecutionReceipt) -> list[str]:
     """Every reason the run cannot be re-executed (empty: eligible). Starts nothing."""
-    reasons = [f"integrity: {d.artifact} {d.kind}"
-               for d in verify_run_hashes(store, run_id).divergences
-               if d.artifact in _REPLAY_INPUTS or d.artifact.startswith("context-r")]
+    reasons = [
+        f"integrity: {d.artifact} {d.kind}"
+        for d in verify_run_hashes(store, run_id).divergences
+        if d.artifact in _REPLAY_INPUTS or d.artifact.startswith("context-r")
+    ]
     info = receipt.reproducibility
     level = info.level if info is not None else "unknown"
     if level not in REEXECUTABLE:
-        detail = "; ".join(info.reasons) if info is not None and info.reasons else (
-            "not recorded" if info is None else "")
+        detail = (
+            "; ".join(info.reasons)
+            if info is not None and info.reasons
+            else ("not recorded" if info is None else "")
+        )
         reasons.append(f"reproducibility is {level}" + (f" ({detail})" if detail else ""))
-    reasons += [f"context changed: {path}"
-                for path in _changed_context(store, run_id, forger.root)]
+    reasons += [f"context changed: {path}" for path in _changed_context(store, run_id, forger.root)]
     provider = receipt.provider
     if provider is None:
         reasons.append("no provider recorded for the run")
@@ -172,14 +189,12 @@ def _refusal(forger: Forger, store: RunStore, run_id: str,
     if entry is None:
         reasons.append(f"provider {provider.id} is no longer registered")
         return reasons
-    cached = next((r for r in forger.registry.cached_records() if r.entry.id == provider.id),
-                  None)
+    cached = next((r for r in forger.registry.cached_records() if r.entry.id == provider.id), None)
     current = cached.manifest.version if cached is not None and cached.manifest else None
     if current is None:
         reasons.append(f"provider {provider.id}: current version unknown (not described)")
     elif current != provider.version:
-        reasons.append(f"provider {provider.id} version changed: "
-                       f"{provider.version} -> {current}")
+        reasons.append(f"provider {provider.id} version changed: {provider.version} -> {current}")
     if provider.fingerprint is None:
         reasons.append(f"provider {provider.id}: fingerprint not recorded")
     elif fingerprint(entry).digest != provider.fingerprint:
@@ -187,48 +202,71 @@ def _refusal(forger: Forger, store: RunStore, run_id: str,
     # A recorded surface fingerprint that no longer matches means the provider's
     # declared capabilities changed in place — even at the same version (3.1).
     if provider.surface_fingerprint is not None:
-        current_surface = cached.surface.surface_fingerprint \
-            if cached is not None and cached.surface is not None else None
+        current_surface = (
+            cached.surface.surface_fingerprint
+            if cached is not None and cached.surface is not None
+            else None
+        )
         if current_surface is None:
             reasons.append(f"provider {provider.id}: current surface unknown")
         elif current_surface != provider.surface_fingerprint:
-            reasons.append(f"provider {provider.id} surface changed "
-                           "(declared surface fingerprint)")
-    if provider.native_surface_fingerprint is not None and cached is not None \
-            and cached.surface is not None \
-            and cached.surface.native_surface_fingerprint is not None \
-            and cached.surface.native_surface_fingerprint \
-            != provider.native_surface_fingerprint:
+            reasons.append(f"provider {provider.id} surface changed (declared surface fingerprint)")
+    if (
+        provider.native_surface_fingerprint is not None
+        and cached is not None
+        and cached.surface is not None
+        and cached.surface.native_surface_fingerprint is not None
+        and cached.surface.native_surface_fingerprint != provider.native_surface_fingerprint
+    ):
         reasons.append(f"provider {provider.id} native surface changed")
     return reasons
 
 
-def _reexecute(forger: Forger, store: RunStore, run_id: str, *,
-               approvals: frozenset[str], allow_unverified: bool) -> ReplayReport:
+def _reexecute(
+    forger: Forger,
+    store: RunStore,
+    run_id: str,
+    *,
+    approvals: frozenset[str],
+    allow_unverified: bool,
+) -> ReplayReport:
     receipt = _read(store, run_id, "receipt", ExecutionReceipt)
     task = _read(store, run_id, "task", TaskSpec)
     if receipt is None or task is None:
-        missing = [name for name, value in (("receipt", receipt), ("task", task))
-                   if value is None]
+        missing = [name for name, value in (("receipt", receipt), ("task", task)) if value is None]
         raise ReplayRefused(tuple(f"{name} not readable" for name in missing))
     if receipt.kind == "plan":
-        raise ReplayRefused(("re-execute of a plan run is not supported",),
-                            code=Codes.REPLAY_UNSUPPORTED)
+        raise ReplayRefused(
+            ("re-execute of a plan run is not supported",), code=Codes.REPLAY_UNSUPPORTED
+        )
     if receipt.parent_run is not None or receipt.plan_node is not None:
         raise ReplayRefused(
             (f"re-execute of a plan node run is not supported (plan {receipt.parent_run})",),
-            code=Codes.REPLAY_UNSUPPORTED)
+            code=Codes.REPLAY_UNSUPPORTED,
+        )
     reasons = _refusal(forger, store, run_id, receipt)
     if reasons or receipt.provider is None:  # eligibility requires a recorded provider
         raise ReplayRefused(tuple(reasons))
-    outcome = forger.ask(AskRequest(
-        intent=task.intent, targets=list(task.targets), capability=task.requested_capability,
-        action=task.requested_action, profile=task.budget_profile,
-        allow_unverified=allow_unverified, approvals=approvals,
-        provider=receipt.provider.id, replay_of=run_id,
-        requirement=task.requirement))
-    return ReplayReport(mode="execute", run_id=run_id, new_run=outcome.run_id,
-                        comparison=_compare(store, run_id, outcome.run_id))
+    outcome = forger.ask(
+        AskRequest(
+            intent=task.intent,
+            targets=list(task.targets),
+            capability=task.requested_capability,
+            action=task.requested_action,
+            profile=task.budget_profile,
+            allow_unverified=allow_unverified,
+            approvals=approvals,
+            provider=receipt.provider.id,
+            replay_of=run_id,
+            requirement=task.requirement,
+        )
+    )
+    return ReplayReport(
+        mode="execute",
+        run_id=run_id,
+        new_run=outcome.run_id,
+        comparison=_compare(store, run_id, outcome.run_id),
+    )
 
 
 def result_fingerprint(result: ExecutionResult) -> str:

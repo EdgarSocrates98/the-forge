@@ -64,15 +64,29 @@ def dep(nid: str, epistemic: Any = "explicit", rule: str | None = None) -> PlanD
 
 
 def pnode(nid: str, *deps: str, inputs: list[str] | None = None) -> PlanNode:
-    return PlanNode(id=nid, role="standalone", provider="demo", capability="demo.echo",
-                    action="echo", depends_on=[dep(d) for d in deps],
-                    inputs=list(deps) if inputs is None else inputs)
+    return PlanNode(
+        id=nid,
+        role="standalone",
+        provider="demo",
+        capability="demo.echo",
+        action="echo",
+        depends_on=[dep(d) for d in deps],
+        inputs=list(deps) if inputs is None else inputs,
+    )
 
 
 def plan(*nodes: PlanNode, pattern: Any = "pipeline") -> ExecutionPlan:
-    return ExecutionPlan(producer=P, created_at=TS, status="validated", plan_run="p1",
-                         task_id="t1", pattern=pattern, source="file", profile="max",
-                         nodes=list(nodes))
+    return ExecutionPlan(
+        producer=P,
+        created_at=TS,
+        status="validated",
+        plan_run="p1",
+        task_id="t1",
+        pattern=pattern,
+        source="file",
+        profile="max",
+        nodes=list(nodes),
+    )
 
 
 def codes(violations: list[Any]) -> list[tuple[str, str | None]]:
@@ -89,19 +103,25 @@ def test_valid_pipeline_and_route_plans_have_no_violations() -> None:
 
 @pytest.mark.parametrize("bad_id", ["A", "1a", "a_b", "", "a" * 33])
 def test_invalid_node_id(bad_id: str) -> None:
-    assert codes(validate_plan_structure(plan(pnode(bad_id)))) == [
-        (Codes.PLAN_INVALID, bad_id)]
+    assert codes(validate_plan_structure(plan(pnode(bad_id)))) == [(Codes.PLAN_INVALID, bad_id)]
 
 
 def test_duplicate_node_id() -> None:
     assert codes(validate_plan_structure(plan(pnode("a"), pnode("a")))) == [
-        (Codes.PLAN_INVALID, "a")]
+        (Codes.PLAN_INVALID, "a")
+    ]
 
 
 def test_duplicate_dependency() -> None:
-    twice = PlanNode(id="b", role="consumer", provider="demo", capability="demo.echo",
-                     action="echo", depends_on=[dep("a"), dep("a", "inferred", "rule-x")],
-                     inputs=["a"])
+    twice = PlanNode(
+        id="b",
+        role="consumer",
+        provider="demo",
+        capability="demo.echo",
+        action="echo",
+        depends_on=[dep("a"), dep("a", "inferred", "rule-x")],
+        inputs=["a"],
+    )
     violations = validate_plan_structure(plan(pnode("a"), twice))
     assert codes(violations) == [(Codes.PLAN_INVALID, "b")]
     assert "twice" in violations[0].detail and "'a'" in violations[0].detail
@@ -157,21 +177,27 @@ def test_delegate_plan_runs_independent_subtasks() -> None:
 
 
 def test_delegate_plan_rejects_specialist_dependencies() -> None:
-    violations = validate_plan_structure(plan(pnode("a"), pnode("b", "a"),
-                                              pattern="delegate"))
+    violations = validate_plan_structure(plan(pnode("a"), pnode("b", "a"), pattern="delegate"))
     assert codes(violations) == [(Codes.PLAN_INVALID, "b")]
     assert "delegate" in violations[0].detail
 
 
 def proposer(nid: str, provider: str | None = None) -> PlanNode:
-    return replace(pnode(nid), role="proposer",
-                   provider=provider if provider is not None else f"demo-{nid}")
+    return replace(
+        pnode(nid), role="proposer", provider=provider if provider is not None else f"demo-{nid}"
+    )
 
 
 def referee(nid: str, *proposer_ids: str) -> PlanNode:
-    return PlanNode(id=nid, role="referee", provider="demo", capability="demo.echo",
-                    action="echo", depends_on=[dep(p) for p in proposer_ids],
-                    inputs=list(proposer_ids))
+    return PlanNode(
+        id=nid,
+        role="referee",
+        provider="demo",
+        capability="demo.echo",
+        action="echo",
+        depends_on=[dep(p) for p in proposer_ids],
+        inputs=list(proposer_ids),
+    )
 
 
 def test_debate_plan_shape() -> None:
@@ -180,20 +206,27 @@ def test_debate_plan_shape() -> None:
 
 
 def test_debate_plan_needs_two_proposers_and_one_referee() -> None:
-    assert (Codes.PLAN_INVALID, None) in codes(validate_plan_structure(
-        plan(proposer("a"), referee("r", "a"), pattern="debate")))
-    no_referee = codes(validate_plan_structure(
-        plan(proposer("a"), proposer("b"), pattern="debate")))
+    assert (Codes.PLAN_INVALID, None) in codes(
+        validate_plan_structure(plan(proposer("a"), referee("r", "a"), pattern="debate"))
+    )
+    no_referee = codes(
+        validate_plan_structure(plan(proposer("a"), proposer("b"), pattern="debate"))
+    )
     assert (Codes.PLAN_INVALID, None) in no_referee
 
 
 def test_debate_referee_must_depend_on_and_read_every_proposer() -> None:
-    missing_dep = plan(proposer("a"), proposer("b"),
-                       referee("r", "a"), pattern="debate")
+    missing_dep = plan(proposer("a"), proposer("b"), referee("r", "a"), pattern="debate")
     assert codes(validate_plan_structure(missing_dep)) == [
-        (Codes.PLAN_INVALID, "r"), (Codes.PLAN_INVALID, "r")]  # depends_on and inputs
-    no_input = plan(proposer("a"), proposer("b"),
-                    replace(referee("r", "a", "b"), inputs=["a"]), pattern="debate")
+        (Codes.PLAN_INVALID, "r"),
+        (Codes.PLAN_INVALID, "r"),
+    ]  # depends_on and inputs
+    no_input = plan(
+        proposer("a"),
+        proposer("b"),
+        replace(referee("r", "a", "b"), inputs=["a"]),
+        pattern="debate",
+    )
     assert codes(validate_plan_structure(no_input)) == [(Codes.PLAN_INVALID, "r")]
 
 
@@ -201,23 +234,32 @@ def test_debate_proposers_must_span_two_providers() -> None:
     """The cross-domain boundary (cycle 3.1): a debate with every proposer on one
     provider is that specialist's internal disagreement — it is refused at
     structure-check time, never replayed as plan nodes."""
-    same = plan(proposer("a", "demo"), proposer("b", "demo"),
-                referee("r", "a", "b"), pattern="debate")
+    same = plan(
+        proposer("a", "demo"), proposer("b", "demo"), referee("r", "a", "b"), pattern="debate"
+    )
     violations = validate_plan_structure(same)
     assert (Codes.PLAN_INVALID, None) in codes(violations)
     assert any("cross-domain boundary" in v.detail for v in violations)
     # Mixed slates stay valid: three proposers across two providers.
-    mixed = plan(proposer("a", "demo"), proposer("b", "demo"), proposer("c", "other"),
-                 referee("r", "a", "b", "c"), pattern="debate")
+    mixed = plan(
+        proposer("a", "demo"),
+        proposer("b", "demo"),
+        proposer("c", "other"),
+        referee("r", "a", "b", "c"),
+        pattern="debate",
+    )
     assert validate_plan_structure(mixed) == []
 
 
 def test_debate_rejects_other_roles_and_dependent_proposers() -> None:
-    odd = plan(proposer("a"), proposer("b"), pnode("x"), referee("r", "a", "b"),
-               pattern="debate")
+    odd = plan(proposer("a"), proposer("b"), pnode("x"), referee("r", "a", "b"), pattern="debate")
     assert codes(validate_plan_structure(odd)) == [(Codes.PLAN_INVALID, "x")]
-    dependent = plan(proposer("a"), replace(proposer("b"), depends_on=[dep("a")]),
-                     referee("r", "a", "b"), pattern="debate")
+    dependent = plan(
+        proposer("a"),
+        replace(proposer("b"), depends_on=[dep("a")]),
+        referee("r", "a", "b"),
+        pattern="debate",
+    )
     assert (Codes.PLAN_INVALID, "b") in codes(validate_plan_structure(dependent))
 
 
@@ -236,8 +278,14 @@ def test_inferred_dependency_without_rule_bypassing_construction() -> None:
 
 
 def test_every_violation_is_reported_at_once() -> None:
-    nodes = [pnode("a", "b"), pnode("b", "a"), pnode("a"), pnode("Bad"),
-             pnode("c", "ghost"), pnode("d", inputs=["a"])]
+    nodes = [
+        pnode("a", "b"),
+        pnode("b", "a"),
+        pnode("a"),
+        pnode("Bad"),
+        pnode("c", "ghost"),
+        pnode("d", inputs=["a"]),
+    ]
     nodes += [pnode(f"x{i}") for i in range(MAX_PLAN_NODES)]
     found = codes(validate_plan_structure(plan(*nodes, pattern="scatter")))
     assert found == [
@@ -260,10 +308,17 @@ def test_structure_validation_is_deterministic() -> None:
 
 
 def item(i: int, claim: str = "c", subject: str = "s") -> HandoffItem:
-    origin = HandoffOrigin(plan_run="p1", node="a", run_id="r1",
-                           provider=Producer(id="spark", version="2.0"))
-    return HandoffItem(kind="evidence", id=f"e{i}", origin=origin, epistemic="observed",
-                       subject=subject, claim=claim)
+    origin = HandoffOrigin(
+        plan_run="p1", node="a", run_id="r1", provider=Producer(id="spark", version="2.0")
+    )
+    return HandoffItem(
+        kind="evidence",
+        id=f"e{i}",
+        origin=origin,
+        epistemic="observed",
+        subject=subject,
+        claim=claim,
+    )
 
 
 def handoff(items: list[HandoffItem]) -> Handoff:
@@ -304,25 +359,34 @@ def test_handoff_claim_over_cap_bypassing_construction() -> None:
 
 
 def graph(edges: list[GraphEdge]) -> WorkspaceGraph:
-    nodes = [GraphNode(id="workspace:.", kind="workspace"),
-             GraphNode(id="repository:api", kind="repository")]
+    nodes = [
+        GraphNode(id="workspace:.", kind="workspace"),
+        GraphNode(id="repository:api", kind="repository"),
+    ]
     return WorkspaceGraph(producer=P, created_at=TS, plan_run="p1", nodes=nodes, edges=edges)
 
 
 def edge(source: str, target: str) -> GraphEdge:
-    return GraphEdge(source=source, target=target, kind="contains", epistemic="observed",
-                     evidence="api/.git")
+    return GraphEdge(
+        source=source, target=target, kind="contains", epistemic="observed", evidence="api/.git"
+    )
 
 
 def test_graph_with_existing_endpoints() -> None:
     validate_graph(graph([edge("workspace:.", "repository:api")]))
-    assert check_graph_edge(edge("workspace:.", "repository:api"),
-                            {"workspace:.", "repository:api"}) is None
+    assert (
+        check_graph_edge(edge("workspace:.", "repository:api"), {"workspace:.", "repository:api"})
+        is None
+    )
 
 
-@pytest.mark.parametrize(("source", "target"), [
-    ("workspace:.", "repository:ghost"), ("repository:ghost", "workspace:."),
-])
+@pytest.mark.parametrize(
+    ("source", "target"),
+    [
+        ("workspace:.", "repository:ghost"),
+        ("repository:ghost", "workspace:."),
+    ],
+)
 def test_graph_edge_with_missing_endpoint(source: str, target: str) -> None:
     with pytest.raises(IntegrityError) as err:
         validate_graph(graph([edge("workspace:.", "repository:api"), edge(source, target)]))
@@ -343,10 +407,16 @@ def outcome(nid: str, status: Any = "ok", **kw: Any) -> NodeOutcome:
 
 
 def presult(status: Any, nodes: list[NodeOutcome], order: list[str] | None = None) -> PlanResult:
-    return PlanResult(producer=P, created_at=TS, status=status, plan_run="p1",
-                      order=[n.node for n in nodes] if order is None else order,
-                      nodes=nodes, synthesis=Synthesis(nodes=[]),
-                      reproducibility=ReproducibilityInfo(level="unknown"))
+    return PlanResult(
+        producer=P,
+        created_at=TS,
+        status=status,
+        plan_run="p1",
+        order=[n.node for n in nodes] if order is None else order,
+        nodes=nodes,
+        synthesis=Synthesis(nodes=[]),
+        reproducibility=ReproducibilityInfo(level="unknown"),
+    )
 
 
 def result_codes(result: PlanResult) -> list[tuple[str, str | None]]:
@@ -357,9 +427,16 @@ def result_codes(result: PlanResult) -> list[tuple[str, str | None]]:
 
 def test_valid_plan_results() -> None:
     validate_plan_result(presult("ok", [outcome("a"), outcome("b")]))
-    validate_plan_result(presult("partial", [
-        outcome("a", "provider_failure"), outcome("b", "skipped", blocked_by="a"),
-        outcome("c", "partial")]))
+    validate_plan_result(
+        presult(
+            "partial",
+            [
+                outcome("a", "provider_failure"),
+                outcome("b", "skipped", blocked_by="a"),
+                outcome("c", "partial"),
+            ],
+        )
+    )
     validate_plan_result(presult("provider_failure", [outcome("a", "provider_failure")]))
     validate_plan_result(presult("refused", [outcome("a", "refused")]))
 
@@ -382,11 +459,11 @@ def test_ok_plan_result_requires_every_result_hash() -> None:
 def test_skipped_node_requires_a_blocking_node() -> None:
     bad = presult("partial", [outcome("a", "partial"), outcome("b", "skipped")])
     assert result_codes(bad) == [(Codes.PLAN_INVALID, "nodes[1].blocked_by")]
-    unknown = presult("partial", [outcome("a", "partial"),
-                                  outcome("b", "skipped", blocked_by="ghost")])
+    unknown = presult(
+        "partial", [outcome("a", "partial"), outcome("b", "skipped", blocked_by="ghost")]
+    )
     assert result_codes(unknown) == [(Codes.PLAN_INVALID, "nodes[1].blocked_by")]
-    itself = presult("partial", [outcome("a", "partial"),
-                                 outcome("b", "skipped", blocked_by="b")])
+    itself = presult("partial", [outcome("a", "partial"), outcome("b", "skipped", blocked_by="b")])
     assert result_codes(itself) == [(Codes.PLAN_INVALID, "nodes[1].blocked_by")]
 
 
@@ -455,50 +532,87 @@ def test_blocked_by_is_transitive_and_takes_the_first_ancestor_in_order() -> Non
 # --- check_plan: structure + registry + profile (task 2.2) -------------------------------
 
 
-def cap(cid: str, actions: tuple[str, ...] = ("run",), state: Any = "supported",
-        aliases: tuple[str, ...] = (), deprecated: bool = False,
-        replaced_by: str | None = None) -> Capability:
-    return Capability(id=cid, actions=list(actions), default_action=actions[0], state=state,
-                      operation_class="read_only", aliases=list(aliases),
-                      deprecated=deprecated, replaced_by=replaced_by)
+def cap(
+    cid: str,
+    actions: tuple[str, ...] = ("run",),
+    state: Any = "supported",
+    aliases: tuple[str, ...] = (),
+    deprecated: bool = False,
+    replaced_by: str | None = None,
+) -> Capability:
+    return Capability(
+        id=cid,
+        actions=list(actions),
+        default_action=actions[0],
+        state=state,
+        operation_class="read_only",
+        aliases=list(aliases),
+        deprecated=deprecated,
+        replaced_by=replaced_by,
+    )
 
 
 def rec(pid: str, *caps: Capability, state: Any = "ready") -> RegistryRecord:
-    manifest = ForgeManifest(id=pid, version="1", protocols=["forge/v1"],
-                             ops=["describe", "health", "execute"], capabilities=list(caps))
-    return RegistryRecord(entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
-                          state=state, manifest=manifest if state == "ready" else None,
-                          manifest_sha256="0" * 64, protocol="forge/v1")
+    manifest = ForgeManifest(
+        id=pid,
+        version="1",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=list(caps),
+    )
+    return RegistryRecord(
+        entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
+        state=state,
+        manifest=manifest if state == "ready" else None,
+        manifest_sha256="0" * 64,
+        protocol="forge/v1",
+    )
 
 
 RECORDS = {
-    "spark": rec("spark", cap("pyspark.static-analysis", ("analyze", "lint"),
-                              aliases=("spark.lint",))),
-    "api": rec("api", cap("api.analyze", ("analyze",)),
-               cap("api.old", ("analyze",), deprecated=True, replaced_by="api.analyze"),
-               cap("api.none", ("analyze",), state="unsupported")),
+    "spark": rec(
+        "spark", cap("pyspark.static-analysis", ("analyze", "lint"), aliases=("spark.lint",))
+    ),
+    "api": rec(
+        "api",
+        cap("api.analyze", ("analyze",)),
+        cap("api.old", ("analyze",), deprecated=True, replaced_by="api.analyze"),
+        cap("api.none", ("analyze",), state="unsupported"),
+    ),
     "down": rec("down", state="unreachable"),
 }
 
 
-def rnode(nid: str, provider: str, capability: str, action: str = "analyze",
-          *deps: str) -> PlanNode:
-    return PlanNode(id=nid, role="standalone", provider=provider, capability=capability,
-                    action=action, depends_on=[dep(d) for d in deps], inputs=list(deps))
+def rnode(
+    nid: str, provider: str, capability: str, action: str = "analyze", *deps: str
+) -> PlanNode:
+    return PlanNode(
+        id=nid,
+        role="standalone",
+        provider=provider,
+        capability=capability,
+        action=action,
+        depends_on=[dep(d) for d in deps],
+        inputs=list(deps),
+    )
 
 
 def test_check_plan_accepts_a_valid_plan() -> None:
-    p = plan(rnode("spark", "spark", "pyspark.static-analysis"),
-             rnode("api", "api", "api.analyze", "analyze", "spark"))
+    p = plan(
+        rnode("spark", "spark", "pyspark.static-analysis"),
+        rnode("api", "api", "api.analyze", "analyze", "spark"),
+    )
     assert check_plan(p, RECORDS, profile_for("max")) == []
 
 
 def test_check_plan_reports_each_registry_violation() -> None:
-    p = plan(rnode("a", "ghost", "x.y"),
-             rnode("b", "down", "x.y"),
-             rnode("c", "api", "api.missing"),
-             rnode("d", "api", "api.none"),
-             rnode("e", "spark", "pyspark.static-analysis", "deploy"))
+    p = plan(
+        rnode("a", "ghost", "x.y"),
+        rnode("b", "down", "x.y"),
+        rnode("c", "api", "api.missing"),
+        rnode("d", "api", "api.none"),
+        rnode("e", "spark", "pyspark.static-analysis", "deploy"),
+    )
     got = check_plan(p, RECORDS, profile_for("max"))
     assert codes(got) == [(Codes.PLAN_CAPABILITY, n) for n in "abcde"]
     details = [v.detail for v in got]
@@ -515,19 +629,26 @@ def test_check_plan_accepts_an_alias_capability() -> None:
 
 
 def test_check_plan_limits_distinct_providers_by_profile() -> None:
-    p = plan(rnode("a", "spark", "pyspark.static-analysis"),
-             rnode("b", "api", "api.analyze", "analyze", "a"))
+    p = plan(
+        rnode("a", "spark", "pyspark.static-analysis"),
+        rnode("b", "api", "api.analyze", "analyze", "a"),
+    )
     assert codes(check_plan(p, RECORDS, profile_for("economy"))) == [(Codes.PLAN_LIMIT, None)]
     assert check_plan(p, RECORDS, profile_for("max")) == []
-    same = plan(rnode("a", "spark", "pyspark.static-analysis"),
-                rnode("b", "spark", "pyspark.static-analysis", "lint", "a"))
+    same = plan(
+        rnode("a", "spark", "pyspark.static-analysis"),
+        rnode("b", "spark", "pyspark.static-analysis", "lint", "a"),
+    )
     assert check_plan(same, RECORDS, profile_for("economy")) == []
 
 
 def test_check_plan_adds_registry_violations_to_structural_ones() -> None:
-    p = plan(rnode("a", "ghost", "x.y", "analyze", "missing"),
-             rnode("b", "api", "api.analyze"),
-             rnode("c", "spark", "pyspark.static-analysis"), pattern="scatter")
+    p = plan(
+        rnode("a", "ghost", "x.y", "analyze", "missing"),
+        rnode("b", "api", "api.analyze"),
+        rnode("c", "spark", "pyspark.static-analysis"),
+        pattern="scatter",
+    )
     assert codes(check_plan(p, RECORDS, profile_for("balanced"))) == [
         (Codes.PLAN_PATTERN_RESERVED, None),
         (Codes.PLAN_INVALID, "a"),
@@ -555,12 +676,22 @@ def plan_doc(**overrides: Any) -> dict[str, Any]:
         "source": "decomposed",
         "profile": "max",
         "nodes": [
-            {"id": "spark", "role": "producer", "provider": "spark",
-             "capability": "spark.lint", "action": "lint"},
-            {"id": "api", "role": "consumer", "provider": "api", "capability": "api.old",
-             "action": "analyze", "inputs": ["spark"],
-             "depends_on": [{"node": "spark", "epistemic": "explicit",
-                             "evidence": "plan file"}]},
+            {
+                "id": "spark",
+                "role": "producer",
+                "provider": "spark",
+                "capability": "spark.lint",
+                "action": "lint",
+            },
+            {
+                "id": "api",
+                "role": "consumer",
+                "provider": "api",
+                "capability": "api.old",
+                "action": "analyze",
+                "inputs": ["spark"],
+                "depends_on": [{"node": "spark", "epistemic": "explicit", "evidence": "plan file"}],
+            },
         ],
     }
     doc.update(overrides)
@@ -578,9 +709,13 @@ def load(path: Path, profile: Any = "max") -> ExecutionPlan:
 
 
 def test_load_plan_file_overrides_run_controlled_fields(tmp_path: Path) -> None:
-    forged = plan_doc(plan_run="evil", producer={"id": "evil", "version": "9"},
-                      created_at="1999-01-01T00:00:00Z", status="rejected",
-                      violations=[{"code": Codes.PLAN_INVALID, "node": None, "detail": "x"}])
+    forged = plan_doc(
+        plan_run="evil",
+        producer={"id": "evil", "version": "9"},
+        created_at="1999-01-01T00:00:00Z",
+        status="rejected",
+        violations=[{"code": Codes.PLAN_INVALID, "node": None, "detail": "x"}],
+    )
     p = load(write_plan(tmp_path, forged))
     assert (p.plan_run, p.producer, p.created_at) == ("run-1", PRODUCER, TS)
     assert (p.status, p.violations, p.source) == ("validated", [], "file")
@@ -594,60 +729,105 @@ def test_load_plan_file_resolves_aliases_with_the_wave_b_notes(tmp_path: Path) -
     spark, api = p.nodes
     assert spark.capability == "pyspark.static-analysis"
     assert spark.limitations == [
-        "capability-alias: 'spark.lint' resolved to 'pyspark.static-analysis' (spark)"]
+        "capability-alias: 'spark.lint' resolved to 'pyspark.static-analysis' (spark)"
+    ]
     assert api.capability == "api.old"
     assert api.limitations == [
-        "capability-deprecated: 'api.old' (api) is deprecated; replaced_by 'api.analyze'"]
+        "capability-deprecated: 'api.old' (api) is deprecated; replaced_by 'api.analyze'"
+    ]
     assert check_plan(p, RECORDS, profile_for("max")) == []
 
 
 def test_load_plan_file_keeps_unknowns_for_check_plan(tmp_path: Path) -> None:
-    doc = plan_doc(nodes=[{"id": "a", "role": "standalone", "provider": "ghost",
-                           "capability": "x.y", "action": "run"},
-                          {"id": "b", "role": "standalone", "provider": "api",
-                           "capability": "api.nope", "action": "run"}])
+    doc = plan_doc(
+        nodes=[
+            {
+                "id": "a",
+                "role": "standalone",
+                "provider": "ghost",
+                "capability": "x.y",
+                "action": "run",
+            },
+            {
+                "id": "b",
+                "role": "standalone",
+                "provider": "api",
+                "capability": "api.nope",
+                "action": "run",
+            },
+        ]
+    )
     p = load(write_plan(tmp_path, doc))
     assert [(n.provider, n.capability, n.limitations) for n in p.nodes] == [
-        ("ghost", "x.y", []), ("api", "api.nope", [])]
+        ("ghost", "x.y", []),
+        ("api", "api.nope", []),
+    ]
     assert codes(check_plan(p, RECORDS, profile_for("max"))) == [
-        (Codes.PLAN_CAPABILITY, "a"), (Codes.PLAN_CAPABILITY, "b")]
+        (Codes.PLAN_CAPABILITY, "a"),
+        (Codes.PLAN_CAPABILITY, "b"),
+    ]
 
 
 def test_load_plan_file_applies_the_command_line_profile(tmp_path: Path) -> None:
     p = load(write_plan(tmp_path, plan_doc(profile="max")), profile="economy")
     assert p.profile == "economy"
     assert p.limitations == [
-        "profile: plan file profile 'max' overridden by command line profile 'economy'"]
+        "profile: plan file profile 'max' overridden by command line profile 'economy'"
+    ]
     same = load(write_plan(tmp_path, plan_doc(profile="economy")), profile="economy")
     assert same.limitations == []
 
 
 def test_file_and_generated_plans_get_the_same_validation(tmp_path: Path) -> None:
     loaded = load(write_plan(tmp_path, plan_doc()))
-    generated = replace(plan(*loaded.nodes), source="decomposed", plan_run="run-1",
-                        producer=PRODUCER, task_id="t-file")
+    generated = replace(
+        plan(*loaded.nodes),
+        source="decomposed",
+        plan_run="run-1",
+        producer=PRODUCER,
+        task_id="t-file",
+    )
     for name in ("economy", "max"):
         profile = profile_for(name)
         assert check_plan(loaded, RECORDS, profile) == check_plan(generated, RECORDS, profile)
-    assert codes(check_plan(loaded, RECORDS, profile_for("economy"))) == [
-        (Codes.PLAN_LIMIT, None)]
+    assert codes(check_plan(loaded, RECORDS, profile_for("economy"))) == [(Codes.PLAN_LIMIT, None)]
 
 
-@pytest.mark.parametrize("content", [
-    "{not json",
-    "[]",
-    json.dumps(plan_doc(extra="field")),
-    json.dumps(plan_doc(pattern="swarm")),
-    json.dumps(plan_doc(nodes=[{"id": "a", "role": "standalone", "provider": "api",
-                                "capability": "api.analyze", "action": "analyze",
-                                "depends_on": [{"node": "b", "epistemic": "inferred",
-                                                "evidence": "x"}]}])),
-    json.dumps({k: v for k, v in plan_doc().items() if k != "nodes"}),
-    json.dumps(plan_doc(schema="theforge/ExecutionPlan/v2")),
-], ids=["not-json", "not-object", "unknown-field", "bad-pattern", "inferred-no-rule",
-        "missing-nodes", "bad-schema"])
-def test_load_plan_file_off_contract_is_a_plan_usage_error(tmp_path: Path,
-                                                           content: str) -> None:
+@pytest.mark.parametrize(
+    "content",
+    [
+        "{not json",
+        "[]",
+        json.dumps(plan_doc(extra="field")),
+        json.dumps(plan_doc(pattern="swarm")),
+        json.dumps(
+            plan_doc(
+                nodes=[
+                    {
+                        "id": "a",
+                        "role": "standalone",
+                        "provider": "api",
+                        "capability": "api.analyze",
+                        "action": "analyze",
+                        "depends_on": [{"node": "b", "epistemic": "inferred", "evidence": "x"}],
+                    }
+                ]
+            )
+        ),
+        json.dumps({k: v for k, v in plan_doc().items() if k != "nodes"}),
+        json.dumps(plan_doc(schema="theforge/ExecutionPlan/v2")),
+    ],
+    ids=[
+        "not-json",
+        "not-object",
+        "unknown-field",
+        "bad-pattern",
+        "inferred-no-rule",
+        "missing-nodes",
+        "bad-schema",
+    ],
+)
+def test_load_plan_file_off_contract_is_a_plan_usage_error(tmp_path: Path, content: str) -> None:
     path = tmp_path / "plan.json"
     path.write_text(content, encoding="utf-8")
     with pytest.raises(UsageError) as info:

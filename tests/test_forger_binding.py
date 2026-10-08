@@ -45,13 +45,19 @@ class _SpyTransport:
         self.spy, self.argv = spy, list(argv)
         self.inner = SubprocessTransport(argv)
 
-    def call(self, op: str, payload: dict[str, Any], *, timeout: float,
-             cwd: Path | None = None, check_protocol: bool = True) -> Response:
+    def call(
+        self,
+        op: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float,
+        cwd: Path | None = None,
+        check_protocol: bool = True,
+    ) -> Response:
         self.spy.calls.append((self.argv[-1], op, payload))
         if op == "execute" and self.spy.fail_execute is not None:
             raise ValueError(self.spy.fail_execute)
-        return self.inner.call(op, payload, timeout=timeout, cwd=cwd,
-                               check_protocol=check_protocol)
+        return self.inner.call(op, payload, timeout=timeout, cwd=cwd, check_protocol=check_protocol)
 
 
 def _forger(root: Path, spy: _Spy | None = None) -> tuple[Forger, RunStore]:
@@ -62,12 +68,29 @@ def _forger(root: Path, spy: _Spy | None = None) -> tuple[Forger, RunStore]:
 
 
 def _handoff(claim: str = "job reads s3://b/orders") -> Handoff:
-    origin = HandoffOrigin(plan_run="plan-1", node="n1", run_id="run-n1",
-                           provider=Producer(id="fixture-api", version="0.0.1"))
-    return Handoff(producer=PRODUCER, created_at=utc_now(), plan_run="plan-1",
-                   target_node="n2", limitations=["handoff-input-missing: n0"],
-                   items=[HandoffItem(kind="evidence", id="e1", origin=origin,
-                                      epistemic="observed", subject="job", claim=claim)])
+    origin = HandoffOrigin(
+        plan_run="plan-1",
+        node="n1",
+        run_id="run-n1",
+        provider=Producer(id="fixture-api", version="0.0.1"),
+    )
+    return Handoff(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        plan_run="plan-1",
+        target_node="n2",
+        limitations=["handoff-input-missing: n0"],
+        items=[
+            HandoffItem(
+                kind="evidence",
+                id="e1",
+                origin=origin,
+                epistemic="observed",
+                subject="job",
+                claim=claim,
+            )
+        ],
+    )
 
 
 def _node(**kw: Any) -> NodeBinding:
@@ -76,9 +99,12 @@ def _node(**kw: Any) -> NodeBinding:
 
 # --- 4.1 pinned provider ---------------------------------------------------------------------
 
+
 def test_pinned_unhealthy_provider_never_falls_back(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [bad_entry("unhealthy", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    make_workspace(
+        tmp_path,
+        [bad_entry("unhealthy", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     spy = _Spy()
     forger, _ = _forger(tmp_path, spy)
     out = forger.ask(AskRequest(intent="run it", capability="bad.thing", provider="bad-a"))
@@ -91,8 +117,10 @@ def test_pinned_unhealthy_provider_never_falls_back(tmp_path: Path) -> None:
 
 
 def test_pinned_provider_replaces_the_routing_selection(tmp_path: Path) -> None:
-    make_workspace(tmp_path, [bad_entry("ok", "bad-a", trust="trusted"),
-                              bad_entry("ok", "bad-b", trust="local")])
+    make_workspace(
+        tmp_path,
+        [bad_entry("ok", "bad-a", trust="trusted"), bad_entry("ok", "bad-b", trust="local")],
+    )
     forger, store = _forger(tmp_path)
     out = forger.ask(AskRequest(intent="run it", capability="bad.thing", provider="bad-b"))
     assert out.status == "ok"
@@ -114,13 +142,19 @@ def test_unroutable_pinned_provider_is_no_route(tmp_path: Path) -> None:
 
 # --- 4.1 plan node binding and replay link ---------------------------------------------------
 
+
 def test_node_handoff_is_persisted_delivered_and_hashed(tmp_path: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     case_a(tmp_path)
     spy = _Spy()
     forger, store = _forger(tmp_path, spy)
-    out = forger.ask(AskRequest(intent="analise o job", capability="spark.performance",
-                                node=_node(handoff=_handoff(f"key token={REDACTION_PROBE}"))))
+    out = forger.ask(
+        AskRequest(
+            intent="analise o job",
+            capability="spark.performance",
+            node=_node(handoff=_handoff(f"key token={REDACTION_PROBE}")),
+        )
+    )
     assert out.status == "ok" and out.result is not None
     persisted = store.read(out.run_id, "handoff")
     assert REDACTION_PROBE not in str(persisted)
@@ -139,8 +173,9 @@ def test_node_handoff_is_persisted_delivered_and_hashed(tmp_path: Path) -> None:
 def test_declared_handoff_consumer_has_no_undeclared_limitation(tmp_path: Path) -> None:
     make_workspace(tmp_path, [bad_entry("handoff-accept", "bad-h")])
     forger, _ = _forger(tmp_path)
-    out = forger.ask(AskRequest(intent="run it", capability="bad.thing",
-                                node=_node(handoff=_handoff())))
+    out = forger.ask(
+        AskRequest(intent="run it", capability="bad.thing", node=_node(handoff=_handoff()))
+    )
     assert out.status == "ok" and out.result is not None
     assert "handoff-items=1" in out.result.limitations
     assert not [n for n in out.receipt.limitations if n.startswith("handoff-use-undeclared")]
@@ -173,10 +208,16 @@ def test_plain_ask_has_no_binding_fields(tmp_path: Path) -> None:
 
 # --- 4.2 stricter estimate -------------------------------------------------------------------
 
+
 def _estimate_class(tmp_path: Path, pid: str) -> str | None:
     record = next(r for r in Registry(tmp_path / ".forge").records() if r.entry.id == pid)
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id="est", intent="run it",
-                    workspace_root=str(tmp_path))
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="est",
+        intent="run it",
+        workspace_root=str(tmp_path),
+    )
     estimate, limitation = request_estimate(record, task, "bad.thing", "run")
     assert limitation is None and estimate is not None
     return estimate.operation_class
@@ -200,8 +241,11 @@ def test_stricter_estimate_requires_approval_for_a_read_only_capability(tmp_path
     assert note in out.receipt.limitations
     assert out.receipt.reproducibility is not None
     assert out.receipt.reproducibility.level == "unknown"  # refused before execute
-    approved = forger.ask(AskRequest(intent="run it", capability="bad.thing", node=node,
-                                     approvals=frozenset({"bad.thing"})))
+    approved = forger.ask(
+        AskRequest(
+            intent="run it", capability="bad.thing", node=node, approvals=frozenset({"bad.thing"})
+        )
+    )
     assert approved.status == "ok"
 
 
@@ -217,6 +261,7 @@ def test_without_estimate_the_policy_decision_is_unchanged(tmp_path: Path) -> No
 
 
 # --- 4.3 verification, reproducibility, diagnostic ---------------------------------------------
+
 
 def test_ok_run_links_its_verification_to_the_receipt(tmp_path: Path) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
@@ -252,8 +297,7 @@ def test_echo_run_is_reproducible(tmp_path: Path) -> None:
     make_workspace(tmp_path, [])
     write_file(tmp_path, "notes.txt", "hello\n")
     forger, store = _forger(tmp_path)
-    out = forger.ask(AskRequest(intent="eco", capability="demo.echo",
-                                profile="balanced"))
+    out = forger.ask(AskRequest(intent="eco", capability="demo.echo", profile="balanced"))
     assert out.status == "ok"
     info = out.receipt.reproducibility
     assert info is not None and info.level == "reproducible", info
@@ -286,7 +330,8 @@ def test_internal_error_diagnostic_is_persisted_only_with_debug(tmp_path: Path) 
         if debug:
             assert persisted is not None and REDACTION_PROBE not in str(persisted)
             assert persisted["frames"] and all(
-                f["module"].startswith("theforge") for f in persisted["frames"])
+                f["module"].startswith("theforge") for f in persisted["frames"]
+            )
         else:
             assert persisted is None
         assert store.read_optional(out.run_id, "receipt") is not None

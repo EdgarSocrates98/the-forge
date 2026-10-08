@@ -69,7 +69,7 @@ Run = Callable[..., NativeOutcome]
 
 def stderr_tail(stderr: str, limit: int = STDERR_TAIL) -> str:
     text = stderr.strip()
-    return text if len(text) <= limit else "..." + text[-(limit - 3):]
+    return text if len(text) <= limit else "..." + text[-(limit - 3) :]
 
 
 def native_failure(exit_code: int, stderr: str) -> Reply:
@@ -77,18 +77,26 @@ def native_failure(exit_code: int, stderr: str) -> Reply:
     matches = _FDD_LINE.findall(stderr)
     if not matches:
         tail = stderr_tail(stderr)
-        detail = (f"bridge exited with code {exit_code} without an FDD-* error line; "
-                  f"stderr tail: {tail}" if tail
-                  else f"bridge exited with code {exit_code} without output on stderr")
-        return fail(NATIVE_FAILURE, detail,
-                    unlock="inspect the forge-doctor-data installation and rerun")
+        detail = (
+            f"bridge exited with code {exit_code} without an FDD-* error line; stderr tail: {tail}"
+            if tail
+            else f"bridge exited with code {exit_code} without output on stderr"
+        )
+        return fail(
+            NATIVE_FAILURE, detail, unlock="inspect the forge-doctor-data installation and rerun"
+        )
     code, detail = matches[-1]
     detail = detail.strip() or code
     if code == BRIDGE_REQUEST_INVALID or exit_code == 2:
-        return refuse(code, detail[:STDERR_TAIL], field="request",
-                      unlock="fix the request payload or the staged input and rerun")
-    return fail(code, detail[:STDERR_TAIL],
-                unlock="inspect the forge-doctor-data installation and rerun")
+        return refuse(
+            code,
+            detail[:STDERR_TAIL],
+            field="request",
+            unlock="fix the request payload or the staged input and rerun",
+        )
+    return fail(
+        code, detail[:STDERR_TAIL], unlock="inspect the forge-doctor-data installation and rerun"
+    )
 
 
 def _bounded_options(payload: Mapping[str, Any]) -> list[str] | Reply:
@@ -97,12 +105,17 @@ def _bounded_options(payload: Mapping[str, Any]) -> list[str] | Reply:
     bounded = options.get("bounded") if isinstance(options, Mapping) else None
     if bounded is None:
         return []
-    if not isinstance(bounded, Mapping) or not bounded or any(
-            type(v) is not int or v < 1 for v in bounded.values()):
-        return refuse(BRIDGE_REQUEST_INVALID,
-                      "options.bounded must be an object of positive integer limits",
-                      field="options.bounded",
-                      unlock="pass HandoffBundle.bounded limits (positive integers)")
+    if (
+        not isinstance(bounded, Mapping)
+        or not bounded
+        or any(type(v) is not int or v < 1 for v in bounded.values())
+    ):
+        return refuse(
+            BRIDGE_REQUEST_INVALID,
+            "options.bounded must be an object of positive integer limits",
+            field="options.bounded",
+            unlock="pass HandoffBundle.bounded limits (positive integers)",
+        )
     return ["--bounded", json.dumps(dict(bounded), sort_keys=True)]
 
 
@@ -116,28 +129,41 @@ def _delta_argv(payload: Mapping[str, Any]) -> tuple[list[str], str | None]:
         return [], "delta descriptor is not an object; ignored"
     baseline = delta.get("baseline_ref", "")
     changed = delta.get("changed_files") or []
-    if not isinstance(baseline, str) or not isinstance(changed, list) \
-            or not all(isinstance(p, str) for p in changed):
+    if (
+        not isinstance(baseline, str)
+        or not isinstance(changed, list)
+        or not all(isinstance(p, str) for p in changed)
+    ):
         return [], "delta descriptor malformed; ignored"
-    return ["--delta-baseline", baseline,
-            "--delta-changed-files", json.dumps(sorted(changed))], None
+    return [
+        "--delta-baseline",
+        baseline,
+        "--delta-changed-files",
+        json.dumps(sorted(changed)),
+    ], None
 
 
-def _bridge_argv(capability: str, action: str, selected: Mapping[str, list[str]],
-                 stage_root: Path, payload: Mapping[str, Any]
-                 ) -> tuple[list[str], str, str | None] | Reply:
+def _bridge_argv(
+    capability: str,
+    action: str,
+    selected: Mapping[str, list[str]],
+    stage_root: Path,
+    payload: Mapping[str, Any],
+) -> tuple[list[str], str, str | None] | Reply:
     """``(argv, artifact_subject, delta warning)`` for the action, or a refusal."""
     spec = CAPABILITY_MAP[capability]
     if spec.verify_input:
         chosen = sorted(selected["payload"])
-        return (["-m", BRIDGE, "conformance", "--file", str(stage_root / chosen[0])],
-                chosen[0], None)
+        return (
+            ["-m", BRIDGE, "conformance", "--file", str(stage_root / chosen[0])],
+            chosen[0],
+            None,
+        )
     bounded = _bounded_options(payload)
     if isinstance(bounded, Reply):
         return bounded
     extra, warning = _delta_argv(payload)
-    return (["-m", BRIDGE, "scan", "--target", str(stage_root), *bounded, *extra],
-            "scan", warning)
+    return (["-m", BRIDGE, "scan", "--target", str(stage_root), *bounded, *extra], "scan", warning)
 
 
 def _read_recording(path: Path) -> dict[str, Any] | Reply:
@@ -146,25 +172,26 @@ def _read_recording(path: Path) -> dict[str, Any] | Reply:
     except (OSError, UnicodeDecodeError, ValueError, RecursionError):
         data = None
     if not isinstance(data, dict):
-        return fail(REPLAY_INVALID,
-                    f"replay recording {path.name}: must be a JSON object",
-                    field="replay")
+        return fail(
+            REPLAY_INVALID, f"replay recording {path.name}: must be a JSON object", field="replay"
+        )
     return data
 
 
-def _replay_document(directory: Path, capability: str, action: str
-                     ) -> dict[str, Any] | Reply:
+def _replay_document(directory: Path, capability: str, action: str) -> dict[str, Any] | Reply:
     """The recorded bridge document of an action, or a reply for missing/invalid/error."""
     backend = ReplayBackend(directory)
     found = backend.recording(capability, action)
     if found is None:
         expected = backend.expected(capability, action)
-        return fail(REPLAY_MISSING,
-                    f"replay recording {expected} not found in {directory}; the specialist "
-                    "is never called in replay",
-                    field="replay",
-                    unlock=f"record {expected} (or {capability}.{action}.error.json) in the "
-                           "replay scenario")
+        return fail(
+            REPLAY_MISSING,
+            f"replay recording {expected} not found in {directory}; the specialist "
+            "is never called in replay",
+            field="replay",
+            unlock=f"record {expected} (or {capability}.{action}.error.json) in the "
+            "replay scenario",
+        )
     kind, path = found
     data = _read_recording(path)
     if isinstance(data, Reply):
@@ -173,29 +200,32 @@ def _replay_document(directory: Path, capability: str, action: str
         exit_code = data.get("exit_code")
         stderr = data.get("stderr")
         if type(exit_code) is not int or exit_code == 0 or not isinstance(stderr, str):
-            return fail(REPLAY_INVALID,
-                        f"replay recording {path.name}: an error recording needs a "
-                        "non-zero integer 'exit_code' and a string 'stderr'",
-                        field="replay")
+            return fail(
+                REPLAY_INVALID,
+                f"replay recording {path.name}: an error recording needs a "
+                "non-zero integer 'exit_code' and a string 'stderr'",
+                field="replay",
+            )
         return native_failure(exit_code, stderr)
     return data
 
 
-def _live_document(argv: list[str], payload: Mapping[str, Any], cwd: Path,
-                   run: Run) -> dict[str, Any] | Reply:
-    outcome = run([sys.executable, *argv], cwd=cwd, env=NATIVE_ENV,
-                  timeout=native_timeout(payload))
+def _live_document(
+    argv: list[str], payload: Mapping[str, Any], cwd: Path, run: Run
+) -> dict[str, Any] | Reply:
+    outcome = run([sys.executable, *argv], cwd=cwd, env=NATIVE_ENV, timeout=native_timeout(payload))
     if outcome.returncode != 0:
-        return native_failure(outcome.returncode,
-                              outcome.stderr.decode("utf-8", "replace"))
+        return native_failure(outcome.returncode, outcome.stderr.decode("utf-8", "replace"))
     try:
         data = json.loads(outcome.stdout.decode("utf-8", "replace"))
     except (ValueError, RecursionError):
         data = None
     if not isinstance(data, dict):
-        return fail(NATIVE_INVALID,
-                    "the bridge emitted no JSON object on stdout",
-                    unlock="inspect the forge-doctor-data installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            "the bridge emitted no JSON object on stdout",
+            unlock="inspect the forge-doctor-data installation and rerun",
+        )
     return data
 
 
@@ -218,11 +248,15 @@ def _sanitize(document: Mapping[str, Any], stage_root: Path) -> Mapping[str, Any
 def _store_artifact(document: Mapping[str, Any], cwd: Path) -> str | Reply:
     """Write the bridge document canonically under ``native/`` and return its sha256."""
     try:
-        blob = (json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False)
-                + "\n").encode("utf-8")
+        blob = (json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode(
+            "utf-8"
+        )
     except (ValueError, TypeError, RecursionError):
-        return fail(NATIVE_INVALID, "the bridge document is not JSON-serializable",
-                    unlock="inspect the forge-doctor-data installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            "the bridge document is not JSON-serializable",
+            unlock="inspect the forge-doctor-data installation and rerun",
+        )
     target = (cwd / ARTIFACT_PATH).resolve()
     if not target.is_relative_to(cwd.resolve()):
         raise RuntimeError("artifact path escapes the working directory")
@@ -231,8 +265,9 @@ def _store_artifact(document: Mapping[str, Any], cwd: Path) -> str | Reply:
     return hashlib.sha256(blob).hexdigest()
 
 
-def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
-                  run: Run = run_native) -> Reply:
+def execute_reply(
+    options: AdapterOptions, request: Request, cwd: Path, *, run: Run = run_native
+) -> Reply:
     """The ``execute`` reply for a declared capability and action (the shell checked both)."""
     payload = request.payload
     capability = str(payload.get("capability"))
@@ -272,4 +307,5 @@ def execute_reply(options: AdapterOptions, request: Request, cwd: Path, *,
 def handler(options: AdapterOptions) -> OpHandler:
     def handle(request: Request, cwd: Path) -> Reply:
         return execute_reply(options, request, cwd)
+
     return handle

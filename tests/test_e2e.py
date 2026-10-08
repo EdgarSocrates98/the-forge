@@ -40,9 +40,14 @@ GOLDEN = Path(__file__).parent / "golden" / "explain_case_b.txt"
 
 def cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
-    return subprocess.run([sys.executable, "-m", "theforge", *args, "--root", str(root)],
-                          capture_output=True, text=True, encoding="utf-8", timeout=120,
-                          env=env)
+    return subprocess.run(
+        [sys.executable, "-m", "theforge", *args, "--root", str(root)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        env=env,
+    )
 
 
 def _drop_ambient_git(text: str) -> str:
@@ -110,19 +115,22 @@ def test_onboarding_flow(tmp_path: Path) -> None:
 GLUE = "Analise este Glue job lento"
 OPENAPI = "Revise este contrato OpenAPI"
 VAGUE = "melhore performance"
-SPARK_DOWN = {**SPARK_ENTRY, "argv": fixture_argv(
-    "fixture_forge.py", "--unhealthy", str(PROVIDERS / "fixture-spark.json"))}
+SPARK_DOWN = {
+    **SPARK_ENTRY,
+    "argv": fixture_argv("fixture_forge.py", "--unhealthy", str(PROVIDERS / "fixture-spark.json")),
+}
 
 
 def orchestrate(root: Path, intent: str, *, allow_unverified: bool = False) -> AskOutcome:
     forge = root / ".forge"
-    return Forger(root, Registry(forge, allow_unverified=allow_unverified),
-                  RunStore(forge)).ask(AskRequest(intent=intent,
-                                                  allow_unverified=allow_unverified))
+    return Forger(root, Registry(forge, allow_unverified=allow_unverified), RunStore(forge)).ask(
+        AskRequest(intent=intent, allow_unverified=allow_unverified)
+    )
 
 
-def ask_cli(capsys: pytest.CaptureFixture[str], root: Path, intent: str,
-            *extra: str) -> tuple[int, dict[str, Any], str]:
+def ask_cli(
+    capsys: pytest.CaptureFixture[str], root: Path, intent: str, *extra: str
+) -> tuple[int, dict[str, Any], str]:
     code = main(["ask", intent, *extra, "--root", str(root), "--json"])
     out, err = capsys.readouterr()
     return code, json.loads(out), err
@@ -138,14 +146,20 @@ def candidate_providers(decision: dict[str, Any]) -> set[str]:
 
 @pytest.mark.parametrize(
     ("intent", "workspace", "expected", "excluded"),
-    [(GLUE, case_a, ("fixture-spark", "spark.performance", "diagnose"), "fixture-api"),
-     (OPENAPI, case_b, ("fixture-api", "api.contract", "review"), "fixture-spark")],
+    [
+        (GLUE, case_a, ("fixture-spark", "spark.performance", "diagnose"), "fixture-api"),
+        (OPENAPI, case_b, ("fixture-api", "api.contract", "review"), "fixture-spark"),
+    ],
     ids=["glue-to-data", "openapi-to-api"],
 )
 def test_task_routes_only_to_its_capability(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str], intent: str,
-        workspace: Callable[[Path], None], expected: tuple[str, str, str],
-        excluded: str) -> None:
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    intent: str,
+    workspace: Callable[[Path], None],
+    expected: tuple[str, str, str],
+    excluded: str,
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
     workspace(tmp_path)
 
@@ -163,7 +177,8 @@ def test_task_routes_only_to_its_capability(
 
 
 def test_vague_task_without_signals_is_ambiguous(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY, API_ENTRY])
     store = RunStore(tmp_path / ".forge")
 
@@ -180,7 +195,8 @@ def test_vague_task_without_signals_is_ambiguous(
 
 
 def test_unavailable_data_provider_without_same_capability_fallback_fails(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     # fixture-api is healthy but serves another capability: it must never be the fallback.
     make_workspace(tmp_path, [SPARK_DOWN, API_ENTRY])
     case_a(tmp_path)
@@ -204,7 +220,8 @@ def test_unavailable_data_provider_without_same_capability_fallback_fails(
 
 
 def test_project_trust_is_demoted_and_needs_explicit_authorization(
-        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     forge = make_workspace(tmp_path, [])
     write_providers(forge, [{**SPARK_ENTRY, "trust": "trusted"}], scope="project")
     case_a(tmp_path)
@@ -228,8 +245,7 @@ def test_project_trust_is_demoted_and_needs_explicit_authorization(
 
     out = orchestrate(tmp_path, GLUE, allow_unverified=True)
     assert out.status == "ok" and out.receipt.provider is not None
-    assert (out.receipt.provider.id, out.receipt.provider.trust) == \
-        ("fixture-spark", "unverified")
+    assert (out.receipt.provider.id, out.receipt.provider.trust) == ("fixture-spark", "unverified")
 
     code, data, _ = ask_cli(capsys, tmp_path, GLUE, "--allow-unverified")
     assert code == 0 and data["status"] == "ok"
@@ -245,9 +261,22 @@ GIT = shutil.which("git")
 def _git(repo: Path, *args: str) -> str:
     assert GIT is not None
     out = subprocess.run(
-        [GIT, "-c", "core.fsmonitor=false", "-c", "user.name=t", "-c", "user.email=t@t",
-         "-c", "commit.gpgsign=false", *args],
-        cwd=repo, capture_output=True, check=True, env={**os.environ, "LC_ALL": "C"},
+        [
+            GIT,
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+            *args,
+        ],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+        env={**os.environ, "LC_ALL": "C"},
     )
     return out.stdout.decode("utf-8", "replace")
 
@@ -259,7 +288,10 @@ def _git_dir_snapshot(d: Path) -> dict[str, tuple[bool, int, bytes]]:
         st = p.lstat()
         is_dir = p.is_dir()
         snap[p.relative_to(d).as_posix()] = (
-            is_dir, st.st_mtime_ns, b"" if is_dir else p.read_bytes())
+            is_dir,
+            st.st_mtime_ns,
+            b"" if is_dir else p.read_bytes(),
+        )
     return snap
 
 
@@ -287,13 +319,17 @@ def test_ask_through_the_cli_leaves_a_real_git_dir_intact(outside_dir: Path) -> 
     home.mkdir()
     repo = outside_dir / "repo"
     repo.mkdir()
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "HOME": str(home),
-           "USERPROFILE": str(home)}
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "HOME": str(home), "USERPROFILE": str(home)}
 
     def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run([sys.executable, "-m", "theforge", *args, "--root", str(repo)],
-                              capture_output=True, text=True, encoding="utf-8",
-                              timeout=120, env=env)
+        return subprocess.run(
+            [sys.executable, "-m", "theforge", *args, "--root", str(repo)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=120,
+            env=env,
+        )
 
     _git(repo, "init", "-q", "-b", "main", ".")
     assert Path(_git(repo, "rev-parse", "--show-toplevel").strip()).resolve() == repo
@@ -332,17 +368,26 @@ PROOF_TASK = "Projete um pipeline Spark que produza dados para uma API"
 
 
 def test_plan_execute_then_explain_in_separate_processes(
-        user_config_dir: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
+    user_config_dir: Path, tmp_path_factory: pytest.TempPathFactory
+) -> None:
     """``plan --execute`` and every ``explain`` run as their own ``python -m theforge``
     process, with isolated user config/cache dirs and the cross proof workspace."""
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8",
-           "THEFORGE_CONFIG_DIR": str(user_config_dir),
-           "THEFORGE_CACHE_DIR": str(tmp_path_factory.mktemp("e2e-cache"))}
+    env = {
+        **os.environ,
+        "PYTHONIOENCODING": "utf-8",
+        "THEFORGE_CONFIG_DIR": str(user_config_dir),
+        "THEFORGE_CACHE_DIR": str(tmp_path_factory.mktemp("e2e-cache")),
+    }
 
     def run_cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run([sys.executable, "-m", "theforge", *args, "--root", str(root)],
-                              capture_output=True, text=True, encoding="utf-8", timeout=300,
-                              env=env)
+        return subprocess.run(
+            [sys.executable, "-m", "theforge", *args, "--root", str(root)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=300,
+            env=env,
+        )
 
     def explain(root: Path, run_id: str) -> dict[str, Any]:
         r = run_cli(root, "explain", run_id, "--json")
@@ -375,6 +420,8 @@ def test_plan_execute_then_explain_in_separate_processes(
         assert r.returncode == 6
         assert r.stderr.splitlines() == [
             "theforge: integrity divergence: 1 artifact(s) diverge "
-            f"[{Codes.PERSIST_DIVERGENCE} · persistence]"]
-        assert [(d["artifact"], d["kind"]) for d in
-                json.loads(r.stdout)["integrity"]["divergences"]] == [("result", "modified")]
+            f"[{Codes.PERSIST_DIVERGENCE} · persistence]"
+        ]
+        assert [
+            (d["artifact"], d["kind"]) for d in json.loads(r.stdout)["integrity"]["divergences"]
+        ] == [("result", "modified")]

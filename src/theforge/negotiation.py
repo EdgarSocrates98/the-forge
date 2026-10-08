@@ -47,15 +47,29 @@ _DIM_ORDER = {"none": 0, "partial": 1, "unknown": 2, "full": 3, "not_applicable"
 # A fresh result's dimensions: demands the engine did not evaluate stay
 # ``unknown`` (capability/protocol/policy) or ``not_applicable`` (the rest).
 _BLANK_DIMS: dict[str, DimensionMatch] = {
-    "capability_match": "unknown", "protocol_match": "unknown",
-    "policy_match": "unknown", "runtime_match": "not_applicable",
-    "technology_match": "not_applicable", "evidence_match": "not_applicable",
-    "artifact_match": "not_applicable", "feature_match": "not_applicable",
+    "capability_match": "unknown",
+    "protocol_match": "unknown",
+    "policy_match": "unknown",
+    "runtime_match": "not_applicable",
+    "technology_match": "not_applicable",
+    "evidence_match": "not_applicable",
+    "artifact_match": "not_applicable",
+    "feature_match": "not_applicable",
 }
 _STATE_RANK: Mapping[NegotiationState, int] = {
-    "INCOMPATIBLE": 0, "UNRESOLVED": 1, "UNSUPPORTED": 2, "PARTIAL": 3, "FULL": 4}
+    "INCOMPATIBLE": 0,
+    "UNRESOLVED": 1,
+    "UNSUPPORTED": 2,
+    "PARTIAL": 3,
+    "FULL": 4,
+}
 _HISTORY_RANK: Mapping[HistoryMaturity, int] = {
-    "absent": 0, "stale": 0, "cold": 1, "warming": 2, "mature": 3}
+    "absent": 0,
+    "stale": 0,
+    "cold": 1,
+    "warming": 2,
+    "mature": 3,
+}
 
 
 def feature_satisfied(declared: frozenset[str] | set[str], required: str) -> bool:
@@ -71,8 +85,9 @@ def feature_satisfied(declared: frozenset[str] | set[str], required: str) -> boo
     return False
 
 
-def maturity(performance: ProviderPerformance | None, provider: str,
-             capability: str, surface: str | None) -> HistoryMaturity:
+def maturity(
+    performance: ProviderPerformance | None, provider: str, capability: str, surface: str | None
+) -> HistoryMaturity:
     """Measured-history maturity scoped to the exact surface (§42-44).
 
     ``stale`` when runs exist for the provider/capability but only against a
@@ -80,12 +95,18 @@ def maturity(performance: ProviderPerformance | None, provider: str,
     """
     if performance is None:
         return "absent"
-    exact = next((e for e in performance.entries
-                  if e.provider == provider and e.capability == capability
-                  and e.surface == surface), None)
+    exact = next(
+        (
+            e
+            for e in performance.entries
+            if e.provider == provider and e.capability == capability and e.surface == surface
+        ),
+        None,
+    )
     if exact is None:
-        touched = any(e.provider == provider and e.capability == capability
-                      for e in performance.entries)
+        touched = any(
+            e.provider == provider and e.capability == capability for e in performance.entries
+        )
         return "stale" if touched and surface is not None else "absent"
     if exact.runs >= _MATURE_RUNS:
         return "mature"
@@ -100,8 +121,7 @@ class _Verdict:
 
     state: NegotiationState = "UNRESOLVED"
     capability: str | None = None
-    dimensions: dict[str, DimensionMatch] = field(
-        default_factory=lambda: dict(_BLANK_DIMS))
+    dimensions: dict[str, DimensionMatch] = field(default_factory=lambda: dict(_BLANK_DIMS))
     history: HistoryMaturity = "absent"
     matched: list[str] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
@@ -109,9 +129,12 @@ class _Verdict:
     policy_conflicts: list[str] = field(default_factory=list)
 
 
-def negotiate(requirement: CapabilityRequirement, record: RegistryRecord, *,
-              performance: ProviderPerformance | None = None
-              ) -> CapabilityNegotiationResult:
+def negotiate(
+    requirement: CapabilityRequirement,
+    record: RegistryRecord,
+    *,
+    performance: ProviderPerformance | None = None,
+) -> CapabilityNegotiationResult:
     """Negotiate one requirement against one provider record (deterministic)."""
     provider = record.entry.id
     surface = record.surface.surface_fingerprint if record.surface else None
@@ -132,8 +155,10 @@ def negotiate(requirement: CapabilityRequirement, record: RegistryRecord, *,
     capability, via_alias = resolved
     v.capability = capability.id
     v.matched.append(
-        f"capability:{requirement.capability}->{capability.id}" if via_alias
-        else f"capability:{capability.id}")
+        f"capability:{requirement.capability}->{capability.id}"
+        if via_alias
+        else f"capability:{capability.id}"
+    )
     v.dimensions["capability_match"] = "full"
     if capability.state in ("heuristic", "unresolved"):
         v.limitations.append(f"capability_state:{capability.state}")
@@ -149,15 +174,24 @@ def negotiate(requirement: CapabilityRequirement, record: RegistryRecord, *,
     return _result(requirement, record, surface, v)
 
 
-def _result(requirement: CapabilityRequirement, record: RegistryRecord,
-            surface: str | None, v: _Verdict) -> CapabilityNegotiationResult:
+def _result(
+    requirement: CapabilityRequirement, record: RegistryRecord, surface: str | None, v: _Verdict
+) -> CapabilityNegotiationResult:
     return CapabilityNegotiationResult(
-        producer=PRODUCER, created_at=utc_now(), requirement=requirement,
-        provider=record.entry.id, state=v.state, capability=v.capability,
-        dimensions=v.dimensions, history=v.history, matched=sorted(v.matched),
-        missing=sorted(set(v.missing)), limitations=v.limitations,
+        producer=PRODUCER,
+        created_at=utc_now(),
+        requirement=requirement,
+        provider=record.entry.id,
+        state=v.state,
+        capability=v.capability,
+        dimensions=v.dimensions,
+        history=v.history,
+        matched=sorted(v.matched),
+        missing=sorted(set(v.missing)),
+        limitations=v.limitations,
         policy_conflicts=sorted(set(v.policy_conflicts)),
-        surface_fingerprint=surface)
+        surface_fingerprint=surface,
+    )
 
 
 def _features(manifest: ForgeManifest, capability: Capability) -> frozenset[str]:
@@ -166,17 +200,22 @@ def _features(manifest: ForgeManifest, capability: Capability) -> frozenset[str]
 
 
 def _produces(capability: Capability, offer: CapabilityOffer | None) -> set[str]:
-    return set(capability.relations.produces) | set(
-        offer.produces_evidence if offer else ())
+    return set(capability.relations.produces) | set(offer.produces_evidence if offer else ())
 
 
-def _hard_gates(requirement: CapabilityRequirement, manifest: ForgeManifest,
-                capability: Capability, record: RegistryRecord,
-                v: _Verdict) -> str | None:
+def _hard_gates(
+    requirement: CapabilityRequirement,
+    manifest: ForgeManifest,
+    capability: Capability,
+    record: RegistryRecord,
+    v: _Verdict,
+) -> str | None:
     """Evaluate hard gates (§9); on failure name the conflicts and return the gate."""
     trust = record.entry.trust
-    if trust == "blocked" or (requirement.minimum_trust is not None
-                              and TRUST_RANK[trust] > TRUST_RANK[requirement.minimum_trust]):
+    if trust == "blocked" or (
+        requirement.minimum_trust is not None
+        and TRUST_RANK[trust] > TRUST_RANK[requirement.minimum_trust]
+    ):
         v.policy_conflicts.append(f"trust:{trust}")
         v.dimensions["policy_match"] = "none"
         return "policy"
@@ -188,8 +227,9 @@ def _hard_gates(requirement: CapabilityRequirement, manifest: ForgeManifest,
         return "protocol"
 
     supported = _features(manifest, capability)
-    feature_missing = [f for f in requirement.protocol_features
-                       if not feature_satisfied(supported, f)]
+    feature_missing = [
+        f for f in requirement.protocol_features if not feature_satisfied(supported, f)
+    ]
     if feature_missing:
         v.missing.extend(f"feature:{f}" for f in feature_missing)
         v.dimensions["protocol_match"] = "none"
@@ -198,8 +238,7 @@ def _hard_gates(requirement: CapabilityRequirement, manifest: ForgeManifest,
 
     ceiling = requirement.operation_class_ceiling
     if ceiling and _OPERATION_RANK[capability.operation_class] > _OPERATION_RANK[ceiling]:
-        v.policy_conflicts.append(
-            f"operation_class:{capability.operation_class}>{ceiling}")
+        v.policy_conflicts.append(f"operation_class:{capability.operation_class}>{ceiling}")
         return "operation_class"
     if not requirement.mutation_allowed and capability.operation_class in _MUTATING:
         v.policy_conflicts.append(f"mutation:{capability.operation_class}")
@@ -229,12 +268,15 @@ def _hard_gates(requirement: CapabilityRequirement, manifest: ForgeManifest,
     return None
 
 
-def _runtime_gate(requirement: CapabilityRequirement, manifest: ForgeManifest,
-                  offer: CapabilityOffer | None) -> str | None:
-    offline = offer.offline if offer and offer.offline is not None \
-        else manifest.execution.offline
-    network = offer.network_required if offer and offer.network_required is not None \
+def _runtime_gate(
+    requirement: CapabilityRequirement, manifest: ForgeManifest, offer: CapabilityOffer | None
+) -> str | None:
+    offline = offer.offline if offer and offer.offline is not None else manifest.execution.offline
+    network = (
+        offer.network_required
+        if offer and offer.network_required is not None
         else manifest.execution.requires_network
+    )
     credentials = offer.credentials_required if offer else None
     if requirement.offline_required and not offline:
         return "runtime:offline_required"
@@ -255,30 +297,34 @@ def _covered(required: list[str], declared: list[str] | set[str]) -> DimensionMa
     return "full" if not missing else ("partial" if len(missing) < len(required) else "none")
 
 
-def _soft_dimensions(requirement: CapabilityRequirement, manifest: ForgeManifest,
-                     capability: Capability, v: _Verdict) -> None:
+def _soft_dimensions(
+    requirement: CapabilityRequirement, manifest: ForgeManifest, capability: Capability, v: _Verdict
+) -> None:
     """Soft dimensions + the explicit ``missing`` entries for unknown demands."""
     offer = capability.offer
     dims = v.dimensions
 
-    missing_actions = [a for a in requirement.required_actions
-                       if a not in capability.actions]
+    missing_actions = [a for a in requirement.required_actions if a not in capability.actions]
     if missing_actions:
         dims["capability_match"] = "partial"
         v.missing.extend(f"action:{a}" for a in missing_actions)
 
     dims["technology_match"] = _covered(
-        requirement.technologies, list(offer.technologies) if offer else [])
-    dims["evidence_match"] = _covered(requirement.required_evidence,
-                                    _produces(capability, offer))
+        requirement.technologies, list(offer.technologies) if offer else []
+    )
+    dims["evidence_match"] = _covered(requirement.required_evidence, _produces(capability, offer))
     consumes = set(capability.relations.consumes) | set(
-        offer.consumes_artifact_types if offer else ())
+        offer.consumes_artifact_types if offer else ()
+    )
     inputs = _covered(requirement.input_artifact_types, consumes)
-    outputs = _covered(requirement.required_output_types,
-                       list(offer.produces_artifact_types) if offer else [])
-    dims["artifact_match"] = ("not_applicable"
-                              if inputs == outputs == "not_applicable"
-                              else min((inputs, outputs), key=_DIM_ORDER.__getitem__))
+    outputs = _covered(
+        requirement.required_output_types, list(offer.produces_artifact_types) if offer else []
+    )
+    dims["artifact_match"] = (
+        "not_applicable"
+        if inputs == outputs == "not_applicable"
+        else min((inputs, outputs), key=_DIM_ORDER.__getitem__)
+    )
 
     # offline/network are always declared at manifest level (ExecutionInfo is
     # non-Optional); only offer.credentials_required can be undeclared — an
@@ -291,25 +337,31 @@ def _soft_dimensions(requirement: CapabilityRequirement, manifest: ForgeManifest
     if not requirement.credentials_allowed:
         creds = offer.credentials_required if offer else None
         runtime_levels.append("full" if creds is not None else "unknown")
-    dims["runtime_match"] = ("not_applicable" if not runtime_levels
-                             else min(runtime_levels, key=_DIM_ORDER.__getitem__))
+    dims["runtime_match"] = (
+        "not_applicable" if not runtime_levels else min(runtime_levels, key=_DIM_ORDER.__getitem__)
+    )
 
     feature_flags = {
-        "handoff_required": "handoff/v1", "trace_required": "trace-ref/v1",
-        "economy_required": "economy-receipt/v1", "graph_required": "graph-refs/v1",
+        "handoff_required": "handoff/v1",
+        "trace_required": "trace-ref/v1",
+        "economy_required": "economy-receipt/v1",
+        "graph_required": "graph-refs/v1",
     }
-    demanded = {flag: feat for flag, feat in feature_flags.items()
-                if getattr(requirement, flag)}
+    demanded = {flag: feat for flag, feat in feature_flags.items() if getattr(requirement, flag)}
     if not demanded:
         dims["feature_match"] = "not_applicable"
     else:
-        missing = [feat for flag, feat in demanded.items()
-                   if not feature_satisfied(_features(manifest, capability), feat)]
+        missing = [
+            feat
+            for flag, feat in demanded.items()
+            if not feature_satisfied(_features(manifest, capability), feat)
+        ]
         v.missing.extend(f"feature:{feat}" for feat in missing)
         dims["feature_match"] = "none" if missing else "full"
 
-    v.missing.extend(f"undeclared:{name}" for name, level in sorted(dims.items())
-                     if level == "unknown")
+    v.missing.extend(
+        f"undeclared:{name}" for name, level in sorted(dims.items()) if level == "unknown"
+    )
 
 
 def _state(dimensions: dict[str, DimensionMatch], missing: list[str]) -> NegotiationState:
@@ -319,22 +371,35 @@ def _state(dimensions: dict[str, DimensionMatch], missing: list[str]) -> Negotia
     return "FULL"
 
 
-def negotiate_all(requirement: CapabilityRequirement,
-                  records: list[RegistryRecord], *,
-                  performance: ProviderPerformance | None = None
-                  ) -> list[CapabilityNegotiationResult]:
+def negotiate_all(
+    requirement: CapabilityRequirement,
+    records: list[RegistryRecord],
+    *,
+    performance: ProviderPerformance | None = None,
+) -> list[CapabilityNegotiationResult]:
     """Every record negotiated, sorted best-first deterministically.
 
     Order: state rank → per-dimension match tuple → history maturity →
     surface fingerprint → provider id. No score arithmetic: lexicographic.
     """
     results = [negotiate(requirement, r, performance=performance) for r in records]
-    dims = ("capability_match", "protocol_match", "policy_match", "runtime_match",
-            "technology_match", "evidence_match", "artifact_match", "feature_match")
-    return sorted(results, key=lambda r: (
-        -_STATE_RANK[r.state],
-        tuple(-_DIM_ORDER[r.dimensions.get(d, "unknown")] for d in dims),
-        -_HISTORY_RANK[r.history],
-        r.surface_fingerprint or "",
-        r.provider,
-    ))
+    dims = (
+        "capability_match",
+        "protocol_match",
+        "policy_match",
+        "runtime_match",
+        "technology_match",
+        "evidence_match",
+        "artifact_match",
+        "feature_match",
+    )
+    return sorted(
+        results,
+        key=lambda r: (
+            -_STATE_RANK[r.state],
+            tuple(-_DIM_ORDER[r.dimensions.get(d, "unknown")] for d in dims),
+            -_HISTORY_RANK[r.history],
+            r.surface_fingerprint or "",
+            r.provider,
+        ),
+    )

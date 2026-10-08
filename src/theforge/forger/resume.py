@@ -62,8 +62,11 @@ def prior_outcomes(store: RunStore, run_id: str) -> dict[str, NodeOutcome]:
     if result is not None:
         try:
             nodes = result.get("nodes") or []
-            return {n["node"]: _outcome(n) for n in nodes if isinstance(n, dict)
-                    and isinstance(n.get("node"), str)}
+            return {
+                n["node"]: _outcome(n)
+                for n in nodes
+                if isinstance(n, dict) and isinstance(n.get("node"), str)
+            }
         except (KeyError, TypeError):
             return {}
     state = store.read_optional(run_id, "plan-state")
@@ -77,8 +80,11 @@ def prior_outcomes(store: RunStore, run_id: str) -> dict[str, NodeOutcome]:
             # A crashed snapshot keeps no receipt hash; integrity is still proven
             # by the child's own chain plus the result hash below.
             outcomes[entry["node"]] = NodeOutcome(
-                node=entry["node"], status="ok", run_id=entry.get("run_id"),
-                result_sha256=entry.get("result_sha256"))
+                node=entry["node"],
+                status="ok",
+                run_id=entry.get("run_id"),
+                result_sha256=entry.get("result_sha256"),
+            )
     return outcomes
 
 
@@ -87,11 +93,14 @@ def _outcome(raw: dict[str, Any]) -> NodeOutcome:
     return from_dict(NodeOutcome, raw)
 
 
-def reuse_execution(store: RunStore, plan: ExecutionPlan, node: PlanNode,
-                    prior: NodeOutcome | None,
-                    sources: Sequence[SourceResult],
-                    records: Mapping[str, RegistryRecord],
-                    ) -> tuple[NodeExecution | None, str | None]:
+def reuse_execution(
+    store: RunStore,
+    plan: ExecutionPlan,
+    node: PlanNode,
+    prior: NodeOutcome | None,
+    sources: Sequence[SourceResult],
+    records: Mapping[str, RegistryRecord],
+) -> tuple[NodeExecution | None, str | None]:
     """The re-hydrated ``NodeExecution`` of a resumable node, or ``(None, why)``.
 
     ``why`` is the invalidation reason for the plan's limitations.
@@ -104,8 +113,10 @@ def reuse_execution(store: RunStore, plan: ExecutionPlan, node: PlanNode,
     receipt = store.read_optional(child, "receipt")
     if receipt is None:
         return None, "prior child run missing"
-    if store.persisted_sha256(child, "receipt") != prior.receipt_sha256 \
-            and prior.receipt_sha256 is not None:
+    if (
+        store.persisted_sha256(child, "receipt") != prior.receipt_sha256
+        and prior.receipt_sha256 is not None
+    ):
         return None, "prior child receipt diverged"
     try:
         receipt_obj = store.read_contract(child, "receipt", ExecutionReceipt)
@@ -117,8 +128,7 @@ def reuse_execution(store: RunStore, plan: ExecutionPlan, node: PlanNode,
         # The child receipt itself is the outcome truth — a ``plan-state``
         # fallback only knows "succeeded"; a diverging status is not reusable.
         return None, f"prior child receipt status {receipt_obj.status!r}"
-    if prior.result_sha256 is not None \
-            and receipt_obj.result_sha256 != prior.result_sha256:
+    if prior.result_sha256 is not None and receipt_obj.result_sha256 != prior.result_sha256:
         return None, "prior child result diverged"
     identity = _provider_identity(receipt_obj, node, records)
     if identity is not None:
@@ -128,28 +138,39 @@ def reuse_execution(store: RunStore, plan: ExecutionPlan, node: PlanNode,
     except Exception:
         return None, "prior child result unreadable"
     try:
-        verification = (store.read_contract(child, "verification", VerificationResult)
-                        if receipt_obj.verification_sha256 is not None else None)
+        verification = (
+            store.read_contract(child, "verification", VerificationResult)
+            if receipt_obj.verification_sha256 is not None
+            else None
+        )
     except Exception:
         verification = None  # integrity of its hash already ran above
-    handoff, note = _handoff_integrity(store, plan, node, sources, records,
-                                       receipt_obj)
+    handoff, note = _handoff_integrity(store, plan, node, sources, records, receipt_obj)
     if note is not None:
         return None, note
     status: NodeStatus = "ok" if receipt_obj.status == "ok" else "partial"
-    outcome = replace(prior, status=status, reused=True, attempts=0,
-                      receipt_sha256=prior.receipt_sha256
-                      or store.persisted_sha256(child, "receipt"))
+    outcome = replace(
+        prior,
+        status=status,
+        reused=True,
+        attempts=0,
+        receipt_sha256=prior.receipt_sha256 or store.persisted_sha256(child, "receipt"),
+    )
     provider = receipt_obj.provider
     return NodeExecution(
-        node=node, outcome=outcome, result=result, handoff=handoff,
-        verification=verification, reached_execute=False,
-        provider=Producer(id=provider.id, version=provider.version) if provider else None
+        node=node,
+        outcome=outcome,
+        result=result,
+        handoff=handoff,
+        verification=verification,
+        reached_execute=False,
+        provider=Producer(id=provider.id, version=provider.version) if provider else None,
     ), None
 
 
-def _provider_identity(receipt: ExecutionReceipt, node: PlanNode,
-                       records: Mapping[str, RegistryRecord]) -> str | None:
+def _provider_identity(
+    receipt: ExecutionReceipt, node: PlanNode, records: Mapping[str, RegistryRecord]
+) -> str | None:
     """Provider mismatch reason, or None when the identity is unchanged (F2)."""
     provider = receipt.provider
     record = records.get(node.provider)
@@ -159,22 +180,34 @@ def _provider_identity(receipt: ExecutionReceipt, node: PlanNode,
         return f"provider {node.provider!r} is no longer registered"
     if provider.id != record.entry.id:
         return f"provider id {provider.id!r} != node provider {record.entry.id!r}"
-    if provider.fingerprint is not None \
-            and provider.fingerprint != fingerprint(record.entry).digest:
+    if (
+        provider.fingerprint is not None
+        and provider.fingerprint != fingerprint(record.entry).digest
+    ):
         return "provider entry fingerprint changed"
-    if provider.manifest_sha256 is not None and record.manifest_sha256 is not None \
-            and provider.manifest_sha256 != record.manifest_sha256:
+    if (
+        provider.manifest_sha256 is not None
+        and record.manifest_sha256 is not None
+        and provider.manifest_sha256 != record.manifest_sha256
+    ):
         return "provider manifest changed"
-    if provider.surface_fingerprint is not None and record.surface is not None \
-            and provider.surface_fingerprint != record.surface.surface_fingerprint:
+    if (
+        provider.surface_fingerprint is not None
+        and record.surface is not None
+        and provider.surface_fingerprint != record.surface.surface_fingerprint
+    ):
         return "provider declared surface changed"
     return None
 
 
-def _handoff_integrity(store: RunStore, plan: ExecutionPlan, node: PlanNode,
-                       sources: Sequence[SourceResult],
-                       records: Mapping[str, RegistryRecord],
-                       receipt: ExecutionReceipt) -> tuple[Handoff | None, str | None]:
+def _handoff_integrity(
+    store: RunStore,
+    plan: ExecutionPlan,
+    node: PlanNode,
+    sources: Sequence[SourceResult],
+    records: Mapping[str, RegistryRecord],
+    receipt: ExecutionReceipt,
+) -> tuple[Handoff | None, str | None]:
     """The child's recorded handoff when it still rebuilds identically (F2).
 
     The handoff is rebuilt with the original ``plan.plan_run`` and the recorded
@@ -192,8 +225,9 @@ def _handoff_integrity(store: RunStore, plan: ExecutionPlan, node: PlanNode,
         delivered_obj = store.read_contract(receipt.run_id, "handoff", Handoff)
     except Exception:
         return None, "prior handoff artifact unreadable"
-    rebuilt = build_handoff(plan.plan_run, node, sources, records=records,
-                            created_at=delivered_obj.created_at)
+    rebuilt = build_handoff(
+        plan.plan_run, node, sources, records=records, created_at=delivered_obj.created_at
+    )
     if rebuilt is None:
         return None, "handoff would now be empty (upstream sources lost)"
     if sha256_of(to_dict(rebuilt)) != receipt.inputs.handoff_sha256:

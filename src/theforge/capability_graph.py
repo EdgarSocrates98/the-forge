@@ -31,9 +31,13 @@ from theforge.registry import RegistryRecord
 # capability.relations fields -> edge kinds, in manifest field order. The first
 # two point at artifact-type nodes; the rest at capability nodes.
 _RELATION_EDGES: Final[tuple[tuple[str, CapEdgeKind], ...]] = (
-    ("produces", "produces"), ("consumes", "consumes"), ("requires", "requires"),
-    ("complements", "complements"), ("conflicts", "conflicts"),
-    ("can_verify", "can_verify"), ("can_review", "can_review"),
+    ("produces", "produces"),
+    ("consumes", "consumes"),
+    ("requires", "requires"),
+    ("complements", "complements"),
+    ("conflicts", "conflicts"),
+    ("can_verify", "can_verify"),
+    ("can_review", "can_review"),
 )
 _ARTIFACT_RELATIONS: Final = frozenset({"produces", "consumes"})
 
@@ -48,14 +52,15 @@ def _cap_node_ids(graph: CapabilityGraph, ref: str) -> list[str]:
     qualified = f"capability:{ref}"
     if "/" in ref:
         return [qualified] if qualified in {n.id for n in graph.nodes} else []
-    return sorted(n.id for n in graph.nodes
-                  if n.kind == "capability" and n.id.endswith(f"/{ref}"))
+    return sorted(n.id for n in graph.nodes if n.kind == "capability" and n.id.endswith(f"/{ref}"))
 
 
 def build_capability_graph(
     records: Mapping[str, RegistryRecord] | Sequence[RegistryRecord],
-    descriptor: WorkspaceDescriptor | None = None, *,
-    run_id: str = "", producer: Producer = PRODUCER,
+    descriptor: WorkspaceDescriptor | None = None,
+    *,
+    run_id: str = "",
+    producer: Producer = PRODUCER,
     created_at: str | None = None,
 ) -> CapabilityGraph:
     """The declared+observed capability graph of the registry and workspace.
@@ -76,78 +81,108 @@ def build_capability_graph(
             nodes[nid] = CapNode(id=nid, kind=kind, label=label)
         return nid
 
-    def edge(source: str, target: str, kind: CapEdgeKind,
-             epistemic: EdgeEpistemic, evidence: str) -> None:
-        edges.append(CapEdge(source=source, target=target, kind=kind,
-                             epistemic=epistemic, evidence=evidence))
+    def edge(
+        source: str, target: str, kind: CapEdgeKind, epistemic: EdgeEpistemic, evidence: str
+    ) -> None:
+        edges.append(
+            CapEdge(source=source, target=target, kind=kind, epistemic=epistemic, evidence=evidence)
+        )
 
-    record_list = (records.values() if isinstance(records, Mapping)
-                   else list(records))
+    record_list = records.values() if isinstance(records, Mapping) else list(records)
     for record in record_list:
         manifest = record.manifest
         if manifest is None:
-            limitations.append(
-                f"provider {record.entry.id}: no manifest; absent from the graph")
+            limitations.append(f"provider {record.entry.id}: no manifest; absent from the graph")
             continue
         provider = node("provider", manifest.id, f"{manifest.id} {manifest.version}")
         for domain in sorted(manifest.domains):
-            edge(provider, node("domain", domain), "in_domain", "explicit",
-                 f"manifest {manifest.id} domains")
+            edge(
+                provider,
+                node("domain", domain),
+                "in_domain",
+                "explicit",
+                f"manifest {manifest.id} domains",
+            )
         for cap in manifest.capabilities:
-            capability = node("capability", _key(manifest.id, cap.id),
-                              cap.description)
+            capability = node("capability", _key(manifest.id, cap.id), cap.description)
             real_capabilities.add(capability)
-            edge(provider, capability, "has_capability", "explicit",
-                 f"manifest {manifest.id} capabilities")
+            edge(
+                provider,
+                capability,
+                "has_capability",
+                "explicit",
+                f"manifest {manifest.id} capabilities",
+            )
             for action in sorted(cap.actions):
-                edge(capability, node("action", f"{manifest.id}/{cap.id}/{action}"),
-                     "has_action", "explicit", f"capability {cap.id} actions")
+                edge(
+                    capability,
+                    node("action", f"{manifest.id}/{cap.id}/{action}"),
+                    "has_action",
+                    "explicit",
+                    f"capability {cap.id} actions",
+                )
             for field_name, kind in _RELATION_EDGES:
                 artifact = field_name in _ARTIFACT_RELATIONS
                 for ref in sorted(getattr(cap.relations, field_name)):
-                    target = node("artifact_type" if artifact else "capability",
-                                  ref if artifact else _resolve(ref, manifest.id))
-                    edge(capability, target, kind, "explicit",
-                         f"{manifest.id}/{cap.id} relations.{field_name}")
+                    target = node(
+                        "artifact_type" if artifact else "capability",
+                        ref if artifact else _resolve(ref, manifest.id),
+                    )
+                    edge(
+                        capability,
+                        target,
+                        kind,
+                        "explicit",
+                        f"{manifest.id}/{cap.id} relations.{field_name}",
+                    )
 
     if descriptor is None:
-        limitations.append(
-            "no workspace descriptor: repository/technology nodes absent")
+        limitations.append("no workspace descriptor: repository/technology nodes absent")
     else:
         for repo in descriptor.repositories:
             node("repository", repo.path)
         for tech in descriptor.technologies:
-            technology = node("technology", f"{tech.repository}:{tech.name}",
-                              tech.name)
+            technology = node("technology", f"{tech.repository}:{tech.name}", tech.name)
             repo_id = f"repository:{tech.repository}"
             if repo_id in nodes:
-                edge(repo_id, technology, "uses_technology", "observed",
-                     tech.evidence)
+                edge(repo_id, technology, "uses_technology", "observed", tech.evidence)
             else:
                 limitations.append(
-                    f"technology {tech.name}: repository {tech.repository!r} "
-                    "not in the descriptor")
+                    f"technology {tech.name}: repository {tech.repository!r} not in the descriptor"
+                )
             for matcher in tech.matched_by:  # "<provider>/<capability>"
                 cap_id = f"capability:{matcher}"
                 if cap_id in real_capabilities:
-                    edge(cap_id, technology, "relevant_to", "observed",
-                         f"signals matched {tech.name} ({tech.evidence})")
+                    edge(
+                        cap_id,
+                        technology,
+                        "relevant_to",
+                        "observed",
+                        f"signals matched {tech.name} ({tech.evidence})",
+                    )
                 else:
-                    limitations.append(
-                        f"technology {tech.name}: matcher {matcher} not in registry")
+                    limitations.append(f"technology {tech.name}: matcher {matcher} not in registry")
 
-    unresolved = sorted({e.target for e in edges
-                         if e.target.startswith("capability:")
-                         and e.target not in real_capabilities})
+    unresolved = sorted(
+        {
+            e.target
+            for e in edges
+            if e.target.startswith("capability:") and e.target not in real_capabilities
+        }
+    )
     if unresolved:
-        limitations.append("declared relation targets not in the registry: "
-                           + ", ".join(unresolved))
+        limitations.append(
+            "declared relation targets not in the registry: " + ", ".join(unresolved)
+        )
 
     return CapabilityGraph(
-        producer=producer, created_at=created_at or utc_now(), run_id=run_id,
+        producer=producer,
+        created_at=created_at or utc_now(),
+        run_id=run_id,
         nodes=[nodes[k] for k in sorted(nodes)],
         edges=sorted(edges, key=lambda e: (e.source, e.kind, e.target)),
-        limitations=limitations)
+        limitations=limitations,
+    )
 
 
 def _resolve(ref: str, owner: str) -> str:
@@ -158,9 +193,9 @@ def _resolve(ref: str, owner: str) -> str:
 
 # --- wave B queries (B5): planning-readable answers over the graph -------------
 
+
 def _out(graph: CapabilityGraph, source: str, kind: CapEdgeKind) -> list[str]:
-    return sorted(e.target for e in graph.edges
-                  if e.source == source and e.kind == kind)
+    return sorted(e.target for e in graph.edges if e.source == source and e.kind == kind)
 
 
 def executors(graph: CapabilityGraph, ref: str) -> list[str]:
@@ -175,20 +210,23 @@ def executors(graph: CapabilityGraph, ref: str) -> list[str]:
 
 def producers(graph: CapabilityGraph, artifact_type: str) -> list[str]:
     """Capability keys declaring they produce the artifact type."""
-    return sorted(e.source.removeprefix("capability:") for e in graph.edges
-                  if e.kind == "produces"
-                  and e.target == f"artifact_type:{artifact_type}")
+    return sorted(
+        e.source.removeprefix("capability:")
+        for e in graph.edges
+        if e.kind == "produces" and e.target == f"artifact_type:{artifact_type}"
+    )
 
 
 def consumers(graph: CapabilityGraph, artifact_type: str) -> list[str]:
     """Capability keys declaring they consume the artifact type."""
-    return sorted(e.source.removeprefix("capability:") for e in graph.edges
-                  if e.kind == "consumes"
-                  and e.target == f"artifact_type:{artifact_type}")
+    return sorted(
+        e.source.removeprefix("capability:")
+        for e in graph.edges
+        if e.kind == "consumes" and e.target == f"artifact_type:{artifact_type}"
+    )
 
 
-def _related(graph: CapabilityGraph, ref: str, kind: CapEdgeKind,
-             *, symmetric: bool) -> list[str]:
+def _related(graph: CapabilityGraph, ref: str, kind: CapEdgeKind, *, symmetric: bool) -> list[str]:
     """Capability keys linked to ``ref`` by ``kind``; symmetric kinds count both
     directions (complements/conflicts), directed kinds count sources only."""
     targets = {nid for nid in _cap_node_ids(graph, ref)}
@@ -270,8 +308,7 @@ def produces_consumes_order(
 
     # Two refs may name the same node; emit each ref at its node's position and
     # keep input order inside it.
-    ordered = [ref for nid in order_ids
-               for ref in refs if in_graph.get(ref) == nid]
+    ordered = [ref for nid in order_ids for ref in refs if in_graph.get(ref) == nid]
     cyclic = nodes - done
     unresolved = sorted(ref for ref in refs if in_graph.get(ref) in cyclic)
     return ordered + missing, unresolved
@@ -289,8 +326,8 @@ def mesh_view(graph: CapabilityGraph) -> dict[str, Any]:
     consumes a consumed artifact type — a real relation outside the mesh, never
     dropped silently.
     """
-    produced: dict[str, set[str]] = {}   # artifact_type node -> producer caps
-    consumed: dict[str, set[str]] = {}   # artifact_type node -> consumer caps
+    produced: dict[str, set[str]] = {}  # artifact_type node -> producer caps
+    consumed: dict[str, set[str]] = {}  # artifact_type node -> consumer caps
     verifies: list[tuple[str, str]] = []  # (verifier cap, target cap)
     declared_domains: dict[str, set[str]] = {}  # provider id -> manifest domains
     for edge in graph.edges:
@@ -301,9 +338,9 @@ def mesh_view(graph: CapabilityGraph) -> dict[str, Any]:
         elif edge.kind == "can_verify":
             verifies.append((edge.source, edge.target))
         elif edge.kind == "in_domain" and edge.target.startswith("domain:"):
-            declared_domains.setdefault(
-                edge.source.removeprefix("provider:"), set()).add(
-                    edge.target.removeprefix("domain:"))
+            declared_domains.setdefault(edge.source.removeprefix("provider:"), set()).add(
+                edge.target.removeprefix("domain:")
+            )
 
     def strip(cap_node: str) -> str:
         return cap_node.removeprefix("capability:")
@@ -314,8 +351,7 @@ def mesh_view(graph: CapabilityGraph) -> dict[str, Any]:
     rows: dict[str, dict[str, set[str]]] = {}
     for art in sorted(set(produced) & set(consumed)):
         domain = namespace(art)
-        row = rows.setdefault(domain, {"observe": set(), "engineer": set(),
-                                       "verify": set()})
+        row = rows.setdefault(domain, {"observe": set(), "engineer": set(), "verify": set()})
         row["observe"] |= {strip(c) for c in produced[art]}
         row["engineer"] |= {strip(c) for c in consumed[art]}
     mesh_domains = set(rows)
@@ -324,21 +360,27 @@ def mesh_view(graph: CapabilityGraph) -> dict[str, Any]:
     # manifest declares; a verifier without declared domains covers them all.
     member_providers: dict[str, set[str]] = {
         domain: {key.split("/", 1)[0] for caps in row.values() for key in caps}
-        for domain, row in rows.items()}
+        for domain, row in rows.items()
+    }
     unplaced: list[str] = []
     for verifier, target in sorted(verifies):
         target_provider = strip(target).split("/", 1)[0]
-        candidates = {d for d in mesh_domains
-                      if target_provider in member_providers[d]}
+        candidates = {d for d in mesh_domains if target_provider in member_providers[d]}
         declared = declared_domains.get(strip(verifier).split("/", 1)[0])
         placed = candidates & declared if declared else candidates
         if not placed:
             unplaced.append(f"{strip(verifier)} -> {strip(target)}")
         for domain in sorted(placed):
             rows[domain]["verify"].add(strip(verifier))
-    return {"domains": [{"domain": domain,
-                         "observe": sorted(row["observe"]),
-                         "engineer": sorted(row["engineer"]),
-                         "verify": sorted(row["verify"])}
-                        for domain, row in sorted(rows.items())],
-            "unplaced_verify": sorted(unplaced)}
+    return {
+        "domains": [
+            {
+                "domain": domain,
+                "observe": sorted(row["observe"]),
+                "engineer": sorted(row["engineer"]),
+                "verify": sorted(row["verify"]),
+            }
+            for domain, row in sorted(rows.items())
+        ],
+        "unplaced_verify": sorted(unplaced),
+    }

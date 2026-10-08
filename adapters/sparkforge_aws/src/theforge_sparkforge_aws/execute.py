@@ -66,9 +66,9 @@ _STAGE_PREFIX = re.compile(r"(?<![\w.\-/\\])stage[/\\]")
 Runner = Callable[..., NativeOutcome]
 
 
-def _upstream_files(payload: Mapping[str, Any], entry: catalog.CapabilitySpec,
-                    action: str, cwd: Path
-                    ) -> tuple[dict[str, str], list[str]]:
+def _upstream_files(
+    payload: Mapping[str, Any], entry: catalog.CapabilitySpec, action: str, cwd: Path
+) -> tuple[dict[str, str], list[str]]:
     """Translate a delivered handoff into the action's upstream-facts file.
 
     Returns ``{upstream: upstream-facts.json}`` (stage-relative, as ``--file``
@@ -80,11 +80,15 @@ def _upstream_files(payload: Mapping[str, Any], entry: catalog.CapabilitySpec,
     if not isinstance(payload.get("handoff"), Mapping):
         return {}, []
     if not entry.accepts_handoff:
-        return {}, ["handoff delivered but not consumed: capability "
-                    f"'{entry.id}' declares no upstream intake"]
+        return {}, [
+            "handoff delivered but not consumed: capability "
+            f"'{entry.id}' declares no upstream intake"
+        ]
     if action != entry.actions[0][0]:
-        return {}, ["handoff delivered but not consumed: the intake belongs to action "
-                    f"'{entry.actions[0][0]}'"]
+        return {}, [
+            "handoff delivered but not consumed: the intake belongs to action "
+            f"'{entry.actions[0][0]}'"
+        ]
     document, notes = translate_handoff(payload["handoff"])
     stage = cwd / STAGE_DIR
     stage.mkdir(parents=True, exist_ok=True)
@@ -97,13 +101,12 @@ def _upstream_files(payload: Mapping[str, Any], entry: catalog.CapabilitySpec,
             count += 1
         name = f"{stem}-{count}.json"
     (stage / name).write_text(
-        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-        encoding="utf-8")
+        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     return {UPSTREAM_ARG: name}, notes
 
 
-def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *,
-                    live: bool) -> list[str]:
+def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *, live: bool) -> list[str]:
     """The limitation a call owes when the delivered handoff was not consumed.
 
     Live, consumption shows under ``output.filters_applied.upstream`` (an older
@@ -121,18 +124,24 @@ def _upstream_audit(recorded: Mapping[str, Any], had_handoff: bool, *,
         if consumed or (not live and recorded_arg):
             return []
         if live:
-            return ["handoff delivered but not consumed: the installed Spark Forge AWS has "
-                    "no upstream intake on analyze pyspark "
-                    "(filters_applied.upstream absent)"]
-        return ["handoff delivered but not consumed: the recorded run of this action "
-                "carries no upstream intake (re-record with a handoff)"]
+            return [
+                "handoff delivered but not consumed: the installed Spark Forge AWS has "
+                "no upstream intake on analyze pyspark "
+                "(filters_applied.upstream absent)"
+            ]
+        return [
+            "handoff delivered but not consumed: the recorded run of this action "
+            "carries no upstream intake (re-record with a handoff)"
+        ]
     if consumed or recorded_arg:
         return ["the recorded run consumed a handoff this request does not carry"]
     return []
 
 
-def _upstream_replay(recorded: Mapping[str, Any], payload: Mapping[str, Any],
-                     ) -> tuple[Mapping[str, Any], list[str]]:
+def _upstream_replay(
+    recorded: Mapping[str, Any],
+    payload: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], list[str]]:
     """Re-derive the items page's upstream facts from THIS request's handoff, in replay.
 
     The handoff→facts translation is adapter-deterministic — the specialist's only
@@ -148,9 +157,15 @@ def _upstream_replay(recorded: Mapping[str, Any], payload: Mapping[str, Any],
     items = output.get("items")
     if not isinstance(items, list):
         return recorded, []
-    native = [item for item in items if not (
-        isinstance(item, Mapping) and isinstance(item.get("id"), str)
-        and item["id"].startswith("upstream:"))]
+    native = [
+        item
+        for item in items
+        if not (
+            isinstance(item, Mapping)
+            and isinstance(item.get("id"), str)
+            and item["id"].startswith("upstream:")
+        )
+    ]
     notes: list[str] = []
     upstream: list[Any] = []
     if isinstance(payload.get("handoff"), Mapping):
@@ -169,8 +184,9 @@ def workspace_detail(reply: Reply) -> Reply:
     return replace(reply, error={**error, "detail": _STAGE_PREFIX.sub("", error["detail"])})
 
 
-def bound_files(binding: catalog.ArgBinding, matches: list[str]) -> tuple[dict[str, str],
-                                                                            list[str]]:
+def bound_files(
+    binding: catalog.ArgBinding, matches: list[str]
+) -> tuple[dict[str, str], list[str]]:
     """The native file argument (stage-relative) filled from the staged ``matches`` (non-empty,
     sorted) and the limitations of that choice."""
     if binding.directory:
@@ -179,60 +195,82 @@ def bound_files(binding: catalog.ArgBinding, matches: list[str]) -> tuple[dict[s
         return {binding.arg: common or "."}, []
     notes = []
     if len(matches) > 1:
-        notes.append(f"{binding.arg}: {len(matches)} staged files match; analyzed "
-                     f"{matches[0]} only")
+        notes.append(
+            f"{binding.arg}: {len(matches)} staged files match; analyzed {matches[0]} only"
+        )
     return {binding.arg: matches[0]}, notes
 
 
-def _replay_recording(replay: Path, capability: str, action: str,
-                      tool: str) -> Mapping[str, Any] | Reply:
+def _replay_recording(
+    replay: Path, capability: str, action: str, tool: str
+) -> Mapping[str, Any] | Reply:
     found = backend.recording(replay, capability, action)
     if found is None:
         expected = backend.expected_recording(capability, action)
-        return fail(backend.REPLAY_MISSING,
-                    f"replay recording {expected} not found in {replay}", field="replay",
-                    unlock="record it with python -m theforge_sparkforge_aws.record_execute")
+        return fail(
+            backend.REPLAY_MISSING,
+            f"replay recording {expected} not found in {replay}",
+            field="replay",
+            unlock="record it with python -m theforge_sparkforge_aws.record_execute",
+        )
     try:
         data = json.loads(found.path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return fail(backend.REPLAY_INVALID, f"{found.path.name} is not valid JSON",
-                    field="replay")
+        return fail(backend.REPLAY_INVALID, f"{found.path.name} is not valid JSON", field="replay")
     if found.kind == "error":
         if not translate.is_native_error(data):
-            return fail(backend.REPLAY_INVALID,
-                        f"{found.path.name} is not a native error envelope", field="replay")
+            return fail(
+                backend.REPLAY_INVALID,
+                f"{found.path.name} is not a native error envelope",
+                field="replay",
+            )
         return workspace_detail(translate.spark_error(data))
-    if (not isinstance(data, dict) or not set(data) >= _RECORDING_KEYS
-            or not set(data) <= _RECORDING_KEYS | {"provenance"}):
-        return fail(backend.REPLAY_INVALID,
-                    f"{found.path.name} must hold tool, arguments, output and judge "
-                    "(and optionally provenance)", field="replay")
+    if (
+        not isinstance(data, dict)
+        or not set(data) >= _RECORDING_KEYS
+        or not set(data) <= _RECORDING_KEYS | {"provenance"}
+    ):
+        return fail(
+            backend.REPLAY_INVALID,
+            f"{found.path.name} must hold tool, arguments, output and judge "
+            "(and optionally provenance)",
+            field="replay",
+        )
     if data["tool"] != tool:
-        return fail(backend.REPLAY_INVALID,
-                    f"{found.path.name} records {data['tool']!r}, but {capability}/{action} "
-                    f"calls {tool!r}", field="replay")
+        return fail(
+            backend.REPLAY_INVALID,
+            f"{found.path.name} records {data['tool']!r}, but {capability}/{action} calls {tool!r}",
+            field="replay",
+        )
     return data
 
 
 def _stderr_tail(stderr: bytes) -> str:
     lines = [line.strip() for line in stderr.decode("utf-8", "replace").splitlines()]
     last = next((line for line in reversed(lines) if line), "")
-    return last if len(last) <= STDERR_SHOWN else last[:STDERR_SHOWN - 3] + "..."
+    return last if len(last) <= STDERR_SHOWN else last[: STDERR_SHOWN - 3] + "..."
 
 
-def _live_recording(payload: Mapping[str, Any], cwd: Path, tool: str,
-                    files: Mapping[str, str], run: Runner) -> Mapping[str, Any] | Reply:
+def _live_recording(
+    payload: Mapping[str, Any], cwd: Path, tool: str, files: Mapping[str, str], run: Runner
+) -> Mapping[str, Any] | Reply:
     argv = [sys.executable, "-m", NATIVE_MODULE, "--tool", tool]
     for name, path in files.items():
         argv += ["--file", f"{name}={path}"]
     outcome = run(argv, cwd=cwd, env=NATIVE_ENV, timeout=native_timeout(payload))
     if outcome.returncode != 0 or outcome.stdout_truncated:
-        why = (f"exited with code {outcome.returncode}" if outcome.returncode != 0
-               else "wrote more output than the adapter reads")
+        why = (
+            f"exited with code {outcome.returncode}"
+            if outcome.returncode != 0
+            else "wrote more output than the adapter reads"
+        )
         tail = _stderr_tail(outcome.stderr)
-        return workspace_detail(fail(NATIVE_FAILED,
-                                     f"the Spark Forge AWS call of {tool} {why}"
-                                     + (f": {tail}" if tail else "")))
+        return workspace_detail(
+            fail(
+                NATIVE_FAILED,
+                f"the Spark Forge AWS call of {tool} {why}" + (f": {tail}" if tail else ""),
+            )
+        )
     try:
         data = json.loads(outcome.stdout)
     except ValueError:
@@ -243,12 +281,17 @@ def _live_recording(payload: Mapping[str, Any], cwd: Path, tool: str,
         return translate.invalid_output(tool, "the native call answered an unexpected object")
     # The recording form of record_execute: file arguments relative to the workspace.
     arguments = {**data["arguments"], **files}
-    return {"tool": tool, "arguments": arguments, "output": data.get("output"),
-            "judge": data.get("judge")}
+    return {
+        "tool": tool,
+        "arguments": arguments,
+        "output": data.get("output"),
+        "judge": data.get("judge"),
+    }
 
 
-def execute(options: AdapterOptions, request: Request, cwd: Path, *,
-            run: Runner = run_native) -> Reply:
+def execute(
+    options: AdapterOptions, request: Request, cwd: Path, *, run: Runner = run_native
+) -> Reply:
     """The reply of a gated ``execute`` (capability and action are declared)."""
     payload = request.payload
     capability, action = str(payload["capability"]), str(payload["action"])
@@ -263,17 +306,24 @@ def execute(options: AdapterOptions, request: Request, cwd: Path, *,
     empty = no_input(stage, required, provider_id=PROVIDER_ID, version=VERSION)
     if empty is not None:
         if isinstance(payload.get("handoff"), Mapping):
-            empty = replace(empty, limitations=[*empty.limitations,
-                            "handoff delivered but not consumed: no input staged"])
+            empty = replace(
+                empty,
+                limitations=[
+                    *empty.limitations,
+                    "handoff delivered but not consumed: no input staged",
+                ],
+            )
         return finalize(empty, cwd)
     files, notes = bound_files(binding, select_inputs(stage, required)[binding.arg])
     upstream_files, upstream_notes = (
-        ({}, []) if options.replay is not None
-        else _upstream_files(payload, entry, action, cwd))
+        ({}, []) if options.replay is not None else _upstream_files(payload, entry, action, cwd)
+    )
     files.update(upstream_files)
-    recorded = (_replay_recording(options.replay, capability, action, tool)
-                if options.replay is not None
-                else _live_recording(payload, cwd, tool, files, run))
+    recorded = (
+        _replay_recording(options.replay, capability, action, tool)
+        if options.replay is not None
+        else _live_recording(payload, cwd, tool, files, run)
+    )
     if isinstance(recorded, Reply):
         return recorded
     if options.replay is not None:
@@ -282,8 +332,9 @@ def execute(options: AdapterOptions, request: Request, cwd: Path, *,
     if isinstance(draft, Reply):
         return workspace_detail(draft)
     notes += upstream_notes
-    notes += _upstream_audit(recorded, isinstance(payload.get("handoff"), Mapping),
-                             live=options.replay is None)
+    notes += _upstream_audit(
+        recorded, isinstance(payload.get("handoff"), Mapping), live=options.replay is None
+    )
     if notes:
         draft = replace(draft, limitations=[*draft.limitations, *notes])
     return finalize(draft, cwd)
@@ -292,4 +343,5 @@ def execute(options: AdapterOptions, request: Request, cwd: Path, *,
 def handler(options: AdapterOptions) -> OpHandler:
     def handle(request: Request, cwd: Path) -> Reply:
         return execute(options, request, cwd)
+
     return handle

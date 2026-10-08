@@ -18,9 +18,22 @@ from theforge.contracts.types import (
     check_sha256,
 )
 
-__all__ = ["RESULT_SCHEMA", "Artifact", "ContextRequest", "ContextRequestItem", "Evidence",
-           "EvidenceSource", "ExecutionResult", "Finding", "Location", "Metric", "Metrics",
-           "NativeTrace", "ProviderEconomyReceipt", "ProviderReceipt"]
+__all__ = [
+    "RESULT_SCHEMA",
+    "Artifact",
+    "ContextRequest",
+    "ContextRequestItem",
+    "Evidence",
+    "EvidenceSource",
+    "ExecutionResult",
+    "Finding",
+    "Location",
+    "Metric",
+    "Metrics",
+    "NativeTrace",
+    "ProviderEconomyReceipt",
+    "ProviderReceipt",
+]
 
 RESULT_SCHEMA = "theforge/ExecutionResult/v1"
 
@@ -61,9 +74,9 @@ class EvidenceSource:
     """
 
     provider: str  # id of the provider that produced the item
-    run_id: str    # the provider run the item came from
-    item: str      # handoff item id
-    node: str | None = None      # plan node of the item (plan context)
+    run_id: str  # the provider run the item came from
+    item: str  # handoff item id
+    node: str | None = None  # plan node of the item (plan context)
     plan_run: str | None = None  # plan run the handoff belonged to
 
 

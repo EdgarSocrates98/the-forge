@@ -33,16 +33,23 @@ from theforge.profiles import ContextProfile, profile_for
 
 
 def task(root: Path, profile: str = "balanced") -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent="x",
-                    workspace_root=str(root), budget_profile=profile)
+    return TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent="x",
+        workspace_root=str(root),
+        budget_profile=profile,
+    )
 
 
 def test_pack_selects_by_glob_and_hashes(tmp_path: Path) -> None:
     write_file(tmp_path, "api/openapi.yaml", "openapi: 3.0.0\n")
     write_file(tmp_path, "api/main.py", "x=1\n")
     write_file(tmp_path, ".env", "A=1")
-    pack = build_context_pack(task(tmp_path), "api-forge", ["openapi.yaml", "*.yaml"],
-                              scan_workspace(tmp_path, ["."]))
+    pack = build_context_pack(
+        task(tmp_path), "api-forge", ["openapi.yaml", "*.yaml"], scan_workspace(tmp_path, ["."])
+    )
     assert [f.path for f in pack.files] == ["api/openapi.yaml"]
     item = pack.files[0]
     assert item.sha256 == hashlib.sha256(b"openapi: 3.0.0\n").hexdigest()
@@ -56,16 +63,18 @@ def test_pack_selects_by_glob_and_hashes(tmp_path: Path) -> None:
 def test_pack_orders_by_glob_hits_then_path(tmp_path: Path) -> None:
     for name in ("b.yaml", "a.yaml", "openapi.yaml"):
         write_file(tmp_path, name, "x")
-    pack = build_context_pack(task(tmp_path), "p", ["*.yaml", "openapi.yaml"],
-                              scan_workspace(tmp_path, ["."]))
+    pack = build_context_pack(
+        task(tmp_path), "p", ["*.yaml", "openapi.yaml"], scan_workspace(tmp_path, ["."])
+    )
     assert [f.path for f in pack.files] == ["openapi.yaml", "a.yaml", "b.yaml"]
 
 
 def test_pack_respects_budget(tmp_path: Path) -> None:
     write_file(tmp_path, "big.txt", "x" * 70_000)
     write_file(tmp_path, "small.txt", "0123456789")
-    pack = build_context_pack(task(tmp_path, "economy"), "p", ["*.txt"],
-                              scan_workspace(tmp_path, ["."]))
+    pack = build_context_pack(
+        task(tmp_path, "economy"), "p", ["*.txt"], scan_workspace(tmp_path, ["."])
+    )
     assert [f.path for f in pack.files] == ["small.txt"]
     assert ExcludedFile(path="big.txt", reason="budget", signals=["glob:*.txt"]) in pack.excluded
     assert pack.truncated and pack.status == "truncated"
@@ -94,10 +103,15 @@ def test_pack_bounds_read_when_file_grows_after_stat(
     target = (tmp_path / "small.txt").resolve()
     grow_after_stat(monkeypatch, target, b"y" * 70_000)
     store = FingerprintStore(tmp_path, enabled=False)
-    pack = build_context_pack(task(tmp_path, "max"), "p", ["*.txt"], scan,
-                              profile=small("max", budget=100),
-                              capability_context=EXCERPTS if excerpts else CapabilityContext(),
-                              fingerprints=store)
+    pack = build_context_pack(
+        task(tmp_path, "max"),
+        "p",
+        ["*.txt"],
+        scan,
+        profile=small("max", budget=100),
+        capability_context=EXCERPTS if excerpts else CapabilityContext(),
+        fingerprints=store,
+    )
     validate_context_pack(pack)
     assert target.stat().st_size == 70_011  # grew between the size check and the read
     assert store.stats.misses == 1  # the stale size passed the pre-check: it was hashed
@@ -107,8 +121,9 @@ def test_pack_bounds_read_when_file_grows_after_stat(
         assert item.sha256 == hashlib.sha256(b"0123456789\n").hexdigest()
     else:
         assert pack.files == []
-        assert ExcludedFile(path="small.txt", reason="budget",
-                            signals=["glob:*.txt"]) in pack.excluded
+        assert (
+            ExcludedFile(path="small.txt", reason="budget", signals=["glob:*.txt"]) in pack.excluded
+        )
         assert pack.truncated
     assert pack.used_bytes <= pack.budget_bytes
 
@@ -142,41 +157,66 @@ GH_TOKEN = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
 
 
 def v2_task(root: Path, profile: BudgetProfile = "balanced", intent: str = "x") -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent,
-                    workspace_root=str(root), budget_profile=profile)
+    return TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent=intent,
+        workspace_root=str(root),
+        budget_profile=profile,
+    )
 
 
-def small(name: BudgetProfile = "balanced", budget: int | None = None,
-          max_files: int | None = None) -> ContextProfile:
+def small(
+    name: BudgetProfile = "balanced", budget: int | None = None, max_files: int | None = None
+) -> ContextProfile:
     base = profile_for(name)
-    return replace(base, budget_bytes=base.budget_bytes if budget is None else budget,
-                   max_files=base.max_files if max_files is None else max_files)
+    return replace(
+        base,
+        budget_bytes=base.budget_bytes if budget is None else budget,
+        max_files=base.max_files if max_files is None else max_files,
+    )
 
 
-def build(root: Path, globs: list[str], *, profile: ContextProfile | None = None,
-          cap: CapabilityContext | None = None, intent: str = "x",
-          git: GitState | None = None, store: FingerprintStore | None = None,
-          profile_name: BudgetProfile = "balanced") -> ContextPack:
-    pack = build_context_pack(v2_task(root, profile_name, intent), "p", globs,
-                              scan_workspace(root, ["."]), profile=profile,
-                              capability_context=cap or CapabilityContext(), git=git,
-                              fingerprints=store)
+def build(
+    root: Path,
+    globs: list[str],
+    *,
+    profile: ContextProfile | None = None,
+    cap: CapabilityContext | None = None,
+    intent: str = "x",
+    git: GitState | None = None,
+    store: FingerprintStore | None = None,
+    profile_name: BudgetProfile = "balanced",
+) -> ContextPack:
+    pack = build_context_pack(
+        v2_task(root, profile_name, intent),
+        "p",
+        globs,
+        scan_workspace(root, ["."]),
+        profile=profile,
+        capability_context=cap or CapabilityContext(),
+        git=git,
+        fingerprints=store,
+    )
     validate_context_pack(pack)
     return pack
 
 
 def test_effective_tiers_intersect_profile_and_capability() -> None:
     assert effective_tiers(profile_for("max"), CapabilityContext()) == frozenset(
-        {"metadata", "reference"})
+        {"metadata", "reference"}
+    )
     assert effective_tiers(profile_for("max"), EXCERPTS) == frozenset(
-        {"metadata", "reference", "excerpt", "requested"})
-    assert effective_tiers(profile_for("economy"), EXCERPTS) == frozenset(
-        {"metadata", "reference"})
+        {"metadata", "reference", "excerpt", "requested"}
+    )
+    assert effective_tiers(profile_for("economy"), EXCERPTS) == frozenset({"metadata", "reference"})
 
 
 @pytest.mark.parametrize("profile_name", ["economy", "balanced", "max"])
 def test_workspace_summary_always_present_with_zero_bytes(
-        tmp_path: Path, profile_name: BudgetProfile) -> None:
+    tmp_path: Path, profile_name: BudgetProfile
+) -> None:
     write_file(tmp_path, "pyproject.toml", "[project]\n")
     write_file(tmp_path, "notes.txt", "n\n")
     pack = build(tmp_path, [], profile_name=profile_name, cap=EXCERPTS)
@@ -198,10 +238,10 @@ def test_empty_workspace_still_has_metadata(tmp_path: Path) -> None:
 def test_git_summary_changed_signal_and_limitations(tmp_path: Path) -> None:
     write_file(tmp_path, "a.txt", "a\n")
     write_file(tmp_path, "b.txt", "b\n")
-    summary = GitSummary(available=True, branch="main", head="0" * 40, dirty=True,
-                         changed_files=1)
-    git = GitState(summary=summary, changed=frozenset({"b.txt"}),
-                   limitations=("git: something degraded",))
+    summary = GitSummary(available=True, branch="main", head="0" * 40, dirty=True, changed_files=1)
+    git = GitState(
+        summary=summary, changed=frozenset({"b.txt"}), limitations=("git: something degraded",)
+    )
     pack = build(tmp_path, [], git=git)
     assert pack.workspace is not None and pack.workspace.git == summary
     assert [(f.path, f.signals) for f in pack.files] == [("b.txt", ["git:changed"])]
@@ -250,8 +290,13 @@ def test_cited_range_becomes_excerpt_with_range_hash(tmp_path: Path) -> None:
 def test_excerpt_hash_matches_reverification(tmp_path: Path) -> None:
     write_file(tmp_path, "src/m.py", LINES10)
     write_file(tmp_path, "big.txt", LINES10)
-    pack = build(tmp_path, ["*.txt"], profile=small("max", budget=40), cap=EXCERPTS,
-                 intent="see src/m.py#L2-L5")
+    pack = build(
+        tmp_path,
+        ["*.txt"],
+        profile=small("max", budget=40),
+        cap=EXCERPTS,
+        intent="see src/m.py#L2-L5",
+    )
     excerpts = [f for f in pack.files if f.tier == "excerpt"]
     assert {f.path for f in excerpts} == {"src/m.py", "big.txt"}
     for item in excerpts:
@@ -263,8 +308,7 @@ def test_excerpt_hash_matches_reverification(tmp_path: Path) -> None:
 def test_capability_without_excerpts_never_gets_excerpt_even_in_max(tmp_path: Path) -> None:
     write_file(tmp_path, "src/m.py", LINES10)
     write_file(tmp_path, "big.txt", "x\n" * 100)
-    pack = build(tmp_path, ["*.txt"], profile=small("max", budget=100),
-                 intent="fix src/m.py:3-4")
+    pack = build(tmp_path, ["*.txt"], profile=small("max", budget=100), intent="fix src/m.py:3-4")
     assert all(f.tier == "reference" for f in pack.files)
     assert [f.path for f in pack.files] == ["src/m.py"]  # cited range -> whole file
     assert ExcludedFile(path="big.txt", reason="budget", signals=["glob:*.txt"]) in pack.excluded
@@ -300,8 +344,11 @@ def test_same_selection_in_two_runs(tmp_path: Path) -> None:
     write_file(tmp_path, "big.txt", LINES10)
     for i in range(5):
         write_file(tmp_path, f"d/f{i}.txt", "y\n" * i)
-    args: dict[str, Any] = {"profile": small("max", budget=60, max_files=4), "cap": EXCERPTS,
-                            "intent": "see src/m.py:2-3 and ghost.py"}
+    args: dict[str, Any] = {
+        "profile": small("max", budget=60, max_files=4),
+        "cap": EXCERPTS,
+        "intent": "see src/m.py:2-3 and ghost.py",
+    }
     one, two = build(tmp_path, ["*.txt"], **args), build(tmp_path, ["*.txt"], **args)
     d1 = {k: v for k, v in to_dict(one).items() if k != "created_at"}
     d2 = {k: v for k, v in to_dict(two).items() if k != "created_at"}
@@ -312,8 +359,9 @@ def test_no_field_carries_file_content(tmp_path: Path) -> None:
     marker = "UNIQUE_CONTENT_MARKER_42"
     write_file(tmp_path, "src/m.py", f"{marker}\n" * 10)
     write_file(tmp_path, "big.txt", f"{marker}\n" * 50)
-    pack = build(tmp_path, ["*.txt"], profile=small("max", budget=300), cap=EXCERPTS,
-                 intent="src/m.py:1-2")
+    pack = build(
+        tmp_path, ["*.txt"], profile=small("max", budget=300), cap=EXCERPTS, intent="src/m.py:1-2"
+    )
     assert {f.tier for f in pack.files} == {"excerpt"}
     assert marker not in json.dumps(to_dict(pack))
 
@@ -344,8 +392,13 @@ def test_every_generated_pack_passes_integrity(tmp_path: Path) -> None:
         for cap in (CapabilityContext(), EXCERPTS):
             for budget in (0, 7, 50, 10_000):
                 for max_files in (0, 1, 3, 100):
-                    build(tmp_path, ["*.txt"], profile=small(name, budget, max_files),
-                          cap=cap, intent="src/m.py:4-9 ghost.py")
+                    build(
+                        tmp_path,
+                        ["*.txt"],
+                        profile=small(name, budget, max_files),
+                        cap=cap,
+                        intent="src/m.py:4-9 ghost.py",
+                    )
 
 
 # --- context v2: extension by provider request (task 3.7) ---------------------------------
@@ -355,10 +408,16 @@ def request(*items: tuple[str, LineRange | None]) -> ContextRequest:
     return ContextRequest(items=[ContextRequestItem(path=p, lines=r) for p, r in items])
 
 
-def extend(pack: ContextPack, root: Path, req: ContextRequest,
-           profile: ContextProfile) -> ContextPack:
-    out = extend_context_pack(pack, req, scan_workspace(root, ["."]), profile=profile,
-                              fingerprints=FingerprintStore(root, enabled=False))
+def extend(
+    pack: ContextPack, root: Path, req: ContextRequest, profile: ContextProfile
+) -> ContextPack:
+    out = extend_context_pack(
+        pack,
+        req,
+        scan_workspace(root, ["."]),
+        profile=profile,
+        fingerprints=FingerprintStore(root, enabled=False),
+    )
     validate_context_pack(out)
     return out
 
@@ -369,20 +428,24 @@ def test_extend_adds_requested_items_and_increments_round(tmp_path: Path) -> Non
     write_file(tmp_path, "src/n.py", "n\n")
     profile = profile_for("balanced")
     pack = build(tmp_path, ["*.md"], profile=profile, cap=EXCERPTS)
-    out = extend(pack, tmp_path,
-                 request(("src/m.py", LineRange(start=2, end=3)), ("./src/n.py", None)),
-                 profile)
+    out = extend(
+        pack,
+        tmp_path,
+        request(("src/m.py", LineRange(start=2, end=3)), ("./src/n.py", None)),
+        profile,
+    )
     assert out.round == pack.round + 1 == 1
-    assert out.files[:len(pack.files)] == pack.files
-    new = out.files[len(pack.files):]
+    assert out.files[: len(pack.files)] == pack.files
+    new = out.files[len(pack.files) :]
     assert [(f.path, f.tier, f.lines, f.signals) for f in new] == [
         ("src/m.py", "requested", LineRange(start=2, end=3), ["requested"]),
-        ("src/n.py", "requested", None, ["requested"])]
+        ("src/n.py", "requested", None, ["requested"]),
+    ]
     assert new[0].sha256 == hashlib.sha256(LINES10[8:24].encode()).hexdigest()
     assert new[1].sha256 == hashlib.sha256(b"n\n").hexdigest()
     assert out.tier_bytes["requested"] == 16 + 2
     assert out.used_bytes == pack.used_bytes + 18
-    assert out.workspace == pack.workspace and out.excluded[:len(pack.excluded)] == pack.excluded
+    assert out.workspace == pack.workspace and out.excluded[: len(pack.excluded)] == pack.excluded
     assert reverify(tmp_path, out.files) == frozenset()
 
 
@@ -393,16 +456,31 @@ def test_extend_refuses_invalid_items_with_reason(tmp_path: Path) -> None:
     write_file(tmp_path, "short.py", "one\n")
     profile = small("balanced", budget=100)
     pack = build(tmp_path, ["*.md"], profile=profile, cap=EXCERPTS)
-    out = extend(pack, tmp_path,
-                 request(("../outside.py", None), ("/etc/passwd", None), ("C:/x.py", None),
-                         (".env", None), ("ghost.py", None), ("big.py", None),
-                         ("short.py", LineRange(start=5, end=9))),
-                 profile)
+    out = extend(
+        pack,
+        tmp_path,
+        request(
+            ("../outside.py", None),
+            ("/etc/passwd", None),
+            ("C:/x.py", None),
+            (".env", None),
+            ("ghost.py", None),
+            ("big.py", None),
+            ("short.py", LineRange(start=5, end=9)),
+        ),
+        profile,
+    )
     assert out.files == pack.files and out.round == 1
     refused = {e.path: e.reason for e in out.excluded if e.signals == ["requested"]}
-    assert refused == {"../outside.py": "outside_root", "/etc/passwd": "outside_root",
-                       "C:/x.py": "outside_root", ".env": "secret", "ghost.py": "missing",
-                       "big.py": "budget", "short.py": "missing"}
+    assert refused == {
+        "../outside.py": "outside_root",
+        "/etc/passwd": "outside_root",
+        "C:/x.py": "outside_root",
+        ".env": "secret",
+        "ghost.py": "missing",
+        "big.py": "budget",
+        "short.py": "missing",
+    }
     assert out.truncated and out.status == "truncated"
 
 
@@ -422,8 +500,9 @@ def test_extend_refuses_when_profile_has_no_requested_tier(tmp_path: Path) -> No
     profile = profile_for("economy")
     pack = build(tmp_path, ["*.md"], profile=profile, cap=EXCERPTS)
     out = extend(pack, tmp_path, request(("b.py", None)), profile)
-    assert ExcludedFile(path="b.py", reason="tier_not_allowed",
-                        signals=["requested"]) in out.excluded
+    assert (
+        ExcludedFile(path="b.py", reason="tier_not_allowed", signals=["requested"]) in out.excluded
+    )
     assert out.files == pack.files
 
 
@@ -440,8 +519,12 @@ def test_extend_twice_preserves_previous_rounds(tmp_path: Path) -> None:
     write_file(tmp_path, "b.py", "b\n")
     write_file(tmp_path, "c.py", "c\n")
     profile = profile_for("max")
-    r1 = extend(build(tmp_path, ["*.md"], profile=profile, cap=EXCERPTS), tmp_path,
-                request(("b.py", None)), profile)
+    r1 = extend(
+        build(tmp_path, ["*.md"], profile=profile, cap=EXCERPTS),
+        tmp_path,
+        request(("b.py", None)),
+        profile,
+    )
     r2 = extend(r1, tmp_path, request(("c.py", None), ("b.py", None)), profile)
-    assert r2.round == 2 and r2.files[:len(r1.files)] == r1.files
+    assert r2.round == 2 and r2.files[: len(r1.files)] == r1.files
     assert [f.path for f in r2.files] == ["a.md", "b.py", "c.py"]  # duplicate not re-added

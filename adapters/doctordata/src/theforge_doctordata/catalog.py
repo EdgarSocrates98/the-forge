@@ -62,10 +62,27 @@ class CapabilitySpec:
 PROJECT_GLOBS = ("*",)
 # File families the Doctor Data scan is built to recognize (dbt, Airflow, SQL, IaC, Python
 # pipelines); routing hints only - the scan itself decides what it reads.
-DATA_GLOBS = ("*.py", "*.sql", "*.yaml", "*.yml", "*.toml", "*.cfg", "*.ini", "*.json",
-              "*.ipynb", "*.tf", "*.jinja", "*.j2", "*.properties", "*.txt",
-              "dbt_project.yml", "profiles.yml", "Dockerfile", "Makefile",
-              "requirements*.txt")
+DATA_GLOBS = (
+    "*.py",
+    "*.sql",
+    "*.yaml",
+    "*.yml",
+    "*.toml",
+    "*.cfg",
+    "*.ini",
+    "*.json",
+    "*.ipynb",
+    "*.tf",
+    "*.jinja",
+    "*.j2",
+    "*.properties",
+    "*.txt",
+    "dbt_project.yml",
+    "profiles.yml",
+    "Dockerfile",
+    "Makefile",
+    "requirements*.txt",
+)
 CONTRACT_GLOBS = ("*.json",)
 
 # Artifact type of what ``data.scan`` emits: the forge-contracts/1 diagnostic the
@@ -77,37 +94,64 @@ DIAGNOSTIC_EVIDENCE = "data.diagnostic-evidence"
 # a ref that stops resolving after a surface change is recorded by the graph as
 # an unresolved target, never dropped silently.
 VERIFIES: tuple[str, ...] = tuple(
-    f"spark-forge-aws/{cap}" for cap in (
-        "pyspark.static-analysis", "spark.runtime-analysis", "streaming.analysis",
-        "glue.analysis", "emr.analysis", "athena.analysis", "iceberg.analysis",
-        "parquet.footer-analysis", "terraform.analysis", "orchestration.analysis",
-        "data-quality.analysis", "lakeformation.access-analysis",
-        "cloudwatch.analysis", "platform.graph-analysis", "migration.assessment",
-        "finops.performance-analysis"))
+    f"spark-forge-aws/{cap}"
+    for cap in (
+        "pyspark.static-analysis",
+        "spark.runtime-analysis",
+        "streaming.analysis",
+        "glue.analysis",
+        "emr.analysis",
+        "athena.analysis",
+        "iceberg.analysis",
+        "parquet.footer-analysis",
+        "terraform.analysis",
+        "orchestration.analysis",
+        "data-quality.analysis",
+        "lakeformation.access-analysis",
+        "cloudwatch.analysis",
+        "platform.graph-analysis",
+        "migration.assessment",
+        "finops.performance-analysis",
+    )
+)
 
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "data.scan": CapabilitySpec(
         seam=SEAM_SCAN,
         actions=("analyze",),
         input_globs=PROJECT_GLOBS,
-        signals_keywords=("data platform", "data pipeline", "dbt", "airflow", "spark",
-                          "etl", "data quality", "lineage", "diagnose data"),
+        signals_keywords=(
+            "data platform",
+            "data pipeline",
+            "dbt",
+            "airflow",
+            "spark",
+            "etl",
+            "data quality",
+            "lineage",
+            "diagnose data",
+        ),
         file_globs=DATA_GLOBS,
         description="Deterministic scan of a data platform repository: findings, "
-                    "capability assessments, platform graph and remediation plans, "
-                    "returned as a forge-contracts/1 HandoffBundle (accept_request).",
+        "capability assessments, platform graph and remediation plans, "
+        "returned as a forge-contracts/1 HandoffBundle (accept_request).",
         relations={"produces": (DIAGNOSTIC_EVIDENCE,)},
     ),
     "data.verify": CapabilitySpec(
         seam=SEAM_CONFORMANCE,
         actions=("verify",),
         input_globs=CONTRACT_GLOBS,
-        signals_keywords=("verify contract", "check contract", "conformance",
-                          "validate handoff", "contract check"),
+        signals_keywords=(
+            "verify contract",
+            "check contract",
+            "conformance",
+            "validate handoff",
+            "contract check",
+        ),
         file_globs=CONTRACT_GLOBS,
         description="Conformance check of a forge-contracts/1 payload against the "
-                    "published schemas plus strict model decode and version "
-                    "negotiation (check_conformance).",
+        "published schemas plus strict model decode and version "
+        "negotiation (check_conformance).",
         stage_root=False,
         verify_input=True,
         relations={"can_verify": VERIFIES},
@@ -145,8 +189,7 @@ def validate_snapshot(data: object) -> dict[str, Any]:
     for index, item in enumerate(seams):
         seam = _seam(item, str(item), index)
         if seam["name"] in seen:
-            raise SnapshotError(f"snapshot.seams[{index}]: duplicate seam "
-                                f"{seam['name']!r}")
+            raise SnapshotError(f"snapshot.seams[{index}]: duplicate seam {seam['name']!r}")
         seen.add(seam["name"])
     return data
 
@@ -162,17 +205,19 @@ def load_snapshot(path: Path = SNAPSHOT_PATH) -> dict[str, Any]:
 
 def seam_present(snapshot: Mapping[str, Any], name: str) -> bool:
     """Whether the recorded surface has the seam an exposed capability needs."""
-    return any(isinstance(item, Mapping) and item.get("name") == name
-               and item.get("present") is True
-               for item in snapshot.get("seams") or ())
+    return any(
+        isinstance(item, Mapping) and item.get("name") == name and item.get("present") is True
+        for item in snapshot.get("seams") or ()
+    )
 
 
 def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
     """The sha256 the manifest declares as ``native_surface_fingerprint``: the canonical
     snapshot minus ``recorded_at`` (a timestamp, not surface)."""
     payload = {key: value for key, value in snapshot.items() if key != "recorded_at"}
-    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
     return hashlib.sha256(blob).hexdigest()
 
 
@@ -191,28 +236,34 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
         },
     }
     if spec.relations:
-        entry["relations"] = {name: list(refs)
-                              for name, refs in spec.relations.items()}
+        entry["relations"] = {name: list(refs) for name, refs in spec.relations.items()}
     return entry
 
 
-def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: str,
-                     ops: Sequence[str] = ("describe", "health", "execute")
-                     ) -> dict[str, Any]:
+def manifest_payload(
+    snapshot: Mapping[str, Any],
+    *,
+    provider_id: str,
+    version: str,
+    ops: Sequence[str] = ("describe", "health", "execute"),
+) -> dict[str, Any]:
     """The ``ForgeManifest`` v1 payload derived from a validated surface snapshot."""
     capabilities: list[dict[str, Any]] = []
     limitations: list[str] = []
     if snapshot["provenance"] == HAND_BUILT:
         limitations.append(
             "native surface snapshot is hand-built (provisional until re-recorded with "
-            "python -m theforge_doctordata.record)")
+            "python -m theforge_doctordata.record)"
+        )
     for capability_id in sorted(CAPABILITY_MAP):
         spec = CAPABILITY_MAP[capability_id]
         if seam_present(snapshot, spec.seam):
             capabilities.append({"id": capability_id, **capability_entry(spec)})
         else:
-            limitations.append(f"capability '{capability_id}' not exposed: seam "
-                               f"{spec.seam!r} absent from the recorded native surface")
+            limitations.append(
+                f"capability '{capability_id}' not exposed: seam "
+                f"{spec.seam!r} absent from the recorded native surface"
+            )
     return {
         "schema": "theforge/ForgeManifest/v1",
         "id": provider_id,

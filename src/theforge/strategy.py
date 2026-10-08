@@ -26,11 +26,17 @@ from theforge.contracts.routing import ShadowRecommendation
 __all__ = ["shadow_recommendation"]
 
 
-def _entry(performance: ProviderPerformance, provider: str, capability: str,
-           surface: str | None) -> ProviderCapabilityPerformance | None:
-    return next((e for e in performance.entries
-                 if e.provider == provider and e.capability == capability
-                 and e.surface == surface), None)
+def _entry(
+    performance: ProviderPerformance, provider: str, capability: str, surface: str | None
+) -> ProviderCapabilityPerformance | None:
+    return next(
+        (
+            e
+            for e in performance.entries
+            if e.provider == provider and e.capability == capability and e.surface == surface
+        ),
+        None,
+    )
 
 
 def _verified_rate(entry: ProviderCapabilityPerformance) -> float:
@@ -42,8 +48,11 @@ def _avg_context(entry: ProviderCapabilityPerformance) -> float:
 
 
 def shadow_recommendation(
-    performance: ProviderPerformance | None, *,
-    selected_provider: str, capability: str, selected_surface: str | None,
+    performance: ProviderPerformance | None,
+    *,
+    selected_provider: str,
+    capability: str,
+    selected_surface: str | None,
     rival_surfaces: dict[str, str | None],
 ) -> ShadowRecommendation | None:
     """The history-preferred challenger for ``capability``, or None.
@@ -58,14 +67,12 @@ def shadow_recommendation(
     import theforge.registry  # noqa: F401
     from theforge.negotiation import maturity
 
-    incumbent = _entry(performance, selected_provider, capability,
-                       selected_surface)
+    incumbent = _entry(performance, selected_provider, capability, selected_surface)
     qualified: list[tuple[tuple[float, ...], str, ProviderCapabilityPerformance]] = []
     for provider in sorted(rival_surfaces):
         if provider == selected_provider:
             continue
-        entry = _entry(performance, provider, capability,
-                       rival_surfaces[provider])
+        entry = _entry(performance, provider, capability, rival_surfaces[provider])
         if entry is None or entry.runs == 0:
             continue
         state = maturity(performance, provider, capability, entry.surface)
@@ -78,9 +85,7 @@ def shadow_recommendation(
                 continue  # no observed cost/context improvement
         elif entry.verified_runs == 0:
             continue  # challenger has runs but none verified — no evidence
-        qualified.append(
-            (performance.score(provider, capability, entry.surface),
-             provider, entry))
+        qualified.append((performance.score(provider, capability, entry.surface), provider, entry))
     if not qualified:
         return None
     # Best measured score wins; provider id breaks ties (deterministic).
@@ -90,13 +95,17 @@ def shadow_recommendation(
     assert state in ("warming", "mature")
     evidence = [f"runs {challenger.runs} ({state})"]
     if incumbent is not None and incumbent.runs > 0:
-        evidence.append(f"verified_rate {_verified_rate(challenger):.2f} vs "
-                        f"{_verified_rate(incumbent):.2f}")
-        evidence.append(f"avg context_bytes {_avg_context(challenger):.0f} vs "
-                        f"{_avg_context(incumbent):.0f}")
+        evidence.append(
+            f"verified_rate {_verified_rate(challenger):.2f} vs {_verified_rate(incumbent):.2f}"
+        )
+        evidence.append(
+            f"avg context_bytes {_avg_context(challenger):.0f} vs {_avg_context(incumbent):.0f}"
+        )
     else:
-        evidence.append(f"verified_rate {_verified_rate(challenger):.2f} "
-                        f"— incumbent has no measured history on this surface")
+        evidence.append(
+            f"verified_rate {_verified_rate(challenger):.2f} "
+            f"— incumbent has no measured history on this surface"
+        )
     return ShadowRecommendation(
-        provider=provider, capability=capability, maturity=state,
-        evidence=evidence)
+        provider=provider, capability=capability, maturity=state, evidence=evidence
+    )

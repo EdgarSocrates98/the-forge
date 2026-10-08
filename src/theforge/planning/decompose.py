@@ -91,8 +91,13 @@ def decomposition_dependencies(root: Path, descriptor: WorkspaceDescriptor) -> s
 
 
 def decompose(
-    task: TaskSpec, decision: RoutingDecision, records: Mapping[str, RegistryRecord],
-    descriptor: WorkspaceDescriptor, scan: "WorkspaceScan", profile: ContextProfile, *,
+    task: TaskSpec,
+    decision: RoutingDecision,
+    records: Mapping[str, RegistryRecord],
+    descriptor: WorkspaceDescriptor,
+    scan: "WorkspaceScan",
+    profile: ContextProfile,
+    *,
     graph: CapabilityGraph | None = None,
 ) -> Decomposition:
     """Turn ``decision`` (``route()`` over ``task``) into plan nodes (2.1-2.7).
@@ -110,46 +115,66 @@ def decompose(
     if task.requested_capability or profile.max_providers <= 1 or len(qualified) <= 1:
         limitations: tuple[str, ...] = ()
         if len(qualified) >= 2 and not task.requested_capability:
-            limitations = (f"multi-provider decomposition not allowed by profile "
-                           f"{profile.name!r}",)
+            limitations = (f"multi-provider decomposition not allowed by profile {profile.name!r}",)
         return _single(task, decision, records, descriptor, files, limitations)
 
     issue = _qualification_issue(qualified, profile)
-    constraints, conflicts = _graph_constraints(
-        [tops[0] for tops in qualified], graph)
+    constraints, conflicts = _graph_constraints([tops[0] for tops in qualified], graph)
     if issue is None and conflicts:
         issue = f"declared capability conflicts: {'; '.join(conflicts)}"
     if issue is None:
         ordered, issue = _order(task, [tops[0] for tops in qualified], constraints)
     if issue is not None:
         return _ambiguous(decision, issue)
-    nodes = _pipeline(task, ordered, records, descriptor, files,
-                      constraints, _reachability(constraints))
-    return Decomposition(status="planned", decision=_pipeline_decision(decision, nodes, records),
-                         nodes=nodes, pattern="pipeline", limitations=())
+    nodes = _pipeline(
+        task, ordered, records, descriptor, files, constraints, _reachability(constraints)
+    )
+    return Decomposition(
+        status="planned",
+        decision=_pipeline_decision(decision, nodes, records),
+        nodes=nodes,
+        pattern="pipeline",
+        limitations=(),
+    )
 
 
 def decomposed_plan(
-    decomposition: Decomposition, task: TaskSpec, records: Mapping[str, RegistryRecord],
-    profile: ContextProfile, *, plan_run: str, created_at: str | None = None,
+    decomposition: Decomposition,
+    task: TaskSpec,
+    records: Mapping[str, RegistryRecord],
+    profile: ContextProfile,
+    *,
+    plan_run: str,
+    created_at: str | None = None,
 ) -> ExecutionPlan:
     """The ``ExecutionPlan`` of a ``planned`` decomposition, validated by ``checked_plan``
     (the same validation as a plan file); any other status raises ``ValueError``."""
     if decomposition.status != "planned":
         raise ValueError(f"decomposition is {decomposition.status}, not planned")
     plan = ExecutionPlan(
-        producer=PRODUCER, created_at=created_at if created_at is not None else utc_now(),
-        status="validated", plan_run=plan_run, task_id=task.id,
-        pattern=decomposition.pattern, source="decomposed", profile=profile.name,
-        nodes=list(decomposition.nodes), limitations=list(decomposition.limitations))
+        producer=PRODUCER,
+        created_at=created_at if created_at is not None else utc_now(),
+        status="validated",
+        plan_run=plan_run,
+        task_id=task.id,
+        pattern=decomposition.pattern,
+        source="decomposed",
+        profile=profile.name,
+        nodes=list(decomposition.nodes),
+        limitations=list(decomposition.limitations),
+    )
     return checked_plan(plan, records, profile)
 
 
 # --- qualification ---------------------------------------------------------------------------
 
+
 def _candidate_key(candidate: Candidate) -> tuple[int, str, str]:
-    return (-(candidate.rank_key[0] if candidate.rank_key else 0), candidate.provider,
-            candidate.capability)
+    return (
+        -(candidate.rank_key[0] if candidate.rank_key else 0),
+        candidate.provider,
+        candidate.capability,
+    )
 
 
 def _best_by_provider(candidates: Sequence[Candidate]) -> dict[str, list[Candidate]]:
@@ -167,12 +192,16 @@ def _best_by_provider(candidates: Sequence[Candidate]) -> dict[str, list[Candida
 def _qualification_issue(qualified: list[list[Candidate]], profile: ContextProfile) -> str | None:
     for tops in qualified:
         if len(tops) > 1:
-            return (f"tie between best capabilities of {tops[0].provider}: "
-                    f"{', '.join(c.capability for c in tops)} at rank {tops[0].rank_key}")
+            return (
+                f"tie between best capabilities of {tops[0].provider}: "
+                f"{', '.join(c.capability for c in tops)} at rank {tops[0].rank_key}"
+            )
     if len(qualified) > profile.max_providers:
-        return (f"{len(qualified)} qualified providers "
-                f"({', '.join(tops[0].provider for tops in qualified)}); profile "
-                f"{profile.name!r} allows {profile.max_providers}")
+        return (
+            f"{len(qualified)} qualified providers "
+            f"({', '.join(tops[0].provider for tops in qualified)}); profile "
+            f"{profile.name!r} allows {profile.max_providers}"
+        )
     return None
 
 
@@ -189,7 +218,8 @@ def _cap_ref(node_id: str) -> _CapKey | None:
 
 
 def _graph_constraints(
-    best: list[Candidate], graph: CapabilityGraph | None,
+    best: list[Candidate],
+    graph: CapabilityGraph | None,
 ) -> tuple[dict[tuple[_CapKey, _CapKey], str], list[str]]:
     """Ordering evidence among the qualified capabilities: ``requires`` (the
     required capability first) and produces→consumes chains over declared
@@ -207,8 +237,7 @@ def _graph_constraints(
             cap = _cap_ref(edge.source)
             if src != "artifact_type" or cap is None or cap not in caps:
                 continue
-            (produces if edge.kind == "produces" else consumes).setdefault(
-                artifact, []).append(cap)
+            (produces if edge.kind == "produces" else consumes).setdefault(artifact, []).append(cap)
         elif edge.kind in ("requires", "conflicts"):
             src_cap, dst_cap = _cap_ref(edge.source), _cap_ref(edge.target)
             if src_cap not in caps or dst_cap not in caps or src_cap == dst_cap:
@@ -216,16 +245,19 @@ def _graph_constraints(
             if edge.kind == "conflicts":
                 conflicts.append(
                     f"{src_cap[0]}/{src_cap[1]} conflicts with "
-                    f"{dst_cap[0]}/{dst_cap[1]} ({edge.evidence})")
+                    f"{dst_cap[0]}/{dst_cap[1]} ({edge.evidence})"
+                )
             else:
                 order.setdefault((dst_cap, src_cap), edge.evidence)
     for artifact, makers in produces.items():
         for maker in makers:
             for user in consumes.get(artifact, []):
                 if maker != user:
-                    order.setdefault((maker, user),
-                                     f"{maker[0]}/{maker[1]} produces {artifact} consumed "
-                                     f"by {user[0]}/{user[1]}")
+                    order.setdefault(
+                        (maker, user),
+                        f"{maker[0]}/{maker[1]} produces {artifact} consumed "
+                        f"by {user[0]}/{user[1]}",
+                    )
     return order, conflicts
 
 
@@ -244,7 +276,8 @@ def _reachability(constraints: dict[tuple[_CapKey, _CapKey], str]) -> set[tuple[
 
 
 def _order(
-    task: TaskSpec, best: list[Candidate],
+    task: TaskSpec,
+    best: list[Candidate],
     constraints: dict[tuple[_CapKey, _CapKey], str],
 ) -> tuple[list[_Ordered], str | None]:
     """Topological order over ``constraints`` (graph rule); unconstrained ties fall
@@ -254,17 +287,20 @@ def _order(
     tokens = normalize_tokens(task.intent)
     positions: dict[_CapKey, tuple[int, str] | None] = {}
     for candidate in best:
-        located = sorted((tokens.index(k.split(" ")[0]), k)
-                         for k in candidate.matched.keywords
-                         if k.split(" ")[0] in tokens)
-        positions[(candidate.provider, candidate.capability)] = (
-            located[0] if located else None)
+        located = sorted(
+            (tokens.index(k.split(" ")[0]), k)
+            for k in candidate.matched.keywords
+            if k.split(" ")[0] in tokens
+        )
+        positions[(candidate.provider, candidate.capability)] = located[0] if located else None
     constrained = {key for pair in constraints for key in pair}
     for candidate in best:
         key = (candidate.provider, candidate.capability)
         if positions[key] is None and key not in constrained:
-            return [], (f"cannot order {candidate.provider}: no keyword of "
-                        f"{candidate.capability} matched the intent")
+            return [], (
+                f"cannot order {candidate.provider}: no keyword of "
+                f"{candidate.capability} matched the intent"
+            )
     ordered, cycle = _topological(best, positions, constraints)
     if cycle is not None:
         return [], cycle
@@ -275,18 +311,23 @@ def _order(
         if (a, b) in reach:
             continue  # declared relations already fix a before b
         if not first.keyword or not second.keyword:
-            return [], (f"cannot order {first.candidate.provider} and "
-                        f"{second.candidate.provider}: no declared relation and a "
-                        "matched keyword is missing")
+            return [], (
+                f"cannot order {first.candidate.provider} and "
+                f"{second.candidate.provider}: no declared relation and a "
+                "matched keyword is missing"
+            )
         if first.position == second.position:
-            return [], (f"cannot order {first.candidate.provider} and "
-                        f"{second.candidate.provider}: keywords '{first.keyword}' and "
-                        f"'{second.keyword}' start at the same position {first.position}")
+            return [], (
+                f"cannot order {first.candidate.provider} and "
+                f"{second.candidate.provider}: keywords '{first.keyword}' and "
+                f"'{second.keyword}' start at the same position {first.position}"
+            )
     return ordered, None
 
 
 def _topological(
-    best: list[Candidate], positions: dict[_CapKey, tuple[int, str] | None],
+    best: list[Candidate],
+    positions: dict[_CapKey, tuple[int, str] | None],
     constraints: dict[tuple[_CapKey, _CapKey], str],
 ) -> tuple[list[_Ordered], str | None]:
     """Kahn over ``constraints``; the ready set ordered by (intent position, provider)."""
@@ -316,8 +357,10 @@ def _topological(
 
 # --- nodes -----------------------------------------------------------------------------------
 
-def _capability(records: Mapping[str, RegistryRecord], provider: str,
-                capability: str) -> Capability | None:
+
+def _capability(
+    records: Mapping[str, RegistryRecord], provider: str, capability: str
+) -> Capability | None:
     record = records.get(provider)
     resolved = record.manifest.resolve(capability) if record and record.manifest else None
     return resolved[0] if resolved is not None else None
@@ -325,12 +368,14 @@ def _capability(records: Mapping[str, RegistryRecord], provider: str,
 
 def _action(task: TaskSpec, capability: Capability) -> str:
     requested = task.requested_action
-    return requested if requested and requested in capability.actions else (
-        capability.default_action)
+    return (
+        requested if requested and requested in capability.actions else (capability.default_action)
+    )
 
 
-def _targets(task: TaskSpec, candidate: Candidate | None, descriptor: WorkspaceDescriptor,
-             files: list[str]) -> list[str]:
+def _targets(
+    task: TaskSpec, candidate: Candidate | None, descriptor: WorkspaceDescriptor, files: list[str]
+) -> list[str]:
     """Repositories where the candidate's (discriminating) globs or dependencies matched;
     none -> ``task.targets``."""
     found: set[str] = set()
@@ -342,16 +387,22 @@ def _targets(task: TaskSpec, candidate: Candidate | None, descriptor: WorkspaceD
                 if owner is not None:
                     found.add(owner)
         deps = set(candidate.matched.dependencies)
-        found.update(t.repository for t in descriptor.technologies
-                     if t.source == "dependency_manifest" and t.name in deps)
+        found.update(
+            t.repository
+            for t in descriptor.technologies
+            if t.source == "dependency_manifest" and t.name in deps
+        )
     if not found:
         return list(task.targets)
     return sorted(found, key=lambda p: () if p == "." else tuple(p.split("/")))
 
 
 def _pipeline(
-    task: TaskSpec, ordered: list[_Ordered], records: Mapping[str, RegistryRecord],
-    descriptor: WorkspaceDescriptor, files: list[str],
+    task: TaskSpec,
+    ordered: list[_Ordered],
+    records: Mapping[str, RegistryRecord],
+    descriptor: WorkspaceDescriptor,
+    files: list[str],
     constraints: dict[tuple[_CapKey, _CapKey], str],
     reach: set[tuple[_CapKey, _CapKey]],
 ) -> tuple[PlanNode, ...]:
@@ -370,62 +421,125 @@ def _pipeline(
             if (before, after) in constraints:
                 rule, evidence = GRAPH_ORDER_RULE, constraints[(before, after)]
             elif (before, after) in reach:
-                rule, evidence = (GRAPH_ORDER_RULE,
-                                  f"{before[0]}/{before[1]} precedes {after[0]}/{after[1]} "
-                                  "via declared relations")
+                rule, evidence = (
+                    GRAPH_ORDER_RULE,
+                    f"{before[0]}/{before[1]} precedes {after[0]}/{after[1]} "
+                    "via declared relations",
+                )
             else:
                 rule = INTENT_ORDER_RULE
-                evidence = (f"keyword '{previous.keyword}'@{previous.position} < "
-                            f"keyword '{item.keyword}'@{item.position}")
-            depends_on = [PlanDependency(node=f"n{index}", epistemic="inferred",
-                                         rule=rule, evidence=evidence)]
-        nodes.append(PlanNode(
-            id=f"n{index + 1}", role=role, provider=candidate.provider,
-            capability=candidate.capability, action=action,
-            targets=_targets(task, candidate, descriptor, files), depends_on=depends_on,
-            inputs=[d.node for d in depends_on]))
+                evidence = (
+                    f"keyword '{previous.keyword}'@{previous.position} < "
+                    f"keyword '{item.keyword}'@{item.position}"
+                )
+            depends_on = [
+                PlanDependency(node=f"n{index}", epistemic="inferred", rule=rule, evidence=evidence)
+            ]
+        nodes.append(
+            PlanNode(
+                id=f"n{index + 1}",
+                role=role,
+                provider=candidate.provider,
+                capability=candidate.capability,
+                action=action,
+                targets=_targets(task, candidate, descriptor, files),
+                depends_on=depends_on,
+                inputs=[d.node for d in depends_on],
+            )
+        )
     return tuple(nodes)
 
 
-def _pipeline_decision(decision: RoutingDecision, nodes: tuple[PlanNode, ...],
-                       records: Mapping[str, RegistryRecord]) -> RoutingDecision:
-    selected = [Selection(provider=n.provider, capability=n.capability, action=n.action,
-                          role="primary" if i == 0 else "specialist")
-                for i, n in enumerate(nodes)]
-    low = sorted({f"capability_state:{c.state}" for n in nodes
-                  if (c := _capability(records, n.provider, n.capability)) is not None
-                  and c.state in LOW_CONFIDENCE_STATES})
+def _pipeline_decision(
+    decision: RoutingDecision, nodes: tuple[PlanNode, ...], records: Mapping[str, RegistryRecord]
+) -> RoutingDecision:
+    selected = [
+        Selection(
+            provider=n.provider,
+            capability=n.capability,
+            action=n.action,
+            role="primary" if i == 0 else "specialist",
+        )
+        for i, n in enumerate(nodes)
+    ]
+    low = sorted(
+        {
+            f"capability_state:{c.state}"
+            for n in nodes
+            if (c := _capability(records, n.provider, n.capability)) is not None
+            and c.state in LOW_CONFIDENCE_STATES
+        }
+    )
     chain = " -> ".join(f"{n.provider}/{n.capability}" for n in nodes)
     return replace(
-        decision, status="routed", pattern="pipeline", selected=selected,
+        decision,
+        status="routed",
+        pattern="pipeline",
+        selected=selected,
         reason=f"decomposed into {len(nodes)} nodes by rule {INTENT_ORDER_RULE}: {chain}",
-        confidence=Confidence(level="low" if low else "high",
-                              measured_signals=list(decision.confidence.measured_signals),
-                              unresolved=low))
+        confidence=Confidence(
+            level="low" if low else "high",
+            measured_signals=list(decision.confidence.measured_signals),
+            unresolved=low,
+        ),
+    )
 
 
-def _single(task: TaskSpec, decision: RoutingDecision, records: Mapping[str, RegistryRecord],
-            descriptor: WorkspaceDescriptor, files: list[str],
-            limitations: tuple[str, ...]) -> Decomposition:
+def _single(
+    task: TaskSpec,
+    decision: RoutingDecision,
+    records: Mapping[str, RegistryRecord],
+    descriptor: WorkspaceDescriptor,
+    files: list[str],
+    limitations: tuple[str, ...],
+) -> Decomposition:
     if decision.status != "routed":
-        return Decomposition(status=decision.status, decision=decision, nodes=(),
-                             pattern="route", limitations=limitations)
+        return Decomposition(
+            status=decision.status,
+            decision=decision,
+            nodes=(),
+            pattern="route",
+            limitations=limitations,
+        )
     selection = decision.selected[0]
-    candidate = next((c for c in decision.candidates if c.provider == selection.provider
-                      and c.capability == selection.capability), None)
-    node = PlanNode(id="n1", role="standalone", provider=selection.provider,
-                    capability=selection.capability, action=selection.action,
-                    targets=_targets(task, candidate, descriptor, files))
-    return Decomposition(status="planned", decision=replace(decision, pattern="route"),
-                         nodes=(node,), pattern="route", limitations=limitations)
+    candidate = next(
+        (
+            c
+            for c in decision.candidates
+            if c.provider == selection.provider and c.capability == selection.capability
+        ),
+        None,
+    )
+    node = PlanNode(
+        id="n1",
+        role="standalone",
+        provider=selection.provider,
+        capability=selection.capability,
+        action=selection.action,
+        targets=_targets(task, candidate, descriptor, files),
+    )
+    return Decomposition(
+        status="planned",
+        decision=replace(decision, pattern="route"),
+        nodes=(node,),
+        pattern="route",
+        limitations=limitations,
+    )
 
 
 def _ambiguous(decision: RoutingDecision, issue: str) -> Decomposition:
     ambiguous = replace(
-        decision, status="ambiguous", pattern="pipeline", selected=[],
+        decision,
+        status="ambiguous",
+        pattern="pipeline",
+        selected=[],
         reason=f"ambiguous: {issue}",
-        confidence=Confidence(level="low",
-                              measured_signals=list(decision.confidence.measured_signals),
-                              unresolved=[issue]))
-    return Decomposition(status="ambiguous", decision=ambiguous, nodes=(), pattern="pipeline",
-                         limitations=())
+        confidence=Confidence(
+            level="low",
+            measured_signals=list(decision.confidence.measured_signals),
+            unresolved=[issue],
+        ),
+    )
+    return Decomposition(
+        status="ambiguous", decision=ambiguous, nodes=(), pattern="pipeline", limitations=()
+    )

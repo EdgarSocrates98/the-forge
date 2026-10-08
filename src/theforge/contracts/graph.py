@@ -11,10 +11,12 @@ from theforge.contracts.base import ContractError
 from theforge.contracts.types import EdgeEpistemic, Producer
 
 GRAPH_SCHEMA = "theforge/WorkspaceGraph/v1"
-NodeKind = Literal["workspace", "repository", "provider", "capability", "plan_node",
-                   "evidence", "artifact"]
-EdgeKind = Literal["contains", "depends_on", "declares", "uses", "targets", "produced",
-                   "handed_off_to"]
+NodeKind = Literal[
+    "workspace", "repository", "provider", "capability", "plan_node", "evidence", "artifact"
+]
+EdgeKind = Literal[
+    "contains", "depends_on", "declares", "uses", "targets", "produced", "handed_off_to"
+]
 
 
 @dataclass(frozen=True, kw_only=True)

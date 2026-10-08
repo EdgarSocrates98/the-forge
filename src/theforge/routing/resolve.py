@@ -60,7 +60,9 @@ def _failed(detail: str) -> tuple[None, str]:
 
 
 def resolver_capability(
-    records: Mapping[str, RegistryRecord], *, allow_unverified: bool = False,
+    records: Mapping[str, RegistryRecord],
+    *,
+    allow_unverified: bool = False,
 ) -> tuple[RegistryRecord, Capability] | None:
     """The deterministic resolver pick: the first ready provider (id order) with a
     ``resolves_ambiguity`` capability (capability id order) and the ``resolve``
@@ -94,22 +96,33 @@ def resolve_candidates(
         if key in candidates:
             continue
         record = records.get(candidate.provider)
-        resolved = (record.manifest.resolve(candidate.capability)
-                    if record is not None and record.manifest is not None else None)
+        resolved = (
+            record.manifest.resolve(candidate.capability)
+            if record is not None and record.manifest is not None
+            else None
+        )
         capability = resolved[0] if resolved is not None else None
         candidates[key] = ResolveCandidate(
-            provider=candidate.provider, capability=candidate.capability,
+            provider=candidate.provider,
+            capability=candidate.capability,
             actions=list(capability.actions) if capability is not None else [],
-            state=candidate.state, matched=candidate.matched)
+            state=candidate.state,
+            matched=candidate.matched,
+        )
     return [candidates[key] for key in sorted(candidates)]
 
 
 def request_resolution(
-    record: RegistryRecord, capability: Capability, task: TaskSpec,
-    candidates: list[ResolveCandidate], ambiguity: str,
-    technologies: list[str], *,
+    record: RegistryRecord,
+    capability: Capability,
+    task: TaskSpec,
+    candidates: list[ResolveCandidate],
+    ambiguity: str,
+    technologies: list[str],
+    *,
     transport_factory: TransportFactory = SubprocessTransport,
-    timeout: float = RESOLVE_TIMEOUT, allow_unverified: bool = False,
+    timeout: float = RESOLVE_TIMEOUT,
+    allow_unverified: bool = False,
 ) -> tuple[RoutingProposal | None, str | None]:
     """``(proposal, None)`` on success, ``(None, limitation)`` otherwise; never raises."""
     manifest = record.manifest
@@ -120,20 +133,26 @@ def request_resolution(
     if record.entry.trust == "blocked":
         return _failed(f"{Codes.PROVIDER_BLOCKED}: {record.entry.id} is blocked")
     if record.entry.trust == "unverified" and not allow_unverified:
-        return _failed(f"{Codes.PROVIDER_UNTRUSTED}: {record.entry.id} is unverified "
-                       "and was not executed")
-    payload = to_dict(ResolveRequest(
-        task=task, candidates=candidates, ambiguity=ambiguity,
-        technologies=technologies))
+        return _failed(
+            f"{Codes.PROVIDER_UNTRUSTED}: {record.entry.id} is unverified and was not executed"
+        )
+    payload = to_dict(
+        ResolveRequest(
+            task=task, candidates=candidates, ambiguity=ambiguity, technologies=technologies
+        )
+    )
     try:
         with provider_cwd() as cwd:
             response = transport_factory(record.entry.argv).call(
-                RESOLVE_OP, payload, timeout=timeout, cwd=Path(cwd))
+                RESOLVE_OP, payload, timeout=timeout, cwd=Path(cwd)
+            )
     except TransportError as exc:
         return _failed(f"{exc.code}: {exc.detail}")
     violation = check_producer(
-        response.producer, expected=Producer(id=record.entry.id, version=manifest.version),
-        field="$.producer")
+        response.producer,
+        expected=Producer(id=record.entry.id, version=manifest.version),
+        field="$.producer",
+    )
     if violation is not None:
         return _failed(f"{violation.code}: {violation.detail}")
     if response.status != "ok":
@@ -150,7 +169,8 @@ def request_resolution(
 
 
 def proposal_selection(
-    proposal: RoutingProposal, candidates: list[ResolveCandidate],
+    proposal: RoutingProposal,
+    candidates: list[ResolveCandidate],
     records: Mapping[str, RegistryRecord],
 ) -> tuple[Selection | None, list[str], str | None]:
     """``(selection, notes, failure)``: the proposal's pick re-checked against the
@@ -165,12 +185,18 @@ def proposal_selection(
     choice = proposal.choice
     record = records.get(choice.provider)
     if record is None or record.manifest is None:
-        return None, notes, (f"resolver picked {choice.provider!r}, which is not a "
-                             "registered provider")
+        return (
+            None,
+            notes,
+            (f"resolver picked {choice.provider!r}, which is not a registered provider"),
+        )
     resolved = record.manifest.resolve(choice.capability)
     if resolved is None:
-        return None, notes, (f"resolver picked undeclared capability "
-                             f"{choice.provider}/{choice.capability}")
+        return (
+            None,
+            notes,
+            (f"resolver picked undeclared capability {choice.provider}/{choice.capability}"),
+        )
     capability, via_alias = resolved
     if via_alias:
         notes.append(alias_note(choice.capability, capability, choice.provider))
@@ -179,11 +205,23 @@ def proposal_selection(
         notes.append(deprecated)
     offered = {c.capability for c in candidates if c.provider == choice.provider}
     if capability.id not in offered:
-        return None, notes, (f"resolver picked {choice.provider}/{capability.id}, which "
-                             "was not among the routing-eligible candidates")
+        return (
+            None,
+            notes,
+            (
+                f"resolver picked {choice.provider}/{capability.id}, which "
+                "was not among the routing-eligible candidates"
+            ),
+        )
     action = choice.action or capability.default_action
     if action not in capability.actions:
-        return None, notes, (f"resolver picked undeclared action {action!r} for "
-                             f"{choice.provider}/{capability.id}")
-    return (Selection(provider=choice.provider, capability=capability.id, action=action),
-            notes, None)
+        return (
+            None,
+            notes,
+            (f"resolver picked undeclared action {action!r} for {choice.provider}/{capability.id}"),
+        )
+    return (
+        Selection(provider=choice.provider, capability=capability.id, action=action),
+        notes,
+        None,
+    )

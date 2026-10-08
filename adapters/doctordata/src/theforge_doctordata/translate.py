@@ -53,9 +53,18 @@ from theforge_doctordata._shell import (
 )
 
 NATIVE_INVALID = "DOCTORDATA-ADAPTER-NATIVE-INVALID"
-CONTRACT_KINDS = ("entity", "relationship", "evidence", "finding", "capability",
-                  "unknown-fact", "migration-plan", "remediation-plan", "handoff",
-                  "diagnostic-manifest")
+CONTRACT_KINDS = (
+    "entity",
+    "relationship",
+    "evidence",
+    "finding",
+    "capability",
+    "unknown-fact",
+    "migration-plan",
+    "remediation-plan",
+    "handoff",
+    "diagnostic-manifest",
+)
 _SEVERITY = {"error": "high", "warning": "medium", "info": "info", "pass": "info"}
 _INFERRED_KINDS = ("derived",)
 _DRIVE = re.compile(r"^[A-Za-z]:")
@@ -80,8 +89,11 @@ def workspace_path(raw: object, stage: StagedInput) -> str | None:
     value = raw.replace("\\", "/")
     if value.startswith("/") or _DRIVE.match(value):
         try:
-            return PurePosixPath(value).relative_to(
-                PurePosixPath(stage.root.resolve().as_posix())).as_posix()
+            return (
+                PurePosixPath(value)
+                .relative_to(PurePosixPath(stage.root.resolve().as_posix()))
+                .as_posix()
+            )
         except ValueError:
             return None
     return _clean(value)
@@ -93,7 +105,7 @@ def _items(bundle: Mapping[str, Any], key: str) -> list[Any] | None:
 
 
 def _clip(text: str, limit: int = CLAIM_LIMIT) -> str:
-    return text if len(text) <= limit else text[:limit - 3] + "..."
+    return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
 def _unknowns(items: list[Any], limitations: list[str]) -> list[str]:
@@ -118,8 +130,7 @@ def _unknowns(items: list[Any], limitations: list[str]) -> list[str]:
 
 
 def _evidence_epistemic(kind: object) -> str:
-    return "inferred" if isinstance(kind, str) and kind.lower() in _INFERRED_KINDS \
-        else "observed"
+    return "inferred" if isinstance(kind, str) and kind.lower() in _INFERRED_KINDS else "observed"
 
 
 def _finding_id(item: Mapping[str, Any], index: int, seen: set[str]) -> str:
@@ -133,8 +144,9 @@ def _finding_id(item: Mapping[str, Any], index: int, seen: set[str]) -> str:
     return candidate
 
 
-def _findings(items: list[Any], stage: StagedInput, limitations: list[str]
-              ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _findings(
+    items: list[Any], stage: StagedInput, limitations: list[str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     findings: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -152,14 +164,14 @@ def _findings(items: list[Any], stage: StagedInput, limitations: list[str]
         severity = item.get("severity")
         mapped = _SEVERITY.get(severity) if isinstance(severity, str) else None
         if mapped is None:
-            limitations.append(f"finding {finding_id}: unknown native severity "
-                               f"{severity!r}, reported as info")
+            limitations.append(
+                f"finding {finding_id}: unknown native severity {severity!r}, reported as info"
+            )
             mapped = "info"
         raw_file = item.get("file")
         path = workspace_path(raw_file, stage)
         line = item.get("line")
-        line = line if isinstance(line, int) and not isinstance(line, bool) \
-            and line >= 1 else None
+        line = line if isinstance(line, int) and not isinstance(line, bool) and line >= 1 else None
         claim = item.get("evidence")
         if not isinstance(claim, str) or not claim:
             claim = item.get("message")
@@ -181,18 +193,24 @@ def _findings(items: list[Any], stage: StagedInput, limitations: list[str]
             if staged_hash is not None:
                 entry["hash"] = staged_hash
         elif raw_file is not None:
-            caveats.append(f"native file {raw_file!r} is outside the staged workspace; "
-                           "no location")
+            caveats.append(f"native file {raw_file!r} is outside the staged workspace; no location")
         if caveats:
             entry["limitations"] = caveats
         evidence.append(entry)
-        findings.append({"id": finding_id, "title": _clip(head), "severity": mapped,
-                         "evidence_ids": [evidence_id]})
+        findings.append(
+            {
+                "id": finding_id,
+                "title": _clip(head),
+                "severity": mapped,
+                "evidence_ids": [evidence_id],
+            }
+        )
     return findings, evidence
 
 
-def _capability_summary(items: list[Any], limitations: list[str],
-                        unknowns: list[str]) -> dict[str, Any] | None:
+def _capability_summary(
+    items: list[Any], limitations: list[str], unknowns: list[str]
+) -> dict[str, Any] | None:
     """One summary evidence for the registry table; per-domain unknowns for unknown rows."""
     statuses: dict[str, int] = {}
     domains: set[str] = set()
@@ -212,13 +230,21 @@ def _capability_summary(items: list[Any], limitations: list[str],
     if not statuses:
         return None
     for domain in sorted(unknown_domains):
-        unknowns.append(f"capabilities:{domain}: {unknown_domains[domain]} declared "
-                        "capabilities have status 'unknown'")
-    claim = (f"capability registry: {len(items)} capabilities across {len(domains)} "
-             f"domains ({', '.join(f'{n} {s}' for s, n in sorted(statuses.items()))}); "
-             f"per-capability detail in artifact {ARTIFACT_PATH}")
-    return {"id": "capability-registry", "epistemic": "observed",
-            "subject": "capability-registry", "claim": _clip(claim)}
+        unknowns.append(
+            f"capabilities:{domain}: {unknown_domains[domain]} declared "
+            "capabilities have status 'unknown'"
+        )
+    claim = (
+        f"capability registry: {len(items)} capabilities across {len(domains)} "
+        f"domains ({', '.join(f'{n} {s}' for s, n in sorted(statuses.items()))}); "
+        f"per-capability detail in artifact {ARTIFACT_PATH}"
+    )
+    return {
+        "id": "capability-registry",
+        "epistemic": "observed",
+        "subject": "capability-registry",
+        "claim": _clip(claim),
+    }
 
 
 def _plans(items: list[Any], limitations: list[str]) -> list[dict[str, Any]]:
@@ -242,22 +268,30 @@ def _plans(items: list[Any], limitations: list[str]) -> list[dict[str, Any]]:
             claim += f": {problem}"
         if item.get("requires_approval") is True:
             claim += " (requires approval)"
-        evidence.append({
-            "id": f"plan:{plan_id}",
-            "epistemic": "proposed",
-            "subject": plan_id,
-            "claim": _clip(claim),
-        })
+        evidence.append(
+            {
+                "id": f"plan:{plan_id}",
+                "epistemic": "proposed",
+                "subject": plan_id,
+                "claim": _clip(claim),
+            }
+        )
     return evidence
 
 
-def _graph_evidence(bundle: Mapping[str, Any],
-                    entities: list[Any], relationships: list[Any]) -> dict[str, Any]:
-    domains = sorted({domain for item in entities if isinstance(item, Mapping)
-                      for domain in [item.get("domain")]
-                      if isinstance(domain, str) and domain})
-    claim = (f"platform graph: {len(entities)} entities, {len(relationships)} "
-             f"relationships")
+def _graph_evidence(
+    bundle: Mapping[str, Any], entities: list[Any], relationships: list[Any]
+) -> dict[str, Any]:
+    domains = sorted(
+        {
+            domain
+            for item in entities
+            if isinstance(item, Mapping)
+            for domain in [item.get("domain")]
+            if isinstance(domain, str) and domain
+        }
+    )
+    claim = f"platform graph: {len(entities)} entities, {len(relationships)} relationships"
     if domains:
         claim += f" across domains {', '.join(domains)}"
     claim += f"; complete graph in artifact {ARTIFACT_PATH}"
@@ -280,31 +314,39 @@ def _summary_evidence(bundle: Mapping[str, Any]) -> dict[str, Any] | None:
     if isinstance(name, str) and name:
         claim += f" of {name}"
     claim += f": {', '.join(parts)}"
-    return {"id": "scan-summary", "epistemic": "observed", "subject": "scan",
-            "claim": _clip(claim)}
+    return {"id": "scan-summary", "epistemic": "observed", "subject": "scan", "claim": _clip(claim)}
 
 
-def translate_bundle(bundle: Mapping[str, Any], stage: StagedInput,
-                     artifact_hash: str) -> ResultDraft | Reply:
+def translate_bundle(
+    bundle: Mapping[str, Any], stage: StagedInput, artifact_hash: str
+) -> ResultDraft | Reply:
     """The result draft of a ``data.scan`` bundle, or ``DOCTORDATA-ADAPTER-NATIVE-INVALID``
     when the bundle is not a ``forge-contracts/1`` handoff."""
     tool = bundle.get("tool")
     if not isinstance(tool, Mapping) or tool.get("name") != "forge-doctor-data":
-        return fail(NATIVE_INVALID,
-                    "the bridge emitted a payload that is not a forge-doctor-data "
-                    "HandoffBundle (missing or wrong 'tool.name')",
-                    unlock="inspect the forge-doctor-data installation and rerun")
-    problems = [key for key in ("findings", "entities", "relationships", "capabilities",
-                                "plans", "unknowns") if _items(bundle, key) is None]
+        return fail(
+            NATIVE_INVALID,
+            "the bridge emitted a payload that is not a forge-doctor-data "
+            "HandoffBundle (missing or wrong 'tool.name')",
+            unlock="inspect the forge-doctor-data installation and rerun",
+        )
+    problems = [
+        key
+        for key in ("findings", "entities", "relationships", "capabilities", "plans", "unknowns")
+        if _items(bundle, key) is None
+    ]
     if problems:
-        return fail(NATIVE_INVALID,
-                    f"the HandoffBundle fields {problems} are missing or not arrays",
-                    unlock="inspect the forge-doctor-data installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            f"the HandoffBundle fields {problems} are missing or not arrays",
+            unlock="inspect the forge-doctor-data installation and rerun",
+        )
     limitations: list[str] = list(stage.limitations)
     unknowns = _unknowns(_items(bundle, "unknowns") or [], limitations)
     findings, evidence = _findings(_items(bundle, "findings") or [], stage, limitations)
-    capability_summary = _capability_summary(_items(bundle, "capabilities") or [],
-                                             limitations, unknowns)
+    capability_summary = _capability_summary(
+        _items(bundle, "capabilities") or [], limitations, unknowns
+    )
     if capability_summary is not None:
         evidence.append(capability_summary)
     evidence += _plans(_items(bundle, "plans") or [], limitations)
@@ -318,8 +360,10 @@ def translate_bundle(bundle: Mapping[str, Any], stage: StagedInput,
     extension = bundle.get("x-forge-data")
     if isinstance(extension, Mapping) and extension.get("bounded") is True:
         limits = extension.get("limits")
-        limitations.append(f"bundle bounded by native limits: "
-                           f"{json.dumps(limits, sort_keys=True) if limits else 'unspecified'}")
+        limitations.append(
+            f"bundle bounded by native limits: "
+            f"{json.dumps(limits, sort_keys=True) if limits else 'unspecified'}"
+        )
     delta = bundle.get("delta")
     if isinstance(delta, Mapping) and delta:
         unresolved = delta.get("unresolved")
@@ -327,30 +371,42 @@ def translate_bundle(bundle: Mapping[str, Any], stage: StagedInput,
             limitations.append(f"delta: {unresolved}")
         baseline = delta.get("baseline_ref")
         parts: list[str] = []
-        for key, label in (("new_findings", "+{} findings"),
-                           ("resolved_findings", "-{} findings"),
-                           ("entities_added", "+{} entities"),
-                           ("entities_removed", "-{} entities"),
-                           ("capability_transitions", "~{} capabilities"),
-                           ("drift_added", "+{} drift"),
-                           ("drift_resolved", "-{} drift")):
+        for key, label in (
+            ("new_findings", "+{} findings"),
+            ("resolved_findings", "-{} findings"),
+            ("entities_added", "+{} entities"),
+            ("entities_removed", "-{} entities"),
+            ("capability_transitions", "~{} capabilities"),
+            ("drift_added", "+{} drift"),
+            ("drift_resolved", "-{} drift"),
+        ):
             value = delta.get(key)
             if isinstance(value, list) and value:
                 parts.append(label.format(len(value)))
-        head = (f"delta vs {baseline}" if isinstance(baseline, str) and baseline
-                else "delta context")
-        claim = (f"{head}: {', '.join(parts)}" if parts else f"{head}: no changes")
-        evidence.append({"id": "delta", "epistemic": "inferred",
-                         "subject": "delta",
-                         "claim": _clip(f"{claim}; detail in artifact {ARTIFACT_PATH}")})
-    return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
-                       evidence=evidence, artifacts=[{
-                           "path": ARTIFACT_PATH, "sha256": artifact_hash}],
-                       limitations=limitations, unknowns=unknowns)
+        head = f"delta vs {baseline}" if isinstance(baseline, str) and baseline else "delta context"
+        claim = f"{head}: {', '.join(parts)}" if parts else f"{head}: no changes"
+        evidence.append(
+            {
+                "id": "delta",
+                "epistemic": "inferred",
+                "subject": "delta",
+                "claim": _clip(f"{claim}; detail in artifact {ARTIFACT_PATH}"),
+            }
+        )
+    return ResultDraft(
+        provider_id=PROVIDER_ID,
+        version=VERSION,
+        findings=findings,
+        evidence=evidence,
+        artifacts=[{"path": ARTIFACT_PATH, "sha256": artifact_hash}],
+        limitations=limitations,
+        unknowns=unknowns,
+    )
 
 
-def translate_verdict(verdict: Mapping[str, Any], stage: StagedInput, payload_path: str,
-                      artifact_hash: str) -> ResultDraft | Reply:
+def translate_verdict(
+    verdict: Mapping[str, Any], stage: StagedInput, payload_path: str, artifact_hash: str
+) -> ResultDraft | Reply:
     """The result draft of a ``data.verify`` conformance check.
 
     The evidence ``hash`` binds to the staged payload's verified sha256 - the content the
@@ -359,10 +415,12 @@ def translate_verdict(verdict: Mapping[str, Any], stage: StagedInput, payload_pa
     valid = verdict.get("valid")
     kind = verdict.get("kind")
     if type(valid) is not bool or not (kind is None or isinstance(kind, str)):
-        return fail(NATIVE_INVALID,
-                    "the conformance verdict is not a forge-contracts/1 check result "
-                    "('valid' must be boolean, 'kind' a string or null)",
-                    unlock="inspect the forge-doctor-data installation and rerun")
+        return fail(
+            NATIVE_INVALID,
+            "the conformance verdict is not a forge-contracts/1 check result "
+            "('valid' must be boolean, 'kind' a string or null)",
+            unlock="inspect the forge-doctor-data installation and rerun",
+        )
     limitations: list[str] = list(stage.limitations)
     payload_hash = stage.files.get(payload_path)
     negotiated = verdict.get("negotiated_version")
@@ -374,36 +432,49 @@ def translate_verdict(verdict: Mapping[str, Any], stage: StagedInput, payload_pa
     evidence: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
     if valid:
-        evidence.append({
-            "id": f"conformance:{kind}",
-            "epistemic": "observed",
-            "subject": str(kind),
-            "claim": _clip(f"payload {payload_path} conforms as {kind}"
-                           + (f" (negotiated {negotiated})" if negotiated else "")),
-            "location": {"path": payload_path},
-            "hash": payload_hash,
-        })
+        evidence.append(
+            {
+                "id": f"conformance:{kind}",
+                "epistemic": "observed",
+                "subject": str(kind),
+                "claim": _clip(
+                    f"payload {payload_path} conforms as {kind}"
+                    + (f" (negotiated {negotiated})" if negotiated else "")
+                ),
+                "location": {"path": payload_path},
+                "hash": payload_hash,
+            }
+        )
     else:
         caveats = [f"conformance warning: {w}" for w in warnings]
-        evidence.append({
-            "id": "conformance:invalid",
-            "epistemic": "observed",
-            "subject": str(kind or "unknown"),
-            "claim": _clip(f"payload {payload_path} does not conform"
-                           + (f" as {kind}" if kind else "")
-                           + (f": {'; '.join(errors)}" if errors else "")),
-            "location": {"path": payload_path},
-            "hash": payload_hash,
-            **({"limitations": caveats} if caveats else {}),
-        })
-        findings.append({
-            "id": f"conformance:{kind or 'unknown'}",
-            "title": "forge-contracts/1 conformance failed"
-                     + (f" ({kind})" if kind else ""),
-            "severity": "high",
-            "evidence_ids": ["conformance:invalid"],
-        })
-    return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, findings=findings,
-                       evidence=evidence, artifacts=[{
-                           "path": ARTIFACT_PATH, "sha256": artifact_hash}],
-                       limitations=limitations)
+        evidence.append(
+            {
+                "id": "conformance:invalid",
+                "epistemic": "observed",
+                "subject": str(kind or "unknown"),
+                "claim": _clip(
+                    f"payload {payload_path} does not conform"
+                    + (f" as {kind}" if kind else "")
+                    + (f": {'; '.join(errors)}" if errors else "")
+                ),
+                "location": {"path": payload_path},
+                "hash": payload_hash,
+                **({"limitations": caveats} if caveats else {}),
+            }
+        )
+        findings.append(
+            {
+                "id": f"conformance:{kind or 'unknown'}",
+                "title": "forge-contracts/1 conformance failed" + (f" ({kind})" if kind else ""),
+                "severity": "high",
+                "evidence_ids": ["conformance:invalid"],
+            }
+        )
+    return ResultDraft(
+        provider_id=PROVIDER_ID,
+        version=VERSION,
+        findings=findings,
+        evidence=evidence,
+        artifacts=[{"path": ARTIFACT_PATH, "sha256": artifact_hash}],
+        limitations=limitations,
+    )

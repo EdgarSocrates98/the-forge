@@ -52,38 +52,66 @@ def _ref(path: str, data: bytes) -> ContextFile:
     return ContextFile(path=path, sha256=_sha(data), bytes=len(data))
 
 
-def _excerpt(root: Path, path: str, start: int, end: int,
-             tier: str = "excerpt") -> ContextFile:
+def _excerpt(root: Path, path: str, start: int, end: int, tier: str = "excerpt") -> ContextFile:
     got = hash_lines((root / path).resolve(), LineRange(start=start, end=end))
     assert got is not None
-    return ContextFile(path=path, sha256=got[0], bytes=got[1], tier=tier,  # type: ignore[arg-type]
-                       lines=LineRange(start=start, end=end))
+    return ContextFile(
+        path=path,
+        sha256=got[0],
+        bytes=got[1],
+        tier=tier,  # type: ignore[arg-type]
+        lines=LineRange(start=start, end=end),
+    )
 
 
 def _pack(files: list[ContextFile]) -> ContextPack:
-    return ContextPack(producer=Producer(id="theforge", version="0"), created_at=NOW,
-                       status="complete", task_id="t1", provider_id="echo", root="ws",
-                       files=files, budget_bytes=10_000, used_bytes=sum(f.bytes for f in files))
+    return ContextPack(
+        producer=Producer(id="theforge", version="0"),
+        created_at=NOW,
+        status="complete",
+        task_id="t1",
+        provider_id="echo",
+        root="ws",
+        files=files,
+        budget_bytes=10_000,
+        used_bytes=sum(f.bytes for f in files),
+    )
 
 
-def _ev(eid: str, status: str = "confirmed", *, path: str | None = None,
-        digest: str | None = None, subject: str = "s") -> Evidence:
-    return Evidence(id=eid, epistemic=status, subject=subject, claim="c",  # type: ignore[arg-type]
-                    producer=PROVIDER, location=Location(path=path) if path else None,
-                    hash=digest)
+def _ev(
+    eid: str,
+    status: str = "confirmed",
+    *,
+    path: str | None = None,
+    digest: str | None = None,
+    subject: str = "s",
+) -> Evidence:
+    return Evidence(
+        id=eid,
+        epistemic=status,
+        subject=subject,
+        claim="c",  # type: ignore[arg-type]
+        producer=PROVIDER,
+        location=Location(path=path) if path else None,
+        hash=digest,
+    )
 
 
 def _result(evidence: list[Evidence], status: str = "ok") -> ExecutionResult:
     return ExecutionResult(
-        producer=PROVIDER, created_at=NOW, status=status,  # type: ignore[arg-type]
+        producer=PROVIDER,
+        created_at=NOW,
+        status=status,  # type: ignore[arg-type]
         evidence=evidence,
-        findings=[Finding(id="f1", title="t", evidence_ids=[e.id for e in evidence])])
+        findings=[Finding(id="f1", title="t", evidence_ids=[e.id for e in evidence])],
+    )
 
 
 @pytest.fixture
 def pack(ws: Path) -> ContextPack:
-    return _pack([_ref("a.py", b"print('a')\n"), _excerpt(ws, "b.py", 2, 3),
-                  _ref("c.py", b"c = 1\n")])
+    return _pack(
+        [_ref("a.py", b"print('a')\n"), _excerpt(ws, "b.py", 2, 3), _ref("c.py", b"c = 1\n")]
+    )
 
 
 # --- provider-reported drift (Evidence.hash semantics) -----------------------------------
@@ -122,14 +150,22 @@ def test_same_path_in_two_items_matching_either_is_enough(ws: Path) -> None:
 
 
 def test_null_hash_or_missing_location_is_never_reported_drift(pack: ContextPack) -> None:
-    res = _result([_ev("e1", path="a.py", digest=None),
-                   _ev("e2", subject="a.py", digest=_sha(b"x"))])
+    res = _result(
+        [_ev("e1", path="a.py", digest=None), _ev("e2", subject="a.py", digest=_sha(b"x"))]
+    )
     assert provider_reported_drift(pack, res) == frozenset()
 
 
 def test_location_line_does_not_change_hash_scope(pack: ContextPack) -> None:
-    ev = Evidence(id="e1", epistemic="observed", subject="s", claim="c", producer=PROVIDER,
-                  location=Location(path="a.py", line=1), hash=_sha(b"print('a')\n"))
+    ev = Evidence(
+        id="e1",
+        epistemic="observed",
+        subject="s",
+        claim="c",
+        producer=PROVIDER,
+        location=Location(path="a.py", line=1),
+        hash=_sha(b"print('a')\n"),
+    )
     assert provider_reported_drift(pack, _result([ev])) == frozenset()
 
 
@@ -147,10 +183,14 @@ def test_minimal_level_selects_nothing(pack: ContextPack) -> None:
 
 
 def test_conditional_selects_items_cited_by_confirmed_or_observed(pack: ContextPack) -> None:
-    res = _result([_ev("e1", "confirmed", path="a.py"),
-                   _ev("e2", "observed", subject="b.py"),  # no location: matched by subject
-                   _ev("e3", "inferred", path="c.py"),
-                   _ev("e4", "unresolved", path="c.py")])
+    res = _result(
+        [
+            _ev("e1", "confirmed", path="a.py"),
+            _ev("e2", "observed", subject="b.py"),  # no location: matched by subject
+            _ev("e3", "inferred", path="c.py"),
+            _ev("e4", "unresolved", path="c.py"),
+        ]
+    )
     assert [f.path for f in items_to_verify(pack, res, "conditional")] == ["a.py", "b.py"]
 
 
@@ -207,8 +247,9 @@ def test_check_drift_minimal_reports_only_provider_drift(ws: Path, pack: Context
     (ws / "a.py").write_bytes(b"changed\n")  # not re-verified at minimal
     res = _result([_ev("e1", path="c.py", digest=_sha(b"other"))])
     report = check_drift(ws, pack, res, "minimal")
-    assert report == DriftReport(drifted=("c.py",), checked=0, level="minimal",
-                                 limitations=(NOT_REVERIFIED_LIMITATION,))
+    assert report == DriftReport(
+        drifted=("c.py",), checked=0, level="minimal", limitations=(NOT_REVERIFIED_LIMITATION,)
+    )
 
 
 def test_check_drift_conditional_reverifies_cited_items(ws: Path, pack: ContextPack) -> None:
@@ -240,19 +281,23 @@ def test_apply_drift_without_drift_returns_result_unchanged() -> None:
     res = _result([_ev("e1", path="a.py")])
     report = DriftReport(drifted=(), checked=3, level="strong", limitations=())
     assert apply_drift(res, report) is res
-    minimal = DriftReport(drifted=(), checked=0, level="minimal",
-                          limitations=(NOT_REVERIFIED_LIMITATION,))
+    minimal = DriftReport(
+        drifted=(), checked=0, level="minimal", limitations=(NOT_REVERIFIED_LIMITATION,)
+    )
     assert apply_drift(res, minimal) is res
 
 
 def test_apply_drift_demotes_confirmed_and_observed_and_marks_partial() -> None:
-    evidence = [_ev("e1", "confirmed", path="a.py"),
-                _ev("e2", "observed", subject="a.py"),
-                _ev("e3", "inferred", path="a.py"),
-                _ev("e4", "confirmed", path="c.py")]
+    evidence = [
+        _ev("e1", "confirmed", path="a.py"),
+        _ev("e2", "observed", subject="a.py"),
+        _ev("e3", "inferred", path="a.py"),
+        _ev("e4", "confirmed", path="c.py"),
+    ]
     res = replace(_result(evidence), limitations=["prior"])
-    out = apply_drift(res, DriftReport(drifted=("a.py",), checked=1, level="strong",
-                                       limitations=()))
+    out = apply_drift(
+        res, DriftReport(drifted=("a.py",), checked=1, level="strong", limitations=())
+    )
     by_id = {e.id: e for e in out.evidence}
     assert by_id["e1"].epistemic == "unresolved"
     assert by_id["e1"].limitations == [f"{DRIFT_LIMITATION_PREFIX} was confirmed"]
@@ -263,18 +308,26 @@ def test_apply_drift_demotes_confirmed_and_observed_and_marks_partial() -> None:
     assert out.status == "partial"
     assert out.limitations == ["prior", f"{DRIFT_LIMITATION_PREFIX} a.py"]
     assert [e.id for e in out.evidence] == ["e1", "e2", "e3", "e4"]
-    assert not any(e.epistemic == "confirmed" and e.location and e.location.path == "a.py"
-                   for e in out.evidence)
+    assert not any(
+        e.epistemic == "confirmed" and e.location and e.location.path == "a.py"
+        for e in out.evidence
+    )
     validate_result(out, expected=PROVIDER)
 
 
 def test_apply_drift_records_every_path_and_keeps_partial() -> None:
     res = _result([], status="partial")
-    out = apply_drift(res, DriftReport(drifted=("a.py", "b.py"), checked=0, level="minimal",
-                                       limitations=(NOT_REVERIFIED_LIMITATION,)))
+    out = apply_drift(
+        res,
+        DriftReport(
+            drifted=("a.py", "b.py"),
+            checked=0,
+            level="minimal",
+            limitations=(NOT_REVERIFIED_LIMITATION,),
+        ),
+    )
     assert out.status == "partial"
-    assert out.limitations == [f"{DRIFT_LIMITATION_PREFIX} a.py",
-                               f"{DRIFT_LIMITATION_PREFIX} b.py"]
+    assert out.limitations == [f"{DRIFT_LIMITATION_PREFIX} a.py", f"{DRIFT_LIMITATION_PREFIX} b.py"]
 
 
 def test_drift_limitation_prefix_is_context_drift() -> None:

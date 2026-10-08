@@ -35,9 +35,12 @@ def _fail(code: str, detail: str, exit_code: int) -> int:
     return exit_code
 
 
-def _scan(target: str, bounded: dict[str, Any] | None,
-          delta_baseline: str | None = None,
-          delta_changed: list[str] | None = None) -> dict[str, Any]:
+def _scan(
+    target: str,
+    bounded: dict[str, Any] | None,
+    delta_baseline: str | None = None,
+    delta_changed: list[str] | None = None,
+) -> dict[str, Any]:
     from forge_doctor_data.core.forger import ForgerRequestError, accept_request
 
     if bounded:
@@ -47,8 +50,9 @@ def _scan(target: str, bounded: dict[str, Any] | None,
     limits = {key: int(value) for key, value in (bounded or {}).items()}
     if delta_baseline is None and delta_changed is None:
         try:
-            bundle = accept_request({"kind": "scan", "path": target,
-                                     "options": {"bounded": limits} if limits else {}})
+            bundle = accept_request(
+                {"kind": "scan", "path": target, "options": {"bounded": limits} if limits else {}}
+            )
         except ForgerRequestError as exc:
             raise _BridgeRefuse(str(exc)) from exc
         plain: dict[str, Any] = bundle.to_dict()
@@ -61,22 +65,27 @@ def _scan(target: str, bounded: dict[str, Any] | None,
     from forge_doctor_data.core.service import ScanRequest, ScanService
 
     outcome = ScanService().run(ScanRequest(path=Path(target)))
-    bundle = HandoffBundle.from_dict(
-        build_handoff_bundle(outcome.report, outcome.ctx))
+    bundle = HandoffBundle.from_dict(build_handoff_bundle(outcome.report, outcome.ctx))
     if limits:
         bundle = bundle.bounded(**{k: limits.get(k) for k in BOUNDED_KEYS})
     bundle.extensions["x-forge-data"] = {
-        "request_kind": "scan", "bounded": bool(limits),
+        "request_kind": "scan",
+        "bounded": bool(limits),
         **({"limits": dict(sorted(limits.items()))} if limits else {}),
     }
     document: dict[str, Any] = bundle.to_dict()
-    document["delta"] = _scan_delta(Path(target), delta_baseline or "",
-                                    delta_changed or [], outcome)
+    document["delta"] = _scan_delta(
+        Path(target), delta_baseline or "", delta_changed or [], outcome
+    )
     return document
 
 
-def _scan_delta(root: Path, ref: str, changed: list[str], outcome: Any,
-                ) -> dict[str, Any]:
+def _scan_delta(
+    root: Path,
+    ref: str,
+    changed: list[str],
+    outcome: Any,
+) -> dict[str, Any]:
     """The ``delta`` section of a scan document: ``diff_snapshots`` of the resolved
     baseline against a freshly recorded snapshot — never a fabricated one.
 
@@ -102,12 +111,12 @@ def _scan_delta(root: Path, ref: str, changed: list[str], outcome: Any,
             snaps = list_snapshots(root)
             if snaps:
                 prev = load_snapshot(snaps[-1])
-        delta["baseline_ref"] = (prev.name if prev is not None
-                                 else ref or "latest")
+        delta["baseline_ref"] = prev.name if prev is not None else ref or "latest"
         if prev is None:
             delta["unresolved"] = (
                 "no baseline snapshot under .forge-doctor-data/history in the staged "
-                "workspace; the full scan was reported")
+                "workspace; the full scan was reported"
+            )
     except HistoryError as exc:
         delta["baseline_ref"] = ref or "latest"
         delta["unresolved"] = f"baseline unresolved: {exc}"
@@ -118,16 +127,19 @@ def _scan_delta(root: Path, ref: str, changed: list[str], outcome: Any,
         return delta
     if prev is not None:
         diff = diff_snapshots(prev, current)
-        delta.update({
-            "older": diff.older, "newer": diff.newer,
-            "new_findings": list(diff.new_findings),
-            "resolved_findings": list(diff.resolved_findings),
-            "entities_added": list(diff.entities_added),
-            "entities_removed": list(diff.entities_removed),
-            "capability_transitions": list(diff.capability_transitions),
-            "drift_added": list(diff.drift_added),
-            "drift_resolved": list(diff.drift_resolved),
-        })
+        delta.update(
+            {
+                "older": diff.older,
+                "newer": diff.newer,
+                "new_findings": list(diff.new_findings),
+                "resolved_findings": list(diff.resolved_findings),
+                "entities_added": list(diff.entities_added),
+                "entities_removed": list(diff.entities_removed),
+                "capability_transitions": list(diff.capability_transitions),
+                "drift_added": list(diff.drift_added),
+                "drift_resolved": list(diff.drift_resolved),
+            }
+        )
     return delta
 
 
@@ -152,13 +164,19 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     scan = sub.add_parser("scan", help="accept_request kind=scan -> HandoffBundle JSON")
     scan.add_argument("--target", required=True)
-    scan.add_argument("--bounded", default=None,
-                      help="JSON object of HandoffBundle.bounded() limits")
-    scan.add_argument("--delta-baseline", default=None,
-                      help="history snapshot ref the delta diffs against "
-                           "(''/unset with changed-files = newest)")
-    scan.add_argument("--delta-changed-files", default=None,
-                      help="JSON array of workspace-relative changed paths (hint)")
+    scan.add_argument(
+        "--bounded", default=None, help="JSON object of HandoffBundle.bounded() limits"
+    )
+    scan.add_argument(
+        "--delta-baseline",
+        default=None,
+        help="history snapshot ref the delta diffs against (''/unset with changed-files = newest)",
+    )
+    scan.add_argument(
+        "--delta-changed-files",
+        default=None,
+        help="JSON array of workspace-relative changed paths (hint)",
+    )
     conf = sub.add_parser("conformance", help="check_conformance of a JSON file")
     conf.add_argument("--file", required=True)
     args = parser.parse_args(argv)
@@ -172,10 +190,8 @@ def main(argv: list[str] | None = None) -> int:
             changed = None
             if args.delta_changed_files is not None:
                 changed = json.loads(args.delta_changed_files)
-                if not isinstance(changed, list) \
-                        or not all(isinstance(p, str) for p in changed):
-                    raise _BridgeRefuse(
-                        "--delta-changed-files must be a JSON array of strings")
+                if not isinstance(changed, list) or not all(isinstance(p, str) for p in changed):
+                    raise _BridgeRefuse("--delta-changed-files must be a JSON array of strings")
             document = _scan(args.target, bounded, args.delta_baseline, changed)
         else:
             document = _conformance(args.file)

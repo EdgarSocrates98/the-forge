@@ -23,11 +23,26 @@ CROSS_FIXTURE = Path(__file__).parent / "fixtures" / "workspaces" / "cross"
 CROSS_REPOSITORIES = ("data-pipeline", "orders-api")
 GIT_TIMEOUT_S = 30
 # Variables that would redirect git away from the repository being created.
-_GIT_REDIRECTS = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
-                  "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CEILING_DIRECTORIES")
-_GIT_CONFIG = ("-c", "user.name=The Forge Tests", "-c", "user.email=tests@theforge.invalid",
-               "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
-               "-c", "init.defaultBranch=main")
+_GIT_REDIRECTS = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CEILING_DIRECTORIES",
+)
+_GIT_CONFIG = (
+    "-c",
+    "user.name=The Forge Tests",
+    "-c",
+    "user.email=tests@theforge.invalid",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.autocrlf=false",
+    "-c",
+    "init.defaultBranch=main",
+)
 
 
 @dataclass(frozen=True)
@@ -53,8 +68,15 @@ def _git(repo: Path, *args: str) -> None:
     env = {k: v for k, v in os.environ.items() if k not in _GIT_REDIRECTS}
     env["GIT_CONFIG_NOSYSTEM"] = "1"
     env["GIT_TERMINAL_PROMPT"] = "0"
-    subprocess.run(["git", *_GIT_CONFIG, *args], cwd=repo, env=env, capture_output=True,
-                   text=True, timeout=GIT_TIMEOUT_S, check=True)
+    subprocess.run(
+        ["git", *_GIT_CONFIG, *args],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT_S,
+        check=True,
+    )
 
 
 def mount_cross_workspace(*, git: bool = True) -> CrossWorkspace:

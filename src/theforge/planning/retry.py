@@ -20,8 +20,7 @@ from typing import Final
 
 from theforge.contracts.codes import Codes
 
-__all__ = ["MAX_ATTEMPTS", "RetryPolicy", "load_retry_config", "retry_backoff",
-           "retryable"]
+__all__ = ["MAX_ATTEMPTS", "RetryPolicy", "load_retry_config", "retry_backoff", "retryable"]
 
 CONFIG_FILE: Final = "retry.toml"
 # Never retry forever: the hard ceiling on attempts a config may ask for.
@@ -58,8 +57,7 @@ def _number(raw: object) -> float | None:
     return float(raw)
 
 
-def load_retry_config(*, user_dir: Path, forge_dir: Path,
-                      warnings: list[str]) -> RetryPolicy:
+def load_retry_config(*, user_dir: Path, forge_dir: Path, warnings: list[str]) -> RetryPolicy:
     """Merge defaults, the user file and the project file (project wins per key).
 
     Missing files keep the defaults; malformed values append to ``warnings`` and
@@ -67,8 +65,10 @@ def load_retry_config(*, user_dir: Path, forge_dir: Path,
     the offending keys.
     """
     policy = RetryPolicy()
-    for path, label in ((user_dir / CONFIG_FILE, "user"),
-                        (forge_dir / "config" / CONFIG_FILE, "project")):
+    for path, label in (
+        (user_dir / CONFIG_FILE, "user"),
+        (forge_dir / "config" / CONFIG_FILE, "project"),
+    ):
         try:
             raw = tomllib.loads(path.read_bytes().decode("utf-8"))
         except FileNotFoundError:
@@ -83,14 +83,18 @@ def load_retry_config(*, user_dir: Path, forge_dir: Path,
         changed = False
         if "max_attempts" in table:
             value = table["max_attempts"]
-            if isinstance(value, int) and not isinstance(value, bool) \
-                    and 1 <= value <= MAX_ATTEMPTS:
+            if (
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                and 1 <= value <= MAX_ATTEMPTS
+            ):
                 policy = replace(policy, max_attempts=value)
                 changed = True
             else:
                 warnings.append(
                     f"{label} {CONFIG_FILE}: retry.max_attempts must be an integer "
-                    f"1..{MAX_ATTEMPTS}")
+                    f"1..{MAX_ATTEMPTS}"
+                )
         if "retryable_codes" in table:
             value = table["retryable_codes"]
             if isinstance(value, list) and all(isinstance(c, str) for c in value):
@@ -98,8 +102,8 @@ def load_retry_config(*, user_dir: Path, forge_dir: Path,
                 changed = True
             else:
                 warnings.append(
-                    f"{label} {CONFIG_FILE}: retry.retryable_codes must be a "
-                    "list of strings")
+                    f"{label} {CONFIG_FILE}: retry.retryable_codes must be a list of strings"
+                )
         for key in ("backoff_seconds", "backoff_cap_seconds"):
             if key not in table:
                 continue
@@ -107,7 +111,8 @@ def load_retry_config(*, user_dir: Path, forge_dir: Path,
             if seconds is None or not 0.0 <= seconds <= MAX_BACKOFF_SECONDS:
                 warnings.append(
                     f"{label} {CONFIG_FILE}: retry.{key} must be a number "
-                    f"0..{MAX_BACKOFF_SECONDS:g}")
+                    f"0..{MAX_BACKOFF_SECONDS:g}"
+                )
                 continue
             if key == "backoff_seconds":
                 policy = replace(policy, backoff_seconds=seconds)

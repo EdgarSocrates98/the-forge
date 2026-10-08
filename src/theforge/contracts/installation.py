@@ -40,7 +40,8 @@ class InstallationPlan:
     def __post_init__(self) -> None:
         if self.schema != INSTALLATION_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {INSTALLATION_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {INSTALLATION_SCHEMA!r}"
+            )
         if not self.items:
             raise ContractError("installation plan: items must not be empty")
 
@@ -49,15 +50,23 @@ INSTALLATION_V2_SCHEMA = "theforge/InstallationPlan/v2"
 
 # The approval flow as an ordered, enumerable contract (§29) — the plan carries
 # every stage with status; execution is out of scope for this milestone.
-INSTALL_STAGES = ("plan", "approval", "download", "verify", "isolated-install",
-                  "provider-check", "surface-fingerprint", "health")
+INSTALL_STAGES = (
+    "plan",
+    "approval",
+    "download",
+    "verify",
+    "isolated-install",
+    "provider-check",
+    "surface-fingerprint",
+    "health",
+)
 
 
 @dataclass(frozen=True, kw_only=True)
 class InstallStep:
     """One stage of the governed install flow (§29)."""
 
-    stage: str                        # one of INSTALL_STAGES
+    stage: str  # one of INSTALL_STAGES
     description: str
     status: Literal["pending"] = "pending"
 
@@ -68,7 +77,7 @@ class InstallApproval:
 
     required: bool = True
     granted: bool = False
-    granted_by: str | None = None     # e.g. "cli-user", a policy id
+    granted_by: str | None = None  # e.g. "cli-user", a policy id
     granted_at: str | None = None
 
 
@@ -80,7 +89,7 @@ class RollbackStrategy:
     previous_version: str | None = None
     previous_manifest_sha256: str | None = None
     previous_surface_fingerprint: str | None = None
-    environment: str | None = None    # isolated env that would be discarded
+    environment: str | None = None  # isolated env that would be discarded
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -95,17 +104,17 @@ class InstallationPlanV2:
     # What is being installed — pinned, never "latest" (§30).
     provider: str
     version: str
-    source: str                       # configured registry source id
-    registry: str | None = None       # declared registry identity
+    source: str  # configured registry source id
+    registry: str | None = None  # declared registry identity
     distribution: DistributionRef
     expected_hashes: dict[str, str] = field(default_factory=dict)
     signature: SignatureRef | None = None
     runtime: RuntimeRequirements | None = None
     # Where: an isolated environment is the default target (name, not a path —
     # the plan describes, it does not create).
-    environment: str                  # e.g. "venv:providers/security-forge-1.3.2"
-    dependencies: list[str] = field(default_factory=list)   # pinned name==ver
-    permissions: list[str] = field(default_factory=list)    # declared needs
+    environment: str  # e.g. "venv:providers/security-forge-1.3.2"
+    dependencies: list[str] = field(default_factory=list)  # pinned name==ver
+    permissions: list[str] = field(default_factory=list)  # declared needs
     post_install_checks: list[str] = field(default_factory=list)
     rollback: RollbackStrategy = field(default_factory=RollbackStrategy)
     steps: list[InstallStep] = field(default_factory=list)
@@ -115,34 +124,35 @@ class InstallationPlanV2:
     def __post_init__(self) -> None:
         if self.schema != INSTALLATION_V2_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected "
-                f"{INSTALLATION_V2_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {INSTALLATION_V2_SCHEMA!r}"
+            )
         parsed = parse_semver(self.version)
         if parsed is None or self.version in ("latest", ""):
             raise ContractError(
                 f"installation plan: version {self.version!r} is not a pinned "
-                "SemVer — 'latest' is never installable (§30)")
+                "SemVer — 'latest' is never installable (§30)"
+            )
         if self.distribution.kind == "pip-package" and (
-                not self.distribution.package or not self.distribution.version):
+            not self.distribution.package or not self.distribution.version
+        ):
             raise ContractError(
-                "installation plan: pip-package distribution requires pinned "
-                "package + version")
+                "installation plan: pip-package distribution requires pinned package + version"
+            )
         for name, digest in self.expected_hashes.items():
             if not SHA256_RE.fullmatch(digest):
-                raise ContractError(
-                    f"installation plan: expected hash {name!r} is not sha256")
+                raise ContractError(f"installation plan: expected hash {name!r} is not sha256")
         stages = [s.stage for s in self.steps]
         unknown = [s for s in stages if s not in INSTALL_STAGES]
         if unknown:
-            raise ContractError(
-                f"installation plan: unknown stages {sorted(set(unknown))}")
-        if stages != sorted(stages, key=INSTALL_STAGES.index) or len(
-                set(stages)) != len(stages):
+            raise ContractError(f"installation plan: unknown stages {sorted(set(unknown))}")
+        if stages != sorted(stages, key=INSTALL_STAGES.index) or len(set(stages)) != len(stages):
             raise ContractError(
                 "installation plan: steps must follow the governed stage order "
                 "(plan→approval→download→verify→isolated-install→provider-check"
-                "→surface-fingerprint→health)")
+                "→surface-fingerprint→health)"
+            )
         if not self.approval.required and not self.approval.granted:
             raise ContractError(
                 "installation plan: approval.required=false demands "
-                "approval.granted — a plan cannot skip its own gate")
+                "approval.granted — a plan cannot skip its own gate"
+            )

@@ -48,19 +48,31 @@ ON_311_PLUS = sys.version_info[:2] >= (3, 11)
 HAS_SPECIALIST = importlib.util.find_spec("forge_doctor_api") is not None
 
 
-def _call(op: str, options: tuple[str, ...] = (), payload: dict[str, Any] | None = None
-          ) -> tuple[Response, dict[str, Any]]:
-    request = json.dumps({"protocol": PROTOCOL_V1, "kind": "Request", "op": op,
-                          "request_id": f"req-{op}", "payload": payload or {}}).encode()
+def _call(
+    op: str, options: tuple[str, ...] = (), payload: dict[str, Any] | None = None
+) -> tuple[Response, dict[str, Any]]:
+    request = json.dumps(
+        {
+            "protocol": PROTOCOL_V1,
+            "kind": "Request",
+            "op": op,
+            "request_id": f"req-{op}",
+            "payload": payload or {},
+        }
+    ).encode()
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:  # never the repo
-        out = subprocess.run([sys.executable, "-m", "theforge_doctorapi", *options, op],
-                             input=request, capture_output=True, timeout=120, cwd=cwd)
+        out = subprocess.run(
+            [sys.executable, "-m", "theforge_doctorapi", *options, op],
+            input=request,
+            capture_output=True,
+            timeout=120,
+            cwd=cwd,
+        )
     assert out.returncode == 0, out.stderr
     data = json.loads(out.stdout)
     response = from_dict(Response, data)
     assert response.op == op and response.request_id == f"req-{op}"
-    assert (response.producer.id, response.producer.version) == ("forge-doctor-api",
-                                                                 "0.3.0")
+    assert (response.producer.id, response.producer.version) == ("forge-doctor-api", "0.3.0")
     return response, data
 
 
@@ -77,27 +89,48 @@ def _workspace_context() -> dict[str, Any]:
     for path in sorted(WORKSPACE.rglob("*")):
         if path.is_file() and "__pycache__" not in path.parts:
             blob = path.read_bytes()
-            files.append({"path": path.relative_to(WORKSPACE).as_posix(),
-                          "sha256": hashlib.sha256(blob).hexdigest(),
-                          "bytes": len(blob)})
+            files.append(
+                {
+                    "path": path.relative_to(WORKSPACE).as_posix(),
+                    "sha256": hashlib.sha256(blob).hexdigest(),
+                    "bytes": len(blob),
+                }
+            )
     return {"root": str(WORKSPACE), "files": files}
 
 
-def _execute(capability: str, action: str, replay: Path = DEFAULT,
-             context: dict[str, Any] | None = None,
-             extra: dict[str, Any] | None = None
-             ) -> tuple[Response, dict[str, Any], Path]:
+def _execute(
+    capability: str,
+    action: str,
+    replay: Path = DEFAULT,
+    context: dict[str, Any] | None = None,
+    extra: dict[str, Any] | None = None,
+) -> tuple[Response, dict[str, Any], Path]:
     """Execute in a cwd that persists past the call so artifacts can be inspected."""
-    payload = {"task": {"intent": "x", "budget_profile": "economy"},
-               "capability": capability, "action": action,
-               "context": context if context is not None else _workspace_context()}
+    payload = {
+        "task": {"intent": "x", "budget_profile": "economy"},
+        "capability": capability,
+        "action": action,
+        "context": context if context is not None else _workspace_context(),
+    }
     payload.update(extra or {})
-    request = json.dumps({"protocol": PROTOCOL_V1, "kind": "Request", "op": "execute",
-                          "request_id": "req-execute", "payload": payload}).encode()
+    request = json.dumps(
+        {
+            "protocol": PROTOCOL_V1,
+            "kind": "Request",
+            "op": "execute",
+            "request_id": "req-execute",
+            "payload": payload,
+        }
+    ).encode()
     cwd = Path(tempfile.mkdtemp())
-    out = subprocess.run([sys.executable, "-m", "theforge_doctorapi",
-                          "--replay", str(replay), "execute"],
-                         input=request, capture_output=True, timeout=120, cwd=cwd)
+    out = subprocess.run(
+        [sys.executable, "-m", "theforge_doctorapi", "--replay", str(replay), "execute"],
+        input=request,
+        capture_output=True,
+        timeout=120,
+        cwd=cwd,
+    )
     assert out.returncode == 0, out.stderr
     data = json.loads(out.stdout)
     response = from_dict(Response, data)
@@ -107,9 +140,10 @@ def _execute(capability: str, action: str, replay: Path = DEFAULT,
 def _context_of(root: Path, name: str, blob: bytes) -> dict[str, Any]:
     """A ContextPack-shaped context for one real file under ``root``."""
     (root / name).write_bytes(blob)
-    return {"root": str(root),
-            "files": [{"path": name, "sha256": hashlib.sha256(blob).hexdigest(),
-                       "bytes": len(blob)}]}
+    return {
+        "root": str(root),
+        "files": [{"path": name, "sha256": hashlib.sha256(blob).hexdigest(), "bytes": len(blob)}],
+    }
 
 
 # --- describe -------------------------------------------------------------------------------
@@ -155,8 +189,9 @@ def test_describe_is_deterministic() -> None:
 def test_describe_flags_a_hand_built_snapshot() -> None:
     snapshot = _snapshot()
     assert snapshot["provenance"] == "recorded"
-    payload = catalog.manifest_payload({**snapshot, "provenance": "hand-built"},
-                                       provider_id="forge-doctor-api", version="0.3.0")
+    payload = catalog.manifest_payload(
+        {**snapshot, "provenance": "hand-built"}, provider_id="forge-doctor-api", version="0.3.0"
+    )
     assert any("hand-built" in n for n in payload["limitations"])
 
 
@@ -164,13 +199,11 @@ def test_seam_absent_becomes_a_limitation_not_a_capability() -> None:
     snapshot = _snapshot()
     for seam in snapshot["seams"]:
         seam["present"] = seam["name"] != catalog.SEAM_DIAGNOSE
-    payload = catalog.manifest_payload(snapshot, provider_id="forge-doctor-api",
-                                       version="0.3.0")
+    payload = catalog.manifest_payload(snapshot, provider_id="forge-doctor-api", version="0.3.0")
     manifest = from_dict(ForgeManifest, payload)
     assert manifest.capability("api.diagnose") is None
     assert manifest.capability("api.verify") is not None
-    assert any("api.diagnose" in n and catalog.SEAM_DIAGNOSE in n
-               for n in manifest.limitations)
+    assert any("api.diagnose" in n and catalog.SEAM_DIAGNOSE in n for n in manifest.limitations)
 
 
 def test_replay_environment_replaces_the_live_checks() -> None:
@@ -199,8 +232,9 @@ def test_replay_environment_must_be_an_object(tmp_path: Path) -> None:
     assert response.error.code == "ADAPTER-REPLAY-INVALID"
 
 
-@pytest.mark.skipif(ON_311_PLUS and HAS_SPECIALIST,
-                    reason="the specialist is usable in this interpreter")
+@pytest.mark.skipif(
+    ON_311_PLUS and HAS_SPECIALIST, reason="the specialist is usable in this interpreter"
+)
 def test_describe_without_replay_refuses_when_the_specialist_is_absent() -> None:
     response, _ = _describe(None)
     assert response.status == "refused"
@@ -236,9 +270,13 @@ def test_native_fingerprint_ignores_recorded_at() -> None:
 def test_record_check_classifies_drift() -> None:
     snapshot = _snapshot()
     assert record.classify_drift(snapshot, snapshot) == ("none", [])
-    added = {**snapshot, "seams": [*snapshot["seams"], {
-        "name": "new_seam", "module": "m", "callable": "C", "present": True,
-        "methods": []}]}
+    added = {
+        **snapshot,
+        "seams": [
+            *snapshot["seams"],
+            {"name": "new_seam", "module": "m", "callable": "C", "present": True, "methods": []},
+        ],
+    }
     status, lines = record.classify_drift(snapshot, added)
     assert status == "additive" and lines == ["seam added: new_seam"]
     missing = {**snapshot, "seams": snapshot["seams"][1:]}
@@ -250,45 +288,72 @@ def test_record_check_classifies_drift() -> None:
 
 
 def _valid_snapshot() -> dict[str, Any]:
-    return {"specialist_version": "0.2.0", "recorded_at": "2026-10-03T00:00:00Z",
-            "provenance": "recorded", "protocol_version": 2,
-            "seams": [{"name": "doctor_boundary",
-                       "module": "forge_doctor_api.handoff.boundary",
-                       "callable": "DoctorBoundary", "present": True}]}
+    return {
+        "specialist_version": "0.2.0",
+        "recorded_at": "2026-10-03T00:00:00Z",
+        "provenance": "recorded",
+        "protocol_version": 2,
+        "seams": [
+            {
+                "name": "doctor_boundary",
+                "module": "forge_doctor_api.handoff.boundary",
+                "callable": "DoctorBoundary",
+                "present": True,
+            }
+        ],
+    }
 
 
-@pytest.mark.parametrize(("content", "message"), [
-    (b"{not json", "unreadable"),
-    (b"\xff\xfe", "unreadable"),
-    (b"[]", "expected an object"),
-    (json.dumps({k: v for k, v in _valid_snapshot().items()
-                 if k != "provenance"}).encode(), "provenance"),
-    (json.dumps({**_valid_snapshot(), "seams": {}}).encode(), "seams"),
-    (json.dumps({**_valid_snapshot(), "seams": ["x"]}).encode(), "seams[0]"),
-    (json.dumps({**_valid_snapshot(), "seams": [
-        {"name": "a", "module": "m", "callable": "c", "present": "yes"}]}).encode(),
-     "present"),
-    (json.dumps({**_valid_snapshot(), "seams": [
-        _valid_snapshot()["seams"][0], _valid_snapshot()["seams"][0]]}).encode(),
-     "duplicate seam"),
-])
-def test_load_snapshot_rejects_corrupt_files(tmp_path: Path, content: bytes,
-                                             message: str) -> None:
+@pytest.mark.parametrize(
+    ("content", "message"),
+    [
+        (b"{not json", "unreadable"),
+        (b"\xff\xfe", "unreadable"),
+        (b"[]", "expected an object"),
+        (
+            json.dumps({k: v for k, v in _valid_snapshot().items() if k != "provenance"}).encode(),
+            "provenance",
+        ),
+        (json.dumps({**_valid_snapshot(), "seams": {}}).encode(), "seams"),
+        (json.dumps({**_valid_snapshot(), "seams": ["x"]}).encode(), "seams[0]"),
+        (
+            json.dumps(
+                {
+                    **_valid_snapshot(),
+                    "seams": [{"name": "a", "module": "m", "callable": "c", "present": "yes"}],
+                }
+            ).encode(),
+            "present",
+        ),
+        (
+            json.dumps(
+                {
+                    **_valid_snapshot(),
+                    "seams": [_valid_snapshot()["seams"][0], _valid_snapshot()["seams"][0]],
+                }
+            ).encode(),
+            "duplicate seam",
+        ),
+    ],
+)
+def test_load_snapshot_rejects_corrupt_files(tmp_path: Path, content: bytes, message: str) -> None:
     path = tmp_path / "native_surface.json"
     path.write_bytes(content)
     with pytest.raises(catalog.SnapshotError, match=re.escape(message)):
         catalog.load_snapshot(path)
 
 
-def test_corrupt_snapshot_makes_describe_an_error(tmp_path: Path,
-                                                  monkeypatch: pytest.MonkeyPatch) -> None:
+def test_corrupt_snapshot_makes_describe_an_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     path = tmp_path / "native_surface.json"
     path.write_bytes(json.dumps({**_valid_snapshot(), "seams": {}}).encode())
     entry = importlib.import_module("theforge_doctorapi.__main__")
     monkeypatch.setattr(entry, "load_snapshot", lambda: catalog.load_snapshot(path))
     handler = entry.describe(_shell.AdapterOptions(replay=DEFAULT))
-    reply = handler(_shell.Request(op="describe", request_id="r", protocol=PROTOCOL_V1,
-                                   payload={}), tmp_path)
+    reply = handler(
+        _shell.Request(op="describe", request_id="r", protocol=PROTOCOL_V1, payload={}), tmp_path
+    )
     assert reply.status == "error"
     assert reply.error is not None
     assert reply.error["code"] == "DOCTORAPI-ADAPTER-SNAPSHOT-INVALID"
@@ -298,8 +363,7 @@ def test_corrupt_snapshot_makes_describe_an_error(tmp_path: Path,
 # --- health ---------------------------------------------------------------------------------
 
 
-def _health(options: tuple[str, ...] = ("--replay", str(DEFAULT))
-            ) -> tuple[Response, HealthReport]:
+def _health(options: tuple[str, ...] = ("--replay", str(DEFAULT))) -> tuple[Response, HealthReport]:
     response, _ = _call("health", options)
     assert response.status == "ok", response.error
     return response, from_dict(HealthReport, response.payload, "$.payload")
@@ -316,8 +380,9 @@ def test_replay_default_health_is_ok() -> None:
     assert checks["python"].ok and "3.11" in checks["python"].detail
     assert checks["import"].ok and "0.2.0" in checks["import"].detail
     assert checks["version"].ok
-    assert checks["boundary"].ok and "forge_doctor_api.handoff.boundary" in \
-        checks["boundary"].detail
+    assert (
+        checks["boundary"].ok and "forge_doctor_api.handoff.boundary" in checks["boundary"].detail
+    )
     assert report.status == "ok"
 
 
@@ -345,8 +410,9 @@ def test_replay_health_without_the_specialist_is_unavailable() -> None:
 
 
 def test_assume_specialist_version_overrides_the_probe() -> None:
-    _, report = _health(("--replay", str(SCENARIOS / "version-skew"),
-                         "--assume-specialist-version", "0.2.1"))
+    _, report = _health(
+        ("--replay", str(SCENARIOS / "version-skew"), "--assume-specialist-version", "0.2.1")
+    )
     checks = _checks(report)
     assert report.status == "ok"
     assert checks["version"].ok and "0.2.1" in checks["version"].detail
@@ -425,20 +491,25 @@ def test_replay_verify_reports_integrity_of_the_staged_bundle() -> None:
     blob = json.dumps(document["bundle"], sort_keys=True).encode()
     digest = hashlib.sha256(blob).hexdigest()
     source = Path(tempfile.mkdtemp())
-    response, _, cwd = _execute("api.verify", "verify",
-                               context=_context_of(source, "bundle.json", blob))
+    response, _, cwd = _execute(
+        "api.verify", "verify", context=_context_of(source, "bundle.json", blob)
+    )
     result = _result(response)
     assert result.status == "ok"
-    verdict = [ev for ev in result.evidence
-               if "integrity" in ev.claim or "valid" in ev.claim or ev.hash == digest]
+    verdict = [
+        ev
+        for ev in result.evidence
+        if "integrity" in ev.claim or "valid" in ev.claim or ev.hash == digest
+    ]
     assert verdict
     assert (cwd / "native" / "handoff.json").is_file()
 
 
 def test_replay_verify_needs_a_staged_payload() -> None:
     source = Path(tempfile.mkdtemp())
-    response, _, _ = _execute("api.verify", "verify",
-                             context=_context_of(source, "readme.md", b"hello"))
+    response, _, _ = _execute(
+        "api.verify", "verify", context=_context_of(source, "readme.md", b"hello")
+    )
     result = _result(response, expect_ok=False)
     assert result.status == "partial"
 
@@ -453,8 +524,8 @@ def test_replay_error_recording_is_a_structured_failure() -> None:
 
 def test_replay_without_a_recording_is_missing(tmp_path: Path) -> None:
     (tmp_path / "environment.json").write_text(
-        json.dumps({"python": "3.11.15", "specialist_version": "0.2.0"}),
-        encoding="utf-8")
+        json.dumps({"python": "3.11.15", "specialist_version": "0.2.0"}), encoding="utf-8"
+    )
     (tmp_path / "health.json").write_text('{"boundary": true}', encoding="utf-8")
     response, _, _ = _execute("api.diagnose", "analyze", tmp_path)
     assert response.status == "error"
@@ -464,8 +535,9 @@ def test_replay_without_a_recording_is_missing(tmp_path: Path) -> None:
 
 
 def test_diagnose_with_no_input_is_partial() -> None:
-    response, _, _ = _execute("api.diagnose", "analyze",
-                             context={"root": str(WORKSPACE), "files": []})
+    response, _, _ = _execute(
+        "api.diagnose", "analyze", context={"root": str(WORKSPACE), "files": []}
+    )
     result = _result(response, expect_ok=False)
     assert result.status == "partial"
 
@@ -475,13 +547,16 @@ def test_diagnose_with_no_input_is_partial() -> None:
 SHA = "a" * 64
 
 
-def _verify_payload(result: dict[str, Any], handoff: dict[str, Any] | None = None
-                    ) -> dict[str, Any]:
+def _verify_payload(
+    result: dict[str, Any], handoff: dict[str, Any] | None = None
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
-        "task": {"schema": "theforge/TaskSpec/v1", "id": "t1", "intent": "x",
-                 "targets": []},
-        "capability": "api.analyze", "action": "analyze",
-        "run_id": "run-1", "result": result}
+        "task": {"schema": "theforge/TaskSpec/v1", "id": "t1", "intent": "x", "targets": []},
+        "capability": "api.analyze",
+        "action": "analyze",
+        "run_id": "run-1",
+        "result": result,
+    }
     if handoff is not None:
         payload["handoff"] = handoff
     return payload
@@ -491,20 +566,29 @@ def _clean_result(**over: Any) -> dict[str, Any]:
     result: dict[str, Any] = {
         "schema": "theforge/ExecutionResult/v1",
         "producer": {"id": "api-forge", "version": "0.2.0"},
-        "capability": "api.analyze", "action": "analyze",
+        "capability": "api.analyze",
+        "action": "analyze",
         "status": "ok",
-        "evidence": [{"id": "e1", "epistemic": "observed",
-                      "subject": "contract", "claim": "saw it",
-                      "producer": {"id": "api-forge", "version": "0.2.0"}}],
-        "findings": [{"id": "f1", "title": "t", "severity": "low",
-                      "evidence_ids": ["e1"]}],
-        "artifacts": [], "limitations": [], "unknowns": [], "assumptions": []}
+        "evidence": [
+            {
+                "id": "e1",
+                "epistemic": "observed",
+                "subject": "contract",
+                "claim": "saw it",
+                "producer": {"id": "api-forge", "version": "0.2.0"},
+            }
+        ],
+        "findings": [{"id": "f1", "title": "t", "severity": "low", "evidence_ids": ["e1"]}],
+        "artifacts": [],
+        "limitations": [],
+        "unknowns": [],
+        "assumptions": [],
+    }
     result.update(over)
     return result
 
 
-def _verify(payload: dict[str, Any], replay: Path = DEFAULT
-            ) -> tuple[Response, dict[str, Any]]:
+def _verify(payload: dict[str, Any], replay: Path = DEFAULT) -> tuple[Response, dict[str, Any]]:
     return _call("verify", ("--replay", str(replay)), payload)
 
 
@@ -522,62 +606,71 @@ def test_verify_op_fails_a_finding_without_evidence() -> None:
     response, _ = _verify(_verify_payload(result))
     assert response.status == "ok"
     assert response.payload["status"] == "failed"
-    assert any("f1" in detail and "evidence" in detail
-               for detail in response.payload["details"])
+    assert any("f1" in detail and "evidence" in detail for detail in response.payload["details"])
 
 
 def test_verify_op_fails_an_unverifiable_evidence_hash() -> None:
-    evidence = [{"id": "e1", "epistemic": "observed", "subject": "s",
-                 "claim": "c", "hash": SHA}]
+    evidence = [{"id": "e1", "epistemic": "observed", "subject": "s", "claim": "c", "hash": SHA}]
     response, _ = _verify(_verify_payload(_clean_result(evidence=evidence)))
     assert response.payload["status"] == "failed"
-    assert any("hash without location" in detail
-               for detail in response.payload["details"])
+    assert any("hash without location" in detail for detail in response.payload["details"])
 
 
 def test_verify_op_fails_a_dangling_evidence_ref() -> None:
     result = _clean_result(
-        findings=[{"id": "f1", "title": "t", "severity": "low",
-                   "evidence_ids": ["ghost"]}])
+        findings=[{"id": "f1", "title": "t", "severity": "low", "evidence_ids": ["ghost"]}]
+    )
     response, _ = _verify(_verify_payload(result))
     assert response.payload["status"] == "failed"
     assert any("ghost" in detail for detail in response.payload["details"])
 
 
 def _handoff(items: list[dict[str, Any]]) -> dict[str, Any]:
-    return {"schema": "theforge/Handoff/v1",
-            "producer": {"id": "theforge", "version": "0.2.0"},
-            "created_at": "2026-01-01T00:00:00Z", "plan_run": "p1",
-            "target_node": "n2", "items": items}
+    return {
+        "schema": "theforge/Handoff/v1",
+        "producer": {"id": "theforge", "version": "0.2.0"},
+        "created_at": "2026-01-01T00:00:00Z",
+        "plan_run": "p1",
+        "target_node": "n2",
+        "items": items,
+    }
 
 
 def _item(**over: Any) -> dict[str, Any]:
     item: dict[str, Any] = {
-        "kind": "evidence", "id": "e1",
-        "origin": {"plan_run": "p1", "node": "n1", "run_id": "r1",
-                   "provider": {"id": "forge-doctor-api", "version": "0.3.0"}},
-        "epistemic": "observed", "subject": "s", "claim": "c"}
+        "kind": "evidence",
+        "id": "e1",
+        "origin": {
+            "plan_run": "p1",
+            "node": "n1",
+            "run_id": "r1",
+            "provider": {"id": "forge-doctor-api", "version": "0.3.0"},
+        },
+        "epistemic": "observed",
+        "subject": "s",
+        "claim": "c",
+    }
     item.update(over)
     return item
 
 
 def test_verify_op_audits_the_consumed_handoff() -> None:
-    handoff = _handoff([
-        _item(),
-        _item(kind="artifact", id="out.json", hash=SHA, epistemic=None),
-    ])
+    handoff = _handoff(
+        [
+            _item(),
+            _item(kind="artifact", id="out.json", hash=SHA, epistemic=None),
+        ]
+    )
     response, _ = _verify(_verify_payload(_clean_result(), handoff))
     assert response.payload["status"] == "passed"
-    assert response.payload["details"] == ["result-coherence: passed",
-                                           "handoff-coherence: passed"]
+    assert response.payload["details"] == ["result-coherence: passed", "handoff-coherence: passed"]
 
 
 def test_verify_op_fails_a_handoff_artifact_without_hash() -> None:
     handoff = _handoff([_item(kind="artifact", id="out.json", epistemic=None)])
     response, _ = _verify(_verify_payload(_clean_result(), handoff))
     assert response.payload["status"] == "failed"
-    assert any("hash is required" in detail
-               for detail in response.payload["details"])
+    assert any("hash is required" in detail for detail in response.payload["details"])
 
 
 def test_verify_op_fails_handoff_evidence_without_epistemic() -> None:
@@ -585,8 +678,7 @@ def test_verify_op_fails_handoff_evidence_without_epistemic() -> None:
     del item["epistemic"]
     response, _ = _verify(_verify_payload(_clean_result(), _handoff([item])))
     assert response.payload["status"] == "failed"
-    assert any("epistemic is required" in detail
-               for detail in response.payload["details"])
+    assert any("epistemic is required" in detail for detail in response.payload["details"])
 
 
 def test_verify_op_never_upgrades_epistemic() -> None:
@@ -606,10 +698,13 @@ def test_verify_op_rejects_a_non_object_payload() -> None:
     assert response.error.code == "ADAPTER-REQUEST-INVALID"
 
 
-@pytest.mark.parametrize("payload", [
-    {"result": "nope"},
-    {"task": {}, "capability": "x", "action": "y", "run_id": "r"},
-])
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"result": "nope"},
+        {"task": {}, "capability": "x", "action": "y", "run_id": "r"},
+    ],
+)
 def test_verify_op_refuses_a_malformed_payload(payload: Any) -> None:
     response, _ = _verify(payload)
     assert response.status == "refused"
@@ -618,14 +713,14 @@ def test_verify_op_refuses_a_malformed_payload(payload: Any) -> None:
 
 
 def test_verify_op_refuses_without_the_specialist() -> None:
-    response, _ = _verify(_verify_payload(_clean_result()),
-                          SCENARIOS / "specialist-missing")
+    response, _ = _verify(_verify_payload(_clean_result()), SCENARIOS / "specialist-missing")
     assert response.status == "refused"
     assert response.error is not None
     assert response.error.code == "DOCTORAPI-ADAPTER-UNAVAILABLE"
 
 
 # --- delta handoff (Phase 49) ------------------------------------------------------------------
+
 
 def test_describe_declares_delta_feature() -> None:
     response, _ = _describe()
@@ -645,8 +740,7 @@ def test_replay_diagnose_surfaces_delta_evidence() -> None:
 
 
 def test_malformed_delta_hint_is_a_limitation_not_a_crash() -> None:
-    response, _, _ = _execute("api.diagnose", "analyze",
-                             extra={"delta": {"baseline_ref": 42}})
+    response, _, _ = _execute("api.diagnose", "analyze", extra={"delta": {"baseline_ref": 42}})
     result = _result(response)
     assert result.status == "ok"
     assert any("delta descriptor malformed" in lim for lim in result.limitations)
@@ -654,11 +748,12 @@ def test_malformed_delta_hint_is_a_limitation_not_a_crash() -> None:
 
 def test_delta_argv_shape() -> None:
     from theforge_doctorapi import execute as da_execute
+
     argv, warning = da_execute._delta_argv(
-        {"delta": {"baseline_ref": "snap-1", "changed_files": ["b.py", "a.py"]}})
+        {"delta": {"baseline_ref": "snap-1", "changed_files": ["b.py", "a.py"]}}
+    )
     assert warning is None
-    assert argv == ["--delta-baseline", "snap-1",
-                    "--delta-changed-files", '["a.py", "b.py"]']
+    assert argv == ["--delta-baseline", "snap-1", "--delta-changed-files", '["a.py", "b.py"]']
     argv, warning = da_execute._delta_argv({})
     assert argv == [] and warning is None
     argv, warning = da_execute._delta_argv({"delta": "nope"})

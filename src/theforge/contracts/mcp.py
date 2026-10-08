@@ -25,7 +25,7 @@ MCP_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$")
 class McpRemote:
     """A remote transport endpoint declared by an MCP server entry."""
 
-    type: str          # "streamable-http", "sse", ...
+    type: str  # "streamable-http", "sse", ...
     url: str
     # Header *names* only — remote MCP auth needs credentials the Forge never
     # stores; declaring them preserves "credential needs" (§72).
@@ -63,7 +63,8 @@ class McpServerEntry:
     def __post_init__(self) -> None:
         if self.schema != MCP_SERVER_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {MCP_SERVER_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {MCP_SERVER_SCHEMA!r}"
+            )
         if not MCP_NAME_RE.match(self.name):
             raise ContractError(f"mcp server entry: invalid name {self.name!r}")
 
@@ -80,14 +81,14 @@ class McpRegistryDocument:
     source_id: str
     produced_at: str
     entries: list[McpServerEntry] = field(default_factory=list)
-    next_cursor: str | None = None   # explicit pagination handle, not followed
+    next_cursor: str | None = None  # explicit pagination handle, not followed
     limitations: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.schema != MCP_DOCUMENT_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected "
-                f"{MCP_DOCUMENT_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {MCP_DOCUMENT_SCHEMA!r}"
+            )
         names = [e.name for e in self.entries]
         if len(set(names)) != len(names):
             raise ContractError("mcp registry document: duplicate server names")

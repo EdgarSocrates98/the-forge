@@ -50,8 +50,14 @@ def staged_path(path: str, cwd: Path) -> str:
     ``<cwd>/stage`` (a link escaping it is refused). CallError otherwise.
     """
     parts = path.split("/")
-    if (not path or "\x00" in path or "\\" in path or path.startswith("/") or ":" in path
-            or ".." in parts):
+    if (
+        not path
+        or "\x00" in path
+        or "\\" in path
+        or path.startswith("/")
+        or ":" in path
+        or ".." in parts
+    ):
         raise CallError(f"file argument {path!r} must be a path relative to {STAGE_DIR}/")
     stage = (cwd / STAGE_DIR).resolve()
     if not (stage / path).resolve().is_relative_to(stage):
@@ -60,8 +66,9 @@ def staged_path(path: str, cwd: Path) -> str:
     return STAGE_DIR if not normalized else f"{STAGE_DIR}/{normalized}"
 
 
-def call_action(tools: Mapping[str, Any], call: NativeCall, tool: str,
-                files: Mapping[str, str]) -> dict[str, Any]:
+def call_action(
+    tools: Mapping[str, Any], call: NativeCall, tool: str, files: Mapping[str, str]
+) -> dict[str, Any]:
     """Call ``tool`` with the staged ``files`` (native argument -> ``stage/...``) and the chained
     judge; ``tools`` is the native ``TOOLS`` table and ``call`` is ``call_tool``."""
     spec = tools.get(tool)
@@ -98,10 +105,18 @@ def _parse_file(value: str) -> tuple[str, str]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m theforge_sparkforge_aws.native_call",
-        description="Call one Spark Forge AWS tool over stage/ (live backend of the adapter).")
+        description="Call one Spark Forge AWS tool over stage/ (live backend of the adapter).",
+    )
     parser.add_argument("--tool", required=True)
-    parser.add_argument("--file", dest="files", type=_parse_file, action="append", default=[],
-                        metavar="NAME=PATH", help="native file argument, relative to stage/")
+    parser.add_argument(
+        "--file",
+        dest="files",
+        type=_parse_file,
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="native file argument, relative to stage/",
+    )
     args = parser.parse_args(argv)
     cwd = Path.cwd()
     try:

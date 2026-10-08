@@ -21,21 +21,31 @@ from theforge.contracts.manifest import ForgeManifest
 
 # The vocabulary this core knows. Documented in docs/versioning.md; a feature
 # absent from this set is simply never asked for.
-HANDOFF: Final = "handoff/v1"                # consumes Handoff in ExecuteRequest
-VERIFY: Final = "verify/v1"                  # answers the ``verify`` op
-PLAN_PROPOSAL: Final = "plan-proposal/v1"    # answers plan purpose="proposal"
-RESOLVE: Final = "resolve/v1"                # answers ``resolve`` requests
+HANDOFF: Final = "handoff/v1"  # consumes Handoff in ExecuteRequest
+VERIFY: Final = "verify/v1"  # answers the ``verify`` op
+PLAN_PROPOSAL: Final = "plan-proposal/v1"  # answers plan purpose="proposal"
+RESOLVE: Final = "resolve/v1"  # answers ``resolve`` requests
 SEMANTIC_HANDOFF: Final = "semantic-handoff/v1"  # structured semantic handoff items
 ECONOMY_RECEIPT: Final = "economy-receipt/v1"  # economy data in results
-TRACE_REF: Final = "trace-ref/v1"            # emits linkable trace references
-RESUME: Final = "resume/v1"                  # resume/partial re-execution aware
-DELTA: Final = "delta/v1"                    # accepts/produces delta handoffs
-GRAPH_REFS: Final = "graph-refs/v1"          # emits graph reference artifacts
+TRACE_REF: Final = "trace-ref/v1"  # emits linkable trace references
+RESUME: Final = "resume/v1"  # resume/partial re-execution aware
+DELTA: Final = "delta/v1"  # accepts/produces delta handoffs
+GRAPH_REFS: Final = "graph-refs/v1"  # emits graph reference artifacts
 
-KNOWN_FEATURES: Final = frozenset({
-    HANDOFF, VERIFY, PLAN_PROPOSAL, RESOLVE, SEMANTIC_HANDOFF, ECONOMY_RECEIPT,
-    TRACE_REF, RESUME, DELTA, GRAPH_REFS,
-})
+KNOWN_FEATURES: Final = frozenset(
+    {
+        HANDOFF,
+        VERIFY,
+        PLAN_PROPOSAL,
+        RESOLVE,
+        SEMANTIC_HANDOFF,
+        ECONOMY_RECEIPT,
+        TRACE_REF,
+        RESUME,
+        DELTA,
+        GRAPH_REFS,
+    }
+)
 
 
 def implied_features(manifest: ForgeManifest) -> frozenset[str]:
@@ -45,8 +55,7 @@ def implied_features(manifest: ForgeManifest) -> frozenset[str]:
         implied.add(VERIFY)
     if "plan" in manifest.ops and any(c.proposes_plans for c in manifest.capabilities):
         implied.add(PLAN_PROPOSAL)
-    if "resolve" in manifest.ops and any(c.resolves_ambiguity
-                                       for c in manifest.capabilities):
+    if "resolve" in manifest.ops and any(c.resolves_ambiguity for c in manifest.capabilities):
         implied.add(RESOLVE)
     if any(c.accepts_handoff for c in manifest.capabilities):
         implied.add(HANDOFF)

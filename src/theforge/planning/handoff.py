@@ -35,14 +35,24 @@ TRUNCATION_MARKER: Final = "…[truncated]"
 # Node statuses whose result may be handed off (a result exists only for these).
 _VALID_STATUSES: Final = frozenset({"ok", "partial"})
 _SEVERITY_RANK: Final = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-_EPISTEMIC_RANK: Final = {"confirmed": 0, "observed": 1, "inferred": 2, "proposed": 3,
-                          "unresolved": 4}
+_EPISTEMIC_RANK: Final = {
+    "confirmed": 0,
+    "observed": 1,
+    "inferred": 2,
+    "proposed": 3,
+    "unresolved": 4,
+}
 _MAX_CLAIM_ATTEMPTS: Final = 8
 
 
-def build_handoff(plan_run: str, target: PlanNode, sources: Sequence[SourceResult], *,
-                  created_at: str | None = None,
-                  records: Mapping[str, RegistryRecord] | None = None) -> Handoff | None:
+def build_handoff(
+    plan_run: str,
+    target: PlanNode,
+    sources: Sequence[SourceResult],
+    *,
+    created_at: str | None = None,
+    records: Mapping[str, RegistryRecord] | None = None,
+) -> Handoff | None:
     """Handoff for ``target`` from its declared inputs; ``None`` if it declares none.
 
     ``sources`` may hold results of any node: only those named in ``target.inputs``
@@ -72,11 +82,16 @@ def build_handoff(plan_run: str, target: PlanNode, sources: Sequence[SourceResul
             continue
         produces = _produces(found, records)
         for item in _source_items(plan_run, found, needs, produces):
-            if (item.kind == "artifact" and needs and item.artifact_type is not None
-                    and item.artifact_type not in needs):
+            if (
+                item.kind == "artifact"
+                and needs
+                and item.artifact_type is not None
+                and item.artifact_type not in needs
+            ):
                 limitations.append(
                     f"handoff-filtered: {item.origin.node}:{item.id} (artifact type "
-                    f"{item.artifact_type} not consumed by {target.capability})")
+                    f"{item.artifact_type} not consumed by {target.capability})"
+                )
                 continue
             candidates.append(_redacted(item))
 
@@ -87,9 +102,16 @@ def build_handoff(plan_run: str, target: PlanNode, sources: Sequence[SourceResul
         notes = list(limitations)
         if dropped:
             notes.append(f"handoff-truncated: dropped {dropped} items")
-        return Handoff(producer=PRODUCER, created_at=stamp, plan_run=plan_run,
-                       target_node=target.id, items=items, truncated=dropped > 0,
-                       dropped=dropped, limitations=notes)
+        return Handoff(
+            producer=PRODUCER,
+            created_at=stamp,
+            plan_run=plan_run,
+            target_node=target.id,
+            items=items,
+            truncated=dropped > 0,
+            dropped=dropped,
+            limitations=notes,
+        )
 
     kept = _prefix_within_limits(candidates, make)
     handoff = make(kept, len(candidates) - len(kept))
@@ -100,8 +122,7 @@ def build_handoff(plan_run: str, target: PlanNode, sources: Sequence[SourceResul
     return handoff
 
 
-def _consumes(target: PlanNode,
-              records: Mapping[str, RegistryRecord] | None) -> frozenset[str]:
+def _consumes(target: PlanNode, records: Mapping[str, RegistryRecord] | None) -> frozenset[str]:
     """Artifact types the target capability declares to consume (D4 needs)."""
     if records is None:
         return frozenset()
@@ -114,8 +135,7 @@ def _consumes(target: PlanNode,
     return frozenset(resolved[0].relations.consumes)
 
 
-def _produces(src: SourceResult,
-              records: Mapping[str, RegistryRecord] | None) -> tuple[str, ...]:
+def _produces(src: SourceResult, records: Mapping[str, RegistryRecord] | None) -> tuple[str, ...]:
     """Artifact types the source capability declares to produce (D4 typing)."""
     if records is None:
         return ()
@@ -149,31 +169,46 @@ def _dedup(candidates: list[HandoffItem]) -> list[HandoffItem]:
             seen[key] = len(merged)
             merged.append(item)
         else:
-            merged[idx] = replace(merged[idx],
-                                  also_from=[*merged[idx].also_from, item.origin])
+            merged[idx] = replace(merged[idx], also_from=[*merged[idx].also_from, item.origin])
     return merged
 
 
-def _source_items(plan_run: str, src: SourceResult, needs: frozenset[str],
-                  produces: tuple[str, ...]) -> list[HandoffItem]:
+def _source_items(
+    plan_run: str, src: SourceResult, needs: frozenset[str], produces: tuple[str, ...]
+) -> list[HandoffItem]:
     """Items of one source in priority order: decision, verification, findings,
     evidence, artifacts (needs-matching first), constraints, assumptions."""
-    origin = HandoffOrigin(plan_run=plan_run, node=src.node, run_id=src.run_id,
-                           provider=src.provider)
+    origin = HandoffOrigin(
+        plan_run=plan_run, node=src.node, run_id=src.run_id, provider=src.provider
+    )
     res = src.result
-    items = [HandoffItem(
-        kind="decision", id="outcome", origin=origin, epistemic="observed", subject=src.node,
-        claim=_claim(f"status={src.status} capability={src.capability} action={src.action}"),
-    )]
+    items = [
+        HandoffItem(
+            kind="decision",
+            id="outcome",
+            origin=origin,
+            epistemic="observed",
+            subject=src.node,
+            claim=_claim(f"status={src.status} capability={src.capability} action={src.action}"),
+        )
+    ]
 
     if src.verification is not None:
         ver = src.verification
-        items.append(HandoffItem(
-            kind="verification", id="verification", origin=origin, epistemic="observed",
-            subject=src.node,
-            claim=_claim(f"forge={ver.forge.status} independent={ver.independent.status} "
-                         f"self_report={ver.self_report.status} "
-                         f"provider_evidence={ver.provider_evidence.status}")))
+        items.append(
+            HandoffItem(
+                kind="verification",
+                id="verification",
+                origin=origin,
+                epistemic="observed",
+                subject=src.node,
+                claim=_claim(
+                    f"forge={ver.forge.status} independent={ver.independent.status} "
+                    f"self_report={ver.self_report.status} "
+                    f"provider_evidence={ver.provider_evidence.status}"
+                ),
+            )
+        )
 
     findings = sorted(res.findings, key=lambda f: (_SEVERITY_RANK[f.severity], f.id))
     items.extend(_finding_item(origin, f) for f in findings)
@@ -182,8 +217,10 @@ def _source_items(plan_run: str, src: SourceResult, needs: frozenset[str],
     for f in findings:
         for eid in f.evidence_ids:
             position.setdefault(eid, len(position))
-    referenced = sorted((e for e in res.evidence if e.id in position),
-                        key=lambda e: (position[e.id], *_evidence_key(e)))
+    referenced = sorted(
+        (e for e in res.evidence if e.id in position),
+        key=lambda e: (position[e.id], *_evidence_key(e)),
+    )
     rest = sorted((e for e in res.evidence if e.id not in position), key=_evidence_key)
     ordered = referenced + rest
     items.extend(_evidence_item(origin, e) for e in ordered)
@@ -191,19 +228,33 @@ def _source_items(plan_run: str, src: SourceResult, needs: frozenset[str],
     # Unambiguous typing only: a capability producing exactly one declared type
     # types its artifacts; several declared types leave the type unknown (kept).
     inferred = produces[0] if len(produces) == 1 else None
-    ranked = sorted(res.artifacts,
-                    key=lambda a: (0 if inferred is not None and inferred in needs else 1,
-                                   a.path, a.sha256))
+    ranked = sorted(
+        res.artifacts,
+        key=lambda a: (0 if inferred is not None and inferred in needs else 1, a.path, a.sha256),
+    )
     for artifact in ranked:
-        items.append(HandoffItem(kind="artifact", id=artifact.path, origin=origin,
-                                 hash=artifact.sha256, artifact_type=inferred))
+        items.append(
+            HandoffItem(
+                kind="artifact",
+                id=artifact.path,
+                origin=origin,
+                hash=artifact.sha256,
+                artifact_type=inferred,
+            )
+        )
 
     for i, limitation in enumerate(res.limitations):
-        items.append(HandoffItem(kind="constraint", id=f"constraint:{i}", origin=origin,
-                                 claim=_claim(limitation)))
+        items.append(
+            HandoffItem(
+                kind="constraint", id=f"constraint:{i}", origin=origin, claim=_claim(limitation)
+            )
+        )
     for i, assumption in enumerate(res.assumptions):
-        items.append(HandoffItem(kind="assumption", id=f"assumption:{i}", origin=origin,
-                                 claim=_claim(assumption)))
+        items.append(
+            HandoffItem(
+                kind="assumption", id=f"assumption:{i}", origin=origin, claim=_claim(assumption)
+            )
+        )
     return items
 
 
@@ -212,18 +263,30 @@ def _evidence_key(e: Evidence) -> tuple[int, str, str, str]:
 
 
 def _finding_item(origin: HandoffOrigin, finding: Finding) -> HandoffItem:
-    return HandoffItem(kind="finding", id=finding.id, origin=origin,
-                       claim=_claim(finding.title), severity=finding.severity,
-                       evidence_ids=list(finding.evidence_ids))
+    return HandoffItem(
+        kind="finding",
+        id=finding.id,
+        origin=origin,
+        claim=_claim(finding.title),
+        severity=finding.severity,
+        evidence_ids=list(finding.evidence_ids),
+    )
 
 
 def _evidence_item(origin: HandoffOrigin, evidence: Evidence) -> HandoffItem:
     # The epistemic status and provenance chain are copied verbatim: the handoff
     # never upgrades them.
-    return HandoffItem(kind="evidence", id=evidence.id, origin=origin,
-                       epistemic=evidence.epistemic, subject=evidence.subject,
-                       claim=_claim(evidence.claim), location=evidence.location,
-                       hash=evidence.hash, derived_from=evidence.derived_from)
+    return HandoffItem(
+        kind="evidence",
+        id=evidence.id,
+        origin=origin,
+        epistemic=evidence.epistemic,
+        subject=evidence.subject,
+        claim=_claim(evidence.claim),
+        location=evidence.location,
+        hash=evidence.hash,
+        derived_from=evidence.derived_from,
+    )
 
 
 def _claim(text: str) -> str:
@@ -237,7 +300,7 @@ def _claim(text: str) -> str:
         if len(value) <= MAX_CLAIM_CHARS and redact_text(value) == value:
             return value
         if len(value) > MAX_CLAIM_CHARS:
-            value = value[:MAX_CLAIM_CHARS - len(TRUNCATION_MARKER)] + TRUNCATION_MARKER
+            value = value[: MAX_CLAIM_CHARS - len(TRUNCATION_MARKER)] + TRUNCATION_MARKER
         value = redact_text(value)
     return REDACTED
 
@@ -250,8 +313,9 @@ def _size(data: Any) -> int:
     return len(canonical_json(data).encode("utf-8"))
 
 
-def _prefix_within_limits(candidates: list[HandoffItem],
-                          make: Callable[[list[HandoffItem], int], Handoff]) -> list[HandoffItem]:
+def _prefix_within_limits(
+    candidates: list[HandoffItem], make: Callable[[list[HandoffItem], int], Handoff]
+) -> list[HandoffItem]:
     """Longest prefix of ``candidates`` within the item and canonical-byte limits.
 
     The envelope is measured at its worst case (every candidate dropped), so adding the

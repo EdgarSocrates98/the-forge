@@ -41,12 +41,17 @@ def _trace(store: RunStore) -> _Trace:
     """A minimal open trace: task persisted, nothing else ran yet."""
     run_id = new_run_id()
     store.create(run_id)
-    task = TaskSpec(producer=PRODUCER, created_at=utc_now(), id=run_id, intent="x",
-                    workspace_root="/ws")
-    return _Trace(run_id=run_id, started_at=utc_now(), task=task,
-                  telemetry=TelemetryRecorder(run_id, profile_for("balanced")),
-                  task_sha=store.write(run_id, "task", task),
-                  request=AskRequest(intent="x"))
+    task = TaskSpec(
+        producer=PRODUCER, created_at=utc_now(), id=run_id, intent="x", workspace_root="/ws"
+    )
+    return _Trace(
+        run_id=run_id,
+        started_at=utc_now(),
+        task=task,
+        telemetry=TelemetryRecorder(run_id, profile_for("balanced")),
+        task_sha=store.write(run_id, "task", task),
+        request=AskRequest(intent="x"),
+    )
 
 
 def test_finish_terminalizes_exactly_once(tmp_path: Path) -> None:
@@ -65,8 +70,9 @@ def test_finish_terminalizes_exactly_once(tmp_path: Path) -> None:
     assert store.persisted_sha256(trace.run_id, "receipt") == receipt_sha
 
 
-def test_receipt_write_failure_is_terminal_not_retried(tmp_path: Path,
-                                                       monkeypatch: pytest.MonkeyPatch) -> None:
+def test_receipt_write_failure_is_terminal_not_retried(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A contract-level failure inside ``_finish`` never loops into a second attempt."""
     make_workspace(tmp_path, [])
     forger, store = _forger(tmp_path)
@@ -86,8 +92,9 @@ def test_receipt_write_failure_is_terminal_not_retried(tmp_path: Path,
     assert attempts == 1  # no second _finish, ever
 
 
-def test_persistence_failure_leaves_no_receipt(tmp_path: Path,
-                                               monkeypatch: pytest.MonkeyPatch) -> None:
+def test_persistence_failure_leaves_no_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A receipt that cannot be persisted means no receipt — the error propagates once."""
     make_workspace(tmp_path, [])
     forger, store = _forger(tmp_path)
@@ -101,12 +108,13 @@ def test_persistence_failure_leaves_no_receipt(tmp_path: Path,
     monkeypatch.setattr(store, "write", write)
     with pytest.raises(PersistenceError, match="disk full"):
         forger.ask(AskRequest(intent="eco", capability="demo.echo"))
-    run_id, = store.list_runs()
+    (run_id,) = store.list_runs()
     assert store.read_optional(run_id, "receipt") is None
 
 
 def test_internal_error_before_execute_writes_no_verification(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """No provider ever ran: failing the run must not invent a verification artifact."""
     make_workspace(tmp_path, [])
 
@@ -125,7 +133,8 @@ def test_internal_error_before_execute_writes_no_verification(
 
 
 def test_internal_error_after_execute_preserves_the_verification(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The provider answered and the result was validated; the drift check then crashed.
 
     The run still records its VerificationResult: self-report and evidence reported,
@@ -139,18 +148,17 @@ def test_internal_error_after_execute_preserves_the_verification(
 
     monkeypatch.setattr("theforge.forger.orchestrator.check_drift", boom)
     forger, store = _forger(tmp_path)
-    out = forger.ask(AskRequest(intent="analise esse Glue Job porque está lento",
-                                debug=True))
+    out = forger.ask(AskRequest(intent="analise esse Glue Job porque está lento", debug=True))
     assert out.status == "provider_failure"
     assert out.error is not None and out.error.code == Codes.INTERNAL
     verification = store.read_contract(out.run_id, "verification", VerificationResult)
-    assert out.receipt.verification_sha256 == sha256_of(
-        store.read(out.run_id, "verification"))
+    assert out.receipt.verification_sha256 == sha256_of(store.read(out.run_id, "verification"))
     assert verification.self_report.status == "reported"
     assert verification.provider_evidence.status == "reported"  # a valid result existed
     assert verification.forge.status == "passed"
-    assert any("context-reverification" in d and "not performed" in d
-               for d in verification.forge.details)
+    assert any(
+        "context-reverification" in d and "not performed" in d for d in verification.forge.details
+    )
     diagnostic = store.read_optional(out.run_id, "diagnostic")
     assert diagnostic is not None and diagnostic["stage"] == "verification"
 
@@ -164,12 +172,12 @@ def test_provider_failure_records_verification_and_one_receipt(tmp_path: Path) -
     verification = store.read_contract(out.run_id, "verification", VerificationResult)
     assert verification.self_report.status == "not_performed"
     assert verification.forge.status == "not_performed"
-    assert store.read_contract(out.run_id, "receipt", ExecutionReceipt).status \
-        == "provider_failure"
+    assert store.read_contract(out.run_id, "receipt", ExecutionReceipt).status == "provider_failure"
 
 
 def test_telemetry_failure_keeps_the_terminal_receipt(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A telemetry build failure costs the run its telemetry hash, never its receipt."""
     make_workspace(tmp_path, [])
 
@@ -185,7 +193,8 @@ def test_telemetry_failure_keeps_the_terminal_receipt(
 
 
 def test_plan_graph_failure_keeps_the_plan_receipt(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A graph build failure is a receipt limitation; the plan run still terminalizes."""
     make_workspace(tmp_path, [])
 
@@ -202,7 +211,8 @@ def test_plan_graph_failure_keeps_the_plan_receipt(
 
 
 def test_plan_receipt_write_failure_is_terminal(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Same invariant for plan runs: a mid-finalize failure never triggers a retry."""
     make_workspace(tmp_path, [])
     forger, store = _forger(tmp_path)

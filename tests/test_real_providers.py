@@ -65,9 +65,10 @@ ADAPTERS = REPO / "adapters"
 NATIVE_STATE = {".sparkforge", ".apiforge", "traces.db", "stage"}
 # Credential-shaped variables set in the test process: none may reach a provider.
 # Values are random per session (never literals), so a leak check cannot match by accident.
-CREDENTIALS = {name: f"theforge-sentinel-{secrets.token_hex(8)}"
-               for name in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "GITHUB_TOKEN",
-                            "OPENAI_API_KEY")}
+CREDENTIALS = {
+    name: f"theforge-sentinel-{secrets.token_hex(8)}"
+    for name in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "GITHUB_TOKEN", "OPENAI_API_KEY")
+}
 HEALTH_TIMEOUT = 60.0
 
 
@@ -82,8 +83,13 @@ class Case:
 
     @property
     def recording(self) -> Path:
-        return FIXTURES / "native" / self.native / "default" / (
-            f"{self.capability}.{self.action}.json")
+        return (
+            FIXTURES
+            / "native"
+            / self.native
+            / "default"
+            / (f"{self.capability}.{self.action}.json")
+        )
 
     @property
     def native(self) -> str:
@@ -95,26 +101,45 @@ class Case:
 
     @property
     def unavailable_code(self) -> str:
-        return (self.spec.unavailable_code
-                or f"{self.spec.provider_id.replace('-', '').upper()}-ADAPTER-UNAVAILABLE")
+        return (
+            self.spec.unavailable_code
+            or f"{self.spec.provider_id.replace('-', '').upper()}-ADAPTER-UNAVAILABLE"
+        )
 
 
 CASES = {
-    "spark": Case("spark", FIXTURES / "workspaces" / "spark", "pyspark.static-analysis",
-                  "pyspark", ">=0.5.0,<0.6.0",
-                  ADAPTERS / "sparkforge_aws" / "src" / "theforge_sparkforge_aws"
-                  / "native_catalog.json"),
-    "api": Case("api", FIXTURES / "workspaces" / "api", "api.analyze", "analyze",
-                ">=0.1.0,<0.2.0",
-                ADAPTERS / "apiforge" / "src" / "theforge_apiforge" / "native_matrix.json"),
-    "doctordata": Case("doctordata", FIXTURES / "workspaces" / "data" / "shop",
-                       "data.scan", "analyze", ">=1.0.0rc1,<2.0.0",
-                       ADAPTERS / "doctordata" / "src" / "theforge_doctordata"
-                       / "native_surface.json"),
-    "doctorapi": Case("doctorapi", FIXTURES / "workspaces" / "cross" / "orders-api",
-                      "api.diagnose", "analyze", ">=0.2.0,<0.3.0",
-                      ADAPTERS / "doctorapi" / "src" / "theforge_doctorapi"
-                      / "native_surface.json"),
+    "spark": Case(
+        "spark",
+        FIXTURES / "workspaces" / "spark",
+        "pyspark.static-analysis",
+        "pyspark",
+        ">=0.5.0,<0.6.0",
+        ADAPTERS / "sparkforge_aws" / "src" / "theforge_sparkforge_aws" / "native_catalog.json",
+    ),
+    "api": Case(
+        "api",
+        FIXTURES / "workspaces" / "api",
+        "api.analyze",
+        "analyze",
+        ">=0.1.0,<0.2.0",
+        ADAPTERS / "apiforge" / "src" / "theforge_apiforge" / "native_matrix.json",
+    ),
+    "doctordata": Case(
+        "doctordata",
+        FIXTURES / "workspaces" / "data" / "shop",
+        "data.scan",
+        "analyze",
+        ">=1.0.0rc1,<2.0.0",
+        ADAPTERS / "doctordata" / "src" / "theforge_doctordata" / "native_surface.json",
+    ),
+    "doctorapi": Case(
+        "doctorapi",
+        FIXTURES / "workspaces" / "cross" / "orders-api",
+        "api.diagnose",
+        "analyze",
+        ">=0.2.0,<0.3.0",
+        ADAPTERS / "doctorapi" / "src" / "theforge_doctorapi" / "native_surface.json",
+    ),
 }
 
 
@@ -137,8 +162,8 @@ def credentials(monkeypatch: pytest.MonkeyPatch) -> Iterator[dict[str, str]]:
 
 # --- helpers ------------------------------------------------------------------------------
 
-def _workspace(tmp_path: Path, case: Case, config_dir: Path,
-               *entries: dict[str, Any]) -> Path:
+
+def _workspace(tmp_path: Path, case: Case, config_dir: Path, *entries: dict[str, Any]) -> Path:
     """A copy of the example workspace with ``entries`` in the isolated user providers.toml."""
     root = tmp_path / "ws"
     shutil.copytree(case.workspace, root)
@@ -154,16 +179,18 @@ def _record(root: Path, provider_id: str) -> RegistryRecord:
 def _ask(root: Path, case: Case) -> tuple[AskOutcome, RunStore]:
     forge_dir = root / ".forge"
     store = RunStore(forge_dir)
-    outcome = Forger(root, Registry(forge_dir), store).ask(AskRequest(
-        intent="analyze this workspace", capability=case.capability, action=case.action))
+    outcome = Forger(root, Registry(forge_dir), store).ask(
+        AskRequest(intent="analyze this workspace", capability=case.capability, action=case.action)
+    )
     return outcome, store
 
 
 def _raw_health(argv: list[str]) -> tuple[HealthReport, str]:
     """The adapter's own health reply (the core's ``check_health`` keeps only the status)."""
     with provider_cwd() as cwd:
-        response = SubprocessTransport(argv).call("health", {}, timeout=HEALTH_TIMEOUT,
-                                                  cwd=Path(cwd))
+        response = SubprocessTransport(argv).call(
+            "health", {}, timeout=HEALTH_TIMEOUT, cwd=Path(cwd)
+        )
     assert response.status == "ok", response.error
     report = from_dict(HealthReport, response.payload, "$.payload")
     return report, json.dumps(response.payload)
@@ -181,58 +208,92 @@ def _recorded_evidence_shapes(case: Case) -> set[str]:
     if case.name == "doctordata":
         # Translated evidence ids: "<fingerprint|check_id>#ev", "plan:<id>"
         # and fixed sections.
-        fids = [f["fingerprint"] if isinstance(f.get("fingerprint"), str)
-                and f["fingerprint"] else f.get("check_id", "finding")
-                for f in recording.get("findings", []) if isinstance(f, dict)]
+        fids = [
+            f["fingerprint"]
+            if isinstance(f.get("fingerprint"), str) and f["fingerprint"]
+            else f.get("check_id", "finding")
+            for f in recording.get("findings", [])
+            if isinstance(f, dict)
+        ]
         shapes = {rp.id_shape(f"{f}#ev") for f in fids if isinstance(f, str)}
-        shapes |= {rp.id_shape(f"{f}#9#ev") for f in fids
-                   if isinstance(f, str)}  # deduped ids gain "#n"
-        shapes |= {rp.id_shape(f"plan:{p['id']}") for p in recording.get("plans") or ()
-                   if isinstance(p, dict) and isinstance(p.get("id"), str)}
-        return shapes | {rp.id_shape(x) for x in
-                         ("capability-registry", "platform-graph", "scan-summary")}
+        shapes |= {
+            rp.id_shape(f"{f}#9#ev") for f in fids if isinstance(f, str)
+        }  # deduped ids gain "#n"
+        shapes |= {
+            rp.id_shape(f"plan:{p['id']}")
+            for p in recording.get("plans") or ()
+            if isinstance(p, dict) and isinstance(p.get("id"), str)
+        }
+        return shapes | {
+            rp.id_shape(x) for x in ("capability-registry", "platform-graph", "scan-summary")
+        }
     # doctorapi: "<finding id>#e<i>", per-section refs and fixed sections.
     bundle = recording["bundle"]
-    fids = [f["id"] for f in bundle.get("findings", [])
-            if isinstance(f, dict) and isinstance(f.get("id"), str)]
+    fids = [
+        f["id"]
+        for f in bundle.get("findings", [])
+        if isinstance(f, dict) and isinstance(f.get("id"), str)
+    ]
     shapes = {rp.id_shape(f"{f}#e0") for f in fids}
     shapes |= {rp.id_shape(f"{f}#9#e0") for f in fids}
-    for section in ("breaking_changes", "clients_affected", "runtime_regressions",
-                    "security_candidates", "reliability_signals", "operations",
-                    "contracts"):
-        shapes |= {rp.id_shape(f"{section}:{i}")
-                   for i in range(len(bundle.get(section) or ()))}
-    shapes |= {rp.id_shape(f"external:{i}")
-               for i in range(len(bundle.get("external_references") or ()))}
-    shapes |= {rp.id_shape(f"remediation:{i}")
-               for i in range(len(bundle.get("remediation_candidates") or ()))}
-    shapes |= {rp.id_shape(f"capability:{c['name']}")
-               for c in bundle.get("capabilities") or ()
-               if isinstance(c, dict) and c.get("name")}
-    return shapes | {rp.id_shape(x) for x in
-                     ("handoff-envelope", "diagnostic-manifest", "service-graph",
-                      "domain-hashes", "delta")}
+    for section in (
+        "breaking_changes",
+        "clients_affected",
+        "runtime_regressions",
+        "security_candidates",
+        "reliability_signals",
+        "operations",
+        "contracts",
+    ):
+        shapes |= {rp.id_shape(f"{section}:{i}") for i in range(len(bundle.get(section) or ()))}
+    shapes |= {
+        rp.id_shape(f"external:{i}") for i in range(len(bundle.get("external_references") or ()))
+    }
+    shapes |= {
+        rp.id_shape(f"remediation:{i}")
+        for i in range(len(bundle.get("remediation_candidates") or ()))
+    }
+    shapes |= {
+        rp.id_shape(f"capability:{c['name']}")
+        for c in bundle.get("capabilities") or ()
+        if isinstance(c, dict) and c.get("name")
+    }
+    return shapes | {
+        rp.id_shape(x)
+        for x in (
+            "handoff-envelope",
+            "diagnostic-manifest",
+            "service-graph",
+            "domain-hashes",
+            "delta",
+        )
+    }
 
 
 def _hashed_evidence_drift(pack: dict[str, Any], result: ExecutionResult) -> list[str]:
     items: dict[str, set[str]] = {}
     for item in pack["files"]:
         items.setdefault(item["path"], set()).add(item["sha256"])
-    return sorted(f"{e.id}: {e.location.path if e.location else None} hash {e.hash}"
-                  for e in result.evidence
-                  if e.hash is not None
-                  and (e.location is None or e.hash not in items.get(e.location.path, set())))
+    return sorted(
+        f"{e.id}: {e.location.path if e.location else None} hash {e.hash}"
+        for e in result.evidence
+        if e.hash is not None
+        and (e.location is None or e.hash not in items.get(e.location.path, set()))
+    )
 
 
 def _native_state_left(root: Path) -> list[str]:
-    return sorted(path.relative_to(root).as_posix() for path in root.rglob("*")
-                  if path.name in NATIVE_STATE)
+    return sorted(
+        path.relative_to(root).as_posix() for path in root.rglob("*") if path.name in NATIVE_STATE
+    )
 
 
 # --- describe -----------------------------------------------------------------------------
 
+
 def test_describe_is_ready_semver_offline_and_on_the_taxonomy(
-        tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge) -> None:
+    tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge
+) -> None:
     root = _workspace(tmp_path, case, user_config_dir, forge.entry())
     record = _record(root, forge.provider_id)
     assert record.state == "ready", record.error
@@ -259,8 +320,15 @@ def _live_snapshot(case: Case, forge: rp.RealForge, directory: Path) -> dict[str
     if case.name == "spark":
         argv = [str(forge.python), "-m", "theforge_sparkforge_aws.record", "--output", str(target)]
     else:
-        argv = [str(forge.python), "-m", f"{case.spec.adapter_module}.record",
-                "--out", str(target), "--recorded-at", "live"]
+        argv = [
+            str(forge.python),
+            "-m",
+            f"{case.spec.adapter_module}.record",
+            "--out",
+            str(target),
+            "--recorded-at",
+            "live",
+        ]
     rp.run_native(argv, directory)
     data: dict[str, Any] = json.loads(target.read_text(encoding="utf-8"))
     return data
@@ -268,15 +336,18 @@ def _live_snapshot(case: Case, forge: rp.RealForge, directory: Path) -> dict[str
 
 def _surface(snapshot: dict[str, Any]) -> dict[str, Any]:
     """The recorded surface, without the recording metadata (date, provenance)."""
-    return {key: value for key, value in snapshot.items()
-            if key not in ("recorded_at", "provenance")}
+    return {
+        key: value for key, value in snapshot.items() if key not in ("recorded_at", "provenance")
+    }
 
 
 def _surface_diff(recorded: dict[str, Any], live: dict[str, Any]) -> list[str]:
     diff: list[str] = []
     if recorded.get("specialist_version") != live.get("specialist_version"):
-        diff.append(f"specialist_version {recorded.get('specialist_version')!r} -> "
-                    f"{live.get('specialist_version')!r}")
+        diff.append(
+            f"specialist_version {recorded.get('specialist_version')!r} -> "
+            f"{live.get('specialist_version')!r}"
+        )
     if "tools" in recorded or "tools" in live:
         old, new = recorded.get("tools", {}), live.get("tools", {})
     else:
@@ -293,21 +364,28 @@ def _surface_diff(recorded: dict[str, Any], live: dict[str, Any]) -> list[str]:
 
 
 def test_recorded_snapshot_equals_the_live_surface(
-        tmp_path: Path, case: Case, forge: rp.RealForge) -> None:
+    tmp_path: Path, case: Case, forge: rp.RealForge
+) -> None:
     """Drift: the packaged snapshot describe uses is the live specialist's surface."""
     recorded = json.loads(case.snapshot.read_text(encoding="utf-8"))
     live = _live_snapshot(case, forge, tmp_path / "live")
     diff = _surface_diff(recorded, live)
     assert _surface(recorded) == _surface(live), (
         f"{case.snapshot.name} drifted from the live {case.spec.label} "
-        f"(re-record it, see docs/real-providers.md): " + "; ".join(diff))
+        f"(re-record it, see docs/real-providers.md): " + "; ".join(diff)
+    )
 
 
 # --- health -------------------------------------------------------------------------------
 
+
 def test_health_is_ok_or_degraded_with_reason_and_without_credentials(
-        tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge,
-        credentials: dict[str, str]) -> None:
+    tmp_path: Path,
+    user_config_dir: Path,
+    case: Case,
+    forge: rp.RealForge,
+    credentials: dict[str, str],
+) -> None:
     root = _workspace(tmp_path, case, user_config_dir, forge.entry())
     record = _record(root, forge.provider_id)
     assert record.state == "ready", record.error
@@ -326,9 +404,14 @@ def test_health_is_ok_or_degraded_with_reason_and_without_credentials(
 
 # --- execute ------------------------------------------------------------------------------
 
+
 def test_execute_through_the_core_ends_with_an_intact_contained_result(
-        tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge,
-        credentials: dict[str, str]) -> None:
+    tmp_path: Path,
+    user_config_dir: Path,
+    case: Case,
+    forge: rp.RealForge,
+    credentials: dict[str, str],
+) -> None:
     root = _workspace(tmp_path, case, user_config_dir, forge.entry())
     outcome, store = _ask(root, case)
     assert outcome.status in ("ok", "partial"), outcome.error
@@ -343,10 +426,13 @@ def test_execute_through_the_core_ends_with_an_intact_contained_result(
     record = _record(root, forge.provider_id)
     assert record.manifest is not None
     persisted = from_dict(ExecutionResult, store.read(outcome.run_id, "result"), "$")
-    validate_result(persisted, expected=Producer(id=forge.provider_id,
-                                                 version=record.manifest.version))
-    validate_receipt(from_dict(ExecutionReceipt, receipt, "$"),
-                     result_sha256=store.persisted_sha256(outcome.run_id, "result"))
+    validate_result(
+        persisted, expected=Producer(id=forge.provider_id, version=record.manifest.version)
+    )
+    validate_receipt(
+        from_dict(ExecutionReceipt, receipt, "$"),
+        result_sha256=store.persisted_sha256(outcome.run_id, "result"),
+    )
     pack = store.read(outcome.run_id, "context")
     validate_context_pack(from_dict(ContextPack, pack, "$"))
 
@@ -364,8 +450,12 @@ def test_execute_through_the_core_ends_with_an_intact_contained_result(
     # holds exactly the declared artifacts (and their parent directories).
     assert _native_state_left(root) == []
     paths = {a.path for a in result.artifacts}
-    parents = {parent.as_posix() for path in paths for parent in PurePosixPath(path).parents
-               if parent.as_posix() != "."}
+    parents = {
+        parent.as_posix()
+        for path in paths
+        for parent in PurePosixPath(path).parents
+        if parent.as_posix() != "."
+    }
     assert rp.left_in(work) == paths | parents
 
     # Every non-null evidence hash is the sha256 of the ContextPack item of the same path.
@@ -374,8 +464,8 @@ def test_execute_through_the_core_ends_with_an_intact_contained_result(
 
     # No credential reached the provider: none of the sentinels is in what it wrote.
     written = json.dumps(store.read(outcome.run_id, "result")) + "".join(
-        (work / a.path).read_text(encoding="utf-8", errors="replace")
-        for a in result.artifacts)
+        (work / a.path).read_text(encoding="utf-8", errors="replace") for a in result.artifacts
+    )
     assert not [value for value in credentials.values() if value in written]
 
 
@@ -386,11 +476,24 @@ def _live_spark_output(case: Case, forge: rp.RealForge, tmp_path: Path) -> dict[
     workspace = tmp_path / "spark-ws"
     shutil.copytree(case.workspace, workspace)
     out = tmp_path / "live"
-    argv = [str(forge.python), "-m", "theforge_sparkforge_aws.record_execute",
-            "--workspace", str(workspace), "--capability", case.capability,
-            "--action", case.action, "--out", str(out)]
-    argv += [f"--arg={name}={value}" for name, value in recording["arguments"].items()
-             if name not in ("detail_level", "limit")]
+    argv = [
+        str(forge.python),
+        "-m",
+        "theforge_sparkforge_aws.record_execute",
+        "--workspace",
+        str(workspace),
+        "--capability",
+        case.capability,
+        "--action",
+        case.action,
+        "--out",
+        str(out),
+    ]
+    argv += [
+        f"--arg={name}={value}"
+        for name, value in recording["arguments"].items()
+        if name not in ("detail_level", "limit")
+    ]
     scratch = tmp_path / "scratch"
     scratch.mkdir()
     rp.run_native(argv, scratch)
@@ -399,8 +502,9 @@ def _live_spark_output(case: Case, forge: rp.RealForge, tmp_path: Path) -> dict[
     return live
 
 
-def _live_api_case(tmp_path: Path, user_config_dir: Path, case: Case,
-                   forge: rp.RealForge) -> dict[str, Any]:
+def _live_api_case(
+    tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge
+) -> dict[str, Any]:
     """The live native case files of the action (the declared artifacts of a core run)."""
     root = _workspace(tmp_path, case, user_config_dir, forge.entry())
     outcome, store = _ask(root, case)
@@ -412,12 +516,14 @@ def _live_api_case(tmp_path: Path, user_config_dir: Path, case: Case,
         path = PurePosixPath(artifact.path)
         if path.parts[0] == "case" and path.suffix == ".json":
             files[path.relative_to("case").as_posix()] = json.loads(
-                (work / artifact.path).read_text(encoding="utf-8"))
+                (work / artifact.path).read_text(encoding="utf-8")
+            )
     return files
 
 
-def _live_doctor_document(tmp_path: Path, user_config_dir: Path, case: Case,
-                          forge: rp.RealForge) -> dict[str, Any]:
+def _live_doctor_document(
+    tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge
+) -> dict[str, Any]:
     """The live bridge document of the action: the ``native/handoff.json`` artifact of a
     core run over a copy of the example workspace."""
     root = _workspace(tmp_path, case, user_config_dir, forge.entry())
@@ -427,13 +533,13 @@ def _live_doctor_document(tmp_path: Path, user_config_dir: Path, case: Case,
     work = store.work_dir(outcome.run_id)
     artifacts = {a.path for a in outcome.result.artifacts}
     assert "native/handoff.json" in artifacts, artifacts
-    doc: dict[str, Any] = json.loads(
-        (work / "native" / "handoff.json").read_text(encoding="utf-8"))
+    doc: dict[str, Any] = json.loads((work / "native" / "handoff.json").read_text(encoding="utf-8"))
     return doc
 
 
 def test_live_native_output_has_the_recorded_keys_and_id_formats(
-        tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge) -> None:
+    tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge
+) -> None:
     """Execute drift: the live native output of the exercised action has the same top-level
     keys and the same id formats as the replay recording of the same action."""
     recording = json.loads(case.recording.read_text(encoding="utf-8"))
@@ -457,23 +563,33 @@ def test_live_native_output_has_the_recorded_keys_and_id_formats(
         # the ``native/handoff.json`` artifact of a core run over the same workspace.
         live_doc = _live_doctor_document(tmp_path, user_config_dir, case, forge)
         pairs = {"recording": (recording, live_doc)}
-    drift = {name: (rp.top_keys(old), rp.top_keys(new)) for name, (old, new) in pairs.items()
-             if rp.top_keys(old) != rp.top_keys(new)}
+    drift = {
+        name: (rp.top_keys(old), rp.top_keys(new))
+        for name, (old, new) in pairs.items()
+        if rp.top_keys(old) != rp.top_keys(new)
+    }
     assert drift == {}, f"{case.recording.name}: top-level keys drifted {drift}"
-    id_drift = {name: (sorted(rp.id_shapes(old)), sorted(rp.id_shapes(new)))
-                for name, (old, new) in pairs.items() if rp.id_shapes(old) != rp.id_shapes(new)}
+    id_drift = {
+        name: (sorted(rp.id_shapes(old)), sorted(rp.id_shapes(new)))
+        for name, (old, new) in pairs.items()
+        if rp.id_shapes(old) != rp.id_shapes(new)
+    }
     assert id_drift == {}, f"{case.recording.name}: id formats drifted {id_drift}"
 
 
 # --- absence and version skew -------------------------------------------------------------
 
+
 def test_missing_interpreter_is_unreachable_with_spawn_code_and_path(
-        tmp_path: Path, user_config_dir: Path, case: Case) -> None:
-    missing = tmp_path / "no-such-venv" / ("python.exe" if sys.platform == "win32"
-                                           else "python")
+    tmp_path: Path, user_config_dir: Path, case: Case
+) -> None:
+    missing = tmp_path / "no-such-venv" / ("python.exe" if sys.platform == "win32" else "python")
     spec = case.spec
-    entry = {"id": spec.provider_id, "argv": [str(missing), "-m", spec.adapter_module],
-             "trust": "trusted"}
+    entry = {
+        "id": spec.provider_id,
+        "argv": [str(missing), "-m", spec.adapter_module],
+        "trust": "trusted",
+    }
     root = _workspace(tmp_path, case, user_config_dir, entry)
     record = _record(root, spec.provider_id)
     assert record.state == "unreachable" and not record.routable()
@@ -484,7 +600,8 @@ def test_missing_interpreter_is_unreachable_with_spawn_code_and_path(
 
 
 def test_interpreter_without_the_specialist_is_invalid_with_reason(
-        tmp_path: Path, user_config_dir: Path, case: Case) -> None:
+    tmp_path: Path, user_config_dir: Path, case: Case
+) -> None:
     """The test's own interpreter has the adapter (development install) but not the
     specialist: describe is refused and the registry keeps the adapter's code and reason."""
     spec = case.spec
@@ -496,10 +613,13 @@ def test_interpreter_without_the_specialist_is_invalid_with_reason(
         # The scheduled workflow installs the adapters only in the specialist venvs: run the
         # adapter from its source tree (stdlib-only) instead of skipping in required mode.
         src = str(ADAPTERS / case.native / "src")
-        argv = [sys.executable, "-c",
-                f"import runpy, sys; sys.path.insert(0, {src!r}); "
-                f"runpy.run_module({spec.adapter_module!r}, run_name='__main__', "
-                f"alter_sys=True)"]
+        argv = [
+            sys.executable,
+            "-c",
+            f"import runpy, sys; sys.path.insert(0, {src!r}); "
+            f"runpy.run_module({spec.adapter_module!r}, run_name='__main__', "
+            f"alter_sys=True)",
+        ]
     entry = {"id": spec.provider_id, "argv": argv, "trust": "trusted"}
     root = _workspace(tmp_path, case, user_config_dir, entry)
     record = _record(root, spec.provider_id)
@@ -512,7 +632,8 @@ def test_interpreter_without_the_specialist_is_invalid_with_reason(
 
 
 def test_assumed_version_outside_the_window_is_degraded_with_version_and_window(
-        tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge) -> None:
+    tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge
+) -> None:
     options = ("--assume-specialist-version", "9.9.9")
     root = _workspace(tmp_path, case, user_config_dir, forge.entry(*options))
     record = _record(root, forge.provider_id)
@@ -522,5 +643,4 @@ def test_assumed_version_outside_the_window_is_degraded_with_version_and_window(
     report, _ = _raw_health(forge.argv(*options))
     assert report.status == "degraded"
     failing = [check.detail or "" for check in report.checks if not check.ok]
-    assert any(f"found 9.9.9, supported {case.supported}" in detail for detail in failing), \
-        report
+    assert any(f"found 9.9.9, supported {case.supported}" in detail for detail in failing), report

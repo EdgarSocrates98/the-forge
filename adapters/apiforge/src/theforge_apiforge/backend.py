@@ -30,8 +30,10 @@ REPLAY_INVALID = "ADAPTER-REPLAY-INVALID"
 ENVIRONMENT_FILE = "environment.json"
 HEALTH_FILE = "health.json"
 REQUIRED = f"{REQUIRED_PYTHON[0]}.{REQUIRED_PYTHON[1]}"
-UNLOCK = (f"run the adapter with a Python {REQUIRED} interpreter that has apiforge "
-          f"{SUPPORTED_SPECIALIST} installed (see docs/real-providers.md)")
+UNLOCK = (
+    f"run the adapter with a Python {REQUIRED} interpreter that has apiforge "
+    f"{SUPPORTED_SPECIALIST} installed (see docs/real-providers.md)"
+)
 
 FindSpec = Callable[[str], object]
 
@@ -49,21 +51,27 @@ def _version(parts: Sequence[int]) -> str:
     return ".".join(str(part) for part in parts[:2])
 
 
-def live_environment_problem(version_info: Sequence[int] | None = None,
-                             executable: str | None = None,
-                             find_spec: FindSpec | None = None) -> str | None:
+def live_environment_problem(
+    version_info: Sequence[int] | None = None,
+    executable: str | None = None,
+    find_spec: FindSpec | None = None,
+) -> str | None:
     """Why the API Forge cannot run in this interpreter, or None when it can."""
-    running = (sys.version_info[0], sys.version_info[1]) if version_info is None else (
-        version_info[0], version_info[1])
+    running = (
+        (sys.version_info[0], sys.version_info[1])
+        if version_info is None
+        else (version_info[0], version_info[1])
+    )
     executable = sys.executable if executable is None else executable
     find_spec = importlib.util.find_spec if find_spec is None else find_spec
     found = _version(running)
     if running != REQUIRED_PYTHON:
-        return (f"API Forge requires Python {REQUIRED}; this adapter runs on {found} "
-                f"at {executable}")
+        return f"API Forge requires Python {REQUIRED}; this adapter runs on {found} at {executable}"
     if find_spec("apiforge") is None:
-        return (f"apiforge is not importable with {executable} (Python {found}); "
-                f"install apiforge {SUPPORTED_SPECIALIST} in this interpreter")
+        return (
+            f"apiforge is not importable with {executable} (Python {found}); "
+            f"install apiforge {SUPPORTED_SPECIALIST} in this interpreter"
+        )
     return None
 
 
@@ -71,19 +79,27 @@ def read_environment(directory: Path) -> dict[str, Any]:
     """The scenario's ``environment.json``; ``ReplayError`` when absent or malformed."""
     path = directory / ENVIRONMENT_FILE
     if not path.is_file():
-        raise ReplayError(REPLAY_MISSING,
-                          f"replay recording {ENVIRONMENT_FILE} not found in {directory}")
+        raise ReplayError(
+            REPLAY_MISSING, f"replay recording {ENVIRONMENT_FILE} not found in {directory}"
+        )
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, ValueError):
         data = None
-    if (not isinstance(data, dict) or not isinstance(data.get("python"), str)
-            or not (data.get("specialist_version") is None
-                    or isinstance(data.get("specialist_version"), str))):
-        raise ReplayError(REPLAY_INVALID,
-                          f"replay recording {ENVIRONMENT_FILE} in {directory} must be an "
-                          "object with a string 'python' and a string or null "
-                          "'specialist_version'")
+    if (
+        not isinstance(data, dict)
+        or not isinstance(data.get("python"), str)
+        or not (
+            data.get("specialist_version") is None
+            or isinstance(data.get("specialist_version"), str)
+        )
+    ):
+        raise ReplayError(
+            REPLAY_INVALID,
+            f"replay recording {ENVIRONMENT_FILE} in {directory} must be an "
+            "object with a string 'python' and a string or null "
+            "'specialist_version'",
+        )
     return data
 
 
@@ -93,16 +109,19 @@ def read_health(directory: Path) -> dict[str, Any]:
     when absent or malformed."""
     path = directory / HEALTH_FILE
     if not path.is_file():
-        raise ReplayError(REPLAY_MISSING,
-                          f"replay recording {HEALTH_FILE} not found in {directory}")
+        raise ReplayError(
+            REPLAY_MISSING, f"replay recording {HEALTH_FILE} not found in {directory}"
+        )
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, ValueError, RecursionError):
         data = None
     if not isinstance(data, dict) or type(data.get("cli")) is not bool:
-        raise ReplayError(REPLAY_INVALID,
-                          f"replay recording {HEALTH_FILE} in {directory} must be an object "
-                          "with a boolean 'cli' (whether apiforge.cli was found)")
+        raise ReplayError(
+            REPLAY_INVALID,
+            f"replay recording {HEALTH_FILE} in {directory} must be an object "
+            "with a boolean 'cli' (whether apiforge.cli was found)",
+        )
     return data
 
 
@@ -111,11 +130,15 @@ def replay_environment_problem(environment: dict[str, Any]) -> str | None:
     python = environment["python"]
     found = ".".join(python.split(".")[:2])
     if found != REQUIRED:
-        return (f"API Forge requires Python {REQUIRED}; the replay environment "
-                f"({ENVIRONMENT_FILE}) records Python {python}")
+        return (
+            f"API Forge requires Python {REQUIRED}; the replay environment "
+            f"({ENVIRONMENT_FILE}) records Python {python}"
+        )
     if environment.get("specialist_version") is None:
-        return (f"apiforge is not importable in the replay environment ({ENVIRONMENT_FILE}, "
-                f"Python {python}); install apiforge {SUPPORTED_SPECIALIST}")
+        return (
+            f"apiforge is not importable in the replay environment ({ENVIRONMENT_FILE}, "
+            f"Python {python}); install apiforge {SUPPORTED_SPECIALIST}"
+        )
     return None
 
 

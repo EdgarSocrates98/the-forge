@@ -24,18 +24,29 @@ def scan(files: list[str], excluded: list[ExcludedFile] | None = None) -> Worksp
 
 
 def task(intent: str = "x", targets: list[str] | None = None) -> TaskSpec:
-    return TaskSpec(producer=PRODUCER, created_at=utc_now(), id="t1", intent=intent,
-                    workspace_root=str(ROOT), targets=targets if targets is not None else ["."])
+    return TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="t1",
+        intent=intent,
+        workspace_root=str(ROOT),
+        targets=targets if targets is not None else ["."],
+    )
 
 
 def rank(
-    files: list[str], *, intent: str = "x", targets: list[str] | None = None,
-    globs: list[str] | None = None, changed: frozenset[str] = frozenset(),
+    files: list[str],
+    *,
+    intent: str = "x",
+    targets: list[str] | None = None,
+    globs: list[str] | None = None,
+    changed: frozenset[str] = frozenset(),
     excluded: list[ExcludedFile] | None = None,
 ) -> tuple[list[RankedFile], int]:
     s = scan(files, excluded)
-    return rank_candidates(task(intent, targets), globs or [], s, changed,
-                           parse_intent_refs(intent, s))
+    return rank_candidates(
+        task(intent, targets), globs or [], s, changed, parse_intent_refs(intent, s)
+    )
 
 
 def by_path(ranked: list[RankedFile]) -> dict[str, RankedFile]:
@@ -43,6 +54,7 @@ def by_path(ranked: list[RankedFile]) -> dict[str, RankedFile]:
 
 
 # --- intent references (2.3, 2.4, 1.5) -------------------------------------------------------
+
 
 def test_intent_cites_relative_path_with_slash() -> None:
     refs = parse_intent_refs("please fix a/b.md now", scan(["a/b.md", "c.md"]))
@@ -55,12 +67,15 @@ def test_intent_cites_bare_file_name_with_extension() -> None:
     assert refs.paths == frozenset({"b.md"})
 
 
-@pytest.mark.parametrize(("token", "expected"), [
-    ("b.md:10-20", LineRange(start=10, end=20)),
-    ("b.md:7", LineRange(start=7, end=7)),
-    ("b.md:L3-L4", LineRange(start=3, end=4)),
-    ("b.md#L3-L4", LineRange(start=3, end=4)),
-])
+@pytest.mark.parametrize(
+    ("token", "expected"),
+    [
+        ("b.md:10-20", LineRange(start=10, end=20)),
+        ("b.md:7", LineRange(start=7, end=7)),
+        ("b.md:L3-L4", LineRange(start=3, end=4)),
+        ("b.md#L3-L4", LineRange(start=3, end=4)),
+    ],
+)
 def test_intent_line_range_suffixes(token: str, expected: LineRange) -> None:
     refs = parse_intent_refs(f"explain {token} please", scan(["b.md"]))
     assert refs.paths == frozenset({"b.md"})
@@ -99,8 +114,9 @@ def test_intent_strips_surrounding_punctuation() -> None:
 
 
 def test_intent_ignores_plain_words_and_urls() -> None:
-    refs = parse_intent_refs("refactor the parser, see https://example.com/x for v1.2",
-                             scan(["parser.py"]))
+    refs = parse_intent_refs(
+        "refactor the parser, see https://example.com/x for v1.2", scan(["parser.py"])
+    )
     assert refs.paths == frozenset() and dict(refs.rejected) == {}
 
 
@@ -114,15 +130,18 @@ def test_intent_repeated_ranges_merge_to_covering_span() -> None:
     assert dict(refs.ranges) == {"b.md": LineRange(start=3, end=12)}
 
 
-@pytest.mark.parametrize(("token", "key", "reason"), [
-    ("../x.md", "../x.md", "outside_root"),
-    ("a/../../x.md", "a/../../x.md", "outside_root"),
-    ("C:/x.md", "C:/x.md", "outside_root"),
-    ("/etc/passwd", "/etc/passwd", "outside_root"),
-    (".env", ".env", "secret"),
-    ("conf/id_rsa.key", "conf/id_rsa.key", "secret"),
-    ("nope/missing.md", "nope/missing.md", "missing"),
-])
+@pytest.mark.parametrize(
+    ("token", "key", "reason"),
+    [
+        ("../x.md", "../x.md", "outside_root"),
+        ("a/../../x.md", "a/../../x.md", "outside_root"),
+        ("C:/x.md", "C:/x.md", "outside_root"),
+        ("/etc/passwd", "/etc/passwd", "outside_root"),
+        (".env", ".env", "secret"),
+        ("conf/id_rsa.key", "conf/id_rsa.key", "secret"),
+        ("nope/missing.md", "nope/missing.md", "missing"),
+    ],
+)
 def test_intent_rejected_citations(token: str, key: str, reason: str) -> None:
     refs = parse_intent_refs(f"use {token}", scan(["a/b.md"]))
     assert refs.paths == frozenset()
@@ -140,6 +159,7 @@ def test_intent_refs_type() -> None:
 
 
 # --- each signal (2.1) --------------------------------------------------------------------
+
 
 def test_signal_intent_path_and_lines() -> None:
     ranked, _ = rank(["a/b.md", "c.md"], intent="see a/b.md and c.md:2-3")
@@ -175,35 +195,68 @@ def test_signal_git_changed_only_for_scanned_files() -> None:
 
 
 def test_signal_dependency_manifest_generic_and_root_only() -> None:
-    files = ["pyproject.toml", "requirements-dev.txt", "package.json",
-             "sub/package.json", "requirements/dev.txt", "setup.cfg"]
+    files = [
+        "pyproject.toml",
+        "requirements-dev.txt",
+        "package.json",
+        "sub/package.json",
+        "requirements/dev.txt",
+        "setup.cfg",
+    ]
     ranked, unmatched = rank(files)
-    assert sorted(r.path for r in ranked) == ["package.json", "pyproject.toml",
-                                              "requirements-dev.txt"]
+    assert sorted(r.path for r in ranked) == [
+        "package.json",
+        "pyproject.toml",
+        "requirements-dev.txt",
+    ]
     assert all(r.signals == ("dependency_manifest",) for r in ranked)
     assert unmatched == 3
 
 
 def test_all_signals_on_one_file_in_fixed_order() -> None:
-    ranked, _ = rank(["pyproject.toml"], intent="edit pyproject.toml:1-2",
-                     targets=["pyproject.toml"], globs=["*.toml"],
-                     changed=frozenset({"pyproject.toml"}))
-    assert ranked[0].signals == ("intent_lines", "intent_path", "target:pyproject.toml",
-                                 "glob:*.toml", "git:changed", "dependency_manifest")
+    ranked, _ = rank(
+        ["pyproject.toml"],
+        intent="edit pyproject.toml:1-2",
+        targets=["pyproject.toml"],
+        globs=["*.toml"],
+        changed=frozenset({"pyproject.toml"}),
+    )
+    assert ranked[0].signals == (
+        "intent_lines",
+        "intent_path",
+        "target:pyproject.toml",
+        "glob:*.toml",
+        "git:changed",
+        "dependency_manifest",
+    )
 
 
 # --- priority (2.2) and aggregate no_signal (4.3) -------------------------------------------
 
+
 def test_priority_one_file_per_class() -> None:
-    files = ["pyproject.toml",  # dependency only
-             "y_git.py", "x_glob.yaml", "w_glob_git.yaml", "v_target/f.py",
-             "u_intent.md", "t_none.txt"]
+    files = [
+        "pyproject.toml",  # dependency only
+        "y_git.py",
+        "x_glob.yaml",
+        "w_glob_git.yaml",
+        "v_target/f.py",
+        "u_intent.md",
+        "t_none.txt",
+    ]
     ranked, unmatched = rank(
-        files, intent="see u_intent.md", targets=["v_target"], globs=["*.yaml"],
+        files,
+        intent="see u_intent.md",
+        targets=["v_target"],
+        globs=["*.yaml"],
         changed=frozenset({"y_git.py", "w_glob_git.yaml"}),
     )
     assert [r.path for r in ranked] == [
-        "u_intent.md", "v_target/f.py", "w_glob_git.yaml", "x_glob.yaml", "y_git.py",
+        "u_intent.md",
+        "v_target/f.py",
+        "w_glob_git.yaml",
+        "x_glob.yaml",
+        "y_git.py",
         "pyproject.toml",
     ]
     assert unmatched == 1
@@ -215,8 +268,9 @@ def test_priority_more_glob_hits_first_then_path() -> None:
 
 
 def test_priority_glob_beats_git_hits_count_after_git() -> None:
-    ranked, _ = rank(["a.yaml", "openapi.yaml"], globs=["*.yaml", "openapi.yaml"],
-                     changed=frozenset({"a.yaml"}))
+    ranked, _ = rank(
+        ["a.yaml", "openapi.yaml"], globs=["*.yaml", "openapi.yaml"], changed=frozenset({"a.yaml"})
+    )
     # git-changed glob files come before unchanged ones, even with fewer glob hits.
     assert [r.path for r in ranked] == ["a.yaml", "openapi.yaml"]
 
@@ -233,8 +287,18 @@ def test_duplicate_scan_entries_counted_once() -> None:
 
 # --- determinism (1.8): permutation of scan.files and globs ---------------------------------
 
-_NAMES = ["pyproject.toml", "a/b.md", "a/c.yaml", "openapi.yaml", "src/x.py", "src/y.yaml",
-          "requirements.txt", "z.txt", "docs/d.md", "e.yaml"]
+_NAMES = [
+    "pyproject.toml",
+    "a/b.md",
+    "a/c.yaml",
+    "openapi.yaml",
+    "src/x.py",
+    "src/y.yaml",
+    "requirements.txt",
+    "z.txt",
+    "docs/d.md",
+    "e.yaml",
+]
 _GLOBS = ["*.yaml", "openapi.yaml", "*.md", "src/*.py"]
 
 
@@ -243,8 +307,9 @@ _GLOBS = ["*.yaml", "openapi.yaml", "*.md", "src/*.py"]
 def test_same_output_for_any_permutation(files: list[str], globs: list[str]) -> None:
     intent = "fix a/b.md:2-5 and z.txt, not ../q.md"
     changed = frozenset({"e.yaml", "z.txt"})
-    expected = rank(sorted(_NAMES), intent=intent, targets=["src"], globs=sorted(_GLOBS),
-                    changed=changed)
+    expected = rank(
+        sorted(_NAMES), intent=intent, targets=["src"], globs=sorted(_GLOBS), changed=changed
+    )
     got = rank(list(files), intent=intent, targets=["src"], globs=list(globs), changed=changed)
     assert got == expected
     s = scan(list(files))
@@ -252,14 +317,16 @@ def test_same_output_for_any_permutation(files: list[str], globs: list[str]) -> 
 
 
 @pytest.mark.parametrize(
-    "target", ["src", "./src/", "src/../src", "docs/../src", str(ROOT / "src")])
+    "target", ["src", "./src/", "src/../src", "docs/../src", str(ROOT / "src")]
+)
 def test_signal_target_normalized_like_the_scan(target: str) -> None:
     ranked, _ = rank(["src/a.py", "docs/b.md"], targets=[target])
     assert [(r.path, r.signals) for r in ranked] == [("src/a.py", ("target:src",))]
 
 
-@pytest.mark.parametrize("target", [".", "./", str(ROOT), "..", "../other", "src/../..",
-                                    "/elsewhere/src"])
+@pytest.mark.parametrize(
+    "target", [".", "./", str(ROOT), "..", "../other", "src/../..", "/elsewhere/src"]
+)
 def test_signal_target_root_or_outside_gives_nothing(target: str) -> None:
     ranked, unmatched = rank(["src/a.py"], targets=[target])
     assert ranked == [] and unmatched == 1

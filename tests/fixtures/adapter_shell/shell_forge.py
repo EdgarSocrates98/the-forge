@@ -31,8 +31,14 @@ import stat
 import sys
 from pathlib import Path
 
-SHELL = (Path(__file__).resolve().parents[3] / "adapters" / "sparkforge_aws" / "src"
-         / "theforge_sparkforge_aws" / "_shell.py")
+SHELL = (
+    Path(__file__).resolve().parents[3]
+    / "adapters"
+    / "sparkforge_aws"
+    / "src"
+    / "theforge_sparkforge_aws"
+    / "_shell.py"
+)
 _spec = importlib.util.spec_from_file_location("adapter_shell_under_test", SHELL)
 assert _spec is not None and _spec.loader is not None
 shell = importlib.util.module_from_spec(_spec)
@@ -51,8 +57,10 @@ MANIFEST = {
         {"id": "test.boom", "actions": ["run", "exit", "interrupt"]},
         {"id": "test.stage", "actions": ["analyze"]},
         {"id": "test.native", "actions": ["sleep", "env"]},
-        {"id": "test.cleanup",
-         "actions": ["ok", "partial", "spill", "refused", "error", "raise", "exit", "timeout"]},
+        {
+            "id": "test.cleanup",
+            "actions": ["ok", "partial", "spill", "refused", "error", "raise", "exit", "timeout"],
+        },
     ],
 }
 
@@ -60,11 +68,13 @@ MANIFEST = {
 def describe(options):
     def handle(request, cwd):
         if options.assume_specialist_version == "describe-refuses":
-            return shell.refuse("SHELL-TEST-UNAVAILABLE", "specialist missing (test)",
-                                unlock="install it")
+            return shell.refuse(
+                "SHELL-TEST-UNAVAILABLE", "specialist missing (test)", unlock="install it"
+            )
         if options.assume_specialist_version == "writes":
             (cwd / "describe.out").write_bytes(b"describe")
         return shell.Reply(status="ok", payload=dict(MANIFEST))
+
     return handle
 
 
@@ -75,10 +85,18 @@ def health(options):
         if options.assume_specialist_version == "writes":
             (cwd / "health.out").write_bytes(b"health")
         replay = None if options.replay is None else str(options.replay)
-        return shell.Reply(status="ok", payload={
-            "status": "ok", "checks": [],
-            "options": {"replay": replay,
-                        "assume_specialist_version": options.assume_specialist_version}})
+        return shell.Reply(
+            status="ok",
+            payload={
+                "status": "ok",
+                "checks": [],
+                "options": {
+                    "replay": replay,
+                    "assume_specialist_version": options.assume_specialist_version,
+                },
+            },
+        )
+
     return handle
 
 
@@ -95,20 +113,47 @@ def analyze(options, request, cwd):
         return shell.fail("ADAPTER-REPLAY-MISSING", "test.stage.analyze.json")
     native = json.loads(recording.read_text(encoding="utf-8"))
     facts = native["facts"]
-    evidence = [{"id": fact["id"], "epistemic": "observed", "subject": "test.fact",
-                 "claim": f"fact {fact['id']}" + "x" * fact.get("pad", 0),
-                 "location": {"path": fact["path"], "line": 1},
-                 "hash": shell.evidence_hash(fact["path"], fact.get("sha256"), stage)}
-                for fact in facts]
+    evidence = [
+        {
+            "id": fact["id"],
+            "epistemic": "observed",
+            "subject": "test.fact",
+            "claim": f"fact {fact['id']}" + "x" * fact.get("pad", 0),
+            "location": {"path": fact["path"], "line": 1},
+            "hash": shell.evidence_hash(fact["path"], fact.get("sha256"), stage),
+        }
+        for fact in facts
+    ]
     if native.get("split"):
-        findings = [{"id": f"TEST-{item['id']}#1", "title": f"TEST-{item['id']}: fact",
-                     "severity": "info", "evidence_ids": [item["id"]]} for item in evidence]
+        findings = [
+            {
+                "id": f"TEST-{item['id']}#1",
+                "title": f"TEST-{item['id']}: fact",
+                "severity": "info",
+                "evidence_ids": [item["id"]],
+            }
+            for item in evidence
+        ]
     else:
-        findings = [{"id": "TEST-1#1", "title": "TEST-1: facts", "severity": "info",
-                     "evidence_ids": [item["id"] for item in evidence]}]
-    return shell.finalize(shell.ResultDraft(
-        provider_id=PROVIDER_ID, version=VERSION, findings=findings, evidence=evidence,
-        limitations=list(stage.limitations), native_output=native), cwd)
+        findings = [
+            {
+                "id": "TEST-1#1",
+                "title": "TEST-1: facts",
+                "severity": "info",
+                "evidence_ids": [item["id"] for item in evidence],
+            }
+        ]
+    return shell.finalize(
+        shell.ResultDraft(
+            provider_id=PROVIDER_ID,
+            version=VERSION,
+            findings=findings,
+            evidence=evidence,
+            limitations=list(stage.limitations),
+            native_output=native,
+        ),
+        cwd,
+    )
 
 
 NATIVE_SLEEP = "import time; time.sleep(30)"
@@ -120,19 +165,23 @@ def native(request, cwd):
     timeout = request.payload.get("native_timeout")
     timeout = shell.native_timeout(request.payload) if timeout is None else float(timeout)
     if request.payload["action"] == "sleep":
-        shell.run_native([sys.executable, "-c", NATIVE_SLEEP], cwd=cwd, env={},
-                         timeout=timeout)
+        shell.run_native([sys.executable, "-c", NATIVE_SLEEP], cwd=cwd, env={}, timeout=timeout)
         return shell.Reply(status="ok", payload={"slept": True})
-    outcome = shell.run_native([sys.executable, "-c", NATIVE_ENV], cwd=cwd,
-                               env=NATIVE_ADJUSTMENTS, timeout=timeout)
-    return shell.Reply(status="ok", payload={"native": json.loads(outcome.stdout),
-                                             "returncode": outcome.returncode})
+    outcome = shell.run_native(
+        [sys.executable, "-c", NATIVE_ENV], cwd=cwd, env=NATIVE_ADJUSTMENTS, timeout=timeout
+    )
+    return shell.Reply(
+        status="ok",
+        payload={"native": json.loads(outcome.stdout), "returncode": outcome.returncode},
+    )
 
 
 CLEANUP_ARTIFACT = "case/findings.json"
 CLEANUP_CASE = b'{"findings": []}\n'
-NATIVE_WRITE_SLEEP = ("import pathlib, time; pathlib.Path('native-tmp').mkdir(); "
-                      "pathlib.Path('native-tmp', 'part.bin').write_bytes(b'x'); time.sleep(30)")
+NATIVE_WRITE_SLEEP = (
+    "import pathlib, time; pathlib.Path('native-tmp').mkdir(); "
+    "pathlib.Path('native-tmp', 'part.bin').write_bytes(b'x'); time.sleep(30)"
+)
 
 
 def _leave_native_state(cwd):
@@ -154,8 +203,12 @@ def cleanup(request, cwd):
     stage = shell.stage_context(request.payload, cwd)
     _leave_native_state(cwd)
     if action == "timeout":
-        shell.run_native([sys.executable, "-c", NATIVE_WRITE_SLEEP], cwd=cwd, env={},
-                         timeout=float(request.payload.get("native_timeout", 1.5)))
+        shell.run_native(
+            [sys.executable, "-c", NATIVE_WRITE_SLEEP],
+            cwd=cwd,
+            env={},
+            timeout=float(request.payload.get("native_timeout", 1.5)),
+        )
     if action == "refused":
         return shell.refuse("SHELL-TEST-NATIVE-REFUSED", "native refusal (test)")
     if action == "error":
@@ -164,19 +217,36 @@ def cleanup(request, cwd):
         raise RuntimeError("s3cr3t cleanup failure")
     if action == "exit":
         raise SystemExit(3)
-    evidence = [{"id": "e1", "epistemic": "observed", "subject": "test.fact", "claim": "c",
-                 "location": {"path": "jobs/a.py", "line": 1}, "hash": None}]
-    findings = [{"id": "TEST-1#1", "title": "TEST-1: f", "severity": "info",
-                 "evidence_ids": ["e1"]}]
+    evidence = [
+        {
+            "id": "e1",
+            "epistemic": "observed",
+            "subject": "test.fact",
+            "claim": "c",
+            "location": {"path": "jobs/a.py", "line": 1},
+            "hash": None,
+        }
+    ]
+    findings = [
+        {"id": "TEST-1#1", "title": "TEST-1: f", "severity": "info", "evidence_ids": ["e1"]}
+    ]
     if action == "spill":
         evidence.append({**evidence[0], "id": "e2", "claim": "x" * (5 * 1024 * 1024)})
         findings.append({**findings[0], "id": "TEST-2#1", "evidence_ids": ["e2"]})
-    artifacts = [{"path": CLEANUP_ARTIFACT,
-                  "sha256": hashlib.sha256(CLEANUP_CASE).hexdigest()}]
-    return shell.finalize(shell.ResultDraft(
-        provider_id=PROVIDER_ID, version=VERSION, findings=findings, evidence=evidence,
-        artifacts=artifacts, limitations=list(stage.limitations),
-        partial=action == "partial", native_output={"native": action}), cwd)
+    artifacts = [{"path": CLEANUP_ARTIFACT, "sha256": hashlib.sha256(CLEANUP_CASE).hexdigest()}]
+    return shell.finalize(
+        shell.ResultDraft(
+            provider_id=PROVIDER_ID,
+            version=VERSION,
+            findings=findings,
+            evidence=evidence,
+            artifacts=artifacts,
+            limitations=list(stage.limitations),
+            partial=action == "partial",
+            native_output={"native": action},
+        ),
+        cwd,
+    )
 
 
 def execute(options):
@@ -197,11 +267,25 @@ def execute(options):
             raise RuntimeError("s3cr3t execute failure")
         if action == "unserializable":
             return shell.Reply(status="ok", payload={"value": object()})
-        return shell.Reply(status="ok", payload={"handled": {
-            "capability": capability, "action": action, "request_id": request.request_id}})
+        return shell.Reply(
+            status="ok",
+            payload={
+                "handled": {
+                    "capability": capability,
+                    "action": action,
+                    "request_id": request.request_id,
+                }
+            },
+        )
+
     return handle
 
 
 if __name__ == "__main__":
-    raise SystemExit(shell.serve(provider_id=PROVIDER_ID, version=VERSION, handlers={
-        "describe": describe, "health": health, "execute": execute}))
+    raise SystemExit(
+        shell.serve(
+            provider_id=PROVIDER_ID,
+            version=VERSION,
+            handlers={"describe": describe, "health": health, "execute": execute},
+        )
+    )

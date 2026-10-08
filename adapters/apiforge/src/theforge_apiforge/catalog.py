@@ -51,11 +51,11 @@ class SignalsSpec:
 class VerbSpec:
     """How a capability runs: the native verb, its inputs, actions and routing signals."""
 
-    argv: tuple[str, ...]          # verb and fixed flags
+    argv: tuple[str, ...]  # verb and fixed flags
     inputs: tuple[InputSpec, ...]
     actions: tuple[str, ...]
     signals: SignalsSpec
-    output_dir: str                # relative to the execute cwd
+    output_dir: str  # relative to the execute cwd
     description: str
     # Native process cwd relative to the execute cwd: ``.`` (inputs given as ``stage/<path>``)
     # or ``stage`` (the staged workspace root, for verbs whose input file names further
@@ -84,8 +84,10 @@ CHANGE_BUNDLE_GLOBS = ("*change-bundle*.json",)
 VERB_MAP: Mapping[str, VerbSpec] = {
     "api.analyze": VerbSpec(
         argv=("analyze", "--detail-level", "summary"),
-        inputs=(InputSpec("contract", "--contract", OPENAPI_GLOBS),
-                InputSpec("project", "--project", PROJECT_GLOBS, stage_root=True)),
+        inputs=(
+            InputSpec("contract", "--contract", OPENAPI_GLOBS),
+            InputSpec("project", "--project", PROJECT_GLOBS, stage_root=True),
+        ),
         actions=("analyze",),
         signals=SignalsSpec(
             keywords=("api", "openapi", "rest api", "endpoint", "api contract"),
@@ -96,7 +98,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         ),
         output_dir="case",
         description="Static analysis of an OpenAPI contract against the API project that "
-                    "implements it (API Forge `analyze`).",
+        "implements it (API Forge `analyze`).",
         upstream="--upstream",
         consumes=("api.diagnostic-evidence", "data.diagnostic-evidence"),
     ),
@@ -112,7 +114,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         ),
         output_dir="change-control",
         description="Governed review of an API change bundle (af-change-bundle/1) from "
-                    "replayed Git/CI evidence (API Forge `change-control run`).",
+        "replayed Git/CI evidence (API Forge `change-control run`).",
         native_cwd="stage",
         case_subdir="case",
         bundle_input="bundle",
@@ -126,14 +128,15 @@ _UNMAPPED_EXACT = {
     "git.read-context": "needs network access and a Git host token",
 }
 _UNMAPPED_SUFFIX = (
-    (".verify-runtime", "its probes run fixtures under the API Forge repository "
-                        "tests/fixtures, absent from an installed package"),
+    (
+        ".verify-runtime",
+        "its probes run fixtures under the API Forge repository "
+        "tests/fixtures, absent from an installed package",
+    ),
     (".inspect", "no single offline verb produces it"),
     (".inspect-run", "no single offline verb produces it"),
 )
-_UNMAPPED_PREFIX = (
-    ("integration.", "needs network access (and, for some, a host credential)"),
-)
+_UNMAPPED_PREFIX = (("integration.", "needs network access (and, for some, a host credential)"),)
 _UNMAPPED_DEFAULT = "no offline verb is mapped to it by this adapter"
 
 
@@ -146,10 +149,12 @@ def unmapped_reason(capability_id: str) -> str:
     if capability_id in _UNMAPPED_EXACT:
         reason = _UNMAPPED_EXACT[capability_id]
     else:
-        reason = next((text for suffix, text in _UNMAPPED_SUFFIX
-                       if capability_id.endswith(suffix)), "")
-        reason = reason or next((text for prefix, text in _UNMAPPED_PREFIX
-                                 if capability_id.startswith(prefix)), "")
+        reason = next(
+            (text for suffix, text in _UNMAPPED_SUFFIX if capability_id.endswith(suffix)), ""
+        )
+        reason = reason or next(
+            (text for prefix, text in _UNMAPPED_PREFIX if capability_id.startswith(prefix)), ""
+        )
     return reason or _UNMAPPED_DEFAULT
 
 
@@ -212,8 +217,9 @@ def native_fingerprint(snapshot: Mapping[str, Any]) -> str:
     """The sha256 the manifest declares as ``native_surface_fingerprint``: the canonical
     snapshot minus ``recorded_at`` (a timestamp, not surface)."""
     payload = {key: value for key, value in snapshot.items() if key != "recorded_at"}
-    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
     return hashlib.sha256(blob).hexdigest()
 
 
@@ -242,9 +248,13 @@ def _excluded_note(record: Mapping[str, Any], reason: str) -> str:
     return f"capability '{record['capability_id']}' ({record['state']}) not exposed: {reason}"
 
 
-def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: str,
-                     ops: Sequence[str] = ("describe", "health", "execute")
-                     ) -> dict[str, Any]:
+def manifest_payload(
+    snapshot: Mapping[str, Any],
+    *,
+    provider_id: str,
+    version: str,
+    ops: Sequence[str] = ("describe", "health", "execute"),
+) -> dict[str, Any]:
     """The ``ForgeManifest`` v1 payload derived from a validated snapshot."""
     capabilities: list[dict[str, Any]] = []
     limitations: list[str] = []
@@ -252,7 +262,8 @@ def manifest_payload(snapshot: Mapping[str, Any], *, provider_id: str, version: 
         limitations.append(
             f"native matrix snapshot is hand-built from the API Forge "
             f"{snapshot['specialist_version']} matrix file (provisional until re-recorded "
-            f"with python -m theforge_apiforge.record)")
+            f"with python -m theforge_apiforge.record)"
+        )
     for record in sorted(snapshot["capabilities"], key=lambda item: item["capability_id"]):
         exposed, reason = eligible(record)
         if exposed:

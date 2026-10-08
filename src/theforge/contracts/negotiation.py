@@ -39,8 +39,13 @@ DimensionMatch = Literal["full", "partial", "none", "unknown", "not_applicable"]
 HistoryMaturity = Literal["absent", "cold", "warming", "mature", "stale"]
 
 # Operation classes ordered by blast radius for the ceiling gate.
-_OPERATION_RANK = {"read_only": 0, "local_mutation": 1, "external_read": 2,
-                   "external_mutation": 3, "destructive": 4}
+_OPERATION_RANK = {
+    "read_only": 0,
+    "local_mutation": 1,
+    "external_read": 2,
+    "external_mutation": 3,
+    "destructive": 4,
+}
 
 TASK_FAMILY = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
 TECHNOLOGY = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
@@ -92,7 +97,8 @@ class CapabilityRequirement:
     def __post_init__(self) -> None:
         if self.schema != REQUIREMENT_SCHEMA:
             raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {REQUIREMENT_SCHEMA!r}")
+                f"unsupported schema {self.schema!r}, expected {REQUIREMENT_SCHEMA!r}"
+            )
         if not self.capability:
             raise ContractError("capability requirement: capability must not be empty")
         _check_ids(self.required_actions, TECHNOLOGY, "required_actions")
@@ -133,8 +139,7 @@ class CapabilityOffer:
 
     def __post_init__(self) -> None:
         if self.schema != OFFER_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {OFFER_SCHEMA!r}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {OFFER_SCHEMA!r}")
         _check_ids(self.technologies, TECHNOLOGY, "offer.technologies")
         bad = [f for f in self.features if not FEATURE_ID_RE.match(f)]
         if bad:
@@ -169,10 +174,10 @@ class CapabilityNegotiationResult:
 
     def __post_init__(self) -> None:
         if self.schema != RESULT_SCHEMA:
-            raise ContractError(
-                f"unsupported schema {self.schema!r}, expected {RESULT_SCHEMA!r}")
+            raise ContractError(f"unsupported schema {self.schema!r}, expected {RESULT_SCHEMA!r}")
         if not self.provider:
             raise ContractError("negotiation result: provider must not be empty")
         if self.surface_fingerprint is not None and not SHA256_RE.fullmatch(
-                self.surface_fingerprint):
+            self.surface_fingerprint
+        ):
             raise ContractError("negotiation result: surface_fingerprint is not a sha256")

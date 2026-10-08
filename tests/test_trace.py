@@ -18,6 +18,7 @@ from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.telemetry import (
     MAX_SPANS,
     SPAN_ATTRS_MAX,
+    NativeTrace,
     RunTelemetry,
     Span,
 )
@@ -43,28 +44,39 @@ class FakeClock:
 
 
 def _recorder(*ticks: float) -> TelemetryRecorder:
-    return TelemetryRecorder("run-1", profile_for("balanced"),
-                             clock=FakeClock(*ticks), now=lambda: "t")
+    return TelemetryRecorder(
+        "run-1", profile_for("balanced"), clock=FakeClock(*ticks), now=lambda: "t"
+    )
 
 
 def _span(**kw: object) -> Span:
-    base: dict[str, object] = {"id": "s1", "name": "routing",
-                               "start_ms": 0.0, "duration_ms": 1.0}
+    base: dict[str, object] = {"id": "s1", "name": "routing", "start_ms": 0.0, "duration_ms": 1.0}
     base.update(kw)
     return Span(**base)  # type: ignore[arg-type]
 
 
 def _telemetry(spans: list[Span]) -> RunTelemetry:
     from theforge.contracts.telemetry import ProfileSnapshot
+
     p = profile_for("balanced")
     return RunTelemetry(
-        producer=P, created_at="t", run_id="r", profile=ProfileSnapshot(
-            name=p.name, budget_bytes=p.budget_bytes, max_files=p.max_files,
-            tiers=list(p.tiers), effective_tiers=[],
-            negotiation_rounds=p.negotiation_rounds, max_providers=p.max_providers,
-            fallback=p.fallback, verification=p.verification,
-            execute_timeout_s=p.execute_timeout_s),
-        spans=spans)
+        producer=P,
+        created_at="t",
+        run_id="r",
+        profile=ProfileSnapshot(
+            name=p.name,
+            budget_bytes=p.budget_bytes,
+            max_files=p.max_files,
+            tiers=list(p.tiers),
+            effective_tiers=[],
+            negotiation_rounds=p.negotiation_rounds,
+            max_providers=p.max_providers,
+            fallback=p.fallback,
+            verification=p.verification,
+            execute_timeout_s=p.execute_timeout_s,
+        ),
+        spans=spans,
+    )
 
 
 # --- Span contract -----------------------------------------------------------
@@ -116,6 +128,46 @@ def test_telemetry_without_spans_still_parses() -> None:
     assert from_dict(RunTelemetry, data, strict=True).spans == []
 
 
+# --- provider trace federation -------------------------------------------------
+
+
+def test_native_trace_is_an_opaque_bounded_provider_reference() -> None:
+    trace = NativeTrace(
+        ref="agentops:run-123",
+        summary="critical path: inspect -> reason -> verify",
+        critical_path=["inspect", "reason", "verify"],
+    )
+    assert trace.ref == "agentops:run-123"
+    assert trace.critical_path[-1] == "verify"
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "file:///etc/passwd",
+        "https://evil.example/trace",
+        "data:text/plain,prompt",
+        "javascript:alert(1)",
+        "C:\\\\temp\\\\trace.json",
+        "agentops:../secret",
+        "forge:run/1",
+        "theforge:run/1",
+    ],
+)
+def test_native_trace_ref_never_becomes_a_dereferenceable_path_or_url(ref: str) -> None:
+    with pytest.raises(ContractError):
+        NativeTrace(ref=ref)
+
+
+def test_native_trace_summary_and_critical_path_are_bounded() -> None:
+    with pytest.raises(ContractError):
+        NativeTrace(ref="agentops:r", summary="x" * 241)
+    with pytest.raises(ContractError):
+        NativeTrace(ref="agentops:r", critical_path=["x"] * 33)
+    with pytest.raises(ContractError):
+        NativeTrace(ref="agentops:r", critical_path=["x" * 121])
+
+
 # --- recorder ----------------------------------------------------------------
 
 
@@ -154,8 +206,7 @@ def test_phase_also_records_a_span() -> None:
 
 def test_phase_span_name_overrides_the_display() -> None:
     rec = _recorder(0.0, 0.1)
-    with rec.phase("provider", span_name="provider:p1", capability="c",
-                   action="a", round="0"):
+    with rec.phase("provider", span_name="provider:p1", capability="c", action="a", round="0"):
         pass
     (span,) = rec.build().spans
     assert span.name == "provider:p1"
@@ -199,7 +250,8 @@ def test_ask_run_trace_shows_the_stages(tmp_path: Path) -> None:
     write_file(tmp_path, "jobs_glue.py", "x = 1")
     forge = tmp_path / ".forge"
     out = Forger(tmp_path, Registry(forge), RunStore(forge)).ask(
-        AskRequest(intent="analise esse glue job lento", profile="balanced"))
+        AskRequest(intent="analise esse glue job lento", profile="balanced")
+    )
     assert out.status == "ok"
     telemetry = RunStore(forge).read_contract(out.run_id, "telemetry", RunTelemetry)
     names = [s.name for s in telemetry.spans]
@@ -208,38 +260,51 @@ def test_ask_run_trace_shows_the_stages(tmp_path: Path) -> None:
     assert "verification" in names and "planning" in names
 
 
-def test_trace_command_renders_the_tree(tmp_path: Path,
-                                        capsys: pytest.CaptureFixture[str]) -> None:
+def test_trace_command_renders_the_tree(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
     write_file(tmp_path, "jobs_glue.py", "x = 1")
     forge = tmp_path / ".forge"
     out = Forger(tmp_path, Registry(forge), RunStore(forge)).ask(
-        AskRequest(intent="glue job", profile="balanced"))
+        AskRequest(intent="glue job", profile="balanced")
+    )
     code, text, _ = _run_cli(capsys, "trace", out.run_id, "--root", str(tmp_path))
     assert code == 0
     assert f"trace {out.run_id}" in text and "ok" in text
     assert "provider:fixture-spark" in text and "capability=spark.performance" in text
-    code, text, _ = _run_cli(capsys, "trace", out.run_id, "--root", str(tmp_path),
-                           "--json")
+    code, text, _ = _run_cli(capsys, "trace", out.run_id, "--root", str(tmp_path), "--json")
     assert code == 0
     spans = json.loads(text)["spans"]
     assert spans and all(s["id"].startswith("s") for s in spans)
 
 
-def test_plan_run_traces_each_node(tmp_path: Path,
-                                   capsys: pytest.CaptureFixture[str]) -> None:
+def test_plan_run_traces_each_node(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     forge = make_workspace(tmp_path, [SPARK_ENTRY])
     store = RunStore(forge)
     executor = PlanExecutor(Forger(tmp_path, Registry(forge), store))
     plan_file = tmp_path / "plan.json"
-    plan_file.write_text(json.dumps({
-        "task_id": "from-file", "pattern": "pipeline", "source": "file",
-        "profile": "balanced",
-        "nodes": [{"id": "n1", "role": "standalone", "provider": "fixture-spark",
-                   "capability": "spark.performance", "action": "diagnose"}],
-    }), encoding="utf-8")
-    out = executor.run(PlanCommand(intent="spec", profile="balanced",
-                                   plan_file=plan_file, execute=True))
+    plan_file.write_text(
+        json.dumps(
+            {
+                "task_id": "from-file",
+                "pattern": "pipeline",
+                "source": "file",
+                "profile": "balanced",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "role": "standalone",
+                        "provider": "fixture-spark",
+                        "capability": "spark.performance",
+                        "action": "diagnose",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = executor.run(
+        PlanCommand(intent="spec", profile="balanced", plan_file=plan_file, execute=True)
+    )
     assert out.result is not None
     telemetry = store.read_contract(out.run_id, "telemetry", RunTelemetry)
     node = next(s for s in telemetry.spans if s.name == "node:n1")
@@ -251,9 +316,9 @@ def test_plan_run_traces_each_node(tmp_path: Path,
     assert code == 0 and "node:n1" in text and "└─" in text or "├─" in text
 
 
-def test_trace_unknown_run_is_usage_error(capsys: pytest.CaptureFixture[str],
-                                          tmp_path: Path) -> None:
+def test_trace_unknown_run_is_usage_error(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
     make_workspace(tmp_path, [SPARK_ENTRY])
-    code, _, _ = _run_cli(capsys, "trace", "20200101T000000Z-deadbeef",
-                          "--root", str(tmp_path))
+    code, _, _ = _run_cli(capsys, "trace", "20200101T000000Z-deadbeef", "--root", str(tmp_path))
     assert code == 2

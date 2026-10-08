@@ -74,9 +74,12 @@ def is_within(path: Path, parent: Path) -> bool:
 
 
 def clean_env(root: Path) -> dict[str, str]:
-    env = {k: v for k, v in os.environ.items()
-           if k not in ("PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV", "PYTHONSTARTUP")
-           and not k.startswith("PIP_")}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV", "PYTHONSTARTUP")
+        and not k.startswith("PIP_")
+    }
     env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
     env["PYTHONNOUSERSITE"] = "1"
     # keep the gate away from the real user config/cache directories
@@ -88,8 +91,14 @@ def clean_env(root: Path) -> dict[str, str]:
 def run(step: str, argv: Sequence[str | Path], *, cwd: Path, env: dict[str, str]) -> str:
     print(f"fresh_install: {step}: {' '.join(map(str, argv))}", flush=True)
     try:
-        proc = subprocess.run([str(a) for a in argv], cwd=cwd, env=env, capture_output=True,
-                              text=True, timeout=STEP_TIMEOUT)
+        proc = subprocess.run(
+            [str(a) for a in argv],
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=STEP_TIMEOUT,
+        )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise GateError(f"{step}: {exc}") from exc
     if proc.returncode != 0:
@@ -126,8 +135,9 @@ def check_metadata(probe: dict[str, object], wheel: Path, venv: Path) -> None:
         raise GateError("metadata: console_scripts unreadable")
     for name in CONSOLE_SCRIPTS:
         if scripts.get(name) != ENTRY_POINT:
-            raise GateError(f"entry points: {name!r} -> {scripts.get(name)!r}, "
-                            f"expected {ENTRY_POINT!r}")
+            raise GateError(
+                f"entry points: {name!r} -> {scripts.get(name)!r}, expected {ENTRY_POINT!r}"
+            )
     module_file = Path(str(probe["module_file"]))
     if not is_within(module_file, venv) or is_within(module_file, REPO):
         raise GateError(f"metadata: theforge imported from {module_file}, not the fresh venv")
@@ -145,8 +155,12 @@ def fresh_install(wheel: Path, root: Path) -> None:
     env["VIRTUAL_ENV"] = str(venv)
     env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
 
-    run("install wheel", [python, "-m", "pip", "install", "--no-index", "--no-deps",
-                          "--no-cache-dir", wheel], cwd=root, env=env)
+    run(
+        "install wheel",
+        [python, "-m", "pip", "install", "--no-index", "--no-deps", "--no-cache-dir", wheel],
+        cwd=root,
+        env=env,
+    )
     run("pip check", [python, "-m", "pip", "check"], cwd=root, env=env)
 
     probe = json.loads(run("metadata", [python, "-c", METADATA_PROBE], cwd=root, env=env))
@@ -161,14 +175,19 @@ def fresh_install(wheel: Path, root: Path) -> None:
     workspace = root / "workspace"
     workspace.mkdir()
     theforge = bin_dir / f"theforge{exe}"
-    doctor = json.loads(run("doctor", [theforge, "doctor", "--json", "--root", workspace],
-                            cwd=workspace, env=env))
+    doctor = json.loads(
+        run("doctor", [theforge, "doctor", "--json", "--root", workspace], cwd=workspace, env=env)
+    )
     checks = {c.get("name"): c.get("status") for c in doctor.get("checks", [])}
     if checks.get("provider:echo-forge") != "ok":
         raise GateError(f"doctor: bundled echo provider not ok: {checks}")
     run("init", [theforge, "init", "--root", workspace], cwd=workspace, env=env)
-    run("ask demo.echo", [theforge, "ask", "echo hello", "--capability", "demo.echo",
-                          "--root", workspace, "--json"], cwd=workspace, env=env)
+    run(
+        "ask demo.echo",
+        [theforge, "ask", "echo hello", "--capability", "demo.echo", "--root", workspace, "--json"],
+        cwd=workspace,
+        env=env,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

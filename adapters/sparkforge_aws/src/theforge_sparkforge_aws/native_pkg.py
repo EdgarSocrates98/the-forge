@@ -36,7 +36,8 @@ def import_tools() -> tuple[Any, Any]:
         except (ImportError, AttributeError) as exc:
             last = exc
     raise ImportError(
-        f"no Spark Forge AWS tool surface importable ({', '.join(DISPATCHERS)})") from last
+        f"no Spark Forge AWS tool surface importable ({', '.join(DISPATCHERS)})"
+    ) from last
 
 
 def installed_version() -> str | None:
