@@ -66,6 +66,24 @@ bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
   `agentic-ecosystem.md`; `architecture.md`, `agentic.md` e `cli.md`
   (linhas `knowledge`/`agents`) atualizados.
 
+#### Polish & Closure (prompt `prompt_evo_agentic_ecosystem`)
+
+- `docs/reports/agentic-ecosystem.md` regenerado: os 8 AgentSpecs reais
+  (autoridade fechada, hosts renderizados) substituem o "não criado" stale;
+  assets host-specific documentados (paridade semântica, não de formato).
+- Inventário de skills corrigido para **16** em `docs/skills.md` (a lista
+  citava nomes inexistentes — `forge-health`, `forge-economy`,
+  `forge-memory`), `docs/architecture.md` e no próprio CHANGELOG.
+- `agentic-scenarios.json` reexecutado em worktree limpa: `git_dirty=false`,
+  15/15 pass, e `specialist_shas` populado com os seis SHAs reais —
+  `_specialist_shas()` lia a chave errada do reality manifest.
+- `specialist-reality.json` regenerado em 0.5.0; matriz de compatibilidade
+  de `docs/versioning.md` ganhou a linha 0.5.0 e as colunas dos adapters
+  sparkforge-azure/platformforge (estava 4/6).
+- Closure: `docs/reports/agentic-polish-closure.md` + `.json`
+  (`theforge-agentic-polish-closure/v1`) com verdict
+  `AGENTIC_POLISH_COMPLETE_REMOTE_BLOCKED`.
+
 ### Agentic Ecosystem benchmarks (prompt `prompt_evo_engenharia_agentica` §87-90, §100)
 
 Fechamento do gap agentic: a série A01–A15 não existia — os benchmarks B01–B25
