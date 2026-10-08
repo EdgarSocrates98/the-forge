@@ -26,7 +26,8 @@ Discovery binds a registry record to a live specialist: executable + manifest + 
 2. `theforge providers health` — live health checks against the recorded argv.
 3. `theforge doctor` — environment truth: OS, Python, PATH, writable dirs, per-provider readiness.
 4. Compare `surface_fingerprint` in policy/memory records with the live fingerprint; a mismatch = stale, not wrong.
-5. `theforge knowledge show <id>` — the bootstrap view (install recipe, verify command) for a missing/broken specialist.
+5. `theforge knowledge check` — freshness of every bootstrap package vs. the live registry (`fresh`/`drift`/`untested`/`not_installed`/`unavailable`); a `drift` package needs re-measuring, not reinstalling.
+6. `theforge knowledge show <id>` — the bootstrap view (install recipe, verify command) for a missing/broken specialist.
 
 ## Boundaries
 

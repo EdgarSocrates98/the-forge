@@ -36,9 +36,24 @@ bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
 - `tests/test_agentic_security.py`: 15 casos adversariais (§75-79, §97) —
   injeção via campos de pacote, fake providers, escalonamento de autoridade,
   stale freshness, refs mortas, instalação falsa.
+- `theforge knowledge check` — freshness acionável dos pacotes: compara
+  `tested_version`/`tested_surface` com o `surface` do registry ao vivo
+  (`fresh`/`drift`/`untested`/`not_installed`/`unavailable`); read-only,
+  exit 0 — drift é informação para re-medir, nunca falha de gate.
+- Loop Factory adotado como fila operacional de specs (`factory/`): a pasta é
+  o estado (`inbox → active → archive`), grill gate é pré-requisito humano de
+  dispatch, `archive --accepted` exige review aceito, e
+  `prompts/runs/reviews/logs` são artefatos gitignored (ADR 0057,
+  `docs/loop-factory.md`, skill canônica `forge-factory`, spec-smoke `lf-0001`
+  deixado em `active/` para aceite humano).
+- Gate de drift docs↔CLI: `cli_coverage_problems` em
+  `test_docs_consistency.py` exige que todo verbo de primeiro nível tenha linha
+  na tabela de `docs/cli.md`; linhas de `knowledge`, `agents` e `graph`
+  adicionadas.
 - ADRs 0052-0056; docs: `forge-knowledge.md`, `skills.md`, `agents.md`,
   `installation-orchestration.md`, `cross-forge-orchestration.md`,
-  `agentic-ecosystem.md`; `architecture.md` e `agentic.md` atualizados.
+  `agentic-ecosystem.md`; `architecture.md`, `agentic.md` e `cli.md`
+  (linhas `knowledge`/`agents`) atualizados.
 
 ### Agentic Ecosystem benchmarks (prompt `prompt_evo_engenharia_agentica` §87-90, §100)
 

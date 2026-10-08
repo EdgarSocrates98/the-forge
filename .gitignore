@@ -23,3 +23,13 @@ build/
 .kiro/steering/
 .agents/skills/source-command-*/
 .claude/agents/
+
+# Loop Factory artifacts (audit trail, not source of truth — specs/ IS tracked)
+factory/prompts/*
+!factory/prompts/.gitkeep
+factory/runs/*
+!factory/runs/.gitkeep
+factory/reviews/*
+!factory/reviews/.gitkeep
+factory/logs/*
+!factory/logs/.gitkeep

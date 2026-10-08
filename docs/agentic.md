@@ -70,6 +70,7 @@ Os comandos abaixo usam a sintaxe do Claude e do Devin (`/kiro-…`); no Codex o
 | `agentic/agents/*.toml` (canônicos) + `.codex/agents/*.toml` (render) | `.claude/agents/` |
 | `.kiro/settings/` (cópias de referência de regras e templates) | `.agents/skills/source-command-*` e outros scaffolds de terceiros |
 | `forge-knowledge/*.json` (pacotes de bootstrap dos seis especialistas) | |
+| `factory/specs/` + `factory/templates/` (fila Loop Factory — a pasta é o estado, [docs/loop-factory.md](loop-factory.md)) | `factory/prompts/`, `factory/runs/`, `factory/reviews/`, `factory/logs/` (artefatos gerados) |
 | `CLAUDE.md`, `AGENTS.md` | |
 | `scripts/agentic/` (auditoria, renderers e configuração) | |
 
