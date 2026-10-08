@@ -19,7 +19,7 @@ bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
   seis pacotes autorados (repo, pacote, install, verify, discover, família,
   `tested_version`/`tested_surface`) — bootstrap metadata, strict parsing,
   nunca verdade de runtime (ADR 0052).
-- `agentic/skills/` — 15 skills `forge-*` canônicas (9 ecossistema + 6
+- `agentic/skills/` — 16 skills `forge-*` canônicas (10 ecossistema + 6
   especialistas) renderizadas para `.claude/`, `.agents/` e `.devin/` por
   `scripts/agentic/render_skills.py` com freshness trailer ligado ao
   knowledge package (ADRs 0053, 0056).

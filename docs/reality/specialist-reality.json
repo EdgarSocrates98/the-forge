@@ -1,23 +1,23 @@
 {
   "forge": {
-    "branch": "devin/cycle51-ecosystem",
-    "commit_sha": "697d5b6cc2bdb29f596f264bd0ebf0d5b83d8ab7",
+    "branch": "devin/agentic-polish",
+    "commit_sha": "cf3240c1acddbc5e2cd7799c8e19defd959a5942",
     "counts": {
-      "adrs": 51,
-      "closed_contracts": 39,
-      "contracts": 67,
-      "docs_root": 33,
-      "schemas": 67,
-      "test_files": 136
+      "adrs": 57,
+      "closed_contracts": 41,
+      "contracts": 69,
+      "docs_root": 40,
+      "schemas": 69,
+      "test_files": 140
     },
-    "origin_main": "bb07e225336795e18a06245bee9f9e2d5a44bbd8",
+    "origin_main": "cf3240c1acddbc5e2cd7799c8e19defd959a5942",
     "package_version": "0.4.0",
     "platform": "win32",
     "python": "3.11.15",
     "python_requires": ">=3.11",
     "runtime_dependencies": 0
   },
-  "generated_at": "2026-10-08T10:07:09Z",
+  "generated_at": "2026-10-08T23:00:38Z",
   "generated_by": "scripts/reality/collect.py",
   "kind": "theforge/specialist-reality/v1",
   "specialists": [
@@ -204,7 +204,7 @@
         "module": "theforge_sparkforge_azure",
         "version": "0.1.0"
       },
-      "compatibility_status": "snapshot_fresh_install_ahead",
+      "compatibility_status": "fresh",
       "drift": {
         "detail": "surface drift: none",
         "exit_code": 0,
@@ -214,13 +214,13 @@
       "import_probe": "sparkforge_azure",
       "installed": {
         "checkout": {
-          "branch": "feat/cycle5-migration",
-          "commit_sha": "6e74262ecbbb30e5cd2597085d22301d4aaeb8cb",
+          "branch": "main",
+          "commit_sha": "c09d4c5cb5b87404209cdad4ff19d98799dcc0e8",
           "dirty": true,
           "location": "file:///E:/projetos/spark-forge-azure",
-          "origin_main": "61367a5ffebc5dff6206b5a3dfd455217819f1f9",
+          "origin_main": "c09d4c5cb5b87404209cdad4ff19d98799dcc0e8",
           "refs_fetched": false,
-          "relation_to_origin_main": "descendant"
+          "relation_to_origin_main": "same"
         },
         "distribution": "sparkforge-azure",
         "editable": true,

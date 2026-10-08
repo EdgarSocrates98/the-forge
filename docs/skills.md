@@ -1,6 +1,6 @@
 # Ecosystem Skills (`forge-*`)
 
-15 skills canônicas que ensinam os hosts a usar a plataforma — renderizadas
+16 skills canônicas que ensinam os hosts a usar a plataforma — renderizadas
 por host, auditadas semanticamente.
 
 ## Fonte canônica
@@ -18,12 +18,12 @@ Saídas: `.claude/skills/` (frontmatter `allowed-tools`/`argument-hint`),
 `.agents/skills/` + `.devin/skills/` (envelope `<background_information>`/
 `<instructions>`; Codex ganha `agents/openai.yaml` por skill).
 
-## As 15
+## As 16
 
-**Ecossistema** (9): `forge-ecosystem` (mapa das seis), `forge-routing`,
-`forge-capability-negotiation`, `forge-cross-domain-planning`,
-`forge-install`, `forge-bootstrap`, `forge-health`, `forge-economy`,
-`forge-memory`.
+**Ecossistema** (10): `forge-ecosystem` (mapa das seis), `forge-routing`,
+`forge-discovery`, `forge-capability-negotiation`,
+`forge-cross-domain-planning`, `forge-install`, `forge-bootstrap`,
+`forge-verification`, `forge-troubleshooting`, `forge-factory`.
 
 **Especialistas** (6): `forge-spark-aws`, `forge-spark-azure`, `forge-api`,
 `forge-platform`, `forge-doctor-data`, `forge-doctor-api` — cada uma diz
