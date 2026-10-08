@@ -94,7 +94,25 @@ API = Adapter(
     "analyze",
     ">=0.1.0,<0.2.0",
 )
-ADAPTERS = {"spark": SPARK, "api": API}
+AZURE = Adapter(
+    "spark-forge-azure",
+    "theforge_sparkforge_azure",
+    FIXTURES / "native" / "sparkforge_azure",
+    FIXTURES / "workspaces" / "azure" / "access-case",
+    "azure.access-diagnose",
+    "analyze",
+    ">=0.1.0,<0.2.0",
+)
+PLATFORM = Adapter(
+    "platform-forge",
+    "theforge_platformforge",
+    FIXTURES / "native" / "platformforge",
+    FIXTURES / "workspaces" / "platform",
+    "iac.analyze",
+    "analyze",
+    ">=0.1.0,<0.2.0",
+)
+ADAPTERS = {"spark": SPARK, "api": API, "azure": AZURE, "platform": PLATFORM}
 
 
 # --- helpers ------------------------------------------------------------------------------
@@ -203,17 +221,21 @@ def _copy_health(adapter: Adapter, directory: Path) -> None:
         shutil.copyfile(adapter.default / name, directory / name)
 
 
+# Only adapters whose translation passes through an unbounded list can overflow the inline
+# limit: the azure/platform translators bound findings (ITEMS_SHOWN) and clip claims, so a
+# huge recording still yields a small result — no spill scenario exists for them.
 LARGE = {"spark": _large_spark_scenario, "api": _large_api_scenario}
 
 
 # --- registry state -----------------------------------------------------------------------
 
 
-def test_both_adapters_in_replay_are_ready_and_healthy_in_the_registry(tmp_path: Path) -> None:
-    root = _workspace(tmp_path, SPARK, [SPARK.entry(SPARK.default), API.entry(API.default)])
+def test_adapters_in_replay_are_ready_and_healthy_in_the_registry(tmp_path: Path) -> None:
+    all_adapters = list(ADAPTERS.values())
+    root = _workspace(tmp_path, SPARK, [adapter.entry(adapter.default) for adapter in all_adapters])
     records = {r.entry.id: r for r in Registry(root / ".forge").records()}
-    assert {"api-forge", "spark-forge-aws"} <= set(records)
-    for adapter in (SPARK, API):
+    assert {a.provider_id for a in all_adapters} <= set(records)
+    for adapter in all_adapters:
         record = records[adapter.provider_id]
         assert record.state == "ready", record.error
         assert record.manifest is not None and record.routable()
@@ -257,19 +279,25 @@ def _input_globs(name: str) -> dict[str, set[str]]:
             spec.id: {glob for binding in spec.bindings.values() for glob in binding.globs}
             for spec in spark_catalog.CAPABILITIES
         }
-    from theforge_apiforge import catalog as api_catalog
+    if name == "api":
+        from theforge_apiforge import catalog as api_catalog
 
-    return {
-        capability: {glob for item in spec.inputs for glob in item.globs}
-        for capability, spec in api_catalog.VERB_MAP.items()
-    }
+        return {
+            capability: {glob for item in spec.inputs for glob in item.globs}
+            for capability, spec in api_catalog.VERB_MAP.items()
+        }
+    # spark-forge-azure and platform-forge share the CapabilitySpec shape.
+    catalog = importlib.import_module(f"{ADAPTERS[name].module}.catalog")
+    return {cap: set(spec.input_globs) for cap, spec in catalog.CAPABILITY_MAP.items()}
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_every_action_input_reaches_the_context_pack(tmp_path: Path, name: str) -> None:
     """The core sends only files matching a capability's ``signals.file_globs`` (the
     ContextPack), so every glob an action input reads must be declared there; otherwise the
-    input can never be staged through the core and every run ends in "no input"."""
+    input can never be staged through the core and every run ends in "no input". A literal
+    ``*`` input means "any staged file" (whole-tree scans) and is exempt: the staged set is
+    whatever the signals selected."""
     adapter = ADAPTERS[name]
     root = _workspace(tmp_path, adapter, [adapter.entry(adapter.default)])
     record = Registry(root / ".forge").get(adapter.provider_id)
@@ -277,7 +305,10 @@ def test_every_action_input_reaches_the_context_pack(tmp_path: Path, name: str) 
     declared = {c.id: set(c.signals.file_globs) for c in record.manifest.capabilities}
     for capability, globs in _input_globs(name).items():
         if capability in declared:
-            assert globs <= declared[capability], (capability, globs - declared[capability])
+            assert globs - {"*"} <= declared[capability], (
+                capability,
+                globs - {"*"} - declared[capability],
+            )
 
 
 # (adapter, capability, action, workspace files the verb reads and the ContextPack must carry)
@@ -287,6 +318,15 @@ DEFAULT_RUNS = [
     (API, "api.analyze", "analyze", {"openapi.yaml", "app/main.py"}),
     # The bundle names the contract and the project: they must be staged with it.
     (API, "api.change-control", "run", {"change-bundle.json", "openapi.yaml", "app/main.py"}),
+    # The Azure case bundle: the loader reads the layer jsons and notebooks/ too.
+    (
+        AZURE,
+        "azure.access-diagnose",
+        "analyze",
+        {"case.yaml", "rbac.json", "notebooks/job.py"},
+    ),
+    (PLATFORM, "iac.analyze", "analyze", {"iac/main.tf"}),
+    (PLATFORM, "secrets.scan", "scan", {"secrets/app.env"}),
 ]
 
 
@@ -310,7 +350,8 @@ def test_default_scenario_run_ends_with_a_valid_result(
     assert not any(note.startswith("no input") for note in result.limitations), result
     assert store.read_optional(outcome.run_id, "result") is not None
     _assert_work_holds_only_artifacts(store, outcome)
-    assert not (root / ".sparkforge").exists() and not (root / ".apiforge").exists()
+    for state_dir in (".sparkforge", ".apiforge", ".sparkforge-azure", ".platformforge"):
+        assert not (root / state_dir).exists()
 
 
 NATIVE_ERRORS = [
@@ -318,6 +359,9 @@ NATIVE_ERRORS = [
     ("api", "analyze-refused", "refused", "AF-OPENAPI-UNSUPPORTED-VERSION"),
     ("api", "analyze-error", "provider_failure", "AF-CASE-INVALID"),
     ("api", "analyze-internal", "provider_failure", "APIFORGE-ADAPTER-NATIVE-FAILURE"),
+    # bridge exit 2 -> request refusal; exit 1 -> native failure.
+    ("azure", "native-error", "refused", "SFA-REQUEST-INVALID"),
+    ("platform", "native-error", "provider_failure", "PF-NATIVE-FAILURE"),
 ]
 
 
@@ -334,7 +378,7 @@ def test_recorded_native_error_is_preserved_through_to_the_receipt(
     _assert_work_holds_only_artifacts(store, outcome)
 
 
-@pytest.mark.parametrize("name", sorted(ADAPTERS))
+@pytest.mark.parametrize("name", sorted(LARGE))
 def test_large_output_is_a_partial_result_with_the_persisted_artifact(
     tmp_path: Path, name: str
 ) -> None:
@@ -360,6 +404,8 @@ VERSION_SKEW = {
     "spark": (lambda: (SPARK.scenario("version-skew"), ()), "found 0.6.1"),
     # API: the default scenario with the adapter's assumed-version option.
     "api": (lambda: (API.default, ("--assume-specialist-version", "9.9.9")), "found 9.9.9"),
+    "azure": (lambda: (AZURE.scenario("version-skew"), ()), "found 9.9.0"),
+    "platform": (lambda: (PLATFORM.scenario("version-skew"), ()), "found 9.9.0"),
 }
 
 
@@ -494,9 +540,15 @@ def _tampered_scenario(adapter: Adapter, directory: Path) -> set[str]:
     return tampered
 
 
-@pytest.mark.parametrize("name", sorted(ADAPTERS))
+# Only adapters that read a native-reported file hash have something to tamper: the
+# azure/platform translators never copy native hashes — evidence hashes are always the
+# staged file's verified sha256 computed by the adapter.
+HASH_PROVIDERS = {"spark": SPARK, "api": API}
+
+
+@pytest.mark.parametrize("name", sorted(HASH_PROVIDERS))
 def test_divergent_native_hash_is_never_copied_into_evidence(tmp_path: Path, name: str) -> None:
-    adapter = ADAPTERS[name]
+    adapter = HASH_PROVIDERS[name]
     _tampered_scenario(adapter, tmp_path / "tampered")
     root = _workspace(tmp_path, adapter, [adapter.entry(tmp_path / "tampered")])
     outcome, store = _ask(root, adapter)
@@ -507,12 +559,12 @@ def test_divergent_native_hash_is_never_copied_into_evidence(tmp_path: Path, nam
     assert _hashed_evidence_drift(store.read(outcome.run_id, "context"), result) == []
 
 
-@pytest.mark.parametrize("name", sorted(ADAPTERS))
+@pytest.mark.parametrize("name", sorted(HASH_PROVIDERS))
 def test_drift_check_fails_when_a_divergent_native_hash_is_copied(
     tmp_path: Path, name: str
 ) -> None:
     """Negative control: an adapter that copied the tampered native hash would be caught."""
-    adapter = ADAPTERS[name]
+    adapter = HASH_PROVIDERS[name]
     tampered = _tampered_scenario(adapter, tmp_path / "tampered")
     entry = {
         "id": adapter.provider_id,

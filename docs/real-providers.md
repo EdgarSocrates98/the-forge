@@ -1,17 +1,17 @@
-# Providers reais: Spark Forge AWS, API Forge e os Doctors
+# Providers reais: os seis especialistas
 
-The Forge fala com os especialistas através de adapters Forge Protocol v1 instalados **no interpretador de cada especialista**, nunca no interpretador do core: Spark Forge AWS (`sparkforge-aws`), API Forge (`apiforge`) e, desde o ciclo 3.1, os observadores determinísticos Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`). O porquê está no [ADR 0014](adr/0014-provider-adapter-location.md).
+The Forge fala com os especialistas através de adapters Forge Protocol v1 instalados **no interpretador de cada especialista**, nunca no interpretador do core: Spark Forge AWS (`sparkforge-aws`), API Forge (`apiforge`), os observadores determinísticos Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`) e, desde o ciclo 5.1 (ecossistema 4→6), Spark Forge Azure (`sparkforge-azure`) e Platform Forge (`platformforge`). O porquê está no [ADR 0014](adr/0014-provider-adapter-location.md).
 
-| | Spark Forge AWS | API Forge | Doctor Data | Doctor API |
-|---|---|---|---|---|
-| Distribuição do adapter | `theforge-sparkforge-aws-adapter` (`adapters/sparkforge_aws`) | `theforge-apiforge-adapter` (`adapters/apiforge`) | `theforge-doctordata-adapter` (`adapters/doctordata`) | `theforge-doctorapi-adapter` (`adapters/doctorapi`) |
-| Módulo | `theforge_sparkforge_aws` | `theforge_apiforge` | `theforge_doctordata` | `theforge_doctorapi` |
-| id do provider | `spark-forge-aws` | `api-forge` | `forge-doctor-data` | `forge-doctor-api` |
-| Especialista suportado | `sparkforge-aws >=0.5.0,<0.6.0` | `apiforge >=0.1.0,<0.2.0` | `forge-doctor-data >=1.0.0rc1,<2.0.0` | `forge-doctor-api >=0.2.0,<0.3.0` |
-| Interpretador | Python ≥ 3.10 (o CI usa 3.11) | Python 3.12 (exigido pelo API Forge) | Python ≥ 3.11 | Python ≥ 3.11 |
-| Seam nativo | `sparkforge_aws.adapters.tools` (`sparkforge.*` antes do rename do pacote; resolvido por `native_pkg`) | `apiforge` CLI pública | `accept_request` + `check_conformance` (`forge-contracts/1`) | `DoctorBoundary` (spec 070) + strict parse |
+| | Spark Forge AWS | Spark Forge Azure | API Forge | Platform Forge | Doctor Data | Doctor API |
+|---|---|---|---|---|---|---|
+| Distribuição do adapter | `theforge-sparkforge-aws-adapter` (`adapters/sparkforge_aws`) | `theforge-sparkforge-azure-adapter` (`adapters/sparkforge_azure`) | `theforge-apiforge-adapter` (`adapters/apiforge`) | `theforge-platformforge-adapter` (`adapters/platformforge`) | `theforge-doctordata-adapter` (`adapters/doctordata`) | `theforge-doctorapi-adapter` (`adapters/doctorapi`) |
+| Módulo | `theforge_sparkforge_aws` | `theforge_sparkforge_azure` | `theforge_apiforge` | `theforge_platformforge` | `theforge_doctordata` | `theforge_doctorapi` |
+| id do provider | `spark-forge-aws` | `spark-forge-azure` | `api-forge` | `platform-forge` | `forge-doctor-data` | `forge-doctor-api` |
+| Especialista suportado | `sparkforge-aws >=0.5.0,<0.6.0` | `sparkforge-azure >=0.1.0,<0.2.0` | `apiforge >=0.1.0,<0.2.0` | `platformforge >=0.1.0,<0.2.0` | `forge-doctor-data >=1.0.0rc1,<2.0.0` | `forge-doctor-api >=0.2.0,<0.3.0` |
+| Interpretador | Python ≥ 3.10 (o CI usa 3.11) | Python ≥ 3.10 | Python 3.12 (exigido pelo API Forge) | Python ≥ 3.10 | Python ≥ 3.11 | Python ≥ 3.11 |
+| Seam nativo | `sparkforge_aws.adapters.tools` (`sparkforge.*` antes do rename do pacote; resolvido por `native_pkg`) | seams públicas `sdd.checks`/`sdd.status` + `azure.pipeline`/`fabric.pipeline` + `doctor` | `apiforge` CLI pública | seams públicas `analyze_*` + `capability_manifest()` (manifest v3) | `accept_request` + `check_conformance` (`forge-contracts/1`) | `DoctorBoundary` (spec 070) + strict parse |
 
-Os adapters são stdlib-only, sem dependências declaradas, e não importam `theforge`. Os Doctors **não** rodam subprocesso nem rede no especialista: o adapter chama só as seams públicas num processo filho (`python -m theforge_doctordata.bridge` / `theforge_doctorapi.bridge`) e traduz o documento `forge-contracts/1`/`ApiHandoffBundle` para o Evidence Bus. Os caminhos abaixo são placeholders: `<spark-python>`, `<api-python>`, `<dd-python>` e `<da-python>` são o executável Python de cada venv (`<venv>/bin/python` no POSIX, `<venv>\Scripts\python.exe` no Windows), e `<the-forge>` é um checkout deste repositório.
+Os adapters são stdlib-only, sem dependências declaradas, e não importam `theforge`. Os Doctors **não** rodam subprocesso nem rede no especialista: o adapter chama só as seams públicas num processo filho (`python -m theforge_doctordata.bridge` / `theforge_doctorapi.bridge`) e traduz o documento `forge-contracts/1`/`ApiHandoffBundle` para o Evidence Bus; o Spark Forge Azure e o Platform Forge seguem o mesmo desenho (`theforge_sparkforge_azure.bridge` / `theforge_platformforge.bridge` chamam as seams em-processo do especialista instalado). Os caminhos abaixo são placeholders: `<spark-python>`, `<azure-python>`, `<api-python>`, `<platform-python>`, `<dd-python>` e `<da-python>` são o executável Python de cada venv (`<venv>/bin/python` no POSIX, `<venv>\Scripts\python.exe` no Windows), e `<the-forge>` é um checkout deste repositório.
 
 ## Instalação
 
@@ -71,12 +71,48 @@ O `api.verify` do Doctor API exige a main pós-PR forge-doctor-api#13 (`035b635`
 `ApiHandoffBundle.from_dict` falhava com `NameError: DeltaContext` porque a anotação só era
 importada sob `TYPE_CHECKING` e `Model.from_dict` resolve hints em runtime.
 
+### Spark Forge Azure (venv Python ≥ 3.10)
+
+```bash
+python3.11 -m venv <azure-venv>
+<azure-python> -m pip install --upgrade pip
+<azure-python> -m pip install "sparkforge-azure>=0.1,<0.2"      # ou: <checkout-spark-forge-azure>
+<azure-python> -m pip install <the-forge>/adapters/sparkforge_azure
+<azure-python> -c "import sparkforge_azure, theforge_sparkforge_azure"   # deve sair 0
+```
+
+O adapter expõe a superfície real do especialista — `sdd.check`, `sdd.status`,
+`azure.access-diagnose`, `fabric.access-diagnose`, `azure.doctor` — nunca um
+alias do AWS: não há equivalência Lake Formation↔Unity Catalog nem Glue↔ADF. As
+capabilities consomem bundles estagiados (`case.yaml` + camadas, ou a árvore
+`docs/sdd/`); a evidência citada por `evidence_paths` é re-vinculada ao sha256
+verificado do arquivo estagiado, nunca ao hash que o especialista reportou.
+
+### Platform Forge (venv Python ≥ 3.10)
+
+```bash
+python3.11 -m venv <platform-venv>
+<platform-python> -m pip install --upgrade pip
+<platform-python> -m pip install "platformforge>=0.1,<0.2"       # ou: <checkout-platform-forge>
+<platform-python> -m pip install <the-forge>/adapters/platformforge
+<platform-python> -c "import platformforge, theforge_platformforge"      # deve sair 0
+```
+
+O adapter cobre as nove seams `analyze_*`/`capability_manifest` do especialista
+(`iac.*`, `k8s`, `secrets`, `gha`, `gitops`, `catalog`, `platform.manifest`).
+`secrets.scan` varre a árvore inteira (input `*`), mas seus sinais de roteamento
+são nomes de alto sinal (`.env`, `*.pem`, `credentials`…) — um glob catch-all
+seria rejeitado como sinal de roteamento. Facts citam `location`/`attrs.file`
+e a evidência re-vincula ao sha256 do arquivo estagiado. Recusas `PF-*` viram
+findings nomeadas, não erros do adapter.
+
 ### Desenvolvimento neste repositório
 
 A suíte offline usa os adapters em modo replay, sem os especialistas:
 
 ```bash
-python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge \
+python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure \
+  -e ./adapters/apiforge -e ./adapters/platformforge \
   -e ./adapters/doctordata -e ./adapters/doctorapi
 ```
 
@@ -118,6 +154,16 @@ trust = "local"
 [[providers]]
 id = "forge-doctor-api"
 argv = ["<da-python>", "-m", "theforge_doctorapi"]
+trust = "local"
+
+[[providers]]
+id = "spark-forge-azure"
+argv = ["<azure-python>", "-m", "theforge_sparkforge_azure"]
+trust = "local"
+
+[[providers]]
+id = "platform-forge"
+argv = ["<platform-python>", "-m", "theforge_platformforge"]
 trust = "local"
 ```
 
@@ -180,6 +226,8 @@ Os testes `real_provider` (`python -m pytest -m real_provider`) rodam contra os 
 | `THEFORGE_REAL_APIFORGE_PYTHON` | caminho absoluto de um interpretador 3.12 com `apiforge` e `theforge-apiforge-adapter` | habilita a integração do API Forge |
 | `THEFORGE_REAL_DOCTORDATA_PYTHON` | caminho absoluto de um interpretador ≥ 3.11 com `forge-doctor-data` e `theforge-doctordata-adapter` | habilita a integração do Doctor Data |
 | `THEFORGE_REAL_DOCTORAPI_PYTHON` | caminho absoluto de um interpretador ≥ 3.11 com `forge-doctor-api` e `theforge-doctorapi-adapter` | habilita a integração do Doctor API |
+| `THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON` | caminho absoluto de um interpretador ≥ 3.10 com `sparkforge-azure` e `theforge-sparkforge-azure-adapter` | habilita a integração do Spark Forge Azure |
+| `THEFORGE_REAL_PLATFORMFORGE_PYTHON` | caminho absoluto de um interpretador ≥ 3.10 com `platformforge` e `theforge-platformforge-adapter` | habilita a integração do Platform Forge |
 | `THEFORGE_REAL_PROVIDERS_REQUIRED` | `1` | pré-requisito ausente vira falha em vez de skip |
 | `THEFORGE_ECOSYSTEM_REQUIRED` | `1` | alias equivalente no nível do ecossistema (mesma obrigação) |
 
@@ -197,12 +245,14 @@ export THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=<spark-python>
 export THEFORGE_REAL_APIFORGE_PYTHON=<api-python>
 export THEFORGE_REAL_DOCTORDATA_PYTHON=<dd-python>
 export THEFORGE_REAL_DOCTORAPI_PYTHON=<da-python>
+export THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON=<azure-python>
+export THEFORGE_REAL_PLATFORMFORGE_PYTHON=<platform-python>
 python -m pytest -m real_provider
 ```
 
 No PowerShell: `$env:THEFORGE_REAL_SPARKFORGE_AWS_PYTHON = "<spark-python>"`.
 
-A integração cobre, por Forge, `describe` (manifest `ready` e snapshot igual à superfície viva), `health`, `execute` de uma capability sobre `tests/fixtures/workspaces/{spark,api,data/shop,cross/orders-api}/`, provider ausente e version skew (`--assume-specialist-version 9.9.9`).
+A integração cobre, por Forge, `describe` (manifest `ready` e snapshot igual à superfície viva), `health`, `execute` de uma capability sobre `tests/fixtures/workspaces/{spark,api,data/shop,cross/orders-api,azure/access-case,platform/iac}/`, provider ausente e version skew (`--assume-specialist-version 9.9.9`).
 
 ### Prova cross-forge (Spark Forge AWS → API Forge)
 `tests/test_cross_forge_real.py` (marker `real_provider`, mesmo contrato de ambiente) registra os dois adapters e roda `theforge plan "Projete um pipeline Spark que produza dados para uma API" --profile max --execute` no workspace de prova `tests/fixtures/workspaces/cross/` (montado em diretório temporário, um repositório git por subdiretório). Confere o plano `spark-forge-aws/pyspark.static-analysis` → `api-forge/api.analyze`, ao menos um item de handoff com origem no Spark Forge AWS e o status epistêmico original recebido pelo nó de API, a síntese com os dois runs e `theforge explain` do plano sem divergência ([ADR 0018](adr/0018-multi-provider-execution.md)).
@@ -232,6 +282,10 @@ Os arquivos gravados são comparados byte a byte. A escrita é canônica: chaves
 # Doctors: native_surface.json (seams públicas gravadas: módulo, callable, presença)
 <dd-python> -m theforge_doctordata.record [--out <arquivo>] [--recorded-at <timestamp>] [--check]
 <da-python> -m theforge_doctorapi.record [--out <arquivo>] [--recorded-at <timestamp>] [--check]
+
+# Spark Forge Azure / Platform Forge: native_surface.json (mesmo formato dos Doctors)
+<azure-python> -m theforge_sparkforge_azure.record [--out <arquivo>] [--recorded-at <timestamp>] [--check]
+<platform-python> -m theforge_platformforge.record [--out <arquivo>] [--recorded-at <timestamp>] [--check]
 ```
 
 Sem `--output`/`--out`, o comando sobrescreve o snapshot empacotado no adapter. Rode a partir de um checkout com o adapter instalado em modo editável (`pip install -e`), senão a gravação vai para o `site-packages`. No Spark, `recorded_at` só muda quando a superfície muda. `--environment <dir>` também grava o `environment.json` (`{python, specialist_version}`) e o `health.json` (`{dispatcher, specialist_version}`) de um cenário de replay. Depois de regravar, rode a suíte offline: mudança de snapshot muda o manifest, e capabilities novas precisam constar em [capabilities.md](capabilities.md).

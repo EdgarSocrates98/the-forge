@@ -54,6 +54,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_adapter_apiforge.py": ("integration", "contract"),
     "test_adapter_doctordata.py": ("integration", "contract"),
     "test_adapter_doctorapi.py": ("integration", "contract"),
+    "test_adapter_sparkforge_azure.py": ("integration", "contract"),
+    "test_adapter_platformforge.py": ("integration", "contract"),
     "test_adapters_core.py": ("integration",),
     "test_real_providers_env.py": ("unit",),
     "test_capability_catalog_doc.py": ("unit",),
@@ -175,6 +177,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_reality_collect.py": ("unit",),
     "test_surface_staleness.py": ("unit", "security"),
     "test_federation_conformance.py": ("integration", "contract"),
+    "test_generic_onboarding.py": ("integration", "contract"),
     "test_memory_roi.py": ("unit",),
     "test_remote_replay.py": ("unit", "security"),
 }

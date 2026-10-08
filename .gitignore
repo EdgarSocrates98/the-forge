@@ -11,6 +11,10 @@ build/
 .ruff_cache/
 .hypothesis/
 .forge/
+.sparkforge-azure/
+.sparkforge/
+.apiforge/
+.platformforge/
 .pytest_tmp/
 .pytest_tmp*/
 

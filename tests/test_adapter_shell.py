@@ -1,8 +1,8 @@
-"""The two real-provider adapters and their common shell (real-provider-integration 1.4, 3.1).
+"""The real-provider adapters and their common shell (real-provider-integration 1.4, 3.1).
 
 Each adapter is its own stdlib-only distribution under ``adapters/`` that speaks Forge
 Protocol v1 through JSON only (never ``import theforge``). The envelope and op dispatch live in
-``_shell.py``, copied byte for byte into both adapters. Until the real describe/health/execute
+``_shell.py``, copied byte for byte into every adapter. Until the real describe/health/execute
 land (4.x/5.x), every op of the adapters is answered with a well-formed ``refused`` and exit 0.
 The shell itself is driven through a test handler set (``tests/fixtures/adapter_shell``) that
 declares a capability and its actions only for these tests.
@@ -59,6 +59,18 @@ ADAPTERS = {
         "forge-doctor-api",
         ">=0.2.0,<0.3.0",
     ),
+    "sparkforge_azure": (
+        "theforge-sparkforge-azure-adapter",
+        "theforge_sparkforge_azure",
+        "spark-forge-azure",
+        ">=0.1.0,<0.2.0",
+    ),
+    "platformforge": (
+        "theforge-platformforge-adapter",
+        "theforge_platformforge",
+        "platform-forge",
+        ">=0.1.0,<0.2.0",
+    ),
 }
 # Adapter release versions (semver of each distribution): bumps track surface
 # changes per docs/versioning.md.
@@ -67,6 +79,8 @@ ADAPTER_VERSION = {
     "apiforge": "0.3.0",
     "doctordata": "0.3.0",
     "doctorapi": "0.3.0",
+    "sparkforge_azure": "0.1.0",
+    "platformforge": "0.1.0",
 }
 OPS = ["describe", "health", "execute", "verify", "bogus"]
 
@@ -141,6 +155,8 @@ def test_adapter_ops_refuse_without_specialist(name: str, op: str) -> None:
         "apiforge": ("apiforge",),
         "doctordata": ("forge_doctor_data",),
         "doctorapi": ("forge_doctor_api",),
+        "sparkforge_azure": ("sparkforge_azure",),
+        "platformforge": ("platformforge",),
     }[name]
     if any(importlib.util.find_spec(mod) is not None for mod in specialist) or (
         name == "apiforge" and sys.version_info[:2] == (3, 12)
@@ -204,6 +220,14 @@ SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     "apiforge": ([sys.executable, "-m", "theforge_apiforge"], ("api-forge", "0.3.0")),
     "doctordata": ([sys.executable, "-m", "theforge_doctordata"], ("forge-doctor-data", "0.3.0")),
     "doctorapi": ([sys.executable, "-m", "theforge_doctorapi"], ("forge-doctor-api", "0.3.0")),
+    "sparkforge_azure": (
+        [sys.executable, "-m", "theforge_sparkforge_azure"],
+        ("spark-forge-azure", "0.1.0"),
+    ),
+    "platformforge": (
+        [sys.executable, "-m", "theforge_platformforge"],
+        ("platform-forge", "0.1.0"),
+    ),
 }
 
 

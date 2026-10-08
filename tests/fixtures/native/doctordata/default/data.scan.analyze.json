@@ -1221,10 +1221,9 @@
       "confidence": "high",
       "contract_version": "forge-contracts/1",
       "evidence_kind": "config",
-      "fingerprint": "5fab4cbb7c1789a4",
-      "message": "AWS CLI not found",
-      "recommendation": "Install AWS CLI v2 for SSO and credential helpers.",
-      "severity": "info",
+      "fingerprint": "986c847c0f8f0052",
+      "message": "aws-cli/2.36.38 detected",
+      "severity": "pass",
       "tags": [],
       "title": "AWS CLI"
     },
@@ -2029,18 +2028,6 @@
       "title": "PySpark usage"
     },
     {
-      "category": "sql",
-      "check_id": "SQL000",
-      "confidence": "high",
-      "contract_version": "forge-contracts/1",
-      "evidence_kind": "static",
-      "fingerprint": "34c6100caf55f14d",
-      "message": "no SQL statements parsed (2 skipped as unparseable)",
-      "severity": "info",
-      "tags": [],
-      "title": "SQL surface"
-    },
-    {
       "category": "search",
       "check_id": "SRCH000",
       "confidence": "high",
@@ -2116,7 +2103,7 @@
   "plans": [],
   "project": {
     "name": "shop",
-    "root": "stage"
+    "root": "E:\\projetos\\the-forger\\tests\\fixtures\\workspaces\\data\\shop"
   },
   "relationships": [
     {
@@ -2170,8 +2157,8 @@
   ],
   "summary": {
     "errors": 0,
-    "info": 20,
-    "passed": 50,
+    "info": 18,
+    "passed": 51,
     "warnings": 5
   },
   "tool": {

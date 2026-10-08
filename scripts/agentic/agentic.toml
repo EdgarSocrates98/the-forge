@@ -73,7 +73,7 @@ required = [
     "ambiguous", "sem LLM", "ExecutionResult",
     "security.redact", ".forge/runs/<id>/work/", "Credenciais nunca chegam ao env dos providers",
     "theforge/<Name>/v1", "python -m theforge.contracts.schema schemas",
-    "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge",
+    "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure",
     "python -m pytest", "python -m pytest -m slow", "ruff check .", "mypy",
 ]
 

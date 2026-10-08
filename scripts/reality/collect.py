@@ -104,6 +104,26 @@ SPECIALISTS: tuple[Specialist, ...] = (
         "forge_doctor_api",
         "adapters/doctorapi/src/theforge_doctorapi/native_surface.json",
     ),
+    Specialist(
+        "spark-forge-azure",
+        "https://github.com/EdgarSocrates98/spark-forge-azure",
+        "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON",
+        "theforge_sparkforge_azure",
+        "theforge-sparkforge-azure-adapter",
+        "sparkforge-azure",
+        "sparkforge_azure",
+        "adapters/sparkforge_azure/src/theforge_sparkforge_azure/native_surface.json",
+    ),
+    Specialist(
+        "platform-forge",
+        "https://github.com/EdgarSocrates98/platform-forge",
+        "THEFORGE_REAL_PLATFORMFORGE_PYTHON",
+        "theforge_platformforge",
+        "theforge-platformforge-adapter",
+        "platformforge",
+        "platformforge",
+        "adapters/platformforge/src/theforge_platformforge/native_surface.json",
+    ),
 )
 
 # The module the specialist is probed through differs from the distribution name
@@ -209,6 +229,8 @@ def _resolve_python(spec: Specialist, overrides: dict[str, str]) -> tuple[Path |
         "api-forge": "api",
         "forge-doctor-data": "dd",
         "forge-doctor-api": "da",
+        "spark-forge-azure": "spark-azure",
+        "platform-forge": "platform",
     }[spec.name]
     for rel in (f".venv-{tail}/Scripts/python.exe", f".venv-{tail}/bin/python"):
         candidate = ROOT / rel

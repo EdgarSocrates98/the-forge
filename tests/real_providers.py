@@ -3,7 +3,7 @@
 Only this test harness reads the variables below, to build the ``argv`` registered in the
 isolated user ``providers.toml`` of a test. They never reach a provider: the entry carries only
 ``id``/``argv``/``trust`` and the core's environment allowlist is unchanged. The variables are
-``THEFORGE_REAL_{SPARKFORGE_AWS,APIFORGE,DOCTORDATA,DOCTORAPI}_PYTHON``.
+``THEFORGE_REAL_{SPARKFORGE_AWS,APIFORGE,DOCTORDATA,DOCTORAPI,SPARKFORGE_AZURE,PLATFORMFORGE}_PYTHON``.
 
 Per Forge, in this order, each with an explicit reason: the variable is set, it names an
 existing interpreter (absolute path), and ``<python> -c "import <adapter>, <specialist>"``
@@ -31,6 +31,8 @@ SPARK_PYTHON_VAR = "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON"
 API_PYTHON_VAR = "THEFORGE_REAL_APIFORGE_PYTHON"
 DOCTORDATA_PYTHON_VAR = "THEFORGE_REAL_DOCTORDATA_PYTHON"
 DOCTORAPI_PYTHON_VAR = "THEFORGE_REAL_DOCTORAPI_PYTHON"
+SPARKAZURE_PYTHON_VAR = "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON"
+PLATFORM_PYTHON_VAR = "THEFORGE_REAL_PLATFORMFORGE_PYTHON"
 REQUIRED_VAR = "THEFORGE_REAL_PROVIDERS_REQUIRED"
 # Ecosystem-wide alias: a CI that sets THEFORGE_ECOSYSTEM_REQUIRED=1 means the same
 # thing — a missing prerequisite is a failure, never a silent skip.
@@ -104,6 +106,27 @@ FORGES: dict[str, ForgeSpec] = {
         "Forge Doctor API needs an interpreter with "
         "forge-doctor-api and theforge-doctorapi-adapter",
         "DOCTORAPI-ADAPTER-UNAVAILABLE",
+    ),
+    "sparkazure": ForgeSpec(
+        "sparkazure",
+        "Spark Forge Azure",
+        "spark-forge-azure",
+        SPARKAZURE_PYTHON_VAR,
+        "theforge_sparkforge_azure",
+        "sparkforge_azure",
+        "Spark Forge Azure needs an interpreter with "
+        "sparkforge-azure and theforge-sparkforge-azure-adapter",
+        "SPARKFORGE_AZURE-ADAPTER-UNAVAILABLE",
+    ),
+    "platform": ForgeSpec(
+        "platform",
+        "Platform Forge",
+        "platform-forge",
+        PLATFORM_PYTHON_VAR,
+        "theforge_platformforge",
+        "platformforge",
+        "Platform Forge needs an interpreter with platformforge and theforge-platformforge-adapter",
+        "PLATFORMFORGE-ADAPTER-UNAVAILABLE",
     ),
 }
 

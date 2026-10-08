@@ -11,7 +11,7 @@ Com os adapters reais, o catálogo passa a ter capabilities de dois Forges espec
 - Granularidade: uma capability por tipo de trabalho distinguível pelos sinais. Ferramentas nativas sobre o mesmo objeto viram ações. Uma ação só é declarada se é read-only, offline e preenchível com arquivos do workspace. Tudo o que não é exposto vai para `limitations` com o motivo.
 - Sobreposição entre providers é permitida para a mesma semântica e resolvida pelo routing existente (nota `capability-overlap`). Não há peso novo nem regra de domínio.
 - Evolução: uma capability publicada não muda de significado. Mudança incompatível vira capability nova, e a antiga recebe `deprecated` e, quando houver, `replaced_by`. Renomeação usa `aliases`, resolvidos para o ID canônico de forma determinística. Um alias com canônicos diferentes entre providers vira `ambiguous`. Um alias que colide no mesmo manifest deixa o provider `invalid`.
-- Regras completas, tabela mecânica e catálogo inicial (com a origem nativa de cada capability e o motivo de cada exclusão) estão em [capabilities.md](../capabilities.md). `tests/test_capability_catalog_doc.py` mantém esse catálogo igual ao describe em replay dos dois adapters.
+- Regras completas, tabela mecânica e catálogo inicial (com a origem nativa de cada capability e o motivo de cada exclusão) estão em [capabilities.md](../capabilities.md). `tests/test_capability_catalog_doc.py` mantém esse catálogo igual ao describe em replay de todos os adapters.
 
 ## Alternativas
 - **Uma capability por tool nativa:** é fiel à superfície, mas tem sinais repetidos, routing ambíguo e um catálogo que muda a cada tool nova do especialista.

@@ -1,0 +1,7 @@
+{
+  "conn-0001": {
+    "type": "adls_gen2",
+    "auth_kind": "workspace_identity",
+    "last_test": "ok"
+  }
+}

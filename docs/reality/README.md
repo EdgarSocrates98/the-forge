@@ -1,7 +1,7 @@
 # Specialist reality manifests
 
 `specialist-reality.json` é a representação canônica e machine-readable da
-realidade dos quatro specialists, coletada de evidência viva (não de relatórios
+realidade dos seis specialists, coletada de evidência viva (não de relatórios
 antigos) por:
 
 ```bash

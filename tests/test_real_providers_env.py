@@ -25,7 +25,10 @@ ALL_VARS = (
     rp.API_PYTHON_VAR,
     rp.DOCTORDATA_PYTHON_VAR,
     rp.DOCTORAPI_PYTHON_VAR,
+    rp.SPARKAZURE_PYTHON_VAR,
+    rp.PLATFORM_PYTHON_VAR,
     rp.REQUIRED_VAR,
+    rp.ECOSYSTEM_REQUIRED_VAR,
 )
 
 
@@ -57,6 +60,8 @@ def test_contract_variable_names() -> None:
     assert rp.API_PYTHON_VAR == "THEFORGE_REAL_APIFORGE_PYTHON"
     assert rp.DOCTORDATA_PYTHON_VAR == "THEFORGE_REAL_DOCTORDATA_PYTHON"
     assert rp.DOCTORAPI_PYTHON_VAR == "THEFORGE_REAL_DOCTORAPI_PYTHON"
+    assert rp.SPARKAZURE_PYTHON_VAR == "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON"
+    assert rp.PLATFORM_PYTHON_VAR == "THEFORGE_REAL_PLATFORMFORGE_PYTHON"
     assert rp.REQUIRED_VAR == "THEFORGE_REAL_PROVIDERS_REQUIRED"
     assert rp.IMPORT_TIMEOUT == 60.0
     assert {
@@ -81,6 +86,18 @@ def test_contract_variable_names() -> None:
             rp.DOCTORAPI_PYTHON_VAR,
             "theforge_doctorapi",
             "forge_doctor_api",
+        ),
+        "sparkazure": (
+            "spark-forge-azure",
+            rp.SPARKAZURE_PYTHON_VAR,
+            "theforge_sparkforge_azure",
+            "sparkforge_azure",
+        ),
+        "platform": (
+            "platform-forge",
+            rp.PLATFORM_PYTHON_VAR,
+            "theforge_platformforge",
+            "platformforge",
         ),
     }
 

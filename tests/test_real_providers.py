@@ -62,7 +62,7 @@ REPO = Path(__file__).parents[1]
 FIXTURES = REPO / "tests" / "fixtures"
 ADAPTERS = REPO / "adapters"
 # Native state directories / files the specialists write into their cwd.
-NATIVE_STATE = {".sparkforge", ".apiforge", "traces.db", "stage"}
+NATIVE_STATE = {".sparkforge", ".sparkforge-azure", ".apiforge", "traces.db", "stage"}
 # Credential-shaped variables set in the test process: none may reach a provider.
 # Values are random per session (never literals), so a leak check cannot match by accident.
 CREDENTIALS = {
@@ -139,6 +139,22 @@ CASES = {
         "analyze",
         ">=0.2.0,<0.3.0",
         ADAPTERS / "doctorapi" / "src" / "theforge_doctorapi" / "native_surface.json",
+    ),
+    "sparkazure": Case(
+        "sparkazure",
+        FIXTURES / "workspaces" / "azure" / "access-case",
+        "azure.access-diagnose",
+        "analyze",
+        ">=0.1.0,<0.2.0",
+        ADAPTERS / "sparkforge_azure" / "src" / "theforge_sparkforge_azure" / "native_surface.json",
+    ),
+    "platform": Case(
+        "platform",
+        FIXTURES / "workspaces" / "platform" / "iac",
+        "iac.analyze",
+        "analyze",
+        ">=0.1.0,<0.2.0",
+        ADAPTERS / "platformforge" / "src" / "theforge_platformforge" / "native_surface.json",
     ),
 }
 
@@ -227,6 +243,22 @@ def _recorded_evidence_shapes(case: Case) -> set[str]:
         return shapes | {
             rp.id_shape(x) for x in ("capability-registry", "platform-graph", "scan-summary")
         }
+    if case.name == "sparkazure":
+        # azure.access-diagnose: run-level ids ("diagnosis", "layer:<n>", "stages")
+        # plus "<rule_id>:file:<n>" for every evidence_paths file the adapter bound
+        # to a staged path (hash = the staged file's sha256).
+        diagnosis = recording.get("diagnosis")
+        layers = diagnosis.get("layers") if isinstance(diagnosis, dict) else None
+        shapes = {rp.id_shape(x) for x in ("diagnosis", "stages")}
+        shapes |= {rp.id_shape(f"layer:{i}") for i in range(len(layers or ()))}
+        paths = recording.get("evidence_paths") or {}
+        shapes |= {rp.id_shape(f"{fid}:file:9") for fid in paths}
+        return shapes
+    if case.name == "platform":
+        # iac.analyze: "facts" plus one "<fact_id>:file:<n>" per fact file the
+        # adapter bound to a staged path (hash = the staged file's sha256).
+        fids = {f.get("fact_id") for f in recording.get("facts", ()) if isinstance(f, dict)}
+        return {"facts"} | {rp.id_shape(f"{fid}:file:9") for fid in fids if isinstance(fid, str)}
     # doctorapi: "<finding id>#e<i>", per-section refs and fixed sections.
     bundle = recording["bundle"]
     fids = [
@@ -348,11 +380,25 @@ def _surface_diff(recorded: dict[str, Any], live: dict[str, Any]) -> list[str]:
             f"specialist_version {recorded.get('specialist_version')!r} -> "
             f"{live.get('specialist_version')!r}"
         )
+
+    def named(items: Any, key: str = "name") -> dict[str, Any]:
+        """A surface section as ``name -> entry``: a dict already, a list of names
+        (``["a", "b"]``), or a list of objects carrying ``name``/``capability_id``."""
+        if isinstance(items, dict):
+            return items
+        out: dict[str, Any] = {}
+        for item in items or ():
+            if isinstance(item, str):
+                out[item] = {}
+            elif isinstance(item, dict):
+                out[str(item.get(key) or item.get("capability_id") or item)] = item
+        return out
+
     if "tools" in recorded or "tools" in live:
-        old, new = recorded.get("tools", {}), live.get("tools", {})
+        old, new = named(recorded.get("tools")), named(live.get("tools"))
     else:
-        old = {c["capability_id"]: c for c in recorded.get("capabilities", [])}
-        new = {c["capability_id"]: c for c in live.get("capabilities", [])}
+        old = named(recorded.get("capabilities"), "capability_id")
+        new = named(live.get("capabilities"), "capability_id")
     for name in sorted(set(old) | set(new)):
         if name not in new:
             diff.append(f"removed {name}")
@@ -524,7 +570,7 @@ def _live_api_case(
 def _live_doctor_document(
     tmp_path: Path, user_config_dir: Path, case: Case, forge: rp.RealForge
 ) -> dict[str, Any]:
-    """The live bridge document of the action: the ``native/handoff.json`` artifact of a
+    """The live bridge document of the action: the single ``native/*.json`` artifact of a
     core run over a copy of the example workspace."""
     root = _workspace(tmp_path, case, user_config_dir, forge.entry())
     outcome, store = _ask(root, case)
@@ -532,8 +578,9 @@ def _live_doctor_document(
     assert outcome.result is not None
     work = store.work_dir(outcome.run_id)
     artifacts = {a.path for a in outcome.result.artifacts}
-    assert "native/handoff.json" in artifacts, artifacts
-    doc: dict[str, Any] = json.loads((work / "native" / "handoff.json").read_text(encoding="utf-8"))
+    natives = sorted(path for path in artifacts if path.startswith("native/"))
+    assert len(natives) == 1, artifacts
+    doc: dict[str, Any] = json.loads((work / natives[0]).read_text(encoding="utf-8"))
     return doc
 
 

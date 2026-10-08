@@ -395,7 +395,7 @@ Os valores ficam em `src/theforge/contracts/codes.py` e nunca mudam depois de pu
 | `FORGE-CONTEXT-REQUEST-INVALID` | context | `context_request` com 0 itens ou mais de 64 (`provider_failure`) |
 
 ## Códigos dos adapters reais
-Os adapters de Spark Forge AWS e API Forge ([ADR 0014](adr/0014-provider-adapter-location.md)) respondem com códigos próprios, que não são `FORGE-*` e não ficam em `codes.py`. Convenção: `ADAPTER-<X>` para a mecânica comum (`_shell.py`, igual nos dois), `<FORGE>-ADAPTER-<X>` para falhas originadas no adapter e `<FORGE>-<X>` (sem `ADAPTER`) só para erros nativos mapeados. Códigos `AF-*` do API Forge passam intactos, com `field` e `unlock`.
+Os seis adapters reais ([ADR 0014](adr/0014-provider-adapter-location.md)) respondem com códigos próprios, que não são `FORGE-*` e não ficam em `codes.py`. Convenção: `ADAPTER-<X>` para a mecânica comum (`_shell.py`, igual nos seis), `<FORGE>-ADAPTER-<X>` para falhas originadas no adapter e `<FORGE>-<X>` (sem `ADAPTER`) só para erros nativos mapeados. Códigos `AF-*` do API Forge, `SFA-*`/`SF-ACC-*` do Spark Forge Azure e `PF-*` do Platform Forge passam intactos, com `field` e `unlock`.
 
 | Código | Status | Causa |
 |---|---|---|
@@ -407,14 +407,14 @@ Os adapters de Spark Forge AWS e API Forge ([ADR 0014](adr/0014-provider-adapter
 | `ADAPTER-NATIVE-TIMEOUT` | `error` | a chamada nativa passou de 85% do timeout de execute do perfil; a árvore nativa é encerrada |
 | `ADAPTER-OUTPUT-TOO-LARGE` | `error` | o resultado passa de 4 MiB mesmo sem nenhum finding inline; nada é gravado |
 | `ADAPTER-REPLAY-MISSING` / `ADAPTER-REPLAY-INVALID` | `error` | em `--replay`, um arquivo do cenário (gravação da ação, `environment.json` ou `health.json`) não existe ou é inválido |
-| `SPARKFORGE_AWS-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12; nos Doctors, Python < 3.11) |
-| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` / `DOCTORDATA-ADAPTER-SNAPSHOT-INVALID` / `DOCTORAPI-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
+| `SPARKFORGE_AWS-ADAPTER-UNAVAILABLE` / `SPARKFORGE_AZURE-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `PLATFORMFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | `refused` | especialista não importável (no API, também Python ≠ 3.12; nos Doctors, Python < 3.11) |
+| `SPARKFORGE-ADAPTER-SNAPSHOT-INVALID` / `SPARKFORGE_AZURE-ADAPTER-SNAPSHOT-INVALID` / `APIFORGE-ADAPTER-SNAPSHOT-INVALID` / `PLATFORMFORGE-ADAPTER-SNAPSHOT-INVALID` / `DOCTORDATA-ADAPTER-SNAPSHOT-INVALID` / `DOCTORAPI-ADAPTER-SNAPSHOT-INVALID` | `error` | snapshot empacotado da superfície nativa ausente ou ilegível |
 | `SPARKFORGE-ADAPTER-NATIVE-FAILED` | `error` | o processo filho nativo saiu com código ≠ 0 ou com stdout truncado |
-| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` / `DOCTORDATA-ADAPTER-NATIVE-INVALID` / `DOCTORAPI-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
+| `SPARKFORGE-ADAPTER-NATIVE-INVALID` / `SPARKFORGE_AZURE-ADAPTER-NATIVE-INVALID` / `APIFORGE-ADAPTER-NATIVE-INVALID` / `PLATFORMFORGE-ADAPTER-NATIVE-INVALID` / `DOCTORDATA-ADAPTER-NATIVE-INVALID` / `DOCTORAPI-ADAPTER-NATIVE-INVALID` | `error` | saída nativa fora do formato esperado |
 | `APIFORGE-ADAPTER-NATIVE-FAILURE` | `error` | a CLI saiu com erro sem uma linha `AF-*` reconhecível |
 | `APIFORGE-ADAPTER-INPUT-OUTSIDE` | `refused` | caminho do bundle de `change-control` fora do workspace |
-| `DOCTORDATA-ADAPTER-NATIVE-FAILURE` / `DOCTORAPI-ADAPTER-NATIVE-FAILURE` | `error` | o bridge saiu com código ≠ 0 sem uma linha `FDD-*`/`FDA-*` reconhecível |
-| `FDD-REQUEST-INVALID` / `FDA-REQUEST-INVALID` | `refused` | requisição ou entrada staged malformada (exit 2 do bridge), `field=request` |
+| `SPARKFORGE_AZURE-ADAPTER-NATIVE-FAILURE` / `PLATFORMFORGE-ADAPTER-NATIVE-FAILURE` / `DOCTORDATA-ADAPTER-NATIVE-FAILURE` / `DOCTORAPI-ADAPTER-NATIVE-FAILURE` | `error` | o bridge saiu com código ≠ 0 sem uma linha `SFA-*`/`PF-*`/`FDD-*`/`FDA-*` reconhecível |
+| `SFA-REQUEST-INVALID` / `PF-REQUEST-INVALID` / `FDD-REQUEST-INVALID` / `FDA-REQUEST-INVALID` | `refused` | requisição ou entrada staged malformada (exit 2 do bridge), `field=request` |
 | `FDD-*` / `FDA-*` (demais) | `error` | falha nativa do Doctor (exit 1 do bridge): tipo+mensagem no `detail` |
 | `SPARKFORGE-TOOL-UNKNOWN` | `refused` | tool nativa inexistente |
 | `SPARKFORGE-<código nativo>` / `SPARKFORGE-TOOL-ERROR` | `refused` ou `error` | erro nativo: tipado ou exit 2 → `refused`, senão `error` |
