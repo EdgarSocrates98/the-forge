@@ -20,7 +20,7 @@ and translates only what the shape proves:
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import replace
 from typing import Any
 
@@ -59,10 +59,10 @@ def _clip(text: object, limit: int = CLAIM_LIMIT) -> str:
     return value if len(value) <= limit else value[: limit - 1] + "…"
 
 
-def _staged(stage: object, ref: str) -> str | None:
+def _staged(stage: StagedInput, ref: str) -> str | None:
     """The staged path a native file reference names: exact match, else the unique
     basename match. ``None`` when the reference names no staged file (or several)."""
-    files = getattr(stage, "files", None) or {}
+    files = stage.files
     normalized = ref.replace("\\", "/").lstrip("/")
     if normalized in files:
         return normalized
@@ -72,7 +72,12 @@ def _staged(stage: object, ref: str) -> str | None:
 
 
 def _evidence(
-    eid: str, subject: str, claim: str, *, stage: object | None = None, file: str | None = None
+    eid: str,
+    subject: str,
+    claim: str,
+    *,
+    stage: StagedInput | None = None,
+    file: str | None = None,
 ) -> dict[str, Any]:
     entry: dict[str, Any] = {
         "id": eid,
@@ -80,12 +85,13 @@ def _evidence(
         "subject": subject,
         "claim": _clip(claim),
     }
-    path = _staged(stage, file) if stage is not None and file else None
-    if path is not None:
-        # Adapter-verified binding: the hash is the staged file's verified sha256,
-        # never a value the specialist reported.
-        entry["location"] = {"path": path, "line": None}
-        entry["hash"] = stage.files[path]
+    if stage is not None and file:
+        path = _staged(stage, file)
+        if path is not None:
+            # Adapter-verified binding: the hash is the staged file's verified sha256,
+            # never a value the specialist reported.
+            entry["location"] = {"path": path, "line": None}
+            entry["hash"] = stage.files[path]
     return entry
 
 
@@ -142,7 +148,7 @@ def _fact_files(fact: Mapping[str, Any]) -> list[str]:
 
 
 def _analyze(
-    document: Mapping[str, Any], artifact_ref: str, capability: str, stage: object | None
+    document: Mapping[str, Any], artifact_ref: str, capability: str, stage: StagedInput | None
 ) -> ResultDraft:
     findings: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
@@ -242,7 +248,7 @@ def _manifest(document: Mapping[str, Any], artifact_ref: str, capability: str) -
     return ResultDraft(provider_id=PROVIDER_ID, version=VERSION, evidence=evidence)
 
 
-_TRANSLATORS = {
+_TRANSLATORS: dict[str, Callable[..., ResultDraft]] = {
     "platform.manifest": _manifest,
 }
 
@@ -256,7 +262,7 @@ def translate(
     capability: str,
     action: str,
     artifact_hash: str,
-    stage: object | None = None,
+    stage: StagedInput | None = None,
 ) -> Reply | ResultDraft:
     """The native document as a ``ResultDraft`` (artifact already stored)."""
     if not isinstance(document, Mapping):

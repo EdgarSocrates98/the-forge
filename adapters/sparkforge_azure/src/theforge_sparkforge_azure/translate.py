@@ -19,7 +19,7 @@ the shape proves, never remodelling internals:
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import replace
 from typing import Any
 
@@ -53,10 +53,10 @@ def _clip(text: object, limit: int = CLAIM_LIMIT) -> str:
     return value if len(value) <= limit else value[: limit - 1] + "…"
 
 
-def _staged(stage: object, ref: str) -> str | None:
+def _staged(stage: StagedInput, ref: str) -> str | None:
     """The staged path a native file reference names: exact match, else the unique
     basename match. ``None`` when the reference names no staged file (or several)."""
-    files = getattr(stage, "files", None) or {}
+    files = stage.files
     normalized = ref.replace("\\", "/").lstrip("/")
     if normalized in files:
         return normalized
@@ -66,7 +66,12 @@ def _staged(stage: object, ref: str) -> str | None:
 
 
 def _evidence(
-    eid: str, subject: str, claim: str, *, stage: object | None = None, file: str | None = None
+    eid: str,
+    subject: str,
+    claim: str,
+    *,
+    stage: StagedInput | None = None,
+    file: str | None = None,
 ) -> dict[str, Any]:
     entry: dict[str, Any] = {
         "id": eid,
@@ -74,12 +79,13 @@ def _evidence(
         "subject": subject,
         "claim": _clip(claim),
     }
-    path = _staged(stage, file) if stage is not None and file else None
-    if path is not None:
-        # Adapter-verified binding: the hash is the staged file's verified sha256,
-        # never a value the specialist reported.
-        entry["location"] = {"path": path, "line": None}
-        entry["hash"] = stage.files[path]
+    if stage is not None and file:
+        path = _staged(stage, file)
+        if path is not None:
+            # Adapter-verified binding: the hash is the staged file's verified sha256,
+            # never a value the specialist reported.
+            entry["location"] = {"path": path, "line": None}
+            entry["hash"] = stage.files[path]
     return entry
 
 
@@ -131,7 +137,7 @@ def _sdd(document: Mapping[str, Any], artifact_ref: str, capability: str) -> Res
 
 
 def _diagnose(
-    document: Mapping[str, Any], artifact_ref: str, capability: str, stage: object | None
+    document: Mapping[str, Any], artifact_ref: str, capability: str, stage: StagedInput | None
 ) -> ResultDraft:
     findings: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
@@ -220,7 +226,7 @@ def _doctor(document: Mapping[str, Any], artifact_ref: str, capability: str) -> 
     )
 
 
-_TRANSLATORS = {
+_TRANSLATORS: dict[str, Callable[..., ResultDraft]] = {
     "sdd.check": _sdd,
     "sdd.status": _sdd,
     "azure.access-diagnose": _diagnose,
