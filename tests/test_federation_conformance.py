@@ -16,7 +16,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -142,9 +141,7 @@ class TestFederatedChains:
         """Every ``can_verify``/``verified_by`` the doctors declare names a
         capability that exists in the federated graph — a doctor must never
         point at a capability nobody offers."""
-        offered = {
-            f"{m.id}/{c.id}" for m in manifests.values() for c in m.capabilities
-        }
+        offered = {f"{m.id}/{c.id}" for m in manifests.values() for c in m.capabilities}
         verifiable = [
             ref
             for m in manifests.values()
@@ -153,9 +150,9 @@ class TestFederatedChains:
         ]
         for ref in verifiable:
             provider, _, _cap_id = ref.partition("/")
-            assert ref in offered or any(
-                ref.startswith(f"{pid}/") for pid in ADAPTERS
-            ), f"verifier ref {ref} resolves to nothing in the federation"
+            assert ref in offered or any(ref.startswith(f"{pid}/") for pid in ADAPTERS), (
+                f"verifier ref {ref} resolves to nothing in the federation"
+            )
 
     def test_accepting_capabilities_have_intake(self, manifests) -> None:
         """A capability that declares ``relations.consumes`` must also declare

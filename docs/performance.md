@@ -30,10 +30,53 @@ python scripts/bench/run_bench.py --budgets-from scripts/bench/baseline.json [--
 | `plan_validate` | `check_plan` de um plano `pipeline` de 32 nós encadeados |
 | `replay_verify` | `verify_run_hashes` de um run real com o eco |
 | `explain_build` | `build_explain_report` de um run real com o eco |
+| `memory_pack` | `memory_pack` escopado sobre store semeado de 240 entradas (Cycle 5.1) |
+| `plan_simulate` | `simulate_plan` do plano de 32 nós (Cycle 5.1) |
+| `target_negotiate` | `negotiate_target` sobre targets local/remoto/isolado (Cycle 5.1) |
+| `receipt_validate` | `accept_receipt` — binding de receipt remoto (Cycle 5.1) |
+| `observation_write` | `record_observation` — append JSONL bounded (Cycle 5.1) |
 
 O planner semântico não entra no SLA determinístico: é medido à parte pelo
 `run_runs_bench.py` (métrica `semantic_calls` por caso — Wave P), nunca por budget
 de latência aqui.
+
+## Suite de cenários do Cycle 5.1
+
+`scripts/bench/run_scenarios.py` (§64-66 do ciclo): B01–B15, cenários
+comportamentais cronometrados — cada um exercita uma superfície do Cycle 5 pela
+API real e falha se o comportamento divergir. Saída
+`{"schema": "theforge-cycle5-scenarios/v1", "environment", "commit_sha",
+"specialist_shas", "surface_hashes", "results"}`; replays vêm de
+`tests/fixtures/native/*` (conformidade de fixture, não execução real — o
+relatório declara). Resultados medidos: `docs/reports/cycle-5.1-scenarios.json`.
+
+```bash
+python scripts/bench/run_scenarios.py [--runs N] [--out PATH]   # exit 1 se algum B falha
+```
+
+| Cenário | Superfície provada |
+|---|---|
+| B01 | plano determinístico — mesmas violations, mesmo sha256 |
+| B02 | cadeia produces→consumes federada (doctor-data → spark/api) |
+| B03 | routing ambíguo nunca chuta — fallback semântico é opt-in |
+| B04 | drift de surface invalida relação, memória e política |
+| B05 | pack de memória escopado vs store inteiro |
+| B06 | linhas corrompidas ignoradas e contadas, nunca entregues |
+| B07 | alvo remoto deny-by-default, allowlist monotônica |
+| B08 | verificação independente: `verified_by` ⇒ independent; `can_verify` sozinho ⇒ forge + limitação nomeada |
+| B09 | precedência do Global Stop: autoridade global > verificação > evidência |
+| B10 | StrategyPolicy muda ordering só dentro do escopo |
+| B11 | conflitos declarados viram arestas/ambiguidade, nunca escolha silenciosa |
+| B12 | specialist indisponível é nomeado, nunca dropado |
+| B13 | receipt forjado rejeitado por binding; honesto aceito |
+| B14 | card A2A auto-declarado permanece externo/não verificado |
+| B15 | import cross-project: só `portable`/`organization` cruzam |
+
+## Memory ROI
+
+`scripts/bench/run_memory_roi.py` mede memory-on vs memory-off (bytes de
+contexto, custo de retrieval, influência pelo canal governado, segurança).
+Relatório: `docs/reports/cycle-5.1-memory-roi.md`.
 
 ## Benchmark de economia de contexto
 
@@ -101,6 +144,20 @@ Arquivo: `scripts/bench/budgets.json`. Regra (gerada por `--budgets-from`): `bud
 | `context_10k_cold` | 3 348,102 | 1,5 | 5 022,153 | 196,159 |
 | `context_10k_warm` | 3 817,534 | 1,5 | 5 726,301 | 196,742 |
 | `persist_run` | 14,741 | 1,5 | 22,111 | 10,665 |
+
+Budgets das medições do Cycle 5.1 (baseline = `docs/reports/cycle-5.1-hotpaths.json`,
+mesma máquina, `--quick`, fator 1,5 — origem registrada em `budgets.json`):
+
+| Medição | Baseline (ms) | Budget (ms) |
+|---|---:|---:|
+| `memory_pack` | 54,73 | 82,10 |
+| `plan_simulate` | 1,84 | 2,75 |
+| `target_negotiate` | 0,03 | 0,05 |
+| `receipt_validate` | 0,05 | 0,08 |
+| `observation_write` | 6,31 | 9,46 |
+
+Remedição Cycle 5.1: 21 medições, 0 regressões (artefato
+`docs/reports/cycle-5.1-hotpaths.json`, commit `devin/cycle5-final`).
 
 Origem da remedição final (`scripts/bench/final.json`, `--quick`, 3 repetições): AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel; Windows-10-10.0.26300-SP0; CPython 3.11.15; 2026-10-04T15:33:14Z; The Forge 0.1.0; commit `68eb7ef` com worktree sujo (`git_dirty: true`; o commit seguinte, `f637e2a`, só acrescenta `budgets.json` e `final.json`). Comparação contra os budgets: 0 regressões em 11 medições. Uma remedição anterior com 10 repetições, feita com a máquina carregada (pouca memória livre e outro processo ativo), acusou `registry_warm` (28,1 ms) e `scan_1k` (1 481,6 ms) acima do budget; a repetição em máquina quieta não as reproduziu, então foram tratadas como ruído. O contexto frio ficou ~8× (1k) e ~17× (10k) mais rápido pela nova seleção limitada por perfil (medianas `context_*_cold`); no contexto quente o cache evita reler os 64 arquivos selecionados (`files_hashed=0`, `cache_hits=64`), mas não reduz o tempo de parede nesse tamanho, pois carregar e gravar o JSON do cache custa tanto ou mais que reler ~125 KB.
 
