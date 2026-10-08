@@ -1,0 +1,5 @@
+{
+  "provenance": "hand-built",
+  "exit_code": 2,
+  "stderr": "SFA-REQUEST-INVALID: bundle missing case.yaml: stage\n"
+}

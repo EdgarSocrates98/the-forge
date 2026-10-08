@@ -1,0 +1,29 @@
+{
+ "assignments": [
+  {
+   "principal": "mi-1",
+   "role": "Storage Blob Data Contributor",
+   "scope": "/subscriptions/s1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stg/blobServices/default/containers/lake"
+  },
+  {
+   "principal": "mi-2",
+   "role": "Storage Blob Data Contributor",
+   "scope": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-bkp/providers/Microsoft.Storage/storageAccounts/stg"
+  },
+  {
+   "principal": "mi-3",
+   "role": "Storage Blob Data Reader",
+   "scope": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-sbx/providers/Microsoft.Storage/storageAccounts/stg2"
+  },
+  {
+   "principal": "spn-job-1",
+   "role": "Reader",
+   "scope": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg"
+  },
+  {
+   "principal": "grp-finance-ro",
+   "role": "Storage Blob Data Reader",
+   "scope": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stg"
+  }
+ ]
+}
