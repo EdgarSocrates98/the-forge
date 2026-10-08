@@ -94,8 +94,7 @@ class TestTransitions:
         from dataclasses import replace
 
         sourced = make_entry(subject="s", claim="c")
-        orphan = make_entry(subject="o", claim="orphan", epistemic="unresolved",
-                            evidence_refs=[])
+        orphan = make_entry(subject="o", claim="orphan", epistemic="unresolved", evidence_refs=[])
         orphan = replace(orphan, source_refs=[])
         for e in (sourced, orphan):
             assert memory_store.record_entry(tmp_path, e) is None
@@ -127,13 +126,9 @@ class TestTransitions:
 
 class TestRetrieval:
     def test_pack_filters_and_echoes_query(self, tmp_path: Path) -> None:
-        memory_store.record_entry(tmp_path, make_entry(subject="kafka", claim="a",
-                                                       provider="p1"))
-        memory_store.record_entry(tmp_path, make_entry(subject="api", claim="b",
-                                                       provider="p2"))
-        pack, _ = memory_store.memory_pack(
-            tmp_path, memory_store.MemoryQuery(provider="p1")
-        )
+        memory_store.record_entry(tmp_path, make_entry(subject="kafka", claim="a", provider="p1"))
+        memory_store.record_entry(tmp_path, make_entry(subject="api", claim="b", provider="p2"))
+        pack, _ = memory_store.memory_pack(tmp_path, memory_store.MemoryQuery(provider="p1"))
         assert pack.total_matches == 1
         assert pack.entries[0].provider == "p1"
         assert pack.query == {"provider": "p1"}
@@ -205,13 +200,11 @@ class TestCrossProject:
         src_dir = tmp_path / "a"
         dst_dir = tmp_path / "b"
         memory_store.record_entry(src_dir, make_entry(subject="private", claim="x"))
-        memory_store.record_entry(
-            src_dir, self.portable(subject="shared", claim="y")
-        )
+        memory_store.record_entry(src_dir, self.portable(subject="shared", claim="y"))
         exported, _ = memory_store.export_entries(src_dir)
         imported, warning = memory_store.import_entries(
-            dst_dir, [to_dict(e) for e in exported]
-            + [to_dict(make_entry(subject="private", claim="x"))]
+            dst_dir,
+            [to_dict(e) for e in exported] + [to_dict(make_entry(subject="private", claim="x"))],
         )
         assert imported == 1
         assert warning and "refused 1" in warning
@@ -273,17 +266,16 @@ class TestLearnFromRun:
 
 
 class TestCLI:
-    def test_memory_list_and_learn(self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
-                                   monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_memory_list_and_learn(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from theforge.cli.main import build_parser
         from theforge.state import init_workspace
 
         init_workspace(tmp_path)
         parser = build_parser()
 
-        args = parser.parse_args(
-            ["memory", "list", "--root", str(tmp_path), "--json"]
-        )
+        args = parser.parse_args(["memory", "list", "--root", str(tmp_path), "--json"])
         assert args.handler(args) == 0
         out = json.loads(capsys.readouterr().out)
         assert out["total_matches"] == 0

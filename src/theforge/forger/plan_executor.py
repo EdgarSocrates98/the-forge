@@ -873,9 +873,7 @@ class PlanExecutor:
         if outcome.error is not None and family_of(outcome.error.code) == "policy":
             return node.id, "policy-blocked"
         failures = sum(
-            e.outcome.attempts
-            for e in trace.executions
-            if e.outcome.status == "provider_failure"
+            e.outcome.attempts for e in trace.executions if e.outcome.status == "provider_failure"
         )
         if failures >= max(2, trace.retry_policy.max_attempts):
             return node.id, "repeated-failure"
@@ -1389,9 +1387,7 @@ def _terminal_state(status: Outcome) -> PlanRunState:
     return "partial" if status == "partial" else "failed"
 
 
-def _condition_unmet(
-    node: PlanNode, executions: Sequence[NodeExecution]
-) -> tuple[str, str] | None:
+def _condition_unmet(node: PlanNode, executions: Sequence[NodeExecution]) -> tuple[str, str] | None:
     """``(blocker, detail)`` when the node's ``condition`` is not met by the
     recorded outcomes; None when the node may run. Only labels the core knows
     reach here — unknown ones were rejected at plan validation."""
@@ -1403,9 +1399,7 @@ def _condition_unmet(
     if not deps:
         return None  # validation requires depends_on for conditional nodes
     if condition == "on-failure":
-        failed = [
-            d for d in deps if outcomes.get(d) in ("provider_failure", "refused", "skipped")
-        ]
+        failed = [d for d in deps if outcomes.get(d) in ("provider_failure", "refused", "skipped")]
         if failed:
             return None
         return deps[0], "condition 'on-failure' unmet: no dependency failed"
@@ -1441,9 +1435,7 @@ def _condition_skipped(node: PlanNode, blocker: str, detail: str) -> NodeExecuti
         status="skipped",
         blocked_by=blocker,
         error=ErrorInfo(code=Codes.PLAN_GLOBAL_STOP, detail=f"node {node.id}: {detail}"),
-        reproducibility=ReproducibilityInfo(
-            level="unknown", reasons=[f"not executed: {detail}"]
-        ),
+        reproducibility=ReproducibilityInfo(level="unknown", reasons=[f"not executed: {detail}"]),
     )
     return NodeExecution(node=node, outcome=outcome, result=None, handoff=None, provider=None)
 

@@ -77,9 +77,7 @@ def load_policy(path: Path | None) -> RemotePolicy:
     return RemotePolicy(
         policy_ref=str(pol.get("policy_ref", "")),
         allowed_target_ids=sorted(str(i) for i in pol.get("allowed_target_ids", [])),
-        allowed_identity_refs=sorted(
-            str(i) for i in pol.get("allowed_identity_refs", [])
-        ),
+        allowed_identity_refs=sorted(str(i) for i in pol.get("allowed_identity_refs", [])),
         max_data_classification=pol.get("max_data_classification", "internal"),
         require_healthy=bool(pol.get("require_healthy", True)),
     )
@@ -96,10 +94,7 @@ def evaluate_remote_policy(
         reasons.append(f"type {target.type!r} is not remote")
     if target.id not in policy.allowed_target_ids:
         reasons.append(f"target {target.id!r} not in allowed_target_ids")
-    if (
-        policy.allowed_identity_refs
-        and target.identity_ref not in policy.allowed_identity_refs
-    ):
+    if policy.allowed_identity_refs and target.identity_ref not in policy.allowed_identity_refs:
         reasons.append(f"identity {target.identity_ref!r} not in allowed_identity_refs")
     if target.network != "egress":
         reasons.append("remote target without egress network")
@@ -110,22 +105,21 @@ def evaluate_remote_policy(
         # Contract-capped at 'unverified': org promotion is expressed by the
         # policy allowlist + identity pinning, not by the target record.
         if target.id not in policy.allowed_target_ids or (
-            policy.allowed_identity_refs
-            and target.identity_ref not in policy.allowed_identity_refs
+            policy.allowed_identity_refs and target.identity_ref not in policy.allowed_identity_refs
         ):
             reasons.append("a2a-agent requires explicit org promotion in policy")
     elif _TRUST_RANK[target.trust] < _TRUST_RANK[floor]:
         reasons.append(f"trust {target.trust!r} below required {floor!r}")
     if not target.admits(requirement.data_classification):
-        reasons.append(
-            f"data_classification {requirement.data_classification!r} not admitted"
-        )
+        reasons.append(f"data_classification {requirement.data_classification!r} not admitted")
     # Remote ceiling: only public/internal can ever leave the boundary, and the
     # policy can lower it further (e.g. public-only).
     _CLASS_RANK = {"public": 0, "internal": 1}
-    if requirement.data_classification not in _CLASS_RANK or _CLASS_RANK[
-        requirement.data_classification
-    ] > _CLASS_RANK[policy.max_data_classification]:
+    if (
+        requirement.data_classification not in _CLASS_RANK
+        or _CLASS_RANK[requirement.data_classification]
+        > _CLASS_RANK[policy.max_data_classification]
+    ):
         reasons.append(
             f"data_classification {requirement.data_classification!r} exceeds "
             f"policy ceiling {policy.max_data_classification!r}"
@@ -175,9 +169,7 @@ def build_request(
     )
 
 
-def accept_receipt(
-    receipt: RemoteExecutionReceipt, request: RemoteExecutionRequest
-) -> list[str]:
+def accept_receipt(receipt: RemoteExecutionReceipt, request: RemoteExecutionRequest) -> list[str]:
     """Replay binding check: every mismatch is a violation, never silent."""
     violations: list[str] = []
     if receipt.request_sha256 != request_sha256(request):

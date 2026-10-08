@@ -8,6 +8,78 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### 0.3.0 — Cycle 5
+
+Federated Engineering Intelligence & Execution: the platform remembers
+engineering facts with provenance, negotiates provider×target pairs, gates
+remote execution behind deny-by-default policy, promotes strategy only with
+experiment evidence plus approval, and correlates federated traces — without
+letting semantic planning, economy or external claims override determinism.
+
+#### Added
+
+- `EngineeringMemoryEntry/v1` + `MemoryPack/v1` + `FailurePattern/v1`:
+  append-only `.forge/memory/entries.jsonl` store with epistemic states,
+  evidence/decision refs, scope isolation (project/workspace never export;
+  portable/org require origin classification + redaction), staleness by
+  surface fingerprint, `learn_from_run`, and `theforge memory
+  list|learn|export|summarize`.
+- Capability Graph v2: `accepts`/`verifies`/`refines`/`verified_by`/
+  `specializes` manifest relations, intelligence nodes (`decision`,
+  `failure`, `memory`, `execution`, `file`, `component`) and edges
+  (`verifies`, `derived_from`, `supersedes`, `executed_by`, `supports`,
+  `specializes`, `conflicts_with`) in the WorkspaceGraph;
+  `relation_fresh` for surface-scoped relation staleness.
+- Planner v2: `PlanSimulation/v1` artifact (pre-execution estimate linked
+  from `PlanRefs.simulation_sha256`), optional-node semantics that never
+  prune `verification_required` nodes, `condition` label evaluation,
+  `FORGE-PLAN-GLOBAL-STOP` early-stop receipt linkage, and per-node
+  `execution_target` resolution inside simulation.
+- `ExecutionTarget/v1` + `TargetRequirement`/`TargetAssignment`: declared
+  `targets.toml` (project overrides user by id), structural caps
+  (remote types never carry `confidential`/`restricted`/`unknown`; A2A
+  targets are `public`-only and capped at `unverified` trust), deterministic
+  negotiation ordered locality > health > trust > id, named refusals.
+- Remote trust model: `RemoteExecutionRequest/v1` (fully hash-bound:
+  task/context/budget/surface/target/policy/artifacts) and
+  `RemoteExecutionReceipt/v1` with replay binding — `build_request` +
+  `accept_receipt` enforce deny-by-default, monotonic `remote-policy.toml`
+  (allowlists, identity pinning, `max_data_classification`). No transport
+  in core.
+- Governed learning: `StrategyPolicy/v1` promotion from
+  `StrategyExperiment` evidence — requires mature sample, quality
+  non-regression, measured improvement, explicit `approval_sha256`;
+  surface-scoped policies go stale on provider surface change; policy
+  preference orders candidates only after compatibility hard gates.
+- Federated trace v2: `RunTelemetry.correlation_id`/`parent_run` propagate
+  plan→node correlation (`THEFORGE_CORRELATION_ID` for federated roots);
+  native provider traces remain opaque non-dereferenceable refs.
+- Economy v2: `ProviderEconomyReceipt` gains `remote_calls`,
+  `artifact_bytes`, `verification_calls`, `retry_calls` axes — same
+  measured/estimated/unresolved/not_applicable discipline; economy never
+  overrides classification/locality policy.
+- Registry org tier: `SourceSpec.tier` (`public`|`org`) propagates
+  `source_tier` onto `RemoteProviderCandidate` for downstream policy;
+  tier is a claim, never trust, and never overrides installed local
+  reality.
+- A2A 1.0 refresh: emitted cards carry `supportedInterfaces`;
+  `entry_from_card` prefers `supportedInterfaces[0]` with `url` fallback.
+
+#### Security / integrity
+
+- Adversarial battery `tests/test_adversarial_cycle5.py`: poisoned memory,
+  fake graph edges, fake remote candidates, fake Agent Cards, MCP spoof,
+  self-reputation, prompt-injection evidence, forged approval, surface
+  swap, cross-project leakage, forged trust/policy data.
+- Remote requests refuse `confidential`/`restricted`/`unknown` egress and
+  require `policy_ref` for allow; receipts must echo request identity and
+  cover expected artifacts — mismatches are named violations.
+- `confirmed` memory requires evidence; portable/org entries require
+  origin classification and redaction evidence; import of
+  project/workspace scope is default-deny.
+- Strategy policies can never lift incompatible or unsupported providers;
+  forged approvals and stale surfaces invalidate the policy.
+
 ### 0.2.1 — Cycle 4.1
 
 Status: implementation in progress on the Cycle 4.1 branch; remote release

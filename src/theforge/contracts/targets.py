@@ -33,9 +33,7 @@ DATA_CLASSIFICATIONS: tuple[str, ...] = (
     "restricted",
     "unknown",
 )
-DataClassification = Literal[
-    "public", "internal", "confidential", "restricted", "unknown"
-]
+DataClassification = Literal["public", "internal", "confidential", "restricted", "unknown"]
 
 _REMOTE_TYPES: frozenset[str] = frozenset({"remote-forge", "a2a-agent"})
 _LOCAL_TYPES: frozenset[str] = frozenset({"local", "isolated-local"})
@@ -85,9 +83,7 @@ class ExecutionTarget:
             raise ContractError("execution target: id must not be empty")
         unknown_class = [c for c in self.data_classes if c not in DATA_CLASSIFICATIONS]
         if unknown_class:
-            raise ContractError(
-                f"execution target: unknown data_classes {unknown_class}"
-            )
+            raise ContractError(f"execution target: unknown data_classes {unknown_class}")
         # Type cap: no target may *declare* permission for data its type
         # cannot carry. The cap is structural, not policy — it cannot be
         # waived by configuration.
@@ -100,8 +96,7 @@ class ExecutionTarget:
         if self.type in _REMOTE_TYPES:
             if not self.identity_ref:
                 raise ContractError(
-                    f"execution target {self.id!r}: remote type {self.type!r} "
-                    "requires identity_ref"
+                    f"execution target {self.id!r}: remote type {self.type!r} requires identity_ref"
                 )
             if self.trust == "unverified" and not self.limitations:
                 object.__setattr__(
@@ -154,8 +149,7 @@ class TargetRequirement:
     def __post_init__(self) -> None:
         if self.data_classification not in DATA_CLASSIFICATIONS:
             raise ContractError(
-                f"target requirement: unknown data_classification "
-                f"{self.data_classification!r}"
+                f"target requirement: unknown data_classification {self.data_classification!r}"
             )
         if self.isolation_required and self.locality != "isolated":
             object.__setattr__(self, "locality", "isolated")
@@ -184,9 +178,7 @@ class TargetNegotiation:
         if not self.provider or not self.capability:
             raise ContractError("target negotiation: provider/capability are required")
         if self.selected is not None and self.selected not in self.candidates:
-            raise ContractError(
-                "target negotiation: selected target must be one of the candidates"
-            )
+            raise ContractError("target negotiation: selected target must be one of the candidates")
         if not self.candidates and not self.refusals:
             raise ContractError(
                 "target negotiation: no candidates and no refusals is not an answer"

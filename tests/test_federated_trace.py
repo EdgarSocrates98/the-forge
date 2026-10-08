@@ -58,18 +58,14 @@ class TestCorrelation:
             PlanCommand(intent="corr", profile="max", plan_file=plan_file, execute=True)
         )
         assert out.status == "ok"
-        telemetry = from_dict(
-            RunTelemetry, store.read(out.run_id, "telemetry"), "$", strict=True
-        )
+        telemetry = from_dict(RunTelemetry, store.read(out.run_id, "telemetry"), "$", strict=True)
         assert telemetry.correlation_id == out.run_id
         assert telemetry.parent_run is None
 
     def test_node_run_inherits_correlation(self, tmp_path: Path) -> None:
         forge_dir = make_workspace(tmp_path, [SPARK_PLAN_ENTRY])
         store = RunStore(forge_dir)
-        plan_file = _plan_file(
-            tmp_path / "p.json", [_node("a"), _node("b", action="review")]
-        )
+        plan_file = _plan_file(tmp_path / "p.json", [_node("a"), _node("b", action="review")])
         out = PlanExecutor(Forger(tmp_path, Registry(forge_dir), store)).run(
             PlanCommand(intent="corr", profile="max", plan_file=plan_file, execute=True)
         )
@@ -92,22 +88,17 @@ class TestCorrelation:
         out = PlanExecutor(Forger(tmp_path, Registry(forge_dir), store)).run(
             PlanCommand(intent="corr", profile="max", plan_file=plan_file, execute=True)
         )
-        plan_t = from_dict(
-            RunTelemetry, store.read(out.run_id, "telemetry"), "$", strict=True
-        )
+        plan_t = from_dict(RunTelemetry, store.read(out.run_id, "telemetry"), "$", strict=True)
         assert plan_t.correlation_id == "fed-42"
         node_run = out.result.nodes[0].run_id
-        node_t = from_dict(
-            RunTelemetry, store.read(node_run, "telemetry"), "$", strict=True
-        )
+        node_t = from_dict(RunTelemetry, store.read(node_run, "telemetry"), "$", strict=True)
         assert node_t.correlation_id == "fed-42"
 
 
 class TestEconomyV2:
     def test_federated_axes_exist_unresolved(self) -> None:
         receipt = ProviderEconomyReceipt(provider="p")
-        for name in ("remote_calls", "artifact_bytes", "verification_calls",
-                     "retry_calls"):
+        for name in ("remote_calls", "artifact_bytes", "verification_calls", "retry_calls"):
             assert name in ECONOMY_METRICS
             metric = getattr(receipt, name)
             assert metric.status == "unresolved" and metric.value is None
@@ -131,7 +122,10 @@ class TestEconomyV2:
 
         def _exec(nid: str, remote: float | None) -> NodeExecution:
             node = PlanNode(
-                id=nid, role="standalone", provider="p", capability="p.cap",
+                id=nid,
+                role="standalone",
+                provider="p",
+                capability="p.cap",
                 action="act",
             )
             economy = {
@@ -159,7 +153,9 @@ class TestEconomyV2:
                 result=result,
                 reached_execute=True,
                 outcome=NodeOutcome(
-                    node=nid, status="ok", run_id=f"r-{nid}",
+                    node=nid,
+                    status="ok",
+                    run_id=f"r-{nid}",
                     receipt_sha256=sha256_of({"r": nid}),
                     result_sha256=sha256_of({"res": nid}),
                 ),

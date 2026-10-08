@@ -68,9 +68,7 @@ class TestEngineeringMemoryEntry:
 
     def test_non_unresolved_requires_provenance(self) -> None:
         with pytest.raises(ContractError, match="requires provenance"):
-            from_dict(
-                EngineeringMemoryEntry, memory_dict(epistemic="observed"), strict=True
-            )
+            from_dict(EngineeringMemoryEntry, memory_dict(epistemic="observed"), strict=True)
 
     def test_reported_cannot_self_confirm(self) -> None:
         # 'reported' only needs a source; it must not carry the confirmed shape.
@@ -90,9 +88,7 @@ class TestEngineeringMemoryEntry:
             )
         entry = from_dict(
             EngineeringMemoryEntry,
-            memory_dict(
-                epistemic="superseded", source_refs=["run:a"], superseded_by=SHA_B
-            ),
+            memory_dict(epistemic="superseded", source_refs=["run:a"], superseded_by=SHA_B),
             strict=True,
         )
         assert entry.superseded_by == SHA_B
@@ -145,8 +141,7 @@ class TestEngineeringMemoryEntry:
         with pytest.raises(ContractError, match="cross-project"):
             from_dict(
                 EngineeringMemoryEntry,
-                memory_dict(origin_project_class="x", source_refs=["run:a"],
-                            epistemic="observed"),
+                memory_dict(origin_project_class="x", source_refs=["run:a"], epistemic="observed"),
                 strict=True,
             )
 
@@ -195,12 +190,8 @@ class TestMemorySummary:
         with pytest.raises(ContractError, match="must not be empty"):
             from_dict(MemorySummary, {**base, "source_ids": []}, strict=True)
         with pytest.raises(ContractError, match="duplicate"):
-            from_dict(
-                MemorySummary, {**base, "source_ids": [SHA_B, SHA_B]}, strict=True
-            )
-        summary = from_dict(
-            MemorySummary, {**base, "source_ids": [SHA_B]}, strict=True
-        )
+            from_dict(MemorySummary, {**base, "source_ids": [SHA_B, SHA_B]}, strict=True)
+        summary = from_dict(MemorySummary, {**base, "source_ids": [SHA_B]}, strict=True)
         assert summary.source_ids == [SHA_B]
 
     def test_summary_never_crosses_projects(self) -> None:
@@ -274,9 +265,7 @@ class TestCapabilityRelation:
 
     def test_unknown_relation_rejected(self) -> None:
         with pytest.raises(ContractError, match="unknown relation"):
-            from_dict(
-                CapabilityRelation, self.rel_dict(relation="trusts"), strict=True
-            )
+            from_dict(CapabilityRelation, self.rel_dict(relation="trusts"), strict=True)
 
     def test_round_trip(self) -> None:
         rel = from_dict(CapabilityRelation, self.rel_dict(), strict=True)
@@ -317,9 +306,7 @@ class TestExecutionTarget:
         with pytest.raises(ContractError, match="network 'none'"):
             from_dict(
                 ExecutionTarget,
-                self.target_dict(
-                    type="a2a-agent", identity_ref="a2a:agent-x", network="none"
-                ),
+                self.target_dict(type="a2a-agent", identity_ref="a2a:agent-x", network="none"),
                 strict=True,
             )
 
@@ -405,9 +392,7 @@ class TestTargetNegotiation:
 
     def test_selected_must_be_candidate(self) -> None:
         with pytest.raises(ContractError, match="one of the candidates"):
-            from_dict(
-                TargetNegotiation, self.neg_dict(selected="ghost"), strict=True
-            )
+            from_dict(TargetNegotiation, self.neg_dict(selected="ghost"), strict=True)
 
     def test_no_answer_rejected(self) -> None:
         with pytest.raises(ContractError, match="not an answer"):
@@ -512,9 +497,7 @@ class TestStrategyPolicy:
 
     def test_prefer_and_approval_required(self) -> None:
         with pytest.raises(ContractError, match="prefer must not be empty"):
-            from_dict(
-                StrategyPolicy, self.policy_dict(prefer=[]), strict=True
-            )
+            from_dict(StrategyPolicy, self.policy_dict(prefer=[]), strict=True)
         with pytest.raises(ContractError, match="approval_sha256"):
             from_dict(
                 StrategyPolicy,

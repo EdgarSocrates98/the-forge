@@ -54,8 +54,7 @@ class StrategyPolicy:
         check_sha256(self.approval_sha256, field="strategy policy: approval_sha256")
         if not self.capability or not self.surface_fingerprint or not self.experiment_id:
             raise ContractError(
-                "strategy policy: capability, surface_fingerprint and experiment_id "
-                "are required"
+                "strategy policy: capability, surface_fingerprint and experiment_id are required"
             )
         if not self.prefer:
             raise ContractError("strategy policy: prefer must not be empty")
@@ -121,8 +120,7 @@ class PlanSimulation:
         check_sha256(self.plan_sha256, field="plan simulation: plan_sha256")
         if self.data_classification not in DATA_CLASSIFICATIONS:
             raise ContractError(
-                f"plan simulation: unknown data_classification "
-                f"{self.data_classification!r}"
+                f"plan simulation: unknown data_classification {self.data_classification!r}"
             )
         for flag in self.risk_flags:
             if not flag or len(flag) > 60:
@@ -159,8 +157,6 @@ class CounterfactualPlanComparison:
         if self.base_sha256 == self.alternative_sha256:
             raise ContractError("counterfactual: base and alternative are the same plan")
         if not self.differences and not self.unknowns:
-            raise ContractError(
-                "counterfactual: a comparison must record differences or unknowns"
-            )
+            raise ContractError("counterfactual: a comparison must record differences or unknowns")
         if len(self.differences) > _MAX_LIST or len(self.unknowns) > _MAX_LIST:
             raise ContractError("counterfactual: differences/unknowns exceed bound")

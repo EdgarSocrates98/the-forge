@@ -62,9 +62,7 @@ def _manifest(
         protocols=["forge/v1"],
         ops=["describe", "health", "execute"],
         capabilities=list(caps),
-        execution=ExecutionInfo(
-            local=local, offline=offline, requires_network=requires_network
-        ),
+        execution=ExecutionInfo(local=local, offline=offline, requires_network=requires_network),
     )
 
 
@@ -81,9 +79,7 @@ def _cap(cid: str, **kw: Any) -> Capability:
 
 def _node(nid: str, provider: str = "p1", **kw: Any) -> PlanNode:
     kw.setdefault("role", "standalone")
-    return PlanNode(
-        id=nid, provider=provider, capability="x.y", action="run", **kw
-    )
+    return PlanNode(id=nid, provider=provider, capability="x.y", action="run", **kw)
 
 
 def _plan(*nodes: PlanNode) -> ExecutionPlan:
@@ -102,9 +98,7 @@ def _plan(*nodes: PlanNode) -> ExecutionPlan:
 
 class TestSimulation:
     def test_declared_footprint(self) -> None:
-        m = _manifest(
-            "p1", _cap("x.y", operation_class="local_mutation"), requires_network=True
-        )
+        m = _manifest("p1", _cap("x.y", operation_class="local_mutation"), requires_network=True)
         plan = _plan(_node("a"))
         sim = simulate_plan(plan, {"p1": _record("p1", m)})
         node = sim.nodes[0]
@@ -139,9 +133,7 @@ class TestSimulation:
             "p1",
             _cap(
                 "x.y",
-                relations=CapabilityRelations(
-                    produces=["report.v1"], verified_by=["p2/check.run"]
-                ),
+                relations=CapabilityRelations(produces=["report.v1"], verified_by=["p2/check.run"]),
             ),
         )
         m2 = _manifest(
@@ -149,9 +141,7 @@ class TestSimulation:
         )
         records = {"p1": _record("p1", m1), "p2": _record("p2", m2)}
         graph = build_capability_graph(list(records.values()), run_id="r")
-        plan = _plan(
-            _node("a", verification_required=True, expected_outputs=["report.v1"])
-        )
+        plan = _plan(_node("a", verification_required=True, expected_outputs=["report.v1"]))
         sim = simulate_plan(plan, records, graph=graph)
         assert sim.nodes[0].verification == "independent"
         assert not sim.limitations
@@ -183,9 +173,7 @@ class TestSimulation:
 
 class TestStructureValidation:
     def test_unknown_condition_rejected(self) -> None:
-        violations = validate_plan_structure(
-            _plan(_node("a", condition="when-moon-full"))
-        )
+        violations = validate_plan_structure(_plan(_node("a", condition="when-moon-full")))
         assert any("condition" in v.detail for v in violations)
 
     def test_conditional_needs_depends_on(self) -> None:
@@ -202,9 +190,7 @@ class TestStructureValidation:
         assert not validate_plan_structure(ok)
 
     def test_optional_referee_rejected(self) -> None:
-        violations = validate_plan_structure(
-            _plan(_node("a", role="referee", optional=True))
-        )
+        violations = validate_plan_structure(_plan(_node("a", role="referee", optional=True)))
         assert any("referee" in v.detail and "optional" in v.detail for v in violations)
 
 
@@ -280,9 +266,7 @@ class TestEarlyStopE2E:
     def test_optional_pruned_mandatory_runs(self, tmp_path: Path) -> None:
         """Two always-failing attempts on node `a` trip the repeated-failure stop;
         optional `b` is pruned, verification-required `c` still runs (§43-44)."""
-        forge_dir = make_workspace(
-            tmp_path, [SPARK_PLAN_ENTRY, bad_entry("crash", "bad-crash")]
-        )
+        forge_dir = make_workspace(tmp_path, [SPARK_PLAN_ENTRY, bad_entry("crash", "bad-crash")])
         # retry.toml: two attempts so one crash node reaches the failure limit.
         (forge_dir / "config").mkdir(parents=True, exist_ok=True)
         (forge_dir / "config" / "retry.toml").write_text(
@@ -296,7 +280,10 @@ class TestEarlyStopE2E:
                 _file_node("a", "bad-crash", "bad.thing", "run"),
                 _file_node("b", "fixture-spark", "spark.performance", "diagnose", optional=True),
                 _file_node(
-                    "c", "fixture-spark", "spark.performance", "review",
+                    "c",
+                    "fixture-spark",
+                    "spark.performance",
+                    "review",
                     verification_required=True,
                 ),
             ],

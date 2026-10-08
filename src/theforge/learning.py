@@ -66,25 +66,17 @@ def promote_experiment(
     metrics: dict[str, float] = {
         "runs": float(sample),
         "verified_rate": (
-            sum(1 for i in scoped if i.verification == "passed") / len(scoped)
-            if scoped
-            else 0.0
+            sum(1 for i in scoped if i.verification == "passed") / len(scoped) if scoped else 0.0
         ),
         "delivered_rate": (
-            sum(1 for i in scoped if i.status in ("ok", "partial")) / len(scoped)
-            if scoped
-            else 0.0
+            sum(1 for i in scoped if i.status in ("ok", "partial")) / len(scoped) if scoped else 0.0
         ),
     }
     for name in ("wall_time_ms", "context_bytes", "cost_usd"):
-        values = [
-            float(v) for i in scoped if (v := getattr(i, name)) is not None
-        ]
+        values = [float(v) for i in scoped if (v := getattr(i, name)) is not None]
         if values and len(values) == len(scoped):
             metrics[f"median_{name}"] = float(median(values))
-    promoted = replace(
-        experiment, state="promoted", approval_sha256=approval_sha256
-    )
+    promoted = replace(experiment, state="promoted", approval_sha256=approval_sha256)
     policy = StrategyPolicy(
         producer=PRODUCER,
         created_at=utc_now(),
@@ -130,9 +122,7 @@ def policy_applies(
         return False
     if policy.task_family is not None and policy.task_family != task_family:
         return False
-    return not (
-        policy.valid_until is not None and at is not None and at > policy.valid_until
-    )
+    return not (policy.valid_until is not None and at is not None and at > policy.valid_until)
 
 
 def active_policies(

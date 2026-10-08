@@ -165,9 +165,7 @@ class EngineeringMemoryEntry:
         # ``confirmed`` is a *verified* claim: it needs evidence or a decision
         # record, never a bare source pointer.
         if self.epistemic == "confirmed" and not (self.evidence_refs or self.decision_refs):
-            raise ContractError(
-                "memory entry: 'confirmed' requires evidence_refs or decision_refs"
-            )
+            raise ContractError("memory entry: 'confirmed' requires evidence_refs or decision_refs")
         if self.epistemic == "superseded" and not self.superseded_by:
             raise ContractError("memory entry: 'superseded' requires superseded_by")
         if self.epistemic == "stale" and not self.stale_reason:

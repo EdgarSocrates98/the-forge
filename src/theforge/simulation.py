@@ -121,8 +121,7 @@ def simulate_plan(
                 )
             )
             limitations.append(
-                f"node {node.id}: manifest for {node.provider!r} unavailable — "
-                "footprint unknown"
+                f"node {node.id}: manifest for {node.provider!r} unavailable — footprint unknown"
             )
         else:
             capability, _ = resolved

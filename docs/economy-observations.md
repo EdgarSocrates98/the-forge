@@ -103,3 +103,20 @@ individualmente:
 
 Assim retry deixa de ser custo invisível sem transformar reserva de pior caso em
 gasto observado.
+
+## Eixos federados (Cycle 5, Wave X)
+
+`ProviderEconomyReceipt/v1` ganhou os eixos de execução federada — todos com a
+mesma disciplina `measured`/`estimated`/`unresolved`/`not_applicable` (um eixo
+não medido nunca vira zero):
+
+- `remote_calls` — execuções delegadas a alvos remotos;
+- `artifact_bytes` — volume de transferência de artifacts;
+- `verification_calls` — gasto de verificação;
+- `retry_calls` — gasto de retry observado pelo provider.
+
+O `EconomyRollup` agrega os eixos novos pelas mesmas regras never-silent:
+um contribuinte `unresolved` bloqueia a soma, `not_applicable` não contribui,
+fontes conflitantes viram `conflicts` nomeados. E economia **nunca** vence
+política (§133): `ExecutionTarget` inseguro não é escolhido por ser barato —
+o gate de classificação/localidade roda antes de qualquer comparação.

@@ -21,9 +21,7 @@ from theforge.targets import (
 
 
 def _target(tid: str, ttype: str = "local", **kw) -> ExecutionTarget:
-    return ExecutionTarget(
-        producer=PRODUCER, created_at=utc_now(), id=tid, type=ttype, **kw
-    )
+    return ExecutionTarget(producer=PRODUCER, created_at=utc_now(), id=tid, type=ttype, **kw)
 
 
 class TestTargetContract:
@@ -44,14 +42,10 @@ class TestTargetContract:
 
     def test_a2a_trust_capped(self) -> None:
         with pytest.raises(ContractError):
-            _target(
-                "a1", "a2a-agent", identity_ref="a2a:agent", network="egress", trust="verified"
-            )
+            _target("a1", "a2a-agent", identity_ref="a2a:agent", network="egress", trust="verified")
 
     def test_unverified_remote_gets_limitation(self) -> None:
-        t = _target(
-            "r1", "remote-forge", identity_ref="org-forge:ci", network="egress"
-        )
+        t = _target("r1", "remote-forge", identity_ref="org-forge:ci", network="egress")
         assert t.trust == "unverified" and t.limitations
 
 
@@ -59,7 +53,10 @@ class TestAdmits:
     def test_unknown_only_local(self) -> None:
         assert _target("l").admits("unknown")
         remote = _target(
-            "r1", "remote-forge", identity_ref="org-forge:ci", network="egress",
+            "r1",
+            "remote-forge",
+            identity_ref="org-forge:ci",
+            network="egress",
             data_classes=["public", "internal"],
         )
         assert not remote.admits("unknown")
@@ -110,20 +107,30 @@ class TestNegotiation:
         return [
             _target("l", "local", data_classes=["public", "internal", "confidential"]),
             _target(
-                "r1", "remote-forge", identity_ref="org-forge:ci", network="egress",
-                trust="verified", data_classes=["public"], health="healthy",
+                "r1",
+                "remote-forge",
+                identity_ref="org-forge:ci",
+                network="egress",
+                trust="verified",
+                data_classes=["public"],
+                health="healthy",
             ),
             _target(
-                "r2", "remote-forge", identity_ref="org-forge:ci2", network="egress",
+                "r2",
+                "remote-forge",
+                identity_ref="org-forge:ci2",
+                network="egress",
                 data_classes=["public"],
             ),
-            _target("a1", "a2a-agent", identity_ref="a2a:x", network="egress",
-                    data_classes=["public"]),
+            _target(
+                "a1", "a2a-agent", identity_ref="a2a:x", network="egress", data_classes=["public"]
+            ),
         ]
 
     def test_unknown_data_stays_local(self) -> None:
-        neg = negotiate_target("p", "cap", TargetRequirement(data_classification="unknown"),
-                               self._targets())
+        neg = negotiate_target(
+            "p", "cap", TargetRequirement(data_classification="unknown"), self._targets()
+        )
         assert neg.selected == "l" and neg.candidates == ["l"]
         assert "r1" in neg.refusals and "a1" in neg.refusals
 
@@ -151,7 +158,9 @@ class TestNegotiation:
 
     def test_unavailable_refused(self) -> None:
         neg = negotiate_target(
-            "p", "cap", TargetRequirement(data_classification="public"),
+            "p",
+            "cap",
+            TargetRequirement(data_classification="public"),
             [_target("down", "local", health="unavailable"), _target("up", "local")],
         )
         assert neg.candidates == ["up"] and "unavailable" in neg.refusals["down"]
@@ -190,8 +199,9 @@ class TestSimulationTargets:
             source="file",
             profile="max",
             nodes=[
-                PlanNode(id="a", role="standalone", provider="ghost",
-                         capability="x.y", action="run"),
+                PlanNode(
+                    id="a", role="standalone", provider="ghost", capability="x.y", action="run"
+                ),
             ],
         )
         sim = simulate_plan(plan, {}, targets=[builtin_local()])

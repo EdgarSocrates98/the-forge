@@ -220,6 +220,7 @@ def test_risk_is_a_known_artifact_in_run_order() -> None:
         "plan-result",
         "graph",
         "capability-graph",
+        "simulation",
         "semantic-proposal",
         "routing-proposal",
         "decision",

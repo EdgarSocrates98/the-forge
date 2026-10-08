@@ -62,15 +62,11 @@ class TestPromotion:
     def test_ineligible_cannot_promote(self) -> None:
         for state in ("planned", "shadow", "observing", "rejected", "stale"):
             with pytest.raises(ValueError, match="eligible_for_review"):
-                promote_experiment(
-                    _experiment(state), [], approval_sha256=APPROVAL
-                )
+                promote_experiment(_experiment(state), [], approval_sha256=APPROVAL)
 
     def test_promotion_binds_approval_and_evidence(self) -> None:
         obs = [_obs(run_id=f"r{i}", wall_time_ms=100.0 + i) for i in range(8)]
-        promoted, policy = promote_experiment(
-            _experiment(), obs, approval_sha256=APPROVAL
-        )
+        promoted, policy = promote_experiment(_experiment(), obs, approval_sha256=APPROVAL)
         assert promoted.state == "promoted"
         assert promoted.approval_sha256 == APPROVAL
         assert policy.approval_sha256 == APPROVAL
@@ -98,14 +94,18 @@ class TestPolicyScope:
             p, capability="spark.perf", surface_fingerprint="s_b", task_family="perf"
         )
         assert not policy_applies(
-            p, capability="spark.perf", surface_fingerprint="s_other",
+            p,
+            capability="spark.perf",
+            surface_fingerprint="s_other",
             task_family="perf",
         )
         assert not policy_applies(
             p, capability="other.cap", surface_fingerprint="s_b", task_family="perf"
         )
         assert not policy_applies(
-            p, capability="spark.perf", surface_fingerprint="s_b",
+            p,
+            capability="spark.perf",
+            surface_fingerprint="s_b",
             task_family="other",
         )
 
@@ -122,20 +122,23 @@ class TestPolicyScope:
 
         p = dataclasses.replace(self._policy(), valid_until="2020-01-01T00:00:00+00:00")
         assert not policy_applies(
-            p, capability="spark.perf", surface_fingerprint="s_b",
-            task_family="perf", at=utc_now(),
+            p,
+            capability="spark.perf",
+            surface_fingerprint="s_b",
+            task_family="perf",
+            at=utc_now(),
         )
 
     def test_preferred_providers_ladder(self) -> None:
         p = self._policy()
         ladder = preferred_providers(
-            [p], capability="spark.perf", surface_fingerprint="s_b",
+            [p],
+            capability="spark.perf",
+            surface_fingerprint="s_b",
             task_family="perf",
         )
         assert ladder == ["beta"]
-        assert preferred_providers(
-            [p], capability="spark.perf", surface_fingerprint="other"
-        ) == []
+        assert preferred_providers([p], capability="spark.perf", surface_fingerprint="other") == []
 
 
 class TestRefresh:
@@ -203,10 +206,17 @@ class TestNegotiationIntegration:
 
         sa, sb = "a" * 64, "b" * 64
         exp = StrategyExperiment(
-            producer=PRODUCER, created_at=utc_now(), experiment_id="e",
-            capability="a.b", task_family=None, champion="alpha",
-            challenger="beta", champion_surface=sa, challenger_surface=sb,
-            state="eligible_for_review", observations=8,
+            producer=PRODUCER,
+            created_at=utc_now(),
+            experiment_id="e",
+            capability="a.b",
+            task_family=None,
+            champion="alpha",
+            challenger="beta",
+            champion_surface=sa,
+            challenger_surface=sb,
+            state="eligible_for_review",
+            observations=8,
             reasons=["improved"],
         )
         _, policy = promote_experiment(exp, [], approval_sha256=APPROVAL)
@@ -226,10 +236,17 @@ class TestNegotiationIntegration:
 
         sa, sb = "a" * 64, "b" * 64
         exp = StrategyExperiment(
-            producer=PRODUCER, created_at=utc_now(), experiment_id="e",
-            capability="a.b", task_family=None, champion="alpha",
-            challenger="beta", champion_surface=sa, challenger_surface=sb,
-            state="eligible_for_review", observations=8,
+            producer=PRODUCER,
+            created_at=utc_now(),
+            experiment_id="e",
+            capability="a.b",
+            task_family=None,
+            champion="alpha",
+            challenger="beta",
+            champion_surface=sa,
+            challenger_surface=sb,
+            state="eligible_for_review",
+            observations=8,
             reasons=["improved"],
         )
         _, policy = promote_experiment(exp, [], approval_sha256=APPROVAL)
@@ -237,7 +254,6 @@ class TestNegotiationIntegration:
         unsupported = self._record("beta", sb)
         object.__setattr__(unsupported.manifest.capabilities[0], "id", "z.z")
         req = CapabilityRequirement(capability="a.b")
-        res = negotiate_all(req, [self._record("alpha", sa), unsupported],
-                            policies=[policy])
+        res = negotiate_all(req, [self._record("alpha", sa), unsupported], policies=[policy])
         assert res[0].provider == "alpha"
         assert res[-1].state == "UNSUPPORTED"

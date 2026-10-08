@@ -1,8 +1,9 @@
 # Cycle 5 — Federated Engineering Intelligence
 
-Status: RESEARCH / IMPLEMENTATION — Cycle 4.1 remains
-`IMPLEMENTATION COMPLETE / REMOTE_VALIDATION_BLOCKED` independently; this cycle
-does not reopen its gates.
+Status: IMPLEMENTATION COMPLETE / LOCAL_GATES_GREEN /
+REMOTE_VALIDATION_BLOCKED (GitHub Actions quota exhausted — owner decision).
+Cycle 4.1 remains `REMOTE_VALIDATION_BLOCKED` independently; this cycle does
+not reopen its gates.
 
 ## Ecosystem reality audit (Wave A, baseline)
 
@@ -42,6 +43,67 @@ independent verification advance · federated trace v2 · economy v2 dims ·
 failure intelligence · policy order · threat model · benchmarks · reality
 proofs.
 
+## Waves entregues
+
+| Wave | Escopo | Commit |
+|---|---|---|
+| Contracts | memory/targets/remote/strategy v1 + registro + schemas | `ed0d1ea` |
+| Memory | `EngineeringMemoryEntry` store append-only, `learn_from_run`, escopos, `theforge memory` CLI | `95c40dc` |
+| Graph v2 | relações `accepts`/`verifies`/`refines`/`verified_by`/`specializes`, nós de inteligência, `relation_fresh` | `1bda6c2` |
+| Planner v2 | `PlanSimulation` pré-execução, optional/verification semantics, `condition`, early-stop `FORGE-PLAN-GLOBAL-STOP` ([errors.md](../errors.md)) | `9ebacae` |
+| Targets | `targets.toml`, `negotiate_target` (localidade>saúde>trust>id), refusals nomeados | `12cecad` |
+| Remote trust | `remote-policy.toml` deny-by-default, `build_request` hash-bound, `accept_receipt` replay binding | `c58469e` |
+| Learning | `StrategyPolicy` promotion com aprovação, surface-scoped, ordering pós-gates | `1b8dedf` |
+| Trace/Economy | `correlation_id`/`parent_run`, eixos `remote_calls`/`artifact_bytes`/`verification_calls`/`retry_calls` | `f8f889f` |
+| Interop | A2A 1.0 `supportedInterfaces`, `SourceSpec.tier` org | `9a3e8d8` |
+| Adversarial | bateria §148: memória envenenada, edge fake, card falso, aprovação forjada, leak cross-project | `64ed220` |
+| Docs/release | ADRs 0049-0051, docs novos, 0.3.0, changelog, checklist | esta wave |
+
+## Decisões-chave (ADRs)
+
+- [ADR 0049](../adr/0049-engineering-memory.md) — memória é conhecimento
+  verificável com proveniência; `confirmed` exige refs; escopos
+  project/workspace nunca exportam.
+- [ADR 0050](../adr/0050-execution-targets-remote-trust.md) — alvo declarado;
+  remote é modelo de trust deny-by-default, não transporte; recibos com
+  replay binding.
+- [ADR 0051](../adr/0051-strategy-policy-governance.md) — política de
+  estratégia só existe com evidência de experimento + aprovação; surface
+  nova invalida; preferência nunca sobe provider incompatível.
+
+## Pesquisa de ecossistema (Wave M/N)
+
+- A2A seguiu para `1.0` com `AgentInterface.supportedInterfaces` e header
+  `A2A-Version` — o bridge emite cards no formato novo e aceita `url` 0.3
+  como fallback.
+- in-toto/Sigstore: políticas monotônicas, deny-by-default, subjects ligados
+  por hash — aplicado literalmente em `remote.py` (ignorar campo nunca vira
+  deny→allow). Nenhuma criptografia custom no core; Sigstore/Cosign/in-toto
+  ficam como integração opcional futura.
+- MCP permanece tools/resources/prompts — metadata nunca vira provider.
+
 ## Validation matrix
 
-Filled as waves land — see "Final local validation" below.
+| Prova | Evidência |
+|---|---|
+| Memory retrieval + proveniência | `test_memory.py`: round-trip, `confirmed` exige refs, export filtra escopos |
+| Stale por surface | `relation_fresh` + política stale em `test_learning.py` |
+| Graph ordering diagnose→optimize→verify | `test_capability_graph_v2.py` |
+| Fallback semântico validado + provider inventado rejeitado | `test_plan_cycle5.py`, `test_adversarial_cycle5.py` |
+| Optional pruning preserva verificação | `test_plan_cycle5.py` e2e early-stop |
+| Localidade/classificação na negociação | `test_targets.py` |
+| Remote deny-by-default + replay binding | `test_remote.py` |
+| A2A externo/unverified/network | `test_a2a_bridge.py`, adversarial |
+| Org tier não sobrescreve local | `test_registry_sources.py` |
+| StrategyPolicy com aprovação + stale | `test_learning.py` |
+| Isolamento cross-project | `test_memory.py` export/import, adversarial |
+
+## Final local validation
+
+- `ruff check .` — clean; `ruff format --check .` — clean
+- `mypy` — no issues
+- `python -m theforge.contracts.schema schemas && git diff --exit-code -- schemas` — clean
+- `pytest -m "not slow and not real_provider"` — green (offline suite, inclui
+  marcador `security` com a bateria adversarial do §148)
+- Remote CI: não executado — quota de GitHub Actions esgotada na conta
+  (decisão explícita do owner; não é REMOTE_FAILED, é REMOTE_BLOCKED)

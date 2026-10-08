@@ -101,9 +101,7 @@ class RemoteExecutionReceipt:
             raise ContractError(f"remote receipt: unsupported schema {self.schema!r}")
         check_sha256(self.request_sha256, field="remote receipt: request_sha256")
         if not self.execution_id or not self.target_id or not self.provider:
-            raise ContractError(
-                "remote receipt: execution_id, target_id and provider are required"
-            )
+            raise ContractError("remote receipt: execution_id, target_id and provider are required")
         check_ref(self.target_identity_ref, field="remote receipt: target_identity_ref")
         for name, hashes in (
             ("input_hashes", self.input_hashes),
@@ -116,9 +114,7 @@ class RemoteExecutionReceipt:
                     raise ContractError(f"remote receipt: {name} keys must be non-empty")
                 check_sha256(digest, field=f"remote receipt: {name}")
         if not self.input_hashes or not self.output_hashes:
-            raise ContractError(
-                "remote receipt: input_hashes and output_hashes are required"
-            )
+            raise ContractError("remote receipt: input_hashes and output_hashes are required")
         if len(self.evidence_refs) > _MAX_REFS:
             raise ContractError("remote receipt: evidence_refs exceed bound")
         for ref in self.evidence_refs:

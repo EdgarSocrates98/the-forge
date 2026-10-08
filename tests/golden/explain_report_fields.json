@@ -162,6 +162,7 @@
     },
     "plan.economy.receipts[].receipt": {
       "properties": [
+        "artifact_bytes",
         "basis",
         "context_bytes",
         "cost_usd",
@@ -169,14 +170,24 @@
         "model_calls",
         "provider",
         "provider_tokens",
+        "remote_calls",
+        "retry_calls",
         "run",
         "schema",
         "tool_calls",
+        "verification_calls",
         "wall_time_ms"
       ],
       "required": [
         "provider"
       ]
+    },
+    "plan.economy.receipts[].receipt.artifact_bytes": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
     },
     "plan.economy.receipts[].receipt.context_bytes": {
       "properties": [
@@ -206,7 +217,28 @@
       ],
       "required": []
     },
+    "plan.economy.receipts[].receipt.remote_calls": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.retry_calls": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
     "plan.economy.receipts[].receipt.tool_calls": {
+      "properties": [
+        "status",
+        "value"
+      ],
+      "required": []
+    },
+    "plan.economy.receipts[].receipt.verification_calls": {
       "properties": [
         "status",
         "value"

@@ -24,8 +24,12 @@ _HASH = sha256_of({"x": 1})
 
 def _remote_target(**kw) -> ExecutionTarget:
     base = dict(
-        id="ci", type="remote-forge", identity_ref="org-forge:ci",
-        network="egress", trust="org-approved", health="healthy",
+        id="ci",
+        type="remote-forge",
+        identity_ref="org-forge:ci",
+        network="egress",
+        trust="org-approved",
+        health="healthy",
         data_classes=["public", "internal"],
     )
     base.update(kw)
@@ -62,8 +66,13 @@ class TestPolicyGate:
         # a2a-agent trust is contract-capped at 'unverified' — the allowlist is
         # the promotion mechanism. A listed a2a target passes; an unlisted one
         # carries the promotion refusal on top of the allowlist refusal.
-        kw = dict(id="a1", type="a2a-agent", identity_ref="a2a:x",
-                  data_classes=["public"], trust="unverified")
+        kw = dict(
+            id="a1",
+            type="a2a-agent",
+            identity_ref="a2a:x",
+            data_classes=["public"],
+            trust="unverified",
+        )
         t = _remote_target(**kw)
         decision, _ = evaluate_remote_policy(t, _req("public"), _policy())
         assert decision == "deny"  # not in allowed_target_ids
@@ -85,9 +94,9 @@ class TestPolicyGate:
 
     def test_locality_forbids_remote(self) -> None:
         for loc in ("local", "isolated"):
-            assert evaluate_remote_policy(
-                _remote_target(), _req(locality=loc), _policy()
-            )[0] == "deny"
+            assert (
+                evaluate_remote_policy(_remote_target(), _req(locality=loc), _policy())[0] == "deny"
+            )
 
     def test_unhealthy_denied_when_required(self) -> None:
         t = _remote_target(health="degraded")
@@ -100,18 +109,26 @@ class TestRequestBuild:
     def test_denied_raises_with_reasons(self) -> None:
         with pytest.raises(ContractError, match="remote request denied"):
             build_request(
-                target=_remote_target(), requirement=_req(),
+                target=_remote_target(),
+                requirement=_req(),
                 policy=RemotePolicy(policy_ref="p"),
-                task_sha256=_HASH, context_sha256=_HASH, budget_sha256=_HASH,
-                provider="p", surface_fingerprint="fp",
+                task_sha256=_HASH,
+                context_sha256=_HASH,
+                budget_sha256=_HASH,
+                provider="p",
+                surface_fingerprint="fp",
             )
 
     def test_allowed_request_is_fully_bound(self) -> None:
         req = build_request(
-            target=_remote_target(), requirement=_req("internal"),
+            target=_remote_target(),
+            requirement=_req("internal"),
             policy=_policy(),
-            task_sha256=_HASH, context_sha256=_HASH, budget_sha256=_HASH,
-            provider="sparkforge_aws", surface_fingerprint="fp1",
+            task_sha256=_HASH,
+            context_sha256=_HASH,
+            budget_sha256=_HASH,
+            provider="sparkforge_aws",
+            surface_fingerprint="fp1",
             expected_artifacts=["report.v1", "log.v1"],
         )
         assert req.policy_decision == "allow"
@@ -127,17 +144,26 @@ class TestReceiptBinding:
     def _pair(self):
         target = _remote_target()
         req = build_request(
-            target=target, requirement=_req(), policy=_policy(),
-            task_sha256=_HASH, context_sha256=_HASH, budget_sha256=_HASH,
-            provider="p", surface_fingerprint="fp",
+            target=target,
+            requirement=_req(),
+            policy=_policy(),
+            task_sha256=_HASH,
+            context_sha256=_HASH,
+            budget_sha256=_HASH,
+            provider="p",
+            surface_fingerprint="fp",
             expected_artifacts=["out.v1"],
         )
         receipt = RemoteExecutionReceipt(
-            producer=PRODUCER, created_at=utc_now(),
-            request_sha256=request_sha256(req), execution_id="ex1",
-            target_id=target.id, target_identity_ref=target.identity_ref,
+            producer=PRODUCER,
+            created_at=utc_now(),
+            request_sha256=request_sha256(req),
+            execution_id="ex1",
+            target_id=target.id,
+            target_identity_ref=target.identity_ref,
             provider="p",
-            input_hashes={"task": _HASH}, output_hashes={"out.v1": _HASH},
+            input_hashes={"task": _HASH},
+            output_hashes={"out.v1": _HASH},
             verification="attest:1",
         )
         return req, receipt

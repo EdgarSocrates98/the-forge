@@ -5,7 +5,7 @@ each must fail closed, never silently promote.
 
 from __future__ import annotations
 
-import json
+import dataclasses
 from pathlib import Path
 
 import pytest
@@ -68,19 +68,25 @@ class TestFakeGraphEdge:
         from theforge.registry.registry import RegistryRecord
 
         manifest = ForgeManifest(
-            id="p", version="1", protocols=["forge/v1"],
+            id="p",
+            version="1",
+            protocols=["forge/v1"],
             ops=["describe", "health", "execute"],
             capabilities=[
                 Capability(
-                    id="a.b", actions=["run"], default_action="run",
-                    state="supported", operation_class="read_only",
+                    id="a.b",
+                    actions=["run"],
+                    default_action="run",
+                    state="supported",
+                    operation_class="read_only",
                     relations=CapabilityRelations(verifies=["ghost.cap"]),
                 )
             ],
         )
         record = RegistryRecord(
             entry=ProviderEntry(id="p", argv=["x"], trust="local"),
-            state="ready", manifest=manifest,
+            state="ready",
+            manifest=manifest,
         )
         graph = build_capability_graph([record])
         # The claimed edge is recorded as what it is: a declared relation with
@@ -90,9 +96,7 @@ class TestFakeGraphEdge:
         assert edge.epistemic == "explicit"
         assert "relations.verifies" in edge.evidence
         # And nothing in the registry backs the ghost capability itself.
-        assert "capability:ghost.cap" not in {
-            n.id for n in graph.nodes if n.kind == "capability"
-        }
+        assert "capability:ghost.cap" not in {n.id for n in graph.nodes if n.kind == "capability"}
 
 
 class TestForgedApproval:
@@ -101,17 +105,22 @@ class TestForgedApproval:
         from theforge.learning import promote_experiment
 
         exp = StrategyExperiment(
-            producer=PRODUCER, created_at=utc_now(), experiment_id="e",
-            capability="a.b", task_family=None, champion="a", challenger="b",
-            champion_surface="sa", challenger_surface="sb", state="observing",
+            producer=PRODUCER,
+            created_at=utc_now(),
+            experiment_id="e",
+            capability="a.b",
+            task_family=None,
+            champion="a",
+            challenger="b",
+            champion_surface="sa",
+            challenger_surface="sb",
+            state="observing",
         )
         with pytest.raises(ValueError):
             promote_experiment(exp, [], approval_sha256=sha256_of({"a": 1}))
-        with pytest.raises(Exception):  # malformed hash
+        with pytest.raises((ValueError, ContractError)):  # malformed hash
             promote_experiment(
-                __import__("dataclasses").replace(
-                    exp, state="eligible_for_review", reasons=["x"]
-                ),
+                dataclasses.replace(exp, state="eligible_for_review", reasons=["x"]),
                 [],
                 approval_sha256="not-a-sha",
             )
@@ -125,18 +134,22 @@ class TestSurfaceSwap:
         from theforge.learning import policy_applies, promote_experiment
 
         exp = StrategyExperiment(
-            producer=PRODUCER, created_at=utc_now(), experiment_id="e",
-            capability="a.b", task_family=None, champion="a", challenger="b",
-            champion_surface="sa", challenger_surface="sb",
-            state="eligible_for_review", observations=8, reasons=["ok"],
+            producer=PRODUCER,
+            created_at=utc_now(),
+            experiment_id="e",
+            capability="a.b",
+            task_family=None,
+            champion="a",
+            challenger="b",
+            champion_surface="sa",
+            challenger_surface="sb",
+            state="eligible_for_review",
+            observations=8,
+            reasons=["ok"],
         )
         _, policy = promote_experiment(exp, [], approval_sha256=sha256_of({"ok": 1}))
-        assert policy_applies(
-            policy, capability="a.b", surface_fingerprint="sb"
-        )
-        assert not policy_applies(
-            policy, capability="a.b", surface_fingerprint="swapped"
-        )
+        assert policy_applies(policy, capability="a.b", surface_fingerprint="sb")
+        assert not policy_applies(policy, capability="a.b", surface_fingerprint="swapped")
 
 
 class TestCrossProjectLeakage:
@@ -144,13 +157,18 @@ class TestCrossProjectLeakage:
         from theforge.memory import export_entries
 
         assert record_entry(tmp_path, _entry(scope="project")) is None
-        assert record_entry(
-            tmp_path,
-            _entry(
-                scope="portable", subject="generic",
-                origin_project_class="internal", redaction="no code",
-            ),
-        ) is None
+        assert (
+            record_entry(
+                tmp_path,
+                _entry(
+                    scope="portable",
+                    subject="generic",
+                    origin_project_class="internal",
+                    redaction="no code",
+                ),
+            )
+            is None
+        )
         exported, _ = export_entries(tmp_path)
         subs = [e.subject for e in exported]
         assert "generic" in subs and "s" not in subs
@@ -184,16 +202,20 @@ class TestFakeRemoteTarget:
         from theforge.targets import negotiate_target
 
         evil = ExecutionTarget(
-            producer=PRODUCER, created_at=utc_now(), id="evil",
-            type="remote-forge", identity_ref="org-forge:x", network="egress",
-            trust="org-approved", health="healthy",
+            producer=PRODUCER,
+            created_at=utc_now(),
+            id="evil",
+            type="remote-forge",
+            identity_ref="org-forge:x",
+            network="egress",
+            trust="org-approved",
+            health="healthy",
             data_classes=["public"],
         )
         neg = negotiate_target(
-            "p", "cap",
-            TargetRequirement(
-                data_classification="restricted", locality="local-or-remote"
-            ),
+            "p",
+            "cap",
+            TargetRequirement(data_classification="restricted", locality="local-or-remote"),
             [evil],
         )
         assert neg.selected is None and "evil" in neg.refusals

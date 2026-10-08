@@ -378,9 +378,9 @@ def build_parser() -> argparse.ArgumentParser:
     trace.add_argument("run_id")
     trace.set_defaults(handler=commands.cmd_trace)
 
-    memory = sub.add_parser(
-        "memory", help="engineering memory (.forge/memory/)"
-    ).add_subparsers(dest="memory_command", required=True)
+    memory = sub.add_parser("memory", help="engineering memory (.forge/memory/)").add_subparsers(
+        dest="memory_command", required=True
+    )
     memory_list = memory.add_parser(
         "list",
         parents=[common],
@@ -397,9 +397,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--epistemic",
     ):
         memory_list.add_argument(flag)
-    memory_list.add_argument(
-        "--all", action="store_true", help="include stale/superseded entries"
-    )
+    memory_list.add_argument("--all", action="store_true", help="include stale/superseded entries")
     memory_list.add_argument("--max-entries", type=int, default=32)
     memory_list.add_argument("--max-bytes", type=int, default=32 * 1024)
     memory_list.set_defaults(handler=commands.cmd_memory)
@@ -424,8 +422,12 @@ def build_parser() -> argparse.ArgumentParser:
     memory_summary.add_argument("subject")
     memory_summary.add_argument("--claim", required=True, help="the distilled statement")
     memory_summary.add_argument(
-        "--source", dest="sources", action="append", required=True,
-        metavar="ENTRY_ID", help="source entry id (repeatable)",
+        "--source",
+        dest="sources",
+        action="append",
+        required=True,
+        metavar="ENTRY_ID",
+        help="source entry id (repeatable)",
     )
     memory_summary.add_argument("--coverage", default="")
     memory_summary.set_defaults(handler=commands.cmd_memory)

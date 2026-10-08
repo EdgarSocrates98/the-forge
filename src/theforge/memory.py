@@ -251,9 +251,7 @@ def supersede(root: Path, old_id: str, new: EngineeringMemoryEntry) -> tuple[boo
     marked: list[EngineeringMemoryEntry] = []
     for entry in entries:
         if entry.id == old_id:
-            marked.append(
-                replace(entry, epistemic="superseded", superseded_by=new.id)
-            )
+            marked.append(replace(entry, epistemic="superseded", superseded_by=new.id))
         else:
             marked.append(entry)
     return True, _write_entries(root, [*marked, new]) or warning
@@ -348,9 +346,7 @@ def memory_pack(
     """
     query = query if query is not None else MemoryQuery()
     entries, warning = load_entries(root)
-    matched = sorted(
-        (e for e in entries if query.matches(e)), key=lambda e: (e.created_at, e.id)
-    )
+    matched = sorted((e for e in entries if query.matches(e)), key=lambda e: (e.created_at, e.id))
     max_entries = max(1, min(max_entries, MAX_PACK_ENTRIES))
     max_bytes = max(1024, min(max_bytes, MAX_PACK_BYTES))
     delivered: list[EngineeringMemoryEntry] = []
@@ -365,8 +361,7 @@ def memory_pack(
     truncated = len(delivered) < len(matched)
     if truncated:
         limitations.append(
-            f"pack truncated: {len(matched) - len(delivered)} matching "
-            "entries withheld by budget"
+            f"pack truncated: {len(matched) - len(delivered)} matching entries withheld by budget"
         )
     if warning is not None:
         limitations.append(warning)
@@ -423,8 +418,7 @@ def summarize(
     missing = [sid for sid in source_ids if sid not in known]
     if missing:
         return None, (
-            f"memory: summary not written — {len(missing)} source id(s) are not "
-            "recorded entries"
+            f"memory: summary not written — {len(missing)} source id(s) are not recorded entries"
         )
     doc = MemorySummary(
         producer=PRODUCER,
@@ -486,8 +480,10 @@ def import_entries(root: Path, entries: Iterable[Mapping[str, Any]]) -> tuple[in
     if warning:
         notes.append(warning)
     if refused:
-        notes.append(f"memory: refused {refused} entr{'y' if refused == 1 else 'ies'} "
-                     "(malformed or project/workspace scope)")
+        notes.append(
+            f"memory: refused {refused} entr{'y' if refused == 1 else 'ies'} "
+            "(malformed or project/workspace scope)"
+        )
     if not imported and not refused:
         return 0, warning
     return imported, (_write_entries(root, out) if imported else None) or "; ".join(notes)
@@ -559,8 +555,7 @@ def learn_from_run(root: Path, store: RunStore, run_id: str) -> tuple[int, list[
                 epistemic="observed",
                 subject=_bounded(record.question, 120),
                 claim=(
-                    f"debate chose {record.chosen} "
-                    f"(confidence {record.confidence})"
+                    f"debate chose {record.chosen} (confidence {record.confidence})"
                     if record.chosen != "unresolved"
                     else "debate ended unresolved"
                 ),
@@ -657,8 +652,9 @@ def failure_patterns(root: Path) -> tuple[list[FailurePattern], str | None]:
     a pattern is an observation rollup, never a promoted rule.
     """
     entries, warning = load_entries(root)
-    groups: dict[tuple[str, str | None, str | None, str | None, str | None],
-               list[EngineeringMemoryEntry]] = {}
+    groups: dict[
+        tuple[str, str | None, str | None, str | None, str | None], list[EngineeringMemoryEntry]
+    ] = {}
     for entry in entries:
         if entry.kind != "failure" or entry.epistemic in ("stale", "superseded"):
             continue
@@ -679,16 +675,15 @@ def failure_patterns(root: Path) -> tuple[list[FailurePattern], str | None]:
         groups.items(), key=lambda item: (item[0][0], item[0][1] or "", item[0][2] or "")
     ):
         seen = sorted(e.created_at for e in group)
-        resolved_by = sorted(
-            {ref for e in group for ref in e.decision_refs}
-        )
+        resolved_by = sorted({ref for e in group for ref in e.decision_refs})
         patterns.append(
             FailurePattern(
                 producer=PRODUCER,
                 created_at=utc_now(),
                 id=sha256_hex(
-                    "|".join(str(part) for part in (family, provider, capability, surface,
-                                                    family_name)).encode()
+                    "|".join(
+                        str(part) for part in (family, provider, capability, surface, family_name)
+                    ).encode()
                 ),
                 error_family=family,
                 provider=provider,

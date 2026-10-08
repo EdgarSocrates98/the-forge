@@ -191,9 +191,7 @@ class CapabilityRelation:
 
     def __post_init__(self) -> None:
         if self.schema != CAPABILITY_RELATION_SCHEMA:
-            raise ContractError(
-                f"capability relation: unsupported schema {self.schema!r}"
-            )
+            raise ContractError(f"capability relation: unsupported schema {self.schema!r}")
         if self.relation not in RELATION_KINDS:
             raise ContractError(f"capability relation: unknown relation {self.relation!r}")
         if not self.source or not self.target:

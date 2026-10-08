@@ -56,6 +56,7 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-PLAN-FILE` | plan | arquivo de plano ilegível ou fora do contrato (erro de uso, exit 2) |
 | `FORGE-PLAN-DEPENDENCY-FAILED` | plan | nó `skipped` porque um ancestral não produziu resultado válido |
 | `FORGE-PLAN-ESTIMATE` | plan | a op `plan` do provider falhou (limitação no nó; o plano segue sem estimativa) |
+| `FORGE-PLAN-GLOBAL-STOP` | plan | nó `skipped` por decisão de global stop (opcionais são podados; `verification_required` nunca) ou por `condition` não satisfeita pelos resultados gravados |
 | `FORGE-CONTEXT-BYTES` | context | ContextPack com `used_bytes` > `budget_bytes` ou ≠ soma dos arquivos (erro do core: o run sai com `FORGE-INTERNAL` e este código no detalhe) |
 | `FORGE-CONTEXT-PATH` | context | arquivo do ContextPack fora das regras de caminho (erro do core, como acima) |
 | `FORGE-CONTEXT-REQUEST-UNSUPPORTED` | context | `context_request` de uma capability que não declara `context.requests` (`provider_failure`) |

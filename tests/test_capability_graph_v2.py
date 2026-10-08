@@ -116,9 +116,7 @@ class TestGraphBuilder:
             "forge-a",
             _cap(
                 "etl.run",
-                relations=CapabilityRelations(
-                    accepts=["source-spec.v1"], produces=["report.v1"]
-                ),
+                relations=CapabilityRelations(accepts=["source-spec.v1"], produces=["report.v1"]),
             ),
             _cap(
                 "check.plan",
@@ -139,9 +137,7 @@ class TestGraphBuilder:
             "forge-a",
             _cap(
                 "etl.run",
-                relations=CapabilityRelations(
-                    verified_by=["check.plan"], specializes=["base.run"]
-                ),
+                relations=CapabilityRelations(verified_by=["check.plan"], specializes=["base.run"]),
             ),
             _cap("check.plan"),
             _cap("base.run"),
@@ -306,9 +302,7 @@ class TestWorkspaceIntelligenceNodes:
         ]
 
     def test_execution_and_failure_nodes(self) -> None:
-        graph = build_graph(
-            "pr", self._descriptor(), [], self._plan(), None, self._executions()
-        )
+        graph = build_graph("pr", self._descriptor(), [], self._plan(), None, self._executions())
         kinds = {(n.kind, n.id) for n in graph.nodes}
         assert ("execution", "execution:a") in kinds
         assert ("execution", "execution:b") in kinds

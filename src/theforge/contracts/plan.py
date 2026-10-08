@@ -82,9 +82,7 @@ class PlanNode:
 
     def __post_init__(self) -> None:
         if self.optional and self.verification_required:
-            raise ContractError(
-                f"plan node {self.id!r}: a verification node cannot be optional"
-            )
+            raise ContractError(f"plan node {self.id!r}: a verification node cannot be optional")
         if self.data_classification is not None and self.data_classification not in (
             "public",
             "internal",
@@ -93,8 +91,7 @@ class PlanNode:
             "unknown",
         ):
             raise ContractError(
-                f"plan node {self.id!r}: unknown data_classification "
-                f"{self.data_classification!r}"
+                f"plan node {self.id!r}: unknown data_classification {self.data_classification!r}"
             )
         for name in ("required_inputs", "expected_outputs"):
             if len(getattr(self, name)) > 32:

@@ -100,9 +100,7 @@ def load_targets(
     return [targets[k] for k in sorted(targets)], warnings
 
 
-def _refusal(
-    target: ExecutionTarget, requirement: TargetRequirement
-) -> str | None:
+def _refusal(target: ExecutionTarget, requirement: TargetRequirement) -> str | None:
     """The reason ``target`` cannot serve ``requirement``; None when valid."""
     if target.health == "unavailable":
         return "target unavailable"

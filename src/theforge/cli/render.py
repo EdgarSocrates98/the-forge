@@ -1400,8 +1400,7 @@ def memory_export(data: dict[str, Any]) -> str:
     count = data.get("count", 0)
     return "\n".join(
         [
-            f"Exportable memory: {count} portable/organization entr"
-            f"{'y' if count == 1 else 'ies'}",
+            f"Exportable memory: {count} portable/organization entr{'y' if count == 1 else 'ies'}",
             *_labelled("Limitations:", _list(data.get("limitations"))),
         ]
     )
