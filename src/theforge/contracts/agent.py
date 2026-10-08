@@ -83,9 +83,7 @@ class AgentSpec:
         if not PROVIDER_ID.match(self.id):
             raise ContractError(f"agent spec: invalid id {self.id!r}")
         if self.authority not in AUTHORITIES:
-            raise ContractError(
-                f"agent spec {self.id}: authority must be one of {AUTHORITIES}"
-            )
+            raise ContractError(f"agent spec {self.id}: authority must be one of {AUTHORITIES}")
         if not self.purpose:
             raise ContractError(f"agent spec {self.id}: purpose is required")
         if not self.output_contracts:
@@ -100,8 +98,7 @@ class AgentSpec:
         overlap = allowed & forbidden
         if overlap:
             raise ContractError(
-                f"agent spec {self.id}: actions both allowed and forbidden: "
-                f"{sorted(overlap)}"
+                f"agent spec {self.id}: actions both allowed and forbidden: {sorted(overlap)}"
             )
         missing_universal = set(UNIVERSAL_FORBIDDEN) - forbidden
         if missing_universal:

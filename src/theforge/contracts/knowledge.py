@@ -83,9 +83,7 @@ class ForgeKnowledge:
     capabilities_source: str = "runtime_discovery"
     # §51-52 freshness: the version/surface this package was recorded against.
     tested_version: str | None = None
-    tested_surface: str | None = field(
-        default=None, metadata={"pattern": SHA256_RE.pattern}
-    )
+    tested_surface: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
     recorded_at: str | None = None
 
     def __post_init__(self) -> None:

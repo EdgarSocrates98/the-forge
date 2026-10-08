@@ -169,7 +169,7 @@ def test_spec_filename_binds_id(tmp_path: Path) -> None:
     lines = []
     for k, v in doc.items():
         if isinstance(v, str):
-            lines.append(f'{k} = {v!r}'.replace("'", '"'))
+            lines.append(f"{k} = {v!r}".replace("'", '"'))
         elif isinstance(v, list):
             inner = ", ".join(f'"{i}"' for i in v)
             lines.append(f"{k} = [{inner}]")

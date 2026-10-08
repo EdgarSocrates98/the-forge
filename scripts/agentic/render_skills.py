@@ -161,10 +161,7 @@ def render_claude(src: SkillSource) -> str:
         lines.append(f"argument-hint: {src.argument_hint}")
     lines.append("---")
     return (
-        "\n".join(lines)
-        + "\n"
-        + _resolve_host_blocks(src.body, "claude")
-        + _freshness_marker(src)
+        "\n".join(lines) + "\n" + _resolve_host_blocks(src.body, "claude") + _freshness_marker(src)
     )
 
 
@@ -175,8 +172,7 @@ def render_envelope(src: SkillSource, host: str) -> str:
         f"---\nname: {src.name}\ndescription: {src.description}\n---\n\n"
         f"# {src.name}\n\n"
         f"<background_information>\n{overview}\n</background_information>\n\n"
-        f"<instructions>\n{rest}\n</instructions>\n"
-        + _freshness_marker(src)
+        f"<instructions>\n{rest}\n</instructions>\n" + _freshness_marker(src)
     )
 
 

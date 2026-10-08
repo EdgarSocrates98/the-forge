@@ -351,9 +351,7 @@ def cmd_knowledge_check(args: argparse.Namespace) -> int:
                 )
             if p.tested_surface is not None:
                 row["surface"] = (
-                    "match"
-                    if record.surface.surface_fingerprint == p.tested_surface
-                    else "drift"
+                    "match" if record.surface.surface_fingerprint == p.tested_surface else "drift"
                 )
             if "drift" in (row["version"], row["surface"]):
                 row["status"] = "drift"

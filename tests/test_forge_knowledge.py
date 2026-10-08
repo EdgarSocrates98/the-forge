@@ -228,9 +228,7 @@ def test_knowledge_check_fresh_and_not_installed(
     assert rows["spark-forge-aws"]["status"] == "not_installed"
 
 
-def test_knowledge_check_version_drift(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_knowledge_check_version_drift(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     from helpers import make_workspace
 
     make_workspace(
@@ -242,9 +240,7 @@ def test_knowledge_check_version_drift(
     assert api["version"] == "drift" and api["installed_version"] == "9.9.9"
 
 
-def test_knowledge_check_surface_drift(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_knowledge_check_surface_drift(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     from helpers import make_workspace
 
     # platform-forge's package records a measured surface fingerprint; a fixture
@@ -263,9 +259,7 @@ def test_knowledge_check_surface_drift(
     assert pf["version"] == "match" and pf["surface"] == "drift"
 
 
-def test_knowledge_check_unavailable(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_knowledge_check_unavailable(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     from helpers import bad_entry, make_workspace
 
     make_workspace(tmp_path, [bad_entry("describe-refused", "spark-forge-aws")])
