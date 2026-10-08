@@ -18,6 +18,13 @@ The Forge versiona cinco coisas diferentes, cada uma com regra própria. Mudar u
 - Campo opcional novo, com default que preserva o comportamento anterior, **não** muda a versão. Remover campo, tornar campo obrigatório ou mudar o significado de um campo exige `vN+1`.
 - Toda mudança de contrato regenera `schemas/` (`python -m theforge.contracts.schema schemas`).
 
+## Estabilidade de contratos (freeze review)
+Os 67 contratos exportados (`contracts/schema.py::EXPORTED`) se dividem em três classes para fins de freeze:
+
+- **stable candidate** — contratos OPEN que cruzam o Forge Protocol ou são configuração declarada por operador e já passaram por mais de um ciclo de uso: `ForgeManifest`, `TaskSpec`, `ContextPack`, `ExecutionResult`, `Evidence`, `Request`, `Response`, `HealthReport`, `ExecuteRequest`, `VerifyRequest`, `VerifyVerdict`, `PlanRequest`, `PlanEstimate`, `Handoff`, `ResolveRequest`, `RoutingProposal`, `CapabilityRequirement`, `CapabilityOffer`, `ForgeRegistryEntry`, `RegistryDocument`, `RemoteProviderCandidate`, `McpRegistryDocument`, `McpServerEntry`. Mudança incompatível neles é breaking e exige `vN+1` ou ADR explícito.
+- **experimental** — superfícies novas do Cycle 5 que ainda precisam atravessar o dogfooding antes de virar stable candidate: `SemanticPlanProposal`, `ExecutionTarget`, `TargetRequirement`, `RemoteExecutionRequest`, `RemoteExecutionReceipt`. Evolução aditiva é livre; breaking exige ADR mesmo assim.
+- **internal** — os 39 contratos `CLOSED_SCHEMAS` (core-produced, `additionalProperties: false`, nunca são entrada remota). Estabilidade interna regida pelas regras de schema de contrato acima; não são API pública de protocolo.
+
 ## Versão de provider
 - `ForgeManifest.version` é obrigatório e precisa ser SemVer 2.0.0 (sem `v` inicial, sem zeros à esquerda, ASCII). Versão malformada deixa o provider `invalid`, fora do routing, com `FORGE-MANIFEST-VERSION`.
 - Toda response repete a versão em `producer.version`.
