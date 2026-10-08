@@ -71,11 +71,17 @@ SourceKind = Literal["local-file", "http", "a2a", "mcp"]
 
 @dataclass(frozen=True, kw_only=True)
 class SourceSpec:
-    """A configured registry source — inert data, never a live connection."""
+    """A configured registry source — inert data, never a live connection.
+
+    ``tier`` marks an organizational registry (org-curated internal feed):
+    candidates from it carry ``source_tier="org"`` so downstream policy can
+    privilege them — still *claims*, never installed reality (§93-95).
+    """
 
     id: str
     kind: SourceKind
     enabled: bool = False  # opt-in: a configured source does nothing until enabled
+    tier: Literal["public", "org"] = "public"
     path: str | None = None  # local-file: JSON document path (config-relative)
     url: str | None = None  # http: document URL; a2a: card; mcp: /servers
     max_age_s: int | None = None  # freshness budget for cached remote documents
@@ -84,6 +90,8 @@ class SourceSpec:
     def __post_init__(self) -> None:
         if not self.id or not self.id.replace("-", "").replace("_", "").isalnum():
             raise ContractError(f"registry source: invalid id {self.id!r}")
+        if self.tier not in ("public", "org"):
+            raise ContractError(f"registry source {self.id!r}: invalid tier {self.tier!r}")
         if self.kind == "local-file" and not self.path:
             raise ContractError(f"registry source {self.id!r}: local-file requires 'path'")
         if self.kind in ("http", "a2a", "mcp") and not self.url:

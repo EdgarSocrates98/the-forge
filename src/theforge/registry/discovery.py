@@ -219,6 +219,7 @@ def _entry_to_candidate(
         source=read.spec.id,
         registry=document.registry.id,
         registry_url=document.registry.url,
+        source_tier=read.spec.tier,
         provider=entry.provider,
         version=entry.version,
         publisher=entry.publisher,

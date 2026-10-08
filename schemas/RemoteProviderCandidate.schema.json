@@ -284,6 +284,12 @@
     "source": {
       "type": "string"
     },
+    "source_tier": {
+      "enum": [
+        "public",
+        "org"
+      ]
+    },
     "unknowns": {
       "items": {
         "type": "string"

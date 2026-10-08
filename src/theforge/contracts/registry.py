@@ -186,6 +186,9 @@ class RemoteProviderCandidate:
     source: str  # configured source id (registries.toml)
     registry: str  # declared registry identity id
     registry_url: str | None = None
+    # Cycle 5 (Wave O): the source's tier — ``org`` marks an org-curated feed,
+    # still a claim, privileged only through explicit downstream policy.
+    source_tier: Literal["public", "org"] = "public"
     # What is claimed.
     provider: str
     version: str
