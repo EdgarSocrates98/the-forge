@@ -70,6 +70,35 @@ class PlanNode:
     inputs: list[str] = field(default_factory=list)  # artifact input: ids within depends_on
     estimate: PlanEstimate | None = None
     limitations: list[str] = field(default_factory=list)
+    # Cycle 5 (Waves E/H): artifact-aware, stoppable plan semantics. All
+    # additive-optional — plans without them behave exactly as before.
+    optional: bool = False  # may be skipped by a terminal Global Stop
+    verification_required: bool = False  # never skippable, never optional
+    required_inputs: list[str] = field(default_factory=list)  # artifact *types* needed
+    expected_outputs: list[str] = field(default_factory=list)  # artifact *types* produced
+    condition: str | None = None  # opaque condition label evaluated by core rules only
+    required_locality: Literal["local", "local-or-remote", "isolated"] | None = None
+    data_classification: str | None = None  # a DataClassification value, if classified
+
+    def __post_init__(self) -> None:
+        if self.optional and self.verification_required:
+            raise ContractError(
+                f"plan node {self.id!r}: a verification node cannot be optional"
+            )
+        if self.data_classification is not None and self.data_classification not in (
+            "public",
+            "internal",
+            "confidential",
+            "restricted",
+            "unknown",
+        ):
+            raise ContractError(
+                f"plan node {self.id!r}: unknown data_classification "
+                f"{self.data_classification!r}"
+            )
+        for name in ("required_inputs", "expected_outputs"):
+            if len(getattr(self, name)) > 32:
+                raise ContractError(f"plan node {self.id!r}: {name} exceeds bound")
 
 
 @dataclass(frozen=True, kw_only=True)

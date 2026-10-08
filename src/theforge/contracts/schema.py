@@ -14,22 +14,27 @@ from theforge.contracts import (
     CapabilityGraph,
     CapabilityNegotiationResult,
     CapabilityOffer,
+    CapabilityRelation,
     CapabilityRequirement,
     ComplexityAssessment,
     ContextBudgetRecommendation,
     ContextPack,
     ContextROI,
+    CounterfactualPlanComparison,
     DecisionMemory,
     DecisionRecord,
     Diagnostic,
     EconomyRollup,
+    EngineeringMemoryEntry,
     Evidence,
     ExecuteRequest,
     ExecutionObservation,
     ExecutionPlan,
     ExecutionReceipt,
     ExecutionResult,
+    ExecutionTarget,
     ExplainReport,
+    FailurePattern,
     ForgeManifest,
     ForgeRegistryEntry,
     GlobalEconomyReceipt,
@@ -40,14 +45,19 @@ from theforge.contracts import (
     InstallationPlanV2,
     McpRegistryDocument,
     McpServerEntry,
+    MemoryPack,
+    MemorySummary,
     PlanEstimate,
     PlanRequest,
     PlanResult,
+    PlanSimulation,
     PlanState,
     ProjectIntel,
     ProviderPerformance,
     ProviderSurfaceIdentity,
     RegistryDocument,
+    RemoteExecutionReceipt,
+    RemoteExecutionRequest,
     RemoteProviderCandidate,
     Request,
     ResolveRequest,
@@ -59,6 +69,9 @@ from theforge.contracts import (
     RunTelemetry,
     SemanticPlanProposal,
     StrategyExperiment,
+    StrategyPolicy,
+    TargetNegotiation,
+    TargetRequirement,
     TaskSpec,
     VerificationResult,
     VerifyRequest,
@@ -134,6 +147,24 @@ EXPORTED: tuple[type[Any], ...] = (
     ContextROI,
     ContextBudgetRecommendation,
     StrategyExperiment,
+    # cycle 5 engineering memory (wave B/C/T/Y)
+    EngineeringMemoryEntry,
+    MemoryPack,
+    MemorySummary,
+    FailurePattern,
+    # cycle 5 capability graph v2 (wave D)
+    CapabilityRelation,
+    # cycle 5 execution targets + negotiation (waves H/I/J)
+    ExecutionTarget,
+    TargetRequirement,
+    TargetNegotiation,
+    # cycle 5 remote execution model (wave K)
+    RemoteExecutionRequest,
+    RemoteExecutionReceipt,
+    # cycle 5 strategy/simulation (waves Q/G/U)
+    StrategyPolicy,
+    PlanSimulation,
+    CounterfactualPlanComparison,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -175,6 +206,19 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     ContextROI,
     ContextBudgetRecommendation,
     StrategyExperiment,
+    # cycle 5: memory, relations, negotiation, policies and simulations are
+    # core-produced artifacts. ExecutionTarget is operator-declared config and
+    # the remote request/receipt pair crosses a remote boundary — all three
+    # stay open like the other protocol/config payloads.
+    EngineeringMemoryEntry,
+    MemoryPack,
+    MemorySummary,
+    FailurePattern,
+    CapabilityRelation,
+    TargetNegotiation,
+    StrategyPolicy,
+    PlanSimulation,
+    CounterfactualPlanComparison,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

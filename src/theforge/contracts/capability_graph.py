@@ -41,6 +41,10 @@ CapEdgeKind = Literal[
     "conflicts",
     "can_verify",
     "can_review",
+    # Cycle 5: explicit artifact-aware verification / specialization links
+    "verified_by",
+    "specializes",
+    "refines",
     # observed by the workspace descriptor
     "uses_technology",
     "relevant_to",
@@ -65,6 +69,9 @@ _CAP_EDGE_KINDS: tuple[CapEdgeKind, ...] = (
     "conflicts",
     "can_verify",
     "can_review",
+    "verified_by",
+    "specializes",
+    "refines",
     "uses_technology",
     "relevant_to",
 )
@@ -136,3 +143,57 @@ class CapabilityGraph:
             raise ContractError(
                 f"capability graph: edges point at nodes not in the graph {dangling}"
             )
+
+
+CAPABILITY_RELATION_SCHEMA = "theforge/CapabilityRelation/v1"
+
+RELATION_KINDS: tuple[str, ...] = (
+    "produces",
+    "consumes",
+    "requires",
+    "complements",
+    "conflicts",
+    "verified_by",
+    "refines",
+    "specializes",
+    "accepts",
+)
+
+
+@dataclass(frozen=True, kw_only=True)
+class CapabilityRelation:
+    """A standalone, evidence-bound relation between two capability/artifact
+    endpoints (Cycle 5, Wave D).
+
+    ``source``/``target`` are capability or artifact_type ids (``<kind>:<key>``
+    convention is *not* required here — adapters declare bare ids); ``surface``
+    scopes the relation to the provider surface it was declared/observed on, so
+    a surface change cannot silently keep a stale relation authoritative.
+    """
+
+    schema: str = CAPABILITY_RELATION_SCHEMA
+    producer: Producer
+    created_at: str
+    source: str
+    relation: str
+    target: str
+    epistemic: EdgeEpistemic = "observed"
+    constraints: list[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list, metadata={"min_items": 1})
+    surface: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.schema != CAPABILITY_RELATION_SCHEMA:
+            raise ContractError(
+                f"capability relation: unsupported schema {self.schema!r}"
+            )
+        if self.relation not in RELATION_KINDS:
+            raise ContractError(f"capability relation: unknown relation {self.relation!r}")
+        if not self.source or not self.target:
+            raise ContractError("capability relation: source/target are required")
+        if not self.evidence:
+            raise ContractError("capability relation: evidence must not be empty")
+        if self.epistemic not in ("explicit", "observed", "inferred"):
+            raise ContractError(f"capability relation: unknown epistemic {self.epistemic!r}")
+        if len(self.constraints) > 32 or len(self.evidence) > 32:
+            raise ContractError("capability relation: constraints/evidence exceed bound")

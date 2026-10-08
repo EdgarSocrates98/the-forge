@@ -334,14 +334,21 @@
       "properties": [
         "action",
         "capability",
+        "condition",
+        "data_classification",
         "depends_on",
         "estimate",
+        "expected_outputs",
         "id",
         "inputs",
         "limitations",
+        "optional",
         "provider",
+        "required_inputs",
+        "required_locality",
         "role",
-        "targets"
+        "targets",
+        "verification_required"
       ],
       "required": [
         "action",

@@ -31,6 +31,9 @@
               "conflicts",
               "can_verify",
               "can_review",
+              "verified_by",
+              "specializes",
+              "refines",
               "uses_technology",
               "relevant_to"
             ]
