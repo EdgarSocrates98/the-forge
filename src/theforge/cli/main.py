@@ -563,3 +563,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001 - never a traceback: governed message, exit 70
         _fail(args, "internal error", f"{type(exc).__name__}: {_text(exc)}", exc, Codes.INTERNAL)
         return EXIT_INTERNAL
+
+
+if __name__ == "__main__":  # `python -m theforge.cli.main` behaves like `theforge`
+    raise SystemExit(main())

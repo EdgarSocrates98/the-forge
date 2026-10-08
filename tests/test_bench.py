@@ -130,6 +130,12 @@ def test_measurement_names_cover_the_procedure(bench: ModuleType) -> None:
         "plan_validate",
         "replay_verify",
         "explain_build",
+        # Cycle 5.1 hot paths (§39)
+        "memory_pack",
+        "plan_simulate",
+        "target_negotiate",
+        "receipt_validate",
+        "observation_write",
     )
 
 
