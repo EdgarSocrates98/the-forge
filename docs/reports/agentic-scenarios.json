@@ -1,11 +1,11 @@
 {
   "benchmark": "agentic-ecosystem-scenarios",
-  "commit_sha": "c592b9f487af8208db5ab0c29fa740405693b783",
+  "commit_sha": "9b812d83460a92d696f60c9758a6fe9f330e7120",
   "environment": {
-    "date": "2026-10-08T11:49:16Z",
-    "forge_version": "0.4.0",
-    "git_dirty": true,
-    "git_head": "c592b9f487af8208db5ab0c29fa740405693b783",
+    "date": "2026-10-08T23:02:46Z",
+    "forge_version": "0.5.0",
+    "git_dirty": false,
+    "git_head": "9b812d83460a92d696f60c9758a6fe9f330e7120",
     "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
     "os": "Windows-10-10.0.26300-SP0",
     "python": "CPython 3.11.15"
@@ -22,8 +22,8 @@
           ]
         }
       ],
-      "median_ms": 0.158,
-      "p90_ms": 0.263,
+      "median_ms": 0.18,
+      "p90_ms": 0.229,
       "status": "pass"
     },
     "A02": {
@@ -36,8 +36,8 @@
           ]
         }
       ],
-      "median_ms": 0.12,
-      "p90_ms": 0.139,
+      "median_ms": 0.117,
+      "p90_ms": 0.158,
       "status": "pass"
     },
     "A03": {
@@ -50,8 +50,8 @@
           ]
         }
       ],
-      "median_ms": 0.182,
-      "p90_ms": 0.228,
+      "median_ms": 0.103,
+      "p90_ms": 0.115,
       "status": "pass"
     },
     "A04": {
@@ -64,8 +64,8 @@
           ]
         }
       ],
-      "median_ms": 0.161,
-      "p90_ms": 0.237,
+      "median_ms": 0.098,
+      "p90_ms": 0.106,
       "status": "pass"
     },
     "A05": {
@@ -79,8 +79,8 @@
           "violations": 0
         }
       ],
-      "median_ms": 0.061,
-      "p90_ms": 0.098,
+      "median_ms": 0.044,
+      "p90_ms": 0.073,
       "status": "pass"
     },
     "A06": {
@@ -94,8 +94,8 @@
           "violations": 0
         }
       ],
-      "median_ms": 0.065,
-      "p90_ms": 0.101,
+      "median_ms": 0.032,
+      "p90_ms": 0.041,
       "status": "pass"
     },
     "A07": {
@@ -109,8 +109,8 @@
           "violations": 0
         }
       ],
-      "median_ms": 0.113,
-      "p90_ms": 0.178,
+      "median_ms": 0.086,
+      "p90_ms": 0.118,
       "status": "pass"
     },
     "A08": {
@@ -125,8 +125,8 @@
           "rejected": "resolver picked platform-forge/iac.analyze, which was not among the routing-eligible candidates"
         }
       ],
-      "median_ms": 0.82,
-      "p90_ms": 1.081,
+      "median_ms": 0.906,
+      "p90_ms": 1.118,
       "status": "pass"
     },
     "A09": {
@@ -149,8 +149,8 @@
           ]
         }
       ],
-      "median_ms": 0.165,
-      "p90_ms": 0.284,
+      "median_ms": 0.194,
+      "p90_ms": 0.22,
       "status": "pass"
     },
     "A10": {
@@ -161,8 +161,8 @@
           "plan_violations": 1
         }
       ],
-      "median_ms": 0.554,
-      "p90_ms": 0.729,
+      "median_ms": 0.609,
+      "p90_ms": 0.712,
       "status": "pass"
     },
     "A11": {
@@ -172,8 +172,8 @@
           "drifted_surface_detected": true
         }
       ],
-      "median_ms": 0.097,
-      "p90_ms": 0.185,
+      "median_ms": 0.105,
+      "p90_ms": 0.166,
       "status": "pass"
     },
     "A12": {
@@ -188,8 +188,8 @@
           "self_claim_inert": true
         }
       ],
-      "median_ms": 0.815,
-      "p90_ms": 0.942,
+      "median_ms": 0.857,
+      "p90_ms": 0.918,
       "status": "pass"
     },
     "A13": {
@@ -200,8 +200,8 @@
           "violations": 0
         }
       ],
-      "median_ms": 0.102,
-      "p90_ms": 0.195,
+      "median_ms": 0.048,
+      "p90_ms": 0.066,
       "status": "pass"
     },
     "A14": {
@@ -213,8 +213,8 @@
           "unnecessary_invocations": 0
         }
       ],
-      "median_ms": 0.384,
-      "p90_ms": 0.606,
+      "median_ms": 0.368,
+      "p90_ms": 0.421,
       "status": "pass"
     },
     "A15": {
@@ -228,8 +228,8 @@
           "store_bytes": 47068
         }
       ],
-      "median_ms": 13.379,
-      "p90_ms": 20.27,
+      "median_ms": 13.1,
+      "p90_ms": 19.708,
       "status": "pass"
     }
   },
@@ -243,11 +243,11 @@
   },
   "schema": "theforge-agentic-scenarios/v1",
   "specialist_shas": {
-    "api-forge": "unknown",
-    "forge-doctor-api": "unknown",
-    "forge-doctor-data": "unknown",
-    "platform-forge": "unknown",
-    "spark-forge-aws": "unknown",
-    "spark-forge-azure": "unknown"
+    "api-forge": "1745f8726941d9d17761bacf94ddf84b711f879d",
+    "forge-doctor-api": "035b63587f2c9350cf6b19c0810c331ef2abd52f",
+    "forge-doctor-data": "3a8d7a5637d6585eaf8151da61f03d0b2d348c51",
+    "platform-forge": "0aee5c6f30a9daa60b47d19abce4dd1f78a7dd05",
+    "spark-forge-aws": "828827d7cd57e90a9ffc9b406ee0105ec31a7d7e",
+    "spark-forge-azure": "c09d4c5cb5b87404209cdad4ff19d98799dcc0e8"
   }
 }
