@@ -592,8 +592,20 @@ def test_negotiated_run_records_rounds_counters_and_tiers(
         assert getattr(telemetry, name).kind == "measured", name
     assert "requested" in telemetry.profile.effective_tiers
     assert telemetry.verification_performed is not None
-    # this negotiated ask was routed without ambiguity: neither semantic path ran
-    assert telemetry.unknowns == ["semantic_planner_calls", "semantic_resolver_calls"]
+    # this negotiated ask was routed without ambiguity and touched no agentic
+    # surface: neither semantic path ran and no agentic counter was recorded
+    assert telemetry.unknowns == [
+        "agent_calls",
+        "knowledge_bytes",
+        "planning_calls",
+        "semantic_planner_calls",
+        "semantic_resolver_calls",
+        "skill_bytes",
+        "skills_considered",
+        "skills_loaded",
+        "subagent_calls",
+        "verification_calls",
+    ]
 
 
 def test_drift_is_recorded_in_the_telemetry(tmp_path: Path, no_git: None) -> None:

@@ -74,7 +74,7 @@ class SkillSource:
     tested_surface: str | None
 
 
-def _require(table: dict, key: str, path: Path) -> str:
+def _require(table: dict[str, object], key: str, path: Path) -> str:
     value = table.get(key)
     if not isinstance(value, str) or not value.strip():
         raise RenderError(f"{path.name}: missing or empty `{key}`")
