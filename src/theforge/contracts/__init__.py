@@ -5,6 +5,7 @@ from theforge.contracts.adaptive import (
     ContextROI,
     StrategyExperiment,
 )
+from theforge.contracts.agent import AGENT_SPEC_SCHEMA, AgentSpec
 from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.budget import BUDGET_SCHEMA, RunBudget
 from theforge.contracts.capability_graph import (
@@ -71,7 +72,6 @@ from theforge.contracts.installation import (
     InstallStep,
     RollbackStrategy,
 )
-from theforge.contracts.agent import AGENT_SPEC_SCHEMA, AgentSpec
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
 from theforge.contracts.knowledge import (
