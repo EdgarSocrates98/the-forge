@@ -22,6 +22,7 @@ A-series (``scripts/bench/run_agentic.py`` A08/A09/A12):
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -140,6 +141,97 @@ def test_missing_description_fails(tmp_path: Path) -> None:
         {"agentic/skills/forge-x.md": _canonical("forge-x", description="")},
     )
     assert any(f.element == "description" for f in _quality_findings(report))
+
+
+# --- §78 dead CLI commands ---------------------------------------------------------------
+#
+# Skills quote `theforge ...` invocations; a dead verb sends the agent down a
+# dead path. The check resolves every backticked verb chain against the real
+# argparse parser — it lives in the test suite (not the audit script) because
+# the audit stays stdlib-only with no theforge import.
+
+_CLI_CMD = re.compile(r"`(?:theforge|forge)\s+([^`]{1,140}?)`")
+_CLI_TOKEN = re.compile(r"[a-z][a-z0-9-]*")
+_CLI_PLACEHOLDER = re.compile(r"<[^>]*>|\"[^\"]*\"|'[^']*'|\[[^\]]*\]")
+
+
+def _cli_verb_paths() -> frozenset[tuple[str, ...]]:
+    import argparse
+
+    from theforge.cli.main import build_parser
+
+    paths: set[tuple[str, ...]] = set()
+
+    def walk(parser: argparse.ArgumentParser, prefix: tuple[str, ...]) -> None:
+        for action in parser._actions:
+            if isinstance(action, argparse._SubParsersAction):
+                for name, sub_parser in action.choices.items():
+                    paths.add(prefix + (name,))
+                    walk(sub_parser, prefix + (name,))
+
+    walk(build_parser(), ())
+    return frozenset(paths)
+
+
+def _cli_command_problem(command: str, paths: frozenset[tuple[str, ...]]) -> str | None:
+    cleaned = _CLI_PLACEHOLDER.sub(" ", command)
+    tokens = _CLI_TOKEN.findall(cleaned)
+    if not tokens:
+        return "empty command"
+    if (tokens[0],) not in paths:
+        return f"unknown verb {tokens[0]!r}"
+    depth = 0
+    while depth < len(tokens) and tuple(tokens[: depth + 1]) in paths:
+        depth += 1
+    if depth == len(tokens):
+        return None
+    prefix = tuple(tokens[:depth])
+    children = sorted({p[depth] for p in paths if len(p) > depth and p[:depth] == prefix})
+    if children:
+        return (
+            f"{tokens[depth]!r} is not a subcommand of `{' '.join(prefix)}`"
+            f" (valid: {', '.join(children)})"
+        )
+    return None  # trailing tokens are arguments, not subcommands
+
+
+def test_dead_cli_command_detected() -> None:
+    paths = _cli_verb_paths()
+    assert _cli_command_problem("providers add <id>", paths) is not None
+    assert _cli_command_problem("knowledge frobnicate", paths) is not None
+
+
+def test_valid_cli_commands_and_args_pass() -> None:
+    """Real verbs plus placeholder/quoted arguments are fine — the check only
+    flags tokens where a subcommand was expected."""
+    paths = _cli_verb_paths()
+    for cmd in (
+        "knowledge show <id>",
+        "knowledge check",
+        "registry list",
+        "registry refresh",
+        'ask "<task>"',
+        "plan <task>",
+        "resume <id>",
+    ):
+        assert _cli_command_problem(cmd, paths) is None, cmd
+
+
+def test_all_skills_quote_only_real_cli_verbs() -> None:
+    """Every backticked `theforge`/`forge` invocation in every skill —
+    canonical sources and host mirrors — resolves against the live parser."""
+    paths = _cli_verb_paths()
+    skill_mds = sorted(REPO.glob("agentic/skills/*.md")) + sorted(
+        REPO.glob(".claude/skills/**/SKILL.md")
+    )
+    assert skill_mds, "no skills found"
+    problems: list[str] = []
+    for md in skill_mds:
+        for m in _CLI_CMD.finditer(md.read_text(encoding="utf-8")):
+            bad = _cli_command_problem(m.group(1), paths)
+            if bad is not None:
+                problems.append(f"{md.relative_to(REPO)}: `theforge {m.group(1)}` — {bad}")
+    assert not problems, "\n".join(problems)
 
 
 def test_prose_family_mention_is_not_a_reference(tmp_path: Path) -> None:

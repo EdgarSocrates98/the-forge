@@ -17,7 +17,7 @@ Verification is structurally independent: the verifier for a result must not be 
 2. Select verifiers via `can_verify` relations compatible with the artifact type — `forge-doctor-data` for data/Spark output, `forge-doctor-api` for API contracts.
 3. Emit a verification request (contract, not prose): artifact refs, producer identity, required checks.
 4. The verdict is a `VerifyVerdict` contract — `verified`/`refused`/named failure, evidence-linked.
-5. Producer ≠ verifier is a hard gate when declared; `forge knowledge show <id>` lists `preferred_verifiers`.
+5. Producer ≠ verifier is a hard gate when declared; `theforge knowledge show <id>` lists `preferred_verifiers`.
 
 ## Boundaries
 

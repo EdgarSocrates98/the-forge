@@ -50,6 +50,15 @@ bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
   `test_docs_consistency.py` exige que todo verbo de primeiro nível tenha linha
   na tabela de `docs/cli.md`; linhas de `knowledge`, `agents` e `graph`
   adicionadas.
+- Gate de comandos citados em skills: `test_agentic_security.py` resolve cada
+  invocação backticked `` `theforge ...` `` das 33 skills (16 canônicas + 17
+  mirrors `kiro-*`) contra o parser real — verbo morto vira falha de teste.
+  Correções aplicadas pela auditoria: `theforge providers add` (verbo
+  inexistente) em `forge-bootstrap` virou edição do `providers.toml` +
+  `registry refresh`; `forge knowledge show` virou `theforge knowledge show`
+  em `forge-verification`; descriptions magras de `kiro-spec-init`,
+  `kiro-spec-status` e `kiro-spec-quick` ganharam gatilho explícito nos três
+  hosts.
 - ADRs 0052-0056; docs: `forge-knowledge.md`, `skills.md`, `agents.md`,
   `installation-orchestration.md`, `cross-forge-orchestration.md`,
   `agentic-ecosystem.md`; `architecture.md`, `agentic.md` e `cli.md`

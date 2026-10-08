@@ -592,6 +592,7 @@ _SKILL_REF = re.compile(r"(?<![A-Za-z0-9_.])[/$]?(kiro|forge)[-:]([a-z][a-z-]*)"
 # Canonical skill quality (W4): frontmatter description, freshness block.
 _CANONICAL_FRONT = re.compile(r"\A\+\+\+\n(.*?)\n\+\+\+\n", re.DOTALL)
 _KNOWLEDGE_DIR = "forge-knowledge"
+
 _PHASE = re.compile(r"\bphase\"?\s*:\s*\"([a-z][a-z-]*)\"")
 
 
@@ -1065,6 +1066,10 @@ class _Auditor:
                     FindingKind.SKILL_QUALITY, subject, (), "references",
                     f"{ref!r} resolves to no skill dir and no tracked path",
                 )
+            # `theforge ...` command mentions are NOT checked here — resolving
+            # them needs the real parser, and this tool stays stdlib-only with
+            # no theforge import (see test_tool_lives_outside_the_package).
+            # tests/test_agentic_security.py carries that gate.
 
     def run(self) -> AuditReport:
         skills = self.skill_files()
