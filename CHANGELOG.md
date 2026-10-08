@@ -8,7 +8,9 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
-### Agentic Ecosystem layer (prompt `prompt_evo_engenharia_agentica` §5-35, §43-58, §64-79, §92-97)
+### 0.5.0 — Agentic Ecosystem
+
+#### Agentic Ecosystem layer (prompt `prompt_evo_engenharia_agentica` §5-35, §43-58, §64-79, §92-97)
 
 A camada que ensina agentes de código a usar a plataforma — conhecimento de
 bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
