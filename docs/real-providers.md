@@ -150,6 +150,26 @@ Só capabilities read-only e offline são declaradas. Tools que pedem rede, cred
 
 Regras de uso: a suíte offline mistura `protocol-real` (fixtures) e `specialist-replay` (gravações); os testes marcados `real_provider` são `specialist-real` e nunca rodam sem as variáveis de ambiente. Um resultado `specialist-replay` nunca é apresentado como `specialist-real`; quando a afirmação precisa do especialista vivo, o teste pula com motivo explícito ou falha sob `THEFORGE_REAL_PROVIDERS_REQUIRED=1`/`THEFORGE_ECOSYSTEM_REQUIRED=1` — nunca um skip silencioso. O benchmark de economia (`scripts/bench/run_context_economy.py`) declara `provider_mode` no relatório exatamente por isso: hoje é `specialist-replay`.
 
+### Taxonomia de testes (mock taxonomy)
+
+Cada arquivo de teste declara suas categorias em `tests/conftest.py::FILE_MARKERS`
+(coleção falha sem a declaração). A taxonomia mapeia para os tiers de prova:
+
+| categoria (marker) | tier de prova | o que cobre |
+|---|---|---|
+| `unit` | — | lógica pura em processo, sem subprocesso nem filesystem de workspace |
+| `contract` | — | forma de contratos/schemas/protocolo (validação, roundtrip, bounds) |
+| `integration` | `protocol-real` + `specialist-replay` | múltiplos componentes: providers em subprocesso (fixtures) ou adapters em `--replay`, workspaces em disco |
+| `e2e` | `protocol-real` | CLI real ponta a ponta num subprocesso |
+| `security` | — | inputs hostis, segredos, limites de confiança (cruza com unit/integration) |
+| `real_provider` | `specialist-real` | Forges reais vivos, env-gated, fora da suíte offline |
+| `slow` | — | builds de pacote / gate de instalação fresh |
+
+Um teste `integration` sobre adapters em replay **não** é prova de
+especialista real — a evidência diz exatamente qual tier produziu o resultado.
+"Remote blocked" não é um marker: é uma propriedade do design (sem transporte),
+exercida pelos cenários B07/B13/B14 e pela suíte `test_remote*`.
+
 ## Contrato de ambiente da conformance de integração
 
 Os testes `real_provider` (`python -m pytest -m real_provider`) rodam contra os Forges reais. Eles ficam fora da suíte offline padrão e são controlados por três variáveis:
