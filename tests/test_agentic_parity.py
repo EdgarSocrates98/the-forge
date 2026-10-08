@@ -1129,9 +1129,12 @@ def test_real_repository_has_no_failing_findings(real_report: Any, kind: Any) ->
     assert found == (), "\n".join(finding.format() for finding in found)
 
 
-def test_real_repository_lists_the_17_skills_in_the_three_hosts(real_report: Any) -> None:
+def test_real_repository_lists_all_skills_in_the_three_hosts(real_report: Any) -> None:
+    """17 hand-mirrored kiro-* + 15 rendered forge-* (ADR 0020 reevaluation)."""
     skills = dict(real_report.skills)
-    assert len(skills) == 17 and all(name.startswith("kiro-") for name in skills)
+    kiro = {name for name in skills if name.startswith("kiro-")}
+    forge = {name for name in skills if name.startswith("forge-")}
+    assert len(kiro) == 17 and len(forge) == 15
     assert all(tuple(hosts) == ("claude", "codex", "devin") for hosts in skills.values()), skills
 
 

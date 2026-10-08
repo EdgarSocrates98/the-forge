@@ -51,3 +51,13 @@ Esta wave não adiciona hooks. Se hooks de desenvolvimento forem adicionados (po
 - **Número de hosts:** três (Claude Code, Codex, Devin); nenhum quarto host com diretório próprio foi adicionado.
 - **Auditoria no momento da revisão:** `python scripts/agentic/audit_assets.py` sai com 0 achados de falha.
 - **Decisão mantida: (A).** O gatilho objetivo não disparou; (C) continua o caminho recomendado quando disparar, e esta seção é atualizada a cada revisão.
+
+## Reavaliação (2026-10-08, agentic engineering wave W2)
+
+- **Fato novo:** o ciclo adicionou **15 skills `forge-*` de ecossistema** (roteamento, discovery, instalação, verificação, troubleshooting, seis especialistas) sobre as 17 `kiro-*` existentes — +88% de skills. Manter à mão seriam 45 mirrors editados por mudança, com metadado de freshness que a paridade semântica da auditoria não cobre.
+- **Evidência de sincronizações `kiro-*`:** continua em 0 — o gatilho nominal (≥3 sincronizações por ciclo) não disparou para o conjunto antigo.
+- **Decisão por escopo — (C) só para `forge-*`, (A) mantido para `kiro-*`:**
+  - Fonte canônica `agentic/skills/<name>.md` (frontmatter TOML `+++`) renderizada por `scripts/agentic/render_skills.py` (stdlib-only) para os três hosts; `--check` é o gate de drift. As saídas geradas nunca são editadas à mão.
+  - As `kiro-*` ficam em (A): sua atualização é do instalador upstream, que reescreveria qualquer mirror renderizado e apagaria o valor da fonte canônica. Migrá-las para `agentic/skills/` criaria conflito com reinstalações.
+  - A auditoria agora cobre os dois prefixos via `[skills].prefixes` em `agentic.toml`; forge-* apresentam perfil semântico idêntico nos três hosts por construção.
+- **Gatilho explícito para migrar `kiro-*`:** quando o instalador upstream for abandonado ou 4º host entrar — o renderer já aceita qualquer fonte canônica no mesmo formato.

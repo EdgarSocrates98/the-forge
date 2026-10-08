@@ -1,4 +1,9 @@
-"""Agentic asset audit: drift between the Kiro skill mirrors of each host and host instructions.
+"""Agentic asset audit: drift between the skill mirrors of each host and host instructions.
+
+Equivalent skills are the directories under each host's ``skills_dir`` whose names start with a
+``[skills].prefixes`` prefix (``kiro-*`` hand-edited mirrors and ``forge-*`` ecosystem skills
+rendered from ``agentic/skills/`` by ``render_skills.py``).
+
 
 Maintenance tool (agentic-maintainability), never part of the ``theforge`` package: stdlib only,
 it never imports ``theforge`` and ``theforge`` never imports it. It only reads: no network, no
@@ -142,6 +147,9 @@ class AgenticConfig:
     budgets: dict[str, int] | None
     pointers: dict[str, tuple[str, ...]] | None
     moved_rules: tuple[MovedRule, ...] | None
+    # Directory prefixes that count as skills under each skills_dir (e.g. "kiro-",
+    # "forge-"); everything else there must be [[host_only]].
+    skill_prefixes: tuple[str, ...]
 
 
 _TOP_KEYS = frozenset(
@@ -155,6 +163,7 @@ _TOP_KEYS = frozenset(
         "budgets",
         "pointers",
         "moved_rules",
+        "skills",
     }
 )
 
@@ -350,6 +359,20 @@ def _parse_moved_rules(raw: object) -> tuple[MovedRule, ...]:
     return tuple(rules)
 
 
+def _parse_skill_prefixes(raw: dict[str, Any]) -> tuple[str, ...]:
+    """``[skills] prefixes``: directory prefixes audited as equivalent skills.
+    Defaults to the historical kiro-* set so an undeclared section keeps working."""
+    if "skills" not in raw:
+        return ("kiro-",)
+    skills = _table(raw["skills"], "skills")
+    _check_keys(skills, "skills", required=frozenset({"prefixes"}))
+    prefixes = _texts(skills["prefixes"], "skills.prefixes")
+    for prefix in prefixes:
+        if not prefix.endswith("-"):
+            raise _fail("skills.prefixes", f"prefix {prefix!r} must end with '-'")
+    return tuple(prefixes)
+
+
 def load_config(path: Path) -> AgenticConfig:
     """Read and validate ``agentic.toml``; any problem raises ``AgenticConfigError``."""
     try:
@@ -376,6 +399,7 @@ def load_config(path: Path) -> AgenticConfig:
         budgets=_parse_budgets(raw["budgets"]) if "budgets" in raw else None,
         pointers=_parse_pointers(raw["pointers"]) if "pointers" in raw else None,
         moved_rules=_parse_moved_rules(raw["moved_rules"]) if "moved_rules" in raw else None,
+        skill_prefixes=_parse_skill_prefixes(raw),
     )
 
 
@@ -561,8 +585,9 @@ _PATH = re.compile(
 )
 # Feature argument forms per host: $ARGUMENTS / $1 (Claude, Codex), {feature-name} / {feature}.
 _FEATURE_ARG = re.compile(r"\$ARGUMENTS|\$1(?![0-9])|\{feature(?:[-_]name)?\}")
-# Invocation prefixes per host: /kiro-x (Claude, Devin), $kiro-x (Codex), /kiro:x (legacy).
-_SKILL_REF = re.compile(r"(?<![A-Za-z0-9_.])[/$]?kiro[-:]([a-z][a-z-]*)")
+# Invocation prefixes per host: /skill-x (Claude, Devin), $skill-x (Codex), /skill:x
+# (legacy). Both skill families are followed: kiro-* and the forge-* ecosystem set.
+_SKILL_REF = re.compile(r"(?<![A-Za-z0-9_.])[/$]?(kiro|forge)[-:]([a-z][a-z-]*)")
 _PHASE = re.compile(r"\bphase\"?\s*:\s*\"([a-z][a-z-]*)\"")
 
 
@@ -583,7 +608,9 @@ def profile_skill(skill_md: str, support_files: frozenset[str]) -> SkillProfile:
     name = name_match.group(1) if name_match else ""
     body = text[frontmatter.end() :] if frontmatter else text
     paths = frozenset(p for p in (_normalize_path(m.group(0)) for m in _PATH.finditer(body)) if p)
-    refs = frozenset(f"kiro-{m.group(1).rstrip('-')}" for m in _SKILL_REF.finditer(body))
+    refs = frozenset(
+        f"{m.group(1)}-{m.group(2).rstrip('-')}" for m in _SKILL_REF.finditer(body)
+    )
     return SkillProfile(
         name=name,
         paths=paths,
@@ -668,7 +695,7 @@ class _Auditor:
                 if not path.startswith(prefix) or self.host_only_entry(path) is not None:
                     continue
                 skill, sep, rel = path[len(prefix) :].partition("/")
-                if sep and rel and skill.startswith("kiro-"):
+                if sep and rel and skill.startswith(self.config.skill_prefixes):
                     found.setdefault(skill, {}).setdefault(host.name, set()).add(rel)
         return {
             skill: {h: frozenset(rels) for h, rels in by_host.items()}

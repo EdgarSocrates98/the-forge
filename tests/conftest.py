@@ -182,6 +182,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_remote_replay.py": ("unit", "security"),
     # agentic knowledge layer (W1)
     "test_forge_knowledge.py": ("unit", "contract", "security"),
+    # agentic canonical skills renderer (W2)
+    "test_render_skills.py": ("unit", "integration"),
 }
 
 

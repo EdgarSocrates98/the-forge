@@ -7,6 +7,13 @@
 # [invariants], [budgets], [pointers] and [[moved_rules]]; an instruction check runs only when
 # its section is declared. Every [[host_only]] and [[accepted]] entry needs a non-empty reason.
 
+# Directory prefixes audited as equivalent skills under each skills_dir:
+# kiro-* (workflow mirrors, hand-edited) and forge-* (ecosystem skills,
+# rendered from agentic/skills/*.md by scripts/agentic/render_skills.py —
+# edit the canonical source, never the generated output).
+[skills]
+prefixes = ["kiro-", "forge-"]
+
 # Hosts with a Kiro skills directory and the instruction files each one reads.
 [hosts.claude]
 skills_dir = ".claude/skills"

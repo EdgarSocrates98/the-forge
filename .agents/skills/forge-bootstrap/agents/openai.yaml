@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Bootstrap"
+  short_description: "Generic new-specialist onboarding"
+
+policy:
+  allow_implicit_invocation: false
