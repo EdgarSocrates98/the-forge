@@ -5,12 +5,12 @@ The Forge = control plane (WHO/WHEN/HOW). Forges especialistas = WHAT.
 <!-- theforge:invariants:begin -->
 ## Invariantes
 - Core (`src/theforge`): runtime stdlib-only, Python >= 3.11, dependências só em `[dev]`. Providers só via Forge Protocol (subprocess + JSON); nunca `import sparkforge_aws`/`apiforge`. Nenhum conhecimento de domínio (Spark, API, …): ele vem dos sinais declarados pelos providers.
-- Adapters (`adapters/`): distribuições à parte, stdlib-only, instaladas no interpretador de cada especialista (Python >= 3.10). Únicos que importam `sparkforge_aws`/`apiforge`/`forge_doctor_data`/`forge_doctor_api`; nunca importam `theforge`.
+- Adapters (`adapters/`): distribuições à parte, stdlib-only, instaladas no interpretador de cada especialista (Python >= 3.10). Únicos que importam `sparkforge_aws`/`sparkforge_azure`/`apiforge`/`platformforge`/`forge_doctor_data`/`forge_doctor_api`; nunca importam `theforge`.
 - Routing determinístico, sem LLM no core: ambiguidade vira `ambiguous`, nunca um chute.
 - Nenhum caminho reporta sucesso sem um `ExecutionResult` válido.
 - Tudo que o core persiste passa por `security.redact`, exceto `.forge/runs/<id>/work/` (escrito pelo provider). Credenciais nunca chegam ao env dos providers.
 - Contratos `theforge/<Name>/v1`; mudou um contrato, regenere `schemas/`: `python -m theforge.contracts.schema schemas`.
-- Setup: `python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi`. Testes: `python -m pytest` (offline); gate: `python -m pytest -m slow`. Lint/tipos: `ruff check .` · `mypy`.
+- Setup: `python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure -e ./adapters/apiforge -e ./adapters/platformforge -e ./adapters/doctordata -e ./adapters/doctorapi`. Testes: `python -m pytest` (offline); gate: `python -m pytest -m slow`. Lint/tipos: `ruff check .` · `mypy`.
 <!-- theforge:invariants:end -->
 
 ## Regras persistentes

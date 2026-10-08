@@ -1,7 +1,7 @@
 """The capability catalog in ``docs/capabilities.md`` matches what the adapters expose
 (real-provider-integration 9.2; requirements 5.1, 5.3, 5.7).
 
-Both adapters run in replay (``--replay tests/fixtures/native/<forge>/default describe``) as
+The adapters run in replay (``--replay tests/fixtures/native/<forge>/default describe``) as
 subprocesses of the current interpreter, where they are installed editable. The two catalog
 tables of the document (exposed capabilities and native surface not exposed) are parsed and
 compared both ways with the describe: a capability or action exposed but not catalogued fails,
@@ -41,6 +41,8 @@ ADAPTERS = {
     "api-forge": "apiforge",
     "forge-doctor-data": "doctordata",
     "forge-doctor-api": "doctorapi",
+    "spark-forge-azure": "sparkforge_azure",
+    "platform-forge": "platformforge",
 }
 
 EXPOSED_HEADER = "| Provider | Capability | Ações | Origem nativa |"
@@ -200,7 +202,8 @@ def test_every_exposed_capability_is_catalogued_with_its_actions(
     doc: str, manifests: dict[str, dict[str, Any]]
 ) -> None:
     exposed = exposed_of(manifests)
-    assert len(exposed) == 21  # 15 Spark Forge AWS + 2 API Forge + 4 Doctors
+    # 15 Spark Forge AWS + 2 API Forge + 4 Doctors + 5 Spark Azure + 9 Platform
+    assert len(exposed) == 35
     assert catalog_drift(parse_exposed(doc), exposed) == []
 
 

@@ -51,7 +51,7 @@ Detalhes normativos em [protocol.md](protocol.md#contexto-v2). Tudo é opcional:
 - **Declarar excerpts.** Só declare `capabilities[].context.excerpts: true` se a capability lê por intervalo. Sem a declaração, o core nunca envia `excerpt`; um arquivo grande demais para o budget é excluído (`budget`) em vez de recortado.
 - **Declarar pedidos.** `capabilities[].context.requests: true` permite responder `execute` com `context_request: {items: [{path, lines?, reason}]}` (1 a 64 itens). O core estende o pack e chama `execute` de novo, até 0 (`economy`), 1 (`balanced`) ou 2 (`max`) rodadas. Pedido sem a declaração, além das rodadas ou com quantidade inválida de itens termina o run em `provider_failure` (`FORGE-CONTEXT-REQUEST-UNSUPPORTED`, `-LIMIT`, `-INVALID`). Itens fora da raiz, de segredo, inexistentes ou sem budget voltam em `excluded` com o motivo; não peça de novo o que foi recusado. Cada rodada tem o timeout inteiro do perfil.
 - **Revalidar o que leu (obrigatório).** Escolha uma estratégia e declare-a em `context_revalidation` no manifest:
-  - `hash`: recalcule o sha256 do conteúdo que leu e informe-o em `Evidence.hash` (estratégia recomendada; o eco embutido e os dois adapters reais a usam);
+  - `hash`: recalcule o sha256 do conteúdo que leu e informe-o em `Evidence.hash` (estratégia recomendada; o eco embutido e os adapters reais a usam);
   - `core`: não revalida e conta com a reverificação do core (que depende do perfil: `economy` não reverifica);
   - `none`: não revalida.
 
@@ -61,7 +61,7 @@ Detalhes normativos em [protocol.md](protocol.md#contexto-v2). Tudo é opcional:
 - **Tokens.** Informe `metrics.tokens` só com `kind` `measured` ou `estimated` e `value` não negativo; o core preserva esse valor e nunca converte bytes em tokens. Sem isso, fica `unknown`.
 
 ### Adapters reais
-Os dois adapters reais declaram `"context_revalidation": "hash"`: copiam para `<cwd>/stage/` só os arquivos dentro de `workspace_root` cujo sha256 bate com o do pack, e o especialista lê só essas cópias; o resto vira a limitação `context file '<p>' skipped: <motivo>`. Eles não declaram `excerpts` nem `requests`, então recebem só itens `reference`.
+Os seis adapters reais declaram `"context_revalidation": "hash"`: copiam para `<cwd>/stage/` só os arquivos dentro de `workspace_root` cujo sha256 bate com o do pack, e o especialista lê só essas cópias; o resto vira a limitação `context file '<p>' skipped: <motivo>`. Eles não declaram `excerpts` nem `requests`, então recebem só itens `reference`.
 
 ## Planos multi-provider: `plan`, handoff e determinismo
 Detalhes normativos em [protocol.md](protocol.md#execução-multi-provider) e decisão no [ADR 0018](adr/0018-multi-provider-execution.md). Tudo é opcional: um provider que não declara nada continua executando nós de plano como qualquer `execute`.

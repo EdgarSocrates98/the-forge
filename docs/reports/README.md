@@ -3,6 +3,15 @@
 Índice dos relatórios de ciclo e artefatos de evidência. Cada ciclo tem um
 relatório principal; waves e auditorias têm documentos próprios.
 
+## Cycle 5.1 — Ecosystem Expansion Validation
+
+| Documento | Conteúdo |
+|---|---|
+| [cycle-5.1-ecosystem.md](cycle-5.1-ecosystem.md) | Ecossistema 4→6 especialistas: adapters Azure/Platform, maturidade derivada, B16–B25, onboarding genérico |
+
+Artefato machine-readable: [specialist-reality.json](../reality/specialist-reality.json)
+(manifest canônico dos seis especialistas, regenerado por `scripts/reality/collect.py`).
+
 ## Cycle 5.1 — Reality Synchronization, Benchmarking & Feature Freeze
 
 | Documento | Conteúdo |

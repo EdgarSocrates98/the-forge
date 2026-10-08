@@ -1,23 +1,23 @@
 {
   "forge": {
-    "branch": "devin/cycle51-polish",
-    "commit_sha": "b747ab7cc29d64fae8977a30006c0808023f5f5c",
+    "branch": "devin/cycle51-ecosystem",
+    "commit_sha": "697d5b6cc2bdb29f596f264bd0ebf0d5b83d8ab7",
     "counts": {
       "adrs": 51,
       "closed_contracts": 39,
       "contracts": 67,
       "docs_root": 33,
       "schemas": 67,
-      "test_files": 133
+      "test_files": 136
     },
-    "origin_main": "b747ab7cc29d64fae8977a30006c0808023f5f5c",
+    "origin_main": "bb07e225336795e18a06245bee9f9e2d5a44bbd8",
     "package_version": "0.4.0",
     "platform": "win32",
     "python": "3.11.15",
     "python_requires": ">=3.11",
     "runtime_dependencies": 0
   },
-  "generated_at": "2026-10-08T08:09:08Z",
+  "generated_at": "2026-10-08T10:07:09Z",
   "generated_by": "scripts/reality/collect.py",
   "kind": "theforge/specialist-reality/v1",
   "specialists": [
@@ -196,6 +196,96 @@
         "recorded_at": "2026-10-06T15:24:21Z",
         "sha256": "ad03aa4f33d7ffde3a008156097be79e79c6235a7a704266b61d930fb6454dda",
         "specialist_version": "0.2.0"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-sparkforge-azure-adapter",
+        "module": "theforge_sparkforge_azure",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "snapshot_fresh_install_ahead",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON",
+      "import_probe": "sparkforge_azure",
+      "installed": {
+        "checkout": {
+          "branch": "feat/cycle5-migration",
+          "commit_sha": "6e74262ecbbb30e5cd2597085d22301d4aaeb8cb",
+          "dirty": true,
+          "location": "file:///E:/projetos/spark-forge-azure",
+          "origin_main": "61367a5ffebc5dff6206b5a3dfd455217819f1f9",
+          "refs_fetched": false,
+          "relation_to_origin_main": "descendant"
+        },
+        "distribution": "sparkforge-azure",
+        "editable": true,
+        "version": "0.1.0"
+      },
+      "name": "spark-forge-azure",
+      "python": "E:\\projetos\\the-forger\\.venv-spark-azure\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/spark-forge-azure",
+      "snapshot": {
+        "entries": {
+          "seams": 5,
+          "tools": 2
+        },
+        "path": "adapters/sparkforge_azure/src/theforge_sparkforge_azure/native_surface.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-08T08:34:09Z",
+        "sha256": "7ff22053153b7b31e6a7f9ddc8a72a565b87aa8c25d0a2124932780416bbb6ad",
+        "specialist_version": "0.1.0"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-platformforge-adapter",
+        "module": "theforge_platformforge",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "fresh",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_PLATFORMFORGE_PYTHON",
+      "import_probe": "platformforge",
+      "installed": {
+        "checkout": {
+          "branch": "main",
+          "commit_sha": "0aee5c6f30a9daa60b47d19abce4dd1f78a7dd05",
+          "dirty": false,
+          "location": "file:///E:/projetos/platform-forge",
+          "origin_main": "0aee5c6f30a9daa60b47d19abce4dd1f78a7dd05",
+          "refs_fetched": false,
+          "relation_to_origin_main": "same"
+        },
+        "distribution": "platformforge",
+        "editable": true,
+        "version": "0.1.0"
+      },
+      "name": "platform-forge",
+      "python": "E:\\projetos\\the-forger\\.venv-platform\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/platform-forge",
+      "snapshot": {
+        "entries": {
+          "seams": 9,
+          "tools": 29
+        },
+        "path": "adapters/platformforge/src/theforge_platformforge/native_surface.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-08T08:57:02Z",
+        "sha256": "f7aa77bb67f441324ec8efe670a9d5ab2d2cd08162da31ac714746dce804a47c",
+        "specialist_version": "0.1.0"
       }
     }
   ]

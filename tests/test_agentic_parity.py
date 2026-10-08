@@ -1086,7 +1086,7 @@ REQUIRED_ANCHORS = {
     "domínio",
     "theforge/<Name>/v1",
     "python -m theforge.contracts.schema schemas",
-    "-e ./adapters/sparkforge_aws -e ./adapters/apiforge",
+    "-e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure",
     "python -m pytest",
     "ruff check .",
     "mypy",

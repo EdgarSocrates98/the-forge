@@ -89,8 +89,10 @@ O catálogo vem da auditoria das superfícies reais (2026-10-03). Cada adapter m
 
 - **Spark Forge AWS** (`spark-forge-aws`): `native_catalog.json`, gravado do `sparkforge-aws` 0.5.0 (`python -m theforge_sparkforge_aws.record`). A origem de cada ação é uma tool MCP nativa. Uma tool é exposta só com `readOnlyHint = true`, `openWorldHint = false` e argumentos obrigatórios que o adapter sabe preencher com arquivos do workspace.
 - **API Forge** (`api-forge`): `native_matrix.json`, a matriz de capabilities do API Forge 0.1.0 (por enquanto montada à mão, até ser gravada com `python -m theforge_apiforge.record`). A origem de cada capability é um verbo da CLI nativa mais o registro dela na matriz. Um registro é exposto só com estado `supported` ou `heuristic`, risco `read_only` e um verbo offline mapeado pelo adapter.
+- **Spark Forge Azure** (`spark-forge-azure`): `native_surface.json`, gravado do `sparkforge-azure` 0.1.0 (`python -m theforge_sparkforge_azure.record`). A origem de cada ação é uma seam pública do pacote (`sdd.checks`, `sdd.status`, `azure.pipeline`, `fabric.pipeline`, `doctor`).
+- **Platform Forge** (`platform-forge`): `native_surface.json`, gravado do `platformforge` 0.1.0 (`python -m theforge_platformforge.record`). A origem de cada ação é uma seam pública `analyze_*` ou `capability_manifest` (manifest nativo `platformforge/capability-manifest/v3`).
 
-Os sinais de routing de cada capability ficam no `catalog.py` de cada adapter e são declarados no describe. O teste `tests/test_capability_catalog_doc.py` compara as duas tabelas abaixo com o describe em replay dos dois adapters. Ele falha se uma capability ou ação for exposta sem estar no catálogo, se o catálogo listar algo que não é exposto, ou se uma exclusão ou o motivo dela divergir do describe.
+Os sinais de routing de cada capability ficam no `catalog.py` de cada adapter e são declarados no describe. O teste `tests/test_capability_catalog_doc.py` compara as duas tabelas abaixo com o describe em replay dos seis adapters. Ele falha se uma capability ou ação for exposta sem estar no catálogo, se o catálogo listar algo que não é exposto, ou se uma exclusão ou o motivo dela divergir do describe.
 
 ### Capabilities expostas
 Todas são `read_only`, `supported` e rodam localmente e offline.
@@ -118,6 +120,20 @@ Todas são `read_only`, `supported` e rodam localmente e offline.
 | `forge-doctor-data` | `data.verify` | `verify` | seam `check_conformance` de `forge_doctor_data.core.conformance` |
 | `forge-doctor-api` | `api.diagnose` | `analyze` | seam `DoctorBoundary` (`handle` + `endpoint_dict`) de `forge_doctor_api.handoff.boundary` (spec 070); `ApiHandoffBundle` v2 + envelope `ForgeHandoff` + `diagnostic-manifest` |
 | `forge-doctor-api` | `api.verify` | `verify` | strict parse `ApiHandoffBundle.from_dict` / `ForgeHandoff.parse` + integridade `body_sha256` (v2) |
+| `spark-forge-azure` | `azure.access-diagnose` | `analyze` | seam `run_case` de `sparkforge_azure.azure.pipeline` |
+| `spark-forge-azure` | `azure.doctor` | `report` | seam `run` de `sparkforge_azure.doctor` |
+| `spark-forge-azure` | `fabric.access-diagnose` | `analyze` | seam `run_fabric_case` de `sparkforge_azure.fabric.pipeline` |
+| `spark-forge-azure` | `sdd.check` | `check` | seam `check` de `sparkforge_azure.sdd.checks` |
+| `spark-forge-azure` | `sdd.status` | `status` | seam `status` de `sparkforge_azure.sdd.status` |
+| `platform-forge` | `catalog.analyze` | `analyze` | seam `analyze_catalog` de `platformforge.product.catalog` |
+| `platform-forge` | `gha.analyze` | `analyze` | seam `analyze_gha` de `platformforge.cicd.github_actions` |
+| `platform-forge` | `gitops.analyze` | `analyze` | seam `analyze_gitops` de `platformforge.cicd.gitops` |
+| `platform-forge` | `iac.analyze` | `analyze` | seam `analyze_hcl` de `platformforge.iac.terraform` |
+| `platform-forge` | `iac.plan-review` | `analyze` | seam `analyze_plan` de `platformforge.iac.plan` |
+| `platform-forge` | `iac.state` | `analyze` | seam `analyze_state` de `platformforge.iac.plan` |
+| `platform-forge` | `k8s.analyze` | `analyze` | seam `analyze_k8s` de `platformforge.k8s.manifests` |
+| `platform-forge` | `platform.manifest` | `report` | seam `capability_manifest` de `platformforge.forge.manifest` (manifest `v3`) |
+| `platform-forge` | `secrets.scan` | `scan` | seam `scan_secrets` de `platformforge.security.scan` |
 
 ### Superfície nativa não exposta
 O motivo é o texto exato que o adapter publica em `limitations` no describe. Ações e capabilities excluídas são listadas uma a uma; ferramentas sem capability são agrupadas pelo motivo.

@@ -8,6 +8,48 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### Ecosystem Expansion Validation (cycle 5.1, prompt `prompt_evo_cycle5.1.md`)
+
+O ecossistema prova 4→6 especialistas sem condicional por provider no core:
+dois adapters novos, conformidade federada sobre os seis, maturidade derivada
+de evidência, benchmarks cloud-aware B16–B25 e onboarding genérico
+(`example-forge`) com gate AST de zero-hardcode.
+
+#### Added
+
+- `adapters/sparkforge_azure` — `theforge-sparkforge-azure-adapter` sobre as
+  seams públicas `sdd.checks`/`sdd.status`/`azure.pipeline`/`fabric.pipeline`/
+  `doctor` do `sparkforge-azure` (`>=0.1.0,<0.2.0`); evidência re-vinculada ao
+  sha256 dos arquivos estagiados via `evidence_paths`.
+- `adapters/platformforge` — `theforge-platformforge-adapter` sobre as nove
+  seams `analyze_*`/`capability_manifest` do `platformforge` (`>=0.1.0,<0.2.0`,
+  manifest nativo `capability-manifest/v3`); recusas `PF-*` preservadas.
+- `tests/test_federation_conformance.py` — conformidade sobre os 6 adapters:
+  grafo federado determinístico, fechamento produces→consumes, escada de
+  maturidade DISCOVERABLE→VERIFICATION_READY derivada de evidência, rejeição
+  adversarial de capability AWS-only em provider Azure.
+- `tests/test_generic_onboarding.py` — `example-forge` onboards pelo caminho
+  normal sem código específico + gate AST de zero-hardcode em `src/theforge`.
+- `tests/test_real_providers.py` + `tests/real_providers.py` — integração live
+  dos seis especialistas (`THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON`,
+  `THEFORGE_REAL_PLATFORMFORGE_PYTHON`, required-mode via
+  `THEFORGE_REAL_PROVIDERS_REQUIRED`/`THEFORGE_ECOSYSTEM_REQUIRED`).
+- Benchmarks B16–B25 em `scripts/bench/run_scenarios.py` — descoberta/
+  planejamento Platform, composições cross-domain, seleção cloud-aware,
+  ambiguidade/incompatibilidade cross-cloud e onboarding genérico.
+- `docs/reports/cycle-5.1-ecosystem.md` — relatório do ciclo.
+
+#### Changed
+
+- `capability_graph.produces_consumes_order` — `can_verify`/`can_review`
+  ordenam o verificador depois da capability nomeada (genérico; única mudança
+  de produção no core do ciclo).
+- `scripts/reality/collect.py` — SPECIALISTS cobre os seis; o manifest
+  canônico `docs/reality/specialist-reality.json` reflete os seis.
+- `docs/real-providers.md`, `docs/capabilities.md`, `docs/architecture.md`,
+  `README.md`, `AGENTS.md`, `CLAUDE.md` — migração 4→6 em instalação,
+  registro, env vars, catálogo (35 capabilities) e seções de adapters.
+
 ### 0.4.0 — Cycle 5.1
 
 Reality Synchronization, Benchmarking & Feature Freeze: a stabilization cycle —
