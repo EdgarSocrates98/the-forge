@@ -5,6 +5,10 @@ closed. Mark an item complete only from evidence produced by the corresponding
 command/workflow. The Cycle 4.1 gates below remain independently open on
 their own blockers.
 
+> `python scripts/check_gates.py` agrega os gates locais rápidos (ruff,
+> format, mypy, paridade de schemas, render checks, audit, zero-deps) num
+> comando só; `--pytest` inclui a suíte default.
+
 ## Cycle 5 gates (0.3.0)
 
 ### Repository state
