@@ -137,6 +137,22 @@ def _split_overview(body: str) -> tuple[str, str]:
     return overview, rest
 
 
+def _freshness_marker(src: SkillSource) -> str:
+    """Machine-checkable freshness trailer (§51-52): audit_assets binds the
+    rendered skill to the forge-knowledge packages and versions it was
+    recorded against."""
+    if not src.specialists and not src.tested_version:
+        return ""
+    parts = []
+    if src.specialists:
+        parts.append(f"specialists={','.join(src.specialists)}")
+    if src.tested_version:
+        parts.append(f"version={src.tested_version}")
+    if src.tested_surface:
+        parts.append(f"surface={src.tested_surface}")
+    return "<!-- forge:freshness " + " ".join(parts) + " -->\n"
+
+
 def render_claude(src: SkillSource) -> str:
     lines = ["---", f"name: {src.name}", f"description: {src.description}"]
     if src.allowed_tools:
@@ -144,7 +160,12 @@ def render_claude(src: SkillSource) -> str:
     if src.argument_hint:
         lines.append(f"argument-hint: {src.argument_hint}")
     lines.append("---")
-    return "\n".join(lines) + "\n" + _resolve_host_blocks(src.body, "claude")
+    return (
+        "\n".join(lines)
+        + "\n"
+        + _resolve_host_blocks(src.body, "claude")
+        + _freshness_marker(src)
+    )
 
 
 def render_envelope(src: SkillSource, host: str) -> str:
@@ -155,6 +176,7 @@ def render_envelope(src: SkillSource, host: str) -> str:
         f"# {src.name}\n\n"
         f"<background_information>\n{overview}\n</background_information>\n\n"
         f"<instructions>\n{rest}\n</instructions>\n"
+        + _freshness_marker(src)
     )
 
 

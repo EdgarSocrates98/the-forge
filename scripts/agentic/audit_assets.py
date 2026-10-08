@@ -487,6 +487,7 @@ class FindingKind(StrEnum):
     BUDGET = "budget"  # instruction file above its size budget
     MOVED_RULE = "moved-rule"  # moved rule absent from its declared target
     POINTER = "pointer"  # mandatory pointer absent from an instruction file
+    SKILL_QUALITY = "skill-quality"  # canonical skill fails a quality/freshness check
 
 
 FAILING: frozenset[FindingKind] = frozenset(FindingKind) - {
@@ -588,6 +589,9 @@ _FEATURE_ARG = re.compile(r"\$ARGUMENTS|\$1(?![0-9])|\{feature(?:[-_]name)?\}")
 # Invocation prefixes per host: /skill-x (Claude, Devin), $skill-x (Codex), /skill:x
 # (legacy). Both skill families are followed: kiro-* and the forge-* ecosystem set.
 _SKILL_REF = re.compile(r"(?<![A-Za-z0-9_.])[/$]?(kiro|forge)[-:]([a-z][a-z-]*)")
+# Canonical skill quality (W4): frontmatter description, freshness block.
+_CANONICAL_FRONT = re.compile(r"\A\+\+\+\n(.*?)\n\+\+\+\n", re.DOTALL)
+_KNOWLEDGE_DIR = "forge-knowledge"
 _PHASE = re.compile(r"\bphase\"?\s*:\s*\"([a-z][a-z-]*)\"")
 
 
@@ -965,12 +969,110 @@ class _Auditor:
                 f"block differs from {other} at line {index + 1}: {line!r}",
             )
 
+    def check_canonical_skills(self, skills: _SkillFiles) -> None:
+        """Quality gate for canonical sources under ``agentic/skills/`` (§17, §75-79).
+
+        Rendered output is generated, so the checks aim at the source: trigger
+        description, Overview/Boundaries sections, freshness metadata that must
+        match the forge-knowledge package it claims, and references that must
+        resolve to a real skill or a tracked path.
+        """
+        skill_names = set(skills)
+        knowledge: dict[str, str | None] = {}
+        for path in sorted(self.files):
+            if path.startswith(_KNOWLEDGE_DIR + "/") and path.endswith(".json"):
+                try:
+                    doc = json.loads(self.read(path))
+                except json.JSONDecodeError:
+                    doc = {}
+                knowledge[path.rsplit("/", 1)[-1][:-5]] = (
+                    doc.get("tested_version") if isinstance(doc, dict) else None
+                )
+        for path in sorted(self.files):
+            if not path.startswith("agentic/skills/") or not path.endswith(".md"):
+                continue
+            subject = path.removeprefix("agentic/skills/")[:-3]
+            text = self.read(path)
+            match = _CANONICAL_FRONT.match(text)
+            meta: dict[str, Any] = {}
+            if match:
+                try:
+                    meta = tomllib.loads(match.group(1))
+                except tomllib.TOMLDecodeError as exc:
+                    self.add(
+                        FindingKind.SKILL_QUALITY, subject, (), "frontmatter",
+                        f"invalid TOML: {exc}",
+                    )
+                    continue
+            else:
+                self.add(
+                    FindingKind.SKILL_QUALITY, subject, (), "frontmatter",
+                    "missing +++ frontmatter",
+                )
+                continue
+            if meta.get("name") != subject:
+                self.add(
+                    FindingKind.SKILL_QUALITY, subject, (), "name",
+                    f"name {meta.get('name')!r} != filename",
+                )
+            if not str(meta.get("description", "")).strip():
+                self.add(
+                    FindingKind.SKILL_QUALITY, subject, (), "description",
+                    "missing trigger description (a skill without one is never loaded on demand)",
+                )
+            body = text[match.end() :]
+            if "## Overview" not in body:
+                self.add(
+                    FindingKind.SKILL_QUALITY, subject, (), "sections",
+                    "missing ## Overview",
+                )
+            if "## Boundaries" not in body and "## Limits" not in body:
+                self.add(
+                    FindingKind.SKILL_QUALITY, subject, (), "sections",
+                    "missing a Boundaries/Limits section (what the skill refuses to do)",
+                )
+            freshness = meta.get("freshness", {})
+            for pid in freshness.get("specialists", []):
+                if pid not in knowledge:
+                    self.add(
+                        FindingKind.SKILL_QUALITY, subject, (), "freshness",
+                        f"references unknown forge-knowledge package {pid!r}",
+                    )
+                elif (
+                    freshness.get("tested_version")
+                    and knowledge[pid]
+                    and freshness["tested_version"] != knowledge[pid]
+                ):
+                    self.add(
+                        FindingKind.SKILL_QUALITY, subject, (), "freshness",
+                        f"tested_version {freshness['tested_version']!r} != knowledge "
+                        f"package {knowledge[pid]!r} (stale skill claim)",
+                    )
+            # Only invocation-prefixed refs (/$forge-x) are checked for
+            # resolution — a bare `forge-aws` in prose is a family shorthand,
+            # not a skill call.
+            refs = {
+                f"{m.group(1)}-{m.group(2)}"
+                for m in _SKILL_REF.finditer(body)
+                if m.group(0)[:1] in ("/", "$")
+            }
+            for ref in refs - {meta.get("name")}:
+                if ref in skill_names or any(
+                    p.startswith(ref + "/") or p == ref for p in self.files
+                ):
+                    continue
+                self.add(
+                    FindingKind.SKILL_QUALITY, subject, (), "references",
+                    f"{ref!r} resolves to no skill dir and no tracked path",
+                )
+
     def run(self) -> AuditReport:
         skills = self.skill_files()
         self.check_host_dirs(skills)
         self.classify(self.compare_skills(skills))
         self.compare_support(skills)
         self.check_instructions()
+        self.check_canonical_skills(skills)
         return AuditReport(
             findings=tuple(sorted(self.findings)),
             skills=tuple((skill, tuple(sorted(skills[skill]))) for skill in sorted(skills)),

@@ -186,6 +186,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_render_skills.py": ("unit", "integration"),
     # agentic specialized agents registry (W3)
     "test_agent_registry.py": ("unit", "contract", "security"),
+    "test_agentic_security.py": ("unit", "contract", "security"),
 }
 
 

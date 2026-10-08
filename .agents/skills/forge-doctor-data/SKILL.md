@@ -30,3 +30,4 @@ Operational guide to `forge-doctor-data` — a doctor, not a producer. It diagno
 
 Verifier-only surface: no producer seams. If no doctor is installed, the honest answer is a plan gap (`forge-install`), not self-verification by the producer.
 </instructions>
+<!-- forge:freshness specialists=forge-doctor-data version=0.3.0 -->

@@ -29,3 +29,4 @@ GitHub Actions / CI/CD pipelines · Kubernetes manifests/Helm · GitOps (Argo/Fl
 
 Staging boundary above is intentional. Refusals preserve `PF-*` codes with `unlock` instructions.
 </instructions>
+<!-- forge:freshness specialists=platform-forge version=0.1.0 surface=4bb0aa837941053ff006db0c3e08356341489d7522cf624db05803239b695653 -->

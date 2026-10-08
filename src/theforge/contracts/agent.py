@@ -46,8 +46,10 @@ KNOWN_ACTIONS = (
 
 # Every agent — no exceptions — must declare these as forbidden. Trust and
 # approval are human/policy gates; an agent that could grant them would be a
-# confused deputy by construction.
-UNIVERSAL_FORBIDDEN = ("grant-trust", "approve")
+# confused deputy by construction. ``waive-verification`` and
+# ``modify-registry`` are universal for the same reason (§75-79): no agent
+# may bypass verification or write the registry — both are governed paths.
+UNIVERSAL_FORBIDDEN = ("grant-trust", "approve", "waive-verification", "modify-registry")
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -30,3 +30,4 @@ Operational guide to `forge-doctor-api` — a doctor, not a producer. It consume
 
 Verifier-only surface. Version-floor above is a hard prerequisite for `api.verify`; it is recorded in the knowledge package because it bit in reality, not as trivia.
 </instructions>
+<!-- forge:freshness specialists=forge-doctor-api version=0.3.0 -->

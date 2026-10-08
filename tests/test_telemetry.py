@@ -37,6 +37,14 @@ ALL_METRICS = (
     "files_cited",
     "evidence_returned",
     "findings_returned",
+    "agent_calls",
+    "subagent_calls",
+    "skills_considered",
+    "skills_loaded",
+    "skill_bytes",
+    "knowledge_bytes",
+    "planning_calls",
+    "verification_calls",
 )
 
 
@@ -137,6 +145,14 @@ def test_complete_run_has_every_metric_measured() -> None:
         ("files_cited", 2),
         ("evidence_returned", 4),
         ("findings_returned", 2),
+        ("agent_calls", 1),
+        ("subagent_calls", 2),
+        ("skills_considered", 6),
+        ("skills_loaded", 2),
+        ("skill_bytes", 4096),
+        ("knowledge_bytes", 2048),
+        ("planning_calls", 1),
+        ("verification_calls", 1),
     ):
         rec.count(name, value)
     rec.set_effective_tiers(["requested", "metadata", "reference"])

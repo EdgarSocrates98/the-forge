@@ -31,3 +31,4 @@ Glue jobs/catalog · EMR clusters/steps · Lake Formation grants/tag-policies ·
 
 AWS-only signals; it will not recognize Azure/GCP tasks. Records `limitations` in results honestly — a partial answer is a partial answer.
 </instructions>
+<!-- forge:freshness specialists=spark-forge-aws version=0.3.0 -->

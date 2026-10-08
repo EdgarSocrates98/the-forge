@@ -30,7 +30,9 @@ def load_package(path: Path) -> ForgeKnowledge:
         data = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise PersistenceError(f"forge knowledge: cannot read {path}: {exc}") from exc
-    package = from_dict(ForgeKnowledge, data, "$")
+    # Strict: knowledge packages are authored core data, not provider output —
+    # a smuggled field is malformed input, never forward compatibility (§76).
+    package = from_dict(ForgeKnowledge, data, "$", strict=True)
     if package.id != path.stem:
         raise UsageError(
             f"forge knowledge: file {path.name} must be named after its provider id "

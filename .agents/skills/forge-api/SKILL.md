@@ -29,3 +29,4 @@ REST/OpenAPI spec design or review · AsyncAPI event contracts · GraphQL schema
 
 Interpreter lock is the most common `INCOMPATIBLE` cause — check `theforge doctor` Python detection first. Contract evolution input must come as upstream-facts intake, not ad-hoc prose.
 </instructions>
+<!-- forge:freshness specialists=api-forge version=0.3.0 -->

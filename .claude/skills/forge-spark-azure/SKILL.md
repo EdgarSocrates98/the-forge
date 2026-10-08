@@ -30,3 +30,4 @@ Databricks (jobs, clusters, notebooks) · ADLS Gen2 storage · Synapse Spark poo
 ## Limits
 
 Azure-only signals. SDD seams require the specialist's own gate (`sparkforge-azure sdd check`) semantics — refusals carry named `unlock` instructions.
+<!-- forge:freshness specialists=spark-forge-azure version=0.1.0 -->
