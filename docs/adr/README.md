@@ -93,6 +93,11 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | engineering memory: conhecimento verificável, isolamento por escopo | [0049](0049-engineering-memory.md) | `cycle-5` |
 | execution targets + remote trust: alvo declarado, deny-by-default | [0050](0050-execution-targets-remote-trust.md) | `cycle-5` |
 | StrategyPolicy: promoção governada, surface-scoped, nunca soberana | [0051](0051-strategy-policy-governance.md) | `cycle-5` |
+| Forge Knowledge: metadado de bootstrap, nunca verdade de runtime | [0052](0052-forge-knowledge-layer.md) | `agentic` |
+| skill ≠ capability: orientação de host vs. superfície executável | [0053](0053-skill-vs-capability.md) | `agentic` |
+| AgentSpec: autoridade fechada, forbidden universal, sem auto-escalonamento | [0054](0054-agent-authority-model.md) | `agentic` |
+| specialist bootstrap: knowledge → plano → aprovação → verificação independente | [0055](0055-specialist-bootstrap.md) | `agentic` |
+| assets agentic: canônico renderiza por host, auditoria semântica vigia | [0056](0056-agentic-host-adaptation.md) | `agentic` |
 
 ## Novo ADR
 

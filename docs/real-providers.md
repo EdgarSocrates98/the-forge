@@ -13,6 +13,8 @@ The Forge fala com os especialistas através de adapters Forge Protocol v1 insta
 
 Os adapters são stdlib-only, sem dependências declaradas, e não importam `theforge`. Os Doctors **não** rodam subprocesso nem rede no especialista: o adapter chama só as seams públicas num processo filho (`python -m theforge_doctordata.bridge` / `theforge_doctorapi.bridge`) e traduz o documento `forge-contracts/1`/`ApiHandoffBundle` para o Evidence Bus; o Spark Forge Azure e o Platform Forge seguem o mesmo desenho (`theforge_sparkforge_azure.bridge` / `theforge_platformforge.bridge` chamam as seams em-processo do especialista instalado). Os caminhos abaixo são placeholders: `<spark-python>`, `<azure-python>`, `<api-python>`, `<platform-python>`, `<dd-python>` e `<da-python>` são o executável Python de cada venv (`<venv>/bin/python` no POSIX, `<venv>\Scripts\python.exe` no Windows), e `<the-forge>` é um checkout deste repositório.
 
+Os pacotes `forge-knowledge/<id>.json` codificam exatamente estas receitas de instalação (`install[]`), as janelas de versão suportadas e os comandos de verificação/descoberta — são a fonte legível por máquina desta página, para bootstrap antes do provider existir ([forge-knowledge.md](forge-knowledge.md)). Depois de instalado, quem fala é o `describe` ao vivo.
+
 ## Instalação
 
 ### Spark Forge AWS (venv Python 3.11)
