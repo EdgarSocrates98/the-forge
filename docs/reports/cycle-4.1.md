@@ -85,10 +85,55 @@ Static/mechanical checks performed against the branch include:
 - forge-contracts extraction;
 - full external trace dereferencing.
 
+## Final local validation (closure pass)
+
+Executed on the closure branch against the four real specialist interpreters:
+
+- `ruff check .`: clean; `ruff format --check .`: 628 files already formatted;
+- `mypy`: no issues in 191 source files;
+- committed schemas regenerated and byte-identical (`git status` clean after
+  `python -m theforge.contracts.schema schemas`);
+- offline pytest suite (`not slow and not real_provider`): green in a single
+  isolated run (two earlier failures were `.pytest_tmp` contention between
+  concurrent pytest processes, not code defects);
+- `pytest -m slow` (package build, zero-runtime-deps, fresh-wheel install):
+  green;
+- `pytest -m real_provider` with `THEFORGE_REAL_PROVIDERS_REQUIRED=1` and all
+  four specialist interpreters: 35 tests, zero failures, zero skips;
+- `python -m theforge_<adapter>.record --check` in each specialist venv:
+  `surface drift: none` for all four providers;
+- `python scripts/agentic/audit_assets.py`: no failing findings.
+
+Sibling specialist SHAs used for the four-provider proof:
+
+- `spark-forge-aws` `828827d7` (`feat/upstream-facts-v1` worktree
+  `E:\projetos\.sibling-upstream\spark-forge-aws`; specialist `main` is
+  `24107f4c` and does not carry the upstream-facts intake yet);
+- `api-forge` `1745f87`;
+- `forge-doctor-data` `3a8d7a5` (`1.0.0rc1`);
+- `forge-doctor-api` `035b635`.
+
+Two real integration findings were fixed in this pass:
+
+- `tests/fixtures/native/doctordata/default/data.scan.analyze.json` was
+  re-recorded: `forge-doctor-data 1.0.0rc1` emits one additive `SQL000`
+  finding on the shop workspace (74 -> 75 findings); all previously recorded
+  fingerprints are preserved.
+- The Spark Forge AWS upstream-facts intake (`sparkforge/upstream-facts/v1`,
+  `analyze pyspark --upstream`) exists only on the specialist branch
+  `feat/upstream-facts-v1` (commit `504e5358`, merged-forward with the
+  `sparkforge` -> `sparkforge_aws` rename at `828827d7`), not yet on the
+  specialist's `main`. The conformance environment therefore installs
+  `sparkforge-aws 0.5.0` from that branch's worktree. On specialist `main`
+  the intake is absent and handoff consumption degrades — by design — to an
+  explicit `handoff delivered but not consumed` limitation, not an error.
+  Merging that branch upstream is the remaining ecosystem dependency.
+
 ## Remaining closure work
 
-- execute full local/remote gates in an environment that can run them;
-- re-run four-provider ecosystem-real and provider-surface-drift;
+- merge `feat/upstream-facts-v1` into Spark Forge AWS `main` so the four-provider
+  handoff chain is proven against the specialist's release line;
+- execute the remote gates once GitHub Actions executes job steps again;
 - review whether early-stop scheduling can be enabled after terminal decision
   behavior has accumulated evidence.
 
@@ -107,4 +152,6 @@ Static/mechanical checks performed against the branch include:
 | Automatic budget reduction | DEFERRED | intentionally unsafe before experiment proof |
 | Early scheduler stop | DEFERRED | terminal decision first; arbitrary node skipping not enabled |
 | Remote The Forge CI | BLOCKED | Actions jobs return with no steps |
-| ecosystem-real / surface-drift remote proof | BLOCKED | requires functioning Actions runner |
+| ecosystem-real local proof | DONE | 35/35 real_provider tests green, zero skips |
+| surface-drift local check | DONE | `record --check`: none ×4 |
+| Spark upstream intake on specialist main | BLOCKED upstream | ships on `feat/upstream-facts-v1` only; degrades to limitation on main |

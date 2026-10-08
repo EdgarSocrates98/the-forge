@@ -12,3 +12,4 @@ build/
 .hypothesis/
 .forge/
 .pytest_tmp/
+.pytest_tmp*/
