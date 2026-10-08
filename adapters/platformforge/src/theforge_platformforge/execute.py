@@ -260,7 +260,7 @@ def execute_reply(
     artifact_hash = _store_artifact(document, cwd, capability)
     if isinstance(artifact_hash, Reply):
         return artifact_hash
-    draft = translate(document, capability, action, artifact_hash)
+    draft = translate(document, capability, action, artifact_hash, stage)
     if isinstance(draft, Reply):
         return draft
     return finalize(draft, cwd)

@@ -70,6 +70,37 @@ K8S_GLOBS = (
     "charts/*",
 )
 SECRETS_GLOBS = ("*",)
+# Routing signals for ``secrets.scan``: the file families a secret scan reads. Broad but
+# literal — a catch-all glob would be rejected as a signal and would name nothing.
+SECRET_FILE_GLOBS = (
+    ".env",
+    ".env.*",
+    "*.env",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    "*.keystore",
+    "credentials",
+    "credentials.*",
+    "id_rsa",
+    "id_rsa.*",
+    "*.secret",
+    "*.secrets",
+    "*.properties",
+    "*.tfvars",
+    "*.ini",
+    "*.cfg",
+    "*.conf",
+    "*.yaml",
+    "*.yml",
+    "*.json",
+    "*.toml",
+    "*.sh",
+    "*.ps1",
+    "*.py",
+    "*.tf",
+)
 GHA_GLOBS = (".github/workflows/*.yml", ".github/workflows/*.yaml")
 GITOPS_GLOBS = (
     "*.yaml",
@@ -131,7 +162,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "terraform module",
             "resource block",
         ),
-        file_globs=("*.tf", "*.hcl"),
+        file_globs=IAC_GLOBS,
         description="Terraform/HCL tree → fact document: resources, modules, providers and "
         "their attributes with provenance (iac.terraform.analyze_hcl).",
         relations={"produces": (IAC_FACTS,)},
@@ -147,7 +178,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "will destroy",
             "plan output",
         ),
-        file_globs=("*.tfplan.json", "plan.json"),
+        file_globs=PLAN_GLOBS,
         description="A ``terraform show -json`` plan → fact document: creates/updates/"
         "deletes with risk-relevant attributes (iac.plan.analyze_plan).",
         relations={"produces": (PLAN_REVIEW,)},
@@ -157,7 +188,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         actions=("analyze",),
         input_globs=STATE_GLOBS,
         signals_keywords=("tfstate", "terraform state", "state file", "drift input"),
-        file_globs=("*.tfstate", "*.tfstate.json"),
+        file_globs=STATE_GLOBS,
         description="A tfstate document → fact document: recorded resources and outputs "
         "(iac.plan.analyze_state).",
         relations={"produces": (STATE_FACTS,)},
@@ -175,7 +206,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "helm",
             "kustomize",
         ),
-        file_globs=("*.yaml", "*.yml"),
+        file_globs=K8S_GLOBS,
         description="Kubernetes manifest tree → fact document: workloads, services, RBAC "
         "and security-relevant fields (k8s.manifests.analyze_k8s).",
         relations={"produces": (K8S_FACTS,)},
@@ -192,17 +223,10 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "private key",
             "password",
         ),
-        # Routing signals name high-signal files; the staged *input* is the whole tree —
-        # a secret can hide in any file. Catch-all globs are rejected as signals.
-        file_globs=(
-            ".env",
-            ".env.*",
-            "*.pem",
-            "*.key",
-            "*.p12",
-            "credentials",
-            "id_rsa",
-        ),
+        # Routing signals name the file families a secret scan targets; the staged
+        # *input* is the whole tree (``*`` = "any staged file", like the Doctors) —
+        # a secret can hide anywhere. Catch-all globs are rejected as signals.
+        file_globs=SECRET_FILE_GLOBS,
         description="Staged tree → secret findings with automatic redaction; never emits "
         "raw secret material (security.scan.scan_secrets).",
         relations={"produces": (SECRETS_REPORT,)},
@@ -218,7 +242,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "ci pipeline",
             ".github/workflows",
         ),
-        file_globs=(".github/workflows/*.yml", ".github/workflows/*.yaml"),
+        file_globs=GHA_GLOBS,
         description="GitHub Actions workflows → fact document: jobs, permissions, triggers "
         "and action pins (cicd.github_actions.analyze_gha).",
         relations={"produces": (GHA_FACTS,)},
@@ -234,7 +258,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "kustomization",
             "sync wave",
         ),
-        file_globs=("*.yaml", "*.yml"),
+        file_globs=GITOPS_GLOBS,
         description="GitOps trees (ArgoCD applications, Flux sources, Kustomize layouts) → "
         "fact document (cicd.gitops.analyze_gitops).",
         relations={"produces": (GITOPS_FACTS,)},
@@ -250,7 +274,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "component spec",
             "api spec registration",
         ),
-        file_globs=("catalog-info.yaml", "catalog-info.yml"),
+        file_globs=CATALOG_GLOBS,
         description="Backstage catalog-info documents → fact document: components, APIs, "
         "resources and ownership claims (product.catalog.analyze_catalog).",
         relations={"produces": (CATALOG_FACTS,)},

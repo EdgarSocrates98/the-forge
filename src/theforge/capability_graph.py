@@ -351,6 +351,11 @@ def produces_consumes_order(
             # its output — the inverse direction of `requires`.
             if e.target in nodes:
                 before[e.target].add(e.source)
+        elif e.kind in ("can_verify", "can_review"):
+            # Same relation declared from the other end: the verifier/reviewer
+            # (the edge's source) runs after the capability it names.
+            if e.target in nodes:
+                before[e.source].add(e.target)
         elif e.kind in _AFTER_PRODUCER:
             before[e.source] |= produced_by.get(e.target, set()) - {e.source}
 

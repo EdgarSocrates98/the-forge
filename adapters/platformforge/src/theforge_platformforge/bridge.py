@@ -95,11 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("manifest", help="forge.manifest.capability_manifest()")
     args = parser.parse_args(argv)
     try:
-        document = (
-            _analyze(args.domain, args.repo)
-            if args.command == "analyze"
-            else _manifest()
-        )
+        document = _analyze(args.domain, args.repo) if args.command == "analyze" else _manifest()
     except _BridgeRefuse as exc:
         return _fail(REQUEST_INVALID, str(exc), 2)
     except Exception as exc:  # noqa: BLE001 - the adapter maps the type+message only

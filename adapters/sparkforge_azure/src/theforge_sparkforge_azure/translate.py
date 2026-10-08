@@ -53,8 +53,34 @@ def _clip(text: object, limit: int = CLAIM_LIMIT) -> str:
     return value if len(value) <= limit else value[: limit - 1] + "…"
 
 
-def _evidence(eid: str, subject: str, claim: str) -> dict[str, Any]:
-    return {"id": eid, "epistemic": "observed", "subject": subject, "claim": _clip(claim)}
+def _staged(stage: object, ref: str) -> str | None:
+    """The staged path a native file reference names: exact match, else the unique
+    basename match. ``None`` when the reference names no staged file (or several)."""
+    files = getattr(stage, "files", None) or {}
+    normalized = ref.replace("\\", "/").lstrip("/")
+    if normalized in files:
+        return normalized
+    tail = normalized.rsplit("/", 1)[-1]
+    matches = [path for path in files if path.rsplit("/", 1)[-1] == tail or path == normalized]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _evidence(
+    eid: str, subject: str, claim: str, *, stage: object | None = None, file: str | None = None
+) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "id": eid,
+        "epistemic": "observed",
+        "subject": subject,
+        "claim": _clip(claim),
+    }
+    path = _staged(stage, file) if stage is not None and file else None
+    if path is not None:
+        # Adapter-verified binding: the hash is the staged file's verified sha256,
+        # never a value the specialist reported.
+        entry["location"] = {"path": path, "line": None}
+        entry["hash"] = stage.files[path]
+    return entry
 
 
 def _finding(fid: str, title: str, severity: str, **kw: Any) -> dict[str, Any]:
@@ -104,21 +130,42 @@ def _sdd(document: Mapping[str, Any], artifact_ref: str, capability: str) -> Res
     )
 
 
-def _diagnose(document: Mapping[str, Any], artifact_ref: str, capability: str) -> ResultDraft:
+def _diagnose(
+    document: Mapping[str, Any], artifact_ref: str, capability: str, stage: object | None
+) -> ResultDraft:
     findings: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
+    paths = document.get("evidence_paths")
     for index, item in enumerate(_items(document, "findings")[:ITEMS_SHOWN]):
         if not isinstance(item, Mapping):
             continue
         sev = _SEVERITY.get(str(item.get("severity", "info")), "info")
-        title = item.get("title") or item.get("id") or f"finding {index}"
-        eid = str(item.get("id") or f"{capability}:{index}")
+        title = item.get("title") or item.get("rule_id") or item.get("id") or f"finding {index}"
+        eid = str(item.get("rule_id") or item.get("id") or f"{capability}:{index}")
+        # evidence_paths[fid].files names the bundle files the finding derives from —
+        # bind each to its staged path with the adapter-verified sha256.
+        bound: list[dict[str, Any]] = []
+        if isinstance(paths, Mapping):
+            entry = paths.get(eid)
+            files = entry.get("files") if isinstance(entry, Mapping) else None
+            for file in (files or ())[:6]:
+                if isinstance(file, str):
+                    bound_item = _evidence(
+                        f"{eid}:file:{len(bound)}",
+                        capability,
+                        f"{eid} derives from {file}",
+                        stage=stage,
+                        file=file,
+                    )
+                    bound.append(bound_item)
+                    if "hash" in bound_item:
+                        evidence.append(bound_item)
         findings.append(
             _finding(
                 eid,
                 str(title),
                 sev,
-                evidence=[_evidence(f"{eid}:e", capability, _json_text(item))],
+                evidence=[_evidence(f"{eid}:e", capability, _json_text(item)), *bound],
             )
         )
     diagnosis = document.get("diagnosis")
@@ -187,17 +234,23 @@ def artifact_path(capability: str) -> str:
 
 
 def translate(
-    document: Mapping[str, Any], capability: str, action: str, artifact_hash: str
+    document: Mapping[str, Any],
+    capability: str,
+    action: str,
+    artifact_hash: str,
+    stage: object | None = None,
 ) -> Reply | ResultDraft:
     """The native document as a ``ResultDraft`` (artifact already stored)."""
     if not isinstance(document, Mapping):
         return fail(NATIVE_INVALID, "the native document is not a JSON object")
     artifact_ref = f"sha256:{artifact_hash[:16]}…"
     translator = _TRANSLATORS.get(capability)
-    draft = (
-        translator(document, artifact_ref, capability)
-        if translator
-        else ResultDraft(
+    if translator is _diagnose:
+        draft = translator(document, artifact_ref, capability, stage)
+    elif translator is not None:
+        draft = translator(document, artifact_ref, capability)
+    else:
+        draft = ResultDraft(
             provider_id=PROVIDER_ID,
             version=VERSION,
             evidence=[
@@ -208,7 +261,6 @@ def translate(
                 )
             ],
         )
-    )
     artifacts = [{"path": artifact_path(capability), "sha256": artifact_hash}]
     return replace(draft, artifacts=artifacts)
 

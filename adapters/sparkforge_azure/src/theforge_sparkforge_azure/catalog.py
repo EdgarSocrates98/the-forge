@@ -43,27 +43,24 @@ SEAM_FABRIC_DIAGNOSE = "fabric_diagnose"
 SEAM_DOCTOR = "doctor_run"
 
 # A staged case bundle is a directory holding case.yaml; the SDD capabilities consume the
-# staged docs/sdd tree. ``*`` means "any staged file" for capabilities reading the whole root.
-# fnmatch ``*`` already spans ``/`` (``docs/sdd/*.md`` matches ``docs/sdd/<FEATURE>/define.md``).
-SDD_GLOBS = (
-    "docs/sdd/*.md",
-    "docs/sdd/*.yaml",
-    "docs/sdd/*.yml",
-    "docs/sdd/*.json",
-    "sdd/*.md",
-    "sdd/*.yaml",
-    "sdd/*.json",
+# staged docs/sdd tree — feature artifacts live one level down (``docs/sdd/<FEATURE>/*.md``).
+# The core stages with ``PurePosixPath.match``, where ``*`` does NOT span ``/``: the tree is
+# covered by the pair ``docs/sdd/*.<ext>`` (root level) + ``docs/sdd/**/*.<ext>`` (nested).
+SDD_GLOBS = tuple(
+    glob
+    for prefix in ("docs/sdd/", "docs/sdd/**/", "sdd/", "sdd/**/")
+    for glob in (f"{prefix}*.md", f"{prefix}*.yaml", f"{prefix}*.yml", f"{prefix}*.json")
 )
 # A case bundle (azure/casefile.load_bundle): case.{yaml,yml,json} plus the optional layer
 # artifacts and notebooks/ — every name the loader reads, so staging never thins a case.
+# ``{name}.*`` collapses the suffix variants into one glob (fnmatch ``*`` covers them all;
+# a stray ``case.md`` is staged but ignored by the loader).
 AZURE_CASE_GLOBS = tuple(
-    f"{name}{suffix}"
-    for name in ("case", "unity_catalog", "rbac", "adls", "network", "entra", "compute")
-    for suffix in (".yaml", ".yml", ".json")
+    f"{name}.*" for name in ("case", "unity_catalog", "rbac", "adls", "network", "entra", "compute")
 ) + ("notebooks/*.py", "notebooks/*.sql", "notebooks/*.ipynb")
 # fabric/casefile.load_bundle reads a different artifact set (Fabric is not ADF).
 FABRIC_CASE_GLOBS = tuple(
-    f"{name}{suffix}"
+    f"{name}.*"
     for name in (
         "case",
         "workspace",
@@ -77,7 +74,6 @@ FABRIC_CASE_GLOBS = tuple(
         "pipelines",
         "identity",
     )
-    for suffix in (".yaml", ".yml", ".json")
 ) + ("notebooks/*.py", "notebooks/*.sql", "notebooks/*.ipynb")
 
 # Artifact types the capabilities emit (consumed via the evidence bus by providers that
@@ -123,7 +119,8 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "requirements",
             "acceptance criteria",
         ),
-        file_globs=("docs/sdd/**/*.md", "docs/sdd/**/*.yaml"),
+        # signals.file_globs drive the ContextPack: they must cover every input glob.
+        file_globs=SDD_GLOBS,
         description="Deterministic SDD gate over the staged docs/sdd tree: every refused "
         "or unresolved phase is named with its unlock (sdd.checks.check).",
         relations={"produces": (SDD_REPORT,)},
@@ -133,7 +130,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         actions=("status",),
         input_globs=SDD_GLOBS,
         signals_keywords=("sdd status", "spec status", "feature phase", "sdd progress"),
-        file_globs=("docs/sdd/**/*.md", "docs/sdd/**/*.yaml"),
+        file_globs=SDD_GLOBS,
         description="SDD lifecycle report: the phase of each feature under the staged "
         "docs/sdd tree (sdd.status.status).",
         relations={"produces": (SDD_STATUS_REPORT,)},
@@ -153,7 +150,8 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "key vault",
             "authorization",
         ),
-        file_globs=("case.yaml", "*.yaml"),
+        # The case bundle is yaml/json layers plus notebooks/ — every input glob is a signal.
+        file_globs=AZURE_CASE_GLOBS,
         description="Offline multi-layer access diagnosis (Entra/RBAC/ACL/Unity Catalog/"
         "network) over a staged case bundle with case.yaml (azure.pipeline.run_case).",
         relations={"produces": (ACCESS_DIAGNOSIS,)},
@@ -169,7 +167,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
             "fabric permission",
             "lakehouse access",
         ),
-        file_globs=("case.yaml", "*.yaml"),
+        file_globs=FABRIC_CASE_GLOBS,
         description="Offline Microsoft Fabric access diagnosis over a staged case bundle "
         "with case.yaml (fabric.pipeline.run_fabric_case).",
         relations={"produces": (FABRIC_DIAGNOSIS,)},

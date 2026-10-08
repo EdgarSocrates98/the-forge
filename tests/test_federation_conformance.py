@@ -1,12 +1,17 @@
-"""Cycle 5.1 §12: cross-repo conformance over the four real adapters.
+"""Cycle 5.1: cross-repo conformance over the six real adapters.
 
 The adapters' own tests prove each adapter in isolation; this suite proves the
-*federation*: the four replay manifests combined into one CapabilityGraph must
+*federation*: the six replay manifests combined into one CapabilityGraph must
 close the declared chains — every ``consumes`` finds a ``produces``, every
 ``can_verify`` names a real capability, artifact references are valid, and the
 graph builds deterministically. Everything runs against the packaged replay
 fixtures (no specialist needed), so this is a fixture-replay conformance, not a
 real-provider proof.
+
+The maturity ladder (DISCOVERABLE → CONTRACT_COMPATIBLE → SURFACE_VALIDATED →
+PLANNABLE → EXECUTION_READY → VERIFICATION_READY) is *derived from manifest and
+graph evidence*, never declared: a provider reaches a level only when the
+evidence for it exists in the federated graph.
 """
 
 from __future__ import annotations
@@ -19,7 +24,14 @@ from pathlib import Path
 
 import pytest
 
-from theforge.capability_graph import build_capability_graph, verified_by
+from theforge.capability_graph import (
+    build_capability_graph,
+    consumers,
+    executors,
+    producers,
+    produces_consumes_order,
+    verifiers,
+)
 from theforge.contracts import PROTOCOL_V1, ForgeManifest, Response, from_dict
 from theforge.registry.config import ProviderEntry
 from theforge.registry.registry import RegistryRecord
@@ -31,7 +43,9 @@ NATIVE = REPO / "tests" / "fixtures" / "native"
 
 ADAPTERS = {
     "spark-forge-aws": ("theforge_sparkforge_aws", NATIVE / "sparkforge_aws" / "default"),
+    "spark-forge-azure": ("theforge_sparkforge_azure", NATIVE / "sparkforge_azure" / "default"),
     "api-forge": ("theforge_apiforge", NATIVE / "apiforge" / "default"),
+    "platform-forge": ("theforge_platformforge", NATIVE / "platformforge" / "default"),
     "forge-doctor-data": ("theforge_doctordata", NATIVE / "doctordata" / "default"),
     "forge-doctor-api": ("theforge_doctorapi", NATIVE / "doctorapi" / "default"),
 }
@@ -41,20 +55,25 @@ _REQUEST = json.dumps(
 ).encode()
 
 
-def _describe(module: str, replay: Path) -> ForgeManifest:
-    """``python -m <adapter> --replay <dir> describe`` -> ForgeManifest."""
+def _describe(module: str, replay: Path) -> tuple[ForgeManifest, dict]:
+    """``python -m <adapter> --replay <dir> describe`` -> (ForgeManifest, raw payload)."""
     argv = [sys.executable, "-m", module, "--replay", str(replay), "describe"]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:
         out = subprocess.run(argv, input=_REQUEST, capture_output=True, timeout=60, cwd=cwd)
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
     assert response.status == "ok", response.error
-    return from_dict(ForgeManifest, response.payload, "$.payload")
+    return from_dict(ForgeManifest, response.payload, "$.payload"), response.payload
 
 
 @pytest.fixture(scope="module")
-def manifests() -> dict[str, ForgeManifest]:
+def described() -> dict[str, tuple[ForgeManifest, dict]]:
     return {pid: _describe(module, replay) for pid, (module, replay) in ADAPTERS.items()}
+
+
+@pytest.fixture(scope="module")
+def manifests(described) -> dict[str, ForgeManifest]:
+    return {pid: manifest for pid, (manifest, _raw) in described.items()}
 
 
 @pytest.fixture(scope="module")
@@ -146,7 +165,7 @@ class TestFederatedChains:
             ref
             for m in manifests.values()
             for c in m.capabilities
-            for ref in verified_by(graph, f"{m.id}/{c.id}")
+            for ref in verifiers(graph, f"{m.id}/{c.id}")
         ]
         for ref in verifiable:
             provider, _, _cap_id = ref.partition("/")
@@ -165,3 +184,194 @@ class TestFederatedChains:
                         f"{pid}/{cap.id} consumes {rel.consumes} but does not "
                         "declare accepts_handoff"
                     )
+
+    def test_new_specialists_produce_namespaced_artifact_types(self, manifests) -> None:
+        """The two new specialists contribute artifact types of their own namespaces —
+        no cross-cloud or cross-domain type reuse is presumed."""
+        produced = self._produced_types(manifests)
+        assert "azure.access-diagnosis" in produced
+        assert "fabric.access-diagnosis" in produced
+        assert "sdd.report" in produced
+        assert {t for t in produced if t.startswith("platform.")} >= {
+            "platform.iac-facts",
+            "platform.secrets-report",
+        }
+        # Nothing consumes them yet: produced-but-unconsumed is honest, never hidden.
+        consumed = self._consumed_types(manifests)
+        for t in ("azure.access-diagnosis", "platform.iac-facts"):
+            assert t not in consumed, f"{t} claimed a consumer nobody declared"
+
+
+# --- maturity ladder ---------------------------------------------------------------------
+
+LEVELS = (
+    "DISCOVERABLE",
+    "CONTRACT_COMPATIBLE",
+    "SURFACE_VALIDATED",
+    "PLANNABLE",
+    "EXECUTION_READY",
+    "VERIFICATION_READY",
+)
+
+
+def _level(manifest: ForgeManifest, raw: dict, graph, replay: Path) -> str:
+    """The highest rung the provider's *evidence* supports (never declared).
+
+    DISCOVERABLE       the describe handshake produced a manifest
+    CONTRACT_COMPATIBLE manifest passes the contract validators (taxonomy+limits)
+    SURFACE_VALIDATED  the manifest carries a fingerprint of a *recorded* surface
+    PLANNABLE          >=1 supported, read-only capability behind the execute op
+    EXECUTION_READY    >=1 declared cap.action has a replay recording (execute proven
+                       end-to-end; uncovered actions are a fixture-coverage fact,
+                       not a readiness defect)
+    VERIFICATION_READY >=1 declared capability has a verifier in the federation
+    """
+    from theforge.contracts.integrity import validate_manifest_limits
+    from theforge.contracts.taxonomy import validate_taxonomy
+
+    level = 0
+    if validate_taxonomy(manifest) or validate_manifest_limits(manifest):
+        return LEVELS[level]
+    level = 1
+    if not raw.get("native_surface_fingerprint"):
+        return LEVELS[level]
+    level = 2
+    routable = [
+        c
+        for c in manifest.capabilities
+        if c.state == "supported" and c.operation_class == "read_only"
+    ]
+    if "execute" not in manifest.ops or not routable:
+        return LEVELS[level]
+    level = 3
+    recorded = [
+        (cap, action)
+        for cap in routable
+        for action in cap.actions
+        if (replay / f"{cap.id}.{action}.json").is_file()
+        or (replay / f"{cap.id}.{action}.error.json").is_file()
+    ]
+    if not recorded:
+        return LEVELS[level]
+    level = 4
+    if any(verifiers(graph, f"{manifest.id}/{cap.id}") for cap in manifest.capabilities):
+        level = 5
+    return LEVELS[level]
+
+
+# Evidence-based expectation: doctors verify the AWS engineer and the API engineer; nobody
+# verifies the doctors' own capabilities yet, and the new specialists have no verifier.
+EXPECTED_LEVEL = {
+    "spark-forge-aws": "VERIFICATION_READY",
+    "api-forge": "VERIFICATION_READY",
+    "forge-doctor-data": "EXECUTION_READY",
+    "forge-doctor-api": "EXECUTION_READY",
+    "spark-forge-azure": "EXECUTION_READY",
+    "platform-forge": "EXECUTION_READY",
+}
+
+
+class TestMaturityLevels:
+    """§SPECIALIST MATURITY LEVELS: each provider reaches exactly the rung its
+    evidence supports — ``SUPPORTED`` is never declared generically."""
+
+    def test_every_specialist_reaches_at_least_plannable(self, described, graph) -> None:
+        levels = {
+            pid: _level(manifest, raw, graph, ADAPTERS[pid][1])
+            for pid, (manifest, raw) in described.items()
+        }
+        assert levels == EXPECTED_LEVEL
+        for pid, level in levels.items():
+            assert LEVELS.index(level) >= LEVELS.index("PLANNABLE"), (pid, level)
+
+    def test_no_level_is_skipped(self, described, graph) -> None:
+        """Strip evidence and the derived level falls — the ladder is monotonic in
+        evidence, so a provider can never reach a rung without the one below."""
+        import copy
+
+        for pid, (manifest, raw) in described.items():
+            no_execute = copy.deepcopy(manifest)
+            object.__setattr__(no_execute, "ops", [o for o in manifest.ops if o != "execute"])
+            level = _level(no_execute, raw, graph, ADAPTERS[pid][1])
+            assert LEVELS.index(level) <= LEVELS.index("SURFACE_VALIDATED"), (pid, level)
+
+    def test_verification_ready_means_a_verifier_resolves(self, manifests, graph) -> None:
+        verified = {
+            pid: [f"{pid}/{c.id}" for c in m.capabilities if verifiers(graph, f"{pid}/{c.id}")]
+            for pid, m in manifests.items()
+        }
+        assert verified["spark-forge-aws"] and verified["api-forge"]
+        # Honest gap, named not hidden: nothing verifies the new specialists' output yet.
+        assert verified["spark-forge-azure"] == []
+        assert verified["platform-forge"] == []
+
+
+# --- cross-domain planning -----------------------------------------------------------------
+
+
+class TestCrossDomainPlanning:
+    """§CROSS-DOMAIN PLANNING: composed plans over the real six-provider graph — only
+    edges the manifests actually declare."""
+
+    def test_diagnostic_producer_runs_before_its_consumer(self, graph) -> None:
+        """Doctor-Data produces data.diagnostic-evidence; api-forge consumes it:
+        the plan order puts the producer first, deterministically."""
+        refs = ["api-forge/api.analyze", "forge-doctor-data/data.scan"]
+        order, unresolved = produces_consumes_order(graph, refs)
+        assert not unresolved
+        assert order.index("forge-doctor-data/data.scan") < order.index("api-forge/api.analyze")
+
+    def test_verifier_runs_after_the_verified_capability(self, graph) -> None:
+        """forge-doctor-api/api.verify can_verify api-forge/api.analyze — the
+        verified capability precedes the verifier in plan order."""
+        refs = ["forge-doctor-api/api.verify", "api-forge/api.analyze"]
+        order, unresolved = produces_consumes_order(graph, refs)
+        assert not unresolved
+        assert order.index("api-forge/api.analyze") < order.index("forge-doctor-api/api.verify")
+
+    def test_six_provider_composition_orders_deterministically(self, graph) -> None:
+        """A plan touching all six specialists: chained edges order, the unconnected
+        keep input order — and the result is byte-stable across builds."""
+        refs = [
+            "api-forge/api.analyze",
+            "platform-forge/iac.analyze",
+            "forge-doctor-data/data.scan",
+            "spark-forge-azure/azure.access-diagnose",
+            "forge-doctor-api/api.verify",
+            "spark-forge-aws/pyspark.static-analysis",
+        ]
+        order1, un1 = produces_consumes_order(graph, refs)
+        order2, un2 = produces_consumes_order(graph, refs)
+        assert order1 == order2 and un1 == un2 == []
+        assert set(order1) == set(refs)
+        # The declared edges still hold inside the larger composition.
+        assert order1.index("forge-doctor-data/data.scan") < order1.index("api-forge/api.analyze")
+        assert order1.index("api-forge/api.analyze") < order1.index("forge-doctor-api/api.verify")
+
+    def test_no_speculative_edges_into_the_new_specialists(self, graph) -> None:
+        """Nothing consumes platform.*/azure.* artifact types, and the new specialists
+        consume nothing either — the graph must not invent API→Platform-style edges."""
+        for artifact_type in (
+            "platform.iac-facts",
+            "platform.k8s-facts",
+            "platform.secrets-report",
+            "azure.access-diagnosis",
+            "fabric.access-diagnosis",
+            "sdd.report",
+        ):
+            assert consumers(graph, artifact_type) == [], artifact_type
+            assert producers(graph, artifact_type), artifact_type
+
+    def test_platform_and_azure_capabilities_are_addressable(self, graph) -> None:
+        """Every exposed capability is a graph node addressable as provider/capability."""
+        for ref in (
+            "platform-forge/iac.analyze",
+            "platform-forge/platform.manifest",
+            "spark-forge-azure/azure.access-diagnose",
+            "spark-forge-azure/sdd.check",
+        ):
+            assert executors(graph, ref) or verifiers(graph, ref) or _cap_in(graph, ref), ref
+
+
+def _cap_in(graph, ref: str) -> bool:
+    return any(n.id == f"capability:{ref}" for n in graph.nodes)
