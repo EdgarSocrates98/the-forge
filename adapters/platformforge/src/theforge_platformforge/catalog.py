@@ -402,6 +402,15 @@ def manifest_payload(
         spec = CAPABILITY_MAP[capability_id]
         if seam_present(snapshot, spec.seam):
             capabilities.append({"id": capability_id, **capability_entry(spec)})
+            if capability_id == "secrets.scan":
+                # Declared, not discovered at runtime: the core never stages
+                # secret-named files, so the scan reads staged content only.
+                limitations.append(
+                    "secrets.scan reads staged content only: files whose names match "
+                    "the core's secret-name boundary (.env, .env.*, *.pem, *.key, "
+                    "credentials*, secrets.*) are excluded before staging — an ok "
+                    "result with zero facts does not mean 'no secrets'"
+                )
         else:
             limitations.append(
                 f"capability '{capability_id}' not exposed: seam "
