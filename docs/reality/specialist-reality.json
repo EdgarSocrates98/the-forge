@@ -1,23 +1,23 @@
 {
   "forge": {
-    "branch": "devin/cycle5-final",
-    "commit_sha": "c70757f9e31f6ff9e7bb3f9d1c33d9996253c4f6",
+    "branch": "devin/cycle51-polish",
+    "commit_sha": "b747ab7cc29d64fae8977a30006c0808023f5f5c",
     "counts": {
       "adrs": 51,
       "closed_contracts": 39,
       "contracts": 67,
-      "docs_root": 31,
+      "docs_root": 33,
       "schemas": 67,
-      "test_files": 128
+      "test_files": 133
     },
-    "origin_main": "c70757f9e31f6ff9e7bb3f9d1c33d9996253c4f6",
-    "package_version": "0.3.0",
+    "origin_main": "b747ab7cc29d64fae8977a30006c0808023f5f5c",
+    "package_version": "0.4.0",
     "platform": "win32",
     "python": "3.11.15",
     "python_requires": ">=3.11",
     "runtime_dependencies": 0
   },
-  "generated_at": "2026-10-08T06:09:09Z",
+  "generated_at": "2026-10-08T08:09:08Z",
   "generated_by": "scripts/reality/collect.py",
   "kind": "theforge/specialist-reality/v1",
   "specialists": [
