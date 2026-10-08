@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from theforge.contracts.base import ContractError
-from theforge.contracts.types import EdgeEpistemic, Producer
+from theforge.contracts.types import EdgeEpistemic, Producer, check_sha256
 
 CAPABILITY_GRAPH_SCHEMA = "theforge/CapabilityGraph/v1"
 
@@ -202,3 +202,5 @@ class CapabilityRelation:
             raise ContractError(f"capability relation: unknown epistemic {self.epistemic!r}")
         if len(self.constraints) > 32 or len(self.evidence) > 32:
             raise ContractError("capability relation: constraints/evidence exceed bound")
+        if self.surface is not None:
+            check_sha256(self.surface, field="capability relation surface")

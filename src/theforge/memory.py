@@ -52,6 +52,7 @@ __all__ = [
     "MEMORY_DIR",
     "SUMMARIES_FILE",
     "MemoryQuery",
+    "entry_fresh",
     "export_entries",
     "failure_patterns",
     "import_entries",
@@ -61,6 +62,7 @@ __all__ = [
     "mark_stale",
     "memory_entry_id",
     "memory_pack",
+    "pack_stats",
     "record_entry",
     "summarize",
     "supersede",
@@ -257,6 +259,26 @@ def supersede(root: Path, old_id: str, new: EngineeringMemoryEntry) -> tuple[boo
     return True, _write_entries(root, [*marked, new]) or warning
 
 
+def entry_fresh(entry: EngineeringMemoryEntry, surface: str | None) -> bool:
+    """Whether a surface-bound entry still applies on the current surface.
+
+    Same contract as ``capability_graph.relation_fresh``: an entry without a
+    ``surface_fingerprint`` is not surface-bound and stays fresh; a bound entry
+    is fresh only while the fingerprint matches the current surface — and when
+    the current surface is unknown (``None``) bound evidence cannot be trusted
+    (``unknown != fresh``). Terminal entries (``stale``/``superseded``) are
+    never fresh regardless of surface.
+
+    ``entry_fresh`` answers "does this fact still hold?" — it does not mutate
+    the store; expiry is a recorded transition via ``mark_stale``.
+    """
+    if entry.epistemic in ("stale", "superseded"):
+        return False
+    if entry.surface_fingerprint is None:
+        return True
+    return surface is not None and entry.surface_fingerprint == surface
+
+
 # --- retrieval ---------------------------------------------------------------------------------
 
 
@@ -376,6 +398,78 @@ def memory_pack(
         limitations=limitations,
     )
     return pack, warning
+
+
+def pack_stats(
+    root: Path,
+    query: MemoryQuery | None = None,
+    *,
+    surface: str | None = None,
+    max_entries: int = DEFAULT_PACK_ENTRIES,
+    max_bytes: int = DEFAULT_PACK_BYTES,
+) -> tuple[dict[str, int], str | None]:
+    """Deterministic retrieval counters for ROI measurement (Cycle 5.1 §14).
+
+    Same store, same ordering and same budgets as ``memory_pack`` — this is
+    instrumentation over the real retrieval path, not a parallel one, and it
+    never writes to the store. Counters:
+
+    - ``entries_considered``: loaded from the store (corrupt lines excluded,
+      counted in the warning);
+    - ``entries_matched`` / ``entries_terminal``: matching the query /
+      excluded by it for being ``stale`` or ``superseded``;
+    - ``entries_fresh`` / ``entries_not_fresh``: among matched, by
+      ``entry_fresh(entry, surface)`` — with ``surface=None`` every
+      surface-bound entry counts as *not* fresh (``unknown != fresh``);
+    - ``entries_delivered`` / ``entries_withheld``: within the budget /
+      matching but cut by it;
+    - ``bytes_matched`` / ``bytes_delivered``: serialized size of matched /
+      delivered entries.
+    """
+    query = query if query is not None else MemoryQuery()
+    entries, warning = load_entries(root)
+    matched = sorted((e for e in entries if query.matches(e)), key=lambda e: (e.created_at, e.id))
+    including = MemoryQuery(
+        kind=query.kind,
+        scope=query.scope,
+        provider=query.provider,
+        capability=query.capability,
+        task_family=query.task_family,
+        surface_fingerprint=query.surface_fingerprint,
+        subject=query.subject,
+        tag=query.tag,
+        epistemic=query.epistemic,
+        include_terminal=True,
+    )
+    terminal = sum(1 for e in entries if including.matches(e)) - len(matched)
+    max_entries = max(1, min(max_entries, MAX_PACK_ENTRIES))
+    max_bytes = max(1024, min(max_bytes, MAX_PACK_BYTES))
+    # Delivery mirrors memory_pack exactly: ordered, first overflow stops the pack.
+    delivered = 0
+    bytes_delivered = 0
+    for entry in matched:
+        size = len(json.dumps(to_dict(entry), sort_keys=True).encode("utf-8"))
+        if delivered >= max_entries or (delivered and bytes_delivered + size > max_bytes):
+            break
+        delivered += 1
+        bytes_delivered += size
+    bytes_matched = 0
+    fresh = 0
+    for entry in matched:
+        bytes_matched += len(json.dumps(to_dict(entry), sort_keys=True).encode("utf-8"))
+        fresh += entry_fresh(entry, surface)
+    stats = {
+        "entries_considered": len(entries),
+        "entries_terminal": terminal,
+        "entries_matched": len(matched),
+        "entries_fresh": fresh,
+        "entries_not_fresh": len(matched) - fresh,
+        "entries_delivered": delivered,
+        "entries_withheld": len(matched) - delivered,
+        "bytes_matched": bytes_matched,
+        "bytes_delivered": bytes_delivered,
+    }
+    return stats, warning
 
 
 # --- distillation (Wave T) ----------------------------------------------------------------------

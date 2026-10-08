@@ -29,7 +29,7 @@ def test_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as info:
         main(["--version"])
     assert info.value.code == 0
-    assert "theforge 0.3.0" in capsys.readouterr().out
+    assert "theforge 0.4.0" in capsys.readouterr().out
 
 
 def test_init_is_idempotent(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

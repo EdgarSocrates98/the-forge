@@ -8,6 +8,60 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### 0.4.0 — Cycle 5.1
+
+Reality Synchronization, Benchmarking & Feature Freeze: a stabilization cycle —
+evidence over features. The four specialists were re-synchronized against
+reality, surfaces now invalidate stale evidence, memory value was measured
+instead of assumed, and the platform enters Feature Freeze + DOGFOODING.
+
+#### Added
+
+- `scripts/reality/collect.py` — machine-readable specialist reality manifest
+  (`docs/reports/cycle-5.1-reality.json`): installed vs published SHA,
+  snapshot drift classification (`fresh`/`snapshot_fresh_install_*`),
+  `record --check` per adapter venv, import probes.
+- `memory.entry_fresh` + `memory.pack_stats` — surface-freshness for memory
+  entries and a deterministic instrumentation path over `memory_pack`
+  (considered/terminal/matched/fresh/delivered/withheld, bytes on both sides).
+- `tests/test_federation_conformance.py` — replay `describe` over all four
+  adapters → manifest validation → deterministic federated `CapabilityGraph`
+  with artifact chains and verifier resolution.
+- `scripts/bench/run_scenarios.py` — the official Cycle 5.1 benchmark suite
+  B01–B15 (deterministic plan, artifact-aware multi-specialist plan, semantic
+  ambiguity fallback, stale surface, memory assist, poisoned memory,
+  restricted remote, independent verification, Global Stop, strategy
+  preference, graph conflict, unavailable specialist, fake receipt, A2A
+  unverified, cross-project import).
+- Hot-path benchmarks in `run_bench.py`: `memory_pack`, `plan_simulate`,
+  `target_negotiate`, `receipt_validate`, `observation_write` with budgets.
+- `tests/test_remote_replay.py` — dedicated §29 replay-attack suite (10 cases;
+  `request_sha256` is the structural nonce-equivalent binding).
+- `tests/test_surface_staleness.py` — the §11/§20 staleness matrix across
+  relations, memory entries, policies and observations.
+- `docs/feature-freeze.md` + `docs/dogfooding.md` — freeze manifest and the
+  dogfooding guide with observation taxonomy + feature-request gate.
+- Reports: `cycle-5.1-audit`, `cycle-5.1-memory-roi`, `cycle-5.1-benchmarks`,
+  `cycle-5.1-security`, `cycle-5.1-operational`, `cycle-5.1-scorecard`,
+  `cycle-5.1-evidence.json`, `cycle-5.1-scenarios.json`,
+  `cycle-5.1-reality.json`.
+
+#### Changed
+
+- `theforge-sparkforge-aws` adapter emits the `UPSTREAM_SCHEMA` the installed
+  specialist declares (`sparkforge_aws/upstream-facts/v1` post-rename,
+  `sparkforge/upstream-facts/v1` legacy fallback) — real drift found and fixed.
+- README cycle status normalized to `CLOSED_LOCALLY /
+  REMOTE_VALIDATION_BLOCKED`; `test_release_metadata` enforces the taxonomy.
+- `docs/versioning.md`: contract stability classes for freeze (stable
+  candidate / experimental / internal).
+- `docs/real-providers.md`: explicit mock taxonomy mapping.
+
+#### Security
+
+- §50 adversarial regression mapped to evidence for all 18 vectors;
+  capability-id collision stays namespaced in the graph.
+
 ### 0.3.0 — Cycle 5
 
 Federated Engineering Intelligence & Execution: the platform remembers

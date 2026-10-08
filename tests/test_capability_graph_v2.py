@@ -233,9 +233,9 @@ class TestRelationFreshness:
         assert relation_fresh(self._relation(None), "surface-x")
 
     def test_scoped_relation_stale_on_surface_change(self) -> None:
-        rel = self._relation("surface-1")
-        assert relation_fresh(rel, "surface-1")
-        assert not relation_fresh(rel, "surface-2")
+        rel = self._relation("a" * 64)
+        assert relation_fresh(rel, "a" * 64)
+        assert not relation_fresh(rel, "b" * 64)
         # unknown current surface -> a scoped relation cannot be trusted
         assert not relation_fresh(rel, None)
 

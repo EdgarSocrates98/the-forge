@@ -76,22 +76,32 @@ from theforge.contracts import (
     RunTelemetry,
     TaskSpec,
 )
-from theforge.contracts.canonical import utc_now
+from theforge.contracts.base import to_dict
+from theforge.contracts.canonical import sha256_of, utc_now
+from theforge.contracts.memory import EngineeringMemoryEntry
+from theforge.contracts.observation import ExecutionObservation
 from theforge.contracts.plan import ExecutionPlan, PlanDependency, PlanNode
+from theforge.contracts.remote import RemoteExecutionReceipt
+from theforge.contracts.targets import ExecutionTarget, TargetRequirement
 from theforge.contracts.telemetry import ProfileSnapshot
 from theforge.contracts.types import BudgetProfile
 from theforge.explain import build_explain_report, verify_run_hashes
 from theforge.forger import AskRequest, Forger
 from theforge.intel import refresh_intel
+from theforge.memory import MemoryQuery, memory_pack, record_entry
 from theforge.meta import PRODUCER, VERSION
+from theforge.observations import record_observation
 from theforge.planning.validate import check_plan
 from theforge.profiles import PROFILES
 from theforge.providers.echo.provider import DOC_GLOBS
 from theforge.registry import Registry
+from theforge.remote import RemotePolicy, accept_receipt, build_request
 from theforge.routing import route
 from theforge.routing.signals import workspace_dependencies
 from theforge.runs import RunStore, new_run_id
+from theforge.simulation import simulate_plan
 from theforge.state import init_workspace
+from theforge.targets import builtin_local, negotiate_target
 from theforge.workspace.describe import describe_workspace
 
 SCHEMA: Final = "theforge-bench/v1"
@@ -116,6 +126,13 @@ MEASUREMENTS: Final = (
     "plan_validate",
     "replay_verify",
     "explain_build",
+    # Cycle 5.1 hot paths (§39): memory retrieval, plan simulation, target
+    # negotiation, remote receipt binding, observation write.
+    "memory_pack",
+    "plan_simulate",
+    "target_negotiate",
+    "receipt_validate",
+    "observation_write",
 )
 DEFAULT_RUNS: Final = 10
 QUICK_RUNS: Final = 3
@@ -638,6 +655,121 @@ def run_procedure(tmp: Path, runs: int, log: Callable[[str], None]) -> dict[str,
 
         record("replay_verify", lambda: verify_run_hashes(store, run_id))
         record("explain_build", lambda: build_explain_report(store, run_id))
+
+        # --- Cycle 5 surfaces (5.1 §39) --------------------------------------------------
+        # Memory retrieval over a seeded store (seeding is untimed setup; the
+        # corpus is fixed: 240 entries, queries scoped by capability+family).
+        mem_root = tmp / "ws-memory"
+        mem_root.mkdir()
+        init_workspace(mem_root)
+
+        def _mem_entry(i: int) -> EngineeringMemoryEntry:
+            stub = EngineeringMemoryEntry(
+                producer=PRODUCER,
+                created_at=utc_now(),
+                id="0" * 64,
+                kind="failure" if i % 3 else "resolution",
+                scope="project",
+                workspace=str(mem_root),
+                subject=f"bench entry {i:04d}",
+                claim=f"provider bench-{i % 4} observation {i:04d}",
+                epistemic="observed",
+                provider=f"bench-{i % 4}",
+                capability="check.plan" if i % 2 else "other.step",
+                task_family="audit",
+                source_refs=[f"run:bench-{i:04d}"],
+                tags=["bench"],
+            )
+            return replace(stub, id=sha256_of({"s": stub.subject, "c": stub.claim}))
+
+        for i in range(240):
+            problem = record_entry(mem_root, _mem_entry(i))
+            if problem is not None:
+                raise RuntimeError(f"memory seed failed: {problem}")
+        mem_query = MemoryQuery(capability="check.plan", task_family="audit")
+        record("memory_pack", lambda: memory_pack(mem_root, mem_query))
+
+        # Plan simulation over the same 32-node plan validated above.
+        record("plan_simulate", lambda: simulate_plan(plan, {r.entry.id: r for r in records}))
+
+        # Target negotiation: provider × declared targets (local + remote mix).
+        bench_targets = [
+            builtin_local(),
+            ExecutionTarget(
+                producer=PRODUCER,
+                created_at=utc_now(),
+                id="remote-bench",
+                type="remote-forge",
+                trust="verified",
+                network="egress",
+                identity_ref="did:example:remote-bench",
+                data_classes=["public"],
+                health="healthy",
+            ),
+            ExecutionTarget(
+                producer=PRODUCER,
+                created_at=utc_now(),
+                id="isolated-bench",
+                type="isolated-local",
+                trust="org-approved",
+                network="none",
+                data_classes=["public", "internal", "confidential"],
+                health="healthy",
+            ),
+        ]
+        record(
+            "target_negotiate",
+            lambda: negotiate_target(
+                "echo-forge",
+                "demo.echo",
+                TargetRequirement(data_classification="internal", locality="local-or-remote"),
+                bench_targets,
+            ),
+        )
+
+        # Remote receipt binding validation (request built against the allowlisted
+        # bench target; receipt checked by accept_receipt).
+        remote_policy = RemotePolicy(policy_ref="bench", allowed_target_ids=["remote-bench"])
+        remote_req = build_request(
+            target=bench_targets[1],
+            requirement=TargetRequirement(data_classification="public", locality="local-or-remote"),
+            policy=remote_policy,
+            task_sha256="1" * 64,
+            context_sha256="2" * 64,
+            budget_sha256="3" * 64,
+            provider="echo-forge",
+            surface_fingerprint="a" * 64,
+            expected_artifacts=["report.v1"],
+        )
+        remote_receipt = RemoteExecutionReceipt(
+            producer=PRODUCER,
+            created_at=utc_now(),
+            request_sha256=sha256_of(to_dict(remote_req)),
+            execution_id="bench-exec",
+            target_id="remote-bench",
+            target_identity_ref="did:example:remote-bench",
+            provider="echo-forge",
+            input_hashes={"task": "1" * 64},
+            output_hashes={"report.v1": "4" * 64},
+            verification="bench-verifier:ok",
+        )
+        record("receipt_validate", lambda: accept_receipt(remote_receipt, remote_req))
+
+        # Observation append to the store's JSONL (bounded writes).
+        obs_root = tmp / "ws-obs"
+        obs_root.mkdir()
+        init_workspace(obs_root)
+        obs = ExecutionObservation(
+            producer=PRODUCER,
+            created_at=utc_now(),
+            run_id="bench-run",
+            provider="echo-forge",
+            capability="demo.echo",
+            status="ok",
+            profile=PROFILE,
+            context_bytes=125440,
+        )
+        record("observation_write", lambda: record_observation(obs_root, obs))
     return {name: results[name] for name in MEASUREMENTS}
 
 

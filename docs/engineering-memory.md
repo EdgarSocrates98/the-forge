@@ -65,3 +65,16 @@ só escopos `portable`/`organization` saem, e `import` recusa
 `project`/`workspace` contando-os em `limitations`. `patterns` mostra o
 rollup `FailurePattern` — recomendação, nunca regra. Tudo offline; writes
 passam por `security.redact` como qualquer persistência.
+
+## Instrumentação e ROI (Cycle 5.1)
+
+`pack_stats(root, query, surface=...)` retorna contadores determinísticos do
+mesmo pipeline de `memory_pack` — `entries_considered`/`matched`/`fresh`/
+`not_fresh`/`delivered`/`withheld`/`terminal`, `bytes_matched`/`delivered` —
+sem escrever nada. É a instrumentação usada por
+`scripts/bench/run_memory_roi.py`, que mede memory-on vs memory-off, custo de
+retrieval vs scan, influência via canal governado
+(`failure_patterns → experimento → StrategyPolicy → preferred_providers`) e
+as propriedades de segurança (terminal nunca entregue; surface desconhecida
+não é fresh). Resultado medido e limitações:
+`docs/reports/cycle-5.1-memory-roi.md`.

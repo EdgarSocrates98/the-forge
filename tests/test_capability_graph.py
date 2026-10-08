@@ -246,6 +246,39 @@ class TestBuilder:
         ) in kinds
         assert ("conflicts", "capability:forge-b/api.serve", "capability:forge-b/etl.run") in kinds
 
+    def test_capability_identity_collision_stays_namespaced(self) -> None:
+        """§50: two providers declaring the same capability id produce distinct
+        namespaced nodes — identity is provider-qualified, never merged."""
+        g = _graph(
+            _record(
+                "forge-a",
+                _manifest(
+                    "forge-a",
+                    _cap("etl.run", relations=CapabilityRelations(produces=["orders.facts"])),
+                ),
+            ),
+            _record(
+                "forge-b",
+                _manifest(
+                    "forge-b",
+                    _cap("etl.run", relations=CapabilityRelations(produces=["orders.facts"])),
+                ),
+            ),
+        )
+        node_ids = {n.id for n in g.nodes}
+        assert "capability:forge-a/etl.run" in node_ids
+        assert "capability:forge-b/etl.run" in node_ids
+        # Both feed the same artifact type — no silent collapse into one node.
+        produces = {(e.source, e.target) for e in g.edges if e.kind == "produces"}
+        assert ("capability:forge-a/etl.run", "artifact_type:orders.facts") in produces
+        assert ("capability:forge-b/etl.run", "artifact_type:orders.facts") in produces
+        # Producers of the artifact type resolve to BOTH namespaced capabilities.
+        assert producers(g, "orders.facts") == ["forge-a/etl.run", "forge-b/etl.run"]
+        # Executor lookup by the bare id returns both providers — ambiguity is
+        # visible to the planner, never silently collapsed.
+        assert executors(g, "forge-a/etl.run") == ["forge-a"]
+        assert executors(g, "forge-b/etl.run") == ["forge-b"]
+
     def test_unresolved_target_named_not_dropped(self) -> None:
         g = _graph(
             _record(

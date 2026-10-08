@@ -13,3 +13,9 @@ build/
 .forge/
 .pytest_tmp/
 .pytest_tmp*/
+
+# local-only agentic state (specs/steering are per-machine; host-only skills)
+.kiro/specs/
+.kiro/steering/
+.agents/skills/source-command-*/
+.claude/agents/
