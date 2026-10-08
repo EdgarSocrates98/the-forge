@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "coverage": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "workspace",
+        "portable",
+        "organization"
+      ]
+    },
+    "source_ids": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "id"
+  ],
+  "title": "MemorySummary",
+  "type": "object"
+}

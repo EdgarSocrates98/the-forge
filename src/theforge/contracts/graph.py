@@ -12,10 +12,44 @@ from theforge.contracts.types import EdgeEpistemic, Producer
 
 GRAPH_SCHEMA = "theforge/WorkspaceGraph/v1"
 NodeKind = Literal[
-    "workspace", "repository", "provider", "capability", "plan_node", "evidence", "artifact"
+    "workspace",
+    "repository",
+    "provider",
+    "capability",
+    "plan_node",
+    "evidence",
+    "artifact",
+    # Cycle 5 (wave C): intelligence nodes — knowledge and execution records.
+    "component",
+    "file",
+    "decision",
+    "failure",
+    "memory",
+    "execution",
 ]
 EdgeKind = Literal[
-    "contains", "depends_on", "declares", "uses", "targets", "produced", "handed_off_to"
+    "contains",
+    "depends_on",
+    "declares",
+    "uses",
+    "targets",
+    "produced",
+    "handed_off_to",
+    # Cycle 5 (wave C): reasoning/trace relations between knowledge nodes.
+    "requires",
+    "produces",
+    "consumes",
+    "verifies",
+    "calls",
+    "reads",
+    "writes",
+    "affects",
+    "derived_from",
+    "supersedes",
+    "executed_by",
+    "supports",
+    "specializes",
+    "conflicts_with",
 ]
 
 

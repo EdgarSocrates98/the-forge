@@ -346,6 +346,31 @@
                           "receipt": {
                             "additionalProperties": false,
                             "properties": {
+                              "artifact_bytes": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
                               "basis": {
                                 "items": {
                                   "type": "string"
@@ -461,6 +486,56 @@
                                 "required": [],
                                 "type": "object"
                               },
+                              "remote_calls": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "retry_calls": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
                               "run": {
                                 "type": "string"
                               },
@@ -468,6 +543,31 @@
                                 "type": "string"
                               },
                               "tool_calls": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "status": {
+                                    "enum": [
+                                      "measured",
+                                      "estimated",
+                                      "unresolved",
+                                      "not_applicable"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [],
+                                "type": "object"
+                              },
+                              "verification_calls": {
                                 "additionalProperties": false,
                                 "properties": {
                                   "status": {
@@ -782,6 +882,26 @@
                       "capability": {
                         "type": "string"
                       },
+                      "condition": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "data_classification": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "depends_on": {
                         "items": {
                           "additionalProperties": false,
@@ -872,6 +992,12 @@
                           }
                         ]
                       },
+                      "expected_outputs": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
                       "id": {
                         "type": "string"
                       },
@@ -887,8 +1013,31 @@
                         },
                         "type": "array"
                       },
+                      "optional": {
+                        "type": "boolean"
+                      },
                       "provider": {
                         "type": "string"
+                      },
+                      "required_inputs": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "required_locality": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "local",
+                              "local-or-remote",
+                              "isolated"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "role": {
                         "enum": [
@@ -904,6 +1053,9 @@
                           "type": "string"
                         },
                         "type": "array"
+                      },
+                      "verification_required": {
+                        "type": "boolean"
                       }
                     },
                     "required": [

@@ -1,8 +1,56 @@
-# Release checklist — The Forge 0.2.1 / Cycle 4.1
+# Release checklist — The Forge 0.3.0 / Cycle 5 (+ 0.2.1 / Cycle 4.1)
 
 This checklist is a release gate, not a claim that the release is already
 closed. Mark an item complete only from evidence produced by the corresponding
-command/workflow.
+command/workflow. The Cycle 4.1 gates below remain independently open on
+their own blockers.
+
+## Cycle 5 gates (0.3.0)
+
+### Repository state
+
+- [x] branch `devin/cycle5-federated-intelligence` cut from the Cycle 4.1
+  closure branch
+- [x] `pyproject.toml` version equals `theforge.__version__` (0.3.0)
+- [x] README and CHANGELOG describe the same release/cycle status
+- [x] committed JSON Schemas equal generated schemas
+- [x] Cycle 5 report (`docs/reports/cycle-5.md`) filled with per-wave
+  evidence and the validation matrix
+- [x] ADRs 0049/0050/0051 indexed in `docs/adr/README.md` and README docs
+  index
+
+### Local gates
+
+- [x] `ruff check .` — clean
+- [x] `ruff format --check .` — clean
+- [x] `mypy` — no issues
+- [x] `python -m theforge.contracts.schema schemas && git diff --exit-code -- schemas`
+- [x] `pytest -m "not slow and not real_provider"` — green
+- [x] Cycle 5 adversarial battery (`test_adversarial_cycle5.py`) — green
+- [x] documentation-consistency tests — green
+
+### Cycle 5 semantic proofs
+
+- [x] memory retrieval preserves provenance; `confirmed` requires evidence
+- [x] surface change makes memory/strategy history stale, never silently reused
+- [x] capability graph orders diagnose → optimize → verify honestly
+- [x] semantic fallback proposals are validated; invented providers rejected
+- [x] optional-node pruning preserves `verification_required` nodes
+- [x] target negotiation honors data classification and locality first
+- [x] remote requests deny-by-default; receipts bind request/target/artifacts
+- [x] A2A candidates stay external/unverified/network-required
+- [x] org registry tier is metadata — never overrides installed reality
+- [x] approved `StrategyPolicy` reorders candidates only after hard gates
+- [x] cross-project memory export/import is default-deny for project scope
+
+### Remote CI
+
+- [ ] remote workflows — **not run: GitHub Actions quota exhausted on the
+  account** (explicit owner decision; local gates above are the evidence)
+
+---
+
+## Cycle 4.1 gates (0.2.1, carried)
 
 ## Repository state
 

@@ -377,6 +377,60 @@ def build_parser() -> argparse.ArgumentParser:
     )
     trace.add_argument("run_id")
     trace.set_defaults(handler=commands.cmd_trace)
+
+    memory = sub.add_parser("memory", help="engineering memory (.forge/memory/)").add_subparsers(
+        dest="memory_command", required=True
+    )
+    memory_list = memory.add_parser(
+        "list",
+        parents=[common],
+        help="structured query over memory entries (deterministic, bounded)",
+    )
+    for flag in (
+        "--kind",
+        "--provider",
+        "--capability",
+        "--task-family",
+        "--surface",
+        "--subject",
+        "--tag",
+        "--epistemic",
+    ):
+        memory_list.add_argument(flag)
+    memory_list.add_argument("--all", action="store_true", help="include stale/superseded entries")
+    memory_list.add_argument("--max-entries", type=int, default=32)
+    memory_list.add_argument("--max-bytes", type=int, default=32 * 1024)
+    memory_list.set_defaults(handler=commands.cmd_memory)
+    memory_learn = memory.add_parser(
+        "learn",
+        parents=[common],
+        help="distill a run's persisted artifacts into memory entries",
+    )
+    memory_learn.add_argument("run_id")
+    memory_learn.set_defaults(handler=commands.cmd_memory)
+    memory_export = memory.add_parser(
+        "export",
+        parents=[common],
+        help="entries allowed to leave the project (portable/organization only)",
+    )
+    memory_export.set_defaults(handler=commands.cmd_memory)
+    memory_summary = memory.add_parser(
+        "summarize",
+        parents=[common],
+        help="distill entries into a MemorySummary (sources are kept)",
+    )
+    memory_summary.add_argument("subject")
+    memory_summary.add_argument("--claim", required=True, help="the distilled statement")
+    memory_summary.add_argument(
+        "--source",
+        dest="sources",
+        action="append",
+        required=True,
+        metavar="ENTRY_ID",
+        help="source entry id (repeatable)",
+    )
+    memory_summary.add_argument("--coverage", default="")
+    memory_summary.set_defaults(handler=commands.cmd_memory)
     return parser
 
 

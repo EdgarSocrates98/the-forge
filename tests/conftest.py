@@ -161,6 +161,16 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_adaptive_cli.py": ("e2e", "integration", "contract"),
     "test_release_metadata.py": ("unit", "contract"),
     "test_remote_validation_classifier.py": ("unit", "contract"),
+    # cycle-5 federated intelligence
+    "test_contracts_cycle5.py": ("unit", "contract"),
+    "test_memory.py": ("unit", "integration", "security"),
+    "test_capability_graph_v2.py": ("unit", "integration"),
+    "test_plan_cycle5.py": ("unit", "integration", "e2e"),
+    "test_targets.py": ("unit", "integration", "security"),
+    "test_remote.py": ("unit", "security"),
+    "test_learning.py": ("unit", "integration"),
+    "test_federated_trace.py": ("unit", "integration", "e2e"),
+    "test_adversarial_cycle5.py": ("unit", "security"),
 }
 
 

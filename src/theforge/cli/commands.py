@@ -798,6 +798,69 @@ def cmd_workspace_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_memory(args: argparse.Namespace) -> int:
+    """``theforge memory``: the engineering memory under ``.forge/memory/``
+    (Cycle 5). Read-only except ``learn``/``summarize``; a missing memory is
+    empty memory, not an error; malformed entries are skipped, not fatal."""
+    from theforge import memory as memory_store
+
+    root = _root(args)
+    if args.memory_command == "learn":
+        store = RunStore(require_forge_dir(root))
+        with _run_lookup():
+            count, notes = memory_store.learn_from_run(root, store, args.run_id)
+        _emit(
+            args,
+            {"run_id": args.run_id, "learned": count, "notes": notes},
+            render.memory_learn,
+        )
+        return 0
+    if args.memory_command == "export":
+        entries, warning = memory_store.export_entries(root)
+        data: dict[str, Any] = {
+            "entries": [to_dict(e) for e in entries],
+            "count": len(entries),
+            "limitations": [warning] if warning else [],
+        }
+        _emit(args, redact(data), render.memory_export)
+        return 0
+    if args.memory_command == "summarize":
+        doc, problem = memory_store.summarize(
+            root,
+            subject=args.subject,
+            summary=args.claim,
+            source_ids=args.sources,
+            coverage=args.coverage or "",
+        )
+        data = {
+            "written": doc is not None,
+            "summary": to_dict(doc) if doc is not None else None,
+            "limitations": [problem] if problem else [],
+        }
+        _emit(args, redact(data), render.memory_summary)
+        return 0
+    # default: list — structured query over the entry store
+    query = memory_store.MemoryQuery(
+        kind=args.kind,
+        provider=args.provider,
+        capability=args.capability,
+        task_family=args.task_family,
+        surface_fingerprint=args.surface,
+        subject=args.subject,
+        tag=args.tag,
+        epistemic=args.epistemic,
+        include_terminal=args.all,
+    )
+    pack, warning = memory_store.memory_pack(
+        root, query, max_entries=args.max_entries, max_bytes=args.max_bytes
+    )
+    data = to_dict(pack)
+    if warning is not None and warning not in data["limitations"]:
+        data["limitations"] = [*data["limitations"], warning]
+    _emit(args, redact(data), render.memory)
+    return 0
+
+
 def cmd_decisions(args: argparse.Namespace) -> int:
     """The project's reusable-decision memory (Wave I): reads
     ``.forge/intel/decisions.json`` only — no provider process starts. A missing

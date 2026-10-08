@@ -90,6 +90,9 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | forge-contracts: auditoria empírica reafirma não extrair | [0042](0042-forge-contracts-audit.md) | `cycle-4` |
 | security hardening: threat model supply-chain + assinatura externa | [0043](0043-security-hardening.md) | `cycle-4` |
 | modelo de policy | [0010](0010-policy-model.md) | `cycle2-reality-hardening` |
+| engineering memory: conhecimento verificável, isolamento por escopo | [0049](0049-engineering-memory.md) | `cycle-5` |
+| execution targets + remote trust: alvo declarado, deny-by-default | [0050](0050-execution-targets-remote-trust.md) | `cycle-5` |
+| StrategyPolicy: promoção governada, surface-scoped, nunca soberana | [0051](0051-strategy-policy-governance.md) | `cycle-5` |
 
 ## Novo ADR
 

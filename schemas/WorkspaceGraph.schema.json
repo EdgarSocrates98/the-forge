@@ -27,7 +27,21 @@
               "uses",
               "targets",
               "produced",
-              "handed_off_to"
+              "handed_off_to",
+              "requires",
+              "produces",
+              "consumes",
+              "verifies",
+              "calls",
+              "reads",
+              "writes",
+              "affects",
+              "derived_from",
+              "supersedes",
+              "executed_by",
+              "supports",
+              "specializes",
+              "conflicts_with"
             ]
           },
           "rule": {
@@ -79,7 +93,13 @@
               "capability",
               "plan_node",
               "evidence",
-              "artifact"
+              "artifact",
+              "component",
+              "file",
+              "decision",
+              "failure",
+              "memory",
+              "execution"
             ]
           },
           "label": {

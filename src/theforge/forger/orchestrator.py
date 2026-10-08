@@ -21,6 +21,7 @@ reproducibility level (14.1, 14.2), and an unexpected internal error its redacte
 diagnostic, persisted as an artifact only when debug is asked for (13.5).
 """
 
+import os
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
@@ -175,6 +176,8 @@ class NodeBinding:
     handoff: Handoff | None = None
     estimate_class: OperationClass | None = None
     upstream: tuple[Reproducibility, ...] = ()
+    # Cycle 5 (Wave W): the plan run's correlation id the child run inherits.
+    correlation_id: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -194,6 +197,9 @@ class AskRequest:
     provider: str | None = None  # pinned provider: replaces the selection, never falls back
     node: NodeBinding | None = None  # plan node this run executes
     replay_of: str | None = None  # original run of a re-execute replay
+    # Cycle 5 (Wave W): federated correlation — groups runs of one logical task
+    # across nodes/targets; inherited by node runs via ``node.correlation_id``.
+    correlation_id: str | None = None
     debug: bool = False  # also persist the diagnostic of an internal error as an artifact
 
 
@@ -390,6 +396,12 @@ class Forger:
             profile_for(config.fallback_profile)
             if config is not None
             else assumed_profile(task.budget_profile),
+            # Wave W: a node run inherits the plan's correlation; a plain ask
+            # adopts the caller's (or the environment's) when given.
+            correlation_id=request.correlation_id
+            or (node.correlation_id if node is not None else None)
+            or os.environ.get("THEFORGE_CORRELATION_ID"),
+            parent_run=node.plan_run if node is not None else None,
         )
         # Always measured, so a run that never gets there records an explicit zero.
         for counter in ("providers_executed", "fallbacks_used", "negotiation_rounds"):

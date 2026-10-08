@@ -687,6 +687,30 @@
           "anyOf": [
             {
               "properties": {
+                "artifact_bytes": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "measured",
+                        "estimated",
+                        "unresolved",
+                        "not_applicable"
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "type": "object"
+                },
                 "basis": {
                   "items": {
                     "type": "string"
@@ -798,6 +822,54 @@
                   "required": [],
                   "type": "object"
                 },
+                "remote_calls": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "measured",
+                        "estimated",
+                        "unresolved",
+                        "not_applicable"
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "type": "object"
+                },
+                "retry_calls": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "measured",
+                        "estimated",
+                        "unresolved",
+                        "not_applicable"
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "type": "object"
+                },
                 "run": {
                   "type": "string"
                 },
@@ -805,6 +877,30 @@
                   "type": "string"
                 },
                 "tool_calls": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "measured",
+                        "estimated",
+                        "unresolved",
+                        "not_applicable"
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "type": "object"
+                },
+                "verification_calls": {
                   "properties": {
                     "status": {
                       "enum": [

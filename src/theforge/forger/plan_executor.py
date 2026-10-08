@@ -26,6 +26,7 @@ every provider is reached through the ``Forger`` or the protocol helpers of ``pl
 """
 
 import json
+import os
 import time
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -128,6 +129,8 @@ from theforge.registry import RegistryRecord, check_health, user_config_dir
 from theforge.registry.health import HealthOutcome
 from theforge.routing import route
 from theforge.runs import new_run_id
+from theforge.simulation import simulate_plan
+from theforge.targets import load_targets
 
 __all__ = ["PLAN_TELEMETRY_LIMITATION", "PlanCommand", "PlanExecutor", "PlanOutcome", "plan_status"]
 
@@ -194,6 +197,7 @@ class _PlanTrace:
     descriptor: WorkspaceDescriptor | None = None
     descriptor_sha: str | None = None
     capability_graph_sha: str | None = None  # CapabilityGraph of the registry+workspace
+    simulation_sha: str | None = None  # PlanSimulation composed before execution
     capability_graph: CapabilityGraph | None = None  # the persisted graph object
     semantic_proposal_sha: str | None = None  # tier-2 SemanticPlanProposal, when asked
     decision_sha: str | None = None  # DecisionRecord of a debate plan, when produced
@@ -310,11 +314,15 @@ class PlanExecutor:
                 forge_dir=self.forger.root / ".forge",
                 warnings=config_warnings,
             )
+        # Wave W: the plan run is the tree root — its correlation id is its own
+        # run id (or the caller/environment's when federated under a bigger tree).
+        correlation_id = os.environ.get("THEFORGE_CORRELATION_ID") or run_id
         telemetry = TelemetryRecorder(
             run_id,
             profile_for(config.fallback_profile)
             if config is not None
             else assumed_profile(command.profile),
+            correlation_id=correlation_id,
         )
         # Measured on every outcome: a plan that never executes records explicit zeros.
         for counter in (
@@ -430,6 +438,10 @@ class PlanExecutor:
                 # The durable scheduler state (F1): first snapshot while planned,
                 # one write per recorded node, a final one before plan-result.
                 self._write_state(trace, plan, "planned")
+                sim_sha, sim_notes = self._write_simulation(trace, plan)
+                for note in sim_notes:
+                    if note not in trace.limitations:
+                        trace.limitations.append(note)
         if installation is not None:
             trace.installation_sha = store.write(trace.run_id, "installation", installation)
 
@@ -619,14 +631,29 @@ class PlanExecutor:
             failed: dict[str, str] = {}
             sources: list[SourceResult] = []
             levels: dict[str, Reproducibility] = {}
+            early_stop: tuple[str, str] | None = None  # (trigger node, reason) Cycle 5 wave E
             for nid in order:
                 node = nodes[nid]
                 blocker = blocked_by(nid, plan, failed)
                 if blocker is not None:
                     execution = _skipped(node, blocker)
+                elif early_stop is not None and node.optional:
+                    # Global Stop (§43): optional remaining nodes are pruned;
+                    # mandatory and verification_required nodes never are (§44).
+                    trigger, reason = early_stop
+                    execution = _stop_skipped(node, trigger, reason)
+                    trace.limitations.append(
+                        f"node {nid}: optional node skipped by global stop ({reason})"
+                    )
                 else:
-                    execution = self._run_or_reuse(trace, plan, node, sources, levels)
+                    unmet = _condition_unmet(node, trace.executions)
+                    if unmet is not None:
+                        execution = _condition_skipped(node, unmet[0], unmet[1])
+                    else:
+                        execution = self._run_or_reuse(trace, plan, node, sources, levels)
                 self._record(trace, execution, failed, sources, levels)
+                if early_stop is None and execution.outcome.status != "skipped":
+                    early_stop = self._early_stop(trace, node, execution)
                 self._write_state(trace, plan, "running")
 
         trace.stage = "plan:synthesis"
@@ -834,6 +861,31 @@ class PlanExecutor:
         if outcome.reproducibility is not None:
             levels[outcome.node] = outcome.reproducibility.level
 
+    def _early_stop(
+        self, trace: _PlanTrace, node: PlanNode, execution: NodeExecution
+    ) -> tuple[str, str] | None:
+        """The mid-execution stop check (Cycle 5 wave E): fires when a stop
+        condition is already visible after ``node`` — a policy denial,
+        repeated provider failures or an exhausted budget. It prunes only
+        ``optional`` nodes; mandatory and verification-required nodes are
+        never skipped (§43-44)."""
+        outcome = execution.outcome
+        if outcome.error is not None and family_of(outcome.error.code) == "policy":
+            return node.id, "policy-blocked"
+        failures = sum(
+            e.outcome.attempts for e in trace.executions if e.outcome.status == "provider_failure"
+        )
+        if failures >= max(2, trace.retry_policy.max_attempts):
+            return node.id, "repeated-failure"
+        execute_calls = sum(e.execute_calls for e in trace.executions)
+        if (
+            trace.budget is not None
+            and trace.budget.provider_calls > 0
+            and execute_calls >= trace.budget.provider_calls
+        ):
+            return node.id, "budget-exhausted"
+        return None
+
     def _write_state(
         self,
         trace: _PlanTrace,
@@ -943,6 +995,7 @@ class PlanExecutor:
             node=node.id,
             pattern=plan.pattern,
             handoff=handoff,
+            correlation_id=trace.telemetry.correlation_id,
             estimate_class=node.estimate.operation_class if node.estimate else None,
             upstream=tuple(levels[i] for i in node.inputs if i in levels),
         )
@@ -1040,6 +1093,7 @@ class PlanExecutor:
                 plan,
                 trace.plan_sha,
                 trace.executions,
+                decision=trace.decision_record,
                 created_at=plan.created_at if plan is not None else trace.started_at,
             )
             return self.forger.store.write(trace.run_id, "graph", graph), list(graph.limitations)
@@ -1047,6 +1101,32 @@ class PlanExecutor:
             raise
         except Exception as exc:  # noqa: BLE001 - the graph must never block the receipt
             return None, [f"{GRAPH_UNAVAILABLE_LIMITATION}: {type(exc).__name__}: {exc}"]
+
+    def _write_simulation(
+        self, trace: _PlanTrace, plan: ExecutionPlan
+    ) -> tuple[str | None, list[str]]:
+        """The pre-execution footprint (Wave G). Never blocks the receipt."""
+        try:
+            targets, target_warnings = load_targets(
+                forge_dir=self.forger.root / ".forge",
+                user_dir=self.forger.registry.user_dir or user_config_dir(),
+            )
+            simulation = simulate_plan(
+                plan,
+                trace.records,
+                graph=trace.capability_graph,
+                targets=targets,
+                created_at=trace.started_at,
+            )
+            trace.simulation_sha = self.forger.store.write(trace.run_id, "simulation", simulation)
+            return trace.simulation_sha, [
+                *(f"targets: {item}" for item in target_warnings),
+                *(f"simulation: {item}" for item in simulation.limitations),
+            ]
+        except PersistenceError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - the simulation must never block the plan
+            return None, [f"simulation-unavailable: {type(exc).__name__}: {exc}"]
 
     def _write_telemetry(self, trace: _PlanTrace) -> tuple[str | None, list[str]]:
         try:
@@ -1161,6 +1241,7 @@ class PlanExecutor:
                 global_stop_sha256=trace.global_stop_sha,
                 plan_state_sha256=trace.plan_state_sha,
                 plan_result_sha256=trace.plan_result_sha,
+                simulation_sha256=trace.simulation_sha,
             ),
         )
         store.write(trace.run_id, "receipt", receipt)
@@ -1304,6 +1385,59 @@ def _terminal_state(status: Outcome) -> PlanRunState:
     if status == "ok":
         return "completed"
     return "partial" if status == "partial" else "failed"
+
+
+def _condition_unmet(node: PlanNode, executions: Sequence[NodeExecution]) -> tuple[str, str] | None:
+    """``(blocker, detail)`` when the node's ``condition`` is not met by the
+    recorded outcomes; None when the node may run. Only labels the core knows
+    reach here — unknown ones were rejected at plan validation."""
+    condition = node.condition
+    if condition in (None, "always"):
+        return None
+    outcomes = {e.node.id: e.outcome.status for e in executions}
+    deps = [d.node for d in node.depends_on]
+    if not deps:
+        return None  # validation requires depends_on for conditional nodes
+    if condition == "on-failure":
+        failed = [d for d in deps if outcomes.get(d) in ("provider_failure", "refused", "skipped")]
+        if failed:
+            return None
+        return deps[0], "condition 'on-failure' unmet: no dependency failed"
+    if condition == "on-success":
+        unmet = [d for d in deps if outcomes.get(d) != "ok"]
+        if not unmet:
+            return None
+        return unmet[0], f"condition 'on-success' unmet: dependency {unmet[0]} is not ok"
+    return None
+
+
+def _stop_skipped(node: PlanNode, trigger: str, reason: str) -> NodeExecution:
+    """An optional node pruned by the mid-execution global stop (wave E)."""
+    outcome = NodeOutcome(
+        node=node.id,
+        status="skipped",
+        blocked_by=trigger,
+        error=ErrorInfo(
+            code=Codes.PLAN_GLOBAL_STOP,
+            detail=f"node {node.id}: optional, skipped by global stop ({reason}) after {trigger}",
+        ),
+        reproducibility=ReproducibilityInfo(
+            level="unknown", reasons=[f"not executed: global stop ({reason})"]
+        ),
+    )
+    return NodeExecution(node=node, outcome=outcome, result=None, handoff=None, provider=None)
+
+
+def _condition_skipped(node: PlanNode, blocker: str, detail: str) -> NodeExecution:
+    """A conditional node whose ``condition`` the recorded outcomes did not meet."""
+    outcome = NodeOutcome(
+        node=node.id,
+        status="skipped",
+        blocked_by=blocker,
+        error=ErrorInfo(code=Codes.PLAN_GLOBAL_STOP, detail=f"node {node.id}: {detail}"),
+        reproducibility=ReproducibilityInfo(level="unknown", reasons=[f"not executed: {detail}"]),
+    )
+    return NodeExecution(node=node, outcome=outcome, result=None, handoff=None, provider=None)
 
 
 def _skipped(node: PlanNode, blocker: str) -> NodeExecution:

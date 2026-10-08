@@ -1362,6 +1362,61 @@ def _span_line(span: dict[str, Any]) -> str:
     return f"{name}  {ms:.1f}ms{marker}"
 
 
+def memory(data: dict[str, Any]) -> str:
+    """A memory pack: one line per entry, epistemic first."""
+    entries = data.get("entries") or []
+    lines = []
+    for entry in entries:
+        tags = _list(entry.get("tags"))
+        lines.append(
+            f"{_clean(entry.get('epistemic', '?'))} {_clean(entry.get('kind', '?'))}: "
+            f"{_clean(entry.get('subject', '?'))} — {_clean(entry.get('claim', '?'))}  "
+            f"[{_clean(entry.get('id', '?'))[:12]}]"
+            f"{'; tags ' + ','.join(tags) if tags else ''}"
+        )
+    total = data.get("total_matches", len(entries))
+    return "\n".join(
+        [
+            f"Memory: {len(entries)}/{total} entr{'y' if total == 1 else 'ies'} "
+            f"({data.get('delivered_bytes', 0)} bytes"
+            f"{', truncated' if data.get('truncated') else ''})",
+            *lines,
+            *_labelled("Limitations:", _list(data.get("limitations"))),
+        ]
+    )
+
+
+def memory_learn(data: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"Learned {data.get('learned', 0)} memory entr"
+            f"{'y' if data.get('learned') == 1 else 'ies'} from {data.get('run_id', '?')}",
+            *_labelled("Notes:", _list(data.get("notes"))),
+        ]
+    )
+
+
+def memory_export(data: dict[str, Any]) -> str:
+    count = data.get("count", 0)
+    return "\n".join(
+        [
+            f"Exportable memory: {count} portable/organization entr{'y' if count == 1 else 'ies'}",
+            *_labelled("Limitations:", _list(data.get("limitations"))),
+        ]
+    )
+
+
+def memory_summary(data: dict[str, Any]) -> str:
+    doc = data.get("summary") or {}
+    return "\n".join(
+        [
+            f"Summary {'written' if data.get('written') else 'not written'}: "
+            f"{_clean(doc.get('subject', '?'))} ({len(_list(doc.get('source_ids')))} sources)",
+            *_labelled("Limitations:", _list(data.get("limitations"))),
+        ]
+    )
+
+
 def trace(data: dict[str, Any]) -> str:
     """The run's local trace (Wave J): *what happened* — spans in start order,
     nested by parent. ``explain`` answers why; ``trace`` answers what."""

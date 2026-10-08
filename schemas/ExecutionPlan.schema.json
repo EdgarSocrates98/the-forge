@@ -21,6 +21,26 @@
           "capability": {
             "type": "string"
           },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_classification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "depends_on": {
             "items": {
               "additionalProperties": false,
@@ -111,6 +131,12 @@
               }
             ]
           },
+          "expected_outputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "id": {
             "type": "string"
           },
@@ -126,8 +152,31 @@
             },
             "type": "array"
           },
+          "optional": {
+            "type": "boolean"
+          },
           "provider": {
             "type": "string"
+          },
+          "required_inputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required_locality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "local",
+                  "local-or-remote",
+                  "isolated"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "role": {
             "enum": [
@@ -143,6 +192,9 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "verification_required": {
+            "type": "boolean"
           }
         },
         "required": [

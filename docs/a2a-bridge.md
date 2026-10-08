@@ -32,8 +32,14 @@ O que o A2A não expressa vai em `metadata.forge` — provider id, manifest e
 surface fingerprints, trust, execution flags, features, requirement,
 constraints, sha256 de artifacts. Nada é perdido em prosa.
 
-Cards emitidos têm `url: ""` e `streaming: false` — providers Forge rodam
-como subprocessos locais; o card descreve, não convida execução direta.
+**A2A 1.0 (Cycle 5, Wave M):** a spec atual usa `supportedInterfaces`
+(lista ordenada de `AgentInterface` — `url` + `protocolBinding` +
+`protocolVersion`) no lugar do `url` top-level legado, e exige o header
+`A2A-Version` nas requests. Cards emitidos declaram
+`supportedInterfaces: []` junto a `url: ""` — providers Forge rodam como
+subprocessos locais; o card descreve, não convida execução direta.
+`entry_from_card` prefere `supportedInterfaces[0].url` e registra o
+`protocolBinding`, com `url` como fallback 0.3.
 
 ## Direção A2A → Forge
 

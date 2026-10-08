@@ -166,6 +166,12 @@
           },
           "relations": {
             "properties": {
+              "accepts": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
               "can_review": {
                 "items": {
                   "type": "string"
@@ -202,7 +208,31 @@
                 },
                 "type": "array"
               },
+              "refines": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
               "requires": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "specializes": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "verified_by": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "verifies": {
                 "items": {
                   "type": "string"
                 },

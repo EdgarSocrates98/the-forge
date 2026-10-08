@@ -168,6 +168,11 @@ class RunTelemetry:
     # artifact stays the one observability record — metrics aggregate, spans
     # structure; no second tracing system (J1).
     spans: list[Span] = field(default_factory=list)
+    # Cycle 5 (Wave W): distributed correlation. ``correlation_id`` groups runs
+    # of one logical task across nodes/targets; ``parent_run`` links a child
+    # (e.g. a plan node run) to the run that spawned it. Opaque, never fetched.
+    correlation_id: str | None = None
+    parent_run: str | None = None
     limitations: list[str] = field(default_factory=list)
     unknowns: list[str] = field(default_factory=list)
 

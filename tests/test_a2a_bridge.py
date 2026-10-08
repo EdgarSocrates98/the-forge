@@ -344,3 +344,28 @@ def test_a2a_source_network_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyP
     ).read()
     assert read.status == "unavailable"
     assert "network disabled" in (read.detail or "")
+
+
+def test_supported_interfaces_v1() -> None:
+    """A2A 1.0 cards advertise ``supportedInterfaces``; preferred wins, ``url``
+    remains the 0.3 fallback."""
+    card = {
+        **CARD,
+        "url": "https://legacy.example/a2a",
+        "supportedInterfaces": [
+            {"url": "https://v1.example/a2a", "protocolBinding": "JSONRPC"},
+            {"url": "https://grpc.example/a2a", "protocolBinding": "GRPC"},
+        ],
+    }
+    converted = entry_from_card(card, source_id="s")
+    assert converted.entry is not None
+    joined = " ".join(converted.limitations)
+    assert "https://v1.example/a2a" in joined  # first interface preferred
+    assert "legacy.example" not in joined
+    assert "JSONRPC" in joined
+
+
+def test_emitted_card_declares_supported_interfaces() -> None:
+    card = agent_card(record())
+    assert card["supportedInterfaces"] == []  # local subprocess: no endpoint
+    assert card["protocolVersion"] == "1.0"

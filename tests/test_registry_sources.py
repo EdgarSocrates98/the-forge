@@ -403,3 +403,12 @@ def test_cli_registry_sources_text(
     out = capsys.readouterr().out
     assert code == 0
     assert "local (authoritative)" in out
+
+
+def test_source_tier_org() -> None:
+    spec = SourceSpec(id="corp", kind="http", url="https://r.corp/idx.json", tier="org")
+    assert spec.tier == "org"
+    default = SourceSpec(id="pub", kind="http", url="https://r.pub/idx.json")
+    assert default.tier == "public"
+    with pytest.raises(ContractError):
+        SourceSpec(id="x", kind="http", url="https://x/", tier="internal")

@@ -81,6 +81,9 @@ class Codes:
     PLAN_FILE: Final = "FORGE-PLAN-FILE"  # plan file unreadable or off-contract (usage error)
     PLAN_DEPENDENCY_FAILED: Final = "FORGE-PLAN-DEPENDENCY-FAILED"  # node skipped
     PLAN_ESTIMATE: Final = "FORGE-PLAN-ESTIMATE"  # op plan failed (limitation)
+    # Cycle 5: an optional node skipped by a global-stop decision; a conditional
+    # node whose condition was not met by the recorded outcomes.
+    PLAN_GLOBAL_STOP: Final = "FORGE-PLAN-GLOBAL-STOP"
 
     # Workspace
     WORKSPACE_CONFIG: Final = "FORGE-WORKSPACE-CONFIG"  # invalid workspace.toml entry (warning)
@@ -144,6 +147,7 @@ CODE_FAMILIES: Final[Mapping[str, ErrorFamily]] = MappingProxyType(
         Codes.PLAN_FILE: "plan",
         Codes.PLAN_DEPENDENCY_FAILED: "plan",
         Codes.PLAN_ESTIMATE: "plan",
+        Codes.PLAN_GLOBAL_STOP: "plan",
         Codes.WORKSPACE_CONFIG: "workspace",
         Codes.WORKSPACE_GRAPH_EDGE: "workspace",
         Codes.PERSIST_WRITE: "persistence",
@@ -254,6 +258,8 @@ CODE_HINTS: Final[Mapping[str, str]] = MappingProxyType(
         Codes.PLAN_ESTIMATE: "the provider's `plan` op failed; the plan proceeds without estimates "
         "— "
         "fix the op to restore them",
+        Codes.PLAN_GLOBAL_STOP: "the node was skipped by a global-stop decision or an unmet "
+        "condition; inspect the run's `global-stop` artifact",
         Codes.WORKSPACE_CONFIG: "a workspace.toml entry is invalid; check the warning and fix the "
         "file",
         Codes.WORKSPACE_GRAPH_EDGE: "a graph edge was rejected; check the endpoint kinds and "

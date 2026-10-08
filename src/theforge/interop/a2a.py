@@ -122,7 +122,11 @@ def agent_card(record: RegistryRecord) -> dict[str, Any]:
         "name": manifest.id,
         "description": manifest.id,
         "version": manifest.version,
+        # A2A 1.0: ``supportedInterfaces`` replaces the legacy ``url`` field.
+        # Forge providers are local subprocesses — no endpoint is advertised;
+        # clients obtain this card through the Forge itself.
         "url": "",
+        "supportedInterfaces": [],
         "protocolVersion": A2A_PROTOCOL_VERSION,
         "capabilities": {
             "streaming": False,
@@ -315,7 +319,25 @@ def entry_from_card(card: dict[str, Any], *, source_id: str) -> CardConversion:
     else:
         limitations.append("card declares no skills array")
 
-    url = card.get("url")
+    # A2A 1.0 advertises endpoints via ``supportedInterfaces`` (ordered, first
+    # preferred); the legacy top-level ``url`` is the 0.3 fallback.
+    url = ""
+    interfaces = card.get("supportedInterfaces")
+    if isinstance(interfaces, list):
+        for iface in interfaces:
+            if not isinstance(iface, dict):
+                continue
+            iface_url = iface.get("url")
+            if isinstance(iface_url, str) and iface_url:
+                url = iface_url
+                binding = iface.get("protocolBinding") or iface.get("protocol_binding")
+                if isinstance(binding, str) and binding:
+                    limitations.append(f"preferred interface binding {binding!r}")
+                break
+    if not url:
+        legacy = card.get("url")
+        if isinstance(legacy, str):
+            url = legacy
     if isinstance(url, str) and url:
         limitations.append(
             f"service endpoint {url[:200]!r} — remote execution only, nothing installable"

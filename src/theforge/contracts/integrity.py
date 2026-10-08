@@ -46,6 +46,9 @@ _TIERS: frozenset[str] = frozenset(get_args(Tier))
 # Outcomes a PlanResult may carry: the plan was executed (a planned, ambiguous or no_route
 # plan run has no PlanResult, only a receipt).
 _PLAN_RESULT_STATUSES: frozenset[str] = frozenset({"ok", "partial", "refused", "provider_failure"})
+# Condition labels the core can evaluate (Cycle 5 wave E): an unknown label is
+# a structural violation — never silently treated as met.
+_NODE_CONDITIONS: frozenset[str] = frozenset({"always", "on-success", "on-failure"})
 
 
 @dataclass(frozen=True)
@@ -268,6 +271,7 @@ def validate_receipt(
     plan_result_sha256: str | None = None,
     telemetry_sha256: str | None = None,
     global_stop_sha256: str | None = None,
+    simulation_sha256: str | None = None,
 ) -> None:
     """Order: hash formats, timestamps, then consistency with what is on disk.
 
@@ -311,6 +315,7 @@ def validate_receipt(
                 ("plan.installation_sha256", plan.installation_sha256),
                 ("plan.plan_result_sha256", plan.plan_result_sha256),
                 ("plan.global_stop_sha256", plan.global_stop_sha256),
+                ("plan.simulation_sha256", plan.simulation_sha256),
             ]
         )
     hashes.extend(
@@ -341,6 +346,7 @@ def validate_receipt(
                 plan_result_sha256=plan_result_sha256,
                 telemetry_sha256=telemetry_sha256,
                 global_stop_sha256=global_stop_sha256,
+                simulation_sha256=simulation_sha256,
             )
         )
     elif receipt.status in _SUCCESS:
@@ -378,6 +384,7 @@ def _plan_receipt_violations(
     plan_result_sha256: str | None,
     telemetry_sha256: str | None,
     global_stop_sha256: str | None,
+    simulation_sha256: str | None,
 ) -> list[Violation]:
     """Plan receipt vs disk: required plan result, plan-result and telemetry hashes."""
     violations: list[Violation] = []
@@ -411,6 +418,14 @@ def _plan_receipt_violations(
                 Codes.RECEIPT_INVALID,
                 "plan.global_stop_sha256 does not match the persisted global-stop hash",
                 "plan.global_stop_sha256",
+            )
+        )
+    if receipt.plan is not None and receipt.plan.simulation_sha256 != simulation_sha256:
+        violations.append(
+            Violation(
+                Codes.RECEIPT_INVALID,
+                "plan.simulation_sha256 does not match the persisted simulation hash",
+                "plan.simulation_sha256",
             )
         )
     return violations
@@ -661,6 +676,28 @@ def validate_plan_structure(plan: ExecutionPlan) -> list[PlanViolation]:
                 Codes.PLAN_INVALID,
                 node.id,
                 f"node {node.id!r} inputs not in depends_on: {', '.join(outside)}",
+            )
+        # Cycle 5 (wave E): the core evaluates only the condition labels it
+        # knows — an unknown label can never be silently treated as met.
+        if node.condition is not None and node.condition not in _NODE_CONDITIONS:
+            add(
+                Codes.PLAN_INVALID,
+                node.id,
+                f"node {node.id!r}: unknown condition {node.condition!r} "
+                f"(known: {', '.join(sorted(_NODE_CONDITIONS))})",
+            )
+        if node.condition in ("on-success", "on-failure") and not node.depends_on:
+            add(
+                Codes.PLAN_INVALID,
+                node.id,
+                f"node {node.id!r}: condition {node.condition!r} needs depends_on "
+                "(the outcomes it is evaluated against)",
+            )
+        if node.optional and node.role == "referee":
+            add(
+                Codes.PLAN_INVALID,
+                node.id,
+                f"node {node.id!r}: a referee is mandatory (optional=false)",
             )
     cyclic = _cyclic_nodes(plan)
     if cyclic:

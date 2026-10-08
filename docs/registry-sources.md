@@ -54,6 +54,13 @@ url = "https://registry.example/index.json"   # URL do RegistryDocument
 enabled = false              # remoto nunca surpreende (air-gapped por default)
 max_age_s = 3600             # freshness budget do cache (default 3600)
 timeout_s = 10               # espera limitada por request (default 10)
+
+[[sources]]
+id = "org-registry"
+kind = "http"
+url = "https://registry.corp.internal/index.json"
+tier = "org"                 # Cycle 5: feed curado pela organização
+enabled = true
 ```
 
 - `id` — identificador da fonte (`[a-zA-Z0-9_-]+`).
@@ -66,6 +73,11 @@ timeout_s = 10               # espera limitada por request (default 10)
   ver [interoperability-mcp.md](interoperability-mcp.md)).
 - `enabled` — **default `false`**: uma fonte configurada não faz nada até ser
   habilitada explicitamente.
+- `tier` — `"public"` (default) ou `"org"` (Cycle 5, Wave O). Um feed `org`
+  marca seus candidatos com `source_tier="org"` para que política downstream
+  (ex.: allowlist de `remote-policy.toml`) possa privilegiá-los — continua
+  sendo *claim*: tier nunca vira trust nem sobrescreve a realidade instalada
+  local (local manifest verificado permanece autoritativo).
 - `max_age_s` — freshness budget: cache mais novo que isso nem dispara fetch.
 - `timeout_s` — bounded wait por request HTTP.
 

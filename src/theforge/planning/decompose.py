@@ -232,13 +232,13 @@ def _graph_constraints(
     order: dict[tuple[_CapKey, _CapKey], str] = {}
     conflicts: list[str] = []
     for edge in graph.edges:
-        if edge.kind == "produces" or edge.kind == "consumes":
+        if edge.kind in ("produces", "consumes", "accepts", "refines", "verifies"):
             src, _, artifact = edge.target.partition(":")
             cap = _cap_ref(edge.source)
             if src != "artifact_type" or cap is None or cap not in caps:
                 continue
             (produces if edge.kind == "produces" else consumes).setdefault(artifact, []).append(cap)
-        elif edge.kind in ("requires", "conflicts"):
+        elif edge.kind in ("requires", "conflicts", "verified_by"):
             src_cap, dst_cap = _cap_ref(edge.source), _cap_ref(edge.target)
             if src_cap not in caps or dst_cap not in caps or src_cap == dst_cap:
                 continue
@@ -247,6 +247,9 @@ def _graph_constraints(
                     f"{src_cap[0]}/{src_cap[1]} conflicts with "
                     f"{dst_cap[0]}/{dst_cap[1]} ({edge.evidence})"
                 )
+            elif edge.kind == "verified_by":
+                # The verifier runs after the capability whose output it verifies.
+                order.setdefault((src_cap, dst_cap), edge.evidence)
             else:
                 order.setdefault((dst_cap, src_cap), edge.evidence)
     for artifact, makers in produces.items():
