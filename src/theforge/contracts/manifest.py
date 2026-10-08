@@ -61,15 +61,31 @@ class CapabilityRelations:
     conflicts: list[str] = field(default_factory=list)
     can_verify: list[str] = field(default_factory=list)
     can_review: list[str] = field(default_factory=list)
+    # Cycle 5 (Wave D): artifact-aware and verification relations. ``accepts``/
+    # ``verifies``/``refines`` name artifact types; ``verified_by``/
+    # ``specializes`` name capabilities (same ref convention as ``requires``).
+    accepts: list[str] = field(default_factory=list)
+    verifies: list[str] = field(default_factory=list)
+    refines: list[str] = field(default_factory=list)
+    verified_by: list[str] = field(default_factory=list)
+    specializes: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        for name in ("produces", "consumes"):
+        for name in ("produces", "consumes", "accepts", "verifies", "refines"):
             for value in getattr(self, name):
                 if not ARTIFACT_TYPE_ID.match(value):
                     raise ContractError(
                         f"capability relations.{name}: invalid artifact type {value!r}"
                     )
-        for name in ("requires", "complements", "conflicts", "can_verify", "can_review"):
+        for name in (
+            "requires",
+            "complements",
+            "conflicts",
+            "can_verify",
+            "can_review",
+            "verified_by",
+            "specializes",
+        ):
             for value in getattr(self, name):
                 if not CAPABILITY_REF.match(value):
                     raise ContractError(

@@ -42,6 +42,8 @@ CapEdgeKind = Literal[
     "can_verify",
     "can_review",
     # Cycle 5: explicit artifact-aware verification / specialization links
+    "accepts",
+    "verifies",
     "verified_by",
     "specializes",
     "refines",
@@ -69,6 +71,8 @@ _CAP_EDGE_KINDS: tuple[CapEdgeKind, ...] = (
     "conflicts",
     "can_verify",
     "can_review",
+    "accepts",
+    "verifies",
     "verified_by",
     "specializes",
     "refines",
@@ -150,13 +154,16 @@ CAPABILITY_RELATION_SCHEMA = "theforge/CapabilityRelation/v1"
 RELATION_KINDS: tuple[str, ...] = (
     "produces",
     "consumes",
+    "accepts",
+    "verifies",
     "requires",
     "complements",
     "conflicts",
+    "can_verify",
+    "can_review",
     "verified_by",
     "refines",
     "specializes",
-    "accepts",
 )
 
 

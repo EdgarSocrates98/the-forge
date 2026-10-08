@@ -31,6 +31,8 @@
               "conflicts",
               "can_verify",
               "can_review",
+              "accepts",
+              "verifies",
               "verified_by",
               "specializes",
               "refines",

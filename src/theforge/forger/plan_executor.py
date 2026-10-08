@@ -1040,6 +1040,7 @@ class PlanExecutor:
                 plan,
                 trace.plan_sha,
                 trace.executions,
+                decision=trace.decision_record,
                 created_at=plan.created_at if plan is not None else trace.started_at,
             )
             return self.forger.store.write(trace.run_id, "graph", graph), list(graph.limitations)

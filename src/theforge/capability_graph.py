@@ -16,6 +16,7 @@ from typing import Any, Final
 
 from theforge.contracts import (
     CapabilityGraph,
+    CapabilityRelation,
     CapEdge,
     CapEdgeKind,
     CapNode,
@@ -28,18 +29,26 @@ from theforge.contracts.types import EdgeEpistemic
 from theforge.meta import PRODUCER
 from theforge.registry import RegistryRecord
 
-# capability.relations fields -> edge kinds, in manifest field order. The first
-# two point at artifact-type nodes; the rest at capability nodes.
+# capability.relations fields -> edge kinds, in manifest field order. The
+# artifact relations point at artifact-type nodes; the rest at capability nodes.
 _RELATION_EDGES: Final[tuple[tuple[str, CapEdgeKind], ...]] = (
     ("produces", "produces"),
     ("consumes", "consumes"),
+    ("accepts", "accepts"),
+    ("verifies", "verifies"),
+    ("refines", "refines"),
     ("requires", "requires"),
     ("complements", "complements"),
     ("conflicts", "conflicts"),
     ("can_verify", "can_verify"),
     ("can_review", "can_review"),
+    ("verified_by", "verified_by"),
+    ("specializes", "specializes"),
 )
-_ARTIFACT_RELATIONS: Final = frozenset({"produces", "consumes"})
+_ARTIFACT_RELATIONS: Final = frozenset({"produces", "consumes", "accepts", "verifies", "refines"})
+# Artifact relations whose source runs after the artifact's producer (the
+# consumer/acceptor/refiner/verifier of X runs after whoever produces X).
+_AFTER_PRODUCER: Final = frozenset({"consumes", "accepts", "refines", "verifies"})
 
 
 def _key(provider: str, capability: str) -> str:
@@ -251,9 +260,57 @@ def reviewers(graph: CapabilityGraph, ref: str) -> list[str]:
     return _related(graph, ref, "can_review", symmetric=False)
 
 
+def artifact_verifiers(graph: CapabilityGraph, artifact_type: str) -> list[str]:
+    """Capability keys declaring they ``verifies`` the artifact type (cycle 5)."""
+    return sorted(
+        e.source.removeprefix("capability:")
+        for e in graph.edges
+        if e.kind == "verifies" and e.target == f"artifact_type:{artifact_type}"
+    )
+
+
+def verified_by(graph: CapabilityGraph, ref: str) -> list[str]:
+    """Capability keys verifying ``ref``'s output: targets of the ``verified_by``
+    edges ``ref`` declares (the edge points at the verifier)."""
+    sources = {nid for nid in _cap_node_ids(graph, ref)}
+    return sorted(
+        e.target.removeprefix("capability:")
+        for e in graph.edges
+        if e.kind == "verified_by" and e.source in sources
+    )
+
+
+def specializations(graph: CapabilityGraph, ref: str) -> list[str]:
+    """Capability keys declaring ``specializes`` of ``ref`` (cycle 5)."""
+    return _related(graph, ref, "specializes", symmetric=False)
+
+
+def accepted_types(graph: CapabilityGraph, ref: str) -> list[str]:
+    """Artifact types ``ref`` declares it accepts as input (cycle 5)."""
+    targets = {nid for nid in _cap_node_ids(graph, ref)}
+    return sorted(
+        e.target.removeprefix("artifact_type:")
+        for e in graph.edges
+        if e.kind == "accepts" and e.source in targets
+    )
+
+
 def complements(graph: CapabilityGraph, ref: str) -> list[str]:
     """Refs declared complementary to ``ref`` (either direction suggests)."""
     return _related(graph, ref, "complements", symmetric=True)
+
+
+def relation_fresh(relation: CapabilityRelation, surface: str | None) -> bool:
+    """Whether a standalone relation still applies on the current provider surface.
+
+    An unscoped relation is always fresh. A relation scoped to a surface is
+    fresh only while the surface fingerprint matches — when the current surface
+    is unknown (``None``) a scoped relation cannot be trusted (``unknown !=
+    fresh``).
+    """
+    if relation.surface is None:
+        return True
+    return surface is not None and relation.surface == surface
 
 
 def conflicts(graph: CapabilityGraph, ref: str) -> list[str]:
@@ -289,7 +346,12 @@ def produces_consumes_order(
             continue
         if e.kind == "requires" and e.target in nodes:
             before[e.source].add(e.target)
-        elif e.kind == "consumes":
+        elif e.kind == "verified_by":
+            # The verified capability runs before the capability that verifies
+            # its output — the inverse direction of `requires`.
+            if e.target in nodes:
+                before[e.target].add(e.source)
+        elif e.kind in _AFTER_PRODUCER:
             before[e.source] |= produced_by.get(e.target, set()) - {e.source}
 
     order_ids: list[str] = []

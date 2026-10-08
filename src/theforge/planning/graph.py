@@ -34,7 +34,7 @@ from theforge.contracts.graph import (
     WorkspaceGraph,
 )
 from theforge.contracts.integrity import check_graph_edge
-from theforge.contracts.plan import ExecutionPlan
+from theforge.contracts.plan import DecisionRecord, ExecutionPlan
 from theforge.contracts.types import MAX_GRAPH_NODES, EdgeEpistemic
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.meta import PRODUCER
@@ -143,6 +143,7 @@ def build_graph(
     plan_sha256: str | None,
     outcomes: Sequence[NodeExecution],
     *,
+    decision: "DecisionRecord | None" = None,
     created_at: str | None = None,
     max_nodes: int = MAX_GRAPH_NODES,
 ) -> WorkspaceGraph:
@@ -187,6 +188,22 @@ def build_graph(
             )
         )
     for ex in executions:
+        if ex.outcome.run_id or ex.reached_execute:
+            builder.add_node(
+                GraphNode(
+                    id=f"execution:{ex.node.id}",
+                    kind="execution",
+                    label=ex.outcome.run_id or "",
+                )
+            )
+        if ex.outcome.status in ("provider_failure", "refused"):
+            builder.add_node(
+                GraphNode(
+                    id=f"failure:{ex.node.id}",
+                    kind="failure",
+                    label=ex.outcome.error.code if ex.outcome.error else ex.outcome.status,
+                )
+            )
         if ex.result is None:
             continue
         for item in ex.result.evidence:
@@ -203,6 +220,14 @@ def build_graph(
                     label=artifact.sha256,
                 )
             )
+    if decision is not None:
+        builder.add_node(
+            GraphNode(
+                id=f"decision:{decision.referee}",
+                kind="decision",
+                label=f"{decision.chosen} ({decision.confidence})",
+            )
+        )
 
     # Workspace relations, as evidenced by the descriptor.
     def repo_node(path: str) -> str:
@@ -267,6 +292,27 @@ def build_graph(
 
     for ex in executions:
         me = f"plan_node:{ex.node.id}"
+        if ex.outcome.run_id or ex.reached_execute:
+            builder.propose(
+                source=me,
+                target=f"execution:{ex.node.id}",
+                kind="executed_by",
+                epistemic="observed",
+                evidence=f"run:{ex.outcome.run_id}" if ex.outcome.run_id else f"plan:{plan_sha256}",
+            )
+        if ex.outcome.status in ("provider_failure", "refused"):
+            failure_evidence = (
+                f"result:{ex.outcome.result_sha256}"
+                if ex.outcome.result_sha256
+                else f"status:{ex.outcome.status}"
+            )
+            builder.propose(
+                source=f"execution:{ex.node.id}",
+                target=f"failure:{ex.node.id}",
+                kind="produced",
+                epistemic="observed",
+                evidence=failure_evidence,
+            )
         if ex.result is not None:
             sha = ex.outcome.result_sha256
             evidence = f"result:{sha}" if sha else ""
@@ -299,5 +345,27 @@ def build_graph(
                     epistemic="observed",
                     evidence=evidence,
                 )
+
+    if decision is not None:
+        # The decision record is core-owned: the hash of its canonical form is
+        # the evidence; it derives from the referee's node and supports the
+        # chosen proposer (rejections live in the record, not the graph).
+        me = f"decision:{decision.referee}"
+        evidence = f"decision:{sha256_of(to_dict(decision))}"
+        builder.propose(
+            source=me,
+            target=f"plan_node:{decision.referee}",
+            kind="derived_from",
+            epistemic="observed",
+            evidence=evidence,
+        )
+        if decision.chosen != "unresolved":
+            builder.propose(
+                source=me,
+                target=f"plan_node:{decision.chosen}",
+                kind="supports",
+                epistemic="explicit",
+                evidence=evidence,
+            )
 
     return builder.build(created_at=created_at)
