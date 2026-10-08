@@ -174,6 +174,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # cycle-5.1 reality synchronization
     "test_reality_collect.py": ("unit",),
     "test_surface_staleness.py": ("unit", "security"),
+    "test_federation_conformance.py": ("integration", "contract"),
 }
 
 
