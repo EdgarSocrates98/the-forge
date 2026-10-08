@@ -86,6 +86,9 @@ class PlanRefs:
     # reached a validated plan, or in runs older than the scheduler states).
     plan_state_sha256: str | None = None
     plan_result_sha256: str | None = None  # None when the plan was not executed
+    # On-disk hash of the PlanSimulation composed before execution (None in
+    # runs older than Cycle 5 Wave G, or when simulation was unavailable).
+    simulation_sha256: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

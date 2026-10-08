@@ -45,6 +45,7 @@ from theforge.contracts.plan import (
     SemanticPlanProposal,
 )
 from theforge.contracts.resolve import RoutingProposal
+from theforge.contracts.strategy import PlanSimulation
 from theforge.contracts.verification import VerificationResult
 from theforge.contracts.workspace import WorkspaceDescriptor
 from theforge.errors import PersistenceError
@@ -75,6 +76,7 @@ ARTIFACTS = (
     "plan-result",
     "graph",
     "capability-graph",
+    "simulation",
     "semantic-proposal",
     "routing-proposal",
     "decision",
@@ -95,6 +97,7 @@ ARTIFACT_TYPES: Final[dict[str, type]] = {
     "complexity": ComplexityAssessment,
     "budget": RunBudget,
     "capability-graph": CapabilityGraph,
+    "simulation": PlanSimulation,
     "semantic-proposal": SemanticPlanProposal,
     "routing-proposal": RoutingProposal,
     "installation": InstallationPlan,
@@ -258,6 +261,9 @@ class RunStore:
                 ),
                 global_stop_sha256=(
                     self.persisted_sha256(run_id, "global-stop") if plan_kind else None
+                ),
+                simulation_sha256=(
+                    self.persisted_sha256(run_id, "simulation") if plan_kind else None
                 ),
             )
         data = redact(to_dict(contract))
