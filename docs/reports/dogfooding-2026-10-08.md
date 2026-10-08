@@ -66,10 +66,13 @@ severity: note
 ```
 
 É a fronteira fazendo seu trabalho: nomes secretos nunca entram no
-`work/stage/` do provider. O gap é semântico/documental — `ok/0 facts` lê-se
-como "repo limpo". Documentado em `real-providers.md` (limite da fronteira).
-Decisão de produto (o scan deveria receber nomes-secretos?) fica em aberto —
-enfraquecer a fronteira não é decisão de dogfooding.
+`work/stage/` do provider. O gap era semântico/documental — `ok/0 facts`
+lia-se como "repo limpo". Resolvido neste commit: documentado em
+`real-providers.md` **e** declarado no `limitations` do manifest do adapter
+(`secrets.scan reads staged content only: …`), para que o consumidor veja o
+limite na superfície e não só na documentação. A decisão de produto oposta —
+deixar o scan receber nomes-secretos — enfraqueceria a fronteira e segue
+proibida sem ADR.
 
 ### O3 — trust de provider de projeto é ignorado e isso está certo
 
@@ -123,5 +126,3 @@ severity: note — corrigido neste commit
 - Se o ContextPack deve ganhar uma forma de excluir convenções de scratch
   de teste (`.pytest_tmp*`) — hoje `IGNORED_DIRS` cobre só diretórios
   canônicos de ferramenta, e qualquer árvore suja polui a seleção.
-- Se `secrets.scan` deve declarar a fronteira de staging como `limitations`
-  no manifest (hoje o limite vive só na documentação).

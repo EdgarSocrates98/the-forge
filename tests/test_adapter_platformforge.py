@@ -185,6 +185,15 @@ def test_describe_is_deterministic() -> None:
     assert _describe()[1]["payload"] == _describe()[1]["payload"]
 
 
+def test_describe_declares_the_secret_name_staging_boundary() -> None:
+    """Dogfooding 2026-10-08: the core never stages secret-named files, so a
+    zero-fact secrets.scan must never read as 'no secrets' — declared, not implicit."""
+    response, _ = _describe()
+    manifest = from_dict(ForgeManifest, response.payload)
+    assert manifest.capability("secrets.scan") is not None
+    assert any("secrets.scan" in n and "secret-name boundary" in n for n in manifest.limitations)
+
+
 def test_describe_flags_a_hand_built_snapshot() -> None:
     snapshot = _snapshot()
     assert snapshot["provenance"] == "recorded"
