@@ -35,6 +35,7 @@ from theforge.contracts import (
     ExecutionTarget,
     ExplainReport,
     FailurePattern,
+    ForgeKnowledge,
     ForgeManifest,
     ForgeRegistryEntry,
     GlobalEconomyReceipt,
@@ -165,6 +166,8 @@ EXPORTED: tuple[type[Any], ...] = (
     StrategyPolicy,
     PlanSimulation,
     CounterfactualPlanComparison,
+    # agentic knowledge layer (W1)
+    ForgeKnowledge,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -219,6 +222,8 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     StrategyPolicy,
     PlanSimulation,
     CounterfactualPlanComparison,
+    # knowledge packages are authored core data — unknown keys are drift.
+    ForgeKnowledge,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

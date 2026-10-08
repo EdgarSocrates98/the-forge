@@ -1,0 +1,58 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "spark-forge-aws",
+  "name": "Spark Forge AWS",
+  "family": "spark-engineering",
+  "summary": "AWS-native Spark engineering specialist: Glue, EMR, Lake Formation, S3, Athena, Iceberg and the AWS lakehouse. Produces reviewed Spark/AES work through its own native surface; The Forge routes to it, it does not teach it Spark.",
+  "repository": "https://github.com/EdgarSocrates98/spark-forge-aws.git",
+  "package": "sparkforge-aws>=0.5,<0.6",
+  "binary": "sparkforge-aws",
+  "adapter": "adapters/sparkforge_aws",
+  "python": ">=3.10",
+  "appropriate_for": [
+    "PySpark/Spark jobs on AWS (Glue jobs, EMR steps, Spark on EC2/EKS)",
+    "AWS lakehouse work: Lake Formation governance, Glue Catalog, Athena queries, S3 tables, Iceberg tables",
+    "Spark performance analysis (event logs, Spark UI, physical plans, skew/spill) on AWS estates"
+  ],
+  "inappropriate_for": [
+    "Azure Spark estates — route to spark-forge-azure (no AWS↔Azure equivalence)",
+    "API design or contract work — route to api-forge",
+    "platform/IDP engineering — route to platform-forge"
+  ],
+  "intents": [
+    "spark on aws", "glue job", "emr cluster", "lake formation",
+    "athena query", "iceberg table", "glue catalog", "aws lakehouse"
+  ],
+  "technologies": [
+    "pyspark", "aws glue", "emr", "lake formation", "s3", "athena", "iceberg", "glue catalog"
+  ],
+  "environments": ["aws"],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <spark-venv> && <spark-python> -m pip install --upgrade pip && <spark-python> -m pip install \"sparkforge-aws>=0.5,<0.6\" <the-forge>/adapters/sparkforge_aws",
+      "verify": "<spark-python> -c \"import sparkforge_aws.adapters.tools, theforge_sparkforge_aws\"",
+      "prerequisites": ["python>=3.11 on PATH or via uv/pyenv", "pip"]
+    },
+    {
+      "kind": "editable",
+      "command": "<spark-python> -m pip install -e <checkout-spark-forge-aws> -e <the-forge>/adapters/sparkforge_aws",
+      "verify": "<spark-python> -c \"import sparkforge_aws.adapters.tools, theforge_sparkforge_aws\"",
+      "prerequisites": ["local checkout of spark-forge-aws", "python>=3.11"]
+    }
+  ],
+  "verify_install": "<spark-python> -c \"import sparkforge_aws.adapters.tools, theforge_sparkforge_aws\"",
+  "discover_command": "theforge providers add spark-forge-aws --python <spark-python>",
+  "preferred_verifiers": ["forge-doctor-data"],
+  "independent_verification": true,
+  "composes_with": ["forge-doctor-data", "platform-forge", "api-forge"],
+  "fallback": ["spark-forge-azure"],
+  "limitations_note": "AWS-only: no Azure/GCP signal. Doctors verify its output; it does not verify itself.",
+  "examples": [
+    "analyze a Glue job that spills to disk",
+    "review Lake Formation grants for a curated zone",
+    "optimize an Iceberg compaction on the AWS lakehouse"
+  ],
+  "tested_version": "0.3.0",
+  "recorded_at": "2026-10-08T00:00:00Z"
+}

@@ -274,6 +274,43 @@ def cmd_registry_sources(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_knowledge_list(args: argparse.Namespace) -> int:
+    """Forge Knowledge Layer (§5-7): bootstrap packages — recognition,
+    install and verification hints that exist *before* a provider is
+    installed. Never authoritative over runtime reality."""
+    from theforge.knowledge import families, load_all
+
+    packages = load_all()
+    data = {
+        "providers": [
+            {
+                "id": p.id,
+                "family": p.family,
+                "package": p.package,
+                "python": p.python,
+                "tested_version": p.tested_version,
+            }
+            for p in packages.values()
+        ],
+        "families": families(packages),
+    }
+    _emit(args, data, render.knowledge_list)
+    return 0
+
+
+def cmd_knowledge_show(args: argparse.Namespace) -> int:
+    from theforge.knowledge import knowledge_for
+
+    package = knowledge_for(args.provider_id)
+    if package is None:
+        raise UsageError(
+            f"no forge knowledge package for {args.provider_id!r} "
+            "(bootstrap metadata unknown — generic onboarding still applies)"
+        )
+    _emit(args, to_dict(package), render.knowledge_detail)
+    return 0
+
+
 def cmd_economy_report(args: argparse.Namespace) -> int:
     """Global economy receipt (cycle 4, wave G): aggregates the recorded
     execution observations into a per-axis view — observed, unresolved,

@@ -73,6 +73,11 @@ from theforge.contracts.installation import (
 )
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
+from theforge.contracts.knowledge import (
+    FORGE_KNOWLEDGE_SCHEMA,
+    ForgeKnowledge,
+    InstallMethod,
+)
 from theforge.contracts.manifest import (
     Capability,
     CapabilityContext,
@@ -237,6 +242,7 @@ __all__ = [
     "ECONOMY_ROLLUP_SCHEMA",
     "EXECUTION_TARGET_SCHEMA",
     "FAILURE_PATTERN_SCHEMA",
+    "FORGE_KNOWLEDGE_SCHEMA",
     "INTEL_SCHEMA",
     "MEMORY_ENTRY_SCHEMA",
     "MEMORY_PACK_SCHEMA",
@@ -304,6 +310,7 @@ __all__ = [
     "ExplainReport",
     "FailurePattern",
     "Finding",
+    "ForgeKnowledge",
     "ForgeManifest",
     "ForgeRegistryEntry",
     "GitSummary",
@@ -317,6 +324,7 @@ __all__ = [
     "HealthReport",
     "InstallApproval",
     "InstallationItem",
+    "InstallMethod",
     "InstallationPlan",
     "InstallationPlanV2",
     "InstallStep",
