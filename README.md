@@ -125,7 +125,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Feature freeze](docs/feature-freeze.md) (Cycle 5.1: arquitetura congelada, dogfooding a seguir)
 - [Dogfooding](docs/dogfooding.md) (uso em projetos reais + taxonomia de observações)
 - [Desenvolvimento com agentes](docs/agentic.md)
-- [Índice de ADRs](docs/adr/README.md)
+- [Índice de ADRs](docs/adr/README.md) e [índice de relatórios](docs/reports/README.md)
 - [Relatório do Cycle 5.1](docs/reports/cycle-5.1.md) (reality sync, benchmarks B01–B15, Memory ROI, freeze)
 - [Relatório do Cycle 5](docs/reports/cycle-5.md) (Federated Engineering Intelligence: memory, targets, remote trust, strategy governance)
 - [Relatório do Cycle 4.1](docs/reports/cycle-4.1.md) (closure, Global Stop, trace federation e adaptive learning)

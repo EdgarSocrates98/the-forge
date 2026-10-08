@@ -45,6 +45,12 @@ instead of assumed, and the platform enters Feature Freeze + DOGFOODING.
   `cycle-5.1-security`, `cycle-5.1-operational`, `cycle-5.1-scorecard`,
   `cycle-5.1-evidence.json`, `cycle-5.1-scenarios.json`,
   `cycle-5.1-reality.json`.
+- `docs/reports/README.md` — index of all cycle reports and evidence
+  artifacts, linked from the main README.
+- Freeze/dogfooding phase is now visible to agents in `AGENTS.md` and
+  `CLAUDE.md` (outside the synced invariants block).
+- `python -m theforge.cli.main` prints help instead of exiting silently
+  (`__main__` guard — dogfooding friction fix).
 
 #### Changed
 
