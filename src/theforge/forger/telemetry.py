@@ -89,11 +89,15 @@ class TelemetryRecorder:
         run_id: str,
         profile: ContextProfile,
         *,
+        correlation_id: str | None = None,
+        parent_run: str | None = None,
         clock: Callable[[], float] = perf_counter,
         now: Callable[[], str] = utc_now,
     ) -> None:
         self._run_id = run_id
         self._profile = profile
+        self._correlation_id = correlation_id
+        self._parent_run = parent_run
         self._clock = clock
         self._now = now
         self._t0: float | None = None  # first instrumented instant, lazily (J3)
@@ -197,6 +201,11 @@ class TelemetryRecorder:
         else:
             self._revalidation = strategy
 
+    @property
+    def correlation_id(self) -> str | None:
+        """The correlation id this run records (None when unfederated)."""
+        return self._correlation_id
+
     def set_profile(self, profile: ContextProfile) -> None:
         """Replace the assumed profile when ``auto`` resolves (the snapshot is taken at
         ``build``, so a run that ends before the assessment records the assumed one)."""
@@ -260,6 +269,8 @@ class TelemetryRecorder:
             # Start order: ids are assigned at start, so id order is the trace order;
             # start_ms breaks no ties (it can only be equal for concurrent spans).
             spans=sorted(self._spans, key=lambda s: int(s.id[1:])),
+            correlation_id=self._correlation_id,
+            parent_run=self._parent_run,
             limitations=list(self._limitations),
             unknowns=sorted(name for name, m in metrics.items() if m.kind == "unknown"),
         )

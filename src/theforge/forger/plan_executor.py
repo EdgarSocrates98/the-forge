@@ -26,6 +26,7 @@ every provider is reached through the ``Forger`` or the protocol helpers of ``pl
 """
 
 import json
+import os
 import time
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -313,11 +314,15 @@ class PlanExecutor:
                 forge_dir=self.forger.root / ".forge",
                 warnings=config_warnings,
             )
+        # Wave W: the plan run is the tree root — its correlation id is its own
+        # run id (or the caller/environment's when federated under a bigger tree).
+        correlation_id = os.environ.get("THEFORGE_CORRELATION_ID") or run_id
         telemetry = TelemetryRecorder(
             run_id,
             profile_for(config.fallback_profile)
             if config is not None
             else assumed_profile(command.profile),
+            correlation_id=correlation_id,
         )
         # Measured on every outcome: a plan that never executes records explicit zeros.
         for counter in (
@@ -992,6 +997,7 @@ class PlanExecutor:
             node=node.id,
             pattern=plan.pattern,
             handoff=handoff,
+            correlation_id=trace.telemetry.correlation_id,
             estimate_class=node.estimate.operation_class if node.estimate else None,
             upstream=tuple(levels[i] for i in node.inputs if i in levels),
         )

@@ -38,12 +38,18 @@ ECONOMY_ROLLUP_SCHEMA = "theforge/EconomyRollup/v1"
 MetricStatus = Literal["measured", "estimated", "unresolved", "not_applicable"]
 
 # The metric names a ProviderEconomyReceipt carries, in canonical order; the
-# rollup's ``totals`` uses them as keys.
+# rollup's ``totals`` uses them as keys. Cycle 5 (Wave X) extends the ledger
+# to the federated axes — remote calls, artifact transfer, verification and
+# retry cost — each still governed by the never-silent status rules.
 ECONOMY_METRICS: Final = (
     "context_bytes",
     "tool_calls",
     "model_calls",
     "provider_tokens",
+    "remote_calls",
+    "artifact_bytes",
+    "verification_calls",
+    "retry_calls",
     "cost_usd",
     "wall_time_ms",
 )
@@ -90,6 +96,14 @@ class ProviderEconomyReceipt:
     tool_calls: EconomyMetric = field(default_factory=EconomyMetric)
     model_calls: EconomyMetric = field(default_factory=EconomyMetric)
     provider_tokens: EconomyMetric = field(default_factory=EconomyMetric)
+    # Cycle 5 (Wave X): federated axes. ``remote_calls`` counts delegated
+    # executions; ``artifact_bytes`` the transfer volume; ``verification_calls``
+    # and ``retry_calls`` the verification/retry spend. All default to
+    # ``unresolved`` — an unmeasured axis never masquerades as zero.
+    remote_calls: EconomyMetric = field(default_factory=EconomyMetric)
+    artifact_bytes: EconomyMetric = field(default_factory=EconomyMetric)
+    verification_calls: EconomyMetric = field(default_factory=EconomyMetric)
+    retry_calls: EconomyMetric = field(default_factory=EconomyMetric)
     cost_usd: EconomyMetric = field(default_factory=EconomyMetric)
     wall_time_ms: EconomyMetric = field(default_factory=EconomyMetric)
     basis: list[str] = field(default_factory=list)
