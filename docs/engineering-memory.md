@@ -52,10 +52,16 @@ decisão como recomendação, nunca ação automática.
 ## CLI
 
 ```text
-theforge memory list [--kind K] [--epistemic E] [--scope S]
+theforge memory list [--kind K] [--epistemic E] [--subject Q] [--all]
 theforge memory learn --run <run_id>
 theforge memory export > pack.json
-theforge memory summarize --subject SUBSTR --entry <id> ...
+theforge memory import <pack.json>            # ou '-' para stdin
+theforge memory patterns
+theforge memory summarize <subject> --claim "..." --source <id>...
 ```
 
-Tudo offline; writes passam por `security.redact` como qualquer persistência.
+`export`/`import` são os únicos comandos que cruzam a fronteira do projeto:
+só escopos `portable`/`organization` saem, e `import` recusa
+`project`/`workspace` contando-os em `limitations`. `patterns` mostra o
+rollup `FailurePattern` — recomendação, nunca regra. Tudo offline; writes
+passam por `security.redact` como qualquer persistência.

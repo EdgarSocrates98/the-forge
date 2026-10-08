@@ -64,6 +64,12 @@ letting semantic planning, economy or external claims override determinism.
   reality.
 - A2A 1.0 refresh: emitted cards carry `supportedInterfaces`;
   `entry_from_card` prefers `supportedInterfaces[0]` with `url` fallback.
+- CLI surface for the Cycle 5 layers: `theforge targets list|negotiate`
+  (declared targets + dry-run of planner negotiation, exit 4 when nothing
+  serves), `theforge remote policy|check` (effective deny-by-default policy
+  and per-target gate evaluation — inspection only, no transport), and
+  `theforge memory import|patterns` (cross-boundary import of
+  portable/org entries and the FailurePattern rollup).
 
 #### Security / integrity
 

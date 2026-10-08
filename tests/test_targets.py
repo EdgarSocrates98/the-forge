@@ -206,3 +206,94 @@ class TestSimulationTargets:
         )
         sim = simulate_plan(plan, {}, targets=[builtin_local()])
         assert sim.nodes[0].execution_target == "local"
+
+
+class TestCLI:
+    def _write_targets(self, tmp_path: Path) -> None:
+        config = tmp_path / ".forge" / "config"
+        config.mkdir(parents=True, exist_ok=True)
+        (config / "targets.toml").write_text(
+            '[[targets]]\nid = "ci"\ntype = "remote-forge"\nnetwork = "egress"\n'
+            'identity_ref = "org-forge:ci"\ntrust = "verified"\n'
+            'data_classes = ["public", "internal"]\nhealth = "healthy"\n'
+            '[[targets]]\nid = "l"\ntype = "local"\n'
+            'data_classes = ["public", "internal", "confidential"]\n',
+            encoding="utf-8",
+        )
+
+    def test_list_declared_targets(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import json
+
+        from theforge.cli.main import build_parser
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        self._write_targets(tmp_path)
+        args = build_parser().parse_args(["targets", "list", "--root", str(tmp_path), "--json"])
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert [t["id"] for t in out["targets"]] == ["ci", "l"]
+
+    def test_negotiate_orders_and_refuses(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import json
+
+        from theforge.cli.main import build_parser
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        self._write_targets(tmp_path)
+        args = build_parser().parse_args(
+            [
+                "targets",
+                "negotiate",
+                "--root",
+                str(tmp_path),
+                "--provider",
+                "p",
+                "--capability",
+                "x.y",
+                "--locality",
+                "local-or-remote",
+                "--data-classification",
+                "public",
+                "--json",
+            ]
+        )
+        assert args.handler(args) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["selected"] == "l" and out["candidates"] == ["l", "ci"]
+
+    def test_negotiate_no_candidate_exits_4(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import json
+
+        from theforge.cli.main import build_parser
+        from theforge.state import init_workspace
+
+        init_workspace(tmp_path)
+        self._write_targets(tmp_path)
+        args = build_parser().parse_args(
+            [
+                "targets",
+                "negotiate",
+                "--root",
+                str(tmp_path),
+                "--provider",
+                "p",
+                "--capability",
+                "x.y",
+                "--locality",
+                "local-or-remote",
+                "--data-classification",
+                "restricted",
+                "--json",
+            ]
+        )
+        assert args.handler(args) == 4
+        out = json.loads(capsys.readouterr().out)
+        assert out["selected"] is None and set(out["refusals"]) == {"ci", "l"}
