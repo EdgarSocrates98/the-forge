@@ -21,7 +21,7 @@ A new specialist becomes routable through four artifacts, none of which touches 
 1. `theforge provider init <name>` — stdlib skeleton: manifest template, protocol loop, conformance test, registration guidance.
 2. Write `forge-knowledge/<id>.json` — bootstrap facts: purpose, intents, install method (venv-pip/editable), verify command, preferred verifiers. Contract refuses trust grants and capability lists.
 3. Implement the adapter under `adapters/<name>/` — stdlib-only, imports the specialist, never `theforge`; bridge module = single subprocess seam.
-4. Register: `theforge providers add <id> --python <venv-python>` → discovery → `describe` → surface fingerprint.
+4. Register in the user `providers.toml` — a `[[providers]]` entry (`id`, `argv` pointing at the specialist venv, `trust`) — then `theforge registry refresh` runs discovery → `describe` → surface fingerprint. Only the user config grants trust.
 5. Verify: `theforge ask` with a matching intent routes to it; conformance test passes.
 
 ## Boundaries

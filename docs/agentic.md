@@ -111,6 +111,8 @@ Duas famílias, dois regimes:
 
 O perfil semântico tolera cabeçalhos, envelopes, prefixos de invocação e a forma do argumento da feature (`$1`, `$ARGUMENTS`, `{feature-name}`); a contrapartida é que prosa divergente sem efeito em nenhum elemento do perfil passa sem achado.
 
+Comandos `theforge` citados nas skills são conferidos contra o parser real em `tests/test_agentic_security.py` (`test_all_skills_quote_only_real_cli_verbs`) — vive na suíte de testes, não no `audit_assets.py`, porque o audit é stdlib-only e não importa `theforge`. Um verbo que deixar de existir falha o teste antes de a skill apontar o agente para um caminho morto.
+
 ### Como aceitar uma divergência
 Acrescente a [`agentic.toml`](../scripts/agentic/agentic.toml) uma entrada com os valores exatos do achado `drift` (skill, elemento, hosts que têm o valor e o valor) e um motivo concreto, que diga por que o comportamento não muda:
 
