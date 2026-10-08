@@ -613,9 +613,7 @@ def profile_skill(skill_md: str, support_files: frozenset[str]) -> SkillProfile:
     name = name_match.group(1) if name_match else ""
     body = text[frontmatter.end() :] if frontmatter else text
     paths = frozenset(p for p in (_normalize_path(m.group(0)) for m in _PATH.finditer(body)) if p)
-    refs = frozenset(
-        f"{m.group(1)}-{m.group(2).rstrip('-')}" for m in _SKILL_REF.finditer(body)
-    )
+    refs = frozenset(f"{m.group(1)}-{m.group(2).rstrip('-')}" for m in _SKILL_REF.finditer(body))
     return SkillProfile(
         name=name,
         paths=paths,
@@ -1001,42 +999,63 @@ class _Auditor:
                     meta = tomllib.loads(match.group(1))
                 except tomllib.TOMLDecodeError as exc:
                     self.add(
-                        FindingKind.SKILL_QUALITY, subject, (), "frontmatter",
+                        FindingKind.SKILL_QUALITY,
+                        subject,
+                        (),
+                        "frontmatter",
                         f"invalid TOML: {exc}",
                     )
                     continue
             else:
                 self.add(
-                    FindingKind.SKILL_QUALITY, subject, (), "frontmatter",
+                    FindingKind.SKILL_QUALITY,
+                    subject,
+                    (),
+                    "frontmatter",
                     "missing +++ frontmatter",
                 )
                 continue
             if meta.get("name") != subject:
                 self.add(
-                    FindingKind.SKILL_QUALITY, subject, (), "name",
+                    FindingKind.SKILL_QUALITY,
+                    subject,
+                    (),
+                    "name",
                     f"name {meta.get('name')!r} != filename",
                 )
             if not str(meta.get("description", "")).strip():
                 self.add(
-                    FindingKind.SKILL_QUALITY, subject, (), "description",
+                    FindingKind.SKILL_QUALITY,
+                    subject,
+                    (),
+                    "description",
                     "missing trigger description (a skill without one is never loaded on demand)",
                 )
             body = text[match.end() :]
             if "## Overview" not in body:
                 self.add(
-                    FindingKind.SKILL_QUALITY, subject, (), "sections",
+                    FindingKind.SKILL_QUALITY,
+                    subject,
+                    (),
+                    "sections",
                     "missing ## Overview",
                 )
             if "## Boundaries" not in body and "## Limits" not in body:
                 self.add(
-                    FindingKind.SKILL_QUALITY, subject, (), "sections",
+                    FindingKind.SKILL_QUALITY,
+                    subject,
+                    (),
+                    "sections",
                     "missing a Boundaries/Limits section (what the skill refuses to do)",
                 )
             freshness = meta.get("freshness", {})
             for pid in freshness.get("specialists", []):
                 if pid not in knowledge:
                     self.add(
-                        FindingKind.SKILL_QUALITY, subject, (), "freshness",
+                        FindingKind.SKILL_QUALITY,
+                        subject,
+                        (),
+                        "freshness",
                         f"references unknown forge-knowledge package {pid!r}",
                     )
                 elif (
@@ -1045,7 +1064,10 @@ class _Auditor:
                     and freshness["tested_version"] != knowledge[pid]
                 ):
                     self.add(
-                        FindingKind.SKILL_QUALITY, subject, (), "freshness",
+                        FindingKind.SKILL_QUALITY,
+                        subject,
+                        (),
+                        "freshness",
                         f"tested_version {freshness['tested_version']!r} != knowledge "
                         f"package {knowledge[pid]!r} (stale skill claim)",
                     )
@@ -1063,7 +1085,10 @@ class _Auditor:
                 ):
                     continue
                 self.add(
-                    FindingKind.SKILL_QUALITY, subject, (), "references",
+                    FindingKind.SKILL_QUALITY,
+                    subject,
+                    (),
+                    "references",
                     f"{ref!r} resolves to no skill dir and no tracked path",
                 )
             # `theforge ...` command mentions are NOT checked here — resolving

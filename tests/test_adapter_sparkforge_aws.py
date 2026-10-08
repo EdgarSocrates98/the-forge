@@ -1894,7 +1894,7 @@ HANDOFF_ORIGIN = {
 def _handoff(*items: Any) -> dict[str, Any]:
     return {
         "schema": "theforge/Handoff/v1",
-        "producer": {"id": "theforge", "version": "0.4.0"},
+        "producer": {"id": "theforge", "version": "0.5.0"},
         "created_at": "2026-01-01T00:00:00Z",
         "plan_run": "plan-1",
         "target_node": "engineer",

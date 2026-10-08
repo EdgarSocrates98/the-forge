@@ -8,7 +8,9 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
-### Agentic Ecosystem layer (prompt `prompt_evo_engenharia_agentica` §5-35, §43-58, §64-79, §92-97)
+### 0.5.0 — Agentic Ecosystem
+
+#### Agentic Ecosystem layer (prompt `prompt_evo_engenharia_agentica` §5-35, §43-58, §64-79, §92-97)
 
 A camada que ensina agentes de código a usar a plataforma — conhecimento de
 bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
@@ -19,7 +21,7 @@ bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
   seis pacotes autorados (repo, pacote, install, verify, discover, família,
   `tested_version`/`tested_surface`) — bootstrap metadata, strict parsing,
   nunca verdade de runtime (ADR 0052).
-- `agentic/skills/` — 15 skills `forge-*` canônicas (9 ecossistema + 6
+- `agentic/skills/` — 16 skills `forge-*` canônicas (10 ecossistema + 6
   especialistas) renderizadas para `.claude/`, `.agents/` e `.devin/` por
   `scripts/agentic/render_skills.py` com freshness trailer ligado ao
   knowledge package (ADRs 0053, 0056).
@@ -63,6 +65,24 @@ bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
   `installation-orchestration.md`, `cross-forge-orchestration.md`,
   `agentic-ecosystem.md`; `architecture.md`, `agentic.md` e `cli.md`
   (linhas `knowledge`/`agents`) atualizados.
+
+#### Polish & Closure (prompt `prompt_evo_agentic_ecosystem`)
+
+- `docs/reports/agentic-ecosystem.md` regenerado: os 8 AgentSpecs reais
+  (autoridade fechada, hosts renderizados) substituem o "não criado" stale;
+  assets host-specific documentados (paridade semântica, não de formato).
+- Inventário de skills corrigido para **16** em `docs/skills.md` (a lista
+  citava nomes inexistentes — `forge-health`, `forge-economy`,
+  `forge-memory`), `docs/architecture.md` e no próprio CHANGELOG.
+- `agentic-scenarios.json` reexecutado em worktree limpa: `git_dirty=false`,
+  15/15 pass, e `specialist_shas` populado com os seis SHAs reais —
+  `_specialist_shas()` lia a chave errada do reality manifest.
+- `specialist-reality.json` regenerado em 0.5.0; matriz de compatibilidade
+  de `docs/versioning.md` ganhou a linha 0.5.0 e as colunas dos adapters
+  sparkforge-azure/platformforge (estava 4/6).
+- Closure: `docs/reports/agentic-polish-closure.md` + `.json`
+  (`theforge-agentic-polish-closure/v1`) com verdict
+  `AGENTIC_POLISH_COMPLETE_REMOTE_BLOCKED`.
 
 ### Agentic Ecosystem benchmarks (prompt `prompt_evo_engenharia_agentica` §87-90, §100)
 

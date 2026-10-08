@@ -7,17 +7,19 @@ testados — B07/B13 — mas nenhum transporte remoto está ligado). Validação
 remota em CI bloqueada por quota de GitHub Actions (decisão do owner; não é
 falha de código).
 
-Branch `devin/agentic-benchmarks` · artefato machine-readable:
-[agentic-scenarios.json](agentic-scenarios.json).
+Artefato machine-readable: [agentic-scenarios.json](agentic-scenarios.json).
+Inventário da camada: **16** skills `forge-*` canônicas (10 ecossistema + 6
+especialistas), **8** AgentSpecs, **6** especialistas/adapters.
 
 ## Repository
 
 ```text
-SHA        c592b9f487af8208db5ab0c29fa740405693b783 + esta wave
-version    0.4.0
-tests      4526 collected (55 deselected = real_provider, live suite aparte)
-contracts  46 módulos em src/theforge/contracts/
-schemas    67 JSON schemas em schemas/ (gerados: python -m theforge.contracts.schema)
+SHA        cf3240c1acddbc5e2cd7799c8e19defd959a5942 (validated_source_sha;
+           o commit que inclui este documento é posterior — §64 circularidade)
+version    0.5.0
+tests      4625 collected (55 deselected = real_provider, live suite aparte)
+contracts  48 módulos em src/theforge/contracts/
+schemas    69 JSON schemas em schemas/ (gerados: python -m theforge.contracts.schema)
 ```
 
 ## Specialists
@@ -41,20 +43,38 @@ configuração).
 
 ## Agents
 
-Nenhum agente extra foi criado para preencher a tabela: o prompt proíbe
-duplicar conhecimento de domínio ("operate without duplicating specialist
-domain knowledge") e inventar formatos ("Não inventar formatos"). O routing
-permanece no core determinístico — um `ecosystem-router` agente duplicaria
-`route()`. Os papéis §71 ficam cobertos pela superfície determinística e os
-assets reais que existem:
+Oito AgentSpecs canônicos vivem em `agentic/agents/*.toml` (contrato
+`theforge/AgentSpec/v1`), com autoridade fechada — `approve`, `grant-trust`,
+`waive-verification` e `modify-registry` são `UNIVERSAL_FORBIDDEN` construtivo:
+nenhum spec pode declará-los (gate em `tests/test_agentic_security.py`). O
+routing permanece no core determinístico; agents *propõem* e o router
+revalida — um pick fora do offered set é rejeição, nunca reparo.
 
-| Agent | Role | Authority | Skills | Status |
-|---|---|---|---|---|
-| `spec-reviewer` (`.codex/agents/`) | revisão cross-spec | consultivo — propõe, humano decide | leitura de specs | ativo |
-| SDD phase agents (plugin AgentSpec, `.claude/agents/` overrideável) | brainstorm/define/design/build/ship/iterate | bounded por fase, revisão humana por gate | kiro-* | ativo via plugin |
-| `subagent_general` / `subagent_explore` (Devin harness) | implementar / explorar read-only | contexto novo por worker; escrita só no general | — | ativo via harness |
-| `ecosystem-router` / `cross-forge-planner` | routing | — | — | **não criado**: duplicaria o `route()` determinístico |
-| `forge-verifier` | verificação | — | — | **não criado**: verificação é contrato `verified_by`/`can_verify`, não um agente |
+| Agent | Authority | Role | Required Skills | Rendered Hosts | Status |
+|---|---|---|---|---|---|
+| `ecosystem-router` | propose | pick dentro do offered set de um `RoutingDecision` ambíguo — ou declina | forge-ecosystem, forge-routing | codex | ativo |
+| `forge-discovery` | classify | classifica tasks e mapeia sinais → capabilities | forge-discovery, forge-ecosystem | codex | ativo |
+| `capability-negotiator` | propose | propõe match capability↔provider quando o offer é parcial | forge-capability-negotiation, forge-routing | codex | ativo |
+| `bootstrap-installation` | execute-approved | executa plano de instalação já aprovado — nunca self-approve/trust/verify | forge-bootstrap, forge-install | codex | ativo |
+| `cross-forge-planner` | propose | decompõe tasks multi-domínio em plano validável | forge-cross-domain-planning, forge-ecosystem, forge-routing | codex | ativo |
+| `execution-orchestrator` | execute-approved | orquestra execução de plano aprovado com recibos | forge-ecosystem, forge-verification | codex | ativo |
+| `verification-orchestrator` | propose | propõe/coordena verificação independente — producer nunca verifica a si | forge-verification, forge-ecosystem | codex | ativo |
+| `ecosystem-debugger` | advise | diagnóstico consultivo de falhas do ecossistema | forge-troubleshooting, forge-ecosystem | codex | ativo |
+
+Assets host-specific que coexistem (não são AgentSpecs canônicos):
+
+| Asset | Host | Role | Status |
+|---|---|---|---|
+| `spec-reviewer` (`.codex/agents/spec-reviewer.toml`) | codex | revisão cross-spec, consultivo | ativo — host-native |
+| SDD phase agents (plugin AgentSpec, `.claude/agents/` overrideável) | claude | brainstorm/define/design/build/ship | ativo via plugin |
+| `subagent_general` / `subagent_explore` | devin | implementar / explorar read-only | ativo via harness |
+
+Paridade é **semântica, não de formato**: só o Codex tem formato de agente
+rastreado no repo (`.codex/agents/*.toml`, renderizado de `agentic/agents/` por
+`render_agents.py`); Claude e Devin cumprem os mesmos papéis por primitivas
+nativas de subagente + as skills canônicas. Não há — nem se pretende — arquivo
+de agente por host para cada spec ([ADR 0054](../adr/0054-agent-authority-model.md),
+[ADR 0056](../adr/0056-agentic-host-adaptation.md)).
 
 ## Agentic Benchmarks (A01–A15)
 

@@ -1080,7 +1080,9 @@ def _specialist_shas() -> dict[str, str]:
     except (OSError, ValueError):
         return {}
     return {
-        s["name"]: s.get("installed_commit") or "unknown"
+        s["name"]: ((s.get("installed") or {}).get("checkout") or {}).get("commit_sha")
+        or s.get("installed_commit")
+        or "unknown"
         for s in data.get("specialists", [])
         if isinstance(s, dict) and s.get("name")
     }

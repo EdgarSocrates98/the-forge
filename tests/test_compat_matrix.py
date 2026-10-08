@@ -16,7 +16,9 @@ import pytest
 import theforge_apiforge
 import theforge_doctorapi
 import theforge_doctordata
+import theforge_platformforge
 import theforge_sparkforge_aws
+import theforge_sparkforge_azure
 
 import theforge
 from theforge.protocol import SUPPORTED_PROTOCOLS, major
@@ -36,6 +38,10 @@ COLUMNS = (
     "forge-doctor-data",
     "theforge-doctorapi-adapter",
     "forge-doctor-api",
+    "theforge-sparkforge-azure-adapter",
+    "sparkforge-azure",
+    "theforge-platformforge-adapter",
+    "platformforge",
     "Suporte até",
 )
 
@@ -108,6 +114,18 @@ def current_adapters() -> dict[str, Adapter]:
             "forge-doctor-api",
             _pyproject_version("doctorapi"),
             theforge_doctorapi.SUPPORTED_SPECIALIST,
+        ),
+        "spark-forge-azure": Adapter(
+            "theforge-sparkforge-azure-adapter",
+            "sparkforge-azure",
+            _pyproject_version("sparkforge_azure"),
+            theforge_sparkforge_azure.SUPPORTED_SPECIALIST,
+        ),
+        "platform-forge": Adapter(
+            "theforge-platformforge-adapter",
+            "platformforge",
+            _pyproject_version("platformforge"),
+            theforge_platformforge.SUPPORTED_SPECIALIST,
         ),
     }
 
@@ -196,7 +214,14 @@ def test_forge_version_bump_without_row_fails(monkeypatch: pytest.MonkeyPatch) -
 
 @pytest.mark.parametrize(
     "adapter_id",
-    ["spark-forge-aws", "api-forge", "forge-doctor-data", "forge-doctor-api"],
+    [
+        "spark-forge-aws",
+        "api-forge",
+        "forge-doctor-data",
+        "forge-doctor-api",
+        "spark-forge-azure",
+        "platform-forge",
+    ],
 )
 def test_adapter_version_bump_without_row_fails(adapter_id: str) -> None:
     adapters = current_adapters()
@@ -221,6 +246,8 @@ def test_adapter_version_bump_without_row_fails(adapter_id: str) -> None:
         theforge_apiforge,
         theforge_doctordata,
         theforge_doctorapi,
+        theforge_sparkforge_azure,
+        theforge_platformforge,
     ],
 )
 def test_specialist_window_change_without_row_fails(
@@ -244,6 +271,7 @@ def test_parse_matrix_reads_table_and_rejects_missing_heading() -> None:
     header = "| " + " | ".join(COLUMNS) + " |"
     row = (
         "| 1.0.0 | `forge/v1` | 1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | "
+        "1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | "
         "1.0.0 | `>=1.0.0,<1.1.0` | 1.0.0 | `>=1.0.0,<1.1.0` | x |"
     )
     doc = "\n".join([MATRIX_HEADING, "", header, "|" + "---|" * len(COLUMNS), row, "", "## Next"])
@@ -254,6 +282,10 @@ def test_parse_matrix_reads_table_and_rejects_missing_heading() -> None:
                 [
                     "1.0.0",
                     "forge/v1",
+                    "1.0.0",
+                    ">=1.0.0,<1.1.0",
+                    "1.0.0",
+                    ">=1.0.0,<1.1.0",
                     "1.0.0",
                     ">=1.0.0,<1.1.0",
                     "1.0.0",

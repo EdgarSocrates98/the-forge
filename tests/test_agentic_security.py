@@ -73,12 +73,7 @@ def _canonical(
     body: str = "## Overview\n\nBody.\n\n## Boundaries\n\n- Never installs.\n",
 ) -> str:
     return (
-        "+++\n"
-        f'name = "{name}"\n'
-        f'description = "{description}"\n'
-        f"{freshness}"
-        "+++\n\n"
-        f"# {name}\n\n{body}"
+        f'+++\nname = "{name}"\ndescription = "{description}"\n{freshness}+++\n\n# {name}\n\n{body}'
     )
 
 
@@ -104,18 +99,14 @@ def test_stale_freshness_claim_fails(tmp_path: Path) -> None:
         {
             "agentic/skills/forge-x.md": _canonical(
                 "forge-x",
-                freshness='[freshness]\nspecialists = ["fake-spec"]\n'
-                'tested_version = "9.9.9"\n',
+                freshness='[freshness]\nspecialists = ["fake-spec"]\ntested_version = "9.9.9"\n',
             ),
             "forge-knowledge/fake-spec.json": json.dumps(
                 {"provider_id": "fake-spec", "tested_version": "0.1.0"}
             ),
         },
     )
-    assert any(
-        f.element == "freshness" and "stale" in f.detail
-        for f in _quality_findings(report)
-    )
+    assert any(f.element == "freshness" and "stale" in f.detail for f in _quality_findings(report))
 
 
 def test_dead_invocation_ref_fails(tmp_path: Path) -> None:
@@ -264,8 +255,7 @@ def test_unknown_freshness_specialist_fails(tmp_path: Path) -> None:
         },
     )
     assert any(
-        f.element == "freshness" and "ghost-provider" in f.detail
-        for f in _quality_findings(report)
+        f.element == "freshness" and "ghost-provider" in f.detail for f in _quality_findings(report)
     )
 
 
@@ -345,9 +335,7 @@ def test_spec_without_registry_wall_fails() -> None:
     with pytest.raises(ContractError, match="modify-registry"):
         from_dict(
             AgentSpec,
-            _agent_spec(
-                forbidden_actions=["grant-trust", "approve", "waive-verification"]
-            ),
+            _agent_spec(forbidden_actions=["grant-trust", "approve", "waive-verification"]),
             "$",
         )
 
@@ -367,8 +355,15 @@ def test_execute_approved_cannot_verify_or_approve() -> None:
     """The installer ceiling: it plans and runs the approved install — it can
     never verify its own work, route, execute provider ops or approve."""
     installer = load_all()["bootstrap-installation"]
-    for action in ("approve", "verify", "grant-trust", "modify-registry",
-                   "route", "execute", "waive-verification"):
+    for action in (
+        "approve",
+        "verify",
+        "grant-trust",
+        "modify-registry",
+        "route",
+        "execute",
+        "waive-verification",
+    ):
         allowed, _ = check_authority(installer, action)
         assert not allowed, f"installer unexpectedly allowed {action}"
     for action in ("install", "plan"):

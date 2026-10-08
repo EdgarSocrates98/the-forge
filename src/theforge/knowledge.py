@@ -35,8 +35,7 @@ def load_package(path: Path) -> ForgeKnowledge:
     package = from_dict(ForgeKnowledge, data, "$", strict=True)
     if package.id != path.stem:
         raise UsageError(
-            f"forge knowledge: file {path.name} must be named after its provider id "
-            f"{package.id!r}"
+            f"forge knowledge: file {path.name} must be named after its provider id {package.id!r}"
         )
     return package
 

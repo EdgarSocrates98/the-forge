@@ -201,9 +201,7 @@ def a07_aws_doctor_data(env: Env) -> dict[str, Any]:
     scan_cap = next(
         c for c in env.manifests["forge-doctor-data"].capabilities if c.id == "data.scan"
     )
-    spark_cap = next(
-        c for c in env.spark.capabilities if c.id == "pyspark.static-analysis"
-    )
+    spark_cap = next(c for c in env.spark.capabilities if c.id == "pyspark.static-analysis")
     order, cycles = produces_consumes_order(
         env.graph, ["forge-doctor-data/data.scan", "spark-forge-aws/pyspark.static-analysis"]
     )
@@ -291,9 +289,7 @@ def a09_missing_install_plan(env: Env) -> dict[str, Any]:
     assert plan.rollback.action == "remove-new", "no existing install to restore"
     # Already installed → rollback material points at the previous version.
     existing = _record("gcp-forge", env.spark)  # stands in for a prior install
-    plan2 = plan_installation(
-        entry, source_id="s", registry_id="r", existing=existing
-    )
+    plan2 = plan_installation(entry, source_id="s", registry_id="r", existing=existing)
     assert plan2.rollback.action == "restore-previous"
     assert plan2.rollback.previous_version == env.spark.version
     # Incompatible: a non-SemVer version is refused at the contract boundary.
@@ -301,9 +297,7 @@ def a09_missing_install_plan(env: Env) -> dict[str, Any]:
         ForgeRegistryEntry(
             provider="gcp-forge",
             version="latest",
-            distribution=DistributionRef(
-                kind="pip-package", package="gcp-forge", version="1.0.0"
-            ),
+            distribution=DistributionRef(kind="pip-package", package="gcp-forge", version="1.0.0"),
         )
     except ContractError:
         pass
@@ -418,8 +412,11 @@ def a12_provider_injection(env: Env) -> dict[str, Any]:
     _s, _n, failure = proposal_selection(injected, candidates, env.records_map)
     assert failure is not None
     COUNTERS["agentic_rejected"] += 1
-    return {"self_claim_inert": True, "resolver_refused": ["blocked", "unverified"],
-            "injection_rejected": failure}
+    return {
+        "self_claim_inert": True,
+        "resolver_refused": ["blocked", "unverified"],
+        "injection_rejected": failure,
+    }
 
 
 def a13_multi_domain(env: Env) -> dict[str, Any]:
