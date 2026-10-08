@@ -55,6 +55,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_adapter_doctordata.py": ("integration", "contract"),
     "test_adapter_doctorapi.py": ("integration", "contract"),
     "test_adapter_sparkforge_azure.py": ("integration", "contract"),
+    "test_adapter_platformforge.py": ("integration", "contract"),
     "test_adapters_core.py": ("integration",),
     "test_real_providers_env.py": ("unit",),
     "test_capability_catalog_doc.py": ("unit",),

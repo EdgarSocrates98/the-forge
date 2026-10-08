@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: worker}
+  template:
+    metadata:
+      labels: {app: worker}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: app
+        image: registry.internal/worker:1.4.2
+        readinessProbe:
+          httpGet: {path: /healthz, port: 8080}
+        livenessProbe:
+          httpGet: {path: /healthz, port: 8080}
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+
