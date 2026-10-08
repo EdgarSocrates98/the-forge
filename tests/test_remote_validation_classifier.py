@@ -113,6 +113,52 @@ def test_skipped_required_job_is_not_remote_verified() -> None:
     assert "windows" in result["blocked_jobs"]
 
 
+def test_in_progress_job_is_blocked_not_failed() -> None:
+    result = classify(
+        {
+            "jobs": [
+                job(
+                    "linux",
+                    "success",
+                    steps=[{"name": "pytest", "conclusion": "success"}],
+                ),
+                job("windows", None, steps=[{"name": "pytest", "conclusion": None}]),
+            ]
+        }
+    )
+    assert result["state"] == REMOTE_BLOCKED
+    assert result["failed_jobs_with_steps"] == []
+    assert "windows" in result["blocked_jobs"]
+
+
+def test_cancelled_or_infra_jobs_are_blocked_not_failed() -> None:
+    for conclusion in ("cancelled", "action_required", "startup_failure", "neutral", "stale"):
+        result = classify(
+            {
+                "jobs": [
+                    job(
+                        "linux",
+                        conclusion,
+                        steps=[{"name": "pytest", "conclusion": "success"}],
+                    )
+                ]
+            }
+        )
+        assert result["state"] == REMOTE_BLOCKED, conclusion
+    result = classify(
+        {
+            "jobs": [
+                job(
+                    "linux",
+                    "timed_out",
+                    steps=[{"name": "pytest", "conclusion": "success"}],
+                )
+            ]
+        }
+    )
+    assert result["state"] == REMOTE_FAILED
+
+
 def test_require_verified_exit_code(tmp_path: Path) -> None:
     blocked = tmp_path / "blocked.json"
     blocked.write_text(

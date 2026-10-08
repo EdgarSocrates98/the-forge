@@ -48,6 +48,10 @@ def classify(payload: Any) -> dict[str, Any]:
     blocked: list[str] = []
     failed_with_steps: list[str] = []
 
+    # Only conclusions that prove the gate ran to a verdict count as failure:
+    # in-progress/null, cancelled, skipped, neutral or infrastructure states
+    # (action_required, startup_failure, stale) are blockage, not code failure.
+    failed_conclusions = {"failure", "timed_out"}
     for job in jobs:
         name = str(job.get("name") or job.get("id") or "unknown-job")
         steps = job.get("steps")
@@ -56,10 +60,10 @@ def classify(payload: Any) -> dict[str, Any]:
             continue
         with_steps.append(job)
         conclusion = job.get("conclusion")
-        if conclusion == "skipped":
-            blocked.append(name)
-        elif conclusion != "success":
+        if conclusion in failed_conclusions:
             failed_with_steps.append(name)
+        elif conclusion != "success":
+            blocked.append(name)
 
     if failed_with_steps:
         state = REMOTE_FAILED
