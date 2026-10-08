@@ -12,7 +12,13 @@ from typing import Any
 
 PACKAGES = ("sparkforge_aws", "sparkforge")
 DISPATCHERS = tuple(f"{package}.adapters.tools" for package in PACKAGES)
+UPSTREAM_MODULES = tuple(f"{package}.adapters.upstream" for package in PACKAGES)
 DISTRIBUTION = "sparkforge-aws"
+# The upstream-facts intake schema is renamed with the package: pre-rename
+# installs validate ``sparkforge/upstream-facts/v1``, renamed installs validate
+# ``sparkforge_aws/upstream-facts/v1``. Emit whatever the installed intake
+# declares — never a guess.
+LEGACY_UPSTREAM_SCHEMA = "sparkforge/upstream-facts/v1"
 
 
 def dispatcher_found() -> bool:
@@ -55,3 +61,22 @@ def installed_version() -> str | None:
         return metadata_version(DISTRIBUTION)
     except Exception:  # noqa: BLE001 - unreadable metadata: no version, never internal
         return None
+
+
+def upstream_schema() -> str:
+    """The upstream-facts document schema the *installed* intake validates.
+
+    The specialist declares it in ``adapters.upstream.UPSTREAM_SCHEMA``; the
+    rename ``sparkforge`` -> ``sparkforge_aws`` renamed the document too, so a
+    hardcoded name would silently emit documents the installed intake refuses.
+    Falls back to the legacy name when no intake is importable.
+    """
+    for name in UPSTREAM_MODULES:
+        try:
+            module = __import__(name, fromlist=["UPSTREAM_SCHEMA"])
+            schema = getattr(module, "UPSTREAM_SCHEMA", None)
+            if isinstance(schema, str) and schema:
+                return schema
+        except Exception:  # noqa: BLE001 - any import failure falls through
+            continue
+    return LEGACY_UPSTREAM_SCHEMA

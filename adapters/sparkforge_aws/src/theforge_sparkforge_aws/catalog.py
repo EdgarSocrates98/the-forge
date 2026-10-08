@@ -146,7 +146,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
         },
         unbound={_analyze("call_graph"): FACTS_INPUT},
         # The observe -> engineer edge: Doctor Data's diagnostics reach
-        # `analyze pyspark` as a translated sparkforge/upstream-facts/v1
+        # `analyze pyspark` as a translated <pkg>/upstream-facts/v1
         # document (sparkforge >= the upstream intake).
         accepts_handoff=True,
         consumes=("data.diagnostic-evidence",),

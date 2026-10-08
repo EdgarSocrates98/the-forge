@@ -772,6 +772,53 @@ def _fake_specialist(monkeypatch: pytest.MonkeyPatch, package: str, marker: str)
     monkeypatch.setitem(_sys.modules, f"{package}.adapters.tools", tools_mod)
 
 
+def _fake_upstream(monkeypatch: pytest.MonkeyPatch, package: str, schema: str) -> None:
+    """A fake upstream-facts intake module declaring ``UPSTREAM_SCHEMA`` — the
+    parent packages must exist in ``sys.modules`` for ``__import__`` to reach
+    it."""
+    import sys as _sys
+    import types
+
+    for name in (package, f"{package}.adapters", f"{package}.adapters.upstream"):
+        monkeypatch.delitem(_sys.modules, name, raising=False)
+    pkg = types.ModuleType(package)
+    adapters = types.ModuleType(f"{package}.adapters")
+    upstream_mod = types.ModuleType(f"{package}.adapters.upstream")
+    upstream_mod.UPSTREAM_SCHEMA = schema  # type: ignore[attr-defined]
+    adapters.upstream = upstream_mod  # type: ignore[attr-defined]
+    pkg.adapters = adapters  # type: ignore[attr-defined]
+    monkeypatch.setitem(_sys.modules, package, pkg)
+    monkeypatch.setitem(_sys.modules, f"{package}.adapters", adapters)
+    monkeypatch.setitem(_sys.modules, f"{package}.adapters.upstream", upstream_mod)
+
+
+def test_upstream_schema_follows_the_installed_intake(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The emitted document schema is whatever the installed intake declares —
+    the package rename renamed it: ``sparkforge_aws/upstream-facts/v1`` on
+    post-rename installs, ``sparkforge/upstream-facts/v1`` before."""
+    from theforge_sparkforge_aws import handoff as upstream
+    from theforge_sparkforge_aws import native_pkg
+
+    _fake_upstream(monkeypatch, "sparkforge_aws", "sparkforge_aws/upstream-facts/v1")
+    _fake_upstream(monkeypatch, "sparkforge", "sparkforge/upstream-facts/v1")
+    assert native_pkg.upstream_schema() == "sparkforge_aws/upstream-facts/v1"
+
+    document, _ = upstream.translate_handoff(_handoff(_handoff_item()))
+    assert document["schema"] == "sparkforge_aws/upstream-facts/v1"
+
+
+def test_upstream_schema_falls_back_to_legacy_package_then_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from theforge_sparkforge_aws import native_pkg
+
+    _fake_upstream(monkeypatch, "sparkforge", "sparkforge/upstream-facts/v1")
+    assert native_pkg.upstream_schema() == "sparkforge/upstream-facts/v1"
+    # with no intake importable the emitted name is the documented default
+    monkeypatch.setattr(native_pkg, "UPSTREAM_MODULES", ("no.such.module", "no.other.module"))
+    assert native_pkg.upstream_schema() == native_pkg.LEGACY_UPSTREAM_SCHEMA
+
+
 def test_import_tools_prefers_the_renamed_package(monkeypatch: pytest.MonkeyPatch) -> None:
     from theforge_sparkforge_aws import native_pkg
 

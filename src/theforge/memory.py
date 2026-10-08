@@ -257,6 +257,26 @@ def supersede(root: Path, old_id: str, new: EngineeringMemoryEntry) -> tuple[boo
     return True, _write_entries(root, [*marked, new]) or warning
 
 
+def entry_fresh(entry: EngineeringMemoryEntry, surface: str | None) -> bool:
+    """Whether a surface-bound entry still applies on the current surface.
+
+    Same contract as ``capability_graph.relation_fresh``: an entry without a
+    ``surface_fingerprint`` is not surface-bound and stays fresh; a bound entry
+    is fresh only while the fingerprint matches the current surface — and when
+    the current surface is unknown (``None``) bound evidence cannot be trusted
+    (``unknown != fresh``). Terminal entries (``stale``/``superseded``) are
+    never fresh regardless of surface.
+
+    ``entry_fresh`` answers "does this fact still hold?" — it does not mutate
+    the store; expiry is a recorded transition via ``mark_stale``.
+    """
+    if entry.epistemic in ("stale", "superseded"):
+        return False
+    if entry.surface_fingerprint is None:
+        return True
+    return surface is not None and entry.surface_fingerprint == surface
+
+
 # --- retrieval ---------------------------------------------------------------------------------
 
 

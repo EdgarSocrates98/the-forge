@@ -1,4 +1,10 @@
-"""Handoff -> upstream-facts translation (Forge Protocol v1 -> sparkforge/upstream-facts/v1).
+"""Handoff -> upstream-facts translation (Forge Protocol v1 -> the installed
+specialist's upstream-facts document).
+
+The emitted ``schema`` is whatever the installed intake declares
+(``native_pkg.upstream_schema()`` — ``sparkforge_aws/upstream-facts/v1`` on
+post-rename installs, ``sparkforge/upstream-facts/v1`` before), never a
+hardcoded name that could drift from the intake's validation.
 
 When a plan node carries a ``theforge/Handoff/v1`` payload, a capability declaring
 ``accepts_handoff`` must not forward it raw: ``translate_handoff`` maps each item to one
@@ -31,6 +37,11 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from theforge_sparkforge_aws.native_pkg import upstream_schema
+
+# Kept as the legacy default for callers that only need a stable identifier;
+# emitted documents always use ``upstream_schema()`` (the installed intake's own
+# declaration — the schema name was renamed with the package).
 UPSTREAM_SCHEMA = "sparkforge/upstream-facts/v1"
 UPSTREAM_EXTRACTOR = "theforge/handoff"
 UPSTREAM_FILE = "upstream-facts.json"
@@ -130,7 +141,7 @@ def _fact(item: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 def translate_handoff(handoff: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    """The ``sparkforge/upstream-facts/v1`` document for a handoff payload + limitations.
+    """The ``<pkg>/upstream-facts/v1`` document for a handoff payload + limitations.
 
     Malformed items are skipped with a limitation (the core already validated the
     handoff; a defect here degrades to fewer facts, never to invented ones). Overflow
@@ -153,7 +164,7 @@ def translate_handoff(handoff: Mapping[str, Any]) -> tuple[dict[str, Any], list[
             f"upstream facts truncated to {MAX_UPSTREAM_ITEMS} of {len(facts)} translated items"
         )
         del facts[MAX_UPSTREAM_ITEMS:]
-    document: dict[str, Any] = {"schema": UPSTREAM_SCHEMA, "facts": facts}
+    document: dict[str, Any] = {"schema": upstream_schema(), "facts": facts}
     if len(_canonical(document)) > MAX_UPSTREAM_BYTES:
         kept = len(facts)
         while facts and len(_canonical(document)) > MAX_UPSTREAM_BYTES:
