@@ -4,6 +4,8 @@ Requirements 7.5 (categories selectable via ``-m``) and 7.6 (offline suite fails
 """
 
 import ipaddress
+import os
+import shutil
 import socket
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -294,6 +296,12 @@ _GUARDS: dict[str, tuple[Any, Callable[..., Any]]] = {
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    # Conftest hooks run before the tmpdir plugin's configure, so this lands
+    # before TempPathFactory reads the option: each run gets its own project-
+    # local basetemp and two concurrent suites no longer race on .pytest_tmp.
+    basetemp = config.option.basetemp
+    if basetemp:
+        config.option.basetemp = f"{basetemp}-{os.getpid()}"
     if REAL_SOCKET_API:
         return
     for name, (owner, guard) in _GUARDS.items():
@@ -306,6 +314,9 @@ def pytest_unconfigure(config: pytest.Config) -> None:
         if name in REAL_SOCKET_API:
             setattr(owner, name, REAL_SOCKET_API[name])
     REAL_SOCKET_API.clear()
+    # Per-PID basetemp is this run's alone — sweep it so runs don't accumulate.
+    if config.option.basetemp:
+        shutil.rmtree(config.option.basetemp, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

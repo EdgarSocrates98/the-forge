@@ -213,18 +213,33 @@ def _check(capsys: pytest.CaptureFixture[str], root: Path) -> dict[str, dict]:
 
 
 def test_knowledge_check_fresh_and_not_installed(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from helpers import make_workspace
+    import dataclasses
 
-    make_workspace(
-        tmp_path,
-        [_entry("api-forge", _manifest(tmp_path / "apiforge.json", "api-forge", "0.3.0"))],
+    import theforge.knowledge as knowledge_mod
+    from helpers import make_workspace
+    from theforge.contracts.manifest import ForgeManifest
+    from theforge.registry.surface import surface_fingerprint
+
+    manifest_path = _manifest(tmp_path / "apiforge.json", "api-forge", "0.3.0")
+    make_workspace(tmp_path, [_entry("api-forge", manifest_path)])
+    # Real packages now record measured surfaces; a fixture manifest can't
+    # reproduce them, so the package under test borrows the fixture's own
+    # fingerprint — the check then exercises a true surface match.
+    fixture_surface = surface_fingerprint(
+        from_dict(ForgeManifest, json.loads(manifest_path.read_text()), "$")
     )
+    packages = load_all()
+    packages["api-forge"] = dataclasses.replace(
+        packages["api-forge"], tested_surface=fixture_surface
+    )
+    monkeypatch.setattr(knowledge_mod, "load_all", lambda directory=None: packages)
     rows = _check(capsys, tmp_path)
     api = rows["api-forge"]
     assert api["status"] == "fresh"
     assert api["version"] == "match" and api["installed_version"] == "0.3.0"
+    assert api["surface"] == "match"
     assert rows["spark-forge-aws"]["status"] == "not_installed"
 
 
