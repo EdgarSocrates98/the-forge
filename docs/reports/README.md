@@ -3,6 +3,12 @@
 Índice dos relatórios de ciclo e artefatos de evidência. Cada ciclo tem um
 relatório principal; waves e auditorias têm documentos próprios.
 
+## Dogfooding (fase corrente)
+
+| Documento | Conteúdo |
+|---|---|
+| [dogfooding-2026-10-08.md](dogfooding-2026-10-08.md) | Primeira sessão real no próprio repo, seis especialistas: trust deny-by-default, binding de evidência ao vivo, 5 observações (poluição de contexto por basetemp, fronteira do `secrets.scan`, custo de scan) |
+
 ## Cycle 5.1 — Ecosystem Expansion Validation
 
 | Documento | Conteúdo |

@@ -104,7 +104,12 @@ O adapter cobre as nove seams `analyze_*`/`capability_manifest` do especialista
 são nomes de alto sinal (`.env`, `*.pem`, `credentials`…) — um glob catch-all
 seria rejeitado como sinal de roteamento. Facts citam `location`/`attrs.file`
 e a evidência re-vincula ao sha256 do arquivo estagiado. Recusas `PF-*` viram
-findings nomeadas, não erros do adapter.
+findings nomeadas, não erros do adapter. **Limite da fronteira**: o core nunca
+estagia arquivos cujo nome casa `is_secret_name` (`.env`, `.env.*`, `*.pem`,
+`*.key`, `credentials*`, `secrets.*`…) — o scan cobre segredos embutidos no
+conteúdo estagiado (chaves em código, configs), não o conteúdo dos arquivos de
+segredo em si; um `ok`/`0 facts` num repo com `.env` não significa "sem
+segredos" (verificado em [dogfooding](reports/dogfooding-2026-10-08.md)).
 
 ### Desenvolvimento neste repositório
 
@@ -192,7 +197,7 @@ Só capabilities read-only e offline são declaradas. Tools que pedem rede, cred
 |---|---|---|---|
 | `protocol-real` | provider *fixture* (`tests/fixtures/providers/*`) num subprocesso real, com envelopes Forge Protocol v1 reais | roteamento, envelopes, registry, planos, recibos e hash chain ponta a ponta | nada do especialista — a lógica é canned |
 | `specialist-replay` | adapter real num subprocesso real, respondendo gravações (`--replay <cenário>`) do especialista | todo o caminho do adapter (describe/execute/health, staging, tradução de evidência, handoff, artifacts) com determinismo offline | o especialista não é importado: sem comportamento vivo, sem custo nativo |
-| `specialist-real` | o pacote do especialista instalado (`sparkforge-aws`, `apiforge`, `forge-doctor-data`, `forge-doctor-api`), via adapter no venv dele | integração viva completa, inclusive consumo real de handoff e versões | nada é simulado — exige os venvs da [conformance](#contrato-de-ambiente-da-conformance-de-integração) |
+| `specialist-real` | o pacote do especialista instalado (`sparkforge-aws`, `sparkforge-azure`, `apiforge`, `platformforge`, `forge-doctor-data`, `forge-doctor-api`), via adapter no venv dele | integração viva completa, inclusive consumo real de handoff e versões | nada é simulado — exige os venvs da [conformance](#contrato-de-ambiente-da-conformance-de-integração) |
 
 Regras de uso: a suíte offline mistura `protocol-real` (fixtures) e `specialist-replay` (gravações); os testes marcados `real_provider` são `specialist-real` e nunca rodam sem as variáveis de ambiente. Um resultado `specialist-replay` nunca é apresentado como `specialist-real`; quando a afirmação precisa do especialista vivo, o teste pula com motivo explícito ou falha sob `THEFORGE_REAL_PROVIDERS_REQUIRED=1`/`THEFORGE_ECOSYSTEM_REQUIRED=1` — nunca um skip silencioso. O benchmark de economia (`scripts/bench/run_context_economy.py`) declara `provider_mode` no relatório exatamente por isso: hoje é `specialist-replay`.
 

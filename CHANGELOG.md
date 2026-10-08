@@ -38,6 +38,11 @@ de evidência, benchmarks cloud-aware B16–B25 e onboarding genérico
   planejamento Platform, composições cross-domain, seleção cloud-aware,
   ambiguidade/incompatibilidade cross-cloud e onboarding genérico.
 - `docs/reports/cycle-5.1-ecosystem.md` — relatório do ciclo.
+- `docs/reports/dogfooding-2026-10-08.md` — primeira sessão de dogfooding
+  real no próprio repositório (seis especialistas vivos): binding de
+  evidência ao sha256 estagiado observado em produção, fronteira de staging
+  do `secrets.scan` documentada em `docs/real-providers.md` e três pendências
+  registradas sem decisão inventada.
 
 #### Changed
 
