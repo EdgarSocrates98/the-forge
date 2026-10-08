@@ -37,6 +37,15 @@ $ theforge knowledge show api-forge        # um pacote (human ou --json)
   *o que existe* ([ADR 0053](adr/0053-skill-vs-capability.md)).
 - **Não se auto-atualiza.** Versão nova = plano novo + aprovação nova (§58).
 
+## Freshness acionável
+
+`theforge knowledge check` confronta `tested_version`/`tested_surface` de cada
+pacote com o `surface` gravado no registry ao vivo — status por pacote:
+`fresh` (recordado == observado), `drift` (recordado difere), `untested`
+(nada medido), `not_installed` (sem entrada) e `unavailable` (record não
+`ready`). Read-only e offline: drift é informação para re-medir o pacote, não
+falha — o exit é sempre 0.
+
 ## Adicionar um especialista
 
 1. Crie `forge-knowledge/<id>.json` a partir de evidência real (repo,

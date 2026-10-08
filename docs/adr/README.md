@@ -98,6 +98,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | AgentSpec: autoridade fechada, forbidden universal, sem auto-escalonamento | [0054](0054-agent-authority-model.md) | `agentic` |
 | specialist bootstrap: knowledge → plano → aprovação → verificação independente | [0055](0055-specialist-bootstrap.md) | `agentic` |
 | assets agentic: canônico renderiza por host, auditoria semântica vigia | [0056](0056-agentic-host-adaptation.md) | `agentic` |
+| fila operacional de specs: pasta = estado, grill gate humano, archive só com aceite | [0057](0057-loop-factory.md) | `agentic` |
 
 ## Novo ADR
 

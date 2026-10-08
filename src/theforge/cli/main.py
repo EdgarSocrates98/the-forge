@@ -121,6 +121,9 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge_show = knowledge.add_parser("show", parents=[common])
     knowledge_show.add_argument("provider_id")
     knowledge_show.set_defaults(handler=commands.cmd_knowledge_show)
+    knowledge.add_parser("check", parents=[common]).set_defaults(
+        handler=commands.cmd_knowledge_check
+    )
 
     agents = sub.add_parser(
         "agents", help="specialized agent registry"

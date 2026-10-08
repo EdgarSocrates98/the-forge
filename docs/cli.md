@@ -11,6 +11,11 @@
 | `registry refresh` | re-`describe` de todos os providers; remove o cache legado `.forge/registry` com aviso | 0 |
 | `registry show <id>` | manifest, argv e hash | 0 / 2 se desconhecido |
 | `registry sources` | fontes de registry configuradas (`registries.toml`): status por fonte + projeção do registry local (autoritativo); metadata não-confiável, nunca instala — [registry-sources.md](registry-sources.md) | 0 |
+| `knowledge list` | pacotes `forge-knowledge/` (bootstrap metadata por especialista) com `tested_version` — [forge-knowledge.md](forge-knowledge.md) | 0 |
+| `knowledge show <id>` | o pacote inteiro (install, verify, discover, composição, freshness) | 0 / 2 se desconhecido |
+| `knowledge check` | freshness acionável: `tested_version`/`tested_surface` de cada pacote vs. o `surface` do registry ao vivo → `fresh` / `drift` / `untested` / `not_installed` / `unavailable`; read-only, drift é informação | 0 |
+| `agents list` | os oito agentes especializados (`agentic/agents/`): autoridade, skills, budget de contexto, hosts renderizados — [agents.md](agents.md) | 0 |
+| `agents show <id>` | a spec + a matriz de autoridade completa (ação → allowed/denied) | 0 / 2 se desconhecido |
 | `capabilities list [--provider id]` | capabilities declaradas, com aliases, depreciação (`replaced_by`) e `declared_by`; aviso em stderr para cada depreciada | 0 |
 | `capabilities search <q>` | busca em id, aliases, descrição e keywords | 0 |
 | `capabilities negotiate --requirement <req.json>` | negocia um `CapabilityRequirement/v1` contra os manifests em cache: resultado dimensional por provider (`FULL`/`PARTIAL`/`UNSUPPORTED`/`INCOMPATIBLE`/`UNRESOLVED`), offline, sem disparar providers — [capability-negotiation.md](capability-negotiation.md) | 0 |
@@ -23,6 +28,7 @@
 | `provider check [--json] -- <argv>...` | bateria de conformidade do Forge Protocol sobre um argv qualquer ([kit](provider-authoring.md#certificação)) | 0 / 1 / 2 |
 | `ask "<texto>" [--capability id] [--action a] [--requirement REQ.json] [--use PROVIDER] [--profile auto\|economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa; `--requirement` seleciona por fit negociado e `--use` pinna sem furar hard gates ([capability-negotiation](capability-negotiation.md)) | 0 / 2 / 3 / 4 / 5 |
 | `plan "<texto>" [--profile auto\|economy\|balanced\|max] [--target path]... [--from FILE] [--requirement REQ.json] [--execute] [--allow-unverified] [--approve CAPABILITY]...` | monta (e, com `--execute`, executa) um plano multi-provider ([`plan`](#plan)); `--requirement` valida nós do capability demandado por negociação | 0 / 2 / 3 / 4 / 5 |
+| `graph [--mesh]` | visão das relações declaradas entre providers a partir do cache do registry ([`graph`](#graph)) | 0 |
 
 `--profile` default `auto`: depois do routing, o complexity engine mede a tarefa (repositórios, risco declarado, ambiguidade, impacto) e escolhe o perfil efetivo — gravado no artefato `complexity` (`ComplexityAssessment/v1`) e linkado no receipt por `complexity_sha256`; `explain` mostra `auto-><resolvido>`. O prompt nunca é entrada. Perfis explícitos mantêm a semântica de sempre; só gravam `complexity` quando a avaliação medida promove os limites elásticos um degrau (a evidência da promoção).
 | `workspace show` | descreve repositórios, git, tecnologias e relações usando só o cache do registry ([`workspace show`](#workspace-show)) | 0 |
