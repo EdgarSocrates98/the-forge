@@ -54,6 +54,16 @@ COUNTERS: Final[tuple[str, ...]] = (
     "files_cited",
     "evidence_returned",
     "findings_returned",
+    # Agentic surface economy (agentic prompt §34-35, §64): subagent/agent
+    # invocations and the bytes of skill/knowledge context they consumed.
+    "agent_calls",
+    "subagent_calls",
+    "skills_considered",
+    "skills_loaded",
+    "skill_bytes",
+    "knowledge_bytes",
+    "planning_calls",
+    "verification_calls",
 )
 REVALIDATION_UNDECLARED_LIMITATION: Final = "provider-revalidation-undeclared"
 
@@ -263,6 +273,14 @@ class TelemetryRecorder:
             files_cited=metrics["files_cited"],
             evidence_returned=metrics["evidence_returned"],
             findings_returned=metrics["findings_returned"],
+            agent_calls=metrics["agent_calls"],
+            subagent_calls=metrics["subagent_calls"],
+            skills_considered=metrics["skills_considered"],
+            skills_loaded=metrics["skills_loaded"],
+            skill_bytes=metrics["skill_bytes"],
+            knowledge_bytes=metrics["knowledge_bytes"],
+            planning_calls=metrics["planning_calls"],
+            verification_calls=metrics["verification_calls"],
             provider_revalidation=self._revalidation,
             verification_performed=self._verification,
             context_drift=list(self._drift),

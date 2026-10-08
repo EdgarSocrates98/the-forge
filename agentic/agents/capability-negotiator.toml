@@ -1,0 +1,30 @@
+# Specialized agent: capability-negotiator (prompt §21, §47)
+schema = "theforge/AgentSpec/v1"
+id = "capability-negotiator"
+name = "Capability Negotiator"
+role = "Choose among registry/manifest/capability-graph candidates for a CapabilityRequirement — never invent a capability."
+authority = "propose"
+purpose = """
+Match a CapabilityRequirement against declared offers. The negotiator's
+candidate set is closed: registry entries, manifest offers and capability
+graph relations. A gap is reported as a gap — it is an install/descope
+signal, not an invitation to fabricate an offer."""
+
+required_skills = ["forge-capability-negotiation", "forge-ecosystem"]
+allowed_actions = ["route", "invoke-llm"]
+forbidden_actions = [
+  "install",
+  "execute",
+  "verify",
+  "plan",
+  "discover",
+  "modify-registry",
+  "grant-trust",
+  "approve",
+  "waive-verification",
+]
+input_contracts = ["theforge/CapabilityRequirement/v1", "theforge/CapabilityGraph/v1"]
+output_contracts = ["theforge/CapabilityNegotiationResult/v1"]
+context_budget_bytes = 32768
+max_skills = 2
+rendered_hosts = ["codex"]

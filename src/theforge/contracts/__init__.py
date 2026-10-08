@@ -5,6 +5,7 @@ from theforge.contracts.adaptive import (
     ContextROI,
     StrategyExperiment,
 )
+from theforge.contracts.agent import AGENT_SPEC_SCHEMA, AgentSpec
 from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.budget import BUDGET_SCHEMA, RunBudget
 from theforge.contracts.capability_graph import (
@@ -73,6 +74,11 @@ from theforge.contracts.installation import (
 )
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
+from theforge.contracts.knowledge import (
+    FORGE_KNOWLEDGE_SCHEMA,
+    ForgeKnowledge,
+    InstallMethod,
+)
 from theforge.contracts.manifest import (
     Capability,
     CapabilityContext,
@@ -225,6 +231,8 @@ from theforge.contracts.workspace import (
 )
 
 __all__ = [
+    "AGENT_SPEC_SCHEMA",
+    "AgentSpec",
     "BUDGET_SCHEMA",
     "CAPABILITY_GRAPH_SCHEMA",
     "CAPABILITY_RELATION_SCHEMA",
@@ -237,6 +245,7 @@ __all__ = [
     "ECONOMY_ROLLUP_SCHEMA",
     "EXECUTION_TARGET_SCHEMA",
     "FAILURE_PATTERN_SCHEMA",
+    "FORGE_KNOWLEDGE_SCHEMA",
     "INTEL_SCHEMA",
     "MEMORY_ENTRY_SCHEMA",
     "MEMORY_PACK_SCHEMA",
@@ -304,6 +313,7 @@ __all__ = [
     "ExplainReport",
     "FailurePattern",
     "Finding",
+    "ForgeKnowledge",
     "ForgeManifest",
     "ForgeRegistryEntry",
     "GitSummary",
@@ -317,6 +327,7 @@ __all__ = [
     "HealthReport",
     "InstallApproval",
     "InstallationItem",
+    "InstallMethod",
     "InstallationPlan",
     "InstallationPlanV2",
     "InstallStep",

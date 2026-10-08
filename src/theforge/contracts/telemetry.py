@@ -164,6 +164,17 @@ class RunTelemetry:
     provider_revalidation: Literal["hash", "core", "none", "undeclared"] | None = None
     verification_performed: VerificationLevel | None = None
     context_drift: list[str] = field(default_factory=list)
+    # Agentic surface economy (agentic prompt §34-35, §64): what the agentic
+    # layer consumed this run. Every field defaults to ``unknown`` — a host or
+    # benchmark that did not measure it leaves it unknown rather than writing 0.
+    agent_calls: Metric = field(default_factory=Metric)
+    subagent_calls: Metric = field(default_factory=Metric)
+    skills_considered: Metric = field(default_factory=Metric)
+    skills_loaded: Metric = field(default_factory=Metric)
+    skill_bytes: Metric = field(default_factory=Metric)
+    knowledge_bytes: Metric = field(default_factory=Metric)
+    planning_calls: Metric = field(default_factory=Metric)
+    verification_calls: Metric = field(default_factory=Metric)
     # The local trace (Wave J): the run's timed units in start order. The same
     # artifact stays the one observability record — metrics aggregate, spans
     # structure; no second tracing system (J1).

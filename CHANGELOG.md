@@ -8,6 +8,38 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### Agentic Ecosystem layer (prompt `prompt_evo_engenharia_agentica` §5-35, §43-58, §64-79, §92-97)
+
+A camada que ensina agentes de código a usar a plataforma — conhecimento de
+bootstrap, skills canônicas, agentes especializados e auditoria/telemetria.
+
+#### Added
+
+- `forge-knowledge/` + `ForgeKnowledge/v1` + `theforge knowledge list|show`:
+  seis pacotes autorados (repo, pacote, install, verify, discover, família,
+  `tested_version`/`tested_surface`) — bootstrap metadata, strict parsing,
+  nunca verdade de runtime (ADR 0052).
+- `agentic/skills/` — 15 skills `forge-*` canônicas (9 ecossistema + 6
+  especialistas) renderizadas para `.claude/`, `.agents/` e `.devin/` por
+  `scripts/agentic/render_skills.py` com freshness trailer ligado ao
+  knowledge package (ADRs 0053, 0056).
+- `agentic/agents/` + `AgentSpec/v1` + `theforge agents list|show`: oito
+  agentes especializados com autoridade fechada e `UNIVERSAL_FORBIDDEN`
+  construtivo (`grant-trust`, `approve`, `waive-verification`,
+  `modify-registry`); render Codex em `.codex/agents/` (ADR 0054).
+- `audit_assets.py`: `SKILL_QUALITY` — gate nas fontes canônicas
+  (descrição, Boundaries/Limits, freshness vs. `tested_version`, refs de
+  invocação resolvíveis); `[skills] prefixes` declarativo.
+- `RunTelemetry`: contadores agentic `agent_calls`, `subagent_calls`,
+  `skills_considered`/`skills_loaded`, `skill_bytes`, `knowledge_bytes`,
+  `planning_calls`, `verification_calls` (§64).
+- `tests/test_agentic_security.py`: 15 casos adversariais (§75-79, §97) —
+  injeção via campos de pacote, fake providers, escalonamento de autoridade,
+  stale freshness, refs mortas, instalação falsa.
+- ADRs 0052-0056; docs: `forge-knowledge.md`, `skills.md`, `agents.md`,
+  `installation-orchestration.md`, `cross-forge-orchestration.md`,
+  `agentic-ecosystem.md`; `architecture.md` e `agentic.md` atualizados.
+
 ### Agentic Ecosystem benchmarks (prompt `prompt_evo_engenharia_agentica` §87-90, §100)
 
 Fechamento do gap agentic: a série A01–A15 não existia — os benchmarks B01–B25

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal, Union, cast, get_args, get_origin, get_type_hints
 
 from theforge.contracts import (
+    AgentSpec,
     CapabilityGraph,
     CapabilityNegotiationResult,
     CapabilityOffer,
@@ -35,6 +36,7 @@ from theforge.contracts import (
     ExecutionTarget,
     ExplainReport,
     FailurePattern,
+    ForgeKnowledge,
     ForgeManifest,
     ForgeRegistryEntry,
     GlobalEconomyReceipt,
@@ -165,6 +167,10 @@ EXPORTED: tuple[type[Any], ...] = (
     StrategyPolicy,
     PlanSimulation,
     CounterfactualPlanComparison,
+    # agentic knowledge layer (W1)
+    ForgeKnowledge,
+    # specialized agent registry (W3)
+    AgentSpec,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -219,6 +225,10 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     StrategyPolicy,
     PlanSimulation,
     CounterfactualPlanComparison,
+    # knowledge packages are authored core data — unknown keys are drift.
+    ForgeKnowledge,
+    # agent specs are authored core data too.
+    AgentSpec,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

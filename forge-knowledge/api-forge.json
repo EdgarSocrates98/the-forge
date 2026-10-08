@@ -1,0 +1,58 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "api-forge",
+  "name": "API Forge",
+  "family": "api-engineering",
+  "summary": "API engineering specialist: REST/OpenAPI, AsyncAPI, GraphQL, gRPC, contract evolution and API testing across Java/Go/Python stacks. Requires Python 3.12 exactly — the adapter refuses describe on other interpreters.",
+  "repository": "https://github.com/EdgarSocrates98/api-forge.git",
+  "package": "apiforge>=0.1,<0.2",
+  "binary": "apiforge",
+  "adapter": "adapters/apiforge",
+  "python": ">=3.12,<3.13",
+  "appropriate_for": [
+    "API design and review: REST, OpenAPI, AsyncAPI, GraphQL, gRPC",
+    "contract evolution, versioning and breaking-change analysis",
+    "API architecture, testing strategy and upstream fact intake (apiforge/upstream-facts/v1)"
+  ],
+  "inappropriate_for": [
+    "Spark/data engineering — route to the spark-engineering family",
+    "platform/IDP or CI/CD estate analysis — route to platform-forge",
+    "independent verification of API work — route to forge-doctor-api"
+  ],
+  "intents": [
+    "api design", "openapi spec", "graphql schema", "grpc service",
+    "asyncapi", "contract evolution", "breaking change", "api versioning"
+  ],
+  "technologies": [
+    "rest", "openapi", "asyncapi", "graphql", "grpc", "java", "go", "python"
+  ],
+  "environments": ["local"],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.12 -m venv <api-venv> && <api-python> -m pip install --upgrade pip && <api-python> -m pip install \"apiforge>=0.1,<0.2\" <the-forge>/adapters/apiforge",
+      "verify": "<api-python> -c \"import apiforge, theforge_apiforge\"",
+      "prerequisites": ["python==3.12.* (required — other interpreters get a describe refusal)", "pip"]
+    },
+    {
+      "kind": "editable",
+      "command": "<api-python> -m pip install -e <checkout-api-forge> -e <the-forge>/adapters/apiforge",
+      "verify": "<api-python> -c \"import apiforge, theforge_apiforge\"",
+      "prerequisites": ["local checkout of api-forge", "python==3.12.*"]
+    }
+  ],
+  "verify_install": "<api-python> -c \"import apiforge, theforge_apiforge\"",
+  "discover_command": "theforge providers add api-forge --python <api-python>",
+  "preferred_verifiers": ["forge-doctor-api"],
+  "independent_verification": true,
+  "composes_with": ["forge-doctor-api", "platform-forge"],
+  "fallback": [],
+  "limitations_note": "Interpreter-locked to Python 3.12: describe refuses with a named reason on anything else. Cross-forge intake requires apiforge post-PR-34 main or a published >=0.1 carrying upstream-facts/v1.",
+  "examples": [
+    "review this OpenAPI spec for breaking changes",
+    "plan the v2 migration of a gRPC service",
+    "analyze an AsyncAPI contract for an event-driven flow"
+  ],
+  "tested_version": "0.3.0",
+  "recorded_at": "2026-10-08T00:00:00Z"
+}

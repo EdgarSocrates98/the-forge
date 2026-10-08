@@ -125,6 +125,84 @@ def provider_detail(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def knowledge_list(data: dict[str, Any]) -> str:
+    lines = []
+    for fam, ids in data["families"].items():
+        lines.append(f"{_clean(fam)}: {', '.join(ids)}")
+    if data["families"]:
+        lines.append("")
+    for p in data["providers"]:
+        lines.append(
+            f"{_clean(p['id']):<20} pkg={_clean(p['package'] or '-'):<28} "
+            f"py={_clean(p['python'] or '-'):<10} tested={_clean(p['tested_version'] or '-')}"
+        )
+    return "\n".join(lines) or "no forge knowledge packages"
+
+
+def knowledge_detail(data: dict[str, Any]) -> str:
+    lines = [
+        f"{_clean(data['id'])} - {_clean(data['name'])} (family: {_clean(data['family'])})",
+        f"  {_clean(data['summary'])}",
+        f"  repository: {_clean(data['repository'] or '-')}",
+        f"  package: {_clean(data['package'] or '-')}  "
+        f"binary: {_clean(data['binary'] or '-')}  "
+        f"python: {_clean(data['python'] or '-')}",
+        f"  adapter: {_clean(data['adapter'] or '-')}",
+        "  appropriate for:",
+    ]
+    lines += [f"    - {_clean(x)}" for x in data.get("appropriate_for", [])]
+    lines.append("  not for:")
+    lines += [f"    - {_clean(x)}" for x in data.get("inappropriate_for", [])]
+    lines.append("  install:")
+    for m in data.get("install", []):
+        lines.append(f"    [{m['kind']}] {_clean(m['command'])}")
+        lines.append(f"      verify: {_clean(m['verify'])}")
+    lines.append(f"  verify_install: {_clean(data.get('verify_install') or '-')}")
+    lines.append(f"  discover: {_clean(data.get('discover_command') or '-')}")
+    lines.append(
+        f"  verifiers: {_clean(', '.join(data.get('preferred_verifiers', [])) or '-')}  "
+        f"trust_default={_clean(data['trust_default'])}"
+    )
+    if data.get("tested_version"):
+        surface = data.get("tested_surface")
+        lines.append(
+            f"  tested: {_clean(data['tested_version'])}"
+            + (f" surface={surface[:16]}..." if surface else "")
+            + f" recorded={_clean(data.get('recorded_at') or '-')}"
+        )
+    return "\n".join(lines)
+
+
+def agents_list(data: dict[str, Any]) -> str:
+    lines = []
+    for a in data["agents"]:
+        lines.append(
+            f"{_clean(a['id']):<26} {_clean(a['authority']):<17} "
+            f"skills<={a['max_skills']} ctx={a['context_budget_bytes'] // 1024}KB "
+            f"hosts={_clean(','.join(a['rendered_hosts']) or '-')}"
+        )
+    return "\n".join(lines) or "no agent specs"
+
+
+def agent_detail(data: dict[str, Any]) -> str:
+    lines = [
+        f"{_clean(data['id'])} - {_clean(data['name'])}",
+        f"  authority: {_clean(data['authority'])}",
+        f"  {_clean(data['purpose'])}",
+        f"  skills: {_clean(', '.join(data.get('required_skills', [])) or '-')}",
+        f"  allowed: {_clean(', '.join(data.get('allowed_actions', [])) or '-')}",
+        f"  forbidden: {_clean(', '.join(data.get('forbidden_actions', [])))}",
+        f"  inputs: {_clean(', '.join(data.get('input_contracts', [])) or '-')}",
+        f"  outputs: {_clean(', '.join(data.get('output_contracts', [])))}",
+        f"  context budget: {data['context_budget_bytes']} bytes, skills≤{data['max_skills']}",
+        f"  rendered hosts: {_clean(', '.join(data.get('rendered_hosts', [])) or '-')}",
+        "  authority matrix:",
+    ]
+    for action, allowed in sorted(data["authority_matrix"].items()):
+        lines.append(f"    {_clean(action):<22} {'allowed' if allowed else 'denied'}")
+    return "\n".join(lines)
+
+
 def registry_sources(data: dict[str, Any]) -> str:
     lines = [f"local (authoritative): {data['local_entries']} installed providers"]
     for s in data["sources"]:

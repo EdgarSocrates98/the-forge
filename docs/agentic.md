@@ -66,18 +66,23 @@ Os comandos abaixo usam a sintaxe do Claude e do Devin (`/kiro-…`); no Codex o
 | Versionados (rastreados pelo git) | Locais (fora do git) |
 |---|---|
 | `.claude/skills/kiro-*`, `.agents/skills/kiro-*`, `.devin/skills/kiro-*` | `.kiro/specs/` |
-| `.codex/agents/spec-reviewer.toml` | `.kiro/steering/` (inclui `roadmap.md` e os eventuais `product.md`, `tech.md`, `structure.md`) |
-| `.kiro/settings/` (cópias de referência de regras e templates) | `.claude/agents/` |
-| `CLAUDE.md`, `AGENTS.md` | `.agents/skills/source-command-*` e outros scaffolds de terceiros |
-| `scripts/agentic/` (auditoria e configuração) | |
+| `agentic/skills/forge-*.md` (canônicas) + mirrors renderizados nos três hosts | `.kiro/steering/` (inclui `roadmap.md` e os eventuais `product.md`, `tech.md`, `structure.md`) |
+| `agentic/agents/*.toml` (canônicos) + `.codex/agents/*.toml` (render) | `.claude/agents/` |
+| `.kiro/settings/` (cópias de referência de regras e templates) | `.agents/skills/source-command-*` e outros scaffolds de terceiros |
+| `forge-knowledge/*.json` (pacotes de bootstrap dos seis especialistas) | |
+| `CLAUDE.md`, `AGENTS.md` | |
+| `scripts/agentic/` (auditoria, renderers e configuração) | |
 
 Specs e steering ficam locais por decisão do mantenedor: são material de trabalho de cada ciclo, e as regras persistentes do projeto vivem em `CLAUDE.md`, `AGENTS.md` e `docs/`. Nenhuma verificação, documento versionado ou instrução de host depende dos assets locais; a auditoria lê só arquivos rastreados, e a suíte offline dá o mesmo resultado com ou sem eles. Não crie links de documentos versionados para `.kiro/`.
 
 ## Manutenção dos mirrors
 
-As skills `kiro-*` são mantidas à mão nos três hosts, protegidas por auditoria ([ADR 0020](adr/0020-agentic-assets-canonical-source.md)).
+Duas famílias, dois regimes:
 
-1. **Edite os três hosts na mesma mudança.** Uma mudança em `SKILL.md` ou num arquivo de apoio vai para `.claude/skills/`, `.agents/skills/` e `.devin/skills/` juntas, ajustando só a sintaxe de cada host (prefixo `/kiro-` ou `$kiro-`, frontmatter, termos de delegação).
+- **`kiro-*`**: mantidas à mão nos três hosts, protegidas por auditoria ([ADR 0020](adr/0020-agentic-assets-canonical-source.md)).
+- **`forge-*` + agentes**: fonte canônica em `agentic/skills/` e `agentic/agents/`; os mirrors são **gerados** por `render_skills.py` e `render_agents.py` — edite a fonte, rode o renderer, nunca toque o mirror ([ADR 0056](adr/0056-agentic-host-adaptation.md), [docs/skills.md](skills.md), [docs/agents.md](agents.md)). A camada de conhecimento que as skills referenciam vive em `forge-knowledge/` ([docs/forge-knowledge.md](forge-knowledge.md)).
+
+1. **`kiro-*` — edite os três hosts na mesma mudança.** Uma mudança em `SKILL.md` ou num arquivo de apoio vai para `.claude/skills/`, `.agents/skills/` e `.devin/skills/` juntas, ajustando só a sintaxe de cada host (prefixo `/kiro-` ou `$kiro-`, frontmatter, termos de delegação).
 2. **Rode a auditoria** e corrija até ela sair com 0:
 
    ```
@@ -101,6 +106,7 @@ As skills `kiro-*` são mantidas à mão nos três hosts, protegidas por auditor
 | `host-only-undeclared` | sim | arquivo rastreado de diretório de host fora de uma skill equivalente e não declarado |
 | `stale-accepted` | sim | entrada `[[accepted]]` que não corresponde a nenhuma divergência atual: remova a entrada |
 | `invariants`, `budget`, `pointer`, `moved-rule` | sim | checagens das instruções de host, ativas quando a seção correspondente está declarada |
+| `skill-quality` | sim | fonte canônica `agentic/skills/` sem descrição/seções de limites, freshness divergente do pacote `forge-knowledge`, ou ref de invocação morta |
 
 O perfil semântico tolera cabeçalhos, envelopes, prefixos de invocação e a forma do argumento da feature (`$1`, `$ARGUMENTS`, `{feature-name}`); a contrapartida é que prosa divergente sem efeito em nenhum elemento do perfil passa sem achado.
 

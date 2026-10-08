@@ -74,6 +74,7 @@ Os Forges reais entram por seis adapters em `adapters/`, instalados no interpret
 - **Troca**: evidência tipada com proveniência via `Handoff` — nunca prompts repetidos nem estado interno sincronizado.
 - **Adicionar um Forge**: `theforge provider init` + [provider-authoring](docs/provider-authoring.md).
 - Visão das relações declaradas: `theforge graph --mesh`.
+- **Camada agentic**: `forge-knowledge/` (bootstrap metadata — nunca verdade de runtime, [doc](docs/forge-knowledge.md)), skills `forge-*` canônicas renderizadas por host ([doc](docs/skills.md)) e oito agentes especializados com autoridade fechada ([doc](docs/agents.md)). `theforge knowledge list/show` e `theforge agents list/show` expõem os dois registries.
 
 ## Exit codes
 
@@ -121,6 +122,12 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 - [Contract stability](docs/contract-stability.md) (scorecard forge-contracts: evidência para não extrair)
 - [Engineering memory](docs/engineering-memory.md) (conhecimento verificável, isolamento cross-project)
 - [Execution targets](docs/execution-targets.md) (alvos declarados, classificação de dados, remote trust)
+- [Forge Knowledge](docs/forge-knowledge.md) (bootstrap metadata por especialista; runtime reality vence)
+- [Ecosystem skills](docs/skills.md) (`forge-*` canônicas → mirrors por host; freshness auditado)
+- [Specialized agents](docs/agents.md) (oito `AgentSpec`, autoridade fechada, sem auto-escalonamento)
+- [Installation orchestration](docs/installation-orchestration.md) (knowledge → plano → aprovação → verificação)
+- [Cross-forge orchestration](docs/cross-forge-orchestration.md) (produces→consumes, produtor≠verificador)
+- [Agentic ecosystem](docs/agentic-ecosystem.md) (mapa da camada agentic: knowledge + skills + agents + auditoria)
 - [Reality manifests](docs/reality/README.md) (estado real dos especialistas: SHAs, surfaces, drift)
 - [Feature freeze](docs/feature-freeze.md) (Cycle 5.1: arquitetura congelada, dogfooding a seguir)
 - [Dogfooding](docs/dogfooding.md) (uso em projetos reais + taxonomia de observações)

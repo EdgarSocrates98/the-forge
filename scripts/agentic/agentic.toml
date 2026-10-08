@@ -7,6 +7,13 @@
 # [invariants], [budgets], [pointers] and [[moved_rules]]; an instruction check runs only when
 # its section is declared. Every [[host_only]] and [[accepted]] entry needs a non-empty reason.
 
+# Directory prefixes audited as equivalent skills under each skills_dir:
+# kiro-* (workflow mirrors, hand-edited) and forge-* (ecosystem skills,
+# rendered from agentic/skills/*.md by scripts/agentic/render_skills.py —
+# edit the canonical source, never the generated output).
+[skills]
+prefixes = ["kiro-", "forge-"]
+
 # Hosts with a Kiro skills directory and the instruction files each one reads.
 [hosts.claude]
 skills_dir = ".claude/skills"
@@ -38,6 +45,52 @@ replacement = '`spec.json.language` / <lang>'
 path = ".codex/agents/spec-reviewer.toml"
 host = "codex"
 reason = "agente customizado do Codex para a revisão cross-spec do kiro-spec-batch; Claude e Devin fazem essa revisão com um subagente genérico, sem arquivo de agente"
+
+# Specialized agents rendered by scripts/agentic/render_agents.py from
+# agentic/agents/<id>.toml. Codex is the only host with a tracked repo-level
+# agent format: .claude/agents/ is a gitignored local-override dir (agents
+# come from the AgentSpec plugin) and Devin dispatches harness profiles via
+# run_subagent — the canonical spec + theforge.agents registry carry the
+# semantics for both.
+[[host_only]]
+path = ".codex/agents/ecosystem-router.toml"
+host = "codex"
+reason = "rendered from agentic/agents/ecosystem-router.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/forge-discovery.toml"
+host = "codex"
+reason = "rendered from agentic/agents/forge-discovery.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/capability-negotiator.toml"
+host = "codex"
+reason = "rendered from agentic/agents/capability-negotiator.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/bootstrap-installation.toml"
+host = "codex"
+reason = "rendered from agentic/agents/bootstrap-installation.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/cross-forge-planner.toml"
+host = "codex"
+reason = "rendered from agentic/agents/cross-forge-planner.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/execution-orchestrator.toml"
+host = "codex"
+reason = "rendered from agentic/agents/execution-orchestrator.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/verification-orchestrator.toml"
+host = "codex"
+reason = "rendered from agentic/agents/verification-orchestrator.toml; only Codex has a tracked agent format"
+
+[[host_only]]
+path = ".codex/agents/ecosystem-debugger.toml"
+host = "codex"
+reason = "rendered from agentic/agents/ecosystem-debugger.toml; only Codex has a tracked agent format"
 
 # Phrasing divergences: the profile differs, the agent behaviour does not.
 [[accepted]]

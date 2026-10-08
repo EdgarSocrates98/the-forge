@@ -1,0 +1,55 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "forge-doctor-data",
+  "name": "Forge Doctor Data",
+  "family": "verification",
+  "summary": "Independent reviewer/verifier for data and Spark engineering output. It diagnoses and reviews; it is not an engineering producer and must never be routed implementation work.",
+  "repository": "https://github.com/EdgarSocrates98/forge-doctor-data.git",
+  "package": "forge-doctor-data>=1.0.0rc1,<2.0.0",
+  "binary": "forge-doctor-data",
+  "adapter": "adapters/doctordata",
+  "python": ">=3.11",
+  "appropriate_for": [
+    "independent verification of Spark/data engineering results (producer/verifier separation)",
+    "diagnosis of data-pipeline findings from forge-contracts/1 documents",
+    "reviewing evidence bundles produced by the spark-engineering family"
+  ],
+  "inappropriate_for": [
+    "producing Spark code or pipelines — it is a doctor, not a producer",
+    "API verification — route to forge-doctor-api",
+    "any task where it would verify its own output"
+  ],
+  "intents": [
+    "verify spark result", "review data pipeline", "diagnose data finding",
+    "independent check data", "doctor data"
+  ],
+  "technologies": ["forge-contracts", "data-quality", "spark-review"],
+  "environments": ["local"],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <dd-venv> && <dd-python> -m pip install --upgrade pip && <dd-python> -m pip install \"forge-doctor-data>=1.0.0rc1,<2.0.0\" <the-forge>/adapters/doctordata",
+      "verify": "<dd-python> -c \"import forge_doctor_data, theforge_doctordata\"",
+      "prerequisites": ["python>=3.11", "pip"]
+    },
+    {
+      "kind": "editable",
+      "command": "<dd-python> -m pip install -e <checkout-forge-doctor-data> -e <the-forge>/adapters/doctordata",
+      "verify": "<dd-python> -c \"import forge_doctor_data, theforge_doctordata\"",
+      "prerequisites": ["local checkout of forge-doctor-data", "python>=3.11"]
+    }
+  ],
+  "verify_install": "<dd-python> -c \"import forge_doctor_data, theforge_doctordata\"",
+  "discover_command": "theforge providers add forge-doctor-data --python <dd-python>",
+  "preferred_verifiers": [],
+  "independent_verification": true,
+  "composes_with": ["spark-forge-aws", "spark-forge-azure", "platform-forge"],
+  "fallback": ["forge-doctor-api"],
+  "limitations_note": "Verifier-only: no producer seams. Runs no subprocess or network in the specialist — the bridge calls public seams in a child process and translates forge-contracts/1 to the Evidence Bus.",
+  "examples": [
+    "independently verify the spark-forge-aws tuning result",
+    "diagnose the data-quality finding bundle"
+  ],
+  "tested_version": "0.3.0",
+  "recorded_at": "2026-10-08T00:00:00Z"
+}

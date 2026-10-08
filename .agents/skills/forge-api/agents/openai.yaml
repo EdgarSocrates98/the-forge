@@ -1,0 +1,6 @@
+interface:
+  display_name: "API Forge"
+  short_description: "API design and contract specialist"
+
+policy:
+  allow_implicit_invocation: false

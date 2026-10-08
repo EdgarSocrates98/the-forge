@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spark Forge Azure"
+  short_description: "Azure Spark engineering specialist"
+
+policy:
+  allow_implicit_invocation: false

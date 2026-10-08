@@ -13,6 +13,7 @@ from theforge.adaptive import advance_experiment, build_context_roi, recommend_c
 from theforge.cli import render
 from theforge.context import scan_workspace
 from theforge.contracts import CapabilityRequirement, StrategyExperiment, to_dict
+from theforge.contracts.agent import KNOWN_ACTIONS
 from theforge.contracts.base import ContractError, from_dict
 from theforge.contracts.codes import Codes, family_of
 from theforge.contracts.targets import TargetRequirement
@@ -271,6 +272,80 @@ def cmd_registry_sources(args: argparse.Namespace) -> int:
         for read in read_sources(specs)
     ]
     _emit(args, {"local_entries": len(local.entries), "sources": sources}, render.registry_sources)
+    return 0
+
+
+def cmd_knowledge_list(args: argparse.Namespace) -> int:
+    """Forge Knowledge Layer (§5-7): bootstrap packages — recognition,
+    install and verification hints that exist *before* a provider is
+    installed. Never authoritative over runtime reality."""
+    from theforge.knowledge import families, load_all
+
+    packages = load_all()
+    data = {
+        "providers": [
+            {
+                "id": p.id,
+                "family": p.family,
+                "package": p.package,
+                "python": p.python,
+                "tested_version": p.tested_version,
+            }
+            for p in packages.values()
+        ],
+        "families": families(packages),
+    }
+    _emit(args, data, render.knowledge_list)
+    return 0
+
+
+def cmd_knowledge_show(args: argparse.Namespace) -> int:
+    from theforge.knowledge import knowledge_for
+
+    package = knowledge_for(args.provider_id)
+    if package is None:
+        raise UsageError(
+            f"no forge knowledge package for {args.provider_id!r} "
+            "(bootstrap metadata unknown — generic onboarding still applies)"
+        )
+    _emit(args, to_dict(package), render.knowledge_detail)
+    return 0
+
+
+def cmd_agents_list(args: argparse.Namespace) -> int:
+    """Specialized agent registry (§18-32, §43-50): canonical specs with the
+    closed authority model — propose/classify/advise/execute-approved."""
+    from theforge.agents import load_all
+
+    specs = load_all()
+    data = {
+        "agents": [
+            {
+                "id": s.id,
+                "authority": s.authority,
+                "skills": s.required_skills,
+                "max_skills": s.max_skills,
+                "context_budget_bytes": s.context_budget_bytes,
+                "rendered_hosts": s.rendered_hosts,
+            }
+            for s in specs.values()
+        ]
+    }
+    _emit(args, data, render.agents_list)
+    return 0
+
+
+def cmd_agents_show(args: argparse.Namespace) -> int:
+    from theforge.agents import agent_for, check_authority
+
+    spec = agent_for(args.agent_id)
+    if spec is None:
+        raise UsageError(f"unknown agent {args.agent_id!r}")
+    data = to_dict(spec)
+    data["authority_matrix"] = {
+        action: check_authority(spec, action)[0] for action in KNOWN_ACTIONS
+    }
+    _emit(args, data, render.agent_detail)
     return 0
 
 

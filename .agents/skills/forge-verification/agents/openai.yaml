@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Verification"
+  short_description: "Independent verify, producer/verifier split"
+
+policy:
+  allow_implicit_invocation: false

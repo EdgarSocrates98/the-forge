@@ -1,0 +1,55 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "forge-doctor-api",
+  "name": "Forge Doctor API",
+  "family": "verification",
+  "summary": "Independent reviewer/verifier for API engineering output. Consumes ApiHandoffBundle documents, diagnoses API findings and verifies api-forge work; it never produces API code.",
+  "repository": "https://github.com/EdgarSocrates98/forge-doctor-api.git",
+  "package": "forge-doctor-api>=0.2.0,<0.3.0",
+  "binary": "forge-doctor-api",
+  "adapter": "adapters/doctorapi",
+  "python": ">=3.11",
+  "appropriate_for": [
+    "independent verification of api-forge results (api.verify)",
+    "diagnosis of API contract findings from ApiHandoffBundle documents",
+    "reviewing evidence produced by the api-engineering family"
+  ],
+  "inappropriate_for": [
+    "producing API designs or code — it is a doctor, not a producer",
+    "data/Spark verification — route to forge-doctor-data",
+    "any task where it would verify its own output"
+  ],
+  "intents": [
+    "verify api result", "review api contract", "diagnose api finding",
+    "independent check api", "doctor api"
+  ],
+  "technologies": ["apihandoffbundle", "openapi", "api-review"],
+  "environments": ["local"],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <da-venv> && <da-python> -m pip install --upgrade pip && <da-python> -m pip install \"forge-doctor-api>=0.2.0,<0.3.0\" <the-forge>/adapters/doctorapi",
+      "verify": "<da-python> -c \"import forge_doctor_api, theforge_doctorapi\"",
+      "prerequisites": ["python>=3.11", "pip"]
+    },
+    {
+      "kind": "editable",
+      "command": "<da-python> -m pip install -e <checkout-forge-doctor-api> -e <the-forge>/adapters/doctorapi",
+      "verify": "<da-python> -c \"import forge_doctor_api, theforge_doctorapi\"",
+      "prerequisites": ["local checkout of forge-doctor-api", "python>=3.11"]
+    }
+  ],
+  "verify_install": "<da-python> -c \"import forge_doctor_api, theforge_doctorapi\"",
+  "discover_command": "theforge providers add forge-doctor-api --python <da-python>",
+  "preferred_verifiers": [],
+  "independent_verification": true,
+  "composes_with": ["api-forge"],
+  "fallback": ["forge-doctor-data"],
+  "limitations_note": "Verifier-only: no producer seams. api.verify requires forge-doctor-api main post-PR-13 (035b635) — earlier versions fail ApiHandoffBundle.from_dict with NameError: DeltaContext.",
+  "examples": [
+    "independently verify the api-forge contract review",
+    "diagnose the api finding bundle from the handoff"
+  ],
+  "tested_version": "0.3.0",
+  "recorded_at": "2026-10-08T00:00:00Z"
+}
