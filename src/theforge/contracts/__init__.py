@@ -71,6 +71,7 @@ from theforge.contracts.installation import (
     InstallStep,
     RollbackStrategy,
 )
+from theforge.contracts.agent import AGENT_SPEC_SCHEMA, AgentSpec
 from theforge.contracts.integrity import IntegrityError, Violation
 from theforge.contracts.intel import INTEL_SCHEMA, IntelFingerprints, ProjectIntel
 from theforge.contracts.knowledge import (
@@ -230,6 +231,8 @@ from theforge.contracts.workspace import (
 )
 
 __all__ = [
+    "AGENT_SPEC_SCHEMA",
+    "AgentSpec",
     "BUDGET_SCHEMA",
     "CAPABILITY_GRAPH_SCHEMA",
     "CAPABILITY_RELATION_SCHEMA",

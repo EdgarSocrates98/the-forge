@@ -122,6 +122,16 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge_show.add_argument("provider_id")
     knowledge_show.set_defaults(handler=commands.cmd_knowledge_show)
 
+    agents = sub.add_parser(
+        "agents", help="specialized agent registry"
+    ).add_subparsers(required=True)
+    agents.add_parser("list", parents=[common]).set_defaults(
+        handler=commands.cmd_agents_list
+    )
+    agents_show = agents.add_parser("show", parents=[common])
+    agents_show.add_argument("agent_id")
+    agents_show.set_defaults(handler=commands.cmd_agents_show)
+
     caps = sub.add_parser("capabilities", help="declared capabilities").add_subparsers(
         dest="capabilities_command", required=True
     )

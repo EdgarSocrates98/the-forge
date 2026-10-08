@@ -141,7 +141,7 @@ def knowledge_list(data: dict[str, Any]) -> str:
 
 def knowledge_detail(data: dict[str, Any]) -> str:
     lines = [
-        f"{_clean(data['id'])} — {_clean(data['name'])} (family: {_clean(data['family'])})",
+        f"{_clean(data['id'])} - {_clean(data['name'])} (family: {_clean(data['family'])})",
         f"  {_clean(data['summary'])}",
         f"  repository: {_clean(data['repository'] or '-')}",
         f"  package: {_clean(data['package'] or '-')}  "
@@ -167,9 +167,39 @@ def knowledge_detail(data: dict[str, Any]) -> str:
         surface = data.get("tested_surface")
         lines.append(
             f"  tested: {_clean(data['tested_version'])}"
-            + (f" surface={surface[:16]}…" if surface else "")
+            + (f" surface={surface[:16]}..." if surface else "")
             + f" recorded={_clean(data.get('recorded_at') or '-')}"
         )
+    return "\n".join(lines)
+
+
+def agents_list(data: dict[str, Any]) -> str:
+    lines = []
+    for a in data["agents"]:
+        lines.append(
+            f"{_clean(a['id']):<26} {_clean(a['authority']):<17} "
+            f"skills<={a['max_skills']} ctx={a['context_budget_bytes'] // 1024}KB "
+            f"hosts={_clean(','.join(a['rendered_hosts']) or '-')}"
+        )
+    return "\n".join(lines) or "no agent specs"
+
+
+def agent_detail(data: dict[str, Any]) -> str:
+    lines = [
+        f"{_clean(data['id'])} - {_clean(data['name'])}",
+        f"  authority: {_clean(data['authority'])}",
+        f"  {_clean(data['purpose'])}",
+        f"  skills: {_clean(', '.join(data.get('required_skills', [])) or '-')}",
+        f"  allowed: {_clean(', '.join(data.get('allowed_actions', [])) or '-')}",
+        f"  forbidden: {_clean(', '.join(data.get('forbidden_actions', [])))}",
+        f"  inputs: {_clean(', '.join(data.get('input_contracts', [])) or '-')}",
+        f"  outputs: {_clean(', '.join(data.get('output_contracts', [])))}",
+        f"  context budget: {data['context_budget_bytes']} bytes, skills≤{data['max_skills']}",
+        f"  rendered hosts: {_clean(', '.join(data.get('rendered_hosts', [])) or '-')}",
+        "  authority matrix:",
+    ]
+    for action, allowed in sorted(data["authority_matrix"].items()):
+        lines.append(f"    {_clean(action):<22} {'allowed' if allowed else 'denied'}")
     return "\n".join(lines)
 
 
