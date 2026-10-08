@@ -27,6 +27,24 @@ Coverage map (prompt's suggested list):
 - B14 A2A unverified target: card self-claims never promote
 - B15 cross-project memory import: only portable/organization crosses
 
+Cycle 5.1 ecosystem wave (4 -> 6 specialists):
+
+- B16 Platform Forge discovery: replay describe exposes the nine real caps
+- B17 Platform Forge planning: a platform node validates through check_plan
+- B18 API -> Platform composition: plan-level chain validates; no invented
+  artifact edge between the two providers
+- B19 Spark -> Platform composition: same contract from the data side
+- B20 Spark AWS selection: AWS-flavored intent/requirement routes to AWS
+- B21 Spark Azure selection: Azure-flavored intent/requirement routes to Azure
+- B22 cloud neutrality: generic Spark never fabricates an Azure candidate and
+  an unknown cloud never defaults anywhere
+- B23 cross-cloud incompatibility: AWS-only capability on the Azure provider
+  violates; cloud artifact types have no cross-cloud consumers
+- B24 portable artifact: an artifact type both sides declare composes through
+  the plan; undeclared types stay provider-local
+- B25 generic onboarding: a synthetic example-forge reaches graph + planning
+  through the same code path, zero provider-name checks
+
 Environment, commit SHA and specialist SHAs are recorded per §66. Replays
 come from ``tests/fixtures/native/*`` — fixture conformance, not live
 specialist execution (the suite says so in ``evidence``).
@@ -52,6 +70,8 @@ from run_bench import collect_origin, measure  # noqa: E402
 
 from theforge.capability_graph import (  # noqa: E402
     build_capability_graph,
+    producers,
+    produces_consumes_order,
     relation_fresh,
     verified_by,
 )
@@ -62,12 +82,14 @@ from theforge.contracts import (  # noqa: E402
     ExecutionInfo,
     ForgeManifest,
     Response,
+    TaskSpec,
     from_dict,
 )
 from theforge.contracts.base import to_dict  # noqa: E402
 from theforge.contracts.canonical import sha256_of, utc_now  # noqa: E402
 from theforge.contracts.capability_graph import CapabilityRelation  # noqa: E402
 from theforge.contracts.memory import EngineeringMemoryEntry  # noqa: E402
+from theforge.contracts.negotiation import CapabilityRequirement  # noqa: E402
 from theforge.contracts.plan import ExecutionPlan, PlanDependency, PlanNode  # noqa: E402
 from theforge.contracts.remote import RemoteExecutionReceipt  # noqa: E402
 from theforge.contracts.strategy import StrategyPolicy  # noqa: E402
@@ -97,6 +119,7 @@ from theforge.remote import (  # noqa: E402
     build_request,
     evaluate_remote_policy,
 )
+from theforge.routing import route  # noqa: E402
 from theforge.simulation import simulate_plan  # noqa: E402
 from theforge.state import init_workspace  # noqa: E402
 
@@ -109,7 +132,12 @@ OTHER_SURF: Final = "b" * 64
 
 ADAPTERS: Final = {
     "spark-forge-aws": ("theforge_sparkforge_aws", NATIVE / "sparkforge_aws" / "default"),
+    "spark-forge-azure": (
+        "theforge_sparkforge_azure",
+        NATIVE / "sparkforge_azure" / "default",
+    ),
     "api-forge": ("theforge_apiforge", NATIVE / "apiforge" / "default"),
+    "platform-forge": ("theforge_platformforge", NATIVE / "platformforge" / "default"),
     "forge-doctor-data": ("theforge_doctordata", NATIVE / "doctordata" / "default"),
     "forge-doctor-api": ("theforge_doctorapi", NATIVE / "doctorapi" / "default"),
 }
@@ -217,6 +245,8 @@ class Env:
         self.graph = build_capability_graph(self.records, run_id="bench")
         self.spark = self.manifests["spark-forge-aws"]
         self.api = self.manifests["api-forge"]
+        self.azure = self.manifests["spark-forge-azure"]
+        self.platform = self.manifests["platform-forge"]
         # B05 corpus: seeded once, outside the timed path.
         ws = str(self.root)
         for i in range(48):
@@ -753,6 +783,267 @@ def b15_cross_project_import(env: Env) -> dict[str, Any]:
     return {"imported": imported, "refused_note": warning}
 
 
+def b16_platform_discovery(env: Env) -> dict[str, Any]:
+    """Platform Forge onboards through the same describe-replay path as every
+    other specialist: the manifest names the nine real capabilities the
+    recorded native surface proves — nothing genericized, nothing invented."""
+    expected = {
+        "catalog.analyze",
+        "gha.analyze",
+        "gitops.analyze",
+        "iac.analyze",
+        "iac.plan-review",
+        "iac.state",
+        "k8s.analyze",
+        "platform.manifest",
+        "secrets.scan",
+    }
+    caps = {c.id: c for c in env.platform.capabilities}
+    assert expected <= set(caps), sorted(expected - set(caps))
+    assert env.platform.id == "platform-forge"
+    assert all(c.operation_class == "read_only" for c in caps.values())
+    node = "capability:platform-forge/iac.analyze"
+    assert node in {n.id for n in env.graph.nodes}
+    return {"capabilities": sorted(caps), "ops": env.platform.ops}
+
+
+def b17_platform_planning(env: Env) -> dict[str, Any]:
+    """A platform-engineering node passes plan validation like any other
+    provider's — the planner needs no platform-specific branch."""
+    cap = next(c for c in env.platform.capabilities if c.id == "iac.analyze")
+    plan = _plan(_node("iac", "platform-forge", cap.id, cap.default_action or cap.actions[0]))
+    violations = check_plan(plan, env.records_map, PROFILES["max"])
+    assert not violations, [f"{v.code}:{v.detail}" for v in violations]
+    return {"capability": cap.id, "violations": len(violations)}
+
+
+def _composed_plan(env: Env, first: str, second: str) -> tuple[ExecutionPlan, list[str]]:
+    """first -> second over an explicit dependency; returns (plan, violations)."""
+    cap_a = env.manifests[first].capabilities[0]
+    cap_b = env.manifests[second].capabilities[0]
+    plan = _plan(
+        _node("first", first, cap_a.id, cap_a.default_action or cap_a.actions[0]),
+        _node(
+            "second",
+            second,
+            cap_b.id,
+            cap_b.default_action or cap_b.actions[0],
+            depends_on=[PlanDependency(node="first", epistemic="explicit", evidence="bench")],
+        ),
+    )
+    violations = check_plan(plan, env.records_map, PROFILES["max"])
+    return plan, [f"{v.code}:{v.detail}" for v in violations]
+
+
+def _artifact_edges_between(env: Env, a: str, b: str) -> list[str]:
+    """Declared artifact edges whose capability endpoints span a -> b."""
+    out: list[str] = []
+    for edge in env.graph.edges:
+        src = edge.source.removeprefix("capability:")
+        if edge.kind in ("produces", "consumes", "accepts", "refines", "verifies") and (
+            src.startswith(f"{a}/") or src.startswith(f"{b}/")
+        ):
+            target = edge.target.removeprefix("artifact_type:")
+            out.append(f"{src} -{edge.kind}-> {target}")
+    return out
+
+
+def b18_api_platform_composition(env: Env) -> dict[str, Any]:
+    """API Forge -> Platform Forge composes at the plan level (explicit
+    dependency, validated). Honest gap: no specialist declares an artifact
+    contract between the two, so the graph carries no invented edge."""
+    plan, violations = _composed_plan(env, "api-forge", "platform-forge")
+    assert not violations, violations
+    edges = _artifact_edges_between(env, "api-forge", "platform-forge")
+    cross = [e for e in edges if e.split(" ")[0].startswith("platform-forge/")]
+    assert not any("consumes" in e for e in cross), (
+        f"platform-forge invented a consume edge: {cross}"
+    )
+    return {"plan_valid": True, "declared_edges_between": len(cross)}
+
+
+def b19_spark_platform_composition(env: Env) -> dict[str, Any]:
+    """Spark Forge -> Platform Forge: same contract — plan-level chain is
+    valid, and no cross-provider artifact edge was fabricated for the demo."""
+    plan, violations = _composed_plan(env, "spark-forge-aws", "platform-forge")
+    assert not violations, violations
+    edges = _artifact_edges_between(env, "spark-forge-aws", "platform-forge")
+    cross = [e for e in edges if e.split(" ")[0].startswith("platform-forge/")]
+    assert not any("consumes" in e for e in cross), (
+        f"platform-forge invented a consume edge: {cross}"
+    )
+    return {"plan_valid": True, "declared_edges_between": len(cross)}
+
+
+def _route_intent(env: Env, intent: str, capability: str | None = None) -> Any:
+    requirement = CapabilityRequirement(capability=capability) if capability is not None else None
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="bench-route",
+        intent=intent,
+        workspace_root=str(env.root),
+        budget_profile="balanced",
+        requirement=requirement,
+    )
+    return route(task, env.records, [], set())
+
+
+def b20_spark_aws_selection(env: Env) -> dict[str, Any]:
+    """AWS-scoped work selects Spark Forge AWS — by declared capability, not
+    by provider name."""
+    decision = _route_intent(env, "review the glue catalog setup", capability="glue.analysis")
+    assert decision.status == "routed", decision
+    picked = {s.provider for s in decision.selected}
+    assert picked == {"spark-forge-aws"}, decision.selected
+    return {"selected": sorted(picked), "status": decision.status}
+
+
+def b21_spark_azure_selection(env: Env) -> dict[str, Any]:
+    """Azure-scoped work selects Spark Forge Azure — a real Azure capability
+    exists for it, and the AWS provider is not substituted."""
+    decision = _route_intent(
+        env, "diagnose this azure access problem", capability="azure.access-diagnose"
+    )
+    assert decision.status == "routed", decision
+    picked = {s.provider for s in decision.selected}
+    assert picked == {"spark-forge-azure"}, decision.selected
+    return {"selected": sorted(picked), "status": decision.status}
+
+
+def b22_cloud_neutrality(env: Env) -> dict[str, Any]:
+    """Neutrality is structural: a generic Spark intent routes only to the
+    provider that *declares* Spark analysis (AWS — Azure offers none), and a
+    capability nobody offers yields no candidates instead of a guess."""
+    generic = _route_intent(env, "review the spark job performance")
+    providers = {c.provider for c in generic.candidates}
+    assert "spark-forge-azure" not in providers, providers
+    unknown = _route_intent(env, "deploy to gcp cloud run", capability="gcp.cloudrun")
+    assert unknown.status != "routed" or not unknown.selected, unknown.selected
+    return {
+        "generic_spark_candidates": sorted(providers),
+        "unknown_cloud_status": unknown.status,
+        "unknown_cloud_selected": len(unknown.selected),
+    }
+
+
+def b23_cross_cloud_incompatibility(env: Env) -> dict[str, Any]:
+    """An AWS-only capability on the Azure provider is a violation, and the
+    cloud-scoped artifact types each side produces have no cross-cloud
+    consumer — incompatible combinations surface, never pass silently."""
+    cap = next(c for c in env.spark.capabilities if c.id == "glue.analysis")
+    plan = _plan(_node("bad", "spark-forge-azure", cap.id, cap.actions[0]))
+    violations = check_plan(plan, env.records_map, PROFILES["max"])
+    assert violations, "AWS-only capability on the Azure provider must violate"
+    produced = {
+        e.target: e.source
+        for e in env.graph.edges
+        if e.kind == "produces" and e.target.startswith("artifact_type:")
+    }
+    consumed = [
+        e for e in env.graph.edges if e.kind == "consumes" and e.target.startswith("artifact_type:")
+    ]
+    cloud_types = {
+        t.split(":", 1)[1]
+        for t, s in produced.items()
+        if s.startswith(("capability:spark-forge-azure/", "capability:platform-forge/"))
+    }
+    foreign_consumers = [
+        e.source
+        for e in consumed
+        if e.target.removeprefix("artifact_type:") in cloud_types
+        and not e.source.startswith(("capability:spark-forge-azure/", "capability:platform-forge/"))
+    ]
+    assert not foreign_consumers, foreign_consumers
+    return {
+        "aws_cap_on_azure_violations": len(violations),
+        "cloud_scoped_types": sorted(cloud_types),
+        "foreign_consumers": len(foreign_consumers),
+    }
+
+
+def b24_portable_artifact(env: Env) -> dict[str, Any]:
+    """An artifact type both sides *declare* composes through the graph:
+    produces->consumes ordering puts the producer first. Types a provider
+    never declared stay local — portability is a contract, not a guess."""
+    m_src = ForgeManifest(
+        id="spark-port-a",
+        version="0.1",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=[
+            Capability(
+                id="job.analyze",
+                actions=["run"],
+                default_action="run",
+                state="supported",
+                operation_class="read_only",
+                relations=CapabilityRelations(produces=["spark.job-facts"]),
+            )
+        ],
+        execution=ExecutionInfo(local=True, offline=True),
+    )
+    m_dst = ForgeManifest(
+        id="spark-port-b",
+        version="0.1",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=[
+            Capability(
+                id="job.review",
+                actions=["run"],
+                default_action="run",
+                state="supported",
+                operation_class="read_only",
+                relations=CapabilityRelations(consumes=["spark.job-facts"]),
+            )
+        ],
+        execution=ExecutionInfo(local=True, offline=True),
+    )
+    records = [_record("spark-port-a", m_src), _record("spark-port-b", m_dst)]
+    graph = build_capability_graph(records, run_id="b24")
+    order, _cycles = produces_consumes_order(
+        graph, ["spark-port-a/job.analyze", "spark-port-b/job.review"]
+    )
+    assert order.index("spark-port-a/job.analyze") < order.index("spark-port-b/job.review")
+    # The real federation: azure/platform artifact types stay provider-local.
+    local = producers(env.graph, "azure.access-diagnosis")
+    assert local == ["spark-forge-azure/azure.access-diagnose"], local
+    return {"portable_order": order, "azure_diagnosis_producers": local}
+
+
+def b25_generic_onboarding(env: Env) -> dict[str, Any]:
+    """A synthetic example-forge reaches graph + planning through the generic
+    path — no provider-name branch anywhere in the pipeline."""
+    manifest = ForgeManifest(
+        id="example-forge",
+        version="0.1.0",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=[
+            Capability(
+                id="example.scan",
+                actions=["scan"],
+                default_action="scan",
+                state="supported",
+                operation_class="read_only",
+                relations=CapabilityRelations(produces=["example.report"]),
+            )
+        ],
+        execution=ExecutionInfo(local=True, offline=True),
+    )
+    record = _record("example-forge", manifest)
+    graph = build_capability_graph([*env.records, record], run_id="b25")
+    assert "capability:example-forge/example.scan" in {n.id for n in graph.nodes}
+    records_map = {**env.records_map, "example-forge": record}
+    plan = _plan(_node("ex", "example-forge", "example.scan", "scan"))
+    violations = check_plan(plan, records_map, PROFILES["max"])
+    assert not violations, [f"{v.code}:{v.detail}" for v in violations]
+    # The artifact it produces is registered; nothing consumed it — honest.
+    assert "artifact_type:example.report" in {n.id for n in graph.nodes}
+    return {"graph_nodes": "present", "plan_violations": len(violations)}
+
+
 SCENARIOS: Final = (
     ("B01", "deterministic simple plan", b01_deterministic_plan),
     ("B02", "artifact-aware multi-specialist plan", b02_artifact_aware_plan),
@@ -769,6 +1060,16 @@ SCENARIOS: Final = (
     ("B13", "fake remote receipt", b13_fake_receipt),
     ("B14", "a2a unverified target", b14_a2a_unverified),
     ("B15", "cross-project memory import", b15_cross_project_import),
+    ("B16", "platform forge discovery", b16_platform_discovery),
+    ("B17", "platform forge planning", b17_platform_planning),
+    ("B18", "api -> platform composition", b18_api_platform_composition),
+    ("B19", "spark -> platform composition", b19_spark_platform_composition),
+    ("B20", "spark aws selection", b20_spark_aws_selection),
+    ("B21", "spark azure selection", b21_spark_azure_selection),
+    ("B22", "cloud neutrality", b22_cloud_neutrality),
+    ("B23", "cross-cloud incompatibility", b23_cross_cloud_incompatibility),
+    ("B24", "portable spark artifact", b24_portable_artifact),
+    ("B25", "generic unknown forge onboarding", b25_generic_onboarding),
 )
 
 

@@ -375,3 +375,152 @@ class TestCrossDomainPlanning:
 
 def _cap_in(graph, ref: str) -> bool:
     return any(n.id == f"capability:{ref}" for n in graph.nodes)
+
+
+# --- cloud-aware negotiation (Cycle 5.1 §W4) --------------------------------------------------
+
+
+def _records(manifests: dict[str, ForgeManifest]) -> list[RegistryRecord]:
+    return [
+        RegistryRecord(
+            entry=ProviderEntry(id=pid, argv=["x"], trust="local"),
+            state="ready",
+            manifest=m,
+        )
+        for pid, m in manifests.items()
+    ]
+
+
+def _route(records, intent: str, capability: str | None = None):
+    from theforge.contracts import TaskSpec
+    from theforge.contracts.canonical import utc_now
+    from theforge.contracts.negotiation import CapabilityRequirement
+    from theforge.meta import PRODUCER
+    from theforge.routing import route
+
+    task = TaskSpec(
+        producer=PRODUCER,
+        created_at=utc_now(),
+        id="fed-route",
+        intent=intent,
+        workspace_root=".",
+        budget_profile="balanced",
+        requirement=CapabilityRequirement(capability=capability) if capability else None,
+    )
+    return route(task, records, [], set())
+
+
+class TestCloudNegotiation:
+    """Selection is by declared capability/signals — provider names are never a
+    signal, and an unknown cloud never defaults to AWS or Azure."""
+
+    def test_aws_scoped_requirement_selects_spark_forge_aws(self, manifests) -> None:
+        decision = _route(_records(manifests), "review the glue catalog setup", "glue.analysis")
+        assert decision.status == "routed"
+        assert {s.provider for s in decision.selected} == {"spark-forge-aws"}
+
+    def test_azure_scoped_requirement_selects_spark_forge_azure(self, manifests) -> None:
+        decision = _route(
+            _records(manifests), "diagnose azure access denied", "azure.access-diagnose"
+        )
+        assert decision.status == "routed"
+        assert {s.provider for s in decision.selected} == {"spark-forge-azure"}
+
+    def test_generic_spark_intent_never_fabricates_an_azure_candidate(self, manifests) -> None:
+        """The Azure specialist declares no Spark-analysis capability — a generic
+        Spark intent must route only to whoever declares it, never infer a cloud."""
+        decision = _route(_records(manifests), "review the spark job performance")
+        providers = {c.provider for c in decision.candidates}
+        assert "spark-forge-azure" not in providers
+        if decision.status == "routed":
+            assert {s.provider for s in decision.selected} <= {"spark-forge-aws"}
+
+    def test_unknown_cloud_never_defaults(self, manifests) -> None:
+        decision = _route(_records(manifests), "deploy to gcp cloud run", "gcp.cloudrun")
+        assert decision.status != "routed" or not decision.selected
+
+    def test_provider_name_is_not_a_signal(self, manifests) -> None:
+        """A provider named like a cloud wins nothing by name: only declared
+        capability/signal matches count."""
+        from theforge.contracts import Capability, ExecutionInfo, Signals
+
+        impostor = ForgeManifest(
+            id="azure-spark-impostor",
+            version="0.1",
+            protocols=["forge/v1"],
+            ops=["describe", "health", "execute"],
+            capabilities=[
+                Capability(
+                    id="gcp.only",
+                    actions=["run"],
+                    default_action="run",
+                    state="supported",
+                    operation_class="read_only",
+                    signals=Signals(keywords=["bigquery", "dataproc"]),
+                )
+            ],
+            execution=ExecutionInfo(local=True, offline=True),
+        )
+        impostor_record = RegistryRecord(
+            entry=ProviderEntry(id="azure-spark-impostor", argv=["x"], trust="local"),
+            state="ready",
+            manifest=impostor,
+        )
+        records = [*_records(manifests), impostor_record]
+        decision = _route(records, "review the glue catalog setup", "glue.analysis")
+        assert "azure-spark-impostor" not in {s.provider for s in decision.selected}
+        assert {s.provider for s in decision.selected} == {"spark-forge-aws"}
+
+    def test_aws_only_capability_on_azure_provider_violates(self, manifests) -> None:
+        """check_plan rejects a node that pins an AWS-only capability to the
+        Azure provider — cross-cloud mixes surface as violations."""
+        from theforge.contracts.canonical import utc_now
+        from theforge.contracts.plan import ExecutionPlan, PlanNode
+        from theforge.meta import PRODUCER
+        from theforge.planning.validate import check_plan
+        from theforge.profiles import PROFILES
+
+        plan = ExecutionPlan(
+            producer=PRODUCER,
+            created_at=utc_now(),
+            status="validated",
+            plan_run="fed",
+            task_id="t",
+            pattern="pipeline",
+            source="decomposed",
+            profile="max",
+            nodes=[
+                PlanNode(
+                    id="bad",
+                    provider="spark-forge-azure",
+                    capability="glue.analysis",
+                    action="analyze",
+                    role="standalone",
+                )
+            ],
+        )
+        violations = check_plan(plan, {r.entry.id: r for r in _records(manifests)}, PROFILES["max"])
+        assert violations, "AWS-only capability on the Azure provider must violate"
+
+    def test_cloud_artifact_types_have_no_foreign_consumers(self, graph) -> None:
+        """azure.*/fabric.*/platform.* artifact types: produced by their own
+        specialist, consumed by nobody foreign — no implicit cross-cloud pipe."""
+        for artifact_type in (
+            "azure.access-diagnosis",
+            "fabric.access-diagnosis",
+            "platform.iac-facts",
+            "platform.secrets-report",
+        ):
+            foreign = [
+                ref
+                for ref in consumers(graph, artifact_type)
+                if not ref.startswith(("spark-forge-azure/", "platform-forge/"))
+            ]
+            assert not foreign, f"{artifact_type}: foreign consumers {foreign}"
+
+    def test_azure_and_aws_capabilities_never_alias(self, manifests) -> None:
+        """The two Spark specialists share no capability ids — Azure is its own
+        surface, not an AWS alias."""
+        aws_ids = {c.id for c in manifests["spark-forge-aws"].capabilities}
+        azure_ids = {c.id for c in manifests["spark-forge-azure"].capabilities}
+        assert not aws_ids & azure_ids
