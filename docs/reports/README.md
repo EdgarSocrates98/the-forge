@@ -18,6 +18,16 @@ relatório principal; waves e auditorias têm documentos próprios.
 Artefato machine-readable: [specialist-reality.json](../reality/specialist-reality.json)
 (manifest canônico dos seis especialistas, regenerado por `scripts/reality/collect.py`).
 
+## Agentic Engineering — relatório final (prompt_evo_engenharia_agentica §100)
+
+| Documento | Conteúdo |
+|---|---|
+| [agentic-ecosystem.md](agentic-ecosystem.md) | Veredicto AGENTIC_ECOSYSTEM_COMPLETE_REMOTE_BLOCKED: A01–A15 verdes, contadores deterministic×agentic medidos, estados de instalação, limitações |
+| [prompt-coverage.md](prompt-coverage.md) | Matriz de completude dos dez `prompt_evo*.md` → evidência/status, com o que foi deferido por design |
+
+Artefato machine-readable: [agentic-scenarios.json](agentic-scenarios.json)
+(suíte `scripts/bench/run_agentic.py` — resultados A01–A15 + `routing_metrics` §88-89).
+
 ## Cycle 5.1 — Reality Synchronization, Benchmarking & Feature Freeze
 
 | Documento | Conteúdo |

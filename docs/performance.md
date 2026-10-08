@@ -72,6 +72,24 @@ python scripts/bench/run_scenarios.py [--runs N] [--out PATH]   # exit 1 se algu
 | B14 | card A2A auto-declarado permanece externo/não verificado |
 | B15 | import cross-project: só `portable`/`organization` cruzam |
 
+## Suite de cenários agentic (A01–A15)
+
+`scripts/bench/run_agentic.py` (prompt `prompt_evo_engenharia_agentica` §87-90):
+mede o que o ecossistema agentic exige — routing por capability (não por
+nome), composições cross-domain, ambiguidade que nunca chuta, fallback
+semântico contido em propose→validate (`proposal_selection` re-checado contra
+o conjunto elegível), plano de instalação staged/aprovação-obrigatória e
+injeção de provider/resolver rejeitada. Saída
+`{"schema": "theforge-agentic-scenarios/v1", ..., "routing_metrics"}` — os
+contadores §88-89 (requests, deterministic_resolved, agentic_fallback_needed,
+accepted, rejected, unnecessary_invocations) são medidos por execução.
+Resultados medidos: `docs/reports/agentic-scenarios.json`; relatório:
+`docs/reports/agentic-ecosystem.md`.
+
+```bash
+python scripts/bench/run_agentic.py [--runs N] [--out PATH]   # exit 1 se algum A falha
+```
+
 ## Memory ROI
 
 `scripts/bench/run_memory_roi.py` mede memory-on vs memory-off (bytes de
