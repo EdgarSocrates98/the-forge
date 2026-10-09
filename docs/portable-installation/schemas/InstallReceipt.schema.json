@@ -55,6 +55,18 @@
       }
     },
     "env": {"type": "object"},
+    "context": {
+      "type": "object",
+      "properties": {
+        "profile": {"type": "string"},
+        "skills_bytes": {"type": ["integer", "null"]},
+        "agents_bytes": {"type": ["integer", "null"]},
+        "managed_bytes": {"type": ["integer", "null"]},
+        "mcp_entries": {"type": ["integer", "null"]},
+        "managed_entries": {"type": ["integer", "null"]},
+        "tools_exposed": {"type": ["integer", "null"]}
+      }
+    },
     "checks": {
       "type": "array",
       "items": {

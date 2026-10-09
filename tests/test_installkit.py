@@ -489,3 +489,31 @@ def test_doctor_surfaces_invoke_check(tmp_path):
     health = kit.doctor(ctx)
     invoke = [c for c in health["checks"] if c["id"] == "mcp-invoke"]
     assert invoke and invoke[0]["status"] == "PASS"
+
+
+def test_receipt_context_metrics(tmp_path):
+    ctx = _ctx(tmp_path, mcp_server_name="forge-test", spawn_ok=False, profile="recommended")
+    receipt = kit.apply_install(ctx, approved=True)
+    ctxm = receipt["context"]
+    assert ctxm["profile"] == "recommended"
+    assert ctxm["skills_bytes"] > 0  # rendered demo skill counted
+    assert ctxm["managed_bytes"] > 0
+
+
+def test_health_context_reports_tools(tmp_path):
+    stub = tmp_path / "stub_mcp.py"
+    stub.write_text(_MCP_STUB, "utf-8")
+    root = tmp_path / "proj"
+    root.mkdir()
+    ctx = _ctx(
+        tmp_path,
+        root=root,
+        mcp_command=(sys.executable, str(stub)),
+        mcp_server_name="stub-mcp",
+        mcp_verify_tool="ping",
+        spawn_ok=True,
+    )
+    kit.apply_install(ctx, approved=True)
+    health = kit.doctor(ctx)
+    assert health["context"]["tools_exposed"] == 2
+    assert health["context"]["managed_entries"] > 0

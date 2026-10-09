@@ -23,6 +23,14 @@
       }
     },
     "repair_hint": {"type": ["string", "null"]},
+    "context": {
+      "type": "object",
+      "properties": {
+        "profile": {"type": "string"},
+        "managed_entries": {"type": ["integer", "null"]},
+        "tools_exposed": {"type": ["integer", "null"]}
+      }
+    },
     "checked_at": {"type": "string"}
   },
   "additionalProperties": false

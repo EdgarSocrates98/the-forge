@@ -188,6 +188,25 @@ structured refusal, not a traceback.
 | `recommended` | + skills mirror into the detected host dirs |
 | `full` | + agents mirror + all host dirs regardless of detection |
 
+`full` is a disclosure ceiling, not an authorization: the approval gate,
+`spawn_ok` policy and host permissions still apply unchanged.
+
+### 7.1 Context budgets (§13.2)
+
+Receipts and health docs carry a `context` block with *observable*
+metrics only:
+
+| Field | Source | Emitted |
+|---|---|---|
+| `skills_bytes` / `agents_bytes` | rendered asset bytes by kind | install receipt |
+| `managed_bytes` | managed asset bytes written/adopted | install receipt |
+| `mcp_entries` | `.mcp.json` managed entries | install receipt |
+| `managed_entries` | ledger entry count | health doc |
+| `tools_exposed` | `tools/list` enumeration | health doc |
+
+Token counts, host context load and discovery time are **not** invented:
+a host that supplies them records them in its own telemetry.
+
 ## 8. Refusal codes
 
 `FORGE-INSTALL-*` for cross-cutting; each forge may add its own prefix.
