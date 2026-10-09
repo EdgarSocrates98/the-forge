@@ -11,13 +11,13 @@
   "python": ">=3.10",
   "appropriate_for": [
     "repository/platform posture: GHA workflows, k8s manifests, IaC, GitOps state, service catalog",
-    "secrets scanning of a repo tree (with the staging boundary \u00e2\u20ac\u201d see limitations)",
+    "secrets scanning of a repo tree (with the staging boundary — see limitations)",
     "developer-experience / golden-path / SRE evidence collection"
   ],
   "inappropriate_for": [
-    "Spark or cloud-data engineering \u00e2\u20ac\u201d route to the spark-engineering family",
-    "API contract design \u00e2\u20ac\u201d route to api-forge",
-    "verifying its own output \u00e2\u20ac\u201d use an independent doctor"
+    "Spark or cloud-data engineering — route to the spark-engineering family",
+    "API contract design — route to api-forge",
+    "verifying its own output — use an independent doctor"
   ],
   "intents": [
     "github actions workflow",
@@ -74,7 +74,7 @@
     "forge-doctor-data"
   ],
   "fallback": [],
-  "limitations_note": "secrets.scan only sees what the core stages: secret-bearing inputs (.env and friends) are excluded by staging with reason 'secret' before the specialist runs \u00e2\u20ac\u201d a 0-facts result means the boundary held, not that the repo is clean.",
+  "limitations_note": "secrets.scan only sees what the core stages: secret-bearing inputs (.env and friends) are excluded by staging with reason 'secret' before the specialist runs — a 0-facts result means the boundary held, not that the repo is clean.",
   "examples": [
     "analyze this repo's GitHub Actions posture",
     "scan the staged tree for secrets",

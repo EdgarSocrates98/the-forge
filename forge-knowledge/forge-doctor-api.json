@@ -15,8 +15,8 @@
     "reviewing evidence produced by the api-engineering family"
   ],
   "inappropriate_for": [
-    "producing API designs or code \u00e2\u20ac\u201d it is a doctor, not a producer",
-    "data/Spark verification \u00e2\u20ac\u201d route to forge-doctor-data",
+    "producing API designs or code — it is a doctor, not a producer",
+    "data/Spark verification — route to forge-doctor-data",
     "any task where it would verify its own output"
   ],
   "intents": [
@@ -64,7 +64,7 @@
   "fallback": [
     "forge-doctor-data"
   ],
-  "limitations_note": "Verifier-only: no producer seams. api.verify requires forge-doctor-api main post-PR-13 (035b635) \u00e2\u20ac\u201d earlier versions fail ApiHandoffBundle.from_dict with NameError: DeltaContext.",
+  "limitations_note": "Verifier-only: no producer seams. api.verify requires forge-doctor-api main post-PR-13 (035b635) — earlier versions fail ApiHandoffBundle.from_dict with NameError: DeltaContext.",
   "examples": [
     "independently verify the api-forge contract review",
     "diagnose the api finding bundle from the handoff"

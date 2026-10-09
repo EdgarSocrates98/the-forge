@@ -3,7 +3,7 @@
   "id": "api-forge",
   "name": "API Forge",
   "family": "api-engineering",
-  "summary": "API engineering specialist: REST/OpenAPI, AsyncAPI, GraphQL, gRPC, contract evolution and API testing across Java/Go/Python stacks. Requires Python 3.12 exactly \u00e2\u20ac\u201d the adapter refuses describe on other interpreters.",
+  "summary": "API engineering specialist: REST/OpenAPI, AsyncAPI, GraphQL, gRPC, contract evolution and API testing across Java/Go/Python stacks. Requires Python 3.12 exactly — the adapter refuses describe on other interpreters.",
   "repository": "https://github.com/EdgarSocrates98/api-forge.git",
   "package": "apiforge>=0.1,<0.2",
   "binary": "apiforge",
@@ -15,9 +15,9 @@
     "API architecture, testing strategy and upstream fact intake (apiforge/upstream-facts/v1)"
   ],
   "inappropriate_for": [
-    "Spark/data engineering \u00e2\u20ac\u201d route to the spark-engineering family",
-    "platform/IDP or CI/CD estate analysis \u00e2\u20ac\u201d route to platform-forge",
-    "independent verification of API work \u00e2\u20ac\u201d route to forge-doctor-api"
+    "Spark/data engineering — route to the spark-engineering family",
+    "platform/IDP or CI/CD estate analysis — route to platform-forge",
+    "independent verification of API work — route to forge-doctor-api"
   ],
   "intents": [
     "api design",
@@ -48,7 +48,7 @@
       "command": "python3.12 -m venv <api-venv> && <api-python> -m pip install --upgrade pip && <api-python> -m pip install \"apiforge>=0.1,<0.2\" <the-forge>/adapters/apiforge",
       "verify": "<api-python> -c \"import apiforge, theforge_apiforge\"",
       "prerequisites": [
-        "python==3.12.* (required \u00e2\u20ac\u201d other interpreters get a describe refusal)",
+        "python==3.12.* (required — other interpreters get a describe refusal)",
         "pip"
       ]
     },

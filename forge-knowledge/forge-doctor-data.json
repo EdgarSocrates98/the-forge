@@ -15,8 +15,8 @@
     "reviewing evidence bundles produced by the spark-engineering family"
   ],
   "inappropriate_for": [
-    "producing Spark code or pipelines \u00e2\u20ac\u201d it is a doctor, not a producer",
-    "API verification \u00e2\u20ac\u201d route to forge-doctor-api",
+    "producing Spark code or pipelines — it is a doctor, not a producer",
+    "API verification — route to forge-doctor-api",
     "any task where it would verify its own output"
   ],
   "intents": [
@@ -66,7 +66,7 @@
   "fallback": [
     "forge-doctor-api"
   ],
-  "limitations_note": "Verifier-only: no producer seams. Runs no subprocess or network in the specialist \u00e2\u20ac\u201d the bridge calls public seams in a child process and translates forge-contracts/1 to the Evidence Bus.",
+  "limitations_note": "Verifier-only: no producer seams. Runs no subprocess or network in the specialist — the bridge calls public seams in a child process and translates forge-contracts/1 to the Evidence Bus.",
   "examples": [
     "independently verify the spark-forge-aws tuning result",
     "diagnose the data-quality finding bundle"

@@ -15,9 +15,9 @@
     "Spark performance analysis (event logs, Spark UI, physical plans, skew/spill) on AWS estates"
   ],
   "inappropriate_for": [
-    "Azure Spark estates \u00e2\u20ac\u201d route to spark-forge-azure (no AWS\u00e2\u2020\u201dAzure equivalence)",
-    "API design or contract work \u00e2\u20ac\u201d route to api-forge",
-    "platform/IDP engineering \u00e2\u20ac\u201d route to platform-forge"
+    "Azure Spark estates — route to spark-forge-azure (no AWS↔Azure equivalence)",
+    "API design or contract work — route to api-forge",
+    "platform/IDP engineering — route to platform-forge"
   ],
   "intents": [
     "spark on aws",
