@@ -44,19 +44,11 @@ _SCOPE_LABELS = {
 
 def env_check_rows() -> list[tuple[str, str]]:
     """Real environment evidence: python, git, host binaries."""
-    rows = [
-        ("Python", f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
-    ]
+    v = sys.version_info
+    rows = [("Python", f"{v.major}.{v.minor}.{v.micro}")]
     rows.append(("Git", "OK" if shutil.which("git") else "missing"))
-    try:
-        from theforge import host_detect
-
-        result = host_detect.detect_hosts()
-        for d in result.detections:
-            rows.append((d.host.capitalize(), "Available" if d.detected else "not detected"))
-    except Exception:  # host detection must never break the wizard
-        for h in _ALL_HOSTS:
-            rows.append((h.capitalize(), "unknown"))
+    for h in _ALL_HOSTS:
+        rows.append((h.capitalize(), "Available" if shutil.which(h) else "not detected"))
     return rows
 
 

@@ -1471,7 +1471,7 @@ def cmd_task_explain(args: argparse.Namespace) -> int:
 def cmd_install_wizard(args: argparse.Namespace) -> int:
     """Bare ``install``: guided wizard on a TTY, subcommand help otherwise."""
     from theforge.install import service
-    from theforge.ui.kit import NonInteractive, UIContext
+    from theforge.ui.kit import UIContext
     from theforge.ui.wizard import run_wizard
 
     ctx = UIContext.detect()
