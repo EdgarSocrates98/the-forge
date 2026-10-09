@@ -96,6 +96,28 @@ material. `managed_files` are the **only** paths uninstall may remove.
   "repair_hint": "…" }
 ```
 
+### 3.1 MCP lifecycle checks
+
+`mcp-handshake` is a real JSON-RPC probe over stdio — never inferred
+from file presence:
+
+- **dependency resolution** — the declared executable must resolve on
+  `PATH` (or be an explicit path); unresolved ⇒ `BLOCKED`, an incomplete
+  install, not a defect.
+- **handshake** — `initialize` → `notifications/initialized` →
+  `tools/list`; the check reports the enumerated tool names.
+- **safe invoke** — when the spec declares `mcp_verify_tool` (a no-arg,
+  read-only tool), `tools/call` is issued with empty arguments and the
+  structured result is required; the outcome is hoisted into `checks[]`
+  as `mcp-invoke` so a failure degrades health. Undeclared ⇒ the invoke
+  check is simply absent — never guessed.
+- **process evidence** — every `mcp-handshake` check carries
+  `process: {exit: clean|terminated|killed, returncode, stderr_tail}` —
+  timeout, stderr and shutdown are validated, not assumed.
+- **transport** — stdio only. Hosts spawn the server on demand; no
+  persistent service, no open ports. HTTP transports are out of scope
+  for the verify path.
+
 ## 4. `forge/WorkspaceInstall/v1` — `<repo>/.forge/workspace-install.json`
 
 Workspace-scope record: which forges are projected into this repo's

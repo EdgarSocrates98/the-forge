@@ -28,7 +28,9 @@ and `UNVERIFIED` are never reported as `PASS`.
 | `.devin/` (Devin config/skills) | target |
 | `.github/skills/` (Copilot) | target |
 | `.mcp.json` managed key | target — where MCP server exists |
-| MCP handshake + tool enumeration | target — where MCP exists |
+| MCP handshake + tool enumeration | exists — real JSON-RPC stdio probe |
+| MCP safe invoke (`tools/call`) | exists — `mcp_verify_tool` per spec: aws `sparkforge_aws_runtime_detect`, azure `sfa_version`, apiforge `portable_status`, platform `platformforge_inspect`, doctor-data `get_execution_baseline`, doctor-api `doctor.get_reliability` |
+| MCP process evidence | exists — `process.exit` + `stderr_tail` on every handshake check |
 
 MCP availability: aws ✔ (`mcp serve`), azure ✔ (`mcp serve`),
 platform ✔ (`platformforge-mcp`), apiforge ✔ (`apiforge-mcp`),

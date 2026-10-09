@@ -52,8 +52,9 @@ def _spec(**kw) -> kit.ForgeSpec:
 
 
 def _ctx(tmp_path: Path, scope: str = "project", **kw) -> kit.InstallContext:
-    spec = _spec(**{k: v for k, v in kw.items() if k in ("mcp_server_name", "spawn_ok")})
-    kw2 = {k: v for k, v in kw.items() if k not in ("mcp_server_name", "spawn_ok")}
+    _SPEC_KEYS = ("mcp_server_name", "spawn_ok", "mcp_command", "mcp_verify_tool")
+    spec = _spec(**{k: v for k, v in kw.items() if k in _SPEC_KEYS})
+    kw2 = {k: v for k, v in kw.items() if k not in _SPEC_KEYS}
     cwd = kw2.pop("cwd", tmp_path)
     root = kit.resolve_scope(spec, scope, cwd, kw2.pop("root", tmp_path))
     state = kit.state_dir_for(spec, scope, root)
@@ -379,3 +380,112 @@ def test_member_precedence(tmp_path):
     assert kit.member_precedence(member, spec) is None
     (member / ".mcp.json").write_text('{"mcpServers": {"forge-test": {}}}', "utf-8")
     assert kit.member_precedence(member, spec) == "project"
+
+
+_MCP_STUB = r"""
+import json, sys
+for line in sys.stdin:
+    try:
+        m = json.loads(line)
+    except ValueError:
+        continue
+    mid, method = m.get("id"), m.get("method")
+    if method == "initialize":
+        print(json.dumps({"jsonrpc": "2.0", "id": mid, "result": {
+            "protocolVersion": "2024-11-05",
+            "serverInfo": {"name": "stub", "version": "0"},
+            "capabilities": {"tools": {}}}}), flush=True)
+    elif method == "tools/list":
+        print(json.dumps({"jsonrpc": "2.0", "id": mid, "result": {
+            "tools": [{"name": "ping"}, {"name": "status"}]}}), flush=True)
+    elif method == "tools/call":
+        if m["params"]["name"] == "ping":
+            print(json.dumps({"jsonrpc": "2.0", "id": mid, "result": {
+                "content": [{"type": "text", "text": "pong"}]}}), flush=True)
+        else:
+            print(json.dumps({"jsonrpc": "2.0", "id": mid, "error": {
+                "code": -32601, "message": "unknown tool"}}), flush=True)
+"""
+
+
+def test_mcp_verify_real_handshake_and_invoke(tmp_path):
+    stub = tmp_path / "stub_mcp.py"
+    stub.write_text(_MCP_STUB, "utf-8")
+    spec = _spec(
+        mcp_command=(sys.executable, str(stub)),
+        mcp_server_name="stub-mcp",
+        mcp_verify_tool="ping",
+        spawn_ok=True,
+    )
+    check = kit.mcp_verify(spec)
+    assert check["status"] == "PASS"
+    assert check["tools"] == ["ping", "status"]
+    assert check["invoke"] == {
+        "tool": "ping",
+        "status": "PASS",
+        "detail": "structured result returned",
+    }
+    assert check["process"]["exit"] in ("clean", "terminated")
+    assert check["process"]["returncode"] is not None
+
+
+def test_mcp_verify_invoke_error_is_fail(tmp_path):
+    stub = tmp_path / "stub_mcp.py"
+    stub.write_text(_MCP_STUB, "utf-8")
+    spec = _spec(
+        mcp_command=(sys.executable, str(stub)),
+        mcp_server_name="stub-mcp",
+        mcp_verify_tool="nosuch",
+        spawn_ok=True,
+    )
+    check = kit.mcp_verify(spec)
+    assert check["status"] == "PASS"  # handshake fine
+    assert check["invoke"]["status"] == "FAIL"
+    assert "unknown tool" in check["invoke"]["detail"]
+
+
+def test_mcp_verify_unresolvable_exe_blocked(tmp_path):
+    spec = _spec(
+        mcp_command=("definitely-not-an-mcp-exe-xyz",),
+        mcp_server_name="stub-mcp",
+        spawn_ok=True,
+    )
+    check = kit.mcp_verify(spec)
+    assert check["status"] == "BLOCKED"
+    assert "not resolvable" in check["detail"]
+
+
+def test_mcp_verify_process_fields_on_fail(tmp_path):
+    spec = _spec(
+        mcp_command=(sys.executable, "-c", "import time; time.sleep(60)"),
+        mcp_server_name="stub-mcp",
+        spawn_ok=True,
+    )
+    check = kit.mcp_verify(spec, timeout=1)
+    assert check["status"] == "FAIL"
+    assert "process" in check
+
+
+def test_doctor_surfaces_invoke_check(tmp_path):
+    stub = tmp_path / "stub_mcp.py"
+    stub.write_text(_MCP_STUB, "utf-8")
+    spec = _spec(
+        mcp_command=(sys.executable, str(stub)),
+        mcp_server_name="stub-mcp",
+        mcp_verify_tool="ping",
+        spawn_ok=True,
+    )
+    root = tmp_path / "proj"
+    root.mkdir()
+    ctx = _ctx(
+        tmp_path,
+        root=root,
+        mcp_command=spec.mcp_command,
+        mcp_server_name=spec.mcp_server_name,
+        mcp_verify_tool=spec.mcp_verify_tool,
+        spawn_ok=True,
+    )
+    kit.apply_install(ctx, approved=True)
+    health = kit.doctor(ctx)
+    invoke = [c for c in health["checks"] if c["id"] == "mcp-invoke"]
+    assert invoke and invoke[0]["status"] == "PASS"
