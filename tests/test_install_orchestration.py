@@ -8,6 +8,8 @@ family delegation (isolated via FORGE_HOME_OVERRIDE).
 from __future__ import annotations
 
 import hashlib
+import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -34,8 +36,14 @@ def forge_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_vendored_kit_matches_canonical() -> None:
-    canon = (ROOT / "scripts" / "installkit" / "forge_installkit.py").read_bytes()
-    vend = (ROOT / "src" / "theforge" / "_installkit.py").read_bytes()
+    def _norm(p: Path) -> bytes:
+        # Vendored copies carry the stamped canonical hash where the source
+        # has the literal "canonical" — normalize before comparing.
+        return re.sub(rb'_SOURCE_SHA256 = "[0-9a-f]+"',
+                      rb'_SOURCE_SHA256 = "canonical"',
+                      p.read_bytes())
+    canon = _norm(ROOT / "scripts" / "installkit" / "forge_installkit.py")
+    vend = _norm(ROOT / "src" / "theforge" / "_installkit.py")
     assert hashlib.sha256(vend).digest() == hashlib.sha256(canon).digest()
 
 
@@ -209,3 +217,32 @@ def test_installations_list_reads_registry(forge_home: Path) -> None:
         '{"forge_id": "x", "version": "1.0.0"}', "utf-8")
     rows = service.installations()
     assert [r["forge_id"] for r in rows] == ["x"]
+
+
+def test_delegated_cmd_install_command_template() -> None:
+    """A forge whose package boundary forbids the install engine registers
+    an ``install_command`` argv template — {python}/{checkout} resolve to
+    the manifest's venv interpreter and source path."""
+    manifest = {
+        "forge_id": "forge-doctor-api",
+        "cli": {"name": "forge-doctor-api"},
+        "venv": "C:/v/fda",
+        "source": {"path": "E:/checkouts/forge-doctor-api"},
+        "install_command": ["{python}",
+                            "{checkout}/scripts/forge_install.py"],
+    }
+    argv = service._delegated_cmd(manifest, "project", Path("T"), True)
+    assert argv[2:5] == ["install", "--scope", "project"]
+    assert argv[-1] == "--dry-run"
+    assert "forge_install.py" in argv[1]
+    assert argv[1].startswith("E:/checkouts/forge-doctor-api")
+    # venv python missing on disk -> sys.executable fallback
+    assert argv[0] == sys.executable
+
+
+def test_delegated_cmd_default_cli() -> None:
+    argv = service._delegated_cmd(
+        {"forge_id": "x", "cli": {"name": "x-cli"}},
+        "user", Path("T"), False)
+    assert argv[0] == "x-cli"
+    assert argv[-1] == "--yes"

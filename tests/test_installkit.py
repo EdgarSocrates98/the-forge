@@ -194,6 +194,56 @@ def test_repair_restores_drifted_managed(tmp_path):
     assert f.read_bytes() == b"# demo skill\n"
 
 
+def test_marker_user_text_is_not_drift(tmp_path):
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    ag = tmp_path / "AGENTS.md"
+    ag.write_text(ag.read_text(encoding="utf-8") + "\n# user notes\n",
+                  encoding="utf-8")
+    st = kit.status(ctx)
+    assert st["drift"]["modified"] == []
+    assert st["status"] == "healthy"
+
+
+def test_repair_heals_damaged_marker_block(tmp_path):
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    ag = tmp_path / "AGENTS.md"
+    ag.write_text("# user notes\n\n(corrupted block)\n", encoding="utf-8")
+    out = kit.repair(ctx)
+    assert "AGENTS.md" in out["repaired"]
+    txt = ag.read_text(encoding="utf-8")
+    assert "# user notes" in txt  # user content survives
+    assert "forge-test:managed:begin" in txt
+    assert kit.status(ctx)["status"] == "healthy"
+
+
+def test_repair_restores_missing_mcp_key_preserving_users(tmp_path):
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    mcp = tmp_path / ".mcp.json"
+    doc = json.loads(mcp.read_text())
+    doc["mcpServers"].pop("forge-test")
+    doc["mcpServers"]["other"] = {"command": "x"}
+    mcp.write_text(json.dumps(doc))
+    out = kit.repair(ctx)
+    assert ".mcp.json" in out["repaired"]
+    new = json.loads(mcp.read_text())
+    assert new["mcpServers"]["forge-test"]["command"] == "forge-test"
+    assert new["mcpServers"]["other"] == {"command": "x"}
+    assert kit.status(ctx)["status"] == "healthy"
+
+
+def test_repair_restores_missing_managed_asset(tmp_path):
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    f = tmp_path / ".agents/skills/demo/SKILL.md"
+    f.unlink()
+    out = kit.repair(ctx)
+    assert ".agents/skills/demo/SKILL.md" in out["repaired"]
+    assert f.read_bytes() == b"# demo skill\n"
+
+
 def test_uninstall_removes_only_owned(tmp_path):
     # foreign file at a managed path is kept; owned file removed
     foreign = tmp_path / ".agents/skills/foreign/SKILL.md"

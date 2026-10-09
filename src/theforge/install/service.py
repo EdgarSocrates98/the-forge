@@ -10,6 +10,7 @@ installs itself. Stdlib-only; the only subprocess use is the explicit
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -173,6 +174,31 @@ def installations() -> list[dict[str, Any]]:
     return kit.installed_forges()
 
 
+def _delegated_cmd(manifest: dict[str, Any], scope: str, target: Path,
+                   dry_run: bool) -> list[str]:
+    """Argv for delegating ``install`` to a sibling forge. Most forges
+    expose ``<cli> install``; a manifest may instead carry
+    ``install_command`` — an argv template where ``{python}`` resolves to
+    the forge's registered venv interpreter and ``{checkout}`` to its
+    registered source path (used by forges whose package boundary forbids
+    the install engine, e.g. forge-doctor-api)."""
+    tpl = manifest.get("install_command")
+    if tpl:
+        venv = manifest.get("venv") or ""
+        py = Path(venv) / ("Scripts/python.exe" if os.name == "nt"
+                           else "bin/python")
+        checkout = str((manifest.get("source") or {}).get("path") or ".")
+        argv = [a.replace("{python}",
+                          str(py) if py.exists() else sys.executable)
+                .replace("{checkout}", checkout) for a in tpl]
+    else:
+        cli = str((manifest.get("cli") or {}).get("name")
+                  or manifest.get("forge_id"))
+        argv = [cli]
+    return argv + ["install", "--scope", scope, "--root", str(target),
+                   "--dry-run" if dry_run else "--yes"]
+
+
 def install_auto(*, scope: str = "project", root: Path | None = None,
                  yes: bool = False, dry_run: bool = False,
                  forge: str | None = None,
@@ -203,8 +229,6 @@ def install_auto(*, scope: str = "project", root: Path | None = None,
                 "verification": {"status": "FAIL"}, "status": "failed",
                 "created_at": kit._utc_now()}
     for manifest in found:
-        cli = ((manifest.get("cli") or {}).get("name")
-               or manifest.get("forge_id"))
         fid = manifest.get("forge_id", "?")
         if fid == FORGE_ID:
             out = (install(scope=scope, root=target, yes=yes, dry_run=dry_run)
@@ -217,8 +241,7 @@ def install_auto(*, scope: str = "project", root: Path | None = None,
                            ("completed", "planned") else "FAIL",
                            "detail": out.get("status")})
             continue
-        cmd = [str(cli), "install", "--scope", scope, "--root", str(target)]
-        cmd.append("--dry-run" if dry_run else "--yes")
+        cmd = _delegated_cmd(manifest, scope, target, dry_run)
         if not (yes or dry_run):
             results.append({"forge_id": fid, "status": "refused",
                             "detail": "sem --yes"})
@@ -226,11 +249,15 @@ def install_auto(*, scope: str = "project", root: Path | None = None,
                            "detail": "approval gate — sem --yes"})
             continue
         import shutil
-        if shutil.which(str(cli)) is None:
+        exe = cmd[0]
+        probe_ok = (Path(exe).exists()
+                    if Path(exe).is_absolute() or os.sep in exe
+                    else shutil.which(exe) is not None)
+        if not probe_ok:
             results.append({"forge_id": fid, "status": "blocked",
-                            "detail": f"cli {cli} nao resolvido no PATH"})
+                            "detail": f"{exe} nao resolvido"})
             checks.append({"id": f"forge:{fid}", "status": "BLOCKED",
-                           "detail": f"{cli} nao encontrado"})
+                           "detail": f"{exe} nao encontrado"})
             continue
         if dry_run:
             results.append({"forge_id": fid, "status": "planned",
