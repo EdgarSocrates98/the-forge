@@ -652,26 +652,39 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
     try:
         if verb == "apply":
             out = service.install(
-                args.host, scope=args.scope, root=root, profile=args.profile,
-                yes=args.yes, dry_run=args.dry_run)
+                args.host,
+                scope=args.scope,
+                root=root,
+                profile=args.profile,
+                yes=args.yes,
+                dry_run=args.dry_run,
+            )
         elif verb == "status":
             out = service.status(scope=args.scope, root=root)
         elif verb == "doctor":
             out = service.doctor(scope=args.scope, root=root)
         elif verb == "repair":
-            out = service.repair(scope=args.scope, root=root,
-                                 dry_run=args.dry_run)
+            out = service.repair(scope=args.scope, root=root, dry_run=args.dry_run)
         elif verb == "uninstall":
-            out = service.uninstall(scope=args.scope, root=root,
-                                    purge=args.purge, dry_run=args.dry_run)
+            out = service.uninstall(
+                scope=args.scope, root=root, purge=args.purge, dry_run=args.dry_run
+            )
         elif verb == "update":
-            out = service.update(to=args.to,
-                                 repo=Path(args.repo) if args.repo else None,
-                                 dry_run=args.dry_run)
+            out = service.update(
+                to=args.to, repo=Path(args.repo) if args.repo else None, dry_run=args.dry_run
+            )
         elif verb == "auto":
-            out = service.install_auto(scope=args.scope, root=root,
-                                       yes=args.yes, dry_run=args.dry_run,
-                                       forge=args.forge)
+            members = tuple(getattr(args, "member", ()) or ())
+            if members and args.scope != "workspace":
+                raise UsageError("--member only applies to install auto --scope workspace")
+            out = service.install_auto(
+                scope=args.scope,
+                root=root,
+                yes=args.yes,
+                dry_run=args.dry_run,
+                forge=args.forge,
+                members=members,
+            )
         elif verb == "mcp-verify":
             out = kit.mcp_verify(service._spec())
         else:
@@ -681,16 +694,14 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
         _emit(args, out, render.install_doc)
         return 4
     _emit(args, out, render.install_doc)
-    return 0 if out.get("status") in ("completed", "planned", "healthy",
-                                      "unverified") else 1
+    return 0 if out.get("status") in ("completed", "planned", "healthy", "unverified") else 1
 
 
 def cmd_installations(args: argparse.Namespace) -> int:
     """``installations list`` — the bootstrap registry (read-only)."""
     from theforge.install import service
 
-    _emit(args, {"installations": service.installations()},
-          render.installations)
+    _emit(args, {"installations": service.installations()}, render.installations)
     return 0
 
 

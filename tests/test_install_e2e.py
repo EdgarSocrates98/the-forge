@@ -17,8 +17,11 @@ def cli(root: Path, *args: str, home: Path | None = None) -> subprocess.Complete
         env["FORGE_HOME_OVERRIDE"] = str(home)
     return subprocess.run(
         [sys.executable, "-m", "theforge", *args, "--root", str(root)],
-        capture_output=True, text=True, encoding="utf-8",
-        timeout=120, env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        env=env,
     )
 
 
@@ -68,7 +71,8 @@ def test_auto_dry_run(target: Path, tmp_path: Path) -> None:
     home = tmp_path / "home"
     (home / ".forge" / "installations").mkdir(parents=True)
     (home / ".forge" / "installations" / "the-forge.json").write_text(
-        '{"forge_id": "the-forge", "cli": {"name": "theforge"}}', "utf-8")
+        '{"forge_id": "the-forge", "cli": {"name": "theforge"}}', "utf-8"
+    )
     proc = cli(target, "install", "auto", "--dry-run", home=home)
     assert proc.returncode == 0
     assert "planned" in proc.stdout

@@ -102,6 +102,38 @@ Workspace-scope record: which forges are projected into this repo's
 `.agents/`/`.claude/`/`.devin/` surfaces and from where. Lets a second
 project in the same workspace install without clobbering sibling state.
 
+### 4.1 Workspace semantics (orchestrator)
+
+`theforge install auto --scope workspace` treats the resolved root as a
+*container* of independent repositories, never as a monorepo:
+
+- **Discovery** — members are directories containing `.git`, found up to
+  2 levels deep, sorted, hidden directories skipped (`.git` internals
+  never walked). The root itself counts when it is a repository.
+- **Isolation** — each member keeps its own `.git`, ledgers and state
+  dirs. The workspace fan-out never writes inside a member unless the
+  member was explicitly selected.
+- **Fan-out** — by default every registered forge installs its shared
+  assets at the workspace *root* only. `--member <relpath>` (repeatable)
+  additionally delegates `install --scope project --root <member>` to
+  each registered forge, through the same governed argv as the
+  workspace-level delegation.
+- **Precedence** — `project` > `workspace` > `user`. A member that
+  already carries a project-scope install for a forge (its own
+  `.mcp.json` managed key or `<forge>:managed` marker block in
+  `AGENTS.md`) keeps that local install: the workspace install
+  *specializes*, it never silently widens permissions or clobbers local
+  state. The decision is reported under
+  `workspace.conflicts[]` as `{member, forge_id, decision, detail}` —
+  explainable, never silent.
+- **Unknown members** — `--member` names that are not discovered repos
+  are reported under `workspace.unknown_members[]`; they are never
+  created or treated as install targets.
+- **Manifest** — after any successful delegation, the orchestrator writes
+  `<ws>/.forge/workspace-install.json` (`forge/WorkspaceInstall/v1`).
+  Repeated runs merge `projects[]` keyed on `(path, forge_id)` and
+  preserve `created_at`; `updated_at` moves. `dry_run` writes nothing.
+
 ## 5. CLI surface (normative)
 
 Every Forge implements the verb family; unsupported ops return a

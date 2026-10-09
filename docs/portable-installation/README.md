@@ -61,7 +61,7 @@ their own richer state (`~/.sparkforge-aws/`, `~/.platformforge/`…) — the
 |---|---|---|---|
 | spark-forge-aws | `sparkforge-aws install` | full | host mirrors + native integrate bridge |
 | api-forge | `apiforge install` | full | wheel-bundled mirrors |
-| the-forge | `theforge install` / `install auto` | full + orchestrator | `install_command` delegation honored |
+| the-forge | `theforge install` / `install auto` | full + orchestrator | `install_command` delegation honored; `--scope workspace` discovers member repos, `--member` fans out |
 | spark-forge-azure | `sparkforge-azure install` | full | adapter over native distribution ledger |
 | platform-forge | `platformforge install` | full | preserves user-modified managed files |
 | forge-doctor-data | `forge-doctor-data install` | full | no host mirrors published |

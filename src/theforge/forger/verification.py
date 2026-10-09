@@ -53,7 +53,12 @@ NO_INDEPENDENT_VERIFIER: Final = "no independent verifier for this capability"
 # "<prefix>: <verifier id>".
 INDEPENDENT_FAILED_LIMITATION: Final = "independent verification failed"
 _EPISTEMIC_ORDER: Final[tuple[Epistemic, ...]] = (
-    "confirmed", "observed", "inferred", "proposed", "unresolved")
+    "confirmed",
+    "observed",
+    "inferred",
+    "proposed",
+    "unresolved",
+)
 
 
 def _self_report(response_status: str | None) -> VerificationCheck:

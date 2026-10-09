@@ -1672,9 +1672,7 @@ def replay(data: dict[str, Any]) -> str:
 def install_doc(data: dict[str, Any]) -> str:
     """forge/* receipt / health / plan document (ADR-0058)."""
     op = data.get("operation", _clean(data.get("command", "install")))
-    lines = [
-        f"{_clean(data.get('forge_id'))} {op} - {_clean(data.get('status'))}"
-    ]
+    lines = [f"{_clean(data.get('forge_id'))} {op} - {_clean(data.get('status'))}"]
     if data.get("target_root"):
         lines.append(f"target: {_clean(data['target_root'])}")
     for c in data.get("checks") or []:
@@ -1692,6 +1690,27 @@ def install_doc(data: dict[str, Any]) -> str:
             f"{len(drift.get('modified') or [])} modified, "
             f"{len(drift.get('missing') or [])} missing"
         )
+    ws = data.get("workspace")
+    if isinstance(ws, dict):
+        members = ws.get("members") or []
+        lines.append(f"workspace: {len(members)} member repo(s) discovered")
+        for m in members:
+            lines.append(f"  member {_clean(m.get('path'))}")
+        for c in ws.get("conflicts") or []:
+            lines.append(
+                f"  precedence {_clean(c.get('member'))}/"
+                f"{_clean(c.get('forge_id'))}: {_clean(c.get('decision'))}"
+            )
+        for m in ws.get("unknown_members") or []:
+            lines.append(f"  member {_clean(m)}: not a discovered repo")
+        for r in ws.get("member_results") or []:
+            line = f"  member-result {_clean(r.get('member'))}"
+            if r.get("forge_id"):
+                line += f"/{_clean(r['forge_id'])}"
+            line += f": {_clean(r.get('status'))}"
+            if r.get("detail"):
+                line += f"  {_detail(r['detail'])}"
+            lines.append(line)
     if data.get("error"):
         err = data["error"]
         lines.append(f"refused: {_clean(err.get('kind'))}: {_detail(err.get('detail'))}")

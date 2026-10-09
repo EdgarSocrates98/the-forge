@@ -213,29 +213,46 @@ def build_parser() -> argparse.ArgumentParser:
         ("repair", "restore managed assets that drifted or went missing"),
         ("uninstall", "remove only what the ledger declares as managed"),
         ("update", "upgrade the bootstrap-installed runtime (pinned only)"),
-        ("auto", "delegate install to every forge in ~/.forge/installations"),
+        (
+            "auto",
+            "delegate install to every registered forge; --scope "
+            "workspace discovers sibling repos, --member fans out",
+        ),
         ("mcp-verify", "real JSON-RPC handshake against the MCP server"),
     ):
         p = install.add_parser(name, parents=[common], help=help_text)
         if name in ("apply", "status", "doctor", "repair", "uninstall", "auto"):
-            p.add_argument("--scope", choices=("project", "workspace", "user"),
-                           default="project")
+            p.add_argument("--scope", choices=("project", "workspace", "user"), default="project")
         if name in ("apply", "auto"):
-            p.add_argument("--yes", "-y", action="store_true",
-                           help="explicit approval — required for any write")
+            p.add_argument(
+                "--yes",
+                "-y",
+                action="store_true",
+                help="explicit approval — required for any write",
+            )
         if name == "auto":
-            p.add_argument("--forge", default=None,
-                           help="limit delegation to one registered forge id")
+            p.add_argument(
+                "--forge", default=None, help="limit delegation to one registered forge id"
+            )
+            p.add_argument(
+                "--member",
+                action="append",
+                default=[],
+                metavar="RELPATH",
+                help="workspace scope: also delegate a project "
+                "install into this member repo (repeatable)",
+            )
         if name == "apply":
-            p.add_argument("--host", default="all",
-                           choices=("claude", "devin", "codex", "copilot", "all"))
-            p.add_argument("--profile", default="recommended",
-                           choices=("minimal", "recommended", "full"))
+            p.add_argument(
+                "--host", default="all", choices=("claude", "devin", "codex", "copilot", "all")
+            )
+            p.add_argument(
+                "--profile", default="recommended", choices=("minimal", "recommended", "full")
+            )
         if name in ("apply", "repair", "uninstall", "update", "auto"):
             p.add_argument("--dry-run", action="store_true")
         if name == "uninstall":
-            p.add_argument("--purge", action="store_true",
-                           help="also delete .forge/install state")
+            p.add_argument("--purge", action="store_true", help="also delete .forge/install state")
         if name == "update":
             p.add_argument("--to", default=None, help="pinned version — never 'latest'")
             p.add_argument("--repo", default=None)
@@ -246,7 +263,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="bootstrap installation registry (~/.forge/installations)",
     ).add_subparsers(dest="installations_command", required=True)
     installations.add_parser("list", parents=[common]).set_defaults(
-        handler=commands.cmd_installations)
+        handler=commands.cmd_installations
+    )
 
     graph = sub.add_parser(
         "graph",

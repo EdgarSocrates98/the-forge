@@ -60,12 +60,12 @@ exit $LASTEXITCODE
 
 def _vendored(src: Path, sha: str) -> bytes:
     body = src.read_bytes()
-    return body.replace(b'_SOURCE_SHA256 = "canonical"',
-                        f'_SOURCE_SHA256 = "{sha}"'.encode())
+    return body.replace(b'_SOURCE_SHA256 = "canonical"', f'_SOURCE_SHA256 = "{sha}"'.encode())
 
 
-def vendor(repo: Path, *, config: dict[str, Any] | None,
-           installkit_pkg: str | None, check: bool) -> int:
+def vendor(
+    repo: Path, *, config: dict[str, Any] | None, installkit_pkg: str | None, check: bool
+) -> int:
     canon_sha = _sha(CANON_BOOTSTRAP.read_bytes())[:16]
     written, drifted, errors = [], [], []
 
@@ -102,8 +102,7 @@ def vendor(repo: Path, *, config: dict[str, Any] | None,
 
     if installkit_pkg:
         kit_sha = _sha(CANON_INSTALLKIT.read_bytes())[:16]
-        put(f"{installkit_pkg}/_installkit.py",
-            _vendored(CANON_INSTALLKIT, kit_sha))
+        put(f"{installkit_pkg}/_installkit.py", _vendored(CANON_INSTALLKIT, kit_sha))
 
     if check:
         for rel in drifted:
@@ -120,17 +119,14 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("repo", type=Path)
     ap.add_argument("--config", help="JSON string or @file for forge.json")
-    ap.add_argument("--installkit-pkg", default=None,
-                    help="package dir to receive _installkit.py")
+    ap.add_argument("--installkit-pkg", default=None, help="package dir to receive _installkit.py")
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
     config = None
     if args.config:
         raw = args.config
-        config = json.loads(Path(raw[1:]).read_text()
-                            if raw.startswith("@") else raw)
-    return vendor(args.repo, config=config,
-                  installkit_pkg=args.installkit_pkg, check=args.check)
+        config = json.loads(Path(raw[1:]).read_text() if raw.startswith("@") else raw)
+    return vendor(args.repo, config=config, installkit_pkg=args.installkit_pkg, check=args.check)
 
 
 if __name__ == "__main__":

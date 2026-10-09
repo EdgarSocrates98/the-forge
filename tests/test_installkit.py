@@ -35,9 +35,12 @@ def _spec(**kw) -> kit.ForgeSpec:
         return assets
 
     base = dict(
-        forge_id="forge-test", package="forge_test",
-        distribution="forge-test", cli_name="forge-test",
-        python_spec=">=3.10", state_dir=".forge-test",
+        forge_id="forge-test",
+        package="forge_test",
+        distribution="forge-test",
+        cli_name="forge-test",
+        python_spec=">=3.10",
+        state_dir=".forge-test",
         mcp_command=("forge-test", "mcp", "serve"),
         mcp_server_name="forge-test",
         marker_body="**forge-test** is installed in this project.",
@@ -49,22 +52,25 @@ def _spec(**kw) -> kit.ForgeSpec:
 
 
 def _ctx(tmp_path: Path, scope: str = "project", **kw) -> kit.InstallContext:
-    spec = _spec(**{k: v for k, v in kw.items()
-                    if k in ("mcp_server_name", "spawn_ok")})
-    kw2 = {k: v for k, v in kw.items()
-           if k not in ("mcp_server_name", "spawn_ok")}
+    spec = _spec(**{k: v for k, v in kw.items() if k in ("mcp_server_name", "spawn_ok")})
+    kw2 = {k: v for k, v in kw.items() if k not in ("mcp_server_name", "spawn_ok")}
     cwd = kw2.pop("cwd", tmp_path)
     root = kit.resolve_scope(spec, scope, cwd, kw2.pop("root", tmp_path))
     state = kit.state_dir_for(spec, scope, root)
     return kit.InstallContext(
-        spec=spec, scope=scope, root=root, state_dir=state,
+        spec=spec,
+        scope=scope,
+        root=root,
+        state_dir=state,
         profile=kw2.pop("profile", "recommended"),
         hosts=kw2.pop("hosts", ("claude", "devin")),
         dry_run=kw2.pop("dry_run", False),
-        ledger=kit.Ledger.load(state))
+        ledger=kit.Ledger.load(state),
+    )
 
 
 # --- scope + validation -------------------------------------------------
+
 
 def test_scope_unknown_refuses(tmp_path):
     with pytest.raises(kit.InstallError) as e:
@@ -96,6 +102,7 @@ def test_dry_run_never_writes(tmp_path):
 
 # --- install lifecycle ---------------------------------------------------
 
+
 def test_install_writes_owned_files(tmp_path):
     ctx = _ctx(tmp_path)
     rcpt = kit.apply_install(ctx, approved=True)
@@ -113,8 +120,7 @@ def test_install_is_idempotent(tmp_path):
     kit.apply_install(ctx, approved=True)
     after = kit.Ledger.load(ctx.state_dir).entries()
     assert before.keys() == after.keys()
-    unchanged = [p for p, e in after.items()
-                 if e["action"] in ("unchanged", "adopted")]
+    unchanged = [p for p, e in after.items() if e["action"] in ("unchanged", "adopted")]
     assert unchanged  # second run adopts, doesn't rewrite
 
 
@@ -136,8 +142,7 @@ def test_install_never_overwrites_foreign_file(tmp_path):
     ctx = _ctx(tmp_path)
     rcpt = kit.apply_install(ctx, approved=True)
     assert p.read_bytes() == b"# user-authored, different\n"
-    skipped = [f for f in rcpt["managed_files"]
-               if f["path"] == ".agents/skills/demo/SKILL.md"]
+    skipped = [f for f in rcpt["managed_files"] if f["path"] == ".agents/skills/demo/SKILL.md"]
     assert skipped and skipped[0]["action"] == "unchanged"
 
 
@@ -155,8 +160,7 @@ def test_marker_block_coexists_with_user_content(tmp_path):
 
 def test_mcp_managed_key_preserves_other_servers(tmp_path):
     mcp = tmp_path / ".mcp.json"
-    mcp.write_text(json.dumps({"mcpServers": {"other": {"command": "x"}},
-                               "unrelated": True}))
+    mcp.write_text(json.dumps({"mcpServers": {"other": {"command": "x"}}, "unrelated": True}))
     ctx = _ctx(tmp_path)
     kit.apply_install(ctx, approved=True)
     doc = json.loads(mcp.read_text())
@@ -166,6 +170,7 @@ def test_mcp_managed_key_preserves_other_servers(tmp_path):
 
 
 # --- status / doctor / repair / uninstall --------------------------------
+
 
 def test_status_healthy_after_install(tmp_path):
     ctx = _ctx(tmp_path)
@@ -198,8 +203,7 @@ def test_marker_user_text_is_not_drift(tmp_path):
     ctx = _ctx(tmp_path)
     kit.apply_install(ctx, approved=True)
     ag = tmp_path / "AGENTS.md"
-    ag.write_text(ag.read_text(encoding="utf-8") + "\n# user notes\n",
-                  encoding="utf-8")
+    ag.write_text(ag.read_text(encoding="utf-8") + "\n# user notes\n", encoding="utf-8")
     st = kit.status(ctx)
     assert st["drift"]["modified"] == []
     assert st["status"] == "healthy"
@@ -279,20 +283,39 @@ def test_lock_refuses_concurrent(tmp_path):
 def test_receipt_shape_conforms(tmp_path):
     ctx = _ctx(tmp_path)
     rcpt = kit.apply_install(ctx, approved=True)
-    for key in ("schema", "receipt_id", "forge_id", "operation", "scope",
-                "target_root", "managed_files", "checks", "verification",
-                "status", "created_at"):
+    for key in (
+        "schema",
+        "receipt_id",
+        "forge_id",
+        "operation",
+        "scope",
+        "target_root",
+        "managed_files",
+        "checks",
+        "verification",
+        "status",
+        "created_at",
+    ):
         assert key in rcpt, key
     assert rcpt["schema"] == "forge/InstallReceipt/v1"
     assert rcpt["verification"]["status"] in (
-        "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE")
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "UNVERIFIED",
+        "NOT_APPLICABLE",
+    )
 
 
 def test_manifest_shape(tmp_path):
-    doc = kit.manifest_for(_spec(), install_root=tmp_path / "i",
-                           venv=tmp_path / "v", version="1.0.0",
-                           source={"kind": "git-checkout", "path": "x"},
-                           shim=tmp_path / "bin" / "x")
+    doc = kit.manifest_for(
+        _spec(),
+        install_root=tmp_path / "i",
+        venv=tmp_path / "v",
+        version="1.0.0",
+        source={"kind": "git-checkout", "path": "x"},
+        shim=tmp_path / "bin" / "x",
+    )
     assert doc["schema"] == "forge/InstallationManifest/v1"
     assert doc["forge_id"] == "forge-test"
     assert doc["mcp"]["verified"] is False
@@ -323,3 +346,36 @@ def test_mcp_verify_blocked_when_spawn_off(tmp_path):
     spec = _spec(spawn_ok=False)
     check = kit.mcp_verify(spec)
     assert check["status"] == "BLOCKED"
+
+
+def test_discover_projects_finds_repos(tmp_path):
+    ws = tmp_path / "ws"
+    for name in ("a", "b"):
+        (ws / name / ".git").mkdir(parents=True)
+    (ws / "not-a-repo").mkdir(parents=True)
+    (ws / ".hidden" / ".git").mkdir(parents=True)
+    assert kit.discover_projects(ws) == sorted((ws / n).resolve() for n in ("a", "b"))
+
+
+def test_discover_projects_includes_root_repo(tmp_path):
+    ws = tmp_path / "ws"
+    (ws / ".git").mkdir(parents=True)
+    (ws / "child" / ".git").mkdir(parents=True)
+    found = kit.discover_projects(ws)
+    assert found == [ws.resolve(), (ws / "child").resolve()]
+
+
+def test_discover_projects_never_descends_into_repo(tmp_path):
+    ws = tmp_path / "ws"
+    (ws / "outer" / ".git").mkdir(parents=True)
+    (ws / "outer" / "nested" / ".git").mkdir(parents=True)
+    assert kit.discover_projects(ws) == [(ws / "outer").resolve()]
+
+
+def test_member_precedence(tmp_path):
+    spec = _spec()
+    member = tmp_path / "m"
+    member.mkdir()
+    assert kit.member_precedence(member, spec) is None
+    (member / ".mcp.json").write_text('{"mcpServers": {"forge-test": {}}}', "utf-8")
+    assert kit.member_precedence(member, spec) == "project"
