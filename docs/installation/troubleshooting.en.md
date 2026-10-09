@@ -12,3 +12,5 @@
 | stale/partial install | `uninstall` removes only ledger-owned files; `status`/`doctor` show the truth |
 
 Português: [troubleshooting.md](troubleshooting.md).
+
+Códigos de erro canônicos: [docs/errors.md](../errors.md).

@@ -88,3 +88,5 @@ lista as forjas especialistas e o que cada uma oferece.
 | MCP `FAIL` com stderr | dependência ausente (ex.: extra `mcp`) | instale o extra e repita `mcp-verify` |
 
 Mais: [../installation/troubleshooting.md](../installation/troubleshooting.md).
+
+Canonical error list: [docs/errors.md](../errors.md).

@@ -114,6 +114,7 @@ Mapa completo por preocupação em [docs/README.md](docs/README.md). Principais:
 - [Versionamento e compatibilidade](docs/versioning.md)
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
+- [Control plane](docs/control-plane.md) (lifecycle dos especialistas, detecção/ativação de hosts, delegação real)
 - [Códigos de erro](docs/errors.md) (lista canônica dos códigos `FORGE-*`)
 - [Semântica de falha](docs/failure-semantics.md) (modos de falha → código, superfície, recuperação)
 - [Ontologia compartilhada](docs/ontology.md) (vocabulário epistêmico e proveniência entre providers)
@@ -155,7 +156,7 @@ DX (Standard v1): [handbook do ecossistema](docs/handbook.md) ·
 - [Índice de ADRs](docs/adr/README.md) e [índice de relatórios](docs/reports/README.md)
 - [Relatório do Cycle 5.1](docs/reports/cycle-5.1.md) (reality sync, benchmarks B01–B15, Memory ROI, freeze)
 - [Relatório do Cycle 5](docs/reports/cycle-5.md) (Federated Engineering Intelligence: memory, targets, remote trust, strategy governance)
-- [Relatório do Cycle 4.1](docs/reports/cycle-4.1.md) (closure, Global Stop, trace federation e adaptive learning)
+- [Relatório do Cycle 4.1](docs/reports/cycle-4.1.md) (closure, Global Stop, trace federation e adaptive learning) — Cycle 4.1: CLOSED_LOCALLY / REMOTE_VALIDATION_BLOCKED on `0.5.0`
 - [Changelog](CHANGELOG.md) e [release checklist](docs/release-checklist.md) (versionamento e fechamento evidence-based)
 - [Validation state policy](docs/validation-state-policy.md) (distingue REMOTE_BLOCKED de REMOTE_FAILED sem inventar green/red)
 - [Relatório do Cycle 4](docs/reports/cycle-4.md) (Capability Mesh: negociação, discovery, economia adaptativa, A2A/MCP, hardening; provas de realidade)

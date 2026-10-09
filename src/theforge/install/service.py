@@ -249,7 +249,7 @@ def _delegated_cmd(manifest: dict[str, Any], scope: str, target: Path, dry_run: 
     ``install_command`` — an argv template where ``{python}`` resolves to
     the forge's registered venv interpreter and ``{checkout}`` to its
     registered source path (used by forges whose package boundary forbids
-    the install engine, e.g. forge-doctor-api)."""
+    the install engine, e.g. RC-locked CLIs that install via a script)."""
     tpl = manifest.get("install_command")
     if tpl:
         venv = manifest.get("venv") or ""
