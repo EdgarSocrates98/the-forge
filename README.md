@@ -114,6 +114,7 @@ Mapa completo por preocupação em [docs/README.md](docs/README.md). Principais:
 - [Versionamento e compatibilidade](docs/versioning.md)
 - [Segurança](docs/security.md)
 - [CLI](docs/cli.md)
+- [Control plane](docs/control-plane.md) (lifecycle dos especialistas, detecção/ativação de hosts, delegação real)
 - [Códigos de erro](docs/errors.md) (lista canônica dos códigos `FORGE-*`)
 - [Semântica de falha](docs/failure-semantics.md) (modos de falha → código, superfície, recuperação)
 - [Ontologia compartilhada](docs/ontology.md) (vocabulário epistêmico e proveniência entre providers)

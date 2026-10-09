@@ -42,6 +42,16 @@ workspace (scope `workspace`, `--member` para fan-out). `theforge
 providers` e `theforge ask` roteiam para o especialista certo — o piso é
 sempre o CLI da forja, que funciona sem o The Forge.
 
+## Control plane
+
+`theforge specialists list` mostra o ciclo de vida real de cada forja
+(NOT_INSTALLED → INSTALLED → CONFIGURED → REGISTERED → HEALTHY), a partir
+de evidência — registry de instalações, probe do CLI e checkouts locais.
+`theforge hosts list` detecta os hosts de IA com `confidence_basis`;
+`theforge task run "<intent>"` delega trabalho real via argv do
+especialista (stages honestos: COMPLETED só com exit_code).
+Detalhe: `docs/control-plane.md`.
+
 ## Hosts de IA
 
 - **Claude Code**: skills em `.claude/skills/`, agents em `.claude/agents/`,
