@@ -128,6 +128,7 @@ required = [
     "theforge/<Name>/v1", "python -m theforge.contracts.schema schemas",
     "python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure",
     "python -m pytest", "python -m pytest -m slow", "ruff check .", "mypy",
+    "python scripts/check_gates.py",
 ]
 
 # Size budgets in UTF-8 bytes with LF line endings (docs/agentic.md, "Orçamentos de tamanho").

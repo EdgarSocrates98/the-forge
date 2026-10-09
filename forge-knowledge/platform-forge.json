@@ -11,43 +11,70 @@
   "python": ">=3.10",
   "appropriate_for": [
     "repository/platform posture: GHA workflows, k8s manifests, IaC, GitOps state, service catalog",
-    "secrets scanning of a repo tree (with the staging boundary — see limitations)",
+    "secrets scanning of a repo tree (with the staging boundary \u00e2\u20ac\u201d see limitations)",
     "developer-experience / golden-path / SRE evidence collection"
   ],
   "inappropriate_for": [
-    "Spark or cloud-data engineering — route to the spark-engineering family",
-    "API contract design — route to api-forge",
-    "verifying its own output — use an independent doctor"
+    "Spark or cloud-data engineering \u00e2\u20ac\u201d route to the spark-engineering family",
+    "API contract design \u00e2\u20ac\u201d route to api-forge",
+    "verifying its own output \u00e2\u20ac\u201d use an independent doctor"
   ],
   "intents": [
-    "github actions workflow", "kubernetes manifest", "gitops drift",
-    "iac posture", "secrets scan", "service catalog", "golden path", "sre slo"
+    "github actions workflow",
+    "kubernetes manifest",
+    "gitops drift",
+    "iac posture",
+    "secrets scan",
+    "service catalog",
+    "golden path",
+    "sre slo"
   ],
   "technologies": [
-    "github actions", "kubernetes", "gitops", "terraform", "iac", "observability", "opentelemetry", "backstage"
+    "github actions",
+    "kubernetes",
+    "gitops",
+    "terraform",
+    "iac",
+    "observability",
+    "opentelemetry",
+    "backstage"
   ],
-  "environments": ["local", "github"],
+  "environments": [
+    "local",
+    "github"
+  ],
   "install": [
     {
       "kind": "venv-pip",
       "command": "python3.11 -m venv <platform-venv> && <platform-python> -m pip install --upgrade pip && <platform-python> -m pip install \"platformforge>=0.1,<0.2\" <the-forge>/adapters/platformforge",
       "verify": "<platform-python> -c \"import platformforge, theforge_platformforge\"",
-      "prerequisites": ["python>=3.10", "pip"]
+      "prerequisites": [
+        "python>=3.10",
+        "pip"
+      ]
     },
     {
       "kind": "editable",
       "command": "<platform-python> -m pip install -e <checkout-platform-forge> -e <the-forge>/adapters/platformforge",
       "verify": "<platform-python> -c \"import platformforge, theforge_platformforge\"",
-      "prerequisites": ["local checkout of platform-forge", "python>=3.10"]
+      "prerequisites": [
+        "local checkout of platform-forge",
+        "python>=3.10"
+      ]
     }
   ],
   "verify_install": "<platform-python> -c \"import platformforge, theforge_platformforge\"",
   "discover_command": "theforge providers add platform-forge --python <platform-python>",
-  "preferred_verifiers": ["forge-doctor-data"],
+  "preferred_verifiers": [
+    "forge-doctor-data"
+  ],
   "independent_verification": true,
-  "composes_with": ["api-forge", "forge-doctor-data"],
+  "composes_with": [
+    "api-forge",
+    "forge-doctor-data"
+  ],
   "fallback": [],
-  "limitations_note": "secrets.scan only sees what the core stages: secret-bearing inputs (.env and friends) are excluded by staging with reason 'secret' before the specialist runs — a 0-facts result means the boundary held, not that the repo is clean.",
+  "limitations_note": "secrets.scan only sees what the core stages: secret-bearing inputs (.env and friends) are excluded by staging with reason 'secret' before the specialist runs \u00e2\u20ac\u201d a 0-facts result means the boundary held, not that the repo is clean.",
   "examples": [
     "analyze this repo's GitHub Actions posture",
     "scan the staged tree for secrets",

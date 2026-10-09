@@ -8,6 +8,28 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### Dogfooding hardening (pós-0.5.0)
+
+Melhorias de atrito real observadas no uso da própria plataforma — sem
+features novas, na linha do Feature Freeze:
+
+- `forge-knowledge/`: `tested_surface` agora medido para os seis
+  especialistas via registry live (era 1/6 — drift de superfície era
+  indetectável em cinco). `theforge knowledge check` reporta
+  `surface=match` ×6.
+- `tests/conftest.py`: `basetemp` ganha sufixo por PID + sweep no fim da
+  sessão — duas suítes concorrentes não colidem mais em `.pytest_tmp`
+  (`FileExistsError` observado 2×; `.gitignore` já cobria `.pytest_tmp*/`).
+- `scripts/check_gates.py`: agregador stdlib-only dos gates locais
+  (ruff, format, mypy, paridade de schemas, render checks, agentic audit,
+  zero-deps; `--pytest` inclui a suíte default) — um comando para "estou
+  verde?", ancorado no bloco de invariantes de `AGENTS.md`/`CLAUDE.md`.
+- `docs/README.md`: índice navegável por preocupação dos 40+ docs vivos
+  (start/protocolo/registry/execução/inteligência/agentic/evidência).
+- `test_forge_knowledge`: o caso "fresh" exercita match real de superfície
+  (fingerprint do próprio fixture) em vez de depender de pacote sem
+  `tested_surface`.
+
 ### 0.5.0 — Agentic Ecosystem
 
 #### Agentic Ecosystem layer (prompt `prompt_evo_engenharia_agentica` §5-35, §43-58, §64-79, §92-97)

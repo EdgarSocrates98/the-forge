@@ -94,6 +94,8 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 
 ## Documentação
 
+Mapa completo por preocupação em [docs/README.md](docs/README.md). Principais:
+
 - [Arquitetura](docs/architecture.md)
 - [Forge Protocol v1](docs/protocol.md)
 - [Escrevendo um provider](docs/provider-authoring.md)
