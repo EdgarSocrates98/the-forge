@@ -246,9 +246,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     cap_discover.set_defaults(handler=commands.cmd_capabilities_discover)
 
-    install = sub.add_parser("install", help="governed provider installation").add_subparsers(
-        dest="install_command", required=True
-    )
+    install_p = sub.add_parser("install", help="governed provider installation")
+    install = install_p.add_subparsers(dest="install_command", required=False)
+    # bare `install` on a TTY opens the guided wizard; non-TTY shows help.
+    install_p.set_defaults(handler=commands.cmd_install_wizard)
     install_plan = install.add_parser(
         "plan",
         parents=[common],
@@ -735,7 +736,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:
-        return _bare_summary(parser)
+        # TTY → Command Center; non-TTY → classic summary (§1.2, §6).
+        try:
+            from theforge.ui import home
+
+            return home.run_home()
+        except Exception as exc:
+            from theforge.ui.kit import NonInteractive
+
+            if not isinstance(exc, NonInteractive):
+                raise
+            return _bare_summary(parser)
     if argv[0] == "help":
         return _help_for(parser, argv)
     args = parser.parse_args(argv)
