@@ -129,6 +129,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_installkit_schemas.py": ("contract",),
     "test_install_orchestration.py": ("integration", "security"),
     "test_install_e2e.py": ("e2e", "integration"),
+    "test_e2e_matrix.py": ("e2e", "contract"),
     # planned by design (cycle-3 project intelligence)
     "test_intel.py": ("unit", "integration"),
     # planned by design (cycle-3 tracing)
