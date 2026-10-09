@@ -2,18 +2,6 @@
   "schema": "forge/DocDivergence/v1",
   "cli": "theforge",
   "documented_missing": [],
-  "undocumented_commands": [
-    "decisions",
-    "economy",
-    "memory",
-    "providers",
-    "remote",
-    "replay",
-    "resume",
-    "status",
-    "targets",
-    "trace",
-    "workspace"
-  ],
-  "generated_at": "2026-10-09T22:25:57Z"
+  "undocumented_commands": [],
+  "generated_at": "2026-10-09T22:43:44Z"
 }
