@@ -11,12 +11,12 @@ and `UNVERIFIED` are never reported as `PASS`.
 |---|---|---|---|---|---|---|---|
 | `setup.sh` / `setup.ps1` | exists | exists | exists | exists | exists | exists | exists |
 | CLI on PATH after setup | exists | exists | exists | exists | exists | exists | exists |
-| `install --scope project` | exists | exists | exists (assets + orchestrator) | target | target | target | target |
-| `install --scope workspace` | exists | exists | exists | target | target | target | target |
-| `install --scope user` | exists (integrate) | exists | exists | target | target | target | target |
-| `status` / `doctor` | exists | exists | exists | exists | partial | target | target |
-| `repair` / `update` / `uninstall` | exists | exists | exists | partial (detach) | target | target | target |
-| Install profiles | exists | exists | exists | target | target | target | target |
+| `install --scope project` | exists | exists | exists (assets + orchestrator) | exists | exists | exists | exists (scripts) |
+| `install --scope workspace` | exists | exists | exists | exists | exists | exists | exists (scripts) |
+| `install --scope user` | exists (integrate) | exists | exists | exists | exists | exists | exists (scripts) |
+| `status` / `doctor` | exists | exists | exists | exists | exists | exists | exists (scripts) |
+| `repair` / `update` / `uninstall` | exists | exists | exists | exists | exists | exists | exists (scripts) |
+| Install profiles | exists | exists | exists | exists | exists | exists | exists (scripts) |
 
 ## Host × Forge (project scope)
 
@@ -32,8 +32,9 @@ and `UNVERIFIED` are never reported as `PASS`.
 
 MCP availability: aws ✔ (`mcp serve`), azure ✔ (`mcp serve`),
 platform ✔ (`platformforge-mcp`), apiforge ✔ (`apiforge-mcp`),
-doctor-data ✔ (`integrations/mcp_server`), the-forge n/a,
-doctor-api ✘ (report `unsupported`, never claimed).
+doctor-data ✔ (zero-dep stdio `integrations/mcp_server`), the-forge n/a,
+doctor-api ✔ (via `mcp` extra; without the extra the probe reports
+`UNVERIFIED`/`BLOCKED`, never `PASS`).
 
 ## The Forge orchestration
 

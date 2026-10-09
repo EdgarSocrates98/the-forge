@@ -54,3 +54,15 @@ installer. The Forge reads this directory to discover what is installed,
 where its CLI lives, and which hosts/scopes are active. Specialists may keep
 their own richer state (`~/.sparkforge-aws/`, `~/.platformforge/`…) — the
 `~/.forge` document is the small, stable, forge-neutral interop surface.
+
+## Implementation status (feat/portable-installation)
+
+| Forge | Entry | Lifecycle | Notes |
+|---|---|---|---|
+| spark-forge-aws | `sparkforge-aws install` | full | host mirrors + native integrate bridge |
+| api-forge | `apiforge install` | full | wheel-bundled mirrors |
+| the-forge | `theforge install` / `install auto` | full + orchestrator | `install_command` delegation honored |
+| spark-forge-azure | `sparkforge-azure install` | full | adapter over native distribution ledger |
+| platform-forge | `platformforge install` | full | preserves user-modified managed files |
+| forge-doctor-data | `forge-doctor-data install` | full | no host mirrors published |
+| forge-doctor-api | `scripts/forge_install.py` | full | package boundary + RC window — CLI verb deliberately absent; `install_command` in `forge.json` |
