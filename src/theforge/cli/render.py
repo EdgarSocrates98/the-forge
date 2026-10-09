@@ -1667,3 +1667,49 @@ def replay(data: dict[str, Any]) -> str:
             f"Explain:     theforge explain {new_run}",
         ]
     )
+
+
+def install_doc(data: dict[str, Any]) -> str:
+    """forge/* receipt / health / plan document (ADR-0058)."""
+    op = data.get("operation", _clean(data.get("command", "install")))
+    lines = [
+        f"{_clean(data.get('forge_id'))} {op} - {_clean(data.get('status'))}"
+    ]
+    if data.get("target_root"):
+        lines.append(f"target: {_clean(data['target_root'])}")
+    for c in data.get("checks") or []:
+        line = f"  {_clean(c.get('id')):<24} {_clean(c.get('status'))}"
+        if c.get("detail"):
+            line += f"  {_detail(c['detail'])}"
+        lines.append(line)
+    managed = data.get("managed_files") or data.get("planned_files") or []
+    if managed:
+        lines.append(f"managed files: {len(managed)}")
+    drift = data.get("drift")
+    if isinstance(drift, dict):
+        lines.append(
+            f"drift: {drift.get('ok', 0)} ok, "
+            f"{len(drift.get('modified') or [])} modified, "
+            f"{len(drift.get('missing') or [])} missing"
+        )
+    if data.get("error"):
+        err = data["error"]
+        lines.append(f"refused: {_clean(err.get('kind'))}: {_detail(err.get('detail'))}")
+    verification = data.get("verification") or {}
+    if verification.get("status"):
+        lines.append(f"verification: {_clean(verification['status'])}")
+    return "\n".join(lines)
+
+
+def installations(data: dict[str, Any]) -> str:
+    rows = data.get("installations") or []
+    if not rows:
+        return "no installations registered (~/.forge/installations is empty)"
+    lines = []
+    for m in rows:
+        line = f"{_clean(m.get('forge_id')):<22} {_clean(m.get('version'))}"
+        if m.get("cli"):
+            cli = m["cli"]
+            line += f"  cli:{_clean(cli.get('name') if isinstance(cli, dict) else cli)}"
+        lines.append(line)
+    return "\n".join(lines)

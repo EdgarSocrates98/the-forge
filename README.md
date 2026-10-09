@@ -18,6 +18,28 @@ python3.11 -m venv .venv                      # qualquer Python >= 3.11
 
 O runtime só usa a stdlib. O comando canônico é `theforge`, usado em todos os exemplos; `forge` é um alias de conveniência ([ADR 0008](docs/adr/0008-cli-name.md)). Use `theforge` se `forge` colidir com Foundry ou Laravel Forge no seu PATH. Para rodar a suíte de testes, instale também os adapters (ver [Desenvolvimento](#desenvolvimento)).
 
+## Instalação portátil (uso, não desenvolvimento)
+
+`setup.sh` (POSIX) / `setup.ps1` (Windows) fazem o bootstrap: resolvem um Python compatível, criam um venv isolado em `~/.forge/installs/the-forge`, instalam o **wheel** (não o checkout), gravam o launcher em `~/.local/bin` e registram o manifesto em `~/.forge/installations/the-forge.json`. Depois o checkout pode ser apagado.
+
+```bash
+./setup.sh            # ou: pwsh setup.ps1
+theforge --version    # smoke test embutido no bootstrap
+```
+
+Com o CLI no PATH, a própria forge instala seus host assets em qualquer repo e orquestra a família inteira:
+
+```bash
+cd seu-projeto
+theforge install apply --yes              # skills + markers gerenciados (.claude/.devin/.agents/.github)
+theforge install apply --dry-run          # plano determinístico, sem escrever
+theforge install auto --yes               # delega a cada forge registrada em ~/.forge/installations
+theforge install status|doctor|repair|uninstall
+theforge installations list               # registry do bootstrap (read-only)
+```
+
+Cada escrita passa por ledger sha256 com posse: `uninstall` remove só o que é gerenciado, arquivos do usuário e edições manuais sobrevivem. Escopos `project` (padrão), `workspace` e `user`; profiles `minimal`/`recommended`/`full`; hosts `claude`, `devin`, `codex`, `copilot` ou `all`. Contrato e matriz: [docs/portable-installation/](docs/portable-installation/README.md) ([ADR 0058](docs/adr/0058-portable-installation.md)).
+
 ## Primeiros passos
 
 Os comandos abaixo assumem o venv ativado (`source .venv/bin/activate`; no Windows, `.venv\Scripts\activate`). Sem ativar, chame `.venv/bin/theforge` (Windows: `.venv\Scripts\theforge`).

@@ -23,6 +23,15 @@
 | `economy report` | `GlobalEconomyReceipt/v1` agregado das observações gravadas: eixos observed/unresolved/conflict + maturidade do histórico + Context ROI advisory — read-only, offline — [economy-observations.md](economy-observations.md) | 0 |
 | `economy experiment --spec <experiment.json>` | avalia um `StrategyExperiment/v1` contra observações locais pós-holdout; só produz estado/evidência (`shadow`, `observing`, `eligible_for_review`, `stale`), nunca promove nem altera routing/budget — [adaptive-experiments.md](adaptive-experiments.md) | 0 / 2 |
 | `install plan --provider <id> --version <sem-ver> --source <id> [--approve]` | `InstallationPlan/v2` determinístico para um candidato remoto: pinned, hashes esperados, stages governados, rollback — plan-only, nada é baixado nem instalado — [provider-distribution.md](provider-distribution.md) | 0 / 2 |
+| `install apply [--scope project\|workspace\|user] [--host all\|claude\|devin\|codex\|copilot] [--profile minimal\|recommended\|full] [--yes] [--dry-run]` | instala os host assets da própria forge no alvo resolvido: skills em `.claude/`, `.devin/`, `.agents/`, `.github/` + marker gerenciado em `AGENTS.md`/`CLAUDE.md` — sem `--yes` recusa (`FORGE-INSTALL-PLAN-NOT-APPROVED`); `--dry-run` é plan-only — [ADR 0058](adr/0058-portable-installation.md) | 0 / 1 / 4 |
+| `install status [--scope ...]` | saúde do ledger instalado no alvo: `forge/InstallationHealth/v1` + drift por arquivo (`ok`/`modified`/`missing`) | 0 / 1 |
+| `install doctor [--scope ...]` | ledger + drift + config MCP + handshake real quando aplicável; `healthy`/`degraded`/`broken`/`unverified` | 0 / 1 |
+| `install repair [--scope ...] [--dry-run]` | reasserta bytes de assets gerenciados que driftaram; arquivos do usuário nunca são tocados | 0 / 1 |
+| `install uninstall [--scope ...] [--purge] [--dry-run]` | remove só o que o ledger declara gerenciado; preserva modificações do usuário e adota, nunca sobrescreve; `--purge` apaga `.forge/install` | 0 / 1 |
+| `install update [--to <version>] [--repo <path>] [--dry-run]` | atualiza o runtime instalado pelo bootstrap (pinned — `latest` é recusado) | 0 / 1 |
+| `install auto [--scope ...] [--forge <id>] [--yes] [--dry-run]` | orquestra a família: lê `~/.forge/installations/` e delega `<cli> install` a cada forge registrada (a própria instala em processo); `--forge` limita a uma — cada forge instala a si mesma | 0 / 1 |
+| `install mcp-verify` | handshake JSON-RPC real contra o servidor MCP quando declarado; `NOT_APPLICABLE` na the-forge (sem MCP) | 0 |
+| `installations list` | registry do bootstrap (`~/.forge/installations/*.json`) — read-only | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
 | `provider init <dir> --id <provider-id> [--capability <id>]` | escreve o scaffold de provider (manifest, esqueleto stdlib, teste de conformidade, README) num diretório novo ou vazio; nada é instalado nem registrado | 0 / 2 |
 | `provider check [--json] -- <argv>...` | bateria de conformidade do Forge Protocol sobre um argv qualquer ([kit](provider-authoring.md#certificação)) | 0 / 1 / 2 |

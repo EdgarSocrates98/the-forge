@@ -98,6 +98,23 @@ class Codes:
     REPLAY_NOT_REPRODUCIBLE: Final = "FORGE-REPLAY-NOT-REPRODUCIBLE"
     REPLAY_UNSUPPORTED: Final = "FORGE-REPLAY-UNSUPPORTED"
 
+    # Portable installation (ADR 0058 — shared forge/* contract; the installkit
+    # carries the same literal values so specialist forges emit them without
+    # importing theforge)
+    INSTALL_SCOPE_UNKNOWN: Final = "FORGE-INSTALL-SCOPE-UNKNOWN"
+    INSTALL_HOST_UNKNOWN: Final = "FORGE-INSTALL-HOST-UNKNOWN"
+    INSTALL_PROFILE_UNKNOWN: Final = "FORGE-INSTALL-PROFILE-UNKNOWN"
+    INSTALL_PYTHON_INCOMPATIBLE: Final = "FORGE-INSTALL-PYTHON-INCOMPATIBLE"
+    INSTALL_UNSUPPORTED: Final = "FORGE-INSTALL-UNSUPPORTED"
+    INSTALL_PERMISSION_DENIED: Final = "FORGE-INSTALL-PERMISSION-DENIED"
+    INSTALL_PLAN_NOT_APPROVED: Final = "FORGE-INSTALL-PLAN-NOT-APPROVED"
+    INSTALL_NOT_A_REPO: Final = "FORGE-INSTALL-NOT-A-REPO"
+    INSTALL_NOT_INSTALLED: Final = "FORGE-INSTALL-NOT-INSTALLED"
+    INSTALL_LOCKED: Final = "FORGE-INSTALL-LOCKED"
+    INSTALL_DRIFT_UNREPAIRABLE: Final = "FORGE-INSTALL-DRIFT-UNREPAIRABLE"
+    INSTALL_SPAWN_DISABLED: Final = "FORGE-INSTALL-SPAWN-DISABLED"
+    INSTALL_VERIFY_FAILED: Final = "FORGE-INSTALL-VERIFY-FAILED"
+
     # Core
     USAGE: Final = "FORGE-USAGE"
     INTERNAL: Final = "FORGE-INTERNAL"
@@ -155,6 +172,19 @@ CODE_FAMILIES: Final[Mapping[str, ErrorFamily]] = MappingProxyType(
         Codes.PERSIST_DIVERGENCE: "persistence",
         Codes.REPLAY_NOT_REPRODUCIBLE: "replay",
         Codes.REPLAY_UNSUPPORTED: "replay",
+        Codes.INSTALL_SCOPE_UNKNOWN: "usage",
+        Codes.INSTALL_HOST_UNKNOWN: "usage",
+        Codes.INSTALL_PROFILE_UNKNOWN: "usage",
+        Codes.INSTALL_PYTHON_INCOMPATIBLE: "usage",
+        Codes.INSTALL_UNSUPPORTED: "usage",
+        Codes.INSTALL_PERMISSION_DENIED: "policy",
+        Codes.INSTALL_PLAN_NOT_APPROVED: "policy",
+        Codes.INSTALL_NOT_A_REPO: "workspace",
+        Codes.INSTALL_NOT_INSTALLED: "workspace",
+        Codes.INSTALL_LOCKED: "persistence",
+        Codes.INSTALL_DRIFT_UNREPAIRABLE: "persistence",
+        Codes.INSTALL_SPAWN_DISABLED: "security",
+        Codes.INSTALL_VERIFY_FAILED: "provider",
         Codes.USAGE: "usage",
         Codes.INTERNAL: "internal",
     }

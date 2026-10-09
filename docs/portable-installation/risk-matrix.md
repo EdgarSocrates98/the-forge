@@ -1,7 +1,8 @@
 # Risk Matrix — portable installation
 
-Failure modes per stage, mitigations, and residual risk. The governed
-pipeline is:
+Failure modes per stage, mitigations, and residual risk. `FORGE-*` codes
+below belong to the canonical taxonomy in [docs/errors.md](../errors.md).
+The governed pipeline is:
 
 ```text
 discover → resolve → negotiate → plan → validate-policy → approve

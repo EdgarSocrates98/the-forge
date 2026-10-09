@@ -21,6 +21,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 CANON_BOOTSTRAP = HERE / "forge_bootstrap.py"
@@ -63,8 +64,8 @@ def _vendored(src: Path, sha: str) -> bytes:
                         f'_SOURCE_SHA256 = "{sha}"'.encode())
 
 
-def vendor(repo: Path, *, config: dict | None, installkit_pkg: str | None,
-           check: bool) -> int:
+def vendor(repo: Path, *, config: dict[str, Any] | None,
+           installkit_pkg: str | None, check: bool) -> int:
     canon_sha = _sha(CANON_BOOTSTRAP.read_bytes())[:16]
     written, drifted, errors = [], [], []
 

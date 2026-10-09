@@ -221,9 +221,8 @@ def test_lock_refuses_concurrent(tmp_path):
     state = tmp_path / ".forge-test"
     lock = kit.acquire_lock(state)
     with lock:
-        with pytest.raises(kit.LockError) as e:
-            with kit.acquire_lock(state):
-                pass
+        with pytest.raises(kit.LockError) as e, kit.acquire_lock(state):
+            pass
         assert e.value.kind == kit.E_LOCKED
 
 

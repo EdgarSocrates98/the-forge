@@ -9,14 +9,14 @@ and `UNVERIFIED` are never reported as `PASS`.
 
 | Capability | sparkforge-aws | api-forge | the-forge | sparkforge-azure | platform-forge | doctor-data | doctor-api |
 |---|---|---|---|---|---|---|---|
-| `setup.sh` / `setup.ps1` | target | target | target | target | target | target | target |
-| CLI on PATH after setup | target | target | target | target | target | target | target |
-| `install --scope project` | target | target | n/a (orchestrator) | target | target | target | target |
-| `install --scope workspace` | target | target | n/a | target | target | target | target |
-| `install --scope user` | exists (integrate) | target | n/a | target | target | target | target |
-| `status` / `doctor` | partial | partial | partial | exists | partial | target | target |
-| `repair` / `update` / `uninstall` | target | target | n/a | partial (detach) | target | target | target |
-| Install profiles | target | target | n/a | target | target | target | target |
+| `setup.sh` / `setup.ps1` | exists | exists | exists | exists | exists | exists | exists |
+| CLI on PATH after setup | exists | exists | exists | exists | exists | exists | exists |
+| `install --scope project` | exists | exists | exists (assets + orchestrator) | target | target | target | target |
+| `install --scope workspace` | exists | exists | exists | target | target | target | target |
+| `install --scope user` | exists (integrate) | exists | exists | target | target | target | target |
+| `status` / `doctor` | exists | exists | exists | exists | partial | target | target |
+| `repair` / `update` / `uninstall` | exists | exists | exists | partial (detach) | target | target | target |
+| Install profiles | exists | exists | exists | target | target | target | target |
 
 ## Host × Forge (project scope)
 
@@ -40,7 +40,7 @@ doctor-api ✘ (report `unsupported`, never claimed).
 | Capability | target |
 |---|---|
 | `theforge install auto` — evidence scan → recommended specialists | ✔ |
-| `theforge install <forge>` — governed single-install | ✔ |
+| `theforge install auto --forge <id>` — governed single-install | ✔ |
 | `installations list|status|doctor|repair|update|uninstall` | ✔ |
 | provider register + identity/protocol/capability/health validation | ✔ |
 | receipt per install, honest unresolved states | ✔ |

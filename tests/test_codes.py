@@ -8,6 +8,11 @@ from theforge.contracts.codes import Codes
 
 SRC = Path(theforge.__file__).resolve().parent
 CODES_FILE = SRC / "contracts" / "codes.py"
+# Vendored shared installkit (canonical: scripts/installkit/): byte-identical
+# across every Forge, so it cannot import contracts.codes — it carries the
+# same FORGE-INSTALL-* literals the contract freezes. Exempt like the
+# ruff/mypy exemptions for the same file.
+EXEMPT = {SRC / "_installkit.py"}
 
 
 def _forge_literals(path: Path) -> list[tuple[int, str]]:
@@ -23,7 +28,7 @@ def test_no_forge_literal_outside_codes_module() -> None:
     offenders = [
         f"{path.relative_to(SRC)}:{lineno}: {value!r}"
         for path in sorted(SRC.rglob("*.py"))
-        if path.resolve() != CODES_FILE
+        if path.resolve() not in {CODES_FILE, *EXEMPT}
         for lineno, value in _forge_literals(path)
     ]
     assert offenders == []

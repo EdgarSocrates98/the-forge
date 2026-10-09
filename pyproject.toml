@@ -29,6 +29,11 @@ forge = "theforge.cli.main:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/theforge"]
 
+# ADR-0058: host assets ship inside the wheel (emenda a ADR-0020) — the
+# installer renders them into consumer repos; they remain sdist-excluded.
+[tool.hatch.build.targets.wheel.force-include]
+".agents/skills" = "theforge/host_assets/skills"
+
 [tool.hatch.build.targets.sdist]
 # The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
 # Agentic assets (host instructions, skills) and local-only state never ship (ADR 0020).
@@ -69,9 +74,19 @@ extend-exclude = ["tests/fixtures/workspaces"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+# Canonical installkit + its vendored copies — byte-identical shared source
+# across all Forges with a Python 3.10 floor; style diffs are intentional.
+"scripts/installkit/*.py" = ["ALL"]
+"scripts/forge_bootstrap.py" = ["ALL"]
+"src/theforge/_installkit.py" = ["ALL"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
+# Vendored/canonical installkit scripts are shared byte-identical source
+# (Python 3.10 floor) — excluded from collection like the ruff exemption.
+exclude = '(^|/)scripts/(installkit/)?forge_(bootstrap|installkit)\.py$'
 mypy_path = "src:adapters/sparkforge_aws/src:adapters/sparkforge_azure/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src:adapters/platformforge/src"
 files = ["src", "scripts", "adapters/sparkforge_aws/src", "adapters/sparkforge_azure/src",
          "adapters/apiforge/src", "adapters/doctordata/src", "adapters/doctorapi/src",

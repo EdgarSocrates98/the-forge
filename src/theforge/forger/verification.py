@@ -32,7 +32,7 @@ from theforge.contracts.handoff import Handoff
 from theforge.contracts.integrity import check_producer
 from theforge.contracts.result import ExecutionResult
 from theforge.contracts.task import TaskSpec
-from theforge.contracts.types import Producer
+from theforge.contracts.types import Epistemic, Producer
 from theforge.contracts.verification import (
     VerificationCheck,
     VerificationResult,
@@ -52,7 +52,8 @@ NO_INDEPENDENT_VERIFIER: Final = "no independent verifier for this capability"
 # Receipt limitation when a distinct-identity verifier fails the result:
 # "<prefix>: <verifier id>".
 INDEPENDENT_FAILED_LIMITATION: Final = "independent verification failed"
-_EPISTEMIC_ORDER: Final = ("confirmed", "observed", "inferred", "proposed", "unresolved")
+_EPISTEMIC_ORDER: Final[tuple[Epistemic, ...]] = (
+    "confirmed", "observed", "inferred", "proposed", "unresolved")
 
 
 def _self_report(response_status: str | None) -> VerificationCheck:
