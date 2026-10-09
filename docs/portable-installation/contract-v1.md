@@ -214,3 +214,37 @@ Required codes: `-SCOPE-UNKNOWN`, `-HOST-UNKNOWN`, `-PROFILE-UNKNOWN`,
 `-PERMISSION-DENIED`, `-PYTHON-INCOMPATIBLE`, `-NOT-A-REPO` (project scope
 with no VCS and no `--root`), `-PLAN-NOT-APPROVED`, `-LOCKED` (concurrent
 mutation), `-NOT-INSTALLED`, `-DRIFT-UNREPAIRABLE`.
+
+`-WRITE-FAILED` wraps an unexpected write-stage failure after managed
+writes were rolled back.
+
+## 9. Mutation safety (§14)
+
+### 9.1 Transactional apply and rollback
+
+Every mutating operation runs the governed path:
+
+1. Lock the target (`<state_dir>/install.lock`, O_EXCL).
+2. Compute the plan; conflicts with user-owned files refuse the whole
+   plan — no partial writes.
+3. Before overwriting an existing managed file, snapshot its bytes to
+   `<state_dir>/backups/<rel>` (single latest generation; `repair`
+   snapshots the same way).
+4. Apply writes atomically (tmp + rename).
+5. If any write stage fails, managed writes are reverted — files
+   created by the operation are removed and backups restored — then
+   the error propagates as `FORGE-INSTALL-WRITE-FAILED`. The on-disk
+   ledger is only saved after success, so a failed apply leaves the
+   prior ledger consistent.
+
+User-modified files are never deleted on `uninstall` — drift-aware
+removal keeps content the ledger no longer owns.
+
+### 9.2 Locks and interrupted installs
+
+The lock file carries `{pid, created_at}`. A held lock refuses
+concurrent mutation (`FORGE-INSTALL-LOCKED`) — contention is a refusal,
+not a hang. A lock whose holder process is dead, or that is older than
+15 minutes, is reclaimed once as an interrupted install; the receipt
+records the recovery in `checks`. `repair` re-asserts managed state
+after an interruption.

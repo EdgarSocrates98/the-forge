@@ -99,8 +99,16 @@ def install(
     ctx = _ctx(scope, root, _hosts(host), profile, dry_run)
     if dry_run:
         return kit.apply_install(ctx, approved=yes)
-    with kit.acquire_lock(ctx.state_dir):
+    with kit.acquire_lock(ctx.state_dir) as lock:
         receipt = kit.apply_install(ctx, approved=yes)
+        if lock.recovered:
+            receipt.setdefault("checks", []).append(
+                {
+                    "id": "lock",
+                    "status": "PASS",
+                    "detail": "stale lock reclaimed (interrupted install recovered)",
+                }
+            )
     if not dry_run and receipt.get("status") == "completed":
         kit._write_receipt(ctx.state_dir, receipt)
     return receipt
@@ -120,8 +128,17 @@ def repair(
     ctx = _ctx(scope, root, render.HOSTS, "full", dry_run)
     if dry_run:
         return kit.status(ctx)
-    with kit.acquire_lock(ctx.state_dir):
-        return kit.repair(ctx)
+    with kit.acquire_lock(ctx.state_dir) as lock:
+        r = kit.repair(ctx)
+        if lock.recovered:
+            r.setdefault("checks", []).append(
+                {
+                    "id": "lock",
+                    "status": "PASS",
+                    "detail": "stale lock reclaimed (interrupted install recovered)",
+                }
+            )
+        return r
 
 
 def uninstall(
@@ -148,8 +165,17 @@ def uninstall(
             "verification": {"status": "UNVERIFIED"},
             "created_at": kit._utc_now(),
         }
-    with kit.acquire_lock(ctx.state_dir):
-        return kit.uninstall(ctx, purge_state=purge)
+    with kit.acquire_lock(ctx.state_dir) as lock:
+        r = kit.uninstall(ctx, purge_state=purge)
+        if lock.recovered:
+            r.setdefault("checks", []).append(
+                {
+                    "id": "lock",
+                    "status": "PASS",
+                    "detail": "stale lock reclaimed (interrupted install recovered)",
+                }
+            )
+        return r
 
 
 def update(

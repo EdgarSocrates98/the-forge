@@ -517,3 +517,88 @@ def test_health_context_reports_tools(tmp_path):
     health = kit.doctor(ctx)
     assert health["context"]["tools_exposed"] == 2
     assert health["context"]["managed_entries"] > 0
+
+
+# --- Phase 10: security — locks, backups, transactional rollback -----------
+
+
+def test_stale_lock_reclaimed(tmp_path):
+    """A lock held by a dead PID is recovered, not a permanent refusal."""
+    state = tmp_path / ".forge-test"
+    state.mkdir(parents=True)
+    lock_file = state / kit.LOCK_NAME
+    lock_file.write_text(json.dumps({"pid": 2**22 + 999, "created_at": "x"}))
+    lock = kit.acquire_lock(state)
+    with lock:
+        assert lock.recovered is True
+    assert not lock_file.exists()
+
+
+def test_live_lock_still_refuses(tmp_path):
+    """A lock with a live PID (ours, fresh) refuses acquisition."""
+    state = tmp_path / ".forge-test"
+    first = kit.acquire_lock(state)
+    with first, pytest.raises(kit.LockError), kit.acquire_lock(state):
+        pass
+
+
+def test_rollback_on_write_failure(tmp_path, monkeypatch):
+    """A mid-apply failure removes created files and restores backups."""
+    ctx = _ctx(tmp_path, profile="recommended")
+    kit.apply_install(ctx, approved=True)
+    # Drift a managed file so the second apply has a backup to restore.
+    managed = tmp_path / ".agents/skills/demo/SKILL.md"
+    managed.write_bytes(b"drifted\n")
+    ledger = kit.Ledger.load(ctx.state_dir)
+    assert ledger.get(".agents/skills/demo/SKILL.md")["sha256"]
+
+    calls = {"n": 0}
+    real_write = kit._atomic_write
+
+    def flaky(path, data):
+        calls["n"] += 1
+        if calls["n"] == 3:
+            raise OSError("disk full")
+        return real_write(path, data)
+
+    monkeypatch.setattr(kit, "_atomic_write", flaky)
+    ctx2 = _ctx(tmp_path, profile="full")
+    with pytest.raises(kit.InstallError) as e:
+        kit.apply_install(ctx2, approved=True)
+    assert "reverted" in str(e.value)
+
+
+def test_rollback_removes_created_and_restores_updated(tmp_path, monkeypatch):
+    """Second apply over .mcp.json: failure reverts .mcp.json to pre-state."""
+    ctx = _ctx(tmp_path, profile="recommended")
+    kit.apply_install(ctx, approved=True)
+    mcp = tmp_path / ".mcp.json"
+    before = mcp.read_bytes()
+
+    real_write = kit._atomic_write
+
+    def bomb(path, data):
+        if Path(path).name == ".mcp.json" and Path(path).parent == tmp_path:
+            raise OSError("boom")
+        return real_write(path, data)
+
+    monkeypatch.setattr(kit, "_atomic_write", bomb)
+    ctx2 = _ctx(
+        tmp_path,
+        profile="recommended",
+        mcp_command=("forge-test", "mcp", "serve", "--v2"),
+    )
+    with pytest.raises(kit.InstallError):
+        kit.apply_install(ctx2, approved=True)
+    assert mcp.read_bytes() == before
+
+
+def test_backup_written_on_overwrite(tmp_path, monkeypatch):
+    ctx = _ctx(tmp_path, profile="recommended")
+    kit.apply_install(ctx, approved=True)
+    managed = tmp_path / ".agents/skills/demo/SKILL.md"
+    managed.write_bytes(b"drifted\n")
+    kit.repair(ctx)
+    assert managed.read_text("utf-8") == "# demo skill\n"
+    bak = ctx.state_dir / "backups" / ".agents/skills/demo/SKILL.md"
+    assert bak.exists() and bak.read_bytes() == b"drifted\n"
