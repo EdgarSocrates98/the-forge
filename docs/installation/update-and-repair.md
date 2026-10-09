@@ -3,7 +3,7 @@
 ## Update
 
 ```bash
-theforge update --to <versão ou tag pinada>
+theforge install update --to <versão ou tag pinada>
 ```
 
 `latest` é recusado por contrato — sempre pin a versão. Sem checkout
@@ -12,8 +12,8 @@ registrado o update reporta BLOCKED honestamente.
 ## Repair
 
 ```bash
-theforge doctor   # mostra o drift
-theforge repair   # reassegura regiões gerenciadas
+theforge install doctor   # mostra o drift
+theforge install repair   # reassegura regiões gerenciadas
 ```
 
 Repair restaura arquivos gerenciados removidos e cura blocos

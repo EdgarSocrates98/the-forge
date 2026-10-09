@@ -21,8 +21,8 @@ the-forge já estão instaladas.
 ## Verificar
 
 ```bash
-theforge status
-theforge doctor
+theforge install status
+theforge install doctor
 ```
 
 Problemas? → [troubleshooting.md](troubleshooting.md)
