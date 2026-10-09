@@ -130,6 +130,13 @@ Mapa completo por preocupação em [docs/README.md](docs/README.md). Principais:
 - [Context ROI](docs/context-roi.md) (utilização medida; recomendação advisory, não causal)
 - [Adaptive experiments](docs/adaptive-experiments.md) (champion/challenger governado, sem auto-promoção)
 - [A2A bridge](docs/a2a-bridge.md) (experimental: cards/tasks/artifacts ⇄ contratos Forge; agente remoto nunca é provider local)
+
+DX (Standard v1): [handbook do ecossistema](docs/handbook.md) ·
+[command reference](docs/reference/commands.md) ·
+[skills](docs/reference/skills.md) · [agents](docs/reference/agents.md) ·
+[tutorial](docs/tutorials/first-run.md) · [economy](docs/economy.md) ·
+[troubleshooting](docs/installation/troubleshooting.md) ·
+[EN quickstart](docs/installation/quickstart.en.md)
 - [MCP interoperability](docs/interoperability-mcp.md) (MCP = tools ≠ provider; awareness opcional via registry oficial, detecção sem instalação)
 - [Contract stability](docs/contract-stability.md) (scorecard forge-contracts: evidência para não extrair)
 - [Engineering memory](docs/engineering-memory.md) (conhecimento verificável, isolamento cross-project)
