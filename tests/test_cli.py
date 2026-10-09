@@ -710,3 +710,25 @@ def test_ask_then_explain_shows_context_and_telemetry_sections(
     data = json.loads(out)["artifacts"]
     assert code == 0 and data["telemetry"]["schema"] == "theforge/RunTelemetry/v1"
     assert data["telemetry"]["negotiation_rounds"]["value"] == 1
+
+
+def test_bare_invocation_shows_summary_not_error(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main([]) == 0
+    out = capsys.readouterr().out
+    assert "one entry point" in out
+    assert "capabilities" in out
+
+
+def test_help_verb_shows_subparser_help(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["help", "install"]) == 0
+    assert "apply" in capsys.readouterr().out
+    assert main(["help"]) == 0
+    capsys.readouterr()
+    assert main(["help", "nonsense"]) == 2
+
+
+def test_unknown_command_suggests_close_match(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["instll"])
+    assert exc.value.code == 2
+    assert "did you mean: install" in capsys.readouterr().err
