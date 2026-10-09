@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/InstallationManifest/v1",
+  "title": "ForgeInstallationManifest",
+  "type": "object",
+  "required": ["schema", "forge_id", "package", "distribution", "cli",
+               "version", "install_root", "source", "installed_at",
+               "installed_by"],
+  "properties": {
+    "schema": {"const": "forge/InstallationManifest/v1"},
+    "forge_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "package": {"type": "string"},
+    "distribution": {"type": "string"},
+    "cli": {
+      "type": "object",
+      "required": ["name", "version_cmd"],
+      "properties": {
+        "name": {"type": "string"},
+        "version_cmd": {"type": "array", "items": {"type": "string"}},
+        "shim": {"type": "string"}
+      }
+    },
+    "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+"},
+    "install_root": {"type": "string"},
+    "venv": {"type": "string"},
+    "python": {
+      "type": "object",
+      "required": ["executable", "version"],
+      "properties": {
+        "executable": {"type": "string"},
+        "version": {"type": "string"},
+        "satisfies": {"type": "string"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"enum": ["git-checkout", "wheel", "pypi"]},
+        "path": {"type": "string"},
+        "ref": {"type": "string"},
+        "rev": {"type": "string"},
+        "editable": {"type": "boolean"}
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "required": ["server_name", "command", "verified"],
+      "properties": {
+        "server_name": {"type": "string"},
+        "command": {"type": "array", "items": {"type": "string"}},
+        "verified": {"type": "boolean"}
+      }
+    },
+    "hosts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "integrated": {"type": "boolean"},
+          "scope": {"enum": ["project", "workspace", "user"]}
+        }
+      }
+    },
+    "installed_at": {"type": "string"},
+    "updated_at": {"type": "string"},
+    "installed_by": {
+      "type": "object",
+      "required": ["agent"],
+      "properties": {
+        "agent": {"type": "string"},
+        "version": {"type": "string"}
+      }
+    }
+  },
+  "additionalProperties": false
+}

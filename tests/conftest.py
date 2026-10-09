@@ -124,6 +124,11 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_federation_adversarial.py": ("unit", "integration", "security"),
     "test_ecosystem_contracts.py": ("contract", "integration"),
     "test_debug_tmp.py": ("unit",),
+    # portable-installation wave: shared vendored engine + forge contract
+    "test_installkit.py": ("unit", "contract"),
+    "test_installkit_schemas.py": ("contract",),
+    "test_install_orchestration.py": ("integration", "security"),
+    "test_install_e2e.py": ("e2e", "integration"),
     # planned by design (cycle-3 project intelligence)
     "test_intel.py": ("unit", "integration"),
     # planned by design (cycle-3 tracing)
