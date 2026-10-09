@@ -21,12 +21,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
+import platform
 import sys
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 _INSTALLKIT_VERSION = "1.0.0"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
@@ -174,7 +175,7 @@ class ForgeSpec:
     mcp_command: tuple[str, ...] = ()     # e.g. ("sparkforge-aws","mcp","serve")
     mcp_server_name: str | None = None    # .mcp.json key
     version_cmd: tuple[str, ...] = ("--version",)
-    render_assets: Callable[["InstallContext"], dict[str, bytes]] | None = None
+    render_assets: Callable[[InstallContext], dict[str, bytes]] | None = None
     marker_files: tuple[str, ...] = ("AGENTS.md", "CLAUDE.md")
     marker_tag: str | None = None          # defaults to forge_id
     marker_body: str = ""
@@ -197,7 +198,7 @@ class InstallContext:
     profile: str
     hosts: tuple[str, ...]
     dry_run: bool = False
-    ledger: "Ledger | None" = None
+    ledger: Ledger | None = None
 
 
 # --------------------------------------------------------------------------
@@ -217,7 +218,7 @@ class Ledger:
             "schema": "forge/InstallLedger/v1", "entries": {}}
 
     @classmethod
-    def load(cls, state_dir: Path) -> "Ledger":
+    def load(cls, state_dir: Path) -> Ledger:
         return cls(state_dir / LEDGER_NAME)
 
     def save(self) -> None:
@@ -285,7 +286,7 @@ def acquire_lock(state_dir: Path, timeout_s: float = 0.0):
             except FileExistsError:
                 holder = _load_json(lock) or lock.read_text(errors="replace")
                 raise LockError(E_LOCKED,
-                                f"install lock held at {lock} ({holder})")
+                                f"install lock held at {lock} ({holder})") from None
 
         def __exit__(self, *exc):
             if self.held:
@@ -407,6 +408,18 @@ def _is_workspace_pyproject(root: Path) -> bool:
         return False
 
 
+def _find_state_root(spec: ForgeSpec, cwd: Path) -> Path | None:
+    """Nearest ancestor (or cwd) already carrying `spec.state_dir` — the dir
+    is an installed project even without a VCS checkout."""
+    cur = Path(cwd).resolve()
+    while True:
+        if (cur / spec.state_dir).is_dir():
+            return cur
+        if cur.parent == cur:
+            return None
+        cur = cur.parent
+
+
 def resolve_scope(spec: ForgeSpec, scope: str, cwd: Path,
                   explicit: Path | None) -> Path:
     if scope not in SCOPES:
@@ -420,6 +433,9 @@ def resolve_scope(spec: ForgeSpec, scope: str, cwd: Path,
     if root is None:
         if explicit:
             return explicit
+        state_root = _find_state_root(spec, cwd)
+        if state_root is not None:
+            return state_root
         raise InstallError(
             E_NOTREPO, f"{cwd}: no VCS root — pass --root or cd into a repo")
     return root
@@ -568,7 +584,6 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
     mcp_entries: list[dict[str, Any]] = []
     if ctx.spec.mcp_server_name and "mcp" in kinds:
         mcp_file = ctx.root / ".mcp.json"
-        doc = _load_json(mcp_file, None)
         entry = {"command": ctx.spec.mcp_command[0],
                  "args": list(ctx.spec.mcp_command[1:])}
         if mcp_file.exists():
@@ -599,8 +614,10 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
                                 "action": "created"})
 
     ledger.save()
+    written = sum(1 for f in files
+                  if f.get("action") in ("created", "updated"))
     checks.append({"id": "files-written", "status": "PASS",
-                   "detail": f"{sum(1 for f in files if f.get('action') in ('created','updated'))} writes"})
+                   "detail": f"{written} writes"})
     receipt = {
         "schema": SCHEMA_RECEIPT,
         "receipt_id": f"sha256:{_sha(_json_bytes({'f': files, 'm': markers}))}",
@@ -609,7 +626,7 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
         "target_root": str(ctx.root), "host": ",".join(ctx.hosts) or None,
         "dry_run": False, "managed_files": files,
         "managed_markers": markers, "mcp": mcp_entries,
-        "env": {"python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"},
+        "env": {"python": platform.python_version()},
         "checks": checks,
         "verification": {"status": "PASS" if all(
             c["status"] in ("PASS", "NOT_APPLICABLE") for c in checks) else "FAIL"},
@@ -749,7 +766,8 @@ def uninstall(ctx: InstallContext, *, purge_state: bool = False) -> dict[str, An
         if target.exists():
             # Re-verify sha256 before deleting — a user-modified managed
             # file is treated as user-owned and kept.
-            if _sha_file(target) != ledger.get(rel)["sha256"]:
+            reg = ledger.get(rel)
+            if reg is None or _sha_file(target) != reg["sha256"]:
                 kept.append(rel)
                 ledger.drop(rel)
                 continue
@@ -800,7 +818,7 @@ def manifest_for(spec: ForgeSpec, *, install_root: Path, venv: Path | None,
         "version": version,
         "install_root": str(install_root),
         "python": {"executable": str(_venv_python(venv)) if venv else sys.executable,
-                   "version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+                   "version": platform.python_version(),
                    "satisfies": spec.python_spec},
         "source": source,
         "installed_at": _utc_now(),
@@ -809,7 +827,9 @@ def manifest_for(spec: ForgeSpec, *, install_root: Path, venv: Path | None,
     if venv:
         doc["venv"] = str(venv)
     if shim:
-        doc["cli"]["shim"] = str(shim)
+        cli_doc = doc["cli"]
+        if isinstance(cli_doc, dict):
+            cli_doc["shim"] = str(shim)
     if spec.mcp_server_name:
         doc["mcp"] = {"server_name": spec.mcp_server_name,
                       "command": list(spec.mcp_command), "verified": False}
@@ -855,7 +875,8 @@ def _spawn(spec: ForgeSpec, cmd: list[str], *, timeout: int = 30,
             "run the equivalent scripts/ helper instead")
     # --vendor-strip:subprocess-begin
     import subprocess  # noqa: PLC0415 - lazy: spawn_ok gates reachability
-    proc = subprocess.run(cmd, capture_output=True, timeout=timeout,
+    proc = subprocess.run(  # noqa: S603 — cmd is the declared spec
+        cmd, capture_output=True, timeout=timeout,
                           input=input_bytes, env=env)
     return proc.returncode, proc.stdout, proc.stderr
     # --vendor-strip:subprocess-end
@@ -872,12 +893,16 @@ def mcp_verify(spec: ForgeSpec, *, timeout: int = 20) -> dict[str, Any]:
                 "detail": "subprocess disabled by policy"}
     try:
         import subprocess  # noqa: PLC0415
-        proc = subprocess.Popen(
+        proc = subprocess.Popen(  # noqa: S603 — command is the declared spec
             list(spec.mcp_command), stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except (OSError, FileNotFoundError) as exc:
         return {"id": "mcp-handshake", "status": "FAIL",
                 "detail": f"cannot spawn {spec.mcp_command[0]!r}: {exc}"}
+    if proc.stdin is None or proc.stdout is None:
+        proc.kill()
+        return {"id": "mcp-handshake", "status": "FAIL",
+                "detail": "stdio pipes unavailable"}
     try:
         req = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                           "params": {"protocolVersion": "2024-11-05",
@@ -925,7 +950,7 @@ def mcp_verify(spec: ForgeSpec, *, timeout: int = 20) -> dict[str, Any]:
         except Exception:
             try:
                 proc.kill()
-            except Exception:
+            except Exception:  # noqa: S110 — best-effort kill after terminate
                 pass
 
 

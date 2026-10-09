@@ -188,7 +188,10 @@ def find_python(spec: str, explicit: str | None,
             v = r.stdout.strip()
             if r.returncode == 0 and _satisfies(v, spec):
                 log(f"python {v} via {cand!r} satisfies {spec}")
-                return cand.split()[0] if cand.startswith("py ") else exe
+                # resolve the real exe (the `py` launcher loses the minor pin)
+                rr = _run(cmd[:-1] + ["-c", "import sys;print(sys.executable)"],
+                          timeout=15)
+                return rr.stdout.strip() if rr.returncode == 0 and rr.stdout.strip() else exe
         except (OSError, subprocess.TimeoutExpired):
             continue
 
@@ -239,7 +242,7 @@ def install_package(repo: Path, venv: Path, extras: list[str],
     """Install the forge from the checkout. Prefers a built wheel (no repo
     dependence after install); falls back to ``pip install`` which may hit
     the network for deps — allowed and reported, never silent."""
-    pip = str(_venv_python(venv)) + " -m pip".split()
+    pip = [str(_venv_python(venv)), "-m", "pip"]
     # Build a wheel first so the installed artifact is immutable.
     log("building wheel from checkout")
     r = _run(pip + ["wheel", str(repo), "-w", str(repo / ".forge-wheels"),
@@ -325,7 +328,7 @@ def register(cfg: dict, install_root: Path, venv: Path, version: str,
                       "verified": False}
     path = forge_home() / INSTALLATIONS / f"{cfg['forge_id']}.json"
     _atomic_write(path, (json.dumps(doc, indent=2, sort_keys=True) + "\n").encode())
-    log(f"registered {path}")
+    _log(f"registered {path}")
     return path
 
 
@@ -359,7 +362,7 @@ def smoke(cli: str, venv: Path, version_cmd: list[str], log) -> dict[str, str]:
         r = _run([str(exe)] + version_cmd, timeout=30)
         ok = r.returncode == 0
         ver = r.stdout.strip().splitlines()[0] if ok else ""
-        log(f"smoke `{cli} {' '.join(version_cmd)}` → {ver or r.returncode}")
+        log(f"smoke `{cli} {' '.join(version_cmd)}` -> {ver or r.returncode}")
         return {"status": "PASS" if ok else "FAIL", "version": ver}
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {"status": "FAIL", "detail": str(exc)}
