@@ -33,6 +33,15 @@
 | `install mcp-verify` | handshake JSON-RPC real contra o servidor MCP quando declarado; `NOT_APPLICABLE` na the-forge (sem MCP) | 0 |
 | `installations list` | registry do bootstrap (`~/.forge/installations/*.json`) — read-only | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
+| `specialists list` | ciclo de vida por forja do catálogo: NOT_INSTALLED→INSTALLED→CONFIGURED→REGISTERED a partir do registry de instalações + probe real do CLI + checkouts locais | 0 |
+| `specialists status` | idem a `specialists list` | 0 |
+| `specialists doctor` | probes reais por especialista (handshake MCP quando declarado) | 0 / 1 |
+| `hosts list` | detecção de hosts de IA com evidência (env/binário/config dirs) e `confidence_basis` — nunca infere sessão de arquivo | 0 |
+| `hosts status` | idem a `hosts list` | 0 |
+| `hosts activate <host> [--scope project\|workspace\|user]` | avalia ativação de um host: `ACTIVE_NOW` só com handshake MCP real; `RESTART_REQUIRED` para skills/agents; `UNSUPPORTED` sem caminho de consumo | 0 / 1 / 2 |
+| `task plan "<intent>" [--target path] [--provider id]` | constrói `SpecialistDelegationRequest/v1` por especialista com manifest agêntico; plan-only | 0 / 2 |
+| `task run "<intent>" [--target path] [--provider id] [--max-parallel n]` | executa as delegações via argv real; stage COMPLETED só com exit_code; registra em `.forge/delegations/` | 0 / 1 / 2 |
+| `task explain <task_id>` | lê o `SpecialistDelegationResult/v1` gravado | 0 / 2 |
 | `provider init <dir> --id <provider-id> [--capability <id>]` | escreve o scaffold de provider (manifest, esqueleto stdlib, teste de conformidade, README) num diretório novo ou vazio; nada é instalado nem registrado | 0 / 2 |
 | `provider check [--json] -- <argv>...` | bateria de conformidade do Forge Protocol sobre um argv qualquer ([kit](provider-authoring.md#certificação)) | 0 / 1 / 2 |
 | `ask "<texto>" [--capability id] [--action a] [--requirement REQ.json] [--use PROVIDER] [--profile auto\|economy\|balanced\|max] [--target path]... [--allow-unverified] [--approve CAPABILITY]...` | roteia, avalia a policy e executa; `--requirement` seleciona por fit negociado e `--use` pinna sem furar hard gates ([capability-negotiation](capability-negotiation.md)) | 0 / 2 / 3 / 4 / 5 |

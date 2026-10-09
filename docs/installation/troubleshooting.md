@@ -9,3 +9,5 @@
 | doctor FAIL em mcp-handshake | `theforge install mcp-verify` mostra stderr_tail — geralmente dependência ausente |
 | arquivo seu sumiu? | não deveria — instalação nunca sobrescreve conteúdo do usuário; backups em `<state_dir>/backups/` |
 | drift detectado | `theforge install repair` restaura regiões gerenciadas mantendo o resto |
+
+Códigos de erro canônicos: [docs/errors.md](../errors.md).

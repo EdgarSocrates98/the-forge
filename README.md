@@ -155,7 +155,7 @@ DX (Standard v1): [handbook do ecossistema](docs/handbook.md) ·
 - [Índice de ADRs](docs/adr/README.md) e [índice de relatórios](docs/reports/README.md)
 - [Relatório do Cycle 5.1](docs/reports/cycle-5.1.md) (reality sync, benchmarks B01–B15, Memory ROI, freeze)
 - [Relatório do Cycle 5](docs/reports/cycle-5.md) (Federated Engineering Intelligence: memory, targets, remote trust, strategy governance)
-- [Relatório do Cycle 4.1](docs/reports/cycle-4.1.md) (closure, Global Stop, trace federation e adaptive learning)
+- [Relatório do Cycle 4.1](docs/reports/cycle-4.1.md) (closure, Global Stop, trace federation e adaptive learning) — Cycle 4.1: CLOSED_LOCALLY / REMOTE_VALIDATION_BLOCKED on `0.5.0`
 - [Changelog](CHANGELOG.md) e [release checklist](docs/release-checklist.md) (versionamento e fechamento evidence-based)
 - [Validation state policy](docs/validation-state-policy.md) (distingue REMOTE_BLOCKED de REMOTE_FAILED sem inventar green/red)
 - [Relatório do Cycle 4](docs/reports/cycle-4.md) (Capability Mesh: negociação, discovery, economia adaptativa, A2A/MCP, hardening; provas de realidade)

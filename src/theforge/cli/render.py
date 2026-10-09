@@ -1732,3 +1732,69 @@ def installations(data: dict[str, Any]) -> str:
             line += f"  cli:{_clean(cli.get('name') if isinstance(cli, dict) else cli)}"
         lines.append(line)
     return "\n".join(lines)
+
+
+def specialists(data: dict[str, Any]) -> str:
+    rows = data.get("specialists") or []
+    if not rows:
+        return "no specialists in catalog"
+    lines = []
+    for r in rows:
+        line = f"{_clean(r.get('provider')):<22} {_clean(r.get('state')):<24}"
+        if r.get("version") and r["version"] != "unknown":
+            line += f" v{_clean(r['version'])}"
+        if r.get("cli"):
+            line += f"  cli:{_clean(r['cli'])}"
+        if r.get("agentic_manifest"):
+            line += "  [agentic]"
+        lines.append(line)
+        for note in r.get("notes") or []:
+            lines.append(f"  - {_clean(note)}")
+    return "\n".join(lines)
+
+
+def hosts(data: dict[str, Any]) -> str:
+    result = data.get("detection") or {}
+    lines = []
+    current = result.get("current")
+    for d in result.get("detections") or []:
+        mark = "*" if d.get("running") else " "
+        line = f"{mark} {_clean(d.get('host')):<10} "
+        line += "DETECTED" if d.get("detected") else "not detected"
+        line += f"  ({_clean(d.get('confidence_basis'))})"
+        lines.append(line)
+        for ev in d.get("evidence") or []:
+            lines.append(f"    [{_clean(ev.get('kind'))}] {_clean(ev.get('detail'))}")
+    if current:
+        lines.append(f"current session host: {_clean(current)}")
+    return "\n".join(lines)
+
+
+def activation(data: dict[str, Any]) -> str:
+    receipt = data.get("receipt") or {}
+    lines = [f"host: {_clean(receipt.get('host'))}  provider: {_clean(receipt.get('provider'))}"]
+    lines.append(f"outcome: {_clean(receipt.get('outcome'))}")
+    for name, status in (receipt.get("checks") or {}).items():
+        lines.append(f"  {_clean(name)}: {_clean(status)}")
+    for step in receipt.get("resume_instructions") or []:
+        lines.append(f"  next: {_clean(step)}")
+    for lim in receipt.get("limitations") or []:
+        lines.append(f"  note: {_clean(lim)}")
+    return "\n".join(lines)
+
+
+def task_result(data: dict[str, Any]) -> str:
+    results = data.get("results") or []
+    if not results:
+        return "no delegation results"
+    lines = []
+    for r in results:
+        lines.append(
+            f"{_clean(r.get('task_id'))}  {_clean(r.get('provider')):<22} "
+            f"{_clean(r.get('stage')):<10} {_clean(r.get('execution_mode'))}"
+        )
+        if r.get("exit_code") is not None:
+            lines.append(f"  exit={r['exit_code']} elapsed={r.get('elapsed_ms')}ms")
+        for lim in r.get("limitations") or []:
+            lines.append(f"  - {_clean(lim)}")
+    return "\n".join(lines)

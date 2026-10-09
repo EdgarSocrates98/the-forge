@@ -66,11 +66,7 @@ class _ForgeParser(argparse.ArgumentParser):
         import difflib
 
         m = re.search(r"invalid choice: '([^']+)'", message)
-        subs = {
-            a
-            for a in self._actions
-            if isinstance(a, argparse._SubParsersAction)
-        }
+        subs = {a for a in self._actions if isinstance(a, argparse._SubParsersAction)}
         choices: list[str] = []
         for a in subs:
             choices += list(a.choices)
@@ -102,11 +98,7 @@ def _help_for(parser: argparse.ArgumentParser, argv: list[str]) -> int:
     if not target:
         parser.print_help()
         return 0
-    subs = {
-        a
-        for a in parser._actions
-        if isinstance(a, argparse._SubParsersAction)
-    }
+    subs = {a for a in parser._actions if isinstance(a, argparse._SubParsersAction)}
     for a in subs:
         if target in a.choices:
             a.choices[target].print_help()
@@ -363,6 +355,53 @@ def build_parser() -> argparse.ArgumentParser:
     providers.add_parser("health", parents=[common]).set_defaults(
         handler=commands.cmd_providers_health
     )
+
+    specialists = sub.add_parser(
+        "specialists", help="specialist lifecycle control plane"
+    ).add_subparsers(dest="specialists_command", required=True)
+    spec_list = specialists.add_parser(
+        "list", parents=[common], help="lifecycle state per catalog forge"
+    )
+    spec_list.add_argument("--no-probe", action="store_true", help="skip the CLI version probe")
+    spec_list.set_defaults(handler=commands.cmd_specialists)
+    specialists.add_parser("status", parents=[common]).set_defaults(
+        handler=commands.cmd_specialists
+    )
+    specialists.add_parser(
+        "doctor", parents=[common], help="real health probes per specialist"
+    ).set_defaults(handler=commands.cmd_specialists_doctor)
+
+    hosts = sub.add_parser("hosts", help="AI host detection and activation").add_subparsers(
+        dest="hosts_command", required=True
+    )
+    hosts.add_parser("list", parents=[common]).set_defaults(handler=commands.cmd_hosts)
+    hosts.add_parser("status", parents=[common]).set_defaults(handler=commands.cmd_hosts)
+    hosts_activate = hosts.add_parser(
+        "activate", parents=[common], help="evaluate activation for a host"
+    )
+    hosts_activate.add_argument("host", choices=["claude", "devin", "codex", "copilot"])
+    hosts_activate.add_argument(
+        "--scope", choices=["project", "workspace", "user"], default="project"
+    )
+    hosts_activate.set_defaults(handler=commands.cmd_hosts_activate)
+
+    task = sub.add_parser(
+        "task", help="delegate a task to specialists (real argv execution)"
+    ).add_subparsers(dest="task_command", required=True)
+    task_plan = task.add_parser("plan", parents=[common], help="build delegation requests")
+    task_plan.add_argument("intent")
+    task_plan.add_argument("--target", help="path the specialist analyzes (default: root)")
+    task_plan.add_argument("--provider", help="pin one specialist")
+    task_plan.set_defaults(handler=commands.cmd_task_plan)
+    task_run = task.add_parser("run", parents=[common], help="execute delegations")
+    task_run.add_argument("intent")
+    task_run.add_argument("--target", help="path the specialist analyzes (default: root)")
+    task_run.add_argument("--provider", help="pin one specialist")
+    task_run.add_argument("--max-parallel", type=int, default=4)
+    task_run.set_defaults(handler=commands.cmd_task_run)
+    task_explain = task.add_parser("explain", parents=[common], help="inspect a delegation")
+    task_explain.add_argument("task_id")
+    task_explain.set_defaults(handler=commands.cmd_task_explain)
 
     provider = sub.add_parser(
         "provider", help="provider authoring: scaffold and conformance"

@@ -307,6 +307,25 @@ CODE_HINTS: Final[Mapping[str, str]] = MappingProxyType(
         "supported modes",
         Codes.USAGE: "check `theforge <command> --help` for the correct usage",
         Codes.INTERNAL: "unexpected core error; report a bug with the --debug diagnostic output",
+        Codes.INSTALL_SCOPE_UNKNOWN: "valid scopes are project, workspace and user",
+        Codes.INSTALL_HOST_UNKNOWN: "valid hosts: claude, devin, codex, copilot",
+        Codes.INSTALL_PROFILE_UNKNOWN: "valid profiles: minimal, recommended, full",
+        Codes.INSTALL_PYTHON_INCOMPATIBLE: "check the forge's requires-python and point the "
+        "bootstrap at a compatible interpreter",
+        Codes.INSTALL_UNSUPPORTED: "this forge does not support that operation; check "
+        "`theforge specialists list`",
+        Codes.INSTALL_PERMISSION_DENIED: "the target is not writable; pick another scope or "
+        "fix permissions",
+        Codes.INSTALL_PLAN_NOT_APPROVED: "review with --dry-run, then re-run with --yes",
+        Codes.INSTALL_NOT_A_REPO: "project scope needs a .git root or an explicit --root",
+        Codes.INSTALL_NOT_INSTALLED: "nothing is installed here; run the forge's install first",
+        Codes.INSTALL_LOCKED: "another install holds the lock; if it was interrupted the lock "
+        "is recovered automatically — retry",
+        Codes.INSTALL_DRIFT_UNREPAIRABLE: "managed drift could not be healed; uninstall and "
+        "reinstall, or restore the backup under the state dir",
+        Codes.INSTALL_SPAWN_DISABLED: "spawning is disabled by policy in this context",
+        Codes.INSTALL_VERIFY_FAILED: "a verification step failed; run the forge's doctor for "
+        "the failing check",
     }
 )
 

@@ -1226,3 +1226,243 @@ def cmd_replay(args: argparse.Namespace) -> int:
         return EXIT_BY_STATUS.get(status, 4) if isinstance(status, str) else 4
     _emit(args, redact(data), render.replay)
     return _integrity_exit(len(report.divergences))
+
+
+# -- specialists / hosts / task (Agentic Ecosystem Control Plane, FASE 4/5/10)
+
+
+def _registered_ids(args: argparse.Namespace) -> set[str]:
+    try:
+        registry = Registry(find_forge_dir(_root(args)))
+        return {r.entry.id for r in registry.records() if r.state in ("ok", "degraded")}
+    except Exception:
+        return set()
+
+
+def cmd_specialists(args: argparse.Namespace) -> int:
+    """``specialists list|status`` — lifecycle view over the forge catalog."""
+    from theforge import specialists as spec_mod
+
+    views = spec_mod.collect(
+        workspace_root=_root(args),
+        registered=_registered_ids(args),
+        probe_cli=not getattr(args, "no_probe", False),
+    )
+    _emit(args, {"specialists": spec_mod.to_rows(views)}, render.specialists)
+    return 0
+
+
+def cmd_specialists_doctor(args: argparse.Namespace) -> int:
+    """``specialists doctor`` — per-specialist health checks (real probes)."""
+    from theforge import _installkit as kit
+    from theforge import specialists as spec_mod
+
+    views = spec_mod.collect(workspace_root=_root(args), registered=_registered_ids(args))
+    rows: list[dict[str, Any]] = []
+    worst = 0
+    for v in views:
+        checks: list[dict[str, Any]] = []
+        mcp = v.mcp or {}
+        verify_tool = mcp.get("verify_tool")
+        if mcp.get("command"):
+            outcome = kit.mcp_verify(mcp["command"], verify_tool=verify_tool)
+            checks.append(
+                {
+                    "name": "mcp-handshake",
+                    "status": "PASS" if outcome.get("ok") else "FAIL",
+                    "detail": outcome.get("detail"),
+                }
+            )
+        state = v.lifecycle.installation_state
+        status = (
+            "ok"
+            if state in ("HEALTHY", "REGISTERED", "CONFIGURED", "READY")
+            else "degraded"
+            if state in ("INSTALLED", "DEGRADED", "INSTALLABLE")
+            else "not-installed"
+        )
+        if any(c["status"] == "FAIL" for c in checks):
+            status = "degraded"
+            worst = max(worst, 1)
+        rows.append(
+            {
+                "provider": v.lifecycle.provider,
+                "state": state,
+                "status": status,
+                "checks": checks,
+                "notes": v.notes,
+            }
+        )
+    _emit(args, {"specialists": rows}, render.specialists)
+    return worst
+
+
+def cmd_hosts(args: argparse.Namespace) -> int:
+    """``hosts list|status`` — evidence-based host detection."""
+    from theforge import host_detect
+
+    result = host_detect.detect_hosts(project_root=_root(args))
+    data = {
+        "detection": {
+            "current": result.current,
+            "detections": [
+                {
+                    "host": d.host,
+                    "detected": d.detected,
+                    "running": d.running,
+                    "confidence_basis": d.confidence_basis,
+                    "evidence": [{"kind": e.kind, "detail": e.detail} for e in d.evidence],
+                }
+                for d in result.detections
+            ],
+            "limitations": list(result.limitations),
+        }
+    }
+    _emit(args, data, render.hosts)
+    return 0
+
+
+def cmd_hosts_activate(args: argparse.Namespace) -> int:
+    """``hosts activate <host>`` — activation plan + honest receipt."""
+    from theforge import _installkit as kit
+    from theforge import activation, host_detect
+    from theforge import specialists as spec_mod
+
+    root = _root(args)
+    detection = host_detect.detect_hosts(project_root=root)
+    detected = detection.for_host(args.host)
+    has_binary = detected is not None and any(e.kind == "binary" for e in detected.evidence)
+    if detected is None or not (detected.detected or has_binary):
+        raise UsageError(
+            f"host {args.host!r} not detected — evidence: "
+            + (", ".join(e.detail for e in detected.evidence) if detected else "none")
+        )
+
+    views = spec_mod.collect(workspace_root=root, registered=_registered_ids(args))
+    installed = [
+        v
+        for v in views
+        if v.lifecycle.installation_state in ("CONFIGURED", "REGISTERED", "HEALTHY")
+    ]
+    if not installed:
+        raise UsageError("no installed specialist to activate — run `theforge install auto`")
+
+    provider = installed[0].lifecycle.provider
+    components = ["skills", "mcp"] if installed[0].mcp else ["skills"]
+    plan = activation.build_activation_plan(
+        host=args.host,
+        provider=provider,
+        scope=args.scope,
+        components=components,
+        writes=[],
+    )
+    mcp_result: bool | None = None
+    mcp = installed[0].mcp or {}
+    if mcp.get("command"):
+        outcome = kit.mcp_verify(mcp["command"], verify_tool=mcp.get("verify_tool"))
+        mcp_result = bool(outcome.get("ok"))
+    receipt = activation.evaluate_activation(
+        plan,
+        host_is_current_session=detection.current == args.host,
+        mcp_handshake_passed=mcp_result,
+    )
+    _emit(args, {"receipt": dataclasses.asdict(receipt)}, render.activation)
+    return 0 if receipt.outcome != "UNSUPPORTED" else 1
+
+
+def _delegations_dir(root: Path) -> Path:
+    d = root / ".forge" / "delegations"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _save_delegation(root: Path, result: Any) -> None:
+    path = _delegations_dir(root) / f"{result.task_id}.json"
+    path.write_text(json.dumps(dataclasses.asdict(result), indent=2), encoding="utf-8")
+
+
+def cmd_task_plan(args: argparse.Namespace) -> int:
+    """``task plan <intent>`` — discover candidates, build delegation requests."""
+    from theforge import delegation
+    from theforge import specialists as spec_mod
+
+    root = _root(args)
+    views = spec_mod.collect(workspace_root=root, registered=_registered_ids(args))
+    requests = []
+    for v in views:
+        if getattr(args, "provider", None) and v.lifecycle.provider != args.provider:
+            continue
+        manifest = v.manifest
+        if manifest is None or not manifest.workflows:
+            continue
+        wf = manifest.workflows[0]
+        argv = spec_mod.resolve_command(wf.command, view=v, target=args.target or str(root))
+        if argv is None:
+            continue
+        requests.append(
+            delegation.new_request(
+                intent=args.intent,
+                provider=v.lifecycle.provider,
+                execution_mode=wf.mode,
+                command=argv,
+                expected_outputs=[wf.description] if wf.description else [],
+            )
+        )
+    data = {
+        "intent": args.intent,
+        "candidates": [
+            {"provider": r.provider, "mode": r.execution_mode, "command": r.command}
+            for r in requests
+        ],
+        "note": "plan only — run `task run` to execute",
+    }
+    _emit(args, data, render.task_result)
+    return 0
+
+
+def cmd_task_run(args: argparse.Namespace) -> int:
+    """``task run <intent>`` — delegate to discovered specialists via real argv."""
+    from theforge import delegation
+    from theforge import specialists as spec_mod
+
+    root = _root(args)
+    views = spec_mod.collect(workspace_root=root, registered=_registered_ids(args))
+    requests = []
+    for v in views:
+        if getattr(args, "provider", None) and v.lifecycle.provider != args.provider:
+            continue
+        manifest = v.manifest
+        if manifest is None or not manifest.workflows:
+            continue
+        wf = manifest.workflows[0]
+        argv = spec_mod.resolve_command(wf.command, view=v, target=args.target or str(root))
+        if argv is None:
+            continue
+        requests.append(
+            delegation.new_request(
+                intent=args.intent,
+                provider=v.lifecycle.provider,
+                execution_mode=wf.mode,
+                command=argv,
+            )
+        )
+    if not requests:
+        raise UsageError(
+            "no delegable specialists — none declare an agentic manifest with executable workflows"
+        )
+    results = delegation.fan_out(requests, max_parallel=args.max_parallel, cwd=str(root))
+    for r in results:
+        _save_delegation(root, r)
+    _emit(args, {"results": [dataclasses.asdict(r) for r in results]}, render.task_result)
+    return 0 if all(r.stage in ("COMPLETED", "PREPARED") for r in results) else 1
+
+
+def cmd_task_explain(args: argparse.Namespace) -> int:
+    """``task explain <task-id>`` — read a stored delegation result."""
+    root = _root(args)
+    path = _delegations_dir(root) / f"{args.task_id}.json"
+    if not path.is_file():
+        raise UsageError(f"no delegation record for {args.task_id!r}")
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    _emit(args, {"results": [doc]}, render.task_result)
+    return 0

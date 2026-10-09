@@ -127,6 +127,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # portable-installation wave: shared vendored engine + forge contract
     "test_installkit.py": ("unit", "contract"),
     "test_installkit_schemas.py": ("contract",),
+    "test_control_plane.py": ("unit", "contract", "integration"),
     "test_install_orchestration.py": ("integration", "security"),
     "test_install_e2e.py": ("e2e", "integration"),
     "test_e2e_matrix.py": ("e2e", "contract"),

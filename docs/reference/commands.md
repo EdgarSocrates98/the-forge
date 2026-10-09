@@ -12,6 +12,7 @@ Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. D
 - [`economy`](#economy) — 3 command(s)
 - [`explain`](#explain) — 1 command(s)
 - [`graph`](#graph) — 1 command(s)
+- [`hosts`](#hosts) — 4 command(s)
 - [`init`](#init) — 1 command(s)
 - [`install`](#install) — 10 command(s)
 - [`installations`](#installations) — 2 command(s)
@@ -24,8 +25,10 @@ Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. D
 - [`remote`](#remote) — 3 command(s)
 - [`replay`](#replay) — 1 command(s)
 - [`resume`](#resume) — 1 command(s)
+- [`specialists`](#specialists) — 4 command(s)
 - [`status`](#status) — 1 command(s)
 - [`targets`](#targets) — 3 command(s)
+- [`task`](#task) — 4 command(s)
 - [`trace`](#trace) — 1 command(s)
 - [`workspace`](#workspace) — 2 command(s)
 
@@ -356,6 +359,83 @@ theforge graph [help] [root] [json] [debug] [CAPABILITY] [mesh]
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `CAPABILITY` | no | — | only the edges touching this capability ('provider/capability' or a bare capability id) |
 | `mesh` | no | — | the domain mesh projection: per domain, the observe/engineer/verify capabilities derived from declared produces/consumes/can_verify relations |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## hosts
+
+### `hosts`
+
+**Syntax**
+
+```text
+theforge hosts [help]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `hosts activate`
+
+**Syntax**
+
+```text
+theforge hosts activate [help] [root] [json] [debug] <host> [scope]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `host` | yes | — | — |
+| `scope` | no | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `hosts list`
+
+**Syntax**
+
+```text
+theforge hosts list [help] [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `hosts status`
+
+**Syntax**
+
+```text
+theforge hosts status [help] [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -919,7 +999,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge provider check [help] [root] [json] [debug] <ARGV>
+theforge provider check [help] [root] [json] [debug] [ARGV]
 ```
 
 | argument/flag | required | default | description |
@@ -928,7 +1008,7 @@ theforge provider check [help] [root] [json] [debug] <ARGV>
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
-| `ARGV` | yes | — | the provider argv (prefix with -- when it starts with a dash) |
+| `ARGV` | no | — | the provider argv (prefix with -- when it starts with a dash) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1199,6 +1279,82 @@ theforge resume [help] [root] [json] [debug] <run_id> [allow_unverified] [CAPABI
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+## specialists
+
+### `specialists`
+
+**Syntax**
+
+```text
+theforge specialists [help]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `specialists doctor`
+
+**Syntax**
+
+```text
+theforge specialists doctor [help] [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `specialists list`
+
+**Syntax**
+
+```text
+theforge specialists list [help] [root] [json] [debug] [no_probe]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `no_probe` | no | — | skip the CLI version probe |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `specialists status`
+
+**Syntax**
+
+```text
+theforge specialists status [help] [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ## status
 
 ### `status`
@@ -1279,6 +1435,89 @@ theforge targets negotiate [help] [root] [json] [debug] <provider> <capability> 
 | `runtime` | no | — | — |
 | `region` | no | — | — |
 | `isolated` | no | — | force locality 'isolated' |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## task
+
+### `task`
+
+**Syntax**
+
+```text
+theforge task [help]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `task explain`
+
+**Syntax**
+
+```text
+theforge task explain [help] [root] [json] [debug] <task_id>
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `task_id` | yes | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `task plan`
+
+**Syntax**
+
+```text
+theforge task plan [help] [root] [json] [debug] <intent> [target] [provider]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `intent` | yes | — | — |
+| `target` | no | — | path the specialist analyzes (default: root) |
+| `provider` | no | — | pin one specialist |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `task run`
+
+**Syntax**
+
+```text
+theforge task run [help] [root] [json] [debug] <intent> [target] [provider] [max_parallel]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `intent` | yes | — | — |
+| `target` | no | — | path the specialist analyzes (default: root) |
+| `provider` | no | — | pin one specialist |
+| `max_parallel` | no | — | — |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
