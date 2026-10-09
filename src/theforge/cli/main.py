@@ -9,6 +9,7 @@ interruption, ends with `[<code> · <family>]` (13.4). A traceback is never prin
 
 import argparse
 import contextlib
+import re
 import sys
 from collections.abc import Sequence
 from typing import Final
@@ -46,6 +47,75 @@ explicitly. An ambiguous decomposition may be resolved by a `proposes_plans` pro
 """
 
 
+_TOP_COMMANDS: tuple[tuple[str, str], ...] = (
+    ("init", "set up The Forge in this workspace"),
+    ("capabilities", "discover skills, agents and providers"),
+    ("install", "install/manage host integrations (apply, auto, status)"),
+    ("doctor", "health-check the installation and registry"),
+    ("providers", "list specialist forges and what they offer"),
+    ("ask", "route a question to the right specialist"),
+    ("status", "workspace and installation status"),
+)
+
+
+class _ForgeParser(argparse.ArgumentParser):
+    """Parser with the Phase-4 DX contract: unknown verbs get fuzzy
+    suggestions instead of a bare invalid-choice dump."""
+
+    def error(self, message: str) -> None:  # noqa: D102
+        import difflib
+
+        m = re.search(r"invalid choice: '([^']+)'", message)
+        subs = {
+            a
+            for a in self._actions
+            if isinstance(a, argparse._SubParsersAction)
+        }
+        choices: list[str] = []
+        for a in subs:
+            choices += list(a.choices)
+        if m and choices:
+            close = difflib.get_close_matches(m.group(1), choices, n=3, cutoff=0.6)
+            if close:
+                message += "\n\ndid you mean: " + ", ".join(close) + "?"
+        super().error(message)
+
+
+def _bare_summary(parser: argparse.ArgumentParser) -> int:
+    """Phase 4.1 — bare ``theforge`` prints a product summary and the way
+    to help; never an error, never a mutation."""
+    print("theforge — one entry point, many specialists.")
+    print()
+    print("most used:")
+    for name, desc in _TOP_COMMANDS:
+        print(f"  {name:<14} {desc}")
+    print()
+    print("help:    theforge help <command>   |   theforge --help")
+    print("install: theforge install apply    |   theforge install auto")
+    print("docs:    docs/installation/quickstart.md")
+    return 0
+
+
+def _help_for(parser: argparse.ArgumentParser, argv: list[str]) -> int:
+    """``theforge help [verb]`` — contextual help without guessing flags."""
+    target = argv[1] if len(argv) > 1 else None
+    if not target:
+        parser.print_help()
+        return 0
+    subs = {
+        a
+        for a in parser._actions
+        if isinstance(a, argparse._SubParsersAction)
+    }
+    for a in subs:
+        if target in a.choices:
+            a.choices[target].print_help()
+            return 0
+    print(f"theforge help: unknown command {target!r}", file=sys.stderr)
+    print("see: theforge --help", file=sys.stderr)
+    return 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--root", default=".", help="workspace root (default: current dir)")
@@ -56,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="on error, print the redacted diagnostic (never a traceback)",
     )
 
-    parser = argparse.ArgumentParser(
+    parser = _ForgeParser(
         prog="theforge", description="The Forge: one entry point, many specialists."
     )
     parser.add_argument("--version", action="version", version=f"theforge {__version__}")
@@ -204,6 +274,67 @@ def build_parser() -> argparse.ArgumentParser:
         help="record the approval gate as granted (plan still does not execute)",
     )
     install_plan.set_defaults(handler=commands.cmd_install_plan)
+
+    # --- portable installation lifecycle (ADR-0058, forge/* v1) ---
+    for name, help_text in (
+        ("apply", "install this forge's host assets into the resolved scope"),
+        ("status", "install ledger + drift + health of the target"),
+        ("doctor", "deep install health (ledger, drift, mcp, handshake)"),
+        ("repair", "restore managed assets that drifted or went missing"),
+        ("uninstall", "remove only what the ledger declares as managed"),
+        ("update", "upgrade the bootstrap-installed runtime (pinned only)"),
+        (
+            "auto",
+            "delegate install to every registered forge; --scope "
+            "workspace discovers sibling repos, --member fans out",
+        ),
+        ("mcp-verify", "real JSON-RPC handshake against the MCP server"),
+    ):
+        p = install.add_parser(name, parents=[common], help=help_text)
+        if name in ("apply", "status", "doctor", "repair", "uninstall", "auto"):
+            p.add_argument("--scope", choices=("project", "workspace", "user"), default="project")
+        if name in ("apply", "auto"):
+            p.add_argument(
+                "--yes",
+                "-y",
+                action="store_true",
+                help="explicit approval — required for any write",
+            )
+        if name == "auto":
+            p.add_argument(
+                "--forge", default=None, help="limit delegation to one registered forge id"
+            )
+            p.add_argument(
+                "--member",
+                action="append",
+                default=[],
+                metavar="RELPATH",
+                help="workspace scope: also delegate a project "
+                "install into this member repo (repeatable)",
+            )
+        if name == "apply":
+            p.add_argument(
+                "--host", default="all", choices=("claude", "devin", "codex", "copilot", "all")
+            )
+            p.add_argument(
+                "--profile", default="recommended", choices=("minimal", "recommended", "full")
+            )
+        if name in ("apply", "repair", "uninstall", "update", "auto"):
+            p.add_argument("--dry-run", action="store_true")
+        if name == "uninstall":
+            p.add_argument("--purge", action="store_true", help="also delete .forge/install state")
+        if name == "update":
+            p.add_argument("--to", default=None, help="pinned version — never 'latest'")
+            p.add_argument("--repo", default=None)
+        p.set_defaults(handler=commands.cmd_install_lifecycle)
+
+    installations = sub.add_parser(
+        "installations",
+        help="bootstrap installation registry (~/.forge/installations)",
+    ).add_subparsers(dest="installations_command", required=True)
+    installations.add_parser("list", parents=[common]).set_defaults(
+        handler=commands.cmd_installations
+    )
 
     graph = sub.add_parser(
         "graph",
@@ -562,7 +693,13 @@ def _fail(
 
 def main(argv: Sequence[str] | None = None) -> int:
     _tolerate_unencodable_output()
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if not argv:
+        return _bare_summary(parser)
+    if argv[0] == "help":
+        return _help_for(parser, argv)
+    args = parser.parse_args(argv)
     try:
         return int(args.handler(args))
     except PersistenceError as exc:

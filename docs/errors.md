@@ -82,6 +82,19 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-WORKSPACE-GRAPH-EDGE` | workspace | aresta do grafo rejeitada (sem evidência, extremidade inexistente ou inferida sem regra) |
 | `FORGE-REPLAY-NOT-REPRODUCIBLE` | replay | `replay --mode execute` recusado: run não reproduzível ou `unknown`, contexto mudou ou provider mudou de identidade ou versão (nenhum provider executado; exit 4) |
 | `FORGE-REPLAY-UNSUPPORTED` | replay | `replay --mode execute` de um run de plano (exit 4) |
+| `FORGE-INSTALL-SCOPE-UNKNOWN` | usage | `install *` com `--scope` fora de `project\|workspace\|user` |
+| `FORGE-INSTALL-HOST-UNKNOWN` | usage | `install apply` com `--host` desconhecido |
+| `FORGE-INSTALL-PROFILE-UNKNOWN` | usage | `install apply` com `--profile` fora de `minimal\|recommended\|full` |
+| `FORGE-INSTALL-PYTHON-INCOMPATIBLE` | usage | nenhum interpretador satisfaz o `python` do `forge.json` no bootstrap |
+| `FORGE-INSTALL-UNSUPPORTED` | usage | operação sem suporte na forge/plataforma |
+| `FORGE-INSTALL-PERMISSION-DENIED` | policy | escrita recusada pelo FS ou pelo ledger (arquivo do usuário protegido) |
+| `FORGE-INSTALL-PLAN-NOT-APPROVED` | policy | mutação de install sem `--yes`/`--approve`/`--dry-run` |
+| `FORGE-INSTALL-NOT-A-REPO` | workspace | alvo sem state dir instalado e sem raiz de repositório |
+| `FORGE-INSTALL-NOT-INSTALLED` | workspace | operação sobre forge ausente do ledger/`~/.forge/installations` |
+| `FORGE-INSTALL-LOCKED` | persistence | outro processo detém o lockfile de install do alvo |
+| `FORGE-INSTALL-DRIFT-UNREPAIRABLE` | persistence | drift de asset gerenciado sem origem canônica para reassert |
+| `FORGE-INSTALL-SPAWN-DISABLED` | security | subprocess recusado por spec (`spawn_ok=False`) |
+| `FORGE-INSTALL-VERIFY-FAILED` | provider | handshake MCP/verificação real falhou pós-instalação |
 | `FORGE-USAGE` | usage | run que falhou por uso inválido |
 | `FORGE-INTERNAL` | internal | run que falhou por erro interno inesperado |
 

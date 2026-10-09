@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/InstallReceipt/v1",
+  "title": "ForgeInstallReceipt",
+  "type": "object",
+  "required": ["schema", "receipt_id", "forge_id", "operation", "scope",
+               "target_root", "managed_files", "checks", "verification",
+               "status", "created_at"],
+  "properties": {
+    "schema": {"const": "forge/InstallReceipt/v1"},
+    "receipt_id": {"type": "string"},
+    "forge_id": {"type": "string"},
+    "operation": {"enum": ["install", "update", "repair", "uninstall"]},
+    "scope": {"enum": ["project", "workspace", "user"]},
+    "target_root": {"type": "string"},
+    "profile": {"enum": ["minimal", "recommended", "full"]},
+    "host": {"type": ["string", "null"]},
+    "dry_run": {"type": "boolean"},
+    "managed_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "kind", "action"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string"},
+          "kind": {"enum": ["config", "skill", "agent", "marker", "mcp", "state", "launcher"]},
+          "action": {"enum": ["created", "updated", "adopted", "unchanged", "removed", "restored"]}
+        }
+      }
+    },
+    "managed_markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "marker", "sha256"],
+        "properties": {
+          "file": {"type": "string"},
+          "marker": {"type": "string"},
+          "sha256": {"type": "string"}
+        }
+      }
+    },
+    "mcp": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["server", "file", "action"],
+        "properties": {
+          "server": {"type": "string"},
+          "file": {"type": "string"},
+          "key": {"type": "string"},
+          "action": {"type": "string"}
+        }
+      }
+    },
+    "env": {"type": "object"},
+    "context": {
+      "type": "object",
+      "properties": {
+        "profile": {"type": "string"},
+        "skills_bytes": {"type": ["integer", "null"]},
+        "agents_bytes": {"type": ["integer", "null"]},
+        "managed_bytes": {"type": ["integer", "null"]},
+        "mcp_entries": {"type": ["integer", "null"]},
+        "managed_entries": {"type": ["integer", "null"]},
+        "tools_exposed": {"type": ["integer", "null"]}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "status": {"enum": ["PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE"]},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE"]}
+      }
+    },
+    "status": {"enum": ["planned", "completed", "failed", "rolled-back"]},
+    "error": {
+      "type": "object",
+      "properties": {
+        "kind": {"type": "string"},
+        "detail": {"type": "string"}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "properties": {
+        "available": {"type": "boolean"},
+        "restore": {"type": "string"}
+      }
+    },
+    "created_at": {"type": "string"},
+    "created_by": {"type": "string"}
+  },
+  "additionalProperties": false
+}

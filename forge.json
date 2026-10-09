@@ -1,0 +1,8 @@
+{
+  "forge_id": "the-forge",
+  "package": "theforge",
+  "distribution": "theforge",
+  "cli": "theforge",
+  "python": ">=3.11",
+  "extras": []
+}

@@ -1667,3 +1667,68 @@ def replay(data: dict[str, Any]) -> str:
             f"Explain:     theforge explain {new_run}",
         ]
     )
+
+
+def install_doc(data: dict[str, Any]) -> str:
+    """forge/* receipt / health / plan document (ADR-0058)."""
+    op = data.get("operation", _clean(data.get("command", "install")))
+    lines = [f"{_clean(data.get('forge_id'))} {op} - {_clean(data.get('status'))}"]
+    if data.get("target_root"):
+        lines.append(f"target: {_clean(data['target_root'])}")
+    for c in data.get("checks") or []:
+        line = f"  {_clean(c.get('id')):<24} {_clean(c.get('status'))}"
+        if c.get("detail"):
+            line += f"  {_detail(c['detail'])}"
+        lines.append(line)
+    managed = data.get("managed_files") or data.get("planned_files") or []
+    if managed:
+        lines.append(f"managed files: {len(managed)}")
+    drift = data.get("drift")
+    if isinstance(drift, dict):
+        lines.append(
+            f"drift: {drift.get('ok', 0)} ok, "
+            f"{len(drift.get('modified') or [])} modified, "
+            f"{len(drift.get('missing') or [])} missing"
+        )
+    ws = data.get("workspace")
+    if isinstance(ws, dict):
+        members = ws.get("members") or []
+        lines.append(f"workspace: {len(members)} member repo(s) discovered")
+        for m in members:
+            lines.append(f"  member {_clean(m.get('path'))}")
+        for c in ws.get("conflicts") or []:
+            lines.append(
+                f"  precedence {_clean(c.get('member'))}/"
+                f"{_clean(c.get('forge_id'))}: {_clean(c.get('decision'))}"
+            )
+        for m in ws.get("unknown_members") or []:
+            lines.append(f"  member {_clean(m)}: not a discovered repo")
+        for r in ws.get("member_results") or []:
+            line = f"  member-result {_clean(r.get('member'))}"
+            if r.get("forge_id"):
+                line += f"/{_clean(r['forge_id'])}"
+            line += f": {_clean(r.get('status'))}"
+            if r.get("detail"):
+                line += f"  {_detail(r['detail'])}"
+            lines.append(line)
+    if data.get("error"):
+        err = data["error"]
+        lines.append(f"refused: {_clean(err.get('kind'))}: {_detail(err.get('detail'))}")
+    verification = data.get("verification") or {}
+    if verification.get("status"):
+        lines.append(f"verification: {_clean(verification['status'])}")
+    return "\n".join(lines)
+
+
+def installations(data: dict[str, Any]) -> str:
+    rows = data.get("installations") or []
+    if not rows:
+        return "no installations registered (~/.forge/installations is empty)"
+    lines = []
+    for m in rows:
+        line = f"{_clean(m.get('forge_id')):<22} {_clean(m.get('version'))}"
+        if m.get("cli"):
+            cli = m["cli"]
+            line += f"  cli:{_clean(cli.get('name') if isinstance(cli, dict) else cli)}"
+        lines.append(line)
+    return "\n".join(lines)

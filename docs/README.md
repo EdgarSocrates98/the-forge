@@ -54,6 +54,12 @@ Memória verificável, não histórico: correlação nunca vira causa sem experi
 - [adaptive-strategy.md](adaptive-strategy.md) — shadow champion/challenger no routing.
 - [adaptive-experiments.md](adaptive-experiments.md) — `StrategyExperiment/v1`: shadow → auditable.
 
+## Instalação portátil
+
+- [portable-installation/](portable-installation/README.md) — productização
+  da família Forge: bootstrap, contrato v1, escopo × host × perfil, matriz
+  de portabilidade e riscos.
+
 ## Camada agentic
 
 - [agentic.md](agentic.md) — trabalhar no repo com agentes: hosts, mirrors, auditoria.
