@@ -1,0 +1,134 @@
+"""Deterministic routing signals: intent tokens, workspace dependencies, file globs."""
+
+import json
+import re
+import tomllib
+import unicodedata
+from collections.abc import Callable
+from pathlib import Path, PurePosixPath
+from typing import Any, Final
+
+from theforge.contracts.types import DEPENDENCY_MANIFESTS
+from theforge.security.paths import resolve_inside
+
+_TOKEN = re.compile(r"\w+")
+_REQ_NAME = re.compile(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
+
+
+def normalize_tokens(text: str) -> list[str]:
+    decomposed = unicodedata.normalize("NFKD", text.lower())
+    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return _TOKEN.findall(stripped)
+
+
+def keyword_matches(intent_tokens: set[str], keywords: list[str]) -> list[str]:
+    hits: list[str] = []
+    for keyword in keywords:
+        tokens = normalize_tokens(keyword)
+        if tokens and all(token in intent_tokens for token in tokens):
+            hits.append(keyword)
+    return hits
+
+
+def normalize_dep(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def glob_matches(files: list[str], globs: list[str]) -> list[str]:
+    # PurePosixPath.match matches from the right, so "openapi.yaml" matches at any depth.
+    # Intended for simple provider globs, not full gitignore-style patterns.
+    return [g for g in globs if any(PurePosixPath(f).match(g) for f in files)]
+
+
+def workspace_dependencies(root: Path) -> set[str]:
+    names: set[str] = set()
+    for declared in dependencies_by_file(root).values():
+        names |= declared
+    return names
+
+
+def dependencies_by_file(root: Path) -> dict[Path, set[str]]:
+    """Normalized dependency names per generic dependency file directly under ``root``.
+
+    Only files that exist inside ``root`` are keys (a file declaring nothing maps to an
+    empty set); keys follow ``DEPENDENCY_MANIFESTS`` order, then path order.
+    """
+    found: dict[Path, set[str]] = {}
+    for pattern in DEPENDENCY_MANIFESTS:
+        parse = _PARSERS[pattern]
+        paths = sorted(root.glob(pattern)) if _MAGIC & set(pattern) else [root / pattern]
+        for path in paths:
+            if path in found or _read(root, path) is None:
+                continue
+            found[path] = {normalize_dep(n) for n in parse(root, path)}
+    return found
+
+
+def _read(root: Path, path: Path) -> str | None:
+    if resolve_inside(root, path) is None:
+        return None
+    try:
+        return path.read_text(encoding="utf-8") if path.is_file() else None
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _pyproject_deps(root: Path, path: Path) -> set[str]:
+    text = _read(root, path)
+    if text is None:
+        return set()
+    try:
+        data: dict[str, Any] = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return set()
+    names: set[str] = set()
+    project = data.get("project")
+    if isinstance(project, dict) and isinstance(project.get("dependencies"), list):
+        for spec in project["dependencies"]:
+            if isinstance(spec, str) and (m := _REQ_NAME.match(spec)):
+                names.add(m.group(1))
+    tool = data.get("tool")
+    poetry = tool.get("poetry") if isinstance(tool, dict) else None
+    deps = poetry.get("dependencies") if isinstance(poetry, dict) else None
+    if isinstance(deps, dict):
+        names |= {str(k) for k in deps if str(k).lower() != "python"}
+    return names
+
+
+def _requirements_deps(root: Path, path: Path) -> set[str]:
+    text = _read(root, path)
+    if text is None:
+        return set()
+    names: set[str] = set()
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", "-", "git+")) or "://" in stripped:
+            continue
+        if m := _REQ_NAME.match(stripped):
+            names.add(m.group(1))
+    return names
+
+
+def _package_json_deps(root: Path, path: Path) -> set[str]:
+    text = _read(root, path)
+    if text is None:
+        return set()
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return set()
+    names: set[str] = set()
+    if isinstance(data, dict):
+        for key in ("dependencies", "devDependencies"):
+            section = data.get(key)
+            if isinstance(section, dict):
+                names |= {str(k) for k in section}
+    return names
+
+
+_MAGIC: Final = frozenset("*?[")
+_PARSERS: Final[dict[str, Callable[[Path, Path], set[str]]]] = {
+    "pyproject.toml": _pyproject_deps,
+    "requirements*.txt": _requirements_deps,
+    "package.json": _package_json_deps,
+}

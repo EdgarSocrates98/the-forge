@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "constraints": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "epistemic": {
+      "enum": [
+        "explicit",
+        "observed",
+        "inferred"
+      ]
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "relation": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "surface": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "target": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "source",
+    "relation",
+    "target"
+  ],
+  "title": "CapabilityRelation",
+  "type": "object"
+}

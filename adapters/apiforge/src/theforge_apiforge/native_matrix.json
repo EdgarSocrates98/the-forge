@@ -1,0 +1,178 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "api.analyze",
+      "limitations": [
+        "dynamic routes remain unresolved",
+        "static adapters do not execute application code"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "api.change-control",
+      "limitations": [
+        "live GitHub evidence is a time-bound observation and requires an explicit read-only transport and policy",
+        "provider observations are read-only and do not prove deployment success"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "api.next-step",
+      "limitations": [
+        "routing requires findings mapped to the catalog"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "api.provenance",
+      "limitations": [
+        "brief acceptance still requires an independent task verification record"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "cicd.inspect",
+      "limitations": [
+        "provider execution status is not inferred from configuration alone"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "cicd.inspect-run",
+      "limitations": [
+        "configuration and check observations do not prove deployment safety or runtime health"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "cicd.verify-runtime",
+      "limitations": [
+        "proves the committed pipeline manifest rehearsal, not a provider's hosted execution"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "cloud.inspect",
+      "limitations": [
+        "variables, remote state and live posture remain unresolved without evidence"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "cloud.verify-runtime",
+      "limitations": [
+        "proves local IaC parsing and declared resources, not cloud apply or remote posture"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "database.inspect",
+      "limitations": [
+        "indexes, cardinality and query plans require database evidence"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "database.verify-runtime",
+      "limitations": [
+        "proves the committed local SQLite fixture, not a remote engine or production query plan"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "external.apply",
+      "limitations": [
+        "live mutation is not available in the offline core"
+      ],
+      "risk": "external_mutation",
+      "state": "unsupported"
+    },
+    {
+      "capability_id": "frontend.inspect",
+      "limitations": [
+        "browser runtime behavior and accessibility require a frontend test host"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "frontend.verify-runtime",
+      "limitations": [
+        "proves the committed integration fixture, not a browser engine or accessibility audit"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "git.plan",
+      "limitations": [
+        "no Git host mutation is enabled by the local core"
+      ],
+      "risk": "local_reversible",
+      "state": "unresolved"
+    },
+    {
+      "capability_id": "git.read-context",
+      "limitations": [
+        "no merge, push, workflow dispatch or deployment mutation is available",
+        "provider availability, permissions and freshness remain unresolved without a live evidence receipt"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "integration.github-issues",
+      "limitations": [
+        "issue state and permissions are observations at collection time, not mutation authorization"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "integration.health",
+      "limitations": [
+        "a health endpoint cannot prove SLO compliance, rollback readiness or application correctness"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "integration.json-read",
+      "limitations": [
+        "provider-specific issue and permission semantics are not inferred from generic JSON"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    },
+    {
+      "capability_id": "messaging.inspect",
+      "limitations": [
+        "lag, backlog and delivery guarantees require broker observations"
+      ],
+      "risk": "read_only",
+      "state": "heuristic"
+    },
+    {
+      "capability_id": "messaging.verify-runtime",
+      "limitations": [
+        "proves the committed local message flow, not broker lag, ordering or delivery guarantees"
+      ],
+      "risk": "read_only",
+      "state": "supported"
+    }
+  ],
+  "provenance": "recorded",
+  "recorded_at": "2026-10-06T13:09:39Z",
+  "specialist_version": "0.1.0"
+}

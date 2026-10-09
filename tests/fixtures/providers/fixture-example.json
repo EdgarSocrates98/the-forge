@@ -1,0 +1,25 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "example-forge",
+  "version": "0.1.0",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "execute"],
+  "domains": ["example"],
+  "native_surface_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+  "capabilities": [
+    {
+      "id": "example.scan",
+      "actions": ["scan"],
+      "default_action": "scan",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Example scan: the smallest capability a Forge can honestly expose",
+      "signals": {
+        "keywords": ["example", "exemplo"],
+        "file_globs": ["*.example"],
+        "dependencies": []
+      },
+      "relations": {"produces": ["example.report"]}
+    }
+  ]
+}

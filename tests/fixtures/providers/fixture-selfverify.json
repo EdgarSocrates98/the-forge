@@ -1,0 +1,62 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-selfverify",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+  "execute",
+  "verify"
+ ],
+ "domains": [
+  "meta"
+ ],
+ "capabilities": [
+  {
+   "id": "self.thing",
+   "actions": [
+    "diagnose"
+   ],
+   "default_action": "diagnose",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Handle selfverify tasks",
+   "signals": {
+    "keywords": [
+     "selfverify",
+     "thing"
+    ],
+    "file_globs": [],
+    "dependencies": []
+   }
+  },
+  {
+   "id": "self.judge",
+   "actions": [
+    "verify"
+   ],
+   "default_action": "verify",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Verify this provider's own results (not independent)",
+   "signals": {
+    "keywords": [
+     "__selfverify_internal__"
+    ],
+    "file_globs": [],
+    "dependencies": []
+   },
+   "relations": {
+    "can_verify": [
+     "fixture-selfverify/self.thing"
+    ]
+   }
+  }
+ ],
+ "verdict": {
+  "status": "passed"
+ }
+}

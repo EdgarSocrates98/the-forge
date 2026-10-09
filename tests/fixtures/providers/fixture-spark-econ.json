@@ -1,0 +1,109 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-spark",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+  "execute",
+  "plan"
+ ],
+ "domains": [
+  "data-engineering"
+ ],
+ "capabilities": [
+  {
+   "id": "spark.performance",
+   "actions": [
+    "diagnose",
+    "review",
+    "optimize"
+   ],
+   "default_action": "diagnose",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Diagnose slow Spark and Glue jobs",
+   "signals": {
+    "keywords": [
+     "spark",
+     "pyspark",
+     "glue",
+     "lento",
+     "slow",
+     "performance",
+     "job"
+    ],
+    "file_globs": [
+     "*glue*.py",
+     "*_job.py",
+     "*.scala"
+    ],
+    "dependencies": [
+     "pyspark",
+     "awsglue"
+    ]
+   },
+   "relations": {
+    "produces": [
+     "spark.analysis-report"
+    ]
+   }
+  }
+ ],
+ "estimate": {
+  "context_needed": [
+   "*_job.py",
+   "requirements*.txt"
+  ],
+  "operation_class": "read_only",
+  "expected_artifacts": [],
+  "unknowns": [
+   "input data volume"
+  ],
+  "limitations": []
+ },
+ "provider_economy": {
+  "schema": "theforge/ProviderEconomyReceipt/v1",
+  "provider": "fixture-spark",
+  "run": "spark-run-7",
+  "context_bytes": {
+   "value": 4096,
+   "status": "measured"
+  },
+  "tool_calls": {
+   "value": 3,
+   "status": "measured"
+  },
+  "model_calls": {
+   "status": "not_applicable"
+  },
+  "provider_tokens": {
+   "value": 1200,
+   "status": "estimated"
+  },
+  "cost_usd": {
+   "status": "unresolved"
+  },
+  "wall_time_ms": {
+   "value": 812,
+   "status": "measured"
+  },
+  "basis": [
+   "native-metrics"
+  ],
+  "limitations": [
+   "tokens counted from the transcript, not billed"
+  ]
+ },
+ "native_trace": {
+  "ref": "sparktrace://run-7",
+  "summary": "analyze > emit",
+  "critical_path": [
+   "analyze",
+   "emit"
+  ]
+ }
+}

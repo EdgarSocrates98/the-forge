@@ -1,0 +1,568 @@
+{
+  "arguments": {
+    "detail_level": "normal",
+    "limit": 200,
+    "path": "data-pipeline/jobs",
+    "upstream": "upstream-facts.json"
+  },
+  "judge": {
+    "arguments": {
+      "limit": 200
+    },
+    "output": {
+      "_trust": {
+        "authority": "data_only",
+        "label": "TOOL_OUTPUT",
+        "taint": "external"
+      },
+      "by_severity": {},
+      "filters_applied": {
+        "cursor": null,
+        "limit": 200,
+        "severity": null
+      },
+      "items": [],
+      "next_cursor": null,
+      "plan": {
+        "constraints": [],
+        "contradictions": [],
+        "note": "calculado, nao gravado. O registro auditavel e `sparkforge-aws arbitrate`.",
+        "objections": [],
+        "order": [],
+        "order_unresolved": {},
+        "persisted": false,
+        "scope": "todos os 0 achados deste case, nao a pagina",
+        "unresolved": []
+      },
+      "returned_count": 0,
+      "runtime": {
+        "athena": "",
+        "databricks": "",
+        "detected_from": [],
+        "divergences": [],
+        "emr": "",
+        "glue": "",
+        "iceberg": "",
+        "photon": "",
+        "python": "",
+        "spark": ""
+      },
+      "total_count": 0
+    },
+    "tool": "sparkforge_judge"
+  },
+  "output": {
+    "_trust": {
+      "authority": "data_only",
+      "label": "TOOL_OUTPUT",
+      "taint": "external"
+    },
+    "by_kind": {
+      "pyspark.chain": 6,
+      "pyspark.join": 1,
+      "pyspark.module_analyzed": 1,
+      "pyspark.read": 2,
+      "pyspark.write": 1,
+      "upstream.decision": 1,
+      "upstream.finding": 6,
+      "upstream.verification": 1
+    },
+    "filters_applied": {
+      "cursor": null,
+      "kind": null,
+      "limit": 200,
+      "upstream": "stage/upstream-facts.json"
+    },
+    "items": [
+      {
+        "attrs": {
+          "methods": [
+            "write",
+            "mode",
+            "partitionBy",
+            "parquet"
+          ]
+        },
+        "id": "f_89821a",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 4
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 0,
+          "end_line": 20,
+          "file": "daily_orders_job.py",
+          "line": 18,
+          "snippet": "daily_orders.write.mode(\"overwrite\").partitionBy(\"order_date\").parquet(",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "join",
+            "groupBy",
+            "agg"
+          ]
+        },
+        "id": "f_c9e2e6",
+        "kind": "pyspark.chain",
+        "measures": {
+          "join_index": 0,
+          "length": 3
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 4,
+          "end_line": 15,
+          "file": "daily_orders_job.py",
+          "line": 13,
+          "snippet": "orders.join(items, \"order_id\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "read",
+            "parquet"
+          ]
+        },
+        "id": "f_b5aa4f",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 8,
+          "end_line": 10,
+          "file": "daily_orders_job.py",
+          "line": 10,
+          "snippet": "items = spark.read.parquet(\"s3://example-lake/raw/order_items/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "builder",
+            "appName",
+            "getOrCreate"
+          ]
+        },
+        "id": "f_567245",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 3
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 8,
+          "end_line": 7,
+          "file": "daily_orders_job.py",
+          "line": 7,
+          "snippet": "spark = SparkSession.builder.appName(\"daily-orders-export\").getOrCreate()",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "sum",
+            "alias"
+          ]
+        },
+        "id": "f_e05937",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 9,
+          "end_line": 15,
+          "file": "daily_orders_job.py",
+          "line": 15,
+          "snippet": ".agg(F.sum(F.col(\"quantity\") * F.col(\"unit_price\")).alias(\"total\"))",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "read",
+            "parquet"
+          ]
+        },
+        "id": "f_6ebd6a",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 9,
+          "end_line": 9,
+          "file": "daily_orders_job.py",
+          "line": 9,
+          "snippet": "orders = spark.read.parquet(\"s3://example-lake/raw/orders/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "has_broadcast_hint": false,
+          "how": "inner"
+        },
+        "id": "f_08a656",
+        "kind": "pyspark.join",
+        "measures": {
+          "on_arity": 1
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 4,
+          "end_line": 13,
+          "file": "daily_orders_job.py",
+          "line": 13,
+          "snippet": "orders.join(items, \"order_id\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "parsed": true,
+          "referenced_names": [
+            "F",
+            "SparkSession",
+            "agg",
+            "alias",
+            "appName",
+            "builder",
+            "col",
+            "daily_orders",
+            "getOrCreate",
+            "groupBy",
+            "items",
+            "join",
+            "mode",
+            "orders",
+            "parquet",
+            "partitionBy",
+            "read",
+            "spark",
+            "sum",
+            "write"
+          ]
+        },
+        "id": "f_1ba997",
+        "kind": "pyspark.module_analyzed",
+        "measures": {
+          "resolved_calls": 14,
+          "unresolved_count": 0
+        },
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 0,
+          "file": "daily_orders_job.py",
+          "line": 0,
+          "snippet": "",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "format": "parquet",
+          "target": "s3://example-lake/raw/order_items/"
+        },
+        "id": "f_1b87a6",
+        "kind": "pyspark.read",
+        "measures": {},
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 8,
+          "end_line": 10,
+          "file": "daily_orders_job.py",
+          "line": 10,
+          "snippet": "items = spark.read.parquet(\"s3://example-lake/raw/order_items/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "format": "parquet",
+          "target": "s3://example-lake/raw/orders/"
+        },
+        "id": "f_d1d403",
+        "kind": "pyspark.read",
+        "measures": {},
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 9,
+          "end_line": 9,
+          "file": "daily_orders_job.py",
+          "line": 9,
+          "snippet": "orders = spark.read.parquet(\"s3://example-lake/raw/orders/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "api": "dataframe_writer_v1",
+          "mode": "overwrite",
+          "target": "s3://example-lake/serving/daily_orders/"
+        },
+        "id": "f_c0ca5d",
+        "kind": "pyspark.write",
+        "measures": {},
+        "provenance_ref": "1c705c0e027491bd",
+        "subject": {
+          "col": 0,
+          "end_line": 20,
+          "file": "daily_orders_job.py",
+          "line": 18,
+          "snippet": "daily_orders.write.mode(\"overwrite\").partitionBy(\"order_date\").parquet(",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "status=ok capability=data.scan action=analyze",
+            "epistemic": "observed",
+            "evidence_ids": [],
+            "item": "outcome",
+            "kind": "decision",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:9d578d9056670f9e",
+        "kind": "upstream.decision",
+        "measures": {
+          "subject": "n1"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "label": "n1"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "forge=passed independent=not_performed self_report=reported provider_evidence=reported",
+            "epistemic": "observed",
+            "evidence_ids": [],
+            "item": "verification",
+            "kind": "verification",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:f31cb8a8099abcac",
+        "kind": "upstream.verification",
+        "measures": {
+          "subject": "n1"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "label": "n1"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "DBT001: Model without tests",
+            "evidence_ids": [
+              "2a3dca33bee73d95#ev"
+            ],
+            "item": "2a3dca33bee73d95",
+            "kind": "finding",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:a2be1638652cef81",
+        "kind": "upstream.finding",
+        "measures": {
+          "severity": "medium"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "item": "2a3dca33bee73d95"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "REP001: pyproject.toml",
+            "evidence_ids": [
+              "33a76d4405a5381d#ev"
+            ],
+            "item": "33a76d4405a5381d",
+            "kind": "finding",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:257cd5339fe01c99",
+        "kind": "upstream.finding",
+        "measures": {
+          "severity": "medium"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "item": "33a76d4405a5381d"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "REP002: README",
+            "evidence_ids": [
+              "3d719653fe98ce8b#ev"
+            ],
+            "item": "3d719653fe98ce8b",
+            "kind": "finding",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:c3791c973c2a80e0",
+        "kind": "upstream.finding",
+        "measures": {
+          "severity": "medium"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "item": "3d719653fe98ce8b"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "DBT001: Model without tests",
+            "evidence_ids": [
+              "935ee07b2574412b#ev"
+            ],
+            "item": "935ee07b2574412b",
+            "kind": "finding",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:2d5c856d0b4bc695",
+        "kind": "upstream.finding",
+        "measures": {
+          "severity": "medium"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "item": "935ee07b2574412b"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "PY002: requires-python",
+            "evidence_ids": [
+              "a2e865a251367d42#ev"
+            ],
+            "item": "a2e865a251367d42",
+            "kind": "finding",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:df923d4031b4bf99",
+        "kind": "upstream.finding",
+        "measures": {
+          "severity": "medium"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "item": "a2e865a251367d42"
+        }
+      },
+      {
+        "attrs": {
+          "upstream": {
+            "claim": "REP005: Tests",
+            "evidence_ids": [
+              "0328a57b8e551c1a#ev"
+            ],
+            "item": "0328a57b8e551c1a",
+            "kind": "finding",
+            "node": "n1",
+            "plan_run": "20261007T024356Z-ecc0c22d",
+            "provider": "forge-doctor-data",
+            "provider_version": "0.3.0",
+            "run_id": "20261007T024358Z-f10df50b"
+          }
+        },
+        "id": "upstream:2bc0229303ec6d62",
+        "kind": "upstream.finding",
+        "measures": {
+          "severity": "info"
+        },
+        "provenance_ref": "0654656e927aabf9",
+        "subject": {
+          "item": "0328a57b8e551c1a"
+        }
+      }
+    ],
+    "next_cursor": null,
+    "provenance": {
+      "0654656e927aabf9": {
+        "artifact": "upstream-facts.json",
+        "artifact_sha256": "d06ef0f8305b0f5d0d87262b268184e9d4281ea5c7f2720578d2db59b97ae22e",
+        "extractor": "theforge/handoff"
+      },
+      "1c705c0e027491bd": {
+        "artifact": "daily_orders_job.py",
+        "artifact_sha256": "556f5402cb8fb9eabdf19ecad3c63cb27ab643c2f459ce76074f52fbe9afffa1",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    "returned_count": 19,
+    "schema_version": 1,
+    "total_count": 19,
+    "unresolved": 0,
+    "unresolved_at": []
+  },
+  "tool": "sparkforge_analyze_pyspark"
+}

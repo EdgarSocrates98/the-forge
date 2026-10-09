@@ -1,0 +1,6 @@
+{
+  "provenance": "derived",
+  "derived_from": "default/health.json",
+  "derivation": "apiforge.cli made unfindable (a partial or broken API Forge install): find_spec('apiforge.cli') returns None",
+  "cli": false
+}

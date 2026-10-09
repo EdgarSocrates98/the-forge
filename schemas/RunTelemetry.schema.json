@@ -1,0 +1,865 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "agent_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "bytes_hashed": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "cache_hits": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "cache_misses": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "context_bytes": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "context_drift": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "context_ms": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "evidence_returned": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "fallbacks_used": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "files_cited": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "files_hashed": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "files_scanned": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "files_selected": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "findings_returned": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "knowledge_bytes": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "negotiation_rounds": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "parent_run": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "planning_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "profile": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_bytes": {
+          "type": "integer"
+        },
+        "effective_tiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "execute_timeout_s": {
+          "type": "number"
+        },
+        "fallback": {
+          "type": "boolean"
+        },
+        "max_files": {
+          "type": "integer"
+        },
+        "max_providers": {
+          "type": "integer"
+        },
+        "name": {
+          "enum": [
+            "economy",
+            "balanced",
+            "max"
+          ]
+        },
+        "negotiation_rounds": {
+          "type": "integer"
+        },
+        "tiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "verification": {
+          "enum": [
+            "minimal",
+            "conditional",
+            "strong"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "budget_bytes",
+        "max_files",
+        "tiers",
+        "effective_tiers",
+        "negotiation_rounds",
+        "max_providers",
+        "fallback",
+        "verification",
+        "execute_timeout_s"
+      ],
+      "type": "object"
+    },
+    "provider_ms": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "provider_revalidation": {
+      "anyOf": [
+        {
+          "enum": [
+            "hash",
+            "core",
+            "none",
+            "undeclared"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "providers_executed": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "routing_ms": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "scan_ms": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "semantic_planner_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "semantic_resolver_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "skill_bytes": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "skills_considered": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "skills_loaded": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "spans": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_ms": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "error"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "start_ms",
+          "duration_ms"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "subagent_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "verification_calls": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "verification_performed": {
+      "anyOf": [
+        {
+          "enum": [
+            "minimal",
+            "conditional",
+            "strong"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "run_id",
+    "profile"
+  ],
+  "title": "RunTelemetry",
+  "type": "object"
+}

@@ -1,0 +1,292 @@
+{
+  "forge": {
+    "branch": "devin/agentic-polish",
+    "commit_sha": "4ed7e2e3e564d628cd483678e565c15c2704f862",
+    "counts": {
+      "adrs": 57,
+      "closed_contracts": 41,
+      "contracts": 69,
+      "docs_root": 40,
+      "schemas": 69,
+      "test_files": 140
+    },
+    "origin_main": "cf3240c1acddbc5e2cd7799c8e19defd959a5942",
+    "package_version": "0.5.0",
+    "platform": "win32",
+    "python": "3.11.15",
+    "python_requires": ">=3.11",
+    "runtime_dependencies": 0
+  },
+  "generated_at": "2026-10-08T23:02:40Z",
+  "generated_by": "scripts/reality/collect.py",
+  "kind": "theforge/specialist-reality/v1",
+  "specialists": [
+    {
+      "adapter": {
+        "distribution": "theforge-sparkforge-aws-adapter",
+        "module": "theforge_sparkforge_aws",
+        "version": "0.3.0"
+      },
+      "compatibility_status": "snapshot_fresh_install_diverged",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON",
+      "import_probe": "sparkforge_aws",
+      "installed": {
+        "checkout": {
+          "branch": "feat/upstream-facts-v1",
+          "commit_sha": "828827d7cd57e90a9ffc9b406ee0105ec31a7d7e",
+          "dirty": false,
+          "location": "file:///E:/projetos/.sibling-upstream/spark-forge-aws",
+          "origin_main": "ab7f02e2423e7c07cc2dbeb982fdc50a2c3f6099",
+          "refs_fetched": false,
+          "relation_to_origin_main": "diverged"
+        },
+        "distribution": "sparkforge-aws",
+        "editable": true,
+        "version": "0.5.0"
+      },
+      "name": "spark-forge-aws",
+      "python": "E:\\projetos\\the-forger\\.venv-spark-aws\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/spark-forge-aws",
+      "snapshot": {
+        "entries": {
+          "tools": 143
+        },
+        "path": "adapters/sparkforge_aws/src/theforge_sparkforge_aws/native_catalog.json",
+        "provenance": null,
+        "recorded_at": "2026-10-06",
+        "sha256": "49f6db89cea5e72f7d681a4cb75965870fc1fdc40bad85a4ee08cbfd69fba9f9",
+        "specialist_version": "0.5.0"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-apiforge-adapter",
+        "module": "theforge_apiforge",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "snapshot_fresh_install_diverged",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_APIFORGE_PYTHON",
+      "import_probe": "apiforge",
+      "installed": {
+        "checkout": {
+          "branch": "(detached)",
+          "commit_sha": "1745f8726941d9d17761bacf94ddf84b711f879d",
+          "dirty": false,
+          "location": "file:///E:/projetos/.sibling-f/api-forge",
+          "origin_main": "07459a2010d51bbf094834aa87bed52b154d2537",
+          "refs_fetched": false,
+          "relation_to_origin_main": "diverged"
+        },
+        "distribution": "apiforge",
+        "editable": true,
+        "version": "0.1.0"
+      },
+      "name": "api-forge",
+      "python": "E:\\projetos\\the-forger\\.venv-api\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.12.13",
+      "repository": "https://github.com/EdgarSocrates98/api-forge",
+      "snapshot": {
+        "entries": {
+          "capabilities": 21
+        },
+        "path": "adapters/apiforge/src/theforge_apiforge/native_matrix.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-06T13:09:39Z",
+        "sha256": "b2be601baaab6dbb26e67e8538936a85d8b5752dcda5eabd0a92f8a5e4d00183",
+        "specialist_version": "0.1.0"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-doctordata-adapter",
+        "module": "theforge_doctordata",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "fresh",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_DOCTORDATA_PYTHON",
+      "import_probe": "forge_doctor_data",
+      "installed": {
+        "checkout": {
+          "branch": "main",
+          "commit_sha": "3a8d7a5637d6585eaf8151da61f03d0b2d348c51",
+          "dirty": false,
+          "location": "file:///E:/projetos/forge-doctor-data",
+          "origin_main": "3a8d7a5637d6585eaf8151da61f03d0b2d348c51",
+          "refs_fetched": false,
+          "relation_to_origin_main": "same"
+        },
+        "distribution": "forge-doctor-data",
+        "editable": true,
+        "version": "1.0.0rc1"
+      },
+      "name": "forge-doctor-data",
+      "python": "E:\\projetos\\the-forger\\.venv-dd\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/forge-doctor-data",
+      "snapshot": {
+        "entries": {
+          "request_kinds": 1,
+          "seams": 2
+        },
+        "path": "adapters/doctordata/src/theforge_doctordata/native_surface.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-06T15:24:16Z",
+        "sha256": "1e2b1f4293daecd9f2bb434c13251bf56ffcb581af4cfdf518a0c4695817ffc6",
+        "specialist_version": "1.0.0rc1"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-doctorapi-adapter",
+        "module": "theforge_doctorapi",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "snapshot_fresh_install_diverged",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_DOCTORAPI_PYTHON",
+      "import_probe": "forge_doctor_api",
+      "installed": {
+        "checkout": {
+          "branch": "main",
+          "commit_sha": "035b63587f2c9350cf6b19c0810c331ef2abd52f",
+          "dirty": false,
+          "location": "file:///E:/projetos/forge-doctor-api",
+          "origin_main": "e916a1102c2170caf9e12063274f7fff2aad76f7",
+          "refs_fetched": false,
+          "relation_to_origin_main": "diverged"
+        },
+        "distribution": "forge-doctor-api",
+        "editable": true,
+        "version": "0.2.0"
+      },
+      "name": "forge-doctor-api",
+      "python": "E:\\projetos\\the-forger\\.venv-da\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/forge-doctor-api",
+      "snapshot": {
+        "entries": {
+          "seams": 4
+        },
+        "path": "adapters/doctorapi/src/theforge_doctorapi/native_surface.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-06T15:24:21Z",
+        "sha256": "ad03aa4f33d7ffde3a008156097be79e79c6235a7a704266b61d930fb6454dda",
+        "specialist_version": "0.2.0"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-sparkforge-azure-adapter",
+        "module": "theforge_sparkforge_azure",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "fresh",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON",
+      "import_probe": "sparkforge_azure",
+      "installed": {
+        "checkout": {
+          "branch": "feat/cycle7-maturity",
+          "commit_sha": "c09d4c5cb5b87404209cdad4ff19d98799dcc0e8",
+          "dirty": true,
+          "location": "file:///E:/projetos/spark-forge-azure",
+          "origin_main": "c09d4c5cb5b87404209cdad4ff19d98799dcc0e8",
+          "refs_fetched": false,
+          "relation_to_origin_main": "same"
+        },
+        "distribution": "sparkforge-azure",
+        "editable": true,
+        "version": "0.1.0"
+      },
+      "name": "spark-forge-azure",
+      "python": "E:\\projetos\\the-forger\\.venv-spark-azure\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/spark-forge-azure",
+      "snapshot": {
+        "entries": {
+          "seams": 5,
+          "tools": 2
+        },
+        "path": "adapters/sparkforge_azure/src/theforge_sparkforge_azure/native_surface.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-08T08:34:09Z",
+        "sha256": "7ff22053153b7b31e6a7f9ddc8a72a565b87aa8c25d0a2124932780416bbb6ad",
+        "specialist_version": "0.1.0"
+      }
+    },
+    {
+      "adapter": {
+        "distribution": "theforge-platformforge-adapter",
+        "module": "theforge_platformforge",
+        "version": "0.1.0"
+      },
+      "compatibility_status": "fresh",
+      "drift": {
+        "detail": "surface drift: none",
+        "exit_code": 0,
+        "status": "none"
+      },
+      "env_var": "THEFORGE_REAL_PLATFORMFORGE_PYTHON",
+      "import_probe": "platformforge",
+      "installed": {
+        "checkout": {
+          "branch": "main",
+          "commit_sha": "0aee5c6f30a9daa60b47d19abce4dd1f78a7dd05",
+          "dirty": false,
+          "location": "file:///E:/projetos/platform-forge",
+          "origin_main": "0aee5c6f30a9daa60b47d19abce4dd1f78a7dd05",
+          "refs_fetched": false,
+          "relation_to_origin_main": "same"
+        },
+        "distribution": "platformforge",
+        "editable": true,
+        "version": "0.1.0"
+      },
+      "name": "platform-forge",
+      "python": "E:\\projetos\\the-forger\\.venv-platform\\Scripts\\python.exe",
+      "python_source": "convention",
+      "python_version": "3.11.15",
+      "repository": "https://github.com/EdgarSocrates98/platform-forge",
+      "snapshot": {
+        "entries": {
+          "seams": 9,
+          "tools": 29
+        },
+        "path": "adapters/platformforge/src/theforge_platformforge/native_surface.json",
+        "provenance": "recorded",
+        "recorded_at": "2026-10-08T08:57:02Z",
+        "sha256": "f7aa77bb67f441324ec8efe670a9d5ab2d2cd08162da31ac714746dce804a47c",
+        "specialist_version": "0.1.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "forge": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "details": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "reported",
+            "passed",
+            "failed",
+            "not_performed"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": "object"
+    },
+    "independent": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "details": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "reported",
+            "passed",
+            "failed",
+            "not_performed"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": "object"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider_evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "details": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "reported",
+            "passed",
+            "failed",
+            "not_performed"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": "object"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "self_report": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "details": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "reported",
+            "passed",
+            "failed",
+            "not_performed"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "run_id",
+    "self_report",
+    "provider_evidence",
+    "forge",
+    "independent"
+  ],
+  "title": "VerificationResult",
+  "type": "object"
+}

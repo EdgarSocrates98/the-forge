@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allowed_actions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "authority": {
+      "type": "string"
+    },
+    "context_budget_bytes": {
+      "type": "integer"
+    },
+    "forbidden_actions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "id": {
+      "type": "string"
+    },
+    "input_contracts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "max_skills": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "output_contracts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "rendered_hosts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "required_skills": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "role": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "role",
+    "authority",
+    "purpose"
+  ],
+  "title": "AgentSpec",
+  "type": "object"
+}

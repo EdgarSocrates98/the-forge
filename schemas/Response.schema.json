@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "error": {
+      "anyOf": [
+        {
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "string"
+            },
+            "field": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "unlock": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "code",
+            "detail"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "kind": {
+      "enum": [
+        "Response"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "op": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "payload": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "partial",
+        "refused",
+        "error"
+      ]
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "request_id",
+    "producer",
+    "status"
+  ],
+  "title": "Response",
+  "type": "object"
+}

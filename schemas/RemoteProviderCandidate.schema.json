@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "distribution": {
+      "anyOf": [
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                "pip-package",
+                "file",
+                "vcs",
+                "container"
+              ]
+            },
+            "package": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ref": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "url": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fit": {
+      "enum": [
+        "declared",
+        "partial",
+        "unknown"
+      ]
+    },
+    "freshness": {
+      "enum": [
+        "fresh",
+        "stale",
+        "unknown"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "manifest_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "matched": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "missing": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "platforms": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "protocols": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "publisher": {
+      "anyOf": [
+        {
+          "properties": {
+            "homepage": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "key_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "organization": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "repository": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "registry": {
+      "type": "string"
+    },
+    "registry_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "retrieved_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "runtime": {
+      "anyOf": [
+        {
+          "properties": {
+            "offline": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "python": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requires_credentials": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requires_network": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "signature_state": {
+      "enum": [
+        "none",
+        "declared",
+        "verified"
+      ]
+    },
+    "source": {
+      "type": "string"
+    },
+    "source_tier": {
+      "enum": [
+        "public",
+        "org"
+      ]
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "registry",
+    "provider",
+    "version"
+  ],
+  "title": "RemoteProviderCandidate",
+  "type": "object"
+}

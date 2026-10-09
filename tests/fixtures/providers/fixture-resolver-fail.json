@@ -1,0 +1,25 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-resolver-fail",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "resolve"],
+  "domains": ["meta"],
+  "capabilities": [
+    {
+      "id": "resolver.routing",
+      "actions": ["resolve"],
+      "default_action": "resolve",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Resolver that fails every resolve call",
+      "resolves_ambiguity": true,
+      "signals": {
+        "keywords": ["__resolver_fail_internal__"],
+        "file_globs": [],
+        "dependencies": []
+      }
+    }
+  ],
+  "resolve_status": "error"
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "data_classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted",
+        "unknown"
+      ]
+    },
+    "isolation_required": {
+      "type": "boolean"
+    },
+    "locality": {
+      "enum": [
+        "local",
+        "local-or-remote",
+        "isolated"
+      ]
+    },
+    "network": {
+      "enum": [
+        "none",
+        "egress",
+        "required",
+        "any"
+      ]
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "runtime": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [],
+  "title": "TargetRequirement",
+  "type": "object"
+}

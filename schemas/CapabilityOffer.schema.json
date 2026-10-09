@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "consumes_artifact_types": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "credentials_required": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "features": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "network_required": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "offline": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "produces_artifact_types": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "produces_evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "read_only": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "technologies": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [],
+  "title": "CapabilityOffer",
+  "type": "object"
+}

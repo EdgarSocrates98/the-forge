@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Troubleshooting"
+  short_description: "Root-cause-first control-plane debugging"
+
+policy:
+  allow_implicit_invocation: false

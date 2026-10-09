@@ -1,0 +1,139 @@
+{
+  "cross_forge_accepts": [
+    "change-intent",
+    "observation-request",
+    "policy-eval-request",
+    "runbook-request"
+  ],
+  "domains": [
+    "cicd",
+    "finops",
+    "gitops",
+    "graph",
+    "iac",
+    "k8s",
+    "live",
+    "product",
+    "security",
+    "sre"
+  ],
+  "manifest_schema": "platformforge/capability-manifest/v3",
+  "provenance": "recorded",
+  "recorded_at": "2026-10-08T08:57:02Z",
+  "seams": [
+    {
+      "callable": "analyze_hcl",
+      "module": "platformforge.iac.terraform",
+      "name": "iac_analyze",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "analyze_plan",
+      "module": "platformforge.iac.plan",
+      "name": "plan_review",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "analyze_state",
+      "module": "platformforge.iac.plan",
+      "name": "state_analyze",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "analyze_k8s",
+      "module": "platformforge.k8s.manifests",
+      "name": "k8s_analyze",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "scan_secrets",
+      "module": "platformforge.security.scan",
+      "name": "secrets_scan",
+      "parameters": [
+        "max_files",
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "analyze_gha",
+      "module": "platformforge.cicd.github_actions",
+      "name": "gha_analyze",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "analyze_gitops",
+      "module": "platformforge.cicd.gitops",
+      "name": "gitops_analyze",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "analyze_catalog",
+      "module": "platformforge.product.catalog",
+      "name": "catalog_analyze",
+      "parameters": [
+        "path"
+      ],
+      "present": true
+    },
+    {
+      "callable": "capability_manifest",
+      "module": "platformforge.forge.manifest",
+      "name": "capability_manifest",
+      "parameters": [
+        "repo"
+      ],
+      "present": true
+    }
+  ],
+  "specialist_version": "0.1.0",
+  "tools": [
+    "platformforge_agents",
+    "platformforge_analyze",
+    "platformforge_capability",
+    "platformforge_change_review",
+    "platformforge_change_verify",
+    "platformforge_collect",
+    "platformforge_correlate",
+    "platformforge_diagnose",
+    "platformforge_drift",
+    "platformforge_economy",
+    "platformforge_evals",
+    "platformforge_explain",
+    "platformforge_finops",
+    "platformforge_graph_query",
+    "platformforge_inspect",
+    "platformforge_integrate",
+    "platformforge_judge",
+    "platformforge_lab_chaos",
+    "platformforge_live",
+    "platformforge_maturity",
+    "platformforge_observe",
+    "platformforge_ops",
+    "platformforge_plan",
+    "platformforge_policy",
+    "platformforge_recommend",
+    "platformforge_reliability",
+    "platformforge_risk",
+    "platformforge_security_scan",
+    "platformforge_slo"
+  ]
+}

@@ -1,0 +1,195 @@
+{
+ "account_id": "/subscriptions/s1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stg",
+ "acl": {
+  "/": {
+   "entries": [
+    {
+     "perms": "r-x",
+     "type": "other"
+    }
+   ],
+   "owner": "o"
+  },
+  "/backup/daily": {
+   "entries": [
+    {
+     "id": "mi-1",
+     "perms": "rwx",
+     "type": "user"
+    },
+    {
+     "id": "grp-finance-ro",
+     "perms": "r-x",
+     "type": "group"
+    },
+    {
+     "perms": "rwx",
+     "type": "mask"
+    },
+    {
+     "perms": "---",
+     "type": "other"
+    }
+   ],
+   "owner": "stg-owner",
+   "owning_group": "stg-admins"
+  },
+  "/finance": {
+   "entries": [
+    {
+     "id": "mi-1",
+     "perms": "rwx",
+     "type": "user"
+    },
+    {
+     "id": "grp-finance-ro",
+     "perms": "r-x",
+     "type": "group"
+    },
+    {
+     "perms": "rwx",
+     "type": "mask"
+    },
+    {
+     "perms": "---",
+     "type": "other"
+    }
+   ],
+   "owner": "stg-owner",
+   "owning_group": "stg-admins"
+  },
+  "/finance/invoices": {
+   "entries": [
+    {
+     "id": "mi-1",
+     "perms": "rwx",
+     "type": "user"
+    },
+    {
+     "id": "grp-finance-ro",
+     "perms": "r-x",
+     "type": "group"
+    },
+    {
+     "perms": "rwx",
+     "type": "mask"
+    },
+    {
+     "perms": "---",
+     "type": "other"
+    }
+   ],
+   "owner": "stg-owner",
+   "owning_group": "stg-admins"
+  },
+  "/finance/orders": {
+   "entries": [
+    {
+     "id": "mi-1",
+     "perms": "rwx",
+     "type": "user"
+    },
+    {
+     "id": "grp-finance-ro",
+     "perms": "r-x",
+     "type": "group"
+    },
+    {
+     "perms": "rwx",
+     "type": "mask"
+    },
+    {
+     "perms": "---",
+     "type": "other"
+    }
+   ],
+   "owner": "stg-owner",
+   "owning_group": "stg-admins"
+  },
+  "/other": {
+   "entries": [
+    {
+     "perms": "r-x",
+     "type": "other"
+    }
+   ],
+   "owner": "o"
+  },
+  "/other/data": {
+   "entries": [
+    {
+     "perms": "r--",
+     "type": "other"
+    }
+   ],
+   "owner": "o"
+  },
+  "/raw": {
+   "entries": [
+    {
+     "perms": "r-x",
+     "type": "other"
+    }
+   ],
+   "owner": "o"
+  },
+  "/raw/events": {
+   "entries": [
+    {
+     "perms": "r--",
+     "type": "other"
+    }
+   ],
+   "owner": "o"
+  },
+  "/sales": {
+   "entries": [
+    {
+     "id": "mi-1",
+     "perms": "rwx",
+     "type": "user"
+    },
+    {
+     "id": "grp-finance-ro",
+     "perms": "r-x",
+     "type": "group"
+    },
+    {
+     "perms": "rwx",
+     "type": "mask"
+    },
+    {
+     "perms": "---",
+     "type": "other"
+    }
+   ],
+   "owner": "stg-owner",
+   "owning_group": "stg-admins"
+  },
+  "/sbx/scratch": {
+   "entries": [
+    {
+     "id": "mi-1",
+     "perms": "rwx",
+     "type": "user"
+    },
+    {
+     "id": "grp-finance-ro",
+     "perms": "r-x",
+     "type": "group"
+    },
+    {
+     "perms": "rwx",
+     "type": "mask"
+    },
+    {
+     "perms": "---",
+     "type": "other"
+    }
+   ],
+   "owner": "stg-owner",
+   "owning_group": "stg-admins"
+  }
+ },
+ "hns": true
+}

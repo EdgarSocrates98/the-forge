@@ -1,0 +1,35 @@
+prompt_evo*.md
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.forge/
+.sparkforge-azure/
+.sparkforge/
+.apiforge/
+.platformforge/
+.pytest_tmp/
+.pytest_tmp*/
+
+# local-only agentic state (specs/steering are per-machine; host-only skills)
+.kiro/specs/
+.kiro/steering/
+.agents/skills/source-command-*/
+.claude/agents/
+
+# Loop Factory artifacts (audit trail, not source of truth — specs/ IS tracked)
+factory/prompts/*
+!factory/prompts/.gitkeep
+factory/runs/*
+!factory/runs/.gitkeep
+factory/reviews/*
+!factory/reviews/.gitkeep
+factory/logs/*
+!factory/logs/.gitkeep

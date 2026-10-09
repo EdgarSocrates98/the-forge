@@ -1,0 +1,6 @@
+{
+  "assembled_from": "failure shape of an API Forge 0.1.0 CLI crash outside apiforge.cli._fail: Typer prints the uncaught exception's traceback on stderr and exits 1, without an AF-* line; provisional until re-recorded by the execute recorder",
+  "exit_code": 1,
+  "provenance": "hand-built",
+  "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"apiforge/cli.py\", line 735, in analyze\nRuntimeError: unexpected extractor state\n"
+}

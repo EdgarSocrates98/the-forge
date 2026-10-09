@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "chosen": {
+      "type": "string"
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "low",
+        "unknown"
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "options": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "node": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "risks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "partial",
+              "refused",
+              "provider_failure",
+              "no_route",
+              "skipped"
+            ]
+          }
+        },
+        "required": [
+          "node",
+          "provider",
+          "capability",
+          "status"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "plan_run": {
+      "type": "string"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "question": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "referee": {
+      "type": "string"
+    },
+    "rejected": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "tradeoffs": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "plan_run",
+    "referee",
+    "question",
+    "options"
+  ],
+  "title": "DecisionRecord",
+  "type": "object"
+}

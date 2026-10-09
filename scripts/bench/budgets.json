@@ -1,0 +1,128 @@
+{
+  "cli_startup": {
+    "baseline_ms": 1317.417,
+    "budget_ms": 1976.125,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_10k_cold": {
+    "baseline_ms": 3348.102,
+    "budget_ms": 5022.153,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_10k_warm": {
+    "baseline_ms": 3817.534,
+    "budget_ms": 5726.301,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_1k_cold": {
+    "baseline_ms": 478.228,
+    "budget_ms": 717.342,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "context_1k_warm": {
+    "baseline_ms": 411.964,
+    "budget_ms": 617.946,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "explain_build": {
+    "baseline_ms": 20.9,
+    "budget_ms": 31.35,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "graph_build": {
+    "baseline_ms": 0.095,
+    "budget_ms": 0.143,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "graph_refresh_warm": {
+    "baseline_ms": 45.388,
+    "budget_ms": 68.082,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "memory_pack": {
+    "baseline_ms": 54.73,
+    "budget_ms": 82.095,
+    "factor": 1.5,
+    "origin": "docs/reports/cycle-5.1-hotpaths.json @ 5bea6b76fdab750d2a7245c88fd65923e0f7b02e"
+  },
+  "observation_write": {
+    "baseline_ms": 6.306,
+    "budget_ms": 9.459,
+    "factor": 1.5,
+    "origin": "docs/reports/cycle-5.1-hotpaths.json @ 5bea6b76fdab750d2a7245c88fd65923e0f7b02e"
+  },
+  "persist_run": {
+    "baseline_ms": 14.741,
+    "budget_ms": 22.111,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "plan_simulate": {
+    "baseline_ms": 1.835,
+    "budget_ms": 2.752,
+    "factor": 1.5,
+    "origin": "docs/reports/cycle-5.1-hotpaths.json @ 5bea6b76fdab750d2a7245c88fd65923e0f7b02e"
+  },
+  "plan_validate": {
+    "baseline_ms": 0.113,
+    "budget_ms": 0.17,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "receipt_validate": {
+    "baseline_ms": 0.051,
+    "budget_ms": 0.076,
+    "factor": 1.5,
+    "origin": "docs/reports/cycle-5.1-hotpaths.json @ 5bea6b76fdab750d2a7245c88fd65923e0f7b02e"
+  },
+  "registry_cold": {
+    "baseline_ms": 962.393,
+    "budget_ms": 1443.59,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "registry_warm": {
+    "baseline_ms": 10.118,
+    "budget_ms": 15.177,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "replay_verify": {
+    "baseline_ms": 8.521,
+    "budget_ms": 12.782,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ 05cea7648cfe1ce039e2b9559ec4dbf381e16937"
+  },
+  "routing_10k": {
+    "baseline_ms": 594.259,
+    "budget_ms": 891.389,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "scan_10k": {
+    "baseline_ms": 12897.393,
+    "budget_ms": 19346.09,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "scan_1k": {
+    "baseline_ms": 898.238,
+    "budget_ms": 1347.357,
+    "factor": 1.5,
+    "origin": "scripts/bench/baseline.json @ d77ba5f2f124a7d2b8d17a61f79d5f0fc3454c5b"
+  },
+  "target_negotiate": {
+    "baseline_ms": 0.032,
+    "budget_ms": 0.048,
+    "factor": 1.5,
+    "origin": "docs/reports/cycle-5.1-hotpaths.json @ 5bea6b76fdab750d2a7245c88fd65923e0f7b02e"
+  }
+}

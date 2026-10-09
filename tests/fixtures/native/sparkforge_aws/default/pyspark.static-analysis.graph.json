@@ -1,0 +1,106 @@
+{
+  "arguments": {
+    "detail_level": "normal",
+    "limit": 200,
+    "path": "jobs"
+  },
+  "judge": {
+    "arguments": {
+      "limit": 200
+    },
+    "output": {
+      "_trust": {
+        "authority": "data_only",
+        "label": "TOOL_OUTPUT",
+        "taint": "external"
+      },
+      "by_severity": {},
+      "filters_applied": {
+        "cursor": null,
+        "limit": 200,
+        "severity": null
+      },
+      "items": [],
+      "next_cursor": null,
+      "plan": {
+        "constraints": [],
+        "contradictions": [],
+        "note": "calculado, nao gravado. O registro auditavel e `sparkforge-aws arbitrate`.",
+        "objections": [],
+        "order": [],
+        "order_unresolved": {},
+        "persisted": false,
+        "scope": "todos os 0 achados deste case, nao a pagina",
+        "unresolved": []
+      },
+      "returned_count": 0,
+      "runtime": {
+        "athena": "",
+        "databricks": "",
+        "detected_from": [],
+        "divergences": [],
+        "emr": "",
+        "glue": "",
+        "iceberg": "",
+        "photon": "",
+        "python": "",
+        "spark": ""
+      },
+      "total_count": 0
+    },
+    "tool": "sparkforge_judge"
+  },
+  "output": {
+    "_trust": {
+      "authority": "data_only",
+      "label": "TOOL_OUTPUT",
+      "taint": "external"
+    },
+    "by_kind": {
+      "graph.module_analyzed": 1
+    },
+    "filters_applied": {
+      "cursor": null,
+      "kind": null,
+      "limit": 200
+    },
+    "items": [
+      {
+        "attrs": {
+          "parsed": true
+        },
+        "id": "f_9e5cb2",
+        "kind": "graph.module_analyzed",
+        "measures": {
+          "algorithm_count": 0,
+          "construction_count": 0,
+          "import_count": 0,
+          "unresolved_count": 0
+        },
+        "provenance_ref": "83a56517a5eb3c5e",
+        "subject": {
+          "col": 0,
+          "file": "orders_job.py",
+          "line": 0,
+          "snippet": "",
+          "symbol": "",
+          "type": "source_location"
+        }
+      }
+    ],
+    "next_cursor": null,
+    "provenance": {
+      "83a56517a5eb3c5e": {
+        "artifact": "orders_job.py",
+        "artifact_sha256": "ae5417750b90b1ce8e6f5d8010e2a7dc12c7b42393962499dcb264f6e087e567",
+        "extractor": "graph@0.1.0"
+      }
+    },
+    "returned_count": 1,
+    "schema_version": 1,
+    "total_count": 1,
+    "unresolved": 0,
+    "unresolved_at": []
+  },
+  "tool": "sparkforge_analyze_graph"
+}

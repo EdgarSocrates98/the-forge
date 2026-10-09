@@ -1,0 +1,86 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-planner",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+  "plan"
+ ],
+ "domains": [
+  "meta"
+ ],
+ "capabilities": [
+  {
+   "id": "planner.compose",
+   "actions": [
+    "propose"
+   ],
+   "default_action": "propose",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Propose a multi-provider plan from the eligible options",
+   "proposes_plans": true,
+   "signals": {
+    "keywords": [
+     "__planner_internal__"
+    ],
+    "file_globs": [],
+    "dependencies": []
+   }
+  }
+ ],
+ "proposal": {
+  "schema": "theforge/SemanticPlanProposal/v1",
+  "nodes": [
+   {
+    "ref": "n1",
+    "provider": "fixture-spark",
+    "capability": "spark.performance",
+    "action": "diagnose",
+    "role": "producer",
+    "rationale": "spark produces the analysis the api contract review consumes"
+   },
+   {
+    "ref": "n2",
+    "provider": "fixture-api",
+    "capability": "api.contract",
+    "action": "review",
+    "depends_on": [
+     "n1"
+    ],
+    "inputs": [
+     "n1"
+    ],
+    "role": "consumer",
+    "rationale": "consumes spark.analysis-report"
+   }
+  ],
+  "dependencies": [
+   {
+    "node": "n2",
+    "depends_on": "n1",
+    "rationale": "spark.analysis-report flows spark -> api"
+   }
+  ],
+  "rationale": "declared produces/consumes fix the order deterministically",
+  "evidence": [
+   "fixture-spark/spark.performance produces spark.analysis-report",
+   "fixture-api/api.contract consumes spark.analysis-report"
+  ],
+  "assumptions": [
+   "the spark analysis actually emits spark.analysis-report"
+  ],
+  "unknowns": [
+   "whether the contract must be versioned"
+  ],
+  "confidence": "medium",
+  "alternatives": [
+   "single-node api.contract review without the spark analysis"
+  ],
+  "limitations": []
+ }
+}

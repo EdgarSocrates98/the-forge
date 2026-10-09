@@ -1,0 +1,42 @@
+{
+  "items": [
+    {
+      "id": "lh-aaaa",
+      "type": "Lakehouse",
+      "workspace_id": "ws-1111",
+      "display_name": "lake_sales"
+    },
+    {
+      "id": "nb-0001",
+      "type": "Notebook",
+      "workspace_id": "ws-1111",
+      "display_name": "nb-etl"
+    },
+    {
+      "id": "sjd-0001",
+      "type": "SparkJobDefinition",
+      "workspace_id": "ws-1111",
+      "display_name": "job-daily",
+      "main_file": "main.py",
+      "default_lakehouse_id": "lh-aaaa",
+      "environment_id": "env-0001",
+      "runtime": "2.0",
+      "retry_policy": {
+        "enabled": true,
+        "max_attempts": 3
+      }
+    },
+    {
+      "id": "env-0001",
+      "type": "Environment",
+      "workspace_id": "ws-1111",
+      "display_name": "env-std"
+    },
+    {
+      "id": "pipe-0001",
+      "type": "DataPipeline",
+      "workspace_id": "ws-1111",
+      "display_name": "pl-main"
+    }
+  ]
+}

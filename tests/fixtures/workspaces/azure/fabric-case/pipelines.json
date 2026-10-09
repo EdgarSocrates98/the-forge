@@ -1,0 +1,21 @@
+{
+  "pipelines": [
+    {
+      "id": "pipe-0001",
+      "workspace_id": "ws-1111",
+      "name": "pl-main",
+      "activities": [
+        {
+          "name": "run-notebook",
+          "type": "Notebook",
+          "reference_item_id": "nb-0001"
+        },
+        {
+          "name": "load-orders",
+          "type": "Copy",
+          "reference_item_id": "lh-aaaa"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+# Specialized agent: ecosystem-debugger (prompt §28)
+schema = "theforge/AgentSpec/v1"
+id = "ecosystem-debugger"
+name = "Ecosystem Debugger"
+role = "Root-cause-first diagnosis of discovery, install, routing, surface and health failures across the ecosystem."
+authority = "advise"
+purpose = """
+Given a failing provider/run/plan, locate the broken layer
+(environment → CLI → adapter bridge → specialist seam → manifest →
+surface → capability → health) and emit a Diagnostic with the evidence and
+the named unlock. It never changes state — it advises."""
+
+required_skills = ["forge-troubleshooting", "forge-discovery"]
+allowed_actions = ["diagnose", "discover", "invoke-llm"]
+forbidden_actions = [
+  "install",
+  "execute",
+  "route",
+  "plan",
+  "verify",
+  "modify-registry",
+  "grant-trust",
+  "approve",
+  "waive-verification",
+]
+input_contracts = ["theforge/HealthReport/v1", "theforge/ExecutionReceipt/v1"]
+output_contracts = ["theforge/Diagnostic/v1"]
+context_budget_bytes = 65536
+max_skills = 2
+rendered_hosts = ["codex"]

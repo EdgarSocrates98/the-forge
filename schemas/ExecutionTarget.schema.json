@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "cost_model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "credentials": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "data_classes": {
+      "items": {
+        "enum": [
+          "public",
+          "internal",
+          "confidential",
+          "restricted",
+          "unknown"
+        ]
+      },
+      "type": "array"
+    },
+    "health": {
+      "enum": [
+        "healthy",
+        "degraded",
+        "unavailable",
+        "unknown"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "identity_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "network": {
+      "enum": [
+        "none",
+        "egress",
+        "required"
+      ]
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "protocols": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "runtime": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "trust": {
+      "enum": [
+        "unverified",
+        "verified",
+        "org-approved"
+      ]
+    },
+    "type": {
+      "enum": [
+        "local",
+        "isolated-local",
+        "remote-forge",
+        "a2a-agent"
+      ]
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "id",
+    "type"
+  ],
+  "title": "ExecutionTarget",
+  "type": "object"
+}

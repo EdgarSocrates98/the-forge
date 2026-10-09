@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Ecosystem"
+  short_description: "Map of the specialist ecosystem and families"
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,18 @@
+{
+  "shortcuts": [
+    {
+      "id": "sc-0001",
+      "lakehouse_id": "lh-aaaa",
+      "path": "Files/ext",
+      "auth": {
+        "mode": "passthrough"
+      },
+      "target": {
+        "kind": "onelake",
+        "workspace_id": "ws-2222",
+        "item_id": "lh-bbbb",
+        "tenant_id": "tenant-aaaa"
+      }
+    }
+  ]
+}

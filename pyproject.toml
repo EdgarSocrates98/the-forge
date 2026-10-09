@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "theforge"
+version = "0.5.0"
+description = "Local-first control plane that discovers, routes and governs specialist Forges."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "jsonschema>=4.21",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "build>=1.2",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+theforge = "theforge.cli.main:main"
+forge = "theforge.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/theforge"]
+
+[tool.hatch.build.targets.sdist]
+# The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
+# Agentic assets (host instructions, skills) and local-only state never ship (ADR 0020).
+exclude = [
+    "/adapters",
+    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Workspace fixtures simulate user repositories; their embedded tests/ trees are data,
+# never collectible tests of this suite.
+norecursedirs = [
+    "*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}",
+    "tests/fixtures/workspaces",
+]
+addopts = "-q -m 'not slow and not real_provider' --basetemp=.pytest_tmp"
+# Categories are applied per file by tests/conftest.py FILE_MARKERS (unmapped file = error).
+markers = [
+    "unit: pure in-process logic, no subprocess",
+    "contract: contract/schema/protocol shape tests",
+    "integration: multiple components, subprocess providers or filesystem workspaces",
+    "e2e: real CLI end to end in a subprocess",
+    "slow: builds packages or needs network (fresh install gate)",
+    "security: hostile inputs, secrets, isolation and trust boundaries",
+    "real_provider: needs real external Forges (separate CI workflow)",
+    "allow_network: releases the session-level network block for one test",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+# Workspace fixtures simulate user repositories (inputs for the specialists); they are
+# test data, not product code — linting them would distort what the specialists analyze.
+extend-exclude = ["tests/fixtures/workspaces"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src:adapters/sparkforge_aws/src:adapters/sparkforge_azure/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src:adapters/platformforge/src"
+files = ["src", "scripts", "adapters/sparkforge_aws/src", "adapters/sparkforge_azure/src",
+         "adapters/apiforge/src", "adapters/doctordata/src", "adapters/doctorapi/src",
+         "adapters/platformforge/src"]
+
+[[tool.mypy.overrides]]
+# The specialists are installed only in their own interpreters, never in the core env.
+module = ["sparkforge_aws.*", "sparkforge.*", "sparkforge_azure.*", "apiforge.*",
+          "forge_doctor_data.*", "forge_doctor_api.*", "platformforge.*"]
+ignore_missing_imports = true

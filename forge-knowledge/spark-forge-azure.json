@@ -1,0 +1,87 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "spark-forge-azure",
+  "name": "Spark Forge Azure",
+  "family": "spark-engineering",
+  "summary": "Azure-native Spark engineering specialist: Databricks, ADLS, Synapse, Event Hubs, Fabric, ADF and Unity Catalog. Exposes its real surface (sdd.*, azure.*, fabric.*, doctor); it is not an alias of the AWS sibling.",
+  "repository": "https://github.com/EdgarSocrates98/spark-forge-azure.git",
+  "package": "sparkforge-azure>=0.1,<0.2",
+  "binary": "sparkforge-azure",
+  "adapter": "adapters/sparkforge_azure",
+  "python": ">=3.10",
+  "appropriate_for": [
+    "Spark on Azure: Databricks jobs, Synapse Spark pools, Fabric Spark",
+    "Azure data estate: ADLS Gen2, Event Hubs, ADF pipelines, Unity Catalog governance",
+    "SDD-gated Spark change on Azure (sdd.check/sdd.status)"
+  ],
+  "inappropriate_for": [
+    "AWS Spark estates — route to spark-forge-aws (Unity Catalog is not Lake Formation; ADF is not Glue)",
+    "API contract work — route to api-forge",
+    "platform engineering — route to platform-forge"
+  ],
+  "intents": [
+    "spark on azure",
+    "databricks job",
+    "adls gen2",
+    "synapse spark",
+    "fabric pipeline",
+    "adf",
+    "unity catalog",
+    "event hubs"
+  ],
+  "technologies": [
+    "pyspark",
+    "databricks",
+    "adls",
+    "synapse",
+    "event hubs",
+    "fabric",
+    "adf",
+    "unity catalog"
+  ],
+  "environments": [
+    "azure"
+  ],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <azure-venv> && <azure-python> -m pip install --upgrade pip && <azure-python> -m pip install \"sparkforge-azure>=0.1,<0.2\" <the-forge>/adapters/sparkforge_azure",
+      "verify": "<azure-python> -c \"import sparkforge_azure, theforge_sparkforge_azure\"",
+      "prerequisites": [
+        "python>=3.10",
+        "pip"
+      ]
+    },
+    {
+      "kind": "editable",
+      "command": "<azure-python> -m pip install -e <checkout-spark-forge-azure> -e <the-forge>/adapters/sparkforge_azure",
+      "verify": "<azure-python> -c \"import sparkforge_azure, theforge_sparkforge_azure\"",
+      "prerequisites": [
+        "local checkout of spark-forge-azure",
+        "python>=3.10"
+      ]
+    }
+  ],
+  "verify_install": "<azure-python> -c \"import sparkforge_azure, theforge_sparkforge_azure\"",
+  "discover_command": "theforge providers add spark-forge-azure --python <azure-python>",
+  "preferred_verifiers": [
+    "forge-doctor-data"
+  ],
+  "independent_verification": true,
+  "composes_with": [
+    "forge-doctor-data",
+    "platform-forge"
+  ],
+  "fallback": [
+    "spark-forge-aws"
+  ],
+  "limitations_note": "Azure-only. Consumes staged bundles (case.yaml, docs/sdd/); evidence is re-bound to staged sha256, never to self-reported hashes.",
+  "examples": [
+    "check a Databricks job that fails on ADLS access",
+    "diagnose Fabric access to a lakehouse table",
+    "run the azure doctor on a Synapse Spark estate"
+  ],
+  "tested_version": "0.1.0",
+  "recorded_at": "2026-10-08T00:00:00Z",
+  "tested_surface": "ae70a7a9e6abfc0204a4b4ea8e0c4e259b0f032d412061d7861d8f45d6c02382"
+}

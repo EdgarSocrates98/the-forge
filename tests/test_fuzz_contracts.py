@@ -1,0 +1,1461 @@
+"""Property-based decoding fuzz for every exported contract and the protocol Response (2.9).
+
+Decoding untrusted data must either succeed or raise ``ContractError``: any other
+exception (TypeError, KeyError, OverflowError, RecursionError, ...) escaping
+``from_dict`` is a bug, in both tolerant and strict modes.
+"""
+
+import contextlib
+import json
+import sys
+from typing import Any
+
+import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
+
+from theforge.contracts import ContractError, Response, from_dict, to_dict
+from theforge.contracts.risk import OPERATION_CLASS_LIMITATION
+from theforge.contracts.schema import EXPORTED
+
+SHA = "a" * 64
+P = {"id": "p", "version": "1"}
+TASK = {
+    "producer": P,
+    "created_at": "t",
+    "id": "task-1",
+    "intent": "analyse",
+    "workspace_root": ".",
+    "constraints": {"k": [1, 2.5, None]},
+}
+CONTEXT = {
+    "producer": P,
+    "created_at": "t",
+    "status": "complete",
+    "task_id": "task-1",
+    "provider_id": "demo-forge",
+    "root": ".",
+    "budget_bytes": 10,
+    "used_bytes": 3,
+    "files": [{"path": "a.md", "sha256": SHA, "bytes": 3, "reason": "r"}],
+    "excluded": [{"path": "b.bin", "reason": "binary"}],
+}
+EVIDENCE = {
+    "id": "e1",
+    "epistemic": "observed",
+    "subject": "s",
+    "claim": "c",
+    "producer": P,
+    "location": {"path": "a.md", "line": 1},
+    "hash": SHA,
+    "limitations": ["l"],
+}
+ERROR = {"code": "FORGE-X", "detail": "d", "field": "f", "unlock": "u"}
+
+ESTIMATE = {
+    "context_needed": ["*.py"],
+    "operation_class": "read_only",
+    "expected_artifacts": ["out.md"],
+    "unknowns": ["u"],
+    "limitations": ["l"],
+}
+PLAN = {
+    "producer": P,
+    "created_at": "t",
+    "status": "validated",
+    "plan_run": "plan-1",
+    "task_id": "task-1",
+    "pattern": "pipeline",
+    "source": "decomposed",
+    "profile": "max",
+    "nodes": [
+        {
+            "id": "n1",
+            "role": "producer",
+            "provider": "demo-forge",
+            "capability": "demo.echo",
+            "action": "echo",
+            "estimate": ESTIMATE,
+        },
+        {
+            "id": "n2",
+            "role": "consumer",
+            "provider": "demo-forge",
+            "capability": "demo.echo",
+            "action": "echo",
+            "targets": ["api"],
+            "inputs": ["n1"],
+            "depends_on": [
+                {"node": "n1", "epistemic": "inferred", "rule": "intent-order", "evidence": "e"}
+            ],
+        },
+    ],
+    "limitations": ["l"],
+    "unknowns": ["u"],
+}
+ORIGIN = {"plan_run": "plan-1", "node": "n1", "run_id": "run-1", "provider": P}
+HANDOFF = {
+    "producer": P,
+    "created_at": "t",
+    "plan_run": "plan-1",
+    "target_node": "n2",
+    "items": [
+        {
+            "kind": "evidence",
+            "id": "e1",
+            "origin": ORIGIN,
+            "epistemic": "observed",
+            "subject": "s",
+            "claim": "c",
+            "location": {"path": "a.md", "line": 1},
+            "hash": SHA,
+            "derived_from": {"provider": "p", "run_id": "run-0", "item": "e0"},
+        },
+        {
+            "kind": "finding",
+            "id": "f1",
+            "origin": ORIGIN,
+            "severity": "low",
+            "evidence_ids": ["e1"],
+        },
+        {
+            "kind": "artifact",
+            "id": "out/r.json",
+            "origin": ORIGIN,
+            "hash": SHA,
+            "artifact_type": "report.full",
+        },
+        {
+            "kind": "verification",
+            "id": "verification",
+            "origin": ORIGIN,
+            "epistemic": "observed",
+            "claim": "forge=passed",
+        },
+        {"kind": "constraint", "id": "constraint:0", "origin": ORIGIN, "claim": "bounded"},
+        {
+            "kind": "assumption",
+            "id": "assumption:0",
+            "origin": ORIGIN,
+            "claim": "schema stable",
+            "also_from": [{**ORIGIN, "node": "n0"}],
+        },
+    ],
+    "truncated": True,
+    "dropped": 1,
+    "limitations": ["l"],
+}
+DESCRIPTOR = {
+    "producer": P,
+    "created_at": "t",
+    "root": ".",
+    "repositories": [
+        {
+            "path": "api",
+            "git": {"available": True, "head": "c" * 40},
+            "dependency_files": ["api/requirements.txt"],
+        }
+    ],
+    "paths": ["api"],
+    "technologies": [
+        {
+            "name": "fastapi",
+            "repository": "api",
+            "source": "dependency_manifest",
+            "evidence": "api/requirements.txt",
+        }
+    ],
+    "relations": [
+        {
+            "source": ".",
+            "target": "api",
+            "kind": "contains",
+            "epistemic": "observed",
+            "evidence": "api/.git",
+        }
+    ],
+}
+VERIFICATION = {
+    "producer": P,
+    "created_at": "t",
+    "run_id": "run-1",
+    "self_report": {"status": "reported", "details": ["d"]},
+    "provider_evidence": {"status": "reported", "basis": ["b"]},
+    "forge": {"status": "passed", "basis": ["result-integrity"]},
+    "independent": {"status": "not_performed"},
+    "limitations": ["l"],
+}
+INSTALLATION = {
+    "producer": P,
+    "created_at": "t",
+    "run_id": "plan-1",
+    "items": [
+        {
+            "provider": "spark",
+            "state": "unavailable",
+            "reason": "r",
+            "suggested_action": "a",
+            "source": "health",
+            "nodes": ["n1"],
+        }
+    ],
+}
+
+# One fully populated valid instance per exported contract: seeds for mutation.
+SEEDS: dict[str, dict[str, Any]] = {
+    "ForgeManifest": {
+        "id": "demo-forge",
+        "version": "1.0.0",
+        "protocols": ["forge/v1"],
+        "ops": ["describe", "health", "execute"],
+        "domains": ["d"],
+        "capabilities": [
+            {
+                "id": "demo.echo",
+                "actions": ["echo"],
+                "default_action": "echo",
+                "state": "supported",
+                "operation_class": "read_only",
+                "description": "x",
+                "signals": {"keywords": ["k"], "file_globs": ["*.md"], "dependencies": ["dep"]},
+            }
+        ],
+        "execution": {"local": True, "offline": True, "requires_network": False},
+    },
+    "TaskSpec": TASK,
+    "RoutingDecision": {
+        "producer": P,
+        "created_at": "t",
+        "status": "routed",
+        "task_id": "task-1",
+        "candidates": [
+            {
+                "provider": "demo-forge",
+                "capability": "demo.echo",
+                "rank_key": [1, 0],
+                "matched": {"dependencies": [], "file_globs": ["*.md"], "keywords": ["k"]},
+            }
+        ],
+        "selected": [{"provider": "demo-forge", "capability": "demo.echo", "action": "echo"}],
+        "reason": "r",
+        "confidence": {"level": "high", "measured_signals": ["keywords"]},
+    },
+    "ContextPack": CONTEXT,
+    "ExecutionResult": {
+        "producer": P,
+        "created_at": "t",
+        "status": "ok",
+        "findings": [{"id": "f1", "title": "t", "severity": "low", "evidence_ids": ["e1"]}],
+        "evidence": [EVIDENCE],
+        "artifacts": [{"path": "out.md", "sha256": SHA}],
+        "metrics": {
+            "duration_ms": {"value": 1.5, "kind": "measured"},
+            "tokens": {"value": None, "kind": "unknown"},
+        },
+        "context_request": {
+            "items": [{"path": "b.md", "lines": {"start": 1, "end": 2}, "reason": "r"}]
+        },
+    },
+    "Evidence": EVIDENCE,
+    "ExecutionReceipt": {
+        "producer": P,
+        "created_at": "t",
+        "status": "refused",
+        "run_id": "run-1",
+        "forge_version": "0.1",
+        "started_at": "t0",
+        "finished_at": "t1",
+        "error": ERROR,
+        "inputs": {
+            "task_sha256": SHA,
+            "routing_sha256": SHA,
+            "context_sha256": None,
+            "context_round_sha256": [SHA],
+            "handoff_sha256": SHA,
+        },
+        "provider": {
+            "id": "demo-forge",
+            "version": "1",
+            "trust": "local",
+            "manifest_sha256": SHA,
+            "executable": "x",
+            "fingerprint": SHA,
+        },
+        "result_sha256": SHA,
+        "telemetry_sha256": SHA,
+        "kind": "run",
+        "parent_run": "plan-1",
+        "plan_node": "n1",
+        "replay_of": "run-0",
+        "verification_sha256": SHA,
+        "reproducibility": {"level": "non_reproducible", "reasons": ["network"]},
+    },
+    "Request": {"op": "describe", "request_id": "r_1", "payload": {"a": {"b": [1]}}},
+    "Response": {
+        "request_id": "r_1",
+        "op": "execute",
+        "producer": P,
+        "status": "error",
+        "payload": {"x": 1},
+        "error": ERROR,
+        "limitations": ["l"],
+        "unknowns": ["u"],
+    },
+    "HealthReport": {"status": "degraded", "checks": [{"name": "n", "ok": False, "detail": "d"}]},
+    "ExecuteRequest": {
+        "task": TASK,
+        "capability": "demo.echo",
+        "action": "echo",
+        "context": CONTEXT,
+    },
+    "VerifyRequest": {
+        "task": TASK,
+        "capability": "demo.echo",
+        "action": "echo",
+        "run_id": "run-1",
+        "result": {"producer": P, "created_at": "t", "status": "ok"},
+        "handoff": HANDOFF,
+    },
+    "VerifyVerdict": {"status": "passed", "details": ["d"], "basis": ["replay"]},
+    "RiskAssessment": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "run-1",
+        "provider_id": "demo-forge",
+        "capability": "demo.echo",
+        "action": "echo",
+        "operation_class": "read_only",
+        "source": "provider_declaration",
+        "dimensions": {
+            "read_only": "yes",
+            "local_mutation": "no",
+            "external_read": "no",
+            "external_mutation": "no",
+            "destructive": "no",
+            "credentials": "unknown",
+            "cross_account": "no",
+        },
+        "policy": {"decision": "allow", "rule": "r", "reason": "r", "approved": False},
+        "limitations": [OPERATION_CLASS_LIMITATION],
+    },
+    "RunTelemetry": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "run-1",
+        "profile": {
+            "name": "balanced",
+            "budget_bytes": 10,
+            "max_files": 2,
+            "tiers": ["metadata", "reference"],
+            "effective_tiers": ["reference"],
+            "negotiation_rounds": 1,
+            "max_providers": 1,
+            "fallback": True,
+            "verification": "conditional",
+            "execute_timeout_s": 180.0,
+        },
+        "scan_ms": {"value": 1.5, "kind": "measured"},
+        "providers_executed": {"value": 2, "kind": "measured"},
+        "provider_revalidation": "undeclared",
+        "verification_performed": "minimal",
+        "context_drift": ["a.md"],
+        "limitations": ["l"],
+        "unknowns": ["u"],
+        "spans": [
+            {"id": "s1", "name": "scan", "start_ms": 0.0, "duration_ms": 12.5},
+            {
+                "id": "s2",
+                "name": "provider:p1",
+                "start_ms": 12.5,
+                "duration_ms": 400.0,
+                "parent": "s1",
+                "status": "ok",
+                "attributes": {"capability": "c.x", "action": "run"},
+            },
+        ],
+    },
+    # cross-forge-foundation (Wave D)
+    "ExecutionPlan": PLAN,
+    "PlanRequest": {"task": TASK, "capability": "demo.echo", "action": "echo"},
+    "PlanEstimate": ESTIMATE,
+    "PlanResult": {
+        "producer": P,
+        "created_at": "t",
+        "status": "partial",
+        "plan_run": "plan-1",
+        "order": ["n1", "n2"],
+        "nodes": [
+            {
+                "node": "n1",
+                "status": "ok",
+                "run_id": "run-1",
+                "receipt_sha256": SHA,
+                "result_sha256": SHA,
+                "reproducibility": {"level": "unknown"},
+            },
+            {"node": "n2", "status": "skipped", "blocked_by": "n1", "error": ERROR},
+        ],
+        "synthesis": {
+            "nodes": [
+                {
+                    "node": "n1",
+                    "provider": "demo-forge",
+                    "capability": "demo.echo",
+                    "action": "echo",
+                    "status": "ok",
+                    "run_id": "run-1",
+                    "findings": [{"id": "f1", "title": "t"}],
+                    "evidence_by_epistemic": {"observed": 1},
+                }
+            ],
+            "handoffs": [{"source": "n1", "target": "n2", "items": 1, "truncated": False}],
+            "failures": ["n2: skipped"],
+            "limitations": ["l"],
+            "unknowns": ["u"],
+        },
+        "reproducibility": {"level": "unknown", "reasons": ["r"]},
+    },
+    "Handoff": HANDOFF,
+    "WorkspaceDescriptor": DESCRIPTOR,
+    "WorkspaceGraph": {
+        "producer": P,
+        "created_at": "t",
+        "plan_run": "plan-1",
+        "nodes": [
+            {"id": "workspace:.", "kind": "workspace"},
+            {"id": "plan_node:n1", "kind": "plan_node", "label": "n1"},
+        ],
+        "edges": [
+            {
+                "source": "plan_node:n1",
+                "target": "workspace:.",
+                "kind": "targets",
+                "epistemic": "inferred",
+                "evidence": "plan",
+                "rule": "intent-order",
+            }
+        ],
+        "limitations": ["l"],
+    },
+    "VerificationResult": VERIFICATION,
+    "InstallationPlan": INSTALLATION,
+    "ExplainReport": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "plan-1",
+        "kind": "plan",
+        "status": "partial",
+        "reproducibility": {"level": "unknown"},
+        "integrity": {
+            "checked": ["plan"],
+            "divergences": [
+                {"artifact": "graph", "kind": "modified", "expected": SHA, "actual": SHA}
+            ],
+        },
+        "verification": VERIFICATION,
+        "plan": {"plan": PLAN, "installation": INSTALLATION, "workspace_descriptor": DESCRIPTOR},
+        "artifacts": {"task": {"id": "task-1"}},
+    },
+    "Diagnostic": {
+        "producer": P,
+        "created_at": "t",
+        "stage": "cli:plan",
+        "code": "FORGE-INTERNAL",
+        "family": "internal",
+        "hint": "unexpected core error; report a bug with the --debug diagnostic output",
+        "error_type": "RuntimeError",
+        "message": "m",
+        "causes": [{"type": "OSError", "message": "c"}],
+        "frames": [{"module": "theforge.cli.main", "function": "main", "line": 1}],
+    },
+    "CapabilityGraph": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "r",
+        "nodes": [
+            {"id": "provider:p1", "kind": "provider", "label": "p1 0.1"},
+            {"id": "capability:p1/a.b", "kind": "capability"},
+        ],
+        "edges": [
+            {
+                "source": "provider:p1",
+                "target": "capability:p1/a.b",
+                "kind": "has_capability",
+                "epistemic": "explicit",
+                "evidence": "manifest p1 capabilities",
+            }
+        ],
+    },
+    "SemanticPlanProposal": {
+        "nodes": [
+            {
+                "ref": "n1",
+                "provider": "p1",
+                "capability": "a.b",
+                "action": "run",
+                "role": "producer",
+                "rationale": "first",
+            },
+            {
+                "ref": "n2",
+                "provider": "p2",
+                "capability": "c.d",
+                "action": "run",
+                "depends_on": ["n1"],
+                "inputs": ["n1"],
+                "role": "consumer",
+            },
+        ],
+        "dependencies": [{"node": "n2", "depends_on": "n1", "rationale": "consumes n1 output"}],
+        "pattern": "pipeline",
+        "rationale": "data flows",
+        "evidence": ["p1/a.b produces x"],
+        "assumptions": ["n1 succeeds"],
+        "unknowns": ["volume"],
+        "confidence": "medium",
+        "alternatives": ["single node"],
+        "limitations": ["draft"],
+    },
+    "DecisionRecord": {
+        "producer": P,
+        "created_at": "t",
+        "plan_run": "plan-1",
+        "referee": "ref",
+        "question": "which design",
+        "options": [
+            {
+                "node": "a",
+                "provider": "p1",
+                "capability": "x.y",
+                "status": "ok",
+                "run_id": "r-a",
+                "claim": "status=ok",
+                "position": "proposal A",
+                "evidence": ["e1"],
+                "risks": ["r1: risk A"],
+            },
+            {
+                "node": "b",
+                "provider": "p2",
+                "capability": "x.z",
+                "status": "partial",
+                "run_id": "r-b",
+                "claim": "status=partial",
+            },
+        ],
+        "evidence": ["a:e1", "b:e1"],
+        "tradeoffs": ["a: f1: proposal A"],
+        "chosen": "a",
+        "rejected": ["b"],
+        "rationale": "a has the evidence",
+        "confidence": "high",
+        "unknowns": ["u"],
+        "limitations": ["l"],
+    },
+    "EconomyRollup": {
+        "schema": "theforge/EconomyRollup/v1",
+        "producer": P,
+        "created_at": "t",
+        "plan_run": "plan-1",
+        "receipts": [
+            {
+                "node": "n1",
+                "receipt": {
+                    "schema": "theforge/ProviderEconomyReceipt/v1",
+                    "provider": "p1",
+                    "run": "r1",
+                    "context_bytes": {"value": 512, "status": "measured"},
+                    "provider_tokens": {"status": "unresolved"},
+                    "basis": ["case-metrics"],
+                    "limitations": ["l"],
+                },
+            }
+        ],
+        "totals": {"context_bytes": {"value": 512, "status": "measured"}},
+        "conflicts": [],
+        "limitations": ["l"],
+    },
+    "PlanState": {
+        "producer": P,
+        "created_at": "t",
+        "plan_run": "plan-1",
+        "run_state": "running",
+        "nodes": [
+            {
+                "node": "n1",
+                "state": "succeeded",
+                "run_id": "run-1",
+                "result_sha256": SHA,
+                "attempts": 2,
+                "reused": False,
+            },
+            {"node": "n2", "state": "pending"},
+        ],
+        "resumed_from": "plan-0",
+    },
+    "ComplexityAssessment": {
+        "producer": P,
+        "created_at": "t",
+        "task_id": "task-1",
+        "level": "medium",
+        "score": 0.42,
+        "confidence": 0.9,
+        "dimensions": [
+            {"name": "mutation_level", "score": 0.7, "weight": 2.0, "value": "external_mutation"},
+            {
+                "name": "repositories",
+                "score": None,
+                "weight": 1.0,
+                "value": "unknown: no workspace descriptor",
+            },
+        ],
+        "signals": ["mutation_level=external_mutation"],
+        "requested_profile": "auto",
+        "selected_profile": "balanced",
+        "profile_reason": "level medium -> balanced",
+        "config_source": "user+project",
+        "limitations": ["repositories: unknown"],
+    },
+    "RunBudget": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "run-1",
+        "profile": "balanced",
+        "context_bytes": 262144,
+        "max_files": 64,
+        "provider_calls": 2,
+        "semantic_calls": 1,
+        "verification_calls": 1,
+        "wall_time_s": 180.0,
+        "max_parallelism": 1,
+        "negotiation_rounds": 1,
+        "adjustments": ["promotion economy→balanced: budget_bytes 65536→262144"],
+    },
+    "ProjectIntel": {
+        "producer": P,
+        "created_at": "t",
+        "updated_at": "t",
+        "root": "/ws",
+        "fingerprints": {
+            "files_sha": "a" * 64,
+            "repos_sha": "b" * 64,
+            "depfiles_sha": "c" * 64,
+            "manifests_sha": "d" * 64,
+            "relations_sha": "e" * 64,
+        },
+        "descriptor": {
+            "producer": P,
+            "created_at": "t",
+            "root": "/ws",
+            "repositories": [],
+            "paths": ["."],
+            "technologies": [],
+            "relations": [],
+            "limitations": [],
+            "unknowns": [],
+        },
+        "capability_graph_sha": None,
+        "reused": ["technologies"],
+        "source": "scan+git+manifests",
+    },
+    "DecisionMemory": {
+        "producer": P,
+        "created_at": "t",
+        "entries": [
+            {
+                "id": "a" * 64,
+                "kind": "routing",
+                "subject": "cap.x",
+                "choice": "p1",
+                "basis": "matched signals",
+                "created_at": "t",
+                "updated_at": "t",
+                "corroborations": 2,
+                "runs": ["r1", "r2"],
+            }
+        ],
+    },
+    "ProviderPerformance": {
+        "producer": P,
+        "created_at": "t",
+        "entries": [
+            {
+                "provider": "p1",
+                "capability": "x.y",
+                "runs": 3,
+                "ok": 2,
+                "partial": 1,
+                "failed": 0,
+                "verified_runs": 2,
+                "evidence": 5,
+                "artifacts": 1,
+                "context_bytes": 4096,
+                "files_sent": 4,
+                "files_cited": 3,
+                "duration_ms": 150.5,
+                "updated_at": "t",
+            },
+            {
+                "provider": "p2",
+                "capability": "x.z",
+                "runs": 1,
+                "ok": 0,
+                "partial": 0,
+                "failed": 1,
+                "verified_runs": 0,
+                "evidence": 0,
+                "artifacts": 0,
+                "context_bytes": 0,
+                "files_sent": 0,
+                "files_cited": 0,
+                "duration_ms": 10.0,
+                "updated_at": "t",
+            },
+        ],
+    },
+    # semantic routing fallback (Wave K)
+    "ResolveRequest": {
+        "task": TASK,
+        "ambiguity": "tie at rank 2",
+        "technologies": ["pyspark"],
+        "candidates": [
+            {
+                "provider": "demo-forge",
+                "capability": "demo.echo",
+                "actions": ["echo"],
+                "state": "supported",
+                "matched": {"dependencies": [], "file_globs": ["*.md"], "keywords": ["k"]},
+            }
+        ],
+    },
+    "RoutingProposal": {
+        "choice": {"provider": "demo-forge", "capability": "demo.echo", "action": "echo"},
+        "confidence": "medium",
+        "reason": "demo-forge matched the intent",
+        "evidence": ["keyword hit"],
+        "alternatives": ["other/x.y"],
+        "unknowns": ["u"],
+        "limitations": ["l"],
+    },
+    # surface identity (cycle 3.1)
+    "ProviderSurfaceIdentity": {
+        "provider_id": "demo-forge",
+        "provider_version": "1.0.0",
+        "adapter_version": "0.2.0",
+        "protocol_version": "forge/v1",
+        "surface_fingerprint": SHA,
+        "capability_fingerprint": SHA,
+        "native_surface_fingerprint": SHA,
+        "recorded_at": "t",
+    },
+    # capability negotiation v2 (cycle 4)
+    "CapabilityRequirement": {
+        "capability": "data.streaming.analysis",
+        "required_actions": ["inspect"],
+        "task_family": "data.spark.performance",
+        "technologies": ["kafka"],
+        "input_artifact_types": ["code-bundle"],
+        "required_output_types": ["finding"],
+        "required_evidence": ["finding"],
+        "verification_level": "strong",
+        "operation_class_ceiling": "read_only",
+        "offline_required": True,
+        "network_allowed": False,
+        "credentials_allowed": False,
+        "mutation_allowed": False,
+        "platform_constraints": ["windows"],
+        "runtime_constraints": ["py311"],
+        "protocol_features": ["handoff/v1"],
+        "handoff_required": True,
+        "trace_required": True,
+        "economy_required": True,
+        "graph_required": True,
+        "minimum_trust": "local",
+    },
+    "CapabilityOffer": {
+        "technologies": ["kafka"],
+        "produces_evidence": ["finding"],
+        "consumes_artifact_types": ["code-bundle"],
+        "produces_artifact_types": ["finding"],
+        "features": ["handoff/v1"],
+        "offline": True,
+        "read_only": True,
+        "network_required": False,
+        "credentials_required": False,
+        "limitations": ["l"],
+    },
+    "CapabilityNegotiationResult": {
+        "producer": P,
+        "created_at": "t",
+        "requirement": {"capability": "data.streaming.analysis"},
+        "provider": "data-forge",
+        "state": "PARTIAL",
+        "capability": "data.streaming",
+        "dimensions": {"capability_match": "full", "technology_match": "partial"},
+        "history": "warming",
+        "matched": ["capability:data.streaming"],
+        "missing": ["technology:kafka"],
+        "limitations": ["l"],
+        "policy_conflicts": ["trust:local"],
+        "surface_fingerprint": SHA,
+        "evidence": ["e"],
+    },
+    # registry metadata (cycle 4, wave C)
+    "ForgeRegistryEntry": {
+        "provider": "acme-forge",
+        "version": "1.2.3",
+        "publisher": {
+            "id": "acme",
+            "organization": "Acme",
+            "repository": "https://github.com/acme/x",
+            "key_id": "k1",
+        },
+        "description": "d",
+        "manifest_url": "https://reg.example/m.json",
+        "manifest_sha256": SHA,
+        "distribution": {
+            "kind": "pip-package",
+            "package": "acme-forge",
+            "version": "1.2.3",
+            "sha256": SHA,
+        },
+        "protocols": ["forge/v1"],
+        "capabilities": ["data.pipeline"],
+        "platforms": ["any"],
+        "runtime": {
+            "python": ">=3.11",
+            "offline": True,
+            "requires_network": False,
+            "requires_credentials": False,
+        },
+        "hashes": {"wheel": SHA},
+        "signatures": [
+            {"key_id": "k1", "algorithm": "ed25519", "signature": "sig", "signed": "manifest"}
+        ],
+        "source_repository": "https://github.com/acme/x",
+        "license": "Apache-2.0",
+        "security_contact": "sec@acme.example",
+        "released_at": "2026-01-01",
+        "limitations": ["l"],
+    },
+    "RegistryDocument": {
+        "registry": {"id": "test-registry", "name": "Test", "url": "https://reg.example"},
+        "produced_at": "2026-01-01T00:00:00Z",
+        "entries": [{"provider": "acme-forge", "version": "1.2.3"}],
+        "limitations": ["l"],
+    },
+    "RemoteProviderCandidate": {
+        "source": "feed",
+        "registry": "test-registry",
+        "registry_url": "https://reg.example",
+        "provider": "acme-forge",
+        "version": "1.2.3",
+        "publisher": {"id": "acme"},
+        "distribution": {
+            "kind": "pip-package",
+            "package": "acme-forge",
+            "version": "1.2.3",
+            "sha256": SHA,
+        },
+        "manifest_sha256": SHA,
+        "signature_state": "declared",
+        "freshness": "fresh",
+        "retrieved_at": "2026-01-01T00:00:00Z",
+        "fit": "declared",
+        "matched": ["capability:data.pipeline"],
+        "missing": [],
+        "unknowns": ["required_actions:remote-undeclared"],
+        "protocols": ["forge/v1"],
+        "capabilities": ["data.pipeline"],
+        "platforms": ["any"],
+        "runtime": {"offline": True, "requires_network": False},
+        "limitations": ["l"],
+    },
+    # governed install planning (cycle 4, wave F)
+    "InstallationPlanV2": {
+        "producer": P,
+        "created_at": "t",
+        "provider": "acme-forge",
+        "version": "1.2.3",
+        "source": "feed",
+        "registry": "reg",
+        "distribution": {
+            "kind": "pip-package",
+            "package": "acme-forge",
+            "version": "1.2.3",
+            "sha256": SHA,
+        },
+        "expected_hashes": {"manifest": SHA},
+        "signature": {"key_id": "k", "algorithm": "ed25519", "signature": "s"},
+        "runtime": {"offline": True, "requires_network": False},
+        "environment": "venv:providers/acme-forge-1.2.3",
+        "dependencies": ["dep==1.0"],
+        "permissions": ["network"],
+        "post_install_checks": ["provider-check", "health"],
+        "rollback": {"action": "remove-new"},
+        "steps": [
+            {"stage": s, "description": "d", "status": "pending"}
+            for s in (
+                "plan",
+                "approval",
+                "download",
+                "verify",
+                "isolated-install",
+                "provider-check",
+                "surface-fingerprint",
+                "health",
+            )
+        ],
+        "approval": {"required": True, "granted": False},
+        "limitations": ["l"],
+    },
+    # mcp registry awareness (cycle 4, wave J)
+    "McpServerEntry": {
+        "name": "io.github.acme/filesystem",
+        "title": "Filesystem",
+        "description": "file tools",
+        "version": "1.0.0",
+        "remotes": [
+            {
+                "type": "streamable-http",
+                "url": "https://mcp.example/sse",
+                "headers": ["Authorization"],
+            }
+        ],
+        "packages": [{"registry_type": "npm", "identifier": "@acme/fs", "version": "1.0.0"}],
+        "requires_network": True,
+        "requires_credentials": True,
+        "limitations": ["l"],
+    },
+    "McpRegistryDocument": {
+        "source_id": "mcp-hub",
+        "produced_at": "2026-01-01T00:00:00Z",
+        "entries": [{"name": "io.github.acme/filesystem"}],
+        "next_cursor": "abc",
+        "limitations": ["l"],
+    },
+    # cycle 4.1 global control / adaptive learning
+    "GlobalStopDecision": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "plan-1",
+        "action": "continue",
+        "information_gain": "unknown",
+        "reasons": ["expected information gain is unknown"],
+        "unresolved": ["node:n2:skipped"],
+        "budget_remaining": 2,
+        "verification_required": True,
+        "verification_satisfied": True,
+    },
+    "ContextROI": {
+        "producer": P,
+        "created_at": "t",
+        "provider": "echo-forge",
+        "capability": "data.pipeline",
+        "surface_fingerprint": SHA,
+        "task_family": "migration",
+        "runs": 3,
+        "measured_runs": 2,
+        "delivered_bytes": 1024,
+        "delivered_items": 4,
+        "cited_items": 2,
+        "utilization_ratio": 0.5,
+        "maturity": "warming",
+        "delivered_runs": 2,
+        "verified_runs": 2,
+        "limitations": ["l"],
+    },
+    "ContextBudgetRecommendation": {
+        "producer": P,
+        "created_at": "t",
+        "provider": "echo-forge",
+        "capability": "data.pipeline",
+        "surface_fingerprint": SHA,
+        "task_family": "migration",
+        "current_budget_bytes": 1000,
+        "suggested_budget_bytes": 500,
+        "maturity": "mature",
+        "basis": ["measured comparable runs"],
+        "advisory": True,
+    },
+    "StrategyExperiment": {
+        "producer": P,
+        "created_at": "t",
+        "experiment_id": "exp-1",
+        "capability": "data.pipeline",
+        "task_family": "migration",
+        "champion": "forge-a",
+        "challenger": "forge-b",
+        "champion_surface": SHA,
+        "challenger_surface": "b" * 64,
+        "state": "observing",
+        "discovery_before": "2026-01-01T00:00:00Z",
+        "evaluation_after": "2026-01-02T00:00:00Z",
+        "minimum_runs": 4,
+        "minimum_verified_runs": 2,
+        "observations": 2,
+        "verified_observations": 1,
+        "reasons": ["collecting"],
+        "operator_approval_required": True,
+    },
+    # economy observations (cycle 4, wave G)
+    "ExecutionObservation": {
+        "producer": P,
+        "created_at": "t",
+        "run_id": "r1",
+        "provider": "echo-forge",
+        "capability": "data.pipeline",
+        "status": "ok",
+        "task_family": "migration",
+        "surface_fingerprint": SHA,
+        "environment_fingerprint": "0123abcd",
+        "profile": "balanced",
+        "complexity": "medium",
+        "context_bytes": 128,
+        "context_items": 3,
+        "context_items_cited": 1,
+        "provider_calls": 1,
+        "tool_calls": 2,
+        "semantic_calls": 0,
+        "tokens": 512,
+        "cost_usd": 0.001,
+        "wall_time_ms": 42.0,
+        "verification": "passed",
+        "evidence_count": 2,
+        "artifact_count": 1,
+        "limitations": ["l"],
+    },
+    "GlobalEconomyReceipt": {
+        "producer": P,
+        "created_at": "t",
+        "observations": 2,
+        "runs": 2,
+        "axes": {
+            a: {"status": "observed", "value": 1.0, "coverage": 2}
+            for a in (
+                "context_bytes",
+                "provider_calls",
+                "tool_calls",
+                "semantic_calls",
+                "tokens",
+                "cost_usd",
+                "wall_time_ms",
+            )
+        },
+        "maturity": {"echo-forge/data.pipeline@abc": "cold"},
+        "task_families": ["migration"],
+        "conflicts": ["r1 p/c tokens: 1 vs 2"],
+        "limitations": ["l"],
+    },
+    # cycle 5 federated intelligence
+    "EngineeringMemoryEntry": {
+        "producer": P,
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "id": SHA,
+        "kind": "fact",
+        "scope": "project",
+        "subject": "kafka needs avro",
+        "claim": "orders topic requires avro",
+        "epistemic": "unresolved",
+        "tags": ["kafka"],
+    },
+    "MemoryPack": {
+        "producer": P,
+        "created_at": "t",
+        "query": {"capability": "data.pipeline"},
+        "entries": [],
+        "total_matches": 0,
+        "delivered_bytes": 0,
+        "truncated": False,
+    },
+    "MemorySummary": {
+        "producer": P,
+        "created_at": "t",
+        "id": SHA,
+        "scope": "project",
+        "subject": "kafka patterns",
+        "summary": "avro is required on orders",
+        "source_ids": ["b" * 64],
+        "coverage": "2 entries",
+        "generated_at": "2026-01-01T00:00:00+00:00",
+    },
+    "FailurePattern": {
+        "producer": P,
+        "created_at": "t",
+        "id": SHA,
+        "error_family": "timeout",
+        "provider": "echo-forge",
+        "capability": "data.pipeline",
+        "occurrences": 2,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-02T00:00:00+00:00",
+    },
+    "CapabilityRelation": {
+        "producer": P,
+        "created_at": "t",
+        "source": "demo.audit",
+        "relation": "verified_by",
+        "target": "demo.scan",
+        "epistemic": "observed",
+        "constraints": ["same-surface"],
+        "evidence": ["manifest declares verification"],
+    },
+    "ExecutionTarget": {
+        "producer": P,
+        "created_at": "t",
+        "id": "local-main",
+        "type": "local",
+        "trust": "unverified",
+        "network": "none",
+        "data_classes": ["public"],
+    },
+    "TargetRequirement": {
+        "data_classification": "internal",
+        "locality": "local-or-remote",
+        "network": "any",
+    },
+    "TargetNegotiation": {
+        "producer": P,
+        "created_at": "t",
+        "provider": "echo-forge",
+        "capability": "data.pipeline",
+        "requirement": {"data_classification": "internal", "locality": "local"},
+        "selected": "local-main",
+        "candidates": ["local-main"],
+        "refusals": {"remote-1": "data class exceeds target cap"},
+    },
+    "RemoteExecutionRequest": {
+        "producer": P,
+        "created_at": "t",
+        "task_sha256": SHA,
+        "context_sha256": SHA,
+        "budget_sha256": SHA,
+        "provider": "echo-forge",
+        "surface_fingerprint": SHA,
+        "target_id": "r1",
+        "target_identity_ref": "org-forge:r1",
+        "policy_decision": "deny",
+        "data_classification": "public",
+    },
+    "RemoteExecutionReceipt": {
+        "producer": P,
+        "created_at": "t",
+        "request_sha256": SHA,
+        "execution_id": "e1",
+        "target_id": "r1",
+        "target_identity_ref": "org-forge:r1",
+        "provider": "echo-forge",
+        "input_hashes": {"task": SHA},
+        "output_hashes": {"result": "b" * 64},
+    },
+    "StrategyPolicy": {
+        "producer": P,
+        "created_at": "t",
+        "id": SHA,
+        "capability": "data.pipeline",
+        "surface_fingerprint": SHA,
+        "prefer": ["echo-forge"],
+        "experiment_id": "exp-1",
+        "approval_sha256": "b" * 64,
+        "sample_runs": 4,
+        "metrics": {"verified_rate": 0.9},
+        "valid_from": "2026-01-01T00:00:00+00:00",
+    },
+    "PlanSimulation": {
+        "producer": P,
+        "created_at": "t",
+        "plan_sha256": SHA,
+        "nodes": [{"node": "n1", "provider": "echo-forge", "capability": "data.pipeline"}],
+        "providers": ["echo-forge"],
+        "capabilities": ["data.pipeline"],
+        "risk_flags": ["local-only"],
+        "cost": "unknown",
+        "data_classification": "internal",
+    },
+    "CounterfactualPlanComparison": {
+        "producer": P,
+        "created_at": "t",
+        "base_sha256": SHA,
+        "alternative_sha256": "b" * 64,
+        "differences": ["alternative adds verification"],
+        "unknowns": ["u"],
+        "predicted_bounds": {"context_bytes": "<=1000"},
+        "evidence_refs": ["run:r1"],
+    },
+    # agentic layer (W1, W3)
+    "ForgeKnowledge": {
+        "schema": "theforge/ForgeKnowledge/v1",
+        "id": "demo-forge",
+        "name": "Demo Forge",
+        "family": "demo",
+        "summary": "s",
+        "repository": "https://example.invalid/demo",
+        "package": "demo-forge",
+        "binary": "demo",
+        "adapter": "adapters/demo",
+        "python": ">=3.10",
+        "appropriate_for": ["a"],
+        "inappropriate_for": ["b"],
+        "intents": ["i"],
+        "technologies": ["t"],
+        "environments": ["e"],
+        "install": [
+            {
+                "kind": "pip",
+                "command": "python -m pip install demo-forge",
+                "verify": "python -c 'import demo_forge'",
+                "prerequisites": ["p"],
+            }
+        ],
+        "verify_install": "demo --version",
+        "discover_command": "demo describe",
+        "preferred_verifiers": ["demo-doctor"],
+        "independent_verification": True,
+        "trust_default": "unverified",
+        "composes_with": ["demo-two"],
+        "fallback": ["demo-fallback"],
+        "limitations_note": "l",
+        "examples": ["x"],
+        "capabilities_source": "runtime_discovery",
+        "tested_version": "1.0.0",
+        "tested_surface": "a" * 64,
+        "recorded_at": "t",
+    },
+    "AgentSpec": {
+        "schema": "theforge/AgentSpec/v1",
+        "id": "demo-agent",
+        "name": "Demo Agent",
+        "role": "r",
+        "authority": "propose",
+        "purpose": "p",
+        "required_skills": ["forge-ecosystem"],
+        "allowed_actions": ["route"],
+        "forbidden_actions": [
+            "grant-trust",
+            "approve",
+            "waive-verification",
+            "modify-registry",
+        ],
+        "input_contracts": ["theforge/Intent/v1"],
+        "output_contracts": ["theforge/RoutingProposal/v1"],
+        "context_budget_bytes": 65536,
+        "max_skills": 4,
+        "rendered_hosts": ["codex"],
+    },
+}
+
+CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))
+IDS = [c.__name__ for c in CONTRACTS]
+
+# Values that historically break naive coercion: huge ints, non-finite floats, bool-as-int.
+EDGE_SCALARS = st.sampled_from(
+    [
+        0,
+        -1,
+        True,
+        False,
+        10**400,
+        -(10**400),
+        2**63,
+        float("inf"),
+        float("-inf"),
+        float("nan"),
+        1e308,
+        -0.0,
+        "",
+        " ",
+        "\x00",
+        "a" * 300,
+        "theforge/ForgeManifest/v1",
+        "forge/v1",
+        "ok",
+        "error",
+        "refused",
+        "routed",
+        "supported",
+        "read_only",
+        SHA,
+        "*",
+    ]
+)
+SCALARS = st.one_of(
+    st.none(),
+    st.booleans(),
+    st.integers(),
+    st.floats(allow_nan=True),
+    st.floats(allow_nan=False, allow_infinity=False),
+    st.text(max_size=20),
+    EDGE_SCALARS,
+)
+
+
+def _walk_keys(value: Any) -> set[str]:
+    keys: set[str] = set()
+    if isinstance(value, dict):
+        for k, v in value.items():
+            keys.add(k)
+            keys |= _walk_keys(v)
+    elif isinstance(value, list):
+        for item in value:
+            keys |= _walk_keys(item)
+    return keys
+
+
+KNOWN_KEYS = sorted(set().union(*(_walk_keys(s) for s in SEEDS.values())))
+KEYS = st.one_of(st.text(max_size=12), st.sampled_from(KNOWN_KEYS))
+JSON = st.recursive(
+    SCALARS,
+    lambda children: st.one_of(
+        st.lists(children, max_size=5),
+        st.dictionaries(KEYS, children, max_size=5),
+    ),
+    max_leaves=12,
+)
+
+FUZZ = settings(
+    max_examples=60,
+    deadline=None,
+    database=None,
+    derandomize=True,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+
+
+def _decode(cls: type[Any], data: Any) -> None:
+    """Decode in tolerant and strict mode; only success or ContractError is allowed."""
+    for strict in (False, True):
+        with contextlib.suppress(ContractError):
+            from_dict(cls, data, strict=strict)
+
+
+def _paths(value: Any, prefix: tuple[Any, ...] = ()) -> list[tuple[Any, ...]]:
+    found: list[tuple[Any, ...]] = [prefix]
+    if isinstance(value, dict):
+        for k, v in value.items():
+            found += _paths(v, (*prefix, k))
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            found += _paths(v, (*prefix, i))
+    return found
+
+
+def _mutate(seed: Any, data: st.DataObject) -> Any:
+    """Apply 1..4 random edits (replace, delete, add key, wrap, duplicate) to a copy."""
+    doc = json.loads(json.dumps(seed))
+    for _ in range(data.draw(st.integers(1, 4), label="edits")):
+        path = data.draw(st.sampled_from(_paths(doc)), label="path")
+        op = data.draw(st.sampled_from(["replace", "delete", "add", "wrap", "dup"]), label="op")
+        if not path:
+            if op in ("replace", "wrap"):
+                doc = data.draw(JSON) if op == "replace" else [doc]
+            continue
+        parent: Any = doc
+        for step in path[:-1]:
+            parent = parent[step]
+        last = path[-1]
+        if op == "replace":
+            parent[last] = data.draw(JSON, label="value")
+        elif op == "delete":
+            if isinstance(parent, dict):
+                del parent[last]
+            else:
+                parent.pop(last)
+        elif op == "add" and isinstance(parent, dict):
+            parent[data.draw(KEYS, label="key")] = data.draw(JSON, label="value")
+        elif op == "wrap":
+            parent[last] = data.draw(st.sampled_from([[parent[last]], {"v": parent[last]}]))
+        elif op == "dup" and isinstance(parent, list):
+            parent.append(json.loads(json.dumps(parent[last])))
+        elif op == "dup" and isinstance(parent, dict):
+            parent[f"{last}_"] = parent[last]
+    return doc
+
+
+@pytest.mark.parametrize("cls", CONTRACTS, ids=IDS)
+@pytest.mark.parametrize("strict", [False, True], ids=["tolerant", "strict"])
+def test_seed_is_valid(cls: type[Any], strict: bool) -> None:
+    """Sanity: each mutation seed decodes, so mutations start from the valid region."""
+    obj = from_dict(cls, SEEDS[cls.__name__], strict=strict)
+    assert from_dict(cls, to_dict(obj), strict=True) == obj
+
+
+def test_every_exported_contract_has_a_seed() -> None:
+    assert {c.__name__ for c in CONTRACTS} == set(SEEDS)
+
+
+@FUZZ
+@pytest.mark.parametrize("cls", CONTRACTS, ids=IDS)
+@given(data=st.one_of(JSON, st.dictionaries(KEYS, JSON, max_size=4)))
+def test_arbitrary_json_only_raises_contract_error(cls: type[Any], data: Any) -> None:
+    _decode(cls, data)
+
+
+@settings(
+    max_examples=100,
+    deadline=None,
+    database=None,
+    derandomize=True,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+@pytest.mark.parametrize("cls", CONTRACTS, ids=IDS)
+@given(data=st.data())
+def test_near_valid_mutations_only_raise_contract_error(
+    cls: type[Any], data: st.DataObject
+) -> None:
+    doc = _mutate(SEEDS[cls.__name__], data)
+    _decode(cls, doc)
+    # Same path as the transport: JSON text (NaN/Infinity tokens included) -> loads -> decode.
+    _decode(cls, json.loads(json.dumps(doc)))
+
+
+def _replaced(seed: Any, path: tuple[Any, ...], value: Any) -> Any:
+    if not path:
+        return value
+    doc = json.loads(json.dumps(seed))
+    parent: Any = doc
+    for step in path[:-1]:
+        parent = parent[step]
+    parent[path[-1]] = value
+    return doc
+
+
+EDGE_VALUES: list[Any] = [
+    None,
+    True,
+    0,
+    -1,
+    10**400,
+    -(10**400),
+    10**5000,
+    float("inf"),
+    float("nan"),
+    1e308,
+    "",
+    "\x00",
+    "a" * 300,
+    [],
+    {},
+    [None],
+    {"": None},
+]
+
+
+@pytest.mark.parametrize("cls", CONTRACTS, ids=IDS)
+def test_edge_values_at_every_position(cls: type[Any]) -> None:
+    """Deterministic sweep: every edge value (huge ints, non-finite floats, wrong
+    containers, ...) placed at every position of the valid seed."""
+    seed = SEEDS[cls.__name__]
+    for path in _paths(seed):
+        for value in EDGE_VALUES:
+            _decode(cls, _replaced(seed, path, value))
+
+
+@pytest.mark.parametrize("cls", CONTRACTS, ids=IDS)
+def test_deeply_nested_values_do_not_escape(cls: type[Any]) -> None:
+    """Nesting deeper than the recursion limit, placed at every seed position."""
+    deep: Any = 0
+    for _ in range(sys.getrecursionlimit() + 100):
+        deep = [deep]
+    seed = SEEDS[cls.__name__]
+    for path in _paths(seed):
+        _decode(cls, _replaced(seed, path, deep))

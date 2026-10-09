@@ -1,0 +1,24 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-cite",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "execute"],
+  "domains": ["data-engineering"],
+  "cite": true,
+  "capabilities": [
+    {
+      "id": "spark.performance",
+      "actions": ["diagnose", "review", "optimize"],
+      "default_action": "diagnose",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Diagnose slow Spark and Glue jobs (cites context)",
+      "signals": {
+        "keywords": ["cite"],
+        "file_globs": ["*.cite.py"],
+        "dependencies": []
+      }
+    }
+  ]
+}

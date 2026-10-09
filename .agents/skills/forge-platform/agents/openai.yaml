@@ -1,0 +1,6 @@
+interface:
+  display_name: "Platform Forge"
+  short_description: "Platform engineering and repo posture"
+
+policy:
+  allow_implicit_invocation: false

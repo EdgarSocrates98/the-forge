@@ -1,0 +1,564 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "string"
+            },
+            "field": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "unlock": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "code",
+            "detail"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "finished_at": {
+      "type": "string"
+    },
+    "forge_version": {
+      "type": "string"
+    },
+    "inputs": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "complexity_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "context_round_sha256": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "context_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "handoff_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "risk_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "routing_proposal_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "routing_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "task_sha256": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_sha256"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "enum": [
+        "run",
+        "plan"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "parent_run": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "plan": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "capability_graph_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "decision_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "economy_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "global_stop_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "graph_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "installation_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "plan_result_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "plan_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "plan_state_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "semantic_proposal_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "simulation_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "workspace_descriptor_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "plan_node": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "executable": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fingerprint": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "manifest_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "native_surface_fingerprint": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "observed_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "surface_fingerprint": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "trust": {
+              "enum": [
+                "builtin",
+                "trusted",
+                "local",
+                "unverified",
+                "blocked"
+              ]
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version",
+            "trust"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_receipt": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "pattern": "^[a-z][a-z0-9+.-]{1,30}:[^\\s]+$",
+              "type": "string"
+            },
+            "sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "ref",
+            "sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "replay_of": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reproducibility": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "enum": [
+                "reproducible",
+                "partially_reproducible",
+                "non_reproducible",
+                "unknown"
+              ]
+            },
+            "reasons": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "level"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "result_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "resumed_from": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "partial",
+        "refused",
+        "provider_failure",
+        "ambiguous",
+        "no_route",
+        "planned"
+      ]
+    },
+    "telemetry_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "verification_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "status",
+    "run_id",
+    "forge_version",
+    "inputs",
+    "started_at",
+    "finished_at"
+  ],
+  "title": "ExecutionReceipt",
+  "type": "object"
+}

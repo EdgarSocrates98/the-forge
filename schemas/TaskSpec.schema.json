@@ -1,0 +1,266 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "budget_profile": {
+      "anyOf": [
+        {
+          "enum": [
+            "economy",
+            "balanced",
+            "max"
+          ]
+        },
+        {
+          "enum": [
+            "auto"
+          ]
+        }
+      ]
+    },
+    "constraints": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "intent": {
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "requested_action": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requested_capability": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requirement": {
+      "anyOf": [
+        {
+          "properties": {
+            "capability": {
+              "type": "string"
+            },
+            "credentials_allowed": {
+              "type": "boolean"
+            },
+            "economy_required": {
+              "type": "boolean"
+            },
+            "graph_required": {
+              "type": "boolean"
+            },
+            "handoff_required": {
+              "type": "boolean"
+            },
+            "id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "input_artifact_types": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "minimum_trust": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "builtin",
+                    "trusted",
+                    "local",
+                    "unverified",
+                    "blocked"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "mutation_allowed": {
+              "type": "boolean"
+            },
+            "network_allowed": {
+              "type": "boolean"
+            },
+            "offline_required": {
+              "type": "boolean"
+            },
+            "operation_class_ceiling": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "read_only",
+                    "local_mutation",
+                    "external_read",
+                    "external_mutation",
+                    "destructive"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "platform_constraints": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "protocol_features": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "required_actions": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "required_evidence": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "required_output_types": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "runtime_constraints": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "schema": {
+              "type": "string"
+            },
+            "task_family": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "technologies": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "trace_required": {
+              "type": "boolean"
+            },
+            "verification_level": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "minimal",
+                    "conditional",
+                    "strong"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capability"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "created"
+      ]
+    },
+    "targets": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workspace_root": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "id",
+    "intent",
+    "workspace_root"
+  ],
+  "title": "TaskSpec",
+  "type": "object"
+}

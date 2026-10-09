@@ -1,0 +1,143 @@
+{
+  "schema": "theforge-bench/v1",
+  "origin": {
+    "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "os": "Windows-10-10.0.26300-SP0",
+    "python": "CPython 3.11.15",
+    "date": "2026-10-08T07:09:12Z",
+    "forge_version": "0.3.0",
+    "git_head": "5bea6b76fdab750d2a7245c88fd65923e0f7b02e",
+    "git_dirty": true
+  },
+  "results": {
+    "cli_startup": {
+      "median_ms": 462.382,
+      "p90_ms": 477.481,
+      "runs": 3
+    },
+    "registry_cold": {
+      "median_ms": 420.958,
+      "p90_ms": 433.462,
+      "runs": 3
+    },
+    "registry_warm": {
+      "median_ms": 6.174,
+      "p90_ms": 25.605,
+      "runs": 3
+    },
+    "scan_1k": {
+      "median_ms": 443.899,
+      "p90_ms": 444.411,
+      "runs": 3
+    },
+    "scan_10k": {
+      "median_ms": 4362.98,
+      "p90_ms": 4373.867,
+      "runs": 3
+    },
+    "routing_10k": {
+      "median_ms": 291.072,
+      "p90_ms": 293.208,
+      "runs": 3
+    },
+    "context_1k_cold": {
+      "median_ms": 50.584,
+      "p90_ms": 104.999,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 64,
+        "bytes_hashed": 125440,
+        "cache_hits": 0,
+        "cache_misses": 64
+      }
+    },
+    "context_1k_warm": {
+      "median_ms": 61.321,
+      "p90_ms": 61.677,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "cache_hits": 64,
+        "cache_misses": 0
+      }
+    },
+    "context_10k_cold": {
+      "median_ms": 151.03,
+      "p90_ms": 187.75,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 64,
+        "bytes_hashed": 125440,
+        "cache_hits": 0,
+        "cache_misses": 64
+      }
+    },
+    "context_10k_warm": {
+      "median_ms": 165.016,
+      "p90_ms": 165.832,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "cache_hits": 64,
+        "cache_misses": 0
+      }
+    },
+    "persist_run": {
+      "median_ms": 12.623,
+      "p90_ms": 13.4,
+      "runs": 3
+    },
+    "graph_build": {
+      "median_ms": 0.103,
+      "p90_ms": 0.181,
+      "runs": 3
+    },
+    "graph_refresh_warm": {
+      "median_ms": 37.414,
+      "p90_ms": 38.095,
+      "runs": 3
+    },
+    "plan_validate": {
+      "median_ms": 0.122,
+      "p90_ms": 0.176,
+      "runs": 3
+    },
+    "replay_verify": {
+      "median_ms": 7.365,
+      "p90_ms": 32.061,
+      "runs": 3
+    },
+    "explain_build": {
+      "median_ms": 18.962,
+      "p90_ms": 26.498,
+      "runs": 3
+    },
+    "memory_pack": {
+      "median_ms": 54.73,
+      "p90_ms": 58.781,
+      "runs": 3
+    },
+    "plan_simulate": {
+      "median_ms": 1.835,
+      "p90_ms": 1.862,
+      "runs": 3
+    },
+    "target_negotiate": {
+      "median_ms": 0.032,
+      "p90_ms": 0.064,
+      "runs": 3
+    },
+    "receipt_validate": {
+      "median_ms": 0.051,
+      "p90_ms": 0.059,
+      "runs": 3
+    },
+    "observation_write": {
+      "median_ms": 6.306,
+      "p90_ms": 6.408,
+      "runs": 3
+    }
+  }
+}

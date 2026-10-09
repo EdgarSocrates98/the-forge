@@ -1,0 +1,47 @@
+{
+  "adapters": 6,
+  "agent_specs": 8,
+  "benchmarks": {
+    "agentic_accepted": 1,
+    "agentic_fallback_needed": 3,
+    "agentic_rejected": 2,
+    "deterministic_resolved": 8,
+    "requests": 11,
+    "scenarios_pass": 15,
+    "scenarios_total": 15,
+    "unnecessary_invocations": 0
+  },
+  "canonical_skills": 16,
+  "codex_rendered_agents": 9,
+  "forge_version": "0.5.0",
+  "kiro_skills": 17,
+  "local_gates": {
+    "agentic_audit": "green",
+    "cli_smoke": "green",
+    "compat_matrix": "green",
+    "mypy": "green",
+    "package_build": "green",
+    "pytest": "green",
+    "real_provider": "green",
+    "render_agents": "green",
+    "render_skills": "green",
+    "ruff_check": "green",
+    "ruff_format": "green",
+    "schema_parity": "green",
+    "security": "green",
+    "slow": "green"
+  },
+  "remote_status": "REMOTE_BLOCKED",
+  "schema": "theforge-agentic-polish-closure/v1",
+  "specialist_shas": {
+    "api-forge": "1745f8726941",
+    "forge-doctor-api": "035b63587f2c",
+    "forge-doctor-data": "3a8d7a5637d6",
+    "platform-forge": "0aee5c6f30a9",
+    "spark-forge-aws": "828827d7cd57",
+    "spark-forge-azure": "c09d4c5cb5b8"
+  },
+  "specialists": 6,
+  "validated_source_sha": "28016c72a9c5917abe131b7a517fb43e2287d634",
+  "verdict": "AGENTIC_POLISH_COMPLETE_REMOTE_BLOCKED"
+}

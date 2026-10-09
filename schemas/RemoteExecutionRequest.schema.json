@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "budget_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "context_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "data_classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted",
+        "unknown"
+      ]
+    },
+    "expected_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "policy_decision": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "policy_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "producer": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "surface_fingerprint": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "target_identity_ref": {
+      "type": "string"
+    },
+    "task_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "task_sha256",
+    "context_sha256",
+    "budget_sha256"
+  ],
+  "title": "RemoteExecutionRequest",
+  "type": "object"
+}

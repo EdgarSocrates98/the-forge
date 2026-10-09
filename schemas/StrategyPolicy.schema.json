@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "approval_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "experiment_id": {
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "metrics": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "prefer": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "sample_runs": {
+      "type": "integer"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "stale": {
+      "type": "boolean"
+    },
+    "surface_fingerprint": {
+      "type": "string"
+    },
+    "task_family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "valid_from": {
+      "type": "string"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "id",
+    "approval_sha256"
+  ],
+  "title": "StrategyPolicy",
+  "type": "object"
+}

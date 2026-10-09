@@ -1,0 +1,6 @@
+{
+  "assembled_from": "API Forge 0.1.0 CLI error format (apiforge.cli._fail) for a CaseIntegrityError, which exits with code 3; provisional until re-recorded by the execute recorder",
+  "exit_code": 3,
+  "provenance": "hand-built",
+  "stderr": "AF-CASE-INVALID: case/case.json (field=unknown; unlock=inspect the documented contract and rerun the verifier)\n"
+}

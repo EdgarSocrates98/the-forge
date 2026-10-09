@@ -1,0 +1,21 @@
+{
+  "id": "ws-1111",
+  "name": "ws-analytics",
+  "capacity_id": "cap-0001",
+  "tenant_id": "tenant-aaaa",
+  "roles": {
+    "spn-viewer": "Viewer",
+    "spn-admin": "Admin"
+  },
+  "peer_workspaces": {
+    "ws-2222": {
+      "roles": {
+        "spn-owner": "Admin"
+      }
+    }
+  },
+  "identity": {
+    "principal_id": "wi-0001",
+    "type": "workspace_identity"
+  }
+}

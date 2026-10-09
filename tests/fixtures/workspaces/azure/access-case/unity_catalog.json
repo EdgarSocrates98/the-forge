@@ -1,0 +1,185 @@
+{
+ "catalogs": {
+  "prod": {
+   "isolation_mode": "OPEN"
+  }
+ },
+ "external_locations": [
+  {
+   "credential": "cred_lake",
+   "name": "loc_finance",
+   "url": "abfss://lake@stg.dfs.core.windows.net/finance"
+  },
+  {
+   "credential": "cred_backup",
+   "name": "loc_backup",
+   "url": "abfss://backup@stg.dfs.core.windows.net/daily"
+  },
+  {
+   "credential": "cred_sandbox",
+   "name": "loc_sandbox",
+   "url": "abfss://sbx@stg2.dfs.core.windows.net/scratch"
+  },
+  {
+   "credential": "cred_sandbox",
+   "name": "loc_shared",
+   "url": "abfss://shared@stg3.dfs.core.windows.net/public"
+  }
+ ],
+ "grants": [
+  {
+   "principal": "spn-job-1",
+   "privileges": [
+    "USE CATALOG"
+   ],
+   "securable": "prod"
+  },
+  {
+   "principal": "spn-job-1",
+   "privileges": [
+    "USE SCHEMA"
+   ],
+   "securable": "prod.finance"
+  },
+  {
+   "principal": "grp-finance-ro",
+   "privileges": [
+    "SELECT"
+   ],
+   "securable": "prod.finance.invoices"
+  },
+  {
+   "principal": "grp-sales",
+   "privileges": [
+    "SELECT",
+    "MODIFY"
+   ],
+   "securable": "prod.sales.customers"
+  },
+  {
+   "principal": "spn-backup",
+   "privileges": [
+    "READ FILES",
+    "WRITE FILES"
+   ],
+   "securable": "external_location:loc_backup"
+  },
+  {
+   "principal": "grp-platform",
+   "privileges": [
+    "USE CATALOG"
+   ],
+   "securable": "prod"
+  }
+ ],
+ "schemas": {
+  "prod.finance": {
+   "owner": "data-eng"
+  },
+  "prod.hr": {
+   "owner": "data-eng"
+  },
+  "prod.marketing": {
+   "owner": "data-eng"
+  },
+  "prod.risk": {
+   "owner": "data-eng"
+  },
+  "prod.sales": {
+   "owner": "data-eng"
+  }
+ },
+ "storage_credentials": {
+  "cred_backup": {
+   "access_connector_id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-bkp/providers/Microsoft.Databricks/accessConnectors/ac-bkp",
+   "identity_id": "mi-2"
+  },
+  "cred_lake": {
+   "access_connector_id": "/subscriptions/s1/resourceGroups/rg/providers/Microsoft.Databricks/accessConnectors/ac1",
+   "identity_id": "mi-1"
+  },
+  "cred_sandbox": {
+   "access_connector_id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-sbx/providers/Microsoft.Databricks/accessConnectors/ac-sbx",
+   "identity_id": "mi-3"
+  }
+ },
+ "tables": {
+  "prod.finance.invoices": {
+   "columns": [
+    "id",
+    "amount",
+    "ts",
+    "region"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/finance/invoices"
+  },
+  "prod.finance.ledger": {
+   "columns": [
+    "id",
+    "amount",
+    "ts",
+    "region"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/finance/ledger"
+  },
+  "prod.finance.orders": {
+   "columns": [
+    "id",
+    "amount",
+    "ts",
+    "region"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/finance/orders"
+  },
+  "prod.finance.payments": {
+   "columns": [
+    "id",
+    "amount",
+    "ts",
+    "region"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/finance/payments"
+  },
+  "prod.finance.refunds": {
+   "columns": [
+    "id",
+    "amount",
+    "ts",
+    "region"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/finance/refunds"
+  },
+  "prod.sales.customers": {
+   "columns": [
+    "id",
+    "sku",
+    "qty"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/sales/customers"
+  },
+  "prod.sales.deals": {
+   "columns": [
+    "id",
+    "sku",
+    "qty"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/sales/deals"
+  },
+  "prod.sales.quotas": {
+   "columns": [
+    "id",
+    "sku",
+    "qty"
+   ],
+   "format": "delta",
+   "location": "abfss://lake@stg.dfs.core.windows.net/sales/quotas"
+  }
+ }
+}

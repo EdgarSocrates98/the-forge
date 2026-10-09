@@ -1,0 +1,354 @@
+{
+  "argv": [
+    "analyze",
+    "--contract",
+    "stage/openapi.yaml",
+    "--project",
+    "stage",
+    "--out-dir",
+    "case",
+    "--detail-level",
+    "summary"
+  ],
+  "assembled_from": "recorded by theforge_apiforge.record_execute: apiforge 0.1.0 analyze analyze on Python 3.12.13 (win32)",
+  "case_dir": "case",
+  "case_files": {
+    "api-ir.json": {
+      "diagnostics": [],
+      "generator": "apiforge 0.1.0",
+      "input_hashes": {
+        "code:app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "code:app/main.py": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a",
+        "contract:stage/openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+      },
+      "operations": [
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "list_orders",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:54c5ce63872af5f3",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 8,
+                "path": "app/main.py",
+                "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [
+            {
+              "detail": {
+                "operation_id": "listOrders",
+                "raw": {
+                  "operationId": "listOrders",
+                  "responses": {
+                    "200": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "items": {
+                              "$ref": "#/components/schemas/Order"
+                            },
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "description": "List orders"
+                    }
+                  }
+                }
+              },
+              "fact_id": "fact:365d9496fb131990",
+              "source": {
+                "column": null,
+                "extractor": "openapi",
+                "line": null,
+                "path": "stage/openapi.yaml",
+                "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+              },
+              "source_kind": "contract"
+            }
+          ],
+          "method": "get",
+          "path": "/orders"
+        },
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "cancel_order",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:4019d1fcb4d4726e",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 18,
+                "path": "app/main.py",
+                "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [],
+          "method": "delete",
+          "path": "/orders/{order_id}"
+        },
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "get_order",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:fd588108415cccc7",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 13,
+                "path": "app/main.py",
+                "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [
+            {
+              "detail": {
+                "operation_id": "getOrder",
+                "raw": {
+                  "operationId": "getOrder",
+                  "parameters": [
+                    {
+                      "in": "path",
+                      "name": "order_id",
+                      "required": true,
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  ],
+                  "responses": {
+                    "200": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "$ref": "#/components/schemas/Order"
+                          }
+                        }
+                      },
+                      "description": "One order"
+                    }
+                  }
+                }
+              },
+              "fact_id": "fact:de156c462927f84a",
+              "source": {
+                "column": null,
+                "extractor": "openapi",
+                "line": null,
+                "path": "stage/openapi.yaml",
+                "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+              },
+              "source_kind": "contract"
+            }
+          ],
+          "method": "get",
+          "path": "/orders/{order_id}"
+        }
+      ],
+      "schema_version": "1"
+    },
+    "case.json": {
+      "artifacts": {
+        "api_ir": {
+          "path": "api-ir.json",
+          "sha256": "6f854819348b5feae0529603d6d533c68d0439c713720665cc0fa8b22d6ef991"
+        },
+        "facts": {
+          "path": "facts.json",
+          "sha256": "5e7f3f4433ea99ce80422e655fb3c3b0b11777291dbb5dc945029f21db1a1b71"
+        },
+        "findings": {
+          "path": "findings.json",
+          "sha256": "7efbf3779c0d978cbc76fe1272c097cca0e58957ab6a06a6b70bec58170d3594"
+        }
+      },
+      "case_id": "case:1d5f6c8502ff3469",
+      "diagnostics_count": 0,
+      "finding_counts": {
+        "severity:medium": 1,
+        "status:confirmed": 1
+      },
+      "generator": "apiforge 0.1.0",
+      "input_hashes": {
+        "code:app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "code:app/main.py": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a",
+        "contract:stage/openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+      },
+      "inputs": {
+        "contract": "stage\\openapi.yaml",
+        "project": "stage"
+      },
+      "schema_version": "1"
+    },
+    "facts.json": {
+      "facts": [
+        {
+          "attrs": {
+            "function": "list_orders",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:54c5ce63872af5f3",
+          "kind": "code.route",
+          "measures": {
+            "method": "get",
+            "path": "/orders"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 8,
+            "path": "app/main.py",
+            "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "function": "cancel_order",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:4019d1fcb4d4726e",
+          "kind": "code.route",
+          "measures": {
+            "method": "delete",
+            "path": "/orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 18,
+            "path": "app/main.py",
+            "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "function": "get_order",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:fd588108415cccc7",
+          "kind": "code.route",
+          "measures": {
+            "method": "get",
+            "path": "/orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 13,
+            "path": "app/main.py",
+            "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "operation_id": "listOrders"
+          },
+          "fact_id": "fact:365d9496fb131990",
+          "kind": "contract.operation",
+          "measures": {
+            "method": "get",
+            "path": "/orders"
+          },
+          "source": {
+            "column": null,
+            "extractor": "openapi",
+            "line": null,
+            "path": "stage/openapi.yaml",
+            "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "operation_id": "getOrder"
+          },
+          "fact_id": "fact:de156c462927f84a",
+          "kind": "contract.operation",
+          "measures": {
+            "method": "get",
+            "path": "/orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "openapi",
+            "line": null,
+            "path": "stage/openapi.yaml",
+            "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+          },
+          "version": 1
+        }
+      ]
+    },
+    "findings.json": {
+      "findings": [
+        {
+          "detail": "DELETE /orders/{order_id}: code route has no contract operation",
+          "evidence": [
+            "fact:4019d1fcb4d4726e"
+          ],
+          "finding_id": "finding:dbbea93d76c8baec",
+          "remediation": "Add the operation to the contract or remove the route.",
+          "rule_id": "AF-CODE-002",
+          "severity": "medium",
+          "status": "confirmed",
+          "title": "Code route missing from contract",
+          "version": 1
+        }
+      ]
+    }
+  },
+  "exit_code": 0,
+  "native_cwd": ".",
+  "provenance": "recorded",
+  "stdout": {
+    "artifacts": {
+      "api_ir": "api-ir.json",
+      "facts": "facts.json",
+      "findings": "findings.json"
+    },
+    "cache": {
+      "enabled": true,
+      "hit": false,
+      "key": "458f60138b102f38"
+    },
+    "case_id": "case:1d5f6c8502ff3469",
+    "changes": 0,
+    "diagnostics": 0,
+    "findings": 1,
+    "operations": 3,
+    "out_dir": "case",
+    "upstream": 0
+  }
+}

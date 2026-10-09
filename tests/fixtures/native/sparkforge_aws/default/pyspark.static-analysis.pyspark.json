@@ -1,0 +1,711 @@
+{
+  "arguments": {
+    "detail_level": "normal",
+    "limit": 200,
+    "path": "jobs"
+  },
+  "judge": {
+    "arguments": {
+      "limit": 200
+    },
+    "output": {
+      "_trust": {
+        "authority": "data_only",
+        "label": "TOOL_OUTPUT",
+        "taint": "external"
+      },
+      "by_severity": {
+        "P1": 2,
+        "P3": 1
+      },
+      "filters_applied": {
+        "cursor": null,
+        "limit": 200,
+        "severity": null
+      },
+      "items": [
+        {
+          "action": {
+            "depends_on": [],
+            "direction": "replace",
+            "kind": "code.replace_udf_with_native",
+            "moves": [
+              "correctness.write_result"
+            ],
+            "requires_absent": [],
+            "target": "pyspark.udf"
+          },
+          "benchmark_ref": "",
+          "catalog_version": 1,
+          "confidence": "high",
+          "evidence": [
+            "f_fd250f"
+          ],
+          "evidence_standing": {
+            "in_version_scope": true,
+            "measures_present": true,
+            "source_tier": "T1_OFFICIAL_DOCS",
+            "value": "high"
+          },
+          "expected_effect": "",
+          "explanation": "Python UDF custa, por linha: serialização JVM->pickle, cópia para o processo Python worker, execução sem vetorização, e o caminho de volta. Além disso perde whole-stage codegen no segmento do plano e torna o operador opaco ao otimizador, eliminando pushdown de predicado e reordenação. Aparece no plano como BatchEvalPython. Ver knowledge/spark/execution-model.md secao 4.",
+          "measured": {},
+          "proposed_change": [
+            "Reescrever com funções Spark SQL nativas.",
+            "Se envolve array/map, usar higher-order functions (transform, filter, aggregate).",
+            "Se realmente inevitável, medir pandas_udf (Arrow, vetorizado por batch) antes de manter Python UDF."
+          ],
+          "risks": [
+            "Reescrita pode alterar tratamento de null ou de tipo em borda.",
+            "Precisão de ponto flutuante pode diferir entre implementação Python e nativa."
+          ],
+          "rollback": [
+            "Reverter o commit; a UDF original não depende de mudança de infraestrutura."
+          ],
+          "rule_id": "SF-PY-001",
+          "runtime_scope": {},
+          "schema_version": 1,
+          "severity": "P1",
+          "sources": [
+            {
+              "retrieved": "2026-07-29",
+              "url": "https://spark.apache.org/docs/3.5.6/sql-performance-tuning.html"
+            }
+          ],
+          "status": "structural",
+          "subject": {
+            "col": 1,
+            "end_line": 14,
+            "file": "orders_job.py",
+            "line": 14,
+            "snippet": "@udf(returnType=StringType())",
+            "symbol": "normalize_status",
+            "type": "source_location"
+          },
+          "threshold": {},
+          "title": "Python UDF em transformação expressável nativamente",
+          "tradeoffs": [
+            "Expressão nativa equivalente pode ficar mais verbosa e menos legível."
+          ],
+          "validation": [
+            "Comparar resultado linha a linha entre versão antiga e nova numa amostra representativa que inclua nulls e valores de borda.",
+            "Contagem total idêntica.",
+            "Contagem de nulls na coluna resultado idêntica.",
+            "Confirmar desaparecimento do nó BatchEvalPython no plano."
+          ]
+        },
+        {
+          "action": {
+            "depends_on": [],
+            "direction": "replace",
+            "kind": "code.replace_driver_collection",
+            "moves": [
+              "correctness.write_result"
+            ],
+            "requires_absent": [],
+            "target": "pyspark.driver_collect"
+          },
+          "benchmark_ref": "",
+          "catalog_version": 1,
+          "confidence": "high",
+          "evidence": [
+            "f_2ca828"
+          ],
+          "evidence_standing": {
+            "in_version_scope": true,
+            "measures_present": true,
+            "source_tier": "T4_RECOGNIZED_AUTHORITY",
+            "value": "low"
+          },
+          "expected_effect": "",
+          "explanation": "Traz todo o resultado para o heap do driver. O risco cresce com o volume do resultado, que costuma crescer com o tempo sem que o código mude. Modo de falha é OOM de driver, e o job passa a falhar por crescimento de dado, não por alteração de código. Também serializa no driver o que era distribuído.",
+          "measured": {},
+          "proposed_change": [
+            "Substituir por escrita distribuída (write) ou por agregação que devolva poucas linhas.",
+            "Se precisa mesmo inspecionar, usar limit(n) explícito antes, ou take(n).",
+            "Para iterar sobre resultado grande, toLocalIterator reduz o pico de memória."
+          ],
+          "risks": [
+            "Lógica downstream pode assumir uma lista Python em memória."
+          ],
+          "rollback": [
+            "Reverter o commit."
+          ],
+          "rule_id": "SF-PY-002",
+          "runtime_scope": {},
+          "schema_version": 1,
+          "severity": "P1",
+          "sources": [
+            {
+              "note": "Consequência direta do modelo de execução; ver knowledge/spark/memory-and-oom.md secao 2, classe driver heap.",
+              "origin": "field-heuristic"
+            }
+          ],
+          "status": "structural",
+          "subject": {
+            "col": 6,
+            "end_line": 26,
+            "file": "orders_job.py",
+            "line": 26,
+            "snippet": "print(daily.collect())",
+            "symbol": "",
+            "type": "source_location"
+          },
+          "threshold": {},
+          "title": "collect() ou toPandas() sem limite na cadeia",
+          "tradeoffs": [
+            "toLocalIterator reduz pico de memória mas aumenta round-trips."
+          ],
+          "validation": [
+            "Contagem de linhas processadas idêntica.",
+            "Resultado final (arquivo ou tabela) idêntico por contagem, schema e agregados de controle."
+          ]
+        },
+        {
+          "action": {
+            "depends_on": [],
+            "direction": "replace",
+            "kind": "shuffle.change_partition_count",
+            "moves": [
+              "shuffle.partition_count"
+            ],
+            "requires_absent": [],
+            "target": "pyspark.partitioning"
+          },
+          "benchmark_ref": "",
+          "catalog_version": 1,
+          "confidence": "high",
+          "evidence": [
+            "f_43c550"
+          ],
+          "evidence_standing": {
+            "in_version_scope": true,
+            "measures_present": true,
+            "source_tier": "T1_OFFICIAL_DOCS",
+            "value": "high"
+          },
+          "expected_effect": "",
+          "explanation": "repartition(n) com n fixo adiciona um shuffle completo para atingir um número que raramente foi calculado a partir do volume. Com AQE ativo — default a partir do Spark 3.2, e em 3.0 e 3.1 só com spark.sql.adaptive.enabled=true — o coalescing de partições pós-shuffle já ajusta a contagem em runtime, então o n fixo frequentemente é revertido logo depois, e o shuffle foi pago em vão. Sem AQE o n fixo é de fato a contagem final, e o defeito deixa de ser trabalho desperdiçado e passa a ser um número escolhido sem base no volume — o achado se mantém, a justificativa muda.",
+          "measured": {
+            "target_count": 1
+          },
+          "proposed_change": [
+            "Se o objetivo é equilibrar a saída, usar o hint REBALANCE, que coopera com o AQE. Exige Spark 3.2 ou superior com spark.sql.adaptive.enabled=true; em 3.0 e 3.1 o hint não existe, e a ação equivalente é calcular n a partir do volume estimado e do tamanho-alvo.",
+            "Se o objetivo é atingir um tamanho de arquivo, calcular n a partir do volume estimado e do tamanho-alvo.",
+            "Se o objetivo é corrigir skew, repartition por chave não resolve; ver knowledge/spark/shuffle-join-skew.md secao 3."
+          ],
+          "risks": [
+            "Remover o repartition pode alterar a contagem de arquivos de saída."
+          ],
+          "rollback": [
+            "Reverter o commit."
+          ],
+          "rule_id": "SF-PY-010",
+          "runtime_scope": {},
+          "schema_version": 1,
+          "severity": "P3",
+          "sources": [
+            {
+              "retrieved": "2026-07-29",
+              "url": "https://spark.apache.org/docs/3.5.6/sql-performance-tuning.html"
+            }
+          ],
+          "status": "structural",
+          "subject": {
+            "col": 0,
+            "end_line": 27,
+            "file": "orders_job.py",
+            "line": 27,
+            "snippet": "daily.repartition(1).write.mode(\"overwrite\").parquet(\"s3://example-bucket/curated/orders_daily/\")",
+            "symbol": "",
+            "type": "source_location"
+          },
+          "threshold": {},
+          "title": "repartition com argumento literal arbitrário",
+          "tradeoffs": [
+            "REBALANCE é menos previsível na contagem exata de arquivos."
+          ],
+          "validation": [
+            "Contagem e tamanho dos arquivos de saída antes e depois.",
+            "Runtime e custo de compute medido antes e depois.",
+            "Contagem total de linhas idêntica."
+          ]
+        }
+      ],
+      "next_cursor": null,
+      "plan": {
+        "constraints": [],
+        "contradictions": [],
+        "note": "calculado, nao gravado. O registro auditavel e `sparkforge-aws arbitrate`.",
+        "objections": [],
+        "order": [
+          "SF-PY-001",
+          "SF-PY-002",
+          "SF-PY-010"
+        ],
+        "order_unresolved": {},
+        "persisted": false,
+        "scope": "todos os 3 achados deste case, nao a pagina",
+        "unresolved": []
+      },
+      "returned_count": 3,
+      "runtime": {
+        "athena": "",
+        "databricks": "",
+        "detected_from": [],
+        "divergences": [],
+        "emr": "",
+        "glue": "",
+        "iceberg": "",
+        "photon": "",
+        "python": "",
+        "spark": ""
+      },
+      "total_count": 3
+    },
+    "tool": "sparkforge_judge"
+  },
+  "output": {
+    "_trust": {
+      "authority": "data_only",
+      "label": "TOOL_OUTPUT",
+      "taint": "external"
+    },
+    "by_kind": {
+      "pyspark.action": 1,
+      "pyspark.chain": 7,
+      "pyspark.driver_collect": 1,
+      "pyspark.function_def": 1,
+      "pyspark.join": 1,
+      "pyspark.module_analyzed": 1,
+      "pyspark.partitioning": 1,
+      "pyspark.read": 2,
+      "pyspark.udf": 1,
+      "pyspark.write": 1
+    },
+    "filters_applied": {
+      "cursor": null,
+      "kind": null,
+      "limit": 200,
+      "upstream": null
+    },
+    "items": [
+      {
+        "attrs": {
+          "method": "collect"
+        },
+        "id": "f_2d3af1",
+        "kind": "pyspark.action",
+        "measures": {},
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 6,
+          "end_line": 26,
+          "file": "orders_job.py",
+          "line": 26,
+          "snippet": "print(daily.collect())",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "repartition",
+            "write",
+            "mode",
+            "parquet"
+          ]
+        },
+        "id": "f_d7feef",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 4
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 0,
+          "end_line": 27,
+          "file": "orders_job.py",
+          "line": 27,
+          "snippet": "daily.repartition(1).write.mode(\"overwrite\").parquet(\"s3://example-bucket/curated/orders_daily/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "strip",
+            "lower"
+          ]
+        },
+        "id": "f_8a1923",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 11,
+          "end_line": 16,
+          "file": "orders_job.py",
+          "line": 16,
+          "snippet": "return (status or \"\").strip().lower()",
+          "symbol": "normalize_status",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "read",
+            "parquet"
+          ]
+        },
+        "id": "f_1515a0",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 12,
+          "end_line": 11,
+          "file": "orders_job.py",
+          "line": 11,
+          "snippet": "customers = spark.read.parquet(\"s3://example-bucket/raw/customers/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "join",
+            "withColumn",
+            "groupBy",
+            "agg"
+          ]
+        },
+        "id": "f_a926f1",
+        "kind": "pyspark.chain",
+        "measures": {
+          "join_index": 0,
+          "length": 4
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 4,
+          "end_line": 23,
+          "file": "orders_job.py",
+          "line": 20,
+          "snippet": "orders.join(customers, \"customer_id\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "builder",
+            "appName",
+            "getOrCreate"
+          ]
+        },
+        "id": "f_30aa32",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 3
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 8,
+          "end_line": 8,
+          "file": "orders_job.py",
+          "line": 8,
+          "snippet": "spark = SparkSession.builder.appName(\"orders-daily\").getOrCreate()",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "read",
+            "parquet"
+          ]
+        },
+        "id": "f_2df6d6",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 9,
+          "end_line": 10,
+          "file": "orders_job.py",
+          "line": 10,
+          "snippet": "orders = spark.read.parquet(\"s3://example-bucket/raw/orders/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "methods": [
+            "sum",
+            "alias"
+          ]
+        },
+        "id": "f_6ecd54",
+        "kind": "pyspark.chain",
+        "measures": {
+          "length": 2
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 9,
+          "end_line": 23,
+          "file": "orders_job.py",
+          "line": 23,
+          "snippet": ".agg(F.sum(\"total\").alias(\"revenue\"))",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "bounded": false,
+          "inside_loop": false,
+          "method": "collect"
+        },
+        "id": "f_2ca828",
+        "kind": "pyspark.driver_collect",
+        "measures": {},
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 6,
+          "end_line": 26,
+          "file": "orders_job.py",
+          "line": 26,
+          "snippet": "print(daily.collect())",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "decorators": [
+            "udf"
+          ],
+          "def_kind": "module",
+          "enclosing": "",
+          "exported": false,
+          "is_async": false
+        },
+        "id": "f_ab58f8",
+        "kind": "pyspark.function_def",
+        "measures": {
+          "name_reference_count": 1
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 0,
+          "end_line": 16,
+          "file": "orders_job.py",
+          "line": 15,
+          "snippet": "def normalize_status(status):",
+          "symbol": "normalize_status",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "has_broadcast_hint": false,
+          "how": "inner"
+        },
+        "id": "f_181d0e",
+        "kind": "pyspark.join",
+        "measures": {
+          "on_arity": 1
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 4,
+          "end_line": 20,
+          "file": "orders_job.py",
+          "line": 20,
+          "snippet": "orders.join(customers, \"customer_id\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "parsed": true,
+          "referenced_names": [
+            "F",
+            "SparkSession",
+            "StringType",
+            "agg",
+            "alias",
+            "appName",
+            "builder",
+            "col",
+            "collect",
+            "customers",
+            "daily",
+            "getOrCreate",
+            "groupBy",
+            "join",
+            "lower",
+            "mode",
+            "normalize_status",
+            "orders",
+            "parquet",
+            "print",
+            "read",
+            "repartition",
+            "spark",
+            "status",
+            "strip",
+            "sum",
+            "udf",
+            "withColumn",
+            "write"
+          ]
+        },
+        "id": "f_e2e741",
+        "kind": "pyspark.module_analyzed",
+        "measures": {
+          "resolved_calls": 21,
+          "unresolved_count": 0
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 0,
+          "file": "orders_job.py",
+          "line": 0,
+          "snippet": "",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "has_partition_expr": false,
+          "inside_loop": false,
+          "literal_arg": true,
+          "method": "repartition"
+        },
+        "id": "f_43c550",
+        "kind": "pyspark.partitioning",
+        "measures": {
+          "target_count": 1
+        },
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 0,
+          "end_line": 27,
+          "file": "orders_job.py",
+          "line": 27,
+          "snippet": "daily.repartition(1).write.mode(\"overwrite\").parquet(\"s3://example-bucket/curated/orders_daily/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "format": "parquet",
+          "target": "s3://example-bucket/raw/customers/"
+        },
+        "id": "f_aa2772",
+        "kind": "pyspark.read",
+        "measures": {},
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 12,
+          "end_line": 11,
+          "file": "orders_job.py",
+          "line": 11,
+          "snippet": "customers = spark.read.parquet(\"s3://example-bucket/raw/customers/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "format": "parquet",
+          "target": "s3://example-bucket/raw/orders/"
+        },
+        "id": "f_ebb600",
+        "kind": "pyspark.read",
+        "measures": {},
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 9,
+          "end_line": 10,
+          "file": "orders_job.py",
+          "line": 10,
+          "snippet": "orders = spark.read.parquet(\"s3://example-bucket/raw/orders/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "udf_type": "python"
+        },
+        "id": "f_fd250f",
+        "kind": "pyspark.udf",
+        "measures": {},
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 1,
+          "end_line": 14,
+          "file": "orders_job.py",
+          "line": 14,
+          "snippet": "@udf(returnType=StringType())",
+          "symbol": "normalize_status",
+          "type": "source_location"
+        }
+      },
+      {
+        "attrs": {
+          "api": "dataframe_writer_v1",
+          "mode": "overwrite",
+          "target": "s3://example-bucket/curated/orders_daily/"
+        },
+        "id": "f_8c2672",
+        "kind": "pyspark.write",
+        "measures": {},
+        "provenance_ref": "bb785b7f079e7a8b",
+        "subject": {
+          "col": 0,
+          "end_line": 27,
+          "file": "orders_job.py",
+          "line": 27,
+          "snippet": "daily.repartition(1).write.mode(\"overwrite\").parquet(\"s3://example-bucket/curated/orders_daily/\")",
+          "symbol": "",
+          "type": "source_location"
+        }
+      }
+    ],
+    "next_cursor": null,
+    "provenance": {
+      "bb785b7f079e7a8b": {
+        "artifact": "orders_job.py",
+        "artifact_sha256": "ae5417750b90b1ce8e6f5d8010e2a7dc12c7b42393962499dcb264f6e087e567",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    "returned_count": 17,
+    "schema_version": 1,
+    "total_count": 17,
+    "unresolved": 0,
+    "unresolved_at": []
+  },
+  "tool": "sparkforge_analyze_pyspark"
+}

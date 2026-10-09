@@ -1,0 +1,160 @@
+# Tests against the real sibling Forges (requirement 7.7; real-provider-integration 3.7).
+# Never part of the PR gate: no pull_request/push trigger, so it can never be a required check
+# and never blocks a merge. A failure is visible: the job is red (no continue-on-error) and an
+# empty real_provider selection is a regression (pytest exit 5 fails the run).
+#
+# Each specialist runs in its own interpreter, never in the core's: Spark Forge AWS in a 3.11 venv
+# (.venv-spark-aws) and API Forge in a 3.12 venv (.venv-api, API Forge requires 3.12), each with its
+# adapter. The env contract of tests/real_providers.py (THEFORGE_REAL_*) points the tests at
+# them, with THEFORGE_REAL_PROVIDERS_REQUIRED=1 so a missing prerequisite fails instead of
+# skipping. See docs/real-providers.md.
+#
+# Secret hygiene: SIBLING_REPOS_TOKEN (read access to the sibling repos) is referenced only by
+# the four sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
+name: ecosystem-real
+
+on:
+  schedule:
+    - cron: "41 4 * * 1" # Mondays 04:41 UTC
+  workflow_dispatch:
+    inputs:
+      spark_forge_ref:
+        description: "spark-forge-aws ref to test against (default: main)"
+        required: false
+        default: "main"
+      api_forge_ref:
+        description: "api-forge ref to test against (default: main)"
+        required: false
+        default: "main"
+      doctor_data_ref:
+        description: "forge-doctor-data ref to test against (default: main)"
+        required: false
+        default: "main"
+      doctor_api_ref:
+        description: "forge-doctor-api ref to test against (default: main)"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  real-providers:
+    name: real providers (ubuntu-latest, core py3.11, spark py3.11, api py3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout spark-forge-aws
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/spark-forge-aws
+          ref: ${{ inputs.spark_forge_ref || 'main' }}
+          path: siblings/spark-forge-aws
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout api-forge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/api-forge
+          ref: ${{ inputs.api_forge_ref || 'main' }}
+          path: siblings/api-forge
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-data
+          ref: ${{ inputs.doctor_data_ref || 'main' }}
+          path: siblings/forge-doctor-data
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-api
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-api
+          ref: ${{ inputs.doctor_api_ref || 'main' }}
+          path: siblings/forge-doctor-api
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      # 3.12 first, 3.11 last: the last setup-python is the default `python` (the core's).
+      - name: Set up Python 3.12 (API Forge)
+        id: py312
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up Python 3.11 (core and Spark Forge AWS)
+        id: py311
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install the core (editable, dev extras, adapters)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/apiforge -e ./adapters/doctordata -e ./adapters/doctorapi
+
+      - name: Spark Forge AWS venv (3.11, sparkforge-aws + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-spark-aws
+          .venv-spark-aws/bin/python -m pip install --upgrade pip
+          .venv-spark-aws/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge_aws
+          .venv-spark-aws/bin/python -c "import sparkforge_aws.adapters.tools, theforge_sparkforge_aws"
+
+      - name: API Forge venv (3.12, apiforge + adapter)
+        env:
+          PY312: ${{ steps.py312.outputs.python-path }}
+        run: |
+          "$PY312" -m venv .venv-api
+          .venv-api/bin/python -m pip install --upgrade pip
+          .venv-api/bin/python -m pip install ./siblings/api-forge ./adapters/apiforge
+          .venv-api/bin/python -c "import apiforge, theforge_apiforge"
+
+      - name: Doctor Data venv (3.11, forge-doctor-data + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-dd
+          .venv-dd/bin/python -m pip install --upgrade pip
+          .venv-dd/bin/python -m pip install ./siblings/forge-doctor-data ./adapters/doctordata
+          .venv-dd/bin/python -c "import forge_doctor_data, theforge_doctordata"
+
+      - name: Doctor API venv (3.11, forge-doctor-api + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-da
+          .venv-da/bin/python -m pip install --upgrade pip
+          .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
+          .venv-da/bin/python -c "import forge_doctor_api, theforge_doctorapi"
+
+      - name: Export the real-provider environment contract
+        run: |
+          echo "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=$PWD/.venv-spark-aws/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_PROVIDERS_REQUIRED=1" >> "$GITHUB_ENV"
+
+      # The exit code is propagated as is: any failure, and an empty selection (exit 5), fails.
+      - name: Real provider tests
+        run: |
+          python -m pytest -m real_provider
