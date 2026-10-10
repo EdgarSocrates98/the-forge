@@ -84,8 +84,11 @@ def test_table_selection_marker_and_scroll():
 
 
 def test_theme_per_forge_accents():
-    assert Theme.for_forge("the-forge").accent != Theme.for_forge("api-forge").accent
-    assert Theme.for_forge("unknown").accent == "36"
+    a = Theme.for_forge("forge-alpha")
+    assert a.accent in {"33", "34", "35", "36", "32", "37"}
+    assert Theme.for_forge("forge-alpha") == a  # deterministic across calls
+    accents = {Theme.for_forge(f"f-{i}").accent for i in range(12)}
+    assert len(accents) >= 3  # hash spreads across the cycle
 
 
 def test_min_layout_60x16():
