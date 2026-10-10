@@ -38,6 +38,7 @@ _Task-oriented guides and workflows._
 ### ./
 
 - [Changelog](../CHANGELOG.md)
+- [FORGE KNOWLEDGE — final program report (prompt_evo_docs2.md)](../FORGE_KNOWLEDGE_FINAL_REPORT.md)
 - [The Forge](../README.md)
 
 ### adapters/
@@ -433,6 +434,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Command drift report](knowledge-program/command-drift-report.md) `UNKNOWN`
 - [Documentation quality report](knowledge-program/documentation-quality-report.md) `UNKNOWN`
 - [Duplicate content report](knowledge-program/duplicate-content-report.md) `UNKNOWN`
+- [Forge Knowledge Program — final report](knowledge-program/final-report.md) `UNKNOWN`
 - [Learning Hub — avaliação de tecnologia (Wave 4)](knowledge-program/hub-evaluation.md) `UNKNOWN`
 - [Obsolete document report](knowledge-program/obsolete-document-report.md) `UNKNOWN`
 
