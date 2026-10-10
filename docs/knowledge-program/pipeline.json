@@ -1,0 +1,19 @@
+{
+  "forge_id": "the-forge",
+  "cli": "theforge",
+  "parser": "argparse:theforge.cli.main:build_parser",
+  "docs": [
+    "docs",
+    "README.md"
+  ],
+  "steps": {
+    "inventory": true,
+    "manifest": true,
+    "index": true,
+    "hub": true,
+    "final_report": true
+  },
+  "aliases": [
+    "forge"
+  ]
+}
