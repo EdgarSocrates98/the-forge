@@ -109,7 +109,7 @@ def test_rendered_outputs_exist_for_every_host() -> None:
 
 def test_claude_gets_tools_and_plain_sections(tmp_path: Path) -> None:
     src = render.parse_source(_write(tmp_path, MINIMAL))
-    out = render.render_claude(src)
+    out = render.render_claude(src, tmp_path)
     assert "allowed-tools: Read, Bash" in out
     assert "argument-hint: <x>" in out
     assert "## Overview" in out
@@ -120,13 +120,13 @@ def test_claude_gets_tools_and_plain_sections(tmp_path: Path) -> None:
 def test_agents_and_devin_get_envelope(tmp_path: Path) -> None:
     src = render.parse_source(_write(tmp_path, MINIMAL))
     for host in ("codex", "devin"):
-        out = render.render_envelope(src, host)
+        out = render.render_envelope(src, host, tmp_path)
         assert "<background_information>\nOverview body.\n</background_information>" in out
         assert "<instructions>" in out and "</instructions>" in out
         assert "## Overview" not in out
         assert "allowed-tools" not in out
-    assert "Devin-only note." in render.render_envelope(src, "devin")
-    assert "Devin-only note." not in render.render_envelope(src, "codex")
+    assert "Devin-only note." in render.render_envelope(src, "devin", tmp_path)
+    assert "Devin-only note." not in render.render_envelope(src, "codex", tmp_path)
 
 
 def test_openai_yaml_uses_codex_metadata(tmp_path: Path) -> None:
@@ -152,7 +152,7 @@ def test_unclosed_host_block_fails_render(tmp_path: Path) -> None:
     bad = MINIMAL.replace("<!-- /host -->", "")
     src = render.parse_source(_write(tmp_path, bad))
     with pytest.raises(render.RenderError, match="host block"):
-        render.render_envelope(src, "devin")
+        render.render_envelope(src, "devin", tmp_path)
 
 
 def _write(tmp_path: Path, text: str) -> Path:

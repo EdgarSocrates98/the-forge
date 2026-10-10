@@ -292,36 +292,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 - [Forge Experience 3.0 — Final Report](../FORGE_EXPERIENCE_3_FINAL_REPORT.md) `RELEASE_REPORT`
 
-### .kiro/
-
-- [Full Discovery Process for Technical Design](../.kiro/settings/rules/design-discovery-full.md) `SDD_ARTIFACT`
-- [Light Discovery Process for Extensions](../.kiro/settings/rules/design-discovery-light.md) `SDD_ARTIFACT`
-- [Technical Design Rules and Principles](../.kiro/settings/rules/design-principles.md) `SDD_ARTIFACT`
-- [Design Review Gate](../.kiro/settings/rules/design-review-gate.md) `SDD_ARTIFACT`
-- [Design Review Process](../.kiro/settings/rules/design-review.md) `SDD_ARTIFACT`
-- [Design Synthesis](../.kiro/settings/rules/design-synthesis.md) `SDD_ARTIFACT`
-- [EARS Format Guidelines](../.kiro/settings/rules/ears-format.md) `SDD_ARTIFACT`
-- [Gap Analysis Process](../.kiro/settings/rules/gap-analysis.md) `SDD_ARTIFACT`
-- [Requirements Review Gate](../.kiro/settings/rules/requirements-review-gate.md) `SDD_ARTIFACT`
-- [Steering Principles](../.kiro/settings/rules/steering-principles.md) `SDD_ARTIFACT`
-- [Task Generation Rules](../.kiro/settings/rules/tasks-generation.md) `SDD_ARTIFACT`
-- [Parallel Task Analysis Rules](../.kiro/settings/rules/tasks-parallel-analysis.md) `SDD_ARTIFACT`
-- [Design Document Template](../.kiro/settings/templates/specs/design.md) `SDD_ARTIFACT`
-- [Requirements Document](../.kiro/settings/templates/specs/requirements-init.md) `SDD_ARTIFACT`
-- [Requirements Document](../.kiro/settings/templates/specs/requirements.md) `SDD_ARTIFACT`
-- [Research & Design Decisions Template](../.kiro/settings/templates/specs/research.md) `SDD_ARTIFACT`
-- [Implementation Plan](../.kiro/settings/templates/specs/tasks.md) `SDD_ARTIFACT`
-- [API Standards](../.kiro/settings/templates/steering-custom/api-standards.md) `SDD_ARTIFACT`
-- [Authentication & Authorization Standards](../.kiro/settings/templates/steering-custom/authentication.md) `SDD_ARTIFACT`
-- [Database Standards](../.kiro/settings/templates/steering-custom/database.md) `SDD_ARTIFACT`
-- [Deployment Standards](../.kiro/settings/templates/steering-custom/deployment.md) `SDD_ARTIFACT`
-- [Error Handling Standards](../.kiro/settings/templates/steering-custom/error-handling.md) `SDD_ARTIFACT`
-- [Security Standards](../.kiro/settings/templates/steering-custom/security.md) `SDD_ARTIFACT`
-- [Testing Standards](../.kiro/settings/templates/steering-custom/testing.md) `SDD_ARTIFACT`
-- [Product Overview](../.kiro/settings/templates/steering/product.md) `SDD_ARTIFACT`
-- [Project Structure](../.kiro/settings/templates/steering/structure.md) `SDD_ARTIFACT`
-- [Technology Stack](../.kiro/settings/templates/steering/tech.md) `SDD_ARTIFACT`
-
 ### audit/
 
 - [Agentic delegation gap analysis (FASE 0)](audit/agentic-delegation-gap-analysis.md) `UNKNOWN`

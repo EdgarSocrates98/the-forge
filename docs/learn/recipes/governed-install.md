@@ -12,9 +12,9 @@
 ## Passo a passo
 
 ```bash
-forge install apply --dry-run     # plano: nada é escrito
-forge install apply --yes         # aplica após aprovar o plano
-forge doctor                      # verifica pós-instalação
+theforge install apply --dry-run     # plano: nada é escrito
+theforge install apply --yes         # aplica após aprovar o plano
+theforge doctor                      # verifica pós-instalação
 ```
 
 Bare `forge install` abre o wizard guiado (só em TTY; em automação dá
@@ -42,6 +42,9 @@ restritas ao disco local e aos arquivos de configuração do host.
 | `FORGE-INSTALL-PLAN-NOT-APPROVED` | mutação sem `--yes` | `--dry-run` → `--yes` |
 | `FORGE-INSTALL-LOCKED` | instalação concorrente | aguarde o lock expirar; repita |
 | wizard não abre | não-TTY | use `install apply --dry-run` |
+
+Lista canônica de todos os códigos `FORGE-*` com causa e desbloqueio:
+[docs/errors.md](../../errors.md).
 
 ## Uso por agentes
 
