@@ -66,6 +66,12 @@ _Task-oriented guides and workflows._
 - [Developer guide](graph-studio/developer-guide.md)
 - [Installation](graph-studio/installation.md)
 
+### hub/
+
+- [Forge Learning Hub — Start Here](hub/index.md)
+- [Install & Configure](hub/install.md)
+- [Recipes — problema → solução por forja](hub/recipes.md)
+
 ### installation/
 
 - [the-forge + Claude Code](installation/claude-code.md)
@@ -231,6 +237,10 @@ _Troubleshooting, doctor/repair, observability._
 ### graph-studio/
 
 - [Troubleshooting](graph-studio/troubleshooting.md)
+
+### hub/
+
+- [Troubleshooting](hub/troubleshooting.md)
 
 ### installation/
 
@@ -407,6 +417,15 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Standalone mode](graph-studio/standalone-mode.md) `UNKNOWN`
 - [Temporal analysis](graph-studio/temporal-analysis.md) `UNKNOWN`
 
+### hub/
+
+- [Advanced Reference](hub/advanced.md) `UNKNOWN`
+- [Agents & Skills](hub/agents-skills.md) `UNKNOWN`
+- [CLI & TUI](hub/cli-tui.md) `UNKNOWN`
+- [Graphfy & Graph Studio](hub/graphfy.md) `UNKNOWN`
+- [AI Hosts](hub/hosts.md) `UNKNOWN`
+- [MCP (Model Context Protocol)](hub/mcp.md) `UNKNOWN`
+
 ### knowledge-program/
 
 - [Agentic Tool Inventory — Forge Knowledge & Learning Experience 1.0](knowledge-program/agentic-tool-inventory.md) `UNKNOWN`
@@ -414,6 +433,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Command drift report](knowledge-program/command-drift-report.md) `UNKNOWN`
 - [Documentation quality report](knowledge-program/documentation-quality-report.md) `UNKNOWN`
 - [Duplicate content report](knowledge-program/duplicate-content-report.md) `UNKNOWN`
+- [Learning Hub — avaliação de tecnologia (Wave 4)](knowledge-program/hub-evaluation.md) `UNKNOWN`
 - [Obsolete document report](knowledge-program/obsolete-document-report.md) `UNKNOWN`
 
 ### learn/

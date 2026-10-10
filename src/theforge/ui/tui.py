@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from theforge.ui.app import ActionData, Entry, ForgeApp, TableData, TextData
+from theforge.ui.app import ActionData, DocMeta, Entry, ForgeApp, TableData, TextData
 from theforge.ui.kit import UIContext
 from theforge.ui.screen import Column
 
@@ -85,22 +85,46 @@ def _health() -> TextData:
 def _graph() -> ActionData:
     from theforge.ui.home import _act_graph
     ctx = UIContext.detect(force_plain=True)
-    return ActionData(callable=lambda: _act_graph(ctx),
-                      title="graph studio (browser)", suspend=True)
+    return ActionData(
+        callable=lambda: _act_graph(ctx),
+        title="graph studio (browser)", suspend=True,
+        doc=DocMeta(
+            description="opens the embedded Graph Studio in the browser",
+            prerequisites="a produced graph (graph view/studio first)",
+            example="forge graph studio",
+            risk="read-only; no mutation",
+            expected="local browser tab with the interactive graph",
+            doc_path="docs/graph-studio/quickstart.md"))
 
 
 def _install() -> ActionData:
     from theforge.ui.home import _act_install
     ctx = UIContext.detect(force_plain=True)
-    return ActionData(callable=lambda: _act_install(ctx),
-                      title="install wizard", suspend=True)
+    return ActionData(
+        callable=lambda: _act_install(ctx),
+        title="install wizard", suspend=True,
+        doc=DocMeta(
+            description="guided host integration install (plan→approve)",
+            prerequisites="interactive TTY; host config files writable",
+            example="forge install apply --dry-run",
+            risk="writes host config files after approval only",
+            expected="install receipt; `forge doctor` verifies",
+            doc_path="docs/learn/recipes/governed-install.md"))
 
 
 def _task() -> ActionData:
     from theforge.ui.home import _run_task
     ctx = UIContext.detect(force_plain=True)
-    return ActionData(callable=lambda: _run_task(ctx),
-                      title="run a task", suspend=True)
+    return ActionData(
+        callable=lambda: _run_task(ctx),
+        title="run a task", suspend=True,
+        doc=DocMeta(
+            description="delegates an intent to the right specialist",
+            prerequisites=".forge/ initialized; specialist checkout in workspace",
+            example="forge task run \"analyze pyspark\" --provider <id> --target <dir>",
+            risk="executes real argv from the specialist's declared workflow",
+            expected="SpecialistDelegationResult/v1 persisted under .forge/runs",
+            doc_path="docs/learn/recipes/delegate-task.md"))
 
 
 def entries() -> list[Entry]:
