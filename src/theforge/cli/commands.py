@@ -1466,3 +1466,24 @@ def cmd_task_explain(args: argparse.Namespace) -> int:
     doc = json.loads(path.read_text(encoding="utf-8"))
     _emit(args, {"results": [doc]}, render.task_result)
     return 0
+
+
+def cmd_install_wizard(args: argparse.Namespace) -> int:
+    """Bare ``install``: guided wizard on a TTY, subcommand help otherwise."""
+    from theforge.install import service
+    from theforge.ui.kit import UIContext
+    from theforge.ui.wizard import run_wizard
+
+    ctx = UIContext.detect()
+    if not ctx.interactive:
+        raise UsageError(
+            "bare `install` is interactive; use `install apply` "
+            "(with --scope/--profile/--host/--dry-run/--yes) in automation"
+        )
+    return run_wizard(
+        forge_name="the-forge",
+        install_fn=lambda **kw: service.install(root=getattr(args, "root", None), **kw),
+        doctor_fn=lambda **kw: service.doctor(**kw),
+        ctx=ctx,
+        out_json=getattr(args, "json", False),
+    )
