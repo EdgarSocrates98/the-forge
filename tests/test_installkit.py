@@ -308,6 +308,28 @@ def test_receipt_shape_conforms(tmp_path):
     )
 
 
+def test_codex_project_scope_marks_mcp_not_applicable(tmp_path):
+    ctx = _ctx(tmp_path, hosts=("codex",))
+    rcpt = kit.apply_install(ctx, approved=True)
+    note = [c for c in rcpt["checks"] if c["id"] == "mcp-scope:codex"]
+    assert note and note[0]["status"] == "NOT_APPLICABLE"
+    assert "scope user" in note[0]["detail"] or "codex mcp add" in note[0]["detail"]
+
+
+def test_codex_user_scope_has_no_mcp_scope_note(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
+    ctx = _ctx(tmp_path, scope="user", hosts=("codex",))
+    rcpt = kit.apply_install(ctx, approved=True)
+    assert not [c for c in rcpt["checks"] if c["id"] == "mcp-scope:codex"]
+
+
+def test_non_codex_project_scope_has_no_mcp_scope_note(tmp_path):
+    ctx = _ctx(tmp_path, hosts=("claude", "devin"))
+    rcpt = kit.apply_install(ctx, approved=True)
+    assert not [c for c in rcpt["checks"] if c["id"] == "mcp-scope:codex"]
+
+
 def test_manifest_shape(tmp_path):
     doc = kit.manifest_for(
         _spec(),
