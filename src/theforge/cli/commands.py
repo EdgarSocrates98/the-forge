@@ -788,13 +788,14 @@ def _cmd_graph_view(args: argparse.Namespace, root: Path) -> int:
     them provider-namespaced (never silently unified).
     """
     from theforge import graphview
+    from theforge.contracts.codes import Codes
     from theforge.graphstudio import graph_studio_enabled, open_studio
 
     if getattr(args, "ui", False) and not graph_studio_enabled(root):
         _emit(
             args,
             {
-                "refusal": "FORGE-GRAPH-STUDIO-DISABLED",
+                "refusal": Codes.GRAPH_STUDIO_DISABLED,
                 "detail": "Graph Studio was declined at install "
                 "(components.json: graph_studio=false)",
                 "unlock": "re-run `theforge install` with graph-studio "
