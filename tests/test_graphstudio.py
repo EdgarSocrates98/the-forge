@@ -249,12 +249,20 @@ def test_graph_ui_refuses_when_declined(tmp_path, capsys):
 # -- federation boundary -------------------------------------------------------
 
 
-def _fake_checkout(tmp_path: Path, body: str) -> Path:
-    """A minimal sibling checkout: forge.json + a cli_entry module."""
+def _fake_checkout(tmp_path: Path, body: str, *, manifest: bool = True) -> Path:
+    """A minimal sibling checkout: agentic manifest + a cli_entry module."""
     tmp_path.mkdir(parents=True, exist_ok=True)
-    (tmp_path / "forge.json").write_text(
-        'cli_entry = "fake_cli:main"\n', encoding="utf-8"
-    )
+    if manifest:
+        (tmp_path / "forge.agentic.json").write_text(
+            '{"schema": "forge/SpecialistAgenticManifest/v1",'
+            ' "provider": "fake", "cli_entry": "fake_cli:main"}',
+            encoding="utf-8",
+        )
+    else:
+        # minimal provider without a manifest may put cli_entry on forge.json
+        (tmp_path / "forge.json").write_text(
+            'cli_entry = "fake_cli:main"\n', encoding="utf-8"
+        )
     (tmp_path / "fake_cli.py").write_text(body, encoding="utf-8")
     return tmp_path
 
@@ -275,17 +283,80 @@ def test_view_from_cli_real_subprocess(tmp_path):
         f"    print(json.dumps({doc!r}))\n"
         "    return 0\n",
     )
-    view = _view_from_cli(checkout, "fake", timeout=20)
-    assert view is not None
+    view, reason = _view_from_cli(checkout, "fake", timeout=20)
+    assert view is not None, reason
     assert view.descriptor.provider_id == "fake"
     assert view.nodes[0].id == "n"
+
+
+def test_view_from_cli_forge_json_fallback(tmp_path):
+    """forge.json cli_entry still works for providers without a manifest."""
+    from theforge.contracts.graphview import ForgeGraphView, GraphNodeView, new_descriptor
+    from theforge.graphview import _view_from_cli
+
+    doc = ForgeGraphView(
+        descriptor=new_descriptor(provider_id="fake", domain="d", graph_id="fake/g"),
+        nodes=(GraphNodeView(id="n", kind="k", label="n"),),
+    ).to_dict()
+    checkout = _fake_checkout(
+        tmp_path,
+        "import json, sys\n"
+        "def main():\n"
+        f"    print(json.dumps({doc!r}))\n"
+        "    return 0\n",
+        manifest=False,
+    )
+    view, reason = _view_from_cli(checkout, "fake", timeout=20)
+    assert view is not None, reason
+    assert view.descriptor.provider_id == "fake"
+
+
+def test_federated_views_real_workspace():
+    """Real FORJAS workspace: siblings discovered via forge.agentic.json.
+
+    Skips when the repo isn't beside sibling checkouts (CI isolation).
+    """
+    from theforge.graphview import federated_views
+
+    workspace = Path(__file__).resolve().parents[2]
+    siblings = [
+        d.name for d in workspace.iterdir()
+        if (d / "forge.agentic.json").is_file()
+    ]
+    if len(siblings) < 2:
+        import pytest
+
+        pytest.skip("no sibling checkouts beside this repo")
+    views, notes = federated_views(workspace_root=workspace, timeout=60)
+    providers = {v.descriptor.provider_id for v in views}
+    assert "the-forge" in providers
+    produced = providers & set(siblings)
+    # producers either emit a view or fail with a named reason — a
+    # refusal code or exit status proves the subprocess reached the CLI
+    assert produced or any(
+        "refused " in n or "exited " in n for n in notes
+    ), f"producers neither produced nor reported; notes={notes}"
+    assert all(": " in n for n in notes)  # every note carries a reason
 
 
 def test_view_from_cli_degrades_honestly(tmp_path):
     from theforge.graphview import _view_from_cli
 
-    assert _view_from_cli(tmp_path / "missing", "x", timeout=10) is None
+    view, reason = _view_from_cli(tmp_path / "missing", "x", timeout=10)
+    assert view is None and reason
     bad = _fake_checkout(tmp_path / "bad", "def main():\n    return 1\n")
-    assert _view_from_cli(bad, "x", timeout=10) is None
+    view, reason = _view_from_cli(bad, "x", timeout=10)
+    assert view is None and "exited" in reason
     junk = _fake_checkout(tmp_path / "junk", "def main():\n    print('not json')\n")
-    assert _view_from_cli(junk, "x", timeout=10) is None
+    view, reason = _view_from_cli(junk, "x", timeout=10)
+    assert view is None and "JSON" in reason
+
+    refused = _fake_checkout(
+        tmp_path / "ref",
+        'import json\n'
+        'def main():\n'
+        '    print(json.dumps({"refusal": "X-NO-GRAPH"}))\n'
+        '    return 2\n',
+    )
+    view, reason = _view_from_cli(refused, "x", timeout=10)
+    assert view is None and reason == "refused X-NO-GRAPH"

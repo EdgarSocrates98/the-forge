@@ -13,7 +13,6 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 from theforge.contracts.graphview import (
     ForgeGraphView,
@@ -77,23 +76,33 @@ def capability_view(*, root: Path) -> ForgeGraphView:
     return ForgeGraphView(descriptor=desc, nodes=nodes, edges=edges)
 
 
-def _view_from_cli(checkout: Path, provider_id: str, *, timeout: int = 30) -> ForgeGraphView | None:
+def _view_from_cli(
+    checkout: Path, provider_id: str, *, timeout: int = 30
+) -> tuple[ForgeGraphView | None, str]:
     """Run ``<cli> graph view --json`` in a sibling checkout via its cli_entry.
 
-    Returns None when the sibling does not implement the producer or the
-    invocation failed — federation degrades honestly, never fabricates.
+    Returns ``(view, "")`` on success or ``(None, reason)`` — the reason
+    feeds federation ``notes[]`` so a refused/absent producer is named
+    honestly instead of collapsing into one generic message.
     """
     import tomllib
 
-    forge_json = checkout / "forge.json"
-    if not forge_json.is_file():
-        return None
-    try:
-        entry = tomllib.loads(forge_json.read_text(encoding="utf-8")).get("cli_entry", "")
-    except (OSError, tomllib.TOMLDecodeError):
-        return None
+    from theforge.specialists import load_agentic_manifest
+
+    manifest = load_agentic_manifest(provider_id, checkout)
+    entry = manifest.cli_entry if manifest is not None else ""
+    if not entry:
+        # minimal providers without forge.agentic.json may declare the
+        # entry point directly on the identity file
+        forge_json = checkout / "forge.json"
+        if not forge_json.is_file():
+            return None, "no forge.agentic.json/forge.json — checkout absent"
+        try:
+            entry = tomllib.loads(forge_json.read_text(encoding="utf-8")).get("cli_entry", "")
+        except (OSError, tomllib.TOMLDecodeError):
+            return None, "unreadable forge.json"
     if not entry or ":" not in entry:
-        return None
+        return None, "no cli_entry declared"
     module, _, fn = entry.partition(":")
     code_t = (
         "import sys; "
@@ -120,19 +129,31 @@ def _view_from_cli(checkout: Path, provider_id: str, *, timeout: int = 30) -> Fo
         if proc.returncode == 0 and proc.stdout.strip():
             break
     if proc is None:
-        return None
+        return None, "producer invocation failed (timeout/os error)"
     if proc.returncode != 0 or not proc.stdout.strip():
-        return None
+        # a fail-closed producer still names its refusal on stdout/stderr
+        for stream in (proc.stdout, proc.stderr):
+            try:
+                doc = json.loads(stream.strip())
+            except (json.JSONDecodeError, AttributeError):
+                continue
+            refusal = doc.get("refusal")
+            if refusal:
+                return None, f"refused {refusal}"
+        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        detail = tail[-1].strip()[:120] if tail else ""
+        reason = f"producer exited {proc.returncode}"
+        return None, f"{reason} — {detail}" if detail else reason
     try:
-        doc: dict[str, Any] = json.loads(proc.stdout)
+        doc = json.loads(proc.stdout)
     except json.JSONDecodeError:
-        return None
+        return None, "producer output was not JSON"
     if doc.get("schema") != "forge/ForgeGraphView/v1":
-        return None
+        return None, "output is not forge/ForgeGraphView/v1"
     try:
-        return ForgeGraphView.from_dict(doc)
+        return ForgeGraphView.from_dict(doc), ""
     except (KeyError, TypeError):
-        return None
+        return None, "view document did not parse"
 
 
 def federated_views(
@@ -152,12 +173,11 @@ def federated_views(
         if not v.checkout:
             notes.append(f"{v.lifecycle.provider}: no checkout — skipped")
             continue
-        view = _view_from_cli(Path(v.checkout), v.lifecycle.provider, timeout=timeout)
+        view, reason = _view_from_cli(
+            Path(v.checkout), v.lifecycle.provider, timeout=timeout
+        )
         if view is None:
-            notes.append(
-                f"{v.lifecycle.provider}: no ForgeGraphView producer "
-                "(graph view unavailable or failed)"
-            )
+            notes.append(f"{v.lifecycle.provider}: {reason}")
             continue
         views.append(view)
     return views, notes
