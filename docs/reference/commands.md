@@ -348,7 +348,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge graph [help] [root] [json] [debug] [CAPABILITY] [mesh]
+theforge graph [help] [root] [json] [debug] [CAPABILITY] [mesh] [view] [federated] [ui] [no_browser] [port]
 ```
 
 | argument/flag | required | default | description |
@@ -359,6 +359,11 @@ theforge graph [help] [root] [json] [debug] [CAPABILITY] [mesh]
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `CAPABILITY` | no | — | only the edges touching this capability ('provider/capability' or a bare capability id) |
 | `mesh` | no | — | the domain mesh projection: per domain, the observe/engineer/verify capabilities derived from declared produces/consumes/can_verify relations |
+| `view` | no | — | emit the ForgeGraphView/v1 document (Graph Studio contract) instead of the capability listing |
+| `federated` | no | — | collect views from every specialist checkout that exposes `graph view --json` and merge them namespaced by provider |
+| `ui` | no | — | open the local Graph Studio explorer in a browser |
+| `no_browser` | no | — | with --ui: serve without opening a browser (SSH/remote) |
+| `port` | no | — | with --ui: port to bind (default ephemeral) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -485,7 +490,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge install apply [help] [root] [json] [debug] [scope] [yes] [host] [profile] [dry_run]
+theforge install apply [help] [root] [json] [debug] [scope] [yes] [host] [profile] [LIST] [dry_run]
 ```
 
 | argument/flag | required | default | description |
@@ -498,6 +503,7 @@ theforge install apply [help] [root] [json] [debug] [scope] [yes] [host] [profil
 | `yes` | no | — | explicit approval — required for any write |
 | `host` | no | — | — |
 | `profile` | no | — | — |
+| `LIST` | no | — | comma-separated optional components (skills,agents,mcp,tui,graph-studio) — overrides the profile's component set |
 | `dry_run` | no | — | — |
 
 <!-- keep:start -->

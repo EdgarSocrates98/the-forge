@@ -244,3 +244,48 @@ def test_graph_ui_refuses_when_declined(tmp_path, capsys):
     assert rc == 2
     doc = json.loads(capsys.readouterr().out)
     assert doc["refusal"] == "FORGE-GRAPH-STUDIO-DISABLED"
+
+
+# -- federation boundary -------------------------------------------------------
+
+
+def _fake_checkout(tmp_path: Path, body: str) -> Path:
+    """A minimal sibling checkout: forge.json + a cli_entry module."""
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "forge.json").write_text(
+        'cli_entry = "fake_cli:main"\n', encoding="utf-8"
+    )
+    (tmp_path / "fake_cli.py").write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def test_view_from_cli_real_subprocess(tmp_path):
+    """End-to-end: a sibling CLI emits a view doc; federation parses it."""
+    from theforge.contracts.graphview import ForgeGraphView, GraphNodeView, new_descriptor
+    from theforge.graphview import _view_from_cli
+
+    doc = ForgeGraphView(
+        descriptor=new_descriptor(provider_id="fake", domain="d", graph_id="fake/g"),
+        nodes=(GraphNodeView(id="n", kind="k", label="n"),),
+    ).to_dict()
+    checkout = _fake_checkout(
+        tmp_path,
+        "import json, sys\n"
+        "def main():\n"
+        f"    print(json.dumps({doc!r}))\n"
+        "    return 0\n",
+    )
+    view = _view_from_cli(checkout, "fake", timeout=20)
+    assert view is not None
+    assert view.descriptor.provider_id == "fake"
+    assert view.nodes[0].id == "n"
+
+
+def test_view_from_cli_degrades_honestly(tmp_path):
+    from theforge.graphview import _view_from_cli
+
+    assert _view_from_cli(tmp_path / "missing", "x", timeout=10) is None
+    bad = _fake_checkout(tmp_path / "bad", "def main():\n    return 1\n")
+    assert _view_from_cli(bad, "x", timeout=10) is None
+    junk = _fake_checkout(tmp_path / "junk", "def main():\n    print('not json')\n")
+    assert _view_from_cli(junk, "x", timeout=10) is None
