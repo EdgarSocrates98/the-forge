@@ -1,0 +1,110 @@
+{
+  "agents": {
+    "why": "registro de agentes especializados com autoridade declarada (AgentSpec/v1)",
+    "when": "inspecionar qual agente propõe/classifica/executa antes de confiar num fluxo"
+  },
+  "ask": {
+    "why": "pergunta em linguagem natural roteada ao especialista certo",
+    "when": "você sabe o que quer mas não qual forja/workflow executa"
+  },
+  "capabilities": {
+    "why": "catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória",
+    "when": "antes de instalar/delegar: list/discover/search/check o que cada forja atende"
+  },
+  "decisions": {
+    "why": "memória de decisões reutilizáveis do workspace (.forge/intel/decisions.json)",
+    "when": "registrar ou auditar decisões que devem persistir entre sessões"
+  },
+  "doctor": {
+    "why": "diagnóstico honesto de host, workspace e providers — primeira linha de troubleshooting",
+    "when": "pós-install, ambiente novo, ou quando qualquer comando falha sem razão clara"
+  },
+  "economy": {
+    "why": "economia medida de execução (bytes, não tokens estimados)",
+    "when": "entender custo real de contexto/descoberta antes de otimizar"
+  },
+  "explain": {
+    "why": "explica um run passado — o porquê de cada passo",
+    "when": "auditar uma execução que já aconteceu (trace mostra o quê, explain o porquê)"
+  },
+  "graph": {
+    "why": "grafo de capabilities: relações declaradas+observadas do registry e do workspace",
+    "when": "navegar dependências e abrir o Graph Studio sem spawnar providers"
+  },
+  "hosts": {
+    "why": "detecção e ativação de hosts de IA (Claude/Devin/Codex)",
+    "when": "ver onde a integração está ativa ou preparar a ativação"
+  },
+  "init": {
+    "why": "cria `.forge/` no workspace — pré-requisito de quase tudo",
+    "when": "primeiro passo num diretório que ainda não é workspace"
+  },
+  "install": {
+    "why": "instalação governada de providers com plano→aprovação",
+    "when": "instalar/atualizar um especialista com recibo verificável"
+  },
+  "installations": {
+    "why": "registro de instalações bootstrap (~/.forge/installations)",
+    "when": "auditar o que está instalado e de onde veio"
+  },
+  "knowledge": {
+    "why": "camada de conhecimento ForgeKnowledge/v1 (appropriate_for/inappropriate_for)",
+    "when": "decidir qual forja usar por contrato declarado — base do which-forge"
+  },
+  "memory": {
+    "why": "memória de engenharia do workspace (.forge/memory/)",
+    "when": "persistir/recuperar contexto entre sessões sem re-derivar fatos"
+  },
+  "plan": {
+    "why": "plano multi-provider: um nó por especialista, sequência local",
+    "when": "trabalho composto que precisa ser revisto antes de executar"
+  },
+  "provider": {
+    "why": "authoring de provider: scaffold + conformance",
+    "when": "criar ou validar um novo provider Forge — não uso diário"
+  },
+  "providers": {
+    "why": "operações sobre providers registrados (health, surface)",
+    "when": "verificar saúde e superfície declarada da frota local"
+  },
+  "registry": {
+    "why": "registry de providers — fonte de descoberta além do checkout local",
+    "when": "descobrir/instalar forjas que não estão no workspace"
+  },
+  "remote": {
+    "why": "camada de confiança de execução remota (remote-policy.toml)",
+    "when": "configurar política para execução fora do host local"
+  },
+  "replay": {
+    "why": "re-renderiza, re-verifica ou re-executa um run persistido",
+    "when": "reproduzir uma execução com a mesma evidência gravada"
+  },
+  "resume": {
+    "why": "retoma um plano: nós com inputs ainda válidos são reutilizados, o resto re-executa",
+    "when": "uma execução multi-step falhou no meio e você não quer recomeçar"
+  },
+  "specialists": {
+    "why": "control plane do ciclo de vida dos especialistas delegáveis",
+    "when": "listar/inspecionar quem pode receber `task` via forge.agentic.json"
+  },
+  "status": {
+    "why": "resumo do estado do workspace",
+    "when": "visão rápida: inicializado? providers? últimas runs?"
+  },
+  "targets": {
+    "why": "targets de execução declarados (targets.toml)",
+    "when": "gerenciar destinos reutilizáveis de `task run`"
+  },
+  "task": {
+    "why": "delega um intent a um especialista — argv real do workflow declarado",
+    "when": "executar trabalho na forja certa (plan antes, run depois, explain para auditar)"
+  },
+  "trace": {
+    "why": "o trace local do run, span por span — o que aconteceu",
+    "when": "depurar uma execução (explain responde porquê, trace mostra o quê)"
+  },
+  "workspace": {
+    "why": "descrição e administração do workspace `.forge/`",
+    "when": "configurar/inspecionar o workspace atual"
+  }
+}
