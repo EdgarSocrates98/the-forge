@@ -65,4 +65,12 @@ preserved per §4.5, reported not repaired.
 
 ## PRs
 
-(filled at delivery)
+| Repo | PR |
+|---|---|
+| the-forge | #37 |
+| api-forge | #47 |
+| spark-forge-aws | #143 |
+| spark-forge-azure | #35 |
+| platform-forge | #16 |
+| forge-doctor-data | #20 |
+| forge-doctor-api | #24 |
