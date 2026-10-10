@@ -1,5 +1,7 @@
 # Troubleshooting
 
+Códigos `FORGE-*` citados aqui seguem a lista canônica em [errors.md](../errors.md).
+
 | Symptom | Cause → fix |
 |---|---|
 | `*-GRAPH-NO-*` refusal | engine has no graph → run its build/index verb |

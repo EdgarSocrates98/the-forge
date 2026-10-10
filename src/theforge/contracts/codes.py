@@ -114,6 +114,7 @@ class Codes:
     INSTALL_DRIFT_UNREPAIRABLE: Final = "FORGE-INSTALL-DRIFT-UNREPAIRABLE"
     INSTALL_SPAWN_DISABLED: Final = "FORGE-INSTALL-SPAWN-DISABLED"
     INSTALL_VERIFY_FAILED: Final = "FORGE-INSTALL-VERIFY-FAILED"
+    GRAPH_STUDIO_DISABLED: Final = "FORGE-GRAPH-STUDIO-DISABLED"
 
     # Core
     USAGE: Final = "FORGE-USAGE"
@@ -185,6 +186,7 @@ CODE_FAMILIES: Final[Mapping[str, ErrorFamily]] = MappingProxyType(
         Codes.INSTALL_DRIFT_UNREPAIRABLE: "persistence",
         Codes.INSTALL_SPAWN_DISABLED: "security",
         Codes.INSTALL_VERIFY_FAILED: "provider",
+        Codes.GRAPH_STUDIO_DISABLED: "usage",
         Codes.USAGE: "usage",
         Codes.INTERNAL: "internal",
     }
@@ -326,6 +328,8 @@ CODE_HINTS: Final[Mapping[str, str]] = MappingProxyType(
         Codes.INSTALL_SPAWN_DISABLED: "spawning is disabled by policy in this context",
         Codes.INSTALL_VERIFY_FAILED: "a verification step failed; run the forge's doctor for "
         "the failing check",
+        Codes.GRAPH_STUDIO_DISABLED: "Graph Studio was declined at install; re-run `theforge "
+        "install` with graph-studio selected, or drop --ui",
     }
 )
 

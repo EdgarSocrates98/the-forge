@@ -95,6 +95,7 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-INSTALL-DRIFT-UNREPAIRABLE` | persistence | drift de asset gerenciado sem origem canônica para reassert |
 | `FORGE-INSTALL-SPAWN-DISABLED` | security | subprocess recusado por spec (`spawn_ok=False`) |
 | `FORGE-INSTALL-VERIFY-FAILED` | provider | handshake MCP/verificação real falhou pós-instalação |
+| `FORGE-GRAPH-STUDIO-DISABLED` | usage | Graph Studio recusado na instalação; reinstale com `graph-studio` ou remova `--ui` |
 | `FORGE-USAGE` | usage | run que falhou por uso inválido |
 | `FORGE-INTERNAL` | internal | run que falhou por erro interno inesperado |
 
