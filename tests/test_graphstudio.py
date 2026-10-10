@@ -181,3 +181,66 @@ def test_graph_default_still_works(capsys):
     assert rc == 0
     doc = json.loads(capsys.readouterr().out)
     assert "nodes" in doc and "edges" in doc
+
+
+def test_component_options_selection():
+    from theforge import _installkit as kit
+
+    opts = kit.component_options("recommended", ("skills", "mcp"))
+    assert opts["graph_studio"] is False
+    assert "skill" in opts["asset_kinds"]
+    assert "agent" not in opts["asset_kinds"]
+
+
+def test_component_options_unknown_rejected():
+    import pytest
+
+    from theforge import _installkit as kit
+
+    with pytest.raises(kit.InstallError):
+        kit.component_options("recommended", ("bogus",))
+
+
+def test_install_apply_persists_components(tmp_path):
+    from theforge.install import service
+
+    receipt = service.install(
+        "claude",
+        scope="project",
+        root=tmp_path,
+        profile="recommended",
+        yes=True,
+        components=("skills", "mcp"),
+    )
+    assert receipt["status"] == "completed"
+    comp = tmp_path / ".forge" / "install" / "components.json"
+    assert comp.is_file()
+    doc = json.loads(comp.read_text())
+    assert doc["graph_studio"] is False
+    assert receipt["components"]["graph_studio"] is False
+
+
+def test_graph_studio_enabled_gate(tmp_path):
+    from theforge.graphstudio import graph_studio_enabled
+
+    assert graph_studio_enabled(tmp_path) is True
+    sd = tmp_path / ".forge" / "install"
+    sd.mkdir(parents=True)
+    (sd / "components.json").write_text(
+        json.dumps({"graph_studio": False}), encoding="utf-8"
+    )
+    assert graph_studio_enabled(tmp_path) is False
+
+
+def test_graph_ui_refuses_when_declined(tmp_path, capsys):
+    from theforge.cli.main import main
+
+    sd = tmp_path / ".forge" / "install"
+    sd.mkdir(parents=True)
+    (sd / "components.json").write_text(
+        json.dumps({"graph_studio": False}), encoding="utf-8"
+    )
+    rc = main(["graph", "--ui", "--root", str(tmp_path), "--json"])
+    assert rc == 2
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["refusal"] == "FORGE-GRAPH-STUDIO-DISABLED"

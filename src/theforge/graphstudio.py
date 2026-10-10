@@ -15,6 +15,7 @@ import json
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 STUDIO_HTML = r"""<!doctype html>
@@ -264,6 +265,37 @@ def serve(
     finally:
         httpd.server_close()
     return 0
+
+
+def graph_studio_enabled(
+    root: Path | str | None = None,
+    *,
+    state_rel: str = ".forge/install",
+    user_state_rel: str = "~/.forge/install",
+) -> bool:
+    """Was Graph Studio declined at install time?
+
+    ``components.json`` under the forge's state dir records the optional-
+    component selection (``graph_studio: false``). Absence means the
+    default — enabled — so checkouts and pre-component installs keep
+    working.
+    """
+    import json
+
+    candidates: list[Path] = []
+    if root:
+        candidates.append(Path(root) / state_rel / "components.json")
+    candidates.append(Path(user_state_rel).expanduser() / "components.json")
+    for p in candidates:
+        if not p.is_file():
+            continue
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if "graph_studio" in doc:
+            return bool(doc["graph_studio"])
+    return True
 
 
 def open_studio(

@@ -18,6 +18,7 @@ _MENU = (
     "specialists",
     "run a task",
     "hosts",
+    "graph studio",
     "install wizard",
     "health check",
     "recent tasks",
@@ -161,6 +162,23 @@ def _act_recent(ctx: UIContext) -> None:
         print(f"  {name:<20} {detail}")
 
 
+def _act_graph(ctx: UIContext) -> int:
+    """Federated Graph Studio — real provider views, namespaced merge."""
+    from theforge import graphview
+    from theforge.graphstudio import graph_studio_enabled, open_studio
+
+    if not graph_studio_enabled(Path.cwd()):
+        print("  graph studio disabled at install (components.json: graph_studio=false)")
+        return 0
+    views, notes = graphview.federated_views(workspace_root=Path.cwd().parent)
+    local = graphview.capability_view(root=Path.cwd())
+    views.insert(0, local)
+    for n in notes:
+        print(f"  note: {n}")
+    merged = graphview.federated_merge(views) if len(views) > 1 else local
+    return open_studio([merged], open_browser=True)
+
+
 def _act_install(ctx: UIContext) -> int:
     from theforge.install import service
     from theforge.ui.wizard import run_wizard
@@ -182,6 +200,7 @@ def run_home(*, ctx: UIContext | None = None) -> int:
         "specialists": _act_specialists,
         "run a task": _run_task,
         "hosts": _act_hosts,
+        "graph studio": _act_graph,
         "install wizard": _act_install,
         "health check": _act_health,
         "recent tasks": _act_recent,

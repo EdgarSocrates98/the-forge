@@ -312,6 +312,14 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument(
                 "--profile", default="recommended", choices=("minimal", "recommended", "full")
             )
+            p.add_argument(
+                "--components",
+                default=None,
+                metavar="LIST",
+                help="comma-separated optional components "
+                "(skills,agents,mcp,tui,graph-studio) — overrides the "
+                "profile's component set",
+            )
         if name in ("apply", "repair", "uninstall", "update", "auto"):
             p.add_argument("--dry-run", action="store_true")
         if name == "uninstall":

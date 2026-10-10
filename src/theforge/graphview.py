@@ -95,23 +95,31 @@ def _view_from_cli(checkout: Path, provider_id: str, *, timeout: int = 30) -> Fo
     if not entry or ":" not in entry:
         return None
     module, _, fn = entry.partition(":")
-    code = (
+    code_t = (
         "import sys; "
         f"sys.path.insert(0, {str(checkout)!r});"
         f"sys.path.insert(0, {str(checkout / 'src')!r});"
-        f"sys.argv=[{provider_id!r}, 'graph', 'view', '--json'];"
+        "sys.argv=[{p!r}, 'graph', 'view'] + {flags!r};"
         f"from {module} import {fn} as _main; sys.exit(_main())"
     )
-    argv = [sys.executable, "-c", code]
-    try:
-        proc = subprocess.run(
-            argv,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+    proc = None
+    # Every producer must emit ForgeGraphView JSON on `graph view`; flag
+    # dialects differ (`--json` vs default-json), so try both.
+    for flags in (["--json"], []):
+        argv = [sys.executable, "-c", code_t.format(p=provider_id, flags=flags)]
+        try:
+            proc = subprocess.run(
+                argv,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if proc.returncode == 0 and proc.stdout.strip():
+            break
+    if proc is None:
         return None
     if proc.returncode != 0 or not proc.stdout.strip():
         return None

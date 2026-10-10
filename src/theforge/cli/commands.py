@@ -651,6 +651,11 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
     verb = args.install_command
     try:
         if verb == "apply":
+            comps = (
+                tuple(c.strip() for c in args.components.split(",") if c.strip())
+                if getattr(args, "components", None)
+                else None
+            )
             out = service.install(
                 args.host,
                 scope=args.scope,
@@ -658,6 +663,7 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                 profile=args.profile,
                 yes=args.yes,
                 dry_run=args.dry_run,
+                components=comps,
             )
         elif verb == "status":
             out = service.status(scope=args.scope, root=root)
@@ -732,7 +738,8 @@ def cmd_graph(args: argparse.Namespace) -> int:
     from theforge.capability_graph import build_capability_graph
 
     root = _root(args)
-    if getattr(args, "view", False) or getattr(args, "ui", False) or getattr(args, "federated", False):
+    view_flags = ("view", "ui", "federated")
+    if any(getattr(args, f, False) for f in view_flags):
         return _cmd_graph_view(args, root)
     registry = Registry(find_forge_dir(root))
     records = registry.cached_records()
@@ -781,7 +788,21 @@ def _cmd_graph_view(args: argparse.Namespace, root: Path) -> int:
     them provider-namespaced (never silently unified).
     """
     from theforge import graphview
-    from theforge.graphstudio import open_studio
+    from theforge.graphstudio import graph_studio_enabled, open_studio
+
+    if getattr(args, "ui", False) and not graph_studio_enabled(root):
+        _emit(
+            args,
+            {
+                "refusal": "FORGE-GRAPH-STUDIO-DISABLED",
+                "detail": "Graph Studio was declined at install "
+                "(components.json: graph_studio=false)",
+                "unlock": "re-run `theforge install` with graph-studio "
+                "selected, or remove the flag",
+            },
+            _dump,
+        )
+        return 2
 
     if getattr(args, "federated", False):
         views, notes = graphview.federated_views(workspace_root=root)
