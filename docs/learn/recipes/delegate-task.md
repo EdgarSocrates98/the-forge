@@ -19,10 +19,10 @@ manifesto `forge.agentic.json`.
 ## Passo a passo
 
 ```bash
-forge task plan "analyze pyspark" --json          # ver o plano primeiro
-forge task run  "analyze pyspark" \
+theforge task plan "analyze pyspark" --json          # ver o plano primeiro
+theforge task run  "analyze pyspark" \
   --provider spark-forge-aws --target <dir> --json # executar
-forge task explain <task-id>                       # auditar depois
+theforge task explain <task-id>                       # auditar depois
 ```
 
 ## Saída esperada / interpretação

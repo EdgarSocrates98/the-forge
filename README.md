@@ -104,7 +104,7 @@ Igual à tabela de [docs/cli.md](docs/cli.md#exit-codes-gerais), que detalha o e
 
 ## Documentação
 
-Mapa completo por preocupação em [docs/README.md](docs/README.md). Principais:
+Mapa completo por preocupação em [docs/README.md](docs/README.md) e o índice canônico gerado em [docs/INDEX.md](docs/INDEX.md). Principais:
 
 - [Arquitetura](docs/architecture.md)
 - [Forge Protocol v1](docs/protocol.md)

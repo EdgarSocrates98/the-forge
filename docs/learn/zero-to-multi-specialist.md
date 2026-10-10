@@ -20,7 +20,7 @@ delegação, é executado por um especialista via argv real e produz um
 ## Passo 1 — inicializar o workspace
 
 ```bash
-forge init --root E:/projetos/FORJAS
+theforge init --root E:/projetos/FORJAS
 ```
 
 ```json
@@ -32,7 +32,7 @@ forge init --root E:/projetos/FORJAS
 ## Passo 2 — verificar o ambiente
 
 ```bash
-forge doctor --json
+theforge doctor --json
 ```
 
 Os 7 providers responderam `ready/ok surface:<fp>` — incluindo o `echo-forge`
@@ -41,7 +41,7 @@ Os 7 providers responderam `ready/ok surface:<fp>` — incluindo o `echo-forge`
 ## Passo 3 — o que as forjas declaram
 
 ```bash
-forge capabilities list --json
+theforge capabilities list --json
 ```
 
 37 capacidades reais, entre elas `glue.analysis ← spark-forge-aws`,
@@ -51,14 +51,14 @@ forge capabilities list --json
 Descoberta por requisito (não por nome):
 
 ```bash
-forge capabilities discover --capability glue.analysis --json
+theforge capabilities discover --capability glue.analysis --json
 # → "local_provider": "spark-forge-aws", "local_state": "FULL"
 ```
 
 ## Passo 4 — intent vira plano
 
 ```bash
-forge task plan "assess glue spark jobs" --root E:/projetos/FORJAS --json
+theforge task plan "assess glue spark jobs" --root E:/projetos/FORJAS --json
 ```
 
 ```json
@@ -85,7 +85,7 @@ Leitura honesta do plano:
 Fixture mínimo (`/tmp/etl-fixture/job.py`, um script PySpark de 4 linhas):
 
 ```bash
-forge task run "analyze pyspark" --provider spark-forge-aws \
+theforge task run "analyze pyspark" --provider spark-forge-aws \
   --target /tmp/etl-fixture --root E:/projetos/FORJAS --json
 ```
 
@@ -107,7 +107,7 @@ fatos AST do PySpark com provenance `sha256`, e o resultado foi persistido.
 ## Passo 6 — explicar depois
 
 ```bash
-forge task explain task-88601326422d --root E:/projetos/FORJAS
+theforge task explain task-88601326422d --root E:/projetos/FORJAS
 # task-88601326422d  spark-forge-aws  COMPLETED  DIRECT_CAPABILITY
 #   exit=0 elapsed=800ms
 ```

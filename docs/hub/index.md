@@ -21,9 +21,9 @@ documentação canônica — este hub aponta, não duplica.
 ## Três primeiros comandos
 
 ```bash
-forge doctor                 # ambiente + providers
-forge knowledge list         # catálogo de forjas com metadados
-forge capabilities list      # o que cada forja declara
+theforge doctor                 # ambiente + providers
+theforge knowledge list         # catálogo de forjas com metadados
+theforge capabilities list      # o que cada forja declara
 ```
 
 ## Trilhas por forja

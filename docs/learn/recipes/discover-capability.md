@@ -13,9 +13,9 @@ você saber o nome dele.
 ## Passo a passo
 
 ```bash
-forge capabilities list --json                              # o catálogo
-forge capabilities discover --capability glue.analysis --json
-forge capabilities search glue                              # por palavra-chave
+theforge capabilities list --json                              # o catálogo
+theforge capabilities discover --capability glue.analysis --json
+theforge capabilities search glue                              # por palavra-chave
 ```
 
 ## Saída esperada / interpretação
