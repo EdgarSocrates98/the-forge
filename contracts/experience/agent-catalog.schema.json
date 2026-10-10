@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/AgentCatalog/v1",
+  "title": "ForgeAgentCatalogContract",
+  "description": "Catálogo didático e operacional de agents e skills de uma Forja (§11). Proibido catálogo só de nomes de arquivo — cada entrada explica o valor do recurso e quando NÃO usar.",
+  "type": "object",
+  "required": ["schema", "forge_id", "agents", "skills", "generated_from"],
+  "properties": {
+    "schema": {"const": "forge/AgentCatalog/v1"},
+    "forge_id": {"type": "string", "minLength": 1},
+    "generated_from": {"type": "array", "items": {"type": "string"}, "description": "fontes canônicas lidas (ex.: agents/*.md, skills/*/SKILL.md, agentic/agents/*.toml)"},
+    "agents": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/agent"}
+    },
+    "skills": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/skill"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "agent": {
+      "type": "object",
+      "required": ["name", "purpose", "domain", "when_to_use", "when_not_to_use", "supported_hosts", "expected_output", "limitations"],
+      "properties": {
+        "name": {"type": "string"},
+        "purpose": {"type": "string", "minLength": 10},
+        "domain": {"type": "string"},
+        "when_to_use": {"type": "string", "minLength": 10},
+        "when_not_to_use": {"type": "string", "minLength": 5},
+        "triggers": {"type": "array", "items": {"type": "string"}},
+        "supported_hosts": {"type": "array", "items": {"enum": ["devin", "claude", "codex", "copilot"]}},
+        "required_skills": {"type": "array", "items": {"type": "string"}},
+        "available_tools": {"type": "array", "items": {"type": "string"}},
+        "mcp_dependencies": {"type": "array", "items": {"type": "string"}},
+        "inputs": {"type": "array", "items": {"type": "string"}},
+        "expected_output": {"type": "string", "minLength": 10},
+        "verification": {"type": "string"},
+        "example_prompt": {"type": "string"},
+        "limitations": {"type": "string", "minLength": 5}
+      },
+      "additionalProperties": false
+    },
+    "skill": {
+      "type": "object",
+      "required": ["name", "purpose", "triggers", "supported_hosts", "activation_method", "example", "verification"],
+      "properties": {
+        "name": {"type": "string"},
+        "purpose": {"type": "string", "minLength": 10},
+        "triggers": {"type": "array", "items": {"type": "string"}},
+        "supported_hosts": {"type": "array", "items": {"enum": ["devin", "claude", "codex", "copilot"]}},
+        "activation_method": {"enum": ["slash", "dollar", "description-match", "agent-dispatch", "mcp", "manual"]},
+        "related_agents": {"type": "array", "items": {"type": "string"}},
+        "related_mcp_tools": {"type": "array", "items": {"type": "string"}},
+        "example": {"type": "string", "minLength": 10},
+        "verification": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

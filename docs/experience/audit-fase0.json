@@ -1,0 +1,514 @@
+{
+  "schema": "forge/ExperienceAudit/v1",
+  "generated_at": "2026-10-10T16:25:08+00:00",
+  "generator": "scripts/experience/audit_surfaces.py",
+  "note": "presence != verified — ver contrato de paridade (§7)",
+  "forges": {
+    "the-forge": {
+      "forge_id": "the-forge",
+      "version": "0.5.0",
+      "requires_python": ">=3.11",
+      "console_scripts": [
+        "forge",
+        "theforge"
+      ],
+      "cli_groups_curated": 27,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": false,
+          "tools_locked": null
+        },
+        "install": {
+          "present": true,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 5,
+          "hub": true,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 8,
+        "skill_source": [
+          ".agents/skills",
+          ".claude/skills",
+          ".devin/skills"
+        ],
+        "skills_canonical": 33,
+        "mirrors": {
+          ".claude/agents": 0,
+          ".claude/skills": 33,
+          ".agents/agents": 0,
+          ".agents/skills": 33,
+          ".devin/agents": 0,
+          ".devin/skills": 33,
+          ".codex/agents": 9,
+          ".github/skills": 0,
+          ".github/agents": 0
+        },
+        "agentic_surfaces_total": 108
+      },
+      "contracts": {
+        "schemas_dir": 69,
+        "surface_lock": false,
+        "capability_manifest": false,
+        "receipt_artifacts": []
+      },
+      "knowledge_docs": 0,
+      "test_files": 157
+    },
+    "api-forge": {
+      "forge_id": "api-forge",
+      "version": "0.1.0",
+      "requires_python": ">=3.12,<3.13",
+      "console_scripts": [
+        "apiforge",
+        "apiforge-mcp",
+        "apiforge-tui"
+      ],
+      "cli_groups_curated": 67,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": true,
+          "tools_locked": null
+        },
+        "install": {
+          "present": true,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 4,
+          "hub": false,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 31,
+        "skill_source": [
+          ".github/skills"
+        ],
+        "skills_canonical": 14,
+        "mirrors": {
+          ".claude/agents": 26,
+          ".claude/skills": 14,
+          ".agents/agents": 26,
+          ".agents/skills": 14,
+          ".devin/agents": 1,
+          ".devin/skills": 15,
+          ".codex/agents": 26,
+          ".github/skills": 14,
+          ".github/agents": 0
+        },
+        "agentic_surfaces_total": 136
+      },
+      "contracts": {
+        "schemas_dir": 0,
+        "surface_lock": false,
+        "capability_manifest": false,
+        "receipt_artifacts": []
+      },
+      "knowledge_docs": 280,
+      "test_files": 348
+    },
+    "spark-forge-aws": {
+      "forge_id": "spark-forge-aws",
+      "version": "0.5.0",
+      "requires_python": ">=3.10",
+      "console_scripts": [
+        "sparkforge-aws",
+        "sparkforge-aws-tools"
+      ],
+      "cli_groups_curated": 65,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": false,
+          "tools_locked": 145
+        },
+        "install": {
+          "present": true,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 4,
+          "hub": false,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 19,
+        "skill_source": [
+          "skills"
+        ],
+        "skills_canonical": 60,
+        "mirrors": {
+          ".claude/agents": 14,
+          ".claude/skills": 60,
+          ".agents/agents": 14,
+          ".agents/skills": 60,
+          ".devin/agents": 0,
+          ".devin/skills": 0,
+          ".codex/agents": 14,
+          ".github/skills": 0,
+          ".github/agents": 28
+        },
+        "agentic_surfaces_total": 190
+      },
+      "contracts": {
+        "schemas_dir": 0,
+        "surface_lock": true,
+        "capability_manifest": true,
+        "receipt_artifacts": []
+      },
+      "knowledge_docs": 73,
+      "test_files": 492
+    },
+    "spark-forge-azure": {
+      "forge_id": "spark-forge-azure",
+      "version": "0.1.0",
+      "requires_python": ">=3.10",
+      "console_scripts": [
+        "sparkforge-azure"
+      ],
+      "cli_groups_curated": 21,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": true,
+          "tools_locked": null
+        },
+        "install": {
+          "present": true,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 4,
+          "hub": false,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 40,
+        "skill_source": [
+          "skills"
+        ],
+        "skills_canonical": 22,
+        "mirrors": {
+          ".claude/agents": 1,
+          ".claude/skills": 22,
+          ".agents/agents": 40,
+          ".agents/skills": 22,
+          ".devin/agents": 0,
+          ".devin/skills": 0,
+          ".codex/agents": 0,
+          ".github/skills": 0,
+          ".github/agents": 0
+        },
+        "agentic_surfaces_total": 85
+      },
+      "contracts": {
+        "schemas_dir": 0,
+        "surface_lock": true,
+        "capability_manifest": true,
+        "receipt_artifacts": []
+      },
+      "knowledge_docs": 38,
+      "test_files": 273
+    },
+    "platform-forge": {
+      "forge_id": "platform-forge",
+      "version": "0.1.0",
+      "requires_python": ">=3.10",
+      "console_scripts": [
+        "platformforge",
+        "platformforge-mcp"
+      ],
+      "cli_groups_curated": 57,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": true,
+          "tools_locked": null
+        },
+        "install": {
+          "present": true,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 4,
+          "hub": false,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 41,
+        "skill_source": [
+          ".devin/skills"
+        ],
+        "skills_canonical": 12,
+        "mirrors": {
+          ".claude/agents": 41,
+          ".claude/skills": 0,
+          ".agents/agents": 41,
+          ".agents/skills": 0,
+          ".devin/agents": 41,
+          ".devin/skills": 12,
+          ".codex/agents": 41,
+          ".github/skills": 0,
+          ".github/agents": 0
+        },
+        "agentic_surfaces_total": 176
+      },
+      "contracts": {
+        "schemas_dir": 0,
+        "surface_lock": false,
+        "capability_manifest": false,
+        "receipt_artifacts": [
+          "docs\\cycle2.1\\VALIDATION-RECEIPT.json",
+          "docs\\cycle5\\VALIDATION-RECEIPT.json",
+          "docs\\cycle5.1\\VALIDATION-RECEIPT.json",
+          "docs\\economy-parity\\VALIDATION-RECEIPT.json",
+          "docs\\freeze\\VALIDATION-RECEIPT.json"
+        ]
+      },
+      "knowledge_docs": 0,
+      "test_files": 103
+    },
+    "forge-doctor-data": {
+      "forge_id": "forge-doctor-data",
+      "version": "1.0.0rc1",
+      "requires_python": ">=3.11",
+      "console_scripts": [
+        "forge-doctor-data"
+      ],
+      "cli_groups_curated": 90,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": true,
+          "tools_locked": null
+        },
+        "install": {
+          "present": true,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 4,
+          "hub": false,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 0,
+        "skill_source": [],
+        "skills_canonical": 0,
+        "mirrors": {
+          ".claude/agents": 0,
+          ".claude/skills": 0,
+          ".agents/agents": 0,
+          ".agents/skills": 0,
+          ".devin/agents": 0,
+          ".devin/skills": 0,
+          ".codex/agents": 0,
+          ".github/skills": 0,
+          ".github/agents": 0
+        },
+        "agentic_surfaces_total": 0
+      },
+      "contracts": {
+        "schemas_dir": 0,
+        "surface_lock": false,
+        "capability_manifest": false,
+        "receipt_artifacts": []
+      },
+      "knowledge_docs": 0,
+      "test_files": 198
+    },
+    "forge-doctor-api": {
+      "forge_id": "forge-doctor-api",
+      "version": "0.2.0",
+      "requires_python": ">=3.11",
+      "console_scripts": [
+        "forge-doctor-api"
+      ],
+      "cli_groups_curated": 17,
+      "install_related_groups": [],
+      "surfaces": {
+        "tui": {
+          "present": true,
+          "files": [
+            "__init__.py",
+            "app.py",
+            "home.py",
+            "i18n.py",
+            "kit.py",
+            "screen.py",
+            "tui.py",
+            "wizard.py"
+          ]
+        },
+        "mcp": {
+          "present": true,
+          "tools_locked": null
+        },
+        "install": {
+          "present": false,
+          "groups": []
+        },
+        "graph": {
+          "present": true
+        },
+        "docs": {
+          "readme": true,
+          "index": true,
+          "learn_tree": 4,
+          "hub": false,
+          "commands_reference": true,
+          "command_rationale": true
+        }
+      },
+      "agentic": {
+        "agents_canonical": 0,
+        "skill_source": [],
+        "skills_canonical": 0,
+        "mirrors": {
+          ".claude/agents": 1,
+          ".claude/skills": 0,
+          ".agents/agents": 0,
+          ".agents/skills": 0,
+          ".devin/agents": 0,
+          ".devin/skills": 0,
+          ".codex/agents": 0,
+          ".github/skills": 0,
+          ".github/agents": 0
+        },
+        "agentic_surfaces_total": 1
+      },
+      "contracts": {
+        "schemas_dir": 0,
+        "surface_lock": false,
+        "capability_manifest": false,
+        "receipt_artifacts": []
+      },
+      "knowledge_docs": 0,
+      "test_files": 86
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/ExperienceState/v1",
+  "title": "ForgeExperienceContract",
+  "description": "Estado agregado das cinco superfícies de uma Forja (§2): agent-first, super CLI, premium TUI, Graph Studio, knowledge PT-BR. O documento de leitura única que responde 'como está a experiência desta Forja'.",
+  "type": "object",
+  "required": ["schema", "forge_id", "surfaces", "updated_at"],
+  "properties": {
+    "schema": {"const": "forge/ExperienceState/v1"},
+    "forge_id": {"type": "string", "minLength": 1},
+    "surfaces": {
+      "type": "object",
+      "required": ["agent_first", "cli", "tui", "graph_studio", "knowledge_ptbr"],
+      "properties": {
+        "agent_first": {"$ref": "#/$defs/surface"},
+        "cli": {"$ref": "#/$defs/surface"},
+        "tui": {"$ref": "#/$defs/surface"},
+        "graph_studio": {"$ref": "#/$defs/surface"},
+        "knowledge_ptbr": {"$ref": "#/$defs/surface"}
+      },
+      "additionalProperties": false
+    },
+    "installation": {"$ref": "installation-state.schema.json"},
+    "hosts": {
+      "type": "array",
+      "items": {"$ref": "host-integration.schema.json"}
+    },
+    "agent_catalog_path": {"type": ["string", "null"]},
+    "documentation_review_path": {"type": ["string", "null"]},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "surface": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {"enum": ["READY", "DEGRADED", "PARTIAL", "UNVERIFIED", "NOT_APPLICABLE", "FAILED"]},
+        "entrypoints": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"type": "string"},
+        "limitations": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  }
+}
