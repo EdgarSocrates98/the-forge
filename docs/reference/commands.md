@@ -1,6 +1,8 @@
 # `theforge` command reference
 
-Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. Status vocabulary: `available` unless marked otherwise.
+Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
+
+Rationale coverage: **27/27** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -36,6 +38,11 @@ Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. D
 
 ### `agents`
 
+**para que:** specialized agent registry
+
+- **por que:** registro de agentes especializados com autoridade declarada (AgentSpec/v1)
+- **quando usar:** inspecionar qual agente propõe/classifica/executa antes de confiar num fluxo
+
 **Syntax**
 
 ```text
@@ -51,6 +58,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `agents list`
+
+- **por que:** registro de agentes especializados com autoridade declarada (AgentSpec/v1)
+- **quando usar:** inspecionar qual agente propõe/classifica/executa antes de confiar num fluxo
 
 **Syntax**
 
@@ -70,6 +80,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `agents show`
+
+- **por que:** registro de agentes especializados com autoridade declarada (AgentSpec/v1)
+- **quando usar:** inspecionar qual agente propõe/classifica/executa antes de confiar num fluxo
 
 **Syntax**
 
@@ -92,6 +105,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## ask
 
 ### `ask`
+
+**para que:** route a task to a specialist
+
+- **por que:** pergunta em linguagem natural roteada ao especialista certo
+- **quando usar:** você sabe o que quer mas não qual forja/workflow executa
 
 **Syntax**
 
@@ -123,6 +141,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `capabilities`
 
+**para que:** declared capabilities
+
+- **por que:** catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória
+- **quando usar:** antes de instalar/delegar: list/discover/search/check o que cada forja atende
+
 **Syntax**
 
 ```text
@@ -138,6 +161,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `capabilities discover`
+
+**para que:** remote discovery by requirement: negotiates installed providers first, then consults enabled registry sources — reports RemoteProviderCandidate metadata, never installs (§22-26)
+
+- **por que:** catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória
+- **quando usar:** antes de instalar/delegar: list/discover/search/check o que cada forja atende
 
 **Syntax**
 
@@ -162,6 +190,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `capabilities list`
 
+- **por que:** catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória
+- **quando usar:** antes de instalar/delegar: list/discover/search/check o que cada forja atende
+
 **Syntax**
 
 ```text
@@ -182,6 +213,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `capabilities negotiate`
 
+**para que:** negotiate a CapabilityRequirement against the registered manifests (offline, deterministic, machine-readable with --json)
+
+- **por que:** catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória
+- **quando usar:** antes de instalar/delegar: list/discover/search/check o que cada forja atende
+
 **Syntax**
 
 ```text
@@ -201,6 +237,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `capabilities search`
+
+- **por que:** catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória
+- **quando usar:** antes de instalar/delegar: list/discover/search/check o que cada forja atende
 
 **Syntax**
 
@@ -224,6 +263,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `decisions`
 
+**para que:** the project's reusable-decision memory (.forge/intel/decisions.json)
+
+- **por que:** memória de decisões reutilizáveis do workspace (.forge/intel/decisions.json)
+- **quando usar:** registrar ou auditar decisões que devem persistir entre sessões
+
 **Syntax**
 
 ```text
@@ -244,6 +288,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## doctor
 
 ### `doctor`
+
+**para que:** inspect host, workspace and providers
+
+- **por que:** diagnóstico honesto de host, workspace e providers — primeira linha de troubleshooting
+- **quando usar:** pós-install, ambiente novo, ou quando qualquer comando falha sem razão clara
 
 **Syntax**
 
@@ -266,6 +315,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `economy`
 
+**para que:** measured execution economy
+
+- **por que:** economia medida de execução (bytes, não tokens estimados)
+- **quando usar:** entender custo real de contexto/descoberta antes de otimizar
+
 **Syntax**
 
 ```text
@@ -281,6 +335,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `economy experiment`
+
+**para que:** evaluate a StrategyExperiment/v1 against local observations (read-only, advisory; never promotes)
+
+- **por que:** economia medida de execução (bytes, não tokens estimados)
+- **quando usar:** entender custo real de contexto/descoberta antes de otimizar
 
 **Syntax**
 
@@ -301,6 +360,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `economy report`
+
+**para que:** aggregate recorded execution observations into a global economy receipt (read-only, offline)
+
+- **por que:** economia medida de execução (bytes, não tokens estimados)
+- **quando usar:** entender custo real de contexto/descoberta antes de otimizar
 
 **Syntax**
 
@@ -323,6 +387,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `explain`
 
+**para que:** explain a past run
+
+- **por que:** explica um run passado — o porquê de cada passo
+- **quando usar:** auditar uma execução que já aconteceu (trace mostra o quê, explain o porquê)
+
 **Syntax**
 
 ```text
@@ -344,6 +413,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## graph
 
 ### `graph`
+
+**para que:** the capability graph: declared+observed relations of the registry and workspace (cached manifests only, no provider process)
+
+- **por que:** grafo de capabilities: relações declaradas+observadas do registry e do workspace
+- **quando usar:** navegar dependências e abrir o Graph Studio sem spawnar providers
 
 **Syntax**
 
@@ -373,6 +447,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `hosts`
 
+**para que:** AI host detection and activation
+
+- **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
+- **quando usar:** ver onde a integração está ativa ou preparar a ativação
+
 **Syntax**
 
 ```text
@@ -388,6 +467,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `hosts activate`
+
+**para que:** evaluate activation for a host
+
+- **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
+- **quando usar:** ver onde a integração está ativa ou preparar a ativação
 
 **Syntax**
 
@@ -410,6 +494,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `hosts list`
 
+- **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
+- **quando usar:** ver onde a integração está ativa ou preparar a ativação
+
 **Syntax**
 
 ```text
@@ -428,6 +515,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `hosts status`
+
+- **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
+- **quando usar:** ver onde a integração está ativa ou preparar a ativação
 
 **Syntax**
 
@@ -450,6 +540,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `init`
 
+**para que:** create .forge/ in the workspace
+
+- **por que:** cria `.forge/` no workspace — pré-requisito de quase tudo
+- **quando usar:** primeiro passo num diretório que ainda não é workspace
+
 **Syntax**
 
 ```text
@@ -471,6 +566,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `install`
 
+**para que:** governed provider installation
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
 **Syntax**
 
 ```text
@@ -486,6 +586,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `install apply`
+
+**para que:** install this forge's host assets into the resolved scope
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
 
 **Syntax**
 
@@ -512,6 +617,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `install auto`
 
+**para que:** delegate install to every registered forge; --scope workspace discovers sibling repos, --member fans out
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
 **Syntax**
 
 ```text
@@ -536,6 +646,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `install doctor`
 
+**para que:** deep install health (ledger, drift, mcp, handshake)
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
 **Syntax**
 
 ```text
@@ -556,6 +671,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `install mcp-verify`
 
+**para que:** real JSON-RPC handshake against the MCP server
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
 **Syntax**
 
 ```text
@@ -574,6 +694,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `install plan`
+
+**para que:** build a deterministic InstallationPlan/v2 for a remote candidate (plan-only: nothing is downloaded or installed)
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
 
 **Syntax**
 
@@ -598,6 +723,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `install repair`
 
+**para que:** restore managed assets that drifted or went missing
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
 **Syntax**
 
 ```text
@@ -619,6 +749,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `install status`
 
+**para que:** install ledger + drift + health of the target
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
 **Syntax**
 
 ```text
@@ -638,6 +773,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `install uninstall`
+
+**para que:** remove only what the ledger declares as managed
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
 
 **Syntax**
 
@@ -660,6 +800,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `install update`
+
+**para que:** upgrade the bootstrap-installed runtime (pinned only)
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
 
 **Syntax**
 
@@ -685,6 +830,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `installations`
 
+**para que:** bootstrap installation registry (~/.forge/installations)
+
+- **por que:** registro de instalações bootstrap (~/.forge/installations)
+- **quando usar:** auditar o que está instalado e de onde veio
+
 **Syntax**
 
 ```text
@@ -700,6 +850,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `installations list`
+
+- **por que:** registro de instalações bootstrap (~/.forge/installations)
+- **quando usar:** auditar o que está instalado e de onde veio
 
 **Syntax**
 
@@ -722,6 +875,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `knowledge`
 
+**para que:** forge knowledge layer (bootstrap packages)
+
+- **por que:** camada de conhecimento ForgeKnowledge/v1 (appropriate_for/inappropriate_for)
+- **quando usar:** decidir qual forja usar por contrato declarado — base do which-forge
+
 **Syntax**
 
 ```text
@@ -737,6 +895,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `knowledge check`
+
+- **por que:** camada de conhecimento ForgeKnowledge/v1 (appropriate_for/inappropriate_for)
+- **quando usar:** decidir qual forja usar por contrato declarado — base do which-forge
 
 **Syntax**
 
@@ -757,6 +918,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `knowledge list`
 
+- **por que:** camada de conhecimento ForgeKnowledge/v1 (appropriate_for/inappropriate_for)
+- **quando usar:** decidir qual forja usar por contrato declarado — base do which-forge
+
 **Syntax**
 
 ```text
@@ -775,6 +939,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `knowledge show`
+
+- **por que:** camada de conhecimento ForgeKnowledge/v1 (appropriate_for/inappropriate_for)
+- **quando usar:** decidir qual forja usar por contrato declarado — base do which-forge
 
 **Syntax**
 
@@ -798,6 +965,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `memory`
 
+**para que:** engineering memory (.forge/memory/)
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
+
 **Syntax**
 
 ```text
@@ -813,6 +985,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `memory export`
+
+**para que:** entries allowed to leave the project (portable/organization only)
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
 
 **Syntax**
 
@@ -832,6 +1009,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `memory import`
+
+**para que:** import portable/organization entries (project/workspace are refused)
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
 
 **Syntax**
 
@@ -853,6 +1035,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `memory learn`
 
+**para que:** distill a run's persisted artifacts into memory entries
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
+
 **Syntax**
 
 ```text
@@ -872,6 +1059,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `memory list`
+
+**para que:** structured query over memory entries (deterministic, bounded)
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
 
 **Syntax**
 
@@ -903,6 +1095,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `memory patterns`
 
+**para que:** failure-pattern rollup over recorded failure entries
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
+
 **Syntax**
 
 ```text
@@ -921,6 +1118,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `memory summarize`
+
+**para que:** distill entries into a MemorySummary (sources are kept)
+
+- **por que:** memória de engenharia do workspace (.forge/memory/)
+- **quando usar:** persistir/recuperar contexto entre sessões sem re-derivar fatos
 
 **Syntax**
 
@@ -947,7 +1149,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `plan`
 
-Plan a task across providers, one node per specialist, executed locally in sequence.
+**para que:** Plan a task across providers, one node per specialist, executed locally in sequence.
 
 Without --from FILE the nodes are ordered by declared capability relations first (rule
 `capability-graph`: requires and produces→consumes among qualified providers) and then by
@@ -956,6 +1158,9 @@ data flow that can infer a wrong dependency (e.g. "an API that consumes the Spar
 data" puts the API first). Review the plan without --execute; --from FILE fixes the order
 explicitly. An ambiguous decomposition may be resolved by a `proposes_plans` provider
 (semantic tier), revalidated by the deterministic plan checks.
+
+- **por que:** plano multi-provider: um nó por especialista, sequência local
+- **quando usar:** trabalho composto que precisa ser revisto antes de executar
 
 **Syntax**
 
@@ -986,6 +1191,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `provider`
 
+**para que:** provider authoring: scaffold and conformance
+
+- **por que:** authoring de provider: scaffold + conformance
+- **quando usar:** criar ou validar um novo provider Forge — não uso diário
+
 **Syntax**
 
 ```text
@@ -1001,6 +1211,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `provider check`
+
+**para que:** run the Forge Protocol conformance battery against an argv
+
+- **por que:** authoring de provider: scaffold + conformance
+- **quando usar:** criar ou validar um novo provider Forge — não uso diário
 
 **Syntax**
 
@@ -1021,6 +1236,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `provider init`
+
+**para que:** write a stdlib-only provider skeleton into an empty directory
+
+- **por que:** authoring de provider: scaffold + conformance
+- **quando usar:** criar ou validar um novo provider Forge — não uso diário
 
 **Syntax**
 
@@ -1046,6 +1266,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `providers`
 
+**para que:** provider operations
+
+- **por que:** operações sobre providers registrados (health, surface)
+- **quando usar:** verificar saúde e superfície declarada da frota local
+
 **Syntax**
 
 ```text
@@ -1061,6 +1286,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `providers health`
+
+- **por que:** operações sobre providers registrados (health, surface)
+- **quando usar:** verificar saúde e superfície declarada da frota local
 
 **Syntax**
 
@@ -1083,6 +1311,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `registry`
 
+**para que:** provider registry
+
+- **por que:** registry de providers — fonte de descoberta além do checkout local
+- **quando usar:** descobrir/instalar forjas que não estão no workspace
+
 **Syntax**
 
 ```text
@@ -1098,6 +1331,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `registry list`
+
+- **por que:** registry de providers — fonte de descoberta além do checkout local
+- **quando usar:** descobrir/instalar forjas que não estão no workspace
 
 **Syntax**
 
@@ -1118,6 +1354,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `registry refresh`
 
+- **por que:** registry de providers — fonte de descoberta além do checkout local
+- **quando usar:** descobrir/instalar forjas que não estão no workspace
+
 **Syntax**
 
 ```text
@@ -1136,6 +1375,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `registry show`
+
+- **por que:** registry de providers — fonte de descoberta além do checkout local
+- **quando usar:** descobrir/instalar forjas que não estão no workspace
 
 **Syntax**
 
@@ -1156,6 +1398,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `registry sources`
+
+**para que:** configured registry sources (untrusted metadata; the local installed registry stays authoritative)
+
+- **por que:** registry de providers — fonte de descoberta além do checkout local
+- **quando usar:** descobrir/instalar forjas que não estão no workspace
 
 **Syntax**
 
@@ -1178,6 +1425,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `remote`
 
+**para que:** remote-execution trust layer (remote-policy.toml)
+
+- **por que:** camada de confiança de execução remota (remote-policy.toml)
+- **quando usar:** configurar política para execução fora do host local
+
 **Syntax**
 
 ```text
@@ -1193,6 +1445,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `remote check`
+
+**para que:** evaluate each declared remote target against the policy
+
+- **por que:** camada de confiança de execução remota (remote-policy.toml)
+- **quando usar:** configurar política para execução fora do host local
 
 **Syntax**
 
@@ -1219,6 +1476,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `remote policy`
 
+**para que:** the effective remote policy (absent file = deny-all)
+
+- **por que:** camada de confiança de execução remota (remote-policy.toml)
+- **quando usar:** configurar política para execução fora do host local
+
 **Syntax**
 
 ```text
@@ -1239,6 +1501,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## replay
 
 ### `replay`
+
+**para que:** re-render, re-verify or re-execute a past run
+
+- **por que:** re-renderiza, re-verifica ou re-executa um run persistido
+- **quando usar:** reproduzir uma execução com a mesma evidência gravada
 
 **Syntax**
 
@@ -1265,6 +1532,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `resume`
 
+**para que:** resume a plan run: nodes whose recorded inputs still verify are reused, the rest re-execute
+
+- **por que:** retoma um plano: nós com inputs ainda válidos são reutilizados, o resto re-executa
+- **quando usar:** uma execução multi-step falhou no meio e você não quer recomeçar
+
 **Syntax**
 
 ```text
@@ -1289,6 +1561,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `specialists`
 
+**para que:** specialist lifecycle control plane
+
+- **por que:** control plane do ciclo de vida dos especialistas delegáveis
+- **quando usar:** listar/inspecionar quem pode receber `task` via forge.agentic.json
+
 **Syntax**
 
 ```text
@@ -1304,6 +1581,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `specialists doctor`
+
+**para que:** real health probes per specialist
+
+- **por que:** control plane do ciclo de vida dos especialistas delegáveis
+- **quando usar:** listar/inspecionar quem pode receber `task` via forge.agentic.json
 
 **Syntax**
 
@@ -1324,6 +1606,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `specialists list`
 
+**para que:** lifecycle state per catalog forge
+
+- **por que:** control plane do ciclo de vida dos especialistas delegáveis
+- **quando usar:** listar/inspecionar quem pode receber `task` via forge.agentic.json
+
 **Syntax**
 
 ```text
@@ -1343,6 +1630,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `specialists status`
+
+- **por que:** control plane do ciclo de vida dos especialistas delegáveis
+- **quando usar:** listar/inspecionar quem pode receber `task` via forge.agentic.json
 
 **Syntax**
 
@@ -1365,6 +1655,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `status`
 
+**para que:** summarize workspace state
+
+- **por que:** resumo do estado do workspace
+- **quando usar:** visão rápida: inicializado? providers? últimas runs?
+
 **Syntax**
 
 ```text
@@ -1386,6 +1681,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `targets`
 
+**para que:** declared execution targets (targets.toml)
+
+- **por que:** targets de execução declarados (targets.toml)
+- **quando usar:** gerenciar destinos reutilizáveis de `task run`
+
 **Syntax**
 
 ```text
@@ -1401,6 +1701,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `targets list`
+
+**para que:** declared targets, merged user+project (project wins per id)
+
+- **por que:** targets de execução declarados (targets.toml)
+- **quando usar:** gerenciar destinos reutilizáveis de `task run`
 
 **Syntax**
 
@@ -1420,6 +1725,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `targets negotiate`
+
+**para que:** dry-run provider×target negotiation for a requirement
+
+- **por que:** targets de execução declarados (targets.toml)
+- **quando usar:** gerenciar destinos reutilizáveis de `task run`
 
 **Syntax**
 
@@ -1450,6 +1760,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `task`
 
+**para que:** delegate a task to specialists (real argv execution)
+
+- **por que:** delega um intent a um especialista — argv real do workflow declarado
+- **quando usar:** executar trabalho na forja certa (plan antes, run depois, explain para auditar)
+
 **Syntax**
 
 ```text
@@ -1465,6 +1780,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `task explain`
+
+**para que:** inspect a delegation
+
+- **por que:** delega um intent a um especialista — argv real do workflow declarado
+- **quando usar:** executar trabalho na forja certa (plan antes, run depois, explain para auditar)
 
 **Syntax**
 
@@ -1486,10 +1806,15 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `task plan`
 
+**para que:** build delegation requests
+
+- **por que:** delega um intent a um especialista — argv real do workflow declarado
+- **quando usar:** executar trabalho na forja certa (plan antes, run depois, explain para auditar)
+
 **Syntax**
 
 ```text
-theforge task plan [help] [root] [json] [debug] <intent> [target] [provider]
+theforge task plan [help] [root] [json] [debug] <intent> [target] [provider] [workflow]
 ```
 
 | argument/flag | required | default | description |
@@ -1501,6 +1826,7 @@ theforge task plan [help] [root] [json] [debug] <intent> [target] [provider]
 | `intent` | yes | — | — |
 | `target` | no | — | path the specialist analyzes (default: root) |
 | `provider` | no | — | pin one specialist |
+| `workflow` | no | — | pin a workflow id when routing is ambiguous |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1508,10 +1834,15 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `task run`
 
+**para que:** execute delegations
+
+- **por que:** delega um intent a um especialista — argv real do workflow declarado
+- **quando usar:** executar trabalho na forja certa (plan antes, run depois, explain para auditar)
+
 **Syntax**
 
 ```text
-theforge task run [help] [root] [json] [debug] <intent> [target] [provider] [max_parallel]
+theforge task run [help] [root] [json] [debug] <intent> [target] [provider] [workflow] [max_parallel]
 ```
 
 | argument/flag | required | default | description |
@@ -1523,6 +1854,7 @@ theforge task run [help] [root] [json] [debug] <intent> [target] [provider] [max
 | `intent` | yes | — | — |
 | `target` | no | — | path the specialist analyzes (default: root) |
 | `provider` | no | — | pin one specialist |
+| `workflow` | no | — | pin a workflow id when routing is ambiguous |
 | `max_parallel` | no | — | — |
 
 <!-- keep:start -->
@@ -1532,6 +1864,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ## trace
 
 ### `trace`
+
+**para que:** the run's local trace: what happened, span by span (explain answers why)
+
+- **por que:** o trace local do run, span por span — o que aconteceu
+- **quando usar:** depurar uma execução (explain responde porquê, trace mostra o quê)
 
 **Syntax**
 
@@ -1555,6 +1892,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 ### `workspace`
 
+**para que:** workspace description
+
+- **por que:** descrição e administração do workspace `.forge/`
+- **quando usar:** configurar/inspecionar o workspace atual
+
 **Syntax**
 
 ```text
@@ -1570,6 +1912,11 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
 ### `workspace show`
+
+**para que:** describe the workspace (cached manifests only, no provider)
+
+- **por que:** descrição e administração do workspace `.forge/`
+- **quando usar:** configurar/inspecionar o workspace atual
 
 **Syntax**
 
