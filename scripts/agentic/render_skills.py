@@ -42,6 +42,7 @@ the drift gate the manual mirrors never had.
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 import tomllib
@@ -127,6 +128,40 @@ def _resolve_host_blocks(body: str, host: str) -> str:
     return resolved
 
 
+_MD_LINK = re.compile(r"(\[[^\]]*\]\()([^)\s]+)((?:\s+\"[^\"]*\")?\))")
+
+
+def _rewrite_links(body: str, *, src_dir: Path, out_dir: Path) -> str:
+    """Re-relativize inline links that resolve inside the repo.
+
+    Canonical skills live at ``agentic/skills/<name>.md`` (depth 2); mirrors
+    render at ``.claude/skills/<name>/SKILL.md`` (depth 3). A verbatim copy
+    breaks relative doc links — e.g. ``../../docs/x.md`` must become
+    ``../../../docs/x.md``. External/absolute/anchor links pass through.
+    Targets that don't resolve against the canonical dir are left as-is.
+    """
+
+    def fix(match: re.Match[str]) -> str:
+        target = match.group(2)
+        if target.startswith(("http://", "https://", "mailto:", "#", "/")):
+            return match.group(0)
+        path_part, sep, frag = target.partition("#")
+        resolved = (src_dir / path_part).resolve()
+        try:
+            resolved.relative_to(ROOT)
+        except ValueError:
+            return match.group(0)
+        if not resolved.exists():
+            return match.group(0)
+        new_target = os.path.relpath(
+            str(resolved), str(out_dir.resolve())).replace("\\", "/")
+        if frag:
+            new_target += "#" + frag
+        return match.group(1) + new_target + match.group(3)
+
+    return _MD_LINK.sub(fix, body)
+
+
 def _split_overview(body: str) -> tuple[str, str]:
     match = OVERVIEW.search(body)
     if not match:
@@ -153,20 +188,22 @@ def _freshness_marker(src: SkillSource) -> str:
     return "<!-- forge:freshness " + " ".join(parts) + " -->\n"
 
 
-def render_claude(src: SkillSource) -> str:
+def render_claude(src: SkillSource, out_dir: Path) -> str:
     lines = ["---", f"name: {src.name}", f"description: {src.description}"]
     if src.allowed_tools:
         lines.append(f"allowed-tools: {src.allowed_tools}")
     if src.argument_hint:
         lines.append(f"argument-hint: {src.argument_hint}")
     lines.append("---")
+    body = _rewrite_links(src.body, src_dir=SOURCES, out_dir=out_dir)
     return (
-        "\n".join(lines) + "\n" + _resolve_host_blocks(src.body, "claude") + _freshness_marker(src)
+        "\n".join(lines) + "\n" + _resolve_host_blocks(body, "claude") + _freshness_marker(src)
     )
 
 
-def render_envelope(src: SkillSource, host: str) -> str:
-    body = _resolve_host_blocks(src.body, host)
+def render_envelope(src: SkillSource, host: str, out_dir: Path) -> str:
+    body = _rewrite_links(src.body, src_dir=SOURCES, out_dir=out_dir)
+    body = _resolve_host_blocks(body, host)
     overview, rest = _split_overview(body)
     return (
         f"---\nname: {src.name}\ndescription: {src.description}\n---\n\n"
@@ -189,10 +226,13 @@ def render_openai_yaml(src: SkillSource) -> str:
 def render_all(src: SkillSource) -> dict[str, str]:
     """repo-relative output path → content."""
     return {
-        f".claude/skills/{src.name}/SKILL.md": render_claude(src),
-        f".agents/skills/{src.name}/SKILL.md": render_envelope(src, "codex"),
+        f".claude/skills/{src.name}/SKILL.md": render_claude(
+            src, ROOT / ".claude" / "skills" / src.name),
+        f".agents/skills/{src.name}/SKILL.md": render_envelope(
+            src, "codex", ROOT / ".agents" / "skills" / src.name),
         f".agents/skills/{src.name}/agents/openai.yaml": render_openai_yaml(src),
-        f".devin/skills/{src.name}/SKILL.md": render_envelope(src, "devin"),
+        f".devin/skills/{src.name}/SKILL.md": render_envelope(
+            src, "devin", ROOT / ".devin" / "skills" / src.name),
     }
 
 

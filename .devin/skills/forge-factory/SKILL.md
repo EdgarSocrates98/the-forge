@@ -6,7 +6,7 @@ description: Loop Factory spec queue in this repository: factory/specs/{inbox,ac
 # forge-factory
 
 <background_information>
-Loop Factory is this repo's operational task queue ([docs/loop-factory.md](../../docs/loop-factory.md), ADR 0057). A task is a Markdown spec; its folder is its state. Agents implement and verify — humans decide what to build and what to accept.
+Loop Factory is this repo's operational task queue ([docs/loop-factory.md](../../../docs/loop-factory.md), ADR 0057). A task is a Markdown spec; its folder is its state. Agents implement and verify — humans decide what to build and what to accept.
 </background_information>
 
 <instructions>

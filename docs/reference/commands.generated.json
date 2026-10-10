@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-10T01:09:26Z",
+  "generated_at": "2026-10-10T09:50:41Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 75,
   "commands": [
@@ -2675,6 +2675,17 @@
           "choices": null,
           "positional": false,
           "help": "pin one specialist"
+        },
+        {
+          "name": "workflow",
+          "flags": [
+            "--workflow"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "pin a workflow id when routing is ambiguous"
         }
       ]
     },
@@ -2757,6 +2768,17 @@
           "choices": null,
           "positional": false,
           "help": "pin one specialist"
+        },
+        {
+          "name": "workflow",
+          "flags": [
+            "--workflow"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "pin a workflow id when routing is ambiguous"
         },
         {
           "name": "max_parallel",

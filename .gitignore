@@ -34,3 +34,4 @@ factory/reviews/*
 factory/logs/*
 !factory/logs/.gitkeep
 .pytest-tmp/
+uv.lock
