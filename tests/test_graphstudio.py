@@ -360,3 +360,33 @@ def test_view_from_cli_degrades_honestly(tmp_path):
     )
     view, reason = _view_from_cli(refused, "x", timeout=10)
     assert view is None and reason == "refused X-NO-GRAPH"
+
+
+# -- studio assets -------------------------------------------------------------
+
+
+def test_studio_inline_script_parses(tmp_path):
+    """The embedded Studio ships one inline <script> — it must be valid JS.
+
+    A real DOM smoke needs a browser harness we don't have; node --check
+    is the cheap honest layer that catches a mangled template.
+    """
+    import re
+    import shutil
+    import subprocess
+
+    from theforge.graphstudio import STUDIO_HTML
+
+    node = shutil.which("node")
+    if node is None:
+        import pytest
+
+        pytest.skip("node not installed")
+    m = re.search(r"<script>(.*)</script>", STUDIO_HTML, re.DOTALL)
+    assert m, "STUDIO_HTML has no inline script"
+    js = tmp_path / "studio.js"
+    js.write_text(m.group(1), encoding="utf-8")
+    proc = subprocess.run(
+        [node, "--check", str(js)], capture_output=True, text=True, timeout=30
+    )
+    assert proc.returncode == 0, proc.stderr

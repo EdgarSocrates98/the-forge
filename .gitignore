@@ -33,3 +33,4 @@ factory/reviews/*
 !factory/reviews/.gitkeep
 factory/logs/*
 !factory/logs/.gitkeep
+.pytest-tmp/
