@@ -18,8 +18,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 from theforge import _installkit as kit
 from theforge.contracts.base import from_dict
 from theforge.contracts.specialist import AgenticManifest
@@ -89,7 +87,11 @@ def test_cli_entry_shape():
         module, _, fn = manifest.cli_entry.partition(":")
         assert module and fn and fn.isidentifier()
         # import check only when the package is trivially importable
-        pkg_root = checkout / "src" if (checkout / "src" / module.split(".")[0]).is_dir() else checkout
+        pkg_root = (
+            checkout / "src"
+            if (checkout / "src" / module.split(".")[0]).is_dir()
+            else checkout
+        )
         probe = f"import sys; sys.path.insert(0, {str(pkg_root)!r}); import {module.split('.')[0]}"
         import subprocess
 
