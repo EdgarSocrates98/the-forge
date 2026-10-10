@@ -9,7 +9,7 @@ argument-hint: [spec-id|scan]
 
 ## Overview
 
-Loop Factory is this repo's operational task queue ([docs/loop-factory.md](../../docs/loop-factory.md), ADR 0057). A task is a Markdown spec; its folder is its state. Agents implement and verify — humans decide what to build and what to accept.
+Loop Factory is this repo's operational task queue ([docs/loop-factory.md](../../../docs/loop-factory.md), ADR 0057). A task is a Markdown spec; its folder is its state. Agents implement and verify — humans decide what to build and what to accept.
 
 ## Workflow
 
