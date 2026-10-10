@@ -189,3 +189,83 @@ def test_install_bare_non_tty_is_usage_error(capsys):
     rc = main(["install"])
     assert rc != 0
     assert "install apply" in capsys.readouterr().err
+
+
+# -- kit quality fixes ---------------------------------------------------------
+
+
+def test_cell_width_wide_and_combining():
+    from theforge.ui.kit import cell_width
+
+    assert cell_width("abc") == 3
+    assert cell_width("あいう") == 6  # CJK wide
+    assert cell_width("éx") == 2   # combining accent
+    assert cell_width("\x1b[32mOK\x1b[0m") == 2  # escapes don't count
+
+
+def test_ellipsize_counts_cells_not_chars():
+    from theforge.ui.kit import _ellipsize
+
+    ctx = UIContext(interactive=False, color=False, unicode=True, width=10)
+    # budget 8 cells: 3 CJK chars (6) + ellipsis (1) = 7; a 4th would be 9
+    assert _ellipsize(ctx, "あいうえおか") == "あいう…"
+
+
+def test_status_table_columns_align_with_color(capsys):
+    """ANSI-colored icons must not shift the detail column."""
+    import re
+
+    from theforge.ui.kit import status_table
+
+    ctx = UIContext(interactive=False, color=True, unicode=False, width=80)
+    status_table([("a", "HEALTHY", "x"), ("bb", "FAIL", "y")], ctx=ctx)
+    lines = [ln for ln in capsys.readouterr().out.splitlines() if ln.strip()]
+    stripped = [re.sub(r"\x1b\[[0-9;]*m", "", ln) for ln in lines]
+    # detail column starts at the same offset on both rows
+    offs = [stripped[0].index("x"), stripped[1].index("y")]
+    assert offs[0] == offs[1]
+
+
+def test_select_windows_long_lists(monkeypatch, capsys):
+    """20 options on an 8-line terminal must not draw past the screen."""
+    import theforge.ui.kit as kit
+
+    keys = iter(["\xe0", "P"] * 18 + ["\r"])  # to the bottom, then enter
+    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    ctx = UIContext(
+        interactive=True, color=False, unicode=False, width=80, height=8,
+    )
+    picked = kit.select(
+        "pick", [f"opt-{i}" for i in range(20)], ctx=ctx)
+    assert picked == 18
+    frames = capsys.readouterr().out.split("pick")  # each frame opens with title
+    last = frames[-1]
+    assert last.count("opt-") == 3  # avail = height-5 windowed
+    assert "more" in last  # scroll markers present
+
+
+def test_select_jk_aliases(monkeypatch):
+    import theforge.ui.kit as kit
+
+    keys = iter(["j", "k", "j", "\r"])  # down, up, down, enter → 1
+    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    ctx = UIContext(interactive=True, color=False, unicode=False, width=80)
+    assert kit.select("pick", ["a", "b", "c"], ctx=ctx) == 1
+
+
+def test_dumb_terminal_no_cursor_escapes(monkeypatch, capsys):
+    """ansi=False ctx must not emit cursor-addressing escapes."""
+    import theforge.ui.kit as kit
+
+    keys = iter(["\r"])
+    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    ctx = UIContext(
+        interactive=True, color=False, unicode=False, width=80, ansi=False,
+    )
+    assert kit.select("pick", ["a", "b"], ctx=ctx) == 0
+    out = capsys.readouterr().out
+    assert "\x1b[" not in out  # full re-print, no moves
+    assert out.count("pick") == 1  # single frame printed once
