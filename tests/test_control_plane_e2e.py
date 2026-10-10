@@ -101,7 +101,8 @@ def test_cli_subprocess_specialists_list():
     import os
 
     proc = subprocess.run(
-        [sys.executable, "-m", "theforge", "specialists", "list", "--root", str(WORKSPACE), "--json"],
+        [sys.executable, "-m", "theforge", "specialists", "list",
+         "--root", str(WORKSPACE), "--json"],
         capture_output=True,
         text=True,
         env={**os.environ, **env},
