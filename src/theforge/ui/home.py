@@ -93,7 +93,23 @@ def _run_task(ctx: UIContext) -> None:
     for v in views:
         if v.manifest is None or not v.manifest.workflows:
             continue
-        wf = v.manifest.workflows[0]
+        picked = specialists.select_workflow(v.manifest.workflows, intent)
+        if picked == "ambiguous":
+            from theforge.ui.kit import select
+
+            chosen = select(
+                f"{v.lifecycle.provider} — which workflow?",
+                [
+                    f"{w.id} — {w.description or w.mode}"
+                    for w in v.manifest.workflows
+                ],
+                ctx=ctx,
+            )
+            if chosen is None:
+                continue
+            wf = v.manifest.workflows[chosen]
+        else:
+            wf = picked
         argv = specialists.resolve_command(wf.command, view=v, target=str(Path.cwd()))
         if argv is None:
             continue

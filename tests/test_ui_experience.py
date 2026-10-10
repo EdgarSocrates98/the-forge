@@ -269,3 +269,45 @@ def test_dumb_terminal_no_cursor_escapes(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "\x1b[" not in out  # full re-print, no moves
     assert out.count("pick") == 1  # single frame printed once
+
+
+def test_wizard_components_and_none_hosts_reach_install_fn(monkeypatch):
+    """GAP-002/003 regression — explicit contract: components always
+    forwarded (no signature probing); zero chosen hosts -> "none",
+    never silently "all"."""
+    import theforge.ui.kit as kit
+    import theforge.ui.wizard as wiz
+    from theforge.ui.wizard import run_wizard
+
+    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(wiz, "env_check_rows", lambda: [])
+    keys = iter(["\r"] * 4)  # scope, profile, components, hosts
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "")  # confirm -> default yes
+    calls: list[dict] = []
+    ctx = UIContext(interactive=True, color=False, unicode=True, width=80)
+    rc = run_wizard(
+        forge_name="x",
+        install_fn=lambda **kw: calls.append(kw) or {"status": "completed"},
+        ctx=ctx,
+    )
+    assert rc == 0
+    assert len(calls) == 2  # dry-run plan + apply
+    for call in calls:
+        assert call["host"] == "none"
+        assert "components" in call
+    assert calls[0]["dry_run"] is True
+    assert calls[1]["yes"] is True and calls[1]["dry_run"] is False
+
+
+def test_select_workflow_single_exact_scored_ambiguous():
+    """GAP-004 — deterministic pick; ambiguity surfaces, never a guess."""
+    from theforge.contracts.specialist import DelegationEntry
+    from theforge.specialists import select_workflow
+
+    wf_a = DelegationEntry(id="analyze", mode="cli", description="analyze a project")
+    wf_b = DelegationEntry(id="doctor", mode="cli", description="diagnose install health")
+    assert select_workflow([wf_a], "anything") is wf_a
+    assert select_workflow([wf_a, wf_b], "run doctor") is wf_b
+    assert select_workflow([wf_a, wf_b], "analyze the repo") is wf_a
+    assert select_workflow([wf_a, wf_b], "zqx unrelated") == "ambiguous"

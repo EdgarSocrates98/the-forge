@@ -346,3 +346,30 @@ def test_workspace_manifest_merges_incrementally(forge_home: Path, tmp_path: Pat
     merged = json.loads((ws / ".forge" / "workspace-install.json").read_text("utf-8"))
     assert merged["created_at"] == first["created_at"]
     assert [p["path"] for p in merged["projects"]] == ["backend-api", "spark-jobs"]
+
+
+def test_hosts_contract_all_none_csv_unknown(tmp_path: Path) -> None:
+    """GAP-003 contract: none -> zero hosts; csv subset validated; unknown
+    -> E_HOST refusal with the known set in the message."""
+    from theforge._installkit import InstallError
+    from theforge.install import render, service
+
+    assert service._hosts("all") == render.HOSTS
+    assert service._hosts("none") == ()
+    assert service._hosts(None) == ()
+    first = render.HOSTS[0]
+    assert service._hosts(first) == (first,)
+    if len(render.HOSTS) > 1:
+        assert service._hosts(f"{first},{render.HOSTS[1]}") == (first, render.HOSTS[1])
+    with pytest.raises(InstallError):
+        service._hosts("emacs")
+
+
+def test_wizard_opt_out_installs_no_host_assets(tmp_path: Path) -> None:
+    """End-to-end of the contract: host='none' must not write any host
+    mirror dir — the bug wrote all of them."""
+    target = tmp_path / "consumer"
+    target.mkdir()
+    receipt = service.install(scope="project", root=target, yes=True, host="none")
+    assert receipt["status"] == "completed"
+    assert not (target / ".mcp.json").exists()

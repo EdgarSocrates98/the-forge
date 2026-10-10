@@ -80,11 +80,21 @@ def _ctx(
 
 
 def _hosts(host: str | None) -> tuple[str, ...]:
-    if not host or host == "all":
+    """Resolve o contrato de hosts: ``all`` → todos; ``none``/ausente →
+    nenhum host configurado (opt-out explícito, nunca "todos"); um nome ou
+    csv de nomes → o subconjunto validado."""
+    if host == "all":
         return render.HOSTS
-    if host not in render.HOSTS:
-        raise kit.InstallError(kit.E_HOST, f"host {host!r}; conhecidos: {list(render.HOSTS)} + all")
-    return (host,)
+    if not host or host == "none":
+        return ()
+    names = [h.strip() for h in host.split(",") if h.strip()]
+    unknown = [h for h in names if h not in render.HOSTS]
+    if unknown:
+        raise kit.InstallError(
+            kit.E_HOST,
+            f"host {unknown[0]!r}; conhecidos: {list(render.HOSTS)} + all,none",
+        )
+    return tuple(dict.fromkeys(names))
 
 
 def install(

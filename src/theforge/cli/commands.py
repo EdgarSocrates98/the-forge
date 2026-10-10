@@ -1442,21 +1442,38 @@ def _save_delegation(root: Path, result: Any) -> None:
     path.write_text(json.dumps(dataclasses.asdict(result), indent=2), encoding="utf-8")
 
 
-def cmd_task_plan(args: argparse.Namespace) -> int:
-    """``task plan <intent>`` — discover candidates, build delegation requests."""
+def _workflow_requests(args, root) -> tuple[list, list[str]]:
+    """Seleciona workflow por contexto (nunca `workflows[0]` — GAP-004) e
+    resolve argv por especialista. Ambiguidade vira nota honesta com os
+    ids elegíveis; `--workflow <id>` resolve explicitamente."""
     from theforge import delegation
     from theforge import specialists as spec_mod
 
-    root = _root(args)
-    views = spec_mod.collect(workspace_root=root, registered=_registered_ids(args))
-    requests = []
-    for v in views:
+    requests, notes = [], []
+    for v in spec_mod.collect(workspace_root=root, registered=_registered_ids(args)):
         if getattr(args, "provider", None) and v.lifecycle.provider != args.provider:
             continue
         manifest = v.manifest
         if manifest is None or not manifest.workflows:
             continue
-        wf = manifest.workflows[0]
+        pinned = getattr(args, "workflow", None)
+        if pinned:
+            wf = next((w for w in manifest.workflows if w.id == pinned), None)
+            if wf is None:
+                ids = [w.id for w in manifest.workflows]
+                raise UsageError(
+                    f"{v.lifecycle.provider}: workflow {pinned!r} desconhecido; ids: {ids}"
+                )
+        else:
+            picked = spec_mod.select_workflow(manifest.workflows, args.intent)
+            if picked == "ambiguous":
+                ids = [w.id for w in manifest.workflows]
+                notes.append(
+                    f"{v.lifecycle.provider}: ambiguous — workflows {ids}; "
+                    "disambiguate with --workflow <id>"
+                )
+                continue
+            wf = picked
         argv = spec_mod.resolve_command(wf.command, view=v, target=args.target or str(root))
         if argv is None:
             continue
@@ -1469,6 +1486,13 @@ def cmd_task_plan(args: argparse.Namespace) -> int:
                 expected_outputs=[wf.description] if wf.description else [],
             )
         )
+    return requests, notes
+
+
+def cmd_task_plan(args: argparse.Namespace) -> int:
+    """``task plan <intent>`` — discover candidates, build delegation requests."""
+    root = _root(args)
+    requests, notes = _workflow_requests(args, root)
     data = {
         "intent": args.intent,
         "candidates": [
@@ -1477,6 +1501,8 @@ def cmd_task_plan(args: argparse.Namespace) -> int:
         ],
         "note": "plan only — run `task run` to execute",
     }
+    if notes:
+        data["notes"] = notes
     _emit(args, data, render.task_result)
     return 0
 
@@ -1484,29 +1510,11 @@ def cmd_task_plan(args: argparse.Namespace) -> int:
 def cmd_task_run(args: argparse.Namespace) -> int:
     """``task run <intent>`` — delegate to discovered specialists via real argv."""
     from theforge import delegation
-    from theforge import specialists as spec_mod
 
     root = _root(args)
-    views = spec_mod.collect(workspace_root=root, registered=_registered_ids(args))
-    requests = []
-    for v in views:
-        if getattr(args, "provider", None) and v.lifecycle.provider != args.provider:
-            continue
-        manifest = v.manifest
-        if manifest is None or not manifest.workflows:
-            continue
-        wf = manifest.workflows[0]
-        argv = spec_mod.resolve_command(wf.command, view=v, target=args.target or str(root))
-        if argv is None:
-            continue
-        requests.append(
-            delegation.new_request(
-                intent=args.intent,
-                provider=v.lifecycle.provider,
-                execution_mode=wf.mode,
-                command=argv,
-            )
-        )
+    requests, notes = _workflow_requests(args, root)
+    for n in notes:
+        print(f"  note: {n}", file=sys.stderr)
     if not requests:
         raise UsageError(
             "no delegable specialists — none declare an agentic manifest with executable workflows"
