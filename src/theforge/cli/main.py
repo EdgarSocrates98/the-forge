@@ -348,6 +348,34 @@ def build_parser() -> argparse.ArgumentParser:
         "observe/engineer/verify capabilities derived from "
         "declared produces/consumes/can_verify relations",
     )
+    graph.add_argument(
+        "--view",
+        action="store_true",
+        help="emit the ForgeGraphView/v1 document (Graph Studio contract) "
+        "instead of the capability listing",
+    )
+    graph.add_argument(
+        "--federated",
+        action="store_true",
+        help="collect views from every specialist checkout that exposes "
+        "`graph view --json` and merge them namespaced by provider",
+    )
+    graph.add_argument(
+        "--ui",
+        action="store_true",
+        help="open the local Graph Studio explorer in a browser",
+    )
+    graph.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="with --ui: serve without opening a browser (SSH/remote)",
+    )
+    graph.add_argument(
+        "--port",
+        type=int,
+        default=0,
+        help="with --ui: port to bind (default ephemeral)",
+    )
     graph.set_defaults(handler=commands.cmd_graph)
 
     providers = sub.add_parser("providers", help="provider operations").add_subparsers(

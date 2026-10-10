@@ -732,6 +732,8 @@ def cmd_graph(args: argparse.Namespace) -> int:
     from theforge.capability_graph import build_capability_graph
 
     root = _root(args)
+    if getattr(args, "view", False) or getattr(args, "ui", False) or getattr(args, "federated", False):
+        return _cmd_graph_view(args, root)
     registry = Registry(find_forge_dir(root))
     records = registry.cached_records()
     # ``.``: the observed half of the graph (technologies -> relevant_to) needs
@@ -769,6 +771,43 @@ def cmd_graph(args: argparse.Namespace) -> int:
     _warn(registry)
     _emit(args, redact(data), render.graph)
     return 0
+
+
+def _cmd_graph_view(args: argparse.Namespace, root: Path) -> int:
+    """``theforge graph --view/--ui/--federated``: ForgeGraphView surface.
+
+    --view: emit the view JSON. --ui: serve the local studio. --federated:
+    collect sibling views through ``<cli> graph view --json`` and merge
+    them provider-namespaced (never silently unified).
+    """
+    from theforge import graphview
+    from theforge.graphstudio import open_studio
+
+    if getattr(args, "federated", False):
+        views, notes = graphview.federated_views(workspace_root=root)
+        for note in notes:
+            print(f"  note: {note}", file=sys.stderr)
+        if getattr(args, "ui", False):
+            return open_studio(
+                [graphview.federated_merge(views)],
+                open_browser=not getattr(args, "no_browser", False),
+                port=getattr(args, "port", 0),
+            )
+        _emit(args, {"views": [v.to_dict() for v in views], "notes": notes}, _dump)
+        return 0
+    view = graphview.capability_view(root=root)
+    if getattr(args, "ui", False):
+        return open_studio(
+            [view],
+            open_browser=not getattr(args, "no_browser", False),
+            port=getattr(args, "port", 0),
+        )
+    _emit(args, view.to_dict(), _dump)
+    return 0
+
+
+def _dump(data: dict[str, Any]) -> str:
+    return json.dumps(data, indent=2, sort_keys=True, default=str)
 
 
 def _cap_match(node_id: str, ref: str) -> bool:
