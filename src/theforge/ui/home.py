@@ -212,6 +212,9 @@ def run_home(*, ctx: UIContext | None = None) -> int:
     ctx = ctx or UIContext.detect()
     if not ctx.interactive:
         raise NonInteractive("home requires a TTY")
+    if ctx.ansi:  # full-screen path; ANSI-free terminals keep the inline kit
+        from theforge.ui.tui import run_tui
+        return run_tui(ctx=ctx)
     actions = {
         "specialists": _act_specialists,
         "run a task": _run_task,
