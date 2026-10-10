@@ -312,6 +312,14 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument(
                 "--profile", default="recommended", choices=("minimal", "recommended", "full")
             )
+            p.add_argument(
+                "--components",
+                default=None,
+                metavar="LIST",
+                help="comma-separated optional components "
+                "(skills,agents,mcp,tui,graph-studio) — overrides the "
+                "profile's component set",
+            )
         if name in ("apply", "repair", "uninstall", "update", "auto"):
             p.add_argument("--dry-run", action="store_true")
         if name == "uninstall":
@@ -347,6 +355,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="the domain mesh projection: per domain, the "
         "observe/engineer/verify capabilities derived from "
         "declared produces/consumes/can_verify relations",
+    )
+    graph.add_argument(
+        "--view",
+        action="store_true",
+        help="emit the ForgeGraphView/v1 document (Graph Studio contract) "
+        "instead of the capability listing",
+    )
+    graph.add_argument(
+        "--federated",
+        action="store_true",
+        help="collect views from every specialist checkout that exposes "
+        "`graph view --json` and merge them namespaced by provider",
+    )
+    graph.add_argument(
+        "--ui",
+        action="store_true",
+        help="open the local Graph Studio explorer in a browser",
+    )
+    graph.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="with --ui: serve without opening a browser (SSH/remote)",
+    )
+    graph.add_argument(
+        "--port",
+        type=int,
+        default=0,
+        help="with --ui: port to bind (default ephemeral)",
     )
     graph.set_defaults(handler=commands.cmd_graph)
 
