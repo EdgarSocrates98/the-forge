@@ -17,13 +17,18 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from theforge import _installkit as kit
 from theforge.contracts.base import from_dict
-from theforge.contracts.specialist import AgenticManifest, SpecialistLifecycle
+from theforge.contracts.specialist import (
+    AgenticManifest,
+    DelegationEntry,
+    SpecialistLifecycle,
+)
 
 
 def catalog_ids(workspace_root: Path | None = None) -> list[str]:
@@ -276,3 +281,60 @@ def to_rows(views: list[SpecialistView]) -> list[dict[str, Any]]:
         }
         for v in views
     ]
+
+
+_STOPWORDS = frozenset(
+    [
+        "a", "o", "as", "os", "um", "uma", "de", "do", "da", "em", "no", "na",
+        "para", "por", "com", "sem", "e", "ou", "que", "the", "an", "and",
+        "or", "for", "to", "in", "on", "at", "is", "it", "my", "me", "run",
+        "execute", "make", "create",
+    ]
+)
+
+
+def _intent_tokens(intent: str) -> list[str]:
+    import re
+
+    return [
+        t
+        for t in re.findall(r"[a-z0-9_-]+", intent.lower())
+        if t not in _STOPWORDS and len(t) > 1
+    ]
+
+
+def _wf_text(wf: DelegationEntry) -> str:
+    return f"{wf.id} {wf.description}".lower()
+
+
+def select_workflow(
+    workflows: Sequence[DelegationEntry], intent: str
+) -> DelegationEntry | str:
+    """Contextual pick among a manifest's workflows — deterministic, never
+    a blind ``workflows[0]`` (GAP-004).
+
+    Um só workflow → ele mesmo. Match exato de `id` nos tokens → esse
+    workflow. Caso contrário, score por overlap de tokens do intent com
+    `id`+`description`; vitória clara → vencedor, empate/zero → a literal
+    ``"ambiguous"`` (nunca um chute — a chamada decide como resolver:
+    `--workflow <id>` na CLI, menu `select` na TUI).
+    """
+    if len(workflows) == 1:
+        return workflows[0]
+    tokens = _intent_tokens(intent)
+    if tokens:
+        exact = [w for w in workflows if w.id.lower() in tokens]
+        if len(exact) == 1:
+            return exact[0]
+    scored = sorted(
+        (
+            (sum(2 if t in w.id.lower() else 1 for t in tokens if t in _wf_text(w)), w)
+            for w in workflows
+        ),
+        key=lambda s: -s[0],
+    )
+    if not scored or scored[0][0] == 0:
+        return "ambiguous"
+    if len(scored) > 1 and scored[0][0] == scored[1][0]:
+        return "ambiguous"
+    return scored[0][1]
