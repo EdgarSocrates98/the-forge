@@ -41,8 +41,10 @@ federation via the-forge, optional install component, docs.
 
 ## UNVERIFIED / gaps
 
-- Federated UI smoke on a multi-provider workspace (argv discovery path
-  implemented; merged view tested with fixture providers).
+- Federated multi-provider workspace E2E: the subprocess boundary
+  (`_view_from_cli` against a real fake checkout) is now covered by
+  `test_view_from_cli_*`; full discovery sweep on a live workspace
+  remains manual.
 - Browser interaction is manual-only (no DOM test harness).
 - Snapshot/timeline/impact UI controls render only when engine
   capabilities advertise them — currently only platform-forge could.

@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-09T23:15:46Z",
+  "generated_at": "2026-10-10T01:09:26Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 75,
   "commands": [
@@ -1359,6 +1359,17 @@
           "help": null
         },
         {
+          "name": "LIST",
+          "flags": [
+            "--components"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "comma-separated optional components (skills,agents,mcp,tui,graph-studio) — overrides the profile's component set"
+        },
+        {
           "name": "dry_run",
           "flags": [
             "--dry-run"
@@ -2054,6 +2065,61 @@
           "choices": null,
           "positional": false,
           "help": "the domain mesh projection: per domain, the observe/engineer/verify capabilities derived from declared produces/consumes/can_verify relations"
+        },
+        {
+          "name": "view",
+          "flags": [
+            "--view"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "emit the ForgeGraphView/v1 document (Graph Studio contract) instead of the capability listing"
+        },
+        {
+          "name": "federated",
+          "flags": [
+            "--federated"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "collect views from every specialist checkout that exposes `graph view --json` and merge them namespaced by provider"
+        },
+        {
+          "name": "ui",
+          "flags": [
+            "--ui"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "open the local Graph Studio explorer in a browser"
+        },
+        {
+          "name": "no_browser",
+          "flags": [
+            "--no-browser"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "with --ui: serve without opening a browser (SSH/remote)"
+        },
+        {
+          "name": "port",
+          "flags": [
+            "--port"
+          ],
+          "required": false,
+          "default": "0",
+          "choices": null,
+          "positional": false,
+          "help": "with --ui: port to bind (default ephemeral)"
         }
       ]
     },
