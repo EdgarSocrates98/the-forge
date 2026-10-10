@@ -204,6 +204,10 @@ class InstallContext:
     hosts: tuple[str, ...]
     dry_run: bool = False
     ledger: Ledger | None = None
+    # Optional-component selection (wizard/CLI). ``asset_kinds`` narrows the
+    # profile's kinds; other booleans (e.g. ``graph_studio``) are runtime
+    # flags persisted to ``components.json`` under state_dir.
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------
@@ -580,10 +584,60 @@ def profile_asset_kinds(profile: str) -> tuple[str, ...]:
     }[profile]
 
 
+def asset_kinds_for(ctx: InstallContext) -> tuple[str, ...]:
+    """Profile kinds narrowed by the component selection, when present."""
+    selected = ctx.options.get("asset_kinds")
+    if selected is None:
+        return profile_asset_kinds(ctx.profile)
+    return tuple(selected)
+
+
+def components_path(state_dir: Path) -> Path:
+    """Where the optional-component selection is persisted."""
+    return state_dir / "components.json"
+
+
+# Optional components selectable beyond the profile. Public names map to
+# asset kinds; "graph-studio"/"tui" are runtime flags persisted to
+# components.json. Core kinds are always installed.
+COMPONENT_KINDS = {"skills": "skill", "agents": "agent", "mcp": "mcp"}
+CORE_KINDS = ("config", "marker", "state")
+OPTIONAL_COMPONENTS = ("skills", "agents", "mcp", "tui", "graph-studio")
+
+
+def component_options(
+    profile: str, components: tuple[str, ...] | list[str] | None
+) -> dict[str, Any]:
+    """Component list → InstallContext.options. None = profile default."""
+    if components is None:
+        return {}
+    selected = set(components)
+    unknown = selected - set(OPTIONAL_COMPONENTS)
+    if unknown:
+        raise InstallError(
+            E_PROFILE,
+            f"unknown components {sorted(unknown)}; known: {list(OPTIONAL_COMPONENTS)}",
+        )
+    kinds = list(CORE_KINDS)
+    for comp, kind in COMPONENT_KINDS.items():
+        if comp in selected and kind not in kinds:
+            kinds.append(kind)
+    return {
+        "asset_kinds": kinds,
+        "graph_studio": "graph-studio" in selected,
+        "tui": "tui" in selected,
+    }
+
+
+def load_components(state_dir: Path) -> dict[str, Any]:
+    """{} when never recorded — absence means default (all enabled)."""
+    return _load_json(components_path(state_dir), {})
+
+
 def plan(ctx: InstallContext) -> dict[str, Any]:
     """Pure plan — what *would* change. Never writes."""
     assets = ctx.spec.render_assets(ctx) if ctx.spec.render_assets else {}
-    kinds = set(profile_asset_kinds(ctx.profile))
+    kinds = set(asset_kinds_for(ctx))
     files = []
     for rel in sorted(assets):
         kind = _asset_kind(rel)
@@ -610,6 +664,7 @@ def plan(ctx: InstallContext) -> dict[str, Any]:
         "operation": "install",
         "scope": ctx.scope,
         "profile": ctx.profile,
+        "components": dict(ctx.options) or None,
         "target_root": str(ctx.root),
         "hosts": list(ctx.hosts),
         "dry_run": ctx.dry_run,
@@ -684,7 +739,7 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
 
     try:
         assets = ctx.spec.render_assets(ctx) if ctx.spec.render_assets else {}
-        kinds = set(profile_asset_kinds(ctx.profile))
+        kinds = set(asset_kinds_for(ctx))
         ctx_bytes = {"skill": 0, "agent": 0, "managed": 0}
         for rel in sorted(assets):
             kind = _asset_kind(rel)
@@ -813,6 +868,11 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
         ) from exc
 
     ledger.save()
+    if ctx.options:
+        ctx.state_dir.mkdir(parents=True, exist_ok=True)
+        _atomic_write(
+            components_path(ctx.state_dir), _json_bytes(dict(ctx.options))
+        )
     written = sum(1 for f in files if f.get("action") in ("created", "updated"))
     checks.append({"id": "files-written", "status": "PASS", "detail": f"{written} writes"})
     receipt = {
@@ -822,6 +882,7 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
         "operation": "install",
         "scope": ctx.scope,
         "profile": ctx.profile,
+        "components": dict(ctx.options) or None,
         "target_root": str(ctx.root),
         "host": ",".join(ctx.hosts) or None,
         "dry_run": False,

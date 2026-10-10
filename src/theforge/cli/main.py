@@ -727,9 +727,12 @@ def _add_requirement_args(
 
 
 def _tolerate_unencodable_output() -> None:
+    # JSON output intentionally uses ensure_ascii=False (pt-BR receipts
+    # stay readable); a cp1252 console would mojibake them — force UTF-8
+    # at the process boundary so the byte stream is always valid.
     for stream in (sys.stdout, sys.stderr):
         with contextlib.suppress(AttributeError, ValueError, OSError):
-            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
 
 
 def _stage(args: argparse.Namespace) -> str:
