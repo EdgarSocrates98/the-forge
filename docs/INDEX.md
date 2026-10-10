@@ -77,6 +77,13 @@ _Task-oriented guides and workflows._
 - [Instalação portátil — the-forge](installation/portable-installation.md)
 - [Instalação em workspace — the-forge](installation/workspace-installation.md)
 
+### learn/
+
+- [The Forge — trilha de aprendizado](learn/README.md)
+- [Receita — delegar um intent ao especialista certo](learn/recipes/delegate-task.md)
+- [Receita — descobrir qual forja atende um requisito](learn/recipes/discover-capability.md)
+- [Receita — instalação governada (plano antes de mutação)](learn/recipes/governed-install.md)
+
 ### portable-installation/
 
 - [Portable Installation — docs](portable-installation/README.md)
@@ -408,6 +415,10 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Documentation quality report](knowledge-program/documentation-quality-report.md) `UNKNOWN`
 - [Duplicate content report](knowledge-program/duplicate-content-report.md) `UNKNOWN`
 - [Obsolete document report](knowledge-program/obsolete-document-report.md) `UNKNOWN`
+
+### learn/
+
+- [The Forge — do zero à execução multi-especialista](learn/zero-to-multi-specialist.md) `UNKNOWN`
 
 ### reports/
 
