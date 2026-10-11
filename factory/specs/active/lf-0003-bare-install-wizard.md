@@ -25,7 +25,6 @@ contract. Non-TTY must never wait or write.
 - cloud mutations;
 - host registration or MCP transport changes;
 - fullscreen TUI framework migration;
-- replication into sibling repos before pilot evidence passes.
 
 ## Invariants
 
@@ -54,4 +53,14 @@ V6: completion → doctor evidence when service supports it
 python -m pytest -q tests/test_install.py tests/test_ui_tui.py
 python -m ruff check sparkforge_aws/install/cli.py sparkforge_aws/adapters/cli.py tests/test_install.py
 ```
+
+## Evidence
+
+E1: bare TTY route → shared wizard; explicit flags → deterministic dispatch
+E2: non-TTY → structured refusal; stdin/file state untouched
+E3: dry-run → no lock, ledger or state directory
+E4: wizard → `profile` & `gateway_profile` independent
+E5: apply → doctor string/nested health envelope rendered
+E6: cancellation → `130` & no target mutation
+E7: real host handshake → UNVERIFIED when host/MCP extra absent
 
