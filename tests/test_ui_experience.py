@@ -301,6 +301,24 @@ def test_wizard_components_and_none_hosts_reach_install_fn(monkeypatch):
     assert calls[1]["yes"] is True and calls[1]["dry_run"] is False
 
 
+def test_recommended_wizard_selects_agents(monkeypatch):
+    import theforge.ui.wizard as wiz
+
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(wiz, "env_check_rows", lambda: [])
+    keys = iter(["\r", "\r", "\r", "\r"])
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "")
+    calls: list[dict] = []
+    ctx = UIContext(interactive=True, color=False, unicode=True, width=80)
+    assert wiz.run_wizard(
+        forge_name="x",
+        install_fn=lambda **kw: calls.append(kw) or {"status": "completed"},
+        ctx=ctx,
+    ) == 0
+    assert "agents" in calls[0]["components"]
+
+
 def test_select_workflow_single_exact_scored_ambiguous():
     """GAP-004 — deterministic pick; ambiguity surfaces, never a guess."""
     from theforge.contracts.specialist import DelegationEntry

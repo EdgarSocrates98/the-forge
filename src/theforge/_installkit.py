@@ -33,7 +33,7 @@ from typing import Any
 _INSTALLKIT_VERSION = "1.0.0"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "7d960bb98bbf7b1e"
+_SOURCE_SHA256 = "9c230ee2fafd1261"
 
 SCHEMA_MANIFEST = "forge/InstallationManifest/v1"
 SCHEMA_RECEIPT = "forge/InstallReceipt/v1"
@@ -579,7 +579,7 @@ def _host_dirs(host: str, scope: str) -> list[str]:
 def profile_asset_kinds(profile: str) -> tuple[str, ...]:
     return {
         "minimal": ("config", "mcp", "marker", "state"),
-        "recommended": ("config", "mcp", "marker", "state", "skill"),
+        "recommended": ("config", "mcp", "marker", "state", "skill", "agent"),
         "full": ("config", "mcp", "marker", "state", "skill", "agent"),
     }[profile]
 
