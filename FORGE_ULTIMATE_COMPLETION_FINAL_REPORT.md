@@ -89,7 +89,7 @@
 | platform-forge | 1025 passed / 0 failed |
 | forge-doctor-data | 2638 passed / 0 failed |
 | forge-doctor-api | 1763 passed / 37 skipped / 0 failed |
-| the-forge | 4853 tests / 1 failure → corrigida (canonical-cli docs) / 7 skipped; slices pós-federation-fix verdes |
+| the-forge | **4853 tests / 0 failures / 7 skipped** — rerun at HEAD incl. federation fixes (junitxml `tf-suite-final.xml`) |
 | spark-forge-aws | **14879 passed / 17 skipped / 0 failed** (1h21, junit log) |
 
 ## Limitações declaradas (não escondidas)
