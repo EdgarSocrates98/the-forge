@@ -7,7 +7,10 @@ import sys
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, cast
+
+if TYPE_CHECKING:
+    from theforge.contracts.specialist import DelegationRequest
 
 from theforge.adaptive import advance_experiment, build_context_roi, recommend_context_budget
 from theforge.cli import render
@@ -1377,13 +1380,24 @@ def cmd_specialists_doctor(args: argparse.Namespace) -> int:
     for v in views:
         checks: list[dict[str, Any]] = []
         mcp = v.mcp or {}
-        verify_tool = mcp.get("verify_tool")
-        if mcp.get("command"):
-            outcome = kit.mcp_verify(mcp["command"], verify_tool=verify_tool)
+        cmd = mcp.get("command") or ()
+        if cmd:
+            spec = kit.ForgeSpec(
+                forge_id=v.lifecycle.provider,
+                package=v.lifecycle.provider.replace("-", "_"),
+                distribution=v.lifecycle.provider,
+                cli_name=(v.cli or cmd[0]),
+                python_spec=">=3.10",
+                state_dir="",
+                mcp_command=tuple(cmd),
+                mcp_server_name=mcp.get("server_name"),
+                mcp_verify_tool=mcp.get("verify_tool"),
+            )
+            outcome = kit.mcp_verify(spec)
             checks.append(
                 {
                     "name": "mcp-handshake",
-                    "status": "PASS" if outcome.get("ok") else "FAIL",
+                    "status": str(outcome.get("status", "FAIL")),
                     "detail": outcome.get("detail"),
                 }
             )
@@ -1472,9 +1486,21 @@ def cmd_hosts_activate(args: argparse.Namespace) -> int:
     )
     mcp_result: bool | None = None
     mcp = installed[0].mcp or {}
-    if mcp.get("command"):
-        outcome = kit.mcp_verify(mcp["command"], verify_tool=mcp.get("verify_tool"))
-        mcp_result = bool(outcome.get("ok"))
+    mcp_cmd = mcp.get("command") or ()
+    if mcp_cmd:
+        spec = kit.ForgeSpec(
+            forge_id=provider,
+            package=provider.replace("-", "_"),
+            distribution=provider,
+            cli_name=mcp_cmd[0],
+            python_spec=">=3.10",
+            state_dir="",
+            mcp_command=tuple(mcp_cmd),
+            mcp_server_name=mcp.get("server_name"),
+            mcp_verify_tool=mcp.get("verify_tool"),
+        )
+        outcome = kit.mcp_verify(spec)
+        mcp_result = outcome.get("status") == "PASS"
     receipt = activation.evaluate_activation(
         plan,
         host_is_current_session=detection.current == args.host,
@@ -1513,14 +1539,17 @@ def _save_delegation(root: Path, result: Any) -> None:
     path.write_text(json.dumps(dataclasses.asdict(result), indent=2), encoding="utf-8")
 
 
-def _workflow_requests(args, root) -> tuple[list, list[str]]:
+def _workflow_requests(
+    args: argparse.Namespace, root: Path
+) -> "tuple[list[DelegationRequest], list[str]]":
     """Seleciona workflow por contexto (nunca `workflows[0]` — GAP-004) e
     resolve argv por especialista. Ambiguidade vira nota honesta com os
     ids elegíveis; `--workflow <id>` resolve explicitamente."""
     from theforge import delegation
     from theforge import specialists as spec_mod
 
-    requests, notes = [], []
+    requests: list[DelegationRequest] = []
+    notes: list[str] = []
     for v in spec_mod.collect(workspace_root=root, registered=_registered_ids(args)):
         if getattr(args, "provider", None) and v.lifecycle.provider != args.provider:
             continue
@@ -1537,7 +1566,7 @@ def _workflow_requests(args, root) -> tuple[list, list[str]]:
                 )
         else:
             picked = spec_mod.select_workflow(manifest.workflows, args.intent)
-            if picked == "ambiguous":
+            if isinstance(picked, str):
                 ids = [w.id for w in manifest.workflows]
                 notes.append(
                     f"{v.lifecycle.provider}: ambiguous — workflows {ids}; "

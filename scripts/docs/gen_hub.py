@@ -7,6 +7,7 @@ Regenerate after changing a knowledge package; never hand-edit the output.
 
 stdlib-only.
 """
+
 from __future__ import annotations
 
 import json
@@ -56,12 +57,10 @@ def main() -> int:
         out.append(d.get("summary", "").strip())
         out.append("")
         if d.get("intents"):
-            out.append("**Intents declarados:** " +
-                       ", ".join(f"`{i}`" for i in d["intents"]))
+            out.append("**Intents declarados:** " + ", ".join(f"`{i}`" for i in d["intents"]))
             out.append("")
         if d.get("composes_with"):
-            out.append("**Compõe com:** " +
-                       ", ".join(f"`{c}`" for c in d["composes_with"]))
+            out.append("**Compõe com:** " + ", ".join(f"`{c}`" for c in d["composes_with"]))
             out.append("")
         if d.get("limitations_note"):
             out.append(f"**Limite honesto:** {d['limitations_note']}")
@@ -71,12 +70,13 @@ def main() -> int:
             cmd = ex.get("command") if isinstance(ex, dict) else str(ex)
             out.append(f"```bash\n{cmd}\n```")
             out.append("")
-        out.append(f"- pacote: `{d.get('package')}` · binário: "
-                   f"`{d.get('binary')}` · python `{d.get('python')}`")
+        out.append(
+            f"- pacote: `{d.get('package')}` · binário: "
+            f"`{d.get('binary')}` · python `{d.get('python')}`"
+        )
         out.append("")
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8",
-                   newline="\n")
+    OUT.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8", newline="\n")
     print(f"wrote {OUT} ({len(packs)} forges)")
     return 0
 

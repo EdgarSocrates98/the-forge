@@ -48,7 +48,9 @@ def test_apply_without_yes_refuses(target: Path) -> None:
 def test_apply_status_uninstall_roundtrip(target: Path) -> None:
     proc = cli(target, "install", "apply", "--yes")
     assert proc.returncode == 0, proc.stderr + proc.stdout
-    assert "completed" in proc.stdout
+    # O doc renderizado mostra o estado em caixa-alta (`COMPLETED`);
+    # `--json` segue o contrato minúsculo — assert no stdout real.
+    assert "COMPLETED" in proc.stdout.upper() or '"completed"' in proc.stdout
 
     proc = cli(target, "install", "status", "--json")
     assert json.loads(proc.stdout)["status"] == "healthy"

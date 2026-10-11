@@ -68,6 +68,7 @@ def catalog_ids(workspace_root: Path | None = None) -> list[str]:
 def CATALOG() -> tuple[str, ...]:  # noqa: N802 — mirrors the old constant
     return tuple(catalog_ids())
 
+
 _VERSION_TIMEOUT = 15
 
 
@@ -285,10 +286,42 @@ def to_rows(views: list[SpecialistView]) -> list[dict[str, Any]]:
 
 _STOPWORDS = frozenset(
     [
-        "a", "o", "as", "os", "um", "uma", "de", "do", "da", "em", "no", "na",
-        "para", "por", "com", "sem", "e", "ou", "que", "the", "an", "and",
-        "or", "for", "to", "in", "on", "at", "is", "it", "my", "me", "run",
-        "execute", "make", "create",
+        "a",
+        "o",
+        "as",
+        "os",
+        "um",
+        "uma",
+        "de",
+        "do",
+        "da",
+        "em",
+        "no",
+        "na",
+        "para",
+        "por",
+        "com",
+        "sem",
+        "e",
+        "ou",
+        "que",
+        "the",
+        "an",
+        "and",
+        "or",
+        "for",
+        "to",
+        "in",
+        "on",
+        "at",
+        "is",
+        "it",
+        "my",
+        "me",
+        "run",
+        "execute",
+        "make",
+        "create",
     ]
 )
 
@@ -297,9 +330,7 @@ def _intent_tokens(intent: str) -> list[str]:
     import re
 
     return [
-        t
-        for t in re.findall(r"[a-z0-9_-]+", intent.lower())
-        if t not in _STOPWORDS and len(t) > 1
+        t for t in re.findall(r"[a-z0-9_-]+", intent.lower()) if t not in _STOPWORDS and len(t) > 1
     ]
 
 
@@ -307,9 +338,7 @@ def _wf_text(wf: DelegationEntry) -> str:
     return f"{wf.id} {wf.description}".lower()
 
 
-def select_workflow(
-    workflows: Sequence[DelegationEntry], intent: str
-) -> DelegationEntry | str:
+def select_workflow(workflows: Sequence[DelegationEntry], intent: str) -> DelegationEntry | str:
     """Contextual pick among a manifest's workflows — deterministic, never
     a blind ``workflows[0]`` (GAP-004).
 

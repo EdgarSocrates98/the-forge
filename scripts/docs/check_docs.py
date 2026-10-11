@@ -28,7 +28,8 @@ from pathlib import Path
 FENCE_CMD = re.compile(
     r"^(\s{0,4})([a-z][a-z0-9_-]*)\s+"
     r"([a-z][a-z0-9-]*(?:\s+[a-z][a-z0-9-]*)?)\s*$",
-    re.IGNORECASE)
+    re.IGNORECASE,
+)
 LINK = re.compile(r"\]\(([^)#\s]+)(#[^)\s]*)?\)")
 ANCHOR = re.compile(r"[^\w -]", re.UNICODE)  # GitHub slugger keeps unicode letters
 
@@ -104,8 +105,11 @@ def main() -> int:
     ap.add_argument("--inventory", required=True)
     ap.add_argument("--cli", required=True)
     ap.add_argument("--docs", default="docs,README.md")
-    ap.add_argument("--exclude", default="archive,superpowers/plans,superpowers/specs,historico",
-                    help="comma-separated path fragments to skip (frozen/archived docs)")
+    ap.add_argument(
+        "--exclude",
+        default="archive,superpowers/plans,superpowers/specs,historico",
+        help="comma-separated path fragments to skip (frozen/archived docs)",
+    )
     a = ap.parse_args()
     repo = Path(a.repo)
     inv = json.loads((repo / a.inventory).read_text(encoding="utf-8"))
@@ -115,10 +119,7 @@ def main() -> int:
     for spec in a.docs.split(","):
         p = repo / spec.strip()
         files += sorted(p.rglob("*.md")) if p.is_dir() else ([p] if p.exists() else [])
-    files = [
-        f for f in files
-        if not any(x in f.relative_to(repo).as_posix().lower() for x in excl)
-    ]
+    files = [f for f in files if not any(x in f.relative_to(repo).as_posix().lower() for x in excl)]
 
     errs = (
         check_links(repo, files)

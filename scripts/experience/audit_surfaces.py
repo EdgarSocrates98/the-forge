@@ -16,6 +16,7 @@ A matriz publicada distingue `present` (arquivo/estrutura existe) de
 `absent`; a promoção a `verified` exige evidência de execução, registrada
 à mão na coluna homônima do relatório — nunca inferida.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,6 +26,7 @@ import sys
 import tomllib
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 FORGES = (
     "the-forge",
@@ -78,7 +80,7 @@ def _count_mirror_skills(root: Path) -> int:
     return sum(1 for p in root.iterdir() if (p / "SKILL.md").is_file())
 
 
-def _pyproject(root: Path) -> dict:
+def _pyproject(root: Path) -> dict[str, Any]:
     pp = root / "pyproject.toml"
     if not pp.is_file():
         return {}
@@ -119,7 +121,7 @@ def _grep_count(root: Path, pattern: str, glob: str = "**/*.py") -> int:
     return n
 
 
-def audit_forge(root: Path, forge: str) -> dict:
+def audit_forge(root: Path, forge: str) -> dict[str, Any]:
     pkg = _find_pkg(root, forge)
     py = _pyproject(root)
     project = py.get("project", {})
@@ -130,9 +132,7 @@ def audit_forge(root: Path, forge: str) -> dict:
     mcp_tools = None
     if surface_lock.is_file():
         mcp_tools = (
-            json.loads(surface_lock.read_text(encoding="utf-8"))
-            .get("tools", {})
-            .get("tool_count")
+            json.loads(surface_lock.read_text(encoding="utf-8")).get("tools", {}).get("tool_count")
         )
 
     mirrors = {
@@ -215,9 +215,7 @@ def audit_forge(root: Path, forge: str) -> dict:
         },
         "contracts": {
             "schemas_dir": (
-                _count_md(root / "schemas", "*.json")
-                if (root / "schemas").is_dir()
-                else 0
+                _count_md(root / "schemas", "*.json") if (root / "schemas").is_dir() else 0
             ),
             "surface_lock": surface_lock.is_file(),
             "capability_manifest": _presence(root, "agents/CAPABILITY.json")
@@ -230,14 +228,10 @@ def audit_forge(root: Path, forge: str) -> dict:
             ][:5],
         },
         "knowledge_docs": (
-            _count_md(root / "knowledge", "**/*.md")
-            if (root / "knowledge").is_dir()
-            else 0
+            _count_md(root / "knowledge", "**/*.md") if (root / "knowledge").is_dir() else 0
         ),
         "test_files": (
-            _count_md(root / "tests", "**/test_*.py")
-            if (root / "tests").is_dir()
-            else 0
+            _count_md(root / "tests", "**/test_*.py") if (root / "tests").is_dir() else 0
         ),
     }
 
@@ -249,7 +243,7 @@ def main() -> int:
     args = ap.parse_args()
 
     root = Path(args.root)
-    report = {
+    report: dict[str, Any] = {
         "schema": "forge/ExperienceAudit/v1",
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "generator": "scripts/experience/audit_surfaces.py",

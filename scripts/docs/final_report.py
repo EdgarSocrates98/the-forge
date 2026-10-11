@@ -8,6 +8,7 @@ inflated.
 
 stdlib-only; safe to vendor verbatim into any Forge repo.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,16 +22,20 @@ def _git(repo: Path, *args: str) -> str:
     try:
         return subprocess.run(
             ["git", "-C", str(repo), *args],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         ).stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
         return "unknown"
 
 
 def build_report(repo: Path, forge: str, out_dir: Path) -> str:
-    rows = [json.loads(ln) for ln in
-            (out_dir / "inventory.jsonl").read_text("utf-8").splitlines()
-            if ln.strip()]
+    rows = [
+        json.loads(ln)
+        for ln in (out_dir / "inventory.jsonl").read_text("utf-8").splitlines()
+        if ln.strip()
+    ]
     cats = Counter(r["category"] for r in rows)
     levels = Counter(r["review_level"] for r in rows)
     vendored = sum(1 for r in rows if "VENDORED_UPSTREAM" in r["secondary"])
@@ -44,23 +49,29 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     bl_path = out_dir / "broken-link-report.md"
     bl_count = 0
     if bl_path.exists():
-        bl_count = sum(1 for ln in bl_path.read_text("utf-8").splitlines()
-                       if ln.startswith("| `"))
+        bl_count = sum(1 for ln in bl_path.read_text("utf-8").splitlines() if ln.startswith("| `"))
     dup_path = out_dir / "duplicate-content-report.md"
     dup_count = 0
     if dup_path.exists():
-        dup_count = sum(1 for ln in dup_path.read_text("utf-8").splitlines()
-                        if ln.startswith("## Group"))
+        dup_count = sum(
+            1 for ln in dup_path.read_text("utf-8").splitlines() if ln.startswith("## Group")
+        )
 
     learn = sorted(r["path"] for r in rows if r["path"].startswith("docs/learn/"))
-    first_runs = [r["path"] for r in rows
-                  if "first-run" in r["path"] or "quickstart" in r["path"]]
+    first_runs = [r["path"] for r in rows if "first-run" in r["path"] or "quickstart" in r["path"]]
     hub = sorted(r["path"] for r in rows if r["path"].startswith("docs/hub/"))
 
     # active-tree broken links = findings outside frozen prefixes
-    frozen = ("docs/sdd/", "docs/superpowers/", ".claude/sdd/",
-              "docs/historico/", "docs/reports/", "vendor/",
-              "docs/knowledge-program/", "knowledge/devin/")
+    frozen = (
+        "docs/sdd/",
+        "docs/superpowers/",
+        ".claude/sdd/",
+        "docs/historico/",
+        "docs/reports/",
+        "vendor/",
+        "docs/knowledge-program/",
+        "knowledge/devin/",
+    )
     active_broken = 0
     if bl_path.exists():
         for ln in bl_path.read_text("utf-8").splitlines():
@@ -75,10 +86,11 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     # documented_missing findings inside frozen trees are reported but
     # exempt — same preservation rule as broken links (§4.5).
     active_doc_missing = sum(
-        1 for f in div.get("documented_missing", [])
-        if not str(f.get("file", "")).replace("\\", "/").startswith(frozen))
-    status = "PASS" if (active_broken == 0 and
-                        active_doc_missing == 0) else "PARTIAL"
+        1
+        for f in div.get("documented_missing", [])
+        if not str(f.get("file", "")).replace("\\", "/").startswith(frozen)
+    )
+    status = "PASS" if (active_broken == 0 and active_doc_missing == 0) else "PARTIAL"
 
     lines = [
         "# Forge Knowledge Program — final report",
@@ -94,9 +106,13 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
         "## Review levels (honest)",
         "",
     ]
-    for lvl in ("INVENTORIED", "AUTOMATICALLY_CHECKED",
-                "TECHNICALLY_VERIFIED", "SEMANTICALLY_REVIEWED",
-                "USER_JOURNEY_VALIDATED"):
+    for lvl in (
+        "INVENTORIED",
+        "AUTOMATICALLY_CHECKED",
+        "TECHNICALLY_VERIFIED",
+        "SEMANTICALLY_REVIEWED",
+        "USER_JOURNEY_VALIDATED",
+    ):
         lines.append(f"- `{lvl}`: {levels.get(lvl, 0)}")
     lines += [
         "",
@@ -134,15 +150,13 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     if forge == "the-forge":
         lines += [
             "- `docs/hub/` — Learning Hub (markdown-first + optional mkdocs)",
-            "- `docs/learn/zero-to-multi-specialist.md` — end-to-end guide "
-            "with captured evidence",
+            "- `docs/learn/zero-to-multi-specialist.md` — end-to-end guide with captured evidence",
         ]
     lines += [
         "",
         "## Tests / gates",
         "",
-        "- `tests/test_doc_manifest.py` — zero broken links in active docs "
-        "(frozen trees exempt)",
+        "- `tests/test_doc_manifest.py` — zero broken links in active docs (frozen trees exempt)",
         "- `check_docs`/`doc_inventory` — command drift gate, parser-walked",
         "",
         "## Limitations & remaining gaps",
@@ -153,8 +167,7 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
         "preservation) — they are reported, not repaired.",
         "- Hub site build not executed (dev-only, `mkdocs-material`); the "
         "markdown hub is the verified deliverable.",
-        "- Screen-reader and POSIX-terminal validation remain UNVERIFIED on "
-        "this host.",
+        "- Screen-reader and POSIX-terminal validation remain UNVERIFIED on this host.",
         "",
         f"## Final status: **{status}**",
         "",
@@ -166,8 +179,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", type=Path, default=Path("."))
     ap.add_argument("--forge", required=True)
-    ap.add_argument("--inventory", type=Path,
-                    default=Path("docs/knowledge-program"))
+    ap.add_argument("--inventory", type=Path, default=Path("docs/knowledge-program"))
     args = ap.parse_args()
     repo = args.repo.resolve()
     out_dir = repo / args.inventory

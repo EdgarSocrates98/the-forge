@@ -153,8 +153,7 @@ def _rewrite_links(body: str, *, src_dir: Path, out_dir: Path) -> str:
             return match.group(0)
         if not resolved.exists():
             return match.group(0)
-        new_target = os.path.relpath(
-            str(resolved), str(out_dir.resolve())).replace("\\", "/")
+        new_target = os.path.relpath(str(resolved), str(out_dir.resolve())).replace("\\", "/")
         if frag:
             new_target += "#" + frag
         return match.group(1) + new_target + match.group(3)
@@ -196,9 +195,7 @@ def render_claude(src: SkillSource, out_dir: Path) -> str:
         lines.append(f"argument-hint: {src.argument_hint}")
     lines.append("---")
     body = _rewrite_links(src.body, src_dir=SOURCES, out_dir=out_dir)
-    return (
-        "\n".join(lines) + "\n" + _resolve_host_blocks(body, "claude") + _freshness_marker(src)
-    )
+    return "\n".join(lines) + "\n" + _resolve_host_blocks(body, "claude") + _freshness_marker(src)
 
 
 def render_envelope(src: SkillSource, host: str, out_dir: Path) -> str:
@@ -227,12 +224,15 @@ def render_all(src: SkillSource) -> dict[str, str]:
     """repo-relative output path → content."""
     return {
         f".claude/skills/{src.name}/SKILL.md": render_claude(
-            src, ROOT / ".claude" / "skills" / src.name),
+            src, ROOT / ".claude" / "skills" / src.name
+        ),
         f".agents/skills/{src.name}/SKILL.md": render_envelope(
-            src, "codex", ROOT / ".agents" / "skills" / src.name),
+            src, "codex", ROOT / ".agents" / "skills" / src.name
+        ),
         f".agents/skills/{src.name}/agents/openai.yaml": render_openai_yaml(src),
         f".devin/skills/{src.name}/SKILL.md": render_envelope(
-            src, "devin", ROOT / ".devin" / "skills" / src.name),
+            src, "devin", ROOT / ".devin" / "skills" / src.name
+        ),
     }
 
 

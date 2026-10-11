@@ -12,13 +12,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 AUDIT = ROOT / "docs" / "experience" / "audit-fase0.json"
 OUT = ROOT / "docs" / "experience" / "matriz-aceite.md"
 
 # Capacidades × o que o auditor observa. Alvo = requisito do programa.
-ROWS: list[tuple[str, str, str]] = [
+ROWS: list[tuple[str, str, str | None]] = [
     # (capacidade, alvo do programa, chave do audit)
     ("install.lifecycle", "status/doctor/plan honestos", "install"),
     ("cli.agentic", "verbos descobrem agents/skills", None),
@@ -32,7 +33,7 @@ ROWS: list[tuple[str, str, str]] = [
 ]
 
 
-def _observed(audit: dict, forge: str, key: str | None) -> tuple[str, str]:
+def _observed(audit: dict[str, Any], forge: str, key: str | None) -> tuple[str, str]:
     """Estado observado + evidência, a partir do audit."""
     row = audit["forges"][forge]
     surf = row["surfaces"]
@@ -54,9 +55,7 @@ def _observed(audit: dict, forge: str, key: str | None) -> tuple[str, str]:
             return ("SUPPORTED", f"{n} tools no lock")
         return (
             "UNVERIFIED" if surf["mcp"]["present"] else "UNSUPPORTED",
-            "módulo mcp/ existe, tools não contadas"
-            if surf["mcp"]["present"]
-            else "sem mcp/",
+            "módulo mcp/ existe, tools não contadas" if surf["mcp"]["present"] else "sem mcp/",
         )
     if key == "graph":
         ok = surf["graph"]["present"]

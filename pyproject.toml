@@ -87,6 +87,16 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 # across all Forges (same class as _installkit).
 "src/theforge/_forge_portal.py" = ["ALL"]
 
+[tool.ruff.format]
+# Same byte-parity set as per-file-ignores: vendored/canonical shared
+# sources (Python 3.10 floor) are formatted at their canonical repo only.
+exclude = [
+    "scripts/installkit/*.py",
+    "scripts/forge_bootstrap.py",
+    "src/theforge/_installkit.py",
+    "src/theforge/_forge_portal.py",
+]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
@@ -103,3 +113,16 @@ files = ["src", "scripts", "adapters/sparkforge_aws/src", "adapters/sparkforge_a
 module = ["sparkforge_aws.*", "sparkforge.*", "sparkforge_azure.*", "apiforge.*",
           "forge_doctor_data.*", "forge_doctor_api.*", "platformforge.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Doc tooling introspects specialist CLIs (typer) which live in the
+# specialist interpreters, never the core env.
+module = ["typer", "typer.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Vendored byte-identical shared sources — canonical copies
+# (forge-portal/portal_core, scripts/installkit/) are the typecheck
+# target; do not diverge the vendored files for typing.
+module = ["theforge._forge_portal", "theforge._installkit"]
+ignore_errors = true

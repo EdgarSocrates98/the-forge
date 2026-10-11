@@ -53,7 +53,7 @@ def _utc_now() -> str:
 def _argparse_args(parser: argparse.ArgumentParser) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for act in parser._actions:  # the parser IS the source
-        if isinstance(act, argparse._SubParsersAction) or act is argparse._HelpAction:
+        if isinstance(act, (argparse._SubParsersAction, argparse._HelpAction)):
             continue
         out.append(
             {
@@ -75,9 +75,7 @@ def walk_argparse(
     out: list[dict[str, Any]],
     _choice_help: str | None = None,
 ) -> None:
-    subs = next(
-        (a for a in parser._actions if isinstance(a, argparse._SubParsersAction)),
-        None)
+    subs = next((a for a in parser._actions if isinstance(a, argparse._SubParsersAction)), None)
     # ``add_parser(name, help=...)`` text lives on the choice actions, not on
     # the child parser's description — merge it so command help is real.
     help_text = (parser.description or "").strip() or _choice_help
@@ -101,14 +99,12 @@ def walk_argparse(
             }
         )
     choice_help = {
-        a.dest: (a.help or "").strip() or None
-        for a in getattr(subs, "_choices_actions", [])
+        a.dest: (a.help or "").strip() or None for a in getattr(subs, "_choices_actions", [])
     }
     for name, sub in subs.choices.items():
         if name in ("-h", "--help") or not isinstance(sub, argparse.ArgumentParser):
             continue
-        walk_argparse(sub, f"{prefix} {name}".strip(), out,
-                    _choice_help=choice_help.get(name))
+        walk_argparse(sub, f"{prefix} {name}".strip(), out, _choice_help=choice_help.get(name))
 
 
 # --------------------------------------------------------------------------
@@ -128,8 +124,7 @@ def walk_click(cmd: Any, prefix: str, out: list[dict[str, Any]]) -> None:
         params.append(
             {
                 "name": getattr(p, "name", None) or (getattr(p, "opts", None) or [None])[-1],
-                "flags": list(getattr(p, "opts", []))
-                + list(getattr(p, "secondary_opts", [])),
+                "flags": list(getattr(p, "opts", [])) + list(getattr(p, "secondary_opts", [])),
                 "required": bool(getattr(p, "required", False)),
                 "default": None if getattr(p, "default", None) is None else str(p.default),
                 "choices": [str(c) for c in choices] if choices else None,
@@ -207,15 +202,11 @@ def _doc_verbs(cli: str, md_files: list[Path]) -> tuple[set[str], dict[str, list
     return verbs, where
 
 
-def divergence(
-    cli: str, commands: list[dict[str, Any]], md_files: list[Path]
-) -> dict[str, Any]:
+def divergence(cli: str, commands: list[dict[str, Any]], md_files: list[Path]) -> dict[str, Any]:
     documented, where = _doc_verbs(cli, md_files)
     real_first = {c["path"].split()[0] for c in commands}
     missing = sorted(v for v in documented if v not in real_first)
-    undocumented = sorted(
-        v for v in real_first - {"-h", "help"} if v not in documented
-    )
+    undocumented = sorted(v for v in real_first - {"-h", "help"} if v not in documented)
     rows = []
     for v in missing:
         rows.append(
@@ -244,8 +235,13 @@ def main() -> int:
     grp.add_argument("--argparse", help="module:parser_factory callable")
     grp.add_argument("--typer", help="module:typer_app")
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--divergence", type=Path, nargs="*", default=None,
-                    help="markdown files/dirs to compare against")
+    ap.add_argument(
+        "--divergence",
+        type=Path,
+        nargs="*",
+        default=None,
+        help="markdown files/dirs to compare against",
+    )
     args = ap.parse_args()
 
     commands: list[dict[str, Any]] = []
