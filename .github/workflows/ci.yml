@@ -84,7 +84,12 @@ jobs:
           python -m pip install "build>=1.2"
 
       - name: Build sdist and wheel
-        run: python -m build
+        # ADR-0058: host assets ship in the wheel but stay sdist-excluded, so
+        # the wheel must be built from the source tree — `python -m build`'s
+        # sdist→wheel roundtrip can never find the force-included dirs.
+        run: |
+          python -m build --sdist
+          python -m build --wheel
 
       - name: Gate - zero runtime dependencies
         run: python scripts/ci/check_zero_deps.py dist/*.whl
