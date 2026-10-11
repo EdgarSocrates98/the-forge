@@ -123,7 +123,10 @@ def load_config(repo: Path) -> dict[str, Any]:
 
 def _semver_tuple(s: str) -> tuple[int, int, int]:
     parts = s.split(".")[:3]
-    return tuple(int(p) for p in parts) if len(parts) == 3 else (0, 0, 0)
+    try:
+        return tuple(int(p) for p in parts + ["0"] * (3 - len(parts)))
+    except ValueError:
+        return (0, 0, 0)
 
 
 def _satisfies(version: str, spec: str) -> bool:
