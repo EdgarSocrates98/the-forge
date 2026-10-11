@@ -14,7 +14,7 @@
 | Fase | Repo | Escopo | Resultado |
 |---|---|---|---|
 | 0 | todos | auditoria + contratos + matriz + design system | baseline selada (`audit-fase0.json`) |
-| 1 | spark-forge-aws | host flow `ai`, menu real, i18n, receitas | implementado; suíte final em run |
+| 1 | spark-forge-aws | host flow `ai`, menu real, i18n, receitas | FECHADO — 14879p/17s/0f |
 | 2 | api-forge | mesma família | FECHADO — suíte 1856p |
 | 3 | spark-forge-azure | `ai` + `sfa_ai` + fleet_root fix + receitas | FECHADO — 3025p/9s, claims 28/28 |
 | 4 | platform-forge | `hosts` + recusas PF-* + FE-004 + receitas | FECHADO — 1025p/0f, freeze verde |
@@ -75,7 +75,7 @@
 | UX | `docs/experience/ux-eval-fase8.md` | navegação→headless medidos; ≤3 comandos a valor |
 | Docs PT-BR | learn/ + hub/ + INDEX + divergence 0 | verificadas na execução real |
 | Hosts | recibo `hosts`/`ai` 3 hosts + `devin mcp list` | observe verificado; launch real em TTY; copilot UNVERIFIED |
-| Graph Studio | `jornadas-fase8.md` J7 | servidor 127.0.0.1 + payload real |
+| Graph Studio | `jornadas-fase8.md` J7 | servidor 127.0.0.1 + federação real: 2 views + 4 recusas nomeadas |
 | Cross-platform | este relatório | testes rodam Windows-native; smoke Ubuntu/macos = PARTIAL |
 | Security | `docs/experience/security-audit-fase8.md` | credenciais→rollback; lacunas declaradas |
 | Suítes | junitxml/logs por repo | ver abaixo |
@@ -89,8 +89,8 @@
 | platform-forge | 1025 passed / 0 failed |
 | forge-doctor-data | 2638 passed / 0 failed |
 | forge-doctor-api | 1763 passed / 37 skipped / 0 failed |
-| the-forge | 4853 tests / 1 failure → corrigida (canonical-cli docs) / 7 skipped |
-| spark-forge-aws | ~14877 collected — run final em curso; drift pré-fix resolvido |
+| the-forge | 4853 tests / 1 failure → corrigida (canonical-cli docs) / 7 skipped; slices pós-federation-fix verdes |
+| spark-forge-aws | **14879 passed / 17 skipped / 0 failed** (1h21, junit log) |
 
 ## Limitações declaradas (não escondidas)
 
@@ -107,6 +107,12 @@
   forja não está no PATH — nunca promovido a healthy.
 - **Hosts MCP** são observe-only por desenho de segurança — launch
   exige TTY humana.
+- **Federação de grafos**: producers sem grafo construído respondem
+  recusa nomeada (`PF-GRAPH-NOGRAPH`, `SF-GRAPH-NO-INDEX`,
+  `SFA-GRAPH-NO-GRAPH`, `AF-GRAPH-NOT-FOUND`); `forge-doctor-api`
+  mantém o dialeto `graph <alvo> --view` (congelado no RC — alinhar
+  exige exceção do dono); `the-forge` não é producer
+  (`no cli_entry declared` — correto por desenho).
 
 ## Freeze (8.9)
 

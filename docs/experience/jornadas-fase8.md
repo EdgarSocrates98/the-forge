@@ -87,12 +87,19 @@
 
 ## Jornada 7 — Graph Studio para explorar impacto
 
-**VERIFIED** (servidor real, sem browser).
+**VERIFIED** (servidor real + federação real, sem browser).
 
-- `theforge graph --federated --ui --no-browser --port 18923` →
-  `ThreadingHTTPServer` real em `127.0.0.1:18923`; `curl` retorna a
-  página Forge Graph Studio (13.5 KB: canvas, painéis de inspeção,
+- `theforge graph --federated --root E:\projetos\FORJAS --ui
+  --no-browser` → `ThreadingHTTPServer` real em `127.0.0.1`; `curl`
+  retorna a página Forge Graph Studio (canvas, painéis de inspeção,
   estilos por `epistemic_state`).
+- Federação real no workspace FORJAS: **2 views emitidas** —
+  `the-forge` (235 nós/595 arestas) e `forge-doctor-data` (16n/10e,
+  via o interpretador do próprio checkout); **4 recusas nomeadas** —
+  `PF-GRAPH-NOGRAPH`, `SF-GRAPH-NO-INDEX`, `SFA-GRAPH-NO-GRAPH`,
+  `AF-GRAPH-NOT-FOUND`; 2 notas honestas (`the-forge` sem
+  `cli_entry` por desenho; `forge-doctor-api` com dialeto
+  `graph <alvo> --view` congelado no RC).
 - platform-forge `graph view --ui` abre studio equivalente no
   scratch instalado.
 - Limitação honesta: navegação em browser real não reproduzida nesta

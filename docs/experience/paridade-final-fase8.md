@@ -13,10 +13,10 @@
 | **Agents** | 8 AgentSpec/v1 c/ autoridade fechada | 31 c/ mirrors | 19 + executors | 40 | 41 roster | 0 (por desenho) | 0 (por desenho) |
 | **Skills** | 33 canônicas | 14 | 60 | 22 | 12 | 0 (por desenho) | 0 (por desenho) |
 | **MCP** | registry + invoke real | SUPPORTED — handshake real | **146 tools** lock + invoke | 18 tools + handshake | 39 caps + handshake | 14 tools + handshake | 17 tools + handshake |
-| **Graph** | view local + federada (235n/595e) | view real | view + blast real | view real | view + blast real | view real | view + blast real |
+| **Graph** | view local + **federação real** (2 views, 4 recusas nomeadas) | view real (recusa `AF-GRAPH-NOT-FOUND`) | view + blast real (`SF-GRAPH-NO-INDEX`) | view real (`SFA-GRAPH-NO-GRAPH`) | view + blast real (`PF-GRAPH-NOGRAPH`) | view real — **único producer federado** | view real; dialeto `graph <alvo> --view` |
 | **Installation** | bootstrap + lifecycle + ledger | SUPPORTED — E2E scratch | SUPPORTED — E2E scratch | SUPPORTED — E2E scratch | SUPPORTED — E2E scratch | SUPPORTED — E2E scratch | SUPPORTED — E2E scratch |
 | **Documentation** | learn+hub+INDEX+receitas | recipes+HOST_PARITY | recipes+rationale | 13 receitas | 12 receitas | 11 receitas | 8 receitas |
-| **Tests** | **4853 t** suite | **1856 p** suite | ~14877 t (run final) | **3025 p** suite | **1025 p/0f** | **2638 p** suite | **1763 p/0f** |
+| **Tests** | **4853 t** suite | **1856 p** suite | **14879 p/17 s/0 f** | **3025 p** suite | **1025 p/0f** | **2638 p** suite | **1763 p/0f** |
 
 ## Divergências intencionais (não defeitos)
 
@@ -30,6 +30,14 @@
   MCPs dos irmãos via manifesto, não publica um.
 - **spark-forge-aws: 145→146 tools** — a tool `sparkforge_aws_ai`
   intencional do fluxo de hosts; lock re-selado.
+- **forge-doctor-api: dialeto `graph <alvo> --view`** — o verbo é
+  target-scoped por desenho (analisa um diretório de evidência); a
+  federação chama `graph view` e recebe a nota honesta "cannot read
+  path: view". Congelado pela janela RC (`docs/rc-discipline.md`) —
+  alinhar o dialeto exige exceção registrada pelo dono.
+- **the-forge sem `cli_entry`** — o orquestrador não é producer de
+  `graph view` (contribui `capability_view` local); a nota
+  `no cli_entry declared` é a classificação correta.
 
 ## Estados externos honestos
 
