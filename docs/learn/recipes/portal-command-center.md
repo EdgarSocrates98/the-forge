@@ -79,3 +79,6 @@ não falso PASS. Probe de checkout cobre o workspace — forjas fora da
 | `TF-PORTAL-NOT-REGISTERED` | forja ausente do registry | rodar o bootstrap/setup primeiro |
 | `TF-PORTAL-MCP-NONE` | nenhum especialista declara MCP | instalar forjas com servidor MCP |
 | especialistas `NOT_INSTALLED` | registry vazio no HOME | `theforge install auto` ou setup.sh |
+| `PORTAL-HOST` 403 | Host não-loopback (rede/túnel/DNS rebinding) | acesse por 127.0.0.1/localhost |
+| `PORTAL-ORIGIN` 403 | POST com Origin fora do loopback | só a UI do portal muta |
+| `PORTAL-RATE-LIMITED` 429 | >10 mutações/min | aguarde a janela; envelope sinaliza retry |
