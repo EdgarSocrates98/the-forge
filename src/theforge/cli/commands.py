@@ -1574,3 +1574,25 @@ def cmd_install_wizard(args: argparse.Namespace) -> int:
         ctx=ctx,
         out_json=getattr(args, "json", False),
     )
+
+
+def cmd_portal(args: argparse.Namespace) -> int:
+    """``theforge portal``: optional local web UI over the real services.
+
+    Why: the command-center journey (install → hosts → MCP → federation →
+    graphs → tasks) in a browser — plan → confirm → apply with receipts —
+    for operators who prefer seeing state before acting. The CLI, MCP
+    delegation and scripts keep working with or without it.
+    When: first workspace setup, visual audit of the federation, demos.
+    When not: automation/CI — use the verbs directly; the portal is
+    interactive and loopback-only."""
+    from theforge.portal_adapter import main as portal_main
+
+    argv: list[str] = []
+    if args.no_browser:
+        argv.append("--no-browser")
+    if args.port:
+        argv.extend(["--port", str(args.port)])
+    if args.root != ".":
+        argv.extend(["--root", str(args.root)])
+    return portal_main(argv)

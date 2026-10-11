@@ -386,6 +386,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     graph.set_defaults(handler=commands.cmd_graph)
 
+    portal = sub.add_parser(
+        "portal",
+        parents=[common],
+        help="optional local web UI (127.0.0.1 + session token) over the "
+        "real services — install, hosts, MCP handshakes, federation, "
+        "agents, skills, graphs and tasks",
+    )
+    portal.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="print the session URL without opening a browser",
+    )
+    portal.add_argument(
+        "--port",
+        type=int,
+        default=0,
+        help="port to bind (default ephemeral)",
+    )
+    portal.set_defaults(handler=commands.cmd_portal)
+
     providers = sub.add_parser("providers", help="provider operations").add_subparsers(
         dest="providers_command", required=True
     )
@@ -422,16 +442,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     hosts_activate.set_defaults(handler=commands.cmd_hosts_activate)
     hosts_observe = hosts.add_parser(
-        "observe", parents=[common],
+        "observe",
+        parents=[common],
         help="version+auth+integration receipt per host (read-only)",
     )
     hosts_observe.add_argument(
-        "host", nargs="?", default="all",
+        "host",
+        nargs="?",
+        default="all",
         choices=["all", "claude", "devin", "codex", "copilot"],
     )
     hosts_observe.set_defaults(handler=commands.cmd_hosts_observe)
     hosts_launch = hosts.add_parser(
-        "launch", parents=[common],
+        "launch",
+        parents=[common],
         help="open one host in this workspace (requires a TTY)",
     )
     hosts_launch.add_argument("host", choices=["claude", "devin", "codex", "copilot"])

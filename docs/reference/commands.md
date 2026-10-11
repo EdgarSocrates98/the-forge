@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **27/27** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **28/28** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -21,6 +21,7 @@ Rationale coverage: **27/27** first-level groups curated in `command-rationale.j
 - [`knowledge`](#knowledge) — 4 command(s)
 - [`memory`](#memory) — 7 command(s)
 - [`plan`](#plan) — 1 command(s)
+- [`portal`](#portal) — 1 command(s)
 - [`provider`](#provider) — 3 command(s)
 - [`providers`](#providers) — 2 command(s)
 - [`registry`](#registry) — 5 command(s)
@@ -1234,6 +1235,35 @@ theforge plan [help] [root] [json] [debug] <intent> [profile] [targets] [REQ_JSO
 | `execute` | no | — | execute the nodes (default: plan only, outcome `planned`) |
 | `allow_unverified` | no | — | — |
 | `CAPABILITY` | no | — | approve a capability for the nodes that use it (repeatable) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## portal
+
+### `portal`
+
+**para que:** optional local web UI (127.0.0.1 + session token) over the real services — install, hosts, MCP handshakes, federation, agents, skills, graphs and tasks
+
+- **por que:** UI web local opcional (127.0.0.1 + token de sessao) sobre os servicos reais — command center da federacao
+- **quando usar:** primeira configuracao, auditoria visual da federacao/grafo/hosts, ou demo do fluxo plan->confirm->apply
+- **quando não:** automacao/CI — use os verbos diretamente; o portal e interativo e loopback-only
+
+**Syntax**
+
+```text
+theforge portal [help] [root] [json] [debug] [no_browser] [port]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `no_browser` | no | — | print the session URL without opening a browser |
+| `port` | no | — | port to bind (default ephemeral) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_

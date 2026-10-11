@@ -32,6 +32,7 @@
 | `install auto [--scope ...] [--forge <id>] [--yes] [--dry-run]` | orquestra a família: lê `~/.forge/installations/` e delega `<cli> install` a cada forge registrada (a própria instala em processo); `--forge` limita a uma — cada forge instala a si mesma | 0 / 1 |
 | `install mcp-verify` | handshake JSON-RPC real contra o servidor MCP quando declarado; `NOT_APPLICABLE` na the-forge (sem MCP) | 0 |
 | `installations list` | registry do bootstrap (`~/.forge/installations/*.json`) — read-only | 0 |
+| `portal [--no-browser] [--port N] [--root DIR]` | UI web local opcional (loopback + token de sessão) — command center da federação: instalação, hosts, MCP por forja, agents, skills, grafo federado, tasks e knowledge; mutações por plan→confirm→apply com `plan_token` — [ADR 0059](adr/0059-forge-portal-command-center.md) | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
 | `specialists list` | ciclo de vida por forja do catálogo: NOT_INSTALLED→INSTALLED→CONFIGURED→REGISTERED a partir do registry de instalações + probe real do CLI + checkouts locais | 0 |
 | `specialists status` | idem a `specialists list` | 0 |

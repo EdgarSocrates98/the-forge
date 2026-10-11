@@ -208,6 +208,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_agentic_security.py": ("unit", "contract", "security"),
     # FASE 7 host observe/launch flow
     "test_hosts_flow.py": ("unit", "security", "integration"),
+    # forge portal command center (loopback http server allowed by 7.6)
+    "test_portal.py": ("unit", "integration", "security"),
 }
 
 

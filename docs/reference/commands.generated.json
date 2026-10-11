@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-11T02:02:03Z",
+  "generated_at": "2026-10-11T07:09:20Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 77,
+  "command_count": 78,
   "commands": [
     {
       "path": "init",
@@ -2120,6 +2120,79 @@
           "choices": null,
           "positional": false,
           "help": "with --ui: port to bind (default ephemeral)"
+        }
+      ]
+    },
+    {
+      "path": "portal",
+      "help": "optional local web UI (127.0.0.1 + session token) over the real services — install, hosts, MCP handshakes, federation, agents, skills, graphs and tasks",
+      "arguments": [
+        {
+          "name": "help",
+          "flags": [
+            "-h",
+            "--help"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "show this help message and exit"
+        },
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "no_browser",
+          "flags": [
+            "--no-browser"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "print the session URL without opening a browser"
+        },
+        {
+          "name": "port",
+          "flags": [
+            "--port"
+          ],
+          "required": false,
+          "default": "0",
+          "choices": null,
+          "positional": false,
+          "help": "port to bind (default ephemeral)"
         }
       ]
     },

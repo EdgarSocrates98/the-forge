@@ -20,5 +20,6 @@
 | "Meu host de IA está pronto? Abrí-lo?" | [hosts-observe-launch](recipes/hosts-observe-launch.md) |
 | "Várias forjas num workspace" | [federacao-multi-forge](recipes/federacao-multi-forge.md) |
 | "Painel único de operação" | [tui-command-center](recipes/tui-command-center.md) |
+| "UI web local da federação" | [portal-command-center](recipes/portal-command-center.md) |
 
 Referência completa gerada: [../INDEX.md](../INDEX.md).

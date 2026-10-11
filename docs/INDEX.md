@@ -95,6 +95,7 @@ _Task-oriented guides and workflows._
 - [Receita — instalação governada (plano antes de mutação)](learn/recipes/governed-install.md)
 - [Receita — observar e abrir seu host de IA](learn/recipes/hosts-observe-launch.md)
 - [Receita — instalar o the-forge (um comando, de verdade)](learn/recipes/instalar-theforge.md)
+- [Receita — portal web local: command center da federação](learn/recipes/portal-command-center.md)
 - [Receita — usar o Command Center (TUI)](learn/recipes/tui-command-center.md)
 
 ### portable-installation/
@@ -209,6 +210,7 @@ _Concepts, architecture and design decisions._
 - [ADR 0056 — Adaptação de assets agentic por host: canônico renderiza, auditoria vigia](adr/0056-agentic-host-adaptation.md)
 - [ADR 0057 — Loop Factory como fila operacional de specs](adr/0057-loop-factory.md)
 - [ADR 0058 — Instalação portátil: kit vendored, escopos e família](adr/0058-portable-installation.md)
+- [ADR 0059 — Forge Portal: UI local opcional e command center](adr/0059-forge-portal-command-center.md)
 - [Índice de ADRs](adr/README.md)
 
 ### docs/
