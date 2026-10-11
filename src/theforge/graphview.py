@@ -128,7 +128,7 @@ def _view_from_cli(
     # installed into. Fall back to ours for stdlib-only producers.
     candidates = [
         checkout / ".venv" / "Scripts" / "python.exe",  # Windows
-        checkout / ".venv" / "bin" / "python",          # POSIX
+        checkout / ".venv" / "bin" / "python",  # POSIX
     ]
     interpreter = next((str(p) for p in candidates if p.is_file()), sys.executable)
     # Every producer must emit ForgeGraphView JSON on `graph view`; flag
@@ -200,9 +200,7 @@ def federated_views(
         if not v.checkout:
             notes.append(f"{v.lifecycle.provider}: no checkout — skipped")
             continue
-        view, reason = _view_from_cli(
-            Path(v.checkout), v.lifecycle.provider, timeout=timeout
-        )
+        view, reason = _view_from_cli(Path(v.checkout), v.lifecycle.provider, timeout=timeout)
         if view is None:
             notes.append(f"{v.lifecycle.provider}: {reason}")
             continue
@@ -257,7 +255,7 @@ def federated_merge(views: list[ForgeGraphView]) -> ForgeGraphView:
         capabilities=("node_inspect", "edge_inspect", "search", "filter", "export"),
         limitations=(
             "cross-forge relations are not inferred; each subgraph keeps "
-            "its own provenance and namespace"
+            "its own provenance and namespace",
         ),
     )
     object.__setattr__(desc, "node_count", len(nodes))

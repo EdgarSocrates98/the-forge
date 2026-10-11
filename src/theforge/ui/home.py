@@ -95,15 +95,12 @@ def _run_task(ctx: UIContext) -> None:
         if v.manifest is None or not v.manifest.workflows:
             continue
         picked = specialists.select_workflow(v.manifest.workflows, intent)
-        if picked == "ambiguous":
+        if isinstance(picked, str):
             from theforge.ui.kit import select
 
             chosen = select(
                 f"{v.lifecycle.provider} — which workflow?",
-                [
-                    f"{w.id} — {w.description or w.mode}"
-                    for w in v.manifest.workflows
-                ],
+                [f"{w.id} — {w.description or w.mode}" for w in v.manifest.workflows],
                 ctx=ctx,
             )
             if chosen is None:
@@ -220,6 +217,7 @@ def run_home(*, ctx: UIContext | None = None) -> int:
         raise NonInteractive("home requires a TTY")
     if ctx.ansi:  # full-screen path; ANSI-free terminals keep the inline kit
         from theforge.ui.tui import run_tui
+
         return run_tui(ctx=ctx)
     actions = {
         "specialists": _act_specialists,

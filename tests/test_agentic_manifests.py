@@ -18,6 +18,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 from theforge import _installkit as kit
 from theforge.contracts.base import from_dict
 from theforge.contracts.specialist import AgenticManifest
@@ -47,6 +49,10 @@ def _manifests() -> list[tuple[Path, AgenticManifest]]:
     return out
 
 
+@pytest.mark.skipif(
+    not _checkouts(),
+    reason="requires sibling forge checkouts (FORJAS workspace layout)",
+)
 def test_manifests_parse_to_contract():
     manifests = _manifests()
     assert manifests, "no forge.agentic.json found in workspace checkouts"

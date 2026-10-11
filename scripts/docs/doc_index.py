@@ -16,17 +16,24 @@ Rules:
 
 stdlib-only; safe to vendor verbatim into any Forge repo.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 SCHEMA = "forge/DocIndex/v1"
 
 SECTION_ORDER = [
-    "Learn", "Use", "Reference", "Understand", "Operate", "Contribute",
+    "Learn",
+    "Use",
+    "Reference",
+    "Understand",
+    "Operate",
+    "Contribute",
     "Archive",
 ]
 
@@ -59,29 +66,41 @@ CATEGORY_TO_SECTION = {
 # Path fragments that mark operational docs even when heuristics file them
 # under another category.
 _OPERATE_HINTS = (
-    "troubleshoot", "runbook", "operat", "incident", "doctor",
-    "repair", "uninstall", "monitor", "observab",
+    "troubleshoot",
+    "runbook",
+    "operat",
+    "incident",
+    "doctor",
+    "repair",
+    "uninstall",
+    "monitor",
+    "observab",
 )
 
 # Local asset prefixes (ADR 0020 / tests.test_docs_consistency
 # LOCAL_ASSET_PREFIXES): versioned docs never link into these trees,
 # even where parts of them are committed (e.g. `.kiro/settings/`).
 # They stay inventoried for visibility but are not index entry points.
-_LOCAL_ASSET_PREFIXES = (".kiro/", ".claude/agents/",
-                         ".agents/skills/source-command-")
+_LOCAL_ASSET_PREFIXES = (".kiro/", ".claude/agents/", ".agents/skills/source-command-")
 
 
-def _section_for(row: dict) -> str:
+def _section_for(row: dict[str, Any]) -> str:
     path = row["path"].lower()
-    frozen = {"HISTORICAL", "DEPRECATED", "SDD_ARTIFACT", "TEST_EVIDENCE",
-              "RELEASE_REPORT", "GENERATED"}
+    frozen = {
+        "HISTORICAL",
+        "DEPRECATED",
+        "SDD_ARTIFACT",
+        "TEST_EVIDENCE",
+        "RELEASE_REPORT",
+        "GENERATED",
+    }
     if row["category"] not in frozen and any(h in path for h in _OPERATE_HINTS):
         return "Operate"
     return CATEGORY_TO_SECTION.get(row["category"], "Archive")
 
 
-def build_index(rows: list[dict], forge: str) -> str:
-    sections: dict[str, list[dict]] = defaultdict(list)
+def build_index(rows: list[dict[str, Any]], forge: str) -> str:
+    sections: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for r in rows:
         if r["category"] == "GENERATED" or "VENDORED_UPSTREAM" in r["secondary"]:
             continue
@@ -120,11 +139,14 @@ def build_index(rows: list[dict], forge: str) -> str:
             out.append("")
             continue
         # group by top-level docs folder to keep long sections scannable
-        groups: dict[str, list[dict]] = defaultdict(list)
+        groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for r in items:
             parts = r["path"].split("/")
-            grp = parts[1] if parts[0] == "docs" and len(parts) > 2 else \
-                (parts[0] if len(parts) > 1 else ".")
+            grp = (
+                parts[1]
+                if parts[0] == "docs" and len(parts) > 2
+                else (parts[0] if len(parts) > 1 else ".")
+            )
             groups[grp].append(r)
         for grp in sorted(groups):
             if len(groups) > 1:
@@ -134,8 +156,7 @@ def build_index(rows: list[dict], forge: str) -> str:
                 title = r["title"] or Path(r["path"]).stem
                 tag = f" `{r['category']}`" if sec == "Archive" else ""
                 # INDEX.md lives in docs/: strip the prefix, else go up.
-                href = (r["path"][5:] if r["path"].startswith("docs/")
-                        else "../" + r["path"])
+                href = r["path"][5:] if r["path"].startswith("docs/") else "../" + r["path"]
                 out.append(f"- [{title}]({href}){tag}")
             out.append("")
     return "\n".join(out).rstrip() + "\n"
@@ -145,20 +166,19 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", type=Path, default=Path("."))
     ap.add_argument("--forge", required=True)
-    ap.add_argument("--inventory", type=Path,
-                    default=Path("docs/knowledge-program/inventory.jsonl"))
+    ap.add_argument(
+        "--inventory", type=Path, default=Path("docs/knowledge-program/inventory.jsonl")
+    )
     ap.add_argument("--out", type=Path, default=Path("docs/INDEX.md"))
     args = ap.parse_args()
 
     inv = args.repo / args.inventory
-    rows = [json.loads(line) for line in
-            inv.read_text("utf-8").splitlines() if line.strip()]
+    rows = [json.loads(line) for line in inv.read_text("utf-8").splitlines() if line.strip()]
     md = build_index(rows, args.forge)
     out = args.repo / args.out
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md, encoding="utf-8", newline="\n")
-    print(f"wrote {out} ({len(rows)} inventoried, "
-          f"{md.count('- [')} entries)")
+    print(f"wrote {out} ({len(rows)} inventoried, {md.count('- [')} entries)")
     return 0
 
 

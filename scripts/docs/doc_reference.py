@@ -17,12 +17,13 @@ import argparse
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 KEEP_START = "<!-- keep:start -->"
 KEEP_END = "<!-- keep:end -->"
 
 
-def _syntax(cli: str, cmd: dict) -> str:
+def _syntax(cli: str, cmd: dict[str, Any]) -> str:
     parts = [cli, *cmd["path"].split()]
     for opt in cmd.get("options", []):
         flag = opt["flags"][0] if opt["flags"] else opt["name"]
@@ -34,7 +35,7 @@ def _syntax(cli: str, cmd: dict) -> str:
     return " ".join(parts)
 
 
-def _args_table(cmd: dict) -> list[str]:
+def _args_table(cmd: dict[str, Any]) -> list[str]:
     rows = ["| argument/flag | required | default | description |", "|---|---|---|---|"]
     for arg in cmd.get("arguments", []):
         req = "yes" if arg.get("required", True) else "no"
@@ -66,18 +67,19 @@ def _extract_keeps(existing: str) -> dict[str, str]:
     return keeps
 
 
-def _resolve_rationale(rationale: dict, path: str) -> dict | None:
+def _resolve_rationale(rationale: dict[str, Any], path: str) -> dict[str, Any] | None:
     """Longest-prefix match: `capabilities list` inherits `capabilities`."""
     words = path.split()
     for n in range(len(words), 0, -1):
         hit = rationale.get(" ".join(words[:n]))
-        if hit:
+        if isinstance(hit, dict):
             return hit
     return None
 
 
-def render(inv: dict, cli: str, existing: str | None,
-           rationale: dict | None = None) -> str:
+def render(
+    inv: dict[str, Any], cli: str, existing: str | None, rationale: dict[str, Any] | None = None
+) -> str:
     rationale = rationale or {}
     keeps = _extract_keeps(existing or "")
     out = [
@@ -93,14 +95,15 @@ def render(inv: dict, cli: str, existing: str | None,
         ),
         "",
     ]
-    groups: dict[str, list[dict]] = {}
+    groups: dict[str, list[dict[str, Any]]] = {}
     for cmd in inv["commands"]:
         top = cmd["path"].split()[0]
         groups.setdefault(top, []).append(cmd)
     covered = sum(1 for g in groups if g in rationale)
     out.append(
         f"Rationale coverage: **{covered}/{len(groups)}** first-level groups"
-        " curated in `command-rationale.json`.")
+        " curated in `command-rationale.json`."
+    )
     out.append("")
     out.append("## Groups")
     out.append("")
@@ -119,8 +122,11 @@ def render(inv: dict, cli: str, existing: str | None,
                 out.append("")
             r = _resolve_rationale(rationale, path)
             if r:
-                for label, key in (("por que", "why"), ("quando usar", "when"),
-                                   ("quando não", "when_not")):
+                for label, key in (
+                    ("por que", "why"),
+                    ("quando usar", "when"),
+                    ("quando não", "when_not"),
+                ):
                     if r.get(key):
                         out.append(f"- **{label}:** {r[key]}")
                 out.append("")
@@ -132,8 +138,10 @@ def render(inv: dict, cli: str, existing: str | None,
                 out += _args_table(cmd)
                 out.append("")
             out.append(KEEP_START)
-            out.append(keeps.get(path, "").strip() or
-                       "_free notes — errors, examples, next steps (hand-written, preserved)_")
+            out.append(
+                keeps.get(path, "").strip()
+                or "_free notes — errors, examples, next steps (hand-written, preserved)_"
+            )
             out.append(KEEP_END)
             out.append("")
     return "\n".join(out)
@@ -144,14 +152,14 @@ def main() -> int:
     ap.add_argument("--inventory", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--cli", required=True)
-    ap.add_argument("--rationale", default=None,
-                    help="curated command-rationale.json (optional)")
+    ap.add_argument("--rationale", default=None, help="curated command-rationale.json (optional)")
     a = ap.parse_args()
     inv = json.loads(Path(a.inventory).read_text(encoding="utf-8"))
     out_path = Path(a.out)
     rationale = (
         json.loads(Path(a.rationale).read_text(encoding="utf-8"))
-        if a.rationale and Path(a.rationale).exists() else None
+        if a.rationale and Path(a.rationale).exists()
+        else None
     )
     existing = out_path.read_text(encoding="utf-8") if out_path.exists() else None
     text = render(inv, a.cli, existing, rationale)

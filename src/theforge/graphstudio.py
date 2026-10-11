@@ -276,7 +276,7 @@ def _handler(views: dict[str, dict[str, Any]]) -> type[BaseHTTPRequestHandler]:
                 self._json(200, {"graphs": [v["descriptor"] for v in views.values()]})
                 return
             if path.startswith("/api/graph/"):
-                gid = path[len("/api/graph/"):]
+                gid = path[len("/api/graph/") :]
                 view = views.get(gid)
                 if view is None:
                     self._json(404, {"error": f"unknown graph {gid!r}"})

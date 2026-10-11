@@ -12,7 +12,7 @@ import contextlib
 import re
 import sys
 from collections.abc import Sequence
-from typing import Final
+from typing import Final, NoReturn
 
 from theforge import __version__
 from theforge.cli import commands, render
@@ -62,7 +62,7 @@ class _ForgeParser(argparse.ArgumentParser):
     """Parser with the Phase-4 DX contract: unknown verbs get fuzzy
     suggestions instead of a bare invalid-choice dump."""
 
-    def error(self, message: str) -> None:  # noqa: D102
+    def error(self, message: str) -> NoReturn:  # noqa: D102
         import difflib
 
         m = re.search(r"invalid choice: '([^']+)'", message)
@@ -109,7 +109,7 @@ def _help_for(parser: argparse.ArgumentParser, argv: list[str]) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    common = argparse.ArgumentParser(add_help=False)
+    common = _ForgeParser(add_help=False)
     common.add_argument("--root", default=".", help="workspace root (default: current dir)")
     common.add_argument("--json", action="store_true", help="machine-readable JSON output")
     common.add_argument(

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from theforge.ui import i18n
@@ -92,7 +94,7 @@ def test_read_key_windows_arrows(monkeypatch):
     import theforge.ui.kit as kit
 
     keys = iter(["\xe0", "H", "\xe0", "P", "\r"])
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     assert kit._read_key() == "up"
     assert kit._read_key() == "down"
@@ -103,7 +105,7 @@ def test_read_key_windows_chars(monkeypatch):
     import theforge.ui.kit as kit
 
     keys = iter([" ", "q", "\x1b"])
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     assert kit._read_key() == "space"
     assert kit._read_key() == "char:q"
@@ -117,7 +119,7 @@ def test_select_navigates_and_returns(monkeypatch, capsys):
     import theforge.ui.kit as kit
 
     keys = iter(["\xe0", "P", "\r"])  # down, enter → index 1
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(interactive=True, color=False, unicode=False, width=80)
     assert kit.select("pick", ["a", "b", "c"], ctx=ctx) == 1
@@ -129,7 +131,7 @@ def test_select_esc_cancels(monkeypatch):
     import theforge.ui.kit as kit
 
     keys = iter(["\x1b"])
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(interactive=True, color=False, unicode=False, width=80)
     assert kit.select("pick", ["a"], ctx=ctx) is None
@@ -139,7 +141,7 @@ def test_multi_select_toggles(monkeypatch, capsys):
     import theforge.ui.kit as kit
 
     keys = iter([" ", "\xe0", "P", " ", "\r"])  # toggle 0, down, toggle 1, enter
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(interactive=True, color=False, unicode=False, width=80)
     assert kit.multi_select("pick", ["a", "b", "c"], ctx=ctx) == {0, 1}
@@ -231,7 +233,7 @@ def test_select_windows_long_lists(monkeypatch, capsys):
     import theforge.ui.kit as kit
 
     keys = iter(["\xe0", "P"] * 18 + ["\r"])  # to the bottom, then enter
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(
         interactive=True, color=False, unicode=False, width=80, height=8,
@@ -249,7 +251,7 @@ def test_select_jk_aliases(monkeypatch):
     import theforge.ui.kit as kit
 
     keys = iter(["j", "k", "j", "\r"])  # down, up, down, enter → 1
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(interactive=True, color=False, unicode=False, width=80)
     assert kit.select("pick", ["a", "b", "c"], ctx=ctx) == 1
@@ -260,7 +262,7 @@ def test_dumb_terminal_no_cursor_escapes(monkeypatch, capsys):
     import theforge.ui.kit as kit
 
     keys = iter(["\r"])
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(
         interactive=True, color=False, unicode=False, width=80, ansi=False,
@@ -275,11 +277,10 @@ def test_wizard_components_and_none_hosts_reach_install_fn(monkeypatch):
     """GAP-002/003 regression — explicit contract: components always
     forwarded (no signature probing); zero chosen hosts -> "none",
     never silently "all"."""
-    import theforge.ui.kit as kit
     import theforge.ui.wizard as wiz
     from theforge.ui.wizard import run_wizard
 
-    monkeypatch.setattr(kit, "IS_WINDOWS", True)
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(wiz, "env_check_rows", lambda: [])
     keys = iter(["\r"] * 4)  # scope, profile, components, hosts
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))

@@ -95,6 +95,10 @@ def test_e2e_missing_checkout_is_blocked_not_invented(tmp_path):
     assert specialists.resolve_command(["{cli}", "doctor"], view=view) is None
 
 
+@pytest.mark.skipif(
+    not (WORKSPACE / "spark-forge-aws" / "forge.agentic.json").is_file(),
+    reason="spark-forge-aws checkout with agentic manifest required",
+)
 def test_cli_subprocess_specialists_list():
     """The real CLI surface works: ``python -m theforge specialists list``."""
     env = {"PYTHONPATH": str(WORKSPACE / "the-forge" / "src")}
