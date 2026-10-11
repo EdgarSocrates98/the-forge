@@ -115,7 +115,7 @@ def test_profile_minimal_installs_markers_only(target: Path) -> None:
 
 def test_profile_recommended_installs_agents(target: Path) -> None:
     service.install(scope="project", root=target, yes=True, profile="recommended")
-    assert (target / ".agents" / "agents").is_dir()
+    assert (target / ".codex" / "agents").is_dir()
 
 
 def test_unknown_host_and_profile(target: Path) -> None:

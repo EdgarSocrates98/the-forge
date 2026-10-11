@@ -4,8 +4,10 @@
 
 `forge_bootstrap.py` → venv + launcher → `ui/wizard.py` → installkit:
 
-Recommended profile includes Skills + Agents + MCP + TUI + Graph Studio. Minimal
-keeps marker/state/MCP assets only; Full includes every supported asset class.
+Recommended profile includes Skills + Agents + MCP + TUI + Graph Studio where
+host format exists. The Forge renders Codex agent specs to `.codex/agents`;
+unsupported host formats remain explicit NOT_APPLICABLE. Minimal keeps
+marker/state/MCP assets only; Full includes every supported asset class.
 `plan (dry_run)` → `apply (yes)` → `receipt` → `doctor`. Escopos
 project/workspace/user, perfis minimal/recommended/full, componentes
 opcionais (skills, agents, mcp, tui, graph-studio), hosts configuráveis,
