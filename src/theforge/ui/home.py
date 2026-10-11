@@ -20,6 +20,7 @@ _MENU = (
     "hosts",
     "graph studio",
     "install wizard",
+    "install status",
     "health check",
     "recent tasks",
     "quit",
@@ -165,12 +166,17 @@ def _act_hosts(ctx: UIContext) -> None:
 
 def _act_health(ctx: UIContext) -> None:
     from theforge.install import service
+    from theforge.ui.kit import format_status_doc
 
     health = service.doctor(scope="project")
-    checks = health.get("checks") or []
-    for c in checks[:15]:
-        color = "32" if c.get("status") == "PASS" else "31"
-        print(f"  {_c(ctx, color, c.get('status', '?'))} {c.get('id')}: {c.get('detail', '')}")
+    print(format_status_doc(health, ctx=ctx))
+
+
+def _act_install_status(ctx: UIContext) -> None:
+    from theforge.install import service
+    from theforge.ui.kit import format_status_doc
+
+    print(format_status_doc(service.status(scope="project"), ctx=ctx))
 
 
 def _act_recent(ctx: UIContext) -> None:
@@ -221,6 +227,7 @@ def run_home(*, ctx: UIContext | None = None) -> int:
         "hosts": _act_hosts,
         "graph studio": _act_graph,
         "install wizard": _act_install,
+        "install status": _act_install_status,
         "health check": _act_health,
         "recent tasks": _act_recent,
     }

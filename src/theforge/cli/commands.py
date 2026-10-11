@@ -656,12 +656,40 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                 if getattr(args, "components", None)
                 else None
             )
+            approved = args.yes
+            if (
+                not args.yes
+                and not args.dry_run
+                and not getattr(args, "json", False)
+                and sys.stdin.isatty()
+                and sys.stdout.isatty()
+            ):
+                # Interactive approval: plan first, render it, confirm —
+                # one command instead of dry-run + apply.
+                from theforge.ui.kit import NonInteractive, approve_plan
+
+                plan = service.install(
+                    args.host,
+                    scope=args.scope,
+                    root=root,
+                    profile=args.profile,
+                    yes=False,
+                    dry_run=True,
+                    components=comps,
+                )
+                try:
+                    approved = approve_plan(plan)
+                except NonInteractive:
+                    approved = False
+                if not approved:
+                    print("declined — nothing written")
+                    return 1
             out = service.install(
                 args.host,
                 scope=args.scope,
                 root=root,
                 profile=args.profile,
-                yes=args.yes,
+                yes=approved,
                 dry_run=args.dry_run,
                 components=comps,
             )
@@ -683,10 +711,35 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
             members = tuple(getattr(args, "member", ()) or ())
             if members and args.scope != "workspace":
                 raise UsageError("--member only applies to install auto --scope workspace")
+            approved = args.yes
+            if (
+                not args.yes
+                and not args.dry_run
+                and not getattr(args, "json", False)
+                and sys.stdin.isatty()
+                and sys.stdout.isatty()
+            ):
+                from theforge.ui.kit import NonInteractive, approve_plan
+
+                plan = service.install_auto(
+                    scope=args.scope,
+                    root=root,
+                    yes=False,
+                    dry_run=True,
+                    forge=args.forge,
+                    members=members,
+                )
+                try:
+                    approved = approve_plan(plan)
+                except NonInteractive:
+                    approved = False
+                if not approved:
+                    print("declined — nothing written")
+                    return 1
             out = service.install_auto(
                 scope=args.scope,
                 root=root,
-                yes=args.yes,
+                yes=approved,
                 dry_run=args.dry_run,
                 forge=args.forge,
                 members=members,
