@@ -75,6 +75,29 @@ def test_table_selection_moves():
     assert app.pane.selected == 1
 
 
+def test_filter_accepts_text_and_backspace():
+    app = _table_app()
+    app.on_key("/")
+    app.on_key("n")
+    assert app.filter == "n"
+    assert app.nav_idx == 1
+    app.on_key("backspace")
+    assert app.filter == ""
+    app.on_key("esc")
+    assert not app.filter_active
+
+
+def test_text_content_supports_page_scroll():
+    app = _table_app()
+    app.nav_idx = 1
+    app._load()
+    app.on_key("enter")
+    app.on_key("pagedown")
+    assert app.pane.scroll == 1
+    app.on_key("home")
+    assert app.pane.scroll == 0
+
+
 def test_action_executes_real_callable():
     app = _table_app()
     app.nav_idx = 3

@@ -114,3 +114,9 @@ def test_screen_refuses_non_tty():
 def test_run_loop_refuses_non_tty():
     with pytest.raises(NonInteractive):
         screen.run_loop(ctx(interactive=False), lambda b: None)
+
+
+def test_key_sequences_support_backtab_and_page_navigation():
+    assert screen._ESC["\x1b[Z"] == "backtab"
+    assert screen._ESC["\x1b[5~"] == "pageup"
+    assert screen._ESC["\x1b[6~"] == "pagedown"

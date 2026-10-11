@@ -20,11 +20,12 @@ non-TTY → `NonInteractive`, `NO_COLOR`/`TERM=dumb` → sem escapes,
 cp1252 → glifos ASCII. ~450 LOC, zero deps. **É o fallback correto do
 §2.9/DoD-16** — não será removido.
 
-## GAP-001 confirmado — o que falta para "full-screen premium"
+## GAP-001 — estado após hardening
 
 - Alternate screen, layout persistente (sidebar + painéis), foco e
-  navegação por Tab/Shift+Tab, `Ctrl+K` palette, `/` search, `?` help,
-  refresh Ctrl+R, estados LOADING/EMPTY/ERROR/SUCCESS em widgets.
+  navegação por Tab/Shift+Tab, `/` search, `?` help, refresh, paginação e
+  estados LOADING/EMPTY/ERROR/SUCCESS em widgets agora existem no engine
+  stdlib canônico; palette Ctrl+K e mouse permanecem fora do escopo.
 - Textual app do api-forge é **task-scoped** (`apiforge-tui <task>`),
   não um home full-screen com navegação entre seções.
 - Nenhuma forge tem: dashboard full-screen, MCP manager visual, skills/
@@ -44,12 +45,10 @@ cp1252 → glifos ASCII. ~450 LOC, zero deps. **É o fallback correto do
 | CSS/declarativo | ✓ .tcss | — | — | — | — |
 | Async workers | ✓ | — | ✓ | — | — |
 
-**Decisão: Textual** como camada full-screen **opcional** (`[tui]` extra),
-lazy-import com fallback honesto para o kit stdlib quando ausente ou
-non-TTY. Mantém os cores offline/stdlib-only intactos — igualdade ao
-precedente `apiforge[tui]` + `_graphstudio.py` (componente opcional).
-Rich entra como dependência transitiva do Textual, não como camada
-separada.
+**Decisão vigente: engine stdlib** como camada full-screen portátil, com
+Textual **opcional** (`[tui]` extra) no api-forge. O import Textual permanece
+lazy e o fallback stdlib continua honesto quando dependência ausente ou
+ambiente non-TTY. Mantém o core offline/stdlib-only intacto.
 
 ## Riscos
 
@@ -57,3 +56,5 @@ separada.
   nunca crash nem fake.
 - PTY real indisponível no ambiente → verificação via `run_test()` e
   snapshots, declarado UNVERIFIED para terminal real.
+- ConPTY e handshake de host real continuam BLOCKED neste ambiente; nenhum
+  estado de evidência foi promovido para PASS sem execução observável.
