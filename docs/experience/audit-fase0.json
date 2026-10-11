@@ -1,6 +1,6 @@
 {
   "schema": "forge/ExperienceAudit/v1",
-  "generated_at": "2026-10-10T16:25:08+00:00",
+  "generated_at": "2026-10-11T01:57:42+00:00",
   "generator": "scripts/experience/audit_surfaces.py",
   "note": "presence != verified — ver contrato de paridade (§7)",
   "forges": {
@@ -42,7 +42,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 5,
+          "learn_tree": 10,
           "hub": true,
           "commands_reference": true,
           "command_rationale": true
@@ -76,7 +76,7 @@
         "receipt_artifacts": []
       },
       "knowledge_docs": 0,
-      "test_files": 157
+      "test_files": 158
     },
     "api-forge": {
       "forge_id": "api-forge",
@@ -87,7 +87,7 @@
         "apiforge-mcp",
         "apiforge-tui"
       ],
-      "cli_groups_curated": 67,
+      "cli_groups_curated": 68,
       "install_related_groups": [],
       "surfaces": {
         "tui": {
@@ -117,7 +117,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 4,
+          "learn_tree": 19,
           "hub": false,
           "commands_reference": true,
           "command_rationale": true
@@ -149,7 +149,7 @@
         "receipt_artifacts": []
       },
       "knowledge_docs": 280,
-      "test_files": 348
+      "test_files": 349
     },
     "spark-forge-aws": {
       "forge_id": "spark-forge-aws",
@@ -177,7 +177,7 @@
         },
         "mcp": {
           "present": false,
-          "tools_locked": 145
+          "tools_locked": 146
         },
         "install": {
           "present": true,
@@ -189,7 +189,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 4,
+          "learn_tree": 17,
           "hub": false,
           "commands_reference": true,
           "command_rationale": true
@@ -221,7 +221,7 @@
         "receipt_artifacts": []
       },
       "knowledge_docs": 73,
-      "test_files": 492
+      "test_files": 494
     },
     "spark-forge-azure": {
       "forge_id": "spark-forge-azure",
@@ -230,7 +230,7 @@
       "console_scripts": [
         "sparkforge-azure"
       ],
-      "cli_groups_curated": 21,
+      "cli_groups_curated": 22,
       "install_related_groups": [],
       "surfaces": {
         "tui": {
@@ -260,7 +260,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 4,
+          "learn_tree": 17,
           "hub": false,
           "commands_reference": true,
           "command_rationale": true
@@ -292,7 +292,7 @@
         "receipt_artifacts": []
       },
       "knowledge_docs": 38,
-      "test_files": 273
+      "test_files": 274
     },
     "platform-forge": {
       "forge_id": "platform-forge",
@@ -302,7 +302,7 @@
         "platformforge",
         "platformforge-mcp"
       ],
-      "cli_groups_curated": 57,
+      "cli_groups_curated": 58,
       "install_related_groups": [],
       "surfaces": {
         "tui": {
@@ -332,7 +332,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 4,
+          "learn_tree": 16,
           "hub": false,
           "commands_reference": true,
           "command_rationale": true
@@ -370,7 +370,7 @@
         ]
       },
       "knowledge_docs": 0,
-      "test_files": 103
+      "test_files": 105
     },
     "forge-doctor-data": {
       "forge_id": "forge-doctor-data",
@@ -379,7 +379,7 @@
       "console_scripts": [
         "forge-doctor-data"
       ],
-      "cli_groups_curated": 90,
+      "cli_groups_curated": 91,
       "install_related_groups": [],
       "surfaces": {
         "tui": {
@@ -409,7 +409,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 4,
+          "learn_tree": 12,
           "hub": false,
           "commands_reference": true,
           "command_rationale": true
@@ -439,7 +439,7 @@
         "receipt_artifacts": []
       },
       "knowledge_docs": 0,
-      "test_files": 198
+      "test_files": 199
     },
     "forge-doctor-api": {
       "forge_id": "forge-doctor-api",
@@ -478,7 +478,7 @@
         "docs": {
           "readme": true,
           "index": true,
-          "learn_tree": 4,
+          "learn_tree": 12,
           "hub": false,
           "commands_reference": true,
           "command_rationale": true
@@ -508,7 +508,7 @@
         "receipt_artifacts": []
       },
       "knowledge_docs": 0,
-      "test_files": 86
+      "test_files": 87
     }
   }
 }
