@@ -18,7 +18,9 @@ import pytest
 # Windows-only module: tests simulate the msvcrt key path on every OS, so a
 # stub must exist for `import msvcrt`/`monkeypatch.setattr("msvcrt.getwch")`.
 if sys.platform != "win32":
-    sys.modules.setdefault("msvcrt", types.ModuleType("msvcrt"))
+    _msvcrt = types.ModuleType("msvcrt")
+    _msvcrt.getwch = lambda: ""  # tests replace this via monkeypatch
+    sys.modules.setdefault("msvcrt", _msvcrt)
 
 # Every test file must declare at least one category here; an unmapped file fails collection.
 # Files planned by the cycle-2 design are pre-registered; new unplanned files must be added.

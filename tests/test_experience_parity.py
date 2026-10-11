@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 WORKSPACE = Path(__file__).resolve().parents[2]
 
 REPOS = {
@@ -37,6 +39,13 @@ REPOS = {
 }
 
 KIT_FILES = ("kit.py", "i18n.py", "wizard.py")
+
+# Parity is only meaningful when every sibling checkout is present
+# (the FORJAS workspace layout); a single-repo checkout skips honestly.
+pytestmark = pytest.mark.skipif(
+    not all((WORKSPACE / repo).is_dir() for repo in REPOS),
+    reason="requires sibling forge checkouts (FORJAS workspace layout)",
+)
 
 
 def _canonical(fname: str, pkg: str) -> str:
