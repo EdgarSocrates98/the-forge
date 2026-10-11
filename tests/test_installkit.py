@@ -624,3 +624,116 @@ def test_backup_written_on_overwrite(tmp_path, monkeypatch):
     assert managed.read_text("utf-8") == "# demo skill\n"
     bak = ctx.state_dir / "backups" / ".agents/skills/demo/SKILL.md"
     assert bak.exists() and bak.read_bytes() == b"drifted\n"
+
+
+# --- forge-portal presence -------------------------------------------------
+
+
+@pytest.fixture
+def isolated_forge_home(tmp_path, monkeypatch):
+    """Empty ~/.forge registry + no FORGE_PORTAL_HOME env."""
+    home = tmp_path / "forgehome"
+    home.mkdir()
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(home))
+    monkeypatch.delenv("FORGE_PORTAL_HOME", raising=False)
+    return home
+
+
+def test_portal_presence_vendored_when_absent(isolated_forge_home):
+    p = kit.forge_portal_presence()
+    assert p["state"] == "vendored"
+    assert p["install_root"] is None
+    assert p["locations"] == []
+
+
+def test_portal_presence_env_root(isolated_forge_home, tmp_path, monkeypatch):
+    root = tmp_path / "portal-root"
+    root.mkdir()
+    monkeypatch.setenv("FORGE_PORTAL_HOME", str(root))
+    p = kit.forge_portal_presence()
+    assert p["state"] == "installed"
+    assert p["install_root"] == str(root)
+    assert any(loc["kind"] == "env:FORGE_PORTAL_HOME" for loc in p["locations"])
+
+
+def test_portal_presence_registry_manifest(isolated_forge_home):
+    installs = isolated_forge_home / ".forge" / "installs" / "forge-portal"
+    installs.mkdir(parents=True)
+    manifests = isolated_forge_home / ".forge" / "installations"
+    manifests.mkdir(parents=True)
+    (manifests / "forge-portal.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/InstallationManifest/v1",
+                "forge_id": "forge-portal",
+                "install_root": str(installs),
+                "installed_at": "2026-01-01T00:00:00Z",
+            }
+        ),
+        encoding="utf-8",
+    )
+    p = kit.forge_portal_presence()
+    assert p["state"] == "installed"
+    assert p["install_root"] == str(installs)
+    assert p["installed_at"] == "2026-01-01T00:00:00Z"
+    assert p["manifest"].endswith("forge-portal.json")
+
+
+def test_portal_presence_stale_install_root(isolated_forge_home):
+    """Manifest exists but its install_root is gone — honest about it."""
+    manifests = isolated_forge_home / ".forge" / "installations"
+    manifests.mkdir(parents=True)
+    (manifests / "forge-portal.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/InstallationManifest/v1",
+                "forge_id": "forge-portal",
+                "install_root": str(isolated_forge_home / "gone"),
+            }
+        ),
+        encoding="utf-8",
+    )
+    p = kit.forge_portal_presence()
+    assert p["state"] == "installed"  # registry entry still counts
+    assert p["install_root"] is None  # but no fabricated root
+    assert not any(loc["kind"] == "install_root" for loc in p["locations"])
+
+
+def test_portal_presence_default_install_root(isolated_forge_home):
+    root = isolated_forge_home / ".forge" / "installs" / "forge-portal"
+    root.mkdir(parents=True)
+    p = kit.forge_portal_presence()
+    assert p["state"] == "installed"
+    assert p["install_root"] == str(root)
+
+
+def test_status_reports_forge_portal(tmp_path, isolated_forge_home):
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    st = kit.status(ctx)
+    assert st["forge_portal"]["state"] == "vendored"
+
+
+def test_doctor_forge_portal_check(tmp_path, isolated_forge_home):
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    health = kit.doctor(ctx)
+    check = next(c for c in health["checks"] if c["id"] == "forge-portal")
+    assert check["status"] == "NOT_APPLICABLE"
+    assert check["repairable"] is False
+    # absent portal must never degrade overall status
+    assert health["status"] == "healthy"
+
+
+def test_doctor_forge_portal_check_pass_when_installed(
+    tmp_path, isolated_forge_home, monkeypatch
+):
+    root = tmp_path / "portal-root"
+    root.mkdir()
+    monkeypatch.setenv("FORGE_PORTAL_HOME", str(root))
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    health = kit.doctor(ctx)
+    check = next(c for c in health["checks"] if c["id"] == "forge-portal")
+    assert check["status"] == "PASS"
+    assert check["detail"] == str(root)
