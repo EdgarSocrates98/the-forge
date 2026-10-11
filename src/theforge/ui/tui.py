@@ -82,6 +82,15 @@ def _health() -> TextData:
     return TextData(lines=sink.getvalue().rstrip().splitlines())
 
 
+def _install_status() -> TextData:
+    from theforge.install import service
+    from theforge.ui.kit import UIContext, format_status_doc
+
+    doc = service.status(scope="project")
+    text = format_status_doc(doc, ctx=UIContext.detect(force_plain=True))
+    return TextData(lines=text.rstrip().splitlines())
+
+
 def _graph() -> ActionData:
     from theforge.ui.home import _act_graph
     ctx = UIContext.detect(force_plain=True)
@@ -137,6 +146,7 @@ def entries() -> list[Entry]:
         Entry(label="mcp status", provider=_mcp),
         Entry(label="graph studio", provider=_graph),
         Entry(label="install wizard", provider=_install),
+        Entry(label="install status", provider=_install_status),
         Entry(label="health check", provider=_health),
         Entry(label="recent tasks", provider=_recent),
     ]
