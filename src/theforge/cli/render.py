@@ -1783,6 +1783,25 @@ def activation(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def hosts_flow(data: dict[str, Any]) -> str:
+    lines = []
+    for h in data.get("hosts") or []:
+        line = f"{_clean(h.get('host')):<10} {_clean(h.get('state'))}"
+        if h.get("version"):
+            line += f"  {_clean(h['version'])}"
+        lines.append(line)
+        if h.get("logged_in") is False:
+            lines.append(f"    login: {_clean(h.get('login_hint'))}")
+        integ = h.get("integration") or {}
+        if integ.get("state"):
+            lines.append(f"    integration: {_clean(integ['state'])}")
+    if data.get("launched"):
+        lines.append(f"launched (exit {_clean(data.get('host_exit_code'))})")
+    elif data.get("launch_refused"):
+        lines.append(f"launch refused: {_clean(data['launch_refused'])}")
+    return "\n".join(lines)
+
+
 def task_result(data: dict[str, Any]) -> str:
     results = data.get("results") or []
     if not results:

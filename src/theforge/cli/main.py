@@ -421,6 +421,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--scope", choices=["project", "workspace", "user"], default="project"
     )
     hosts_activate.set_defaults(handler=commands.cmd_hosts_activate)
+    hosts_observe = hosts.add_parser(
+        "observe", parents=[common],
+        help="version+auth+integration receipt per host (read-only)",
+    )
+    hosts_observe.add_argument(
+        "host", nargs="?", default="all",
+        choices=["all", "claude", "devin", "codex", "copilot"],
+    )
+    hosts_observe.set_defaults(handler=commands.cmd_hosts_observe)
+    hosts_launch = hosts.add_parser(
+        "launch", parents=[common],
+        help="open one host in this workspace (requires a TTY)",
+    )
+    hosts_launch.add_argument("host", choices=["claude", "devin", "codex", "copilot"])
+    hosts_launch.set_defaults(handler=commands.cmd_hosts_launch)
 
     task = sub.add_parser(
         "task", help="delegate a task to specialists (real argv execution)"

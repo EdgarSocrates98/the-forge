@@ -27,6 +27,15 @@ o audit de assets".
 `forge hosts` detecta/ativa; `forge install apply` escreve a integração
 com plano→aprovação. Verificação: `install mcp-verify` (handshake real).
 
+## Observação e launch
+
+`forge hosts observe` mede por host (binário, versão, login, integração)
+sem lançar nada — estados `READY`/`SUPPORTED`/`NEEDS_LOGIN`/
+`NOT_DETECTED`. `forge hosts launch <host>` abre UM host no workspace
+herdando o terminal; recusa nomeada (`host_absent`, `login_required`,
+`no_tty`) quando a fronteira não se fecha. Copilot reporta
+`logged_in: null` — não há subcomando de status documentado.
+
 ## Fontes
 
 `docs/agentic.md` e `docs/AGENTS.md` do the-forge; `AGENTS.md` por forja.

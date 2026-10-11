@@ -87,9 +87,14 @@ _Task-oriented guides and workflows._
 ### learn/
 
 - [The Forge — trilha de aprendizado](learn/README.md)
+- [Receita — perguntar em linguagem natural e deixar o roteador escolher](learn/recipes/ask-router.md)
 - [Receita — delegar um intent ao especialista certo](learn/recipes/delegate-task.md)
 - [Receita — descobrir qual forja atende um requisito](learn/recipes/discover-capability.md)
+- [Receita — federar várias forjas num workspace](learn/recipes/federacao-multi-forge.md)
 - [Receita — instalação governada (plano antes de mutação)](learn/recipes/governed-install.md)
+- [Receita — observar e abrir seu host de IA](learn/recipes/hosts-observe-launch.md)
+- [Receita — instalar o the-forge (um comando, de verdade)](learn/recipes/instalar-theforge.md)
+- [Receita — usar o Command Center (TUI)](learn/recipes/tui-command-center.md)
 
 ### portable-installation/
 
@@ -117,6 +122,10 @@ _Task-oriented guides and workflows._
 ## Reference
 
 _Command, contract, schema and tool references._
+
+### contracts/
+
+- [Forge Experience Contracts — v1 (congelados na FASE 0)](../contracts/experience/README.md)
 
 ### docs/
 
@@ -205,6 +214,10 @@ _Concepts, architecture and design decisions._
 
 - [Arquitetura (ciclos 1–4.1)](architecture.md)
 - [Forge Protocol v1](protocol.md)
+
+### experience/
+
+- [Forge Design System — baseline FASE 0](experience/design-system.md)
 
 ### experience-3/
 
@@ -349,9 +362,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### experience/
 
+- [FASE 0 — Auditoria e fundação (concluída)](experience/RELATORIO-FASE0.md) `UNKNOWN`
 - [Accessibility](experience/accessibility.md) `UNKNOWN`
 - [Automation mode](experience/automation-mode.md) `UNKNOWN`
 - [Interactive CLI](experience/interactive-cli.md) `UNKNOWN`
+- [Matriz de Aceite — FASE 0 (baseline observado)](experience/matriz-aceite.md) `UNKNOWN`
 - [Themes and visual identity](experience/themes.md) `UNKNOWN`
 
 ### experience-3/

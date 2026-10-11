@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-10T10:33:24Z",
+  "generated_at": "2026-10-11T01:32:56Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 75,
+  "command_count": 77,
   "commands": [
     {
       "path": "init",
@@ -2573,6 +2573,137 @@
             "user"
           ],
           "positional": false,
+          "help": null
+        }
+      ]
+    },
+    {
+      "path": "hosts observe",
+      "help": "version+auth+integration receipt per host (read-only)",
+      "arguments": [
+        {
+          "name": "help",
+          "flags": [
+            "-h",
+            "--help"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "show this help message and exit"
+        },
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "host",
+          "flags": [],
+          "required": false,
+          "default": "all",
+          "choices": [
+            "all",
+            "claude",
+            "devin",
+            "codex",
+            "copilot"
+          ],
+          "positional": true,
+          "help": null
+        }
+      ]
+    },
+    {
+      "path": "hosts launch",
+      "help": "open one host in this workspace (requires a TTY)",
+      "arguments": [
+        {
+          "name": "help",
+          "flags": [
+            "-h",
+            "--help"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "show this help message and exit"
+        },
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "host",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": [
+            "claude",
+            "devin",
+            "codex",
+            "copilot"
+          ],
+          "positional": true,
           "help": null
         }
       ]

@@ -1431,6 +1431,24 @@ def cmd_hosts_activate(args: argparse.Namespace) -> int:
     return 0 if receipt.outcome != "UNSUPPORTED" else 1
 
 
+def cmd_hosts_observe(args: argparse.Namespace) -> int:
+    """``hosts observe [host]`` — version/auth/integration receipt, read-only."""
+    from theforge import hostflow
+
+    receipt = hostflow.hosts_flow(args.host, repo=_root(args))
+    _emit(args, receipt, render.hosts_flow)
+    return 0
+
+
+def cmd_hosts_launch(args: argparse.Namespace) -> int:
+    """``hosts launch <host>`` — open one host in the workspace (TTY only)."""
+    from theforge import hostflow
+
+    receipt = hostflow.hosts_flow(args.host, repo=_root(args), launch=True)
+    _emit(args, receipt, render.hosts_flow)
+    return int(receipt.get("host_exit_code") or 0)
+
+
 def _delegations_dir(root: Path) -> Path:
     d = root / ".forge" / "delegations"
     d.mkdir(parents=True, exist_ok=True)

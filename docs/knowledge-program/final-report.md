@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `the-forge` |
-| branch | `main` |
-| commit | `6f2e42d` |
-| docs inventoried | 464 (excl. GENERATED mirrors: 312; vendored upstream: 0) |
+| branch | `feat/ultimate-completion` |
+| commit | `132903d` |
+| docs inventoried | 473 (excl. GENERATED mirrors: 321; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 464
+- `AUTOMATICALLY_CHECKED`: 473
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -20,19 +20,19 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Category counts
 
 - `GENERATED`: 152
-- `UNKNOWN`: 94
+- `UNKNOWN`: 96
 - `ADR`: 59
 - `USER_GUIDE`: 48
 - `SDD_ARTIFACT`: 35
 - `RELEASE_REPORT`: 30
 - `SKILL`: 16
+- `HOW_TO`: 10
+- `CONTRACT`: 5
 - `ARCHITECTURE`: 5
 - `GETTING_STARTED`: 5
-- `HOW_TO`: 5
-- `CONTRACT`: 4
 - `TEST_EVIDENCE`: 4
 - `AGENT_INSTRUCTIONS`: 3
-- `CONCEPT`: 2
+- `CONCEPT`: 3
 - `TUTORIAL`: 1
 - `REFERENCE`: 1
 
@@ -46,7 +46,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Educational layer delivered
 
 - first-run/quickstart docs: 4
-- docs/learn/ entries: 5
+- docs/learn/ entries: 10
 - docs/hub/ entries: 11
 
 ## Documentation changes this program

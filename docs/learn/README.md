@@ -15,5 +15,10 @@
 | "Quero que a forja certa execute meu pedido" | [delegate-task](recipes/delegate-task.md) |
 | "Não sei qual forja resolve meu caso" | [discover-capability](recipes/discover-capability.md) |
 | "Quero instalar host a host sem surpresa" | [governed-install](recipes/governed-install.md) |
+| "Primeiro contato / um comando só" | [instalar-theforge](recipes/instalar-theforge.md) |
+| "Perguntar em linguagem natural" | [ask-router](recipes/ask-router.md) |
+| "Meu host de IA está pronto? Abrí-lo?" | [hosts-observe-launch](recipes/hosts-observe-launch.md) |
+| "Várias forjas num workspace" | [federacao-multi-forge](recipes/federacao-multi-forge.md) |
+| "Painel único de operação" | [tui-command-center](recipes/tui-command-center.md) |
 
 Referência completa gerada: [../INDEX.md](../INDEX.md).

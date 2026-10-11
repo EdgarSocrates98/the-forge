@@ -14,7 +14,7 @@ Rationale coverage: **27/27** first-level groups curated in `command-rationale.j
 - [`economy`](#economy) — 3 command(s)
 - [`explain`](#explain) — 1 command(s)
 - [`graph`](#graph) — 1 command(s)
-- [`hosts`](#hosts) — 4 command(s)
+- [`hosts`](#hosts) — 6 command(s)
 - [`init`](#init) — 1 command(s)
 - [`install`](#install) — 10 command(s)
 - [`installations`](#installations) — 2 command(s)
@@ -492,6 +492,32 @@ theforge hosts activate [help] [root] [json] [debug] <host> [scope]
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+### `hosts launch`
+
+**para que:** open one host in this workspace (requires a TTY)
+
+- **por que:** abre UM host no workspace herdando o terminal — fronteira humana de execução
+- **quando usar:** após `hosts observe` mostrar o host READY/SUPPORTED e você querer operar nele
+- **quando não:** sem TTY, com host ausente ou deslogado, ou para observar (use `observe`): o recibo recusa com a razão nomeada
+
+**Syntax**
+
+```text
+theforge hosts launch [help] [root] [json] [debug] <host>
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `host` | yes | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ### `hosts list`
 
 - **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
@@ -509,6 +535,32 @@ theforge hosts list [help] [root] [json] [debug]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `hosts observe`
+
+**para que:** version+auth+integration receipt per host (read-only)
+
+- **por que:** recibo operacional por host: binário, versão, login e integração do workspace — sem lançar nada
+- **quando usar:** antes de `hosts launch`, ou para auditar se o host está pronto (READY/SUPPORTED/NEEDS_LOGIN)
+- **quando não:** para detecção por evidência (env/config), use `hosts list`/`status`
+
+**Syntax**
+
+```text
+theforge hosts observe [help] [root] [json] [debug] [host]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `host` | no | — | — |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
