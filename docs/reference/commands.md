@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **27/27** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **28/28** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -14,13 +14,14 @@ Rationale coverage: **27/27** first-level groups curated in `command-rationale.j
 - [`economy`](#economy) — 3 command(s)
 - [`explain`](#explain) — 1 command(s)
 - [`graph`](#graph) — 1 command(s)
-- [`hosts`](#hosts) — 4 command(s)
+- [`hosts`](#hosts) — 6 command(s)
 - [`init`](#init) — 1 command(s)
 - [`install`](#install) — 10 command(s)
 - [`installations`](#installations) — 2 command(s)
 - [`knowledge`](#knowledge) — 4 command(s)
 - [`memory`](#memory) — 7 command(s)
 - [`plan`](#plan) — 1 command(s)
+- [`portal`](#portal) — 1 command(s)
 - [`provider`](#provider) — 3 command(s)
 - [`providers`](#providers) — 2 command(s)
 - [`registry`](#registry) — 5 command(s)
@@ -492,6 +493,32 @@ theforge hosts activate [help] [root] [json] [debug] <host> [scope]
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+### `hosts launch`
+
+**para que:** open one host in this workspace (requires a TTY)
+
+- **por que:** abre UM host no workspace herdando o terminal — fronteira humana de execução
+- **quando usar:** após `hosts observe` mostrar o host READY/SUPPORTED e você querer operar nele
+- **quando não:** sem TTY, com host ausente ou deslogado, ou para observar (use `observe`): o recibo recusa com a razão nomeada
+
+**Syntax**
+
+```text
+theforge hosts launch [help] [root] [json] [debug] <host>
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `host` | yes | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ### `hosts list`
 
 - **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
@@ -509,6 +536,32 @@ theforge hosts list [help] [root] [json] [debug]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `hosts observe`
+
+**para que:** version+auth+integration receipt per host (read-only)
+
+- **por que:** recibo operacional por host: binário, versão, login e integração do workspace — sem lançar nada
+- **quando usar:** antes de `hosts launch`, ou para auditar se o host está pronto (READY/SUPPORTED/NEEDS_LOGIN)
+- **quando não:** para detecção por evidência (env/config), use `hosts list`/`status`
+
+**Syntax**
+
+```text
+theforge hosts observe [help] [root] [json] [debug] [host]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `host` | no | — | — |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1182,6 +1235,35 @@ theforge plan [help] [root] [json] [debug] <intent> [profile] [targets] [REQ_JSO
 | `execute` | no | — | execute the nodes (default: plan only, outcome `planned`) |
 | `allow_unverified` | no | — | — |
 | `CAPABILITY` | no | — | approve a capability for the nodes that use it (repeatable) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## portal
+
+### `portal`
+
+**para que:** optional local web UI (127.0.0.1 + session token) over the real services — install, hosts, MCP handshakes, federation, agents, skills, graphs and tasks
+
+- **por que:** UI web local opcional (127.0.0.1 + token de sessao) sobre os servicos reais — command center da federacao
+- **quando usar:** primeira configuracao, auditoria visual da federacao/grafo/hosts, ou demo do fluxo plan->confirm->apply
+- **quando não:** automacao/CI — use os verbos diretamente; o portal e interativo e loopback-only
+
+**Syntax**
+
+```text
+theforge portal [help] [root] [json] [debug] [no_browser] [port]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `help` | no | — | show this help message and exit |
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `no_browser` | no | — | print the session URL without opening a browser |
+| `port` | no | — | port to bind (default ephemeral) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_

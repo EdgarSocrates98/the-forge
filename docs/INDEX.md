@@ -39,6 +39,7 @@ _Task-oriented guides and workflows._
 
 - [Changelog](../CHANGELOG.md)
 - [FORGE KNOWLEDGE — final program report (prompt_evo_docs2.md)](../FORGE_KNOWLEDGE_FINAL_REPORT.md)
+- [FORGE ULTIMATE COMPLETION — Relatório Final](../FORGE_ULTIMATE_COMPLETION_FINAL_REPORT.md)
 - [The Forge](../README.md)
 
 ### adapters/
@@ -87,9 +88,15 @@ _Task-oriented guides and workflows._
 ### learn/
 
 - [The Forge — trilha de aprendizado](learn/README.md)
+- [Receita — perguntar em linguagem natural e deixar o roteador escolher](learn/recipes/ask-router.md)
 - [Receita — delegar um intent ao especialista certo](learn/recipes/delegate-task.md)
 - [Receita — descobrir qual forja atende um requisito](learn/recipes/discover-capability.md)
+- [Receita — federar várias forjas num workspace](learn/recipes/federacao-multi-forge.md)
 - [Receita — instalação governada (plano antes de mutação)](learn/recipes/governed-install.md)
+- [Receita — observar e abrir seu host de IA](learn/recipes/hosts-observe-launch.md)
+- [Receita — instalar o the-forge (um comando, de verdade)](learn/recipes/instalar-theforge.md)
+- [Receita — portal web local: command center da federação](learn/recipes/portal-command-center.md)
+- [Receita — usar o Command Center (TUI)](learn/recipes/tui-command-center.md)
 
 ### portable-installation/
 
@@ -117,6 +124,10 @@ _Task-oriented guides and workflows._
 ## Reference
 
 _Command, contract, schema and tool references._
+
+### contracts/
+
+- [Forge Experience Contracts — v1 (congelados na FASE 0)](../contracts/experience/README.md)
 
 ### docs/
 
@@ -199,12 +210,17 @@ _Concepts, architecture and design decisions._
 - [ADR 0056 — Adaptação de assets agentic por host: canônico renderiza, auditoria vigia](adr/0056-agentic-host-adaptation.md)
 - [ADR 0057 — Loop Factory como fila operacional de specs](adr/0057-loop-factory.md)
 - [ADR 0058 — Instalação portátil: kit vendored, escopos e família](adr/0058-portable-installation.md)
+- [ADR 0059 — Forge Portal: UI local opcional e command center](adr/0059-forge-portal-command-center.md)
 - [Índice de ADRs](adr/README.md)
 
 ### docs/
 
 - [Arquitetura (ciclos 1–4.1)](architecture.md)
 - [Forge Protocol v1](protocol.md)
+
+### experience/
+
+- [Forge Design System — baseline FASE 0](experience/design-system.md)
 
 ### experience-3/
 
@@ -349,10 +365,17 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### experience/
 
+- [FASE 0 — Auditoria e fundação (concluída)](experience/RELATORIO-FASE0.md) `UNKNOWN`
 - [Accessibility](experience/accessibility.md) `UNKNOWN`
 - [Automation mode](experience/automation-mode.md) `UNKNOWN`
+- [FASE 7 — the-forge: relatório de experiência](experience/fase7-report.md) `RELEASE_REPORT`
 - [Interactive CLI](experience/interactive-cli.md) `UNKNOWN`
+- [FASE 8.2 — Jornadas de usuário: execução real](experience/jornadas-fase8.md) `UNKNOWN`
+- [Matriz de Aceite — FASE 0 (baseline observado)](experience/matriz-aceite.md) `UNKNOWN`
+- [FASE 8.1 — Matriz de paridade final ×7](experience/paridade-final-fase8.md) `UNKNOWN`
+- [FASE 8.8 — Auditoria de segurança](experience/security-audit-fase8.md) `UNKNOWN`
 - [Themes and visual identity](experience/themes.md) `UNKNOWN`
+- [FASE 8.3 — Avaliação de UX](experience/ux-eval-fase8.md) `UNKNOWN`
 
 ### experience-3/
 

@@ -10,6 +10,7 @@ isolation, no cross-imports.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -98,9 +99,19 @@ def _view_from_cli(
         if not forge_json.is_file():
             return None, "no forge.agentic.json/forge.json — checkout absent"
         try:
-            entry = tomllib.loads(forge_json.read_text(encoding="utf-8")).get("cli_entry", "")
-        except (OSError, tomllib.TOMLDecodeError):
+            text = forge_json.read_text(encoding="utf-8")
+        except OSError:
             return None, "unreadable forge.json"
+        # real forge.json files are JSON; the documented fallback also
+        # accepts TOML (`cli_entry = "mod:fn"`) for minimal providers
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            try:
+                data = tomllib.loads(text)
+            except tomllib.TOMLDecodeError:
+                return None, "unreadable forge.json"
+        entry = data.get("cli_entry", "") if isinstance(data, dict) else ""
     if not entry or ":" not in entry:
         return None, "no cli_entry declared"
     module, _, fn = entry.partition(":")
@@ -112,15 +123,25 @@ def _view_from_cli(
         f"from {module} import {fn} as _main; sys.exit(_main())"
     )
     proc = None
+    # Prefer the checkout's own venv interpreter — a producer CLI can
+    # only import its deps (typer etc.) in the interpreter it was
+    # installed into. Fall back to ours for stdlib-only producers.
+    candidates = [
+        checkout / ".venv" / "Scripts" / "python.exe",  # Windows
+        checkout / ".venv" / "bin" / "python",          # POSIX
+    ]
+    interpreter = next((str(p) for p in candidates if p.is_file()), sys.executable)
     # Every producer must emit ForgeGraphView JSON on `graph view`; flag
     # dialects differ (`--json` vs default-json), so try both.
     for flags in (["--json"], []):
-        argv = [sys.executable, "-c", code_t.format(p=provider_id, flags=flags)]
+        argv = [interpreter, "-c", code_t.format(p=provider_id, flags=flags)]
         try:
             proc = subprocess.run(
                 argv,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=timeout,
                 check=False,
             )
@@ -140,6 +161,12 @@ def _view_from_cli(
             refusal = doc.get("refusal")
             if refusal:
                 return None, f"refused {refusal}"
+        # text-dialect refusals: `AF-CODE-NAME: detail` (apiforge family)
+        for stream in (proc.stdout, proc.stderr):
+            for line in stream.splitlines():
+                m = re.match(r"^([A-Z]{2,6}-[A-Z0-9-]{3,}):", line.strip())
+                if m:
+                    return None, f"refused {m.group(1)}"
         tail = (proc.stderr or proc.stdout).strip().splitlines()
         detail = tail[-1].strip()[:120] if tail else ""
         reason = f"producer exited {proc.returncode}"

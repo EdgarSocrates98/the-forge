@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/ExperienceParity/v1",
+  "title": "ForgeExperienceParityContract",
+  "description": "Matriz versionada de paridade das sete Forjas (§7, §8.1). Cada célula registra estado por capacidade×superfície. Proibido preencher por existência de arquivo — UNVERIFIED é o estado honesto quando não há evidência de comportamento.",
+  "type": "object",
+  "required": ["schema", "generated_at", "forges", "matrix"],
+  "properties": {
+    "schema": {"const": "forge/ExperienceParity/v1"},
+    "generated_at": {"type": "string"},
+    "forges": {"type": "array", "items": {"type": "string"}},
+    "capabilities": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "linhas da matriz (ex.: install.lifecycle, agent-first.launch, mcp.handshake, skills.catalog, ...)"
+    },
+    "matrix": {
+      "type": "object",
+      "description": "matrix[forge_id][capability][surface] = cell",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/cell"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {"enum": ["SUPPORTED", "PARTIAL", "UNSUPPORTED", "UNVERIFIED", "NOT_APPLICABLE"]},
+        "evidence": {"type": "string", "description": "comando/artefato que fundamenta SUPPORTED/PARTIAL; ausência em UNVERIFIED"},
+        "detail": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

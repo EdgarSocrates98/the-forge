@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/HostIntegration/v1",
+  "title": "ForgeHostIntegrationContract",
+  "description": "Estado de integração entre uma Forja e um AI host (Devin, Claude Code, Codex, Copilot). Congela os estados do §4 do programa e a capability matrix do §4.1. Regra central: nunca declarar ACTIVE quando apenas CONFIGURED; nunca EXECUTION_VERIFIED por uma tool MCP apenas listada.",
+  "type": "object",
+  "required": ["schema", "forge_id", "host", "version", "detected", "features", "updated_at"],
+  "properties": {
+    "schema": {"const": "forge/HostIntegration/v1"},
+    "forge_id": {"type": "string", "minLength": 1},
+    "host": {"enum": ["devin", "claude", "codex", "copilot"]},
+    "version": {"type": ["string", "null"], "description": "versão observada via CLI; null quando NOT_DETECTED"},
+    "detected": {"type": "boolean"},
+    "cli_path": {"type": ["string", "null"]},
+    "global_state": {
+      "enum": [
+        "NOT_DETECTED", "DETECTED", "SUPPORTED", "AUTH_REQUIRED",
+        "CONFIGURED", "MCP_HANDSHAKE_VERIFIED", "TOOLS_DISCOVERED",
+        "SKILLS_AVAILABLE", "AGENTS_AVAILABLE", "RESTART_REQUIRED",
+        "ACTIVE", "EXECUTION_VERIFIED", "DEGRADED", "BLOCKED", "UNSUPPORTED"
+      ]
+    },
+    "features": {
+      "type": "object",
+      "description": "estado por recurso — cada um promovido só por evidência do próprio recurso",
+      "required": ["cli_launcher", "mcp", "skills", "agents", "subagents", "instructions", "workspace_context", "authentication", "execution", "evidence"],
+      "properties": {
+        "cli_launcher": {"$ref": "#/$defs/feature"},
+        "mcp": {"$ref": "#/$defs/feature"},
+        "skills": {"$ref": "#/$defs/feature"},
+        "agents": {"$ref": "#/$defs/feature"},
+        "subagents": {"$ref": "#/$defs/feature"},
+        "instructions": {"$ref": "#/$defs/feature"},
+        "workspace_context": {"$ref": "#/$defs/feature"},
+        "authentication": {"$ref": "#/$defs/feature"},
+        "execution": {"$ref": "#/$defs/feature"},
+        "evidence": {"$ref": "#/$defs/feature"}
+      },
+      "additionalProperties": false
+    },
+    "launch_command": {"type": ["string", "null"], "description": "comando documentado e testado; null quando launch não suportado"},
+    "restart_required": {"type": ["boolean", "null"], "description": "null = UNVERIFIED, nunca presumido"},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "evidence": {
+      "type": "array",
+      "description": "comandos/outputs que fundamentam cada estado promovido",
+      "items": {
+        "type": "object",
+        "required": ["claim", "command", "observed"],
+        "properties": {
+          "claim": {"type": "string"},
+          "command": {"type": "string"},
+          "observed": {"type": "string"},
+          "at": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "feature": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {"enum": ["NOT_DETECTED", "DETECTED", "SUPPORTED", "AUTH_REQUIRED", "CONFIGURED", "MCP_HANDSHAKE_VERIFIED", "TOOLS_DISCOVERED", "SKILLS_AVAILABLE", "AGENTS_AVAILABLE", "RESTART_REQUIRED", "ACTIVE", "EXECUTION_VERIFIED", "DEGRADED", "BLOCKED", "UNSUPPORTED", "UNVERIFIED", "NOT_APPLICABLE"]},
+        "detail": {"type": "string"},
+        "evidence_ref": {"type": "integer", "description": "índice em evidence[] que fundamenta o estado"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

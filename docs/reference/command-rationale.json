@@ -106,5 +106,20 @@
   "workspace": {
     "why": "descrição e administração do workspace `.forge/`",
     "when": "configurar/inspecionar o workspace atual"
+  },
+  "hosts observe": {
+    "why": "recibo operacional por host: binário, versão, login e integração do workspace — sem lançar nada",
+    "when": "antes de `hosts launch`, ou para auditar se o host está pronto (READY/SUPPORTED/NEEDS_LOGIN)",
+    "when_not": "para detecção por evidência (env/config), use `hosts list`/`status`"
+  },
+  "hosts launch": {
+    "why": "abre UM host no workspace herdando o terminal — fronteira humana de execução",
+    "when": "após `hosts observe` mostrar o host READY/SUPPORTED e você querer operar nele",
+    "when_not": "sem TTY, com host ausente ou deslogado, ou para observar (use `observe`): o recibo recusa com a razão nomeada"
+  },
+  "portal": {
+    "why": "UI web local opcional (127.0.0.1 + token de sessao) sobre os servicos reais — command center da federacao",
+    "when": "primeira configuracao, auditoria visual da federacao/grafo/hosts, ou demo do fluxo plan->confirm->apply",
+    "when_not": "automacao/CI — use os verbos diretamente; o portal e interativo e loopback-only"
   }
 }

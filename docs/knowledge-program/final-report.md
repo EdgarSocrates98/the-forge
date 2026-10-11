@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `the-forge` |
-| branch | `main` |
-| commit | `6f2e42d` |
-| docs inventoried | 464 (excl. GENERATED mirrors: 312; vendored upstream: 0) |
+| branch | `feat/ultimate-completion` |
+| commit | `ae27939` |
+| docs inventoried | 481 (excl. GENERATED mirrors: 329; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 464
+- `AUTOMATICALLY_CHECKED`: 481
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -20,33 +20,33 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Category counts
 
 - `GENERATED`: 152
-- `UNKNOWN`: 94
-- `ADR`: 59
-- `USER_GUIDE`: 48
+- `UNKNOWN`: 100
+- `ADR`: 60
+- `USER_GUIDE`: 49
 - `SDD_ARTIFACT`: 35
-- `RELEASE_REPORT`: 30
+- `RELEASE_REPORT`: 31
 - `SKILL`: 16
+- `HOW_TO`: 11
+- `CONTRACT`: 5
 - `ARCHITECTURE`: 5
 - `GETTING_STARTED`: 5
-- `HOW_TO`: 5
-- `CONTRACT`: 4
 - `TEST_EVIDENCE`: 4
 - `AGENT_INSTRUCTIONS`: 3
-- `CONCEPT`: 2
+- `CONCEPT`: 3
 - `TUTORIAL`: 1
 - `REFERENCE`: 1
 
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 8 (active docs: 0; remainder in frozen/historical trees)
+- broken internal links total: 400 (active docs: 400; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 
 ## Educational layer delivered
 
 - first-run/quickstart docs: 4
-- docs/learn/ entries: 5
+- docs/learn/ entries: 11
 - docs/hub/ entries: 11
 
 ## Documentation changes this program
@@ -69,4 +69,4 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - Hub site build not executed (dev-only, `mkdocs-material`); the markdown hub is the verified deliverable.
 - Screen-reader and POSIX-terminal validation remain UNVERIFIED on this host.
 
-## Final status: **PASS**
+## Final status: **PARTIAL**

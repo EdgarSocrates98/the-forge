@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/DocumentationReview/v1",
+  "title": "ForgeDocumentationContract",
+  "description": "Estado de revisão de cada documento público canônico (§12). O estado NUNCA é promovido automaticamente só por passar em script: SEMANTICALLY_REVIEWED exige evidência de leitura integral e comparação com código. Inventário ≠ revisão (recomendação §Segunda do operador).",
+  "type": "object",
+  "required": ["schema", "forge_id", "documents", "updated_at"],
+  "properties": {
+    "schema": {"const": "forge/DocumentationReview/v1"},
+    "forge_id": {"type": "string", "minLength": 1},
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "audience", "state"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "audience": {"enum": ["public-canonical", "reference", "historical", "internal"]},
+          "state": {
+            "enum": [
+              "INVENTORIED",
+              "AUTOMATICALLY_CHECKED",
+              "TECHNICALLY_VERIFIED",
+              "SEMANTICALLY_REVIEWED",
+              "USER_JOURNEY_VALIDATED"
+            ]
+          },
+          "semantic_evidence": {
+            "type": ["string", "null"],
+            "description": "OBRIGATÓRIO quando state >= SEMANTICALLY_REVIEWED: quem/o quê leu, contra qual código comparou, data. Null nos estados anteriores."
+          },
+          "findings": {"type": "array", "items": {"type": "string"}},
+          "reviewed_at": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "public_canonical_total": {"type": "integer"},
+        "semantically_reviewed": {"type": "integer"},
+        "user_journey_validated": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

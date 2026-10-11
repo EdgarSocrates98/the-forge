@@ -1431,6 +1431,24 @@ def cmd_hosts_activate(args: argparse.Namespace) -> int:
     return 0 if receipt.outcome != "UNSUPPORTED" else 1
 
 
+def cmd_hosts_observe(args: argparse.Namespace) -> int:
+    """``hosts observe [host]`` — version/auth/integration receipt, read-only."""
+    from theforge import hostflow
+
+    receipt = hostflow.hosts_flow(args.host, repo=_root(args))
+    _emit(args, receipt, render.hosts_flow)
+    return 0
+
+
+def cmd_hosts_launch(args: argparse.Namespace) -> int:
+    """``hosts launch <host>`` — open one host in the workspace (TTY only)."""
+    from theforge import hostflow
+
+    receipt = hostflow.hosts_flow(args.host, repo=_root(args), launch=True)
+    _emit(args, receipt, render.hosts_flow)
+    return int(receipt.get("host_exit_code") or 0)
+
+
 def _delegations_dir(root: Path) -> Path:
     d = root / ".forge" / "delegations"
     d.mkdir(parents=True, exist_ok=True)
@@ -1556,3 +1574,25 @@ def cmd_install_wizard(args: argparse.Namespace) -> int:
         ctx=ctx,
         out_json=getattr(args, "json", False),
     )
+
+
+def cmd_portal(args: argparse.Namespace) -> int:
+    """``theforge portal``: optional local web UI over the real services.
+
+    Why: the command-center journey (install → hosts → MCP → federation →
+    graphs → tasks) in a browser — plan → confirm → apply with receipts —
+    for operators who prefer seeing state before acting. The CLI, MCP
+    delegation and scripts keep working with or without it.
+    When: first workspace setup, visual audit of the federation, demos.
+    When not: automation/CI — use the verbs directly; the portal is
+    interactive and loopback-only."""
+    from theforge.portal_adapter import main as portal_main
+
+    argv: list[str] = []
+    if args.no_browser:
+        argv.append("--no-browser")
+    if args.port:
+        argv.extend(["--port", str(args.port)])
+    if args.root != ".":
+        argv.extend(["--root", str(args.root)])
+    return portal_main(argv)

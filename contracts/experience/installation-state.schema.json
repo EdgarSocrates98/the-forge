@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/InstallationState/v1",
+  "title": "ForgeInstallationContract",
+  "description": "Estado de instalação de uma Forja por escopo/perfil/componente (§6 do programa). Complementa forge/InstallReceipt/v1 (o recibo da operação) — este contrato é o MODELO DE ESTADO consultável depois. Escolha de wizard que não aparece no plano/receipt é bug, não variação.",
+  "type": "object",
+  "required": ["schema", "forge_id", "scope", "profile", "components", "updated_at"],
+  "properties": {
+    "schema": {"const": "forge/InstallationState/v1"},
+    "forge_id": {"type": "string", "minLength": 1},
+    "scope": {"enum": ["project", "workspace", "user"]},
+    "profile": {"enum": ["economy", "balanced", "full"], "description": "nenhum perfil reduz exigências de segurança"},
+    "components": {
+      "type": "object",
+      "required": ["runtime", "cli", "tui", "skills", "agents", "mcp", "knowledge", "graph_studio", "host_config"],
+      "properties": {
+        "runtime": {"$ref": "#/$defs/component"},
+        "cli": {"$ref": "#/$defs/component"},
+        "tui": {"$ref": "#/$defs/component"},
+        "skills": {"$ref": "#/$defs/component"},
+        "agents": {"$ref": "#/$defs/component"},
+        "mcp": {"$ref": "#/$defs/component"},
+        "knowledge": {"$ref": "#/$defs/component"},
+        "graph_studio": {"$ref": "#/$defs/component"},
+        "host_config": {"$ref": "#/$defs/component"}
+      },
+      "additionalProperties": false
+    },
+    "hosts": {
+      "type": "array",
+      "items": {"enum": ["devin", "claude", "codex", "copilot"]},
+      "description": "hosts selecionados pelo usuário — seleção vazia é estado válido e honesto"
+    },
+    "ledger_path": {"type": ["string", "null"]},
+    "drift": {"type": "integer", "minimum": 0},
+    "unlock": {"type": ["string", "null"], "description": "instrução de desbloqueio quando FAILED/DEGRADED — obrigatório em recusa"},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "component": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {"enum": ["NOT_INSTALLED", "INSTALLED", "CONFIGURED", "REGISTERED", "ACTIVATED", "VERIFIED", "READY", "DEGRADED", "FAILED", "NOT_APPLICABLE"]},
+        "version": {"type": ["string", "null"]},
+        "detail": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

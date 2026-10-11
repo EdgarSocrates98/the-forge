@@ -36,6 +36,8 @@ theforge install apply --dry-run          # plano determinístico, sem escrever
 theforge install auto --yes               # delega a cada forge registrada em ~/.forge/installations
 theforge install status|doctor|repair|uninstall
 theforge installations list               # registry do bootstrap (read-only)
+
+theforge portal [--no-browser]            # UI local opcional — command center da federação
 ```
 
 Cada escrita passa por ledger sha256 com posse: `uninstall` remove só o que é gerenciado, arquivos do usuário e edições manuais sobrevivem. Escopos `project` (padrão), `workspace` e `user`; profiles `minimal`/`recommended`/`full`; hosts `claude`, `devin`, `codex`, `copilot` ou `all`. Contrato e matriz: [docs/portable-installation/](docs/portable-installation/README.md) ([ADR 0058](docs/adr/0058-portable-installation.md)).
