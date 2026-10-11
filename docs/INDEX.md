@@ -39,6 +39,7 @@ _Task-oriented guides and workflows._
 
 - [Changelog](../CHANGELOG.md)
 - [FORGE KNOWLEDGE — final program report (prompt_evo_docs2.md)](../FORGE_KNOWLEDGE_FINAL_REPORT.md)
+- [FORGE ULTIMATE COMPLETION — Relatório Final](../FORGE_ULTIMATE_COMPLETION_FINAL_REPORT.md)
 - [The Forge](../README.md)
 
 ### adapters/
@@ -365,9 +366,14 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [FASE 0 — Auditoria e fundação (concluída)](experience/RELATORIO-FASE0.md) `UNKNOWN`
 - [Accessibility](experience/accessibility.md) `UNKNOWN`
 - [Automation mode](experience/automation-mode.md) `UNKNOWN`
+- [FASE 7 — the-forge: relatório de experiência](experience/fase7-report.md) `RELEASE_REPORT`
 - [Interactive CLI](experience/interactive-cli.md) `UNKNOWN`
+- [FASE 8.2 — Jornadas de usuário: execução real](experience/jornadas-fase8.md) `UNKNOWN`
 - [Matriz de Aceite — FASE 0 (baseline observado)](experience/matriz-aceite.md) `UNKNOWN`
+- [FASE 8.1 — Matriz de paridade final ×7](experience/paridade-final-fase8.md) `UNKNOWN`
+- [FASE 8.8 — Auditoria de segurança](experience/security-audit-fase8.md) `UNKNOWN`
 - [Themes and visual identity](experience/themes.md) `UNKNOWN`
+- [FASE 8.3 — Avaliação de UX](experience/ux-eval-fase8.md) `UNKNOWN`
 
 ### experience-3/
 

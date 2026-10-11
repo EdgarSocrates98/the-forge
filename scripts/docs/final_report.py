@@ -28,9 +28,9 @@ def _git(repo: Path, *args: str) -> str:
 
 
 def build_report(repo: Path, forge: str, out_dir: Path) -> str:
-    rows = [json.loads(l) for l in
+    rows = [json.loads(ln) for ln in
             (out_dir / "inventory.jsonl").read_text("utf-8").splitlines()
-            if l.strip()]
+            if ln.strip()]
     cats = Counter(r["category"] for r in rows)
     levels = Counter(r["review_level"] for r in rows)
     vendored = sum(1 for r in rows if "VENDORED_UPSTREAM" in r["secondary"])
@@ -44,13 +44,13 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     bl_path = out_dir / "broken-link-report.md"
     bl_count = 0
     if bl_path.exists():
-        bl_count = sum(1 for l in bl_path.read_text("utf-8").splitlines()
-                       if l.startswith("| `"))
+        bl_count = sum(1 for ln in bl_path.read_text("utf-8").splitlines()
+                       if ln.startswith("| `"))
     dup_path = out_dir / "duplicate-content-report.md"
     dup_count = 0
     if dup_path.exists():
-        dup_count = sum(1 for l in dup_path.read_text("utf-8").splitlines()
-                        if l.startswith("## Group"))
+        dup_count = sum(1 for ln in dup_path.read_text("utf-8").splitlines()
+                        if ln.startswith("## Group"))
 
     learn = sorted(r["path"] for r in rows if r["path"].startswith("docs/learn/"))
     first_runs = [r["path"] for r in rows
@@ -63,9 +63,9 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
               "docs/knowledge-program/", "knowledge/devin/")
     active_broken = 0
     if bl_path.exists():
-        for l in bl_path.read_text("utf-8").splitlines():
-            if l.startswith("| `"):
-                f = l.split("`")[1]
+        for ln in bl_path.read_text("utf-8").splitlines():
+            if ln.startswith("| `"):
+                f = ln.split("`")[1]
                 if not f.startswith(frozen):
                     active_broken += 1
 
@@ -83,8 +83,8 @@ def build_report(repo: Path, forge: str, out_dir: Path) -> str:
     lines = [
         "# Forge Knowledge Program — final report",
         "",
-        f"| Campo | Valor |",
-        f"|---|---|",
+        "| Campo | Valor |",
+        "|---|---|",
         f"| repository | `{forge}` |",
         f"| branch | `{branch}` |",
         f"| commit | `{commit}` |",

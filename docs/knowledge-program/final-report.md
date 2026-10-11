@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `feat/ultimate-completion` |
-| commit | `132903d` |
-| docs inventoried | 473 (excl. GENERATED mirrors: 321; vendored upstream: 0) |
+| commit | `3f846e9` |
+| docs inventoried | 479 (excl. GENERATED mirrors: 327; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 473
+- `AUTOMATICALLY_CHECKED`: 479
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -20,11 +20,11 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Category counts
 
 - `GENERATED`: 152
-- `UNKNOWN`: 96
+- `UNKNOWN`: 100
 - `ADR`: 59
-- `USER_GUIDE`: 48
+- `USER_GUIDE`: 49
 - `SDD_ARTIFACT`: 35
-- `RELEASE_REPORT`: 30
+- `RELEASE_REPORT`: 31
 - `SKILL`: 16
 - `HOW_TO`: 10
 - `CONTRACT`: 5
