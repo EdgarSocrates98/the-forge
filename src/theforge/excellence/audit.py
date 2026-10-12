@@ -203,11 +203,45 @@ def _metadata(path: Path) -> dict[str, Any]:
 
 
 def _evidence(path: Path, markers: Iterable[str]) -> list[str]:
-    return sorted(marker for marker in markers if (path / marker).exists())
+    evidence: list[str] = []
+    for marker in markers:
+        candidate = (path / marker).resolve()
+        try:
+            candidate.relative_to(path)
+        except ValueError:
+            continue
+        if candidate.exists():
+            evidence.append(marker)
+    return sorted(evidence)
 
 
 def _repo_report(root: Path, spec: RepositorySpec) -> dict[str, Any]:
     path = root / spec.directory
+    try:
+        path = path.resolve()
+        path.relative_to(root)
+    except ValueError:
+        return {
+            "repo": spec.repo,
+            "path": spec.directory,
+            "state": "invalid",
+            "branch": "unknown",
+            "commit": "unknown",
+            "dirty": False,
+            "git": False,
+            "checks": [
+                {
+                    "repo": spec.repo,
+                    "capability": capability.name,
+                    "state": "invalid",
+                    "evidence": [],
+                    "confidence": 0.0,
+                    "cost": "offline",
+                    "next_action": "reject repository path outside workspace",
+                }
+                for capability in spec.capabilities
+            ],
+        }
     if not path.is_dir():
         return {
             "repo": spec.repo,
@@ -266,6 +300,7 @@ def audit_workspace(root: Path, specs: Iterable[RepositorySpec] = REPOSITORIES) 
         "repositories": len(repositories),
         "observed": sum(repository["state"] == "observed" for repository in repositories),
         "unavailable": sum(repository["state"] == "unavailable" for repository in repositories),
+        "invalid": sum(repository["state"] == "invalid" for repository in repositories),
         "capabilities": len(checks),
         "capabilities_observed": sum(check["state"] == "observed" for check in checks),
         "capabilities_unknown": sum(check["state"] == "unknown" for check in checks),

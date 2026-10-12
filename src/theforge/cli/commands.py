@@ -222,7 +222,7 @@ def cmd_excellence_audit(args: argparse.Namespace) -> int:
 
     data = audit_workspace(_root(args))
     _emit(args, data, render.excellence_audit)
-    return 3 if data["summary"]["unavailable"] else 0
+    return 3 if data["summary"]["unavailable"] or data["summary"]["invalid"] else 0
 
 
 def _list(args: argparse.Namespace, refresh: bool) -> int:

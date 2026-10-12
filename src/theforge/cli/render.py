@@ -105,7 +105,8 @@ def excellence_audit(data: dict[str, Any]) -> str:
         "Engineering Excellence audit",
         f"Root: {clean(data['root'])}",
         f"Mode: {clean(data['mode'])} | repos={summary['repositories']} "
-        f"observed={summary['observed']} unavailable={summary['unavailable']}",
+        f"observed={summary['observed']} unavailable={summary['unavailable']} "
+        f"invalid={summary['invalid']}",
     ]
     for repository in data["repositories"]:
         dirty = " dirty" if repository["dirty"] else ""

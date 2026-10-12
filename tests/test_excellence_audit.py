@@ -32,6 +32,7 @@ def test_audit_is_stable_and_reports_evidence(tmp_path: Path) -> None:
         "repositories": 1,
         "observed": 1,
         "unavailable": 0,
+        "invalid": 0,
         "capabilities": 3,
         "capabilities_observed": 2,
         "capabilities_unknown": 1,
@@ -50,6 +51,25 @@ def test_missing_repository_is_explicit(tmp_path: Path) -> None:
     assert data["summary"]["unavailable"] == 1
     assert data["repositories"][0]["state"] == "unavailable"
     assert data["repositories"][0]["checks"][0]["next_action"].startswith("restore repository")
+
+
+@pytest.mark.security
+def test_audit_rejects_repository_escape_and_external_marker(tmp_path: Path) -> None:
+    outside = tmp_path.parent / "outside-excellence"
+    outside.mkdir()
+    (outside / "secret").mkdir()
+    spec = RepositorySpec(
+        "escape",
+        "../outside-excellence",
+        (CapabilitySpec("secret", ("secret",)),),
+    )
+
+    data = audit_workspace(tmp_path, (spec,))
+
+    assert data["summary"]["invalid"] == 1
+    check = data["repositories"][0]["checks"][0]
+    assert check["state"] == "invalid"
+    assert check["evidence"] == []
 
 
 @pytest.mark.unit
