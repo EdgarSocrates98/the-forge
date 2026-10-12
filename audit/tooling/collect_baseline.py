@@ -24,6 +24,14 @@ REPOSITORIES = {
     "forge-portal": "EdgarSocrates98/forge-portal",
 }
 
+SAFE_REF = re.compile(r"^[A-Za-z0-9_./-]+$")
+
+
+def validate_ref(ref: str) -> str:
+    if not SAFE_REF.fullmatch(ref) or ref.startswith("-"):
+        raise ValueError("ref must be a simple Git ref without options")
+    return ref
+
 
 def run(repo: Path, *args: str) -> str:
     result = subprocess.run(
@@ -194,6 +202,7 @@ def main() -> int:
     parser.add_argument("--ref", default="origin/main")
     parser.add_argument("--output", type=Path, default=Path("audit/baseline"))
     args = parser.parse_args()
+    validate_ref(args.ref)
     workspace = args.workspace_root.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
