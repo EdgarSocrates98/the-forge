@@ -122,6 +122,15 @@ def test_min_layout_60x16():
     assert "nav" in out[-1] and "quit" in out[-1]
 
 
+def test_buffer_composes_overlapping_spans_inside_viewport():
+    buf = Buffer(ctx(60, 4), 20, 4)
+    buf.draw(0, 0, "left")
+    buf.draw(0, 12, "right")
+    line = buf.render()[0]
+    assert "left" in line and "right" in line
+    assert len(line) <= 20
+
+
 def test_color_mode_wraps_ansi():
     buf = Buffer(ctx(color=True, unicode=True), 80, 24)
     buf.draw(0, 0, "hi", style="31")
