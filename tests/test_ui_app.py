@@ -147,6 +147,13 @@ def test_suspended_action_does_not_capture_attached_output():
     assert "attached terminal" in "\n".join(app.pane.log)
 
 
+def test_empty_menu_renders_empty_state():
+    app = ForgeApp(ctx(60, 16), forge_id="the-forge", title="t", entries=[])
+    buf = Buffer(ctx(60, 16), 60, 16)
+    app.render(buf)
+    assert "no menu entries" in "\n".join(buf.render())
+
+
 def test_tui_entries_load():
     from theforge.ui import tui
 
