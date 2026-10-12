@@ -19,6 +19,7 @@ _MENU = (
     "run a task",
     "hosts",
     "graph studio",
+    "guided setup",
     "install wizard",
     "install status",
     "health check",
@@ -210,6 +211,12 @@ def _act_install(ctx: UIContext) -> int:
     )
 
 
+def _act_setup(ctx: UIContext) -> int:
+    from theforge.ui.wizard import run_setup_wizard
+
+    return run_setup_wizard(ctx=ctx)
+
+
 def run_home(*, ctx: UIContext | None = None) -> int:
     """Command Center loop. Returns exit code; raises NonInteractive off-TTY."""
     ctx = ctx or UIContext.detect()
@@ -224,6 +231,7 @@ def run_home(*, ctx: UIContext | None = None) -> int:
         "run a task": _run_task,
         "hosts": _act_hosts,
         "graph studio": _act_graph,
+        "guided setup": _act_setup,
         "install wizard": _act_install,
         "install status": _act_install_status,
         "health check": _act_health,

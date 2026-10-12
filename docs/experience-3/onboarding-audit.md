@@ -11,9 +11,8 @@ primeira tarefa              home → "run a task"/menu → execução real
 ```
 
 Total medido: **2 comandos + ~6 decisões interativas** até instalação
-verificada — já próximo do "one-command setup". O que falta é
-descoberta *dentro* do produto: sem search, sem palette, sem help
-contextual na TUI (GAP-006).
+verificada. `theforge setup` agora cobre a família registrada com um plano e
+uma aprovação; `theforge` bare, o home textual e a TUI expõem a mesma entrada.
 
 ## Documentação de entrada
 
@@ -22,11 +21,20 @@ contextual na TUI (GAP-006).
   `tutorials/first-run.md` ×7, troubleshooting pt+en.
 - README com índice DX nos 7. `check_docs`: 0 problemas em ~2800 arquivos.
 
-## Lacunas onboarding reais
+## Lacunas onboarding resolvidas nesta onda
 
-- Wizard não lista **o que cada componente instala** antes de escolher
-  (progressive disclosure parcial).
-- Sem "próximos passos" pós-instalação direcionados (receipt mostra
-  status; não guia para first task).
-- `first-run.md` existe mas não é linkado pela TUI.
-- Sem `--tutorial`/`walkthrough` verb; descoberta depende do README.
+- Wizard explica cada componente antes da seleção.
+- Família de Forjas usa plano real → aprovação única → apply → saúde.
+- Receipt textual aponta `specialists status`, `doctor` e `portal`.
+- Portal recebe a mesma jornada por catálogo federado.
+- `theforge ask --auto-install` prepara Forjas registradas no projeto e só
+  roteia depois de um único gate de aprovação; execução sem TTY exige `--yes`.
+
+## Limites honestos
+
+- Só Forjas registradas em `~/.forge/installations` entram na instalação
+  automática; ausência do registro vira bloqueio explícito.
+- Knowledge e evals permanecem nos pacotes/registro e entram por descoberta
+  progressiva; não são copiados indiscriminadamente para projetos.
+- Capacidades de host seguem evidência do instalador e do handshake de cada
+  Forja; nenhum host é declarado equivalente sem verificação.

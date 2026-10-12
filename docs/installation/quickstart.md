@@ -12,17 +12,21 @@ Depois, dentro de qualquer projeto:
 
 ```bash
 cd ~/meu-projeto
-theforge
+theforge setup
 ```
 
-Pronto. Abra seu AI host (Devin, Claude, Codex ou Copilot) — as skills do
-the-forge já estão instaladas.
+O wizard permite escolher instalação global, por projeto ou por workspace,
+hosts, perfil econômico/recomendado/full e componentes. Ele mostra o plano
+real e pede uma aprovação única para o The Forge e as Forjas especialistas
+registradas.
 
 ## Verificar
 
 ```bash
 theforge install status
 theforge install doctor
+theforge specialists status
+theforge portal
 ```
 
 Problemas? → [troubleshooting.md](troubleshooting.md)

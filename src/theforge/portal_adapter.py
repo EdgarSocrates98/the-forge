@@ -351,20 +351,50 @@ class TheForgePortal(fp.PortalAdapter):
         }
 
     def _federation_plan(self, ctx: fp.RequestContext) -> dict[str, Any]:
-        scope = (ctx.body or {}).get("scope", "project")
+        body = ctx.body or {}
+        scope = body.get("scope", "project")
         if scope not in _SCOPES:
             raise fp.PortalError(
                 "PORTAL-BAD-FIELD",
                 f"scope must be one of {_SCOPES}",
                 details={"field": "scope", "got": scope},
             )
-        forge = (ctx.body or {}).get("forge")
-        plan_input = {"scope": scope, "forge": forge}
+        forge = body.get("forge")
+        host = body.get("host", "all")
+        profile = body.get("profile", "recommended")
+        gateway_profile = body.get("gateway_profile")
+        raw_components = body.get("components")
+        if isinstance(raw_components, dict):
+            components = tuple(
+                str(key) for key, enabled in raw_components.items() if enabled
+            )
+        elif isinstance(raw_components, list):
+            components = tuple(str(item) for item in raw_components)
+        elif raw_components is None:
+            components = None
+        else:
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "components must be an object or array",
+                details={"field": "components"},
+            )
+        plan_input = {
+            "scope": scope,
+            "forge": forge,
+            "host": host,
+            "profile": profile,
+            "gateway_profile": gateway_profile,
+            "components": list(components) if components is not None else None,
+        }
         try:
             receipt = service.install_auto(
                 scope=scope,
                 root=self._root,
                 forge=forge,
+                host=host,
+                profile=profile,
+                components=components,
+                gateway_profile=gateway_profile,
                 dry_run=True,
             )
         except kit.InstallError as e:
@@ -400,6 +430,10 @@ class TheForgePortal(fp.PortalAdapter):
                 scope=plan.get("scope", "project"),
                 root=self._root,
                 forge=plan.get("forge"),
+                host=plan.get("host", "all"),
+                profile=plan.get("profile", "recommended"),
+                components=tuple(plan.get("components") or ()) or None,
+                gateway_profile=plan.get("gateway_profile"),
                 dry_run=False,
                 yes=True,
             )

@@ -181,4 +181,10 @@ def test_tui_entries_load():
     from theforge.ui import tui
 
     entries = tui.entries()
-    assert {e.label for e in entries} >= {"specialists", "hosts", "install wizard", "graph studio"}
+    assert {e.label for e in entries} >= {
+        "specialists",
+        "hosts",
+        "guided setup",
+        "install wizard",
+        "graph studio",
+    }

@@ -24,6 +24,7 @@ FORGE_ID = "the-forge"
 STATE_DIR = ".forge/install"
 PROFILES: tuple[str, ...] = ("minimal", "recommended", "full")
 SCOPES: tuple[str, ...] = ("project", "workspace", "user")
+GATEWAY_PROFILES: tuple[str, ...] = ("economy", "balanced", "deep")
 
 
 def _spec() -> kit.ForgeSpec:
@@ -67,10 +68,19 @@ def _ctx(
     dry_run: bool,
     cwd: Path | None = None,
     components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
 ) -> kit.InstallContext:
     spec = _spec()
     base = Path(cwd or Path.cwd())
     target = kit.resolve_scope(spec, scope, base, root)
+    options = kit.component_options(profile, components)
+    if gateway_profile is not None:
+        if gateway_profile not in GATEWAY_PROFILES:
+            raise kit.InstallError(
+                kit.E_PROFILE,
+                f"gateway profile {gateway_profile!r}; {GATEWAY_PROFILES}",
+            )
+        options["execution_profile"] = gateway_profile
     return kit.InstallContext(
         spec=spec,
         scope=scope,
@@ -79,7 +89,7 @@ def _ctx(
         profile=profile,
         hosts=hosts,
         dry_run=dry_run,
-        options=kit.component_options(profile, components),
+        options=options,
     )
 
 
@@ -110,10 +120,19 @@ def install(
     yes: bool = False,
     dry_run: bool = False,
     components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
 ) -> dict[str, Any]:
     if profile not in PROFILES:
         raise kit.InstallError(kit.E_PROFILE, f"profile {profile!r}; {PROFILES}")
-    ctx = _ctx(scope, root, _hosts(host), profile, dry_run, components=components)
+    ctx = _ctx(
+        scope,
+        root,
+        _hosts(host),
+        profile,
+        dry_run,
+        components=components,
+        gateway_profile=gateway_profile,
+    )
     if dry_run:
         return kit.apply_install(ctx, approved=yes)
     with kit.acquire_lock(ctx.state_dir) as lock:
@@ -260,7 +279,16 @@ def installations() -> list[dict[str, Any]]:
     return kit.installed_forges()
 
 
-def _delegated_cmd(manifest: dict[str, Any], scope: str, target: Path, dry_run: bool) -> list[str]:
+def _delegated_cmd(
+    manifest: dict[str, Any],
+    scope: str,
+    target: Path,
+    dry_run: bool,
+    *,
+    host: str = "all",
+    profile: str = "recommended",
+    components: tuple[str, ...] | None = None,
+) -> list[str]:
     """Argv for delegating ``install`` to a sibling forge. Most forges
     expose ``<cli> install``; a manifest may instead carry
     ``install_command`` — an argv template where ``{python}`` resolves to
@@ -281,14 +309,18 @@ def _delegated_cmd(manifest: dict[str, Any], scope: str, target: Path, dry_run: 
     else:
         cli = str((manifest.get("cli") or {}).get("name") or manifest.get("forge_id"))
         argv = [cli]
-    return argv + [
+    command = argv + [
         "install",
         "--scope",
         scope,
         "--root",
         str(target),
-        "--dry-run" if dry_run else "--yes",
     ]
+    command.extend(["--host", host, "--profile", profile])
+    if components is not None:
+        command.extend(["--components", ",".join(components)])
+    command.append("--dry-run" if dry_run else "--yes")
+    return command
 
 
 def install_auto(
@@ -300,6 +332,10 @@ def install_auto(
     forge: str | None = None,
     members: tuple[str, ...] = (),
     cwd: Path | None = None,
+    host: str = "all",
+    profile: str = "recommended",
+    components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
 ) -> dict[str, Any]:
     """Orquestra a familia: cada forge registrada no bootstrap instala a si
     mesma no alvo resolvido. Delega ao CLI real — nunca simula.
@@ -307,6 +343,15 @@ def install_auto(
     ``workspace``, ``members`` seleciona subprojetos (paths relativos ao
     root) para delegação per-member adicional — o default e instalar os
     assets compartilhados no root da workspace sem tocar os membros."""
+    if profile not in PROFILES:
+        raise kit.InstallError(kit.E_PROFILE, f"profile {profile!r}; {PROFILES}")
+    _hosts(host)  # validate once before any delegation
+    kit.component_options(profile, components)  # validate even when self is absent
+    if gateway_profile is not None and gateway_profile not in GATEWAY_PROFILES:
+        raise kit.InstallError(
+            kit.E_PROFILE,
+            f"gateway profile {gateway_profile!r}; {GATEWAY_PROFILES}",
+        )
     spec = _spec()
     base = Path(cwd or Path.cwd())
     target = kit.resolve_scope(spec, scope, base, root)
@@ -344,7 +389,16 @@ def install_auto(
         fid = manifest.get("forge_id", "?")
         if fid == FORGE_ID:
             out = (
-                install(scope=scope, root=target, yes=yes, dry_run=dry_run)
+                install(
+                    scope=scope,
+                    root=target,
+                    host=host,
+                    profile=profile,
+                    components=components,
+                    gateway_profile=gateway_profile,
+                    yes=yes,
+                    dry_run=dry_run,
+                )
                 if (yes or dry_run)
                 else {"status": "refused", "detail": "sem --yes"}
             )
@@ -363,7 +417,15 @@ def install_auto(
                 }
             )
             continue
-        cmd = _delegated_cmd(manifest, scope, target, dry_run)
+        cmd = _delegated_cmd(
+            manifest,
+            scope,
+            target,
+            dry_run,
+            host=host,
+            profile=profile,
+            components=components,
+        )
         if not (yes or dry_run):
             results.append({"forge_id": fid, "status": "refused", "detail": "sem --yes"})
             checks.append(
@@ -422,6 +484,10 @@ def install_auto(
         "scope": scope,
         "target_root": str(target),
         "dry_run": dry_run,
+        "host": host,
+        "profile": profile,
+        "components": list(components) if components is not None else None,
+        "execution_profile": gateway_profile,
         "checks": checks,
         "forges": results,
         "managed_files": [],
@@ -434,7 +500,15 @@ def install_auto(
     }
     if scope == "workspace":
         receipt["workspace"] = _workspace_report(
-            target, results, found, members=members, approved=yes, dry_run=dry_run
+            target,
+            results,
+            found,
+            members=members,
+            approved=yes,
+            dry_run=dry_run,
+            host=host,
+            profile=profile,
+            components=components,
         )
     return receipt
 
@@ -447,6 +521,9 @@ def _workspace_report(
     members: tuple[str, ...] = (),
     approved: bool = False,
     dry_run: bool = False,
+    host: str = "all",
+    profile: str = "recommended",
+    components: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     """Member discovery + precedence + the ``forge/WorkspaceInstall/v1``
     manifest for ``install auto --scope workspace``.
@@ -507,7 +584,15 @@ def _workspace_report(
             fid = manifest.get("forge_id", "?")
             if fid == FORGE_ID:
                 continue  # self already installed at workspace root
-            cmd = _delegated_cmd(manifest, "project", member_dir, dry_run)
+            cmd = _delegated_cmd(
+                manifest,
+                "project",
+                member_dir,
+                dry_run,
+                host=host,
+                profile=profile,
+                components=components,
+            )
             if not (approved or dry_run):
                 member_results.append(
                     {"member": rel, "forge_id": fid, "status": "refused", "detail": "approval gate"}
