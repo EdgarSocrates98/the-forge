@@ -14,7 +14,6 @@ selected-item visibility for long menus, active-stream resize probing,
 byte-safe POSIX CSI parsing, clean EOF handling, and attached execution
 output for suspended actions. The seven package-local copies keep the same
 behavioral contract; no runtime dependency was added.
-
 Textual remains optional for `api-forge`; no required dependency or platform
 migration was introduced during the 0.2 RC freeze. The official Textual
 documentation confirms Windows support and headless asyncio/Pilot testing,

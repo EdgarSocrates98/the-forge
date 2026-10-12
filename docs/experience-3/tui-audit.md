@@ -58,7 +58,6 @@ ambiente non-TTY. Mantém o core offline/stdlib-only intacto.
   snapshots, declarado UNVERIFIED para terminal real.
 - ConPTY e handshake de host real continuam BLOCKED neste ambiente; nenhum
   estado de evidência foi promovido para PASS sem execução observável.
-
 ## Rui terminal resilience — 2026-10-12
 
 - Layout floor: 60×16; table columns rebalance inside available cells.
