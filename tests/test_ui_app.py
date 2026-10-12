@@ -96,6 +96,21 @@ def test_filter_accepts_text_and_backspace():
     assert not app.filter_active
 
 
+def test_command_palette_finds_and_opens_action():
+    app = _table_app()
+    app.on_key("ctrl-k")
+    app.on_key("n")
+    app.on_key("o")
+    app.on_key("t")
+    app.on_key("e")
+    app.on_key("s")
+    app.on_key("enter")
+    assert app.nav_idx == 1
+    assert isinstance(app.pane.data, TextData)
+    assert app.focus == "content"
+    assert not app.palette_active
+
+
 def test_text_content_supports_page_scroll():
     app = _table_app()
     app.nav_idx = 1

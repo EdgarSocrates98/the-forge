@@ -159,6 +159,8 @@ def _read_key() -> str:
             return _ESC
         if ch == "\x03":
             return _CTRL_C
+        if ch == "\x0b":
+            return "ctrl-k"
         return f"char:{ch}"
     ch = sys.stdin.read(1)  # pragma: no cover - platform
     if not ch:  # pragma: no cover - platform
@@ -181,6 +183,8 @@ def _read_key() -> str:
         return _SPACE
     if ch == "\x03":
         return _CTRL_C
+    if ch == "\x0b":
+        return "ctrl-k"
     return f"char:{ch}"
 
 

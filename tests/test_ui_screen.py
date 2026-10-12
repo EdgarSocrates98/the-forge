@@ -126,6 +126,23 @@ def test_min_layout_60x16():
     assert "nav" in out[-1] and "quit" in out[-1]
 
 
+def test_key_bar_adapts_without_overflowing_small_viewport():
+    buf = Buffer(ctx(60, 16), 60, 16)
+    key_bar(
+        buf,
+        [
+            ("ctrl-k", "commands"),
+            ("up/dn", "navigate"),
+            ("enter", "open/run"),
+            ("?", "help"),
+            ("q", "back/quit"),
+        ],
+        theme=Theme(),
+    )
+    assert len(buf.render()[-1]) <= 60
+    assert "ctrl-k" in buf.render()[-1]
+
+
 def test_buffer_composes_overlapping_spans_inside_viewport():
     buf = Buffer(ctx(60, 4), 20, 4)
     buf.draw(0, 0, "left")

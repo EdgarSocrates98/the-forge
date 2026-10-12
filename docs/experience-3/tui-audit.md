@@ -25,7 +25,8 @@ cp1252 → glifos ASCII. ~450 LOC, zero deps. **É o fallback correto do
 - Alternate screen, layout persistente (sidebar + painéis), foco e
   navegação por Tab/Shift+Tab, `/` search, `?` help, refresh, paginação e
   estados LOADING/EMPTY/ERROR/SUCCESS em widgets agora existem no engine
-  stdlib canônico; palette Ctrl+K e mouse permanecem fora do escopo.
+  stdlib canônico; palette Ctrl+K agora cobre descoberta de comandos, mouse
+  permanece fora do escopo.
 - Textual app do api-forge é **task-scoped** (`apiforge-tui <task>`),
   não um home full-screen com navegação entre seções.
 - Nenhuma forge tem: dashboard full-screen, MCP manager visual, skills/
@@ -68,4 +69,17 @@ ambiente non-TTY. Mantém o core offline/stdlib-only intacto.
 - Suspended actions: alternate screen/raw mode restored before attached
   command output and after return.
 - Evidence: pure-render and app regression tests pass across seven Forjas.
+- External PTY/ConPTY and screen-reader validation: UNVERIFIED here.
+
+## CLI/TUI product polish — 2026-10-12
+
+- Ctrl+K opens searchable command palette across six specialist TUIs and the
+  canonical The Forge TUI.
+- Footer adapts shortcut hints to terminal width; lower-priority hints drop
+  before content overflows.
+- Potentially long or interactive commands suspend alternate screen and stream
+  in attached terminal; captured commands return explicit timeout feedback.
+- Raw-mode setup rolls back terminal state after partial failures.
+- Unit coverage validates palette selection, narrow footer, timeout handling,
+  resize, EOF, ANSI-free output, and viewport bounds.
 - External PTY/ConPTY and screen-reader validation: UNVERIFIED here.
