@@ -125,7 +125,10 @@ def run_doctor(
         partial = [row["forge_id"] for row in account_environment if row["state"] == "partial"]
         status: Literal["ok", "warn", "fail"] = "fail" if invalid else "warn" if partial else "ok"
         detail = ", ".join(
-            [*(f"invalid: {forge}" for forge in invalid), *(f"partial: {forge}" for forge in partial)]
+            [
+                *(f"invalid: {forge}" for forge in invalid),
+                *(f"partial: {forge}" for forge in partial),
+            ]
         ) or f"ready: {len(account_environment)} Forge(s)"
         checks.append(Check(name="account-environment", status=status, detail=detail))
     forge_dir = registry.forge_dir
