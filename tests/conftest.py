@@ -223,6 +223,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_portal.py": ("unit", "integration", "security"),
     # engineering excellence evidence audit
     "test_excellence_audit.py": ("unit",),
+    "test_excellence_contract.py": ("contract",),
 }
 
 

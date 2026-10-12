@@ -60,6 +60,13 @@ from theforge.contracts.envelope import (
     VerifyRequest,
     new_request_id,
 )
+from theforge.contracts.excellence import (
+    FEDERATED_DESCRIPTOR_SCHEMA,
+    FederatedCapabilityDescriptor,
+    InvocationSurfaces,
+    project_capability,
+    project_manifest,
+)
 from theforge.contracts.explain import ExplainReport
 from theforge.contracts.graph import GraphEdge, GraphNode, WorkspaceGraph
 from theforge.contracts.handoff import Handoff, HandoffItem, HandoffOrigin
@@ -316,6 +323,9 @@ __all__ = [
     "ExecutionObservation",
     "ExecutionPlan",
     "ExecutionReceipt",
+    "FEDERATED_DESCRIPTOR_SCHEMA",
+    "FederatedCapabilityDescriptor",
+    "InvocationSurfaces",
     "ExecutionResult",
     "ExecutionTarget",
     "ExplainReport",
@@ -457,6 +467,8 @@ __all__ = [
     "WorkspaceSummary",
     "from_dict",
     "new_request_id",
+    "project_capability",
+    "project_manifest",
     "to_dict",
     "transition",
 ]
