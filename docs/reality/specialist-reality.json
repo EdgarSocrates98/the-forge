@@ -1,7 +1,7 @@
 {
   "forge": {
     "branch": "codex/evo-grill-2026-10-12",
-    "commit_sha": "7a9ba6e04391202834061d897422f78f795df75f",
+    "commit_sha": "26952e8efef6c0a4a9e6304d83917ffde40f6f90",
     "counts": {
       "adrs": 59,
       "closed_contracts": 42,
@@ -17,7 +17,7 @@
     "python_requires": ">=3.11",
     "runtime_dependencies": 0
   },
-  "generated_at": "2026-10-12T16:02:51Z",
+  "generated_at": "2026-10-12T16:14:22Z",
   "generated_by": "scripts/reality/collect.py",
   "kind": "theforge/specialist-reality/v1",
   "specialists": [
