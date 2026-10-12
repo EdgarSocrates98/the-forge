@@ -16,20 +16,29 @@ from theforge.ui.screen import Buffer, Column, StateSpec
 
 
 def ctx(w: int = 80, h: int = 24) -> UIContext:
-    return UIContext(interactive=False, color=False, unicode=False,
-                     width=w, height=h, ansi=False)
+    return UIContext(interactive=False, color=False, unicode=False, width=w, height=h, ansi=False)
 
 
 def _table_app() -> ForgeApp:
-    return ForgeApp(ctx(), forge_id="the-forge", title="t", entries=[
-        Entry(label="items", provider=lambda: TableData(
-            columns=[Column(key="n", title="n", width=10)],
-            rows=[{"n": f"r{i}"} for i in range(5)])),
-        Entry(label="notes", provider=lambda: TextData(lines=["a", "b"])),
-        Entry(label="bad", provider=lambda: 1 / 0),
-        Entry(label="go", provider=lambda: ActionData(
-            callable=lambda: print("ran"), title="run")),
-    ])
+    return ForgeApp(
+        ctx(),
+        forge_id="the-forge",
+        title="t",
+        entries=[
+            Entry(
+                label="items",
+                provider=lambda: TableData(
+                    columns=[Column(key="n", title="n", width=10)],
+                    rows=[{"n": f"r{i}"} for i in range(5)],
+                ),
+            ),
+            Entry(label="notes", provider=lambda: TextData(lines=["a", "b"])),
+            Entry(label="bad", provider=lambda: 1 / 0),
+            Entry(
+                label="go", provider=lambda: ActionData(callable=lambda: print("ran"), title="run")
+            ),
+        ],
+    )
 
 
 def test_render_two_panes():
@@ -116,6 +125,6 @@ def test_run_refuses_non_tty():
 
 def test_tui_entries_load():
     from theforge.ui import tui
+
     entries = tui.entries()
-    assert {e.label for e in entries} >= {
-        "specialists", "hosts", "install wizard", "graph studio"}
+    assert {e.label for e in entries} >= {"specialists", "hosts", "install wizard", "graph studio"}
