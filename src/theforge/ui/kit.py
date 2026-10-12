@@ -61,7 +61,7 @@ class UIContext:
         ansi = interactive and term != "dumb"
         no_color = bool(os.environ.get("NO_COLOR")) or not ansi
         encoding = (sys.stdout.encoding or "").lower()
-        uni = "utf" in encoding
+        uni = _supports_unicode(encoding)
         size = terminal_size()
         return UIContext(
             interactive=interactive,
@@ -97,6 +97,13 @@ def _c(ctx: UIContext, code: str, text: str) -> str:
 
 
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _supports_unicode(encoding: str) -> bool:
+    """Recognize UTF-8 aliases used by Windows Terminal and POSIX shells."""
+
+    normalized = encoding.lower().replace("-", "").replace("_", "")
+    return "utf" in normalized or normalized.endswith("65001")
 
 
 def cell_width(text: str) -> int:
