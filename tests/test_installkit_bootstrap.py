@@ -73,3 +73,18 @@ def test_environment_contract_is_account_scoped_and_shell_safe(tmp_path):
 def test_env_prefix_normalizes_hyphenated_forge_ids():
     assert fb.env_prefix("the-forge") == "THE_FORGE"
     assert fb.env_prefix("forge.doctor-api") == "FORGE_DOCTOR_API"
+
+
+def test_posix_environment_file_is_idempotent(tmp_path, monkeypatch):
+    env_file = tmp_path / "config" / "forjas" / "env.sh"
+    rc_file = tmp_path / ".profile"
+    monkeypatch.setattr(fb, "_posix_env_paths", lambda: (env_file, rc_file))
+    values = {"SPARK_FORGE_AWS_HOME": str(tmp_path / "checkout")}
+
+    fb._persist_posix(values, None)
+    fb._persist_posix(values, None)
+
+    rendered = env_file.read_text(encoding="utf-8")
+    assert rendered.count("# >>> forjas account environment >>>") == 1
+    assert rendered.count("SPARK_FORGE_AWS_HOME") == 1
+    assert rc_file.read_text(encoding="utf-8").count("forjas-account-environment") == 1
