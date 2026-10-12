@@ -56,6 +56,18 @@ As escolhas de host, perfil e componentes são propagadas para cada CLI
 registrada. Se uma Forja não estiver registrada em `~/.forge/installations`, o
 The Forge informa o bloqueio em vez de simular uma instalação.
 
+Para uma primeira demanda sem abrir o wizard, o roteador oferece uma única
+entrada governada:
+
+```bash
+theforge ask "analise a API deste projeto" --auto-install
+```
+
+Em TTY, o plano de preparação aparece antes da confirmação. Em automação ou
+JSON, `--yes` é obrigatório. O host padrão é `none`, portanto a preparação
+instala os assets no projeto sem alterar arquivos globais de Claude, Devin,
+Codex ou Copilot.
+
 ## Depois da instalação
 
 ```bash

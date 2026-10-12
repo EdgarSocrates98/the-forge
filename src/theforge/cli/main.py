@@ -606,6 +606,40 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("--target", dest="targets", action="append")
     ask.add_argument("--allow-unverified", action="store_true")
     ask.add_argument(
+        "--auto-install",
+        action="store_true",
+        help="prepare registered specialists for this project before routing",
+    )
+    ask.add_argument(
+        "--install-profile",
+        choices=("minimal", "recommended", "full"),
+        default="recommended",
+        help="profile used with --auto-install",
+    )
+    ask.add_argument(
+        "--install-host",
+        choices=("claude", "devin", "codex", "copilot", "all", "none"),
+        default="none",
+        help="host integration used with --auto-install (default: none)",
+    )
+    ask.add_argument(
+        "--gateway-profile",
+        choices=("economy", "balanced", "deep"),
+        default=None,
+        help="router execution budget used with --auto-install",
+    )
+    ask.add_argument(
+        "--install-components",
+        default=None,
+        help="optional components csv used with --auto-install",
+    )
+    ask.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="approve --auto-install in non-interactive or JSON mode",
+    )
+    ask.add_argument(
         "--approve",
         dest="approvals",
         action="append",

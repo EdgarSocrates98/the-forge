@@ -339,6 +339,33 @@ def test_setup_and_auto_parser_expose_governed_choices() -> None:
     assert auto.components == "skills"
 
 
+def test_ask_parser_exposes_one_step_auto_install() -> None:
+    from theforge.cli.main import build_parser
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "ask",
+            "analyze api",
+            "--auto-install",
+            "--install-profile",
+            "minimal",
+            "--install-host",
+            "none",
+            "--gateway-profile",
+            "economy",
+            "--install-components",
+            "mcp,tui",
+            "--yes",
+        ]
+    )
+    assert args.auto_install is True
+    assert args.install_profile == "minimal"
+    assert args.install_host == "none"
+    assert args.gateway_profile == "economy"
+    assert args.install_components == "mcp,tui"
+
+
 # install auto --scope workspace — member discovery, precedence, manifest
 # --------------------------------------------------------------------------
 

@@ -27,6 +27,8 @@ uma aprovação; `theforge` bare, o home textual e a TUI expõem a mesma entrada
 - Família de Forjas usa plano real → aprovação única → apply → saúde.
 - Receipt textual aponta `specialists status`, `doctor` e `portal`.
 - Portal recebe a mesma jornada por catálogo federado.
+- `theforge ask --auto-install` prepara Forjas registradas no projeto e só
+  roteia depois de um único gate de aprovação; execução sem TTY exige `--yes`.
 
 ## Limites honestos
 

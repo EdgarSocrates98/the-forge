@@ -949,6 +949,26 @@ def cmd_provider_check(args: argparse.Namespace) -> int:
 def cmd_ask(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)
+    installation: dict[str, Any] | None = None
+    if getattr(args, "auto_install", False):
+        installation = _auto_install_for_ask(args, root)
+        if installation.get("status") not in ("completed", "planned"):
+            data = redact(
+                {
+                    "run_id": None,
+                    "status": "refused",
+                    "decision": None,
+                    "result": None,
+                    "installation": installation,
+                    "error": {
+                        "code": "FORGE-AUTO-INSTALL-FAILED",
+                        "detail": "specialist preparation did not complete",
+                    },
+                    "error_family": "installation",
+                }
+            )
+            _emit(args, data, render.ask)
+            return 4
     registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
     requirement = _load_requirement(args.requirement)
     capability = args.capability
@@ -979,6 +999,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
             "status": outcome.status,
             "decision": to_dict(outcome.decision),
             "result": to_dict(outcome.result) if outcome.result else None,
+            "installation": installation,
             "error": to_dict(outcome.error) if outcome.error else None,
             "error_family": error_family(outcome.error.code) if outcome.error else None,
         }
@@ -987,6 +1008,52 @@ def cmd_ask(args: argparse.Namespace) -> int:
     if args.debug and outcome.diagnostic is not None:
         print_debug(to_dict(outcome.diagnostic))
     return EXIT_BY_STATUS.get(outcome.status, 4)
+
+
+def _auto_install_for_ask(args: argparse.Namespace, root: Path) -> dict[str, Any]:
+    """Prepare registered specialists before routing, with one approval gate.
+
+    The router stays read-only by default. ``--auto-install`` opts into the
+    same plan → review → confirm → receipt contract as ``setup``/``install
+    auto``; host integration defaults to ``none`` so asking a question never
+    edits global host files accidentally.
+    """
+    from theforge.install import service
+    from theforge.ui.kit import NonInteractive, UIContext, approve_plan
+
+    components = (
+        tuple(c.strip() for c in args.install_components.split(",") if c.strip())
+        if args.install_components
+        else None
+    )
+    ctx = UIContext.detect()
+    approved = bool(args.yes)
+    if not approved:
+        if args.json or not ctx.interactive:
+            raise NonInteractive(
+                "--auto-install requires --yes in JSON/non-interactive mode"
+            )
+        plan = service.install_auto(
+            scope="project",
+            root=root,
+            host=args.install_host,
+            profile=args.install_profile,
+            components=components,
+            gateway_profile=args.gateway_profile,
+            dry_run=True,
+        )
+        approved = approve_plan(plan, ctx=ctx)
+        if not approved:
+            return {"status": "refused", "detail": "declined — nothing written"}
+    return service.install_auto(
+        scope="project",
+        root=root,
+        host=args.install_host,
+        profile=args.install_profile,
+        components=components,
+        gateway_profile=args.gateway_profile,
+        yes=True,
+    )
 
 
 @contextmanager
