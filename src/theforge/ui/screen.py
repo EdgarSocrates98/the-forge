@@ -306,8 +306,7 @@ def key_bar(buf: Buffer, bindings: Iterable[tuple[str, str]], *, theme: Theme) -
     if len(visible) < len(all_bindings):
         visible.append(("...", "more"))
     text = " · ".join(
-        f"{_c(buf.ctx, '1', key) if buf.ctx.color else key} {label}"
-        for key, label in visible
+        f"{_c(buf.ctx, '1', key) if buf.ctx.color else key} {label}" for key, label in visible
     )
     buf.draw(y, 1, re.sub(r"\x1b\[[0-9;]*m", "", text) if not buf.ctx.color else text)
 

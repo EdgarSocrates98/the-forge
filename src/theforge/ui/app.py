@@ -251,12 +251,7 @@ class ForgeApp:
         lines = (
             d.lines
             if isinstance(d, TextData)
-            else (
-                [f"action: {d.title}"]
-                + _doc_lines(d)
-                + ["", action_hint]
-                + self.pane.log
-            )
+            else ([f"action: {d.title}"] + _doc_lines(d) + ["", action_hint] + self.pane.log)
         )
         for i, line in enumerate(lines[self.pane.scroll : self.pane.scroll + h]):
             buf.draw(y + i, x, line)
