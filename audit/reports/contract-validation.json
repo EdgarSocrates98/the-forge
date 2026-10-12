@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-12T22:48:06.544757+00:00",
+  "generated_at": "2026-10-12T23:36:29.847841+00:00",
   "ref": "origin/main",
-  "status": "FAIL",
+  "status": "PASS",
   "repositories": {
     "the-forge": {
       "sha": "64d44922b114b08e9decd46d2ec0127e35acf717",
@@ -215,8 +215,8 @@
       ]
     },
     "api-forge": {
-      "sha": "7fcdf12ae7ff39f60b205ae1f42f3531f50bb78d",
-      "status": "FAIL",
+      "sha": "bd78dd79cc1b0873256fb14c775574d3a0536c8f",
+      "status": "PASS",
       "checks": [
         {
           "id": "installers",
@@ -292,14 +292,14 @@
         },
         {
           "id": "runtime_independence",
-          "status": "FAIL",
+          "status": "PASS",
           "detail": "runtime source has no explicit convenience-project dependency",
-          "evidence": "origin/main:src/apiforge/ui/wizard.py:265:    from theforge.install import service"
+          "evidence": "source scan"
         }
       ]
     },
     "platform-forge": {
-      "sha": "b7e6e42cd47b6c1602418d51113a955fc687bced",
+      "sha": "11a44e80459eecb248d19efb8b102a8cae57a0eb",
       "status": "PASS",
       "checks": [
         {
@@ -383,8 +383,8 @@
       ]
     },
     "forge-doctor-api": {
-      "sha": "c9b05b6acbbda65ac8e6c8c5c25678bc669105b2",
-      "status": "FAIL",
+      "sha": "d044432d282080272543d327a4edaae0b0977556",
+      "status": "PASS",
       "checks": [
         {
           "id": "installers",
@@ -460,15 +460,15 @@
         },
         {
           "id": "runtime_independence",
-          "status": "FAIL",
+          "status": "PASS",
           "detail": "runtime source has no explicit convenience-project dependency",
-          "evidence": "origin/main:src/forge_doctor_api/ui/wizard.py:265:    from theforge.install import service"
+          "evidence": "source scan"
         }
       ]
     },
     "forge-doctor-data": {
-      "sha": "40c32d498b0784f50f8a3c5e1e36fa100700cc8b",
-      "status": "FAIL",
+      "sha": "33e591758d9ab7467a45437619bb51450822fe23",
+      "status": "PASS",
       "checks": [
         {
           "id": "installers",
@@ -544,9 +544,9 @@
         },
         {
           "id": "runtime_independence",
-          "status": "FAIL",
+          "status": "PASS",
           "detail": "runtime source has no explicit convenience-project dependency",
-          "evidence": "origin/main:src/forge_doctor_data/ui/wizard.py:265:    from theforge.install import service"
+          "evidence": "source scan"
         }
       ]
     },

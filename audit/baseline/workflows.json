@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-12T22:00:40.882696+00:00",
+  "generated_at": "2026-10-12T23:35:46.579701+00:00",
   "ref": "origin/main",
   "data": {
     "the-forge": {
@@ -17,7 +17,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:36.482988+00:00"
+        "collected_at": "2026-10-12T23:35:36.812490+00:00"
       }
     },
     "spark-forge-aws": {
@@ -32,7 +32,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:37.380881+00:00"
+        "collected_at": "2026-10-12T23:35:40.139042+00:00"
       }
     },
     "spark-forge-azure": {
@@ -46,12 +46,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:38.047150+00:00"
+        "collected_at": "2026-10-12T23:35:41.493256+00:00"
       }
     },
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "7fcdf12ae7ff39f60b205ae1f42f3531f50bb78d",
+      "sha": "bd78dd79cc1b0873256fb14c775574d3a0536c8f",
       "workflows": [
         ".github/workflows/api-change-control.yml",
         ".github/workflows/change-control-pages.yml",
@@ -61,12 +61,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:38.595156+00:00"
+        "collected_at": "2026-10-12T23:35:42.469519+00:00"
       }
     },
     "platform-forge": {
       "repository": "EdgarSocrates98/platform-forge",
-      "sha": "b7e6e42cd47b6c1602418d51113a955fc687bced",
+      "sha": "11a44e80459eecb248d19efb8b102a8cae57a0eb",
       "workflows": [
         ".github/workflows/ci.yml"
       ],
@@ -74,12 +74,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:39.086769+00:00"
+        "collected_at": "2026-10-12T23:35:43.152204+00:00"
       }
     },
     "forge-doctor-api": {
       "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "c9b05b6acbbda65ac8e6c8c5c25678bc669105b2",
+      "sha": "d044432d282080272543d327a4edaae0b0977556",
       "workflows": [
         ".github/workflows/doctor-scan.yml",
         ".github/workflows/quality.yml",
@@ -89,12 +89,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:39.582647+00:00"
+        "collected_at": "2026-10-12T23:35:44.058285+00:00"
       }
     },
     "forge-doctor-data": {
       "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "40c32d498b0784f50f8a3c5e1e36fa100700cc8b",
+      "sha": "33e591758d9ab7467a45437619bb51450822fe23",
       "workflows": [
         ".github/workflows/benchmarks.yml",
         ".github/workflows/ci.yml",
@@ -105,7 +105,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:40.086522+00:00"
+        "collected_at": "2026-10-12T23:35:45.120244+00:00"
       }
     },
     "forge-cli": {
@@ -119,7 +119,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:40.457004+00:00"
+        "collected_at": "2026-10-12T23:35:45.779529+00:00"
       }
     },
     "forge-portal": {
@@ -132,7 +132,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-12T22:00:40.882685+00:00"
+        "collected_at": "2026-10-12T23:35:46.579690+00:00"
       }
     }
   }

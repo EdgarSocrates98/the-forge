@@ -1,0 +1,74 @@
+usage: platformforge [-h] [--version]
+                     {install,uninstall,upgrade,portable,workspace,init,doctor,status,inspect,judge,knowledge,tokens,rtk,caveman,economy,route,sdd,graph,analyze,observe,live,ops,finops,fleet,analytics,optimize,ai,federation,product,agents,mcp,collect,diagnose,plan,correlate,diff,drift,impact,context,cache,routing,policy,security,reliability,integrate,hosts,portal,evals,lab,forge,capability,risk,change,explain,recommend,store,bench,freeze,cases}
+                     ...
+
+Agentic Platform Engineering intelligence
+
+positional arguments:
+  {install,uninstall,upgrade,portable,workspace,init,doctor,status,inspect,judge,knowledge,tokens,rtk,caveman,economy,route,sdd,graph,analyze,observe,live,ops,finops,fleet,analytics,optimize,ai,federation,product,agents,mcp,collect,diagnose,plan,correlate,diff,drift,impact,context,cache,routing,policy,security,reliability,integrate,hosts,portal,evals,lab,forge,capability,risk,change,explain,recommend,store,bench,freeze,cases}
+    install             install Platform Forge assets into a workspace
+    uninstall           remove owned Platform Forge assets safely
+    upgrade             upgrade managed portable assets
+    portable            build/verify/doctor portable distributions
+    workspace           workspace lifecycle and multi-repo manifest
+    init                scaffold .platformforge/
+    doctor              environment health-check
+    status              workspace + store status
+    inspect             inventory analyzable artifacts
+    judge               apply rule catalog to facts
+    knowledge           knowledge freshness/drift check
+    tokens              tokensave: index/search/pack/delta/stats/ledger
+    rtk                 compact command output (rtk)
+    caveman             compress text (caveman)
+    economy             economy engine report/strategy/qpt
+    route               adaptive routing decision
+    sdd                 native SDD lifecycle
+    graph               Graphfy platform graph
+    analyze             domain analyzers → facts
+    observe             SRE/observability verbs
+    live                live platform observation (cycle3)
+    ops                 governed operations (cycle4)
+    finops              FinOps cost analysis
+    fleet               fleet intelligence (dir input)
+    analytics           analytics summary/metric/maturity
+    optimize            optimization scan → ChangeIntent only
+    ai                  AI platform awareness (bounded)
+    federation          intelligence exchange — no credentials
+    product             platform product verbs
+    agents              agent roster, mirrors, referee
+    mcp                 MCP server + host parity
+    collect             ingest artifact dumps → facts
+    diagnose            node diagnosis: facts+findings+blast
+    plan                findings → ordered remediation plan
+    correlate           OTel correlation (observe otel)
+    diff                graph diff between two facts docs
+    drift               IaC drift: --config dir vs --state file
+    impact              blast radius for a graph node
+    context             context pack for a task;
+                        capsule/inspect/expand/delta/gc
+    cache               multilayer cache stats/inspect/invalidate/gc
+    routing             routing explain/compare/scorecard
+    policy              policy-as-code catalog check
+    security            security bundle (secrets+iam+sbom+supply)
+    reliability         SRE+K8S rules over facts
+    integrate           host integration (mcp parity)
+    hosts               AI host observe + optional launch (integrate is the
+                        setup path)
+    portal              optional local web portal (127.0.0.1, session token) —
+                        never inside MCP
+    evals               eval framework (§94–95)
+    lab                 Forge Lab scenarios
+    forge               Forge interop
+    capability          capability registry
+    risk                §130 change-risk assessment
+    change              §85–86 change lifecycle (sandboxed)
+    explain             evidence chain for a finding
+    recommend           findings → recommendations
+    store               §151 artifact store stats/gc
+    bench               §148–150 measured benchmarks
+    freeze              architecture freeze governance
+    cases               real-world case corpus + replay
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
