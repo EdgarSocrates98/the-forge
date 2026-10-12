@@ -56,7 +56,8 @@ def _account_environment(env: Mapping[str, str]) -> list[dict[str, Any]]:
             key[: -(len(suffix) + 1)]
             for key in env
             for suffix in ACCOUNT_ENV_SUFFIXES
-            if key.upper().endswith(f"_{suffix}") and key[: -(len(suffix) + 1)]
+            if key.upper().endswith(f"_{suffix}")
+            and "FORGE" in key[: -(len(suffix) + 1)].upper().split("_")
         }
     )
     for prefix in prefixes:
