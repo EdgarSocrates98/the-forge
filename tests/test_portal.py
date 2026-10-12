@@ -211,17 +211,33 @@ def test_federation_install_auto_plan_and_apply(target: Path, _isolate_home: Pat
     try:
         # plan spans the whole registered family — each forge's real CLI is
         # resolved, never spawned, at plan time
-        code, plan_doc = _call(srv, "POST", "/federation/plan", {"scope": "project"})
+        choices = {
+            "scope": "project",
+            "host": "none",
+            "profile": "minimal",
+            "gateway_profile": "economy",
+            "components": {"mcp": True, "tui": True, "skills": False},
+        }
+        code, plan_doc = _call(srv, "POST", "/federation/plan", choices)
         assert code == 200, plan_doc
         plan = plan_doc["data"]["plan"]
+        assert plan == {
+            "scope": "project",
+            "forge": None,
+            "host": "none",
+            "profile": "minimal",
+            "gateway_profile": "economy",
+            "components": ["mcp", "tui"],
+        }
         # apply restricted to the-forge itself: the self branch installs
         # in-process (no delegated 600s subprocess) — the portal→kit→receipt
         # path is still exercised end-to-end
-        self_plan = {**plan, "forge": "the-forge"}
+        self_choices = {**choices, "forge": "the-forge"}
         code, self_doc = _call(
-            srv, "POST", "/federation/plan", {"scope": "project", "forge": "the-forge"}
+            srv, "POST", "/federation/plan", self_choices
         )
         self_token = self_doc["data"]["plan_token"]
+        self_plan = self_doc["data"]["plan"]
         code, applied = _call(
             srv,
             "POST",
@@ -231,6 +247,10 @@ def test_federation_install_auto_plan_and_apply(target: Path, _isolate_home: Pat
         assert code == 200, applied
         assert applied["data"]["schema"].endswith("InstallReceipt/v1")
         assert applied["data"]["operation"] == "install-auto"
+        assert applied["data"]["host"] == "none"
+        assert applied["data"]["profile"] == "minimal"
+        assert applied["data"]["components"] == ["mcp", "tui"]
+        assert applied["data"]["execution_profile"] == "economy"
         assert any(
             f.get("forge_id") == "the-forge" and f.get("via") == "self"
             for f in applied["data"]["forges"]
