@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "confidence": {
+      "enum": [
+        "declared",
+        "measured",
+        "unknown"
+      ]
+    },
+    "cost": {
+      "enum": [
+        "known",
+        "unknown"
+      ]
+    },
+    "deterministic": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "features": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "invocation": {
+      "additionalProperties": false,
+      "properties": {
+        "agentic": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hosts": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "human": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "operation_class": {
+      "type": "string"
+    },
+    "protocols": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_version": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "provider_version",
+    "capability",
+    "actions",
+    "operation_class",
+    "invocation",
+    "protocols"
+  ],
+  "title": "FederatedCapabilityDescriptor",
+  "type": "object"
+}

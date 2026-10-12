@@ -244,8 +244,13 @@ def resolve_command(
 
     manifest = view.manifest
     cli_argv: list[str] | None = None
-    if view.cli and shutil.which(view.cli):
-        cli_argv = [view.cli]
+    if view.cli:
+        installed_cli = shutil.which(view.cli)
+        if installed_cli:
+            # Keep the resolved launcher path. On Windows ``which`` may find
+            # a .cmd/.exe sibling while subprocess cannot resolve bare names
+            # consistently across shells and Python spawn modes.
+            cli_argv = [installed_cli]
     elif manifest is not None:
         cli_argv = _checkout_cli_argv(manifest, view.checkout)
 

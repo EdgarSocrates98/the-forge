@@ -207,6 +207,25 @@ def test_resolve_command_checkout_fallback(tmp_path):
     assert argv[-1] == "."
 
 
+def test_resolve_command_uses_discovered_launcher_path(tmp_path, monkeypatch):
+    from theforge.contracts.specialist import SpecialistLifecycle
+    from theforge.specialists import SpecialistView
+
+    launcher = str(tmp_path / "forge-cli.cmd")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: launcher if name == "forge-cli" else None,
+    )
+    view = SpecialistView(
+        lifecycle=SpecialistLifecycle(provider="example-forge", installation_state="INSTALLED"),
+        cli="forge-cli",
+    )
+
+    argv = specialists.resolve_command(["{cli}", "doctor"], view=view)
+
+    assert argv == [launcher, "doctor"]
+
+
 def test_resolve_command_no_cli_no_checkout():
     from theforge.contracts.specialist import SpecialistLifecycle
     from theforge.specialists import SpecialistView

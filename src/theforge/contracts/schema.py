@@ -36,6 +36,7 @@ from theforge.contracts import (
     ExecutionTarget,
     ExplainReport,
     FailurePattern,
+    FederatedCapabilityDescriptor,
     ForgeKnowledge,
     ForgeManifest,
     ForgeRegistryEntry,
@@ -171,6 +172,7 @@ EXPORTED: tuple[type[Any], ...] = (
     ForgeKnowledge,
     # specialized agent registry (W3)
     AgentSpec,
+    FederatedCapabilityDescriptor,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -221,6 +223,7 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     MemorySummary,
     FailurePattern,
     CapabilityRelation,
+    FederatedCapabilityDescriptor,
     TargetNegotiation,
     StrategyPolicy,
     PlanSimulation,

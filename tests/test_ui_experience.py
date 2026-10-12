@@ -30,6 +30,25 @@ def test_context_ascii_fallback():
     assert ctx.cursor == ">" and ctx.checked == "x"
 
 
+def test_context_recognizes_windows_utf8_codepage(monkeypatch):
+    import theforge.ui.kit as kit
+
+    class FakeStream:
+        encoding = "cp65001"
+
+        @staticmethod
+        def isatty():
+            return True
+
+    monkeypatch.setattr(kit.sys, "stdin", FakeStream())
+    monkeypatch.setattr(kit.sys, "stdout", FakeStream())
+    monkeypatch.setattr(kit, "terminal_size", lambda: (80, 24))
+
+    ctx = kit.UIContext.detect()
+
+    assert ctx.unicode is True
+
+
 def test_ellipsize_never_loses_signal_silently():
     ctx = UIContext(interactive=True, color=False, unicode=False, width=20)
     assert _ellipsize(ctx, "x" * 50) == "x" * 17 + "."
