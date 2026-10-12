@@ -63,3 +63,41 @@ def test_doctor_surfaces_registry_warnings(tmp_path: Path) -> None:
     warns = [c for c in report["checks"] if c["name"] == "registry"]
     assert warns and warns[0]["status"] == "warn"
     assert "fixture-spark" in warns[0]["detail"]
+
+
+def test_doctor_validates_account_environment_when_published(tmp_path: Path) -> None:
+    install = tmp_path / "install"
+    venv = install / ".venv"
+    checkout = tmp_path / "checkout"
+    install.mkdir()
+    venv.mkdir()
+    checkout.mkdir()
+    python = venv / "python.exe"
+    cli = venv / "sparkforge-aws.exe"
+    python.write_text("", encoding="utf-8")
+    cli.write_text("", encoding="utf-8")
+    env = {
+        "SPARK_FORGE_AWS_HOME": str(checkout),
+        "SPARK_FORGE_AWS_INSTALL_ROOT": str(install),
+        "SPARK_FORGE_AWS_VENV": str(venv),
+        "SPARK_FORGE_AWS_PYTHON": str(python),
+        "SPARK_FORGE_AWS_CLI": str(cli),
+    }
+
+    report = run_doctor(tmp_path, Registry(None), env=env)
+
+    checks = {c["name"]: c for c in report["checks"]}
+    assert checks["account-environment"]["status"] == "ok"
+    assert report["account_environment"][0]["state"] == "ready"
+
+
+def test_doctor_marks_invalid_account_environment_as_failure(tmp_path: Path) -> None:
+    report = run_doctor(
+        tmp_path,
+        Registry(None),
+        env={"SPARK_FORGE_AWS_HOME": str(tmp_path / "gone")},
+    )
+
+    checks = {c["name"]: c for c in report["checks"]}
+    assert checks["account-environment"]["status"] == "fail"
+    assert report["healthy"] is False

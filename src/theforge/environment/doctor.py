@@ -16,6 +16,15 @@ from theforge.protocol import SubprocessTransport, TransportFactory
 from theforge.registry import Registry, check_health
 
 REPORT_SCHEMA = "theforge/EnvironmentReport/v0"
+ACCOUNT_FORGES = (
+    "the-forge",
+    "api-forge",
+    "spark-forge-aws",
+    "spark-forge-azure",
+    "platform-forge",
+    "forge-doctor-api",
+    "forge-doctor-data",
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -43,6 +52,45 @@ def _writable(directory: Path) -> bool:
         return False
 
 
+def _account_environment(env: Mapping[str, str]) -> list[dict[str, Any]]:
+    """Inspect published account paths; absent forge variables stay non-fatal."""
+    out: list[dict[str, Any]] = []
+    for forge_id in ACCOUNT_FORGES:
+        prefix = "_".join(part for part in forge_id.upper().replace(".", "-").split("-") if part)
+        required = {
+            "HOME": "directory",
+            "INSTALL_ROOT": "directory",
+            "VENV": "directory",
+            "PYTHON": "file",
+            "CLI": "file",
+        }
+        present = {suffix: str(env.get(f"{prefix}_{suffix}", "")).strip() for suffix in required}
+        if not any(present.values()):
+            continue
+        variables = []
+        missing = []
+        invalid = []
+        for suffix, kind in required.items():
+            raw = present[suffix]
+            path = Path(raw).expanduser() if raw else None
+            valid = bool(path and (path.is_dir() if kind == "directory" else path.is_file()))
+            variables.append({"name": f"{prefix}_{suffix}", "present": bool(raw), "valid": valid})
+            if not raw:
+                missing.append(suffix)
+            elif not valid:
+                invalid.append(suffix)
+        state = "invalid" if invalid else "partial" if missing else "ready"
+        out.append(
+            {
+                "forge_id": forge_id,
+                "prefix": prefix,
+                "state": state,
+                "variables": variables,
+            }
+        )
+    return out
+
+
 def run_doctor(
     root: Path,
     registry: Registry,
@@ -63,6 +111,23 @@ def run_doctor(
         Check(name="git", status="ok" if git else "warn", detail=git or "not found on PATH"),
         Check(name="host", status="ok", detail=detect_host(environment)),
     ]
+    account_environment = _account_environment(environment)
+    if not account_environment:
+        checks.append(
+            Check(
+                name="account-environment",
+                status="warn",
+                detail="no Forge account environment published; run install.ps1 or install.sh",
+            )
+        )
+    else:
+        invalid = [row["forge_id"] for row in account_environment if row["state"] == "invalid"]
+        partial = [row["forge_id"] for row in account_environment if row["state"] == "partial"]
+        status: Literal["ok", "warn", "fail"] = "fail" if invalid else "warn" if partial else "ok"
+        detail = ", ".join(
+            [*(f"invalid: {forge}" for forge in invalid), *(f"partial: {forge}" for forge in partial)]
+        ) or f"ready: {len(account_environment)} Forge(s)"
+        checks.append(Check(name="account-environment", status=status, detail=detail))
     forge_dir = registry.forge_dir
     if forge_dir is None:
         checks.append(
@@ -104,5 +169,6 @@ def run_doctor(
         "forge_version": VERSION,
         "root": str(root),
         "checks": [asdict(c) for c in checks],
+        "account_environment": account_environment,
         "healthy": all(c.status != "fail" for c in checks),
     }
