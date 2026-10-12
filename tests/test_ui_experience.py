@@ -282,7 +282,7 @@ def test_wizard_components_and_none_hosts_reach_install_fn(monkeypatch):
 
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(wiz, "env_check_rows", lambda: [])
-    keys = iter(["\r"] * 4)  # scope, profile, components, hosts
+    keys = iter(["\r"] * 5)  # scope, profile, execution, components, hosts
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     monkeypatch.setattr("builtins.input", lambda *a, **k: "")  # confirm -> default yes
     calls: list[dict] = []
@@ -306,7 +306,7 @@ def test_recommended_wizard_selects_agents(monkeypatch):
 
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(wiz, "env_check_rows", lambda: [])
-    keys = iter(["\r", "\r", "\r", "\r"])
+    keys = iter(["\r", "\r", "\r", "\r", "\r"])
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     monkeypatch.setattr("builtins.input", lambda *a, **k: "")
     calls: list[dict] = []
