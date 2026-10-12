@@ -67,3 +67,8 @@
 - AWS readiness docs: `f655b5d8`; 156 focused tests passed, 2 pre-existing portal adapter failures with `DEGRADED` state.
 - Portal UX readiness docs: `18a776e`; screenshot modification preserved outside commit.
 - API readiness doc: `334c758a`.
+
+## Final report
+
+- Consolidated report: `final-report.md`.
+- Recommendation: `READY WITH LIMITATIONS`; runtime specialist and benchmark limitations remain explicit.
