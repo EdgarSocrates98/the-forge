@@ -49,3 +49,27 @@ def test_satisfies_ceiling_still_works():
     # the historical api-forge pin is only satisfiable by 3.12.x itself
     assert fb._satisfies("3.12.13", ">=3.12,<3.13")
     assert not fb._satisfies("3.13.0", ">=3.12,<3.13")
+
+
+def test_environment_contract_is_account_scoped_and_shell_safe(tmp_path):
+    cfg = {"forge_id": "spark-forge-aws", "cli": "sparkforge-aws"}
+    venv = tmp_path / "install" / ".venv"
+    contract = fb.environment_contract(cfg, tmp_path / "checkout", tmp_path / "install", venv, None)
+
+    assert contract["schema"] == "forge/InstallEnvironment/v1"
+    assert contract["scope"] == "user"
+    assert contract["prefix"] == "SPARK_FORGE_AWS"
+    assert contract["variables"]["SPARK_FORGE_AWS_HOME"].endswith("checkout")
+    venv_value = contract["variables"]["SPARK_FORGE_AWS_VENV"].replace("\\", "/")
+    cli_value = contract["variables"]["SPARK_FORGE_AWS_CLI"].replace("\\", "/")
+    assert venv_value.endswith("install/.venv")
+    assert cli_value.endswith(
+        "install/.venv/Scripts/sparkforge-aws.exe"
+    ) or cli_value.endswith(
+        "install/.venv/bin/sparkforge-aws"
+    )
+
+
+def test_env_prefix_normalizes_hyphenated_forge_ids():
+    assert fb.env_prefix("the-forge") == "THE_FORGE"
+    assert fb.env_prefix("forge.doctor-api") == "FORGE_DOCTOR_API"
