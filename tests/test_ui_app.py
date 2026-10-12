@@ -136,9 +136,17 @@ def test_navigation_keeps_selected_entry_visible_on_long_menu():
 def test_suspended_action_does_not_capture_attached_output():
     seen = []
     app = ForgeApp(
-        ctx(), forge_id="the-forge", title="t",
-        entries=[Entry(label="go", provider=lambda: ActionData(
-            callable=lambda: seen.append("ran"), title="run", suspend=True))],
+        ctx(),
+        forge_id="the-forge",
+        title="t",
+        entries=[
+            Entry(
+                label="go",
+                provider=lambda: ActionData(
+                    callable=lambda: seen.append("ran"), title="run", suspend=True
+                ),
+            )
+        ],
     )
     data = app.pane.data
     assert isinstance(data, ActionData)

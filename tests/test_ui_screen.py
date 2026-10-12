@@ -96,7 +96,11 @@ def test_table_selection_marker_and_scroll():
 def test_table_fits_narrow_viewport_without_dropping_columns():
     buf = Buffer(ctx(60, 16), 31, 10)
     table(
-        buf, 2, 1, 27, 8,
+        buf,
+        2,
+        1,
+        27,
+        8,
         columns=[Column(key="name", title="name", width=28), Column(key="detail", title="detail")],
         rows=[{"name": "specialist", "detail": "ready"}],
         theme=Theme(),
