@@ -2,6 +2,26 @@
 
 Status: decided · 2025 — applies to all 7 Forges.
 
+## Delivery update — 2026-10-11
+
+The stdlib engine remains the portable baseline. The full-screen app now
+normalizes `Shift+Tab`, Page Up/Page Down and Home/End, supports a real `/`
+filter query with backspace/escape handling, and scrolls text/action panes.
+These changes stay dependency-free and preserve the non-TTY refusal contract.
+
+Textual remains optional for `api-forge`; no required dependency or platform
+migration was introduced during the 0.2 RC freeze. The official Textual
+documentation confirms Windows support and headless asyncio/Pilot testing,
+while Microsoft ConPTY guidance requires careful channel separation and
+resize handling. Those references inform a future optional pilot, not a
+claim of real-host verification in this delivery.
+
+References:
+
+- https://textual.textualize.io/getting_started/
+- https://textual.textualize.io/guide/testing/
+- https://learn.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session
+
 ## Options evaluated
 
 | Option | Footprint | Portability | Fit |

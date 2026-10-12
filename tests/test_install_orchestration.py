@@ -113,6 +113,11 @@ def test_profile_minimal_installs_markers_only(target: Path) -> None:
     assert not (target / ".claude" / "skills").exists()
 
 
+def test_profile_recommended_installs_agents(target: Path) -> None:
+    service.install(scope="project", root=target, yes=True, profile="recommended")
+    assert (target / ".codex" / "agents").is_dir()
+
+
 def test_unknown_host_and_profile(target: Path) -> None:
     with pytest.raises(kit.InstallError) as exc:
         service.install("zsh", scope="project", root=target, yes=True)

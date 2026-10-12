@@ -22,11 +22,18 @@ from theforge.ui.screen import (
 )
 
 
-def ctx(w: int = 80, h: int = 24, *, color: bool = False,
-        unicode: bool = False, interactive: bool = False,
-        ansi: bool = False) -> UIContext:
-    return UIContext(interactive=interactive, color=color, unicode=unicode,
-                     width=w, height=h, ansi=ansi)
+def ctx(
+    w: int = 80,
+    h: int = 24,
+    *,
+    color: bool = False,
+    unicode: bool = False,
+    interactive: bool = False,
+    ansi: bool = False,
+) -> UIContext:
+    return UIContext(
+        interactive=interactive, color=color, unicode=unicode, width=w, height=h, ansi=ansi
+    )
 
 
 def test_buffer_clips_and_renders():
@@ -55,9 +62,11 @@ def test_panel_returns_inner_region():
 
 def test_state_view_centers_and_colorless_text():
     buf = Buffer(ctx(), 80, 24)
-    state_view(buf, StateSpec(kind="error", title="boom",
-                              detail="traceback", hint="press r"),
-               theme=Theme())
+    state_view(
+        buf,
+        StateSpec(kind="error", title="boom", detail="traceback", hint="press r"),
+        theme=Theme(),
+    )
     text = "\n".join(buf.render())
     assert "boom" in text and "traceback" in text and "press r" in text
     assert "x boom" in text  # ASCII icon present without color
@@ -72,12 +81,13 @@ def test_too_small_state():
 
 def test_table_selection_marker_and_scroll():
     buf = Buffer(ctx(), 80, 24)
-    cols = [Column(key="name", title="name", width=20),
-            Column(key="state", title="state", width=8),
-            Column(key="detail", title="detail")]
+    cols = [
+        Column(key="name", title="name", width=20),
+        Column(key="state", title="state", width=8),
+        Column(key="detail", title="detail"),
+    ]
     rows = [{"name": f"n{i}", "state": "ok", "detail": "d"} for i in range(50)]
-    table(buf, 2, 2, 76, 20, columns=cols, rows=rows, selected=30,
-          theme=Theme())
+    table(buf, 2, 2, 76, 20, columns=cols, rows=rows, selected=30, theme=Theme())
     out = "\n".join(buf.render())
     assert "NAME" in out and ">" in out
     assert "n30" in out  # selected row scrolled into view
@@ -114,3 +124,9 @@ def test_screen_refuses_non_tty():
 def test_run_loop_refuses_non_tty():
     with pytest.raises(NonInteractive):
         screen.run_loop(ctx(interactive=False), lambda b: None)
+
+
+def test_key_sequences_support_backtab_and_page_navigation():
+    assert screen._ESC["\x1b[Z"] == "backtab"
+    assert screen._ESC["\x1b[5~"] == "pageup"
+    assert screen._ESC["\x1b[6~"] == "pagedown"

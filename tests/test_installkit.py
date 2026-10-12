@@ -86,6 +86,12 @@ def test_profile_unknown_raises(tmp_path):
         kit.profile_asset_kinds(ctx.profile)
 
 
+def test_recommended_profile_includes_agent_assets():
+    assert "agent" in kit.profile_asset_kinds("recommended")
+    assert "agent" not in kit.profile_asset_kinds("minimal")
+    assert "agent" in kit.profile_asset_kinds("full")
+
+
 def test_install_requires_approval(tmp_path):
     ctx = _ctx(tmp_path)
     with pytest.raises(kit.InstallError) as e:

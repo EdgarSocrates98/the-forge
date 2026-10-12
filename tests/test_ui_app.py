@@ -16,20 +16,29 @@ from theforge.ui.screen import Buffer, Column, StateSpec
 
 
 def ctx(w: int = 80, h: int = 24) -> UIContext:
-    return UIContext(interactive=False, color=False, unicode=False,
-                     width=w, height=h, ansi=False)
+    return UIContext(interactive=False, color=False, unicode=False, width=w, height=h, ansi=False)
 
 
 def _table_app() -> ForgeApp:
-    return ForgeApp(ctx(), forge_id="the-forge", title="t", entries=[
-        Entry(label="items", provider=lambda: TableData(
-            columns=[Column(key="n", title="n", width=10)],
-            rows=[{"n": f"r{i}"} for i in range(5)])),
-        Entry(label="notes", provider=lambda: TextData(lines=["a", "b"])),
-        Entry(label="bad", provider=lambda: 1 / 0),
-        Entry(label="go", provider=lambda: ActionData(
-            callable=lambda: print("ran"), title="run")),
-    ])
+    return ForgeApp(
+        ctx(),
+        forge_id="the-forge",
+        title="t",
+        entries=[
+            Entry(
+                label="items",
+                provider=lambda: TableData(
+                    columns=[Column(key="n", title="n", width=10)],
+                    rows=[{"n": f"r{i}"} for i in range(5)],
+                ),
+            ),
+            Entry(label="notes", provider=lambda: TextData(lines=["a", "b"])),
+            Entry(label="bad", provider=lambda: 1 / 0),
+            Entry(
+                label="go", provider=lambda: ActionData(callable=lambda: print("ran"), title="run")
+            ),
+        ],
+    )
 
 
 def test_render_two_panes():
@@ -75,6 +84,29 @@ def test_table_selection_moves():
     assert app.pane.selected == 1
 
 
+def test_filter_accepts_text_and_backspace():
+    app = _table_app()
+    app.on_key("/")
+    app.on_key("n")
+    assert app.filter == "n"
+    assert app.nav_idx == 1
+    app.on_key("backspace")
+    assert app.filter == ""
+    app.on_key("esc")
+    assert not app.filter_active
+
+
+def test_text_content_supports_page_scroll():
+    app = _table_app()
+    app.nav_idx = 1
+    app._load()
+    app.on_key("enter")
+    app.on_key("pagedown")
+    assert app.pane.scroll == 1
+    app.on_key("home")
+    assert app.pane.scroll == 0
+
+
 def test_action_executes_real_callable():
     app = _table_app()
     app.nav_idx = 3
@@ -93,6 +125,6 @@ def test_run_refuses_non_tty():
 
 def test_tui_entries_load():
     from theforge.ui import tui
+
     entries = tui.entries()
-    assert {e.label for e in entries} >= {
-        "specialists", "hosts", "install wizard", "graph studio"}
+    assert {e.label for e in entries} >= {"specialists", "hosts", "install wizard", "graph studio"}

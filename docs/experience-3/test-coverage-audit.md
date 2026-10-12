@@ -17,8 +17,11 @@
 - `test_ui_kit.py`-família: scripted keys por select/multi_select/confirm,
   i18n, wizard, parity byte-vendored — 24 testes no the-forge, espelhados.
 - api-forge: `tests/tui/` para o app Textual task-scoped.
-- **Ausente**: snapshots de frame em tamanhos fixos (80×24, 60 col),
-  pilot tests `run_test()` para shell full-screen, jornadas E2E.
+- Engine stdlib: frames 80×24/60×16, navegação filtrada, paginação e estados
+  de layout cobertos por testes puros; PTY real e jornadas E2E continuam
+  UNVERIFIED.
+- **Ausente**: pilot tests `run_test()` para shell full-screen e jornada E2E
+  em host real; Textual segue opcional e fora do core portátil.
 
 ## Obrigatórios do §IV.3 que já existem
 

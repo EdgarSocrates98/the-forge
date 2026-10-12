@@ -52,7 +52,11 @@ def _spec() -> kit.ForgeSpec:
 
 def _render_for(ctx: kit.InstallContext) -> dict[str, bytes]:
     kinds = set(kit.asset_kinds_for(ctx))
-    return render.render(ctx.hosts, skills="skill" in kinds)
+    return render.render(
+        ctx.hosts,
+        skills="skill" in kinds,
+        agents="agent" in kinds,
+    )
 
 
 def _ctx(
