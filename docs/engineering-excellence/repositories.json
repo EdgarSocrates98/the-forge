@@ -1,0 +1,29 @@
+{
+  "schema": "theforge/EngineeringRepositoryCatalog/v1",
+  "repositories": [
+    {"repo":"the-forge","directory":"the-forge","capabilities":[
+      {"name":"routing","markers":["src/theforge/routing"]},{"name":"registry","markers":["src/theforge/registry"]},{"name":"context","markers":["src/theforge/context"]},{"name":"economy","markers":["src/theforge/observations","src/theforge/adaptive"]},{"name":"evals","markers":["tests/test_bench.py","tests/test_adaptive_cycle41.py"]},{"name":"installation","markers":["src/theforge/install","docs/portable-installation"]},{"name":"mcp","markers":["src/theforge/protocol"]},{"name":"diagnostics","markers":["src/theforge/diagnostics"]},{"name":"portal","markers":["portal","src/theforge/portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"api-forge","directory":"api-forge","capabilities":[
+      {"name":"routing","markers":["src/apiforge/runtime","src/apiforge/agentops"]},{"name":"registry","markers":["src/apiforge/registry","src/apiforge/contracts"]},{"name":"context","markers":["src/apiforge/context","knowledge"]},{"name":"economy","markers":["src/apiforge/economy"]},{"name":"evals","markers":["evals"]},{"name":"installation","markers":["scripts","docs/installation"]},{"name":"mcp","markers":["src/apiforge/mcp_protocol"]},{"name":"diagnostics","markers":["src/apiforge/observability"]},{"name":"portal","markers":["portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"spark-forge-aws","directory":"spark-forge-aws","capabilities":[
+      {"name":"routing","markers":["rules/catalog/routing.yaml","sparkforge_aws"]},{"name":"registry","markers":["rules/catalog/schema_registry.yaml","contracts"]},{"name":"context","markers":["knowledge"]},{"name":"economy","markers":["sparkforge_aws/economy","rules/catalog/benchmark.yaml"]},{"name":"evals","markers":["evals"]},{"name":"installation","markers":["scripts"]},{"name":"mcp","markers":["sparkforge_aws/mcp","mcp"]},{"name":"diagnostics","markers":["sparkforge_aws/diagnostics"]},{"name":"portal","markers":["portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"spark-forge-azure","directory":"spark-forge-azure","capabilities":[
+      {"name":"routing","markers":["sparkforge_azure/routing","rules"]},{"name":"registry","markers":["sparkforge_azure/registry","config"]},{"name":"context","markers":["sparkforge_azure/context","knowledge"]},{"name":"economy","markers":["sparkforge_azure/economy"]},{"name":"evals","markers":["evals"]},{"name":"installation","markers":["scripts"]},{"name":"mcp","markers":["sparkforge_azure/mcp"]},{"name":"diagnostics","markers":["sparkforge_azure/diagnostics"]},{"name":"portal","markers":["portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"platform-forge","directory":"platform-forge","capabilities":[
+      {"name":"routing","markers":["platformforge/routing","rules"]},{"name":"registry","markers":["platformforge/registry","contracts"]},{"name":"context","markers":["platformforge/context","knowledge"]},{"name":"economy","markers":["platformforge/economy"]},{"name":"evals","markers":["evals"]},{"name":"installation","markers":["scripts"]},{"name":"mcp","markers":["platformforge/mcp","MCP.md"]},{"name":"diagnostics","markers":["platformforge/diagnostics"]},{"name":"portal","markers":["portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"forge-doctor-api","directory":"forge-doctor-api","capabilities":[
+      {"name":"routing","markers":["src/forge_doctor_api/analyzers"]},{"name":"registry","markers":["src/forge_doctor_api/contracts"]},{"name":"context","markers":["src/forge_doctor_api/context"]},{"name":"economy","markers":["src/forge_doctor_api/benchmarks"]},{"name":"evals","markers":["tests","labs"]},{"name":"installation","markers":["scripts"]},{"name":"mcp","markers":["src/forge_doctor_api/mcp"]},{"name":"diagnostics","markers":["src/forge_doctor_api/analyzers"]},{"name":"portal","markers":["portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"forge-doctor-data","directory":"forge-doctor-data","capabilities":[
+      {"name":"routing","markers":["src/forge_doctor_data/analyzers"]},{"name":"registry","markers":["src/forge_doctor_data/contracts"]},{"name":"context","markers":["src/forge_doctor_data/context"]},{"name":"economy","markers":["tools/benchmarks"]},{"name":"evals","markers":["tests","golden"]},{"name":"installation","markers":["scripts"]},{"name":"mcp","markers":["src/forge_doctor_data/plugins"]},{"name":"diagnostics","markers":["src/forge_doctor_data/core","src/forge_doctor_data/analyzers"]},{"name":"portal","markers":["portal"]},{"name":"tests","markers":["tests"]},{"name":"docs","markers":["docs"]}
+    ]},
+    {"repo":"forge-portal","directory":"forge-portal","capabilities":[
+      {"name":"routing","markers":["src/app"]},{"name":"registry","markers":["src/app"]},{"name":"context","markers":["src/app"]},{"name":"economy","markers":["src/app"]},{"name":"evals","markers":["e2e","tests"]},{"name":"installation","markers":["scripts","src/app"]},{"name":"mcp","markers":["src/app"]},{"name":"diagnostics","markers":["src/app"]},{"name":"portal","markers":["src/app"]},{"name":"tests","markers":["tests","e2e"]},{"name":"docs","markers":["docs"]}
+    ]}
+  ]
+}

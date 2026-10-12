@@ -7,6 +7,7 @@ registries remain authoritative; this module emits evidence projection only.
 
 from __future__ import annotations
 
+import json
 import subprocess
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
@@ -31,148 +32,28 @@ class RepositorySpec:
     capabilities: tuple[CapabilitySpec, ...]
 
 
-def _capabilities(*groups: tuple[str, tuple[str, ...]]) -> tuple[CapabilitySpec, ...]:
-    return tuple(CapabilitySpec(name, markers) for name, markers in groups)
+def load_repository_specs(root: Path) -> tuple[RepositorySpec, ...]:
+    """Load workspace catalog from docs; no specialist identity is hardcoded."""
 
-
-REPOSITORIES: tuple[RepositorySpec, ...] = (
-    RepositorySpec(
-        "the-forge",
-        "the-forge",
-        _capabilities(
-            ("routing", ("src/theforge/routing",)),
-            ("registry", ("src/theforge/registry",)),
-            ("context", ("src/theforge/context",)),
-            ("economy", ("src/theforge/observations", "src/theforge/adaptive")),
-            ("evals", ("tests/test_bench.py", "tests/test_adaptive_cycle41.py")),
-            ("installation", ("src/theforge/install", "docs/portable-installation")),
-            ("mcp", ("src/theforge/protocol",)),
-            ("diagnostics", ("src/theforge/diagnostics",)),
-            ("portal", ("portal", "src/theforge/portal")),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "api-forge",
-        "api-forge",
-        _capabilities(
-            ("routing", ("src/apiforge/runtime", "src/apiforge/agentops")),
-            ("registry", ("src/apiforge/registry", "src/apiforge/contracts")),
-            ("context", ("src/apiforge/context", "knowledge")),
-            ("economy", ("src/apiforge/economy",)),
-            ("evals", ("evals",)),
-            ("installation", ("scripts", "docs/installation")),
-            ("mcp", ("src/apiforge/mcp_protocol",)),
-            ("diagnostics", ("src/apiforge/observability",)),
-            ("portal", ("portal",)),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "spark-forge-aws",
-        "spark-forge-aws",
-        _capabilities(
-            ("routing", ("rules/catalog/routing.yaml", "sparkforge_aws")),
-            ("registry", ("rules/catalog/schema_registry.yaml", "contracts")),
-            ("context", ("knowledge",)),
-            ("economy", ("sparkforge_aws/economy", "rules/catalog/benchmark.yaml")),
-            ("evals", ("evals",)),
-            ("installation", ("scripts",)),
-            ("mcp", ("sparkforge_aws/mcp", "mcp")),
-            ("diagnostics", ("sparkforge_aws/diagnostics",)),
-            ("portal", ("portal",)),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "spark-forge-azure",
-        "spark-forge-azure",
-        _capabilities(
-            ("routing", ("sparkforge_azure/routing", "rules")),
-            ("registry", ("sparkforge_azure/registry", "config")),
-            ("context", ("sparkforge_azure/context", "knowledge")),
-            ("economy", ("sparkforge_azure/economy",)),
-            ("evals", ("evals",)),
-            ("installation", ("scripts",)),
-            ("mcp", ("sparkforge_azure/mcp",)),
-            ("diagnostics", ("sparkforge_azure/diagnostics",)),
-            ("portal", ("portal",)),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "platform-forge",
-        "platform-forge",
-        _capabilities(
-            ("routing", ("platformforge/routing", "rules")),
-            ("registry", ("platformforge/registry", "contracts")),
-            ("context", ("platformforge/context", "knowledge")),
-            ("economy", ("platformforge/economy",)),
-            ("evals", ("evals",)),
-            ("installation", ("scripts",)),
-            ("mcp", ("platformforge/mcp", "MCP.md")),
-            ("diagnostics", ("platformforge/diagnostics",)),
-            ("portal", ("portal",)),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "forge-doctor-api",
-        "forge-doctor-api",
-        _capabilities(
-            ("routing", ("src/forge_doctor_api/analyzers",)),
-            ("registry", ("src/forge_doctor_api/contracts",)),
-            ("context", ("src/forge_doctor_api/context",)),
-            ("economy", ("src/forge_doctor_api/benchmarks",)),
-            ("evals", ("tests", "labs")),
-            ("installation", ("scripts",)),
-            ("mcp", ("src/forge_doctor_api/mcp",)),
-            ("diagnostics", ("src/forge_doctor_api/analyzers",)),
-            ("portal", ("portal",)),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "forge-doctor-data",
-        "forge-doctor-data",
-        _capabilities(
-            ("routing", ("src/forge_doctor_data/analyzers",)),
-            ("registry", ("src/forge_doctor_data/contracts",)),
-            ("context", ("src/forge_doctor_data/context",)),
-            ("economy", ("tools/benchmarks",)),
-            ("evals", ("tests", "golden")),
-            ("installation", ("scripts",)),
-            ("mcp", ("src/forge_doctor_data/plugins",)),
-            ("diagnostics", ("src/forge_doctor_data/core", "src/forge_doctor_data/analyzers")),
-            ("portal", ("portal",)),
-            ("tests", ("tests",)),
-            ("docs", ("docs",)),
-        ),
-    ),
-    RepositorySpec(
-        "forge-portal",
-        "forge-portal",
-        _capabilities(
-            ("routing", ("src/app",)),
-            ("registry", ("src/app",)),
-            ("context", ("src/app",)),
-            ("economy", ("src/app",)),
-            ("evals", ("e2e", "tests")),
-            ("installation", ("scripts", "src/app")),
-            ("mcp", ("src/app",)),
-            ("diagnostics", ("src/app",)),
-            ("portal", ("src/app",)),
-            ("tests", ("tests", "e2e")),
-            ("docs", ("docs",)),
-        ),
-    ),
-)
+    candidates = (
+        root / "docs/engineering-excellence/repositories.json",
+        root / "the-forge/docs/engineering-excellence/repositories.json",
+    )
+    catalog = next((path for path in candidates if path.is_file()), None)
+    if catalog is None:
+        return ()
+    document = json.loads(catalog.read_text(encoding="utf-8"))
+    return tuple(
+        RepositorySpec(
+            repo=item["repo"],
+            directory=item["directory"],
+            capabilities=tuple(
+                CapabilitySpec(name=capability["name"], markers=tuple(capability["markers"]))
+                for capability in item["capabilities"]
+            ),
+        )
+        for item in document["repositories"]
+    )
 
 
 def _git(path: Path, *args: str) -> str | None:
@@ -289,11 +170,13 @@ def _repo_report(root: Path, spec: RepositorySpec) -> dict[str, Any]:
     }
 
 
-def audit_workspace(root: Path, specs: Iterable[RepositorySpec] = REPOSITORIES) -> dict[str, Any]:
+def audit_workspace(
+    root: Path, specs: Iterable[RepositorySpec] | None = None
+) -> dict[str, Any]:
     """Return stable, local-only evidence for configured Forge repositories."""
 
     resolved = root.expanduser().resolve()
-    specs = tuple(specs)
+    specs = tuple(load_repository_specs(resolved) if specs is None else specs)
     repositories = [_repo_report(resolved, spec) for spec in specs]
     checks = [check for repository in repositories for check in repository["checks"]]
     summary = {

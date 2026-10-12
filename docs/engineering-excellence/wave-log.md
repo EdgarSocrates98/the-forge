@@ -41,6 +41,27 @@
 - Commit: `dee84b5`.
 - Accepted: ASCII fallback preserved; TTY/non-TTY contract unchanged.
 
+## Wave 6 — catalog-driven evidence and contract closure
+
+- Result: repository identities moved from Python core into versioned workspace catalog; CLI/reality/fuzz evidence stays synchronized.
+- Evidence: `repositories.json`, generated experience/reality snapshots, CLI docs, contract seed and schema-count parity.
+- Commit: pending in current branch.
+- Accepted: core can onboard another repository without source edit; missing specialist runtimes remain explicit.
+
+## Wave 7 — host launcher portability
+
+- Result: installed launcher path returned by `shutil.which` is preserved in delegation argv.
+- Evidence: Windows `.cmd` E2E against AWS specialist and resolver regression test.
+- Commit: pending in current branch.
+- Accepted: shell-independent subprocess execution; checkout fallback remains available.
+
+## Wave 8 — Rui surface parity
+
+- Result: canonical kit/i18n/wizard behavior synchronized across specialist CLIs.
+- Evidence: cross-repository parity suite and per-repository focused tests.
+- Commits: pending in specialist branches.
+- Accepted: onboarding/status surfaces retain same adaptive terminal contract.
+
 ## External sidecars
 
 - AWS readiness docs: `f655b5d8`; 156 focused tests passed, 2 pre-existing portal adapter failures with `DEGRADED` state.

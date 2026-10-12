@@ -7,6 +7,7 @@
 | `init` | cria `.forge/` (idempotente); remove o cache legado `.forge/registry` com aviso | 0 |
 | `doctor` | OS, Python, git, host, workspace, providers | 0 / 1 só se algum check for `fail` (Python < 3.11, `.forge` sem escrita, provider builtin não saudável, `providers.toml` inválido); provider não builtin não saudável e workspace não inicializado são `warn` (exit 0) |
 | `status` | resumo do workspace, incluindo os providers com cache | 0 |
+| `excellence audit [--root DIR] [--json]` | auditoria offline das Forjas catalogadas: estado, commit, capabilities, evidência, confiança, custo e próxima ação; não executa código nem rede | 0 / 3 se houver repositório indisponível ou caminho inválido |
 | `registry list` | providers (usa o cache do usuário) | 0 |
 | `registry refresh` | re-`describe` de todos os providers; remove o cache legado `.forge/registry` com aviso | 0 |
 | `registry show <id>` | manifest, argv e hash | 0 / 2 se desconhecido |
