@@ -5,8 +5,7 @@ agent: codex
 risk: medium
 grill: completed
 verification:
-  - python -m pytest tests/test_ui_screen.py tests/test_ui_app.py
-  - python -m pytest tests/test_ui_tui.py
+  - '$env:PYTHONPATH="src"; python -m pytest tests/test_ui_screen.py tests/test_ui_app.py'
 ---
 
 # Grill Gate

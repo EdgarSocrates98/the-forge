@@ -58,3 +58,15 @@ ambiente non-TTY. Mantém o core offline/stdlib-only intacto.
   snapshots, declarado UNVERIFIED para terminal real.
 - ConPTY e handshake de host real continuam BLOCKED neste ambiente; nenhum
   estado de evidência foi promovido para PASS sem execução observável.
+
+## Rui terminal resilience — 2026-10-12
+
+- Layout floor: 60×16; table columns rebalance inside available cells.
+- Long menus: selected entry remains inside visible navigation window.
+- Input: POSIX CSI sequences normalized byte-by-byte; Windows extended-key
+  fallback returns explicit unknown key; EOF exits cleanly.
+- Resize: active output stream probed on every event-loop tick.
+- Suspended actions: alternate screen/raw mode restored before attached
+  command output and after return.
+- Evidence: pure-render and app regression tests pass across seven Forjas.
+- External PTY/ConPTY and screen-reader validation: UNVERIFIED here.
