@@ -93,6 +93,18 @@ def test_table_selection_marker_and_scroll():
     assert "n30" in out  # selected row scrolled into view
 
 
+def test_table_fits_narrow_viewport_without_dropping_columns():
+    buf = Buffer(ctx(60, 16), 31, 10)
+    table(
+        buf, 2, 1, 27, 8,
+        columns=[Column(key="name", title="name", width=28), Column(key="detail", title="detail")],
+        rows=[{"name": "specialist", "detail": "ready"}],
+        theme=Theme(),
+    )
+    out = "\n".join(buf.render())
+    assert "NAME" in out and "DETAIL" in out and "ready" in out
+
+
 def test_theme_per_forge_accents():
     a = Theme.for_forge("forge-alpha")
     assert a.accent in {"33", "34", "35", "36", "32", "37"}
@@ -130,3 +142,10 @@ def test_key_sequences_support_backtab_and_page_navigation():
     assert screen._ESC["\x1b[Z"] == "backtab"
     assert screen._ESC["\x1b[5~"] == "pageup"
     assert screen._ESC["\x1b[6~"] == "pagedown"
+
+
+def test_clip_and_buffer_are_safe_for_zero_or_negative_space():
+    buf = Buffer(ctx(), 1, 1)
+    buf.draw(0, -4, "x")
+    assert len(buf.render()) == 1
+    assert screen._clip("hello", 0) == ""
