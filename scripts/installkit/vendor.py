@@ -7,6 +7,7 @@
 Writes (idempotent):
 - ``forge.json``             declarative bootstrap driver (if absent)
 - ``setup.sh`` / ``setup.ps1``  thin entry points
+- ``install.sh`` / ``install.ps1``  account-scoped editable install entry points
 - ``scripts/forge_bootstrap.py``  vendored, _SOURCE_SHA256-stamped
 - ``<pkg>/_installkit.py``   runtime engine (when --installkit-pkg given)
 
@@ -57,6 +58,37 @@ if ($py.EndsWith("py.exe")) { & $py -3 scripts/forge_bootstrap.py @args } else {
 exit $LASTEXITCODE
 """
 
+INSTALL_SH = """#!/usr/bin/env bash
+# Forge account install — editable runtime + user-scoped environment.
+set -euo pipefail
+cd "$(dirname "$0")"
+PY="$(command -v python3 || command -v python || command -v py)"
+if [ -z "$PY" ]; then
+  echo "install: no python on PATH (need $PYTHON_SPEC)" >&2; exit 2
+fi
+ARGS=(--editable --persist-env --allow-download "$@")
+if [ "${PY##*/}" = "py" ]; then "$PY" -3 scripts/forge_bootstrap.py "${ARGS[@]}"; else "$PY" scripts/forge_bootstrap.py "${ARGS[@]}"; fi
+status=$?
+if [ "$status" -eq 0 ]; then
+  echo "Install complete. Open new shell or run: source ~/.config/forjas/env.sh"
+fi
+exit "$status"
+"""
+
+INSTALL_PS1 = """# Forge account install — editable runtime + user-scoped environment.
+$ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+$py = $null
+foreach ($c in @("python3", "python", "py")) {
+    $cmd = Get-Command $c -ErrorAction SilentlyContinue
+    if ($cmd) { $py = $cmd.Source; break }
+}
+if (-not $py) { Write-Error "install: no python on PATH (need $PYTHON_SPEC)"; exit 2 }
+$installArgs = @("--editable", "--persist-env", "--allow-download") + $args
+if ($py.EndsWith("py.exe")) { & $py -3 scripts/forge_bootstrap.py @installArgs } else { & $py scripts/forge_bootstrap.py @installArgs }
+exit $LASTEXITCODE
+"""
+
 
 def _vendored(src: Path, sha: str) -> bytes:
     body = src.read_bytes()
@@ -98,6 +130,8 @@ def vendor(
     py_spec = (config or {}).get("python", ">=3.10")
     put("setup.sh", SETUP_SH.replace("$PYTHON_SPEC", py_spec).encode(), "exec")
     put("setup.ps1", SETUP_PS1.replace("$PYTHON_SPEC", py_spec).encode())
+    put("install.sh", INSTALL_SH.replace("$PYTHON_SPEC", py_spec).encode(), "exec")
+    put("install.ps1", INSTALL_PS1.replace("$PYTHON_SPEC", py_spec).encode())
     put("scripts/forge_bootstrap.py", _vendored(CANON_BOOTSTRAP, canon_sha))
 
     if installkit_pkg:

@@ -5,7 +5,7 @@ Três comandos:
 ```bash
 git clone <the-forge repo>
 cd the-forge
-./setup.sh        # Windows: .\setup.ps1
+./install.sh      # Windows: .\install.ps1 — account runtime + editable CLI
 ```
 
 Depois, dentro de qualquer projeto:
@@ -29,4 +29,4 @@ theforge specialists status
 theforge portal
 ```
 
-Problemas? → [troubleshooting.md](troubleshooting.md)
+Detalhes: [account-installation.md](account-installation.md). Problemas? → [troubleshooting.md](troubleshooting.md)
