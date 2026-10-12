@@ -961,7 +961,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
                     "result": None,
                     "installation": installation,
                     "error": {
-                        "code": "FORGE-AUTO-INSTALL-FAILED",
+                        "code": Codes.INSTALL_VERIFY_FAILED,
                         "detail": "specialist preparation did not complete",
                     },
                     "error_family": "installation",
