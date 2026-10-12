@@ -256,6 +256,89 @@ def test_delegated_cmd_default_cli() -> None:
     assert argv[0] == "x-cli"
 
 
+def test_delegated_cmd_propagates_setup_choices() -> None:
+    argv = service._delegated_cmd(
+        {"forge_id": "x", "cli": {"name": "x-cli"}},
+        "workspace",
+        Path("T"),
+        True,
+        host="none",
+        profile="minimal",
+        components=("mcp", "tui"),
+    )
+    assert argv == [
+        "x-cli",
+        "install",
+        "--scope",
+        "workspace",
+        "--root",
+        "T",
+        "--host",
+        "none",
+        "--profile",
+        "minimal",
+        "--components",
+        "mcp,tui",
+        "--dry-run",
+    ]
+
+
+def test_install_auto_self_persists_execution_profile(
+    forge_home: Path, target: Path
+) -> None:
+    inst = forge_home / ".forge" / "installations"
+    inst.mkdir(parents=True)
+    (inst / "the-forge.json").write_text(
+        '{"forge_id": "the-forge", "cli": {"name": "theforge"}}', "utf-8"
+    )
+    out = service.install_auto(
+        scope="project",
+        root=target,
+        host="none",
+        profile="minimal",
+        components=("mcp", "tui"),
+        gateway_profile="economy",
+        yes=True,
+    )
+    assert out["status"] == "completed"
+    state = json.loads((target / ".forge" / "install" / "components.json").read_text("utf-8"))
+    assert state["execution_profile"] == "economy"
+
+
+def test_setup_and_auto_parser_expose_governed_choices() -> None:
+    from theforge.cli.main import build_parser
+
+    parser = build_parser()
+    setup = parser.parse_args(
+        [
+            "setup",
+            "--scope",
+            "workspace",
+            "--host",
+            "none",
+            "--profile",
+            "minimal",
+            "--components",
+            "mcp,tui",
+            "--gateway-profile",
+            "economy",
+            "--dry-run",
+        ]
+    )
+    assert setup.command == "setup"
+    assert setup.scope == "workspace"
+    assert setup.host == "none"
+    assert setup.profile == "minimal"
+    assert setup.components == "mcp,tui"
+
+    auto = parser.parse_args(
+        ["install", "auto", "--host", "codex", "--profile", "full", "--components", "skills"]
+    )
+    assert auto.host == "codex"
+    assert auto.profile == "full"
+    assert auto.components == "skills"
+
+
 # install auto --scope workspace — member discovery, precedence, manifest
 # --------------------------------------------------------------------------
 

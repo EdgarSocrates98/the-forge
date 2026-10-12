@@ -149,6 +149,25 @@ def _install() -> ActionData:
     )
 
 
+def _setup() -> ActionData:
+    from theforge.ui.wizard import run_setup_wizard
+
+    ctx = UIContext.detect(force_plain=True)
+    return ActionData(
+        callable=lambda: run_setup_wizard(ctx=ctx),
+        title="guided setup",
+        suspend=True,
+        doc=DocMeta(
+            description="one approved plan for The Forge and registered specialist forges",
+            prerequisites="interactive TTY; registered forge CLIs available",
+            example="theforge setup --dry-run",
+            risk="writes managed host assets after one explicit family approval",
+            expected="family install receipt followed by health and next steps",
+            doc_path="docs/installation/family-onboarding.md",
+        ),
+    )
+
+
 def _task() -> ActionData:
     from theforge.ui.home import _run_task
 
@@ -177,6 +196,7 @@ def entries() -> list[Entry]:
         Entry(label="hosts", provider=_hosts),
         Entry(label="mcp status", provider=_mcp),
         Entry(label="graph studio", provider=_graph),
+        Entry(label="guided setup", provider=_setup),
         Entry(label="install wizard", provider=_install),
         Entry(label="install status", provider=_install_status),
         Entry(label="health check", provider=_health),

@@ -679,6 +679,7 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                     yes=False,
                     dry_run=True,
                     components=comps,
+                    gateway_profile=getattr(args, "gateway_profile", None),
                 )
                 try:
                     approved = approve_plan(plan)
@@ -695,6 +696,7 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                 yes=approved,
                 dry_run=args.dry_run,
                 components=comps,
+                gateway_profile=getattr(args, "gateway_profile", None),
             )
         elif verb == "status":
             out = service.status(scope=args.scope, root=root)
@@ -711,6 +713,11 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                 to=args.to, repo=Path(args.repo) if args.repo else None, dry_run=args.dry_run
             )
         elif verb == "auto":
+            comps = (
+                tuple(c.strip() for c in args.components.split(",") if c.strip())
+                if getattr(args, "components", None)
+                else None
+            )
             members = tuple(getattr(args, "member", ()) or ())
             if members and args.scope != "workspace":
                 raise UsageError("--member only applies to install auto --scope workspace")
@@ -731,6 +738,10 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                     dry_run=True,
                     forge=args.forge,
                     members=members,
+                    host=args.host,
+                    profile=args.profile,
+                    components=comps,
+                    gateway_profile=getattr(args, "gateway_profile", None),
                 )
                 try:
                     approved = approve_plan(plan)
@@ -746,6 +757,10 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                 dry_run=args.dry_run,
                 forge=args.forge,
                 members=members,
+                host=args.host,
+                profile=args.profile,
+                components=comps,
+                gateway_profile=getattr(args, "gateway_profile", None),
             )
         elif verb == "mcp-verify":
             out = kit.mcp_verify(service._spec())
@@ -1656,6 +1671,87 @@ def cmd_install_wizard(args: argparse.Namespace) -> int:
         ctx=ctx,
         out_json=getattr(args, "json", False),
     )
+
+
+def cmd_setup(args: argparse.Namespace) -> int:
+    """``setup``: one governed onboarding flow for The Forge + specialists."""
+    from theforge.install import service
+    from theforge.ui.kit import NonInteractive, UIContext, approve_plan
+    from theforge.ui.wizard import run_setup_wizard
+
+    root = _root(args)
+    ctx = UIContext.detect()
+    interactive_defaults = (
+        args.scope is None
+        and args.host is None
+        and args.profile is None
+        and args.components is None
+        and args.gateway_profile is None
+        and args.forge is None
+        and not args.member
+        and not args.yes
+        and not args.dry_run
+        and not getattr(args, "json", False)
+    )
+    if interactive_defaults:
+        if not ctx.interactive:
+            raise NonInteractive(
+                "setup wizard requires a TTY; use `theforge setup --dry-run` "
+                "or explicit --yes flags in automation"
+            )
+        return run_setup_wizard(root=root, ctx=ctx, out_json=args.json)
+
+    components = (
+        tuple(c.strip() for c in args.components.split(",") if c.strip())
+        if args.components
+        else None
+    )
+    scope = args.scope or "project"
+    host = args.host or "all"
+    profile = args.profile or "recommended"
+    gateway_profile = args.gateway_profile
+    approved = args.yes
+    if not approved and not args.dry_run and not args.json and ctx.interactive:
+        plan = service.install_auto(
+            scope=scope,
+            root=root,
+            forge=args.forge,
+            members=tuple(args.member or ()),
+            host=host,
+            profile=profile,
+            components=components,
+            gateway_profile=gateway_profile,
+            dry_run=True,
+        )
+        try:
+            approved = approve_plan(plan)
+        except NonInteractive:
+            approved = False
+        if not approved:
+            print("declined — nothing written")
+            return 1
+    out = service.install_auto(
+        scope=scope,
+        root=root,
+        forge=args.forge,
+        members=tuple(args.member or ()),
+        host=host,
+        profile=profile,
+        components=components,
+        gateway_profile=gateway_profile,
+        yes=approved,
+        dry_run=args.dry_run,
+    )
+    out.setdefault(
+        "next_steps",
+        [
+            "theforge specialists status",
+            "theforge doctor",
+            "theforge portal",
+        ],
+    )
+    _emit(args, out, render.install_doc)
+    return 0 if out.get("status") in ("completed", "planned") else 1
 
 
 def cmd_portal(args: argparse.Namespace) -> int:

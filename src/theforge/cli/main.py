@@ -50,6 +50,7 @@ explicitly. An ambiguous decomposition may be resolved by a `proposes_plans` pro
 _TOP_COMMANDS: tuple[tuple[str, str], ...] = (
     ("init", "set up The Forge in this workspace"),
     ("capabilities", "discover skills, agents and providers"),
+    ("setup", "guided setup for The Forge and registered specialists"),
     ("install", "install/manage host integrations (apply, auto, status)"),
     ("doctor", "health-check the installation and registry"),
     ("providers", "list specialist forges and what they offer"),
@@ -87,6 +88,7 @@ def _bare_summary(parser: argparse.ArgumentParser) -> int:
         print(f"  {name:<14} {desc}")
     print()
     print("help:    theforge help <command>   |   theforge --help")
+    print("setup:   theforge setup            |   theforge portal")
     print("install: theforge install apply    |   theforge install auto")
     print("docs:    docs/installation/quickstart.md")
     return 0
@@ -130,6 +132,41 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser(
         "doctor", parents=[common], help="inspect host, workspace and providers"
     ).set_defaults(handler=commands.cmd_doctor)
+    setup = sub.add_parser(
+        "setup",
+        parents=[common],
+        help="guided, approval-gated setup for The Forge and registered specialists",
+    )
+    setup.add_argument("--scope", choices=("project", "workspace", "user"), default=None)
+    setup.add_argument(
+        "--host",
+        choices=("claude", "devin", "codex", "copilot", "all", "none"),
+        default=None,
+        help="host integration; none keeps host files untouched",
+    )
+    setup.add_argument("--profile", choices=("minimal", "recommended", "full"), default=None)
+    setup.add_argument(
+        "--gateway-profile",
+        choices=("economy", "balanced", "deep"),
+        default=None,
+        help="The Forge router execution budget",
+    )
+    setup.add_argument(
+        "--components",
+        default=None,
+        help="optional components csv: skills,agents,mcp,tui,graph-studio",
+    )
+    setup.add_argument("--forge", default=None, help="limit family setup to one forge id")
+    setup.add_argument(
+        "--member",
+        action="append",
+        default=[],
+        metavar="RELPATH",
+        help="workspace member for project-scope fan-out (repeatable)",
+    )
+    setup.add_argument("--yes", "-y", action="store_true", help="approve the real plan")
+    setup.add_argument("--dry-run", action="store_true", help="show the real plan only")
+    setup.set_defaults(handler=commands.cmd_setup)
     sub.add_parser("status", parents=[common], help="summarize workspace state").set_defaults(
         handler=commands.cmd_status
     )
@@ -319,6 +356,37 @@ def build_parser() -> argparse.ArgumentParser:
                 help="comma-separated optional components "
                 "(skills,agents,mcp,tui,graph-studio) — overrides the "
                 "profile's component set",
+            )
+            p.add_argument(
+                "--gateway-profile",
+                choices=("economy", "balanced", "deep"),
+                default=None,
+                help="The Forge router execution budget",
+            )
+        if name == "auto":
+            p.add_argument(
+                "--host",
+                default="all",
+                choices=("claude", "devin", "codex", "copilot", "all", "none"),
+                help="host integration propagated to every registered forge",
+            )
+            p.add_argument(
+                "--profile",
+                default="recommended",
+                choices=("minimal", "recommended", "full"),
+                help="asset profile propagated to every registered forge",
+            )
+            p.add_argument(
+                "--components",
+                default=None,
+                metavar="LIST",
+                help="optional components csv propagated to every registered forge",
+            )
+            p.add_argument(
+                "--gateway-profile",
+                choices=("economy", "balanced", "deep"),
+                default=None,
+                help="The Forge router execution budget",
             )
         if name in ("apply", "repair", "uninstall", "update", "auto"):
             p.add_argument("--dry-run", action="store_true")
