@@ -16,15 +16,7 @@ from theforge.protocol import SubprocessTransport, TransportFactory
 from theforge.registry import Registry, check_health
 
 REPORT_SCHEMA = "theforge/EnvironmentReport/v0"
-ACCOUNT_FORGES = (
-    "the-forge",
-    "api-forge",
-    "spark-forge-aws",
-    "spark-forge-azure",
-    "platform-forge",
-    "forge-doctor-api",
-    "forge-doctor-data",
-)
+ACCOUNT_ENV_SUFFIXES = ("HOME", "INSTALL_ROOT", "VENV", "PYTHON", "CLI")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -53,10 +45,23 @@ def _writable(directory: Path) -> bool:
 
 
 def _account_environment(env: Mapping[str, str]) -> list[dict[str, Any]]:
-    """Inspect published account paths; absent forge variables stay non-fatal."""
+    """Inspect published account paths; absent forge variables stay non-fatal.
+
+    Prefixes are discovered from the published contract instead of being
+    catalogued here. New specialists become visible automatically.
+    """
     out: list[dict[str, Any]] = []
-    for forge_id in ACCOUNT_FORGES:
-        prefix = "_".join(part for part in forge_id.upper().replace(".", "-").split("-") if part)
+    prefixes = sorted(
+        {
+            key[: -(len(suffix) + 1)]
+            for key in env
+            for suffix in ACCOUNT_ENV_SUFFIXES
+            if key.upper().endswith(f"_{suffix}") and key[: -(len(suffix) + 1)]
+        }
+    )
+    for prefix in prefixes:
+        prefix = prefix.upper()
+        forge_id = prefix.lower().replace("_", "-")
         required = {
             "HOME": "directory",
             "INSTALL_ROOT": "directory",
