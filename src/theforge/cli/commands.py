@@ -953,7 +953,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
     if getattr(args, "auto_install", False):
         installation = _auto_install_for_ask(args, root)
         if installation.get("status") not in ("completed", "planned"):
-            data = redact(
+            refusal_data = redact(
                 {
                     "run_id": None,
                     "status": "refused",
@@ -967,7 +967,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
                     "error_family": "installation",
                 }
             )
-            _emit(args, data, render.ask)
+            _emit(args, refusal_data, render.ask)
             return 4
     registry = Registry(forge_dir, allow_unverified=args.allow_unverified)
     requirement = _load_requirement(args.requirement)
