@@ -93,6 +93,22 @@ def test_table_selection_marker_and_scroll():
     assert "n30" in out  # selected row scrolled into view
 
 
+def test_table_fits_narrow_viewport_without_dropping_columns():
+    buf = Buffer(ctx(60, 16), 31, 10)
+    table(
+        buf,
+        2,
+        1,
+        27,
+        8,
+        columns=[Column(key="name", title="name", width=28), Column(key="detail", title="detail")],
+        rows=[{"name": "specialist", "detail": "ready"}],
+        theme=Theme(),
+    )
+    out = "\n".join(buf.render())
+    assert "NAME" in out and "DETAIL" in out and "ready" in out
+
+
 def test_theme_per_forge_accents():
     a = Theme.for_forge("forge-alpha")
     assert a.accent in {"33", "34", "35", "36", "32", "37"}
@@ -108,6 +124,42 @@ def test_min_layout_60x16():
     out = buf.render()
     assert len(out) == 16
     assert "nav" in out[-1] and "quit" in out[-1]
+
+
+def test_buffer_composes_overlapping_spans_inside_viewport():
+    buf = Buffer(ctx(60, 4), 20, 4)
+    buf.draw(0, 0, "left")
+    buf.draw(0, 12, "right")
+    line = buf.render()[0]
+    assert "left" in line and "right" in line
+    assert len(line) <= 20
+
+
+def test_buffer_viewport_matrix_stays_bounded():
+    for width, height in ((60, 16), (80, 24), (100, 30), (120, 40), (160, 50)):
+        buf = Buffer(ctx(width, height), width, height)
+        buf.draw(0, 0, "left")
+        buf.draw(0, width - 5, "right")
+        assert len(buf.render()[0]) <= width
+
+
+def test_posix_reader_exits_on_eof_and_normalizes_csi(monkeypatch):
+    if screen.os.name == "nt":
+        return
+    import select as select_module
+
+    class ClosedStdin:
+        def fileno(self):
+            return 0
+
+    monkeypatch.setattr(screen.sys, "stdin", ClosedStdin())
+    monkeypatch.setattr(select_module, "select", lambda *args: ([0], [], []))
+    monkeypatch.setattr(screen.os, "read", lambda *_args: b"")
+    assert screen.read_key(0) == "ctrl-d"
+
+    chunks = iter((b"\x1b", b"[", b"A"))
+    monkeypatch.setattr(screen.os, "read", lambda *_args: next(chunks))
+    assert screen.read_key(0) == "up"
 
 
 def test_color_mode_wraps_ansi():
@@ -130,3 +182,10 @@ def test_key_sequences_support_backtab_and_page_navigation():
     assert screen._ESC["\x1b[Z"] == "backtab"
     assert screen._ESC["\x1b[5~"] == "pageup"
     assert screen._ESC["\x1b[6~"] == "pagedown"
+
+
+def test_clip_and_buffer_are_safe_for_zero_or_negative_space():
+    buf = Buffer(ctx(), 1, 1)
+    buf.draw(0, -4, "x")
+    assert len(buf.render()) == 1
+    assert screen._clip("hello", 0) == ""

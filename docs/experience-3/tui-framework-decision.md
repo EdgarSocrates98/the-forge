@@ -9,6 +9,11 @@ normalizes `Shift+Tab`, Page Up/Page Down and Home/End, supports a real `/`
 filter query with backspace/escape handling, and scrolls text/action panes.
 These changes stay dependency-free and preserve the non-TTY refusal contract.
 
+The 2026-10-12 Rui hardening wave adds viewport-aware table allocation,
+selected-item visibility for long menus, active-stream resize probing,
+byte-safe POSIX CSI parsing, clean EOF handling, and attached execution
+output for suspended actions. The seven package-local copies keep the same
+behavioral contract; no runtime dependency was added.
 Textual remains optional for `api-forge`; no required dependency or platform
 migration was introduced during the 0.2 RC freeze. The official Textual
 documentation confirms Windows support and headless asyncio/Pilot testing,

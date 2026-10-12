@@ -123,6 +123,45 @@ def test_run_refuses_non_tty():
         _table_app().run()
 
 
+def test_navigation_keeps_selected_entry_visible_on_long_menu():
+    entries = [Entry(label=f"item-{i}", provider=lambda: TextData(lines=["ok"])) for i in range(30)]
+    app = ForgeApp(ctx(60, 16), forge_id="the-forge", title="t", entries=entries)
+    for _ in range(25):
+        app.on_key("down")
+    buf = Buffer(ctx(60, 16), 60, 16)
+    app.render(buf)
+    assert "item-25" in "\n".join(buf.render())
+
+
+def test_suspended_action_does_not_capture_attached_output():
+    seen = []
+    app = ForgeApp(
+        ctx(),
+        forge_id="the-forge",
+        title="t",
+        entries=[
+            Entry(
+                label="go",
+                provider=lambda: ActionData(
+                    callable=lambda: seen.append("ran"), title="run", suspend=True
+                ),
+            )
+        ],
+    )
+    data = app.pane.data
+    assert isinstance(data, ActionData)
+    app._execute(data, capture=False)
+    assert seen == ["ran"]
+    assert "attached terminal" in "\n".join(app.pane.log)
+
+
+def test_empty_menu_renders_empty_state():
+    app = ForgeApp(ctx(60, 16), forge_id="the-forge", title="t", entries=[])
+    buf = Buffer(ctx(60, 16), 60, 16)
+    app.render(buf)
+    assert "no menu entries" in "\n".join(buf.render())
+
+
 def test_tui_entries_load():
     from theforge.ui import tui
 
