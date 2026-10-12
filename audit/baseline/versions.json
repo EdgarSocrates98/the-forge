@@ -1,0 +1,201 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-12T22:00:40.882696+00:00",
+  "ref": "origin/main",
+  "data": {
+    "the-forge": {
+      "repository": "EdgarSocrates98/the-forge",
+      "sha": "64d44922b114b08e9decd46d2ec0127e35acf717",
+      "metadata": {
+        "name": "theforge",
+        "version": "0.5.0",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "theforge": "theforge.cli.main:main",
+          "forge": "theforge.cli.main:main"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:36.482982+00:00"
+      }
+    },
+    "spark-forge-aws": {
+      "repository": "EdgarSocrates98/spark-forge-aws",
+      "sha": "03ad7661f0146053a4e2b3e0e2d647405b2d7e78",
+      "metadata": {
+        "name": "sparkforge-aws",
+        "version": "0.5.0",
+        "requires_python": ">=3.10",
+        "scripts": {
+          "sparkforge-aws": "sparkforge_aws.adapters.cli:main",
+          "sparkforge-aws-tools": "sparkforge_aws.tools.cli:main"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:37.380875+00:00"
+      }
+    },
+    "spark-forge-azure": {
+      "repository": "EdgarSocrates98/spark-forge-azure",
+      "sha": "54ccad274066cd1342cde733536bc21e5515a24d",
+      "metadata": {
+        "name": "sparkforge-azure",
+        "version": "0.1.0",
+        "requires_python": ">=3.10",
+        "scripts": {
+          "sparkforge-azure": "sparkforge_azure.cli.main:main"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:38.047145+00:00"
+      }
+    },
+    "api-forge": {
+      "repository": "EdgarSocrates98/api-forge",
+      "sha": "7fcdf12ae7ff39f60b205ae1f42f3531f50bb78d",
+      "metadata": {
+        "name": "apiforge",
+        "version": "0.1.0",
+        "requires_python": ">=3.12",
+        "scripts": {
+          "apiforge": "apiforge.cli:app",
+          "apiforge-mcp": "apiforge.mcp.main:main",
+          "apiforge-tui": "apiforge.cli_tui:tui_app"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:38.595151+00:00"
+      }
+    },
+    "platform-forge": {
+      "repository": "EdgarSocrates98/platform-forge",
+      "sha": "b7e6e42cd47b6c1602418d51113a955fc687bced",
+      "metadata": {
+        "name": "platformforge",
+        "version": "0.1.0",
+        "requires_python": ">=3.10",
+        "scripts": {
+          "platformforge": "platformforge.cli.main:main",
+          "platformforge-mcp": "platformforge.mcp.server:main"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:39.086764+00:00"
+      }
+    },
+    "forge-doctor-api": {
+      "repository": "EdgarSocrates98/forge-doctor-api",
+      "sha": "c9b05b6acbbda65ac8e6c8c5c25678bc669105b2",
+      "metadata": {
+        "name": "forge-doctor-api",
+        "version": "0.2.0",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "forge-doctor-api": "forge_doctor_api.cli:main"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:39.582641+00:00"
+      }
+    },
+    "forge-doctor-data": {
+      "repository": "EdgarSocrates98/forge-doctor-data",
+      "sha": "40c32d498b0784f50f8a3c5e1e36fa100700cc8b",
+      "metadata": {
+        "name": "forge-doctor-data",
+        "version": "1.0.0rc1",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "forge-doctor-data": "forge_doctor_data.cli:app"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:40.086516+00:00"
+      }
+    },
+    "forge-cli": {
+      "repository": "EdgarSocrates98/forge-cli",
+      "sha": "f0574b7418cec0193b65687564698053b63bcdff",
+      "metadata": {
+        "name": "forge-cli",
+        "version": "0.1.0",
+        "engines": {
+          "node": ">=20"
+        },
+        "package_manager": null,
+        "scripts": {
+          "dev": "tsx src/index.ts",
+          "build": "tsup",
+          "start": "node dist/index.js",
+          "test": "vitest run",
+          "typecheck": "tsc --noEmit",
+          "format": "prettier --write .",
+          "format:check": "prettier --check .",
+          "lint": "eslint .",
+          "coverage": "vitest run --coverage",
+          "prepublishOnly": "npm run typecheck && npm test && npm run build",
+          "pack": "npm pack --dry-run"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:40.456998+00:00"
+      }
+    },
+    "forge-portal": {
+      "repository": "EdgarSocrates98/forge-portal",
+      "sha": "37bafd532f0a4b26e879d24d6738ed892d4bce61",
+      "metadata": {
+        "name": "forge-portal-app",
+        "version": "0.0.0",
+        "engines": {},
+        "package_manager": "npm@12.0.2",
+        "scripts": {
+          "ng": "ng",
+          "start": "ng serve",
+          "build": "ng build",
+          "watch": "ng build --watch --configuration development",
+          "test": "ng test"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-10-12T22:00:40.882679+00:00"
+      }
+    }
+  }
+}

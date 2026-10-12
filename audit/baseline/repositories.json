@@ -1,0 +1,412 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-12T22:00:40.882696+00:00",
+  "ref": "origin/main",
+  "data": {
+    "the-forge": {
+      "repository": "EdgarSocrates98/the-forge",
+      "local_path": "E:\\projetos\\FORJAS\\the-forge",
+      "ref": "origin/main",
+      "sha": "64d44922b114b08e9decd46d2ec0127e35acf717",
+      "remote": "https://github.com/EdgarSocrates98/the-forge.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:36.482958+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:36.482978+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:36.482982+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:36.482984+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:36.482986+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:36.482988+00:00"
+        }
+      }
+    },
+    "spark-forge-aws": {
+      "repository": "EdgarSocrates98/spark-forge-aws",
+      "local_path": "E:\\projetos\\FORJAS\\spark-forge-aws",
+      "ref": "origin/main",
+      "sha": "03ad7661f0146053a4e2b3e0e2d647405b2d7e78",
+      "remote": "https://github.com/EdgarSocrates98/spark-forge-aws.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:37.380860+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:37.380873+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:37.380875+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:37.380877+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:37.380878+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:37.380881+00:00"
+        }
+      }
+    },
+    "spark-forge-azure": {
+      "repository": "EdgarSocrates98/spark-forge-azure",
+      "local_path": "E:\\projetos\\FORJAS\\spark-forge-azure",
+      "ref": "origin/main",
+      "sha": "54ccad274066cd1342cde733536bc21e5515a24d",
+      "remote": "https://github.com/EdgarSocrates98/spark-forge-azure.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:38.047131+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:38.047143+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:38.047145+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:38.047147+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:38.047149+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:38.047150+00:00"
+        }
+      }
+    },
+    "api-forge": {
+      "repository": "EdgarSocrates98/api-forge",
+      "local_path": "E:\\projetos\\FORJAS\\api-forge",
+      "ref": "origin/main",
+      "sha": "7fcdf12ae7ff39f60b205ae1f42f3531f50bb78d",
+      "remote": "https://github.com/EdgarSocrates98/api-forge.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:38.595137+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:38.595148+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:38.595151+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:38.595152+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:38.595154+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:38.595156+00:00"
+        }
+      }
+    },
+    "platform-forge": {
+      "repository": "EdgarSocrates98/platform-forge",
+      "local_path": "E:\\projetos\\FORJAS\\platform-forge",
+      "ref": "origin/main",
+      "sha": "b7e6e42cd47b6c1602418d51113a955fc687bced",
+      "remote": "https://github.com/EdgarSocrates98/platform-forge.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:39.086749+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:39.086761+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:39.086764+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:39.086766+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:39.086767+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:39.086769+00:00"
+        }
+      }
+    },
+    "forge-doctor-api": {
+      "repository": "EdgarSocrates98/forge-doctor-api",
+      "local_path": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "ref": "origin/main",
+      "sha": "c9b05b6acbbda65ac8e6c8c5c25678bc669105b2",
+      "remote": "https://github.com/EdgarSocrates98/forge-doctor-api.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:39.582627+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:39.582639+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:39.582641+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:39.582643+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:39.582645+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:39.582647+00:00"
+        }
+      }
+    },
+    "forge-doctor-data": {
+      "repository": "EdgarSocrates98/forge-doctor-data",
+      "local_path": "E:\\projetos\\FORJAS\\forge-doctor-data",
+      "ref": "origin/main",
+      "sha": "40c32d498b0784f50f8a3c5e1e36fa100700cc8b",
+      "remote": "https://github.com/EdgarSocrates98/forge-doctor-data",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:40.086503+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.086514+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:40.086516+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:40.086518+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.086520+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.086522+00:00"
+        }
+      }
+    },
+    "forge-cli": {
+      "repository": "EdgarSocrates98/forge-cli",
+      "local_path": "E:\\projetos\\FORJAS\\forge-cli",
+      "ref": "origin/main",
+      "sha": "f0574b7418cec0193b65687564698053b63bcdff",
+      "remote": "https://github.com/EdgarSocrates98/forge-cli.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:40.456985+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.456996+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:40.456998+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:40.457000+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.457002+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.457004+00:00"
+        }
+      }
+    },
+    "forge-portal": {
+      "repository": "EdgarSocrates98/forge-portal",
+      "local_path": "E:\\projetos\\FORJAS\\forge-portal",
+      "ref": "origin/main",
+      "sha": "37bafd532f0a4b26e879d24d6738ed892d4bce61",
+      "remote": "https://github.com/EdgarSocrates98/forge-portal.git",
+      "provenance": {
+        "sha": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git rev-parse origin/main",
+          "collected_at": "2026-10-12T22:00:40.882663+00:00"
+        },
+        "tree": {
+          "ref": "origin/main",
+          "source": "git",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.882676+00:00"
+        },
+        "metadata": {
+          "ref": "origin/main",
+          "source": "pyproject.toml or package.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:40.882679+00:00"
+        },
+        "contracts": {
+          "ref": "origin/main",
+          "source": "forge*.json/.mcp.json",
+          "command": "git show REF:FILE",
+          "collected_at": "2026-10-12T22:00:40.882681+00:00"
+        },
+        "tests": {
+          "ref": "origin/main",
+          "source": "git tree",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.882682+00:00"
+        },
+        "workflows": {
+          "ref": "origin/main",
+          "source": ".github/workflows",
+          "command": "git ls-tree -r --name-only origin/main",
+          "collected_at": "2026-10-12T22:00:40.882685+00:00"
+        }
+      }
+    }
+  }
+}
