@@ -23,6 +23,7 @@ from theforge.contracts.targets import TargetRequirement
 from theforge.contracts.types import BudgetProfile
 from theforge.environment import run_doctor
 from theforge.errors import UsageError
+from theforge.excellence import audit_workspace
 from theforge.explain import build_explain_report
 from theforge.forger import AskRequest, Forger, PlanCommand, PlanExecutor
 from theforge.forger.replay import replay
@@ -214,6 +215,14 @@ def cmd_status(args: argparse.Namespace) -> int:
     }
     _emit(args, data, render.status)
     return 0
+
+
+def cmd_excellence_audit(args: argparse.Namespace) -> int:
+    """Emit offline evidence projection for all configured Forge repositories."""
+
+    data = audit_workspace(_root(args))
+    _emit(args, data, render.excellence_audit)
+    return 3 if data["summary"]["unavailable"] else 0
 
 
 def _list(args: argparse.Namespace, refresh: bool) -> int:

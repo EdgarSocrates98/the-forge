@@ -56,6 +56,7 @@ _TOP_COMMANDS: tuple[tuple[str, str], ...] = (
     ("providers", "list specialist forges and what they offer"),
     ("ask", "route a question to the right specialist"),
     ("status", "workspace and installation status"),
+    ("excellence", "offline evidence audit across Forge repositories"),
 )
 
 
@@ -170,6 +171,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", parents=[common], help="summarize workspace state").set_defaults(
         handler=commands.cmd_status
     )
+    excellence = sub.add_parser(
+        "excellence", help="engineering excellence evidence"
+    ).add_subparsers(dest="excellence_command", required=True)
+    excellence.add_parser(
+        "audit",
+        parents=[common],
+        help="audit local repositories without network, credentials or code execution",
+    ).set_defaults(handler=commands.cmd_excellence_audit)
 
     registry = sub.add_parser("registry", help="provider registry").add_subparsers(
         dest="registry_command", required=True

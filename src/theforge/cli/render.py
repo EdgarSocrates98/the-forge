@@ -1,6 +1,7 @@
 """Human-readable renderers. Pure functions: dict in, text out."""
 
 import re
+import shutil
 from typing import Any
 
 from theforge.explain.report import ROUTING_NOTE_PREFIXES
@@ -93,6 +94,39 @@ def status(data: dict[str, Any]) -> str:
             f"Runs:       {data['runs']} (last: {_clean(data['last_run'] or '-')})",
         ]
     )
+
+
+def excellence_audit(data: dict[str, Any]) -> str:
+    """Render audit without assuming TTY, color or Unicode support."""
+
+    width = max(40, shutil.get_terminal_size(fallback=(100, 24)).columns)
+    summary = data["summary"]
+    lines = [
+        "Engineering Excellence audit",
+        f"Root: {clean(data['root'])}",
+        f"Mode: {clean(data['mode'])} | repos={summary['repositories']} "
+        f"observed={summary['observed']} unavailable={summary['unavailable']}",
+    ]
+    for repository in data["repositories"]:
+        dirty = " dirty" if repository["dirty"] else ""
+        lines.append(
+            f"{clean(repository['repo']):<20} {clean(repository['state']):<11} "
+            f"{clean(repository['branch'])}@{clean(repository['commit'])}{dirty}"
+        )
+        for check in repository["checks"]:
+            evidence = ", ".join(clean(item) for item in check["evidence"]) or "-"
+            if width < 90 and len(evidence) > 32:
+                evidence = evidence[:29] + "..."
+            lines.append(
+                f"  {clean(check['capability']):<15} {clean(check['state']):<11} {evidence}"
+            )
+    lines.append(
+        f"Capabilities: {summary['capabilities_observed']} observed, "
+        f"{summary['capabilities_unknown']} unknown"
+    )
+    for limitation in data["limitations"]:
+        lines.append(f"Limit: {clean(limitation)}")
+    return "\n".join(lines)
 
 
 def providers(data: dict[str, Any]) -> str:
