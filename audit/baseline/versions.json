@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-13T01:12:42.144725+00:00",
+  "generated_at": "2026-10-13T05:55:40.066544+00:00",
   "ref": "origin/main",
   "data": {
     "the-forge": {
@@ -20,12 +20,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:36.771389+00:00"
+        "collected_at": "2026-10-13T05:55:35.856445+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "03ad7661f0146053a4e2b3e0e2d647405b2d7e78",
+      "sha": "a94b9d6f4a32fca827cc64ca1de39477ed4a62e9",
       "metadata": {
         "name": "sparkforge-aws",
         "version": "0.5.0",
@@ -40,7 +40,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:39.297266+00:00"
+        "collected_at": "2026-10-13T05:55:36.300469+00:00"
       }
     },
     "spark-forge-azure": {
@@ -59,7 +59,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:39.685260+00:00"
+        "collected_at": "2026-10-13T05:55:36.730688+00:00"
       }
     },
     "api-forge": {
@@ -80,7 +80,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:40.096271+00:00"
+        "collected_at": "2026-10-13T05:55:37.220172+00:00"
       }
     },
     "platform-forge": {
@@ -100,7 +100,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:40.491291+00:00"
+        "collected_at": "2026-10-13T05:55:37.713741+00:00"
       }
     },
     "forge-doctor-api": {
@@ -119,7 +119,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:40.938378+00:00"
+        "collected_at": "2026-10-13T05:55:38.194196+00:00"
       }
     },
     "forge-doctor-data": {
@@ -138,7 +138,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:41.359271+00:00"
+        "collected_at": "2026-10-13T05:55:39.229247+00:00"
       }
     },
     "forge-cli": {
@@ -170,12 +170,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:41.712158+00:00"
+        "collected_at": "2026-10-13T05:55:39.680697+00:00"
       }
     },
     "forge-portal": {
       "repository": "EdgarSocrates98/forge-portal",
-      "sha": "37bafd532f0a4b26e879d24d6738ed892d4bce61",
+      "sha": "5d09c842cf9a587d652d128482507e2fc78164c0",
       "metadata": {
         "name": "forge-portal-app",
         "version": "0.0.0",
@@ -194,7 +194,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-13T01:12:42.144709+00:00"
+        "collected_at": "2026-10-13T05:55:40.066528+00:00"
       }
     }
   }

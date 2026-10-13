@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-13T01:52:32.133969+00:00",
+  "generated_at": "2026-10-13T05:55:44.404831+00:00",
   "ref": "origin/main",
   "status": "PASS",
   "repositories": {
@@ -47,7 +47,7 @@
       ]
     },
     "spark-forge-aws": {
-      "sha": "03ad7661f0146053a4e2b3e0e2d647405b2d7e78",
+      "sha": "a94b9d6f4a32fca827cc64ca1de39477ed4a62e9",
       "status": "PASS",
       "checks": [
         {
@@ -569,7 +569,7 @@
       ]
     },
     "forge-portal": {
-      "sha": "37bafd532f0a4b26e879d24d6738ed892d4bce61",
+      "sha": "5d09c842cf9a587d652d128482507e2fc78164c0",
       "status": "PASS",
       "checks": [
         {

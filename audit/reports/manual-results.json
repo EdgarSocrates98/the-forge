@@ -1,7 +1,7 @@
 {
   "schema": "forge/manual-results/v1",
   "results": [
-    {"id":"python-full-spark-forge-aws","status":"PASS","evidence":"14913 passed, 17 skipped, 2 warnings in 9885.19s"},
+    {"id":"python-full-spark-forge-aws","status":"PASS","evidence":"CI matrix 3.10/3.11/3.12 green; Python 3.12: 14928 passed, 20 skipped, 2 warnings; run 38344016364"},
     {"id":"python-full-api-forge","status":"PASS","evidence":"1887 passed, 1 skipped in 1687.21s"},
     {"id":"python-full-forge-doctor-api","status":"PASS","evidence":"1787 passed, 37 skipped in 784.66s"},
     {"id":"python-full-forge-doctor-data","status":"PASS","evidence":"2666 passed in 1697.16s"},
@@ -10,18 +10,18 @@
     {"id":"forge-cli-tests","status":"PASS","evidence":"npm test: 296/296; focused TUI: 3/3; typecheck, lint, build and pack passed"},
     {"id":"forge-portal-browser-e2e","status":"PASS","evidence":"python -m pytest e2e -q: 11 passed; mobile assertion confirms scrollWidth <= innerWidth after responsive fix"},
     {"id":"forge-portal-i18n","status":"PASS","evidence":"366/366"},
-    {"id":"forge-portal-python","status":"PASS","evidence":"43 tests"},
+    {"id":"forge-portal-python","status":"PASS","evidence":"45 tests"},
     {"id":"forge-portal-vendor","status":"PASS","evidence":"7/7 parity checks"},
     {"id":"cross-forge-real-provider","status":"PASS","evidence":"tests/test_cross_forge_real.py -m real_provider -q: 3 passed"},
     {"id":"real-provider-conformance","status":"PASS","evidence":"six real provider conformance tests passed"},
     {"id":"mcp-real-handshake-and-invoke","status":"PASS","evidence":"six installed MCP servers; initialize/tools/list/tools/call PASS; 388 tools catalogued; audit/reports/mcp-handshake.json"},
     {"id":"powershell-7-actual-installers","status":"PASS","evidence":"7/7 canonical account installs completed with pwsh.exe; audit/reports/installer-powershell7-actual.json"},
-    {"id":"portal-cross-forge-script","status":"BLOCKED","evidence":"scripts/portal_e2e.py exceeded bounded wait before first URL"},
+    {"id":"portal-cross-forge-script","status":"PASS","evidence":"scripts/portal_e2e.py: 7 forges, 126 assertions, bounded startup handshake"},
     {"id":"cua-visual-terminal","status":"BLOCKED","evidence":"CUA kernel asset initialization failed with OS error 3"},
     {"id":"linux-bash-installer","status":"BLOCKED","evidence":"Windows host has WSL bash stub but no Linux distribution"},
     {"id":"deep-security-scan","status":"BLOCKED","evidence":"managed filesystem permission profile unavailable"},
     {"id":"snyk-sca","status":"PASS","evidence":"Snyk CLI ran across 13 projects; 5 pre-existing vulnerable dependency paths reported"},
-    {"id":"ci-six-specialist-prs","status":"UNVERIFIED","evidence":"checks still running at report generation"},
+    {"id":"ci-six-specialist-prs","status":"PASS","evidence":"all specialist PRs merged after green checks; AWS run 38344016364 green; branch protection verified"},
     {"id":"ci-central-pr","status":"UNVERIFIED","evidence":"central PR not created until specialist PRs and reports close"}
   ]
 }

@@ -8,14 +8,14 @@ Nine repositories were inventoried against `origin/main`; baseline files and pro
 
 ## Part B — Individual certification
 
-Seven Python forges passed independent suites and applied installers. Forge CLI passed 296/296 tests plus build/package. Forge Portal passed 11 browser E2E, 366 i18n checks, 43 Python tests and 7/7 vendor parity checks. Details: `manual-results.json`, `compatibility-matrix.md`, `installation-report.md`.
+Seven Python forges passed independent suites and applied installers. Forge CLI passed 296/296 tests plus build/package. Forge Portal passed 11 browser E2E, 366 i18n checks, 45 Python tests and 7/7 vendor parity checks. Details: `manual-results.json`, `compatibility-matrix.md`, `installation-report.md`.
 
 ## Part C — Golden Path
 
 Real provider conformance, six MCP initialize/list/invoke probes and
-cross-forge correlation passed. Full visual/host/Portal journey is not closed:
-Portal cross-forge runner and CUA visual runtime are blocked. Therefore no full
-Golden Path PASS claim.
+cross-forge correlation passed. Full visual/host journey is not closed: CUA
+visual runtime is blocked and external host integrations remain unverified.
+Portal cross-forge execution is closed with 7 forges and 126 assertions.
 
 ## Part D — Windows matrix
 
@@ -23,19 +23,19 @@ Golden Path PASS claim.
 
 ## Part E — Portal
 
-Browser E2E passed with screenshots generated and then removed from working tree. Cross-forge portal runner timed out before first URL and remains BLOCKED. Accessibility/security claims are limited to automated checks already executed; native visual inspection is BLOCKED.
+Browser E2E passed with screenshots generated and then removed from working tree. Cross-forge portal runner passed 7 forges and 126 assertions after bounded startup-handshake fix. Accessibility/security claims are limited to automated checks already executed; native visual inspection is BLOCKED.
 
 ## Part F — Failures and gaps
 
-No P0/P1 product failure was observed in completed evidence. Release blockers are environment/verification gates: specialist CI, central CI, Linux runtime, CUA, Portal runner, external host matrix, deep scan and dependency findings. Full list: `unresolved-gaps.md`.
+No P0/P1 product failure was observed in completed evidence. Remaining blockers are environment/verification gates: central CI, Linux runtime, CUA, external host matrix, browser variants, deep scan and dependency findings. Full list: `unresolved-gaps.md`.
 
 ## Part G — Corrections
 
-Fixed Windows registry API/access handling in installer bootstrap. Fixed The Forge environment doctor prefix filtering. Reconciled AWS runtime tool names and native catalog. Added AWS `mcp serve` entry point so declared Forge command maps to real stdio server. Regenerated Platform native surface snapshot. Fixed real-provider ID helper. Fixed Forge CLI TUI repository search selection for terminal-safe key flow. Added regression tests and propagated installer fix PRs.
+Fixed Windows registry API/access handling in installer bootstrap. Fixed The Forge environment doctor prefix filtering. Reconciled AWS runtime tool names and native catalog. Added AWS `mcp serve` entry point so declared Forge command maps to real stdio server. Refreshed AWS vNext claim measurements after parity expansion. Regenerated Platform native surface snapshot. Fixed real-provider ID helper. Fixed Forge CLI TUI repository search selection for terminal-safe key flow. Added bounded Portal startup handshake and regression tests. Added regression tests and propagated installer fix PRs.
 
 ## Part H — Release decision
 
-`CERTIFIED_WITH_LIMITATIONS` candidate only. Final decision is withheld until all required PR CI checks are green, merges complete, central PR CI is green, and evidence files are committed. If blocked gates remain, release cannot be called `CERTIFIED`.
+`CERTIFIED_WITH_LIMITATIONS` candidate. Central PR CI and evidence closeout remain required before merge. Environment blockers prevent an unrestricted `CERTIFIED` claim; once central CI is green, release status is `CERTIFIED_WITH_LIMITATIONS`.
 
 ## Reproduction index
 
