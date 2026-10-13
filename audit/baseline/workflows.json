@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-13T05:55:40.066544+00:00",
+  "ref": "origin/main",
+  "data": {
+    "the-forge": {
+      "repository": "EdgarSocrates98/the-forge",
+      "sha": "64d44922b114b08e9decd46d2ec0127e35acf717",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/compat.yml",
+        ".github/workflows/ecosystem-real.yml",
+        ".github/workflows/provider-surface-drift.yml",
+        ".github/workflows/release-compat.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:35.856451+00:00"
+      }
+    },
+    "spark-forge-aws": {
+      "repository": "EdgarSocrates98/spark-forge-aws",
+      "sha": "a94b9d6f4a32fca827cc64ca1de39477ed4a62e9",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/refresh-knowledge.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:36.300475+00:00"
+      }
+    },
+    "spark-forge-azure": {
+      "repository": "EdgarSocrates98/spark-forge-azure",
+      "sha": "ae672d623aeba48e6347d455daca845dc836beb3",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/scheduled.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:36.730694+00:00"
+      }
+    },
+    "api-forge": {
+      "repository": "EdgarSocrates98/api-forge",
+      "sha": "296e9a292f9fb4cc2d8fc1517069c2e59c4ba1e5",
+      "workflows": [
+        ".github/workflows/api-change-control.yml",
+        ".github/workflows/change-control-pages.yml",
+        ".github/workflows/ci.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:37.220177+00:00"
+      }
+    },
+    "platform-forge": {
+      "repository": "EdgarSocrates98/platform-forge",
+      "sha": "684fd76385dee3f79215e5b604703ce3a4764aef",
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:37.713747+00:00"
+      }
+    },
+    "forge-doctor-api": {
+      "repository": "EdgarSocrates98/forge-doctor-api",
+      "sha": "76fbf8547e9e24dbf139a4910a5e80e2daf448e1",
+      "workflows": [
+        ".github/workflows/doctor-scan.yml",
+        ".github/workflows/quality.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:38.194201+00:00"
+      }
+    },
+    "forge-doctor-data": {
+      "repository": "EdgarSocrates98/forge-doctor-data",
+      "sha": "fd6dcec4ad53356f3da5e187e763919ca35ffaca",
+      "workflows": [
+        ".github/workflows/benchmarks.yml",
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+        ".github/workflows/security.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:39.229252+00:00"
+      }
+    },
+    "forge-cli": {
+      "repository": "EdgarSocrates98/forge-cli",
+      "sha": "23d6b8c1109d1965852580e1ccf02d95e28efb89",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:39.680703+00:00"
+      }
+    },
+    "forge-portal": {
+      "repository": "EdgarSocrates98/forge-portal",
+      "sha": "5d09c842cf9a587d652d128482507e2fc78164c0",
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-10-13T05:55:40.066533+00:00"
+      }
+    }
+  }
+}

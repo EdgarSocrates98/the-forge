@@ -283,7 +283,7 @@ def register(config_dir: Path, *entries: dict[str, Any]) -> list[dict[str, Any]]
 # --- shared helpers of the real-provider tests (drift checks and native calls) -------------
 
 NATIVE_TIMEOUT = 300.0
-_HEX_TAIL = re.compile(r"(?P<prefix>.*?)(?P<hex>[0-9a-f]{6,})")
+_HEX_TAIL = re.compile(r"^(?P<prefix>.*?)(?P<hex>[0-9a-f]{6,})(?P<suffix>(?:#.*)?)$")
 ID_KEYS = {"id", "fact_id", "finding_id", "case_id"}
 
 
@@ -316,7 +316,7 @@ def id_shape(value: str) -> str:
     match = _HEX_TAIL.fullmatch(value)
     if match is None:
         return re.sub(r"\d", "9", value)
-    return f"{match['prefix']}<hex{len(match['hex'])}>"
+    return f"{match['prefix']}<hex{len(match['hex'])}>{match['suffix']}"
 
 
 def id_shapes(document: Any) -> set[str]:

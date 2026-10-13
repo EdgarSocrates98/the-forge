@@ -1,0 +1,107 @@
+[forge-bootstrap] registered C:\Users\edgar\.forge\installations\forge-doctor-api.json
+{
+  "cli": "forge-doctor-api",
+  "created_at": "2026-10-13T01:48:35Z",
+  "environment": {
+    "persistence": "HKCU\\Environment",
+    "prefix": "FORGE_DOCTOR_API",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "shell_init": null,
+    "variables": {
+      "FORGE_DOCTOR_API_CLI": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv\\Scripts\\forge-doctor-api.exe",
+      "FORGE_DOCTOR_API_HOME": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "FORGE_DOCTOR_API_INSTALL_ROOT": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api",
+      "FORGE_DOCTOR_API_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\forge-doctor-api.cmd",
+      "FORGE_DOCTOR_API_PYTHON": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv\\Scripts\\python.exe",
+      "FORGE_DOCTOR_API_VENV": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv"
+    },
+    "windows_aliases": {
+      "FORGE-DOCTOR-API-CLI": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv\\Scripts\\forge-doctor-api.exe",
+      "FORGE-DOCTOR-API-HOME": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "FORGE-DOCTOR-API-INSTALL-ROOT": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api",
+      "FORGE-DOCTOR-API-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\forge-doctor-api.cmd",
+      "FORGE-DOCTOR-API-PYTHON": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv\\Scripts\\python.exe",
+      "FORGE-DOCTOR-API-VENV": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv"
+    }
+  },
+  "forge_id": "forge-doctor-api",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "done"
+    },
+    {
+      "stage": "create-venv",
+      "status": "done"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "done"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "done"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "done"
+    },
+    {
+      "stage": "smoke",
+      "status": "done"
+    },
+    {
+      "stage": "register",
+      "status": "done"
+    }
+  ],
+  "status": "completed",
+  "target_root": "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api"
+}

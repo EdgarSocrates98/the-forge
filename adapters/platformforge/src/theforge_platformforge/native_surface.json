@@ -1,7 +1,10 @@
 {
   "cross_forge_accepts": [
+    "analytics-report-request",
     "change-intent",
+    "fleet-summary-request",
     "observation-request",
+    "optimization-list-request",
     "policy-eval-request",
     "runbook-request"
   ],
@@ -17,9 +20,9 @@
     "security",
     "sre"
   ],
-  "manifest_schema": "platformforge/capability-manifest/v3",
+  "manifest_schema": "platformforge/capability-manifest/v4",
   "provenance": "recorded",
-  "recorded_at": "2026-10-08T08:57:02Z",
+  "recorded_at": "2026-10-12T00:00:00Z",
   "seams": [
     {
       "callable": "analyze_hcl",
@@ -107,19 +110,27 @@
   "specialist_version": "0.1.0",
   "tools": [
     "platformforge_agents",
+    "platformforge_ai",
+    "platformforge_analytics",
     "platformforge_analyze",
     "platformforge_capability",
     "platformforge_change_review",
     "platformforge_change_verify",
     "platformforge_collect",
+    "platformforge_context_expand",
+    "platformforge_context_inspect",
     "platformforge_correlate",
     "platformforge_diagnose",
     "platformforge_drift",
     "platformforge_economy",
+    "platformforge_economy_explain",
     "platformforge_evals",
     "platformforge_explain",
+    "platformforge_federation",
     "platformforge_finops",
+    "platformforge_fleet",
     "platformforge_graph_query",
+    "platformforge_hosts",
     "platformforge_inspect",
     "platformforge_integrate",
     "platformforge_judge",
@@ -128,11 +139,13 @@
     "platformforge_maturity",
     "platformforge_observe",
     "platformforge_ops",
+    "platformforge_optimize",
     "platformforge_plan",
     "platformforge_policy",
     "platformforge_recommend",
     "platformforge_reliability",
     "platformforge_risk",
+    "platformforge_routing_explain",
     "platformforge_security_scan",
     "platformforge_slo"
   ]

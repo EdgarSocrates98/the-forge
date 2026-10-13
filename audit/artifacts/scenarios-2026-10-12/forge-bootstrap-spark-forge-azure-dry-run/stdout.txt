@@ -1,0 +1,104 @@
+{
+  "cli": "sparkforge-azure",
+  "created_at": "2026-10-12T23:11:57Z",
+  "environment": {
+    "prefix": "SPARK_FORGE_AZURE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "variables": {
+      "SPARK_FORGE_AZURE_CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure\\.venv\\Scripts\\sparkforge-azure.exe",
+      "SPARK_FORGE_AZURE_HOME": "E:\\projetos\\FORJAS\\.e2e-worktrees\\spark-forge-azure",
+      "SPARK_FORGE_AZURE_INSTALL_ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure",
+      "SPARK_FORGE_AZURE_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\sparkforge-azure",
+      "SPARK_FORGE_AZURE_PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure\\.venv\\Scripts\\python.exe",
+      "SPARK_FORGE_AZURE_VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure\\.venv"
+    },
+    "windows_aliases": {
+      "SPARK-FORGE-AZURE-CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure\\.venv\\Scripts\\sparkforge-azure.exe",
+      "SPARK-FORGE-AZURE-HOME": "E:\\projetos\\FORJAS\\.e2e-worktrees\\spark-forge-azure",
+      "SPARK-FORGE-AZURE-INSTALL-ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure",
+      "SPARK-FORGE-AZURE-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\sparkforge-azure",
+      "SPARK-FORGE-AZURE-PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure\\.venv\\Scripts\\python.exe",
+      "SPARK-FORGE-AZURE-VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure\\.venv"
+    }
+  },
+  "forge_id": "spark-forge-azure",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.12.13"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-10-12\\forge-bootstrap-spark-forge-azure-dry-run\\install-spark-forge-azure"
+}

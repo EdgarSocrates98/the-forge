@@ -21,6 +21,27 @@ DISTRIBUTION = "sparkforge-aws"
 LEGACY_UPSTREAM_SCHEMA = "sparkforge/upstream-facts/v1"
 
 
+def resolve_tool_name(tools: Any, requested: str) -> str | None:
+    """Resolve stable catalog names against legacy and renamed tool surfaces."""
+    if requested in tools:
+        return requested
+    prefix = "sparkforge_"
+    renamed_prefix = "sparkforge_aws_"
+    if requested.startswith(prefix) and not requested.startswith(renamed_prefix):
+        candidate = renamed_prefix + requested[len(prefix) :]
+        if candidate in tools:
+            return candidate
+    return None
+
+
+def canonical_tool_name(name: str) -> str:
+    """Keep recordings and catalogs stable across the package-prefix rename."""
+    renamed_prefix = "sparkforge_aws_"
+    if name.startswith(renamed_prefix):
+        return "sparkforge_" + name[len(renamed_prefix) :]
+    return name
+
+
 def dispatcher_found() -> bool:
     """Whether an adapter tool surface is importable here (found, never imported)."""
     for name in DISPATCHERS:

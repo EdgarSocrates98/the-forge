@@ -1,0 +1,24 @@
+{
+  "schema": "forge/scenario-plan/v1",
+  "scenarios": [
+    {"id": "the-forge-help", "repo": "the-forge", "kind": "cli", "entrypoint": "theforge", "args": ["--help"]},
+    {"id": "spark-forge-aws-help", "repo": "spark-forge-aws", "kind": "cli", "entrypoint": "sparkforge-aws", "args": ["--help"]},
+    {"id": "spark-forge-aws-pyspark", "repo": "spark-forge-aws", "kind": "cli", "entrypoint": "sparkforge-aws", "args": ["analyze", "pyspark", "--path", "examples/glue_iceberg_job.py"]},
+    {"id": "spark-forge-azure-help", "repo": "spark-forge-azure", "kind": "cli", "entrypoint": "sparkforge-azure", "args": ["--help"]},
+    {"id": "spark-forge-azure-pyspark", "repo": "spark-forge-azure", "kind": "cli", "entrypoint": "sparkforge-azure", "args": ["analyze", "pyspark", "--path", "examples/workspace/databricks/notebooks/silver_orders.py"]},
+    {"id": "api-forge-help", "repo": "api-forge", "kind": "cli", "entrypoint": "apiforge", "args": ["--help"]},
+    {"id": "api-forge-discover", "repo": "api-forge", "kind": "cli", "entrypoint": "apiforge", "args": ["discover", "--project", "tests/fixtures/fastapi_orders_complete"]},
+    {"id": "platform-forge-help", "repo": "platform-forge", "kind": "cli", "entrypoint": "platformforge", "args": ["--help"]},
+    {"id": "platform-forge-k8s", "repo": "platform-forge", "kind": "cli", "entrypoint": "platformforge", "args": ["analyze", "k8s", "lab/scenarios/k8s-bad-readiness/fixture", "--offline"]},
+    {"id": "forge-doctor-api-help", "repo": "forge-doctor-api", "kind": "cli", "entrypoint": "forge-doctor-api", "args": ["--help"]},
+    {"id": "forge-doctor-data-help", "repo": "forge-doctor-data", "kind": "cli", "entrypoint": "forge-doctor-data", "args": ["--help"]},
+    {"id": "forge-doctor-data-scan", "repo": "forge-doctor-data", "kind": "cli", "entrypoint": "forge-doctor-data", "args": ["scan", "tests/sample_projects/clean_python_project", "--format", "json", "--output", "{artifact_dir}/doctor-data.json", "--no-color"]},
+    {"id": "forge-bootstrap-the-forge-dry-run", "repo": "the-forge", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-the-forge", "--editable", "--persist-env", "--dry-run", "--quiet"]},
+    {"id": "forge-bootstrap-spark-forge-aws-dry-run", "repo": "spark-forge-aws", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-spark-forge-aws", "--editable", "--persist-env", "--dry-run", "--quiet"]},
+    {"id": "forge-bootstrap-spark-forge-azure-dry-run", "repo": "spark-forge-azure", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-spark-forge-azure", "--editable", "--persist-env", "--dry-run", "--quiet"]},
+    {"id": "forge-bootstrap-api-forge-dry-run", "repo": "api-forge", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-api-forge", "--editable", "--persist-env", "--dry-run", "--quiet"]},
+    {"id": "forge-bootstrap-platform-forge-dry-run", "repo": "platform-forge", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-platform-forge", "--editable", "--persist-env", "--dry-run", "--quiet"]},
+    {"id": "forge-bootstrap-forge-doctor-api-dry-run", "repo": "forge-doctor-api", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-forge-doctor-api", "--editable", "--persist-env", "--dry-run", "--quiet"]},
+    {"id": "forge-bootstrap-forge-doctor-data-dry-run", "repo": "forge-doctor-data", "kind": "bootstrap", "entrypoint": "scripts/forge_bootstrap.py", "args": ["--repo", "{repo_root}", "--install-dir", "{artifact_dir}/install-forge-doctor-data", "--editable", "--persist-env", "--dry-run", "--quiet"]}
+  ]
+}

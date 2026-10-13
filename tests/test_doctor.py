@@ -101,3 +101,14 @@ def test_doctor_marks_invalid_account_environment_as_failure(tmp_path: Path) -> 
     checks = {c["name"]: c for c in report["checks"]}
     assert checks["account-environment"]["status"] == "fail"
     assert report["healthy"] is False
+
+
+def test_doctor_ignores_unrelated_tool_environment_variables(tmp_path: Path) -> None:
+    report = run_doctor(
+        tmp_path,
+        Registry(None),
+        env={"M2_HOME": str(tmp_path), "PYENV_HOME": str(tmp_path / "missing")},
+    )
+
+    assert report["account_environment"] == []
+    assert report["healthy"] is True

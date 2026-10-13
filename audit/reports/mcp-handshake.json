@@ -1,0 +1,83 @@
+{
+  "schema": "forge/mcp-handshake/v1",
+  "results": [
+    {
+      "repo": "spark-forge-aws",
+      "command": [
+        "C:\\Users\\edgar\\.forge\\installs\\spark-forge-aws\\venv\\Scripts\\sparkforge-aws.exe",
+        "mcp",
+        "serve"
+      ],
+      "initialize": "PASS",
+      "tools_list": "PASS",
+      "tool_count": 146,
+      "invoked_tool": "sparkforge_aws_runtime_detect",
+      "tools_call": "PASS",
+      "status": "PASS"
+    },
+    {
+      "repo": "spark-forge-azure",
+      "command": [
+        "C:\\Users\\edgar\\.forge\\installs\\spark-forge-azure\\venv\\Scripts\\sparkforge-azure.exe",
+        "mcp",
+        "serve"
+      ],
+      "initialize": "PASS",
+      "tools_list": "PASS",
+      "tool_count": 18,
+      "invoked_tool": "sfa_agents_list",
+      "tools_call": "PASS",
+      "status": "PASS"
+    },
+    {
+      "repo": "api-forge",
+      "command": [
+        "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv\\Scripts\\apiforge-mcp.exe"
+      ],
+      "initialize": "PASS",
+      "tools_list": "PASS",
+      "tool_count": 154,
+      "invoked_tool": "portable_inspect",
+      "tools_call": "PASS",
+      "status": "PASS"
+    },
+    {
+      "repo": "platform-forge",
+      "command": [
+        "C:\\Users\\edgar\\.forge\\installs\\platform-forge\\venv\\Scripts\\platformforge-mcp.exe"
+      ],
+      "initialize": "PASS",
+      "tools_list": "PASS",
+      "tool_count": 39,
+      "invoked_tool": "platformforge_inspect",
+      "tools_call": "PASS",
+      "status": "PASS"
+    },
+    {
+      "repo": "forge-doctor-api",
+      "command": [
+        "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-api\\venv\\Scripts\\forge-doctor-api.exe",
+        "mcp"
+      ],
+      "initialize": "PASS",
+      "tools_list": "PASS",
+      "tool_count": 17,
+      "invoked_tool": "doctor.get_contract",
+      "tools_call": "PASS",
+      "status": "PASS"
+    },
+    {
+      "repo": "forge-doctor-data",
+      "command": [
+        "C:\\Users\\edgar\\.forge\\installs\\forge-doctor-data\\venv\\Scripts\\forge-doctor-data.exe",
+        "mcp"
+      ],
+      "initialize": "PASS",
+      "tools_list": "PASS",
+      "tool_count": 14,
+      "invoked_tool": "diagnose_log",
+      "tools_call": "PASS",
+      "status": "PASS"
+    }
+  ]
+}

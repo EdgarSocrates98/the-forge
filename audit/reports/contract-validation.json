@@ -1,0 +1,591 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-13T05:55:44.404831+00:00",
+  "ref": "origin/main",
+  "status": "PASS",
+  "repositories": {
+    "the-forge": {
+      "sha": "64d44922b114b08e9decd46d2ec0127e35acf717",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "spark-forge-aws": {
+      "sha": "a94b9d6f4a32fca827cc64ca1de39477ed4a62e9",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "agentic_manifest",
+          "status": "PASS",
+          "detail": "agentic manifest uses versioned schema",
+          "evidence": "forge.agentic.json"
+        },
+        {
+          "id": "provider_identity",
+          "status": "PASS",
+          "detail": "provider matches Forge identity",
+          "evidence": "forge.agentic.json:provider"
+        },
+        {
+          "id": "readonly_default",
+          "status": "PASS",
+          "detail": "read_only_default is true",
+          "evidence": "forge.agentic.json:read_only_default"
+        },
+        {
+          "id": "no_credentials_default",
+          "status": "PASS",
+          "detail": "fixture workflows do not require credentials",
+          "evidence": "forge.agentic.json:requires_credentials"
+        },
+        {
+          "id": "workflow_contract",
+          "status": "PASS",
+          "detail": "workflows have id and command",
+          "evidence": "forge.agentic.json:workflows"
+        },
+        {
+          "id": "mcp_declared",
+          "status": "PASS",
+          "detail": "MCP command is declared when supported",
+          "evidence": "forge.json:mcp_command"
+        },
+        {
+          "id": "mcp_cli_consistent",
+          "status": "PASS",
+          "detail": "MCP command uses native Forge surface",
+          "evidence": "forge.json:mcp_command + native entrypoints"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "spark-forge-azure": {
+      "sha": "ae672d623aeba48e6347d455daca845dc836beb3",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "agentic_manifest",
+          "status": "PASS",
+          "detail": "agentic manifest uses versioned schema",
+          "evidence": "forge.agentic.json"
+        },
+        {
+          "id": "provider_identity",
+          "status": "PASS",
+          "detail": "provider matches Forge identity",
+          "evidence": "forge.agentic.json:provider"
+        },
+        {
+          "id": "readonly_default",
+          "status": "PASS",
+          "detail": "read_only_default is true",
+          "evidence": "forge.agentic.json:read_only_default"
+        },
+        {
+          "id": "no_credentials_default",
+          "status": "PASS",
+          "detail": "fixture workflows do not require credentials",
+          "evidence": "forge.agentic.json:requires_credentials"
+        },
+        {
+          "id": "workflow_contract",
+          "status": "PASS",
+          "detail": "workflows have id and command",
+          "evidence": "forge.agentic.json:workflows"
+        },
+        {
+          "id": "mcp_declared",
+          "status": "PASS",
+          "detail": "MCP command is declared when supported",
+          "evidence": "forge.json:mcp_command"
+        },
+        {
+          "id": "mcp_cli_consistent",
+          "status": "PASS",
+          "detail": "MCP command uses native Forge surface",
+          "evidence": "forge.json:mcp_command + native entrypoints"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "api-forge": {
+      "sha": "296e9a292f9fb4cc2d8fc1517069c2e59c4ba1e5",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "agentic_manifest",
+          "status": "PASS",
+          "detail": "agentic manifest uses versioned schema",
+          "evidence": "forge.agentic.json"
+        },
+        {
+          "id": "provider_identity",
+          "status": "PASS",
+          "detail": "provider matches Forge identity",
+          "evidence": "forge.agentic.json:provider"
+        },
+        {
+          "id": "readonly_default",
+          "status": "PASS",
+          "detail": "read_only_default is true",
+          "evidence": "forge.agentic.json:read_only_default"
+        },
+        {
+          "id": "no_credentials_default",
+          "status": "PASS",
+          "detail": "fixture workflows do not require credentials",
+          "evidence": "forge.agentic.json:requires_credentials"
+        },
+        {
+          "id": "workflow_contract",
+          "status": "PASS",
+          "detail": "workflows have id and command",
+          "evidence": "forge.agentic.json:workflows"
+        },
+        {
+          "id": "mcp_declared",
+          "status": "PASS",
+          "detail": "MCP command is declared when supported",
+          "evidence": "forge.json:mcp_command"
+        },
+        {
+          "id": "mcp_cli_consistent",
+          "status": "PASS",
+          "detail": "MCP command uses native Forge surface",
+          "evidence": "forge.json:mcp_command + native entrypoints"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "platform-forge": {
+      "sha": "684fd76385dee3f79215e5b604703ce3a4764aef",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "agentic_manifest",
+          "status": "PASS",
+          "detail": "agentic manifest uses versioned schema",
+          "evidence": "forge.agentic.json"
+        },
+        {
+          "id": "provider_identity",
+          "status": "PASS",
+          "detail": "provider matches Forge identity",
+          "evidence": "forge.agentic.json:provider"
+        },
+        {
+          "id": "readonly_default",
+          "status": "PASS",
+          "detail": "read_only_default is true",
+          "evidence": "forge.agentic.json:read_only_default"
+        },
+        {
+          "id": "no_credentials_default",
+          "status": "PASS",
+          "detail": "fixture workflows do not require credentials",
+          "evidence": "forge.agentic.json:requires_credentials"
+        },
+        {
+          "id": "workflow_contract",
+          "status": "PASS",
+          "detail": "workflows have id and command",
+          "evidence": "forge.agentic.json:workflows"
+        },
+        {
+          "id": "mcp_declared",
+          "status": "PASS",
+          "detail": "MCP command is declared when supported",
+          "evidence": "forge.json:mcp_command"
+        },
+        {
+          "id": "mcp_cli_consistent",
+          "status": "PASS",
+          "detail": "MCP command uses native Forge surface",
+          "evidence": "forge.json:mcp_command + native entrypoints"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "forge-doctor-api": {
+      "sha": "76fbf8547e9e24dbf139a4910a5e80e2daf448e1",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "agentic_manifest",
+          "status": "PASS",
+          "detail": "agentic manifest uses versioned schema",
+          "evidence": "forge.agentic.json"
+        },
+        {
+          "id": "provider_identity",
+          "status": "PASS",
+          "detail": "provider matches Forge identity",
+          "evidence": "forge.agentic.json:provider"
+        },
+        {
+          "id": "readonly_default",
+          "status": "PASS",
+          "detail": "read_only_default is true",
+          "evidence": "forge.agentic.json:read_only_default"
+        },
+        {
+          "id": "no_credentials_default",
+          "status": "PASS",
+          "detail": "fixture workflows do not require credentials",
+          "evidence": "forge.agentic.json:requires_credentials"
+        },
+        {
+          "id": "workflow_contract",
+          "status": "PASS",
+          "detail": "workflows have id and command",
+          "evidence": "forge.agentic.json:workflows"
+        },
+        {
+          "id": "mcp_declared",
+          "status": "PASS",
+          "detail": "MCP command is declared when supported",
+          "evidence": "forge.json:mcp_command"
+        },
+        {
+          "id": "mcp_cli_consistent",
+          "status": "PASS",
+          "detail": "MCP command uses native Forge surface",
+          "evidence": "forge.json:mcp_command + native entrypoints"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "forge-doctor-data": {
+      "sha": "fd6dcec4ad53356f3da5e187e763919ca35ffaca",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "forge_manifest",
+          "status": "PASS",
+          "detail": "Forge manifest has forge_id",
+          "evidence": "forge.json"
+        },
+        {
+          "id": "forge_id_unique_shape",
+          "status": "PASS",
+          "detail": "forge_id matches repository identity",
+          "evidence": "forge.json:forge_id"
+        },
+        {
+          "id": "cli_entrypoint",
+          "status": "PASS",
+          "detail": "CLI name declared",
+          "evidence": "forge.json:cli"
+        },
+        {
+          "id": "cli_script_declared",
+          "status": "PASS",
+          "detail": "CLI is represented by a native entrypoint",
+          "evidence": "forge.json + pyproject/package.json"
+        },
+        {
+          "id": "agentic_manifest",
+          "status": "PASS",
+          "detail": "agentic manifest uses versioned schema",
+          "evidence": "forge.agentic.json"
+        },
+        {
+          "id": "provider_identity",
+          "status": "PASS",
+          "detail": "provider matches Forge identity",
+          "evidence": "forge.agentic.json:provider"
+        },
+        {
+          "id": "readonly_default",
+          "status": "PASS",
+          "detail": "read_only_default is true",
+          "evidence": "forge.agentic.json:read_only_default"
+        },
+        {
+          "id": "no_credentials_default",
+          "status": "PASS",
+          "detail": "fixture workflows do not require credentials",
+          "evidence": "forge.agentic.json:requires_credentials"
+        },
+        {
+          "id": "workflow_contract",
+          "status": "PASS",
+          "detail": "workflows have id and command",
+          "evidence": "forge.agentic.json:workflows"
+        },
+        {
+          "id": "mcp_declared",
+          "status": "PASS",
+          "detail": "MCP command is declared when supported",
+          "evidence": "forge.json:mcp_command"
+        },
+        {
+          "id": "mcp_cli_consistent",
+          "status": "PASS",
+          "detail": "MCP command uses native Forge surface",
+          "evidence": "forge.json:mcp_command + native entrypoints"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "forge-cli": {
+      "sha": "23d6b8c1109d1965852580e1ccf02d95e28efb89",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    },
+    "forge-portal": {
+      "sha": "5d09c842cf9a587d652d128482507e2fc78164c0",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "installers",
+          "status": "PASS",
+          "detail": "official installer exists or project is an optional host/UI without one",
+          "evidence": "git tree"
+        },
+        {
+          "id": "runtime_independence",
+          "status": "PASS",
+          "detail": "runtime source has no explicit convenience-project dependency",
+          "evidence": "source scan"
+        }
+      ]
+    }
+  },
+  "provenance": "git show REF:FILE + git ls-tree + git rev-parse"
+}

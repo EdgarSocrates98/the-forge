@@ -1,0 +1,232 @@
+{
+  "total_count": 7,
+  "returned_count": 7,
+  "next_cursor": null,
+  "filters_applied": {
+    "kind": null,
+    "limit": 50,
+    "cursor": null,
+    "upstream": null
+  },
+  "by_kind": {
+    "pyspark.chain": 3,
+    "pyspark.glue_context_init": 1,
+    "pyspark.module_analyzed": 1,
+    "pyspark.read": 2
+  },
+  "items": [
+    {
+      "id": "f_6f0cda",
+      "schema_version": 1,
+      "kind": "pyspark.chain",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 30,
+        "col": 12,
+        "end_line": 30,
+        "symbol": "",
+        "snippet": ".filter(F.col(\"event_id\").isNotNull())"
+      },
+      "measures": {
+        "length": 2
+      },
+      "attrs": {
+        "methods": [
+          "col",
+          "isNotNull"
+        ]
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    {
+      "id": "f_8942d4",
+      "schema_version": 1,
+      "kind": "pyspark.chain",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 21,
+        "col": 4,
+        "end_line": 24,
+        "symbol": "",
+        "snippet": "spark.read"
+      },
+      "measures": {
+        "length": 4,
+        "first_reduction_index": 2
+      },
+      "attrs": {
+        "methods": [
+          "read",
+          "parquet",
+          "select",
+          "filter"
+        ]
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    {
+      "id": "f_48b404",
+      "schema_version": 1,
+      "kind": "pyspark.chain",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 28,
+        "col": 4,
+        "end_line": 30,
+        "symbol": "",
+        "snippet": "source"
+      },
+      "measures": {
+        "length": 2,
+        "first_reduction_index": 1
+      },
+      "attrs": {
+        "methods": [
+          "withColumn",
+          "filter"
+        ]
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    {
+      "id": "f_9a367a",
+      "schema_version": 1,
+      "kind": "pyspark.glue_context_init",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 15,
+        "col": 15,
+        "end_line": 15,
+        "symbol": "",
+        "snippet": "glue_context = GlueContext(sc)"
+      },
+      "measures": {},
+      "attrs": {
+        "form": "call"
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    {
+      "id": "f_6a838a",
+      "schema_version": 1,
+      "kind": "pyspark.module_analyzed",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 0,
+        "col": 0,
+        "symbol": "",
+        "snippet": ""
+      },
+      "measures": {
+        "resolved_calls": 19,
+        "unresolved_count": 0
+      },
+      "attrs": {
+        "parsed": true,
+        "referenced_names": [
+          "F",
+          "GlueContext",
+          "Job",
+          "SparkContext",
+          "args",
+          "argv",
+          "col",
+          "commit",
+          "createOrReplaceTempView",
+          "current_date",
+          "date_sub",
+          "filter",
+          "getResolvedOptions",
+          "glue_context",
+          "init",
+          "isNotNull",
+          "job",
+          "parquet",
+          "prepared",
+          "read",
+          "sc",
+          "select",
+          "source",
+          "spark",
+          "spark_session",
+          "sql",
+          "sys",
+          "to_date",
+          "withColumn"
+        ]
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    {
+      "id": "f_465ae8",
+      "schema_version": 1,
+      "kind": "pyspark.read",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 35,
+        "col": 0,
+        "end_line": 41,
+        "symbol": "",
+        "snippet": "spark.sql(f\"\"\""
+      },
+      "measures": {},
+      "attrs": {
+        "format": "sql"
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    },
+    {
+      "id": "f_761a85",
+      "schema_version": 1,
+      "kind": "pyspark.read",
+      "subject": {
+        "type": "source_location",
+        "file": "glue_iceberg_job.py",
+        "line": 21,
+        "col": 4,
+        "end_line": 22,
+        "symbol": "",
+        "snippet": "spark.read"
+      },
+      "measures": {},
+      "attrs": {
+        "format": "parquet"
+      },
+      "provenance": {
+        "artifact": "glue_iceberg_job.py",
+        "artifact_sha256": "eebf051fd949db764a490adcd1ae0cc266e34ae531bb17604a474d7c48bbccab",
+        "extractor": "pyspark_ast@0.1.0"
+      }
+    }
+  ]
+}

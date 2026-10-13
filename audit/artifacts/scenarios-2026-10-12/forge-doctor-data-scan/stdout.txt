@@ -1,0 +1,3 @@
+json report written:
+E:\projetos\FORJAS\the-forge\audit\artifacts\scenarios-2026-10-12\forge-doctor-
+data-scan\doctor-data.json
