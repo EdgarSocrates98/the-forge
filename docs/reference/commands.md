@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **28/30** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **30/30** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -375,6 +375,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 **para que:** engineering excellence evidence
 
+- **por que:** auditoria local de qualidade e prontidão das Forges do workspace
+- **quando usar:** verificar saúde de produto, evidência, custo e próxima ação sem rede
+
 **Syntax**
 
 ```text
@@ -388,6 +391,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ### `excellence audit`
 
 **para que:** audit local repositories without network, credentials or code execution
+
+- **por que:** auditoria detalhada e determinística dos repositórios Forge catalogados
+- **quando usar:** investigar gaps de produtização antes de uma release ou homologação
 
 **Syntax**
 
@@ -1620,6 +1626,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ### `setup`
 
 **para que:** guided, approval-gated setup for The Forge and registered specialists
+
+- **por que:** onboarding guiado da família Forge com plano real e aprovação explícita
+- **quando usar:** primeira instalação ou reconfiguração sem memorizar comandos por Forge
 
 **Syntax**
 
