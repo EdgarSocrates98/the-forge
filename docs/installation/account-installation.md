@@ -16,3 +16,11 @@ Names use underscores because POSIX shells reject hyphens. Windows also receives
 POSIX installer writes `~/.config/forjas/env.sh` and a guarded shell-init line. Open a new shell or run `source ~/.config/forjas/env.sh`. Windows processes opened after installation receive HKCU variables.
 
 `setup.sh`/`setup.ps1` remains compatibility mode for wheel-style installation. `theforge doctor` validates published account paths. Portal exposes same check at `/api/v1/environment`.
+
+## Homologação
+
+O fluxo foi validado com os sete instaladores Python em PowerShell 5.1 e Git
+Bash, sem privilégio administrativo. PowerShell 7 foi validado em dry-run;
+Linux Bash depende de uma distribuição WSL disponível. Evidências e gaps
+atuais ficam em
+[`audit/reports/THE_FORGE_FULL_ECOSYSTEM_CERTIFICATION.md`](../../audit/reports/THE_FORGE_FULL_ECOSYSTEM_CERTIFICATION.md).

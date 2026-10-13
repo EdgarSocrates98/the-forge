@@ -1,0 +1,23 @@
+{
+  "schema": "forge/installer-apply/v1",
+  "generated_at": "2026-10-13T00:00:00-03:00",
+  "platform": "Windows 11",
+  "scope": "real application, disposable source copies, account scope",
+  "results": [
+    {"repo":"the-forge","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"spark-forge-aws","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"spark-forge-azure","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"api-forge","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"platform-forge","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"forge-doctor-api","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"forge-doctor-data","install_ps1":"PASS","install_sh":"PASS","powershell":"Windows PowerShell 5.1","git_bash":"Git Bash","venv":"PASS","editable_install":"PASS","launcher":"PASS","account_env":"PASS","smoke_version":"PASS"},
+    {"repo":"forge-cli","install_ps1":"NOT_APPLICABLE","install_sh":"NOT_APPLICABLE","reason":"npm/browser product"},
+    {"repo":"forge-portal","install_ps1":"NOT_APPLICABLE","install_sh":"NOT_APPLICABLE","reason":"npm/browser product"}
+  ],
+  "additional_matrix": {
+    "powershell_7_dry_run": "PASS",
+    "linux_bash": "BLOCKED: WSL distribution unavailable",
+    "registry_scope": "HKCU\\Environment; no admin elevation",
+    "verification": "fresh PowerShell child process invoked each account launcher with --version"
+  }
+}

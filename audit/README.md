@@ -46,3 +46,19 @@ instalada; `forge-cli` e `forge-portal` são `NOT_APPLICABLE` para esses
 scripts e usam seus próprios fluxos npm/browser. A matriz não chama o modo
 persistente do instalador, pois esse modo altera variáveis do usuário; o
 bootstrap subjacente é validado separadamente em diretórios descartáveis.
+
+## Relatórios de homologação
+
+- `reports/THE_FORGE_FULL_ECOSYSTEM_CERTIFICATION.md`: decisão global e
+  limites de certificação.
+- `reports/installer-apply.json`: aplicação real dos instaladores em conta
+  sem administrador.
+- `reports/compatibility-matrix.md`: matriz de compatibilidade e estados.
+- `reports/manual-results.json`: evidências de suites longas, CLI, TUI,
+  Portal, adapters reais e gates bloqueados.
+- `reports/unresolved-gaps.md`: gaps priorizados; `BLOCKED` e `UNVERIFIED`
+  permanecem explícitos.
+
+O relatório global não converte documentação em evidência. Para reproduzir
+aplicação real, use diretório descartável, subprocesso novo para ler HKCU e
+preserve o checkout do produto fora do workspace do consumidor.
