@@ -30,6 +30,8 @@ def _schema_parity() -> tuple[int, str]:
         cwd=REPO,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if regen.returncode != 0:
         return regen.returncode, regen.stderr or regen.stdout
@@ -38,6 +40,8 @@ def _schema_parity() -> tuple[int, str]:
         cwd=REPO,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     return diff.returncode, diff.stdout or "schemas/ regenerated cleanly"
 
@@ -64,7 +68,16 @@ SLOW_GATES: list[tuple[str, Step]] = [
 ]
 
 
+def _configure_console() -> None:
+    """Keep gate diagnostics printable on Windows code pages."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    _configure_console()
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--pytest", action="store_true", help="also run the default pytest selection"
@@ -87,7 +100,14 @@ def main(argv: list[str] | None = None) -> int:
         if callable(step):
             code, output = step()
         else:
-            run = subprocess.run(step, cwd=REPO, capture_output=True, text=True)
+            run = subprocess.run(
+                step,
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             code, output = run.returncode, (run.stdout + run.stderr).strip()
         if code == 0:
             print("green")
