@@ -15,6 +15,9 @@
     {"repo":"forge-portal","install_ps1":"NOT_APPLICABLE","install_sh":"NOT_APPLICABLE","reason":"npm/browser product"}
   ],
   "additional_matrix": {
+    "canonical_replay": "PASS: both wrappers reapplied from the seven canonical checkouts",
+    "account_runtime_root": "C:\\Users\\edgar\\.forge\\installs\\<forge-id>",
+    "canonical_home_validation": "PASS: each *_HOME points to E:\\projetos\\FORJAS\\<repo>; each *_VENV and *_CLI exists",
     "powershell_7_dry_run": "PASS",
     "linux_bash": "BLOCKED: WSL distribution unavailable",
     "registry_scope": "HKCU\\Environment; no admin elevation",

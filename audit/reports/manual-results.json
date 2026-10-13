@@ -8,7 +8,7 @@
     {"id":"python-full-spark-forge-azure","status":"PASS","evidence":"3051 passed, 10 skipped in 2480.98s"},
     {"id":"python-targeted-the-forge","status":"PASS","evidence":"doctor regression, adapter, provider and cross-forge targeted suites passed"},
     {"id":"forge-cli-tests","status":"PASS","evidence":"npm test: 296/296; focused TUI: 3/3; typecheck, lint, build and pack passed"},
-    {"id":"forge-portal-browser-e2e","status":"PASS","evidence":"python -m pytest e2e -q: 11 passed in 50.44s"},
+    {"id":"forge-portal-browser-e2e","status":"PASS","evidence":"python -m pytest e2e -q: 11 passed; mobile assertion confirms scrollWidth <= innerWidth after responsive fix"},
     {"id":"forge-portal-i18n","status":"PASS","evidence":"366/366"},
     {"id":"forge-portal-python","status":"PASS","evidence":"43 tests"},
     {"id":"forge-portal-vendor","status":"PASS","evidence":"7/7 parity checks"},

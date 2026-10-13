@@ -16,7 +16,7 @@ Real provider conformance and cross-forge correlation passed. Full visual/host/P
 
 ## Part D — Windows matrix
 
-`install.ps1`: 7/7 real PASS on PowerShell 5.1. `install.sh`: 7/7 real PASS on Git Bash. PowerShell 7 dry-run: 7/7 PASS. Account variables, editable venvs and launcher paths validated from HKCU in a fresh child process. Linux Bash: BLOCKED, no WSL distribution. TUI focused regression passed; visual Windows Terminal evidence is BLOCKED by CUA runtime.
+`install.ps1`: 7/7 real PASS on PowerShell 5.1. `install.sh`: 7/7 real PASS on Git Bash. Both wrappers were replayed from canonical checkouts after disposable tests. PowerShell 7 dry-run: 7/7 PASS. Account variables, editable venvs and launcher paths validated from HKCU in a fresh child process. Linux Bash: BLOCKED, no WSL distribution. TUI focused regression passed; visual Windows Terminal evidence is BLOCKED by CUA runtime.
 
 ## Part E — Portal
 

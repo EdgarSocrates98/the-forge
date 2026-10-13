@@ -1,8 +1,8 @@
-                                                                               
- Usage: forge-doctor-data [OPTIONS] COMMAND [ARGS]...                          
-                                                                               
- Deterministic diagnostics for data engineering projects.                      
-                                                                               
+
+ Usage: forge-doctor-data [OPTIONS] COMMAND [ARGS]...
+
+ Deterministic diagnostics for data engineering projects.
+
 +- Options -------------------------------------------------------------------+
 | --version                                                                   |
 | --install-completion            Install completion for the current shell.   |
@@ -152,10 +152,10 @@
 |                categories and discovered external plugins.                  |
 | policy         Organization policy packs.                                   |
 +-----------------------------------------------------------------------------+
-                                                                               
- Start here: forge-doctor-data scan .  |  forge-doctor-data checks  |          
- forge-doctor-data explain <CHECK-ID>                                          
-                                                                               
- Docs & issues: https://github.com/EdgarSocrates98/forge-doctor-data           
-                                                                               
+
+ Start here: forge-doctor-data scan .  |  forge-doctor-data checks  |
+ forge-doctor-data explain <CHECK-ID>
+
+ Docs & issues: https://github.com/EdgarSocrates98/forge-doctor-data
+
 

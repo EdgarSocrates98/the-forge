@@ -1,8 +1,8 @@
-                                                                               
- Usage: apiforge [OPTIONS] COMMAND [ARGS]...                                   
-                                                                               
- Analyze API evolution deterministically and offline.                          
-                                                                               
+
+ Usage: apiforge [OPTIONS] COMMAND [ARGS]...
+
+ Analyze API evolution deterministically and offline.
+
 +- Options -------------------------------------------------------------------+
 | --version                          Show the API Forge version and exit.     |
 | --output                    <str>  Payload projection: json (default) or    |

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-12T23:36:29.847841+00:00",
+  "generated_at": "2026-10-13T01:12:49.716427+00:00",
   "ref": "origin/main",
   "status": "PASS",
   "repositories": {
@@ -131,7 +131,7 @@
       ]
     },
     "spark-forge-azure": {
-      "sha": "54ccad274066cd1342cde733536bc21e5515a24d",
+      "sha": "ae672d623aeba48e6347d455daca845dc836beb3",
       "status": "PASS",
       "checks": [
         {
@@ -215,7 +215,7 @@
       ]
     },
     "api-forge": {
-      "sha": "bd78dd79cc1b0873256fb14c775574d3a0536c8f",
+      "sha": "296e9a292f9fb4cc2d8fc1517069c2e59c4ba1e5",
       "status": "PASS",
       "checks": [
         {
@@ -299,7 +299,7 @@
       ]
     },
     "platform-forge": {
-      "sha": "11a44e80459eecb248d19efb8b102a8cae57a0eb",
+      "sha": "684fd76385dee3f79215e5b604703ce3a4764aef",
       "status": "PASS",
       "checks": [
         {
@@ -383,7 +383,7 @@
       ]
     },
     "forge-doctor-api": {
-      "sha": "d044432d282080272543d327a4edaae0b0977556",
+      "sha": "76fbf8547e9e24dbf139a4910a5e80e2daf448e1",
       "status": "PASS",
       "checks": [
         {
@@ -467,7 +467,7 @@
       ]
     },
     "forge-doctor-data": {
-      "sha": "33e591758d9ab7467a45437619bb51450822fe23",
+      "sha": "fd6dcec4ad53356f3da5e187e763919ca35ffaca",
       "status": "PASS",
       "checks": [
         {
@@ -551,7 +551,7 @@
       ]
     },
     "forge-cli": {
-      "sha": "f0574b7418cec0193b65687564698053b63bcdff",
+      "sha": "23d6b8c1109d1965852580e1ccf02d95e28efb89",
       "status": "PASS",
       "checks": [
         {

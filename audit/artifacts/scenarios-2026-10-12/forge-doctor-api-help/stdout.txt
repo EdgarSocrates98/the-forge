@@ -1,8 +1,8 @@
-                                                                               
- Usage: forge-doctor-api [OPTIONS] COMMAND [ARGS]...                           
-                                                                               
- Deterministic, offline-first API architecture intelligence.                   
-                                                                               
+
+ Usage: forge-doctor-api [OPTIONS] COMMAND [ARGS]...
+
+ Deterministic, offline-first API architecture intelligence.
+
 ┌─ Options ───────────────────────────────────────────────────────────────────┐
 │ --version          Show version and exit.                                   │
 │ --help             Show this message and exit.                              │
