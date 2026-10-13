@@ -14,6 +14,7 @@
     {"id":"forge-portal-vendor","status":"PASS","evidence":"7/7 parity checks"},
     {"id":"cross-forge-real-provider","status":"PASS","evidence":"tests/test_cross_forge_real.py -m real_provider -q: 3 passed"},
     {"id":"real-provider-conformance","status":"PASS","evidence":"six real provider conformance tests passed"},
+    {"id":"mcp-real-handshake-and-invoke","status":"PASS","evidence":"six installed MCP servers; initialize/tools/list/tools/call PASS; 388 tools catalogued; audit/reports/mcp-handshake.json"},
     {"id":"portal-cross-forge-script","status":"BLOCKED","evidence":"scripts/portal_e2e.py exceeded bounded wait before first URL"},
     {"id":"cua-visual-terminal","status":"BLOCKED","evidence":"CUA kernel asset initialization failed with OS error 3"},
     {"id":"linux-bash-installer","status":"BLOCKED","evidence":"Windows host has WSL bash stub but no Linux distribution"},

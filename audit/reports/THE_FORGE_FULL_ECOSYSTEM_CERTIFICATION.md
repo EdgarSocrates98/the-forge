@@ -12,7 +12,10 @@ Seven Python forges passed independent suites and applied installers. Forge CLI 
 
 ## Part C — Golden Path
 
-Real provider conformance and cross-forge correlation passed. Full visual/host/Portal journey is not closed: Portal cross-forge runner and CUA visual runtime are blocked. Therefore no full Golden Path PASS claim.
+Real provider conformance, six MCP initialize/list/invoke probes and
+cross-forge correlation passed. Full visual/host/Portal journey is not closed:
+Portal cross-forge runner and CUA visual runtime are blocked. Therefore no full
+Golden Path PASS claim.
 
 ## Part D — Windows matrix
 
@@ -28,7 +31,7 @@ No P0/P1 product failure was observed in completed evidence. Release blockers ar
 
 ## Part G — Corrections
 
-Fixed Windows registry API/access handling in installer bootstrap. Fixed The Forge environment doctor prefix filtering. Reconciled AWS runtime tool names and native catalog. Regenerated Platform native surface snapshot. Fixed real-provider ID helper. Fixed Forge CLI TUI repository search selection for terminal-safe key flow. Added regression tests and propagated installer fix PRs.
+Fixed Windows registry API/access handling in installer bootstrap. Fixed The Forge environment doctor prefix filtering. Reconciled AWS runtime tool names and native catalog. Added AWS `mcp serve` entry point so declared Forge command maps to real stdio server. Regenerated Platform native surface snapshot. Fixed real-provider ID helper. Fixed Forge CLI TUI repository search selection for terminal-safe key flow. Added regression tests and propagated installer fix PRs.
 
 ## Part H — Release decision
 

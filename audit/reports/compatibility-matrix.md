@@ -8,6 +8,7 @@ Data: 2026-10-12/13. Estado só muda para `PASS` com execução e evidência.
 | The Forge targeted integration | PASS | adapter, provider-conformance e cross-forge real |
 | Native AWS surface | PASS | snapshot/catalog reconciliado; aliases old/new resolvidos |
 | Native Platform surface | PASS | snapshot regenerado contra runtime 0.1.0 |
+| MCP initialize/list/invoke | PASS | seis servidores reais; 388 tools catalogadas; chamada read-only por servidor |
 | Forge CLI | PASS | 296/296, TUI focused 3/3, build/pack |
 | Forge Portal | PASS | 11 browser E2E, 366 i18n, 43 Python, vendor 7/7 |
 | install.ps1 | PASS | sete produtos Python aplicados em PowerShell 5.1 |

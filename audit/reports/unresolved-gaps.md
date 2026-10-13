@@ -9,7 +9,7 @@
 | P1 | Portal cross-forge runner | BLOCKED | diagnose bounded wait and rerun |
 | P2 | Firefox/WebKit browser matrix | UNVERIFIED | run browsers when installed |
 | P2 | Actual PowerShell 7 persistent install | UNVERIFIED | run outside dry-run |
-| P2 | External Claude/Devin/Copilot host handshake | UNVERIFIED | execute on each host; availability not assumed |
+| P2 | External host MCP handshake (Claude/Devin/Copilot) | UNVERIFIED | execute on each installed host; local MCP protocol probes PASS |
 | P2 | Deep security scan | BLOCKED | provide managed filesystem permission profile |
 | P2 | Snyk findings | UNVERIFIED_FOR_RELEASE | upgrade fixture Pygments; assess Portal zod high |
 | P3 | Full The Forge regression after final branch merge | UNVERIFIED | rely on central CI, avoid duplicate 85-minute local run |
