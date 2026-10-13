@@ -40,4 +40,5 @@ Fixed Windows registry API/access handling in installer bootstrap. Fixed The For
 - Installer application: `installer-apply.json`.
 - Contract and scenarios: `contract-validation.json`, `evidence-index.json`.
 - Security: `security-report.md`, `snyk-sca.json`.
+- Branch governance: `branch-protection.json`.
 - Gaps: `unresolved-gaps.md`.
