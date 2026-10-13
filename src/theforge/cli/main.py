@@ -489,6 +489,24 @@ def build_parser() -> argparse.ArgumentParser:
     providers.add_parser("health", parents=[common]).set_defaults(
         handler=commands.cmd_providers_health
     )
+    providers_sync = providers.add_parser(
+        "sync",
+        parents=[common],
+        help="register installed local adapters and refresh live descriptors",
+    )
+    providers_sync.add_argument(
+        "--forge", default=None, help="limit synchronization to one installed Forge id"
+    )
+    providers_sync.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="approve the managed user providers.toml write",
+    )
+    providers_sync.add_argument(
+        "--dry-run", action="store_true", help="show managed registry changes without writing"
+    )
+    providers_sync.set_defaults(handler=commands.cmd_providers_sync)
 
     specialists = sub.add_parser(
         "specialists", help="specialist lifecycle control plane"

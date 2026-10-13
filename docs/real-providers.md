@@ -17,6 +17,31 @@ Os pacotes `forge-knowledge/<id>.json` codificam exatamente estas receitas de in
 
 ## Instalação
 
+### Caminho recomendado: instalação da família
+
+Depois de executar o instalador de cada Forge, o fluxo de usuário não precisa
+montar `providers.toml` à mão:
+
+```bash
+theforge install auto --host all --profile recommended --components mcp --yes
+theforge providers health
+```
+
+`install auto` usa manifests de conta para localizar cada checkout, Python, CLI e
+venv; delega `install` à Forge correspondente (incluindo MCP para hosts
+selecionados); depois chama o sync local de adapters e faz refresh live. Para
+instalações já presentes:
+
+```bash
+theforge providers sync --dry-run
+theforge providers sync --yes
+```
+
+O sync é restrito a manifests locais confiáveis, escreve somente seu bloco
+gerenciado em `providers.toml`, preserva entradas manuais e nunca instala código
+remoto. Falha de import, executável ou handshake deixa o provider `unavailable`
+e impede routing; não cria uma entrada aparentemente saudável.
+
 ### Spark Forge AWS (venv Python 3.11)
 
 ```bash
@@ -344,7 +369,7 @@ Os códigos `FORGE-*` desta tabela estão, com a família de cada um, na lista c
 
 | Sintoma | Causa | O que fazer |
 |---|---|---|
-| provider `unreachable`, `FORGE-PROTO-SPAWN` com o caminho | o `argv[0]` registrado não existe ou não é executável | corrija o caminho absoluto do interpretador no `providers.toml` e rode `theforge registry refresh` |
+| provider `unreachable`, `FORGE-PROTO-SPAWN` com o caminho | o `argv[0]` registrado não existe ou não é executável | confira o manifesto em `theforge installations list`, rode `theforge providers sync --dry-run` e depois `theforge providers sync --yes` |
 | provider `invalid` com `SPARKFORGE_AWS-ADAPTER-UNAVAILABLE` / `APIFORGE-ADAPTER-UNAVAILABLE` / `DOCTORDATA-ADAPTER-UNAVAILABLE` / `DOCTORAPI-ADAPTER-UNAVAILABLE` | o adapter roda, mas o especialista não é importável nesse interpretador (ou, no API, o interpretador não é 3.12; nos Doctors, menor que 3.11); o `describe` recusa com o motivo | instale o especialista no mesmo venv do adapter ou registre o interpretador certo |
 | `ModuleNotFoundError: theforge_sparkforge_aws` / `theforge_apiforge` / `theforge_doctordata` / `theforge_doctorapi` no spawn | o adapter não foi instalado no interpretador registrado | `<python> -m pip install <the-forge>/adapters/<forge>` |
 | Python 3.12 ausente | o API Forge exige 3.12. Sem ele, o `health` do API responde `unavailable` (`API Forge requires Python 3.12; this adapter runs on <x.y> at <python>`), e a integração pula com `THEFORGE_REAL_APIFORGE_PYTHON not set (API Forge needs Python 3.12; ...)` | instale um 3.12, crie o venv do API Forge e aponte a variável ou o `providers.toml` para ele |

@@ -810,6 +810,20 @@ def cmd_providers_health(args: argparse.Namespace) -> int:
     return 0 if all(row["status"] in ("ok", "degraded") for row in rows) else 1
 
 
+def cmd_providers_sync(args: argparse.Namespace) -> int:
+    """``providers sync`` — managed local registration plus live refresh."""
+    from theforge.install import service
+
+    out = service.sync_provider_registry(
+        root=_root(args),
+        forge=args.forge,
+        yes=args.yes,
+        dry_run=args.dry_run,
+    )
+    _emit(args, out, render.install_doc)
+    return 0 if out.get("status") in ("completed", "planned") else 1
+
+
 def cmd_graph(args: argparse.Namespace) -> int:
     """``theforge graph``: the declared+observed capability graph of the registry
     and workspace (Wave B structure, Wave Q surface). Cached manifests only — no
