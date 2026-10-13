@@ -11,7 +11,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 REPOSITORIES = {
     "the-forge": "EdgarSocrates98/the-forge",
     "spark-forge-aws": "EdgarSocrates98/spark-forge-aws",
@@ -206,9 +205,7 @@ def main() -> int:
     workspace = args.workspace_root.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    collected = {
-        name: collect(name, workspace / name, args.ref) for name in REPOSITORIES
-    }
+    collected = {name: collect(name, workspace / name, args.ref) for name in REPOSITORIES}
     generated = datetime.now(UTC).isoformat()
     envelope = {
         "schema_version": "1.0",
@@ -250,8 +247,14 @@ def main() -> int:
             name: {
                 "repository": record["repository"],
                 "sha": record["sha"],
-                "dependencies": dependencies(workspace / name, args.ref, tree(workspace / name, args.ref)),
-                "provenance": provenance(args.ref, "pyproject.toml/package.json/git tree", "git show REF:FILE; git ls-tree"),
+                "dependencies": dependencies(
+                    workspace / name, args.ref, tree(workspace / name, args.ref)
+                ),
+                "provenance": provenance(
+                    args.ref,
+                    "pyproject.toml/package.json/git tree",
+                    "git show REF:FILE; git ls-tree",
+                ),
             }
             for name, record in collected.items()
         },
@@ -268,7 +271,12 @@ def main() -> int:
     for filename, content in views.items():
         (output / filename).write_text(
             json.dumps(
-                {"schema_version": "1.0", "generated_at": generated, "ref": args.ref, "data": content},
+                {
+                    "schema_version": "1.0",
+                    "generated_at": generated,
+                    "ref": args.ref,
+                    "data": content,
+                },
                 indent=2,
                 ensure_ascii=False,
             )

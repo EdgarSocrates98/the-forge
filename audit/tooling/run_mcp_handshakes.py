@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import queue
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path
-
 
 PREFIX_BY_REPO = {
     "spark-forge-aws": "SPARK_FORGE_AWS",
@@ -37,7 +36,6 @@ def _read_env(name: str) -> str | None:
         return value
     if os.name != "nt":
         return None
-    phase = "initialize"
     try:
         import winreg
 
@@ -109,6 +107,7 @@ def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
         process.stdin.write(json.dumps(message) + "\n")
         process.stdin.flush()
 
+    phase = "initialize"
     try:
         init = send(
             {
@@ -126,7 +125,9 @@ def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
         notify({"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
         phase = "tools_list"
         listed = send({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
-        tools = ((listed.get("result") or {}).get("tools") or []) if isinstance(listed, dict) else []
+        tools = (
+            ((listed.get("result") or {}).get("tools") or []) if isinstance(listed, dict) else []
+        )
         result["tools_list"] = "PASS" if "result" in listed and isinstance(tools, list) else "FAIL"
         result["tool_count"] = len(tools)
         if tools:
@@ -165,10 +166,8 @@ def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
         result["error"] = str(exc)
         result.setdefault(phase, "BLOCKED")
     finally:
-        try:
+        with contextlib.suppress(OSError):
             process.kill()
-        except OSError:
-            pass
         process.wait(timeout=2)
     return result
 
@@ -180,7 +179,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=8.0)
     args = parser.parse_args()
     results = []
-    for repo, prefix in PREFIX_BY_REPO.items():
+    for repo, _prefix in PREFIX_BY_REPO.items():
         root = args.workspace_root / repo
         manifest = root / "forge.json"
         if not manifest.is_file():
@@ -198,9 +197,7 @@ def main() -> int:
             if result.get("initialize") != "PASS" or result.get("tools_list") != "PASS":
                 result["status"] = "FAIL"
             elif result.get("tool_count", 0) and result.get("tools_call") != "PASS":
-                result["status"] = (
-                    "BLOCKED" if result.get("tools_call") == "BLOCKED" else "FAIL"
-                )
+                result["status"] = "BLOCKED" if result.get("tools_call") == "BLOCKED" else "FAIL"
             else:
                 result["status"] = "PASS"
         except FileNotFoundError as exc:
@@ -208,12 +205,13 @@ def main() -> int:
         results.append(result)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps({"schema": "forge/mcp-handshake/v1", "results": results}, indent=2)
-        + "\n",
+        json.dumps({"schema": "forge/mcp-handshake/v1", "results": results}, indent=2) + "\n",
         encoding="utf-8",
     )
     print(json.dumps(results, indent=2))
-    return 0 if all(item["status"] in {"PASS", "NOT_APPLICABLE", "BLOCKED"} for item in results) else 1
+    return (
+        0 if all(item["status"] in {"PASS", "NOT_APPLICABLE", "BLOCKED"} for item in results) else 1
+    )
 
 
 if __name__ == "__main__":

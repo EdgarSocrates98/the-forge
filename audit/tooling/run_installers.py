@@ -9,12 +9,10 @@ import os
 import platform
 import shutil
 import subprocess
-import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPOSITORIES = (
     "the-forge",
@@ -147,17 +145,59 @@ def main() -> int:
         for shell, executable in powershells:
             script = source / "install.ps1"
             command = (
-                [executable, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", win_path(script), "--dry-run", "--install-dir", win_path(target_base / shell), "--python", win_path(python), "--quiet"]
+                [
+                    executable,
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    win_path(script),
+                    "--dry-run",
+                    "--install-dir",
+                    win_path(target_base / shell),
+                    "--python",
+                    win_path(python),
+                    "--quiet",
+                ]
                 if executable and script.is_file()
                 else None
             )
-            cases.append(run_case(repo=repo, shell=shell, script=script, command=command, target=target_base / shell, artifact_dir=artifact_dir, timeout=parsed.timeout))
+            cases.append(
+                run_case(
+                    repo=repo,
+                    shell=shell,
+                    script=script,
+                    command=command,
+                    target=target_base / shell,
+                    artifact_dir=artifact_dir,
+                    timeout=parsed.timeout,
+                )
+            )
         script = source / "install.sh"
         if bash and script.is_file():
-            command = [bash, bash_path(script), "--dry-run", "--install-dir", win_path(target_base / "git-bash"), "--python", win_path(python), "--quiet"]
+            command = [
+                bash,
+                bash_path(script),
+                "--dry-run",
+                "--install-dir",
+                win_path(target_base / "git-bash"),
+                "--python",
+                win_path(python),
+                "--quiet",
+            ]
         else:
             command = None
-        cases.append(run_case(repo=repo, shell="git-bash", script=script, command=command, target=target_base / "git-bash", artifact_dir=artifact_dir, timeout=parsed.timeout))
+        cases.append(
+            run_case(
+                repo=repo,
+                shell="git-bash",
+                script=script,
+                command=command,
+                target=target_base / "git-bash",
+                artifact_dir=artifact_dir,
+                timeout=parsed.timeout,
+            )
+        )
         cases.append(
             run_case(
                 repo=repo,
@@ -175,7 +215,10 @@ def main() -> int:
         "platform": platform.platform(),
         "mode": "dry-run; no HKCU, PATH, shell profile or source checkout mutation",
         "results": cases,
-        "counts": {state: sum(1 for case in cases if case["status"] == state) for state in ("PASS", "FAIL", "BLOCKED")},
+        "counts": {
+            state: sum(1 for case in cases if case["status"] == state)
+            for state in ("PASS", "FAIL", "BLOCKED")
+        },
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

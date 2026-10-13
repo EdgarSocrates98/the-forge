@@ -20,7 +20,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,100}$")
 SECRET_LINE = re.compile(
     r"(?i)(\b(?:api[_-]?key|access[_-]?token|secret|password|passwd)\b\s*[:=]\s*)([^\s,;]+)"
@@ -33,9 +32,13 @@ def redact(value: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario-file", type=Path, default=Path("audit/scenarios/ecosystem.json"))
+    parser.add_argument(
+        "--scenario-file", type=Path, default=Path("audit/scenarios/ecosystem.json")
+    )
     parser.add_argument("--repo-root", type=Path, help="central repository root")
-    parser.add_argument("--worktree-root", type=Path, help="directory containing one checkout per repository")
+    parser.add_argument(
+        "--worktree-root", type=Path, help="directory containing one checkout per repository"
+    )
     parser.add_argument("--runtime-root", type=Path, help="directory containing runtime venvs")
     parser.add_argument("--artifact-dir", type=Path, default=Path("audit/artifacts/scenarios"))
     parser.add_argument("--output", type=Path, default=Path("audit/reports/evidence-index.json"))
@@ -61,7 +64,9 @@ def runtime_python(repo: str, runtimes: Path | None) -> Path:
     candidates: list[Path] = []
     if runtimes:
         root = runtimes / repo
-        candidates.extend((root / ".venv" / "Scripts" / "python.exe", root / ".venv" / "bin" / "python"))
+        candidates.extend(
+            (root / ".venv" / "Scripts" / "python.exe", root / ".venv" / "bin" / "python")
+        )
     candidates.append(Path(sys.executable))
     for candidate in candidates:
         if candidate.is_file():
@@ -98,7 +103,9 @@ def expand(value: str, *, root: Path, artifact_dir: Path) -> str:
     return value.replace("{repo_root}", str(root)).replace("{artifact_dir}", str(artifact_dir))
 
 
-def build_command(spec: dict[str, Any], root: Path, artifact_dir: Path, runtimes: Path | None) -> list[str]:
+def build_command(
+    spec: dict[str, Any], root: Path, artifact_dir: Path, runtimes: Path | None
+) -> list[str]:
     repo = str(spec["repo"])
     args = [expand(str(arg), root=root, artifact_dir=artifact_dir) for arg in spec.get("args", [])]
     kind = spec.get("kind")
@@ -109,7 +116,15 @@ def build_command(spec: dict[str, Any], root: Path, artifact_dir: Path, runtimes
     raise ValueError(f"unsupported scenario kind: {kind}")
 
 
-def run_one(spec: dict[str, Any], *, central: Path, worktrees: Path | None, runtimes: Path | None, artifact_dir: Path, default_timeout: float) -> dict[str, Any]:
+def run_one(
+    spec: dict[str, Any],
+    *,
+    central: Path,
+    worktrees: Path | None,
+    runtimes: Path | None,
+    artifact_dir: Path,
+    default_timeout: float,
+) -> dict[str, Any]:
     scenario_id = str(spec.get("id", ""))
     if not SAFE_ID.fullmatch(scenario_id):
         raise ValueError(f"invalid scenario id: {scenario_id!r}")
@@ -130,7 +145,9 @@ def run_one(spec: dict[str, Any], *, central: Path, worktrees: Path | None, runt
         env = os.environ.copy()
         src = root / "src"
         if src.is_dir():
-            env["PYTHONPATH"] = str(src) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+            env["PYTHONPATH"] = str(src) + (
+                os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else ""
+            )
         env["NO_COLOR"] = "1"
         env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         env["PYTHONNOUSERSITE"] = "1"
@@ -181,26 +198,53 @@ def run_one(spec: dict[str, Any], *, central: Path, worktrees: Path | None, runt
 def main() -> int:
     args = parse_args()
     central = (args.repo_root or Path(__file__).resolve().parents[2]).resolve()
-    scenario_file = (central / args.scenario_file).resolve() if not args.scenario_file.is_absolute() else args.scenario_file.resolve()
+    scenario_file = (
+        (central / args.scenario_file).resolve()
+        if not args.scenario_file.is_absolute()
+        else args.scenario_file.resolve()
+    )
     worktrees = args.worktree_root.resolve() if args.worktree_root else None
     runtimes = args.runtime_root.resolve() if args.runtime_root else central.parent
-    artifact_dir = (central / args.artifact_dir).resolve() if not args.artifact_dir.is_absolute() else args.artifact_dir.resolve()
-    output = (central / args.output).resolve() if not args.output.is_absolute() else args.output.resolve()
+    artifact_dir = (
+        (central / args.artifact_dir).resolve()
+        if not args.artifact_dir.is_absolute()
+        else args.artifact_dir.resolve()
+    )
+    output = (
+        (central / args.output).resolve()
+        if not args.output.is_absolute()
+        else args.output.resolve()
+    )
     plan = json.loads(scenario_file.read_text(encoding="utf-8"))
     if plan.get("schema") != "forge/scenario-plan/v1":
         raise SystemExit(f"unsupported scenario schema: {plan.get('schema')!r}")
     artifact_dir.mkdir(parents=True, exist_ok=True)
     results = []
     for spec in plan["scenarios"]:
-        result = run_one(spec, central=central, worktrees=worktrees, runtimes=runtimes, artifact_dir=artifact_dir, default_timeout=args.timeout)
+        result = run_one(
+            spec,
+            central=central,
+            worktrees=worktrees,
+            runtimes=runtimes,
+            artifact_dir=artifact_dir,
+            default_timeout=args.timeout,
+        )
         results.append(result)
         print(f"{result['status']:8} {result['id']} ({result['duration_seconds']}s)")
     payload = {
         "schema": "forge/evidence-index/v1",
         "generated_at": datetime.now(UTC).isoformat(),
-        "runner": {"path": str(Path(__file__).resolve()), "python": sys.version, "platform": platform.platform(), "sha": git_sha(central)},
+        "runner": {
+            "path": str(Path(__file__).resolve()),
+            "python": sys.version,
+            "platform": platform.platform(),
+            "sha": git_sha(central),
+        },
         "results": results,
-        "counts": {status: sum(1 for result in results if result["status"] == status) for status in ("PASS", "FAIL", "BLOCKED")},
+        "counts": {
+            status: sum(1 for result in results if result["status"] == status)
+            for status in ("PASS", "FAIL", "BLOCKED")
+        },
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
