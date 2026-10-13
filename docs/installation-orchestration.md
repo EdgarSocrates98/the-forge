@@ -23,6 +23,32 @@ no_route ──► forge-knowledge ──► InstallationPlanV2 ──► aprova
 5. **Verificar** — quem instala tem `verify` forbidden: `verify_install` +
    `discover` rodam o binário real; o `HealthReport` vem do especialista.
 
+## Caminho zero-touch para Forges locais
+
+`install auto --yes` é o caminho recomendado após instalar uma ou mais Forges.
+Ele lê os manifests de `~/.forge/installations/`, propaga escopo, host, profile e
+componentes para cada CLI da família e, ao final, sincroniza os adapters locais no
+`providers.toml` do usuário. O sync é idempotente: altera apenas o bloco marcado
+como gerenciado, preserva providers escritos pelo usuário e faz refresh live para
+que somente entries `ready` e trusted entrem no routing.
+
+Para instalações existentes, sem repetir instalação:
+
+```bash
+theforge providers sync --dry-run   # revisão do plano
+theforge providers sync --yes       # aprovação e refresh
+theforge providers health
+```
+
+Precedência de runtime: variável de ambiente de conta persistida no manifesto,
+`python.executable`/`cli.shim` do manifesto e, por fim, o venv registrado. Isso
+permite manter checkouts, venvs, skills, knowledge e evals fora do workspace do
+usuário sem depender de PATH global.
+
+Registro de provider e configuração MCP são etapas separadas. O sync registra o
+adapter Forge Protocol para routing; a configuração MCP de cada host permanece
+responsabilidade da CLI especialista durante `install auto --components mcp`.
+
 ## Estados
 
 `NOT_INSTALLED` → `INSTALLED`/`INSTALLED_BROKEN`/`INCOMPATIBLE` — descoberta

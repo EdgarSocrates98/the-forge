@@ -2,26 +2,14 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-11T07:09:20Z",
+  "generated_at": "2026-10-13T08:13:17Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 78,
+  "command_count": 82,
   "commands": [
     {
       "path": "init",
       "help": "create .forge/ in the workspace",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -62,17 +50,202 @@
       "help": "inspect host, workspace and providers",
       "arguments": [
         {
-          "name": "help",
+          "name": "root",
           "flags": [
-            "-h",
-            "--help"
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
+      "path": "setup",
+      "help": "guided, approval-gated setup for The Forge and registered specialists",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "scope",
+          "flags": [
+            "--scope"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "project",
+            "workspace",
+            "user"
+          ],
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "host",
+          "flags": [
+            "--host"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "claude",
+            "devin",
+            "codex",
+            "copilot",
+            "all",
+            "none"
+          ],
+          "positional": false,
+          "help": "host integration; none keeps host files untouched"
+        },
+        {
+          "name": "profile",
+          "flags": [
+            "--profile"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "minimal",
+            "recommended",
+            "full"
+          ],
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "gateway_profile",
+          "flags": [
+            "--gateway-profile"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "economy",
+            "balanced",
+            "deep"
+          ],
+          "positional": false,
+          "help": "The Forge router execution budget"
+        },
+        {
+          "name": "components",
+          "flags": [
+            "--components"
           ],
           "required": false,
           "default": null,
           "choices": null,
           "positional": false,
-          "help": "show this help message and exit"
+          "help": "optional components csv: skills,agents,mcp,tui,graph-studio"
         },
+        {
+          "name": "forge",
+          "flags": [
+            "--forge"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "limit family setup to one forge id"
+        },
+        {
+          "name": "RELPATH",
+          "flags": [
+            "--member"
+          ],
+          "required": false,
+          "default": "[]",
+          "choices": null,
+          "positional": false,
+          "help": "workspace member for project-scope fan-out (repeatable)"
+        },
+        {
+          "name": "yes",
+          "flags": [
+            "--yes",
+            "-y"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "approve the real plan"
+        },
+        {
+          "name": "dry_run",
+          "flags": [
+            "--dry-run"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "show the real plan only"
+        }
+      ]
+    },
+    {
+      "path": "status",
+      "help": "summarize workspace state",
+      "arguments": [
         {
           "name": "root",
           "flags": [
@@ -109,21 +282,15 @@
       ]
     },
     {
-      "path": "status",
-      "help": "summarize workspace state",
+      "path": "excellence",
+      "help": "engineering excellence evidence",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "excellence audit",
+      "help": "audit local repositories without network, credentials or code execution",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -162,38 +329,13 @@
     {
       "path": "registry",
       "help": "provider registry",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "registry list",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -234,18 +376,6 @@
       "help": null,
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -285,18 +415,6 @@
       "help": "configured registry sources (untrusted metadata; the local installed registry stays authoritative)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -335,18 +453,6 @@
       "path": "registry show",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -394,38 +500,13 @@
     {
       "path": "economy",
       "help": "measured execution economy",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "economy report",
       "help": "aggregate recorded execution observations into a global economy receipt (read-only, offline)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -465,18 +546,6 @@
       "path": "economy experiment",
       "help": "evaluate a StrategyExperiment/v1 against local observations (read-only, advisory; never promotes)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -526,38 +595,13 @@
     {
       "path": "knowledge",
       "help": "forge knowledge layer (bootstrap packages)",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "knowledge list",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -597,18 +641,6 @@
       "path": "knowledge show",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -658,18 +690,6 @@
       "help": null,
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -707,38 +727,13 @@
     {
       "path": "agents",
       "help": "specialized agent registry",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "agents list",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -778,18 +773,6 @@
       "path": "agents show",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -837,38 +820,13 @@
     {
       "path": "capabilities",
       "help": "declared capabilities",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "capabilities list",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -920,18 +878,6 @@
       "help": null,
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -979,18 +925,6 @@
       "path": "capabilities negotiate",
       "help": "negotiate a CapabilityRequirement against the registered manifests (offline, deterministic, machine-readable with --json)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1041,18 +975,6 @@
       "path": "capabilities discover",
       "help": "remote discovery by requirement: negotiates installed providers first, then consults enabled registry sources — reports RemoteProviderCandidate metadata, never installs (§22-26)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1139,38 +1061,13 @@
     {
       "path": "install",
       "help": "governed provider installation",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "install plan",
       "help": "build a deterministic InstallationPlan/v2 for a remote candidate (plan-only: nothing is downloaded or installed)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1254,18 +1151,6 @@
       "path": "install apply",
       "help": "install this forge's host assets into the resolved scope",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1370,6 +1255,21 @@
           "help": "comma-separated optional components (skills,agents,mcp,tui,graph-studio) — overrides the profile's component set"
         },
         {
+          "name": "gateway_profile",
+          "flags": [
+            "--gateway-profile"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "economy",
+            "balanced",
+            "deep"
+          ],
+          "positional": false,
+          "help": "The Forge router execution budget"
+        },
+        {
           "name": "dry_run",
           "flags": [
             "--dry-run"
@@ -1386,18 +1286,6 @@
       "path": "install status",
       "help": "install ledger + drift + health of the target",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1453,18 +1341,6 @@
       "help": "deep install health (ledger, drift, mcp, handshake)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -1518,18 +1394,6 @@
       "path": "install repair",
       "help": "restore managed assets that drifted or went missing",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1595,18 +1459,6 @@
       "path": "install uninstall",
       "help": "remove only what the ledger declares as managed",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1684,18 +1536,6 @@
       "help": "upgrade the bootstrap-installed runtime (pinned only)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -1767,18 +1607,6 @@
       "path": "install auto",
       "help": "delegate install to every registered forge; --scope workspace discovers sibling repos, --member fans out",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1862,6 +1690,65 @@
           "help": "workspace scope: also delegate a project install into this member repo (repeatable)"
         },
         {
+          "name": "host",
+          "flags": [
+            "--host"
+          ],
+          "required": false,
+          "default": "all",
+          "choices": [
+            "claude",
+            "devin",
+            "codex",
+            "copilot",
+            "all",
+            "none"
+          ],
+          "positional": false,
+          "help": "host integration propagated to every registered forge"
+        },
+        {
+          "name": "profile",
+          "flags": [
+            "--profile"
+          ],
+          "required": false,
+          "default": "recommended",
+          "choices": [
+            "minimal",
+            "recommended",
+            "full"
+          ],
+          "positional": false,
+          "help": "asset profile propagated to every registered forge"
+        },
+        {
+          "name": "LIST",
+          "flags": [
+            "--components"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "optional components csv propagated to every registered forge"
+        },
+        {
+          "name": "gateway_profile",
+          "flags": [
+            "--gateway-profile"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "economy",
+            "balanced",
+            "deep"
+          ],
+          "positional": false,
+          "help": "The Forge router execution budget"
+        },
+        {
           "name": "dry_run",
           "flags": [
             "--dry-run"
@@ -1878,18 +1765,6 @@
       "path": "install mcp-verify",
       "help": "real JSON-RPC handshake against the MCP server",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1928,38 +1803,13 @@
     {
       "path": "installations",
       "help": "bootstrap installation registry (~/.forge/installations)",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "installations list",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -1999,18 +1849,6 @@
       "path": "graph",
       "help": "the capability graph: declared+observed relations of the registry and workspace (cached manifests only, no provider process)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -2128,18 +1966,6 @@
       "help": "optional local web UI (127.0.0.1 + session token) over the real services — install, hosts, MCP handshakes, federation, agents, skills, graphs and tasks",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -2199,38 +2025,13 @@
     {
       "path": "providers",
       "help": "provider operations",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "providers health",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -2267,40 +2068,88 @@
       ]
     },
     {
-      "path": "specialists",
-      "help": "specialist lifecycle control plane",
+      "path": "providers sync",
+      "help": "register installed local adapters and refresh live descriptors",
       "arguments": [
         {
-          "name": "help",
+          "name": "root",
           "flags": [
-            "-h",
-            "--help"
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "forge",
+          "flags": [
+            "--forge"
           ],
           "required": false,
           "default": null,
           "choices": null,
           "positional": false,
-          "help": "show this help message and exit"
+          "help": "limit synchronization to one installed Forge id"
+        },
+        {
+          "name": "yes",
+          "flags": [
+            "--yes",
+            "-y"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "approve the managed user providers.toml write"
+        },
+        {
+          "name": "dry_run",
+          "flags": [
+            "--dry-run"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "show managed registry changes without writing"
         }
-      ],
+      ]
+    },
+    {
+      "path": "specialists",
+      "help": "specialist lifecycle control plane",
+      "arguments": [],
       "group": true
     },
     {
       "path": "specialists list",
       "help": "lifecycle state per catalog forge",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -2352,18 +2201,6 @@
       "help": null,
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -2403,18 +2240,6 @@
       "help": "real health probes per specialist",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -2452,38 +2277,13 @@
     {
       "path": "hosts",
       "help": "AI host detection and activation",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "hosts list",
       "help": null,
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -2524,18 +2324,6 @@
       "help": null,
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -2574,18 +2362,6 @@
       "path": "hosts activate",
       "help": "evaluate activation for a host",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -2655,18 +2431,6 @@
       "help": "version+auth+integration receipt per host (read-only)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -2721,18 +2485,6 @@
       "help": "open one host in this workspace (requires a TTY)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -2784,38 +2536,13 @@
     {
       "path": "task",
       "help": "delegate a task to specialists (real argv execution)",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "task plan",
       "help": "build delegation requests",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -2897,18 +2624,6 @@
       "path": "task run",
       "help": "execute delegations",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3002,18 +2717,6 @@
       "help": "inspect a delegation",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -3060,38 +2763,13 @@
     {
       "path": "provider",
       "help": "provider authoring: scaffold and conformance",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "provider init",
       "help": "write a stdlib-only provider skeleton into an empty directory",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3163,18 +2841,6 @@
       "help": "run the Forge Protocol conformance battery against an argv",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -3222,18 +2888,6 @@
       "path": "ask",
       "help": "route a task to a specialist",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3359,6 +3013,88 @@
           "help": null
         },
         {
+          "name": "auto_install",
+          "flags": [
+            "--auto-install"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "prepare registered specialists for this project before routing"
+        },
+        {
+          "name": "install_profile",
+          "flags": [
+            "--install-profile"
+          ],
+          "required": false,
+          "default": "recommended",
+          "choices": [
+            "minimal",
+            "recommended",
+            "full"
+          ],
+          "positional": false,
+          "help": "profile used with --auto-install"
+        },
+        {
+          "name": "install_host",
+          "flags": [
+            "--install-host"
+          ],
+          "required": false,
+          "default": "none",
+          "choices": [
+            "claude",
+            "devin",
+            "codex",
+            "copilot",
+            "all",
+            "none"
+          ],
+          "positional": false,
+          "help": "host integration used with --auto-install (default: none)"
+        },
+        {
+          "name": "gateway_profile",
+          "flags": [
+            "--gateway-profile"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "economy",
+            "balanced",
+            "deep"
+          ],
+          "positional": false,
+          "help": "router execution budget used with --auto-install"
+        },
+        {
+          "name": "install_components",
+          "flags": [
+            "--install-components"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "optional components csv used with --auto-install"
+        },
+        {
+          "name": "yes",
+          "flags": [
+            "--yes",
+            "-y"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "approve --auto-install in non-interactive or JSON mode"
+        },
+        {
           "name": "CAPABILITY",
           "flags": [
             "--approve"
@@ -3375,18 +3111,6 @@
       "path": "plan",
       "help": "Plan a task across providers, one node per specialist, executed locally in sequence.\n\nWithout --from FILE the nodes are ordered by declared capability relations first (rule\n`capability-graph`: requires and produces→consumes among qualified providers) and then by\nthe textual order of their keywords in the intent (rule `intent-order`): proxies of the\ndata flow that can infer a wrong dependency (e.g. \"an API that consumes the Spark pipeline\ndata\" puts the API first). Review the plan without --execute; --from FILE fixes the order\nexplicitly. An ambiguous decomposition may be resolved by a `proposes_plans` provider\n(semantic tier), revalidated by the deterministic plan checks.",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3516,38 +3240,13 @@
     {
       "path": "workspace",
       "help": "workspace description",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "workspace show",
       "help": "describe the workspace (cached manifests only, no provider)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3587,18 +3286,6 @@
       "path": "explain",
       "help": "explain a past run",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3647,18 +3334,6 @@
       "path": "replay",
       "help": "re-render, re-verify or re-execute a past run",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3745,18 +3420,6 @@
       "help": "resume a plan run: nodes whose recorded inputs still verify are reused, the rest re-execute",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -3827,18 +3490,6 @@
       "help": "the project's reusable-decision memory (.forge/intel/decisions.json)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -3877,18 +3528,6 @@
       "path": "trace",
       "help": "the run's local trace: what happened, span by span (explain answers why)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -3936,38 +3575,13 @@
     {
       "path": "memory",
       "help": "engineering memory (.forge/memory/)",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "memory list",
       "help": "structured query over memory entries (deterministic, bounded)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -4129,18 +3743,6 @@
       "help": "distill a run's persisted artifacts into memory entries",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -4189,18 +3791,6 @@
       "help": "entries allowed to leave the project (portable/organization only)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -4239,18 +3829,6 @@
       "path": "memory summarize",
       "help": "distill entries into a MemorySummary (sources are kept)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -4333,18 +3911,6 @@
       "help": "import portable/organization entries (project/workspace are refused)",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -4393,18 +3959,6 @@
       "help": "failure-pattern rollup over recorded failure entries",
       "arguments": [
         {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
-        {
           "name": "root",
           "flags": [
             "--root"
@@ -4442,38 +3996,13 @@
     {
       "path": "targets",
       "help": "declared execution targets (targets.toml)",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "targets list",
       "help": "declared targets, merged user+project (project wins per id)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -4513,18 +4042,6 @@
       "path": "targets negotiate",
       "help": "dry-run provider×target negotiation for a requirement",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -4666,38 +4183,13 @@
     {
       "path": "remote",
       "help": "remote-execution trust layer (remote-policy.toml)",
-      "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        }
-      ],
+      "arguments": [],
       "group": true
     },
     {
       "path": "remote policy",
       "help": "the effective remote policy (absent file = deny-all)",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [
@@ -4737,18 +4229,6 @@
       "path": "remote check",
       "help": "evaluate each declared remote target against the policy",
       "arguments": [
-        {
-          "name": "help",
-          "flags": [
-            "-h",
-            "--help"
-          ],
-          "required": false,
-          "default": null,
-          "choices": null,
-          "positional": false,
-          "help": "show this help message and exit"
-        },
         {
           "name": "root",
           "flags": [

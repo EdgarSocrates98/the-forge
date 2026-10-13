@@ -23,6 +23,14 @@
     "why": "economia medida de execução (bytes, não tokens estimados)",
     "when": "entender custo real de contexto/descoberta antes de otimizar"
   },
+  "excellence": {
+    "why": "auditoria local de qualidade e prontidão das Forges do workspace",
+    "when": "verificar saúde de produto, evidência, custo e próxima ação sem rede"
+  },
+  "excellence audit": {
+    "why": "auditoria detalhada e determinística dos repositórios Forge catalogados",
+    "when": "investigar gaps de produtização antes de uma release ou homologação"
+  },
   "explain": {
     "why": "explica um run passado — o porquê de cada passo",
     "when": "auditar uma execução que já aconteceu (trace mostra o quê, explain o porquê)"
@@ -90,6 +98,10 @@
   "status": {
     "why": "resumo do estado do workspace",
     "when": "visão rápida: inicializado? providers? últimas runs?"
+  },
+  "setup": {
+    "why": "onboarding guiado da família Forge com plano real e aprovação explícita",
+    "when": "primeira instalação ou reconfiguração sem memorizar comandos por Forge"
   },
   "targets": {
     "why": "targets de execução declarados (targets.toml)",

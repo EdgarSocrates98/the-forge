@@ -36,6 +36,7 @@
 | `installations list` | registry do bootstrap (`~/.forge/installations/*.json`) — read-only | 0 |
 | `portal [--no-browser] [--port N] [--root DIR]` | UI web local opcional (loopback + token de sessão) — command center da federação: instalação, hosts, MCP por forja, agents, skills, grafo federado, tasks e knowledge; mutações por plan→confirm→apply com `plan_token` — [ADR 0059](adr/0059-forge-portal-command-center.md) | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
+| `providers sync [--forge <id>] [--yes] [--dry-run]` | sincroniza manifests de instalações locais no bloco gerenciado de `providers.toml` e faz refresh live; preserva configuração manual | 0 / 1 |
 | `specialists list` | ciclo de vida por forja do catálogo: NOT_INSTALLED→INSTALLED→CONFIGURED→REGISTERED a partir do registry de instalações + probe real do CLI + checkouts locais | 0 |
 | `specialists status` | idem a `specialists list` | 0 |
 | `specialists doctor` | probes reais por especialista (handshake MCP quando declarado) | 0 / 1 |

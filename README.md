@@ -34,6 +34,8 @@ cd seu-projeto
 theforge install apply --yes              # skills + markers gerenciados (.claude/.devin/.agents/.github)
 theforge install apply --dry-run          # plano determinístico, sem escrever
 theforge install auto --yes               # delega a cada forge registrada em ~/.forge/installations
+theforge providers sync --yes             # registra adapters locais e atualiza o registry ao vivo
+theforge providers sync --dry-run         # mostra o plano sem escrever providers.toml
 theforge install status|doctor|repair|uninstall
 theforge installations list               # registry do bootstrap (read-only)
 
@@ -41,6 +43,14 @@ theforge portal [--no-browser]            # UI local opcional — command center
 ```
 
 Cada escrita passa por ledger sha256 com posse: `uninstall` remove só o que é gerenciado, arquivos do usuário e edições manuais sobrevivem. Escopos `project` (padrão), `workspace` e `user`; profiles `minimal`/`recommended`/`full`; hosts `claude`, `devin`, `codex`, `copilot` ou `all`. Contrato e matriz: [docs/portable-installation/](docs/portable-installation/README.md) ([ADR 0058](docs/adr/0058-portable-installation.md)).
+
+`install auto --yes` também sincroniza, de forma idempotente, os providers locais
+descobertos em `~/.forge/installations/` para o bloco gerenciado do
+`providers.toml` do usuário e executa refresh ao vivo. O comando preserva entradas
+manuais e exige aprovação antes de escrever. `providers sync --yes` é o reparo
+explícito para quem já instalou uma Forge antes dessa automação. A sincronização
+registra o adapter do provider; a configuração MCP continua sendo feita pela CLI
+da própria Forge quando `--components mcp` e um host são selecionados.
 
 ## Primeiros passos
 
@@ -69,7 +79,13 @@ trust = "local"                        # trusted | local | unverified | blocked 
 
 O `providers.toml` de projeto (`.forge/config/providers.toml`) pode declarar providers, mas eles entram sempre como `unverified` e não são executados (nem `describe`) sem `--allow-unverified`. Para confiar num provider de projeto, copie a entrada para o arquivo do usuário. Ids builtin (`echo-forge`) são reservados: usá-los em qualquer `providers.toml` é erro de uso (exit 2). Uma entrada de projeto cujo id já esteja definido no arquivo do usuário é ignorada, com aviso.
 
-Depois rode `theforge registry refresh`. Para começar um provider do zero, `theforge provider init <dir> --id <id>` escreve o scaffold (manifest, esqueleto stdlib, teste de conformidade) e `theforge provider check -- <argv>` roda a bateria de conformidade sem registrar nada ([provider-authoring](docs/provider-authoring.md)).
+Para providers instalados pelo ecossistema, prefira `theforge providers sync --yes`;
+ele resolve o interpretador/CLI do manifesto, deriva o adapter publicado pelo
+catálogo local e roda `registry refresh`. Para um provider externo, edite o bloco
+manual e rode `theforge registry refresh`. Para começar um provider do zero,
+`theforge provider init <dir> --id <id>` escreve o scaffold (manifest, esqueleto
+stdlib, teste de conformidade) e `theforge provider check -- <argv>` roda a bateria
+de conformidade sem registrar nada ([provider-authoring](docs/provider-authoring.md)).
 
 O `version` do manifest precisa ser SemVer 2.0.0 (senão o provider fica `invalid`, `FORGE-MANIFEST-VERSION`), e cada capability segue a [taxonomia](docs/capabilities.md) (fora dela, a capability é excluída com aviso `FORGE-MANIFEST-TAXONOMY`). Para quem já tem um provider: [nota de migração](docs/provider-authoring.md#nota-de-migração-ciclo-2-wave-b).
 

@@ -18,7 +18,7 @@ from typing import Any
 
 from theforge import __version__
 from theforge import _installkit as kit
-from theforge.install import render
+from theforge.install import providers, render
 
 FORGE_ID = "the-forge"
 STATE_DIR = ".forge/install"
@@ -279,6 +279,23 @@ def installations() -> list[dict[str, Any]]:
     return kit.installed_forges()
 
 
+def sync_provider_registry(
+    *,
+    root: Path | None = None,
+    forge: str | None = None,
+    yes: bool = False,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Register installed local adapters and refresh live provider state."""
+    return providers.sync(
+        kit.installed_forges(),
+        root=root,
+        forge=forge,
+        approved=yes,
+        dry_run=dry_run,
+    )
+
+
 def _delegated_cmd(
     manifest: dict[str, Any],
     scope: str,
@@ -297,17 +314,23 @@ def _delegated_cmd(
     the install engine, e.g. RC-locked CLIs that install via a script)."""
     tpl = manifest.get("install_command")
     if tpl:
-        venv = manifest.get("venv") or ""
-        py = Path(venv) / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        py = providers.manifest_python(manifest)
         checkout = str((manifest.get("source") or {}).get("path") or ".")
+        replacements = {
+            "python": py or sys.executable,
+            "checkout": checkout,
+            "home": checkout,
+            "install_root": str(manifest.get("install_root") or ""),
+        }
         argv = [
-            a.replace("{python}", str(py) if py.exists() else sys.executable).replace(
-                "{checkout}", checkout
-            )
+            a.replace("{python}", replacements["python"])
+            .replace("{checkout}", replacements["checkout"])
+            .replace("{home}", replacements["home"])
+            .replace("{install_root}", replacements["install_root"])
             for a in tpl
         ]
     else:
-        cli = str((manifest.get("cli") or {}).get("name") or manifest.get("forge_id"))
+        cli = providers.manifest_cli(manifest) or str(manifest.get("forge_id"))
         argv = [cli]
     command = argv + [
         "install",
@@ -470,6 +493,29 @@ def install_auto(
                 "detail": (proc.stdout or proc.stderr)[-200:],
             }
         )
+    registry_sync: dict[str, Any] | None = None
+    if yes or dry_run:
+        registry_sync = sync_provider_registry(
+            root=target,
+            forge=forge,
+            yes=yes,
+            dry_run=dry_run,
+        )
+        sync_status = registry_sync.get("status")
+        sync_verification = (registry_sync.get("verification") or {}).get("status")
+        checks.append(
+            {
+                "id": "provider-registry",
+                "status": (
+                    "PASS"
+                    if sync_status == "completed" and sync_verification == "PASS"
+                    else "UNVERIFIED"
+                    if sync_status in ("completed", "planned")
+                    else "FAIL"
+                ),
+                "detail": registry_sync.get("path") or registry_sync.get("detail"),
+            }
+        )
     overall = (
         "planned"
         if dry_run
@@ -490,9 +536,16 @@ def install_auto(
         "execution_profile": gateway_profile,
         "checks": checks,
         "forges": results,
+        "provider_registry": registry_sync,
         "managed_files": [],
         "verification": {
-            "status": "PASS" if overall == "completed" else ("UNVERIFIED" if dry_run else "FAIL")
+            "status": (
+                "UNVERIFIED"
+                if dry_run or any(c["status"] == "UNVERIFIED" for c in checks)
+                else "PASS"
+                if overall == "completed"
+                else "FAIL"
+            )
         },
         "status": overall,
         "created_at": kit._utc_now(),
@@ -681,6 +734,7 @@ __all__ = [
     "install",
     "install_auto",
     "installations",
+    "sync_provider_registry",
     "repair",
     "status",
     "uninstall",
