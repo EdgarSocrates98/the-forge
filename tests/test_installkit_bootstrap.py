@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import types
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,3 +89,22 @@ def test_posix_environment_file_is_idempotent(tmp_path, monkeypatch):
     assert rendered.count("# >>> forjas account environment >>>") == 1
     assert rendered.count("SPARK_FORGE_AWS_HOME") == 1
     assert rc_file.read_text(encoding="utf-8").count("forjas-account-environment") == 1
+
+
+def test_registry_has_value_uses_winreg_function(monkeypatch):
+    calls = []
+
+    def query_value(key, name):
+        calls.append((key, name))
+        return "value", 1
+
+    monkeypatch.setitem(sys.modules, "winreg", types.SimpleNamespace(QueryValueEx=query_value))
+    key = object()
+    assert fb._registry_has_value(key, "Path")
+    assert calls == [(key, "Path")]
+
+    def missing(_key, _name):
+        raise FileNotFoundError
+
+    monkeypatch.setitem(sys.modules, "winreg", types.SimpleNamespace(QueryValueEx=missing))
+    assert not fb._registry_has_value(key, "Missing")
