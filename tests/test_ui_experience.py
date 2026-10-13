@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -14,6 +16,7 @@ from theforge.ui.kit import (
     dashboard,
     status_table,
 )
+from theforge.ui import wizard
 from theforge.ui.wizard import env_check_rows
 
 # -- capability detection ----------------------------------------------------
@@ -28,6 +31,16 @@ def test_context_detect_non_tty():
 def test_context_ascii_fallback():
     ctx = UIContext(interactive=False, color=False, unicode=False, width=80)
     assert ctx.cursor == ">" and ctx.checked == "x"
+
+
+def test_fresh_directory_hides_repository_scope(monkeypatch, capsys):
+    original = Path.cwd()
+    with TemporaryDirectory() as fresh:
+        monkeypatch.chdir(fresh)
+        ctx = UIContext(interactive=False, color=False, unicode=False, width=80)
+        assert wizard._scope_choices(ctx) == ["workspace", "user"]
+        monkeypatch.chdir(original)
+    assert "No repository detected" in capsys.readouterr().out
 
 
 def test_context_recognizes_windows_utf8_codepage(monkeypatch):
