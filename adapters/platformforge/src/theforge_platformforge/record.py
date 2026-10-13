@@ -2,7 +2,7 @@
 
 Runs in the specialist's interpreter (``platformforge`` importable): it records the
 *public seam* surface the adapter relies on — which boundary callables exist, their public
-signatures, plus the specialist's own ``capability-manifest/v3`` declaration (tools,
+signatures, plus the specialist's own ``capability-manifest/v3`` or ``v4`` declaration (tools,
 domains and the ``cross_forge.accepts`` vocabulary — surface evidence, never a claimed
 capability). ``describe`` declares a capability only for a seam the snapshot marks
 present, so a drifted specialist degrades to manifest limitations instead of a runtime

@@ -48,6 +48,7 @@ from theforge_sparkforge_aws import catalog
 from theforge_sparkforge_aws._shell import STAGE_DIR
 from theforge_sparkforge_aws.backend import expected_recording, live_unavailable_reason
 from theforge_sparkforge_aws.handoff import UPSTREAM_ARG, UPSTREAM_FILE, translate_handoff
+from theforge_sparkforge_aws.native_pkg import resolve_tool_name
 from theforge_sparkforge_aws.record import render
 
 JUDGE_TOOL = "sparkforge_judge"
@@ -298,7 +299,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         tool = tool_of(args.capability, args.action)
-        schema = tools_surface[tool].get("inputSchema") or {}
+        runtime_tool = resolve_tool_name(tools_surface, tool)
+        if runtime_tool is None:
+            raise RecordingError(f"installed Spark Forge AWS has no tool {tool!r}")
+        schema = tools_surface[runtime_tool].get("inputSchema") or {}
         accepted = set(schema.get("properties") or {})
         workspace = check_workspace(workspace_arg, out)
         handoff = None
@@ -313,8 +317,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     f"--handoff {args.handoff} is not a theforge/Handoff/v1 document"
                 )
             handoff = loaded
+        def runtime_call(name: str, arguments: dict[str, Any]) -> Any:
+            resolved = resolve_tool_name(tools_surface, name)
+            if resolved is None:
+                raise KeyError(name)
+            return call_tool(resolved, arguments)
+
         name, data = record_action(
-            call_tool,
+            runtime_call,
             workspace=workspace,
             capability=args.capability,
             action=args.action,

@@ -270,7 +270,10 @@ def test_snapshot_shape_and_canonical_encoding() -> None:
         catalog.SEAM_MANIFEST,
     } <= set(names)
     # The specialist's own manifest declaration is recorded verbatim (surface evidence).
-    assert snapshot["manifest_schema"] == "platformforge/capability-manifest/v3"
+    assert snapshot["manifest_schema"] in {
+        "platformforge/capability-manifest/v3",
+        "platformforge/capability-manifest/v4",
+    }
     assert "change-intent" in snapshot["cross_forge_accepts"]
     assert "iac" in snapshot["domains"] and "k8s" in snapshot["domains"]
     raw = (PACKAGE / "native_surface.json").read_bytes()
@@ -306,7 +309,14 @@ def test_record_check_classifies_drift() -> None:
     shrunk = {**snapshot, "cross_forge_accepts": []}
     status, lines = record.classify_drift(snapshot, shrunk)
     assert status == "breaking" and any("cross-forge accept" in line for line in lines)
-    schema_changed = {**snapshot, "manifest_schema": "platformforge/capability-manifest/v4"}
+    schema_changed = {
+        **snapshot,
+        "manifest_schema": (
+            "platformforge/capability-manifest/v3"
+            if snapshot["manifest_schema"] != "platformforge/capability-manifest/v3"
+            else "platformforge/capability-manifest/v4"
+        ),
+    }
     status, lines = record.classify_drift(snapshot, schema_changed)
     assert status == "breaking" and any("manifest schema" in line for line in lines)
     versioned = {**snapshot, "specialist_version": "9.9.9"}

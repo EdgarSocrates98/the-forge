@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from theforge_sparkforge_aws._shell import STAGE_DIR
+from theforge_sparkforge_aws.native_pkg import resolve_tool_name
 from theforge_sparkforge_aws.record_execute import DETAIL_LEVEL, JUDGE_TOOL, PAGE_LIMIT
 
 NativeCall = Callable[[str, dict[str, Any]], Any]
@@ -71,7 +72,8 @@ def call_action(
 ) -> dict[str, Any]:
     """Call ``tool`` with the staged ``files`` (native argument -> ``stage/...``) and the chained
     judge; ``tools`` is the native ``TOOLS`` table and ``call`` is ``call_tool``."""
-    spec = tools.get(tool)
+    runtime_tool = resolve_tool_name(tools, tool)
+    spec = tools.get(runtime_tool) if runtime_tool is not None else None
     if not isinstance(spec, Mapping):
         return {"unknown_tool": tool}
     schema = spec.get("inputSchema")
@@ -83,15 +85,17 @@ def call_action(
     if "limit" in accepted:
         arguments["limit"] = PAGE_LIMIT
     try:
-        output = call(tool, dict(arguments))
+        output = call(runtime_tool, dict(arguments))
     except KeyError:
         return {"unknown_tool": tool}
     judge = None
     items = output.get("items") if isinstance(output, Mapping) else None
     if isinstance(output, Mapping) and "error" not in output and items:
         judge_args = {"limit": PAGE_LIMIT}
-        judged = call(JUDGE_TOOL, {"facts": items, **judge_args})
-        judge = {"tool": JUDGE_TOOL, "arguments": judge_args, "output": judged}
+        runtime_judge = resolve_tool_name(tools, JUDGE_TOOL)
+        if runtime_judge is not None:
+            judged = call(runtime_judge, {"facts": items, **judge_args})
+            judge = {"tool": runtime_judge, "arguments": judge_args, "output": judged}
     return {"arguments": arguments, "output": output, "judge": judge}
 
 

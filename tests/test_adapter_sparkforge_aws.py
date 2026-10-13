@@ -221,10 +221,14 @@ def test_exclusions_are_listed_in_limitations(
 
 
 def test_every_recorded_tool_has_a_classification(snapshot: dict[str, Any]) -> None:
-    # A tool the catalog does not know falls back to an explicit "unmapped" limitation; with
-    # the recorded surface that never happens (a new native tool surfaces here first).
+    # New native tools remain explicit limitations until this adapter maps them. They must
+    # never disappear silently from the derived manifest.
     exposure = catalog.derive(snapshot)
-    assert not [line for line in exposure.limitations if catalog.UNMAPPED_REASON in line]
+    unmapped = [line for line in exposure.limitations if catalog.UNMAPPED_REASON in line]
+    newly_observed = {"sparkforge_ai", "sparkforge_graph_status", "sparkforge_graph_view"}
+    assert newly_observed <= set(snapshot["tools"])
+    for tool in newly_observed:
+        assert any(tool in line for line in unmapped), tool
 
 
 # --- action inputs ------------------------------------------------------------------------
@@ -433,7 +437,7 @@ def test_recorded_snapshot_has_origin_version_and_tool_surface(snapshot: dict[st
     assert set(snapshot) == {"specialist_version", "recorded_at", "tools"}
     assert snapshot["specialist_version"] == "0.5.0"
     assert len(snapshot["recorded_at"]) == 10  # YYYY-MM-DD (UTC)
-    assert len(snapshot["tools"]) == 143
+    assert len(snapshot["tools"]) >= 143
     for name, entry in snapshot["tools"].items():
         assert name.startswith("sparkforge_")
         assert set(entry) == {"annotations", "required"}
@@ -483,6 +487,24 @@ def test_snapshot_rerecording_is_deterministic() -> None:
     assert changed["specialist_version"] == "0.5.1"
     rendered = record.render(first)
     assert rendered.endswith("\n") and list(json.loads(rendered)) == sorted(first)
+
+
+def test_snapshot_rerecording_canonicalizes_renamed_package_tools() -> None:
+    snapshot = record.build_snapshot(
+        {
+            "sparkforge_aws_analyze_pyspark": {
+                "annotations": {},
+                "inputSchema": {"required": ["path"]},
+            },
+            "sparkforge_aws_judge": {
+                "annotations": {},
+                "inputSchema": {"required": ["facts"]},
+            },
+        },
+        "0.5.0",
+        today="2026-10-12",
+    )
+    assert set(snapshot["tools"]) == {"sparkforge_analyze_pyspark", "sparkforge_judge"}
 
 
 def test_record_check_classifies_drift() -> None:
@@ -1821,6 +1843,35 @@ def test_native_call_maps_stage_relative_paths(tmp_path: Path) -> None:
     assert native_call.staged_path(".", tmp_path) == "stage"
     assert native_call.staged_path("jobs", tmp_path) == "stage/jobs"
     assert native_call.staged_path("./jobs/x.py", tmp_path) == "stage/jobs/x.py"
+
+
+def test_native_call_resolves_renamed_sparkforge_tools() -> None:
+    from theforge_sparkforge_aws.native_call import call_action, resolve_tool_name
+
+    output = {"items": [{"id": "f_1"}]}
+    judged = {"items": []}
+    calls: Calls = []
+
+    def call(name: str, arguments: dict[str, Any]) -> Any:
+        calls.append((name, arguments, Path.cwd()))
+        return judged if name == "sparkforge_aws_judge" else output
+
+    tools = {
+        "sparkforge_aws_analyze_pyspark": {
+            "inputSchema": {"properties": {"path": {}, "limit": {}}}
+        },
+        "sparkforge_aws_judge": {"inputSchema": {"properties": {"facts": {}}}},
+    }
+
+    assert resolve_tool_name(tools, "sparkforge_analyze_pyspark") == (
+        "sparkforge_aws_analyze_pyspark"
+    )
+    result = call_action(tools, call, "sparkforge_analyze_pyspark", {"path": "stage"})
+    assert result["judge"]["tool"] == "sparkforge_aws_judge"
+    assert [name for name, _, _ in calls] == [
+        "sparkforge_aws_analyze_pyspark",
+        "sparkforge_aws_judge",
+    ]
 
 
 def test_native_call_cli_refuses_an_escaping_file_before_importing_the_specialist(

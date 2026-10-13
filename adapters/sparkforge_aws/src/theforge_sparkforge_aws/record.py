@@ -52,7 +52,12 @@ def build_snapshot(
 ) -> dict[str, Any]:
     """The snapshot of ``tools`` (``TOOLS`` of the Spark Forge AWS): annotations and required
     arguments per tool. ``recorded_at`` is kept from ``previous`` when nothing else changed."""
-    surface = {name: _tool_entry(spec) for name, spec in sorted(tools.items())}
+    from theforge_sparkforge_aws.native_pkg import canonical_tool_name
+
+    surface = {
+        canonical_tool_name(name): _tool_entry(spec)
+        for name, spec in sorted(tools.items())
+    }
     recorded_at = today or _today()
     if (
         previous is not None

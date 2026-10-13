@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-10-06",
+  "recorded_at": "2026-10-13",
   "specialist_version": "0.5.0",
   "tools": {
     "sparkforge_agentops_baseline": {
@@ -59,6 +59,15 @@
       "required": [
         "run_id"
       ]
+    },
+    "sparkforge_ai": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
     },
     "sparkforge_analyze_airflow_dag": {
       "annotations": {
@@ -1286,6 +1295,24 @@
         "glue",
         "path"
       ]
+    },
+    "sparkforge_graph_status": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
+    },
+    "sparkforge_graph_view": {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "required": []
     },
     "sparkforge_iceberg_assess_upgrade": {
       "annotations": {
