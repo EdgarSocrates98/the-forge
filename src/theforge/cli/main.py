@@ -12,6 +12,7 @@ import contextlib
 import re
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Final, NoReturn
 
 from theforge import __version__
@@ -460,6 +461,14 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         help="with --ui: port to bind (default ephemeral)",
+    )
+    graph.add_argument(
+        "--out",
+        type=Path,
+        help=(
+            "write graph JSON snapshot atomically; supports capability, view, "
+            "and federated outputs"
+        ),
     )
     graph.set_defaults(handler=commands.cmd_graph)
 

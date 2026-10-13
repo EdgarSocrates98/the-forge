@@ -870,7 +870,7 @@ def cmd_graph(args: argparse.Namespace) -> int:
     if missing:
         data["limitations"] = [*(data.get("limitations") or []), *missing]
     _warn(registry)
-    _emit(args, redact(data), render.graph)
+    _emit(args, _persist_graph(args, redact(data)), render.graph)
     return 0
 
 
@@ -904,26 +904,49 @@ def _cmd_graph_view(args: argparse.Namespace, root: Path) -> int:
         for note in notes:
             print(f"  note: {note}", file=sys.stderr)
         if getattr(args, "ui", False):
+            merged = graphview.federated_merge(views)
+            _persist_graph(args, merged.to_dict())
             return open_studio(
-                [graphview.federated_merge(views)],
+                [merged],
                 open_browser=not getattr(args, "no_browser", False),
                 port=getattr(args, "port", 0),
             )
-        _emit(args, {"views": [v.to_dict() for v in views], "notes": notes}, _dump)
+        _emit(
+            args,
+            _persist_graph(args, {"views": [v.to_dict() for v in views], "notes": notes}),
+            _dump,
+        )
         return 0
     view = graphview.capability_view(root=root)
     if getattr(args, "ui", False):
+        _persist_graph(args, view.to_dict())
         return open_studio(
             [view],
             open_browser=not getattr(args, "no_browser", False),
             port=getattr(args, "port", 0),
         )
-    _emit(args, view.to_dict(), _dump)
+    _emit(args, _persist_graph(args, view.to_dict()), _dump)
     return 0
 
 
 def _dump(data: dict[str, Any]) -> str:
     return json.dumps(data, indent=2, sort_keys=True, default=str)
+
+
+def _persist_graph(args: argparse.Namespace, data: dict[str, Any]) -> dict[str, Any]:
+    """Write an explicit graph snapshot without changing default read-only behavior."""
+    output = getattr(args, "out", None)
+    if output is None:
+        return data
+    output = Path(output).expanduser().resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_name(f".{output.name}.tmp")
+    temporary.write_text(_dump(data) + "\n", encoding="utf-8")
+    temporary.replace(output)
+    return {
+        **data,
+        "artifact": {"format": "json", "path": str(output)},
+    }
 
 
 def _cap_match(node_id: str, ref: str) -> bool:
