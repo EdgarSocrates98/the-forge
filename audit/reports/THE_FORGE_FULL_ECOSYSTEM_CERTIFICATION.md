@@ -27,7 +27,7 @@ Browser E2E passed with screenshots generated and then removed from working tree
 
 ## Part F — Failures and gaps
 
-No P0/P1 product failure was observed in completed evidence. Remaining blockers are environment/verification gates: central CI, Linux runtime, CUA, external host matrix, browser variants, deep scan and dependency findings. Full list: `unresolved-gaps.md`.
+No P0/P1 product failure was observed in completed evidence. Remaining blockers are environment/verification gates: Linux runtime, CUA, external host matrix, browser variants, deep scan and dependency findings. Full list: `unresolved-gaps.md`.
 
 ## Part G — Corrections
 
@@ -35,7 +35,7 @@ Fixed Windows registry API/access handling in installer bootstrap. Fixed The For
 
 ## Part H — Release decision
 
-`CERTIFIED_WITH_LIMITATIONS` candidate. Central PR CI and evidence closeout remain required before merge. Environment blockers prevent an unrestricted `CERTIFIED` claim; once central CI is green, release status is `CERTIFIED_WITH_LIMITATIONS`.
+`CERTIFIED_WITH_LIMITATIONS`. Central CI run 38354070524 is green and report integrity checks pass. Environment blockers prevent an unrestricted `CERTIFIED` claim.
 
 ## Reproduction index
 

@@ -5,10 +5,9 @@ Auditoria operacional baseada em `prompt_evo_e2e.md` e
 
 ## Resultado
 
-Estado: `CERTIFIED_WITH_LIMITATIONS` candidate. Portal cross-forge,
-PowerShell 7 e CI dos especialistas estão fechados. CI central ainda precisa
-passar; Linux Bash, CUA visual e demais limitações de
-`audit/reports/unresolved-gaps.md` permanecem explícitas.
+Estado: `CERTIFIED_WITH_LIMITATIONS`. Portal cross-forge, PowerShell 7, CI dos
+especialistas e CI central estão fechados. Linux Bash, CUA visual e demais
+limitações de `audit/reports/unresolved-gaps.md` permanecem explícitas.
 
 ## Evidência
 

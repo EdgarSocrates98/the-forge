@@ -22,6 +22,6 @@
     {"id":"deep-security-scan","status":"BLOCKED","evidence":"managed filesystem permission profile unavailable"},
     {"id":"snyk-sca","status":"PASS","evidence":"Snyk CLI ran across 13 projects; 5 pre-existing vulnerable dependency paths reported"},
     {"id":"ci-six-specialist-prs","status":"PASS","evidence":"all specialist PRs merged after green checks; AWS run 38344016364 green; branch protection verified"},
-    {"id":"ci-central-pr","status":"UNVERIFIED","evidence":"central PR not created until specialist PRs and reports close"}
+    {"id":"ci-central-pr","status":"PASS","evidence":"The Forge run 38354070524 green: packages and Python 3.11/3.12/3.13/3.14 on Ubuntu and Windows"}
   ]
 }
