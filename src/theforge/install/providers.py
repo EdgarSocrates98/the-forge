@@ -56,7 +56,9 @@ def manifest_python(manifest: dict[str, Any]) -> str | None:
             continue
         path = Path(raw).expanduser()
         if path.is_file():
-            return str(path.resolve())
+            # Preserve configured spelling/symlinks. Runtime launchers and
+            # tests may intentionally bind to account-scoped interpreter path.
+            return str(path.absolute())
     return None
 
 
