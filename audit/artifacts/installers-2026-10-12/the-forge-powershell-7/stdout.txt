@@ -1,0 +1,104 @@
+{
+  "cli": "theforge",
+  "created_at": "2026-10-12T23:43:35Z",
+  "environment": {
+    "prefix": "THE_FORGE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "variables": {
+      "THE_FORGE_CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7\\.venv\\Scripts\\theforge.exe",
+      "THE_FORGE_HOME": "E:\\projetos\\FORJAS\\.e2e-worktrees\\the-forge",
+      "THE_FORGE_INSTALL_ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7",
+      "THE_FORGE_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\theforge",
+      "THE_FORGE_PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7\\.venv\\Scripts\\python.exe",
+      "THE_FORGE_VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7\\.venv"
+    },
+    "windows_aliases": {
+      "THE-FORGE-CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7\\.venv\\Scripts\\theforge.exe",
+      "THE-FORGE-HOME": "E:\\projetos\\FORJAS\\.e2e-worktrees\\the-forge",
+      "THE-FORGE-INSTALL-ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7",
+      "THE-FORGE-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\theforge",
+      "THE-FORGE-PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7\\.venv\\Scripts\\python.exe",
+      "THE-FORGE-VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7\\.venv"
+    }
+  },
+  "forge_id": "the-forge",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-10-12\\targets\\the-forge\\powershell-7"
+}

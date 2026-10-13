@@ -25,3 +25,24 @@ Saídas:
 Cada registro contém `provenance`, com comando, arquivo/ref e timestamp da
 coleta. Ausência de evidência permanece explícita; o relatório não converte
 documentação em `PASS`.
+
+## Instaladores
+
+Os sete repositórios Python que distribuem `install.ps1` e `install.sh` são
+exercitados em modo seguro, sem alterar HKCU, PATH, perfis de shell ou o
+checkout:
+
+```powershell
+python audit/tooling/run_installers.py `
+  --worktree-root ..\.e2e-worktrees `
+  --runtime-root .. `
+  --artifact-dir audit/artifacts/installers-YYYY-MM-DD `
+  --output audit/reports/installer-matrix.json
+```
+
+O runner executa PowerShell 5.1, PowerShell 7 e Git Bash real quando
+disponíveis. Linux Bash recebe `BLOCKED` quando não há WSL/distribuição
+instalada; `forge-cli` e `forge-portal` são `NOT_APPLICABLE` para esses
+scripts e usam seus próprios fluxos npm/browser. A matriz não chama o modo
+persistente do instalador, pois esse modo altera variáveis do usuário; o
+bootstrap subjacente é validado separadamente em diretórios descartáveis.
