@@ -19,6 +19,7 @@
     "account_runtime_root": "C:\\Users\\edgar\\.forge\\installs\\<forge-id>",
     "canonical_home_validation": "PASS: each *_HOME points to E:\\projetos\\FORJAS\\<repo>; each *_VENV and *_CLI exists",
     "powershell_7_dry_run": "PASS",
+    "powershell_7_actual": "PASS: 7/7 canonical account installs completed with persistent HKCU environment",
     "linux_bash": "BLOCKED: WSL distribution unavailable",
     "registry_scope": "HKCU\\Environment; no admin elevation",
     "verification": "fresh PowerShell child process invoked each account launcher with --version"

@@ -13,7 +13,7 @@ Data: 2026-10-12/13. Estado só muda para `PASS` com execução e evidência.
 | Forge Portal | PASS | 11 browser E2E, 366 i18n, 43 Python, vendor 7/7 |
 | install.ps1 | PASS | sete produtos Python aplicados em PowerShell 5.1 |
 | install.sh | PASS | sete produtos Python aplicados em Git Bash |
-| PowerShell 7 installer | PASS | dry-run 7/7 |
+| PowerShell 7 installer | PASS | dry-run 7/7 + persistent account replay 7/7 |
 | Linux Bash installer | BLOCKED | sem distribuição WSL disponível |
 | CUA visual terminal | BLOCKED | runtime CUA indisponível neste host |
 | Portal cross-forge runner | BLOCKED | bounded wait excedido antes da primeira URL |

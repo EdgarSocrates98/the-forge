@@ -21,7 +21,8 @@ Matrizes, comandos e artefatos ficam em `audit/`. Estados permitidos:
 Sete produtos Python passaram aplicação real de `install.ps1` e `install.sh`
 em conta sem administrador. Cada caso confirmou venv, `pip install -e .`,
 launcher e variáveis `*_HOME`, `*_INSTALL_ROOT`, `*_VENV`, `*_PYTHON`,
-`*_CLI`, `*_LAUNCHER` em HKCU. Ver
+`*_CLI`, `*_LAUNCHER` em HKCU. PowerShell 7 também passou replay persistente
+7/7. Ver
 [`audit/reports/installer-apply.json`](../../audit/reports/installer-apply.json).
 
 ## Reprodução segura

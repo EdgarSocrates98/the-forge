@@ -46,6 +46,8 @@ instalada; `forge-cli` e `forge-portal` são `NOT_APPLICABLE` para esses
 scripts e usam seus próprios fluxos npm/browser. A matriz não chama o modo
 persistente do instalador, pois esse modo altera variáveis do usuário; o
 bootstrap subjacente é validado separadamente em diretórios descartáveis.
+O replay persistente de PowerShell 7 fica separado em
+`reports/installer-powershell7-actual.json`, com stdout/stderr por repositório.
 
 ## Relatórios de homologação
 

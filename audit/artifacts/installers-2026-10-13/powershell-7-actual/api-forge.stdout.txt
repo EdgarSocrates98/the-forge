@@ -1,0 +1,107 @@
+[forge-bootstrap] registered C:\Users\edgar\.forge\installations\api-forge.json
+{
+  "cli": "apiforge",
+  "created_at": "2026-10-13T01:47:57Z",
+  "environment": {
+    "persistence": "HKCU\\Environment",
+    "prefix": "API_FORGE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "shell_init": null,
+    "variables": {
+      "API_FORGE_CLI": "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv\\Scripts\\apiforge.exe",
+      "API_FORGE_HOME": "E:\\projetos\\FORJAS\\api-forge",
+      "API_FORGE_INSTALL_ROOT": "C:\\Users\\edgar\\.forge\\installs\\api-forge",
+      "API_FORGE_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\apiforge.cmd",
+      "API_FORGE_PYTHON": "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv\\Scripts\\python.exe",
+      "API_FORGE_VENV": "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv"
+    },
+    "windows_aliases": {
+      "API-FORGE-CLI": "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv\\Scripts\\apiforge.exe",
+      "API-FORGE-HOME": "E:\\projetos\\FORJAS\\api-forge",
+      "API-FORGE-INSTALL-ROOT": "C:\\Users\\edgar\\.forge\\installs\\api-forge",
+      "API-FORGE-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\apiforge.cmd",
+      "API-FORGE-PYTHON": "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv\\Scripts\\python.exe",
+      "API-FORGE-VENV": "C:\\Users\\edgar\\.forge\\installs\\api-forge\\venv"
+    }
+  },
+  "forge_id": "api-forge",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "C:\\Users\\edgar\\.forge\\installs\\api-forge",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "done"
+    },
+    {
+      "stage": "create-venv",
+      "status": "done"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "done"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "done"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "done"
+    },
+    {
+      "stage": "smoke",
+      "status": "done"
+    },
+    {
+      "stage": "register",
+      "status": "done"
+    }
+  ],
+  "status": "completed",
+  "target_root": "C:\\Users\\edgar\\.forge\\installs\\api-forge"
+}
