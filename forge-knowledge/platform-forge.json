@@ -1,0 +1,86 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "platform-forge",
+  "name": "Platform Forge",
+  "family": "platform-engineering",
+  "summary": "Platform engineering specialist: IDP posture, golden paths, Kubernetes, GitOps, CI/CD (GitHub Actions), IaC, observability, SRE, service catalog and secrets scanning. Exposes nine analyze_* seams plus a native capability manifest.",
+  "repository": "https://github.com/EdgarSocrates98/platform-forge.git",
+  "package": "platformforge>=0.1,<0.2",
+  "binary": "platformforge",
+  "adapter": "adapters/platformforge",
+  "python": ">=3.10",
+  "appropriate_for": [
+    "repository/platform posture: GHA workflows, k8s manifests, IaC, GitOps state, service catalog",
+    "secrets scanning of a repo tree (with the staging boundary — see limitations)",
+    "developer-experience / golden-path / SRE evidence collection"
+  ],
+  "inappropriate_for": [
+    "Spark or cloud-data engineering — route to the spark-engineering family",
+    "API contract design — route to api-forge",
+    "verifying its own output — use an independent doctor"
+  ],
+  "intents": [
+    "github actions workflow",
+    "kubernetes manifest",
+    "gitops drift",
+    "iac posture",
+    "secrets scan",
+    "service catalog",
+    "golden path",
+    "sre slo"
+  ],
+  "technologies": [
+    "github actions",
+    "kubernetes",
+    "gitops",
+    "terraform",
+    "iac",
+    "observability",
+    "opentelemetry",
+    "backstage"
+  ],
+  "environments": [
+    "local",
+    "github"
+  ],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <platform-venv> && <platform-python> -m pip install --upgrade pip && <platform-python> -m pip install \"platformforge>=0.1,<0.2\" <the-forge>/adapters/platformforge",
+      "verify": "<platform-python> -c \"import platformforge, theforge_platformforge\"",
+      "prerequisites": [
+        "python>=3.10",
+        "pip"
+      ]
+    },
+    {
+      "kind": "editable",
+      "command": "<platform-python> -m pip install -e <checkout-platform-forge> -e <the-forge>/adapters/platformforge",
+      "verify": "<platform-python> -c \"import platformforge, theforge_platformforge\"",
+      "prerequisites": [
+        "local checkout of platform-forge",
+        "python>=3.10"
+      ]
+    }
+  ],
+  "verify_install": "<platform-python> -c \"import platformforge, theforge_platformforge\"",
+  "discover_command": "theforge providers add platform-forge --python <platform-python>",
+  "preferred_verifiers": [
+    "forge-doctor-data"
+  ],
+  "independent_verification": true,
+  "composes_with": [
+    "api-forge",
+    "forge-doctor-data"
+  ],
+  "fallback": [],
+  "limitations_note": "secrets.scan only sees what the core stages: secret-bearing inputs (.env and friends) are excluded by staging with reason 'secret' before the specialist runs — a 0-facts result means the boundary held, not that the repo is clean.",
+  "examples": [
+    "analyze this repo's GitHub Actions posture",
+    "scan the staged tree for secrets",
+    "evaluate the service catalog coverage of a platform"
+  ],
+  "tested_version": "0.1.0",
+  "tested_surface": "4bb0aa837941053ff006db0c3e08356341489d7522cf624db05803239b695653",
+  "recorded_at": "2026-10-08T00:00:00Z"
+}

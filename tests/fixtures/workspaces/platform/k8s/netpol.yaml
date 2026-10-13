@@ -1,0 +1,9 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: worker, namespace: prod}
+spec: {podSelector: {matchLabels: {app: worker}}}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: worker, namespace: prod}
+spec: {minAvailable: 1, selector: {matchLabels: {app: worker}}}

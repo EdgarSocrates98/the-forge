@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "edges": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "epistemic": {
+            "enum": [
+              "explicit",
+              "observed",
+              "inferred"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "contains",
+              "depends_on",
+              "declares",
+              "uses",
+              "targets",
+              "produced",
+              "handed_off_to",
+              "requires",
+              "produces",
+              "consumes",
+              "verifies",
+              "calls",
+              "reads",
+              "writes",
+              "affects",
+              "derived_from",
+              "supersedes",
+              "executed_by",
+              "supports",
+              "specializes",
+              "conflicts_with"
+            ]
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind",
+          "epistemic",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "workspace",
+              "repository",
+              "provider",
+              "capability",
+              "plan_node",
+              "evidence",
+              "artifact",
+              "component",
+              "file",
+              "decision",
+              "failure",
+              "memory",
+              "execution"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "plan_run": {
+      "type": "string"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "plan_run"
+  ],
+  "title": "WorkspaceGraph",
+  "type": "object"
+}

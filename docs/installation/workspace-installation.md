@@ -1,0 +1,19 @@
+# Instalação em workspace — the-forge
+
+Monorepo/pasta com vários repositórios:
+
+```bash
+cd ~/minha-workspace
+theforge setup --scope workspace
+# ou membro explícito (repetível):
+theforge setup --scope workspace --member sub/repo
+```
+
+Descoberta: repositórios com `.git` até 2 níveis. Cada membro mantém seu
+próprio `.git`, estado e ledger isolados — nenhum runtime duplicado.
+Precedência: `project > workspace > user` — instalação local do projeto
+vence sempre, e conflitos são reportados, nunca sobrescritos.
+
+Para scripts que já controlam aprovação, `install auto` continua disponível e
+aceita `--host`, `--profile` e `--components`, propagando as escolhas a cada
+Forja registrada.

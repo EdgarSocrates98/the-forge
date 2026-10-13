@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "context_needed": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "expected_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "operation_class": {
+      "anyOf": [
+        {
+          "enum": [
+            "read_only",
+            "local_mutation",
+            "external_read",
+            "external_mutation",
+            "destructive"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [],
+  "title": "PlanEstimate",
+  "type": "object"
+}

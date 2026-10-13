@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "confidence": {
+      "type": "number"
+    },
+    "config_source": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "dimensions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "score",
+          "weight"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "level": {
+      "enum": [
+        "trivial",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "profile_reason": {
+      "type": "string"
+    },
+    "requested_profile": {
+      "anyOf": [
+        {
+          "enum": [
+            "economy",
+            "balanced",
+            "max"
+          ]
+        },
+        {
+          "enum": [
+            "auto"
+          ]
+        }
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "selected_profile": {
+      "enum": [
+        "economy",
+        "balanced",
+        "max"
+      ]
+    },
+    "signals": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "task_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "task_id",
+    "level",
+    "score",
+    "confidence"
+  ],
+  "title": "ComplexityAssessment",
+  "type": "object"
+}

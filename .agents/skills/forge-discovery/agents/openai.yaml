@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Discovery"
+  short_description: "Discovery, health and surface staleness"
+
+policy:
+  allow_implicit_invocation: false

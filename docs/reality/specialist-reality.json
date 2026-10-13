@@ -1,0 +1,85 @@
+{
+  "forge": {
+    "branch": "codex/evo-grill-2026-10-12",
+    "commit_sha": "26952e8efef6c0a4a9e6304d83917ffde40f6f90",
+    "counts": {
+      "adrs": 59,
+      "closed_contracts": 42,
+      "contracts": 70,
+      "docs_root": 45,
+      "schemas": 70,
+      "test_files": 162
+    },
+    "origin_main": "06b7d1c84715b4bbd92b1f6a6208c2a3ac5f4cf1",
+    "package_version": "0.5.0",
+    "platform": "win32",
+    "python": "3.14.6",
+    "python_requires": ">=3.11",
+    "runtime_dependencies": 0
+  },
+  "generated_at": "2026-10-12T16:14:22Z",
+  "generated_by": "scripts/reality/collect.py",
+  "kind": "theforge/specialist-reality/v1",
+  "specialists": [
+    {
+      "compatibility_status": "missing",
+      "env_var": "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON",
+      "evidence": [
+        "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON not set and no conventional .venv-spark-aws found"
+      ],
+      "name": "spark-forge-aws",
+      "python_source": "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON not set and no conventional .venv-spark-aws found",
+      "repository": "https://github.com/EdgarSocrates98/spark-forge-aws"
+    },
+    {
+      "compatibility_status": "missing",
+      "env_var": "THEFORGE_REAL_APIFORGE_PYTHON",
+      "evidence": [
+        "THEFORGE_REAL_APIFORGE_PYTHON not set and no conventional .venv-api found"
+      ],
+      "name": "api-forge",
+      "python_source": "THEFORGE_REAL_APIFORGE_PYTHON not set and no conventional .venv-api found",
+      "repository": "https://github.com/EdgarSocrates98/api-forge"
+    },
+    {
+      "compatibility_status": "missing",
+      "env_var": "THEFORGE_REAL_DOCTORDATA_PYTHON",
+      "evidence": [
+        "THEFORGE_REAL_DOCTORDATA_PYTHON not set and no conventional .venv-dd found"
+      ],
+      "name": "forge-doctor-data",
+      "python_source": "THEFORGE_REAL_DOCTORDATA_PYTHON not set and no conventional .venv-dd found",
+      "repository": "https://github.com/EdgarSocrates98/forge-doctor-data"
+    },
+    {
+      "compatibility_status": "missing",
+      "env_var": "THEFORGE_REAL_DOCTORAPI_PYTHON",
+      "evidence": [
+        "THEFORGE_REAL_DOCTORAPI_PYTHON not set and no conventional .venv-da found"
+      ],
+      "name": "forge-doctor-api",
+      "python_source": "THEFORGE_REAL_DOCTORAPI_PYTHON not set and no conventional .venv-da found",
+      "repository": "https://github.com/EdgarSocrates98/forge-doctor-api"
+    },
+    {
+      "compatibility_status": "missing",
+      "env_var": "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON",
+      "evidence": [
+        "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON not set and no conventional .venv-spark-azure found"
+      ],
+      "name": "spark-forge-azure",
+      "python_source": "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON not set and no conventional .venv-spark-azure found",
+      "repository": "https://github.com/EdgarSocrates98/spark-forge-azure"
+    },
+    {
+      "compatibility_status": "missing",
+      "env_var": "THEFORGE_REAL_PLATFORMFORGE_PYTHON",
+      "evidence": [
+        "THEFORGE_REAL_PLATFORMFORGE_PYTHON not set and no conventional .venv-platform found"
+      ],
+      "name": "platform-forge",
+      "python_source": "THEFORGE_REAL_PLATFORMFORGE_PYTHON not set and no conventional .venv-platform found",
+      "repository": "https://github.com/EdgarSocrates98/platform-forge"
+    }
+  ]
+}

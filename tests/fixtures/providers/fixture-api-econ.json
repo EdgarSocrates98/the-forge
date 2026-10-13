@@ -1,0 +1,102 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-api",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+  "execute",
+  "plan"
+ ],
+ "domains": [
+  "api-engineering"
+ ],
+ "capabilities": [
+  {
+   "id": "api.contract",
+   "actions": [
+    "review",
+    "lint"
+   ],
+   "default_action": "review",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Review OpenAPI contracts",
+   "signals": {
+    "keywords": [
+     "openapi",
+     "contrato",
+     "contract",
+     "api",
+     "swagger"
+    ],
+    "file_globs": [
+     "openapi.yaml",
+     "openapi.json",
+     "*.openapi.yaml",
+     "swagger.json"
+    ],
+    "dependencies": [
+     "fastapi",
+     "flask"
+    ]
+   },
+   "relations": {
+    "consumes": [
+     "spark.analysis-report"
+    ],
+    "can_review": [
+     "fixture-spark/spark.performance"
+    ]
+   }
+  }
+ ],
+ "estimate": {
+  "context_needed": [
+   "openapi.yaml"
+  ],
+  "operation_class": "read_only",
+  "expected_artifacts": [],
+  "unknowns": [],
+  "limitations": []
+ },
+ "provider_economy": {
+  "schema": "theforge/ProviderEconomyReceipt/v1",
+  "provider": "fixture-api",
+  "run": "case:api-9",
+  "context_bytes": {
+   "value": 2048,
+   "status": "measured"
+  },
+  "tool_calls": {
+   "value": 1,
+   "status": "measured"
+  },
+  "model_calls": {
+   "status": "not_applicable"
+  },
+  "provider_tokens": {
+   "status": "unresolved"
+  },
+  "cost_usd": {
+   "value": 0.02,
+   "status": "estimated"
+  },
+  "wall_time_ms": {
+   "value": 300,
+   "status": "measured"
+  },
+  "basis": [
+   "case-metrics"
+  ],
+  "limitations": []
+ },
+ "native_trace": {
+  "ref": "apiforge://case/api-9/trace",
+  "summary": "",
+  "critical_path": []
+ }
+}

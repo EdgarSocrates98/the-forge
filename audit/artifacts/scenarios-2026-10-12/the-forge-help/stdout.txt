@@ -1,0 +1,50 @@
+usage: theforge [-h] [--version]
+                {init,doctor,setup,status,excellence,registry,economy,knowledge,agents,capabilities,install,installations,graph,portal,providers,specialists,hosts,task,provider,ask,plan,workspace,explain,replay,resume,decisions,trace,memory,targets,remote} ...
+
+The Forge: one entry point, many specialists.
+
+positional arguments:
+  {init,doctor,setup,status,excellence,registry,economy,knowledge,agents,capabilities,install,installations,graph,portal,providers,specialists,hosts,task,provider,ask,plan,workspace,explain,replay,resume,decisions,trace,memory,targets,remote}
+    init                create .forge/ in the workspace
+    doctor              inspect host, workspace and providers
+    setup               guided, approval-gated setup for The Forge and
+                        registered specialists
+    status              summarize workspace state
+    excellence          engineering excellence evidence
+    registry            provider registry
+    economy             measured execution economy
+    knowledge           forge knowledge layer (bootstrap packages)
+    agents              specialized agent registry
+    capabilities        declared capabilities
+    install             governed provider installation
+    installations       bootstrap installation registry
+                        (~/.forge/installations)
+    graph               the capability graph: declared+observed relations of
+                        the registry and workspace (cached manifests only, no
+                        provider process)
+    portal              optional local web UI (127.0.0.1 + session token) over
+                        the real services — install, hosts, MCP handshakes,
+                        federation, agents, skills, graphs and tasks
+    providers           provider operations
+    specialists         specialist lifecycle control plane
+    hosts               AI host detection and activation
+    task                delegate a task to specialists (real argv execution)
+    provider            provider authoring: scaffold and conformance
+    ask                 route a task to a specialist
+    plan                plan (and optionally execute) a multi-provider task
+    workspace           workspace description
+    explain             explain a past run
+    replay              re-render, re-verify or re-execute a past run
+    resume              resume a plan run: nodes whose recorded inputs still
+                        verify are reused, the rest re-execute
+    decisions           the project's reusable-decision memory
+                        (.forge/intel/decisions.json)
+    trace               the run's local trace: what happened, span by span
+                        (explain answers why)
+    memory              engineering memory (.forge/memory/)
+    targets             declared execution targets (targets.toml)
+    remote              remote-execution trust layer (remote-policy.toml)
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit

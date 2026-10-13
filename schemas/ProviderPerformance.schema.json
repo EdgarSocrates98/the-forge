@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "type": "integer"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "context_bytes": {
+            "type": "integer"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "files_cited": {
+            "type": "integer"
+          },
+          "files_sent": {
+            "type": "integer"
+          },
+          "ok": {
+            "type": "integer"
+          },
+          "partial": {
+            "type": "integer"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "runs": {
+            "type": "integer"
+          },
+          "surface": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "verified_runs": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "provider",
+          "capability",
+          "runs",
+          "ok",
+          "partial",
+          "failed",
+          "verified_runs",
+          "evidence",
+          "artifacts",
+          "context_bytes",
+          "files_sent",
+          "files_cited",
+          "duration_ms",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at"
+  ],
+  "title": "ProviderPerformance",
+  "type": "object"
+}

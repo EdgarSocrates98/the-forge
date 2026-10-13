@@ -1,0 +1,233 @@
+{
+  "kind": "theforge/evidence-manifest/v1",
+  "cycle": "5.1",
+  "forge_sha": "75a0032ffab327b62e0fd554ce427a526ce38d1d",
+  "generated_at": "2026-10-08T07:28:24Z",
+  "evidence": [
+    {
+      "claim": "spark-forge-aws: adapter snapshot fresh against installed specialist",
+      "source": "scripts/reality/collect.py",
+      "hash": "49f6db89cea5e72f7d681a4cb75965870fc1fdc40bad85a4ee08cbfd69fba9f9",
+      "surface": "828827d7cd57e90a9ffc9b406ee0105ec31a7d7e",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "spark-forge-aws: relation to origin/main = diverged",
+      "source": "scripts/reality/collect.py",
+      "hash": "828827d7cd57e90a9ffc9b406ee0105ec31a7d7e",
+      "surface": "ab7f02e2423e7c07cc2dbeb982fdc50a2c3f6099",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "api-forge: adapter snapshot fresh against installed specialist",
+      "source": "scripts/reality/collect.py",
+      "hash": "b2be601baaab6dbb26e67e8538936a85d8b5752dcda5eabd0a92f8a5e4d00183",
+      "surface": "1745f8726941d9d17761bacf94ddf84b711f879d",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "api-forge: relation to origin/main = diverged",
+      "source": "scripts/reality/collect.py",
+      "hash": "1745f8726941d9d17761bacf94ddf84b711f879d",
+      "surface": "07459a2010d51bbf094834aa87bed52b154d2537",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "forge-doctor-data: adapter snapshot fresh against installed specialist",
+      "source": "scripts/reality/collect.py",
+      "hash": "1e2b1f4293daecd9f2bb434c13251bf56ffcb581af4cfdf518a0c4695817ffc6",
+      "surface": "3a8d7a5637d6585eaf8151da61f03d0b2d348c51",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "forge-doctor-data: relation to origin/main = same",
+      "source": "scripts/reality/collect.py",
+      "hash": "3a8d7a5637d6585eaf8151da61f03d0b2d348c51",
+      "surface": "3a8d7a5637d6585eaf8151da61f03d0b2d348c51",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "forge-doctor-api: adapter snapshot fresh against installed specialist",
+      "source": "scripts/reality/collect.py",
+      "hash": "ad03aa4f33d7ffde3a008156097be79e79c6235a7a704266b61d930fb6454dda",
+      "surface": "035b63587f2c9350cf6b19c0810c331ef2abd52f",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "forge-doctor-api: relation to origin/main = diverged",
+      "source": "scripts/reality/collect.py",
+      "hash": "035b63587f2c9350cf6b19c0810c331ef2abd52f",
+      "surface": "e916a1102c2170caf9e12063274f7fff2aad76f7",
+      "scope": "specialist",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "offline suite green",
+      "source": "pytest -m \"not slow and not real_provider\"",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "package build + fresh install gate",
+      "source": "pytest -m slow (4/4)",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "remote CI matrix",
+      "source": "github actions quota exhausted",
+      "hash": null,
+      "surface": "REMOTE_BLOCKED",
+      "scope": "ci",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "unverified"
+    },
+    {
+      "claim": "ruff check + format",
+      "source": "ruff check . / ruff format --check .",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "mypy strict",
+      "source": "mypy (203 files, 0 issues)",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "schema parity 67<->67",
+      "source": "python -m theforge.contracts.schema schemas",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "B01-B15 scenario suite",
+      "source": "scripts/bench/run_scenarios.py — 15/15",
+      "hash": "0f33f8a5fe7afb4fc610c99c382b3b64539863a9ef040ba51f1f44d692d51ca1",
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "hot-path benchmarks 5 metrics, 0 regressions in 21",
+      "source": "scripts/bench/run_bench.py --check",
+      "hash": "74f5a757052b60adcf87c25f8cefdc1b5437b1b41c27f39061ac6d627394d3ef",
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "memory ROI 87.6% context bytes saved",
+      "source": "scripts/bench/run_memory_roi.py",
+      "hash": "1b19ab1b155105dc70e09a9c525c12e99e569d1f15572cf3737a95054cbb6e98",
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "adversarial suite §50 18 vectors covered",
+      "source": "tests/test_adversarial_cycle5.py + test_surface_staleness + test_remote*",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "replay protection §29",
+      "source": "tests/test_remote_replay.py (10 cases)",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "cross-repo conformance describe×4 + graph deterministic",
+      "source": "tests/test_federation_conformance.py",
+      "hash": null,
+      "surface": null,
+      "scope": "repo",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "proven"
+    },
+    {
+      "claim": "remote transport",
+      "source": "deferred by design — no transport code in remote.py",
+      "hash": null,
+      "surface": null,
+      "scope": "arch",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "deferred"
+    },
+    {
+      "claim": "marketplace",
+      "source": "deferred — ADR 0036 / registry-sources.md",
+      "hash": null,
+      "surface": null,
+      "scope": "arch",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "deferred"
+    },
+    {
+      "claim": "provider reputation engine",
+      "source": "deferred — observations only",
+      "hash": null,
+      "surface": null,
+      "scope": "arch",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "deferred"
+    },
+    {
+      "claim": "full Sigstore/in-toto",
+      "source": "future hardening — documented, not implemented",
+      "hash": null,
+      "surface": null,
+      "scope": "arch",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "deferred"
+    },
+    {
+      "claim": "counterfactual planning runtime",
+      "source": "contract-only — FOUNDATION_ONLY",
+      "hash": null,
+      "surface": null,
+      "scope": "arch",
+      "timestamp": "2026-10-08T07:28:24Z",
+      "status": "deferred"
+    }
+  ]
+}

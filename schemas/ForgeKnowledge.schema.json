@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "appropriate_for": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "binary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilities_source": {
+      "type": "string"
+    },
+    "composes_with": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "discover_command": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "environments": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "examples": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "fallback": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "family": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "inappropriate_for": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "independent_verification": {
+      "type": "boolean"
+    },
+    "install": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "prerequisites": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "verify": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "command",
+          "verify"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "intents": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limitations_note": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "package": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "preferred_verifiers": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "python": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "recorded_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "repository": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "technologies": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "tested_surface": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "tested_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trust_default": {
+      "type": "string"
+    },
+    "verify_install": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "family",
+    "summary"
+  ],
+  "title": "ForgeKnowledge",
+  "type": "object"
+}

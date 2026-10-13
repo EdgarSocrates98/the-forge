@@ -1,0 +1,253 @@
+{
+  "benchmark": "cycle-5.1-scenarios",
+  "commit_sha": "5bea6b76fdab750d2a7245c88fd65923e0f7b02e",
+  "environment": {
+    "date": "2026-10-08T07:05:16Z",
+    "forge_version": "0.3.0",
+    "git_dirty": true,
+    "git_head": "5bea6b76fdab750d2a7245c88fd65923e0f7b02e",
+    "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "os": "Windows-10-10.0.26300-SP0",
+    "python": "CPython 3.11.15"
+  },
+  "evidence_note": "adapter replay fixtures (tests/fixtures/native) \u2014 conformance evidence, not live specialist execution",
+  "results": {
+    "B01": {
+      "benchmark": "deterministic simple plan",
+      "evidence": [
+        {
+          "plan_sha256": "573afa92710c1fbe185200c6c746f1d5a170f1761b4c147143b46d83615ca6c2",
+          "violations": 0
+        }
+      ],
+      "median_ms": 0.165,
+      "p90_ms": 0.241,
+      "status": "pass"
+    },
+    "B02": {
+      "benchmark": "artifact-aware multi-specialist plan",
+      "evidence": [
+        {
+          "chain": [
+            "api.diagnostic-evidence",
+            "data.diagnostic-evidence"
+          ],
+          "nodes": 2,
+          "shared_artifact_types": 2
+        }
+      ],
+      "median_ms": 0.046,
+      "p90_ms": 0.089,
+      "status": "pass"
+    },
+    "B03": {
+      "benchmark": "semantic ambiguity fallback",
+      "evidence": [
+        {
+          "candidates": 0,
+          "status": "no_route"
+        }
+      ],
+      "median_ms": 0.489,
+      "p90_ms": 0.919,
+      "status": "pass"
+    },
+    "B04": {
+      "benchmark": "stale specialist surface",
+      "evidence": [
+        {
+          "fresh_on_match": [
+            true,
+            true,
+            true
+          ],
+          "stale_on_change": [
+            false,
+            false,
+            false
+          ],
+          "stale_on_unknown": [
+            false,
+            false,
+            false
+          ]
+        }
+      ],
+      "median_ms": 0.103,
+      "p90_ms": 0.246,
+      "status": "pass"
+    },
+    "B05": {
+      "benchmark": "memory-assisted repeated task",
+      "evidence": [
+        {
+          "delivered_bytes": 31404,
+          "entries": 32,
+          "savings_ratio": 0.3342,
+          "store_bytes": 47164
+        }
+      ],
+      "median_ms": 12.663,
+      "p90_ms": 18.001,
+      "status": "pass"
+    },
+    "B06": {
+      "benchmark": "poisoned memory",
+      "evidence": [
+        {
+          "entries": 1,
+          "skipped": "memory: skipped 3 corrupt entries"
+        }
+      ],
+      "median_ms": 10.257,
+      "p90_ms": 10.845,
+      "status": "pass"
+    },
+    "B07": {
+      "benchmark": "restricted remote target",
+      "evidence": [
+        {
+          "allow": "allow",
+          "deny_reasons": [
+            "target 'remote-1' not in allowed_target_ids"
+          ],
+          "locality_forbids": "deny"
+        }
+      ],
+      "median_ms": 0.032,
+      "p90_ms": 0.059,
+      "status": "pass"
+    },
+    "B08": {
+      "benchmark": "independent verification",
+      "evidence": [
+        {
+          "can_verify_edges": 18,
+          "real_federation": "forge (no patient-side verified_by \u2014 limitation named)",
+          "with_binding": "independent"
+        }
+      ],
+      "median_ms": 0.356,
+      "p90_ms": 0.525,
+      "status": "pass"
+    },
+    "B09": {
+      "benchmark": "global stop optional nodes",
+      "evidence": [
+        {
+          "budget_authority": "stop_budget_exhausted",
+          "pending_verification_recorded": true,
+          "sufficient_evidence": "stop_sufficient_evidence",
+          "verification_blocks_evidence_stop": "continue"
+        }
+      ],
+      "median_ms": 0.046,
+      "p90_ms": 0.065,
+      "status": "pass"
+    },
+    "B10": {
+      "benchmark": "strategy policy preference",
+      "evidence": [
+        {
+          "in_scope": [
+            "bench-beta"
+          ],
+          "out_of_scope": [],
+          "without_policy": []
+        }
+      ],
+      "median_ms": 0.035,
+      "p90_ms": 0.051,
+      "status": "pass"
+    },
+    "B11": {
+      "benchmark": "graph conflict",
+      "evidence": [
+        {
+          "real_conflicts": 0,
+          "synthetic_conflicts": 2
+        }
+      ],
+      "median_ms": 0.092,
+      "p90_ms": 0.12,
+      "status": "pass"
+    },
+    "B12": {
+      "benchmark": "unavailable specialist",
+      "evidence": [
+        {
+          "named_in_limitations": true,
+          "plan_violations": 1
+        }
+      ],
+      "median_ms": 0.436,
+      "p90_ms": 0.481,
+      "status": "pass"
+    },
+    "B13": {
+      "benchmark": "fake remote receipt",
+      "evidence": [
+        {
+          "forged_violations": [
+            "no target-side verification ref recorded",
+            "provider mismatch: 'other-provider' != 'spark-forge-aws'",
+            "receipt does not bind this request (request_sha256)",
+            "target_id mismatch: 'other-target' != 'remote-1'",
+            "target_identity_ref mismatch: 'did:example:forged' != 'did:example:remote-1'"
+          ],
+          "honest": "accepted"
+        }
+      ],
+      "median_ms": 0.181,
+      "p90_ms": 0.234,
+      "status": "pass"
+    },
+    "B14": {
+      "benchmark": "a2a unverified target",
+      "evidence": [
+        {
+          "capabilities": [
+            "x.y"
+          ],
+          "limitations": [
+            "a2a-agent-card: external service, not a Forge provider",
+            "all capabilities are unverified self-declared claims",
+            "remote execution implies data egress \u2014 review before use",
+            "service endpoint 'https://agent.example/a2a' \u2014 remote execution only, nothing installable"
+          ],
+          "provider": "claimed-trusted-agent",
+          "publisher": "a2a:claimed-trusted-agent",
+          "requires_network": true
+        }
+      ],
+      "median_ms": 0.038,
+      "p90_ms": 0.171,
+      "status": "pass"
+    },
+    "B15": {
+      "benchmark": "cross-project memory import",
+      "evidence": [
+        {
+          "imported": 1,
+          "refused_note": "memory: refused 1 entry (malformed or project/workspace scope)"
+        }
+      ],
+      "median_ms": 8.646,
+      "p90_ms": 8.763,
+      "status": "pass"
+    }
+  },
+  "schema": "theforge-cycle5-scenarios/v1",
+  "specialist_shas": {
+    "api-forge": "unknown",
+    "forge-doctor-api": "unknown",
+    "forge-doctor-data": "unknown",
+    "spark-forge-aws": "unknown"
+  },
+  "surface_hashes": {
+    "api-forge": "b2be601baaab6dbb26e67e8538936a85d8b5752dcda5eabd0a92f8a5e4d00183",
+    "forge-doctor-api": "ad03aa4f33d7ffde3a008156097be79e79c6235a7a704266b61d930fb6454dda",
+    "forge-doctor-data": "1e2b1f4293daecd9f2bb434c13251bf56ffcb581af4cfdf518a0c4695817ffc6",
+    "spark-forge-aws": "49f6db89cea5e72f7d681a4cb75965870fc1fdc40bad85a4ee08cbfd69fba9f9"
+  }
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Cross-Domain Planning"
+  short_description: "Multi-specialist DAG construction"
+
+policy:
+  allow_implicit_invocation: false

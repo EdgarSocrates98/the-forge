@@ -1,0 +1,706 @@
+"""Relational contract invariants (requirements 1.1-1.8, 1.11, 2.6).
+
+Each invariant has at least one valid and one invalid case asserting the specific code.
+"""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from theforge.contracts import (
+    Artifact,
+    Capability,
+    ContextFile,
+    ContextPack,
+    ContextRequest,
+    ContextRequestItem,
+    ContractError,
+    Evidence,
+    ExecutionReceipt,
+    ExecutionResult,
+    Finding,
+    ForgeManifest,
+    Producer,
+    ReceiptInputs,
+    ReceiptProvider,
+    Signals,
+    from_dict,
+)
+from theforge.contracts.canonical import utc_now
+from theforge.contracts.codes import Codes
+from theforge.contracts.integrity import (
+    IntegrityError,
+    Violation,
+    check_artifact_path,
+    check_producer,
+    check_timestamp,
+    validate_context_pack,
+    validate_context_request,
+    validate_manifest_limits,
+    validate_receipt,
+    validate_result,
+)
+from theforge.contracts.types import (
+    CATCH_ALL_GLOBS,
+    MAX_ACTIONS,
+    MAX_CAPABILITIES,
+    MAX_CONTEXT_REQUEST_ITEMS,
+    MAX_DEPENDENCIES,
+    MAX_GLOBS,
+    MAX_KEYWORDS,
+    ErrorInfo,
+    is_catch_all_glob,
+)
+from theforge.providers.echo.provider import MANIFEST as ECHO_MANIFEST
+
+H1 = "a" * 64
+H2 = "b" * 64
+PROD = Producer(id="echo", version="1.0.0")
+TS = "2026-01-01T00:00:00.000000Z"
+
+
+def evidence(eid: str) -> Evidence:
+    return Evidence(id=eid, epistemic="observed", subject="s", claim="c", producer=PROD)
+
+
+def result(**overrides: Any) -> ExecutionResult:
+    base: dict[str, Any] = {
+        "producer": PROD,
+        "created_at": TS,
+        "status": "ok",
+        "evidence": [evidence("e1"), evidence("e2")],
+        "findings": [
+            Finding(id="f1", title="t", evidence_ids=["e1"]),
+            Finding(id="f2", title="t", evidence_ids=["e1", "e2"]),
+        ],
+        "artifacts": [Artifact(path="out/report.md", sha256=H1)],
+    }
+    base.update(overrides)
+    return ExecutionResult(**base)
+
+
+def codes_of(exc: pytest.ExceptionInfo[IntegrityError]) -> list[str]:
+    return [v.code for v in exc.value.violations]
+
+
+# --- IntegrityError shape -------------------------------------------------------------
+
+
+def test_integrity_error_is_contract_error() -> None:
+    assert issubclass(IntegrityError, ContractError)
+
+
+def test_valid_result_passes() -> None:
+    validate_result(result(), expected=PROD)
+
+
+def test_utc_now_result_passes() -> None:
+    validate_result(result(created_at=utc_now()), expected=PROD)
+
+
+# --- 1.1 duplicate evidence ids -------------------------------------------------------
+
+
+def test_duplicate_evidence_ids_rejected() -> None:
+    bad = result(evidence=[evidence("e1"), evidence("e1"), evidence("e2")])
+    with pytest.raises(IntegrityError) as exc:
+        validate_result(bad, expected=PROD)
+    assert exc.value.code == Codes.RESULT_DUP_EVIDENCE
+    assert "e1" in str(exc.value)
+
+
+# --- 1.2 duplicate finding ids --------------------------------------------------------
+
+
+def test_duplicate_finding_ids_rejected() -> None:
+    bad = result(findings=[Finding(id="f1", title="a"), Finding(id="f1", title="b")])
+    with pytest.raises(IntegrityError) as exc:
+        validate_result(bad, expected=PROD)
+    assert exc.value.code == Codes.RESULT_DUP_FINDING
+
+
+# --- 1.3 dangling evidence references -------------------------------------------------
+
+
+def test_dangling_evidence_reference_rejected_and_named() -> None:
+    bad = result(findings=[Finding(id="f1", title="t", evidence_ids=["e1", "ghost"])])
+    with pytest.raises(IntegrityError) as exc:
+        validate_result(bad, expected=PROD)
+    assert exc.value.code == Codes.RESULT_DANGLING_EVIDENCE
+    assert "ghost" in str(exc.value)
+    assert exc.value.violations[0].field == "findings[0].evidence_ids[1]"
+
+
+# --- 1.4 artifact path containment (lexical, never opened) ----------------------------
+
+
+@pytest.mark.parametrize(
+    "path", ["report.md", "out/report.md", "./out/r.md", "a/b.c/d", "deep/..name/x"]
+)
+def test_contained_artifact_paths_accepted(path: str) -> None:
+    assert check_artifact_path(path) is None
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "",
+        "/etc/passwd",
+        "../escape",
+        "out/../../escape",
+        "out/..",
+        "C:/Windows/x",
+        "c:relative",
+        "\\\\server\\share\\x",
+        "out\\report.md",
+        "\\rooted",
+        ".",
+        "./",
+        "a\x00b",
+    ],
+)
+def test_escaping_artifact_paths_rejected(path: str) -> None:
+    v = check_artifact_path(path)
+    assert v is not None
+    assert v.code == Codes.RESULT_ARTIFACT_PATH
+
+
+def test_result_with_bad_artifact_rejected_without_opening(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def boom(*_a: object, **_k: object) -> None:
+        raise AssertionError("path must never be opened")
+
+    monkeypatch.setattr("builtins.open", boom)
+    bad = result(artifacts=[Artifact(path="ok.md", sha256=H1), Artifact(path="/abs", sha256=H2)])
+    with pytest.raises(IntegrityError) as exc:
+        validate_result(bad, expected=PROD)
+    assert exc.value.code == Codes.RESULT_ARTIFACT_PATH
+    assert exc.value.violations[0].field == "artifacts[1].path"
+
+
+# --- 1.6 producer -------------------------------------------------------------------
+
+
+def test_check_producer_matching() -> None:
+    assert check_producer(PROD, expected=Producer(id="echo", version="1.0.0"), field="p") is None
+
+
+@pytest.mark.parametrize(
+    "actual", [Producer(id="other", version="1.0.0"), Producer(id="echo", version="9.9.9")]
+)
+def test_check_producer_divergent(actual: Producer) -> None:
+    v = check_producer(actual, expected=PROD, field="producer")
+    assert v == Violation(code=Codes.PROTO_PRODUCER, detail=v.detail if v else "", field="producer")
+
+
+def test_result_with_wrong_producer_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_result(result(), expected=Producer(id="echo", version="2.0.0"))
+    assert exc.value.code == Codes.PROTO_PRODUCER
+
+
+# --- 2.6 timestamps -------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "value",
+    [TS, "2026-01-01T00:00:00Z", "2026-01-01T00:00:00+00:00", "2026-01-01T00:00:00.5+00:00"],
+)
+def test_utc_timestamps_accepted(value: str) -> None:
+    assert check_timestamp(value, field="created_at") is None
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        "t",
+        "yesterday",
+        "2026-13-01T00:00:00Z",
+        "2026-01-01T00:00:00",
+        "2026-01-01T00:00:00+02:00",
+        "2026-01-01",
+    ],
+)
+def test_malformed_or_non_utc_timestamps_rejected(value: str) -> None:
+    v = check_timestamp(value, field="created_at")
+    assert v is not None
+    assert v.code == Codes.PROTO_SCHEMA
+    assert v.field == "created_at"
+
+
+def test_result_with_malformed_timestamp_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_result(result(created_at="not-a-date"), expected=PROD)
+    assert exc.value.code == Codes.PROTO_SCHEMA
+
+
+# --- deterministic collection ---------------------------------------------------------
+
+
+def test_all_violations_collected_in_deterministic_order() -> None:
+    bad = result(
+        producer=Producer(id="evil", version="1.0.0"),
+        created_at="nope",
+        evidence=[evidence("e1"), evidence("e1")],
+        findings=[
+            Finding(id="f1", title="t", evidence_ids=["missing"]),
+            Finding(id="f1", title="t"),
+        ],
+        artifacts=[Artifact(path="../x", sha256=H1)],
+    )
+    with pytest.raises(IntegrityError) as first:
+        validate_result(bad, expected=PROD)
+    with pytest.raises(IntegrityError) as second:
+        validate_result(bad, expected=PROD)
+    expected_order = [
+        Codes.PROTO_PRODUCER,
+        Codes.PROTO_SCHEMA,
+        Codes.RESULT_DUP_EVIDENCE,
+        Codes.RESULT_DUP_FINDING,
+        Codes.RESULT_DANGLING_EVIDENCE,
+        Codes.RESULT_ARTIFACT_PATH,
+    ]
+    assert codes_of(first) == expected_order
+    assert first.value.code == Codes.PROTO_PRODUCER
+    assert first.value.violations == second.value.violations
+
+
+# --- 1.7 context pack -----------------------------------------------------------------
+
+
+def pack(**overrides: Any) -> ContextPack:
+    base: dict[str, Any] = {
+        "producer": Producer(id="theforge", version="0.1.0"),
+        "created_at": TS,
+        "status": "complete",
+        "task_id": "t1",
+        "provider_id": "echo",
+        "root": "/ws",
+        "files": [
+            ContextFile(path="a.py", sha256=H1, bytes=10),
+            ContextFile(path="src/b.py", sha256=H2, bytes=5),
+        ],
+        "budget_bytes": 100,
+        "used_bytes": 15,
+    }
+    base.update(overrides)
+    return ContextPack(**base)
+
+
+def test_valid_context_pack_passes() -> None:
+    validate_context_pack(pack())
+    validate_context_pack(pack(files=[], used_bytes=0))
+    validate_context_pack(pack(budget_bytes=15))
+
+
+def test_context_pack_over_budget_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(budget_bytes=10))
+    assert exc.value.code == Codes.CONTEXT_BYTES
+
+
+def test_context_pack_used_bytes_mismatch_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(used_bytes=14))
+    assert exc.value.code == Codes.CONTEXT_BYTES
+
+
+@pytest.mark.parametrize("path", ["/etc/passwd", "../x", "C:/x", "a\\b"])
+def test_context_pack_escaping_file_path_rejected(path: str) -> None:
+    files = [ContextFile(path=path, sha256=H1, bytes=15)]
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(files=files))
+    assert exc.value.code == Codes.CONTEXT_PATH
+    assert exc.value.violations[0].field == "files[0].path"
+
+
+# --- context-intelligence-v2 1.4: tier bytes, negotiation round, context request ---
+
+
+def test_context_pack_with_consistent_tier_bytes_passes() -> None:
+    validate_context_pack(pack(tier_bytes={"metadata": 0, "reference": 10, "excerpt": 5}))
+    validate_context_pack(pack(tier_bytes={"reference": 15}))
+    validate_context_pack(pack(round=2))
+
+
+def test_context_pack_tier_bytes_sum_mismatch_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(tier_bytes={"metadata": 0, "reference": 10, "excerpt": 4}))
+    assert exc.value.code == Codes.CONTEXT_BYTES
+    assert exc.value.violations[0].field == "tier_bytes"
+
+
+def test_context_pack_nonzero_metadata_tier_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(tier_bytes={"metadata": 5, "reference": 10}))
+    assert codes_of(exc) == [Codes.CONTEXT_BYTES]
+    assert exc.value.violations[0].field == "tier_bytes.metadata"
+
+
+@pytest.mark.parametrize(
+    "tier_bytes", [{"bogus": 0, "reference": 15}, {"reference": 20, "excerpt": -5}]
+)
+def test_context_pack_unknown_or_negative_tier_rejected(tier_bytes: dict[str, int]) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(tier_bytes=tier_bytes))
+    assert exc.value.code == Codes.CONTEXT_BYTES
+    assert exc.value.violations[0].field is not None
+    assert exc.value.violations[0].field.startswith("tier_bytes.")
+
+
+def test_context_pack_negative_round_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_pack(pack(round=-1))
+    assert exc.value.violations[0].field == "round"
+    assert codes_of(exc) == [Codes.PROTO_SCHEMA]
+
+
+def request_of(n: int) -> ContextRequest:
+    return ContextRequest(items=[ContextRequestItem(path=f"f{i}.py") for i in range(n)])
+
+
+def test_max_context_request_items_is_64() -> None:
+    assert MAX_CONTEXT_REQUEST_ITEMS == 64
+
+
+@pytest.mark.parametrize("n", [1, MAX_CONTEXT_REQUEST_ITEMS])
+def test_valid_context_request_passes(n: int) -> None:
+    validate_context_request(request_of(n))
+
+
+@pytest.mark.parametrize("n", [0, MAX_CONTEXT_REQUEST_ITEMS + 1])
+def test_context_request_item_count_out_of_range_rejected(n: int) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_context_request(request_of(n))
+    assert codes_of(exc) == [Codes.CONTEXT_REQUEST_INVALID]
+    assert exc.value.violations[0].field == "items"
+
+
+def test_context_request_item_paths_left_to_broker() -> None:
+    items = [ContextRequestItem(path=p) for p in ("../x", "/etc/passwd", "")]
+    validate_context_request(ContextRequest(items=items))
+
+
+# --- 1.8 / 1.5 receipt ----------------------------------------------------------------
+
+
+def receipt(**overrides: Any) -> ExecutionReceipt:
+    base: dict[str, Any] = {
+        "producer": Producer(id="theforge", version="0.1.0"),
+        "created_at": TS,
+        "status": "ok",
+        "run_id": "r1",
+        "forge_version": "0.1.0",
+        "inputs": ReceiptInputs(task_sha256=H1, routing_sha256=H2, context_sha256=H1),
+        "provider": ReceiptProvider(
+            id="echo", version="1.0.0", trust="builtin", manifest_sha256=H2
+        ),
+        "result_sha256": H1,
+        "started_at": TS,
+        "finished_at": TS,
+    }
+    base.update(overrides)
+    return ExecutionReceipt(**base)
+
+
+def test_valid_success_receipt_passes() -> None:
+    validate_receipt(receipt(), result_sha256=H1)
+    validate_receipt(receipt(status="partial"), result_sha256=H1)
+
+
+def test_failure_receipt_without_result_hash_passes() -> None:
+    failed = receipt(
+        status="provider_failure",
+        result_sha256=None,
+        error=ErrorInfo(code=Codes.PROTO_EXIT, detail="exit 1"),
+    )
+    validate_receipt(failed, result_sha256=None)
+
+
+def test_success_receipt_without_result_hash_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(result_sha256=None), result_sha256=H1)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+
+
+def test_success_receipt_with_no_persisted_result_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(), result_sha256=None)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+
+
+def test_success_receipt_with_mismatched_hash_rejected() -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(), result_sha256=H2)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert exc.value.violations[0].field == "result_sha256"
+
+
+@pytest.mark.parametrize(
+    ("overrides", "field"),
+    [
+        ({"inputs": ReceiptInputs(task_sha256="A" * 64)}, "inputs.task_sha256"),
+        ({"inputs": ReceiptInputs(task_sha256=H1, routing_sha256="abc")}, "inputs.routing_sha256"),
+        ({"inputs": ReceiptInputs(task_sha256=H1, context_sha256="h")}, "inputs.context_sha256"),
+        ({"inputs": ReceiptInputs(task_sha256=H1, risk_sha256="g" * 64)}, "inputs.risk_sha256"),
+        (
+            {"provider": ReceiptProvider(id="e", version="1", trust="local", manifest_sha256="h")},
+            "provider.manifest_sha256",
+        ),
+    ],
+)
+def test_receipt_malformed_hash_rejected(overrides: dict[str, Any], field: str) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(**overrides), result_sha256=H1)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert exc.value.violations[0].field == field
+
+
+def test_receipt_malformed_result_hash_rejected() -> None:
+    bad = "F" * 64
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(result_sha256=bad), result_sha256=bad)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert exc.value.violations[0].field == "result_sha256"
+
+
+@pytest.mark.parametrize("field", ["created_at", "started_at", "finished_at"])
+def test_receipt_malformed_timestamp_rejected(field: str) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(**{field: "t"}), result_sha256=H1)
+    assert exc.value.code == Codes.RECEIPT_INVALID
+    assert exc.value.violations[0].field == field
+
+
+def test_receipt_with_wellformed_telemetry_and_round_hashes_passes() -> None:
+    inputs = ReceiptInputs(task_sha256=H1, context_round_sha256=[H1, H2])
+    validate_receipt(receipt(inputs=inputs, telemetry_sha256=H2), result_sha256=H1)
+
+
+@pytest.mark.parametrize("bad", ["A" * 64, "abc", "g" * 64])
+def test_receipt_malformed_telemetry_hash_rejected(bad: str) -> None:
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(telemetry_sha256=bad), result_sha256=H1)
+    assert codes_of(exc) == [Codes.RECEIPT_INVALID]
+    assert exc.value.violations[0].field == "telemetry_sha256"
+
+
+def test_receipt_malformed_round_hash_rejected() -> None:
+    inputs = ReceiptInputs(task_sha256=H1, context_round_sha256=[H1, "F" * 64])
+    with pytest.raises(IntegrityError) as exc:
+        validate_receipt(receipt(inputs=inputs), result_sha256=H1)
+    assert codes_of(exc) == [Codes.RECEIPT_INVALID]
+    assert exc.value.violations[0].field == "inputs.context_round_sha256[1]"
+
+
+# --- manifest limits and catch-all globs (requirements 1.9, 3.2) ---
+
+FIXTURES = Path(__file__).parent / "fixtures" / "providers"
+
+
+def cap(i: int = 0, **signals: list[str]) -> Capability:
+    return Capability(
+        id=f"demo.cap{i}",
+        actions=["run"],
+        default_action="run",
+        state="supported",
+        operation_class="read_only",
+        signals=Signals(**signals),
+    )
+
+
+def manifest_of(*caps: Capability) -> ForgeManifest:
+    return ForgeManifest(
+        id="demo",
+        version="1.0.0",
+        protocols=["forge/v1"],
+        ops=["describe", "health", "execute"],
+        capabilities=list(caps),
+    )
+
+
+def test_limits_are_defined_in_contract_types() -> None:
+    assert (MAX_CAPABILITIES, MAX_KEYWORDS, MAX_GLOBS, MAX_DEPENDENCIES, MAX_ACTIONS) == (
+        256,
+        64,
+        32,
+        32,
+        16,
+    )
+    assert {"*", "**", "**/*", "*.*", "**/*.*"} <= CATCH_ALL_GLOBS
+
+
+def test_manifest_within_limits_has_no_violations() -> None:
+    m = manifest_of(cap(0, keywords=["a"], file_globs=["*.md"], dependencies=["x"]))
+    assert validate_manifest_limits(m) == ()
+
+
+def test_too_many_capabilities_is_manifest_level_violation() -> None:
+    m = manifest_of(*(cap(i) for i in range(300)))
+    violations = validate_manifest_limits(m)
+    assert len(violations) == 1
+    assert violations[0].code == Codes.MANIFEST_LIMITS
+    assert violations[0].field == "capabilities"
+    assert "300" in violations[0].detail
+
+
+def test_exactly_max_capabilities_is_allowed() -> None:
+    assert validate_manifest_limits(manifest_of(*(cap(i) for i in range(MAX_CAPABILITIES)))) == ()
+
+
+@pytest.mark.parametrize(
+    "glob",
+    [
+        "*",
+        "**",
+        "**/*",
+        "*.*",
+        "**/*.*",
+        "./*",
+        "./**/*",
+        " * ",
+        # no literal alphanumeric character: still matches (almost) any file (2.8 gap)
+        "?*",
+        "**/?*",
+        "*?",
+        "?",
+        "*.?",
+        "./?*",
+        "**/**",
+        "[!.]*",
+        "[a-z]*",
+        "**/[a-z0-9]*",
+        "*.[a-z]*",
+        "",
+    ],
+)
+def test_catch_all_glob_rejected_per_capability(glob: str) -> None:
+    m = manifest_of(cap(0, file_globs=["*.md"]), cap(1, file_globs=["*.md", glob]))
+    violations = validate_manifest_limits(m)
+    assert [v.code for v in violations] == [Codes.MANIFEST_LIMITS]
+    assert violations[0].field == "capabilities[1].signals.file_globs[1]"
+    assert "demo.cap1" in violations[0].detail
+
+
+@pytest.mark.parametrize(
+    "glob",
+    [
+        "*.md",
+        "*.txt",
+        "*.scala",
+        "*.py",
+        "*_job.py",
+        "*glue*.py",
+        "openapi.yaml",
+        "**/*.py",
+        "src/**/*",
+        "?*.md",
+        "src/?*",
+        "Dockerfile",
+        "**/[Mm]akefile",
+        "*.[ch]pp",
+        "*.[ch]",
+        "**/*.[ch]",
+        "*.[cC]",
+        "*.é",
+    ],
+)
+def test_specific_globs_allowed(glob: str) -> None:
+    assert is_catch_all_glob(glob) is False
+    assert validate_manifest_limits(manifest_of(cap(0, file_globs=[glob]))) == ()
+
+
+def test_too_many_keywords_rejected_per_capability() -> None:
+    m = manifest_of(cap(0), cap(1, keywords=[f"k{i}" for i in range(100)]))
+    violations = validate_manifest_limits(m)
+    assert [v.code for v in violations] == [Codes.MANIFEST_LIMITS]
+    assert violations[0].field == "capabilities[1].signals.keywords"
+    assert "demo.cap1" in violations[0].detail and "100" in violations[0].detail
+
+
+@pytest.mark.parametrize(
+    ("signals", "field"),
+    [
+        ({"file_globs": [f"f{i}.py" for i in range(MAX_GLOBS + 1)]}, "signals.file_globs"),
+        ({"dependencies": [f"d{i}" for i in range(MAX_DEPENDENCIES + 1)]}, "signals.dependencies"),
+    ],
+)
+def test_too_many_globs_or_dependencies_rejected(signals: dict[str, list[str]], field: str) -> None:
+    violations = validate_manifest_limits(manifest_of(cap(0, **signals)))
+    assert [(v.code, v.field) for v in violations] == [
+        (Codes.MANIFEST_LIMITS, f"capabilities[0].{field}")
+    ]
+
+
+def test_too_many_actions_rejected() -> None:
+    actions = [f"a{i}" for i in range(MAX_ACTIONS + 1)]
+    c = Capability(
+        id="demo.many",
+        actions=actions,
+        default_action="a0",
+        state="supported",
+        operation_class="read_only",
+    )
+    violations = validate_manifest_limits(manifest_of(c))
+    assert [(v.code, v.field) for v in violations] == [
+        (Codes.MANIFEST_LIMITS, "capabilities[0].actions")
+    ]
+
+
+def test_capability_without_actions_rejected_at_construction() -> None:
+    with pytest.raises(ContractError):
+        Capability(
+            id="demo.none",
+            actions=[],
+            default_action="run",
+            state="supported",
+            operation_class="read_only",
+        )
+
+
+def test_capability_without_actions_reported_not_crashing() -> None:
+    c = cap(0)
+    object.__setattr__(c, "actions", [])  # bypass __post_init__ defensively
+    violations = validate_manifest_limits(manifest_of(c))
+    assert [(v.code, v.field) for v in violations] == [
+        (Codes.MANIFEST_LIMITS, "capabilities[0].actions")
+    ]
+
+
+def test_violations_in_deterministic_order() -> None:
+    bad = cap(0, keywords=[f"k{i}" for i in range(MAX_KEYWORDS + 1)], file_globs=["**/*", "*"])
+    fields = [v.field for v in validate_manifest_limits(manifest_of(bad))]
+    assert fields == [
+        "capabilities[0].signals.keywords",
+        "capabilities[0].signals.file_globs[0]",
+        "capabilities[0].signals.file_globs[1]",
+    ]
+
+
+def test_echo_manifest_within_limits() -> None:
+    assert validate_manifest_limits(ECHO_MANIFEST) == ()
+
+
+@pytest.mark.parametrize("name", ["fixture-spark.json", "fixture-api.json"])
+def test_fixture_manifests_within_limits(name: str) -> None:
+    data = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+    assert validate_manifest_limits(from_dict(ForgeManifest, data)) == ()
+
+
+def test_bad_forge_default_manifest_within_limits() -> None:
+    proc = subprocess.run(
+        [sys.executable, str(FIXTURES / "bad_forge.py"), "default", "describe"],
+        input="{}",
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
+    payload = json.loads(proc.stdout)["payload"]
+    assert validate_manifest_limits(from_dict(ForgeManifest, payload)) == ()

@@ -1,0 +1,46 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-verifier",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+  "verify"
+ ],
+ "domains": [
+  "meta"
+ ],
+ "capabilities": [
+  {
+   "id": "audit.verify",
+   "actions": [
+    "verify"
+   ],
+   "default_action": "verify",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Independently verify a result produced by another provider",
+   "signals": {
+    "keywords": [
+     "__verifier_internal__"
+    ],
+    "file_globs": [],
+    "dependencies": []
+   },
+   "relations": {
+    "can_verify": [
+     "fixture-spark/spark.performance"
+    ]
+   }
+  }
+ ],
+ "verdict": {
+  "status": "passed",
+  "details": [
+   "verifier replayed the declared checks"
+  ]
+ }
+}

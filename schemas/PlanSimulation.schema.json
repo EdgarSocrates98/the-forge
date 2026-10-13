@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "cost": {
+      "enum": [
+        "known",
+        "unknown"
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "data_classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted",
+        "unknown"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "type": "string"
+          },
+          "credentials": {
+            "enum": [
+              "none",
+              "required",
+              "unknown"
+            ]
+          },
+          "execution_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mutations": {
+            "enum": [
+              "none",
+              "local",
+              "external",
+              "unknown"
+            ]
+          },
+          "network": {
+            "enum": [
+              "none",
+              "egress",
+              "required",
+              "unknown"
+            ]
+          },
+          "node": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "verification": {
+            "enum": [
+              "none",
+              "forge",
+              "provider",
+              "independent"
+            ]
+          }
+        },
+        "required": [
+          "node",
+          "provider",
+          "capability"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "providers": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "risk_flags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "plan_sha256"
+  ],
+  "title": "PlanSimulation",
+  "type": "object"
+}

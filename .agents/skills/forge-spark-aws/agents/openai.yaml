@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spark Forge AWS"
+  short_description: "AWS Spark engineering specialist"
+
+policy:
+  allow_implicit_invocation: false

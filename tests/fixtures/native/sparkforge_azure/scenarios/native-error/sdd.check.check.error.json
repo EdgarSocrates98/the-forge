@@ -1,0 +1,5 @@
+{
+  "provenance": "hand-built",
+  "exit_code": 1,
+  "stderr": "SFA-NATIVE-FAILURE: RuntimeError: simulated specialist failure during sdd check\n"
+}

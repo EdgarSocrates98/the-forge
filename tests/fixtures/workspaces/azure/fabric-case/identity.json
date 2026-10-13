@@ -1,0 +1,12 @@
+{
+  "principals": {
+    "spn-viewer": {
+      "type": "service_principal",
+      "tenant": "tenant-aaaa"
+    },
+    "wi-0001": {
+      "type": "workspace_identity",
+      "workspace": "ws-1111"
+    }
+  }
+}

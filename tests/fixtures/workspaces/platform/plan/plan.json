@@ -1,0 +1,12 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.7.0",
+  "resource_changes": [
+    {"address": "aws_db_instance.main", "type": "aws_db_instance",
+     "name": "main",
+     "change": {"actions": ["delete", "create"]}},
+    {"address": "aws_s3_bucket.logs", "type": "aws_s3_bucket",
+     "name": "logs",
+     "change": {"actions": ["update"]}}
+  ]
+}

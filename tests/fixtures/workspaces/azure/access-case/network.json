@@ -1,0 +1,4 @@
+{
+ "public_network_access": "Enabled",
+ "default_action": "Allow"
+}

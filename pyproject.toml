@@ -1,0 +1,128 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "theforge"
+version = "0.5.0"
+description = "Local-first control plane that discovers, routes and governs specialist Forges."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "jsonschema>=4.21",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "build>=1.2",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+theforge = "theforge.cli.main:main"
+forge = "theforge.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/theforge"]
+
+# ADR-0058: host assets ship inside the wheel (emenda a ADR-0020) — the
+# installer renders them into consumer repos; they remain sdist-excluded.
+[tool.hatch.build.targets.wheel.force-include]
+".agents/skills" = "theforge/host_assets/skills"
+# Portal SPA ships inside the wheel so `theforge portal` works from a pip
+# install, not just the clone (same class as host_assets).
+"portal/assets" = "theforge/portal_assets"
+
+[tool.hatch.build.targets.sdist]
+# The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
+# Agentic assets (host instructions, skills) and local-only state never ship (ADR 0020).
+exclude = [
+    "/adapters",
+    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Workspace fixtures simulate user repositories; their embedded tests/ trees are data,
+# never collectible tests of this suite.
+norecursedirs = [
+    "*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}",
+    "tests/fixtures/workspaces",
+]
+addopts = "-q -m 'not slow and not real_provider' --basetemp=.pytest_tmp"
+# Categories are applied per file by tests/conftest.py FILE_MARKERS (unmapped file = error).
+markers = [
+    "unit: pure in-process logic, no subprocess",
+    "contract: contract/schema/protocol shape tests",
+    "integration: multiple components, subprocess providers or filesystem workspaces",
+    "e2e: real CLI end to end in a subprocess",
+    "slow: builds packages or needs network (fresh install gate)",
+    "security: hostile inputs, secrets, isolation and trust boundaries",
+    "real_provider: needs real external Forges (separate CI workflow)",
+    "allow_network: releases the session-level network block for one test",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+# Workspace fixtures simulate user repositories (inputs for the specialists); they are
+# test data, not product code — linting them would distort what the specialists analyze.
+extend-exclude = ["tests/fixtures/workspaces"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Canonical installkit + its vendored copies — byte-identical shared source
+# across all Forges with a Python 3.10 floor; style diffs are intentional.
+"scripts/installkit/*.py" = ["ALL"]
+"scripts/forge_bootstrap.py" = ["ALL"]
+"src/theforge/_installkit.py" = ["ALL"]
+# Vendored Forge Portal server — byte-identical canonical source shared
+# across all Forges (same class as _installkit).
+"src/theforge/_forge_portal.py" = ["ALL"]
+
+[tool.ruff.format]
+# Same byte-parity set as per-file-ignores: vendored/canonical shared
+# sources (Python 3.10 floor) are formatted at their canonical repo only.
+exclude = [
+    "scripts/installkit/*.py",
+    "scripts/forge_bootstrap.py",
+    "src/theforge/_installkit.py",
+    "src/theforge/_forge_portal.py",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+# Vendored/canonical installkit scripts are shared byte-identical source
+# (Python 3.10 floor) — excluded from collection like the ruff exemption.
+exclude = '(^|/)scripts/(installkit/)?forge_(bootstrap|installkit)\.py$'
+mypy_path = "src:adapters/sparkforge_aws/src:adapters/sparkforge_azure/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src:adapters/platformforge/src"
+files = ["src", "scripts", "adapters/sparkforge_aws/src", "adapters/sparkforge_azure/src",
+         "adapters/apiforge/src", "adapters/doctordata/src", "adapters/doctorapi/src",
+         "adapters/platformforge/src"]
+
+[[tool.mypy.overrides]]
+# The specialists are installed only in their own interpreters, never in the core env.
+module = ["sparkforge_aws.*", "sparkforge.*", "sparkforge_azure.*", "apiforge.*",
+          "forge_doctor_data.*", "forge_doctor_api.*", "platformforge.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Doc tooling introspects specialist CLIs (typer) which live in the
+# specialist interpreters, never the core env.
+module = ["typer", "typer.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Vendored byte-identical shared sources — canonical copies
+# (forge-portal/portal_core, scripts/installkit/) are the typecheck
+# target; do not diverge the vendored files for typing.
+module = ["theforge._forge_portal", "theforge._installkit"]
+ignore_errors = true

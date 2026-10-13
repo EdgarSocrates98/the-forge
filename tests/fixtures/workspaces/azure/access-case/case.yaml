@@ -1,0 +1,15 @@
+name: s01_uc_privilege_denied
+principal:
+  id: spn-job-1
+  type: service_principal
+operation: read
+target:
+  kind: table
+  table: prod.finance.orders
+  url: abfss://lake@stg.dfs.core.windows.net/finance/orders
+compute:
+  workspace_id: '1234567890123456'
+  type: classic_vnet
+expect:
+  status: denied
+  failure_layer: unity_catalog

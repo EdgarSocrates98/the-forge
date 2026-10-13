@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "kind": {
+      "enum": [
+        "Request"
+      ]
+    },
+    "op": {
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "op",
+    "request_id"
+  ],
+  "title": "Request",
+  "type": "object"
+}

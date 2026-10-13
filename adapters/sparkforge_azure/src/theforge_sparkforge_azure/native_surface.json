@@ -1,0 +1,83 @@
+{
+  "provenance": "recorded",
+  "recorded_at": "2026-10-08T08:34:09Z",
+  "seams": [
+    {
+      "callable": "check",
+      "module": "sparkforge_azure.sdd.checks",
+      "name": "sdd_check",
+      "parameters": [
+        "feature",
+        "repo",
+        "root"
+      ],
+      "present": true
+    },
+    {
+      "callable": "status",
+      "module": "sparkforge_azure.sdd.status",
+      "name": "sdd_status",
+      "parameters": [
+        "repo",
+        "root"
+      ],
+      "present": true
+    },
+    {
+      "callable": "run_case",
+      "module": "sparkforge_azure.azure.pipeline",
+      "name": "access_diagnose",
+      "parameters": [
+        "profile",
+        "root"
+      ],
+      "present": true
+    },
+    {
+      "callable": "run_fabric_case",
+      "module": "sparkforge_azure.fabric.pipeline",
+      "name": "fabric_diagnose",
+      "parameters": [
+        "profile",
+        "root"
+      ],
+      "present": true
+    },
+    {
+      "callable": "run",
+      "module": "sparkforge_azure.doctor",
+      "name": "doctor_run",
+      "parameters": [
+        "areas"
+      ],
+      "present": true
+    }
+  ],
+  "specialist_domains": [
+    "adf",
+    "adls",
+    "azure-databricks",
+    "bicep",
+    "delta",
+    "entra",
+    "event-hubs",
+    "fabric",
+    "finops",
+    "iceberg",
+    "migration",
+    "networking",
+    "observability",
+    "onelake",
+    "purview",
+    "spark-performance",
+    "streaming",
+    "synapse",
+    "terraform",
+    "unity-catalog"
+  ],
+  "specialist_version": "0.1.0",
+  "tools": [
+    "sparkforge_sdd_check",
+    "sparkforge_sdd_status"
+  ]
+}

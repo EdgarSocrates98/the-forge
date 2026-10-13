@@ -1,0 +1,82 @@
+{
+  "cache": {
+    "enabled": true,
+    "hit": true,
+    "key": "8b01733c37ad0935"
+  },
+  "diagnostics": [],
+  "input_hashes": {
+    "app/__init__.py": "6b375f92c4e11ad4bdf72420cd5dca2e526636c3460799a84996d35893c081b3",
+    "app/main.py": "2e3b2c3f76ebbe5af371b4b268333fe5c0a1b71aa738fd3de58f61e8c0cb276d",
+    "app/routes/__init__.py": "62e4d5a16d5e5bd1c9f290894ae37f42d841f714b17690759a73df8f1e9c6f93",
+    "app/routes/orders.py": "3246a51e8df05ebafe1f65273a525313ac9be1fc3cd2296bdb7b225b822b88e6"
+  },
+  "routes": [
+    {
+      "attrs": {
+        "function": "list_orders",
+        "reachable": true,
+        "router": "router",
+        "via": "app/main.py:6"
+      },
+      "fact_id": "fact:6d0f6ba64187f272",
+      "kind": "code.route",
+      "measures": {
+        "method": "get",
+        "path": "/v1/orders"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 6,
+        "path": "app/routes/orders.py",
+        "sha256": "3246a51e8df05ebafe1f65273a525313ac9be1fc3cd2296bdb7b225b822b88e6"
+      },
+      "version": 1
+    },
+    {
+      "attrs": {
+        "function": "create_order",
+        "reachable": true,
+        "router": "router",
+        "via": "app/main.py:6"
+      },
+      "fact_id": "fact:3305314aa5a59daa",
+      "kind": "code.route",
+      "measures": {
+        "method": "post",
+        "path": "/v1/orders"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 11,
+        "path": "app/routes/orders.py",
+        "sha256": "3246a51e8df05ebafe1f65273a525313ac9be1fc3cd2296bdb7b225b822b88e6"
+      },
+      "version": 1
+    },
+    {
+      "attrs": {
+        "function": "get_order",
+        "reachable": true,
+        "router": "router",
+        "via": "app/main.py:6"
+      },
+      "fact_id": "fact:e1ba6aac758d8634",
+      "kind": "code.route",
+      "measures": {
+        "method": "get",
+        "path": "/v1/orders/{order_id}"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 16,
+        "path": "app/routes/orders.py",
+        "sha256": "3246a51e8df05ebafe1f65273a525313ac9be1fc3cd2296bdb7b225b822b88e6"
+      },
+      "version": 1
+    }
+  ]
+}

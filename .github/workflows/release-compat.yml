@@ -1,0 +1,152 @@
+# Release compatibility (cycle 3.1, Phase 45): conformance of the latest main of
+# each specialist against the committed adapters, independent of package
+# versions. Scheduled and manual only — never a PR gate.
+#
+# Each specialist gets its own interpreter (its declared Python), with the
+# specialist at the requested ref plus the adapter from this checkout. The Forge
+# core runs `theforge provider check -- <venv python> -m theforge_<adapter>` —
+# the Forge Protocol conformance battery (describe/health/execute/malformed
+# payloads) — so a main that stops speaking the protocol turns the job red even
+# when its version number did not move.
+name: release-compat
+
+on:
+  schedule:
+    - cron: "9 5 * * 1" # Mondays 05:09 UTC
+  workflow_dispatch:
+    inputs:
+      spark_forge_ref:
+        description: "spark-forge-aws ref to check (default: main)"
+        required: false
+        default: "main"
+      api_forge_ref:
+        description: "api-forge ref to check (default: main)"
+        required: false
+        default: "main"
+      doctor_data_ref:
+        description: "forge-doctor-data ref to check (default: main)"
+        required: false
+        default: "main"
+      doctor_api_ref:
+        description: "forge-doctor-api ref to check (default: main)"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  conformance:
+    name: provider conformance (ubuntu-latest, core py3.11, api py3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout spark-forge-aws
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/spark-forge-aws
+          ref: ${{ inputs.spark_forge_ref || 'main' }}
+          path: siblings/spark-forge-aws
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout api-forge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/api-forge
+          ref: ${{ inputs.api_forge_ref || 'main' }}
+          path: siblings/api-forge
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-data
+          ref: ${{ inputs.doctor_data_ref || 'main' }}
+          path: siblings/forge-doctor-data
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout forge-doctor-api
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/forge-doctor-api
+          ref: ${{ inputs.doctor_api_ref || 'main' }}
+          path: siblings/forge-doctor-api
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Set up Python 3.12 (API Forge)
+        id: py312
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up Python 3.11 (core, Spark Forge AWS and Doctors)
+        id: py311
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install the core (theforge CLI)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+
+      - name: Spark Forge AWS venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-spark-aws
+          .venv-spark-aws/bin/python -m pip install --upgrade pip
+          .venv-spark-aws/bin/python -m pip install ./siblings/spark-forge-aws ./adapters/sparkforge_aws
+
+      - name: API Forge venv (specialist main + adapter)
+        env:
+          PY312: ${{ steps.py312.outputs.python-path }}
+        run: |
+          "$PY312" -m venv .venv-api
+          .venv-api/bin/python -m pip install --upgrade pip
+          .venv-api/bin/python -m pip install ./siblings/api-forge ./adapters/apiforge
+
+      - name: Doctor Data venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-dd
+          .venv-dd/bin/python -m pip install --upgrade pip
+          .venv-dd/bin/python -m pip install ./siblings/forge-doctor-data ./adapters/doctordata
+
+      - name: Doctor API venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-da
+          .venv-da/bin/python -m pip install --upgrade pip
+          .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
+
+      # theforge provider check -- <argv> — conformance over the live adapter.
+      - name: Conformance — Spark Forge AWS adapter
+        run: python -m theforge provider check -- .venv-spark-aws/bin/python -m theforge_sparkforge_aws
+
+      - name: Conformance — API Forge adapter
+        run: python -m theforge provider check -- .venv-api/bin/python -m theforge_apiforge
+
+      - name: Conformance — Doctor Data adapter
+        run: python -m theforge provider check -- .venv-dd/bin/python -m theforge_doctordata
+
+      - name: Conformance — Doctor API adapter
+        run: python -m theforge provider check -- .venv-da/bin/python -m theforge_doctorapi

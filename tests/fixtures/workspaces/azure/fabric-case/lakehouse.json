@@ -1,0 +1,21 @@
+{
+  "id": "lh-aaaa",
+  "workspace_id": "ws-1111",
+  "name": "lake_sales",
+  "tables": [
+    {
+      "name": "Orders"
+    },
+    {
+      "name": "Customers"
+    }
+  ],
+  "files": [
+    {
+      "path": "Files/raw/orders.parquet"
+    },
+    {
+      "path": "Files/ext/orders"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+
+ Usage: apiforge [OPTIONS] COMMAND [ARGS]...
+
+ Analyze API evolution deterministically and offline.
+
++- Options -------------------------------------------------------------------+
+| --version                          Show the API Forge version and exit.     |
+| --output                    <str>  Payload projection: json (default) or    |
+|                                    compact (minified, null/empty pruned).   |
+| --install-completion               Install completion for the current       |
+|                                    shell.                                   |
+| --show-completion                  Show completion for the current shell,   |
+|                                    to copy it or customize the              |
+|                                    installation.                            |
+| --help                             Show this message and exit.              |
++-----------------------------------------------------------------------------+
++- Commands ------------------------------------------------------------------+
+| portal          Open the API Forge local web portal (127.0.0.1, session     |
+|                 token).                                                     |
+| doctor          Inspect runtime state, or the local installation when no    |
+|                 task is supplied.                                           |
+| status          Show TaskSpec status, or project/workspace status when no   |
+|                 task is supplied.                                           |
+| inspect         Inspect installed assets and bounded project/workspace      |
+|                 discovery.                                                  |
+| ai              Observe an AI host (detect -> version -> auth ->            |
+|                 integration) and open it.                                   |
+| init            Create only a minimal local project or workspace manifest.  |
+| review          Render the canonical Outcome Brief for a runtime run.       |
+| evolve          Execute a bounded, evidence-backed API evolution run.       |
+| resume          Resume only persisted, eligible work from the latest        |
+|                 control run.                                                |
+| discover        Statically inventory FastAPI routes without executing code. |
+| analyze         Run the full deterministic slice and persist a case.        |
+| judge           Judge contract/code divergence, or catalog checks over      |
+|                 report facts.                                               |
+| next-step       Recommend the specialist agent for the dominant finding     |
+|                 area.                                                       |
+| playbook        Render the declared executor decomposition for a            |
+|                 coordinator.                                                |
+| rules           Read the rule catalog � the knowledge base every finding    |
+|                 cites.                                                      |
+| build           Generate code skeletons � evaluated in the sandbox,         |
+|                 promoted via worktree only.                                 |
+| collect         Collect AWS artifacts into offline dumps (the only family   |
+|                 that touches AWS).                                          |
+| model           Build the canonical API-IR.                                 |
+| diff            Diff OpenAPI contracts.                                     |
+| policy          Evaluate actions against the policy catalog.                |
+| sdd             Spec-driven development artifacts and gates.                |
+| sandbox         Copy-based sandbox evaluation.                              |
+| evidence        Release evidence receipts.                                  |
+| economy         Measured cost per call � bytes recorded, tokens unresolved  |
+|                 without a transcript.                                       |
+| context         Measured context accounting � the funnel, in bytes per      |
+|                 stage.                                                      |
+| agentops        Host-neutral Caveman/RTK protocols, workflows and adapters. |
+| devin           Generate and inspect offline-first payloads for Devin       |
+|                 Desktop, CLI and Cloud.                                     |
+| evals           Declarative local eval matrix, goldens and holdout          |
+|                 metadata.                                                   |
+| capabilities    Inspect the evidence-backed public capability matrix.       |
+| contract-intel  Unify contract impact analysis and build an offline API     |
+|                 Digital Twin.                                               |
+| report          Release evidence bundle � sign binds hashes; verify names   |
+|                 what diverged.                                              |
+| plan            Planning verbs � compose over facts other verbs already     |
+|                 extracted.                                                  |
+| debate          Record specialist disagreement � positions cite fact_ids, a |
+|                 referee closes.                                             |
+| dispatch        Run deterministic playbook steps; pending steps name their  |
+|                 missing inputs.                                             |
+| perf            Compose over measured runs � compare, never interpolate.    |
+| agents          Publish coordinator profiles to host-native mirrors.        |
+| run             Execute allowlisted scanner binaries, then read their       |
+|                 reports.                                                    |
+| autonomy        Autonomy modes (observe->continuous) and runbooks on the    |
+|                 policy engine.                                              |
+| contract        List and inspect the canonical versioned contracts.         |
+| task            Sealed, budgeted units of agentic work (TaskSpec).          |
+| runtime         Bounded agentic execution over sealed TaskSpecs; local and  |
+|                 CI safe.                                                    |
+| governor        Agent Governor decisions: ceilings, gain, stop, recovery    |
+|                 and loop checks.                                            |
+| control         Decision Control Plane lifecycle: shadow, assisted, active  |
+|                 and fallback.                                               |
+| route           Model routing: candidates, scorecards and lifecycle         |
+|                 promotion.                                                  |
+| brief           Outcome Briefs � DONE is refused while mandatory gaps       |
+|                 exist.                                                      |
+| graph           Native provenance graph � canonical JSONL store,            |
+|                 closed-vocabulary queries.                                  |
+| index           TokenSave: content-hash cache + local indexes over          |
+|                 extractor output.                                           |
+| knowledge       Domain packs � source authority, runtime matrices, declared |
+|                 evals.                                                      |
+| observability   Offline-first OTel, Datadog and Dynatrace control plane.    |
+| grpc            Offline-first gRPC contract control plane.                  |
+| migration       Offline-first runtime migration analysis and verification.  |
+| lab             Opt-in experimental scenario catalog (�28).                 |
+| change-control  Govern API, Git and CI/CD changes with read-only evidence.  |
+| integration     Read-only external evidence adapters and freshness          |
+|                 receipts.                                                   |
+| platform        Run allowlisted local runtime probes for platform           |
+|                 verticals.                                                  |
+| tui             Execution-first terminal UX with a Rich/JSON fallback.      |
+| distribution    Inspect the installed package, paths and hostless           |
+|                 capabilities.                                               |
+| workspace       Register independent repositories in a local virtual        |
+|                 workspace.                                                  |
+| field           Pre-registered field validation: evidence-joined run        |
+|                 records and gap report.                                     |
+| cache           Advisory layered cache � reuse only fresh evidence,         |
+|                 invalidate by dependency.                                   |
+| slice           Failures and signatures instead of whole logs; the full log |
+|                 stays behind ctx://.                                        |
+| mcp             MCP surface projections and their measured cost.            |
+| verify          Targeted verification plans (never executes).               |
+| forge           Forge Protocol: capabilities, task                          |
+|                 submit/inspect/result/evidence, handoff, health.            |
+| memory          Governed append-only agent memory.                          |
+| blackboard      Structured append-only shared state.                        |
+| governance      Fail-closed agentic decision gates.                         |
+| experience      Canonical execution, governance and evidence projections.   |
+| install         Install API Forge assets into a project, workspace or the   |
+|                 user home; manage the lifecycle (status, doctor, repair,    |
+|                 update, uninstall).                                         |
++-----------------------------------------------------------------------------+
+

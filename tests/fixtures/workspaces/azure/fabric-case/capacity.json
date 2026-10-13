@@ -1,0 +1,19 @@
+{
+  "id": "cap-0001",
+  "sku": "F8",
+  "state": "Active",
+  "workspaces": [
+    "ws-1111"
+  ],
+  "metrics": {
+    "utilization_percent": 118,
+    "interactive_delay_percent": 31
+  },
+  "events": [
+    {
+      "type": "CapacityLimitExceeded",
+      "at": "2026-10-01T12:00Z",
+      "scope": "interactive"
+    }
+  ]
+}

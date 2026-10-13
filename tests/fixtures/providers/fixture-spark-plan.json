@@ -1,0 +1,68 @@
+{
+ "schema": "theforge/ForgeManifest/v1",
+ "id": "fixture-spark",
+ "version": "0.0.1",
+ "protocols": [
+  "forge/v1"
+ ],
+ "ops": [
+  "describe",
+  "health",
+  "execute",
+  "plan"
+ ],
+ "domains": [
+  "data-engineering"
+ ],
+ "capabilities": [
+  {
+   "id": "spark.performance",
+   "actions": [
+    "diagnose",
+    "review",
+    "optimize"
+   ],
+   "default_action": "diagnose",
+   "state": "supported",
+   "operation_class": "read_only",
+   "description": "Diagnose slow Spark and Glue jobs",
+   "signals": {
+    "keywords": [
+     "spark",
+     "pyspark",
+     "glue",
+     "lento",
+     "slow",
+     "performance",
+     "job"
+    ],
+    "file_globs": [
+     "*glue*.py",
+     "*_job.py",
+     "*.scala"
+    ],
+    "dependencies": [
+     "pyspark",
+     "awsglue"
+    ]
+   },
+   "relations": {
+    "produces": [
+     "spark.analysis-report"
+    ]
+   }
+  }
+ ],
+ "estimate": {
+  "context_needed": [
+   "*_job.py",
+   "requirements*.txt"
+  ],
+  "operation_class": "read_only",
+  "expected_artifacts": [],
+  "unknowns": [
+   "input data volume"
+  ],
+  "limitations": []
+ }
+}

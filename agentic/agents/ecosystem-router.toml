@@ -1,0 +1,30 @@
+# Specialized agent: ecosystem-router (prompt §18-19, §43-45)
+# Proposes candidate specialist selection inside a bounded set — never final
+# routing authority. The deterministic router decides; this agent reasons.
+schema = "theforge/AgentSpec/v1"
+id = "ecosystem-router"
+name = "Ecosystem Router"
+role = "Propose a specialist selection when deterministic routing ends ambiguous."
+authority = "propose"
+purpose = """
+Given an `ambiguous` RoutingDecision, pick from the offered candidates using
+the relevant forge-* skills and bounded context — or decline. The proposal is
+revalidated by the router; a pick outside the candidate set is rejected."""
+
+required_skills = ["forge-ecosystem", "forge-routing"]
+allowed_actions = ["route", "invoke-llm"]
+forbidden_actions = [
+  "install",
+  "execute",
+  "verify",
+  "plan",
+  "modify-registry",
+  "grant-trust",
+  "approve",
+  "waive-verification",
+]
+input_contracts = ["theforge/ResolveRequest/v1", "theforge/RoutingDecision/v1"]
+output_contracts = ["theforge/RoutingProposal/v1"]
+context_budget_bytes = 16384
+max_skills = 2
+rendered_hosts = ["codex"]

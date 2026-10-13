@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Factory"
+  short_description: "Spec queue: inbox → active → archive"
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,15 @@
+{
+  "id": "env-0001",
+  "workspace_id": "ws-1111",
+  "name": "env-std",
+  "runtime": {
+    "version": "2.0",
+    "spark": "4.1",
+    "python": "3.13"
+  },
+  "libraries": [
+    {
+      "name": "delta-spark"
+    }
+  ]
+}

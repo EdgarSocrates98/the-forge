@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/InstallationHealth/v1",
+  "title": "ForgeInstallationHealth",
+  "type": "object",
+  "required": ["schema", "forge_id", "status", "checks"],
+  "properties": {
+    "schema": {"const": "forge/InstallationHealth/v1"},
+    "forge_id": {"type": "string"},
+    "status": {"enum": ["healthy", "degraded", "broken", "unverified"]},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "status": {"enum": ["PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE"]},
+          "detail": {"type": "string"},
+          "repairable": {"type": "boolean"},
+          "tools": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "repair_hint": {"type": ["string", "null"]},
+    "context": {
+      "type": "object",
+      "properties": {
+        "profile": {"type": "string"},
+        "managed_entries": {"type": ["integer", "null"]},
+        "tools_exposed": {"type": ["integer", "null"]}
+      }
+    },
+    "checked_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

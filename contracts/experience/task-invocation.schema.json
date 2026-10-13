@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge/TaskInvocation/v1",
+  "title": "ForgeTaskInvocationContract",
+  "description": "Uma tarefa em linguagem natural roteada para capacidades reais da Forja (§2-A, §4.2). Registra intenção → decisão → execução → evidência. Ambiguidade vira 'ambiguous', nunca um chute — mesmo invariante do routing determinístico.",
+  "type": "object",
+  "required": ["schema", "invocation_id", "forge_id", "host", "intent", "route", "outcome", "created_at"],
+  "properties": {
+    "schema": {"const": "forge/TaskInvocation/v1"},
+    "invocation_id": {"type": "string", "minLength": 1},
+    "forge_id": {"type": "string"},
+    "host": {"enum": ["devin", "claude", "codex", "copilot", "cli", "tui"]},
+    "intent": {"type": "string", "minLength": 3, "description": "o pedido em linguagem natural, como recebido"},
+    "route": {
+      "type": "object",
+      "required": ["decision", "reason"],
+      "properties": {
+        "decision": {"enum": ["capability", "agent", "skill", "mcp_tool", "cli_verb", "ambiguous", "refused"]},
+        "target": {"type": "string", "description": "nome da capability/agent/skill/tool/verbo escolhido; vazio em ambiguous/refused"},
+        "reason": {"type": "string", "minLength": 5},
+        "candidates": {"type": "array", "items": {"type": "string"}, "description": "alternativas consideradas — obrigatório quando ambiguous"},
+        "unlock": {"type": "string", "description": "instrução de desbloqueio quando refused"}
+      },
+      "additionalProperties": false
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["completed", "partial", "refused", "failed", "ambiguous", "unverified"]},
+        "facts": {"type": "array", "items": {"type": "string"}},
+        "findings": {"type": "array", "items": {"type": "string"}},
+        "evidence_refs": {"type": "array", "items": {"type": "string"}},
+        "limitations": {"type": "array", "items": {"type": "string"}},
+        "next_steps": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "created_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

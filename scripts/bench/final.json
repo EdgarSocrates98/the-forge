@@ -1,0 +1,93 @@
+{
+  "schema": "theforge-bench/v1",
+  "origin": {
+    "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "os": "Windows-10-10.0.26300-SP0",
+    "python": "CPython 3.11.15",
+    "date": "2026-10-04T15:33:14Z",
+    "forge_version": "0.1.0",
+    "git_head": "68eb7effb6a4556a4f088371bd23363540ca5ca6",
+    "git_dirty": true
+  },
+  "results": {
+    "cli_startup": {
+      "median_ms": 302.389,
+      "p90_ms": 391.945,
+      "runs": 3
+    },
+    "registry_cold": {
+      "median_ms": 335.892,
+      "p90_ms": 364.276,
+      "runs": 3
+    },
+    "registry_warm": {
+      "median_ms": 5.307,
+      "p90_ms": 25.091,
+      "runs": 3
+    },
+    "scan_1k": {
+      "median_ms": 649.58,
+      "p90_ms": 665.713,
+      "runs": 3
+    },
+    "scan_10k": {
+      "median_ms": 5654.459,
+      "p90_ms": 6042.946,
+      "runs": 3
+    },
+    "routing_10k": {
+      "median_ms": 391.325,
+      "p90_ms": 398.16,
+      "runs": 3
+    },
+    "context_1k_cold": {
+      "median_ms": 61.114,
+      "p90_ms": 148.083,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 64,
+        "bytes_hashed": 125440,
+        "cache_hits": 0,
+        "cache_misses": 64
+      }
+    },
+    "context_1k_warm": {
+      "median_ms": 92.977,
+      "p90_ms": 105.392,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "cache_hits": 64,
+        "cache_misses": 0
+      }
+    },
+    "context_10k_cold": {
+      "median_ms": 196.159,
+      "p90_ms": 254.504,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 64,
+        "bytes_hashed": 125440,
+        "cache_hits": 0,
+        "cache_misses": 64
+      }
+    },
+    "context_10k_warm": {
+      "median_ms": 196.742,
+      "p90_ms": 200.27,
+      "runs": 3,
+      "hashing": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "cache_hits": 64,
+        "cache_misses": 0
+      }
+    },
+    "persist_run": {
+      "median_ms": 10.665,
+      "p90_ms": 14.479,
+      "runs": 3
+    }
+  }
+}

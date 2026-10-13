@@ -1,0 +1,31 @@
+# Specialized agent: forge-discovery (prompt §20, §46)
+# Classifies specialist state from evidence — never repairs or alters records.
+schema = "theforge/AgentSpec/v1"
+id = "forge-discovery"
+name = "Forge Discovery Agent"
+role = "Classify a specialist's runtime state: AVAILABLE, NOT_INSTALLED, INSTALLED_BROKEN, INCOMPATIBLE, UNVERIFIED, BLOCKED or UNKNOWN."
+authority = "classify"
+purpose = """
+Run the discovery workflow (registry record + health + describe + surface
+fingerprint) and emit a classified state with the evidence that supports it.
+Diagnosis only: it never installs, repairs or edits the registry."""
+
+required_skills = ["forge-discovery", "forge-troubleshooting"]
+allowed_actions = ["discover", "diagnose"]
+forbidden_actions = [
+  "install",
+  "execute",
+  "route",
+  "plan",
+  "verify",
+  "modify-registry",
+  "grant-trust",
+  "approve",
+  "waive-verification",
+  "invoke-llm",
+]
+input_contracts = ["theforge/RegistryDocument/v1", "theforge/HealthReport/v1"]
+output_contracts = ["theforge/Diagnostic/v1", "theforge/HealthReport/v1"]
+context_budget_bytes = 32768
+max_skills = 2
+rendered_hosts = ["codex"]

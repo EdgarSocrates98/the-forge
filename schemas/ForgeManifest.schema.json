@@ -1,0 +1,406 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "adapter_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilities": {
+      "items": {
+        "properties": {
+          "accepts_handoff": {
+            "type": "boolean"
+          },
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "context": {
+            "properties": {
+              "excerpts": {
+                "type": "boolean"
+              },
+              "requests": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "default_action": {
+            "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+            "type": "string"
+          },
+          "mcp_requires": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "offer": {
+            "anyOf": [
+              {
+                "properties": {
+                  "consumes_artifact_types": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "credentials_required": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "features": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "limitations": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "network_required": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "offline": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "produces_artifact_types": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "produces_evidence": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "read_only": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "schema": {
+                    "type": "string"
+                  },
+                  "technologies": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation_class": {
+            "enum": [
+              "read_only",
+              "local_mutation",
+              "external_read",
+              "external_mutation",
+              "destructive"
+            ]
+          },
+          "proposes_plans": {
+            "type": "boolean"
+          },
+          "relations": {
+            "properties": {
+              "accepts": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "can_review": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "can_verify": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "complements": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "conflicts": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "consumes": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "produces": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "refines": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "requires": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "specializes": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "verified_by": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "verifies": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "replaced_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolves_ambiguity": {
+            "type": "boolean"
+          },
+          "signals": {
+            "properties": {
+              "dependencies": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "file_globs": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "keywords": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "state": {
+            "enum": [
+              "supported",
+              "heuristic",
+              "unresolved",
+              "unsupported"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "actions",
+          "default_action",
+          "state",
+          "operation_class"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "context_revalidation": {
+      "anyOf": [
+        {
+          "enum": [
+            "hash",
+            "core",
+            "none"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "domains": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "execution": {
+      "properties": {
+        "deterministic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "local": {
+          "type": "boolean"
+        },
+        "offline": {
+          "type": "boolean"
+        },
+        "requires_network": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "features": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "id": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "native_surface_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ops": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "protocols": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "protocols",
+    "ops"
+  ],
+  "title": "ForgeManifest",
+  "type": "object"
+}

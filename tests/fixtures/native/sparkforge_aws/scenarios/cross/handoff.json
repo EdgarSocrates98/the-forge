@@ -1,0 +1,48 @@
+{
+  "schema": "theforge/Handoff/v1",
+  "items": [
+    {
+      "id": "ev-data-scan-001",
+      "kind": "finding",
+      "origin": {
+        "provider": {"id": "forge-doctor-data", "version": "1.0.0rc1"},
+        "run_id": "run-dd-cross",
+        "node": "observe-data",
+        "plan_run": "run-plan-cross"
+      },
+      "location": {"path": "data-pipeline/jobs/orders_job.py", "line": 12},
+      "subject": "data-pipeline/jobs/orders_job.py",
+      "claim": "PySpark job reads the orders table without partition pruning",
+      "epistemic": "observed",
+      "severity": "medium",
+      "evidence_ids": ["ev:data-scan-001"]
+    },
+    {
+      "id": "ev-data-scan-002",
+      "kind": "metric",
+      "origin": {
+        "provider": {"id": "forge-doctor-data", "version": "1.0.0rc1"},
+        "run_id": "run-dd-cross",
+        "node": "observe-data",
+        "plan_run": "run-plan-cross"
+      },
+      "subject": "data-pipeline",
+      "claim": "Dataset schema carries nullable currency columns",
+      "epistemic": "confirmed",
+      "severity": "info"
+    },
+    {
+      "id": "ev-data-scan-003",
+      "kind": "recommendation",
+      "origin": {
+        "provider": {"id": "forge-doctor-data", "version": "1.0.0rc1"},
+        "run_id": "run-dd-cross",
+        "node": "observe-data"
+      },
+      "subject": "orders_job.py",
+      "claim": "Prefer broadcast joins for the small dimension tables",
+      "epistemic": "proposed",
+      "severity": "low"
+    }
+  ]
+}

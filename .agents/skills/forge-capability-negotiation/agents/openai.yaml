@@ -1,0 +1,6 @@
+interface:
+  display_name: "Capability Negotiation"
+  short_description: "Requirement ↔ offer matching"
+
+policy:
+  allow_implicit_invocation: false

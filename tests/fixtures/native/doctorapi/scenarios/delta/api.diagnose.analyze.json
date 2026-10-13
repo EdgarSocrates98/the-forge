@@ -1,0 +1,827 @@
+{
+  "bundle": {
+    "analysis_rev": "f1619339986735d719e416a2adc995e338e16e89ecb562b6a7cde287ff9ab446",
+    "breaking_changes": [],
+    "capabilities": [],
+    "clients_affected": [],
+    "context_refs": [
+      "doctor://capability",
+      "doctor://contract",
+      "doctor://finding/APISEC001/openapi.yaml/7f65e1552fc7fe00",
+      "doctor://finding/APISEC006/openapi.yaml/ea5df43ff07b1bb4",
+      "doctor://finding/APISEC011/openapi.yaml/5a7f25db234530c7",
+      "doctor://finding/APISEC011/openapi.yaml/ae7c68f0f56d4a61",
+      "doctor://finding/OAS010/api:openapi:openapi.yaml/ac16f57959afabfe",
+      "doctor://finding/OAS020/operation:openapi:operation_id:getDailyOrder/3d941513f7588cd9",
+      "doctor://finding/OAS020/operation:openapi:operation_id:listDailyOrders/cb655d3ea08c57aa",
+      "doctor://graph",
+      "doctor://runtime",
+      "doctor://service",
+      "doctor://unknown/0",
+      "doctor://unknown/1",
+      "doctor://unknown/2"
+    ],
+    "contracts": [],
+    "delta": {
+      "analysis_rev_cur": "rev-cur",
+      "analysis_rev_prev": "rev-prev",
+      "baseline_ref": "abc123def456",
+      "capabilities_added": [
+        "OPENAPI_3X"
+      ],
+      "capabilities_removed": [],
+      "changed_files": [
+        "api/openapi.yaml"
+      ],
+      "domains_added": [],
+      "domains_removed": [],
+      "evidence_added": 4,
+      "evidence_removed": 1,
+      "findings_added": [
+        "API001|svc:orders"
+      ],
+      "findings_changed": [
+        "API002|svc:orders"
+      ],
+      "findings_removed": [],
+      "graph_entities_added": [],
+      "graph_entities_removed": [],
+      "initial": false,
+      "operations_added": [
+        "GET /v2/orders"
+      ],
+      "operations_changed": [],
+      "operations_removed": [],
+      "protocol_diff": [
+        "+capability:OPENAPI_3X"
+      ],
+      "unknowns_added": [],
+      "unknowns_removed": []
+    },
+    "domain_sha256": [
+      [
+        "clients",
+        "d85ee134bc40aab7"
+      ],
+      [
+        "contracts",
+        "7209694ad5b9fa43"
+      ],
+      [
+        "graph",
+        "8863dbbd43a6413a"
+      ],
+      [
+        "migration",
+        "e485d72c30f4334e"
+      ],
+      [
+        "routes",
+        "9218ff1ca610cacc"
+      ],
+      [
+        "twin",
+        "ebf714924d2c8602"
+      ]
+    ],
+    "external_references": [],
+    "findings": [
+      {
+        "confidence": "LOW",
+        "description": "[candidate] (API1) GET /daily-orders/{order_id}: object-id parameter(s) order_id with no authorization evidence - BOLA risk candidate, manual review required",
+        "entity_ids": [],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 26,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders/{order_id}: object-id parameter(s) order_id with no authorization evidence - BOLA risk candidate, manual review required"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "APISEC001",
+        "remediation": "verify caller owns the referenced object before returning it",
+        "severity": "HIGH",
+        "source_location": {
+          "column": null,
+          "line": 26,
+          "path": "openapi.yaml"
+        },
+        "title": "Object-ID route without authorization evidence",
+        "unknowns": [
+          {
+            "missing": "object-level authorization evidence (ownership check, roles, scopes)",
+            "resolution": "declare x-ownership-check / x-roles / security scopes, or provide impl authz evidence",
+            "subject": "operation_id:getDailyOrder"
+          }
+        ]
+      },
+      {
+        "confidence": "LOW",
+        "description": "[candidate] (API6) GET /daily-orders: list-returning endpoint without a bounded pagination/limit parameter - unrestricted resource candidate",
+        "entity_ids": [],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 7,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders: list-returning endpoint without a bounded pagination/limit parameter - unrestricted resource candidate"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "APISEC006",
+        "remediation": "declare a limit/pagination parameter or a rate-limit policy",
+        "severity": "MEDIUM",
+        "source_location": {
+          "column": null,
+          "line": 7,
+          "path": "openapi.yaml"
+        },
+        "title": "Unrestricted expensive operation",
+        "unknowns": []
+      },
+      {
+        "confidence": "UNKNOWN",
+        "description": "[unknown] (API2) GET /daily-orders/{order_id}: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])",
+        "entity_ids": [],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 26,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders/{order_id}: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "APISEC011",
+        "remediation": null,
+        "severity": "MEDIUM",
+        "source_location": {
+          "column": null,
+          "line": 26,
+          "path": "openapi.yaml"
+        },
+        "title": "Ambiguous auth-coverage chain",
+        "unknowns": [
+          {
+            "missing": "global or operation security requirement",
+            "resolution": "declare security schemes and requirements, or gateway auth evidence",
+            "subject": "operation_id:getDailyOrder"
+          }
+        ]
+      },
+      {
+        "confidence": "UNKNOWN",
+        "description": "[unknown] (API2) GET /daily-orders: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])",
+        "entity_ids": [],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 7,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "APISEC011",
+        "remediation": null,
+        "severity": "MEDIUM",
+        "source_location": {
+          "column": null,
+          "line": 7,
+          "path": "openapi.yaml"
+        },
+        "title": "Ambiguous auth-coverage chain",
+        "unknowns": [
+          {
+            "missing": "global or operation security requirement",
+            "resolution": "declare security schemes and requirements, or gateway auth evidence",
+            "subject": "operation_id:listDailyOrders"
+          }
+        ]
+      },
+      {
+        "confidence": "LOW",
+        "description": "openapi.yaml: no document-level security requirement protects 2 operations",
+        "entity_ids": [
+          "api:openapi:openapi.yaml"
+        ],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 1,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "openapi.yaml: no document-level security requirement protects 2 operations"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "OAS010",
+        "remediation": "if this API is partner/public, add a document-level `security` requirement",
+        "severity": "HIGH",
+        "source_location": {
+          "column": 1,
+          "line": 1,
+          "path": "openapi.yaml"
+        },
+        "title": "Public API without security requirement (candidate)",
+        "unknowns": [
+          {
+            "missing": "API exposure classification (internal/partner/public)",
+            "resolution": "declare exposure via gateway/org metadata or add a security requirement so the question is moot",
+            "subject": "openapi.yaml"
+          }
+        ]
+      },
+      {
+        "confidence": "LOW",
+        "description": "GET /daily-orders/{order_id} has no tags or domain grouping",
+        "entity_ids": [
+          "operation:openapi:operation_id:getDailyOrder"
+        ],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 26,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders/{order_id} has no tags or domain grouping"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "OAS020",
+        "remediation": null,
+        "severity": "INFO",
+        "source_location": {
+          "column": 5,
+          "line": 26,
+          "path": "openapi.yaml"
+        },
+        "title": "Operation without tags/domain ownership (candidate)",
+        "unknowns": [
+          {
+            "missing": "domain/owner attribution for the operation",
+            "resolution": "add tags or declare ownership metadata",
+            "subject": "operation_id:getDailyOrder"
+          }
+        ]
+      },
+      {
+        "confidence": "LOW",
+        "description": "GET /daily-orders has no tags or domain grouping",
+        "entity_ids": [
+          "operation:openapi:operation_id:listDailyOrders"
+        ],
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 7,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders has no tags or domain grouping"
+          }
+        ],
+        "evidence_kind": "STATIC",
+        "id": "OAS020",
+        "remediation": null,
+        "severity": "INFO",
+        "source_location": {
+          "column": 5,
+          "line": 7,
+          "path": "openapi.yaml"
+        },
+        "title": "Operation without tags/domain ownership (candidate)",
+        "unknowns": [
+          {
+            "missing": "domain/owner attribution for the operation",
+            "resolution": "add tags or declare ownership metadata",
+            "subject": "operation_id:listDailyOrders"
+          }
+        ]
+      }
+    ],
+    "graph_edges": [
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:openapi.yaml"
+        ],
+        "from_id": "api:openapi:openapi.yaml",
+        "kind": "EXPOSES",
+        "to_id": "operation:openapi:operation_id:getDailyOrder"
+      },
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:openapi.yaml"
+        ],
+        "from_id": "api:openapi:openapi.yaml",
+        "kind": "EXPOSES",
+        "to_id": "operation:openapi:operation_id:listDailyOrders"
+      },
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:app/main.py"
+        ],
+        "from_id": "operation:fastapi:app.main.get_daily_order",
+        "kind": "IMPLEMENTS",
+        "to_id": "endpoint:http:GET /daily-orders/{order_id}"
+      },
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:app/main.py"
+        ],
+        "from_id": "operation:fastapi:app.main.list_daily_orders",
+        "kind": "IMPLEMENTS",
+        "to_id": "endpoint:http:GET /daily-orders"
+      },
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:openapi.yaml"
+        ],
+        "from_id": "operation:openapi:operation_id:getDailyOrder",
+        "kind": "RETURNS",
+        "to_id": "schema:openapi:openapi.yaml#DailyOrder"
+      },
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:app/main.py"
+        ],
+        "from_id": "service:python:orders-api",
+        "kind": "EXPOSES",
+        "to_id": "endpoint:http:GET /daily-orders"
+      },
+      {
+        "confidence": "HIGH",
+        "evidence_ids": [
+          "STATIC:app/main.py"
+        ],
+        "from_id": "service:python:orders-api",
+        "kind": "EXPOSES",
+        "to_id": "endpoint:http:GET /daily-orders/{order_id}"
+      }
+    ],
+    "handoff_id": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+    "handoff_version": 2,
+    "knowledge_versions": {
+      "asyncapi-versions": "2026.10",
+      "aws-api-gateway-capabilities": "2026.10",
+      "envoy-capabilities": "2026.10",
+      "express-capabilities": "2026.10",
+      "fastapi-capabilities": "2026.10",
+      "gateway-capability-map": "2026.10",
+      "graphql-spec": "2026.10",
+      "grpc-behaviors": "2026.10",
+      "http-semantics": "2026.10",
+      "jsonschema-dialects": "2026.10",
+      "kong-capabilities": "2026.10",
+      "nginx-capabilities": "2026.10",
+      "openapi-versions": "2026.10",
+      "owasp-api-security-top-10": "2023",
+      "spring-capabilities": "2026.10"
+    },
+    "operations": [],
+    "reliability_signals": [],
+    "remediation_candidates": [
+      {
+        "classification": "MANUAL_ONLY",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 26,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders/{order_id}: object-id parameter(s) order_id with no authorization evidence - BOLA risk candidate, manual review required"
+          }
+        ],
+        "finding_id": "APISEC001",
+        "fix_types": [
+          "authorization"
+        ],
+        "justification": "authorization change affects who can reach what",
+        "location": {
+          "column": null,
+          "line": 26,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "verify caller owns the referenced object before returning it",
+        "target": "Object-ID route without authorization evidence",
+        "unknowns": [
+          {
+            "missing": "object-level authorization evidence (ownership check, roles, scopes)",
+            "resolution": "declare x-ownership-check / x-roles / security scopes, or provide impl authz evidence",
+            "subject": "operation_id:getDailyOrder"
+          }
+        ]
+      },
+      {
+        "classification": "MANUAL_ONLY",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 7,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders: list-returning endpoint without a bounded pagination/limit parameter - unrestricted resource candidate"
+          }
+        ],
+        "finding_id": "APISEC006",
+        "fix_types": [
+          "pagination_default",
+          "rate_limit"
+        ],
+        "justification": "pagination default changes response size and client paging; rate-limit change affects availability and abuse controls",
+        "location": {
+          "column": null,
+          "line": 7,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "declare a limit/pagination parameter or a rate-limit policy",
+        "target": "Unrestricted expensive operation",
+        "unknowns": []
+      },
+      {
+        "classification": "MANUAL_ONLY",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 26,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders/{order_id}: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+          }
+        ],
+        "finding_id": "APISEC011",
+        "fix_types": [
+          "unmapped"
+        ],
+        "justification": "fix type is not in the \u00a7104 table \u2014 default-deny MANUAL_ONLY",
+        "location": {
+          "column": null,
+          "line": 26,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "Ambiguous auth-coverage chain",
+        "target": "Ambiguous auth-coverage chain",
+        "unknowns": [
+          {
+            "missing": "global or operation security requirement",
+            "resolution": "declare security schemes and requirements, or gateway auth evidence",
+            "subject": "operation_id:getDailyOrder"
+          }
+        ]
+      },
+      {
+        "classification": "MANUAL_ONLY",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 7,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+          }
+        ],
+        "finding_id": "APISEC011",
+        "fix_types": [
+          "unmapped"
+        ],
+        "justification": "fix type is not in the \u00a7104 table \u2014 default-deny MANUAL_ONLY",
+        "location": {
+          "column": null,
+          "line": 7,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "Ambiguous auth-coverage chain",
+        "target": "Ambiguous auth-coverage chain",
+        "unknowns": [
+          {
+            "missing": "global or operation security requirement",
+            "resolution": "declare security schemes and requirements, or gateway auth evidence",
+            "subject": "operation_id:listDailyOrders"
+          }
+        ]
+      },
+      {
+        "classification": "MANUAL_ONLY",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 1,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "openapi.yaml: no document-level security requirement protects 2 operations"
+          }
+        ],
+        "finding_id": "OAS010",
+        "fix_types": [
+          "auth"
+        ],
+        "justification": "auth change affects the credential surface",
+        "location": {
+          "column": 1,
+          "line": 1,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "if this API is partner/public, add a document-level `security` requirement",
+        "target": "api:openapi:openapi.yaml",
+        "unknowns": [
+          {
+            "missing": "API exposure classification (internal/partner/public)",
+            "resolution": "declare exposure via gateway/org metadata or add a security requirement so the question is moot",
+            "subject": "openapi.yaml"
+          }
+        ]
+      },
+      {
+        "classification": "SAFE",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 26,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders/{order_id} has no tags or domain grouping"
+          }
+        ],
+        "finding_id": "OAS020",
+        "fix_types": [
+          "metadata_missing"
+        ],
+        "justification": "missing explicit contract metadata \u2014 doc-only change",
+        "location": {
+          "column": 5,
+          "line": 26,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "Operation without tags/domain ownership (candidate)",
+        "target": "operation:openapi:operation_id:getDailyOrder",
+        "unknowns": [
+          {
+            "missing": "domain/owner attribution for the operation",
+            "resolution": "add tags or declare ownership metadata",
+            "subject": "operation_id:getDailyOrder"
+          }
+        ]
+      },
+      {
+        "classification": "SAFE",
+        "evidence": [
+          {
+            "kind": "STATIC",
+            "line": 7,
+            "offset": null,
+            "source": "openapi.yaml",
+            "summary": "GET /daily-orders has no tags or domain grouping"
+          }
+        ],
+        "finding_id": "OAS020",
+        "fix_types": [
+          "metadata_missing"
+        ],
+        "justification": "missing explicit contract metadata \u2014 doc-only change",
+        "location": {
+          "column": 5,
+          "line": 7,
+          "path": "openapi.yaml"
+        },
+        "proposed_change": "Operation without tags/domain ownership (candidate)",
+        "target": "operation:openapi:operation_id:listDailyOrders",
+        "unknowns": [
+          {
+            "missing": "domain/owner attribution for the operation",
+            "resolution": "add tags or declare ownership metadata",
+            "subject": "operation_id:listDailyOrders"
+          }
+        ]
+      }
+    ],
+    "runtime_regressions": [],
+    "schema_version": "1.0",
+    "security_candidates": [
+      "APISEC001 openapi.yaml: Object-ID route without authorization evidence",
+      "APISEC006 openapi.yaml: Unrestricted expensive operation",
+      "APISEC011 openapi.yaml: Ambiguous auth-coverage chain",
+      "APISEC011 openapi.yaml: Ambiguous auth-coverage chain"
+    ],
+    "service": "orders-api",
+    "unknowns": [
+      {
+        "missing": "source evidence for this plane",
+        "resolution": "provide the corresponding artifacts",
+        "subject": "DESIRED state"
+      },
+      {
+        "missing": "source evidence for this plane",
+        "resolution": "provide the corresponding artifacts",
+        "subject": "HYPOTHETICAL state"
+      },
+      {
+        "missing": "source evidence for this plane",
+        "resolution": "provide the corresponding artifacts",
+        "subject": "OBSERVED state"
+      },
+      {
+        "missing": "API exposure classification (internal/partner/public)",
+        "resolution": "declare exposure via gateway/org metadata or add a security requirement so the question is moot",
+        "subject": "openapi.yaml"
+      },
+      {
+        "missing": "domain/owner attribution for the operation",
+        "resolution": "add tags or declare ownership metadata",
+        "subject": "operation_id:getDailyOrder"
+      },
+      {
+        "missing": "global or operation security requirement",
+        "resolution": "declare security schemes and requirements, or gateway auth evidence",
+        "subject": "operation_id:getDailyOrder"
+      },
+      {
+        "missing": "object-level authorization evidence (ownership check, roles, scopes)",
+        "resolution": "declare x-ownership-check / x-roles / security scopes, or provide impl authz evidence",
+        "subject": "operation_id:getDailyOrder"
+      },
+      {
+        "missing": "domain/owner attribution for the operation",
+        "resolution": "add tags or declare ownership metadata",
+        "subject": "operation_id:listDailyOrders"
+      },
+      {
+        "missing": "global or operation security requirement",
+        "resolution": "declare security schemes and requirements, or gateway auth evidence",
+        "subject": "operation_id:listDailyOrders"
+      }
+    ]
+  },
+  "capabilities": [],
+  "handoff": {
+    "analysis_rev": "f1619339986735d719e416a2adc995e338e16e89ecb562b6a7cde287ff9ab446",
+    "bundle_ref": "doctor://handoff/1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+    "capabilities": [],
+    "handoff_id": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+    "protocol_version": 2,
+    "refs": [
+      {
+        "entity": null,
+        "kind": "capability",
+        "ref_id": "doctor://capability",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "contract",
+        "ref_id": "doctor://contract",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/APISEC001/openapi.yaml/7f65e1552fc7fe00",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/APISEC006/openapi.yaml/ea5df43ff07b1bb4",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/APISEC011/openapi.yaml/5a7f25db234530c7",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/APISEC011/openapi.yaml/ae7c68f0f56d4a61",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/OAS010/api:openapi:openapi.yaml/ac16f57959afabfe",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/OAS020/operation:openapi:operation_id:getDailyOrder/3d941513f7588cd9",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "finding",
+        "ref_id": "doctor://finding/OAS020/operation:openapi:operation_id:listDailyOrders/cb655d3ea08c57aa",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "graph",
+        "ref_id": "doctor://graph",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "runtime",
+        "ref_id": "doctor://runtime",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "service",
+        "ref_id": "doctor://service",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "unknown",
+        "ref_id": "doctor://unknown/0",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "unknown",
+        "ref_id": "doctor://unknown/1",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      },
+      {
+        "entity": null,
+        "kind": "unknown",
+        "ref_id": "doctor://unknown/2",
+        "sha256": "1a7fa7b54d8fc09cf8db112530b14309f9471844a34a75f5fd8fe9c2492e3a08",
+        "summary": ""
+      }
+    ],
+    "unknowns": [
+      {
+        "entity": "DESIRED state",
+        "kind": "unknown",
+        "ref_id": "doctor://unknown/0",
+        "sha256": null,
+        "summary": "source evidence for this plane"
+      },
+      {
+        "entity": "OBSERVED state",
+        "kind": "unknown",
+        "ref_id": "doctor://unknown/1",
+        "sha256": null,
+        "summary": "source evidence for this plane"
+      },
+      {
+        "entity": "HYPOTHETICAL state",
+        "kind": "unknown",
+        "ref_id": "doctor://unknown/2",
+        "sha256": null,
+        "summary": "source evidence for this plane"
+      }
+    ]
+  },
+  "manifest": {
+    "capabilities": [],
+    "contract_version": "forge-contracts/1",
+    "domains": [
+      "apisec",
+      "oas",
+      "python"
+    ],
+    "entity_count": 1,
+    "evidence_refs": [
+      "openapi.yaml:L1",
+      "openapi.yaml:L26",
+      "openapi.yaml:L7"
+    ],
+    "finding_count": 7,
+    "risks": [],
+    "tool": {
+      "name": "forge-doctor-api",
+      "version": "0.2.0"
+    },
+    "unknown_count": 8,
+    "x-forge-api": {
+      "analysis_rev": "f1619339986735d719e416a2adc995e338e16e89ecb562b6a7cde287ff9ab446"
+    }
+  }
+}

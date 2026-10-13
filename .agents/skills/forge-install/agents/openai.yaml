@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Install"
+  short_description: "Governed, approval-gated installation plans"
+
+policy:
+  allow_implicit_invocation: false

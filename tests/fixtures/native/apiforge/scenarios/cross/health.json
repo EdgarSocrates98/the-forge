@@ -1,0 +1,5 @@
+{
+  "cli": true,
+  "provenance": "recorded",
+  "recorded_with": "apiforge 0.1.0, Python 3.12.13, win32: importlib.util.find_spec('apiforge.cli') is not None"
+}

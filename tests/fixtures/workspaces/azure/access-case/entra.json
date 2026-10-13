@@ -1,0 +1,35 @@
+{
+ "principals": {
+  "grp-finance-ro": {
+   "enabled": true,
+   "type": "group"
+  },
+  "grp-platform": {
+   "enabled": true,
+   "type": "group"
+  },
+  "grp-sales": {
+   "enabled": true,
+   "type": "group"
+  },
+  "mi-1": {
+   "enabled": true
+  },
+  "mi-2": {
+   "enabled": true,
+   "type": "managed_identity"
+  },
+  "mi-3": {
+   "enabled": true,
+   "type": "managed_identity"
+  },
+  "spn-backup": {
+   "enabled": false,
+   "type": "service_principal"
+  },
+  "spn-job-1": {
+   "enabled": true,
+   "groups": []
+  }
+ }
+}

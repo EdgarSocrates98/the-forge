@@ -1,0 +1,24 @@
+{
+  "schema": "forge/branch-protection-evidence/v1",
+  "verified_at": "2026-10-13T03:34:57-03:00",
+  "owner_user_id": 20999364,
+  "repositories": [
+    "the-forge",
+    "spark-forge-aws",
+    "spark-forge-azure",
+    "api-forge",
+    "platform-forge",
+    "forge-doctor-api",
+    "forge-doctor-data",
+    "forge-cli",
+    "forge-portal"
+  ],
+  "invariants": {
+    "active_main_ruleset": true,
+    "owner_only_bypass": true,
+    "pull_request_required": true,
+    "minimum_approvals": 1,
+    "code_owner_review": true
+  },
+  "note": "all nine main rulesets verified active with PR review, one approval, CODEOWNERS review and owner User bypass only; forge-cli main targets ~DEFAULT_BRANCH and release tags remain owner-bypassed"
+}

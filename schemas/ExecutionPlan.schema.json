@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_classification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "depends_on": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "epistemic": {
+                  "enum": [
+                    "explicit",
+                    "inferred"
+                  ]
+                },
+                "evidence": {
+                  "type": "string"
+                },
+                "node": {
+                  "type": "string"
+                },
+                "rule": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "node",
+                "epistemic",
+                "evidence"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "context_needed": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "expected_artifacts": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "limitations": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "operation_class": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "read_only",
+                          "local_mutation",
+                          "external_read",
+                          "external_mutation",
+                          "destructive"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "unknowns": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_outputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "required_inputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required_locality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "local",
+                  "local-or-remote",
+                  "isolated"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "enum": [
+              "producer",
+              "consumer",
+              "standalone",
+              "proposer",
+              "referee"
+            ]
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "verification_required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "provider",
+          "capability",
+          "action"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "pattern": {
+      "enum": [
+        "route",
+        "delegate",
+        "parallel",
+        "pipeline",
+        "debate"
+      ]
+    },
+    "plan_run": {
+      "type": "string"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "profile": {
+      "enum": [
+        "economy",
+        "balanced",
+        "max"
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "decomposed",
+        "file",
+        "semantic"
+      ]
+    },
+    "status": {
+      "enum": [
+        "validated",
+        "rejected"
+      ]
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "violations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "node": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "node",
+          "detail"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "status",
+    "plan_run",
+    "task_id",
+    "pattern",
+    "source",
+    "profile",
+    "nodes"
+  ],
+  "title": "ExecutionPlan",
+  "type": "object"
+}

@@ -1,0 +1,6 @@
+{
+  "assembled_from": "line printed by a live apiforge 0.1.0 analyze run (Python 3.12.13) over a staged contract declaring swagger 2.0 instead of openapi 3.1; provisional until re-recorded by the execute recorder",
+  "exit_code": 2,
+  "provenance": "hand-built",
+  "stderr": "AF-OPENAPI-UNSUPPORTED-VERSION: openapi.yaml: openapi must be 3.1.x, got None (field=unknown; unlock=inspect the documented contract and rerun the verifier)\n"
+}

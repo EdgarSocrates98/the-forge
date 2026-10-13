@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "edges": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "epistemic": {
+            "enum": [
+              "explicit",
+              "observed",
+              "inferred"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "has_capability",
+              "has_action",
+              "in_domain",
+              "produces",
+              "consumes",
+              "requires",
+              "complements",
+              "conflicts",
+              "can_verify",
+              "can_review",
+              "accepts",
+              "verifies",
+              "verified_by",
+              "specializes",
+              "refines",
+              "uses_technology",
+              "relevant_to"
+            ]
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind",
+          "epistemic",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "provider",
+              "capability",
+              "action",
+              "artifact_type",
+              "technology",
+              "repository",
+              "domain"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "run_id"
+  ],
+  "title": "CapabilityGraph",
+  "type": "object"
+}

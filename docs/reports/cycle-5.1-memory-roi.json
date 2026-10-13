@@ -1,0 +1,90 @@
+{
+  "corpus": {
+    "decoys": 60,
+    "entries_written": 252,
+    "failures_for_subject": 180,
+    "store_bytes": 260874
+  },
+  "economy": {
+    "context_saved_bytes": 228417,
+    "memory_off_bytes": 260874,
+    "memory_on_bytes": 32457,
+    "query": {
+      "capability": "check.plan",
+      "surface_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "task_family": "audit"
+    },
+    "savings_ratio": 0.8756
+  },
+  "influence": {
+    "channel": "memory -> failure_patterns -> experiment -> human-approved StrategyPolicy -> preferred_providers",
+    "decision_changed": true,
+    "evidence": {
+      "occurrences": 180,
+      "pattern_ids": [
+        "f418ced663670478b3718fae83bc1e5c9c95b1e2d8a4e3449119364b460d548a"
+      ]
+    },
+    "patterns_rollup": 1,
+    "preferred_with_policy": [
+      "bench-beta"
+    ],
+    "preferred_without_memory": [],
+    "scope_gates_hold": true
+  },
+  "limitations": [
+    "the bench policy is a measurement artifact; production policies still require a promoted experiment and a real approval hash",
+    "nothing else in the runtime consumes memory today \u2014 retrieval quality (task outcome delta) is not measurable offline and is reported as not_measured rather than estimated"
+  ],
+  "origin": {
+    "date": "2026-10-08T06:48:05Z",
+    "forge_version": "0.3.0",
+    "git_dirty": true,
+    "git_head": "772428132bfc4d33f75b38bfc39a3fb2600db046",
+    "machine": "AMD64; 6 cpus; Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "os": "Windows-10-10.0.26300-SP0",
+    "python": "CPython 3.11.15"
+  },
+  "retrieval": {
+    "full_scan_ms": {
+      "median": 54.629,
+      "p90": 55.209
+    },
+    "memory_pack_ms": {
+      "median": 56.561,
+      "p90": 62.626
+    }
+  },
+  "safety": {
+    "deterministic": true,
+    "other_surface_not_fresh": true,
+    "terminal_counted_not_delivered": true,
+    "unknown_surface_not_fresh": true
+  },
+  "schema": "theforge-memory-roi/v1",
+  "stats": {
+    "surface_known": {
+      "bytes_delivered": 32457,
+      "bytes_matched": 188460,
+      "entries_considered": 252,
+      "entries_delivered": 31,
+      "entries_fresh": 180,
+      "entries_matched": 180,
+      "entries_not_fresh": 0,
+      "entries_terminal": 12,
+      "entries_withheld": 149
+    },
+    "surface_unknown": {
+      "bytes_delivered": 32457,
+      "bytes_matched": 188460,
+      "entries_considered": 252,
+      "entries_delivered": 31,
+      "entries_fresh": 0,
+      "entries_matched": 180,
+      "entries_not_fresh": 180,
+      "entries_terminal": 12,
+      "entries_withheld": 149
+    }
+  },
+  "wall_ms": 28594.225
+}

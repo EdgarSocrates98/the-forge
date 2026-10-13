@@ -1,0 +1,884 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "context": {
+      "properties": {
+        "budget_bytes": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "excluded": {
+          "items": {
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "signals": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "path",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "properties": {
+              "bytes": {
+                "type": "integer"
+              },
+              "lines": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "end": {
+                        "type": "integer"
+                      },
+                      "start": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "signals": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "tier": {
+                "enum": [
+                  "reference",
+                  "excerpt",
+                  "requested"
+                ]
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "bytes"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "producer": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "type": "object"
+        },
+        "provider_id": {
+          "type": "string"
+        },
+        "root": {
+          "type": "string"
+        },
+        "round": {
+          "type": "integer"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "truncated"
+          ]
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "tier_bytes": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "tokens": {
+          "properties": {
+            "kind": {
+              "enum": [
+                "measured",
+                "estimated",
+                "unknown"
+              ]
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "used_bytes": {
+          "type": "integer"
+        },
+        "workspace": {
+          "anyOf": [
+            {
+              "properties": {
+                "dependency_files": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "files_scanned": {
+                  "type": "integer"
+                },
+                "git": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "branch": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "changed_files": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "detached": {
+                          "type": "boolean"
+                        },
+                        "dirty": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "head": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "state": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "available"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "unmatched_files": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "files_scanned",
+                "unmatched_files"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "producer",
+        "created_at",
+        "status",
+        "task_id",
+        "provider_id",
+        "root",
+        "budget_bytes"
+      ],
+      "type": "object"
+    },
+    "delta": {
+      "anyOf": [
+        {
+          "properties": {
+            "baseline_ref": {
+              "type": "string"
+            },
+            "changed_files": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "handoff": {
+      "anyOf": [
+        {
+          "properties": {
+            "created_at": {
+              "type": "string"
+            },
+            "dropped": {
+              "type": "integer"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "also_from": {
+                    "items": {
+                      "properties": {
+                        "node": {
+                          "type": "string"
+                        },
+                        "plan_run": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "version"
+                          ],
+                          "type": "object"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "plan_run",
+                        "node",
+                        "run_id",
+                        "provider"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "artifact_type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "claim": {
+                    "type": "string"
+                  },
+                  "derived_from": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "item": {
+                            "type": "string"
+                          },
+                          "node": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "plan_run": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "provider": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider",
+                          "run_id",
+                          "item"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "epistemic": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "confirmed",
+                          "observed",
+                          "inferred",
+                          "proposed",
+                          "unresolved"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "evidence_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "hash": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "evidence",
+                      "finding",
+                      "artifact",
+                      "decision",
+                      "constraint",
+                      "assumption",
+                      "verification"
+                    ]
+                  },
+                  "location": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "line": {
+                            "anyOf": [
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "path"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "origin": {
+                    "properties": {
+                      "node": {
+                        "type": "string"
+                      },
+                      "plan_run": {
+                        "type": "string"
+                      },
+                      "provider": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "type": "object"
+                      },
+                      "run_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "plan_run",
+                      "node",
+                      "run_id",
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  "severity": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "info",
+                          "low",
+                          "medium",
+                          "high",
+                          "critical"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "subject": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "origin"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "limitations": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "plan_run": {
+              "type": "string"
+            },
+            "producer": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "version"
+              ],
+              "type": "object"
+            },
+            "schema": {
+              "type": "string"
+            },
+            "target_node": {
+              "type": "string"
+            },
+            "truncated": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "producer",
+            "created_at",
+            "plan_run",
+            "target_node"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "task": {
+      "properties": {
+        "budget_profile": {
+          "anyOf": [
+            {
+              "enum": [
+                "economy",
+                "balanced",
+                "max"
+              ]
+            },
+            {
+              "enum": [
+                "auto"
+              ]
+            }
+          ]
+        },
+        "constraints": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "producer": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "type": "object"
+        },
+        "requested_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requested_capability": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requirement": {
+          "anyOf": [
+            {
+              "properties": {
+                "capability": {
+                  "type": "string"
+                },
+                "credentials_allowed": {
+                  "type": "boolean"
+                },
+                "economy_required": {
+                  "type": "boolean"
+                },
+                "graph_required": {
+                  "type": "boolean"
+                },
+                "handoff_required": {
+                  "type": "boolean"
+                },
+                "id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "input_artifact_types": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "minimum_trust": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "builtin",
+                        "trusted",
+                        "local",
+                        "unverified",
+                        "blocked"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "mutation_allowed": {
+                  "type": "boolean"
+                },
+                "network_allowed": {
+                  "type": "boolean"
+                },
+                "offline_required": {
+                  "type": "boolean"
+                },
+                "operation_class_ceiling": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "read_only",
+                        "local_mutation",
+                        "external_read",
+                        "external_mutation",
+                        "destructive"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "platform_constraints": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "protocol_features": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "required_actions": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "required_evidence": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "required_output_types": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "runtime_constraints": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "schema": {
+                  "type": "string"
+                },
+                "task_family": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "technologies": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "trace_required": {
+                  "type": "boolean"
+                },
+                "verification_level": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "minimal",
+                        "conditional",
+                        "strong"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "capability"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schema": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "created"
+          ]
+        },
+        "targets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "workspace_root": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "producer",
+        "created_at",
+        "id",
+        "intent",
+        "workspace_root"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "task",
+    "capability",
+    "action",
+    "context"
+  ],
+  "title": "ExecuteRequest",
+  "type": "object"
+}

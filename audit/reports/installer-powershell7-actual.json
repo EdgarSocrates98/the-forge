@@ -1,0 +1,145 @@
+{
+  "schema": "forge/installer-apply-powershell7/v1",
+  "mode": "real persistent account install",
+  "platform": "Windows 11",
+  "scope": "HKCU; no admin elevation",
+  "results": [
+    {
+      "repo": "the-forge",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "the-forge/install.ps1",
+        "--python",
+        "the-forge/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/the-forge.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/the-forge.stderr.txt"
+    },
+    {
+      "repo": "spark-forge-aws",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "spark-forge-aws/install.ps1",
+        "--python",
+        "spark-forge-aws/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/spark-forge-aws.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/spark-forge-aws.stderr.txt"
+    },
+    {
+      "repo": "spark-forge-azure",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "spark-forge-azure/install.ps1",
+        "--python",
+        "spark-forge-azure/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/spark-forge-azure.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/spark-forge-azure.stderr.txt"
+    },
+    {
+      "repo": "api-forge",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "api-forge/install.ps1",
+        "--python",
+        "api-forge/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/api-forge.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/api-forge.stderr.txt"
+    },
+    {
+      "repo": "platform-forge",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "platform-forge/install.ps1",
+        "--python",
+        "platform-forge/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/platform-forge.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/platform-forge.stderr.txt"
+    },
+    {
+      "repo": "forge-doctor-api",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "forge-doctor-api/install.ps1",
+        "--python",
+        "forge-doctor-api/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/forge-doctor-api.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/forge-doctor-api.stderr.txt"
+    },
+    {
+      "repo": "forge-doctor-data",
+      "shell": "PowerShell 7",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "forge-doctor-data/install.ps1",
+        "--python",
+        "forge-doctor-data/.venv/Scripts/python.exe",
+        "--quiet"
+      ],
+      "stdout_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/forge-doctor-data.stdout.txt",
+      "stderr_artifact": "audit/artifacts/installers-2026-10-13/powershell-7-actual/forge-doctor-data.stderr.txt"
+    }
+  ],
+  "counts": {
+    "PASS": 7,
+    "FAIL": 0
+  }
+}

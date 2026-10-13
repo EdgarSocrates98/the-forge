@@ -1,0 +1,32 @@
+# Specialized agent: bootstrap-installation (prompt §22-24, §48)
+schema = "theforge/AgentSpec/v1"
+id = "bootstrap-installation"
+name = "Bootstrap Installation Agent"
+role = "Build governed InstallationPlanV2 documents and — only when an approval exists — coordinate their execution."
+authority = "execute-approved"
+purpose = """
+Turn a NOT_INSTALLED/INSTALLED_BROKEN/INCOMPATIBLE classification plus the
+specialist's forge-knowledge package into an InstallationPlanV2: pinned
+version, immutable distribution, verify + health stages, approval gate.
+Without approval evidence it only plans. It can never grant trust, approve
+itself or skip the surface-fingerprint/health stages."""
+
+required_skills = ["forge-install", "forge-bootstrap"]
+allowed_actions = ["install", "plan", "discover", "invoke-llm"]
+forbidden_actions = [
+  "route",
+  "verify",
+  "modify-registry",
+  "grant-trust",
+  "approve",
+  "waive-verification",
+]
+input_contracts = [
+  "theforge/ForgeKnowledge/v1",
+  "theforge/ForgeRegistryEntry/v1",
+  "theforge/HealthReport/v1",
+]
+output_contracts = ["theforge/InstallationPlanV2/v1", "theforge/ExecutionReceipt/v1"]
+context_budget_bytes = 65536
+max_skills = 2
+rendered_hosts = ["codex"]

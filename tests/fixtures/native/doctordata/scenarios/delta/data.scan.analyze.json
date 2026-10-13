@@ -1,0 +1,2205 @@
+{
+  "capabilities": [
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "adls",
+      "evidence_refs": [],
+      "id": "ADLS_ABFSS_DRIVER",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "adls",
+      "evidence_refs": [],
+      "id": "ADLS_HIERARCHICAL_NAMESPACE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "adls",
+      "evidence_refs": [],
+      "id": "ADLS_POSIX_ACLS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "adls",
+      "evidence_refs": [],
+      "id": "ADLS_SOFT_DELETE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "ATHENA_ICEBERG",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "ATHENA_PREPARED_STATEMENTS",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "ATHENA_RESULT_REUSE",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "ATHENA_SYNC_INTEGRATION",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "ATHENA_UNLOAD",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_FGAC",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "athena",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_FTA",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "azure_fabric",
+      "evidence_refs": [],
+      "id": "FABRIC_CAPACITY_THROTTLING",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "azure_fabric",
+      "evidence_refs": [],
+      "id": "FABRIC_DIRECT_LAKE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "azure_fabric",
+      "evidence_refs": [],
+      "id": "FABRIC_ONELAKE_SHORTCUTS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "BIGLAKE_EXTERNAL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "BI_ENGINE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "CLUSTERING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "DML_MUTATIONS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "PARTITIONING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "SLOTS_RESERVATIONS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "bigquery",
+      "evidence_refs": [],
+      "id": "TIME_TRAVEL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "catalog",
+      "evidence_refs": [],
+      "id": "FINE_GRAINED_ACCESS",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "compute_engine",
+      "evidence_refs": [],
+      "id": "SERVERLESS_OPTION",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "databricks",
+      "evidence_refs": [],
+      "id": "DBX_BUNDLES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "databricks",
+      "evidence_refs": [],
+      "id": "DBX_LAKEFLOW_PIPELINES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "databricks",
+      "evidence_refs": [],
+      "id": "DBX_SERVERLESS_COMPUTE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "databricks",
+      "evidence_refs": [],
+      "id": "DBX_SQL_WAREHOUSE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "databricks",
+      "evidence_refs": [],
+      "id": "DBX_UNITY_CATALOG",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataflow",
+      "evidence_refs": [],
+      "id": "DATAFLOW_AUTOSCALING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataflow",
+      "evidence_refs": [],
+      "id": "DATAFLOW_DRAIN",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataflow",
+      "evidence_refs": [],
+      "id": "DATAFLOW_STREAMING_ENGINE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataplex",
+      "evidence_refs": [],
+      "id": "DATAPLEX_AUTO_DISCOVERY",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataplex",
+      "evidence_refs": [],
+      "id": "DATAPLEX_DATA_QUALITY",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataplex",
+      "evidence_refs": [],
+      "id": "DATAPLEX_LAKE_ZONES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataproc",
+      "evidence_refs": [],
+      "id": "DATAPROC_AUTOSCALING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataproc",
+      "evidence_refs": [],
+      "id": "DATAPROC_PREEMPTIBLE_WORKERS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dataproc",
+      "evidence_refs": [],
+      "id": "DATAPROC_SERVERLESS_BATCHES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_CDF",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_COLUMN_MAPPING",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_DELETION_VECTORS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_LIQUID_CLUSTERING",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_MERGE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_OPTIMIZE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_SCHEMA_EVOLUTION",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "delta",
+      "evidence_refs": [],
+      "id": "DELTA_VACUUM",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_GLOBAL_TABLE_MREC",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_GLOBAL_TABLE_MRSC",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_GSI",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_LSI",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_STREAMS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_STRONG_READ",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb",
+      "evidence_refs": [],
+      "id": "DYNAMODB_TRANSACTIONS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb_global_table",
+      "evidence_refs": [],
+      "id": "DYNAMODB_STRONG_READ",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "dynamodb_global_table",
+      "evidence_refs": [],
+      "id": "DYNAMODB_TRANSACTIONS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "elasticsearch",
+      "evidence_refs": [],
+      "id": "INGEST_PIPELINES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "elasticsearch",
+      "evidence_refs": [],
+      "id": "LIFECYCLE_MANAGEMENT",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "elasticsearch",
+      "evidence_refs": [],
+      "id": "SERVERLESS_DEPLOYMENT",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "elasticsearch",
+      "evidence_refs": [],
+      "id": "VECTOR_SEARCH_KNN",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "emr",
+      "evidence_refs": [],
+      "id": "EMR_DELTA",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "emr",
+      "evidence_refs": [],
+      "id": "EMR_ICEBERG",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "emr",
+      "evidence_refs": [],
+      "id": "EMR_LAKE_FORMATION",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "emr",
+      "evidence_refs": [],
+      "id": "EMR_SERVERLESS",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "emr",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_FGAC",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "eventhubs",
+      "evidence_refs": [],
+      "id": "EVENTHUBS_CAPTURE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "eventhubs",
+      "evidence_refs": [],
+      "id": "EVENTHUBS_KAFKA_ENDPOINT",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "eventhubs",
+      "evidence_refs": [],
+      "id": "EVENTHUBS_LONG_RETENTION",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "flink",
+      "evidence_refs": [],
+      "id": "FLINK_EXACTLY_ONCE_CHECKPOINTING",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "flink",
+      "evidence_refs": [],
+      "id": "FLINK_ROCKSDB_STATE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "flink",
+      "evidence_refs": [],
+      "id": "FLINK_SAVEPOINT_UPGRADES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "glue",
+      "evidence_refs": [],
+      "id": "ICEBERG_DELETE",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "glue",
+      "evidence_refs": [],
+      "id": "ICEBERG_MERGE_WRITE",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "glue",
+      "evidence_refs": [],
+      "id": "ICEBERG_UPDATE",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "glue",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_FGAC",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "glue",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_FTA",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "graph",
+      "evidence_refs": [],
+      "id": "GRAPH_BULK_LOAD",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "graph",
+      "evidence_refs": [],
+      "id": "GRAPH_PROPERTY_MODEL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "graph",
+      "evidence_refs": [],
+      "id": "GRAPH_QUERY_LANGUAGE_GREMLIN",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "graph",
+      "evidence_refs": [],
+      "id": "GRAPH_QUERY_LANGUAGE_OPENCYPHER",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "graph",
+      "evidence_refs": [],
+      "id": "GRAPH_QUERY_LANGUAGE_SPARQL",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "graph",
+      "evidence_refs": [],
+      "id": "GRAPH_RDF_MODEL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "iceberg",
+      "evidence_refs": [],
+      "id": "ICEBERG_DELETE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "iceberg",
+      "evidence_refs": [],
+      "id": "ICEBERG_MERGE_WRITE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "iceberg",
+      "evidence_refs": [],
+      "id": "ICEBERG_UPDATE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "kafka",
+      "evidence_refs": [],
+      "id": "KAFKA_CONSUMER_GROUPS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "kafka",
+      "evidence_refs": [],
+      "id": "KAFKA_REPLAYABLE_SOURCE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "kinesis",
+      "evidence_refs": [],
+      "id": "KINESIS_ENHANCED_FANOUT",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "kinesis",
+      "evidence_refs": [],
+      "id": "KINESIS_EXTENDED_RETENTION",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "kinesis",
+      "evidence_refs": [],
+      "id": "KINESIS_ON_DEMAND_MODE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "kinesis",
+      "evidence_refs": [],
+      "id": "KINESIS_REPLAYABLE_SOURCE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "lakeformation",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_CROSS_ACCOUNT",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "lakeformation",
+      "evidence_refs": [],
+      "id": "LAKEFORMATION_HYBRID_ACCESS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "lambda",
+      "evidence_refs": [],
+      "id": "LAMBDA_DESTINATIONS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "lambda",
+      "evidence_refs": [],
+      "id": "LAMBDA_RESERVED_CONCURRENCY",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "lambda",
+      "evidence_refs": [],
+      "id": "LAMBDA_SNAPSTART",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "lambda",
+      "evidence_refs": [],
+      "id": "LAMBDA_STREAM_TO_LAKE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "managed_flink",
+      "evidence_refs": [],
+      "id": "MANAGED_FLINK_AUTOSCALING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "msk",
+      "evidence_refs": [],
+      "id": "MSK_IAM_AUTH",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "msk",
+      "evidence_refs": [],
+      "id": "MSK_SERVERLESS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "GRAPH_BULK_LOAD",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "GRAPH_PROPERTY_MODEL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "GRAPH_RDF_MODEL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_BULK_LOADER",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_EXPLAIN",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_GLOBAL_DATABASE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_GREMLIN",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_OPENCYPHER",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_PROFILE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune",
+      "evidence_refs": [],
+      "id": "NEPTUNE_SPARQL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "neptune_analytics",
+      "evidence_refs": [],
+      "id": "NEPTUNE_ANALYTICS_ALGORITHMS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "object_storage",
+      "evidence_refs": [],
+      "id": "ENCRYPTION_AT_REST",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "object_storage",
+      "evidence_refs": [],
+      "id": "VERSIONING",
+      "status": "unknown"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "opensearch",
+      "evidence_refs": [],
+      "id": "INGEST_PIPELINES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "opensearch",
+      "evidence_refs": [],
+      "id": "LIFECYCLE_MANAGEMENT",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "opensearch",
+      "evidence_refs": [],
+      "id": "SERVERLESS_DEPLOYMENT",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "opensearch",
+      "evidence_refs": [],
+      "id": "VECTOR_SEARCH_KNN",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "operational_store",
+      "evidence_refs": [],
+      "id": "TIME_TO_LIVE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "pubsub",
+      "evidence_refs": [],
+      "id": "PUBSUB_DEAD_LETTER",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "pubsub",
+      "evidence_refs": [],
+      "id": "PUBSUB_EXACTLY_ONCE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "pubsub",
+      "evidence_refs": [],
+      "id": "PUBSUB_ORDERING_KEYS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "pubsub",
+      "evidence_refs": [],
+      "id": "PUBSUB_SEEK",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "purview",
+      "evidence_refs": [],
+      "id": "PURVIEW_AUTOMATED_SCAN",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "purview",
+      "evidence_refs": [],
+      "id": "PURVIEW_CLASSIFICATION",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "purview",
+      "evidence_refs": [],
+      "id": "PURVIEW_LINEAGE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "AUTO_MATERIALIZED_VIEWS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "CONCURRENCY_SCALING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "DATASHARES",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "DIST_SORT_KEYS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "RA3_MANAGED_STORAGE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "SERVERLESS_RPU",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "redshift",
+      "evidence_refs": [],
+      "id": "SPECTRUM_EXTERNAL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "CLUSTERING_KEYS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "MULTI_CLUSTER_WAREHOUSE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "RESULT_CACHE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "SHARING",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "SNOWPIPE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "STREAMS_AND_TASKS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "TIME_TRAVEL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "snowflake",
+      "evidence_refs": [],
+      "id": "ZERO_COPY_CLONE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "spark_ss",
+      "evidence_refs": [],
+      "id": "KAFKA_TRANSACTIONAL_SINK",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "stream",
+      "evidence_refs": [],
+      "id": "MESSAGE_ORDERING",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "stream",
+      "evidence_refs": [],
+      "id": "RETENTION_CONFIG",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "synapse",
+      "evidence_refs": [],
+      "id": "SYNAPSE_CETAS",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "synapse",
+      "evidence_refs": [],
+      "id": "SYNAPSE_SERVERLESS_SQL",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "synapse",
+      "evidence_refs": [],
+      "id": "SYNAPSE_SPARK_AUTOSCALE",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "EVENT_LISTENERS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "FEDERATED_READ",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "FEDERATED_WRITE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "PUSHDOWN",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "RESOURCE_GROUPS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "SPILL_TO_DISK",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "trino",
+      "evidence_refs": [],
+      "id": "TRANSACTIONAL_TABLES",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "warehouse",
+      "evidence_refs": [],
+      "id": "MATERIALIZED_VIEWS",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "warehouse",
+      "evidence_refs": [],
+      "id": "RESULT_CACHE",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "warehouse",
+      "evidence_refs": [],
+      "id": "SHARING",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "warehouse",
+      "evidence_refs": [],
+      "id": "SQL_QUERY",
+      "status": "supported"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "warehouse",
+      "evidence_refs": [],
+      "id": "TIME_TRAVEL",
+      "status": "conditional"
+    },
+    {
+      "contract_version": "forge-contracts/1",
+      "domain": "warehouse",
+      "evidence_refs": [],
+      "id": "ZERO_COPY_CLONE",
+      "status": "unknown"
+    }
+  ],
+  "contract_version": "forge-contracts/1",
+  "delta": {
+    "baseline_ref": "20250101-000000.json",
+    "capability_transitions": [
+      {
+        "capability": "postgres/indexes",
+        "from": "unknown",
+        "to": "detected"
+      }
+    ],
+    "changed_files": [
+      "pipelines/orders.py"
+    ],
+    "drift_added": [],
+    "drift_resolved": [],
+    "entities_added": [
+      "table:shop.orders"
+    ],
+    "entities_removed": [],
+    "new_findings": [
+      {
+        "category": "architecture",
+        "check_id": "ARCH001",
+        "file": "pipelines/orders.py",
+        "key": "ARCH001|orders",
+        "severity": "warning"
+      }
+    ],
+    "newer": "20250201-000000.json",
+    "older": "20250101-000000.json",
+    "resolved_findings": []
+  },
+  "entities": [
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "domain": "dbt",
+      "id": "dataset:dbt:raw.customers",
+      "identifier": "raw.customers",
+      "kind": "dataset",
+      "name": "raw.customers"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "domain": "dbt",
+      "id": "dataset:dbt:raw.orders",
+      "identifier": "raw.orders",
+      "kind": "dataset",
+      "name": "raw.orders"
+    },
+    {
+      "attrs": {
+        "materialized": "unknown"
+      },
+      "contract_version": "forge-contracts/1",
+      "domain": "dbt",
+      "file": "models/customers.sql",
+      "id": "dbt_model:dbt:customers",
+      "identifier": "customers",
+      "kind": "dbt_model",
+      "name": "customers"
+    },
+    {
+      "attrs": {
+        "materialized": "unknown"
+      },
+      "contract_version": "forge-contracts/1",
+      "domain": "dbt",
+      "file": "models/orders.sql",
+      "id": "dbt_model:dbt:orders",
+      "identifier": "orders",
+      "kind": "dbt_model",
+      "name": "orders"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "domain": "dbt",
+      "id": "table:dbt:customers",
+      "identifier": "customers",
+      "kind": "table",
+      "name": "customers"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "domain": "dbt",
+      "id": "table:dbt:orders",
+      "identifier": "orders",
+      "kind": "table",
+      "name": "orders"
+    },
+    {
+      "attrs": {
+        "operator": "EmptyOperator"
+      },
+      "contract_version": "forge-contracts/1",
+      "domain": "airflow",
+      "file": "dags/shop_daily.py",
+      "id": "task:airflow:build",
+      "identifier": "build",
+      "kind": "task",
+      "line": 5,
+      "name": "build"
+    },
+    {
+      "attrs": {
+        "retries": "",
+        "schedule": "@daily"
+      },
+      "contract_version": "forge-contracts/1",
+      "domain": "airflow",
+      "file": "dags/shop_daily.py",
+      "id": "workflow:airflow:shop_daily",
+      "identifier": "shop_daily",
+      "kind": "workflow",
+      "line": 4,
+      "name": "shop_daily"
+    }
+  ],
+  "findings": [
+    {
+      "category": "airflow",
+      "check_id": "AIR000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "3c3b5e246dc57a47",
+      "message": "1 dags, 1 tasks (0 sensors), 0 dependencies",
+      "severity": "info",
+      "tags": [],
+      "title": "Airflow usage"
+    },
+    {
+      "category": "serverless",
+      "check_id": "ATH000",
+      "confidence": "medium",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "a3220d0892512feb",
+      "message": "no Athena workgroups/queries/config detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Athena usage"
+    },
+    {
+      "category": "aws",
+      "check_id": "AWS001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "5fab4cbb7c1789a4",
+      "message": "AWS CLI not found",
+      "recommendation": "Install AWS CLI v2 for SSO and credential helpers.",
+      "severity": "info",
+      "tags": [],
+      "title": "AWS CLI"
+    },
+    {
+      "category": "aws",
+      "check_id": "AWS002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "1a6abf55cf765901",
+      "message": "region us-east-1 configured (profile: sparkforge)",
+      "severity": "pass",
+      "tags": [],
+      "title": "AWS region"
+    },
+    {
+      "category": "aws",
+      "check_id": "AWS003",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "9907f7abe0b0b0a9",
+      "message": "no credentials detected",
+      "recommendation": "Configure credentials via environment, ~/.aws/credentials, or SSO.",
+      "severity": "info",
+      "tags": [],
+      "title": "AWS credentials"
+    },
+    {
+      "category": "aws",
+      "check_id": "AWS004",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "7b76bc4d278f5227",
+      "message": "profiles in ~/.aws/config: sparkforge",
+      "severity": "info",
+      "tags": [],
+      "title": "AWS profile"
+    },
+    {
+      "category": "azure",
+      "check_id": "AZ000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "3d05a8b713404da5",
+      "message": "no Azure data-platform evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Azure data-platform surface"
+    },
+    {
+      "category": "bigquery",
+      "check_id": "BQ000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "7e0558bddf46f2e9",
+      "message": "no BigQuery evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "BigQuery surface"
+    },
+    {
+      "category": "ci",
+      "check_id": "CI001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "0cb325d0289fb66d",
+      "message": "No CI configuration found.",
+      "recommendation": "Add a CI pipeline (e.g. .github/workflows) to run tests and lint.",
+      "severity": "info",
+      "tags": [],
+      "title": "CI configured"
+    },
+    {
+      "category": "cloud",
+      "check_id": "CLOUD000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "212e4d549110d76d",
+      "message": "no cloud-platform evidence",
+      "severity": "pass",
+      "tags": [],
+      "title": "Multi-cloud abstraction surface"
+    },
+    {
+      "category": "controlm",
+      "check_id": "CTM000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "6a9a40e88d290d63",
+      "message": "no Control-M usage detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Control-M usage"
+    },
+    {
+      "category": "dbt",
+      "check_id": "DBT000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "bde6cf4c18cf86af",
+      "message": "project 'shop': 2 models ({'unknown': 2}), 0 sources, 0 seeds, 0 snapshots, 0 exposures, 0 singular tests, 0 manifest nodes",
+      "severity": "info",
+      "tags": [],
+      "title": "dbt surface"
+    },
+    {
+      "category": "dbt",
+      "check_id": "DBT001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence": "no tests in schema yml for customers",
+      "evidence_kind": "static",
+      "file": "models/customers.sql",
+      "fingerprint": "2a3dca33bee73d95",
+      "message": "model 'customers' has no declared tests",
+      "severity": "warning",
+      "tags": [],
+      "title": "Model without tests"
+    },
+    {
+      "category": "dbt",
+      "check_id": "DBT001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence": "no tests in schema yml for orders",
+      "evidence_kind": "static",
+      "file": "models/orders.sql",
+      "fingerprint": "935ee07b2574412b",
+      "message": "model 'orders' has no declared tests",
+      "severity": "warning",
+      "tags": [],
+      "title": "Model without tests"
+    },
+    {
+      "category": "dbt",
+      "check_id": "DBT005",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence": "schema.yml descriptions counted",
+      "evidence_kind": "static",
+      "fingerprint": "5cb1619a2cbc5d19",
+      "message": "0% of 2 models carry a description (threshold 50%)",
+      "severity": "info",
+      "tags": [],
+      "title": "Low model doc coverage"
+    },
+    {
+      "category": "platforms",
+      "check_id": "DBX000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "88168b7c1a86002e",
+      "message": "no Databricks workloads detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Databricks usage"
+    },
+    {
+      "category": "datacontract",
+      "check_id": "DCTR000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "60a11eca2b7de057",
+      "message": "no data contract files detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Data contract surface"
+    },
+    {
+      "category": "dynamodb",
+      "check_id": "DDB001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "0ada8c74244e5a00",
+      "message": "no dynamodb workloads detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "DynamoDB workload detected"
+    },
+    {
+      "category": "platforms",
+      "check_id": "DELTA000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "47be4dd24c536117",
+      "message": "no Delta Lake usage detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Delta Lake usage"
+    },
+    {
+      "category": "docker",
+      "check_id": "DOCKER001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "bf2a460222517ce8",
+      "message": "No Dockerfile found.",
+      "recommendation": "Add a Dockerfile if this project ships a container image.",
+      "severity": "info",
+      "tags": [],
+      "title": "Dockerfile present"
+    },
+    {
+      "category": "quality",
+      "check_id": "DQ000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "8a08ac8c31155c19",
+      "message": "no data-quality evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Data quality surface"
+    },
+    {
+      "category": "platforms",
+      "check_id": "EMR000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "b9c633ecf3329374",
+      "message": "no EMR workloads detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "EMR usage"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "FLK000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "ce073cb05ff9393c",
+      "message": "no flink evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Flink surface detected"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "FLK001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "f6cb722466df4dca",
+      "message": "flink checkpointing configured (or no flink)",
+      "severity": "pass",
+      "tags": [],
+      "title": "Flink job without checkpointing"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "FLK002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "f0fe62268335b007",
+      "message": "keyed state is checkpointed (or absent)",
+      "severity": "pass",
+      "tags": [],
+      "title": "Flink keyed state without checkpointing"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "FLK003",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "172463d8da962951",
+      "message": "managed apps autoscale or set parallelism",
+      "severity": "pass",
+      "tags": [],
+      "title": "Managed Flink app without autoscaling"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "FLK004",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "a5b462c662114906",
+      "message": "no AT_LEAST_ONCE declaration",
+      "severity": "pass",
+      "tags": [],
+      "title": "Flink checkpointing at AT_LEAST_ONCE"
+    },
+    {
+      "category": "gcp",
+      "check_id": "GCP000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "cc78e595a8de6dbf",
+      "message": "no GCP data-platform evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "GCP data-platform surface"
+    },
+    {
+      "category": "git",
+      "check_id": "GIT001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "observed_metadata",
+      "fingerprint": "b86d0097550f314b",
+      "message": "Project is a git repository.",
+      "severity": "pass",
+      "tags": [],
+      "title": "Git repository"
+    },
+    {
+      "category": "git",
+      "check_id": "GIT002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "observed_metadata",
+      "fingerprint": "e5ebb5c6e493584f",
+      "message": "No sensitive files tracked by git.",
+      "severity": "pass",
+      "tags": [],
+      "title": "Sensitive files tracked"
+    },
+    {
+      "category": "git",
+      "check_id": "GIT003",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "observed_metadata",
+      "fingerprint": "77a24f70cc84079d",
+      "message": "No Python artifacts tracked by git.",
+      "severity": "pass",
+      "tags": [],
+      "title": "Python artifacts tracked"
+    },
+    {
+      "category": "glue",
+      "check_id": "GLUE001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "16d08bd0509fa060",
+      "message": "no AWS Glue usage detected",
+      "severity": "info",
+      "tags": [],
+      "title": "Glue usage"
+    },
+    {
+      "category": "graph",
+      "check_id": "GRAPH001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "a4580a21b9501598",
+      "message": "no graph workloads detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Graph workload detected"
+    },
+    {
+      "category": "iceberg",
+      "check_id": "ICE000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "29dbca7f90c25722",
+      "message": "no Iceberg usage detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Iceberg usage"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "257394306a69e967",
+      "message": "no kafka evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kafka surface detected"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "d68f0592d62a706f",
+      "message": "no plaintext client-broker traffic detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "MSK cluster without TLS client-broker encryption"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "19779bf27be14581",
+      "message": "no single-partition topics detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kafka topic with a single partition"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK003",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "2f94b2c4ababb861",
+      "message": "no kafka streaming sources detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kafka source without maxOffsetsPerTrigger"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK004",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "2eba4eec6bd74939",
+      "message": "schema registry evidence present (or no kafka)",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kafka topics consumed without a schema registry"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK005",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "54e9a2ade15619f5",
+      "message": "consumer groups declared (or no consumers)",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kafka consumer without a consumer group"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KFK006",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "2a1320487f3246ed",
+      "message": "kafka security evidence present (or no kafka)",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kafka traffic without security evidence"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KIN000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "facd3aa73932fe5b",
+      "message": "no kinesis evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kinesis surface detected"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KIN001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "2e9da3a652909bef",
+      "message": "no single-shard provisioned streams",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kinesis stream with a single shard"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KIN002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "08a1184e65504937",
+      "message": "streams declare extended retention",
+      "severity": "pass",
+      "tags": [],
+      "title": "Kinesis stream with default retention"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "KIN003",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "61d3862794710e62",
+      "message": "fan-out is EFO-backed or single-consumer",
+      "severity": "pass",
+      "tags": [],
+      "title": "Multiple consumers without enhanced fan-out"
+    },
+    {
+      "category": "serverless",
+      "check_id": "LAM000",
+      "confidence": "medium",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "7cf91ac20dad177e",
+      "message": "no Lambda functions/config detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Lambda usage"
+    },
+    {
+      "category": "lakeformation",
+      "check_id": "LF000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "4420bb88d96a731b",
+      "message": "no Lake Formation resources detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Lake Formation usage"
+    },
+    {
+      "category": "metadata",
+      "check_id": "META000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "a28df8797e828749",
+      "message": "no metadata-catalog evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Metadata estate surface"
+    },
+    {
+      "category": "neptune",
+      "check_id": "NEP001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "928eb8fd18b18a40",
+      "message": "no neptune workloads detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Neptune workload detected"
+    },
+    {
+      "category": "parquet",
+      "check_id": "PARQ000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "10cdc68c2027d83a",
+      "message": "no Parquet usage detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Parquet usage"
+    },
+    {
+      "category": "python",
+      "check_id": "PY001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "c8af0b779d978f3c",
+      "message": "Python 3.14.6 found on PATH.",
+      "severity": "pass",
+      "tags": [],
+      "title": "Python version"
+    },
+    {
+      "category": "python",
+      "check_id": "PY002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "a2e865a251367d42",
+      "message": "requires-python is not declared.",
+      "recommendation": "Declare requires-python (e.g. '>=3.11') in pyproject.toml.",
+      "severity": "warning",
+      "tags": [],
+      "title": "requires-python"
+    },
+    {
+      "category": "python",
+      "check_id": "PY004",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "d9f9a29dc2e03400",
+      "message": "No .venv/ directory and VIRTUAL_ENV is not set.",
+      "recommendation": "Create a virtual environment (python -m venv .venv).",
+      "severity": "info",
+      "tags": [],
+      "title": "Virtual environment"
+    },
+    {
+      "category": "python",
+      "check_id": "PY005",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "48df1b867efb74d3",
+      "message": "No pytest or tox configuration found.",
+      "recommendation": "Add [tool.pytest.ini_options] to pyproject.toml.",
+      "severity": "info",
+      "tags": [],
+      "title": "Test configuration"
+    },
+    {
+      "category": "python",
+      "check_id": "PY006",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "50ddde4835c70cf5",
+      "message": "No linter configuration found (ruff, flake8, pre-commit).",
+      "recommendation": "Add a [tool.ruff] section or a ruff.toml file.",
+      "severity": "info",
+      "tags": [],
+      "title": "Linter configuration"
+    },
+    {
+      "category": "python",
+      "check_id": "PY007",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "04cd4f11df1aa40f",
+      "message": "No type checker configuration found (mypy, pyright).",
+      "recommendation": "Add a [tool.mypy] section or a pyrightconfig.json file.",
+      "severity": "info",
+      "tags": [],
+      "title": "Type checker"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "33a76d4405a5381d",
+      "message": "pyproject.toml not found.",
+      "recommendation": "Add a PEP 621 pyproject.toml at the project root.",
+      "severity": "warning",
+      "tags": [],
+      "title": "pyproject.toml"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP002",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "3d719653fe98ce8b",
+      "message": "No README.md, README.rst or README.txt at the project root.",
+      "recommendation": "Add a README describing the project and how to run it.",
+      "severity": "warning",
+      "tags": [],
+      "title": "README"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP003",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "09060e35a31d9e2e",
+      "message": "No LICENSE, LICENCE or COPYING file found.",
+      "recommendation": "Add a license file so others know the terms of use.",
+      "severity": "info",
+      "tags": [],
+      "title": "License"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP004",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "e611f9937049dd9f",
+      "message": "No .gitignore found.",
+      "recommendation": "Add a .gitignore covering __pycache__, .venv and .env.",
+      "severity": "info",
+      "tags": [],
+      "title": ".gitignore"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP005",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "0328a57b8e551c1a",
+      "message": "No tests/ directory or test_*.py files found.",
+      "recommendation": "Add a tests/ directory with pytest test modules.",
+      "severity": "info",
+      "tags": [],
+      "title": "Tests"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP006",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "79fb83ecd787e626",
+      "message": "No Python sources under src/.",
+      "recommendation": "Consider a src layout (src/<package>/) to avoid accidental imports of the working tree.",
+      "severity": "info",
+      "tags": [],
+      "title": "src layout"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP007",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "8d93135ff21446b1",
+      "message": "No conflicting dependency manifests.",
+      "severity": "pass",
+      "tags": [],
+      "title": "Conflicting manifests"
+    },
+    {
+      "category": "repository",
+      "check_id": "REP008",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "5b330714830e6e77",
+      "message": "No CI configuration found.",
+      "recommendation": "Add a CI pipeline (e.g. .github/workflows) to run tests and lint.",
+      "severity": "info",
+      "tags": [],
+      "title": "CI configuration"
+    },
+    {
+      "category": "redshift",
+      "check_id": "RS000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "8c5e97f8c027a782",
+      "message": "no Redshift evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Redshift surface"
+    },
+    {
+      "category": "stepfunctions",
+      "check_id": "SFN000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "d03b1d7059e33a34",
+      "message": "no Step Functions detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Step Functions usage"
+    },
+    {
+      "category": "snowflake",
+      "check_id": "SNOW000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "c7c680e06a5372ff",
+      "message": "no Snowflake evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Snowflake surface"
+    },
+    {
+      "category": "spark",
+      "check_id": "SPARK007",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "9aa4f05040321afe",
+      "message": "no PySpark usage detected",
+      "severity": "info",
+      "tags": [],
+      "title": "PySpark usage"
+    },
+    {
+      "category": "search",
+      "check_id": "SRCH000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "442aad8f260e37c1",
+      "message": "no search-platform evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Search surface"
+    },
+    {
+      "category": "streaming",
+      "check_id": "STREAM001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "74b9ce443799b1d8",
+      "message": "no streaming workloads detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Streaming workload detected"
+    },
+    {
+      "category": "streaming-bus",
+      "check_id": "STREAM080",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "derived",
+      "fingerprint": "a4bde13a95805670",
+      "message": "no streaming queries detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Streaming delivery semantics"
+    },
+    {
+      "category": "terraform",
+      "check_id": "TF000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "config",
+      "fingerprint": "2f7642f17979ea71",
+      "message": "no Terraform detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Terraform usage"
+    },
+    {
+      "category": "trino",
+      "check_id": "TRINO000",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "b0ffb8f5083a04bd",
+      "message": "no trino evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Trino surface"
+    },
+    {
+      "category": "warehouse",
+      "check_id": "WARE001",
+      "confidence": "high",
+      "contract_version": "forge-contracts/1",
+      "evidence_kind": "static",
+      "fingerprint": "7b0ac80e8c492c64",
+      "message": "no warehouse evidence detected",
+      "severity": "pass",
+      "tags": [],
+      "title": "Warehouse surface"
+    }
+  ],
+  "plans": [],
+  "project": {
+    "name": "shop",
+    "root": "stage"
+  },
+  "relationships": [
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "dst": "dataset:dbt:raw.customers",
+      "evidence_kind": "static",
+      "kind": "READS_FROM",
+      "src": "dbt_model:dbt:customers"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "dst": "table:dbt:customers",
+      "evidence_kind": "static",
+      "kind": "WRITES_TO",
+      "src": "dbt_model:dbt:customers"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "dst": "dataset:dbt:raw.orders",
+      "evidence_kind": "static",
+      "kind": "READS_FROM",
+      "src": "dbt_model:dbt:orders"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "dst": "dbt_model:dbt:customers",
+      "evidence_kind": "static",
+      "kind": "READS_FROM",
+      "src": "dbt_model:dbt:orders"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "dst": "table:dbt:orders",
+      "evidence_kind": "static",
+      "kind": "WRITES_TO",
+      "src": "dbt_model:dbt:orders"
+    },
+    {
+      "attrs": {},
+      "contract_version": "forge-contracts/1",
+      "dst": "task:airflow:build",
+      "evidence_kind": "static",
+      "kind": "INVOKES",
+      "src": "workflow:airflow:shop_daily"
+    }
+  ],
+  "summary": {
+    "errors": 0,
+    "info": 19,
+    "passed": 50,
+    "warnings": 5
+  },
+  "tool": {
+    "name": "forge-doctor-data",
+    "version": "1.0.0rc1"
+  },
+  "unknowns": [],
+  "x-forge-data": {
+    "bounded": false,
+    "request_kind": "scan"
+  }
+}

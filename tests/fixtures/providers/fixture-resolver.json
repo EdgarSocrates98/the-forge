@@ -1,0 +1,41 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-resolver",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "resolve"],
+  "domains": ["meta"],
+  "capabilities": [
+    {
+      "id": "resolver.routing",
+      "actions": ["resolve"],
+      "default_action": "resolve",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Break an ambiguous routing decision by picking an offered candidate",
+      "resolves_ambiguity": true,
+      "signals": {
+        "keywords": ["__resolver_internal__"],
+        "file_globs": [],
+        "dependencies": []
+      }
+    }
+  ],
+  "resolution": {
+    "schema": "theforge/RoutingProposal/v1",
+    "choice": {
+      "provider": "fixture-spark",
+      "capability": "spark.performance",
+      "action": "diagnose"
+    },
+    "confidence": "medium",
+    "reason": "the intent names a spark glue job; both executors are equivalent, fixture-spark is the canonical one",
+    "evidence": [
+      "task targets include a glue job file",
+      "both candidates declare spark.performance"
+    ],
+    "alternatives": ["fixture-spark-b/spark.performance"],
+    "unknowns": ["whether the two spark executors actually differ"],
+    "limitations": []
+  }
+}

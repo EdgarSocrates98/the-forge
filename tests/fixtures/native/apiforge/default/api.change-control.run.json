@@ -1,0 +1,827 @@
+{
+  "argv": [
+    "change-control",
+    "run",
+    "--bundle",
+    "change-bundle.json",
+    "--out-dir",
+    "<cwd>/change-control"
+  ],
+  "assembled_from": "live apiforge 0.1.0 change-control run (Python 3.12.13) over a copy of tests/fixtures/workspaces/api staged under stage/, run with the staged workspace as native cwd and an absolute --out-dir under the execute cwd; absolute output paths rewritten to execute-cwd-relative POSIX paths (hashes over files that embed them, such as the receipt, are therefore not reproducible); provisional until re-recorded by the execute recorder",
+  "case_dir": "change-control",
+  "case_files": {
+    "brief.json": {
+      "gaps": [
+        "live provider freshness is not proven by replay"
+      ],
+      "graph_impact": null,
+      "human_action": "independently verify findings before approving the change",
+      "next": "resolve findings, then rerun the governed verifier",
+      "open": [],
+      "outcome": "API/Git/CI change-control analysis completed",
+      "proof": [
+        "change-control/case/case.json",
+        "change-control/next-step.json",
+        "change-control/graph.json",
+        "change-control/graph/nodes.jsonl",
+        "change-control/graph/edges.jsonl",
+        "change-control/evidence/receipt.json"
+      ],
+      "status": "REVIEW",
+      "subject": "0ff657fc-af73-5d91-899b-b2a2d530ea26",
+      "version": 1
+    },
+    "case/api-ir.json": {
+      "diagnostics": [],
+      "generator": "apiforge 0.1.0",
+      "input_hashes": {
+        "code:__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "code:main.py": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a",
+        "contract:openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+      },
+      "operations": [
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "list_orders",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:62172398e4c90613",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 8,
+                "path": "main.py",
+                "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [
+            {
+              "detail": {
+                "operation_id": "listOrders",
+                "raw": {
+                  "operationId": "listOrders",
+                  "responses": {
+                    "200": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "items": {
+                              "$ref": "#/components/schemas/Order"
+                            },
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "description": "List orders"
+                    }
+                  }
+                }
+              },
+              "fact_id": "fact:365d9496fb131990",
+              "source": {
+                "column": null,
+                "extractor": "openapi",
+                "line": null,
+                "path": "openapi.yaml",
+                "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+              },
+              "source_kind": "contract"
+            }
+          ],
+          "method": "get",
+          "path": "/orders"
+        },
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "cancel_order",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:76ca819565bf6c3d",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 18,
+                "path": "main.py",
+                "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [],
+          "method": "delete",
+          "path": "/orders/{order_id}"
+        },
+        {
+          "code_projections": [
+            {
+              "detail": {
+                "function": "get_order",
+                "reachable": true,
+                "router": "app",
+                "via": null
+              },
+              "fact_id": "fact:9215b303575ec92c",
+              "source": {
+                "column": null,
+                "extractor": "fastapi",
+                "line": 13,
+                "path": "main.py",
+                "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+              },
+              "source_kind": "code"
+            }
+          ],
+          "contract_projections": [
+            {
+              "detail": {
+                "operation_id": "getOrder",
+                "raw": {
+                  "operationId": "getOrder",
+                  "parameters": [
+                    {
+                      "in": "path",
+                      "name": "order_id",
+                      "required": true,
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  ],
+                  "responses": {
+                    "200": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "$ref": "#/components/schemas/Order"
+                          }
+                        }
+                      },
+                      "description": "One order"
+                    }
+                  }
+                }
+              },
+              "fact_id": "fact:de156c462927f84a",
+              "source": {
+                "column": null,
+                "extractor": "openapi",
+                "line": null,
+                "path": "openapi.yaml",
+                "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+              },
+              "source_kind": "contract"
+            }
+          ],
+          "method": "get",
+          "path": "/orders/{order_id}"
+        }
+      ],
+      "schema_version": "1"
+    },
+    "case/case.json": {
+      "artifacts": {
+        "api_ir": {
+          "path": "api-ir.json",
+          "sha256": "ca835fe8a94dda324cede683496c4035b05c7223eff57c5c32f20067f517dffb"
+        },
+        "facts": {
+          "path": "facts.json",
+          "sha256": "e0839691a113f020ab09139c8aad60626ba1a18f2f31beb52fcca18e9005c923"
+        },
+        "findings": {
+          "path": "findings.json",
+          "sha256": "91f5958f63b464328e9d91b1f6ae909cf12039d76e1a61dffb5dcf2f09e152da"
+        }
+      },
+      "case_id": "case:00442361714c79c5",
+      "diagnostics_count": 0,
+      "finding_counts": {
+        "severity:medium": 1,
+        "status:confirmed": 1
+      },
+      "generator": "apiforge 0.1.0",
+      "input_hashes": {
+        "code:__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "code:main.py": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a",
+        "contract:openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+      },
+      "inputs": {
+        "contract": "openapi.yaml",
+        "project": "app"
+      },
+      "schema_version": "1"
+    },
+    "case/facts.json": {
+      "facts": [
+        {
+          "attrs": {
+            "function": "list_orders",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:62172398e4c90613",
+          "kind": "code.route",
+          "measures": {
+            "method": "get",
+            "path": "/orders"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 8,
+            "path": "main.py",
+            "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "function": "cancel_order",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:76ca819565bf6c3d",
+          "kind": "code.route",
+          "measures": {
+            "method": "delete",
+            "path": "/orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 18,
+            "path": "main.py",
+            "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "function": "get_order",
+            "reachable": true,
+            "router": "app",
+            "via": null
+          },
+          "fact_id": "fact:9215b303575ec92c",
+          "kind": "code.route",
+          "measures": {
+            "method": "get",
+            "path": "/orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "fastapi",
+            "line": 13,
+            "path": "main.py",
+            "sha256": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "operation_id": "listOrders"
+          },
+          "fact_id": "fact:365d9496fb131990",
+          "kind": "contract.operation",
+          "measures": {
+            "method": "get",
+            "path": "/orders"
+          },
+          "source": {
+            "column": null,
+            "extractor": "openapi",
+            "line": null,
+            "path": "openapi.yaml",
+            "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+          },
+          "version": 1
+        },
+        {
+          "attrs": {
+            "operation_id": "getOrder"
+          },
+          "fact_id": "fact:de156c462927f84a",
+          "kind": "contract.operation",
+          "measures": {
+            "method": "get",
+            "path": "/orders/{order_id}"
+          },
+          "source": {
+            "column": null,
+            "extractor": "openapi",
+            "line": null,
+            "path": "openapi.yaml",
+            "sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+          },
+          "version": 1
+        }
+      ]
+    },
+    "case/findings.json": {
+      "findings": [
+        {
+          "detail": "DELETE /orders/{order_id}: code route has no contract operation",
+          "evidence": [
+            "fact:76ca819565bf6c3d"
+          ],
+          "finding_id": "finding:a76f85ea72066e34",
+          "remediation": "Add the operation to the contract or remove the route.",
+          "rule_id": "AF-CODE-002",
+          "severity": "medium",
+          "status": "confirmed",
+          "title": "Code route missing from contract",
+          "version": 1
+        }
+      ]
+    },
+    "evidence/receipt.json": {
+      "artifacts": [
+        {
+          "kind": "api_ir",
+          "path": "api-ir.json",
+          "sha256": "ca835fe8a94dda324cede683496c4035b05c7223eff57c5c32f20067f517dffb"
+        },
+        {
+          "kind": "facts",
+          "path": "facts.json",
+          "sha256": "e0839691a113f020ab09139c8aad60626ba1a18f2f31beb52fcca18e9005c923"
+        },
+        {
+          "kind": "findings",
+          "path": "findings.json",
+          "sha256": "91f5958f63b464328e9d91b1f6ae909cf12039d76e1a61dffb5dcf2f09e152da"
+        }
+      ],
+      "case": "change-control/case",
+      "emitted_at": null,
+      "input_hashes": [
+        [
+          "code:__init__.py",
+          "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        ],
+        [
+          "code:main.py",
+          "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+        ],
+        [
+          "contract:openapi.yaml",
+          "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+        ]
+      ],
+      "policy_sha256": "cd0fdb0a8bff2aef209a55cdb9649219d48d6dea591ed858a08906ad0990a13d",
+      "proves": "correspondence between the listed paths and their sha256 contents at emit time; it does not prove authorship or freshness",
+      "schema_version": "af-receipt/1"
+    },
+    "graph.json": {
+      "built_from": [
+        "case.json",
+        "api-ir.json",
+        "facts.json",
+        "findings.json"
+      ],
+      "edge_count": 10,
+      "edges_sha256": "4f588fc45c1561dbb4ae175ab4aadd8c1e4266af38eaae344ea54483dc431c00",
+      "files": [],
+      "format": "jsonl",
+      "node_count": 13,
+      "nodes_sha256": "37f03b85e32f1b0d7844e8b7f8259cb49328e1ed2d7fbbda36089f6fcaa599d9",
+      "version": 1
+    },
+    "graph/edges.jsonl": "{\"from_id\":\"case:case:00442361714c79c5\",\"kind\":\"derived_from\",\"props\":{},\"to_id\":\"contract:848085897c731558\",\"version\":1}\n{\"from_id\":\"case:case:00442361714c79c5\",\"kind\":\"derived_from\",\"props\":{},\"to_id\":\"project:app\",\"version\":1}\n{\"from_id\":\"finding:a76f85ea72066e34\",\"kind\":\"backed_by\",\"props\":{},\"to_id\":\"fact:76ca819565bf6c3d\",\"version\":1}\n{\"from_id\":\"finding:a76f85ea72066e34\",\"kind\":\"violates\",\"props\":{},\"to_id\":\"rule:AF-CODE-002\",\"version\":1}\n{\"from_id\":\"operation:DELETE /orders/{order_id}\",\"kind\":\"described_by\",\"props\":{},\"to_id\":\"contract:848085897c731558\",\"version\":1}\n{\"from_id\":\"operation:DELETE /orders/{order_id}\",\"kind\":\"implemented_by\",\"props\":{},\"to_id\":\"fact:76ca819565bf6c3d\",\"version\":1}\n{\"from_id\":\"operation:GET /orders\",\"kind\":\"described_by\",\"props\":{},\"to_id\":\"contract:848085897c731558\",\"version\":1}\n{\"from_id\":\"operation:GET /orders\",\"kind\":\"implemented_by\",\"props\":{},\"to_id\":\"fact:62172398e4c90613\",\"version\":1}\n{\"from_id\":\"operation:GET /orders/{order_id}\",\"kind\":\"described_by\",\"props\":{},\"to_id\":\"contract:848085897c731558\",\"version\":1}\n{\"from_id\":\"operation:GET /orders/{order_id}\",\"kind\":\"implemented_by\",\"props\":{},\"to_id\":\"fact:9215b303575ec92c\",\"version\":1}\n",
+    "graph/nodes.jsonl": "{\"id\":\"case:case:00442361714c79c5\",\"kind\":\"case\",\"props\":{\"diagnostics_count\":0,\"generator\":\"apiforge 0.1.0\"},\"sha256\":\"1b2e0fac55e1022f6f11e601e0c24dbcf4731d36325325786f52f206dea6a01f\",\"version\":1}\n{\"id\":\"contract:848085897c731558\",\"kind\":\"contract\",\"props\":{},\"sha256\":\"ba17df0ea0594366efa5fa99bcd26244b765de734ce14a31c8ee197909d3dc6a\",\"version\":1}\n{\"id\":\"fact:365d9496fb131990\",\"kind\":\"fact\",\"props\":{\"fact_kind\":\"contract.operation\",\"path\":\"openapi.yaml\"},\"sha256\":\"c4937a99fd179ca81c1d6f16b80f4be73ab18fd4741262c4a3963f3e6ae9d28d\",\"version\":1}\n{\"id\":\"fact:62172398e4c90613\",\"kind\":\"fact\",\"props\":{\"fact_kind\":\"code.route\",\"line\":8,\"path\":\"main.py\"},\"sha256\":\"2ee126efbcc356f426efa700514863be57851b35027f7f52f4181340e3dad9d0\",\"version\":1}\n{\"id\":\"fact:76ca819565bf6c3d\",\"kind\":\"fact\",\"props\":{\"fact_kind\":\"code.route\",\"line\":18,\"path\":\"main.py\"},\"sha256\":\"3a142d50c9020a531fc24b3ceafc4b412a093c3796d42118238654523a13d70b\",\"version\":1}\n{\"id\":\"fact:9215b303575ec92c\",\"kind\":\"fact\",\"props\":{\"fact_kind\":\"code.route\",\"line\":13,\"path\":\"main.py\"},\"sha256\":\"e25d76d816d28d157ee73534d3d8d20aa8b38abbcb5357f62976d016a27b9353\",\"version\":1}\n{\"id\":\"fact:de156c462927f84a\",\"kind\":\"fact\",\"props\":{\"fact_kind\":\"contract.operation\",\"path\":\"openapi.yaml\"},\"sha256\":\"268e6dd6896e5c87ec39769e51a335fe30712bdeeab1fb745880fb30d5f47a26\",\"version\":1}\n{\"id\":\"finding:a76f85ea72066e34\",\"kind\":\"finding\",\"props\":{\"rule_id\":\"AF-CODE-002\",\"severity\":\"medium\",\"status\":\"confirmed\",\"title\":\"Code route missing from contract\"},\"sha256\":\"334651dab6926956e45344568d05e4d8e447c342444a2307db34e1ea6e8d2b59\",\"version\":1}\n{\"id\":\"operation:DELETE /orders/{order_id}\",\"kind\":\"operation\",\"props\":{\"method\":\"delete\",\"path\":\"/orders/{order_id}\"},\"sha256\":\"67dd01b9bdd6585526d4683394a0580b252930126f0f4e4f5f3c17ce4d02bc10\",\"version\":1}\n{\"id\":\"operation:GET /orders\",\"kind\":\"operation\",\"props\":{\"method\":\"get\",\"path\":\"/orders\"},\"sha256\":\"44e9eeb193ad7a86b0330a312994c9126229c6e0cddf836be34cc3ac02dc9a41\",\"version\":1}\n{\"id\":\"operation:GET /orders/{order_id}\",\"kind\":\"operation\",\"props\":{\"method\":\"get\",\"path\":\"/orders/{order_id}\"},\"sha256\":\"8b7963505e163dd2f27b9e88d56a1cf9f461498c4c5f693d36f09a89dca5a9f6\",\"version\":1}\n{\"id\":\"project:app\",\"kind\":\"project\",\"props\":{},\"sha256\":\"6f948a61cb6005b0c586465db20744848ae07bde7884ec68ed19a16686d4e52c\",\"version\":1}\n{\"id\":\"rule:AF-CODE-002\",\"kind\":\"rule\",\"props\":{},\"sha256\":\"5b1fc7b200e2d0d79536cd4e675ed61fa9ac06444fd309a17e819e7a598be1fa\",\"version\":1}\n",
+    "metrics.json": {
+      "adapter_errors": [],
+      "artifact_refs": [
+        "change-control/case/case.json",
+        "change-control/next-step.json",
+        "change-control/graph.json",
+        "change-control/graph/nodes.jsonl",
+        "change-control/graph/edges.jsonl",
+        "change-control/evidence/receipt.json",
+        "change-control/brief.json",
+        "change-control/result.json"
+      ],
+      "base_sha": "0000000000000000000000000000000000000001",
+      "details": {
+        "bundle_sha256": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+      },
+      "head_sha": "0000000000000000000000000000000000000002",
+      "repository": "example/orders-api",
+      "run_id": "0ff657fc-af73-5d91-899b-b2a2d530ea26",
+      "source": "artifact",
+      "stages": [
+        {
+          "duration_ms": 291.828,
+          "error_code": null,
+          "stage": "analyze",
+          "status": "ok",
+          "version": 1
+        },
+        {
+          "duration_ms": 301.056,
+          "error_code": null,
+          "stage": "next_step",
+          "status": "ok",
+          "version": 1
+        },
+        {
+          "duration_ms": 47.791,
+          "error_code": null,
+          "stage": "graph",
+          "status": "ok",
+          "version": 1
+        },
+        {
+          "duration_ms": 4.161,
+          "error_code": null,
+          "stage": "evidence",
+          "status": "ok",
+          "version": 1
+        },
+        {
+          "duration_ms": 0.981,
+          "error_code": null,
+          "stage": "brief",
+          "status": "review",
+          "version": 1
+        }
+      ],
+      "status": "review",
+      "unresolved": [
+        "live provider freshness is not proven by replay"
+      ],
+      "version": 1
+    },
+    "next-step.json": {
+      "dominant_area": "CONTRACT",
+      "finding_count": 1,
+      "phase": "verify",
+      "rationale": "Contract/code divergence surfacing at verify time is the governance question: style, compatibility, and lifecycle policy.",
+      "recommended_agent": "api-governance-reviewer",
+      "unmapped_count": 0
+    },
+    "result.json": {
+      "capability_id": "api.change-control",
+      "error_code": null,
+      "evidence": [
+        "change-control/case/case.json",
+        "change-control/next-step.json",
+        "change-control/graph.json",
+        "change-control/graph/nodes.jsonl",
+        "change-control/graph/edges.jsonl",
+        "change-control/evidence/receipt.json",
+        "change-control/brief.json"
+      ],
+      "gaps": [
+        "live provider freshness is not proven by replay"
+      ],
+      "limitations": [
+        "live provider freshness is not proven by replay"
+      ],
+      "payload": {
+        "analysis": {
+          "artifacts": {
+            "api_ir": {
+              "path": "api-ir.json",
+              "sha256": "ca835fe8a94dda324cede683496c4035b05c7223eff57c5c32f20067f517dffb"
+            },
+            "facts": {
+              "path": "facts.json",
+              "sha256": "e0839691a113f020ab09139c8aad60626ba1a18f2f31beb52fcca18e9005c923"
+            },
+            "findings": {
+              "path": "findings.json",
+              "sha256": "91f5958f63b464328e9d91b1f6ae909cf12039d76e1a61dffb5dcf2f09e152da"
+            }
+          },
+          "case_id": "case:00442361714c79c5",
+          "diagnostics_count": 0,
+          "finding_counts": {
+            "severity:medium": 1,
+            "status:confirmed": 1
+          },
+          "generator": "apiforge 0.1.0",
+          "input_hashes": {
+            "code:__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "code:main.py": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a",
+            "contract:openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+          },
+          "inputs": {
+            "contract": "openapi.yaml",
+            "project": "app"
+          },
+          "schema_version": "1"
+        },
+        "artifacts": [
+          "change-control/case/case.json",
+          "change-control/next-step.json",
+          "change-control/graph.json",
+          "change-control/graph/nodes.jsonl",
+          "change-control/graph/edges.jsonl",
+          "change-control/evidence/receipt.json",
+          "change-control/brief.json"
+        ],
+        "base_sha": "0000000000000000000000000000000000000001",
+        "evaluation": {
+          "case_id": "change-control",
+          "dataset": "api-git-cicd",
+          "matched_requirements": [
+            "recommendation",
+            "evidence",
+            "verifier"
+          ],
+          "missing_requirements": [],
+          "notes": [],
+          "status": "pass",
+          "version": 1
+        },
+        "graph": {
+          "built_from": [
+            "case.json",
+            "api-ir.json",
+            "facts.json",
+            "findings.json"
+          ],
+          "edge_count": 10,
+          "edges_sha256": "4f588fc45c1561dbb4ae175ab4aadd8c1e4266af38eaae344ea54483dc431c00",
+          "files": [],
+          "format": "jsonl",
+          "node_count": 13,
+          "nodes_sha256": "37f03b85e32f1b0d7844e8b7f8259cb49328e1ed2d7fbbda36089f6fcaa599d9",
+          "version": 1
+        },
+        "head_sha": "0000000000000000000000000000000000000002",
+        "origin": "replay",
+        "receipt": {
+          "artifacts": [
+            {
+              "kind": "api_ir",
+              "path": "api-ir.json",
+              "sha256": "ca835fe8a94dda324cede683496c4035b05c7223eff57c5c32f20067f517dffb"
+            },
+            {
+              "kind": "facts",
+              "path": "facts.json",
+              "sha256": "e0839691a113f020ab09139c8aad60626ba1a18f2f31beb52fcca18e9005c923"
+            },
+            {
+              "kind": "findings",
+              "path": "findings.json",
+              "sha256": "91f5958f63b464328e9d91b1f6ae909cf12039d76e1a61dffb5dcf2f09e152da"
+            }
+          ],
+          "case": "change-control/case",
+          "emitted_at": null,
+          "input_hashes": [
+            [
+              "code:__init__.py",
+              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            ],
+            [
+              "code:main.py",
+              "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+            ],
+            [
+              "contract:openapi.yaml",
+              "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+            ]
+          ],
+          "policy_sha256": "cd0fdb0a8bff2aef209a55cdb9649219d48d6dea591ed858a08906ad0990a13d",
+          "proves": "correspondence between the listed paths and their sha256 contents at emit time; it does not prove authorship or freshness",
+          "schema_version": "af-receipt/1"
+        },
+        "recommendation": {
+          "alternatives": [
+            "approve after independent verification",
+            "hold the change and request remediation"
+          ],
+          "assumptions": [
+            "provider observations are read-only and may be stale"
+          ],
+          "confidence": 0.8,
+          "evidence_refs": [
+            "change-control/case/case.json",
+            "change-control/next-step.json",
+            "change-control/graph.json",
+            "change-control/graph/nodes.jsonl",
+            "change-control/graph/edges.jsonl",
+            "change-control/evidence/receipt.json"
+          ],
+          "facts": [
+            "finding:a76f85ea72066e34"
+          ],
+          "recommendation": "Review the governed change bundle and resolve every unresolved finding before merge.",
+          "risks": [
+            "contract and implementation can diverge",
+            "CI observations do not prove deployment safety"
+          ],
+          "unresolved": [],
+          "verifier": "apiforge change-control verify --run-dir change-control",
+          "version": 1
+        },
+        "repository": "example/orders-api",
+        "route": {
+          "dominant_area": "CONTRACT",
+          "finding_count": 1,
+          "phase": "verify",
+          "rationale": "Contract/code divergence surfacing at verify time is the governance question: style, compatibility, and lifecycle policy.",
+          "recommended_agent": "api-governance-reviewer",
+          "unmapped_count": 0
+        },
+        "run_id": "0ff657fc-af73-5d91-899b-b2a2d530ea26"
+      },
+      "state": "supported",
+      "status": "review",
+      "version": 1
+    }
+  },
+  "exit_code": 0,
+  "native_cwd": "stage",
+  "provenance": "hand-built",
+  "stdout": {
+    "capability_id": "api.change-control",
+    "error_code": null,
+    "evidence": [
+      "change-control/case/case.json",
+      "change-control/next-step.json",
+      "change-control/graph.json",
+      "change-control/graph/nodes.jsonl",
+      "change-control/graph/edges.jsonl",
+      "change-control/evidence/receipt.json",
+      "change-control/brief.json"
+    ],
+    "gaps": [
+      "live provider freshness is not proven by replay"
+    ],
+    "limitations": [
+      "live provider freshness is not proven by replay"
+    ],
+    "payload": {
+      "analysis": {
+        "artifacts": {
+          "api_ir": {
+            "path": "api-ir.json",
+            "sha256": "ca835fe8a94dda324cede683496c4035b05c7223eff57c5c32f20067f517dffb"
+          },
+          "facts": {
+            "path": "facts.json",
+            "sha256": "e0839691a113f020ab09139c8aad60626ba1a18f2f31beb52fcca18e9005c923"
+          },
+          "findings": {
+            "path": "findings.json",
+            "sha256": "91f5958f63b464328e9d91b1f6ae909cf12039d76e1a61dffb5dcf2f09e152da"
+          }
+        },
+        "case_id": "case:00442361714c79c5",
+        "diagnostics_count": 0,
+        "finding_counts": {
+          "severity:medium": 1,
+          "status:confirmed": 1
+        },
+        "generator": "apiforge 0.1.0",
+        "input_hashes": {
+          "code:__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "code:main.py": "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a",
+          "contract:openapi.yaml": "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+        },
+        "inputs": {
+          "contract": "openapi.yaml",
+          "project": "app"
+        },
+        "schema_version": "1"
+      },
+      "artifacts": [
+        "change-control/case/case.json",
+        "change-control/next-step.json",
+        "change-control/graph.json",
+        "change-control/graph/nodes.jsonl",
+        "change-control/graph/edges.jsonl",
+        "change-control/evidence/receipt.json",
+        "change-control/brief.json"
+      ],
+      "base_sha": "0000000000000000000000000000000000000001",
+      "evaluation": {
+        "case_id": "change-control",
+        "dataset": "api-git-cicd",
+        "matched_requirements": [
+          "recommendation",
+          "evidence",
+          "verifier"
+        ],
+        "missing_requirements": [],
+        "notes": [],
+        "status": "pass",
+        "version": 1
+      },
+      "graph": {
+        "built_from": [
+          "case.json",
+          "api-ir.json",
+          "facts.json",
+          "findings.json"
+        ],
+        "edge_count": 10,
+        "edges_sha256": "4f588fc45c1561dbb4ae175ab4aadd8c1e4266af38eaae344ea54483dc431c00",
+        "files": [],
+        "format": "jsonl",
+        "node_count": 13,
+        "nodes_sha256": "37f03b85e32f1b0d7844e8b7f8259cb49328e1ed2d7fbbda36089f6fcaa599d9",
+        "version": 1
+      },
+      "head_sha": "0000000000000000000000000000000000000002",
+      "origin": "replay",
+      "receipt": {
+        "artifacts": [
+          {
+            "kind": "api_ir",
+            "path": "api-ir.json",
+            "sha256": "ca835fe8a94dda324cede683496c4035b05c7223eff57c5c32f20067f517dffb"
+          },
+          {
+            "kind": "facts",
+            "path": "facts.json",
+            "sha256": "e0839691a113f020ab09139c8aad60626ba1a18f2f31beb52fcca18e9005c923"
+          },
+          {
+            "kind": "findings",
+            "path": "findings.json",
+            "sha256": "91f5958f63b464328e9d91b1f6ae909cf12039d76e1a61dffb5dcf2f09e152da"
+          }
+        ],
+        "case": "change-control/case",
+        "emitted_at": null,
+        "input_hashes": [
+          [
+            "code:__init__.py",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          ],
+          [
+            "code:main.py",
+            "097322101f4cfdafea2d229d7742900a6b0baa64bb35bd3b2479ee1061b33e3a"
+          ],
+          [
+            "contract:openapi.yaml",
+            "848085897c731558d65e71ff1cba01108046fe782745816d979ac1196f77d79a"
+          ]
+        ],
+        "policy_sha256": "cd0fdb0a8bff2aef209a55cdb9649219d48d6dea591ed858a08906ad0990a13d",
+        "proves": "correspondence between the listed paths and their sha256 contents at emit time; it does not prove authorship or freshness",
+        "schema_version": "af-receipt/1"
+      },
+      "recommendation": {
+        "alternatives": [
+          "approve after independent verification",
+          "hold the change and request remediation"
+        ],
+        "assumptions": [
+          "provider observations are read-only and may be stale"
+        ],
+        "confidence": 0.8,
+        "evidence_refs": [
+          "change-control/case/case.json",
+          "change-control/next-step.json",
+          "change-control/graph.json",
+          "change-control/graph/nodes.jsonl",
+          "change-control/graph/edges.jsonl",
+          "change-control/evidence/receipt.json"
+        ],
+        "facts": [
+          "finding:a76f85ea72066e34"
+        ],
+        "recommendation": "Review the governed change bundle and resolve every unresolved finding before merge.",
+        "risks": [
+          "contract and implementation can diverge",
+          "CI observations do not prove deployment safety"
+        ],
+        "unresolved": [],
+        "verifier": "apiforge change-control verify --run-dir change-control",
+        "version": 1
+      },
+      "repository": "example/orders-api",
+      "route": {
+        "dominant_area": "CONTRACT",
+        "finding_count": 1,
+        "phase": "verify",
+        "rationale": "Contract/code divergence surfacing at verify time is the governance question: style, compatibility, and lifecycle policy.",
+        "recommended_agent": "api-governance-reviewer",
+        "unmapped_count": 0
+      },
+      "run_id": "0ff657fc-af73-5d91-899b-b2a2d530ea26"
+    },
+    "state": "supported",
+    "status": "review",
+    "version": 1
+  }
+}

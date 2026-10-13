@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adjustments": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "context_bytes": {
+      "type": "integer"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "max_files": {
+      "type": "integer"
+    },
+    "max_parallelism": {
+      "type": "integer"
+    },
+    "negotiation_rounds": {
+      "type": "integer"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "provider_calls": {
+      "type": "integer"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "semantic_calls": {
+      "type": "integer"
+    },
+    "verification_calls": {
+      "type": "integer"
+    },
+    "wall_time_s": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "producer",
+    "created_at",
+    "run_id",
+    "profile",
+    "context_bytes",
+    "max_files",
+    "provider_calls",
+    "semantic_calls",
+    "verification_calls",
+    "wall_time_s",
+    "max_parallelism",
+    "negotiation_rounds"
+  ],
+  "title": "RunBudget",
+  "type": "object"
+}

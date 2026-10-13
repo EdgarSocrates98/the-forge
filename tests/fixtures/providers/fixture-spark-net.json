@@ -1,0 +1,24 @@
+{
+  "schema": "theforge/ForgeManifest/v1",
+  "id": "fixture-spark-net",
+  "version": "0.0.1",
+  "protocols": ["forge/v1"],
+  "ops": ["describe", "health", "execute"],
+  "domains": ["data-engineering"],
+  "execution": {"offline": false, "requires_network": true},
+  "capabilities": [
+    {
+      "id": "spark.performance",
+      "actions": ["diagnose", "review", "optimize"],
+      "default_action": "diagnose",
+      "state": "supported",
+      "operation_class": "read_only",
+      "description": "Diagnose slow Spark and Glue jobs (network-dependent executor)",
+      "signals": {
+        "keywords": ["spark", "pyspark", "glue", "lento", "slow", "performance", "job"],
+        "file_globs": ["*glue*.py", "*_job.py", "*.scala"],
+        "dependencies": ["pyspark", "awsglue"]
+      }
+    }
+  ]
+}
