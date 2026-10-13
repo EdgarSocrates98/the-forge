@@ -73,7 +73,9 @@ def call_action(
     """Call ``tool`` with the staged ``files`` (native argument -> ``stage/...``) and the chained
     judge; ``tools`` is the native ``TOOLS`` table and ``call`` is ``call_tool``."""
     runtime_tool = resolve_tool_name(tools, tool)
-    spec = tools.get(runtime_tool) if runtime_tool is not None else None
+    if runtime_tool is None:
+        return {"unknown_tool": tool}
+    spec = tools.get(runtime_tool)
     if not isinstance(spec, Mapping):
         return {"unknown_tool": tool}
     schema = spec.get("inputSchema")
