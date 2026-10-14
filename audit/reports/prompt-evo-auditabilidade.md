@@ -60,7 +60,7 @@ Eles carregam SHAs próprios no JSON e não devem ser confundidos com prova de
 | H4 Hosts, MCP e agentes | `BLOCKED` | `mcp-handshake.json` prova MCP local | Hosts Claude/Devin/Copilot estão `UNVERIFIED` em `unresolved-gaps.md`. |
 | H5 Workflows multi-Forge | `CONDITIONAL` | `evidence-index.json`: 19/19 cenários locais `PASS`, `integration-report.md` | Runtime dos cenários não é o SHA H0 em todos os casos; jornada completa multi-Forge permanece `UNVERIFIED/BLOCKED`. |
 | H6 Segurança, resiliência e observabilidade | `CONDITIONAL` | `security-report.md` | Deep scan está `BLOCKED`; achados de dependência não estão fechados para release. |
-| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38497876506` `PASS`; full audit dispatch `38500376956` `IN_PROGRESS` | Smoke PR e gates locais passam; full matrix foi disparada uma vez no branch da mudança e ainda precisa terminar com conclusão `success`. |
+| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38501375515` `PASS`; full audit dispatch `38500376956` `IN_PROGRESS` | Smoke PR e gates locais passam; full matrix foi disparada uma vez no branch da mudança e ainda precisa terminar com conclusão `success`. |
 
 ## Normalização de evidências
 
@@ -71,7 +71,7 @@ Os conflitos anteriores foram normalizados sem promover evidência antiga:
    como não autoritativo.
 2. Snyk agora é `BLOCKED`/`UNVERIFIED_FOR_RELEASE` nos relatórios; achados não
    são tratados como aprovação de release.
-3. `manual-results.json` diferencia AWS smoke PR (`38497876506`) do full audit
+3. `manual-results.json` diferencia AWS smoke PR (`38501375515`) do full audit
    dispatch (`38500376956`), que ainda está em execução.
 
 ## Próximos gates obrigatórios

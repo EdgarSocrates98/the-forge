@@ -48,7 +48,7 @@ CUA visual e hosts externos não estavam disponíveis.
 | H4 hosts/MCP/agentes | BLOCKED | MCP local PASS; Claude/Devin/Copilot não verificados |
 | H5 workflows multi-Forge | CONDITIONAL | `evidence-index.json`: 19/19 cenários locais PASS; SHAs de runtime divergentes em parte |
 | H6 segurança/observabilidade | CONDITIONAL | findings Snyk não fechados; deep scan BLOCKED |
-| H7 regressão/certificação | CONDITIONAL | AWS smoke `38497876506` PASS; full dispatch `38500376956` em execução no momento da revisão |
+| H7 regressão/certificação | CONDITIONAL | AWS smoke `38501375515` PASS; full dispatch `38500376956` em execução no momento da revisão |
 
 ## 4. Capacidades, contratos e independência
 
@@ -95,7 +95,7 @@ Portal cross-forge e hosts externos como homologados.
 - [the-forge#61](https://github.com/EdgarSocrates98/the-forge/pull/61)
 
 PRs de correções anteriores já mergeados permanecem referenciados no relatório
-de auditoria. CI AWS smoke `38497876506` e CI The Forge `38498576625` terminaram
+de auditoria. CI AWS smoke `38501375515` e CI The Forge `38498576625` terminaram
 verdes. Full AWS dispatch `38500376956` deve ser anexado somente após conclusão.
 
 ## 9. Testes não executados e riscos residuais

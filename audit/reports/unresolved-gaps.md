@@ -2,7 +2,7 @@
 
 | Priority | Gap | State | Closure |
 |---|---|---|---|
-| P1 | Six specialist PR checks | PASS | current specialist PR checks are green; AWS run 38497876506 is focused PR smoke, not full audit |
+| P1 | Six specialist PR checks | PASS | current specialist PR checks are green; AWS run 38501375515 is focused PR smoke, not full audit |
 | P1 | Central The Forge PR CI | PASS | run 38498576625 green: package jobs and Python matrix completed successfully |
 | P1 | Linux Bash real runtime | BLOCKED | provision WSL distribution or Linux runner |
 | P1 | CUA visual Windows Terminal evidence | BLOCKED | restore CUA kernel assets/permission profile |
