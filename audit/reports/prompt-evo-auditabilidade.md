@@ -17,6 +17,8 @@ relatórios anteriores em aprovação nova.
   PR, Actions ou histórico Git.
 - Evidência anterior só é reutilizada quando o arquivo referenciado a ancora.
   Estados conflitantes permanecem `UNVERIFIED`.
+- Execuções novas foram gravadas em `audit/reports/` e seus artefatos em
+  `audit/artifacts/`, sem escrever nos checkouts de produto.
 
 ## H0 — baseline atual
 
@@ -35,17 +37,30 @@ ancorados em SHAs reais de `origin/main`:
 | forge-cli | `f893bb0308f2c4016e024d7e21a2e9e79f09c64a` |
 | forge-portal | `88015f233bab105c0cbae173fbbcddc6665bb346` |
 
+## Evidência executada nesta revisão
+
+| Verificação | Resultado | Evidência |
+|---|---|---|
+| Contratos dos nove repositórios | `PASS` | `contract-validation.json`, `generated_at=2026-10-14T01:53:54Z` |
+| Cenários determinísticos | `PASS` | `evidence-index.json`: 19/19 cenários, `generated_at=2026-10-14T01:54:55Z` |
+| Instaladores dry-run | `PASS` parcial | 21 `PASS`, 7 `BLOCKED` por Linux Bash ausente; `installer-matrix.json`, `generated_at=2026-10-14T01:57:06Z` |
+| MCP local | `PASS` parcial | 6/6 initialize/list/call, 388 tools; `mcp-handshake.json` |
+
+Os cenários foram executados contra runtimes instalados nos checkouts locais.
+Eles carregam SHAs próprios no JSON e não devem ser confundidos com prova de
+`origin/main` quando os SHAs divergem do baseline H0.
+
 ## Gates H1–H7
 
 | Fase | Estado | Evidência atual | Limite que impede aprovação integral |
 |---|---|---|---|
-| H1 Independência | `CONDITIONAL` | `audit/reports/independence-report.md` | Evidência cobre superfícies exercitadas; Linux e hosts externos continuam sem execução real. |
-| H2 Contratos e descoberta | `CONDITIONAL` | `contract-validation.json`, `compatibility-matrix.md`, `mcp-handshake.json` | Handshake local não prova integração em Claude, Devin e Copilot. |
-| H3 CLI, Portal e instalação | `CONDITIONAL` | `installation-report.md`, `installer-apply.json`, evidências Portal | `integration-report.md` marca runner Portal cross-forge como `BLOCKED`, enquanto `manual-results.json` marca o mesmo caso `PASS`; conflito exige rerun autoritativo. |
+| H1 Independência | `CONDITIONAL` | `independence-report.md`, `installer-matrix.json` | 21 dry-runs passam; 7 matrizes Linux estão `BLOCKED`; evidência ainda cobre superfícies exercitadas. |
+| H2 Contratos e descoberta | `CONDITIONAL` | `contract-validation.json` `PASS`, `compatibility-matrix.md`, `mcp-handshake.json` | 6 MCP locais e contratos passam; isso não prova integração em Claude, Devin e Copilot. |
+| H3 CLI, Portal e instalação | `CONDITIONAL` | `installer-matrix.json`, `installation-report.md`, evidências Portal | 21 instaladores passam em PowerShell/Git Bash; `integration-report.md` marca Portal cross-forge `BLOCKED`, enquanto `manual-results.json` marca `PASS`; conflito exige rerun autoritativo. |
 | H4 Hosts, MCP e agentes | `BLOCKED` | `mcp-handshake.json` prova MCP local | Hosts Claude/Devin/Copilot estão `UNVERIFIED` em `unresolved-gaps.md`. |
-| H5 Workflows multi-Forge | `CONDITIONAL` | `evidence-index.json`, `integration-report.md` | Provider conformance passou; jornada completa multi-Forge permanece `UNVERIFIED/BLOCKED`. |
+| H5 Workflows multi-Forge | `CONDITIONAL` | `evidence-index.json`: 19/19 cenários locais `PASS`, `integration-report.md` | Runtime dos cenários não é o SHA H0 em todos os casos; jornada completa multi-Forge permanece `UNVERIFIED/BLOCKED`. |
 | H6 Segurança, resiliência e observabilidade | `CONDITIONAL` | `security-report.md` | Deep scan está `BLOCKED`; achados de dependência não estão fechados para release. |
-| H7 Regressão e certificação | `NOT_TESTED` para a topologia CI nova | PR `spark-forge-aws#164`, run `38495555353` em execução durante esta coleta | O caminho rápido ainda não tem conclusão verde; full audit/nightly precisa execução posterior. |
+| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38497876506` `PASS` | Smoke PR e gates locais passam; full matrix/nightly ainda precisa execução para certificar regressão completa. |
 
 ## Conflitos que não podem virar `PASS`
 
@@ -54,9 +69,9 @@ ancorados em SHAs reais de `origin/main`:
 2. `audit/reports/security-report.md` registra achados de dependência como
    `UNVERIFIED_FOR_RELEASE`, embora `manual-results.json` registre Snyk como
    `PASS`.
-3. Evidência de CI AWS em `manual-results.json` referencia run antigo. A
-   alteração atual separa PR rápido de full audit; o run novo precisa terminar
-   antes de atualizar qualquer certificação.
+3. Evidência de CI AWS em `manual-results.json` referencia run antigo. O run
+   atual `38497876506` cobre smoke PR, não full matrix; não substitui auditoria
+   completa.
 
 ## Próximos gates obrigatórios
 
@@ -65,8 +80,8 @@ ancorados em SHAs reais de `origin/main`:
 2. Executar handshake nos hosts realmente disponíveis; hosts ausentes ficam
    `BLOCKED`, nunca simulados como `PASS`.
 3. Fechar ou registrar formalmente findings de dependência e deep scan.
-4. Concluir PR `spark-forge-aws#164`; executar full matrix em `main` ou
-   workflow manual/nightly e anexar run atual.
+4. Executar full matrix em `main` ou workflow manual/nightly e anexar run atual;
+   smoke verde não equivale a full audit verde.
 5. Só então regenerar relatório final e avaliar `Conditionally Certified`.
 
 ## Decisão

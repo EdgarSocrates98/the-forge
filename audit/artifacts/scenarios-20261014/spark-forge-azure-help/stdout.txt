@@ -1,0 +1,46 @@
+usage: sparkforge-azure [-h] [--version] [--format {json,text}] <command> ...
+
+Spark Forge Azure - Agentic Engineering OS for Azure Data Engineering.
+
+positional arguments:
+  <command>
+    version             print engine identity and version
+    ai                  observe AI host state
+                        (binary/version/auth/integration); --launch opens it
+                        (CLI+TTY only, never via MCP)
+    tokensave           economical retrieval ladder (L0-L6)
+    governance          multi-layer governance (Entra/RBAC/ACL/UC/network)
+    doctor              installation and capability health (no cloud access)
+    graph               Graphfy: semantic/workspace graph (offline)
+    collect             read-only Azure collectors (offline exports by
+                        default)
+    offline-bundle      redacted evidence bundle (no secrets, no raw dumps)
+    lab                 Forge Lab offline: doctor, verify, scenarios,
+                        plan/run, lifecycle
+    mcp                 MCP runtime: catalog inspection and server
+    diagnose            offline access diagnosis on a case bundle
+    migration           ADF/Synapse -> Fabric migration assessment (offline)
+    sdd                 SDD gate — spec artifact chain check/status
+    agents              agent fleet — list status, inspect one contract,
+                        explain a route
+    agentops            inspect recorded runs: runs/inspect/timeline/critical-
+                        path
+    analyze             extract facts offline (only kinds with an extractor)
+    judge               apply the versioned rule catalogue to facts
+    knowledge           dated knowledge packs
+    distribution        portable distribution lifecycle:
+                        inspect/init/status/doctor/detach
+    install             forge/* install lifecycle:
+                        apply/status/doctor/repair/uninstall/update/mcp-verify
+    portal              open the optional local web portal (127.0.0.1, session
+                        token) over the same services as the CLI — never
+                        inside MCP
+    workspace           ForgeWorkspace: discover/init/add/remove/status of
+                        declared projects
+    context             workspace-scoped context resolution
+                        (target|direct|transitive|all)
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --format {json,text}  output format (default json)

@@ -1,0 +1,104 @@
+{
+  "cli": "forge-doctor-api",
+  "created_at": "2026-10-14T01:57:02Z",
+  "environment": {
+    "prefix": "FORGE_DOCTOR_API",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "variables": {
+      "FORGE_DOCTOR_API_CLI": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1\\.venv\\Scripts\\forge-doctor-api.exe",
+      "FORGE_DOCTOR_API_HOME": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "FORGE_DOCTOR_API_INSTALL_ROOT": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1",
+      "FORGE_DOCTOR_API_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\forge-doctor-api",
+      "FORGE_DOCTOR_API_PYTHON": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1\\.venv\\Scripts\\python.exe",
+      "FORGE_DOCTOR_API_VENV": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1\\.venv"
+    },
+    "windows_aliases": {
+      "FORGE-DOCTOR-API-CLI": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1\\.venv\\Scripts\\forge-doctor-api.exe",
+      "FORGE-DOCTOR-API-HOME": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "FORGE-DOCTOR-API-INSTALL-ROOT": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1",
+      "FORGE-DOCTOR-API-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\forge-doctor-api",
+      "FORGE-DOCTOR-API-PYTHON": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1\\.venv\\Scripts\\python.exe",
+      "FORGE-DOCTOR-API-VENV": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1\\.venv"
+    }
+  },
+  "forge_id": "forge-doctor-api",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\forge-doctor-api\\powershell-5.1"
+}

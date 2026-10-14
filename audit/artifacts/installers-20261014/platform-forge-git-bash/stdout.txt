@@ -1,0 +1,105 @@
+{
+  "cli": "platformforge",
+  "created_at": "2026-10-14T01:57:01Z",
+  "environment": {
+    "prefix": "PLATFORM_FORGE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "variables": {
+      "PLATFORM_FORGE_CLI": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash\\.venv\\Scripts\\platformforge.exe",
+      "PLATFORM_FORGE_HOME": "E:\\projetos\\FORJAS\\platform-forge",
+      "PLATFORM_FORGE_INSTALL_ROOT": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash",
+      "PLATFORM_FORGE_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\platformforge",
+      "PLATFORM_FORGE_PYTHON": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash\\.venv\\Scripts\\python.exe",
+      "PLATFORM_FORGE_VENV": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash\\.venv"
+    },
+    "windows_aliases": {
+      "PLATFORM-FORGE-CLI": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash\\.venv\\Scripts\\platformforge.exe",
+      "PLATFORM-FORGE-HOME": "E:\\projetos\\FORJAS\\platform-forge",
+      "PLATFORM-FORGE-INSTALL-ROOT": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash",
+      "PLATFORM-FORGE-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\platformforge",
+      "PLATFORM-FORGE-PYTHON": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash\\.venv\\Scripts\\python.exe",
+      "PLATFORM-FORGE-VENV": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash\\.venv"
+    }
+  },
+  "forge_id": "platform-forge",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\platform-forge\\git-bash"
+}
+Install complete. Open new shell or run: source ~/.config/forjas/env.sh
