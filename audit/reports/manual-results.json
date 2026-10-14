@@ -1,7 +1,7 @@
 {
   "schema": "forge/manual-results/v1",
   "results": [
-    {"id":"python-full-spark-forge-aws","status":"NOT_TESTED","evidence":"Historical full-matrix run 38344016364 is not anchored to the current H0 SHA; current PR run 38501375515 covers focused smoke only. Execute one full workflow_dispatch run before certification."},
+    {"id":"python-full-spark-forge-aws","status":"NOT_TESTED","evidence":"Historical full-matrix run 38344016364 is not anchored to the current H0 SHA; current PR run 38502479687 on head 12cc25f covers focused smoke only. Execute one full workflow_dispatch run before certification."},
     {"id":"python-full-api-forge","status":"PASS","evidence":"1887 passed, 1 skipped in 1687.21s"},
     {"id":"python-full-forge-doctor-api","status":"PASS","evidence":"1787 passed, 37 skipped in 784.66s"},
     {"id":"python-full-forge-doctor-data","status":"PASS","evidence":"2666 passed in 1697.16s"},
@@ -21,7 +21,7 @@
     {"id":"linux-bash-installer","status":"BLOCKED","evidence":"Windows host has WSL bash stub but no Linux distribution"},
     {"id":"deep-security-scan","status":"BLOCKED","evidence":"managed filesystem permission profile unavailable"},
     {"id":"snyk-sca","status":"BLOCKED","evidence":"Snyk output is present in snyk-sca.json, but dependency findings remain UNVERIFIED_FOR_RELEASE; no release PASS is asserted."},
-    {"id":"ci-six-specialist-prs","status":"PASS","evidence":"Current specialist PR checks are green; AWS run 38501375515 covers focused PR smoke and full audit remains pending; branch protection verified"},
+    {"id":"ci-six-specialist-prs","status":"PASS","evidence":"Current specialist PR checks are green; AWS run 38502479687 covers focused PR smoke and full audit remains pending; branch protection verified"},
     {"id":"ci-central-pr","status":"PASS","evidence":"The Forge run 38498576625 green: package jobs and Python matrix completed successfully"}
   ]
 }
