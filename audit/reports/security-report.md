@@ -2,7 +2,7 @@
 
 | Controle | Estado | Nota |
 |---|---|---|
-| Snyk SCA | PASS | 13 projetos analisados; resultado salvo em `snyk-sca.json` |
+| Snyk SCA | BLOCKED | 13 projetos analisados; achados pré-existentes permanecem `UNVERIFIED_FOR_RELEASE`; resultado salvo em `snyk-sca.json` |
 | Deep scan | BLOCKED | ferramenta exigiu permission profile gerenciado inexistente |
 | Instalador sem admin | PASS | HKCU only; sem escrita em HKLM |
 | Caminhos e checkout | PASS | testes em worktrees/diretórios descartáveis |

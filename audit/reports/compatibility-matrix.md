@@ -18,7 +18,7 @@ Data: 2026-10-12/13. Estado só muda para `PASS` com execução e evidência.
 | CUA visual terminal | BLOCKED | runtime CUA indisponível neste host |
 | Portal cross-forge runner | BLOCKED | bounded wait excedido antes da primeira URL |
 | Deep security scan | BLOCKED | permission profile gerenciado ausente |
-| Snyk SCA | PASS | execução concluída; achados pré-existentes registrados |
+| Snyk SCA | UNVERIFIED_FOR_RELEASE | execução concluída; achados pré-existentes ainda não fechados para release |
 
 ## Independence
 

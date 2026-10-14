@@ -91,6 +91,49 @@ def test_posix_environment_file_is_idempotent(tmp_path, monkeypatch):
     assert rc_file.read_text(encoding="utf-8").count("forjas-account-environment") == 1
 
 
+def test_detects_git_bash_native_windows(monkeypatch):
+    monkeypatch.setattr(fb.os, "name", "nt")
+    monkeypatch.setenv("MSYSTEM", "UCRT64")
+    monkeypatch.delenv("OSTYPE", raising=False)
+    assert fb._is_git_bash()
+
+
+def test_rejects_unrelated_msystem_value(monkeypatch):
+    monkeypatch.setattr(fb.os, "name", "nt")
+    monkeypatch.setenv("MSYSTEM", "custom-shell")
+    monkeypatch.setenv("OSTYPE", "windows")
+    assert not fb._is_git_bash()
+
+
+def test_git_bash_persistence_writes_registry_and_shell_init(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(fb.os, "name", "nt")
+    monkeypatch.setattr(fb, "_is_git_bash", lambda: True)
+    monkeypatch.setattr(
+        fb,
+        "_persist_windows",
+        lambda values, aliases, shim: calls.append(("windows", values, aliases, shim)),
+    )
+    monkeypatch.setattr(
+        fb,
+        "_persist_posix",
+        lambda values, shim, shell_shim=None: calls.append(
+            ("git-bash", values, shim, shell_shim)
+        ) or str(tmp_path / "env.sh"),
+    )
+    env = {
+        "variables": {"FORGE_TEST_HOME": str(tmp_path)},
+        "windows_aliases": {"FORGE-TEST-HOME": str(tmp_path)},
+    }
+
+    out = fb.persist_environment(env, tmp_path / "bin" / "forge-test", lambda _: None)
+
+    assert [call[0] for call in calls] == ["windows", "git-bash"]
+    assert out["persistence"] == "HKCU\\Environment + Git Bash shell-init"
+    assert out["shell"] == "git-bash"
+    assert out["shell_init"].endswith("env.sh")
+
+
 def test_registry_has_value_uses_winreg_function(monkeypatch):
     calls = []
 

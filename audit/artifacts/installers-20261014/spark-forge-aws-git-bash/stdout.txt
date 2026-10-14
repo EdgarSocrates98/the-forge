@@ -1,0 +1,105 @@
+{
+  "cli": "sparkforge-aws",
+  "created_at": "2026-10-14T01:56:54Z",
+  "environment": {
+    "prefix": "SPARK_FORGE_AWS",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "variables": {
+      "SPARK_FORGE_AWS_CLI": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash\\.venv\\Scripts\\sparkforge-aws.exe",
+      "SPARK_FORGE_AWS_HOME": "E:\\projetos\\FORJAS\\spark-forge-aws",
+      "SPARK_FORGE_AWS_INSTALL_ROOT": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash",
+      "SPARK_FORGE_AWS_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\sparkforge-aws",
+      "SPARK_FORGE_AWS_PYTHON": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash\\.venv\\Scripts\\python.exe",
+      "SPARK_FORGE_AWS_VENV": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash\\.venv"
+    },
+    "windows_aliases": {
+      "SPARK-FORGE-AWS-CLI": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash\\.venv\\Scripts\\sparkforge-aws.exe",
+      "SPARK-FORGE-AWS-HOME": "E:\\projetos\\FORJAS\\spark-forge-aws",
+      "SPARK-FORGE-AWS-INSTALL-ROOT": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash",
+      "SPARK-FORGE-AWS-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\sparkforge-aws",
+      "SPARK-FORGE-AWS-PYTHON": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash\\.venv\\Scripts\\python.exe",
+      "SPARK-FORGE-AWS-VENV": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash\\.venv"
+    }
+  },
+  "forge_id": "spark-forge-aws",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash",
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\_forge-work-20261013\\the-forge-audit\\audit\\artifacts\\installers-20261014\\targets\\spark-forge-aws\\git-bash"
+}
+Install complete. Open new shell or run: source ~/.config/forjas/env.sh

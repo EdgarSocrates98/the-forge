@@ -2,6 +2,15 @@
 
 Auditoria evidence-first do ecossistema Forge.
 
+O programa de referência atual é `prompt_evo_auditabilidade.md`, no workspace
+pai. A leitura de estado consolidada fica em
+`reports/prompt-evo-auditabilidade.md`; ela aplica H0–H7 e mantém
+`BLOCKED`/`UNVERIFIED` explícitos.
+
+O relatório final exigido pelo programa fica em
+`../docs/homologation/FINAL-ECOSYSTEM-CERTIFICATION.md`. Ele é um espelho
+executivo do relatório H0–H7 e não promove evidência ausente a aprovação.
+
 Este diretório é infraestrutura de validação e documentação. Não é importado
 por nenhuma Forge e não participa do runtime de produção.
 
