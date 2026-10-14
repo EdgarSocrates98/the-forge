@@ -60,7 +60,7 @@ Eles carregam SHAs próprios no JSON e não devem ser confundidos com prova de
 | H4 Hosts, MCP e agentes | `BLOCKED` | `mcp-handshake.json` prova MCP local | Hosts Claude/Devin/Copilot estão `UNVERIFIED` em `unresolved-gaps.md`. |
 | H5 Workflows multi-Forge | `CONDITIONAL` | `evidence-index.json`: 19/19 cenários locais `PASS`, `integration-report.md` | Runtime dos cenários não é o SHA H0 em todos os casos; jornada completa multi-Forge permanece `UNVERIFIED/BLOCKED`. |
 | H6 Segurança, resiliência e observabilidade | `CONDITIONAL` | `security-report.md` | Deep scan está `BLOCKED`; achados de dependência não estão fechados para release. |
-| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38502479687` `PASS`; full audit dispatch `38500376956` `IN_PROGRESS` | Smoke PR e gates locais passam; full matrix foi disparada uma vez no branch da mudança e ainda precisa terminar com conclusão `success`. |
+| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38502479687` `PASS`; dispatch `38500376956` `CANCELLED` em head obsoleto | Smoke PR e gates locais passam; full matrix do head atual ainda não foi executada até conclusão `success`. |
 
 ## Normalização de evidências
 
@@ -71,8 +71,9 @@ Os conflitos anteriores foram normalizados sem promover evidência antiga:
    como não autoritativo.
 2. Snyk agora é `BLOCKED`/`UNVERIFIED_FOR_RELEASE` nos relatórios; achados não
    são tratados como aprovação de release.
-3. `manual-results.json` diferencia AWS smoke PR (`38502479687`) do full audit
-   dispatch (`38500376956`), que ainda está em execução.
+3. `manual-results.json` diferencia AWS smoke PR (`38502479687`) do dispatch
+   `38500376956`, cancelado por custo no head obsoleto `cedaa22`; cancelamento
+   não é evidência de PASS nem FAIL funcional.
 
 ## Próximos gates obrigatórios
 
@@ -81,8 +82,9 @@ Os conflitos anteriores foram normalizados sem promover evidência antiga:
 2. Executar handshake nos hosts realmente disponíveis; hosts ausentes ficam
    `BLOCKED`, nunca simulados como `PASS`.
 3. Fechar ou registrar formalmente findings de dependência e deep scan.
-4. Aguardar full matrix dispatch `38500376956`; anexar conclusão atual somente
-   se o run terminar com sucesso. Smoke verde não equivale a full audit verde.
+4. Executar uma full matrix no head atual em workflow manual/nightly, com os
+   timeouts versionados no CI, e anexar conclusão somente se terminar com
+   sucesso. Smoke verde não equivale a full audit verde.
 5. Só então regenerar relatório final e avaliar `Conditionally Certified`.
 
 ## Decisão

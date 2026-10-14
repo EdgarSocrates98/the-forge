@@ -1,7 +1,7 @@
 {
   "schema": "forge/manual-results/v1",
   "results": [
-    {"id":"python-full-spark-forge-aws","status":"NOT_TESTED","evidence":"Historical full-matrix run 38344016364 is not anchored to the current H0 SHA; current PR run 38502479687 on head 12cc25f covers focused smoke only. Execute one full workflow_dispatch run before certification."},
+    {"id":"python-full-spark-forge-aws","status":"NOT_TESTED","evidence":"Historical full-matrix run 38344016364 is not anchored to the current H0 SHA; PR run 38502479687 on head 12cc25f covers focused smoke only; dispatch 38500376956 on stale head cedaa22 was cancelled after budget review. Execute one current full workflow_dispatch/nightly run with timeout before certification."},
     {"id":"python-full-api-forge","status":"PASS","evidence":"1887 passed, 1 skipped in 1687.21s"},
     {"id":"python-full-forge-doctor-api","status":"PASS","evidence":"1787 passed, 37 skipped in 784.66s"},
     {"id":"python-full-forge-doctor-data","status":"PASS","evidence":"2666 passed in 1697.16s"},
