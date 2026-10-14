@@ -146,6 +146,27 @@ def test_graph_without_providers_is_empty_not_an_error(
     assert "Capability graph:" in out
 
 
+def test_graph_out_persists_json_snapshot(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_workspace(tmp_path, [SPARK_ENTRY])
+    output = tmp_path / "artifacts" / "capability-graph.json"
+    code, out, err = run(
+        capsys,
+        "graph",
+        "--root",
+        str(tmp_path),
+        "--out",
+        str(output),
+        "--json",
+    )
+    assert code == 0, err
+    emitted = json.loads(out)
+    persisted = json.loads(output.read_text(encoding="utf-8"))
+    assert persisted["nodes"] == emitted["nodes"]
+    assert persisted["edges"] == emitted["edges"]
+
+
 # --- explain additions (same wave) -----------------------------------------------------------
 
 
