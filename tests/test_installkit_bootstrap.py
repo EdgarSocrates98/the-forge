@@ -98,6 +98,13 @@ def test_detects_git_bash_native_windows(monkeypatch):
     assert fb._is_git_bash()
 
 
+def test_rejects_unrelated_msystem_value(monkeypatch):
+    monkeypatch.setattr(fb.os, "name", "nt")
+    monkeypatch.setenv("MSYSTEM", "custom-shell")
+    monkeypatch.setenv("OSTYPE", "windows")
+    assert not fb._is_git_bash()
+
+
 def test_git_bash_persistence_writes_registry_and_shell_init(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(fb.os, "name", "nt")
