@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from theforge.ui import i18n
+from theforge.ui import i18n, wizard
 from theforge.ui.kit import (
     NonInteractive,
     UIContext,
@@ -16,7 +16,6 @@ from theforge.ui.kit import (
     dashboard,
     status_table,
 )
-from theforge.ui import wizard
 from theforge.ui.wizard import env_check_rows
 
 # -- capability detection ----------------------------------------------------
