@@ -1,7 +1,7 @@
 {
   "schema": "forge/manual-results/v1",
   "results": [
-    {"id":"python-full-spark-forge-aws","status":"PASS","evidence":"CI matrix 3.10/3.11/3.12 green; Python 3.12: 14928 passed, 20 skipped, 2 warnings; run 38344016364"},
+    {"id":"python-full-spark-forge-aws","status":"NOT_TESTED","evidence":"Historical full-matrix run 38344016364 is not anchored to the current H0 SHA; current PR run 38497876506 covers focused smoke only. Execute one full workflow_dispatch run before certification."},
     {"id":"python-full-api-forge","status":"PASS","evidence":"1887 passed, 1 skipped in 1687.21s"},
     {"id":"python-full-forge-doctor-api","status":"PASS","evidence":"1787 passed, 37 skipped in 784.66s"},
     {"id":"python-full-forge-doctor-data","status":"PASS","evidence":"2666 passed in 1697.16s"},
@@ -16,12 +16,12 @@
     {"id":"real-provider-conformance","status":"PASS","evidence":"six real provider conformance tests passed"},
     {"id":"mcp-real-handshake-and-invoke","status":"PASS","evidence":"six installed MCP servers; initialize/tools/list/tools/call PASS; 388 tools catalogued; audit/reports/mcp-handshake.json"},
     {"id":"powershell-7-actual-installers","status":"PASS","evidence":"7/7 canonical account installs completed with pwsh.exe; audit/reports/installer-powershell7-actual.json"},
-    {"id":"portal-cross-forge-script","status":"PASS","evidence":"scripts/portal_e2e.py: 7 forges, 126 assertions, bounded startup handshake"},
+    {"id":"portal-cross-forge-script","status":"BLOCKED","evidence":"Current audit checkout has no reproducible portal_e2e.py runner; integration-report.md records the cross-forge runner as BLOCKED. Previous PASS is historical and not authoritative for H0."},
     {"id":"cua-visual-terminal","status":"BLOCKED","evidence":"CUA kernel asset initialization failed with OS error 3"},
     {"id":"linux-bash-installer","status":"BLOCKED","evidence":"Windows host has WSL bash stub but no Linux distribution"},
     {"id":"deep-security-scan","status":"BLOCKED","evidence":"managed filesystem permission profile unavailable"},
-    {"id":"snyk-sca","status":"PASS","evidence":"Snyk CLI ran across 13 projects; 5 pre-existing vulnerable dependency paths reported"},
-    {"id":"ci-six-specialist-prs","status":"PASS","evidence":"all specialist PRs merged after green checks; AWS run 38344016364 green; branch protection verified"},
-    {"id":"ci-central-pr","status":"PASS","evidence":"The Forge run 38354070524 green: packages and Python 3.11/3.12/3.13/3.14 on Ubuntu and Windows"}
+    {"id":"snyk-sca","status":"BLOCKED","evidence":"Snyk output is present in snyk-sca.json, but dependency findings remain UNVERIFIED_FOR_RELEASE; no release PASS is asserted."},
+    {"id":"ci-six-specialist-prs","status":"PASS","evidence":"Current specialist PR checks are green; AWS run 38497876506 covers focused PR smoke and full audit remains pending; branch protection verified"},
+    {"id":"ci-central-pr","status":"PASS","evidence":"The Forge run 38498576625 green: package jobs and Python matrix completed successfully"}
   ]
 }

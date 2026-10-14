@@ -1,5 +1,10 @@
 # THE FORGE FULL ECOSYSTEM CERTIFICATION
 
+> Historical report. Superseded by `prompt-evo-auditabilidade.md` and kept
+> for provenance only. Its former `CERTIFIED_WITH_LIMITATIONS` wording is not
+> a current certification decision; unresolved evidence is `BLOCKED` until
+> rerun against the current H0 baseline.
+
 Date: 2026-10-13. Program: `prompt_evo_e2e.md` + `prompt_evo_homolog_e2e.md`.
 
 ## Part A — Baseline
@@ -35,7 +40,10 @@ Fixed Windows registry API/access handling in installer bootstrap. Fixed The For
 
 ## Part H — Release decision
 
-`CERTIFIED_WITH_LIMITATIONS`. Central CI run 38354070524 is green and report integrity checks pass. Environment blockers prevent an unrestricted `CERTIFIED` claim.
+Historical decision recorded here: `CERTIFIED_WITH_LIMITATIONS`. Central CI
+run 38354070524 and its evidence belong to the older report generation; they
+do not supersede the current `CERTIFICATION_BLOCKED` decision in
+`prompt-evo-auditabilidade.md`.
 
 ## Reproduction index
 

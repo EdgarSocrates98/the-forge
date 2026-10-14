@@ -60,18 +60,19 @@ Eles carregam SHAs próprios no JSON e não devem ser confundidos com prova de
 | H4 Hosts, MCP e agentes | `BLOCKED` | `mcp-handshake.json` prova MCP local | Hosts Claude/Devin/Copilot estão `UNVERIFIED` em `unresolved-gaps.md`. |
 | H5 Workflows multi-Forge | `CONDITIONAL` | `evidence-index.json`: 19/19 cenários locais `PASS`, `integration-report.md` | Runtime dos cenários não é o SHA H0 em todos os casos; jornada completa multi-Forge permanece `UNVERIFIED/BLOCKED`. |
 | H6 Segurança, resiliência e observabilidade | `CONDITIONAL` | `security-report.md` | Deep scan está `BLOCKED`; achados de dependência não estão fechados para release. |
-| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38497876506` `PASS` | Smoke PR e gates locais passam; full matrix/nightly ainda precisa execução para certificar regressão completa. |
+| H7 Regressão e certificação | `CONDITIONAL` | PR `spark-forge-aws#164`, run `38497876506` `PASS`; full audit dispatch `38500376956` `IN_PROGRESS` | Smoke PR e gates locais passam; full matrix foi disparada uma vez no branch da mudança e ainda precisa terminar com conclusão `success`. |
 
-## Conflitos que não podem virar `PASS`
+## Normalização de evidências
 
-1. `audit/reports/integration-report.md` e `audit/reports/manual-results.json`
-   discordam sobre `portal-cross-forge-script`.
-2. `audit/reports/security-report.md` registra achados de dependência como
-   `UNVERIFIED_FOR_RELEASE`, embora `manual-results.json` registre Snyk como
-   `PASS`.
-3. Evidência de CI AWS em `manual-results.json` referencia run antigo. O run
-   atual `38497876506` cobre smoke PR, não full matrix; não substitui auditoria
-   completa.
+Os conflitos anteriores foram normalizados sem promover evidência antiga:
+
+1. `portal-cross-forge-script` agora é `BLOCKED` em `manual-results.json`,
+   alinhado com `integration-report.md`; o PASS histórico ficou identificado
+   como não autoritativo.
+2. Snyk agora é `BLOCKED`/`UNVERIFIED_FOR_RELEASE` nos relatórios; achados não
+   são tratados como aprovação de release.
+3. `manual-results.json` diferencia AWS smoke PR (`38497876506`) do full audit
+   dispatch (`38500376956`), que ainda está em execução.
 
 ## Próximos gates obrigatórios
 
@@ -80,8 +81,8 @@ Eles carregam SHAs próprios no JSON e não devem ser confundidos com prova de
 2. Executar handshake nos hosts realmente disponíveis; hosts ausentes ficam
    `BLOCKED`, nunca simulados como `PASS`.
 3. Fechar ou registrar formalmente findings de dependência e deep scan.
-4. Executar full matrix em `main` ou workflow manual/nightly e anexar run atual;
-   smoke verde não equivale a full audit verde.
+4. Aguardar full matrix dispatch `38500376956`; anexar conclusão atual somente
+   se o run terminar com sucesso. Smoke verde não equivale a full audit verde.
 5. Só então regenerar relatório final e avaliar `Conditionally Certified`.
 
 ## Decisão
