@@ -816,15 +816,15 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.generated.json": {
-    "mtime": 1792099644.5697472,
-    "seen": 1792099693.481804,
-    "ast_hash": "02022dbc56d3e40063a980a23f07fae2",
+    "mtime": 1792100080.376472,
+    "seen": 1792100467.8049104,
+    "ast_hash": "c231f7cb7b64991cd6e9de34f9086ab3",
     "semantic_hash": ""
   },
   "docs/reference/divergence.generated.json": {
-    "mtime": 1792099644.592803,
-    "seen": 1792099693.4818048,
-    "ast_hash": "1d4587d4ab2e92d2eb18f192c268f1e1",
+    "mtime": 1792100080.399704,
+    "seen": 1792100467.8049114,
+    "ast_hash": "c2389a94af40636850aeeb72afa2279a",
     "semantic_hash": ""
   },
   "docs/reports/agentic-polish-closure.json": {
@@ -912,9 +912,9 @@
     "semantic_hash": ""
   },
   "forge.json": {
-    "mtime": 1792098822.9633408,
-    "seen": 1792099693.4818242,
-    "ast_hash": "95c40f58eef57dd8a97d119e6813de14",
+    "mtime": 1792100290.726549,
+    "seen": 1792100467.8049304,
+    "ast_hash": "e2a890a64d6312a7e22f7815c5202db8",
     "semantic_hash": ""
   },
   "install.ps1": {
@@ -1806,21 +1806,21 @@
     "semantic_hash": ""
   },
   "src/theforge/cli/commands.py": {
-    "mtime": 1792098930.4144294,
-    "seen": 1792099693.4820068,
-    "ast_hash": "35a530c46a95f4ada1a92280f72f3f0c",
+    "mtime": 1792100385.3925238,
+    "seen": 1792100467.8050976,
+    "ast_hash": "51b79a19ea52b08cf7027a05a3ec97d2",
     "semantic_hash": ""
   },
   "src/theforge/cli/main.py": {
-    "mtime": 1792098930.4114294,
-    "seen": 1792099693.4820077,
-    "ast_hash": "36cd7b37560ab3d84c069caabcfa36e2",
+    "mtime": 1792099868.9519155,
+    "seen": 1792100467.8050985,
+    "ast_hash": "5ffc34076bcc071b4e3e657e65845101",
     "semantic_hash": ""
   },
   "src/theforge/cli/render.py": {
-    "mtime": 1792098659.730274,
-    "seen": 1792099693.4820085,
-    "ast_hash": "2128f1f2d1f4146656f1a541fbc2e3c8",
+    "mtime": 1792099870.3933415,
+    "seen": 1792100467.8050995,
+    "ast_hash": "e814e040c956c62cd233f45934378ca6",
     "semantic_hash": ""
   },
   "src/theforge/complexity.py": {
@@ -2820,9 +2820,9 @@
     "semantic_hash": ""
   },
   "tests/conftest.py": {
-    "mtime": 1792098715.9964237,
-    "seen": 1792099693.4822266,
-    "ast_hash": "8365359aba7f0155ab39055fdcbb09de",
+    "mtime": 1792100003.2843668,
+    "seen": 1792100467.8052795,
+    "ast_hash": "cad998f7de4ecd86825eb1f612758954",
     "semantic_hash": ""
   },
   "tests/cross_workspace.py": {
@@ -4446,9 +4446,9 @@
     "semantic_hash": ""
   },
   "tests/test_installkit_schemas.py": {
-    "mtime": 1792098855.9250116,
-    "seen": 1792099693.482618,
-    "ast_hash": "3c8d3107c779988ff13d8eede2cdb305",
+    "mtime": 1792100324.7299275,
+    "seen": 1792100467.8055677,
+    "ast_hash": "ef0ab2f529ace6e866ef8d2637909570",
     "semantic_hash": ""
   },
   "tests/test_integrity.py": {
@@ -7590,9 +7590,9 @@
     "semantic_hash": ""
   },
   "docs/INDEX.md": {
-    "mtime": 1792099645.2026865,
-    "seen": 1792099693.483614,
-    "ast_hash": "09e4b67382c64231ab646086512ff2ab",
+    "mtime": 1792100081.0093925,
+    "seen": 1792100467.8062093,
+    "ast_hash": "3298c2566e67713b12ead5ab38767f8c",
     "semantic_hash": ""
   },
   "docs/README.md": {
@@ -8052,9 +8052,9 @@
     "semantic_hash": ""
   },
   "docs/cli.md": {
-    "mtime": 1792099640.8805282,
-    "seen": 1792099693.4837394,
-    "ast_hash": "bc13fc7d5b4de4f8e8eea8c6e6774b16",
+    "mtime": 1792100062.7902107,
+    "seen": 1792100467.8062925,
+    "ast_hash": "f5d388522d4c2f35560cf8fdade96085",
     "semantic_hash": ""
   },
   "docs/context-roi.md": {
@@ -8604,8 +8604,8 @@
     "semantic_hash": ""
   },
   "docs/hub/which-forge.md": {
-    "mtime": 1792099645.2293484,
-    "seen": 1792099693.4838903,
+    "mtime": 1792100081.0402923,
+    "seen": 1792100467.8063974,
     "ast_hash": "1f2a16d5b955d8f754b276d8447f9503",
     "semantic_hash": ""
   },
@@ -8730,39 +8730,39 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/broken-link-report.md": {
-    "mtime": 1792099645.155817,
-    "seen": 1792099693.4839246,
-    "ast_hash": "10eb60dbbc9088243f5a5035ce9eeb6e",
+    "mtime": 1792100080.966544,
+    "seen": 1792100467.806421,
+    "ast_hash": "c5cda258e843c75c93629216aeffce43",
     "semantic_hash": ""
   },
   "docs/knowledge-program/classification-report.md": {
-    "mtime": 1792099645.155613,
-    "seen": 1792099693.483926,
-    "ast_hash": "5bfa99187da8c5332746458afafdefc8",
+    "mtime": 1792100080.9663942,
+    "seen": 1792100467.8064218,
+    "ast_hash": "18122df95b5741382c37e551cc312d6d",
     "semantic_hash": ""
   },
   "docs/knowledge-program/command-drift-report.md": {
-    "mtime": 1792099645.1559954,
-    "seen": 1792099693.483927,
+    "mtime": 1792100080.9666681,
+    "seen": 1792100467.8064227,
     "ast_hash": "a9d4fa20e0baf611738c05a85d93c312",
     "semantic_hash": ""
   },
   "docs/knowledge-program/documentation-quality-report.md": {
-    "mtime": 1792099645.1561372,
-    "seen": 1792099693.483929,
+    "mtime": 1792100080.9667878,
+    "seen": 1792100467.806424,
     "ast_hash": "9b131ca56e39add1558956e011260501",
     "semantic_hash": ""
   },
   "docs/knowledge-program/duplicate-content-report.md": {
-    "mtime": 1792099645.155726,
-    "seen": 1792099693.48393,
+    "mtime": 1792100080.9664736,
+    "seen": 1792100467.8064246,
     "ast_hash": "1bba782b953dc9472dfac839e7d1d258",
     "semantic_hash": ""
   },
   "docs/knowledge-program/final-report.md": {
-    "mtime": 1792099645.2760482,
-    "seen": 1792099693.4839313,
-    "ast_hash": "97177fbca908224d90a1806d10bd2352",
+    "mtime": 1792100081.0835147,
+    "seen": 1792100467.8064258,
+    "ast_hash": "90427a237d41f32adbaab0a765a26f5a",
     "semantic_hash": ""
   },
   "docs/knowledge-program/hub-evaluation.md": {
@@ -8772,14 +8772,14 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/obsolete-document-report.md": {
-    "mtime": 1792099645.1559126,
-    "seen": 1792099693.4839344,
+    "mtime": 1792100080.9666064,
+    "seen": 1792100467.806428,
     "ast_hash": "9332ba74314019005fcde3dfe48ba185",
     "semantic_hash": ""
   },
   "docs/knowledge-program/tutorial-coverage-report.md": {
-    "mtime": 1792099645.1560683,
-    "seen": 1792099693.4839358,
+    "mtime": 1792100080.9667284,
+    "seen": 1792100467.8064287,
     "ast_hash": "2b83b7d264ae186bce1297211a4fcf2e",
     "semantic_hash": ""
   },
@@ -9054,9 +9054,9 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.md": {
-    "mtime": 1792099644.66024,
-    "seen": 1792099693.4840074,
-    "ast_hash": "a47026ac291a488e6e4e30e666bb339e",
+    "mtime": 1792100080.4664283,
+    "seen": 1792100467.8064818,
+    "ast_hash": "ee1eea4d11495215cd43c8173d5153a8",
     "semantic_hash": ""
   },
   "docs/reference/skills.md": {
@@ -9443,18 +9443,6 @@
     "ast_hash": "e8f59eac13233f8e2ba2cf158e99c384",
     "semantic_hash": ""
   },
-  "factory/specs/inbox/cyc9-02-eval-integrity.md": {
-    "mtime": 1792090616.482514,
-    "seen": 1792098062.1245043,
-    "ast_hash": "804c233f360e1bf20ea3d1b6ab3dbb72",
-    "semantic_hash": ""
-  },
-  "factory/specs/inbox/cyc9-03-scenarios-multiforge.md": {
-    "mtime": 1792090635.4027395,
-    "seen": 1792098062.124505,
-    "ast_hash": "9d3c967cfa9cd608f0fcbaf5cd16cc35",
-    "semantic_hash": ""
-  },
   "factory/templates/review.md": {
     "mtime": 1792088988.775779,
     "seen": 1792098062.124506,
@@ -9636,9 +9624,9 @@
     "semantic_hash": ""
   },
   "docs/portable-installation/schemas/BenchmarkResult.schema.json": {
-    "mtime": 1792098855.0901685,
-    "seen": 1792099693.481768,
-    "ast_hash": "2caf56ae359b9a63d97ef0ff27bc15f7",
+    "mtime": 1792099923.1107836,
+    "seen": 1792100467.8048754,
+    "ast_hash": "a1dce77a8915f212fcd5ce8db9d4b6db",
     "semantic_hash": ""
   },
   "docs/portable-installation/schemas/BenchmarkSuite.schema.json": {
@@ -9648,27 +9636,27 @@
     "semantic_hash": ""
   },
   "scripts/lab/theforge_lab.py": {
-    "mtime": 1792098904.8612788,
-    "seen": 1792099693.4819915,
-    "ast_hash": "c8214df4005ea76bb6b626e91846bbd7",
+    "mtime": 1792100337.7670739,
+    "seen": 1792100467.805084,
+    "ast_hash": "0a0a305005c80285250a7072a0140045",
     "semantic_hash": ""
   },
   "src/theforge/contracts/benchmark.py": {
-    "mtime": 1792098930.4104295,
-    "seen": 1792099693.4820378,
-    "ast_hash": "a8cc040564e4cd146ec228973f0f81a2",
+    "mtime": 1792100289.940027,
+    "seen": 1792100467.805114,
+    "ast_hash": "10603d35476e17ee2e6af664bf9b968b",
     "semantic_hash": ""
   },
   "src/theforge/lab.py": {
-    "mtime": 1792098930.4104295,
-    "seen": 1792099693.4821367,
-    "ast_hash": "84d887408f5a10cf4fe9d90eb2e795c7",
+    "mtime": 1792100280.7064342,
+    "seen": 1792100467.8052003,
+    "ast_hash": "b600a5526b7026e6f836e26d4f8143ff",
     "semantic_hash": ""
   },
   "tests/test_benchmark_contract.py": {
-    "mtime": 1792098727.20246,
-    "seen": 1792099693.4824784,
-    "ast_hash": "a045e245ba6f1f392774e937530e3b38",
+    "mtime": 1792100330.2389894,
+    "seen": 1792100467.8054829,
+    "ast_hash": "58ecc63842f83654df487e5fa1a5063f",
     "semantic_hash": ""
   },
   "tests/test_lab.py": {
@@ -9678,21 +9666,99 @@
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/benchmarks/2026-10-15-A.md": {
-    "mtime": 1792098833.515994,
-    "seen": 1792099693.4839854,
-    "ast_hash": "292c4ab099c0f69e2110fcaf81e3abae",
+    "mtime": 1792100343.2328174,
+    "seen": 1792100467.806465,
+    "ast_hash": "fbd06706f73baf94ecac0b6b0d6d69f5",
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/benchmarks/methodology.md": {
-    "mtime": 1792098866.8700688,
-    "seen": 1792099693.4839866,
-    "ast_hash": "980b1736c2314b42a49ebf0c75388cb9",
+    "mtime": 1792100361.1083362,
+    "seen": 1792100467.806466,
+    "ast_hash": "861dc19c771490b3c29c778da8b3e783",
     "semantic_hash": ""
   },
   "factory/specs/active/cyc9-01-lab-coordinator.md": {
     "mtime": 1792098357.5711277,
     "seen": 1792099693.484098,
     "ast_hash": "5e2976d37cea1220c1f8379b62ca93de",
+    "semantic_hash": ""
+  },
+  "docs/portable-installation/schemas/MultiForgeScenario.schema.json": {
+    "mtime": 1792100310.9197726,
+    "seen": 1792100467.804885,
+    "ast_hash": "8108dc659e7f0694e161e2efb0dd7a63",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/api-forge-doctor-api.json": {
+    "mtime": 1792100220.4427617,
+    "seen": 1792100467.8049335,
+    "ast_hash": "ebaf1f80bb0f5c952af444ad1523e50e",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/api-plus-infra.json": {
+    "mtime": 1792100218.1997366,
+    "seen": 1792100467.8049352,
+    "ast_hash": "487ac87f4b2c8b07dbc18ff2b99c6495",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/cloud-migration.json": {
+    "mtime": 1792100221.2037702,
+    "seen": 1792100467.8049366,
+    "ast_hash": "849208ad864356ba461926dc2e086ad1",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/spark-aws-doctor-data.json": {
+    "mtime": 1792100218.9707453,
+    "seen": 1792100467.804938,
+    "ast_hash": "df971db046c0502a4e72ef8228ef687e",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/spark-azure-doctor-data.json": {
+    "mtime": 1792100219.7197535,
+    "seen": 1792100467.804939,
+    "ast_hash": "615e73a53e1ae80f93ef27d67e89fdbc",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/specialist-orchestration.json": {
+    "mtime": 1792100222.6737864,
+    "seen": 1792100467.80494,
+    "ast_hash": "840d98c2aced6c9684fb4d216cec7ad6",
+    "semantic_hash": ""
+  },
+  "labs/multiforge/workspace-multirepo.json": {
+    "mtime": 1792100221.9527786,
+    "seen": 1792100467.8049414,
+    "ast_hash": "b706a1dfae1a6ef79d85919f6031e75a",
+    "semantic_hash": ""
+  },
+  "src/theforge/lab_gate.py": {
+    "mtime": 1792100015.3314981,
+    "seen": 1792100467.805202,
+    "ast_hash": "91d6ec5a221835253d3b183162abdf06",
+    "semantic_hash": ""
+  },
+  "src/theforge/lab_stats.py": {
+    "mtime": 1792100015.3314981,
+    "seen": 1792100467.805203,
+    "ast_hash": "b7cdd2b4ea354c484761117ed57c6ae9",
+    "semantic_hash": ""
+  },
+  "tests/test_lab_gate.py": {
+    "mtime": 1792099987.3081927,
+    "seen": 1792100467.8055723,
+    "ast_hash": "52dc378725ef95f42d82b59b0d0ad591",
+    "semantic_hash": ""
+  },
+  "factory/specs/active/cyc9-02-eval-integrity.md": {
+    "mtime": 1792100067.0835495,
+    "seen": 1792100467.8065464,
+    "ast_hash": "4f5c4f00e0ba9c4c8cf27ab49580c70e",
+    "semantic_hash": ""
+  },
+  "factory/specs/active/cyc9-03-scenarios-multiforge.md": {
+    "mtime": 1792100361.8901143,
+    "seen": 1792100467.8065472,
+    "ast_hash": "b9eb408e4aee385c479f3bcf3cc381f2",
     "semantic_hash": ""
   }
 }
