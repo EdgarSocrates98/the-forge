@@ -33,10 +33,10 @@ Classificação P0 (bloqueia release) / P1 (bloqueia claims) / P2 (adoção). Cr
 
 | # | Gap | Evidência | Spec |
 |---|---|---|---|
-| G-13 | Onboarding/golden paths não documentados | ausente | cyc10-01 |
-| G-14 | GitHub Experience heterogêneo (licença/templates/security por repo) | não auditado | cyc10-02 |
-| G-15 | Sem modelo de contribuição/confiança para Forjas externas | ausente | cyc10-03 |
-| G-16 | Sem mecanismo opt-in de feedback | ausente | cyc10-03 |
+| ~~G-13~~ | ~~Onboarding/golden paths não documentados~~ **fechado 2026-10-15** — `docs/onboarding/`: jornada §10.2, 11 guias §10.3, 4 golden paths §10.4; gate `check_onboarding.py` valida | 11 gates verdes | cyc10-01 |
+| ~~G-14~~ | ~~GitHub Experience heterogêneo~~ **fechado 2026-10-15** — checklist §10.7 em `github-experience.md`; 47 arquivos padronizados; licenças MIT uniformes (D1) | `check_docs_portal.py` + matriz | cyc10-02 |
+| ~~G-15~~ | ~~Sem modelo de contribuição~~ **fechado 2026-10-15** — `docs/contributing/external-forges.md`: 7-etapas, `untrusted/validated/trusted`, DCO | gate `check_adoption.py` | cyc10-03 |
+| ~~G-16~~ | ~~Sem mecanismo opt-in de feedback~~ **fechado 2026-10-15** — `scripts/feedback_bundle.py`: bundle local revisado pelo usuário, zero telemetria | gate `check_adoption.py` | cyc10-03 |
 
 ## Resolvidos após baseline (sweep 2026-10-15, "trate todos os gaps")
 

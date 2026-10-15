@@ -170,6 +170,16 @@ _Task-oriented guides and workflows._
 
 - [Relatórios](reports/README.md)
 
+### templates/
+
+- [API + API Forge](../templates/api-apiforge/README.md)
+- [Custom specialist capability](../templates/custom-specialist/README.md)
+- [MCP host configuration](../templates/mcp-host-config/README.md)
+- [Multi-repo + The Forge](../templates/multi-repo-theforge/README.md)
+- [PySpark + Spark Forge AWS](../templates/pyspark-aws/README.md)
+- [PySpark + Spark Forge Azure](../templates/pyspark-azure/README.md)
+- [Terraform + Platform Forge](../templates/terraform-platform/README.md)
+
 ## Reference
 
 _Command, contract, schema and tool references._
@@ -356,6 +366,10 @@ _Agent instructions, skills and internal process._
 - [forge-spark-azure](../agentic/skills/forge-spark-azure.md)
 - [forge-verification](../agentic/skills/forge-verification.md)
 
+### contributing/
+
+- [Modelo de contribuição — Forjas externas (§10.9)](contributing/external-forges.md)
+
 ### docs/
 
 - [Specialized Agents](agents.md)
@@ -490,8 +504,10 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Run note — cyc9-01 forge-lab-coordinator](../factory/runs/2026-10-15.cyc9-01.md) `UNKNOWN`
 - [Run — cyc9-02 eval-integrity (the-forge)](../factory/runs/2026-10-15.cyc9-02.md) `UNKNOWN`
 - [Run — cyc9-03 multi-forge scenarios (the-forge)](../factory/runs/2026-10-15.cyc9-03.md) `UNKNOWN`
+- [cyc10-02 — Documentação unificada + GitHub Experience](../factory/runs/cyc10-02-docs-github.md) `UNKNOWN`
 - [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
 - [Baseline do programa ecosystem-2026](../factory/specs/active/cyc0-01-program-baseline.md) `UNKNOWN`
+- [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/active/cyc10-02-docs-github.md) `UNKNOWN`
 - [Política de versões + Compatibility Manifest](../factory/specs/active/cyc8-01-compat-manifest.md) `UNKNOWN`
 - [Conformidade de empacotamento dos nove repos](../factory/specs/active/cyc8-02-packaging.md) `UNKNOWN`
 - [Supply chain security dos artefatos](../factory/specs/active/cyc8-03-supply-chain.md) `UNKNOWN`
@@ -503,7 +519,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
-- [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/inbox/cyc10-02-docs-github.md) `UNKNOWN`
 - [Public Readiness: contribuição, distribuição, templates, demos e feedback](../factory/specs/inbox/cyc10-03-adoption-readiness.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
 - [Grill Gate](../factory/templates/spec.md) `UNKNOWN`
@@ -565,13 +580,16 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### programs/
 
+- [FINAL PROGRAM REPORT — ecosystem-2026](programs/ecosystem-2026/FINAL-PROGRAM-REPORT.md) `UNKNOWN`
 - [Baseline — 2026-10-15](programs/ecosystem-2026/baseline.md) `UNKNOWN`
 - [Benchmark report — 2026-10-15 (mode A)](programs/ecosystem-2026/benchmarks/2026-10-15-A.md) `UNKNOWN`
 - [Forge Lab — methodology (cyc9-01, ADR-0060)](programs/ecosystem-2026/benchmarks/methodology.md) `UNKNOWN`
 - [Compatibility matrix — draft inicial](programs/ecosystem-2026/compatibility-matrix.md) `UNKNOWN`
 - [Cycle 10 — decisões de produto pendentes (memo para o dono)](programs/ecosystem-2026/cycle-10-decisions.md) `UNKNOWN`
+- [Cycle 10 — Public Adoption (cyc10-03)](programs/ecosystem-2026/cycle-10-public-adoption.md) `UNKNOWN`
 - [Cycle 8 — Release readiness (RC evidence)](programs/ecosystem-2026/cycle-8-release-readiness.md) `RELEASE_REPORT`
 - [Dependency map — ecosystem-2026](programs/ecosystem-2026/dependency-map.md) `UNKNOWN`
+- [Plano de distribuição (cyc10-03, decisão D2)](programs/ecosystem-2026/distribution-plan.md) `UNKNOWN`
 - [GitHub Experience — checklist §10.7 (cyc10-02)](programs/ecosystem-2026/github-experience.md) `UNKNOWN`
 - [Open gaps — ecosystem-2026 (Wave 0)](programs/ecosystem-2026/open-gaps.md) `UNKNOWN`
 - [Matriz de empacotamento — ecosystem-2026](programs/ecosystem-2026/packaging-matrix.md) `UNKNOWN`

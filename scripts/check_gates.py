@@ -63,6 +63,7 @@ GATES: list[tuple[str, Step]] = [
     ("zero runtime deps", _cmd("scripts/ci/check_zero_deps.py")),
     ("onboarding docs", _cmd("scripts/check_onboarding.py")),
     ("docs portal", _cmd("scripts/check_docs_portal.py")),
+    ("adoption", _cmd("scripts/check_adoption.py")),
 ]
 
 SLOW_GATES: list[tuple[str, Step]] = [
