@@ -1813,3 +1813,40 @@ def task_result(data: dict[str, Any]) -> str:
         for lim in r.get("limitations") or []:
             lines.append(f"  - {_clean(lim)}")
     return "\n".join(lines)
+
+
+def lab_list(data: dict[str, Any]) -> str:
+    rows = data.get("labs") or []
+    if not rows:
+        return "no lab declarations found"
+    lines = [f"{len(rows)} forge(s) inspected:"]
+    for r in rows:
+        line = f"  {_clean(r.get('forge')):<22} {_clean(r.get('status'))}"
+        if r.get("modes"):
+            line += f"  modes={','.join(r['modes'])}"
+        lines.append(line)
+        if r.get("detail"):
+            lines.append(f"    {_clean(r['detail'])}")
+    return "\n".join(lines)
+
+
+def lab_collect(data: dict[str, Any]) -> str:
+    s = data.get("summary") or {}
+    lines = [
+        f"lab collect — ran={s.get('ran', 0)} skipped={s.get('skipped', 0)} "
+        f"failed={s.get('failed', 0)} scenarios={s.get('scenarios', 0)}"
+    ]
+    if s.get("interrupted"):
+        lines.append("  INTERRUPTED — partial report, no conclusions")
+    for f in data.get("forges") or []:
+        line = f"  {_clean(f.get('forge')):<22} {_clean(f.get('status'))}"
+        if f.get("runs"):
+            line += f"  runs={f['runs']}"
+        if f.get("duration_ms") is not None:
+            line += f"  {f['duration_ms']}ms"
+        lines.append(line)
+        if f.get("detail"):
+            lines.append(f"    {_clean(f['detail'])}")
+    lines.append(f"report: {_clean(data.get('report'))}")
+    lines.append(f"jsonl:  {_clean(data.get('results_jsonl'))}")
+    return "\n".join(lines)

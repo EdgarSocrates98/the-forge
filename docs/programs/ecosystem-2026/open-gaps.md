@@ -22,9 +22,9 @@ Classificação P0 (bloqueia release) / P1 (bloqueia claims) / P2 (adoção). Cr
 
 | # | Gap | Evidência | Spec |
 |---|---|---|---|
-| G-07 | Forge Lab coordenador federado inexistente (labs locais existem: doctor `lab`, doctor-data `benchmarks.yml`) | baseline | cyc9-01 |
-| G-08 | Sem contrato de métricas nem ground truth compartilhado | ausente | cyc9-02 |
-| G-09 | Cenários versionados por especialista ausentes | ausente | cyc9-04..09 |
+| ~~G-07~~ | ~~Forge Lab coordenador federado inexistente~~ **parcialmente fechado por cyc9-01** (2026-10-15): coordenador + harness entregues (`theforge lab collect`, guardrails §9.11, relatórios em `benchmarks/`); emissores `forge/BenchmarkResult/v1` por especialista pendentes (cyc9-04..09) | `theforge lab collect` live | cyc9-01 |
+| ~~G-08~~ | ~~Sem contrato de métricas~~ **parcialmente fechado por cyc9-01** (2026-10-15): `forge/BenchmarkSuite/v1` + `forge/BenchmarkResult/v1` + schemas publicados; ground truth por `sha256` declarado — suites por especialista pendentes (G-09) | `contracts/benchmark.py` | cyc9-01, cyc9-02 |
+| G-09 | Cenários versionados por especialista ausentes (the-forge `compat-manifest-parity` é o primeiro; suites por domínio pendentes) | ausente | cyc9-04..09 |
 | G-10 | Supply chain: sem SHA-256/SBOM/proveniência publicados | ausente | cyc8-03 |
 | G-11 | Gates CI desiguais; sem escala smoke-PR vs full-noturno | workflows | cyc8-04 |
 | G-12 | RC windows ativas (doctor-data 1.0.0rc1, doctor-api 0.2.0) — requer disciplina de exceções | pyproject, rc-discipline.md | cyc8-04 |
@@ -47,7 +47,7 @@ Classificação P0 (bloqueia release) / P1 (bloqueia claims) / P2 (adoção). Cr
   `freeze_validation_receipt.py`) normalizam paths via `_display_cmd`;
   capturas históricas preservadas como evidência point-in-time.
 - **Homologação refresh**: `install.sh --dry-run` 7/7, lifecycle isolado PASS.
-- **ADR-0060** proposto (Forge Lab) — aguarda aceite humano, desbloqueia cyc9-01.
+- **ADR-0060** aceito (2026-10-15, opção B — agregador fino) — desbloqueou cyc9-01.
 - **Design pendente**: branding por produto na mensagem do wizard (ui-kit
   canônico usa "native Forge commands"; asserts dos siblings alinhados).
   Requer placeholder no template canônico — decisão, não bug.

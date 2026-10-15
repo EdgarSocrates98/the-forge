@@ -69,6 +69,8 @@
 | `targets negotiate --provider P --capability C [--data-classification X] [--locality L] [--network N] [--runtime R] [--region R] [--isolated]` | dry-run da negociação provider×target do planner: selecionado, candidatos ordenados e recusas nomeadas | 0 / 4 (nenhum candidato) |
 | `remote policy` | a política remota efetiva (`remote-policy.toml`; arquivo ausente = deny-all) | 0 |
 | `remote check [--data-classification X] [--locality L] ...` | avalia cada alvo remoto declarado contra a política — `allow`/`deny` por alvo com as razões; nunca executa nada | 0 |
+| `lab list [--repo CHECKOUT]...` | inspeciona a declaração `lab` do `forge.json` de cada forge registrada (+ checkouts explícitos): `declared`/`undeclared`/`none`/`invalid` — read-only, nunca executa | 0 |
+| `lab collect [--mode A\|B\|C] [--forge id] [--repo CHECKOUT]... [--timeout s] [--repeats n] [--jobs n] [--allow-external] [--out DIR]` | Forge Lab federado (ADR-0060): invoca os labs declarados sob os guardrails do §9.11 — env sanitizado, timeout/repetições/jobs limitados, modo C recusado sem `--allow-external` — e grava relatório + `results-*.jsonl` em `docs/programs/ecosystem-2026/benchmarks/`; labs `undeclared`/`none`/`invalid` são reportados honestamente, nunca como falha | 0 / 1 / 2 |
 
 ## Exit codes gerais
 
@@ -333,6 +335,38 @@ Limitations: none
 - Spans de run `plan`: `scan`, `planning` (routing + decomposição + validação), `node:<id>` por nó (atributos: provider/capability/ação/role + `outcome`, `attempts` > 1 e `reused` quando houver) com `handoff` aninhado, e `synthesis`.
 - Um span `ERROR` marca a etapa que lançou — o detalhe da falha está em `error`/`diagnostic` do run, não no span.
 - Run desconhecido é erro de uso (exit 2). Um run sem artefato `telemetry` reporta `no telemetry recorded` em `Limitations:` (exit 0). `--json` emite `run_id`, `status`, `kind`, `spans` e `limitations`.
+
+## `lab`
+
+`theforge lab` é o coletor federado do Forge Lab ([ADR-0060](adr/0060-forge-lab-coordinator.md)): descobre os labs declarados no `forge.json` de cada forge registrada (ou em checkouts explícitos via `--repo`), invoca cada um sob os guardrails do §9.11 (ambiente sanitizado + `FORGE_LAB_SANDBOX=1`, timeout/repetições/jobs limitados, modo C recusado sem `--allow-external`) e normaliza o que volta em receipts `forge/BenchmarkResult/v1` estritos. O relatório Markdown + `results-<data>-<modo>.jsonl` vão para `docs/programs/ecosystem-2026/benchmarks/` (ou `--out DIR`).
+
+```
+$ theforge lab list
+7 forge(s) inspected:
+  api-forge              undeclared
+  forge-doctor-api       undeclared
+  forge-doctor-data      undeclared
+  platform-forge         undeclared
+  spark-forge-aws        none
+  spark-forge-azure      none
+  the-forge              declared  modes=A
+```
+
+```
+$ theforge lab collect --mode A
+lab collect — ran=1 skipped=6 failed=0 scenarios=1
+  api-forge              undeclared
+  forge-doctor-api       undeclared
+  ...
+  the-forge              ok  runs=1  268ms
+report: docs/programs/ecosystem-2026/benchmarks/2026-10-15-A.md
+jsonl:  docs/programs/ecosystem-2026/benchmarks/results-2026-10-15-A.jsonl
+```
+
+- Estados honestos: `undeclared` (sem `lab` no `forge.json`), `none` (`lab: false` explícito), `invalid` (declaração malformada), `unsupported-mode` — nunca contados como falha nem como sucesso.
+- Modos: **A** fixtures determinísticos offline (default); **B** replay gravado; **C** execução real externa — recusado sem `--allow-external` e marcado `external` no receipt.
+- Métricas nunca são agregadas entre domínios: cada resultado é por forge × cenário, e o relatório declara essa limitação.
+- `--forge <id>` restringe a coleta a um lab; `--timeout` (máx 3600s), `--repeats` (máx 10), `--jobs` (máx 4, default sequencial) são limitados por construção. Metodologia: [benchmarks/methodology.md](programs/ecosystem-2026/benchmarks/methodology.md).
 
 ## Comandos deliberadamente ausentes
 

@@ -448,19 +448,20 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Run — cyc8-02 packaging-conformance-matrix](../factory/runs/2026-10-15.cyc8-02.md) `UNKNOWN`
 - [Run — cyc8-03 supply-chain-security](../factory/runs/2026-10-15.cyc8-03.md) `UNKNOWN`
 - [Run — cyc8-04 ci-release-gates-rc](../factory/runs/2026-10-15.cyc8-04.md) `UNKNOWN`
+- [Run note — cyc9-01 forge-lab-coordinator](../factory/runs/2026-10-15.cyc9-01.md) `UNKNOWN`
 - [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
 - [Baseline do programa ecosystem-2026](../factory/specs/active/cyc0-01-program-baseline.md) `UNKNOWN`
 - [Política de versões + Compatibility Manifest](../factory/specs/active/cyc8-01-compat-manifest.md) `UNKNOWN`
 - [Conformidade de empacotamento dos nove repos](../factory/specs/active/cyc8-02-packaging.md) `UNKNOWN`
 - [Supply chain security dos artefatos](../factory/specs/active/cyc8-03-supply-chain.md) `UNKNOWN`
 - [Gates de CI/CD e Release Candidate](../factory/specs/active/cyc8-04-ci-release-gates.md) `RELEASE_REPORT`
+- [Forge Lab — coordenador federado e harness](../factory/specs/active/cyc9-01-lab-coordinator.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
 - [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/inbox/cyc10-02-docs-github.md) `UNKNOWN`
 - [Public Readiness: contribuição, distribuição, templates, demos e feedback](../factory/specs/inbox/cyc10-03-adoption-readiness.md) `UNKNOWN`
-- [Forge Lab — coordenador federado e harness](../factory/specs/inbox/cyc9-01-lab-coordinator.md) `UNKNOWN`
 - [Integridade de avaliação: métricas, ground truth e regression gates](../factory/specs/inbox/cyc9-02-eval-integrity.md) `UNKNOWN`
 - [Cenários multi-Forge do Forge Lab](../factory/specs/inbox/cyc9-03-scenarios-multiforge.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
@@ -481,6 +482,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Snapshots](graph-studio/snapshots.md) `UNKNOWN`
 - [Standalone mode](graph-studio/standalone-mode.md) `UNKNOWN`
 - [Temporal analysis](graph-studio/temporal-analysis.md) `UNKNOWN`
+
+### graphify-out/
+
+- [Graph Report - the-forge  (2026-10-15)](../graphify-out/2026-10-15/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - the-forge  (2026-10-15)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
 
 ### homologation/
 
@@ -514,6 +520,8 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### programs/
 
 - [Baseline — 2026-10-15](programs/ecosystem-2026/baseline.md) `UNKNOWN`
+- [Benchmark report — 2026-10-15 (mode A)](programs/ecosystem-2026/benchmarks/2026-10-15-A.md) `UNKNOWN`
+- [Forge Lab — methodology (cyc9-01, ADR-0060)](programs/ecosystem-2026/benchmarks/methodology.md) `UNKNOWN`
 - [Compatibility matrix — draft inicial](programs/ecosystem-2026/compatibility-matrix.md) `UNKNOWN`
 - [Cycle 8 — Release readiness (RC evidence)](programs/ecosystem-2026/cycle-8-release-readiness.md) `RELEASE_REPORT`
 - [Dependency map — ecosystem-2026](programs/ecosystem-2026/dependency-map.md) `UNKNOWN`

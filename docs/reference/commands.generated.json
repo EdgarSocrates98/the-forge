@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-15T20:52:39Z",
+  "generated_at": "2026-10-15T21:27:24Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 82,
+  "command_count": 85,
   "commands": [
     {
       "path": "init",
@@ -4188,6 +4188,193 @@
           "choices": null,
           "positional": false,
           "help": "force locality 'isolated'"
+        }
+      ]
+    },
+    {
+      "path": "lab",
+      "help": "federated benchmark collector (ADR-0060)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "lab list",
+      "help": "inspect each forge's lab declaration (read-only)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "CHECKOUT",
+          "flags": [
+            "--repo"
+          ],
+          "required": false,
+          "default": "[]",
+          "choices": null,
+          "positional": false,
+          "help": "explicit repo checkout to include beyond the install registry"
+        }
+      ]
+    },
+    {
+      "path": "lab collect",
+      "help": "invoke declared labs under §9.11 guardrails and write the federated report into docs/programs/ecosystem-2026/benchmarks/",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "mode",
+          "flags": [
+            "--mode"
+          ],
+          "required": false,
+          "default": "A",
+          "choices": [
+            "A",
+            "B",
+            "C"
+          ],
+          "positional": false,
+          "help": "A=offline fixtures (default), B=replay, C=external sandbox (opt-in)"
+        },
+        {
+          "name": "forge",
+          "flags": [
+            "--forge"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "run only this forge id"
+        },
+        {
+          "name": "CHECKOUT",
+          "flags": [
+            "--repo"
+          ],
+          "required": false,
+          "default": "[]",
+          "choices": null,
+          "positional": false,
+          "help": "explicit repo checkout to include beyond the install registry"
+        },
+        {
+          "name": "timeout",
+          "flags": [
+            "--timeout"
+          ],
+          "required": false,
+          "default": "600",
+          "choices": null,
+          "positional": false,
+          "help": "per-lab timeout seconds (max 3600)"
+        },
+        {
+          "name": "repeats",
+          "flags": [
+            "--repeats"
+          ],
+          "required": false,
+          "default": "1",
+          "choices": null,
+          "positional": false,
+          "help": "repetitions per lab (max 10)"
+        },
+        {
+          "name": "jobs",
+          "flags": [
+            "--jobs"
+          ],
+          "required": false,
+          "default": "1",
+          "choices": null,
+          "positional": false,
+          "help": "parallel labs (max 4; default sequential)"
+        },
+        {
+          "name": "allow_external",
+          "flags": [
+            "--allow-external"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "required for mode C — real external resources, receipt marked external"
+        },
+        {
+          "name": "DIR",
+          "flags": [
+            "--out"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "report directory override"
         }
       ]
     },

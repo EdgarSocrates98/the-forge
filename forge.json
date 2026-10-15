@@ -4,5 +4,23 @@
   "distribution": "theforge",
   "cli": "theforge",
   "python": ">=3.11",
-  "extras": []
+  "extras": [],
+  "lab": {
+    "command": [
+      "{python}",
+      "scripts/lab/theforge_lab.py",
+      "--checkout",
+      "{checkout}",
+      "--mode",
+      "{mode}",
+      "--result-out",
+      "{receipt}"
+    ],
+    "receipt": ".forge/lab-result.json",
+    "modes": [
+      "A"
+    ],
+    "suite": "theforge-contracts",
+    "timeout_s": 120
+  }
 }

@@ -1,7 +1,7 @@
 ---
 id: cyc9-01
 title: forge-lab-coordinator
-status: inbox
+status: active
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

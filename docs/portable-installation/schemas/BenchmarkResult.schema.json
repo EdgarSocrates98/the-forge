@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theforge.dev/schemas/BenchmarkResult.schema.json",
+  "title": "forge/BenchmarkResult/v1",
+  "$comment": "external must be true exactly when mode is C — enforced by the Python/TS consumers as a semantic rule beyond this schema.",
+  "type": "object",
+  "required": ["schema", "suite", "forge", "mode", "created_at", "producer", "results"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "forge/BenchmarkResult/v1"},
+    "suite": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"},
+    "forge": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"},
+    "mode": {"enum": ["A", "B", "C"]},
+    "created_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "producer": {
+      "type": "object",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "external": {"type": "boolean", "default": false},
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scenario_id", "verdict"],
+        "additionalProperties": false,
+        "properties": {
+          "scenario_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"},
+          "verdict": {"enum": ["pass", "fail", "error", "skipped"]},
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["value"],
+              "additionalProperties": false,
+              "properties": {
+                "value": {"type": ["number", "string"]},
+                "unit": {"type": "string", "default": ""}
+              }
+            }
+          },
+          "duration_ms": {"type": "integer", "minimum": 0},
+          "evidence_ref": {"type": "string"},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "notes": {"type": "array", "items": {"type": "string"}, "default": []}
+  }
+}

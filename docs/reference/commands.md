@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **30/30** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **30/31** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -20,6 +20,7 @@ Rationale coverage: **30/30** first-level groups curated in `command-rationale.j
 - [`install`](#install) — 10 command(s)
 - [`installations`](#installations) — 2 command(s)
 - [`knowledge`](#knowledge) — 4 command(s)
+- [`lab`](#lab) — 3 command(s)
 - [`memory`](#memory) — 7 command(s)
 - [`plan`](#plan) — 1 command(s)
 - [`portal`](#portal) — 1 command(s)
@@ -1005,6 +1006,71 @@ theforge knowledge show [root] [json] [debug] <provider_id>
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `provider_id` | yes | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## lab
+
+### `lab`
+
+**para que:** federated benchmark collector (ADR-0060)
+
+**Syntax**
+
+```text
+theforge lab
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `lab collect`
+
+**para que:** invoke declared labs under §9.11 guardrails and write the federated report into docs/programs/ecosystem-2026/benchmarks/
+
+**Syntax**
+
+```text
+theforge lab collect [root] [json] [debug] [mode] [forge] [CHECKOUT] [timeout] [repeats] [jobs] [allow_external] [DIR]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `mode` | no | — | A=offline fixtures (default), B=replay, C=external sandbox (opt-in) |
+| `forge` | no | — | run only this forge id |
+| `CHECKOUT` | no | — | explicit repo checkout to include beyond the install registry |
+| `timeout` | no | — | per-lab timeout seconds (max 3600) |
+| `repeats` | no | — | repetitions per lab (max 10) |
+| `jobs` | no | — | parallel labs (max 4; default sequential) |
+| `allow_external` | no | — | required for mode C — real external resources, receipt marked external |
+| `DIR` | no | — | report directory override |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `lab list`
+
+**para que:** inspect each forge's lab declaration (read-only)
+
+**Syntax**
+
+```text
+theforge lab list [root] [json] [debug] [CHECKOUT]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `CHECKOUT` | no | — | explicit repo checkout to include beyond the install registry |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_

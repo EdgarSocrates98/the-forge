@@ -1,8 +1,8 @@
 # ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?
 
-- Status: **proposto (2026-10-15)** — aguardando aceite humano (feature
-  freeze exige ADR para subsistema novo; spec cyc9-01 não implementa
-  sem isto)
+- Status: **aceito (2026-10-15)** — opção B aprovada pelo mantenedor
+  (agregador fino: contrato `forge/Benchmark*/v1` + consumer
+  `theforge lab collect`; motores ficam nos especialistas)
 
 ## Contexto
 

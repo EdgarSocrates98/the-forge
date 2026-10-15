@@ -5,7 +5,7 @@ import dataclasses
 import json
 import sys
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, cast
 
@@ -223,6 +223,96 @@ def cmd_excellence_audit(args: argparse.Namespace) -> int:
     data = audit_workspace(_root(args))
     _emit(args, data, render.excellence_audit)
     return 3 if data["summary"]["unavailable"] or data["summary"]["invalid"] else 0
+
+
+def cmd_lab(args: argparse.Namespace) -> int:
+    """Federated lab collection (cyc9-01, ADR-0060)."""
+
+    from theforge import __version__
+    from theforge import _installkit as kit
+    from theforge import lab as forgeslab
+    from theforge.contracts.types import Producer
+    from theforge.install.providers import manifest_python
+
+    root = _root(args)
+    manifests = kit.installed_forges()
+    repos = tuple(Path(r).expanduser() for r in getattr(args, "repo", []) or [])
+
+    def _lab_row(fid: str, checkout: Path, interp: str) -> dict[str, Any]:
+        try:
+            decl = forgeslab.load_lab_decl(fid, checkout, interp)
+        except Exception as exc:  # noqa: BLE001 - broken decl reports, not crashes
+            return {"forge": fid, "status": "invalid", "detail": str(exc)[:200]}
+        if decl is None:
+            return {"forge": fid, "status": "undeclared", "checkout": str(checkout)}
+        if decl == "none":
+            return {"forge": fid, "status": "none", "checkout": str(checkout)}
+        return {
+            "forge": fid,
+            "status": "declared",
+            "modes": list(decl.modes),
+            "checkout": str(checkout),
+        }
+
+    if args.lab_command == "list":
+        rows = []
+        seen: set[str] = set()
+        for manifest in manifests:
+            fid = str(manifest.get("forge_id") or "")
+            checkout = forgeslab._checkout_of(manifest)
+            if not fid or checkout is None or fid in seen:
+                continue
+            seen.add(fid)
+            rows.append(_lab_row(fid, checkout, manifest_python(manifest) or sys.executable))
+        for repo in repos:
+            fid = repo.name
+            decl_doc = repo.resolve() / "forge.json"
+            if decl_doc.is_file():
+                with suppress(json.JSONDecodeError, OSError):
+                    fid = str(
+                        json.loads(decl_doc.read_text(encoding="utf-8")).get("forge_id") or fid
+                    )
+            if fid in seen:
+                continue
+            seen.add(fid)
+            rows.append(_lab_row(fid, repo.resolve(), sys.executable))
+        _emit(args, {"labs": sorted(rows, key=lambda r: r["forge"])}, render.lab_list)
+        return 0
+
+    try:
+        outcomes, interrupted = forgeslab.collect(
+            manifests=manifests,
+            mode=args.mode,
+            forge=args.forge,
+            repos=repos,
+            timeout_s=args.timeout,
+            repeats=args.repeats,
+            jobs=args.jobs,
+            allow_external=args.allow_external,
+        )
+    except forgeslab.LabError as exc:
+        raise UsageError(str(exc)) from exc
+    producer = Producer(id="theforge", version=__version__)
+    data = forgeslab.write_report(
+        root=root,
+        mode=args.mode,
+        outcomes=outcomes,
+        producer=producer,
+        out=Path(args.out).expanduser() if getattr(args, "out", None) else None,
+        guardrails={
+            "mode": args.mode,
+            "timeout_s": args.timeout,
+            "repeats": args.repeats,
+            "jobs": args.jobs,
+            "allow_external": args.allow_external,
+            "env": "sanitized (no credentials propagate)",
+        },
+        interrupted=interrupted,
+    )
+    _emit(args, data, render.lab_collect)
+    if interrupted:
+        return 130
+    return 4 if data["summary"]["failed"] else 0
 
 
 def _list(args: argparse.Namespace, refresh: bool) -> int:

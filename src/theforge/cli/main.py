@@ -867,6 +867,57 @@ def build_parser() -> argparse.ArgumentParser:
     _add_requirement_args(targets_negotiate)
     targets_negotiate.set_defaults(handler=commands.cmd_targets)
 
+    lab = sub.add_parser("lab", help="federated benchmark collector (ADR-0060)").add_subparsers(
+        dest="lab_command", required=True
+    )
+    lab_list = lab.add_parser(
+        "list",
+        parents=[common],
+        help="inspect each forge's lab declaration (read-only)",
+    )
+    lab_list.add_argument(
+        "--repo",
+        action="append",
+        default=[],
+        metavar="CHECKOUT",
+        help="explicit repo checkout to include beyond the install registry",
+    )
+    lab_list.set_defaults(handler=commands.cmd_lab)
+    lab_collect = lab.add_parser(
+        "collect",
+        parents=[common],
+        help="invoke declared labs under §9.11 guardrails and write the "
+        "federated report into docs/programs/ecosystem-2026/benchmarks/",
+    )
+    lab_collect.add_argument(
+        "--mode",
+        choices=["A", "B", "C"],
+        default="A",
+        help="A=offline fixtures (default), B=replay, C=external sandbox (opt-in)",
+    )
+    lab_collect.add_argument("--forge", default=None, help="run only this forge id")
+    lab_collect.add_argument(
+        "--repo",
+        action="append",
+        default=[],
+        metavar="CHECKOUT",
+        help="explicit repo checkout to include beyond the install registry",
+    )
+    lab_collect.add_argument(
+        "--timeout", type=int, default=600, help="per-lab timeout seconds (max 3600)"
+    )
+    lab_collect.add_argument("--repeats", type=int, default=1, help="repetitions per lab (max 10)")
+    lab_collect.add_argument(
+        "--jobs", type=int, default=1, help="parallel labs (max 4; default sequential)"
+    )
+    lab_collect.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="required for mode C — real external resources, receipt marked external",
+    )
+    lab_collect.add_argument("--out", default=None, metavar="DIR", help="report directory override")
+    lab_collect.set_defaults(handler=commands.cmd_lab)
+
     remote = sub.add_parser(
         "remote", help="remote-execution trust layer (remote-policy.toml)"
     ).add_subparsers(dest="remote_command", required=True)
