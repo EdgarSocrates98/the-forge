@@ -505,9 +505,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Run — cyc9-02 eval-integrity (the-forge)](../factory/runs/2026-10-15.cyc9-02.md) `UNKNOWN`
 - [Run — cyc9-03 multi-forge scenarios (the-forge)](../factory/runs/2026-10-15.cyc9-03.md) `UNKNOWN`
 - [cyc10-02 — Documentação unificada + GitHub Experience](../factory/runs/cyc10-02-docs-github.md) `UNKNOWN`
+- [cyc10-03 — Public Readiness](../factory/runs/cyc10-03-adoption-readiness.md) `UNKNOWN`
 - [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
 - [Baseline do programa ecosystem-2026](../factory/specs/active/cyc0-01-program-baseline.md) `UNKNOWN`
 - [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/active/cyc10-02-docs-github.md) `UNKNOWN`
+- [Public Readiness: contribuição, distribuição, templates, demos e feedback](../factory/specs/active/cyc10-03-adoption-readiness.md) `UNKNOWN`
 - [Política de versões + Compatibility Manifest](../factory/specs/active/cyc8-01-compat-manifest.md) `UNKNOWN`
 - [Conformidade de empacotamento dos nove repos](../factory/specs/active/cyc8-02-packaging.md) `UNKNOWN`
 - [Supply chain security dos artefatos](../factory/specs/active/cyc8-03-supply-chain.md) `UNKNOWN`
@@ -519,7 +521,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
-- [Public Readiness: contribuição, distribuição, templates, demos e feedback](../factory/specs/inbox/cyc10-03-adoption-readiness.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
 - [Grill Gate](../factory/templates/spec.md) `UNKNOWN`
 

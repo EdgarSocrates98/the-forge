@@ -48,7 +48,7 @@ Fonte: `prompt_evo_cycles.md` (Cycles 8, 9, 10). Decomposto em 20 specs na conve
 
 ## Status — 2026-10-15 (fim de sessão)
 
-- **cyc9-01..cyc9-10 implementadas, validadas, commitadas e pushadas** (Cycle 9 completo, 10/10):
+- **cyc9-01..cyc9-10 + cyc10-01..cyc10-03 implementadas, validadas, commitadas e pushadas** — **programa 19/19 completo**:
   - cyc9-01 coordenador federado (ADR-0060 opção B), cyc9-02 integridade de avaliação
     (estados/métricas/stats/gate), cyc9-03 biblioteca multi-forge (7 cenários, runner real).
   - cyc9-04..09 emissores `forge/BenchmarkResult/v1` nos 6 especialistas sobre os
@@ -61,7 +61,15 @@ Fonte: `prompt_evo_cycles.md` (Cycles 8, 9, 10). Decomposto em 20 specs na conve
     catálogo com filtro por forja, comparação de vereditos, exports
     JSON/Markdown, estados Sem dados/UNVERIFIED). 235 testes, build e
     vendor --check verdes; bundle re-vendored nos 7 repos.
-- **Restantes:** cyc10-01/02/03 (adoção — depende de decisões de dono:
-  licença, canais, publicação — ver open-gaps.md).
+- **cyc10-01..03** (2026-10-15): onboarding §10.2–§10.4 (jornada 8 estágios,
+  11 guias de perfil, 4 golden paths + gate `check_onboarding.py`); portal de
+  docs §10.5 (18 seções → fontes canônicas) + GitHub Experience §10.7 (47
+  arquivos padronizados, DCO, licenças MIT — D1); adoção §10.9–§10.12 (modelo
+  de confiança untrusted→trusted, plano PyPI+MCP — D2, 7 templates, 8 demos
+  sintéticas, feedback opt-in — `check_adoption.py`). 12 gates verdes.
+- **Decisões do dono registradas** em `docs/programs/ecosystem-2026/cycle-10-decisions.md` (D1–D5).
+- **Restantes:** review humana das specs em `active/` (regra do programa);
+  publicação PyPI/MCP e releases públicas aguardam sign-off (D5); About/topics
+  do GitHub são ação manual (`github-experience.md`).
 - Semântica estabelecida: emissor sai 0 quando o receipt foi escrito — vereditos
   `fail` são dado dentro do receipt; `skipped`/`not_applicable` nunca viram pass.

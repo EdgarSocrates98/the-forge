@@ -1,16 +1,16 @@
 # Graph Report - the-forge  (2026-10-15)
 
 ## Corpus Check
-- 1397 files · ~1,159,720 words
+- 1425 files · ~1,162,387 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4852 nodes · 12950 edges · 301 communities (252 shown, 49 thin omitted)
+- 4954 nodes · 13037 edges · 333 communities (276 shown, 57 thin omitted)
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 840 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a8d82030`
+- Built from commit: `b4c679f6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,13 +18,13 @@
 - test_install_orchestration.py
 - main-QDFVZK3T.js
 - test_graphstudio.py
-- chunk-C2t4OUVu.js
+- chunk-BGUitn2r.js
 - record_execute.py
 - _ctx
 - test_ui_experience.py
 - pl
-- chunk-CXcsLDPJ.js
-- a
+- chunk-B7N3TXcn.js
+- r
 - commands.py
 - test_installkit.py
 - audit.py
@@ -40,12 +40,12 @@
 - _spec
 - test_agentic_manifests.py
 - test_command_rationale.py
-- e
+- ml
 - render.py
 - test_doc_drift.py
 - lE
 - cmd_remote
-- lab_gate.py
+- _list
 - test_doc_manifest.py
 - isolated_forge_home
 - test_stale_lock_reclaimed
@@ -53,21 +53,21 @@
 - test_rollback_on_write_failure
 - test_rollback_removes_created_and_restores_updated
 - test_portal_presence_stale_install_root
-- uE
+- bd
 - Any
 - chunk-kXRFMGqe.js
-- l
+- ah
 - test_portal.py
 - chunk-CGWeHhKY.js
 - Getting Started — Usuário de Codex
 - cli/render.py
 - Documentação unificada, posicionamento e GitHub Experience
-- o
+- v
 - test_ecosystem_compat.py
 - e
 - jI
-- r
-- MetricValue
+- constructor
+- lab_gate.py
 - n
 - _installkit.py
 - _t
@@ -75,7 +75,7 @@
 - Programa ecosystem-2026 — índice de specs
 - bug_report.md
 - `theforge` command reference
-- ah
+- chunk-CXcsLDPJ.js
 - dependencies
 - dependencies
 - apply_install
@@ -83,27 +83,27 @@
 - @eslint/core
 - Path
 - dependencies
-- .run
+- main.py
 - dependencies
 - dependencies
 - apply_install
 - Ledger
 - ast-v8-to-istanbul
 - @babel/parser
-- Qe$1
+- required
 - Archive
 - fast-wrap-ansi
 - debug
 - eslint-scope
 - @humanfs/core
-- _anyControls
+- participants
 - getting-started/README.md
 - forge_installkit.py
 - InstallError
 - Any
 - InstallError
-- updateValueAndValidity
-- _assignAsyncValidators
+- constructor
+- _assignValidators
 - Forge Installation Contract v1
 - properties
 - sh
@@ -114,11 +114,11 @@
 - acorn-jsx
 - find-up
 - is-glob
-- .constructor
-- .getContext
+- .navigateToSyncWithBrowser
+- buildIndex
 - .remove
 - required
-- required
+- properties
 - get-stream
 - npm-run-path
 - Fe
@@ -130,7 +130,7 @@
 - spark-forge-azure.cdx.json
 - the-forge.cdx.json
 - consumeOptional
-- .get
+- get
 - producer
 - install
 - Ledger
@@ -159,7 +159,7 @@
 - benchmark.py
 - Gates de CI/CD e Release Candidate
 - Getting Started — Usuário de Claude Code
-- Public Readiness: contribuição, distribuição, templates, demos e feedback
+- items
 - CLI
 - Programa ecosystem-2026
 - Getting Started — Usuário de CLI/TUI
@@ -172,7 +172,7 @@
 - Política de versões — ecossistema Forge
 - hosts
 - feature_request.md
-- bt$1
+- theforge_lab.py
 - files
 - vendor
 - PULL_REQUEST_TEMPLATE.md
@@ -180,6 +180,7 @@
 - Política de Segurança
 - capabilities
 - registry
+- deactivateRouteAndOutlet
 - Getting Started — Usuário de Copilot
 - fast-string-width
 - which
@@ -188,7 +189,7 @@
 - task
 - Getting Started — Data Engineer AWS
 - excellence
-- Getting Started — Data Engineer Azure
+- explain
 - enum
 - is-plain-obj
 - Supply chain security dos artefatos
@@ -214,21 +215,23 @@
 - properties
 - judge
 - Getting Started — Platform Engineer
-- dr
-- _f
+- properties
+- .update
+- _detail
 - Getting Started — Usuário de Forge Portal
 - cmd_graph
 - figlet
-- ve
+- chunk-DuPPkSIE.js
+- _context_sections
 - Golden Path — Spark AWS
 - Onboarding, Getting Started e Golden Paths
 - ngControlUpdate
 - check_gates.py
-- .synchronizeOnce
+- Modelo de contribuição — Forjas externas (§10.9)
 - Golden Path — API
 - escape-string-regexp
 - json-stable-stringify-without-jsonify
-- Wr
+- t
 - chunk-7_l-b4Tr.js
 - chunk-B0Iad6pD.js
 - chunk-B605XnCF.js
@@ -253,6 +256,7 @@
 - BenchmarkSuite.schema.json
 - chunk-C4gpbtbP.js
 - chunk-CcjxoLxw.js
+- items
 - properties
 - properties
 - chunk-CGWeHhKY.js
@@ -295,22 +299,51 @@
 - chunk-qe3u763a.js
 - chunk-UBKt05Rg.js
 - main-QDFVZK3T.js
+- Cycle 10 — Public Adoption (cyc10-03)
 - workspace
 - parametrize
-- .bypassSecurityTrustScript
-- .bypassSecurityTrustStyle
-- .bypassSecurityTrustUrl
+- Public Readiness: contribuição, distribuição, templates, demos e feedback
+- ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?
+- enum
 - Any
 - fixture
-- disable
+- updateValueAndValidity
 - Cycle 10 — decisões de produto pendentes (memo para o dono)
 - Golden Path — Platform
 - Onboarding — jornada de primeiro uso
 - Golden Path — Multi-Forge
+- required
 - check_onboarding.py
-- .createRenderer
+- FINAL PROGRAM REPORT — ecosystem-2026
+- _updateHasRequiredValidator
 - PortalServer
 - RequestContext
+- notes
+- Plano de distribuição (cyc10-03, decisão D2)
+- Forge Ecosystem — Portal de Documentação (§10.5)
+- Releases & compatibilidade
+- Compatibility matrix — draft inicial
+- graph
+- Suporte
+- API + API Forge
+- Custom specialist capability
+- Terraform + Platform Forge
+- 01-install-linux.sh
+- 02-two-forges.sh
+- 03-host-config.sh
+- 04-diagnostic.sh
+- 05-orchestration.sh
+- 06-portal.sh
+- 07-benchmark.sh
+- 08-evidence.sh
+- check_adoption.py
+- api-apiforge/check.sh
+- custom-specialist/check.sh
+- mcp-host-config/check.sh
+- multi-repo-theforge/check.sh
+- pyspark-aws/check.sh
+- pyspark-azure/check.sh
+- terraform-platform/check.sh
 
 ## God Nodes (most connected - your core abstractions)
 1. `pl()` - 364 edges
@@ -331,31 +364,31 @@
   tests/test_lab_gate.py → src/theforge/lab_gate.py
 - `test_gate_string_metrics_equal_direction()` --uses--> `GateRule`  [INFERRED]
   tests/test_lab_gate.py → src/theforge/lab_gate.py
-- `_multiforge_scenario()` --calls--> `dump_result()`  [INFERRED]
-  scripts/lab/theforge_lab.py → src/theforge/contracts/benchmark.py
-- `_multiforge_scenario()` --calls--> `load_multiforge_scenario()`  [INFERRED]
-  scripts/lab/theforge_lab.py → src/theforge/contracts/benchmark.py
+- `test_ask_parser_exposes_one_step_auto_install()` --calls--> `build_parser()`  [INFERRED]
+  tests/test_install_orchestration.py → src/theforge/cli/main.py
+- `test_setup_and_auto_parser_expose_governed_choices()` --calls--> `build_parser()`  [INFERRED]
+  tests/test_install_orchestration.py → src/theforge/cli/main.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (301 total, 49 thin omitted)
+## Communities (333 total, 57 thin omitted)
 
 ### Community 0 - "test_install_orchestration.py"
-Cohesion: 0.06
-Nodes (62): ArgumentParser, BaseException, NoReturn, _add_requirement_args(), _bare_summary(), build_parser(), _fail(), _ForgeParser (+54 more)
+Cohesion: 0.09
+Nodes (42): forge_home(), fixture, MonkeyPatch, Path, Orchestration tests for ``theforge install`` (ADR-0058, forge/* v1). Drives…, Uninstall on a never-installed root is a no-op, not a refusal., A forge whose package boundary forbids the install engine registers an…, GAP-003 contract: none -> zero hosts; csv subset validated; unknown -> E_HOST… (+34 more)
 
 ### Community 1 - "main-QDFVZK3T.js"
 Cohesion: 0.01
-Nodes (184): Ac(), accept(), accountEnvironment(), activate(), activateChildRoutes(), activateRoutes(), ad(), af() (+176 more)
+Nodes (208): Ac(), accept(), accountEnvironment(), addClass(), addMatch(), af(), agents(), ai$1() (+200 more)
 
 ### Community 2 - "test_graphstudio.py"
 Cohesion: 0.07
 Nodes (19): _fake_checkout(), fixture, Path, Graph Studio tests: ForgeGraphView/v1, adapters, local server, federation., ``theforge graph`` without new flags keeps the old listing., A minimal sibling checkout: agentic manifest + a cli_entry module., End-to-end: a sibling CLI emits a view doc; federation parses it., forge.json cli_entry still works for providers without a manifest. (+11 more)
 
-### Community 3 - "chunk-C2t4OUVu.js"
-Cohesion: 0.13
-Nodes (27): ae(), ce(), constructor(), de(), _e(), ee(), fmt(), ie() (+19 more)
+### Community 3 - "chunk-BGUitn2r.js"
+Cohesion: 0.07
+Nodes (48): backToReview(), confirmExecute(), constructor(), ct(), de(), fail(), fe(), ft() (+40 more)
 
 ### Community 4 - "record_execute.py"
 Cohesion: 0.09
@@ -367,15 +400,15 @@ Nodes (25): _ctx(), InstallContext, Path, test_backup_written_on_overwrite(), te
 
 ### Community 7 - "pl"
 Cohesion: 0.04
-Nodes (208): ae(), be(), ce(), constructor(), de(), _e(), ee(), fe() (+200 more)
+Nodes (168): le(), pe(), R(), se(), ae(), be(), ce(), de() (+160 more)
 
-### Community 8 - "chunk-CXcsLDPJ.js"
+### Community 8 - "chunk-B7N3TXcn.js"
 Cohesion: 0.08
-Nodes (102): agentCandidate(), buildIndex(), de(), ensureIndex(), forgeCandidates(), le(), mcpCandidate(), refresh() (+94 more)
+Nodes (94): explainKey(), reached(), agentCandidate(), buildIndex(), clearTimer(), constructor(), de(), ensureIndex() (+86 more)
 
-### Community 9 - "a"
-Cohesion: 0.06
-Nodes (79): I(), an(), ap(), append(), attach(), attachToViewContainerRef(), bI(), bi$1() (+71 more)
+### Community 9 - "r"
+Cohesion: 0.05
+Nodes (106): I(), aI(), an(), attachToViewContainerRef(), bI(), bi$1(), bv(), Cc() (+98 more)
 
 ### Community 10 - "commands.py"
 Cohesion: 0.11
@@ -391,7 +424,7 @@ Nodes (15): audit_workspace(), CapabilitySpec, _evidence(), _git(), load_reposit
 
 ### Community 13 - ".subscribe"
 Cohesion: 0.05
-Nodes (98): A(), add(), _addParent(), Ag(), ao(), Bl(), _checkFinalizedStatuses(), cn$1() (+90 more)
+Nodes (93): A(), add(), _addParent(), Ag(), ao(), ask(), Bl(), _checkFinalizedStatuses() (+85 more)
 
 ### Community 14 - "Path"
 Cohesion: 0.10
@@ -433,9 +466,9 @@ Nodes (10): _checkouts(), _manifests(), AgenticManifest, Path, skipif, Cross-rep
 Cohesion: 0.27
 Nodes (7): inventory(), fixture, rationale(), Every documented command must resolve to curated rationale. Coverage contract…, _resolve(), test_every_command_resolves_rationale(), test_resolved_rationale_has_required_fields()
 
-### Community 25 - "e"
-Cohesion: 0.05
-Nodes (50): addMatch(), aI(), bv(), cn(), createSnapshot(), ct(), dn(), eb() (+42 more)
+### Community 25 - "ml"
+Cohesion: 0.13
+Nodes (33): ae(), be(), ce(), constructor(), de(), _e(), ee(), fe() (+25 more)
 
 ### Community 26 - "render.py"
 Cohesion: 0.43
@@ -447,15 +480,15 @@ Nodes (6): _active_docs(), _commands(), _load(), Path, Docs-as-code drift gate (
 
 ### Community 28 - "lE"
 Cohesion: 0.05
-Nodes (60): As(), at$1(), cleanup(), consumerOnSignalRead(), cp(), ct$1(), cu(), dc() (+52 more)
+Nodes (56): ad(), at$1(), cleanup(), cp(), createComponentRef(), dc(), eE(), eI() (+48 more)
 
 ### Community 29 - "cmd_remote"
 Cohesion: 0.29
 Nodes (8): cmd_remote(), cmd_targets(), ``theforge targets``: the declared execution-target layer (Cycle 5). Read-only…, ``theforge remote``: the deny-by-default remote trust layer (Cycle 5).…, _target_requirement(), TargetRequirement, The test's isolated user config dir (the one ``THEFORGE_CONFIG_DIR`` points to)., user_config_dir()
 
-### Community 30 - "lab_gate.py"
-Cohesion: 0.17
-Nodes (13): GateDirection, metric_direction(), Direction of a standard metric; ``None`` for names outside §9.5 — unknown…, _compare_metric(), GatePolicy, GateRule, MetricVerdict, Regression gate for lab results (§9.10, spec cyc9-02). Compares current… (+5 more)
+### Community 30 - "_list"
+Cohesion: 0.12
+Nodes (30): _counts(), _decision_lines(), decisions(), _dicts(), _economy_lines(), _labelled(), _list(), memory() (+22 more)
 
 ### Community 31 - "test_doc_manifest.py"
 Cohesion: 0.50
@@ -465,9 +498,9 @@ Nodes (4): _load_manifest(), parametrize, Docs-as-code gate (Forge Knowledge Pro
 Cohesion: 0.67
 Nodes (3): isolated_forge_home(), fixture, Empty ~/.forge registry + no FORGE_PORTAL_HOME env.
 
-### Community 38 - "uE"
-Cohesion: 0.06
-Nodes (33): clearTimer(), constructor(), setQuery(), attachToAppRef(), Bc(), br(), Cf(), clearTimeout() (+25 more)
+### Community 38 - "bd"
+Cohesion: 0.13
+Nodes (24): bd(), consumerOnSignalRead(), ct$1(), cu(), dn$1(), du(), fu(), hu() (+16 more)
 
 ### Community 39 - "Any"
 Cohesion: 0.11
@@ -475,54 +508,58 @@ Nodes (14): Any, build_server(), _health_state(), main(), _now(), _portal(), Pat
 
 ### Community 40 - "chunk-kXRFMGqe.js"
 Cohesion: 0.04
-Nodes (28): be(), email(), et(), _find(), get(), getError(), hasError(), he() (+20 more)
+Nodes (29): _anyControls(), _anyControlsDirty(), _anyControlsTouched(), be(), email(), _find(), get(), getError() (+21 more)
 
-### Community 41 - "l"
-Cohesion: 0.08
-Nodes (46): F(), setLocale(), Be(), De(), Te(), viewEdges(), viewName(), viewNodes() (+38 more)
+### Community 41 - "ah"
+Cohesion: 0.05
+Nodes (70): ee(), pe(), Z(), ve(), _e(), me(), se(), X() (+62 more)
 
 ### Community 42 - "test_portal.py"
 Cohesion: 0.07
 Nodes (63): Config, fixture, FixtureRequest, Item, MonkeyPatch, OSError, PortalServer, RequestContext (+55 more)
 
 ### Community 43 - "chunk-CGWeHhKY.js"
-Cohesion: 0.10
-Nodes (31): Ae(), constructor(), duration(), _e(), Ee(), execute(), he(), je() (+23 more)
+Cohesion: 0.11
+Nodes (28): Ae(), constructor(), driftFiles(), duration(), Ee(), execute(), he(), je() (+20 more)
 
 ### Community 44 - "Getting Started — Usuário de Codex"
-Cohesion: 0.22
+Cohesion: 0.20
 Nodes (9): Configuração, Explicação do resultado, Getting Started — Usuário de Codex, Instalação, Primeiro comando, Pré-requisitos, Próximos passos, Resolução de problemas (+1 more)
 
 ### Community 45 - "cli/render.py"
-Cohesion: 0.06
-Nodes (111): activation(), agent_detail(), agents_list(), ask(), capabilities(), _clean(), code_suffix(), collapse_traceback() (+103 more)
+Cohesion: 0.11
+Nodes (47): activation(), agent_detail(), agents_list(), capabilities(), _clean(), _dependency(), diagnostic(), discovery() (+39 more)
 
 ### Community 46 - "Documentação unificada, posicionamento e GitHub Experience"
 Cohesion: 0.29
 Nodes (6): Acceptance, Constraints, Documentação unificada, posicionamento e GitHub Experience, Grill gate, Outcome, Pending
 
-### Community 47 - "o"
+### Community 47 - "v"
 Cohesion: 0.04
-Nodes (98): Ae$1(), Am(), An$1(), ba(), bd(), bf(), bh(), bm() (+90 more)
+Nodes (86): Ae$1(), al(), Am(), An$1(), ap(), Ar(), ba(), bf() (+78 more)
 
 ### Community 48 - "test_ecosystem_compat.py"
 Cohesion: 0.06
-Nodes (43): CheckVerdict, _compat_scenario(), _declared_version(), main(), _multiforge_scenario(), Any, Path, The Forge's own lab (mode A — offline fixtures only). Domain: contracts and… (+35 more)
+Nodes (33): CheckVerdict, ComponentVersion, ContractRange, dump_manifest(), EcosystemCompatibility, load_manifest(), parse_manifest(), Any (+25 more)
+
+### Community 49 - "e"
+Cohesion: 0.02
+Nodes (54): setParseErrorSource(), _adjustIndex(), append(), As(), attachToAppRef(), Bn$1(), bs(), bt$1() (+46 more)
 
 ### Community 50 - "jI"
-Cohesion: 0.11
-Nodes (32): abnormal(), pe(), xe(), Z(), le(), pe(), Ee(), he() (+24 more)
+Cohesion: 0.12
+Nodes (30): Ae(), ee(), ie(), le(), pe(), te(), Ee(), he() (+22 more)
 
-### Community 51 - "r"
+### Community 51 - "constructor"
 Cohesion: 0.04
-Nodes (98): aa(), addHeaderEntry(), _adjustIndex(), al(), appendAll(), applyPreference(), applyUpdate(), Ar() (+90 more)
+Nodes (55): activate(), activateChildRoutes(), activateRoutes(), addHeaderEntry(), appendAll(), applyPreference(), applyRedirectCommands(), applyRedirectCreateUrlTree() (+47 more)
 
-### Community 52 - "MetricValue"
-Cohesion: 0.17
-Nodes (15): MetricValue, One metric datum: ``measured`` carries ``value``; ``not_available`` (the lab…, MetricSummary, numeric_values(), Deterministic statistics for repeated lab runs (§9.7, spec cyc9-02). Median +…, Dispersion summary of one metric across repeated runs., A metric's numeric payload, or ``None`` when absent/non-numeric — strings and…, Summarize one metric across repeated scenario results. (+7 more)
+### Community 52 - "lab_gate.py"
+Cohesion: 0.09
+Nodes (28): GateDirection, metric_direction(), MetricValue, One metric datum: ``measured`` carries ``value``; ``not_available`` (the lab…, Direction of a standard metric; ``None`` for names outside §9.5 — unknown…, _compare_metric(), GatePolicy, GateRule (+20 more)
 
 ### Community 53 - "n"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (3): ct(), n, yt()
 
 ### Community 54 - "_installkit.py"
@@ -545,9 +582,9 @@ Nodes (5): Ambiente, Comportamento esperado, Comportamento observado, Evidência
 Cohesion: 0.06
 Nodes (32): ask, `ask`, decisions, `decisions`, doctor, `doctor`, explain, `explain` (+24 more)
 
-### Community 60 - "ah"
-Cohesion: 0.05
-Nodes (46): ke(), ve(), we(), xe(), Ae(), qe(), _e(), me() (+38 more)
+### Community 60 - "chunk-CXcsLDPJ.js"
+Cohesion: 0.06
+Nodes (54): abnormal(), xe(), ke(), we(), xe(), constructor(), Ee(), loadSpecialists() (+46 more)
 
 ### Community 61 - "dependencies"
 Cohesion: 0.08
@@ -577,9 +614,9 @@ Nodes (24): deregister_installation(), discover_projects(), _find_state_root(), 
 Cohesion: 0.09
 Nodes (22): dependencies, overridden, resolved, version, ajv, fast-deep-equal, fast-json-stable-stringify, json-schema-traverse (+14 more)
 
-### Community 68 - ".run"
-Cohesion: 0.09
-Nodes (22): detectContentTypeHeader(), eg(), flush(), flushQueue(), gI(), ig(), Ko(), match() (+14 more)
+### Community 68 - "main.py"
+Cohesion: 0.15
+Nodes (20): ArgumentParser, BaseException, NoReturn, _add_requirement_args(), _bare_summary(), build_parser(), _fail(), _ForgeParser (+12 more)
 
 ### Community 69 - "dependencies"
 Cohesion: 0.10
@@ -605,9 +642,9 @@ Nodes (19): dependencies, overridden, resolved, version, ast-v8-to-istanbul, est
 Cohesion: 0.11
 Nodes (19): dependencies, overridden, resolved, version, dependencies, overridden, resolved, version (+11 more)
 
-### Community 75 - "Qe$1"
-Cohesion: 0.19
-Nodes (7): getBaseHref(), getGlobalEventTarget(), listen(), onAndCancel(), Qe$1(), _setPending(), shouldAttach()
+### Community 75 - "required"
+Cohesion: 0.18
+Nodes (14): items, minItems, type, items, additionalProperties, $comment, required, type (+6 more)
 
 ### Community 76 - "Archive"
 Cohesion: 0.10
@@ -629,13 +666,13 @@ Nodes (18): eslint-scope, esrecurse, @types/esrecurse, @types/estree, dependenci
 Cohesion: 0.11
 Nodes (18): @humanfs/core, @humanfs/node, @humanfs/types, @humanwhocodes/retry, dependencies, overridden, resolved, version (+10 more)
 
-### Community 81 - "_anyControls"
-Cohesion: 0.33
-Nodes (6): _anyControls(), _anyControlsDirty(), _anyControlsHaveStatus(), _anyControlsTouched(), _updatePristine(), _updateTouched()
+### Community 81 - "participants"
+Cohesion: 0.14
+Nodes (14): pattern, type, items, type, default, items, type, items (+6 more)
 
 ### Community 82 - "getting-started/README.md"
-Cohesion: 0.09
-Nodes (19): Configuração, Explicação do resultado, Getting Started — Usuário de Devin, Instalação, Primeiro comando, Pré-requisitos, Próximos passos, Resolução de problemas (+11 more)
+Cohesion: 0.06
+Nodes (28): Configuração, Explicação do resultado, Getting Started — Data Engineer Azure, Instalação, Primeiro comando, Pré-requisitos, Próximos passos, Resolução de problemas (+20 more)
 
 ### Community 83 - "forge_installkit.py"
 Cohesion: 0.17
@@ -653,25 +690,25 @@ Nodes (18): components_path(), doctor(), _entry_intact(), installed_forges(), lo
 Cohesion: 0.12
 Nodes (12): acquire_lock(), component_options(), InstallError, _Lock, LockError, _pid_alive(), Exception, Best-effort liveness; ``None`` = cannot determine (do not steal). (+4 more)
 
-### Community 87 - "updateValueAndValidity"
-Cohesion: 0.13
-Nodes (20): _allControlsDisabled(), asyncValidator(), _calculateStatus(), _cancelExistingSubscription(), constructor(), Ee(), _initObservables(), it() (+12 more)
+### Community 87 - "constructor"
+Cohesion: 0.24
+Nodes (11): _applyFormState(), constructor(), _initObservables(), it(), nt(), removeParseErrorsValidator(), removeValidators(), _setUpdateStrategy() (+3 more)
 
-### Community 88 - "_assignAsyncValidators"
-Cohesion: 0.40
-Nodes (5): _assignAsyncValidators(), ot(), Re(), _setAsyncValidators(), Ue()
+### Community 88 - "_assignValidators"
+Cohesion: 0.24
+Nodes (9): _assignAsyncValidators(), _assignValidators(), Oe(), ot(), Re(), rt(), _setAsyncValidators(), _setValidators() (+1 more)
 
 ### Community 89 - "Forge Installation Contract v1"
 Cohesion: 0.12
 Nodes (16): 10. `forge/EcosystemCompatibility/v1` — `<the-forge>/ecosystem-compatibility.json`, 1. `forge/InstallationManifest/v1` — `~/.forge/installations/<forge_id>.json`, 2. `forge/InstallReceipt/v1` — `<target>/.<forge_state>/receipts/<ts>.json`, 3.1 MCP lifecycle checks, 3. `forge/InstallationHealth/v1` — output of `<cli> doctor --json`, 4.1 Workspace semantics (orchestrator), 4. `forge/WorkspaceInstall/v1` — `<repo>/.forge/workspace-install.json`, 5. CLI surface (normative) (+8 more)
 
 ### Community 90 - "properties"
-Cohesion: 0.07
-Nodes (29): additionalProperties, $comment, $id, pattern, type, minLength, type, pattern (+21 more)
+Cohesion: 0.11
+Nodes (18): additionalProperties, $comment, $id, pattern, type, minLength, type, properties (+10 more)
 
 ### Community 91 - "sh"
-Cohesion: 0.04
-Nodes (115): q(), constructor(), fe(), he(), load(), te(), ue(), ve() (+107 more)
+Cohesion: 0.06
+Nodes (90): J(), q(), constructor(), fe(), he(), load(), te(), ue() (+82 more)
 
 ### Community 92 - "Any"
 Cohesion: 0.18
@@ -679,15 +716,15 @@ Nodes (16): components_path(), doctor(), installed_forges(), load_components(), 
 
 ### Community 93 - "./"
 Cohesion: 0.06
-Nodes (27): Código de Conduta — Contributor Covenant 2.1, Reportar, ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?, Consequências, Contexto, Decisão proposta, Opções, Riscos (+19 more)
+Nodes (21): Código de Conduta — Contributor Covenant 2.1, Reportar, Decisões exigidas pelo Cycle 2, Novo ADR, Índice de ADRs, ./, Broken link report, Golden Paths (§10.4) (+13 more)
 
 ### Community 94 - "Use"
 Cohesion: 0.12
-Nodes (16): adapters/, audit/, docs/, experience/, experience-3/, factory/, graph-studio/, hub/ (+8 more)
+Nodes (17): adapters/, audit/, docs/, experience/, experience-3/, factory/, graph-studio/, hub/ (+9 more)
 
 ### Community 95 - "test_benchmark_contract.py"
-Cohesion: 0.17
-Nodes (22): parametrize, parse_result(), parse_suite(), forge/Benchmark*/v1 contract validation (cyc9-01, ADR-0060). The aggregator…, Every versioned scenario in labs/multiforge/ is contract-valid., test_evidence_ref_accepts_locator_uri(), test_judge_declaration_rejects(), test_judge_declaration_roundtrip() (+14 more)
+Cohesion: 0.18
+Nodes (20): parametrize, parse_result(), forge/Benchmark*/v1 contract validation (cyc9-01, ADR-0060). The aggregator…, Every versioned scenario in labs/multiforge/ is contract-valid., test_evidence_ref_accepts_locator_uri(), test_judge_declaration_rejects(), test_judge_declaration_roundtrip(), test_metric_state_value_invariant() (+12 more)
 
 ### Community 96 - "acorn-jsx"
 Cohesion: 0.14
@@ -701,17 +738,21 @@ Nodes (14): find-up, locate-path, path-exists, dependencies, overridden, resolve
 Cohesion: 0.14
 Nodes (14): glob-parent, is-extglob, is-glob, dependencies, overridden, resolved, version, overridden (+6 more)
 
+### Community 100 - "buildIndex"
+Cohesion: 0.24
+Nodes (13): agentEntry(), buildIndex(), capabilityEntries(), capVisible(), cycleTheme(), errorEntries(), forgeEntry(), hostEntry() (+5 more)
+
 ### Community 101 - ".remove"
-Cohesion: 0.08
-Nodes (33): addClass(), chars(), clear(), de(), df(), dispatchEvent(), endElement(), Ey() (+25 more)
+Cohesion: 0.09
+Nodes (33): appendChild(), av(), chars(), cI(), clear(), createComment(), de(), endElement() (+25 more)
 
 ### Community 102 - "required"
 Cohesion: 0.14
 Nodes (16): required, required, required, components, contracts, created_at, forge, intent (+8 more)
 
-### Community 103 - "required"
-Cohesion: 0.07
-Nodes (32): additionalProperties, items, minItems, type, items, type, pattern, type (+24 more)
+### Community 103 - "properties"
+Cohesion: 0.11
+Nodes (18): additionalProperties, type, pattern, type, $id, type, properties, contracts (+10 more)
 
 ### Community 104 - "get-stream"
 Cohesion: 0.15
@@ -722,8 +763,8 @@ Cohesion: 0.15
 Nodes (13): npm-run-path, path-key, unicorn-magic, dependencies, overridden, resolved, version, overridden (+5 more)
 
 ### Community 106 - "Fe"
-Cohesion: 0.14
-Nodes (17): _assignValidators(), compose(), Fe(), hasAsyncValidator(), hasValidator(), Ie(), Me(), min() (+9 more)
+Cohesion: 0.16
+Nodes (13): asyncValidator(), compose(), Ee(), Fe(), Ie(), Me(), min(), Ne() (+5 more)
 
 ### Community 107 - "api-forge.cdx.json"
 Cohesion: 0.17
@@ -754,12 +795,12 @@ Cohesion: 0.17
 Nodes (11): bomFormat, components, dependencies, metadata, timestamp, tools, $schema, serialNumber (+3 more)
 
 ### Community 114 - "consumeOptional"
-Cohesion: 0.33
-Nodes (14): capture(), consumeOptional(), parse(), parseChildren(), parseFragment(), parseMatrixParams(), parseParam(), parseParens() (+6 more)
+Cohesion: 0.27
+Nodes (16): capture(), consumeOptional(), en(), parse(), parseChildren(), parseFragment(), parseMatrixParams(), parseParam() (+8 more)
 
-### Community 115 - ".get"
-Cohesion: 0.05
-Nodes (52): agents(), applyBootstrap(), bootstrap(), by(), cv(), Di$1(), dm(), docsSearch() (+44 more)
+### Community 115 - "get"
+Cohesion: 0.06
+Nodes (49): applyStyles(), applyToHost(), by(), cy(), Di$1(), dm(), Ec(), Ef() (+41 more)
 
 ### Community 116 - "producer"
 Cohesion: 0.18
@@ -810,8 +851,8 @@ Cohesion: 0.15
 Nodes (14): minLength, type, additionalProperties, properties, required, type, id, producer (+6 more)
 
 ### Community 129 - "expected"
-Cohesion: 0.15
-Nodes (13): additionalProperties, default, properties, type, items, type, minimum, type (+5 more)
+Cohesion: 0.20
+Nodes (10): additionalProperties, default, properties, type, minimum, type, type, expected (+2 more)
 
 ### Community 130 - "esquery"
 Cohesion: 0.22
@@ -862,8 +903,8 @@ Cohesion: 0.25
 Nodes (7): Acceptance, Conformidade de empacotamento dos nove repos, Constraints, Grill gate, Outcome, Pending, Rejected
 
 ### Community 142 - "benchmark.py"
-Cohesion: 0.10
-Nodes (24): BenchmarkResult, BenchmarkSuite, _check_rel_path(), dump_result(), dump_suite(), JudgeDeclaration, LabScenario, load_multiforge_scenario() (+16 more)
+Cohesion: 0.09
+Nodes (26): BenchmarkResult, BenchmarkSuite, _check_rel_path(), dump_result(), dump_suite(), JudgeDeclaration, LabScenario, load_multiforge_scenario() (+18 more)
 
 ### Community 143 - "Gates de CI/CD e Release Candidate"
 Cohesion: 0.25
@@ -873,9 +914,9 @@ Nodes (7): Acceptance, Constraints, Gates de CI/CD e Release Candidate, Grill ga
 Cohesion: 0.20
 Nodes (9): Configuração, Explicação do resultado, Getting Started — Usuário de Claude Code, Instalação, Primeiro comando, Pré-requisitos, Próximos passos, Resolução de problemas (+1 more)
 
-### Community 145 - "Public Readiness: contribuição, distribuição, templates, demos e feedback"
-Cohesion: 0.25
-Nodes (7): Acceptance, Constraints, Grill gate, Outcome, Pending, Public Readiness: contribuição, distribuição, templates, demos e feedback, Rejected
+### Community 145 - "items"
+Cohesion: 0.17
+Nodes (12): additionalProperties, required, type, default, items, type, notes, results (+4 more)
 
 ### Community 146 - "CLI"
 Cohesion: 0.11
@@ -924,6 +965,10 @@ Nodes (7): hosts, `hosts`, `hosts activate`, `hosts launch`, `hosts list`, `host
 ### Community 157 - "feature_request.md"
 Cohesion: 0.40
 Nodes (4): Alternativas consideradas, Observações, Problema que resolve, Proposta
+
+### Community 158 - "theforge_lab.py"
+Cohesion: 0.38
+Nodes (10): _compat_scenario(), _declared_version(), main(), _multiforge_scenario(), Any, Path, The Forge's own lab (mode A — offline fixtures only). Domain: contracts and…, Execute one MultiForgeScenario: resolve participants, invoke their declared… (+2 more)
 
 ### Community 159 - "files"
 Cohesion: 0.29
@@ -985,9 +1030,9 @@ Nodes (9): Configuração, Explicação do resultado, Getting Started — Data E
 Cohesion: 0.67
 Nodes (3): excellence, `excellence`, `excellence audit`
 
-### Community 175 - "Getting Started — Data Engineer Azure"
-Cohesion: 0.20
-Nodes (9): Configuração, Explicação do resultado, Getting Started — Data Engineer Azure, Instalação, Primeiro comando, Pré-requisitos, Próximos passos, Resolução de problemas (+1 more)
+### Community 175 - "explain"
+Cohesion: 0.18
+Nodes (11): _drift(), explain(), _metric(), _num(), A hash (or a list of hashes, e.g. negotiation rounds) shortened to 12 chars…, A telemetry Metric: ``unknown`` unless measured/estimated with a numeric value., A plain float field (complexity score/confidence), two decimals., _risk() (+3 more)
 
 ### Community 176 - "enum"
 Cohesion: 0.32
@@ -1046,8 +1091,8 @@ Cohesion: 0.67
 Nodes (3): installations, `installations`, `installations list`
 
 ### Community 198 - "properties"
-Cohesion: 0.06
-Nodes (33): additionalProperties, $comment, pattern, type, default, type, pattern, type (+25 more)
+Cohesion: 0.09
+Nodes (21): additionalProperties, $comment, pattern, type, default, type, pattern, type (+13 more)
 
 ### Community 199 - "judge"
 Cohesion: 0.18
@@ -1057,9 +1102,17 @@ Nodes (11): additionalProperties, description, properties, required, human_valid
 Cohesion: 0.20
 Nodes (9): Configuração, Explicação do resultado, Getting Started — Platform Engineer, Instalação, Primeiro comando, Pré-requisitos, Próximos passos, Resolução de problemas (+1 more)
 
-### Community 203 - "_f"
-Cohesion: 0.09
-Nodes (25): appendChild(), av(), cI(), createComment(), createElement(), ev(), _f(), getDefaultDocument() (+17 more)
+### Community 201 - "properties"
+Cohesion: 0.20
+Nodes (10): pattern, type, properties, minLength, type, id, path, sha256 (+2 more)
+
+### Community 202 - ".update"
+Cohesion: 0.24
+Nodes (3): Ds(), Ee$1(), nu()
+
+### Community 203 - "_detail"
+Cohesion: 0.22
+Nodes (10): ask(), code_suffix(), collapse_traceback(), _detail(), health(), plan(), provider_check(), ``text`` with any raw traceback (e.g. a provider's stderr tail) collapsed to… (+2 more)
 
 ### Community 204 - "Getting Started — Usuário de Forge Portal"
 Cohesion: 0.20
@@ -1073,9 +1126,13 @@ Nodes (9): _cap_match(), cmd_graph(), _cmd_graph_view(), _dump(), _persist_graph
 Cohesion: 0.33
 Nodes (6): commander, figlet, dependencies, overridden, resolved, version
 
-### Community 207 - "ve"
-Cohesion: 0.13
-Nodes (20): Ce(), A(), E(), v(), W(), be(), comparison(), countOf() (+12 more)
+### Community 207 - "chunk-DuPPkSIE.js"
+Cohesion: 0.14
+Nodes (29): T(), badgeFor(), be(), comparison(), countOf(), de(), download(), _e() (+21 more)
+
+### Community 208 - "_context_sections"
+Cohesion: 0.31
+Nodes (9): _context_sections(), _excluded(), _git(), _item(), _pack_summary(), ``branch@head dirty changed=N`` or why git could not be read (its limitation)., Negotiation rounds: summary, requested items and the new exclusions of each…, _rounds() (+1 more)
 
 ### Community 209 - "Golden Path — Spark AWS"
 Cohesion: 0.25
@@ -1093,6 +1150,10 @@ Nodes (4): at(), bindControlProperty(), _convertErrors(), ngControlUpdate()
 Cohesion: 0.29
 Nodes (6): _configure_console(), main(), Local gate battery: one command for "am I green?". Runs the same checks the…, Regenerate schemas then diff — identical bytes mean no mutation., Keep gate diagnostics printable on Windows code pages., _schema_parity()
 
+### Community 213 - "Modelo de contribuição — Forjas externas (§10.9)"
+Cohesion: 0.25
+Nodes (7): Como contribuir uma Forja, Estados de confiança, Modelo de contribuição — Forjas externas (§10.9), Não-negociáveis, O que pode ser contribuído, Pipeline de validação, Princípio central
+
 ### Community 214 - "Golden Path — API"
 Cohesion: 0.29
 Nodes (7): 1. Instalação, 2. Seleção de especialista, 3. Contratos e diagnóstico, 4. Planejamento, 5. Validação, 6. Resultado, Golden Path — API
@@ -1105,9 +1166,9 @@ Nodes (4): escape-string-regexp, overridden, resolved, version
 Cohesion: 0.50
 Nodes (4): json-stable-stringify-without-jsonify, overridden, resolved, version
 
-### Community 217 - "Wr"
-Cohesion: 0.11
-Nodes (4): pristine(), status(), touched(), Wr()
+### Community 217 - "t"
+Cohesion: 0.04
+Nodes (54): copyCommand(), pristine(), status(), touched(), aa(), bp(), ca(), cE() (+46 more)
 
 ### Community 218 - "chunk-7_l-b4Tr.js"
 Cohesion: 0.67
@@ -1182,8 +1243,8 @@ Cohesion: 0.06
 Nodes (48): Namespace, cmd_agents_list(), cmd_agents_show(), cmd_decisions(), cmd_economy_report(), cmd_excellence_audit(), cmd_hosts(), cmd_hosts_activate() (+40 more)
 
 ### Community 241 - "BenchmarkSuite.schema.json"
-Cohesion: 0.15
-Nodes (12): additionalProperties, $comment, $id, created_at, schema, required, $schema, title (+4 more)
+Cohesion: 0.29
+Nodes (6): additionalProperties, $comment, $id, $schema, title, type
 
 ### Community 242 - "chunk-C4gpbtbP.js"
 Cohesion: 0.67
@@ -1193,9 +1254,13 @@ Nodes (3): bytes, sha256, chunk-C4gpbtbP.js
 Cohesion: 0.67
 Nodes (3): bytes, sha256, chunk-CcjxoLxw.js
 
+### Community 244 - "items"
+Cohesion: 0.25
+Nodes (8): additionalProperties, required, id, scenarios, items, minItems, type, path
+
 ### Community 245 - "properties"
-Cohesion: 0.05
-Nodes (41): pattern, type, pattern, type, additionalProperties, properties, required, type (+33 more)
+Cohesion: 0.17
+Nodes (12): pattern, type, pattern, type, properties, created_at, owner_forge, schema (+4 more)
 
 ### Community 246 - "properties"
 Cohesion: 0.08
@@ -1218,8 +1283,8 @@ Cohesion: 0.25
 Nodes (7): Acceptance, Constraints, Grill gate, Integridade de avaliação: métricas, ground truth e regression gates, Outcome, Pending, Rejected
 
 ### Community 251 - "Dependency map — ecosystem-2026"
-Cohesion: 0.18
-Nodes (8): Arquitetura de dependência (invariantes do the-forge), Dependency map — ecosystem-2026, Dependências entre specs do programa (ordem), Observações de acoplamento (baseline), Regras de dependência (contratos), Canal, Escopo de suporte, Suporte
+Cohesion: 0.33
+Nodes (5): Arquitetura de dependência (invariantes do the-forge), Dependency map — ecosystem-2026, Dependências entre specs do programa (ordem), Observações de acoplamento (baseline), Regras de dependência (contratos)
 
 ### Community 252 - "Forge Lab — methodology (cyc9-01, ADR-0060)"
 Cohesion: 0.20
@@ -1274,8 +1339,8 @@ Cohesion: 0.67
 Nodes (3): bytes, sha256, chunk-Fx4zSGL5.js
 
 ### Community 277 - "the-forge — Documentation Index"
-Cohesion: 0.33
-Nodes (6): ./, agentic/, Contribute, docs/, onboarding/, the-forge — Documentation Index
+Cohesion: 0.29
+Nodes (7): ./, agentic/, Contribute, contributing/, docs/, onboarding/, the-forge — Documentation Index
 
 ### Community 278 - "Baseline — 2026-10-15"
 Cohesion: 0.40
@@ -1301,53 +1366,121 @@ Nodes (3): bytes, sha256, chunk-UBKt05Rg.js
 Cohesion: 0.67
 Nodes (3): main-QDFVZK3T.js, bytes, sha256
 
+### Community 287 - "Cycle 10 — Public Adoption (cyc10-03)"
+Cohesion: 0.25
+Nodes (7): Claims públicos, Cycle 10 — Public Adoption (cyc10-03), Demos (§10.11), Distribuição (decisão D2), Feedback opt-in (§10.12), Modelo de contribuição (§10.9), Templates (§10.10)
+
 ### Community 288 - "workspace"
 Cohesion: 0.67
 Nodes (3): workspace, `workspace`, `workspace show`
 
-### Community 295 - "disable"
-Cohesion: 0.31
-Nodes (10): _applyFormState(), disable(), enable(), _forEachChild(), markAsPristine(), markAsUntouched(), _parentMarkedDirty(), reset() (+2 more)
+### Community 290 - "Public Readiness: contribuição, distribuição, templates, demos e feedback"
+Cohesion: 0.25
+Nodes (7): Acceptance, Constraints, Grill gate, Outcome, Pending, Public Readiness: contribuição, distribuição, templates, demos e feedback, Rejected
+
+### Community 291 - "ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?"
+Cohesion: 0.33
+Nodes (6): ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?, Consequências, Contexto, Decisão proposta, Opções, Riscos
+
+### Community 292 - "enum"
+Cohesion: 0.33
+Nodes (6): A, B, C, default, enum, mode
+
+### Community 295 - "updateValueAndValidity"
+Cohesion: 0.13
+Nodes (19): _allControlsDisabled(), _anyControlsHaveStatus(), _calculateStatus(), _cancelExistingSubscription(), disable(), enable(), et(), _forEachChild() (+11 more)
 
 ### Community 296 - "Cycle 10 — decisões de produto pendentes (memo para o dono)"
 Cohesion: 0.22
 Nodes (8): Cycle 10 — decisões de produto pendentes (memo para o dono), D1 — Licença dos 3 repos sem `LICENSE`, D2 — Canal de distribuição prioritário (cyc10-03 ⚠), D3 — Termo de contribuição: DCO vs CLA vs nada (cyc10-03 ⚠), D4 — Onde vive o portal de docs unificado (cyc10-02 ⚠), D5 — Janela de release pública, Decisões registradas (2026-10-15, dono), Ordem sugerida de implementação pós-decisão
 
 ### Community 297 - "Golden Path — Platform"
-Cohesion: 0.29
-Nodes (7): 1. Instalação, 2. Seleção de especialista, 3. Análise determinística, 4. Evidências, 5. Recomendações, 6. Resultado, Golden Path — Platform
+Cohesion: 0.18
+Nodes (10): 1. Instalação, 2. Seleção de especialista, 3. Análise determinística, 4. Evidências, 5. Recomendações, 6. Resultado, Golden Path — Platform, main() (+2 more)
 
 ### Community 298 - "Onboarding — jornada de primeiro uso"
-Cohesion: 0.29
+Cohesion: 0.33
 Nodes (6): Golden Paths, Guias por perfil, O mínimo que você precisa digitar, Onboarding — jornada de primeiro uso, Os 8 estágios, mapeados a comandos reais, Regras honestas
 
 ### Community 299 - "Golden Path — Multi-Forge"
-Cohesion: 0.33
+Cohesion: 0.29
 Nodes (6): 1. Instalação, 2. Descoberta, 3. Integração entre especialistas, 4. Diagnóstico e evidências, 5. Resultado, Golden Path — Multi-Forge
+
+### Community 300 - "required"
+Cohesion: 0.33
+Nodes (6): created_at, schema, required, owner_forge, scenarios, source
 
 ### Community 301 - "check_onboarding.py"
 Cohesion: 0.60
 Nodes (4): _failures(), main(), Onboarding docs gate (cyc10-01, §10.2–§10.4). Verifies the public first-run…, _theforge_verbs()
 
+### Community 302 - "FINAL PROGRAM REPORT — ecosystem-2026"
+Cohesion: 0.33
+Nodes (5): Decisões do dono registradas, Evidências centrais, FINAL PROGRAM REPORT — ecosystem-2026, Pendências honestas (handoff), Resultado
+
+### Community 303 - "_updateHasRequiredValidator"
+Cohesion: 0.33
+Nodes (6): hasAsyncValidator(), hasValidator(), _runValidator(), _updateHasRequiredValidator(), validator(), w()
+
+### Community 306 - "notes"
+Cohesion: 0.40
+Nodes (5): type, default, items, type, notes
+
+### Community 307 - "Plano de distribuição (cyc10-03, decisão D2)"
+Cohesion: 0.40
+Nodes (4): Canal 1 — PyPI, Canal 2 — Diretórios MCP, Fora do primeiro wave (documentado), Plano de distribuição (cyc10-03, decisão D2)
+
+### Community 308 - "Forge Ecosystem — Portal de Documentação (§10.5)"
+Cohesion: 0.50
+Nodes (4): As 18 seções, Fontes oficiais por Forja, Forge Ecosystem — Portal de Documentação (§10.5), Regras deste portal
+
+### Community 309 - "Releases & compatibilidade"
+Cohesion: 0.50
+Nodes (4): Política, Política de suporte, Releases & compatibilidade, Verificar compatibilidade instalada
+
+### Community 310 - "Compatibility matrix — draft inicial"
+Cohesion: 0.50
+Nodes (4): Compatibility matrix — draft inicial, Política-alvo (§8.3), Ranges de contrato (a preencher por cyc8-01), Versões atuais (observadas, não certificadas)
+
+### Community 311 - "graph"
+Cohesion: 0.50
+Nodes (4): graph(), ``p/c`` matches exactly; bare ``c`` matches ``capability:*/c``., The capability graph (``theforge graph``): every edge of the persisted…, _ref_match()
+
+### Community 312 - "Suporte"
+Cohesion: 0.50
+Nodes (3): Canal, Escopo de suporte, Suporte
+
+### Community 313 - "API + API Forge"
+Cohesion: 0.50
+Nodes (3): API + API Forge, Instalação, Testes
+
+### Community 314 - "Custom specialist capability"
+Cohesion: 0.50
+Nodes (3): Custom specialist capability, Instalação, Testes
+
+### Community 315 - "Terraform + Platform Forge"
+Cohesion: 0.50
+Nodes (3): Instalação, Terraform + Platform Forge, Testes
+
 ## Knowledge Gaps
-- **1109 isolated node(s):** `Comportamento observado`, `Comportamento esperado`, `Reprodução`, `Evidência`, `Ambiente` (+1104 more)
+- **1167 isolated node(s):** `01-install-linux.sh script`, `FORGE_HOME_OVERRIDE`, `02-two-forges.sh script`, `FORGE_HOME_OVERRIDE`, `03-host-config.sh script` (+1162 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **49 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `_t()` connect `_t` to `main-QDFVZK3T.js`, `chunk-CXcsLDPJ.js`, `a`, `.subscribe`, `e`, `.ngOnChanges`, `l`, `chunk-CGWeHhKY.js`, `o`, `jI`, `r`, `dr`, `_f`, `Wr`, `sh`, `.constructor`, `.getContext`, `.remove`, `.get`, `.handleRouterEvent`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `e` connect `e` to `main-QDFVZK3T.js`, `pl`, `chunk-CXcsLDPJ.js`, `.subscribe`, `bt$1`, `.bypassSecurityTrustScript`, `.bypassSecurityTrustStyle`, `.bypassSecurityTrustUrl`, `uE`, `.createRenderer`, `o`, `jI`, `r`, `ah`, `.run`, `.request`, `_f`, `Qe$1`, `.synchronizeOnce`, `sh`, `.remove`, `Fe`, `.get`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `./` connect `./` to `Results by forge`, `Cenários multi-Forge do Forge Lab`, `Open gaps — ecosystem-2026 (Wave 0)`, `Baseline do programa ecosystem-2026`, `Política de versões + Compatibility Manifest`, `Conformidade de empacotamento dos nove repos`, `Gates de CI/CD e Release Candidate`, `Getting Started — Usuário de Claude Code`, `Public Readiness: contribuição, distribuição, templates, demos e feedback`, `Programa ecosystem-2026`, `Getting Started — Usuário de CLI/TUI`, `the-forge — Documentation Index`, `Baseline — 2026-10-15`, `Cycle 8 — Release readiness (RC evidence)`, `Matriz de empacotamento — ecosystem-2026`, `feature_request.md`, `PULL_REQUEST_TEMPLATE.md`, `Política de Segurança`, `Getting Started — Usuário de Copilot`, `Cycle 10 — decisões de produto pendentes (memo para o dono)`, `Onboarding — jornada de primeiro uso`, `Getting Started — Data Engineer AWS`, `Getting Started — Data Engineer Azure`, `Supply chain security dos artefatos`, `Contribuindo`, `Programa ecosystem-2026 — índice de specs`, `bug_report.md`, `Getting Started — Platform Engineer`, `Getting Started — Usuário de Forge Portal`, `getting-started/README.md`, `Onboarding, Getting Started e Golden Paths`, `Use`, `Forge Knowledge Program — final report`, `Supply chain — ecosystem-2026`, `Integridade de avaliação: métricas, ground truth e regression gates`, `Dependency map — ecosystem-2026`, `GitHub Experience — checklist §10.7 (cyc10-02)`, `Forge Lab — coordenador federado e harness`, `Getting Started — Desenvolvedor backend`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **What connects `Comportamento observado`, `Comportamento esperado`, `Reprodução` to the rest of the system?**
-  _1109 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `e` connect `e` to `main-QDFVZK3T.js`, `.remove`, `pl`, `chunk-B7N3TXcn.js`, `ah`, `Fe`, `r`, `.subscribe`, `v`, `jI`, `constructor`, `get`, `t`, `sh`, `lE`?**
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `_t()` connect `_t` to `main-QDFVZK3T.js`, `chunk-BGUitn2r.js`, `.buildTitle`, `.navigateToSyncWithBrowser`, `deactivateRouteAndOutlet`, `chunk-B7N3TXcn.js`, `ah`, `r`, `chunk-CGWeHhKY.js`, `.update`, `.subscribe`, `v`, `e`, `jI`, `constructor`, `.handleRouterEvent`, `t`?**
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
+- **Why does `./` connect `./` to `Results by forge`, `Cenários multi-Forge do Forge Lab`, `Open gaps — ecosystem-2026 (Wave 0)`, `Baseline do programa ecosystem-2026`, `Política de versões + Compatibility Manifest`, `Conformidade de empacotamento dos nove repos`, `Gates de CI/CD e Release Candidate`, `Getting Started — Usuário de Claude Code`, `Programa ecosystem-2026`, `Getting Started — Usuário de CLI/TUI`, `the-forge — Documentation Index`, `Baseline — 2026-10-15`, `Cycle 8 — Release readiness (RC evidence)`, `Matriz de empacotamento — ecosystem-2026`, `feature_request.md`, `Cycle 10 — Public Adoption (cyc10-03)`, `PULL_REQUEST_TEMPLATE.md`, `Política de Segurança`, `Getting Started — Usuário de Copilot`, `Cycle 10 — decisões de produto pendentes (memo para o dono)`, `Golden Path — Platform`, `Golden Path — Multi-Forge`, `Getting Started — Usuário de Codex`, `Getting Started — Data Engineer AWS`, `FINAL PROGRAM REPORT — ecosystem-2026`, `Documentação unificada, posicionamento e GitHub Experience`, `Supply chain security dos artefatos`, `Plano de distribuição (cyc10-03, decisão D2)`, `Contribuindo`, `Programa ecosystem-2026 — índice de specs`, `bug_report.md`, `Suporte`, `API + API Forge`, `Custom specialist capability`, `Terraform + Platform Forge`, `Getting Started — Platform Engineer`, `Getting Started — Usuário de Forge Portal`, `getting-started/README.md`, `Onboarding, Getting Started e Golden Paths`, `Modelo de contribuição — Forjas externas (§10.9)`, `Use`, `Forge Knowledge Program — final report`, `Supply chain — ecosystem-2026`, `Integridade de avaliação: métricas, ground truth e regression gates`, `Dependency map — ecosystem-2026`, `GitHub Experience — checklist §10.7 (cyc10-02)`, `Forge Lab — coordenador federado e harness`, `Getting Started — Desenvolvedor backend`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **What connects `01-install-linux.sh script`, `FORGE_HOME_OVERRIDE`, `02-two-forges.sh script` to the rest of the system?**
+  _1167 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `test_install_orchestration.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.05874125874125874 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09408033826638477 - nodes in this community are weakly interconnected._
 - **Should `main-QDFVZK3T.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.014012175628337245 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.01279614129663782 - nodes in this community are weakly interconnected._
 - **Should `test_graphstudio.py` be split into smaller, more focused modules?**
   _Cohesion score 0.07196969696969698 - nodes in this community are weakly interconnected._
