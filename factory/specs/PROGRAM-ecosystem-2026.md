@@ -13,7 +13,7 @@ Fonte: `prompt_evo_cycles.md` (Cycles 8, 9, 10). Decomposto em 20 specs na conve
 | cyc8-06 | forge-portal | 1 | p0 | Portal: Release Management UI |
 | cyc9-01 | the-forge | 2 | p1 | Forge Lab coordenador federado + harness (modos A/B/C) |
 | cyc9-02 | the-forge | 2 | p1 | Métricas + ground truth + regression gates |
-| cyc9-03 (done) | the-forge | 3 | p1 | Cenários multi-Forge |
+| cyc9-03 | the-forge | 3 | p1 | Cenários multi-Forge |
 | cyc9-04 | spark-forge-aws | 3 | p1 | Cenários Data Engineering AWS |
 | cyc9-05 | spark-forge-azure | 3 | p1 | Cenários Data Engineering Azure |
 | cyc9-06 | api-forge | 3 | p1 | Cenários API Engineering |
@@ -45,3 +45,18 @@ Fonte: `prompt_evo_cycles.md` (Cycles 8, 9, 10). Decomposto em 20 specs na conve
 - `loop-factory` CLI **não instalado**: `factory/specs/` foi populada manualmente; `Loop-Factory/` não existe no workspace (referência obsoleta em `forge-doctor-api/AGENTS.md` → `../Loop-Factory/bin/loop-factory`).
 - Feature freeze no the-forge: specs de subsistema novo (cyc9-01) pedem ADR — registrado em Pending, decisão do mantenedor.
 - RC window em forge-doctor-api (`docs/rc-discipline.md`): mudança de surface/contrato exige exceção.
+
+## Status — 2026-10-15 (fim de sessão)
+
+- **cyc9-01..cyc9-09 implementadas, validadas, commitadas e pushadas** (9/10 do Cycle 9):
+  - cyc9-01 coordenador federado (ADR-0060 opção B), cyc9-02 integridade de avaliação
+    (estados/métricas/stats/gate), cyc9-03 biblioteca multi-forge (7 cenários, runner real).
+  - cyc9-04..09 emissores `forge/BenchmarkResult/v1` nos 6 especialistas sobre os
+    motores locais reais; `.venv` próprio via uv onde o motor exige deps
+    (api-forge, platform-forge, sparks) — declarado `{checkout}/.venv/bin/python`.
+  - Evidência: `theforge lab collect --mode A` → 7/7 labs ok, **203 cenários**,
+    0 falhas de coleta; vereditos `fail` do corpus reportados honestamente.
+- **Restantes:** cyc9-10 (Portal lab UI), cyc10-01/02/03 (adoção — depende de
+  decisões de dono: licença, canais, publicação).
+- Semântica estabelecida: emissor sai 0 quando o receipt foi escrito — vereditos
+  `fail` são dado dentro do receipt; `skipped`/`not_applicable` nunca viram pass.
