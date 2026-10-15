@@ -1076,9 +1076,7 @@ def _auto_install_for_ask(args: argparse.Namespace, root: Path) -> dict[str, Any
     approved = bool(args.yes)
     if not approved:
         if args.json or not ctx.interactive:
-            raise NonInteractive(
-                "--auto-install requires --yes in JSON/non-interactive mode"
-            )
+            raise NonInteractive("--auto-install requires --yes in JSON/non-interactive mode")
         plan = service.install_auto(
             scope="project",
             root=root,

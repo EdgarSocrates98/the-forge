@@ -170,9 +170,7 @@ def _repo_report(root: Path, spec: RepositorySpec) -> dict[str, Any]:
     }
 
 
-def audit_workspace(
-    root: Path, specs: Iterable[RepositorySpec] | None = None
-) -> dict[str, Any]:
+def audit_workspace(root: Path, specs: Iterable[RepositorySpec] | None = None) -> dict[str, Any]:
     """Return stable, local-only evidence for configured Forge repositories."""
 
     resolved = root.expanduser().resolve()

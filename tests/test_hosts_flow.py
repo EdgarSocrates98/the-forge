@@ -4,6 +4,7 @@ Without injected `which`/`runner`/`exec_host` the test never reaches a real
 binary, version, auth or process: `host_state` returns NOT_DETECTED and
 `hosts_flow` never launches.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,6 +22,7 @@ def _runner_fake(outputs: dict[tuple[str, ...], tuple[int, str]]):
         key = tuple(argv[1:])
         assert key in outputs, f"unexpected argv: {argv}"
         return outputs[key]
+
     return run
 
 
@@ -32,7 +34,9 @@ def _status(monkeypatch, **kw):
 
 def test_absent_host_is_not_detected(tmp_path):
     state = hostflow.host_state(
-        "devin", repo=tmp_path, which=lambda _n: None,
+        "devin",
+        repo=tmp_path,
+        which=lambda _n: None,
         runner=lambda _a: (_ for _ in ()).throw(AssertionError("called")),
     )
     assert state["state"] == "NOT_DETECTED"
@@ -40,14 +44,14 @@ def test_absent_host_is_not_detected(tmp_path):
 
 
 def test_full_flow_to_ready(tmp_path, monkeypatch):
-    _status(monkeypatch, status="healthy",
-            drift={"ok": 4, "modified": [], "missing": []})
+    _status(monkeypatch, status="healthy", drift={"ok": 4, "modified": [], "missing": []})
     outputs = {
         ("--version",): (0, "devin 3000.11.3 (abc)\n"),
         ("auth", "status"): (0, "Logged in (via Devin).\nCredentials:\n  File: /x/secret.toml"),
     }
     state = hostflow.host_state(
-        "devin", repo=tmp_path,
+        "devin",
+        repo=tmp_path,
         which=_which_fake({"devin": "/bin/devin"}),
         runner=_runner_fake(outputs),
     )
@@ -67,7 +71,10 @@ def test_signed_out_never_launches_and_points_at_login(tmp_path, monkeypatch):
     }
     launched = []
     receipt = hostflow.hosts_flow(
-        "codex", repo=tmp_path, launch=True, tty=True,
+        "codex",
+        repo=tmp_path,
+        launch=True,
+        tty=True,
         which=_which_fake({"codex": "/bin/codex"}),
         runner=_runner_fake(outputs),
         exec_host=lambda _c, _r: launched.append(True) or 0,
@@ -86,7 +93,10 @@ def test_no_tty_refuses_but_carries_command(tmp_path, monkeypatch):
         ("auth", "status"): (0, json.dumps({"loggedIn": True})),
     }
     receipt = hostflow.hosts_flow(
-        "claude", repo=tmp_path, launch=True, tty=False,
+        "claude",
+        repo=tmp_path,
+        launch=True,
+        tty=False,
         which=_which_fake({"claude": "/bin/claude"}),
         runner=_runner_fake(outputs),
         exec_host=lambda _c, _r: 0,
@@ -107,8 +117,12 @@ def test_with_tty_launches_in_repo_and_records_exit(tmp_path, monkeypatch):
     def exec_fake(path, cwd):
         calls.append((path, cwd))
         return 0
+
     receipt = hostflow.hosts_flow(
-        "devin", repo=tmp_path, launch=True, tty=True,
+        "devin",
+        repo=tmp_path,
+        launch=True,
+        tty=True,
         which=_which_fake({"devin": "/bin/devin"}),
         runner=_runner_fake(outputs),
         exec_host=exec_fake,
@@ -121,7 +135,9 @@ def test_with_tty_launches_in_repo_and_records_exit(tmp_path, monkeypatch):
 def test_all_measures_every_host_and_never_launches(tmp_path, monkeypatch):
     _status(monkeypatch)
     receipt = hostflow.hosts_flow(
-        "all", repo=tmp_path, launch=True,
+        "all",
+        repo=tmp_path,
+        launch=True,
         which=lambda _n: None,
         runner=lambda _a: (_ for _ in ()).throw(AssertionError("called")),
         exec_host=lambda _c, _r: (_ for _ in ()).throw(AssertionError("launched")),
@@ -142,7 +158,8 @@ def test_copilot_auth_is_honest_unknown(tmp_path, monkeypatch):
     _status(monkeypatch)
     outputs = {("--version",): (0, "copilot 1.0")}
     state = hostflow.host_state(
-        "copilot", repo=tmp_path,
+        "copilot",
+        repo=tmp_path,
         which=_which_fake({"copilot": "/bin/copilot"}),
         runner=_runner_fake(outputs),
     )

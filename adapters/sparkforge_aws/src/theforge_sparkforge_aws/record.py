@@ -54,10 +54,7 @@ def build_snapshot(
     arguments per tool. ``recorded_at`` is kept from ``previous`` when nothing else changed."""
     from theforge_sparkforge_aws.native_pkg import canonical_tool_name
 
-    surface = {
-        canonical_tool_name(name): _tool_entry(spec)
-        for name, spec in sorted(tools.items())
-    }
+    surface = {canonical_tool_name(name): _tool_entry(spec) for name, spec in sorted(tools.items())}
     recorded_at = today or _today()
     if (
         previous is not None

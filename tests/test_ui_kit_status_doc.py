@@ -44,10 +44,8 @@ HEALTH_DOC = {
     "ledger_entries": 12,
     "checks": [
         {"id": "ledger", "status": "PASS", "detail": "12 managed entries"},
-        {"id": "drift:.mcp.json", "status": "FAIL", "detail": "modified",
-         "repairable": True},
-        {"id": "forge-portal", "status": "NOT_APPLICABLE",
-         "detail": "vendored assets only"},
+        {"id": "drift:.mcp.json", "status": "FAIL", "detail": "modified", "repairable": True},
+        {"id": "forge-portal", "status": "NOT_APPLICABLE", "detail": "vendored assets only"},
     ],
     "context": {"profile": "recommended", "managed_entries": 12},
     "repair_hint": "apiforge install repair",
@@ -80,8 +78,7 @@ STATUS_DOC = {
         "modified": [{"path": ".mcp.json", "status": "modified"}],
         "missing": [{"path": "AGENTS.md", "status": "missing"}],
     },
-    "forge_portal": {"state": "vendored", "install_root": None,
-                     "manifest": None, "locations": []},
+    "forge_portal": {"state": "vendored", "install_root": None, "manifest": None, "locations": []},
     "receipts": ["r1.json"],
     "checked_at": "2026-01-01T00:00:00Z",
 }
@@ -159,11 +156,11 @@ def test_workspace_members_and_conflicts():
         "status": "planned",
         "workspace": {
             "members": [{"path": "../api-forge"}],
-            "conflicts": [{"member": "../api-forge", "forge_id": "api-forge",
-                           "decision": "install"}],
+            "conflicts": [
+                {"member": "../api-forge", "forge_id": "api-forge", "decision": "install"}
+            ],
             "unknown_members": ["../ghost"],
-            "member_results": [{"member": "../api-forge",
-                                "status": "completed"}],
+            "member_results": [{"member": "../api-forge", "status": "completed"}],
         },
     }
     out = format_status_doc(doc, ctx=_ctx())

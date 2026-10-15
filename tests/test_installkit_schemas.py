@@ -92,6 +92,7 @@ def test_schema_files_exist():
         "InstallReceipt",
         "InstallationHealth",
         "WorkspaceInstall",
+        "EcosystemCompatibility",
     ):
         assert (SCHEMAS / f"{name}.schema.json").exists(), name
 

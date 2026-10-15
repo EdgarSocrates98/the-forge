@@ -42,9 +42,7 @@ def _agents_src() -> Path | None:
     return bundled if bundled.is_dir() else None
 
 
-def render(
-    hosts: tuple[str, ...], *, skills: bool, agents: bool = False
-) -> dict[str, bytes]:
+def render(hosts: tuple[str, ...], *, skills: bool, agents: bool = False) -> dict[str, bytes]:
     """``{rel_path: bytes}`` de assets canônicos suportados por host."""
     src = _skills_src()
     out: dict[str, bytes] = {}

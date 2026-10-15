@@ -232,7 +232,7 @@ def test_cell_width_wide_and_combining():
 
     assert cell_width("abc") == 3
     assert cell_width("あいう") == 6  # CJK wide
-    assert cell_width("éx") == 2   # combining accent
+    assert cell_width("éx") == 2  # combining accent
     assert cell_width("\x1b[32mOK\x1b[0m") == 2  # escapes don't count
 
 
@@ -267,10 +267,13 @@ def test_select_windows_long_lists(monkeypatch, capsys):
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(
-        interactive=True, color=False, unicode=False, width=80, height=8,
+        interactive=True,
+        color=False,
+        unicode=False,
+        width=80,
+        height=8,
     )
-    picked = kit.select(
-        "pick", [f"opt-{i}" for i in range(20)], ctx=ctx)
+    picked = kit.select("pick", [f"opt-{i}" for i in range(20)], ctx=ctx)
     assert picked == 18
     frames = capsys.readouterr().out.split("pick")  # each frame opens with title
     last = frames[-1]
@@ -296,7 +299,11 @@ def test_dumb_terminal_no_cursor_escapes(monkeypatch, capsys):
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
     ctx = UIContext(
-        interactive=True, color=False, unicode=False, width=80, ansi=False,
+        interactive=True,
+        color=False,
+        unicode=False,
+        width=80,
+        ansi=False,
     )
     assert kit.select("pick", ["a", "b"], ctx=ctx) == 0
     out = capsys.readouterr().out
@@ -342,11 +349,14 @@ def test_recommended_wizard_selects_agents(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda *a, **k: "")
     calls: list[dict] = []
     ctx = UIContext(interactive=True, color=False, unicode=True, width=80)
-    assert wiz.run_wizard(
-        forge_name="x",
-        install_fn=lambda **kw: calls.append(kw) or {"status": "completed"},
-        ctx=ctx,
-    ) == 0
+    assert (
+        wiz.run_wizard(
+            forge_name="x",
+            install_fn=lambda **kw: calls.append(kw) or {"status": "completed"},
+            ctx=ctx,
+        )
+        == 0
+    )
     assert "agents" in calls[0]["components"]
 
 

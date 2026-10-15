@@ -62,12 +62,14 @@ def _scope_choices(ctx: UIContext) -> list[str]:
     """Hide repository-only choice when operator is in a fresh directory."""
     scopes = ["project", "workspace", "user"]
     if not _has_vcs_root(Path.cwd()):
-        print(_c(
-            ctx,
-            "33",
-            "  No repository detected; choose Entire workspace to use this directory "
-            "or My user account.",
-        ))
+        print(
+            _c(
+                ctx,
+                "33",
+                "  No repository detected; choose Entire workspace to use this directory "
+                "or My user account.",
+            )
+        )
         scopes.remove("project")
     return scopes
 

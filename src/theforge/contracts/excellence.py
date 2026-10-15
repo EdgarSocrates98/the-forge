@@ -110,6 +110,5 @@ def project_manifest(
     """Project all capabilities in manifest in declaration order."""
 
     return [
-        project_capability(manifest, capability.id, agentic)
-        for capability in manifest.capabilities
+        project_capability(manifest, capability.id, agentic) for capability in manifest.capabilities
     ]

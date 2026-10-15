@@ -91,9 +91,7 @@ def test_federated_merge_namespaces_nodes():
             descriptor=new_descriptor(provider_id=pid, domain="d", graph_id=f"{pid}/g"),
             nodes=(GraphNodeView(id=nid, kind="k", label=nid, source_provider=pid),),
             edges=(
-                GraphEdgeView(
-                    id="e", source=nid, target=nid, kind="self", provenance="declared"
-                ),
+                GraphEdgeView(id="e", source=nid, target=nid, kind="self", provenance="declared"),
             ),
         )
 
@@ -168,9 +166,7 @@ def test_graph_federated_cli(capsys):
     assert rc == 0
     doc = json.loads(out.out)
     assert "views" in doc and "notes" in doc
-    assert any(
-        v["descriptor"]["provider_id"] == "the-forge" for v in doc["views"]
-    )
+    assert any(v["descriptor"]["provider_id"] == "the-forge" for v in doc["views"])
 
 
 def test_graph_default_still_works(capsys):
@@ -226,9 +222,7 @@ def test_graph_studio_enabled_gate(tmp_path):
     assert graph_studio_enabled(tmp_path) is True
     sd = tmp_path / ".forge" / "install"
     sd.mkdir(parents=True)
-    (sd / "components.json").write_text(
-        json.dumps({"graph_studio": False}), encoding="utf-8"
-    )
+    (sd / "components.json").write_text(json.dumps({"graph_studio": False}), encoding="utf-8")
     assert graph_studio_enabled(tmp_path) is False
 
 
@@ -237,9 +231,7 @@ def test_graph_ui_refuses_when_declined(tmp_path, capsys):
 
     sd = tmp_path / ".forge" / "install"
     sd.mkdir(parents=True)
-    (sd / "components.json").write_text(
-        json.dumps({"graph_studio": False}), encoding="utf-8"
-    )
+    (sd / "components.json").write_text(json.dumps({"graph_studio": False}), encoding="utf-8")
     rc = main(["graph", "--ui", "--root", str(tmp_path), "--json"])
     assert rc == 2
     doc = json.loads(capsys.readouterr().out)
@@ -260,9 +252,7 @@ def _fake_checkout(tmp_path: Path, body: str, *, manifest: bool = True) -> Path:
         )
     else:
         # minimal provider without a manifest may put cli_entry on forge.json
-        (tmp_path / "forge.json").write_text(
-            'cli_entry = "fake_cli:main"\n', encoding="utf-8"
-        )
+        (tmp_path / "forge.json").write_text('cli_entry = "fake_cli:main"\n', encoding="utf-8")
     (tmp_path / "fake_cli.py").write_text(body, encoding="utf-8")
     return tmp_path
 
@@ -278,10 +268,7 @@ def test_view_from_cli_real_subprocess(tmp_path):
     ).to_dict()
     checkout = _fake_checkout(
         tmp_path,
-        "import json, sys\n"
-        "def main():\n"
-        f"    print(json.dumps({doc!r}))\n"
-        "    return 0\n",
+        f"import json, sys\ndef main():\n    print(json.dumps({doc!r}))\n    return 0\n",
     )
     view, reason = _view_from_cli(checkout, "fake", timeout=20)
     assert view is not None, reason
@@ -300,10 +287,7 @@ def test_view_from_cli_forge_json_fallback(tmp_path):
     ).to_dict()
     checkout = _fake_checkout(
         tmp_path,
-        "import json, sys\n"
-        "def main():\n"
-        f"    print(json.dumps({doc!r}))\n"
-        "    return 0\n",
+        f"import json, sys\ndef main():\n    print(json.dumps({doc!r}))\n    return 0\n",
         manifest=False,
     )
     view, reason = _view_from_cli(checkout, "fake", timeout=20)
@@ -319,10 +303,7 @@ def test_federated_views_real_workspace():
     from theforge.graphview import federated_views
 
     workspace = Path(__file__).resolve().parents[2]
-    siblings = [
-        d.name for d in workspace.iterdir()
-        if (d / "forge.agentic.json").is_file()
-    ]
+    siblings = [d.name for d in workspace.iterdir() if (d / "forge.agentic.json").is_file()]
     if len(siblings) < 2:
         import pytest
 
@@ -333,9 +314,9 @@ def test_federated_views_real_workspace():
     produced = providers & set(siblings)
     # producers either emit a view or fail with a named reason — a
     # refusal code or exit status proves the subprocess reached the CLI
-    assert produced or any(
-        "refused " in n or "exited " in n for n in notes
-    ), f"producers neither produced nor reported; notes={notes}"
+    assert produced or any("refused " in n or "exited " in n for n in notes), (
+        f"producers neither produced nor reported; notes={notes}"
+    )
     assert all(": " in n for n in notes)  # every note carries a reason
 
 
@@ -353,10 +334,10 @@ def test_view_from_cli_degrades_honestly(tmp_path):
 
     refused = _fake_checkout(
         tmp_path / "ref",
-        'import json\n'
-        'def main():\n'
+        "import json\n"
+        "def main():\n"
         '    print(json.dumps({"refusal": "X-NO-GRAPH"}))\n'
-        '    return 2\n',
+        "    return 2\n",
     )
     view, reason = _view_from_cli(refused, "x", timeout=10)
     assert view is None and reason == "refused X-NO-GRAPH"
@@ -386,7 +367,5 @@ def test_studio_inline_script_parses(tmp_path):
     assert m, "STUDIO_HTML has no inline script"
     js = tmp_path / "studio.js"
     js.write_text(m.group(1), encoding="utf-8")
-    proc = subprocess.run(
-        [node, "--check", str(js)], capture_output=True, text=True, timeout=30
-    )
+    proc = subprocess.run([node, "--check", str(js)], capture_output=True, text=True, timeout=30)
     assert proc.returncode == 0, proc.stderr

@@ -317,6 +317,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     f"--handoff {args.handoff} is not a theforge/Handoff/v1 document"
                 )
             handoff = loaded
+
         def runtime_call(name: str, arguments: dict[str, Any]) -> Any:
             resolved = resolve_tool_name(tools_surface, name)
             if resolved is None:

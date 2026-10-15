@@ -466,8 +466,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--out",
         type=Path,
         help=(
-            "write graph JSON snapshot atomically; supports capability, view, "
-            "and federated outputs"
+            "write graph JSON snapshot atomically; supports capability, view, and federated outputs"
         ),
     )
     graph.set_defaults(handler=commands.cmd_graph)

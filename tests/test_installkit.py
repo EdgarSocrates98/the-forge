@@ -731,9 +731,7 @@ def test_doctor_forge_portal_check(tmp_path, isolated_forge_home):
     assert health["status"] == "healthy"
 
 
-def test_doctor_forge_portal_check_pass_when_installed(
-    tmp_path, isolated_forge_home, monkeypatch
-):
+def test_doctor_forge_portal_check_pass_when_installed(tmp_path, isolated_forge_home, monkeypatch):
     root = tmp_path / "portal-root"
     root.mkdir()
     monkeypatch.setenv("FORGE_PORTAL_HOME", str(root))

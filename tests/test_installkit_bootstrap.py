@@ -64,9 +64,7 @@ def test_environment_contract_is_account_scoped_and_shell_safe(tmp_path):
     venv_value = contract["variables"]["SPARK_FORGE_AWS_VENV"].replace("\\", "/")
     cli_value = contract["variables"]["SPARK_FORGE_AWS_CLI"].replace("\\", "/")
     assert venv_value.endswith("install/.venv")
-    assert cli_value.endswith(
-        "install/.venv/Scripts/sparkforge-aws.exe"
-    ) or cli_value.endswith(
+    assert cli_value.endswith("install/.venv/Scripts/sparkforge-aws.exe") or cli_value.endswith(
         "install/.venv/bin/sparkforge-aws"
     )
 
@@ -117,9 +115,9 @@ def test_git_bash_persistence_writes_registry_and_shell_init(monkeypatch, tmp_pa
     monkeypatch.setattr(
         fb,
         "_persist_posix",
-        lambda values, shim, shell_shim=None: calls.append(
-            ("git-bash", values, shim, shell_shim)
-        ) or str(tmp_path / "env.sh"),
+        lambda values, shim, shell_shim=None: (
+            calls.append(("git-bash", values, shim, shell_shim)) or str(tmp_path / "env.sh")
+        ),
     )
     env = {
         "variables": {"FORGE_TEST_HOME": str(tmp_path)},

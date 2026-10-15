@@ -53,9 +53,7 @@ def test_e2e_delegate_analyze_pyspark_to_aws_checkout(tmp_path):
     assert argv is not None, "could not resolve delegation argv for aws checkout"
 
     proj = _pyspark_project(tmp_path)
-    argv = specialists.resolve_command(
-        wf.command, view=view, target=str(proj / "jobs")
-    )
+    argv = specialists.resolve_command(wf.command, view=view, target=str(proj / "jobs"))
     req = delegation.new_request(
         intent="analyze the pyspark pipeline",
         provider=view.lifecycle.provider,
@@ -105,8 +103,16 @@ def test_cli_subprocess_specialists_list():
     import os
 
     proc = subprocess.run(
-        [sys.executable, "-m", "theforge", "specialists", "list",
-         "--root", str(WORKSPACE), "--json"],
+        [
+            sys.executable,
+            "-m",
+            "theforge",
+            "specialists",
+            "list",
+            "--root",
+            str(WORKSPACE),
+            "--json",
+        ],
         capture_output=True,
         text=True,
         env={**os.environ, **env},

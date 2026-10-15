@@ -57,9 +57,10 @@ def test_manifests_parse_to_contract():
     manifests = _manifests()
     assert manifests, "no forge.agentic.json found in workspace checkouts"
     for checkout, manifest in manifests:
-        assert manifest.provider == json.loads(
-            (checkout / "forge.json").read_text(encoding="utf-8")
-        )["forge_id"], f"{checkout.name}: manifest provider != forge.json forge_id"
+        assert (
+            manifest.provider
+            == json.loads((checkout / "forge.json").read_text(encoding="utf-8"))["forge_id"]
+        ), f"{checkout.name}: manifest provider != forge.json forge_id"
 
 
 def test_workflow_commands_use_real_verbs():
@@ -94,9 +95,7 @@ def test_cli_entry_shape():
         assert module and fn and fn.isidentifier()
         # import check only when the package is trivially importable
         pkg_root = (
-            checkout / "src"
-            if (checkout / "src" / module.split(".")[0]).is_dir()
-            else checkout
+            checkout / "src" if (checkout / "src" / module.split(".")[0]).is_dir() else checkout
         )
         probe = f"import sys; sys.path.insert(0, {str(pkg_root)!r}); import {module.split('.')[0]}"
         import subprocess

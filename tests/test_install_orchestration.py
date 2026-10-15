@@ -283,9 +283,7 @@ def test_delegated_cmd_propagates_setup_choices() -> None:
     ]
 
 
-def test_install_auto_self_persists_execution_profile(
-    forge_home: Path, target: Path
-) -> None:
+def test_install_auto_self_persists_execution_profile(forge_home: Path, target: Path) -> None:
     inst = forge_home / ".forge" / "installations"
     inst.mkdir(parents=True)
     (inst / "the-forge.json").write_text(
