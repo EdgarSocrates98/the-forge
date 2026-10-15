@@ -378,7 +378,7 @@ class TheForgePortal(fp.PortalAdapter):
                     }
                 )
         return {
-            "dir": str(bench.relative_to(_REPO_ROOT)) if bench.is_dir() else None,
+            "dir": bench.relative_to(_REPO_ROOT).as_posix() if bench.is_dir() else None,
             "runs": runs,
             "reports": reports,
             "notes": notes,
