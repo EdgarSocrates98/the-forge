@@ -33,6 +33,26 @@ _Start here — installation, first run, tutorials._
 
 - [Tutorial coverage report](knowledge-program/tutorial-coverage-report.md)
 
+### onboarding/
+
+- [Onboarding — jornada de primeiro uso](onboarding/README.md)
+- [Getting Started — guias por perfil (§10.3)](onboarding/getting-started/README.md)
+- [Getting Started — Desenvolvedor backend](onboarding/getting-started/backend-developer.md)
+- [Getting Started — Usuário de Claude Code](onboarding/getting-started/claude-code.md)
+- [Getting Started — Usuário de CLI/TUI](onboarding/getting-started/cli-tui.md)
+- [Getting Started — Usuário de Copilot](onboarding/getting-started/copilot.md)
+- [Getting Started — Data Engineer AWS](onboarding/getting-started/data-engineer-aws.md)
+- [Getting Started — Data Engineer Azure](onboarding/getting-started/data-engineer-azure.md)
+- [Getting Started — Usuário de Devin](onboarding/getting-started/devin.md)
+- [Getting Started — Usuário novo no ecossistema](onboarding/getting-started/new-user.md)
+- [Getting Started — Platform Engineer](onboarding/getting-started/platform-engineer.md)
+- [Getting Started — Usuário de Forge Portal](onboarding/getting-started/portal.md)
+- [Golden Paths (§10.4)](onboarding/golden-paths/README.md)
+- [Golden Path — API](onboarding/golden-paths/api.md)
+- [Golden Path — Multi-Forge](onboarding/golden-paths/multi-forge.md)
+- [Golden Path — Platform](onboarding/golden-paths/platform.md)
+- [Golden Path — Spark AWS](onboarding/golden-paths/spark-aws.md)
+
 ### tutorials/
 
 - [Tutorial — primeira execução real (theforge)](tutorials/first-run.md)
@@ -331,6 +351,10 @@ _Agent instructions, skills and internal process._
 
 - [Specialized Agents](agents.md)
 
+### onboarding/
+
+- [Getting Started — Usuário de Codex](onboarding/getting-started/codex.md)
+
 ## Archive
 
 _Historical, deprecated, generated and evidence docs (preserved, not entry points)._
@@ -450,6 +474,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Run — cyc8-04 ci-release-gates-rc](../factory/runs/2026-10-15.cyc8-04.md) `UNKNOWN`
 - [Run note — cyc9-01 forge-lab-coordinator](../factory/runs/2026-10-15.cyc9-01.md) `UNKNOWN`
 - [Run — cyc9-02 eval-integrity (the-forge)](../factory/runs/2026-10-15.cyc9-02.md) `UNKNOWN`
+- [Run — cyc9-03 multi-forge scenarios (the-forge)](../factory/runs/2026-10-15.cyc9-03.md) `UNKNOWN`
 - [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
 - [Baseline do programa ecosystem-2026](../factory/specs/active/cyc0-01-program-baseline.md) `UNKNOWN`
 - [Política de versões + Compatibility Manifest](../factory/specs/active/cyc8-01-compat-manifest.md) `UNKNOWN`
@@ -458,13 +483,13 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Gates de CI/CD e Release Candidate](../factory/specs/active/cyc8-04-ci-release-gates.md) `RELEASE_REPORT`
 - [Forge Lab — coordenador federado e harness](../factory/specs/active/cyc9-01-lab-coordinator.md) `UNKNOWN`
 - [Integridade de avaliação: métricas, ground truth e regression gates](../factory/specs/active/cyc9-02-eval-integrity.md) `UNKNOWN`
+- [Cenários multi-Forge do Forge Lab](../factory/specs/active/cyc9-03-scenarios-multiforge.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
 - [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/inbox/cyc10-02-docs-github.md) `UNKNOWN`
 - [Public Readiness: contribuição, distribuição, templates, demos e feedback](../factory/specs/inbox/cyc10-03-adoption-readiness.md) `UNKNOWN`
-- [Cenários multi-Forge do Forge Lab](../factory/specs/inbox/cyc9-03-scenarios-multiforge.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
 - [Grill Gate](../factory/templates/spec.md) `UNKNOWN`
 
@@ -524,6 +549,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Benchmark report — 2026-10-15 (mode A)](programs/ecosystem-2026/benchmarks/2026-10-15-A.md) `UNKNOWN`
 - [Forge Lab — methodology (cyc9-01, ADR-0060)](programs/ecosystem-2026/benchmarks/methodology.md) `UNKNOWN`
 - [Compatibility matrix — draft inicial](programs/ecosystem-2026/compatibility-matrix.md) `UNKNOWN`
+- [Cycle 10 — decisões de produto pendentes (memo para o dono)](programs/ecosystem-2026/cycle-10-decisions.md) `UNKNOWN`
 - [Cycle 8 — Release readiness (RC evidence)](programs/ecosystem-2026/cycle-8-release-readiness.md) `RELEASE_REPORT`
 - [Dependency map — ecosystem-2026](programs/ecosystem-2026/dependency-map.md) `UNKNOWN`
 - [Open gaps — ecosystem-2026 (Wave 0)](programs/ecosystem-2026/open-gaps.md) `UNKNOWN`

@@ -479,9 +479,7 @@ def test_lab_reads_real_benchmark_artifacts(target: Path) -> None:
         assert out["dir"] == "docs/programs/ecosystem-2026/benchmarks"
         expected_runs = sorted(p.name for p in bench.glob("results-*.jsonl"))
         assert [r["file"] for r in out["runs"]] == expected_runs
-        expected_reports = sorted(
-            p.name for p in bench.glob("*.md") if p.name != "methodology.md"
-        )
+        expected_reports = sorted(p.name for p in bench.glob("*.md") if p.name != "methodology.md")
         assert [r["file"] for r in out["reports"]] == expected_reports
         # every forge row traces to a parsed receipt line — no invention
         for run in out["runs"]:

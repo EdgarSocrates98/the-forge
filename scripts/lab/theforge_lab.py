@@ -25,6 +25,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 SCENARIO_ID = "compat-manifest-parity"
 MULTIFORGE_DIR = "labs/multiforge"
@@ -56,7 +57,7 @@ def _repos_root(checkout: Path, override: str | None) -> Path:
     return checkout.resolve().parent
 
 
-def _compat_scenario(checkout: Path, repos_root: Path) -> dict:
+def _compat_scenario(checkout: Path, repos_root: Path) -> dict[str, Any]:
     started = time.monotonic()
     manifest_path = checkout / "ecosystem-compatibility.json"
     detail = ""
@@ -92,12 +93,12 @@ def _compat_scenario(checkout: Path, repos_root: Path) -> dict:
     }
 
 
-def _multiforge_scenario(checkout: Path, repos_root: Path, sc_path: Path) -> dict:
+def _multiforge_scenario(checkout: Path, repos_root: Path, sc_path: Path) -> dict[str, Any]:
     """Execute one MultiForgeScenario: resolve participants, invoke their
     declared labs through the real collector, measure Mode-C metrics."""
     started = time.monotonic()
     detail = ""
-    metrics: dict[str, dict] = {}
+    metrics: dict[str, dict[str, Any]] = {}
     try:
         sys.path.insert(0, str(checkout / "src"))
         from theforge import lab as forgeslab
@@ -126,7 +127,7 @@ def _multiforge_scenario(checkout: Path, repos_root: Path, sc_path: Path) -> dic
 
         # invoke declared labs of resolvable participants via the real
         # collector — never re-implemented here
-        outcomes = []
+        outcomes: list[Any] = []  # LabOutcome — imported under sys.path
         runnable = [p for fid, p in sorted(present.items()) if decl_states[fid] == "declared"]
         if runnable:
             os.environ["FORGE_LAB_NESTED"] = "1"

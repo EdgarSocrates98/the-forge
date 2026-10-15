@@ -290,9 +290,7 @@ class MultiForgeScenario:
 
     def __post_init__(self) -> None:
         if self.schema != MULTIFORGE_SCHEMA:
-            raise ContractError(
-                f"multiforge scenario: unsupported schema {self.schema!r}"
-            )
+            raise ContractError(f"multiforge scenario: unsupported schema {self.schema!r}")
         if not SCENARIO_ID_RE.fullmatch(self.id):
             raise ContractError(f"multiforge scenario: bad id {self.id!r}")
         if len(self.participants) < 2:
@@ -314,9 +312,7 @@ def parse_multiforge_scenario(data: Any, *, strict: bool = False) -> MultiForgeS
 
 
 def load_multiforge_scenario(path: Path) -> MultiForgeScenario:
-    return parse_multiforge_scenario(
-        json.loads(path.read_text(encoding="utf-8")), strict=True
-    )
+    return parse_multiforge_scenario(json.loads(path.read_text(encoding="utf-8")), strict=True)
 
 
 def parse_suite(data: Any, *, strict: bool = False) -> BenchmarkSuite:

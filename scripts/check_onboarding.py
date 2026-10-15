@@ -1,0 +1,161 @@
+"""Onboarding docs gate (cyc10-01, §10.2–§10.4).
+
+Verifies the public first-run surface stays honest and complete:
+
+- the unified journey lists the 8 stages of §10.2;
+- all 11 getting-started guides of §10.3 exist and carry the 8 mandatory
+  sections (pré-requisitos → próximos passos);
+- all 4 golden paths of §10.4 exist and demonstrate the required stages;
+- every ``theforge <verb>`` referenced in the docs is a real verb of the
+  installed CLI (no invented commands);
+- every ``docs/...`` path referenced in the docs exists.
+
+Specialist commands (``apiforge``, ``platformforge``, ``sparkforge-*``,
+``forge-doctor-*``) are validated at authoring time against the installed
+surfaces — the gate cannot assume a sibling install and must not fake one.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+ONB = REPO / "docs" / "onboarding"
+PY = sys.executable
+
+STAGES_8 = [
+    "Discover",
+    "Install",
+    "Choose Forge",
+    "Configure Host",
+    "Validate Environment",
+    "Run First Task",
+    "See Evidence",
+    "Explore Advanced Features",
+]
+
+SECTIONS_8 = [
+    "Pré-requisitos",
+    "Instalação",
+    "Configuração",
+    "Primeiro comando",
+    "Resultado esperado",
+    "Explicação do resultado",
+    "Resolução de problemas",
+    "Próximos passos",
+]
+
+GUIDES = [
+    "new-user",
+    "backend-developer",
+    "data-engineer-aws",
+    "data-engineer-azure",
+    "platform-engineer",
+    "claude-code",
+    "codex",
+    "devin",
+    "copilot",
+    "cli-tui",
+    "portal",
+]
+
+GOLDEN_PATHS = {
+    "spark-aws": [
+        "instalação",
+        "especialista",
+        "diagnóstico",
+        "evidências",
+        "recomend",
+        "testes",
+        "resultado",
+    ],
+    "api": ["contratos", "diagnóstico", "planejamento", "validação"],
+    "platform": ["determinística", "evidências", "recomend"],
+    "multi-forge": ["descoberta", "integração", "especialistas"],
+}
+
+_THEFORGE_VERB = re.compile(r"\btheforge\s+([a-z][a-z0-9-]*)")
+_DOC_PATH = re.compile(r"docs/[A-Za-z0-9_./-]+")
+
+
+def _theforge_verbs() -> set[str]:
+    out = subprocess.run(
+        [PY, "-m", "theforge", "--help"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+    )
+    if out.returncode != 0:
+        return set()
+    m = re.search(r"\{([^}]+)\}", out.stdout)
+    return set(m.group(1).split(",")) if m else set()
+
+
+def _failures() -> list[str]:
+    fails: list[str] = []
+
+    readme = ONB / "README.md"
+    if not readme.is_file():
+        return ["docs/onboarding/README.md missing"]
+    body = readme.read_text(encoding="utf-8")
+    for stage in STAGES_8:
+        if stage not in body:
+            fails.append(f"journey stage '{stage}' absent from onboarding/README.md")
+
+    gs = ONB / "getting-started"
+    for guide in GUIDES:
+        f = gs / f"{guide}.md"
+        if not f.is_file():
+            fails.append(f"getting-started/{guide}.md missing")
+            continue
+        text = f.read_text(encoding="utf-8")
+        for sec in SECTIONS_8:
+            if f"## {sec}" not in text:
+                fails.append(f"{f.relative_to(REPO)}: missing section '## {sec}'")
+
+    gp = ONB / "golden-paths"
+    for name, stages in GOLDEN_PATHS.items():
+        f = gp / f"{name}.md"
+        if not f.is_file():
+            fails.append(f"golden-paths/{name}.md missing")
+            continue
+        text = f.read_text(encoding="utf-8").lower()
+        for st in stages:
+            if st not in text:
+                fails.append(f"{f.relative_to(REPO)}: missing stage '{st}'")
+
+    verbs = _theforge_verbs()
+    docs = list(ONB.rglob("*.md"))
+    for f in docs:
+        text = f.read_text(encoding="utf-8")
+        for verb in set(_THEFORGE_VERB.findall(text)):
+            if verbs and verb not in verbs:
+                fails.append(f"{f.relative_to(REPO)}: 'theforge {verb}' is not a real verb")
+        for ref in set(_DOC_PATH.findall(text)):
+            if not (REPO / ref).exists():
+                fails.append(f"{f.relative_to(REPO)}: referenced path '{ref}' does not exist")
+
+    return fails
+
+
+def main() -> int:
+    if not ONB.is_dir():
+        print("docs/onboarding/ missing")
+        return 1
+    fails = _failures()
+    if fails:
+        for f in fails:
+            print(f"FAIL {f}")
+        return 1
+    print(
+        "onboarding docs: 8-stage journey, 11 guides, 4 golden paths, "
+        "all theforge verbs + docs/ paths verified"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -929,190 +929,10 @@
     "ast_hash": "43460b9e84dec18ebfb79b30a9ba3a91",
     "semantic_hash": ""
   },
-  "portal/assets/chunk-0jvHH0Tf.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230373,
-    "ast_hash": "7a41135cc075b1cf5f0e160070c1e0ca",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-2p96R1p3.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230385,
-    "ast_hash": "2bfe9fd2ec7e0c904829e63385a9696d",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-7GolWqhh.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230395,
-    "ast_hash": "29079c27ab805a968a81b1a14891431a",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-BLDtA2P_.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230402,
-    "ast_hash": "2deb73842c602692f215f6e88296fd97",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-BNszwVLC.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230414,
-    "ast_hash": "692cc32ede57b97192f5b4e1c23533a9",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-Bhm-9fdc.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230423,
-    "ast_hash": "3e410b55f90adac6178c98a8168dca56",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-Bm5AlGNH.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230433,
-    "ast_hash": "5481767c38c0c2461ec98e5523244bfc",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-BoRW97Zu.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230443,
-    "ast_hash": "34d3a15889ab8fb2c56229900a65d4ea",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-BtTFZi7A.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230454,
-    "ast_hash": "156408e77b124db620d2a38dc28232fa",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-BzVVhA-g.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230464,
-    "ast_hash": "732d3d0c41be6939c40918d27b2e0c5e",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-C1ml6e-d.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230474,
-    "ast_hash": "8f9eddf926394680fd0899ef0d837824",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-CNQ5_Qk0.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230483,
-    "ast_hash": "781c7e0faad47189cb9a8173347e7dad",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-CYJ0Mz6O.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230493,
-    "ast_hash": "9eff9ca9892b6bf64f30f7ef076f57ff",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-Cfb6MYoH.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230502,
-    "ast_hash": "9d3993685d2121d430d40e125d5f7faa",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-ChTpTNFN.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230512,
-    "ast_hash": "451682bfd4a37d2304ab3164e8492323",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-CjdKhNyQ.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230521,
-    "ast_hash": "068ceb56c5d0a68339b665a4e18f2381",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-Co1iA-oU.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230543,
-    "ast_hash": "6f3953c604b841bef19b6a00f5b9671f",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-CwxN1B0L.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230555,
-    "ast_hash": "2ff3dcbfad1dbaac6cfa728d32a98b0a",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-DGqpN7m4.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230564,
-    "ast_hash": "b45fb83511c653e82c5cf8a40fcc88b3",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-DfZjuOUp.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230574,
-    "ast_hash": "3d345cc8d1d8646f7b0d113bb7d88f6b",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-DyD8EIMC.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230583,
-    "ast_hash": "af65793e22442779bf005374c9143862",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-GBl_l5hj.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230595,
-    "ast_hash": "23589592290d5ae6a07d725c4f5da881",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-L8t7mEuq.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230605,
-    "ast_hash": "df415d3ceb9e3a9f7bc908246a78afd4",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-OEu349e1.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230614,
-    "ast_hash": "3404c014b32090993b270cffac71f827",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-VSU1OE-Y.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230624,
-    "ast_hash": "13c9d9ef920ceee1114d26cdd69f501b",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-bwGNAN31.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230638,
-    "ast_hash": "0df5a1f1097804fcedcddfd3b886a936",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-pQXiklWZ.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230648,
-    "ast_hash": "98c61ad8f27d066ab77aa5ce6d92deb9",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-v0Y---Ul.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230657,
-    "ast_hash": "a5a05b0231697c339fda1d8fb51c6f75",
-    "semantic_hash": ""
-  },
-  "portal/assets/chunk-zaFrU43U.js": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.1230667,
-    "ast_hash": "30e6c490f0c43d2c534710768a9d9ca5",
-    "semantic_hash": ""
-  },
-  "portal/assets/main-YP7FMX2V.js": {
-    "mtime": 1792096145.926611,
-    "seen": 1792098062.1230676,
-    "ast_hash": "59da911ec11f413e72d54c7e8f819481",
-    "semantic_hash": ""
-  },
   "portal/manifest.json": {
-    "mtime": 1792096146.0225852,
-    "seen": 1792098062.1230686,
-    "ast_hash": "12e5f4ba57f2a4079a3bc73f274b3f11",
+    "mtime": 1792101936.7962883,
+    "seen": 1792102046.5309243,
+    "ast_hash": "1b1fb41caec0585a52b0b8c4b79161b2",
     "semantic_hash": ""
   },
   "pyproject.toml": {
@@ -1764,8 +1584,8 @@
     "semantic_hash": ""
   },
   "src/theforge/_forge_portal.py": {
-    "mtime": 1792096146.0147734,
-    "seen": 1792098062.1231773,
+    "mtime": 1792101936.78883,
+    "seen": 1792102046.531108,
     "ast_hash": "9fb2d00417b12b34688a15e087b74899",
     "semantic_hash": ""
   },
@@ -2526,9 +2346,9 @@
     "semantic_hash": ""
   },
   "src/theforge/portal_adapter.py": {
-    "mtime": 1792096495.3914883,
-    "seen": 1792098062.1233068,
-    "ast_hash": "fd3ff187e97c104a674917eb133311c3",
+    "mtime": 1792101552.188768,
+    "seen": 1792102046.5313365,
+    "ast_hash": "03eb4596d4a84bec35089cd488c3bd3c",
     "semantic_hash": ""
   },
   "src/theforge/profiles.py": {
@@ -4554,9 +4374,9 @@
     "semantic_hash": ""
   },
   "tests/test_portal.py": {
-    "mtime": 1792096495.3894882,
-    "seen": 1792098062.123641,
-    "ast_hash": "387e9b724ba588662d142e4a35635d8a",
+    "mtime": 1792102005.971516,
+    "seen": 1792102046.5320537,
+    "ast_hash": "d487f887718dc4042c556f53de963a7c",
     "semantic_hash": ""
   },
   "tests/test_proctree.py": {
@@ -9348,9 +9168,9 @@
     "semantic_hash": ""
   },
   "factory/specs/PROGRAM-ecosystem-2026.md": {
-    "mtime": 1792101334.1181319,
-    "seen": 1792101354.4170187,
-    "ast_hash": "b21c0abcc0a1f4406cde95ff3a5a54ae",
+    "mtime": 1792102088.2185671,
+    "seen": 1792102101.956387,
+    "ast_hash": "e8eb0a1d999267fd019a60adfe73b0d2",
     "semantic_hash": ""
   },
   "factory/specs/active/cyc0-01-program-baseline.md": {
@@ -9456,9 +9276,9 @@
     "semantic_hash": ""
   },
   "portal/assets/index.html": {
-    "mtime": 1792096145.9276109,
-    "seen": 1792098062.124508,
-    "ast_hash": "60b963103ee9ff0a2fea52f8abaae611",
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.533626,
+    "ast_hash": "6dd11584f8e0a605ee397c05c78d18e6",
     "semantic_hash": ""
   },
   "tests/fixtures/workspaces/api/openapi.yaml": {
@@ -9759,6 +9579,192 @@
     "mtime": 1792100361.8901143,
     "seen": 1792100467.8065472,
     "ast_hash": "b9eb408e4aee385c479f3bcf3cc381f2",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-7_l-b4Tr.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308585,
+    "ast_hash": "ac507a0be590b0bc00ee77159e9702d3",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-B0Iad6pD.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308616,
+    "ast_hash": "96e0254b28cad9b901d58cd4ba521828",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-B605XnCF.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308743,
+    "ast_hash": "4e1fdf0bf875a95203585505d44c952b",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-B7N3TXcn.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.530878,
+    "ast_hash": "81c6d01181ea5ce23645a4cf537ac3e0",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BAj6yGem.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.53088,
+    "ast_hash": "96d933cbaabe3ef8095f0e4647fda2d5",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BGUitn2r.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308816,
+    "ast_hash": "96b302aaffa565aa51313a123806ba03",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BVKnCv85.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308838,
+    "ast_hash": "aa6b3f11dd65dda0808ab6ea53318b7f",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BYyM9V_w.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.530886,
+    "ast_hash": "2a80ede179f613968434dfc1f79617a6",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BaQMhq-G.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308871,
+    "ast_hash": "6864b2418e475d39fc485c9b96fde075",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BavOrxVm.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308893,
+    "ast_hash": "a67628ee8cc307813a76e796d97de7eb",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-Bb0C24YV.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308905,
+    "ast_hash": "7a5c43f34b6b341f7f057cf46653fc60",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-BfCFGPzs.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308924,
+    "ast_hash": "f3e58a07eb272838cf28bb4268de7f7f",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-C2t4OUVu.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308938,
+    "ast_hash": "9efeeb41495ac0d68eb449044823a9da",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-C3pI4QjU.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.530896,
+    "ast_hash": "fb8bc4542eaa905771375d37a32ab232",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-C4gpbtbP.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5308974,
+    "ast_hash": "24bb433f1e53bdde6a96d28481f43a3c",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-CGWeHhKY.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.530899,
+    "ast_hash": "141305587cf43103c225ad3d96947c65",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-CJCT86Dr.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309005,
+    "ast_hash": "88a5ca9e3d62496ddacabad20b2510fd",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-CXcsLDPJ.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309017,
+    "ast_hash": "d0bf069b87a3f0b411d647d60f4d240d",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-CcjxoLxw.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309036,
+    "ast_hash": "977ca079780945e835768753421c4c1e",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-D-gBPXHa.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.530905,
+    "ast_hash": "2c70caa29a7df8204b6664ebd7ee661a",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-D3eZogIe.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309067,
+    "ast_hash": "f3f1dd1d8b91ba5d16d86337ff7f0611",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-DQU0VyoQ.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309083,
+    "ast_hash": "da24834d9ddfe7e52a25d62d8a6e80f5",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-DqWNkF1O.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.53091,
+    "ast_hash": "510d59defcd90b31f7b3a8ed7bc501de",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-DuPPkSIE.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309114,
+    "ast_hash": "770e43ba3ad602da1f8edf867d80019d",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-DyIHOW_a.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.530913,
+    "ast_hash": "f6799a589260bfd2658aaf8b8aecd3a5",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-Fx4zSGL5.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309145,
+    "ast_hash": "ac4d475bdb6ff53ea96410e583cdf738",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-UBKt05Rg.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309157,
+    "ast_hash": "ca1543e0951cc02b315211bc553aa09e",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-htnJDQEY.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309172,
+    "ast_hash": "8187fa4b0dab5a408e011045d016a8b0",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-kXRFMGqe.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309186,
+    "ast_hash": "46dca0613641bdebf85997a02486b245",
+    "semantic_hash": ""
+  },
+  "portal/assets/chunk-qe3u763a.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309203,
+    "ast_hash": "5e79fbfdcfae5f0a2af28a31ca59ac7d",
+    "semantic_hash": ""
+  },
+  "portal/assets/main-QDFVZK3T.js": {
+    "mtime": 1792101916.423696,
+    "seen": 1792102046.5309215,
+    "ast_hash": "a7d51451b5303af581f15eb23cf6144d",
     "semantic_hash": ""
   }
 }

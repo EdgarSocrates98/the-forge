@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `main` |
-| commit | `ba461d6` |
-| docs inventoried | 548 (excl. GENERATED mirrors: 396; vendored upstream: 0) |
+| commit | `ccff926` |
+| docs inventoried | 568 (excl. GENERATED mirrors: 416; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 548
+- `AUTOMATICALLY_CHECKED`: 568
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -20,18 +20,18 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Category counts
 
 - `GENERATED`: 152
-- `UNKNOWN`: 150
+- `UNKNOWN`: 152
 - `ADR`: 61
 - `USER_GUIDE`: 55
 - `SDD_ARTIFACT`: 35
 - `RELEASE_REPORT`: 34
+- `GETTING_STARTED`: 25
 - `SKILL`: 16
 - `HOW_TO`: 11
-- `GETTING_STARTED`: 8
 - `CONTRACT`: 7
 - `ARCHITECTURE`: 5
+- `AGENT_INSTRUCTIONS`: 4
 - `TEST_EVIDENCE`: 4
-- `AGENT_INSTRUCTIONS`: 3
 - `CONCEPT`: 3
 - `REFERENCE`: 2
 - `TUTORIAL`: 1
