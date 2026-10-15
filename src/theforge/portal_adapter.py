@@ -98,6 +98,7 @@ class TheForgePortal(fp.PortalAdapter):
             fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
             fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
             fp.Operation("GET", "/versions", lambda ctx: self._versions()),
+            fp.Operation("GET", "/lab", lambda ctx: self._lab()),
             fp.Operation("POST", "/installation/plan", self._install_plan, mutating=True),
             fp.Operation(
                 "POST",
@@ -338,6 +339,51 @@ class TheForgePortal(fp.PortalAdapter):
     # ------------------------------------------------------------------
     # installation lifecycle — the-forge's own install on the workspace
     # ------------------------------------------------------------------
+    def _lab(self) -> dict[str, Any]:
+        """Forge Lab data (cyc9-10) — real receipts + reports emitted by
+        `theforge lab collect` under benchmarks/. Nothing is synthesized:
+        absent artifacts render as empty lists, malformed lines as notes."""
+        bench = _REPO_ROOT / "docs" / "programs" / "ecosystem-2026" / "benchmarks"
+        runs: list[dict[str, Any]] = []
+        reports: list[dict[str, Any]] = []
+        notes: list[str] = []
+        if bench.is_dir():
+            for f in sorted(bench.glob("results-*.jsonl")):
+                forges: list[dict[str, Any]] = []
+                for i, line in enumerate(f.read_text(encoding="utf-8").splitlines()):
+                    if not line.strip():
+                        continue
+                    try:
+                        rec = json.loads(line)
+                    except json.JSONDecodeError:
+                        notes.append(f"{f.name}:{i + 1} unparsed line skipped")
+                        continue
+                    forges.append(
+                        {
+                            "forge": rec.get("forge"),
+                            "status": rec.get("status"),
+                            "suite": rec.get("suite"),
+                            "mode": rec.get("mode"),
+                            "results": rec.get("results") or [],
+                        }
+                    )
+                runs.append({"file": f.name, "forges": forges})
+            for f in sorted(bench.glob("*.md")):
+                if f.name == "methodology.md":
+                    continue
+                reports.append(
+                    {
+                        "file": f.name,
+                        "content": f.read_text(encoding="utf-8")[:60000],
+                    }
+                )
+        return {
+            "dir": str(bench.relative_to(_REPO_ROOT)) if bench.is_dir() else None,
+            "runs": runs,
+            "reports": reports,
+            "notes": notes,
+        }
+
     def _install_plan(self, ctx: fp.RequestContext) -> dict[str, Any]:
         scope = (ctx.body or {}).get("scope", "project")
         if scope not in _SCOPES:

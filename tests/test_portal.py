@@ -466,3 +466,29 @@ def test_versions_reports_real_local_state(target: Path) -> None:
     assert out["rollback"]["supported"] is True
     assert "theforge install" in out["rollback"]["hint"]
     assert out["pending"] is None and out["upgrade_plan"] is None
+
+
+def test_lab_reads_real_benchmark_artifacts(target: Path) -> None:
+    """cyc9-10: GET /lab surfaces real collected runs + reports from
+    docs/programs/ecosystem-2026/benchmarks — nothing synthesized; absent
+    dir yields honest nulls; malformed lines become notes, not crashes."""
+    out = TheForgePortal(target)._lab()
+
+    bench = ROOT / "docs" / "programs" / "ecosystem-2026" / "benchmarks"
+    if bench.is_dir():
+        assert out["dir"] == "docs/programs/ecosystem-2026/benchmarks"
+        expected_runs = sorted(p.name for p in bench.glob("results-*.jsonl"))
+        assert [r["file"] for r in out["runs"]] == expected_runs
+        expected_reports = sorted(
+            p.name for p in bench.glob("*.md") if p.name != "methodology.md"
+        )
+        assert [r["file"] for r in out["reports"]] == expected_reports
+        # every forge row traces to a parsed receipt line — no invention
+        for run in out["runs"]:
+            for forge in run["forges"]:
+                assert isinstance(forge["results"], list)
+    else:
+        assert out["dir"] is None
+        assert out["runs"] == [] and out["reports"] == []
+
+    assert isinstance(out["notes"], list)
