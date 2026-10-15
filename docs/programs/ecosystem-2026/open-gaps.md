@@ -16,7 +16,7 @@ Classificação P0 (bloqueia release) / P1 (bloqueia claims) / P2 (adoção). Cr
 | ~~G-18~~ | ~~api-forge `ui/wizard.py` diverge do kit~~ **fechado por cyc8-02** — drift era em 6 repos (edições locais "native &lt;Product&gt; commands"); re-vendored do canônico, `test_experience_parity` 4/4 verde | pytest 2026-10-15 | cyc8-02 |
 | G-19 | Vendored portal assets estavam stale nos 7 siblings — **fechado por cyc8-02** (`vendor.py` re-sync; `forge/PortalAssets/1` manifest) | `vendor.py --check` | cyc8-02 |
 | ~~G-20~~ | ~~api-forge `cryptography>=43,<47` = 46.0.7 com 4 CVEs~~ **fechado 2026-10-15** — bump autorizado pelo usuário: `>=50,<51` → 50.0.2, re-audit zero CVEs, 110 testes keys/report verdes | `audit/api-forge.json` | cyc8-04 |
-| G-21 | the-forge declara MIT sem `LICENSE`; forge-portal e forge-doctor-api sem licença alguma — decisão de dono (não inventar) | LICENSE scan | cyc10-02 |
+| ~~G-21~~ | ~~licença ausente em 3 repos~~ **fechado 2026-10-15** — dono decidiu MIT uniforme (cycle-10-decisions.md D1): `LICENSE` MIT adicionado em the-forge, forge-portal, forge-doctor-api; `license`/metadata declarados | LICENSE nos 9 | cyc10-02 |
 
 ## P1
 
