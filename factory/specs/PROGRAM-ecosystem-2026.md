@@ -13,7 +13,7 @@ Fonte: `prompt_evo_cycles.md` (Cycles 8, 9, 10). Decomposto em 20 specs na conve
 | cyc8-06 | forge-portal | 1 | p0 | Portal: Release Management UI |
 | cyc9-01 | the-forge | 2 | p1 | Forge Lab coordenador federado + harness (modos A/B/C) |
 | cyc9-02 | the-forge | 2 | p1 | Métricas + ground truth + regression gates |
-| cyc9-03 | the-forge | 3 | p1 | Cenários multi-Forge |
+| cyc9-03 (done) | the-forge | 3 | p1 | Cenários multi-Forge |
 | cyc9-04 | spark-forge-aws | 3 | p1 | Cenários Data Engineering AWS |
 | cyc9-05 | spark-forge-azure | 3 | p1 | Cenários Data Engineering Azure |
 | cyc9-06 | api-forge | 3 | p1 | Cenários API Engineering |

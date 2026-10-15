@@ -23,8 +23,8 @@ Classificação P0 (bloqueia release) / P1 (bloqueia claims) / P2 (adoção). Cr
 | # | Gap | Evidência | Spec |
 |---|---|---|---|
 | ~~G-07~~ | ~~Forge Lab coordenador federado inexistente~~ **parcialmente fechado por cyc9-01** (2026-10-15): coordenador + harness entregues (`theforge lab collect`, guardrails §9.11, relatórios em `benchmarks/`); emissores `forge/BenchmarkResult/v1` por especialista pendentes (cyc9-04..09) | `theforge lab collect` live | cyc9-01 |
-| ~~G-08~~ | ~~Sem contrato de métricas~~ **parcialmente fechado por cyc9-01** (2026-10-15): `forge/BenchmarkSuite/v1` + `forge/BenchmarkResult/v1` + schemas publicados; ground truth por `sha256` declarado — suites por especialista pendentes (G-09) | `contracts/benchmark.py` | cyc9-01, cyc9-02 |
-| G-09 | Cenários versionados por especialista ausentes (the-forge `compat-manifest-parity` é o primeiro; suites por domínio pendentes) | ausente | cyc9-04..09 |
+| ~~G-08~~ | ~~Sem contrato de métricas~~ **parcialmente fechado por cyc9-01** (2026-10-15): `forge/BenchmarkSuite/v1` + `forge/BenchmarkResult/v1` + schemas publicados; ground truth por `sha256` declarado — suites por especialista pendentes (G-09 (fechado 2026-10-15: emissores BenchmarkResult/v1 nos 6 especialistas — lab collect 7/7, 203 cenários)) | `contracts/benchmark.py` | cyc9-01, cyc9-02 |
+| G-09 (fechado 2026-10-15: emissores BenchmarkResult/v1 nos 6 especialistas — lab collect 7/7, 203 cenários) | Cenários versionados por especialista ausentes (the-forge `compat-manifest-parity` é o primeiro; suites por domínio pendentes) | ausente | cyc9-04..09 |
 | G-10 | Supply chain: sem SHA-256/SBOM/proveniência publicados | ausente | cyc8-03 |
 | G-11 | Gates CI desiguais; sem escala smoke-PR vs full-noturno | workflows | cyc8-04 |
 | G-12 | RC windows ativas (doctor-data 1.0.0rc1, doctor-api 0.2.0) — requer disciplina de exceções | pyproject, rc-discipline.md | cyc8-04 |

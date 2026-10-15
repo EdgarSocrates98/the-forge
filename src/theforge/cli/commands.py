@@ -316,7 +316,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
     return 4 if data["summary"]["failed"] else 0
 
 
-def _load_results_file(path: Path) -> list[BenchmarkResult]:
+def _load_results_file(path: Path) -> "list[BenchmarkResult]":
     """A results file is JSONL (collector output) or one receipt object."""
     from theforge.contracts.benchmark import parse_result
 
