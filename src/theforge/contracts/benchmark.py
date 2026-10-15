@@ -37,6 +37,49 @@ TIMESTAMP_RE = re.compile(
 )
 LabMode = Literal["A", "B", "C"]
 Verdict = Literal["pass", "fail", "error", "skipped"]
+MetricState = Literal["measured", "not_available", "not_applicable"]
+GateDirection = Literal["higher_better", "lower_better", "equal", "informative"]
+
+# §9.5 canonical metric names (dotted suffixes allowed, e.g.
+# ``precision.api``). ``direction`` drives regression gates —
+# ``informative`` metrics are reported but never gate on their own.
+STANDARD_METRICS: dict[str, str] = {
+    "duration_ms": "lower_better",
+    "tokens": "lower_better",
+    "cost_usd": "lower_better",
+    "tool_calls": "lower_better",
+    "handoffs": "lower_better",
+    "handoff_cost_ms": "lower_better",
+    "context_bytes": "lower_better",
+    "duplication_ratio": "lower_better",
+    "success": "higher_better",
+    "test_pass_rate": "higher_better",
+    "precision": "higher_better",
+    "recall": "higher_better",
+    "false_positives": "lower_better",
+    "evidence_coverage": "higher_better",
+    "reproducibility_rate": "higher_better",
+    "components_matched": "higher_better",
+    "components_total": "informative",  # denominator — reported, never gated
+    "transported_context_bytes": "lower_better",
+    "routing_failures": "lower_better",
+    "re_executions": "lower_better",
+    "labs_invoked": "informative",  # environment-dependent count
+    "participants_declared": "informative",
+    "participants_present": "higher_better",
+    "receipt_integrity": "higher_better",
+}
+
+
+def metric_direction(name: str) -> GateDirection | None:
+    """Direction of a standard metric; ``None`` for names outside §9.5 —
+    unknown metrics never gate, they are reported as ``unknown``."""
+    if name in STANDARD_METRICS:
+        return STANDARD_METRICS[name]  # type: ignore[return-value]
+    base = name.split(".", 1)[0]
+    if base in STANDARD_METRICS:
+        return STANDARD_METRICS[base]  # type: ignore[return-value]
+    return None
 
 
 def _check_rel_path(path: str, *, what: str) -> None:
@@ -112,10 +155,44 @@ class BenchmarkSuite:
 
 @dataclass(frozen=True, kw_only=True)
 class MetricValue:
-    """One measured value with its unit — the denominator is part of the data."""
+    """One metric datum: ``measured`` carries ``value``; ``not_available``
+    (the lab tried, could not measure) and ``not_applicable`` (does not
+    apply to this scenario) carry none — unknown is never a zero (§9.5)."""
 
-    value: int | float | str
+    value: int | float | str | None = None
     unit: str = ""
+    state: MetricState = "measured"
+
+    def __post_init__(self) -> None:
+        if self.state == "measured":
+            if self.value is None:
+                raise ContractError("metric: state 'measured' requires a value")
+        elif self.value is not None:
+            raise ContractError(f"metric: state {self.state!r} must not carry a value")
+
+    @property
+    def measured(self) -> bool:
+        return self.state == "measured"
+
+
+@dataclass(frozen=True, kw_only=True)
+class JudgeDeclaration:
+    """LLM-as-judge registration (§9.8): mandatory whenever a judge scores
+    a scenario — model, rubric reference, human-validated sample count and
+    declared limitations travel with the receipt."""
+
+    model: str
+    rubric: str
+    human_validated_samples: int | None = None
+    limitations: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.model:
+            raise ContractError("judge: model is required")
+        if not self.rubric:
+            raise ContractError("judge: rubric reference is required")
+        if self.human_validated_samples is not None and self.human_validated_samples < 0:
+            raise ContractError("judge: human_validated_samples must be >= 0")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -132,6 +209,7 @@ class ScenarioResult:
     duration_ms: int | None = None
     evidence_ref: str = ""
     detail: str = ""
+    judge: JudgeDeclaration | None = None
 
     def __post_init__(self) -> None:
         if not SCENARIO_ID_RE.fullmatch(self.scenario_id):
@@ -159,6 +237,9 @@ class BenchmarkResult:
     producer: Producer
     results: list[ScenarioResult]
     external: bool = False
+    subject: str | None = None  # model/toolchain under test — separates
+    # model variation from infra variation (§9.7); comparisons only pair
+    # equal subjects
     notes: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -182,6 +263,60 @@ class BenchmarkResult:
         ids = [r.scenario_id for r in self.results]
         if len(set(ids)) != len(ids):
             raise ContractError("benchmark result: duplicate scenario ids")
+
+
+MULTIFORGE_SCHEMA = "forge/MultiForgeScenario/v1"
+
+
+@dataclass(frozen=True, kw_only=True)
+class MultiForgeScenario:
+    """``forge/MultiForgeScenario/v1`` — a versioned scenario exercising
+    composition across >= 2 forges (cyc9-03, §9.3/§9.4).
+
+    ``participants`` carries real forge ids; ``expected`` declares the
+    checkable expectations (presence, lab declarations, minimum ok runs)
+    so the runner verifies composition instead of asserting it.
+    """
+
+    schema: str = MULTIFORGE_SCHEMA
+    id: str
+    title: str
+    intent: str
+    participants: list[str]
+    expected: dict[str, Any] = field(default_factory=dict)
+    mode: LabMode = "A"
+    ground_truth: str | None = None
+    notes: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != MULTIFORGE_SCHEMA:
+            raise ContractError(
+                f"multiforge scenario: unsupported schema {self.schema!r}"
+            )
+        if not SCENARIO_ID_RE.fullmatch(self.id):
+            raise ContractError(f"multiforge scenario: bad id {self.id!r}")
+        if len(self.participants) < 2:
+            raise ContractError(
+                "multiforge scenario: at least 2 participants required — "
+                "a single-specialist scenario is not multi-forge"
+            )
+        if len(set(self.participants)) != len(self.participants):
+            raise ContractError("multiforge scenario: duplicate participants")
+        for fid in self.participants:
+            if not FORGE_ID_RE.fullmatch(fid):
+                raise ContractError(f"multiforge scenario: bad participant id {fid!r}")
+        if self.ground_truth is not None:
+            _check_rel_path(self.ground_truth, what="ground_truth")
+
+
+def parse_multiforge_scenario(data: Any, *, strict: bool = False) -> MultiForgeScenario:
+    return from_dict(MultiForgeScenario, data, strict=strict)
+
+
+def load_multiforge_scenario(path: Path) -> MultiForgeScenario:
+    return parse_multiforge_scenario(
+        json.loads(path.read_text(encoding="utf-8")), strict=True
+    )
 
 
 def parse_suite(data: Any, *, strict: bool = False) -> BenchmarkSuite:

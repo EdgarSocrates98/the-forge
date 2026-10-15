@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, cast
 
 if TYPE_CHECKING:
+    from theforge.contracts.benchmark import BenchmarkResult
     from theforge.contracts.specialist import DelegationRequest
 
 from theforge.adaptive import advance_experiment, build_context_roi, recommend_context_budget
@@ -313,6 +314,48 @@ def cmd_lab(args: argparse.Namespace) -> int:
     if interrupted:
         return 130
     return 4 if data["summary"]["failed"] else 0
+
+
+def _load_results_file(path: Path) -> list[BenchmarkResult]:
+    """A results file is JSONL (collector output) or one receipt object."""
+    from theforge.contracts.benchmark import parse_result
+
+    text = path.read_text(encoding="utf-8")
+    out: list[BenchmarkResult] = []
+    stripped = text.lstrip()
+    if stripped.startswith("["):
+        for item in json.loads(text):
+            out.append(parse_result(item, strict=True))
+        return out
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    for ln in lines:
+        out.append(parse_result(json.loads(ln), strict=True))
+    return out
+
+
+def cmd_lab_gate(args: argparse.Namespace) -> int:
+    """Regression gate: current vs. baseline receipts (cyc9-02)."""
+    from theforge import lab_gate
+    from theforge.contracts.base import ContractError
+
+    try:
+        current = _load_results_file(Path(args.results).expanduser())
+        baseline = _load_results_file(Path(args.baseline).expanduser())
+    except (OSError, json.JSONDecodeError, ContractError) as exc:
+        raise UsageError(f"lab gate: cannot load results — {exc}") from exc
+    policy = lab_gate.DEFAULT_POLICY
+    if getattr(args, "policy", None):
+        try:
+            policy = lab_gate.parse_policy(
+                json.loads(Path(args.policy).expanduser().read_text(encoding="utf-8"))
+            )
+        except (OSError, json.JSONDecodeError, ContractError) as exc:
+            raise UsageError(f"lab gate: invalid policy — {exc}") from exc
+    data = lab_gate.evaluate(current, baseline, policy)
+    data["results_file"] = str(args.results)
+    data["baseline_file"] = str(args.baseline)
+    _emit(args, data, render.lab_gate)
+    return 1 if data["verdict"] == "fail" else 0
 
 
 def _list(args: argparse.Namespace, refresh: bool) -> int:

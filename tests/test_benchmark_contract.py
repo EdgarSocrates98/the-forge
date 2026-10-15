@@ -5,6 +5,8 @@ error, never silently certified. Mirrors the strictness contract of
 ``forge/EcosystemCompatibility/v1`` (cyc8-01).
 """
 
+from pathlib import Path
+
 import pytest
 
 from theforge.contracts.base import ContractError
@@ -201,3 +203,157 @@ def test_metric_value_types():
     result = parse_result(doc, strict=True)
     assert result.results[0].metrics["count"].value == 3
     assert result.results[0].metrics["label"].value == "p95"
+
+
+# --- cyc9-02: explicit unmeasured states, judge declaration, subject ---
+
+
+@pytest.mark.parametrize(
+    "metric,state",
+    [
+        ({"state": "not_available"}, "not_available"),
+        ({"state": "not_applicable", "unit": "usd"}, "not_applicable"),
+    ],
+)
+def test_metric_unmeasured_states(metric, state):
+    doc = {
+        **RESULT,
+        "results": [
+            {"scenario_id": "x-ok", "verdict": "pass", "metrics": {"tokens": metric}},
+        ],
+    }
+    result = parse_result(doc, strict=True)
+    m = result.results[0].metrics["tokens"]
+    assert m.state == state
+    assert m.value is None
+    assert not m.measured
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        {"state": "measured"},  # measured without value
+        {},  # defaults to measured, no value
+        {"value": None},  # explicit null still defaults to measured
+        {"state": "not_available", "value": 0},  # unmeasured must not carry a value
+        {"state": "bogus", "value": 1},  # unknown state
+    ],
+)
+def test_metric_state_value_invariant(metric):
+    doc = {
+        **RESULT,
+        "results": [
+            {"scenario_id": "x-ok", "verdict": "pass", "metrics": {"tokens": metric}},
+        ],
+    }
+    with pytest.raises(ContractError):
+        parse_result(doc, strict=True)
+
+
+def test_judge_declaration_roundtrip():
+    doc = {
+        **RESULT,
+        "results": [
+            {
+                "scenario_id": "x-ok",
+                "verdict": "pass",
+                "judge": {
+                    "model": "judge-7b",
+                    "rubric": "evals/rubrics/diagnosis-v2.md",
+                    "human_validated_samples": 40,
+                    "limitations": ["single-domain rubric"],
+                },
+            }
+        ],
+    }
+    result = parse_result(doc, strict=True)
+    judge = result.results[0].judge
+    assert judge is not None
+    assert judge.model == "judge-7b"
+    assert judge.human_validated_samples == 40
+
+
+@pytest.mark.parametrize(
+    "judge",
+    [
+        {"rubric": "r.md"},  # model required
+        {"model": "m"},  # rubric required
+        {"model": "m", "rubric": "r", "human_validated_samples": -1},
+    ],
+)
+def test_judge_declaration_rejects(judge):
+    doc = {
+        **RESULT,
+        "results": [{"scenario_id": "x-ok", "verdict": "pass", "judge": judge}],
+    }
+    with pytest.raises(ContractError):
+        parse_result(doc, strict=True)
+
+
+def test_subject_field_roundtrip():
+    doc = {**RESULT, "subject": "model-foo-1.2"}
+    result = parse_result(doc, strict=True)
+    assert result.subject == "model-foo-1.2"
+    assert parse_result(RESULT, strict=True).subject is None
+
+
+def test_standard_metric_directions():
+    from theforge.contracts.benchmark import metric_direction
+
+    assert metric_direction("precision") == "higher_better"
+    assert metric_direction("duration_ms") == "lower_better"
+    assert metric_direction("precision.api") == "higher_better"  # dotted suffix
+    assert metric_direction("exotic_metric") is None  # never gates
+
+
+# --- cyc9-03: MultiForgeScenario ---
+
+MF_SCENARIO = {
+    "schema": "forge/MultiForgeScenario/v1",
+    "id": "api-doctor",
+    "title": "diagnosis + remediation",
+    "intent": "doctor diagnoses; api plans",
+    "participants": ["forge-doctor-api", "api-forge"],
+    "expected": {"participants_present": True, "min_labs_ok": 0},
+}
+
+
+def test_multiforge_scenario_roundtrip():
+    from theforge.contracts.benchmark import parse_multiforge_scenario
+
+    sc = parse_multiforge_scenario(MF_SCENARIO, strict=True)
+    assert sc.id == "api-doctor"
+    assert sc.participants == ["forge-doctor-api", "api-forge"]
+
+
+@pytest.mark.parametrize(
+    "patch,match",
+    [
+        ({"schema": "forge/MultiForgeScenario/v0"}, "unsupported schema"),
+        ({"id": "Bad_Id"}, "bad id"),
+        ({"participants": ["only-one"]}, "at least 2"),
+        ({"participants": ["a-forge", "a-forge"]}, "duplicate"),
+        ({"participants": ["ok-forge", "Bad_Id"]}, "bad participant id"),
+        ({"ground_truth": "/abs/gt.json"}, "relative path"),
+        ({"ground_truth": "../gt.json"}, "must not escape"),
+    ],
+)
+def test_multiforge_scenario_rejects(patch, match):
+    from theforge.contracts.benchmark import parse_multiforge_scenario
+
+    doc = {**MF_SCENARIO, **patch}
+    with pytest.raises(ContractError, match=match):
+        parse_multiforge_scenario(doc, strict=True)
+
+
+def test_multiforge_library_parses_strict():
+    """Every versioned scenario in labs/multiforge/ is contract-valid."""
+    from theforge.contracts.benchmark import load_multiforge_scenario
+
+    root = Path(__file__).resolve().parents[1] / "labs" / "multiforge"
+    files = sorted(p for p in root.glob("*.json") if p.name != "suite.json")
+    assert len(files) >= 7, "cyc9-03 requires the §9.3 scenario set"
+    for f in files:
+        sc = load_multiforge_scenario(f)
+        assert sc.id == f.stem
+        assert len(sc.participants) >= 2

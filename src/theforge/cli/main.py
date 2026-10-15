@@ -917,6 +917,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     lab_collect.add_argument("--out", default=None, metavar="DIR", help="report directory override")
     lab_collect.set_defaults(handler=commands.cmd_lab)
+    lab_gate = lab.add_parser(
+        "gate",
+        parents=[common],
+        help="compare current results-*.jsonl against a baseline — regression gate (cyc9-02)",
+    )
+    lab_gate.add_argument(
+        "--results",
+        required=True,
+        metavar="FILE",
+        help="current results JSONL (or single BenchmarkResult JSON)",
+    )
+    lab_gate.add_argument(
+        "--baseline",
+        required=True,
+        metavar="FILE",
+        help="baseline results JSONL — the calibration source, never an invented threshold",
+    )
+    lab_gate.add_argument(
+        "--policy",
+        default=None,
+        metavar="FILE",
+        help="forge/LabGatePolicy/v1 JSON — explicit tolerances; absent → "
+        "baseline spread, then exact comparison",
+    )
+    lab_gate.set_defaults(handler=commands.cmd_lab_gate)
 
     remote = sub.add_parser(
         "remote", help="remote-execution trust layer (remote-policy.toml)"

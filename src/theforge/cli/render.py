@@ -1850,3 +1850,26 @@ def lab_collect(data: dict[str, Any]) -> str:
     lines.append(f"report: {_clean(data.get('report'))}")
     lines.append(f"jsonl:  {_clean(data.get('results_jsonl'))}")
     return "\n".join(lines)
+
+
+def lab_gate(data: dict[str, Any]) -> str:
+    lines = [
+        f"lab gate — {data.get('verdict')}  "
+        f"(baseline={data.get('baseline_runs')} run(s), "
+        f"current={data.get('current_runs')} run(s), "
+        f"policy={_clean(data.get('policy'))})"
+    ]
+    for s in data.get("scenarios") or []:
+        lines.append(f"  {s['scenario_id']:<30} {s['verdict']}")
+        if s.get("detail"):
+            lines.append(f"    {_clean(s['detail'])}")
+        for m in s.get("metrics") or []:
+            base = m.get("baseline")
+            cur = m.get("current")
+            pair = f"{base!r} → {cur!r}" if base is not None or cur is not None else "—"
+            tol = f" tol={m['tolerance']}" if m.get("tolerance") is not None else ""
+            lines.append(f"    {m['name']:<28} {m['verdict']:<12} {pair}{tol}")
+    counts = data.get("counts") or {}
+    if counts:
+        lines.append("counts: " + " ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    return "\n".join(lines)

@@ -25,6 +25,11 @@
       }
     },
     "external": {"type": "boolean", "default": false},
+    "subject": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "model/toolchain under test — separates model from infra variation (§9.7)"
+    },
     "results": {
       "type": "array",
       "items": {
@@ -38,17 +43,47 @@
             "type": "object",
             "additionalProperties": {
               "type": "object",
-              "required": ["value"],
               "additionalProperties": false,
               "properties": {
-                "value": {"type": ["number", "string"]},
-                "unit": {"type": "string", "default": ""}
-              }
+                "value": {"type": ["number", "string", "null"]},
+                "unit": {"type": "string", "default": ""},
+                "state": {
+                  "enum": ["measured", "not_available", "not_applicable"],
+                  "default": "measured",
+                  "description": "measured requires value; not_available/not_applicable forbid it — unknown is never zero (§9.5)"
+                }
+              },
+              "oneOf": [
+                {
+                  "required": ["value"],
+                  "properties": {
+                    "state": {"const": "measured"},
+                    "value": {"type": ["number", "string"]}
+                  }
+                },
+                {
+                  "required": ["state"],
+                  "properties": {"state": {"enum": ["not_available", "not_applicable"]}},
+                  "not": {"required": ["value"]}
+                }
+              ]
             }
           },
           "duration_ms": {"type": "integer", "minimum": 0},
           "evidence_ref": {"type": "string"},
-          "detail": {"type": "string"}
+          "detail": {"type": "string"},
+          "judge": {
+            "type": ["object", "null"],
+            "required": ["model", "rubric"],
+            "additionalProperties": false,
+            "properties": {
+              "model": {"type": "string", "minLength": 1},
+              "rubric": {"type": "string", "minLength": 1},
+              "human_validated_samples": {"type": ["integer", "null"], "minimum": 0},
+              "limitations": {"type": "array", "items": {"type": "string"}, "default": []}
+            },
+            "description": "LLM-as-judge registration (§9.8) — mandatory when a judge scores the scenario"
+          }
         }
       }
     },
