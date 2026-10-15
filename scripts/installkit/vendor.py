@@ -60,33 +60,120 @@ exit $LASTEXITCODE
 
 INSTALL_SH = """#!/usr/bin/env bash
 # Forge account install — editable runtime + user-scoped environment.
+# Works from POSIX shells and native Windows Git Bash.
 set -euo pipefail
-cd "$(dirname "$0")"
-PY="$(command -v python3 || command -v python || command -v py)"
+
+_forge_is_sourced=0
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  _forge_is_sourced=1
+fi
+_forge_original_dir=$PWD
+_forge_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+cd "$_forge_root"
+
+_forge_is_git_bash=0
+case "${MSYSTEM:-}:${OSTYPE:-}" in
+  *MSYS*|*MINGW*|*UCRT*|*CYGWIN*) _forge_is_git_bash=1 ;;
+esac
+_forge_dry_run=0
+for arg in "$@"; do
+  if [ "$arg" = "--dry-run" ]; then _forge_dry_run=1; break; fi
+done
+
+PY=""
+PY_ARGS=()
+for candidate in python3 python py; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    PY="$(command -v "$candidate")"
+    case "$(basename -- "$PY")" in
+      py|py.exe) PY_ARGS=(-3) ;;
+    esac
+    break
+  fi
+done
 if [ -z "$PY" ]; then
-  echo "install: no python on PATH (need $PYTHON_SPEC)" >&2; exit 2
+  echo "install: no python on PATH (need $PYTHON_SPEC)" >&2
+  cd "$_forge_original_dir"
+  if [ "$_forge_is_sourced" -eq 1 ]; then return 2; fi
+  exit 2
 fi
 ARGS=(--editable --persist-env --allow-download "$@")
-if [ "${PY##*/}" = "py" ]; then "$PY" -3 scripts/forge_bootstrap.py "${ARGS[@]}"; else "$PY" scripts/forge_bootstrap.py "${ARGS[@]}"; fi
-status=$?
+if "$PY" "${PY_ARGS[@]}" scripts/forge_bootstrap.py "${ARGS[@]}"; then
+  status=0
+else
+  status=$?
+fi
 if [ "$status" -eq 0 ]; then
-  echo "Install complete. Open new shell or run: source ~/.config/forjas/env.sh"
+  env_file="${XDG_CONFIG_HOME:-$HOME/.config}/forjas/env.sh"
+  if [ "$_forge_dry_run" -eq 1 ]; then
+    echo "Install plan complete. No files, variables or registry entries were written."
+  elif [ "$_forge_is_git_bash" -eq 1 ]; then
+    echo "Install complete. Windows user variables saved in HKCU and Git Bash environment saved in: $env_file"
+    echo "Reload current Git Bash with: source '$env_file'"
+  else
+    echo "Install complete. Open a new shell or run: source '$env_file'"
+  fi
+  if [ "$_forge_is_sourced" -eq 1 ] && [ -f "$env_file" ]; then
+    # A sourced installer can update its caller; an executed child cannot.
+    # shellcheck disable=SC1090
+    . "$env_file"
+  fi
+fi
+cd "$_forge_original_dir"
+if [ "$_forge_is_sourced" -eq 1 ]; then
+  return "$status"
 fi
 exit "$status"
 """
 
-INSTALL_PS1 = """# Forge account install — editable runtime + user-scoped environment.
+INSTALL_PS1 = r"""# Forge account install — editable runtime + user-scoped environment.
+# Persists HKCU variables and can refresh current session when dot-sourced.
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
-$py = $null
-foreach ($c in @("python3", "python", "py")) {
-    $cmd = Get-Command $c -ErrorAction SilentlyContinue
-    if ($cmd) { $py = $cmd.Source; break }
+$isDotSourced = $MyInvocation.InvocationName -eq "."
+$oldLocation = Get-Location
+try {
+    Set-Location -LiteralPath $PSScriptRoot
+    $py = $null
+    $pyArgs = @()
+    foreach ($c in @("python3", "python", "py")) {
+        $cmd = Get-Command $c -CommandType Application -ErrorAction SilentlyContinue
+        if ($cmd) {
+            $py = $cmd.Source
+            if ([IO.Path]::GetFileName($py) -in @("py.exe", "py")) { $pyArgs = @("-3") }
+            break
+        }
+    }
+    if (-not $py) { throw "install: no Python executable on PATH (need $PYTHON_SPEC)" }
+    $installArgs = @("--editable", "--persist-env", "--allow-download") + $args
+    & $py @pyArgs scripts/forge_bootstrap.py @installArgs
+    $status = $LASTEXITCODE
+    if ($status -eq 0) {
+        if ($args -contains "--dry-run") {
+            Write-Host "Install plan complete. No files, variables or registry entries were written."
+            return
+        }
+        # Bootstrap writes HKCU. Copy canonical variables into this process too;
+        # dot-sourcing this script therefore refreshes the caller's session.
+        $config = Get-Content -LiteralPath (Join-Path $PWD "forge.json") -Raw | ConvertFrom-Json
+        $prefix = ([string]$config.forge_id -replace "[^A-Za-z0-9]", "_").ToUpperInvariant()
+        $userEnv = [Environment]::GetEnvironmentVariables("User")
+        foreach ($suffix in @("HOME", "INSTALL_ROOT", "VENV", "PYTHON", "CLI", "LAUNCHER")) {
+            $name = "${prefix}_${suffix}"
+            if ($userEnv.Contains($name)) { Set-Item -Path ("Env:" + $name) -Value ([string]$userEnv[$name]) }
+        }
+        $envFile = Join-Path $(if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $HOME ".config" }) "forjas\env.sh"
+        Write-Host "Install complete. User variables persisted in HKCU:\Environment."
+        Write-Host "Open a new terminal. Git Bash environment file: $envFile"
+        Write-Host "Dot-source to refresh current PowerShell session: .\install.ps1"
+    }
+} catch {
+    Write-Error $_
+    $status = 2
+} finally {
+    Set-Location $oldLocation
 }
-if (-not $py) { Write-Error "install: no python on PATH (need $PYTHON_SPEC)"; exit 2 }
-$installArgs = @("--editable", "--persist-env", "--allow-download") + $args
-if ($py.EndsWith("py.exe")) { & $py -3 scripts/forge_bootstrap.py @installArgs } else { & $py scripts/forge_bootstrap.py @installArgs }
-exit $LASTEXITCODE
+if ($isDotSourced) { return $status }
+exit $status
 """
 
 

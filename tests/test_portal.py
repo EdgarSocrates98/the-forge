@@ -233,9 +233,7 @@ def test_federation_install_auto_plan_and_apply(target: Path, _isolate_home: Pat
         # in-process (no delegated 600s subprocess) — the portal→kit→receipt
         # path is still exercised end-to-end
         self_choices = {**choices, "forge": "the-forge"}
-        code, self_doc = _call(
-            srv, "POST", "/federation/plan", self_choices
-        )
+        code, self_doc = _call(srv, "POST", "/federation/plan", self_choices)
         self_token = self_doc["data"]["plan_token"]
         self_plan = self_doc["data"]["plan"]
         code, applied = _call(
@@ -419,3 +417,52 @@ def test_portal_verb_serves_and_answers(target: Path) -> None:
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+def test_versions_reports_real_local_state(target: Path) -> None:
+    """cyc8-06: GET /versions assembles real data — dist version, the
+    committed ecosystem manifest (sha256 + verdict), CHANGELOG.md and
+    receipts under .forge/install/receipts. Absent data stays null."""
+    out = TheForgePortal(target)._versions()
+
+    installed = out["installed"]
+    assert installed["version"] is None or isinstance(installed["version"], str)
+    assert installed["channel"] is None
+    assert out["available"]["version"] is None
+    assert "offline" in out["available"]["source"]
+
+    manifest = Path(__file__).resolve().parents[1] / "ecosystem-compatibility.json"
+    if manifest.is_file():
+        import hashlib
+
+        assert (
+            out["integrity"]["manifest_sha256"] == hashlib.sha256(manifest.read_bytes()).hexdigest()
+        )
+        assert out["integrity"]["manifest_release"] is not None
+        assert "forge/EcosystemCompatibility/v1" in out["compat"]
+    else:
+        assert out["integrity"]["manifest_sha256"] is None
+        assert "unverified" in out["compat"]
+
+    receipts_dir = target / ".forge" / "install" / "receipts"
+    receipts_dir.mkdir(parents=True)
+    (receipts_dir / "apply-20261015T120000Z.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/InstallReceipt/v1",
+                "operation": "apply",
+                "status": "completed",
+                "created_at": "2026-10-15T12:00:00Z",
+                "created_by": "theforge/0.5.0",
+            }
+        )
+    )
+    out = TheForgePortal(target)._versions()
+    assert [r["file"] for r in out["receipts"]] == ["apply-20261015T120000Z.json"]
+    # receipts carry no version-transition field — created_by is the
+    # installer's version, so history version stays honestly null.
+    assert out["history"][0]["version"] is None
+    assert out["history"][0]["at"] == "2026-10-15T12:00:00Z"
+    assert out["rollback"]["supported"] is True
+    assert "theforge install" in out["rollback"]["hint"]
+    assert out["pending"] is None and out["upgrade_plan"] is None

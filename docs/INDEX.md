@@ -14,12 +14,18 @@ _Start here — installation, first run, tutorials._
 
 - [Onboarding Audit — Forge Experience 3.0](experience-3/onboarding-audit.md)
 
+### factory/
+
+- [Grill Gate](../factory/specs/active/lf-0004-family-onboarding-router.md)
+- [Onboarding, Getting Started e Golden Paths](../factory/specs/inbox/cyc10-01-onboarding-golden-paths.md)
+
 ### graph-studio/
 
 - [Quickstart](graph-studio/quickstart.md)
 
 ### installation/
 
+- [Onboarding da família de Forjas](installation/family-onboarding.md)
 - [Quickstart — The Forge (EN)](installation/quickstart.en.md)
 - [Quickstart — the-forge](installation/quickstart.md)
 
@@ -49,6 +55,12 @@ _Task-oriented guides and workflows._
 - [theforge-sparkforge-aws-adapter](../adapters/sparkforge_aws/README.md)
 - [theforge-sparkforge-azure-adapter](../adapters/sparkforge_azure/README.md)
 
+### audit/
+
+- [Forge ecosystem audit](../audit/README.md)
+- [Validation matrix](../audit/matrix/README.md)
+- [Installation report](../audit/reports/installation-report.md)
+
 ### docs/
 
 - [Documentação — índice](README.md)
@@ -61,6 +73,10 @@ _Task-oriented guides and workflows._
 ### experience-3/
 
 - [Installation Audit — Forge Experience 3.0](experience-3/installation-audit.md)
+
+### factory/
+
+- [LF-0003 — Bare install wizard](../factory/specs/active/lf-0003-bare-install-wizard.md)
 
 ### graph-studio/
 
@@ -76,6 +92,7 @@ _Task-oriented guides and workflows._
 
 ### installation/
 
+- [Account-scoped installation](installation/account-installation.md)
 - [the-forge + Claude Code](installation/claude-code.md)
 - [the-forge + Codex CLI](installation/codex-cli.md)
 - [the-forge + GitHub Copilot CLI](installation/copilot-cli.md)
@@ -113,6 +130,10 @@ _Task-oriented guides and workflows._
 - [Risk Matrix — portable installation](portable-installation/risk-matrix.md)
 - [Scope Cut — what's in this wave](portable-installation/scope-cut.md)
 
+### programs/
+
+- [Programa ecosystem-2026](programs/ecosystem-2026/README.md)
+
 ### reality/
 
 - [Specialist reality manifests](reality/README.md)
@@ -132,6 +153,15 @@ _Command, contract, schema and tool references._
 ### docs/
 
 - [Contract stability scorecard — `forge-contracts` extraction study](contract-stability.md)
+
+### engineering-excellence/
+
+- [Federated Capability Descriptor](engineering-excellence/federation-contract.md)
+- [External Practice References](engineering-excellence/references.md)
+
+### factory/
+
+- [Grill Gate](../factory/specs/active/lf-0002-install-contract-wizard.md)
 
 ### graph-studio/
 
@@ -211,6 +241,7 @@ _Concepts, architecture and design decisions._
 - [ADR 0057 — Loop Factory como fila operacional de specs](adr/0057-loop-factory.md)
 - [ADR 0058 — Instalação portátil: kit vendored, escopos e família](adr/0058-portable-installation.md)
 - [ADR 0059 — Forge Portal: UI local opcional e command center](adr/0059-forge-portal-command-center.md)
+- [ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?](adr/0060-forge-lab-coordinator.md)
 - [Índice de ADRs](adr/README.md)
 
 ### docs/
@@ -310,6 +341,14 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### audit/
 
+- [THE FORGE FULL ECOSYSTEM CERTIFICATION](../audit/reports/THE_FORGE_FULL_ECOSYSTEM_CERTIFICATION.md) `UNKNOWN`
+- [Compatibility matrix](../audit/reports/compatibility-matrix.md) `UNKNOWN`
+- [Ecosystem summary](../audit/reports/ecosystem-summary.md) `UNKNOWN`
+- [Independence report](../audit/reports/independence-report.md) `UNKNOWN`
+- [Integration report](../audit/reports/integration-report.md) `UNKNOWN`
+- [Prompt Evo — auditoria de auditabilidade](../audit/reports/prompt-evo-auditabilidade.md) `UNKNOWN`
+- [Security and supply-chain report](../audit/reports/security-report.md) `UNKNOWN`
+- [Unresolved gaps](../audit/reports/unresolved-gaps.md) `UNKNOWN`
 - [Agentic delegation gap analysis (FASE 0)](audit/agentic-delegation-gap-analysis.md) `UNKNOWN`
 - [Ecosystem provisioning audit (FASE 0)](audit/ecosystem-provisioning-audit.md) `UNKNOWN`
 - [Host activation gap analysis (FASE 0)](audit/host-activation-gap-analysis.md) `UNKNOWN`
@@ -363,6 +402,19 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Forge Documentation & CLI Experience Standard v1](dx/standard-v1.md) `UNKNOWN`
 - [Usability matrix — personas × tarefas (Phase 13)](dx/usability-matrix.md) `UNKNOWN`
 
+### engineering-excellence/
+
+- [Engineering Excellence — Baseline Audit](engineering-excellence/audit.md) `UNKNOWN`
+- [Capability Parity Matrix](engineering-excellence/capability-parity.md) `UNKNOWN`
+- [Federation Compatibility Matrix](engineering-excellence/compatibility.md) `UNKNOWN`
+- [Context, Planning and Quality Loop](engineering-excellence/context-planning.md) `UNKNOWN`
+- [Engineering Excellence — relatório final](engineering-excellence/final-report.md) `UNKNOWN`
+- [Gap Analysis](engineering-excellence/gap-analysis.md) `UNKNOWN`
+- [Release Readiness](engineering-excellence/release-readiness.md) `RELEASE_REPORT`
+- [Federated Retro — Baseline](engineering-excellence/retro.md) `UNKNOWN`
+- [Engineering Excellence Roadmap](engineering-excellence/roadmap.md) `UNKNOWN`
+- [Wave Log](engineering-excellence/wave-log.md) `UNKNOWN`
+
 ### experience/
 
 - [FASE 0 — Auditoria e fundação (concluída)](experience/RELATORIO-FASE0.md) `UNKNOWN`
@@ -391,7 +443,26 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### factory/
 
+- [Run — cyc0-01 program-baseline](../factory/runs/2026-10-15.cyc0-01.md) `UNKNOWN`
+- [Run — cyc8-01 versioning-policy-compat-manifest](../factory/runs/2026-10-15.cyc8-01.md) `UNKNOWN`
+- [Run — cyc8-02 packaging-conformance-matrix](../factory/runs/2026-10-15.cyc8-02.md) `UNKNOWN`
+- [Run — cyc8-03 supply-chain-security](../factory/runs/2026-10-15.cyc8-03.md) `UNKNOWN`
+- [Run — cyc8-04 ci-release-gates-rc](../factory/runs/2026-10-15.cyc8-04.md) `UNKNOWN`
+- [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
+- [Baseline do programa ecosystem-2026](../factory/specs/active/cyc0-01-program-baseline.md) `UNKNOWN`
+- [Política de versões + Compatibility Manifest](../factory/specs/active/cyc8-01-compat-manifest.md) `UNKNOWN`
+- [Conformidade de empacotamento dos nove repos](../factory/specs/active/cyc8-02-packaging.md) `UNKNOWN`
+- [Supply chain security dos artefatos](../factory/specs/active/cyc8-03-supply-chain.md) `UNKNOWN`
+- [Gates de CI/CD e Release Candidate](../factory/specs/active/cyc8-04-ci-release-gates.md) `RELEASE_REPORT`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
+- [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
+- [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
+- [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
+- [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/inbox/cyc10-02-docs-github.md) `UNKNOWN`
+- [Public Readiness: contribuição, distribuição, templates, demos e feedback](../factory/specs/inbox/cyc10-03-adoption-readiness.md) `UNKNOWN`
+- [Forge Lab — coordenador federado e harness](../factory/specs/inbox/cyc9-01-lab-coordinator.md) `UNKNOWN`
+- [Integridade de avaliação: métricas, ground truth e regression gates](../factory/specs/inbox/cyc9-02-eval-integrity.md) `UNKNOWN`
+- [Cenários multi-Forge do Forge Lab](../factory/specs/inbox/cyc9-03-scenarios-multiforge.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
 - [Grill Gate](../factory/templates/spec.md) `UNKNOWN`
 
@@ -410,6 +481,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Snapshots](graph-studio/snapshots.md) `UNKNOWN`
 - [Standalone mode](graph-studio/standalone-mode.md) `UNKNOWN`
 - [Temporal analysis](graph-studio/temporal-analysis.md) `UNKNOWN`
+
+### homologation/
+
+- [Certificação final do ecossistema The Forge](homologation/FINAL-ECOSYSTEM-CERTIFICATION.md) `UNKNOWN`
+- [SUPER PROMPT — THE FORGE](homologation/prompt_evo_auditabilidade.md) `UNKNOWN`
 
 ### hub/
 
@@ -434,6 +510,17 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### learn/
 
 - [The Forge — do zero à execução multi-especialista](learn/zero-to-multi-specialist.md) `UNKNOWN`
+
+### programs/
+
+- [Baseline — 2026-10-15](programs/ecosystem-2026/baseline.md) `UNKNOWN`
+- [Compatibility matrix — draft inicial](programs/ecosystem-2026/compatibility-matrix.md) `UNKNOWN`
+- [Cycle 8 — Release readiness (RC evidence)](programs/ecosystem-2026/cycle-8-release-readiness.md) `RELEASE_REPORT`
+- [Dependency map — ecosystem-2026](programs/ecosystem-2026/dependency-map.md) `UNKNOWN`
+- [Open gaps — ecosystem-2026 (Wave 0)](programs/ecosystem-2026/open-gaps.md) `UNKNOWN`
+- [Matriz de empacotamento — ecosystem-2026](programs/ecosystem-2026/packaging-matrix.md) `UNKNOWN`
+- [Supply chain — ecosystem-2026](programs/ecosystem-2026/security.md) `UNKNOWN`
+- [Política de versões — ecossistema Forge](programs/ecosystem-2026/versioning-policy.md) `UNKNOWN`
 
 ### reports/
 
@@ -467,6 +554,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Cycle 5.1 — Reality Synchronization, Benchmarking & Feature Freeze](reports/cycle-5.1.md) `RELEASE_REPORT`
 - [Cycle 5 — Federated Engineering Intelligence](reports/cycle-5.md) `RELEASE_REPORT`
 - [Dogfooding — 2026-10-08: primeira sessão real no próprio repositório](reports/dogfooding-2026-10-08.md) `UNKNOWN`
+- [E2E certification — 2026-10](reports/e2e-certification-2026-10.md) `UNKNOWN`
 - [Forge Experience 3.0 — report](reports/experience-3.md) `RELEASE_REPORT`
 - [Forge Experience — cycle report](reports/forge-experience.md) `RELEASE_REPORT`
 - [Graph Studio — acceptance report](reports/graph-studio.md) `UNKNOWN`

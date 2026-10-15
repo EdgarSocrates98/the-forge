@@ -35,3 +35,8 @@ factory/logs/*
 !factory/logs/.gitkeep
 .pytest-tmp/
 uv.lock
+
+# Environment stubs/secrets — forge-cli generates .env templates; values must
+# never be committed. Keep the stub on disk, keep it out of git.
+.env
+.env.*

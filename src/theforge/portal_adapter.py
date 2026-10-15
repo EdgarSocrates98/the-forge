@@ -97,6 +97,7 @@ class TheForgePortal(fp.PortalAdapter):
             fp.Operation("GET", "/tasks", lambda ctx: list(self._tasks)),
             fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
             fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
+            fp.Operation("GET", "/versions", lambda ctx: self._versions()),
             fp.Operation("POST", "/installation/plan", self._install_plan, mutating=True),
             fp.Operation(
                 "POST",
@@ -236,6 +237,105 @@ class TheForgePortal(fp.PortalAdapter):
             return {"drift": {}, "status": "unverified"}
 
     # ------------------------------------------------------------------
+    # versions / release management (spec §8.6, cyc8-06)
+    #
+    # Everything here is read from real local state — dist metadata, the
+    # committed ecosystem manifest, CHANGELOG.md and install receipts.
+    # Absent data is reported as null/UNVERIFIED, never fabricated.
+    # ------------------------------------------------------------------
+    def _versions(self) -> dict[str, Any]:
+        import hashlib
+
+        version = _version()
+        origin: str | None = None
+        try:
+            dist = importlib_metadata.distribution("theforge")
+            origin = "site-packages"
+            direct = dist.read_text("direct_url.json")
+            if direct and json.loads(direct).get("dir_info", {}).get("editable"):
+                origin = "editable-checkout"
+        except importlib_metadata.PackageNotFoundError:
+            origin = None  # no dist metadata — origin unverifiable, never guessed
+        except Exception:  # noqa: BLE001 — unreadable metadata stays honest
+            origin = None
+        repo_root = _REPO_ROOT
+
+        manifest_path = repo_root / "ecosystem-compatibility.json"
+        manifest_sha: str | None = None
+        compat = "unverified — ecosystem manifest not found"
+        release: str | None = None
+        if manifest_path.is_file():
+            raw = manifest_path.read_bytes()
+            manifest_sha = hashlib.sha256(raw).hexdigest()
+            try:
+                from theforge.install.compatibility import load_manifest
+
+                manifest = load_manifest(manifest_path)
+                release = manifest.release
+                verdict = manifest.check("the-forge", version) if version else "unknown"
+                compat = (
+                    f"forge/EcosystemCompatibility/v1 · release {manifest.release} "
+                    f"· the-forge@{version or '?'} → {verdict}"
+                )
+            except Exception as exc:  # noqa: BLE001 — report, never guess
+                compat = f"unverified — manifest invalid ({exc})"
+
+        changelog = None
+        changelog_path = repo_root / "CHANGELOG.md"
+        if changelog_path.is_file():
+            changelog = changelog_path.read_text(encoding="utf-8")[:20000]
+
+        history: list[dict[str, Any]] = []
+        receipts: list[dict[str, Any]] = []
+        receipts_dir = self._root / ".forge" / "install" / kit.RECEIPTS_DIR
+        if receipts_dir.is_dir():
+            for f in sorted(receipts_dir.glob("*.json")):
+                doc = kit._load_json(f, {})
+                if not isinstance(doc, dict):
+                    doc = {}
+                receipts.append(
+                    {
+                        "file": f.name,
+                        "operation": doc.get("operation") or None,
+                        "status": doc.get("status") or None,
+                    }
+                )
+                history.append(
+                    {
+                        # receipts carry no version-transition field — null
+                        # stays honest (created_by is the installer's version,
+                        # not the installed component's).
+                        "version": doc.get("version") or None,
+                        "at": doc.get("created_at") or None,
+                        "detail": f"{doc.get('operation', '?')} — {doc.get('status', '?')}",
+                    }
+                )
+
+        return {
+            "installed": {
+                "version": version,
+                "origin": origin,
+                "channel": None,
+            },
+            "available": {"version": None, "source": "offline — remote lookups disabled"},
+            "compat": compat,
+            "integrity": {
+                "manifest_sha256": manifest_sha,
+                "manifest_release": release,
+                "manifest_path": str(manifest_path) if manifest_path.is_file() else None,
+            },
+            "changelog": changelog,
+            "history": history,
+            "receipts": receipts,
+            "pending": None,
+            "upgrade_plan": None,
+            "rollback": {
+                "supported": True,
+                "hint": "theforge install repair --root <root> / install uninstall --root <root>",
+            },
+        }
+
+    # ------------------------------------------------------------------
     # installation lifecycle — the-forge's own install on the workspace
     # ------------------------------------------------------------------
     def _install_plan(self, ctx: fp.RequestContext) -> dict[str, Any]:
@@ -365,9 +465,7 @@ class TheForgePortal(fp.PortalAdapter):
         gateway_profile = body.get("gateway_profile")
         raw_components = body.get("components")
         if isinstance(raw_components, dict):
-            components = tuple(
-                str(key) for key, enabled in raw_components.items() if enabled
-            )
+            components = tuple(str(key) for key, enabled in raw_components.items() if enabled)
         elif isinstance(raw_components, list):
             components = tuple(str(item) for item in raw_components)
         elif raw_components is None:

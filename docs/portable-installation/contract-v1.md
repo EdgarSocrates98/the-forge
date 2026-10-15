@@ -248,3 +248,24 @@ not a hang. A lock whose holder process is dead, or that is older than
 15 minutes, is reclaimed once as an interrupted install; the receipt
 records the recovery in `checks`. `repair` re-asserts managed state
 after an interruption.
+
+## 10. `forge/EcosystemCompatibility/v1` — `<the-forge>/ecosystem-compatibility.json`
+
+Declared (not per-install emitted) release document: which *combination* of
+component versions across the nine Forge repositories is certified for one
+release train (`release: YYYY.MM`), plus the supported major windows of the
+wire contracts that cross between components.
+
+- `components[]` — `component`, pinned `version` (never `latest`), `scheme`
+  (`semver` | `pep440`), `source` (file where the version is declared —
+  provenance is mandatory), optional `distribution`.
+- `contracts[]` — `family` (e.g. `specialist_manifest`, `install_receipt`,
+  `portal_api`, `mcp`), `contract` id + `[min_major, max_major]` window.
+  `contract: null` is the honest *unversioned* state — the family is named
+  rather than silently absent.
+- Consumers (forge-cli, Portal, hosts) evaluate membership: the manifest
+  declares; it does not assert its own certification.
+
+JSON Schema: [`schemas/EcosystemCompatibility.schema.json`](schemas/EcosystemCompatibility.schema.json) ·
+Python validation: `src/theforge/install/compatibility.py` ·
+Policy: [`../programs/ecosystem-2026/versioning-policy.md`](../programs/ecosystem-2026/versioning-policy.md).

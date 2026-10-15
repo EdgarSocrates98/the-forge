@@ -449,7 +449,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge graph [root] [json] [debug] [CAPABILITY] [mesh] [view] [federated] [ui] [no_browser] [port]
+theforge graph [root] [json] [debug] [CAPABILITY] [mesh] [view] [federated] [ui] [no_browser] [port] [out]
 ```
 
 | argument/flag | required | default | description |
@@ -464,6 +464,7 @@ theforge graph [root] [json] [debug] [CAPABILITY] [mesh] [view] [federated] [ui]
 | `ui` | no | — | open the local Graph Studio explorer in a browser |
 | `no_browser` | no | — | with --ui: serve without opening a browser (SSH/remote) |
 | `port` | no | — | with --ui: port to bind (default ephemeral) |
+| `out` | no | — | write graph JSON snapshot atomically; supports capability, view, and federated outputs |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1281,7 +1282,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge provider check [root] [json] [debug] [ARGV]
+theforge provider check [root] [json] [debug] <ARGV>
 ```
 
 | argument/flag | required | default | description |
@@ -1289,7 +1290,7 @@ theforge provider check [root] [json] [debug] [ARGV]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
-| `ARGV` | no | — | the provider argv (prefix with -- when it starts with a dash) |
+| `ARGV` | yes | — | the provider argv (prefix with -- when it starts with a dash) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_

@@ -1,0 +1,262 @@
+# Release gates ladder — Cycle 8 (§8.9/§8.10, program ecosystem-2026).
+#
+# PRs get the smoke subset (build → unit → contract → smoke). The full
+# ladder — package install, security, compatibility, RC lifecycle,
+# certification — runs nightly and on demand. Every gate emits an artifact;
+# nothing is promoted without execution evidence.
+name: release-gates
+
+on:
+  pull_request:
+  schedule:
+    - cron: "17 3 * * *" # nightly full ladder
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PY_MAIN: "3.12"
+
+jobs:
+  build:
+    name: gate/build (wheel + sdist)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - run: python -m pip install --index-url https://pypi.org/simple build
+      - run: python -m build --outdir dist/
+      - run: sha256sum dist/* | tee dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dist
+          path: dist/
+          retention-days: 14
+
+  unit:
+    name: gate/unit (pytest, contract markers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - run: |
+          python -m pip install --index-url https://pypi.org/simple \
+            -e .[dev] \
+            -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure \
+            -e ./adapters/apiforge -e ./adapters/platformforge \
+            -e ./adapters/doctordata -e ./adapters/doctorapi
+      - run: python -m pytest -m "unit or contract" -q
+      - run: ruff check .
+
+  contract:
+    name: gate/contract (schemas regen clean)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - run: python -m pip install --index-url https://pypi.org/simple -e .[dev]
+      - run: python -m theforge.contracts.schema schemas
+      - run: git diff --exit-code schemas/ || (echo "::error::schemas/ out of date — regenerate" && exit 1)
+
+  smoke:
+    name: gate/smoke (installed CLI probes)
+    runs-on: ubuntu-latest
+    needs: [build, unit, contract]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+        with:
+          name: dist
+          path: dist/
+      - run: |
+          python -m venv /tmp/smoke-venv
+          /tmp/smoke-venv/bin/pip install --index-url https://pypi.org/simple dist/*.whl
+          /tmp/smoke-venv/bin/theforge --version
+          /tmp/smoke-venv/bin/theforge --help > /dev/null
+
+  integration:
+    name: gate/integration (nightly/manual only)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - run: |
+          python -m pip install --index-url https://pypi.org/simple \
+            -e .[dev] \
+            -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure \
+            -e ./adapters/apiforge -e ./adapters/platformforge \
+            -e ./adapters/doctordata -e ./adapters/doctorapi
+      - run: python -m pytest -m "integration" -q
+
+  package-install:
+    name: gate/package-install (wheel in clean venv)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: [build]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+        with:
+          name: dist
+          path: dist/
+      - name: install wheel into a clean venv
+        run: |
+          python -m venv /tmp/pkg-venv
+          /tmp/pkg-venv/bin/pip install --index-url https://pypi.org/simple dist/*.whl
+      - name: verify hashes
+        run: cd dist && sha256sum -c SHA256SUMS.txt
+      - name: independence — theforge absent from the specialist wheels
+        run: |
+          ! /tmp/pkg-venv/bin/pip show apiforge platformforge sparkforge-aws 2>/dev/null | grep -q "^Name"
+          /tmp/pkg-venv/bin/theforge --version
+
+  security:
+    name: gate/security (audit + SBOM, severity policy)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: [build]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+        with:
+          name: dist
+          path: dist/
+      - name: tool install (dev-only, never a runtime dep)
+        run: python -m pip install --index-url https://pypi.org/simple pip-audit cyclonedx-bom
+      - name: install wheel into audit venv
+        run: |
+          python -m venv /tmp/audit-venv
+          /tmp/audit-venv/bin/pip install --index-url https://pypi.org/simple dist/*.whl
+      - name: SBOM of the installed environment
+        run: cyclonedx-py environment /tmp/audit-venv/bin/python --of JSON -o sbom.cdx.json
+      - name: vuln scan — severity policy per docs/programs/ecosystem-2026/security.md
+        run: |
+          pip-audit --path /tmp/audit-venv/lib/python3*/site-packages -f json -o audit.json || true
+          test -f audit.json || { echo "::error::pip-audit produced no audit.json"; exit 1; }
+          python - <<'PY'
+          import json, sys
+          deps = {d["name"] for d in json.load(open("audit.json")).get("dependencies", []) if d.get("vulns")}
+          env_noise = deps - {"pip", "setuptools", "wheel"}
+          print("artifact deps with vulns:", sorted(env_noise) or "none")
+          sys.exit(1 if env_noise else 0)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-evidence
+          path: |
+            sbom.cdx.json
+            audit.json
+          retention-days: 30
+
+  compatibility:
+    name: gate/compatibility (ecosystem manifest)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - run: python -m pip install --index-url https://pypi.org/simple -e .[dev]
+      - name: validate committed manifest (forge/EcosystemCompatibility/v1)
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from theforge.install.compatibility import load_manifest
+          m = load_manifest(Path("ecosystem-compatibility.json"))
+          print(m.release, len(m.components), "components,", len(m.contracts), "contract families")
+          PY
+      - run: python -m pytest tests/test_ecosystem_compat.py -q
+
+  rc-lifecycle:
+    name: gate/rc-lifecycle (installed package, disposable env)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: [build, package-install]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PY_MAIN }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+        with:
+          name: dist
+          path: dist/
+      - name: bootstrap install — registers ~/.forge/installations/the-forge.json
+        run: python scripts/forge_bootstrap.py --repo "$GITHUB_WORKSPACE" --quiet
+      - name: lifecycle on the installed wheel — every step emits a receipt
+        run: |
+          python -m venv /tmp/rc-venv
+          /tmp/rc-venv/bin/pip install --index-url https://pypi.org/simple dist/*.whl
+          mkdir -p /tmp/rc-proj
+          TF=/tmp/rc-venv/bin/theforge
+          $TF install apply   --root /tmp/rc-proj --scope project --yes --json | tee step-apply.json
+          $TF install status  --root /tmp/rc-proj --json                          | tee step-status.json
+          # update reads the bootstrap-registered manifest (source + venv),
+          # not --root — that flag does not exist for this verb.
+          $TF install update  --json                                              | tee step-update.json
+          $TF install repair  --root /tmp/rc-proj --json                          | tee step-repair.json
+          $TF install uninstall --root /tmp/rc-proj --json                        | tee step-uninstall.json
+          test "$(find /tmp/rc-proj -name '*.json' -path '*receipt*' | wc -l)" -ge 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rc-lifecycle
+          path: step-*.json
+          retention-days: 30
+
+  certification:
+    name: gate/certification (aggregate)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs:
+      [build, unit, contract, integration, package-install, security, compatibility, rc-lifecycle]
+    steps:
+      - name: certification verdict
+        run: |
+          echo "release candidate gates: ALL PASSED for ${GITHUB_SHA}"
+          echo "evidence: dist SHA256SUMS, rc-lifecycle receipts, sbom.cdx.json, audit.json"

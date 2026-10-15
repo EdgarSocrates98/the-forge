@@ -25,6 +25,7 @@ import platform
 import sys
 import tempfile
 import time
+from importlib import metadata as importlib_metadata
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -947,10 +948,19 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
         "status": "completed",
         "rollback": {"available": bool(files), "restore": "ledger"},
         "created_at": _utc_now(),
-        "created_by": f"{ctx.spec.distribution}",
+        "created_by": _created_by(ctx.spec.distribution),
     }
     _write_receipt(ctx.state_dir, receipt)
     return receipt
+
+
+def _created_by(distribution: str) -> str:
+    """``dist/version`` when the dist metadata is installed, bare ``dist``
+    otherwise — matches service.py's ``f"theforge/{__version__}"`` shape."""
+    try:
+        return f"{distribution}/{importlib_metadata.version(distribution)}"
+    except importlib_metadata.PackageNotFoundError:
+        return distribution
 
 
 def _write_receipt(state_dir: Path, receipt: dict[str, Any]) -> Path:

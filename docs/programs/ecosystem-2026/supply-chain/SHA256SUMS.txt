@@ -1,0 +1,9 @@
+912abc0b9e68bace476fa4f68b55b6accb79c729552457af904d9d460be28546  wheels/api-forge/apiforge-0.1.0-py3-none-any.whl
+a0226da6cc9a938eb3981e14b95e7b24c5ff6e3a10c7eceb7c172ce767221315  wheels/forge-doctor-api/forge_doctor_api-0.2.0-py3-none-any.whl
+1eb5e1b6d5866655d6ad8301c2a12d350569beff8a23274a821e37aa5b5982bc  wheels/forge-doctor-data/forge_doctor_data-1.0.0rc1-py3-none-any.whl
+141ab3d1f1d1e3ddcc2f7ddd5a30201cf330831b1399e1403e4b7ac8617f2ebe  wheels/platform-forge/platformforge-0.1.0-py3-none-any.whl
+388b383d4e92aab9d7f372d885893252a6a8b0316e4ed58c54c9bc21c9b9a6cc  wheels/spark-forge-aws/sparkforge_aws-0.5.0-py3-none-any.whl
+af0eff7e8f7ac2da94a2cde3e215a826f297c5703bf44533db5664048767068d  wheels/spark-forge-azure/sparkforge_azure-0.1.0-py3-none-any.whl
+b0b36a8063a3710a1de7a3a241ed9dc22379b4693175b8f5d2cb59070c878100  wheels/the-forge/theforge-0.5.0-py3-none-any.whl
+b3aca56d5085026c1a58fd961f29d983736397530cf6ce37f15da8eb578c5234  forge-cli/forge-cli-0.1.0.tgz
+b11a4b660b18058bbf1fd5294f608a8306a108d927c092831160280976089b74  the-forge/portal/manifest.json

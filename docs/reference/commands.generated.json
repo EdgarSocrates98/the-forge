@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-13T08:13:17Z",
+  "generated_at": "2026-10-15T20:52:39Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 82,
   "commands": [
@@ -1958,6 +1958,17 @@
           "choices": null,
           "positional": false,
           "help": "with --ui: port to bind (default ephemeral)"
+        },
+        {
+          "name": "out",
+          "flags": [
+            "--out"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "write graph JSON snapshot atomically; supports capability, view, and federated outputs"
         }
       ]
     },
@@ -2876,7 +2887,7 @@
         {
           "name": "ARGV",
           "flags": [],
-          "required": false,
+          "required": true,
           "default": null,
           "choices": null,
           "positional": true,
