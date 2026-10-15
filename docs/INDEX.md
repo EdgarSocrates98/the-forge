@@ -494,17 +494,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### factory/
 
-- [Run — cyc0-01 program-baseline](../factory/runs/2026-10-15.cyc0-01.md) `UNKNOWN`
-- [cyc10-01 — Onboarding, Getting Started e Golden Paths](../factory/runs/2026-10-15.cyc10-01.md) `UNKNOWN`
-- [cyc10-02 — Documentação unificada + GitHub Experience](../factory/runs/2026-10-15.cyc10-02.md) `UNKNOWN`
-- [cyc10-03 — Public Readiness](../factory/runs/2026-10-15.cyc10-03.md) `UNKNOWN`
-- [Run — cyc8-01 versioning-policy-compat-manifest](../factory/runs/2026-10-15.cyc8-01.md) `UNKNOWN`
-- [Run — cyc8-02 packaging-conformance-matrix](../factory/runs/2026-10-15.cyc8-02.md) `UNKNOWN`
-- [Run — cyc8-03 supply-chain-security](../factory/runs/2026-10-15.cyc8-03.md) `UNKNOWN`
-- [Run — cyc8-04 ci-release-gates-rc](../factory/runs/2026-10-15.cyc8-04.md) `UNKNOWN`
-- [Run note — cyc9-01 forge-lab-coordinator](../factory/runs/2026-10-15.cyc9-01.md) `UNKNOWN`
-- [Run — cyc9-02 eval-integrity (the-forge)](../factory/runs/2026-10-15.cyc9-02.md) `UNKNOWN`
-- [Run — cyc9-03 multi-forge scenarios (the-forge)](../factory/runs/2026-10-15.cyc9-03.md) `UNKNOWN`
 - [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`

@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **30/31** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **31/31** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -1017,6 +1017,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 **para que:** federated benchmark collector (ADR-0060)
 
+- **por que:** benchmarks federados: receipts forge/BenchmarkResult/v1 reais dos labs de cada Forge
+- **quando usar:** ver o que cada Forge mede (list), coletar evidência (collect) ou regredir contra baseline (gate)
+
 **Syntax**
 
 ```text
@@ -1030,6 +1033,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ### `lab collect`
 
 **para que:** invoke declared labs under §9.11 guardrails and write the federated report into docs/programs/ecosystem-2026/benchmarks/
+
+- **por que:** rodar os labs declarados nos forge.json e persistir receipts + relatório
+- **quando usar:** produzir evidência de benchmark — modo A/B/C, repeats, baseline
 
 **Syntax**
 
@@ -1059,6 +1065,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 
 **para que:** compare current results-*.jsonl against a baseline — regression gate (cyc9-02)
 
+- **por que:** comparar um run contra baseline calibrado e falhar em regressão de métricas
+- **quando usar:** CI/release: gate de regressão sobre métricas medidas
+
 **Syntax**
 
 ```text
@@ -1081,6 +1090,9 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ### `lab list`
 
 **para que:** inspect each forge's lab declaration (read-only)
+
+- **por que:** benchmarks federados: receipts forge/BenchmarkResult/v1 reais dos labs de cada Forge
+- **quando usar:** ver o que cada Forge mede (list), coletar evidência (collect) ou regredir contra baseline (gate)
 
 **Syntax**
 
