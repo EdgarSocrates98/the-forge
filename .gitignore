@@ -40,3 +40,4 @@ uv.lock
 # never be committed. Keep the stub on disk, keep it out of git.
 .env
 .env.*
+graphify-out/.rebuild.lock
