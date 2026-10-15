@@ -1806,9 +1806,9 @@
     "semantic_hash": ""
   },
   "src/theforge/cli/commands.py": {
-    "mtime": 1792100385.3925238,
-    "seen": 1792100467.8050976,
-    "ast_hash": "51b79a19ea52b08cf7027a05a3ec97d2",
+    "mtime": 1792100824.7976253,
+    "seen": 1792101354.4148114,
+    "ast_hash": "87c9e6c2b9024bb5c514b5c044479ebb",
     "semantic_hash": ""
   },
   "src/theforge/cli/main.py": {
@@ -8988,9 +8988,9 @@
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/open-gaps.md": {
-    "mtime": 1792099443.8985791,
-    "seen": 1792099693.483992,
-    "ast_hash": "5279fdf6f557f364ac2391ffc9501e00",
+    "mtime": 1792101334.1178243,
+    "seen": 1792101354.4169288,
+    "ast_hash": "f4845f21698bcda2a603561a5dac5372",
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/packaging-matrix.md": {
@@ -9348,9 +9348,9 @@
     "semantic_hash": ""
   },
   "factory/specs/PROGRAM-ecosystem-2026.md": {
-    "mtime": 1792099675.388882,
-    "seen": 1792099693.484089,
-    "ast_hash": "aba2401b9969b0fdba82fcae1b5c06db",
+    "mtime": 1792101334.1181319,
+    "seen": 1792101354.4170187,
+    "ast_hash": "b21c0abcc0a1f4406cde95ff3a5a54ae",
     "semantic_hash": ""
   },
   "factory/specs/active/cyc0-01-program-baseline.md": {
@@ -9636,9 +9636,9 @@
     "semantic_hash": ""
   },
   "scripts/lab/theforge_lab.py": {
-    "mtime": 1792100337.7670739,
-    "seen": 1792100467.805084,
-    "ast_hash": "0a0a305005c80285250a7072a0140045",
+    "mtime": 1792101181.0881078,
+    "seen": 1792101354.4147882,
+    "ast_hash": "826c814b2b3ccc32665eb23f6bb53fe7",
     "semantic_hash": ""
   },
   "src/theforge/contracts/benchmark.py": {
@@ -9666,9 +9666,9 @@
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/benchmarks/2026-10-15-A.md": {
-    "mtime": 1792100343.2328174,
-    "seen": 1792100467.806465,
-    "ast_hash": "fbd06706f73baf94ecac0b6b0d6d69f5",
+    "mtime": 1792101306.9100363,
+    "seen": 1792101354.4169214,
+    "ast_hash": "cbf2efd5765b89b3a27a973faf5d9dcb",
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/benchmarks/methodology.md": {
