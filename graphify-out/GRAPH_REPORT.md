@@ -1,7 +1,7 @@
 # Graph Report - the-forge  (2026-10-15)
 
 ## Corpus Check
-- 1425 files · ~1,162,474 words
+- 1425 files · ~1,162,216 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0b5e0cd8`
+- Built from commit: `ab933f95`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -61,7 +61,7 @@
 - chunk-CGWeHhKY.js
 - Getting Started — Usuário de Codex
 - cli/render.py
-- Documentação unificada, posicionamento e GitHub Experience
+- Baseline do programa ecosystem-2026
 - Ld
 - test_ecosystem_compat.py
 - e
@@ -152,11 +152,11 @@
 - Reference
 - Open gaps — ecosystem-2026 (Wave 0)
 - memory
-- Baseline do programa ecosystem-2026
+- Onboarding, Getting Started e Golden Paths
+- Public Readiness: contribuição, distribuição, templates, demos e feedback
 - Política de versões + Compatibility Manifest
-- Conformidade de empacotamento dos nove repos
 - benchmark.py
-- Gates de CI/CD e Release Candidate
+- Conformidade de empacotamento dos nove repos
 - Getting Started — Usuário de Claude Code
 - items
 - CLI
@@ -223,7 +223,7 @@
 - chunk-DuPPkSIE.js
 - _context_sections
 - Golden Path — Spark AWS
-- Onboarding, Getting Started e Golden Paths
+- Gates de CI/CD e Release Candidate
 - ngControlUpdate
 - check_gates.py
 - Modelo de contribuição — Forjas externas (§10.9)
@@ -261,10 +261,10 @@
 - chunk-CGWeHhKY.js
 - Learn
 - chunk-CJCT86Dr.js
-- Integridade de avaliação: métricas, ground truth e regression gates
+- Forge Lab — coordenador federado e harness
 - Dependency map — ecosystem-2026
 - Forge Lab — methodology (cyc9-01, ADR-0060)
-- Forge Lab — coordenador federado e harness
+- Integridade de avaliação: métricas, ground truth e regression gates
 - chunk-CXcsLDPJ.js
 - Cenários multi-Forge do Forge Lab
 - chunk-D3eZogIe.js
@@ -301,7 +301,7 @@
 - Cycle 10 — Public Adoption (cyc10-03)
 - workspace
 - parametrize
-- Public Readiness: contribuição, distribuição, templates, demos e feedback
+- Documentação unificada, posicionamento e GitHub Experience
 - ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?
 - enum
 - Any
@@ -531,9 +531,9 @@ Nodes (9): Configuração, Explicação do resultado, Getting Started — Usuár
 Cohesion: 0.11
 Nodes (47): activation(), agent_detail(), agents_list(), capabilities(), _clean(), _dependency(), diagnostic(), discovery() (+39 more)
 
-### Community 46 - "Documentação unificada, posicionamento e GitHub Experience"
-Cohesion: 0.29
-Nodes (6): Acceptance, Constraints, Documentação unificada, posicionamento e GitHub Experience, Grill gate, Outcome, Pending
+### Community 46 - "Baseline do programa ecosystem-2026"
+Cohesion: 0.25
+Nodes (7): Acceptance, Baseline do programa ecosystem-2026, Constraints, Grill gate, Outcome, Pending, Rejected
 
 ### Community 47 - "Ld"
 Cohesion: 0.07
@@ -891,25 +891,25 @@ Nodes (7): Bloqueios externos (registrados, não resolvíveis em código), Homol
 Cohesion: 0.25
 Nodes (8): memory, `memory`, `memory export`, `memory import`, `memory learn`, `memory list`, `memory patterns`, `memory summarize`
 
-### Community 139 - "Baseline do programa ecosystem-2026"
+### Community 139 - "Onboarding, Getting Started e Golden Paths"
 Cohesion: 0.25
-Nodes (7): Acceptance, Baseline do programa ecosystem-2026, Constraints, Grill gate, Outcome, Pending, Rejected
+Nodes (7): Acceptance, Constraints, Grill gate, Onboarding, Getting Started e Golden Paths, Outcome, Pending, Rejected
 
-### Community 140 - "Política de versões + Compatibility Manifest"
+### Community 140 - "Public Readiness: contribuição, distribuição, templates, demos e feedback"
+Cohesion: 0.25
+Nodes (7): Acceptance, Constraints, Grill gate, Outcome, Pending, Public Readiness: contribuição, distribuição, templates, demos e feedback, Rejected
+
+### Community 141 - "Política de versões + Compatibility Manifest"
 Cohesion: 0.25
 Nodes (7): Acceptance, Constraints, Grill gate, Outcome, Pending, Política de versões + Compatibility Manifest, Rejected
-
-### Community 141 - "Conformidade de empacotamento dos nove repos"
-Cohesion: 0.25
-Nodes (7): Acceptance, Conformidade de empacotamento dos nove repos, Constraints, Grill gate, Outcome, Pending, Rejected
 
 ### Community 142 - "benchmark.py"
 Cohesion: 0.09
 Nodes (26): BenchmarkResult, BenchmarkSuite, _check_rel_path(), dump_result(), dump_suite(), JudgeDeclaration, LabScenario, load_multiforge_scenario() (+18 more)
 
-### Community 143 - "Gates de CI/CD e Release Candidate"
+### Community 143 - "Conformidade de empacotamento dos nove repos"
 Cohesion: 0.25
-Nodes (7): Acceptance, Constraints, Gates de CI/CD e Release Candidate, Grill gate, Outcome, Pending, Rejected
+Nodes (7): Acceptance, Conformidade de empacotamento dos nove repos, Constraints, Grill gate, Outcome, Pending, Rejected
 
 ### Community 144 - "Getting Started — Usuário de Claude Code"
 Cohesion: 0.20
@@ -1139,9 +1139,9 @@ Nodes (9): _context_sections(), _excluded(), _git(), _item(), _pack_summary(), `
 Cohesion: 0.25
 Nodes (8): 1. Instalação, 2. Seleção de especialista, 3. Diagnóstico, 4. Análise de evidências, 5. Recomendações, 6. Testes, 7. Resultado, Golden Path — Spark AWS
 
-### Community 210 - "Onboarding, Getting Started e Golden Paths"
+### Community 210 - "Gates de CI/CD e Release Candidate"
 Cohesion: 0.25
-Nodes (7): Acceptance, Constraints, Grill gate, Onboarding, Getting Started e Golden Paths, Outcome, Pending, Rejected
+Nodes (7): Acceptance, Constraints, Gates de CI/CD e Release Candidate, Grill gate, Outcome, Pending, Rejected
 
 ### Community 211 - "ngControlUpdate"
 Cohesion: 0.40
@@ -1279,9 +1279,9 @@ Nodes (8): experience-3/, factory/, graph-studio/, installation/, knowledge-prog
 Cohesion: 0.67
 Nodes (3): bytes, sha256, chunk-CJCT86Dr.js
 
-### Community 250 - "Integridade de avaliação: métricas, ground truth e regression gates"
+### Community 250 - "Forge Lab — coordenador federado e harness"
 Cohesion: 0.25
-Nodes (7): Acceptance, Constraints, Grill gate, Integridade de avaliação: métricas, ground truth e regression gates, Outcome, Pending, Rejected
+Nodes (7): Acceptance, Constraints, Forge Lab — coordenador federado e harness, Grill gate, Outcome, Pending, Rejected
 
 ### Community 251 - "Dependency map — ecosystem-2026"
 Cohesion: 0.33
@@ -1291,9 +1291,9 @@ Nodes (5): Arquitetura de dependência (invariantes do the-forge), Dependency ma
 Cohesion: 0.20
 Nodes (10): §9.11 guardrails, Comparison discipline, Contracts, Current coverage (2026-10-15), Declaration, Eval integrity (cyc9-02, §9.5–§9.10), Forge Lab — methodology (cyc9-01, ADR-0060), Modes (+2 more)
 
-### Community 253 - "Forge Lab — coordenador federado e harness"
+### Community 253 - "Integridade de avaliação: métricas, ground truth e regression gates"
 Cohesion: 0.25
-Nodes (7): Acceptance, Constraints, Forge Lab — coordenador federado e harness, Grill gate, Outcome, Pending, Rejected
+Nodes (7): Acceptance, Constraints, Grill gate, Integridade de avaliação: métricas, ground truth e regression gates, Outcome, Pending, Rejected
 
 ### Community 254 - "chunk-CXcsLDPJ.js"
 Cohesion: 0.67
@@ -1375,9 +1375,9 @@ Nodes (7): Claims públicos, Cycle 10 — Public Adoption (cyc10-03), Demos (§1
 Cohesion: 0.67
 Nodes (3): workspace, `workspace`, `workspace show`
 
-### Community 290 - "Public Readiness: contribuição, distribuição, templates, demos e feedback"
-Cohesion: 0.25
-Nodes (7): Acceptance, Constraints, Grill gate, Outcome, Pending, Public Readiness: contribuição, distribuição, templates, demos e feedback, Rejected
+### Community 290 - "Documentação unificada, posicionamento e GitHub Experience"
+Cohesion: 0.29
+Nodes (6): Acceptance, Constraints, Documentação unificada, posicionamento e GitHub Experience, Grill gate, Outcome, Pending
 
 ### Community 291 - "ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?"
 Cohesion: 0.33
@@ -1479,12 +1479,12 @@ Nodes (3): Instalação, PySpark + Spark Forge Azure, Testes
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `_t()` connect `_t` to `main-QDFVZK3T.js`, `chunk-BGUitn2r.js`, `.constructor`, `deactivateRouteAndOutlet`, `chunk-B7N3TXcn.js`, `ah`, `r`, `chunk-CGWeHhKY.js`, `.update`, `e`, `.getContext`, `jI`, `t`, `.get`, `.handleRouterEvent`, `Wr`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **Why does `e` connect `e` to `main-QDFVZK3T.js`, `buildIndex`, `Bn$1`, `pl`, `chunk-B7N3TXcn.js`, `ah`, `Fe`, `r`, `e`, `jI`, `t`, `.get`, `Cr`, `sh`, `lE`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `./` connect `./` to `Results by forge`, `Cenários multi-Forge do Forge Lab`, `Open gaps — ecosystem-2026 (Wave 0)`, `Baseline do programa ecosystem-2026`, `Política de versões + Compatibility Manifest`, `Conformidade de empacotamento dos nove repos`, `Gates de CI/CD e Release Candidate`, `Getting Started — Usuário de Claude Code`, `Programa ecosystem-2026`, `Getting Started — Usuário de CLI/TUI`, `the-forge — Documentation Index`, `Baseline — 2026-10-15`, `Cycle 8 — Release readiness (RC evidence)`, `Matriz de empacotamento — ecosystem-2026`, `feature_request.md`, `Cycle 10 — Public Adoption (cyc10-03)`, `PULL_REQUEST_TEMPLATE.md`, `Public Readiness: contribuição, distribuição, templates, demos e feedback`, `Política de Segurança`, `Getting Started — Usuário de Copilot`, `Cycle 10 — decisões de produto pendentes (memo para o dono)`, `Golden Path — Platform`, `Golden Path — Multi-Forge`, `Getting Started — Usuário de Codex`, `Getting Started — Data Engineer AWS`, `FINAL PROGRAM REPORT — ecosystem-2026`, `Documentação unificada, posicionamento e GitHub Experience`, `Supply chain security dos artefatos`, `Plano de distribuição (cyc10-03, decisão D2)`, `Contribuindo`, `Getting Started — Data Engineer Azure`, `Programa ecosystem-2026 — índice de specs`, `bug_report.md`, `API + API Forge`, `Custom specialist capability`, `MCP host configuration`, `PySpark + Spark Forge AWS`, `Getting Started — Platform Engineer`, `PySpark + Spark Forge Azure`, `getting-started/README.md`, `Onboarding, Getting Started e Golden Paths`, `Modelo de contribuição — Forjas externas (§10.9)`, `Use`, `Forge Knowledge Program — final report`, `Supply chain — ecosystem-2026`, `Integridade de avaliação: métricas, ground truth e regression gates`, `Dependency map — ecosystem-2026`, `GitHub Experience — checklist §10.7 (cyc10-02)`, `Forge Lab — coordenador federado e harness`, `Getting Started — Desenvolvedor backend`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Why does `pl()` connect `pl` to `main-QDFVZK3T.js`, `chunk-BGUitn2r.js`, `chunk-B7N3TXcn.js`, `ah`, `r`, `chunk-CGWeHhKY.js`, `lE`, `e`, `chunk-DuPPkSIE.js`, `e`, `jI`, `t`, `ml`, `sh`, `chunk-CXcsLDPJ.js`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `./` connect `./` to `Results by forge`, `Cenários multi-Forge do Forge Lab`, `Open gaps — ecosystem-2026 (Wave 0)`, `Onboarding, Getting Started e Golden Paths`, `Public Readiness: contribuição, distribuição, templates, demos e feedback`, `Política de versões + Compatibility Manifest`, `Conformidade de empacotamento dos nove repos`, `Getting Started — Usuário de Claude Code`, `Programa ecosystem-2026`, `Getting Started — Usuário de CLI/TUI`, `the-forge — Documentation Index`, `Baseline — 2026-10-15`, `Cycle 8 — Release readiness (RC evidence)`, `Matriz de empacotamento — ecosystem-2026`, `feature_request.md`, `Cycle 10 — Public Adoption (cyc10-03)`, `PULL_REQUEST_TEMPLATE.md`, `Documentação unificada, posicionamento e GitHub Experience`, `Política de Segurança`, `Getting Started — Usuário de Copilot`, `Cycle 10 — decisões de produto pendentes (memo para o dono)`, `Golden Path — Platform`, `Golden Path — Multi-Forge`, `Getting Started — Usuário de Codex`, `Getting Started — Data Engineer AWS`, `FINAL PROGRAM REPORT — ecosystem-2026`, `Baseline do programa ecosystem-2026`, `Supply chain security dos artefatos`, `Plano de distribuição (cyc10-03, decisão D2)`, `Contribuindo`, `Getting Started — Data Engineer Azure`, `Programa ecosystem-2026 — índice de specs`, `bug_report.md`, `API + API Forge`, `Custom specialist capability`, `MCP host configuration`, `PySpark + Spark Forge AWS`, `Getting Started — Platform Engineer`, `PySpark + Spark Forge Azure`, `getting-started/README.md`, `Gates de CI/CD e Release Candidate`, `Modelo de contribuição — Forjas externas (§10.9)`, `Use`, `Forge Knowledge Program — final report`, `Supply chain — ecosystem-2026`, `Forge Lab — coordenador federado e harness`, `Dependency map — ecosystem-2026`, `GitHub Experience — checklist §10.7 (cyc10-02)`, `Integridade de avaliação: métricas, ground truth e regression gates`, `Getting Started — Desenvolvedor backend`?**
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **What connects `experience-3/`, `factory/`, `graph-studio/` to the rest of the system?**
   _1167 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `test_install_orchestration.py` be split into smaller, more focused modules?**

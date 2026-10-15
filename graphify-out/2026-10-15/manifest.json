@@ -816,15 +816,15 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.generated.json": {
-    "mtime": 1792103169.6596534,
-    "seen": 1792103182.8442585,
-    "ast_hash": "be98ec549a21ecf54e9429c7f4cc7c48",
+    "mtime": 1792103193.8812819,
+    "seen": 1792103235.8708842,
+    "ast_hash": "1df6e8dda3a26e2b66920214b6aeaaa5",
     "semantic_hash": ""
   },
   "docs/reference/divergence.generated.json": {
-    "mtime": 1792103169.68398,
-    "seen": 1792103182.844261,
-    "ast_hash": "b8084e81c42b71d8cf5da3152d5a93b3",
+    "mtime": 1792103193.9059165,
+    "seen": 1792103235.870886,
+    "ast_hash": "c1afff5b5fb4256eecb91119675f47af",
     "semantic_hash": ""
   },
   "docs/reports/agentic-polish-closure.json": {
@@ -7410,9 +7410,9 @@
     "semantic_hash": ""
   },
   "docs/INDEX.md": {
-    "mtime": 1792103170.3153174,
-    "seen": 1792103182.8466964,
-    "ast_hash": "d5a7841e892a07c2addb0f4d0fd0de16",
+    "mtime": 1792103194.5411887,
+    "seen": 1792103235.8722951,
+    "ast_hash": "c58b6f20d5b5dc9d7d7e13f28136cbaa",
     "semantic_hash": ""
   },
   "docs/README.md": {
@@ -8424,8 +8424,8 @@
     "semantic_hash": ""
   },
   "docs/hub/which-forge.md": {
-    "mtime": 1792103170.3444462,
-    "seen": 1792103182.8469448,
+    "mtime": 1792103194.5713196,
+    "seen": 1792103235.8725045,
     "ast_hash": "1f2a16d5b955d8f754b276d8447f9503",
     "semantic_hash": ""
   },
@@ -8550,39 +8550,39 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/broken-link-report.md": {
-    "mtime": 1792103170.2724109,
-    "seen": 1792103182.8469782,
-    "ast_hash": "76a5b4836c4dbf211556f30121560f70",
+    "mtime": 1792103194.4973195,
+    "seen": 1792103235.8725286,
+    "ast_hash": "4c1c01c36a847347870d86d27e5f6716",
     "semantic_hash": ""
   },
   "docs/knowledge-program/classification-report.md": {
-    "mtime": 1792103170.2722642,
-    "seen": 1792103182.8469796,
-    "ast_hash": "82b6228e4b03abb989393a033ad16d38",
+    "mtime": 1792103194.4971704,
+    "seen": 1792103235.87253,
+    "ast_hash": "4092c0668f15300cbd738d8eb5e6f6ed",
     "semantic_hash": ""
   },
   "docs/knowledge-program/command-drift-report.md": {
-    "mtime": 1792103170.2725332,
-    "seen": 1792103182.8469806,
+    "mtime": 1792103194.4974425,
+    "seen": 1792103235.8725307,
     "ast_hash": "a9d4fa20e0baf611738c05a85d93c312",
     "semantic_hash": ""
   },
   "docs/knowledge-program/documentation-quality-report.md": {
-    "mtime": 1792103170.272651,
-    "seen": 1792103182.8469822,
+    "mtime": 1792103194.4975598,
+    "seen": 1792103235.872532,
     "ast_hash": "9b131ca56e39add1558956e011260501",
     "semantic_hash": ""
   },
   "docs/knowledge-program/duplicate-content-report.md": {
-    "mtime": 1792103170.2723415,
-    "seen": 1792103182.8469832,
+    "mtime": 1792103194.497248,
+    "seen": 1792103235.872533,
     "ast_hash": "1bba782b953dc9472dfac839e7d1d258",
     "semantic_hash": ""
   },
   "docs/knowledge-program/final-report.md": {
-    "mtime": 1792103170.389092,
-    "seen": 1792103182.8469844,
-    "ast_hash": "550d0235d006efd240489b772cabe639",
+    "mtime": 1792103194.6152244,
+    "seen": 1792103235.872534,
+    "ast_hash": "d544f7ff78dd705aac3776abfa231655",
     "semantic_hash": ""
   },
   "docs/knowledge-program/hub-evaluation.md": {
@@ -8592,14 +8592,14 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/obsolete-document-report.md": {
-    "mtime": 1792103170.272472,
-    "seen": 1792103182.846987,
+    "mtime": 1792103194.497382,
+    "seen": 1792103235.8725364,
     "ast_hash": "9332ba74314019005fcde3dfe48ba185",
     "semantic_hash": ""
   },
   "docs/knowledge-program/tutorial-coverage-report.md": {
-    "mtime": 1792103170.272593,
-    "seen": 1792103182.846988,
+    "mtime": 1792103194.4975023,
+    "seen": 1792103235.8725371,
     "ast_hash": "2b83b7d264ae186bce1297211a4fcf2e",
     "semantic_hash": ""
   },
@@ -8874,8 +8874,8 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.md": {
-    "mtime": 1792103169.7510612,
-    "seen": 1792103182.8470955,
+    "mtime": 1792103193.9730003,
+    "seen": 1792103235.872635,
     "ast_hash": "ee1eea4d11495215cd43c8173d5153a8",
     "semantic_hash": ""
   },
@@ -9168,9 +9168,9 @@
     "semantic_hash": ""
   },
   "factory/specs/PROGRAM-ecosystem-2026.md": {
-    "mtime": 1792102088.2185671,
-    "seen": 1792102101.956387,
-    "ast_hash": "e8eb0a1d999267fd019a60adfe73b0d2",
+    "mtime": 1792103223.5346987,
+    "seen": 1792103235.872697,
+    "ast_hash": "98fccfb6b507b3495d5f15a21b246aa9",
     "semantic_hash": ""
   },
   "factory/specs/active/cyc0-01-program-baseline.md": {

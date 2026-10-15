@@ -37619,10 +37619,10 @@
       "node_kind": "heading",
       "norm_label": "contracts/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L187"
+      "source_location": "L185"
     },
     {
-      "id": "docs_index_docs_191",
+      "id": "docs_index_docs_189",
       "label": "docs/",
       "_origin": "ast",
       "community": 136,
@@ -37631,7 +37631,7 @@
       "node_kind": "heading",
       "norm_label": "docs/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L191"
+      "source_location": "L189"
     },
     {
       "id": "docs_index_engineering_excellence",
@@ -37643,10 +37643,10 @@
       "node_kind": "heading",
       "norm_label": "engineering-excellence/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L195"
+      "source_location": "L193"
     },
     {
-      "id": "docs_index_factory_200",
+      "id": "docs_index_factory_198",
       "label": "factory/",
       "_origin": "ast",
       "community": 136,
@@ -37655,10 +37655,10 @@
       "node_kind": "heading",
       "norm_label": "factory/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L200"
+      "source_location": "L198"
     },
     {
-      "id": "docs_index_graph_studio_204",
+      "id": "docs_index_graph_studio_202",
       "label": "graph-studio/",
       "_origin": "ast",
       "community": 136,
@@ -37667,10 +37667,10 @@
       "node_kind": "heading",
       "norm_label": "graph-studio/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L204"
+      "source_location": "L202"
     },
     {
-      "id": "docs_index_portable_installation_209",
+      "id": "docs_index_portable_installation_207",
       "label": "portable-installation/",
       "_origin": "ast",
       "community": 136,
@@ -37679,7 +37679,7 @@
       "node_kind": "heading",
       "norm_label": "portable-installation/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L209"
+      "source_location": "L207"
     },
     {
       "id": "docs_index_reference",
@@ -37691,10 +37691,10 @@
       "node_kind": "heading",
       "norm_label": "reference",
       "source_file": "docs/INDEX.md",
-      "source_location": "L183"
+      "source_location": "L181"
     },
     {
-      "id": "docs_index_reference_213",
+      "id": "docs_index_reference_211",
       "label": "reference/",
       "_origin": "ast",
       "community": 136,
@@ -37703,7 +37703,7 @@
       "node_kind": "heading",
       "norm_label": "reference/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L213"
+      "source_location": "L211"
     },
     {
       "id": "docs_programs_ecosystem_2026_open_gaps",
@@ -37898,114 +37898,114 @@
       "source_location": "L1249"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline",
-      "label": "cyc0-01-program-baseline.md",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths",
+      "label": "cyc10-01-onboarding-golden-paths.md",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc0-01",
-        "title": "program-baseline-ecosystem-2026",
-        "status": "active",
+        "id": "cyc10-01",
+        "title": "onboarding-golden-paths",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
-        "cycle": "0",
-        "wave": "0",
-        "priority": "p0",
+        "cycle": "10",
+        "wave": "4",
+        "priority": "p2",
         "risk": "medium",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a75 Wave 0, \u00a78.2, \u00a78"
+        "source": "prompt_evo_cycles.md \u00a710.2, \u00a710.3, \u00a710.4"
       },
       "node_kind": "page",
-      "norm_label": "cyc0-01-program-baseline.md",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "norm_label": "cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline_acceptance",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "label": "Baseline do programa ecosystem-2026",
-      "_origin": "ast",
-      "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "baseline do programa ecosystem-2026",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
-      "source_location": "L18"
-    },
-    {
-      "id": "factory_specs_active_cyc0_01_program_baseline_constraints",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
-      "source_location": "L42"
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
+      "source_location": "L40"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline_grill_gate",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline_outcome",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "label": "Onboarding, Getting Started e Golden Paths",
+      "_origin": "ast",
+      "community": 139,
+      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "onboarding, getting started e golden paths",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
+      "source_location": "L18"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline_pending",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
-      "source_location": "L53"
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
+      "source_location": "L49"
     },
     {
-      "id": "factory_specs_active_cyc0_01_program_baseline_rejected",
+      "id": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 139,
-      "community_name": "Baseline do programa ecosystem-2026",
+      "community_name": "Onboarding, Getting Started e Golden Paths",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
-      "source_location": "L48"
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
+      "source_location": "L45"
     },
     {
       "id": "src_theforge_cli_commands_py_path",
@@ -38118,16 +38118,126 @@
       "source_location": "L635"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest",
-      "label": "cyc8-01-compat-manifest.md",
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness",
+      "label": "cyc10-03-adoption-readiness.md",
       "_origin": "ast",
       "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "frontmatter": {
+        "id": "cyc10-03",
+        "title": "public-readiness-contribution-distribution",
+        "status": "done",
+        "created": "2026-10-15",
+        "owner": "the-forge",
+        "scope": "ecosystem",
+        "cycle": "10",
+        "wave": "5",
+        "priority": "p2",
+        "risk": "high",
+        "agent": "codex",
+        "source": "prompt_evo_cycles.md \u00a710.8\u201310.12, \u00a75 Wave 5"
+      },
+      "node_kind": "page",
+      "norm_label": "cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_acceptance",
+      "label": "Acceptance",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "acceptance",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L33"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_constraints",
+      "label": "Constraints",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "constraints",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L42"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_grill_gate",
+      "label": "Grill gate",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "grill gate",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L24"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_outcome",
+      "label": "Outcome",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "outcome",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L20"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_pending",
+      "label": "Pending",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "pending",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L53"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "label": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "public readiness: contribuicao, distribuicao, templates, demos e feedback",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L18"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_03_adoption_readiness_rejected",
+      "label": "Rejected",
+      "_origin": "ast",
+      "community": 140,
+      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "rejected",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
+      "source_location": "L47"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest",
+      "label": "cyc8-01-compat-manifest.md",
+      "_origin": "ast",
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "frontmatter": {
         "id": "cyc8-01",
         "title": "versioning-policy-compat-manifest",
-        "status": "active",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
@@ -38140,202 +38250,92 @@
       },
       "node_kind": "page",
       "norm_label": "cyc8-01-compat-manifest.md",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_acceptance",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_constraints",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_constraints",
       "label": "Constraints",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L42"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_grill_gate",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_outcome",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_outcome",
       "label": "Outcome",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_pending",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_pending",
       "label": "Pending",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L52"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
       "label": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "politica de versoes + compatibility manifest",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc8_01_compat_manifest_rejected",
+      "id": "factory_specs_archive_2026_cyc8_01_compat_manifest_rejected",
       "label": "Rejected",
       "_origin": "ast",
-      "community": 140,
+      "community": 141,
       "community_name": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L47"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging",
-      "label": "cyc8-02-packaging.md",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "frontmatter": {
-        "id": "cyc8-02",
-        "title": "packaging-conformance-matrix",
-        "status": "active",
-        "created": "2026-10-15",
-        "owner": "the-forge",
-        "scope": "ecosystem",
-        "cycle": "8",
-        "wave": "1",
-        "priority": "p0",
-        "risk": "high",
-        "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a78.7"
-      },
-      "node_kind": "page",
-      "norm_label": "cyc8-02-packaging.md",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L1"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_acceptance",
-      "label": "Acceptance",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L33"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "label": "Conformidade de empacotamento dos nove repos",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "conformidade de empacotamento dos nove repos",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L18"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_constraints",
-      "label": "Constraints",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L41"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_grill_gate",
-      "label": "Grill gate",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L24"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_outcome",
-      "label": "Outcome",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L20"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_pending",
-      "label": "Pending",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L51"
-    },
-    {
-      "id": "factory_specs_active_cyc8_02_packaging_rejected",
-      "label": "Rejected",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "Conformidade de empacotamento dos nove repos",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
-      "source_location": "L46"
     },
     {
       "id": "src_theforge_contracts_benchmark",
@@ -38459,16 +38459,16 @@
       "source_location": "L96"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates",
-      "label": "cyc8-04-ci-release-gates.md",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging",
+      "label": "cyc8-02-packaging.md",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc8-04",
-        "title": "ci-release-gates-rc",
-        "status": "active",
+        "id": "cyc8-02",
+        "title": "packaging-conformance-matrix",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
@@ -38477,96 +38477,96 @@
         "priority": "p0",
         "risk": "high",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a78.9, \u00a78.10"
+        "source": "prompt_evo_cycles.md \u00a78.7"
       },
       "node_kind": "page",
-      "norm_label": "cyc8-04-ci-release-gates.md",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "norm_label": "cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_acceptance",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_constraints",
-      "label": "Constraints",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "label": "Conformidade de empacotamento dos nove repos",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
-      "source_location": "L41"
-    },
-    {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "label": "Gates de CI/CD e Release Candidate",
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "gates de ci/cd e release candidate",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "norm_label": "conformidade de empacotamento dos nove repos",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_grill_gate",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_constraints",
+      "label": "Constraints",
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "Conformidade de empacotamento dos nove repos",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "constraints",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
+      "source_location": "L41"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_outcome",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_pending",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
-      "source_location": "L52"
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
+      "source_location": "L51"
     },
     {
-      "id": "factory_specs_active_cyc8_04_ci_release_gates_rejected",
+      "id": "factory_specs_archive_2026_cyc8_02_packaging_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 143,
-      "community_name": "Gates de CI/CD e Release Candidate",
+      "community_name": "Conformidade de empacotamento dos nove repos",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
-      "source_location": "L47"
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
+      "source_location": "L46"
     },
     {
       "id": "docs_onboarding_getting_started_claude_code",
@@ -39448,7 +39448,7 @@
       "source_location": "L1"
     },
     {
-      "id": "docs_index_adapters_312",
+      "id": "docs_index_adapters_310",
       "label": "adapters/",
       "_origin": "ast",
       "community": 150,
@@ -39457,7 +39457,7 @@
       "node_kind": "heading",
       "norm_label": "adapters/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L312"
+      "source_location": "L310"
     },
     {
       "id": "docs_index_agentic",
@@ -39469,10 +39469,10 @@
       "node_kind": "heading",
       "norm_label": "agentic/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L317"
+      "source_location": "L315"
     },
     {
-      "id": "docs_index_graph_studio_323",
+      "id": "docs_index_graph_studio_321",
       "label": "graph-studio/",
       "_origin": "ast",
       "community": 150,
@@ -39481,10 +39481,10 @@
       "node_kind": "heading",
       "norm_label": "graph-studio/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L323"
+      "source_location": "L321"
     },
     {
-      "id": "docs_index_hub_327",
+      "id": "docs_index_hub_325",
       "label": "hub/",
       "_origin": "ast",
       "community": 150,
@@ -39493,10 +39493,10 @@
       "node_kind": "heading",
       "norm_label": "hub/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L327"
+      "source_location": "L325"
     },
     {
-      "id": "docs_index_installation_331",
+      "id": "docs_index_installation_329",
       "label": "installation/",
       "_origin": "ast",
       "community": 150,
@@ -39505,7 +39505,7 @@
       "node_kind": "heading",
       "norm_label": "installation/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L331"
+      "source_location": "L329"
     },
     {
       "id": "docs_index_operate",
@@ -39517,10 +39517,10 @@
       "node_kind": "heading",
       "norm_label": "operate",
       "source_file": "docs/INDEX.md",
-      "source_location": "L308"
+      "source_location": "L306"
     },
     {
-      "id": "docs_index_portable_installation_338",
+      "id": "docs_index_portable_installation_336",
       "label": "portable-installation/",
       "_origin": "ast",
       "community": 150,
@@ -39529,7 +39529,7 @@
       "node_kind": "heading",
       "norm_label": "portable-installation/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L338"
+      "source_location": "L336"
     },
     {
       "id": "src_theforge_lab_gate_py_any",
@@ -41566,7 +41566,7 @@
       "source_location": "L787"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain",
       "label": "cyc8-03-supply-chain.md",
       "_origin": "ast",
       "community": 178,
@@ -41575,7 +41575,7 @@
       "frontmatter": {
         "id": "cyc8-03",
         "title": "supply-chain-security",
-        "status": "active",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
@@ -41588,11 +41588,11 @@
       },
       "node_kind": "page",
       "norm_label": "cyc8-03-supply-chain.md",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_acceptance",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 178,
@@ -41600,11 +41600,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_constraints",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 178,
@@ -41612,11 +41612,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L41"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_grill_gate",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
       "community": 178,
@@ -41624,11 +41624,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_outcome",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 178,
@@ -41636,11 +41636,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_pending",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 178,
@@ -41648,11 +41648,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L50"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_rejected",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 178,
@@ -41660,11 +41660,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L46"
     },
     {
-      "id": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "id": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
       "label": "Supply chain security dos artefatos",
       "_origin": "ast",
       "community": 178,
@@ -41672,7 +41672,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "supply chain security dos artefatos",
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L18"
     },
     {
@@ -42595,10 +42595,10 @@
       "node_kind": "heading",
       "norm_label": "adr/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L221"
+      "source_location": "L219"
     },
     {
-      "id": "docs_index_docs_285",
+      "id": "docs_index_docs_283",
       "label": "docs/",
       "_origin": "ast",
       "community": 196,
@@ -42607,10 +42607,10 @@
       "node_kind": "heading",
       "norm_label": "docs/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L285"
+      "source_location": "L283"
     },
     {
-      "id": "docs_index_experience_290",
+      "id": "docs_index_experience_288",
       "label": "experience/",
       "_origin": "ast",
       "community": 196,
@@ -42619,10 +42619,10 @@
       "node_kind": "heading",
       "norm_label": "experience/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L290"
+      "source_location": "L288"
     },
     {
-      "id": "docs_index_experience_3_294",
+      "id": "docs_index_experience_3_292",
       "label": "experience-3/",
       "_origin": "ast",
       "community": 196,
@@ -42631,10 +42631,10 @@
       "node_kind": "heading",
       "norm_label": "experience-3/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L294"
+      "source_location": "L292"
     },
     {
-      "id": "docs_index_graph_studio_299",
+      "id": "docs_index_graph_studio_297",
       "label": "graph-studio/",
       "_origin": "ast",
       "community": 196,
@@ -42643,7 +42643,7 @@
       "node_kind": "heading",
       "norm_label": "graph-studio/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L299"
+      "source_location": "L297"
     },
     {
       "id": "docs_index_superpowers",
@@ -42655,7 +42655,7 @@
       "node_kind": "heading",
       "norm_label": "superpowers/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L304"
+      "source_location": "L302"
     },
     {
       "id": "docs_index_understand",
@@ -42667,7 +42667,7 @@
       "node_kind": "heading",
       "norm_label": "understand",
       "source_file": "docs/INDEX.md",
-      "source_location": "L217"
+      "source_location": "L215"
     },
     {
       "id": "docs_reference_commands_installations",
@@ -43824,114 +43824,114 @@
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths",
-      "label": "cyc10-01-onboarding-golden-paths.md",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates",
+      "label": "cyc8-04-ci-release-gates.md",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc10-01",
-        "title": "onboarding-golden-paths",
-        "status": "inbox",
+        "id": "cyc8-04",
+        "title": "ci-release-gates-rc",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
-        "cycle": "10",
-        "wave": "4",
-        "priority": "p2",
-        "risk": "medium",
+        "cycle": "8",
+        "wave": "1",
+        "priority": "p0",
+        "risk": "high",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a710.2, \u00a710.3, \u00a710.4"
+        "source": "prompt_evo_cycles.md \u00a78.9, \u00a78.10"
       },
       "node_kind": "page",
-      "norm_label": "cyc10-01-onboarding-golden-paths.md",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "norm_label": "cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_acceptance",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_constraints",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
-      "source_location": "L40"
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
+      "source_location": "L41"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_grill_gate",
-      "label": "Grill gate",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "label": "Gates de CI/CD e Release Candidate",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
-      "source_location": "L24"
-    },
-    {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "label": "Onboarding, Getting Started e Golden Paths",
-      "_origin": "ast",
-      "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "onboarding, getting started e golden paths",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "norm_label": "gates de ci/cd e release candidate",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_outcome",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_grill_gate",
+      "label": "Grill gate",
+      "_origin": "ast",
+      "community": 210,
+      "community_name": "Gates de CI/CD e Release Candidate",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "grill gate",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
+      "source_location": "L24"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_pending",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
-      "source_location": "L49"
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
+      "source_location": "L52"
     },
     {
-      "id": "factory_specs_active_cyc10_01_onboarding_golden_paths_rejected",
+      "id": "factory_specs_archive_2026_cyc8_04_ci_release_gates_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 210,
-      "community_name": "Onboarding, Getting Started e Golden Paths",
+      "community_name": "Gates de CI/CD e Release Candidate",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
-      "source_location": "L45"
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
+      "source_location": "L47"
     },
     {
       "id": "scripts_check_gates",
@@ -45947,7 +45947,7 @@
       "node_kind": "heading",
       "norm_label": "graph-studio/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L23"
+      "source_location": "L21"
     },
     {
       "id": "docs_index_installation",
@@ -45959,7 +45959,7 @@
       "node_kind": "heading",
       "norm_label": "installation/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L27"
+      "source_location": "L25"
     },
     {
       "id": "docs_index_knowledge_program",
@@ -45971,7 +45971,7 @@
       "node_kind": "heading",
       "norm_label": "knowledge-program/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L33"
+      "source_location": "L31"
     },
     {
       "id": "docs_index_learn",
@@ -45995,7 +45995,7 @@
       "node_kind": "heading",
       "norm_label": "onboarding/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L37"
+      "source_location": "L35"
     },
     {
       "id": "docs_index_tutorials",
@@ -46007,7 +46007,7 @@
       "node_kind": "heading",
       "norm_label": "tutorials/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L57"
+      "source_location": "L55"
     },
     {
       "id": "portal_manifest_chunk_cjct86dr_js_bytes",
@@ -46054,114 +46054,114 @@
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity",
-      "label": "cyc9-02-eval-integrity.md",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator",
+      "label": "cyc9-01-lab-coordinator.md",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc9-02",
-        "title": "eval-integrity-metrics-groundtruth",
-        "status": "active",
+        "id": "cyc9-01",
+        "title": "forge-lab-coordinator",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
         "cycle": "9",
         "wave": "2",
         "priority": "p1",
-        "risk": "medium",
+        "risk": "high",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a79.5, \u00a79.6, \u00a79.7, \u00a79.8, \u00a79.10"
+        "source": "prompt_evo_cycles.md \u00a79.2, \u00a79.4, \u00a79.11"
       },
       "node_kind": "page",
-      "norm_label": "cyc9-02-eval-integrity.md",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "norm_label": "cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_acceptance",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_constraints",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
-      "source_location": "L41"
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
+      "source_location": "L43"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_grill_gate",
-      "label": "Grill gate",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "label": "Forge Lab \u2014 coordenador federado e harness",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
-      "source_location": "L24"
-    },
-    {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "label": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
-      "_origin": "ast",
-      "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "integridade de avaliacao: metricas, ground truth e regression gates",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "norm_label": "forge lab \u2014 coordenador federado e harness",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_outcome",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_grill_gate",
+      "label": "Grill gate",
+      "_origin": "ast",
+      "community": 250,
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "grill gate",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
+      "source_location": "L24"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_pending",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
-      "source_location": "L51"
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
+      "source_location": "L54"
     },
     {
-      "id": "factory_specs_active_cyc9_02_eval_integrity_rejected",
+      "id": "factory_specs_archive_2026_cyc9_01_lab_coordinator_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 250,
-      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "community_name": "Forge Lab \u2014 coordenador federado e harness",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
-      "source_location": "L46"
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
+      "source_location": "L49"
     },
     {
       "id": "docs_programs_ecosystem_2026_dependency_map",
@@ -46356,114 +46356,114 @@
       "source_location": "L112"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator",
-      "label": "cyc9-01-lab-coordinator.md",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity",
+      "label": "cyc9-02-eval-integrity.md",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc9-01",
-        "title": "forge-lab-coordinator",
-        "status": "active",
+        "id": "cyc9-02",
+        "title": "eval-integrity-metrics-groundtruth",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
         "cycle": "9",
         "wave": "2",
         "priority": "p1",
-        "risk": "high",
+        "risk": "medium",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a79.2, \u00a79.4, \u00a79.11"
+        "source": "prompt_evo_cycles.md \u00a79.5, \u00a79.6, \u00a79.7, \u00a79.8, \u00a79.10"
       },
       "node_kind": "page",
-      "norm_label": "cyc9-01-lab-coordinator.md",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "norm_label": "cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_acceptance",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_constraints",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
-      "source_location": "L43"
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
+      "source_location": "L41"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "label": "Forge Lab \u2014 coordenador federado e harness",
-      "_origin": "ast",
-      "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "forge lab \u2014 coordenador federado e harness",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
-      "source_location": "L18"
-    },
-    {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_grill_gate",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_outcome",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "label": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "_origin": "ast",
+      "community": 253,
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "integridade de avaliacao: metricas, ground truth e regression gates",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
+      "source_location": "L18"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_pending",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
-      "source_location": "L54"
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
+      "source_location": "L51"
     },
     {
-      "id": "factory_specs_active_cyc9_01_lab_coordinator_rejected",
+      "id": "factory_specs_archive_2026_cyc9_02_eval_integrity_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 253,
-      "community_name": "Forge Lab \u2014 coordenador federado e harness",
+      "community_name": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
-      "source_location": "L49"
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
+      "source_location": "L46"
     },
     {
       "id": "portal_manifest_chunk_cxcsldpj_js_bytes",
@@ -46499,7 +46499,7 @@
       "source_location": "L71"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge",
       "label": "cyc9-03-scenarios-multiforge.md",
       "_origin": "ast",
       "community": 255,
@@ -46508,7 +46508,7 @@
       "frontmatter": {
         "id": "cyc9-03",
         "title": "scenarios-multiforge",
-        "status": "active",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
@@ -46521,11 +46521,11 @@
       },
       "node_kind": "page",
       "norm_label": "cyc9-03-scenarios-multiforge.md",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_acceptance",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 255,
@@ -46533,11 +46533,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
       "label": "Cen\u00e1rios multi-Forge do Forge Lab",
       "_origin": "ast",
       "community": 255,
@@ -46545,11 +46545,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "cenarios multi-forge do forge lab",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_constraints",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 255,
@@ -46557,11 +46557,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L40"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_grill_gate",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
       "community": 255,
@@ -46569,11 +46569,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_outcome",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 255,
@@ -46581,11 +46581,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_pending",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 255,
@@ -46593,11 +46593,11 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L50"
     },
     {
-      "id": "factory_specs_active_cyc9_03_scenarios_multiforge_rejected",
+      "id": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_rejected",
       "label": "Rejected",
       "_origin": "ast",
       "community": 255,
@@ -46605,7 +46605,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L45"
     },
     {
@@ -47253,7 +47253,7 @@
       "source_location": "L103"
     },
     {
-      "id": "docs_index_347",
+      "id": "docs_index_345",
       "label": "./",
       "_origin": "ast",
       "community": 277,
@@ -47262,10 +47262,10 @@
       "node_kind": "heading",
       "norm_label": "./",
       "source_file": "docs/INDEX.md",
-      "source_location": "L347"
+      "source_location": "L345"
     },
     {
-      "id": "docs_index_agentic_353",
+      "id": "docs_index_agentic_351",
       "label": "agentic/",
       "_origin": "ast",
       "community": 277,
@@ -47274,7 +47274,7 @@
       "node_kind": "heading",
       "norm_label": "agentic/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L353"
+      "source_location": "L351"
     },
     {
       "id": "docs_index_contribute",
@@ -47286,7 +47286,7 @@
       "node_kind": "heading",
       "norm_label": "contribute",
       "source_file": "docs/INDEX.md",
-      "source_location": "L343"
+      "source_location": "L341"
     },
     {
       "id": "docs_index_contributing",
@@ -47298,10 +47298,10 @@
       "node_kind": "heading",
       "norm_label": "contributing/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L369"
+      "source_location": "L367"
     },
     {
-      "id": "docs_index_docs_373",
+      "id": "docs_index_docs_371",
       "label": "docs/",
       "_origin": "ast",
       "community": 277,
@@ -47310,10 +47310,10 @@
       "node_kind": "heading",
       "norm_label": "docs/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L373"
+      "source_location": "L371"
     },
     {
-      "id": "docs_index_onboarding_377",
+      "id": "docs_index_onboarding_375",
       "label": "onboarding/",
       "_origin": "ast",
       "community": 277,
@@ -47322,7 +47322,7 @@
       "node_kind": "heading",
       "norm_label": "onboarding/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L377"
+      "source_location": "L375"
     },
     {
       "id": "docs_index_the_forge_documentation_index",
@@ -47782,114 +47782,102 @@
       "source_location": "L386"
     },
     {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness",
-      "label": "cyc10-03-adoption-readiness.md",
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github",
+      "label": "cyc10-02-docs-github.md",
       "_origin": "ast",
       "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc10-03",
-        "title": "public-readiness-contribution-distribution",
-        "status": "inbox",
+        "id": "cyc10-02",
+        "title": "unified-docs-github-experience",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
         "cycle": "10",
-        "wave": "5",
+        "wave": "4",
         "priority": "p2",
-        "risk": "high",
+        "risk": "medium",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a710.8\u201310.12, \u00a75 Wave 5"
+        "source": "prompt_evo_cycles.md \u00a710.5, \u00a710.6, \u00a710.7"
       },
       "node_kind": "page",
-      "norm_label": "cyc10-03-adoption-readiness.md",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "norm_label": "cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_acceptance",
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_constraints",
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github_constraints",
       "label": "Constraints",
       "_origin": "ast",
       "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
-      "source_location": "L42"
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
+      "source_location": "L40"
     },
     {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_grill_gate",
-      "label": "Grill gate",
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "label": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
       "_origin": "ast",
       "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
-      "source_location": "L24"
-    },
-    {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_outcome",
-      "label": "Outcome",
-      "_origin": "ast",
-      "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
-      "source_location": "L20"
-    },
-    {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_pending",
-      "label": "Pending",
-      "_origin": "ast",
-      "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
-      "source_location": "L53"
-    },
-    {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "label": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
-      "_origin": "ast",
-      "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "public readiness: contribuicao, distribuicao, templates, demos e feedback",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "norm_label": "documentacao unificada, posicionamento e github experience",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc10_03_adoption_readiness_rejected",
-      "label": "Rejected",
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github_grill_gate",
+      "label": "Grill gate",
       "_origin": "ast",
       "community": 290,
-      "community_name": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback",
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "rejected",
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
-      "source_location": "L47"
+      "norm_label": "grill gate",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
+      "source_location": "L24"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github_outcome",
+      "label": "Outcome",
+      "_origin": "ast",
+      "community": 290,
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "outcome",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
+      "source_location": "L20"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc10_02_docs_github_pending",
+      "label": "Pending",
+      "_origin": "ast",
+      "community": 290,
+      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "pending",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
+      "source_location": "L44"
     },
     {
       "id": "docs_adr_0060_forge_lab_coordinator_adr_0060_forge_lab_coordinator_subsistema_novo_no_core_ou_orquestra\u00e7\u00e3o_sobre_labs_existentes",
@@ -50857,102 +50845,114 @@
       "source_location": "L43"
     },
     {
-      "id": "factory_specs_active_cyc10_02_docs_github",
-      "label": "cyc10-02-docs-github.md",
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline",
+      "label": "cyc0-01-program-baseline.md",
       "_origin": "ast",
       "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "community_name": "Baseline do programa ecosystem-2026",
       "file_type": "document",
       "frontmatter": {
-        "id": "cyc10-02",
-        "title": "unified-docs-github-experience",
-        "status": "inbox",
+        "id": "cyc0-01",
+        "title": "program-baseline-ecosystem-2026",
+        "status": "done",
         "created": "2026-10-15",
         "owner": "the-forge",
         "scope": "ecosystem",
-        "cycle": "10",
-        "wave": "4",
-        "priority": "p2",
+        "cycle": "0",
+        "wave": "0",
+        "priority": "p0",
         "risk": "medium",
         "agent": "codex",
-        "source": "prompt_evo_cycles.md \u00a710.5, \u00a710.6, \u00a710.7"
+        "source": "prompt_evo_cycles.md \u00a75 Wave 0, \u00a78.2, \u00a78"
       },
       "node_kind": "page",
-      "norm_label": "cyc10-02-docs-github.md",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "norm_label": "cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L1"
     },
     {
-      "id": "factory_specs_active_cyc10_02_docs_github_acceptance",
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_acceptance",
       "label": "Acceptance",
       "_origin": "ast",
       "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "community_name": "Baseline do programa ecosystem-2026",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "acceptance",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L33"
     },
     {
-      "id": "factory_specs_active_cyc10_02_docs_github_constraints",
-      "label": "Constraints",
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "label": "Baseline do programa ecosystem-2026",
       "_origin": "ast",
       "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "community_name": "Baseline do programa ecosystem-2026",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "constraints",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
-      "source_location": "L40"
-    },
-    {
-      "id": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
-      "label": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
-      "_origin": "ast",
-      "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "documentacao unificada, posicionamento e github experience",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "norm_label": "baseline do programa ecosystem-2026",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L18"
     },
     {
-      "id": "factory_specs_active_cyc10_02_docs_github_grill_gate",
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_constraints",
+      "label": "Constraints",
+      "_origin": "ast",
+      "community": 46,
+      "community_name": "Baseline do programa ecosystem-2026",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "constraints",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
+      "source_location": "L42"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_grill_gate",
       "label": "Grill gate",
       "_origin": "ast",
       "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "community_name": "Baseline do programa ecosystem-2026",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "grill gate",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L24"
     },
     {
-      "id": "factory_specs_active_cyc10_02_docs_github_outcome",
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_outcome",
       "label": "Outcome",
       "_origin": "ast",
       "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "community_name": "Baseline do programa ecosystem-2026",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "outcome",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L20"
     },
     {
-      "id": "factory_specs_active_cyc10_02_docs_github_pending",
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_pending",
       "label": "Pending",
       "_origin": "ast",
       "community": 46,
-      "community_name": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience",
+      "community_name": "Baseline do programa ecosystem-2026",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "pending",
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
-      "source_location": "L44"
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
+      "source_location": "L53"
+    },
+    {
+      "id": "factory_specs_archive_2026_cyc0_01_program_baseline_rejected",
+      "label": "Rejected",
+      "_origin": "ast",
+      "community": 46,
+      "community_name": "Baseline do programa ecosystem-2026",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "rejected",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
+      "source_location": "L48"
     },
     {
       "id": "checkverdict",
@@ -51577,7 +51577,7 @@
       "node_kind": "heading",
       "norm_label": "notas",
       "source_file": "factory/specs/PROGRAM-ecosystem-2026.md",
-      "source_location": "L43"
+      "source_location": "L49"
     },
     {
       "id": "factory_specs_program_ecosystem_2026_ordem_e_depend\u00eancias",
@@ -51613,7 +51613,7 @@
       "node_kind": "heading",
       "norm_label": "status \u2014 2026-10-15 (fim de sessao)",
       "source_file": "factory/specs/PROGRAM-ecosystem-2026.md",
-      "source_location": "L49"
+      "source_location": "L55"
     },
     {
       "id": "github_issue_template_bug_report",
@@ -54387,7 +54387,7 @@
       "source_location": "L40"
     },
     {
-      "id": "docs_index_385",
+      "id": "docs_index_383",
       "label": "./",
       "_origin": "ast",
       "community": 76,
@@ -54396,7 +54396,7 @@
       "node_kind": "heading",
       "norm_label": "./",
       "source_file": "docs/INDEX.md",
-      "source_location": "L385"
+      "source_location": "L383"
     },
     {
       "id": "docs_index_archive",
@@ -54408,10 +54408,10 @@
       "node_kind": "heading",
       "norm_label": "archive",
       "source_file": "docs/INDEX.md",
-      "source_location": "L381"
+      "source_location": "L379"
     },
     {
-      "id": "docs_index_audit_395",
+      "id": "docs_index_audit_393",
       "label": "audit/",
       "_origin": "ast",
       "community": 76,
@@ -54420,10 +54420,10 @@
       "node_kind": "heading",
       "norm_label": "audit/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L395"
+      "source_location": "L393"
     },
     {
-      "id": "docs_index_docs_411",
+      "id": "docs_index_docs_409",
       "label": "docs/",
       "_origin": "ast",
       "community": 76,
@@ -54432,7 +54432,7 @@
       "node_kind": "heading",
       "norm_label": "docs/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L411"
+      "source_location": "L409"
     },
     {
       "id": "docs_index_dx",
@@ -54444,10 +54444,10 @@
       "node_kind": "heading",
       "norm_label": "dx/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L452"
+      "source_location": "L450"
     },
     {
-      "id": "docs_index_engineering_excellence_458",
+      "id": "docs_index_engineering_excellence_456",
       "label": "engineering-excellence/",
       "_origin": "ast",
       "community": 76,
@@ -54456,10 +54456,10 @@
       "node_kind": "heading",
       "norm_label": "engineering-excellence/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L458"
+      "source_location": "L456"
     },
     {
-      "id": "docs_index_experience_3_485",
+      "id": "docs_index_experience_3_483",
       "label": "experience-3/",
       "_origin": "ast",
       "community": 76,
@@ -54468,10 +54468,10 @@
       "node_kind": "heading",
       "norm_label": "experience-3/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L485"
+      "source_location": "L483"
     },
     {
-      "id": "docs_index_experience_471",
+      "id": "docs_index_experience_469",
       "label": "experience/",
       "_origin": "ast",
       "community": 76,
@@ -54480,10 +54480,10 @@
       "node_kind": "heading",
       "norm_label": "experience/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L471"
+      "source_location": "L469"
     },
     {
-      "id": "docs_index_factory_497",
+      "id": "docs_index_factory_495",
       "label": "factory/",
       "_origin": "ast",
       "community": 76,
@@ -54492,7 +54492,7 @@
       "node_kind": "heading",
       "norm_label": "factory/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L497"
+      "source_location": "L495"
     },
     {
       "id": "docs_index_github",
@@ -54504,7 +54504,7 @@
       "node_kind": "heading",
       "norm_label": ".github/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L389"
+      "source_location": "L387"
     },
     {
       "id": "docs_index_graph_studio_527",
@@ -57180,7 +57180,7 @@
       "node_kind": "heading",
       "norm_label": "./",
       "source_file": "docs/INDEX.md",
-      "source_location": "L65"
+      "source_location": "L63"
     },
     {
       "id": "docs_knowledge_program_broken_link_report",
@@ -57576,7 +57576,7 @@
       "node_kind": "heading",
       "norm_label": "adapters/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L75"
+      "source_location": "L73"
     },
     {
       "id": "docs_index_audit",
@@ -57588,7 +57588,7 @@
       "node_kind": "heading",
       "norm_label": "audit/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L82"
+      "source_location": "L80"
     },
     {
       "id": "docs_index_docs",
@@ -57600,7 +57600,7 @@
       "node_kind": "heading",
       "norm_label": "docs/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L88"
+      "source_location": "L86"
     },
     {
       "id": "docs_index_experience",
@@ -57612,10 +57612,10 @@
       "node_kind": "heading",
       "norm_label": "experience/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L93"
+      "source_location": "L91"
     },
     {
-      "id": "docs_index_experience_3_97",
+      "id": "docs_index_experience_3_95",
       "label": "experience-3/",
       "_origin": "ast",
       "community": 94,
@@ -57624,10 +57624,10 @@
       "node_kind": "heading",
       "norm_label": "experience-3/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L97"
+      "source_location": "L95"
     },
     {
-      "id": "docs_index_factory_101",
+      "id": "docs_index_factory_99",
       "label": "factory/",
       "_origin": "ast",
       "community": 94,
@@ -57636,10 +57636,10 @@
       "node_kind": "heading",
       "norm_label": "factory/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L101"
+      "source_location": "L99"
     },
     {
-      "id": "docs_index_graph_studio_105",
+      "id": "docs_index_graph_studio_103",
       "label": "graph-studio/",
       "_origin": "ast",
       "community": 94,
@@ -57648,7 +57648,7 @@
       "node_kind": "heading",
       "norm_label": "graph-studio/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L105"
+      "source_location": "L103"
     },
     {
       "id": "docs_index_hub",
@@ -57660,10 +57660,10 @@
       "node_kind": "heading",
       "norm_label": "hub/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L111"
+      "source_location": "L109"
     },
     {
-      "id": "docs_index_installation_117",
+      "id": "docs_index_installation_115",
       "label": "installation/",
       "_origin": "ast",
       "community": 94,
@@ -57672,10 +57672,10 @@
       "node_kind": "heading",
       "norm_label": "installation/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L117"
+      "source_location": "L115"
     },
     {
-      "id": "docs_index_learn_129",
+      "id": "docs_index_learn_127",
       "label": "learn/",
       "_origin": "ast",
       "community": 94,
@@ -57684,7 +57684,7 @@
       "node_kind": "heading",
       "norm_label": "learn/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L129"
+      "source_location": "L127"
     },
     {
       "id": "docs_index_portable_installation",
@@ -57696,7 +57696,7 @@
       "node_kind": "heading",
       "norm_label": "portable-installation/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L142"
+      "source_location": "L140"
     },
     {
       "id": "docs_index_portal",
@@ -57708,7 +57708,7 @@
       "node_kind": "heading",
       "norm_label": "portal/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L157"
+      "source_location": "L155"
     },
     {
       "id": "docs_index_programs",
@@ -57720,7 +57720,7 @@
       "node_kind": "heading",
       "norm_label": "programs/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L161"
+      "source_location": "L159"
     },
     {
       "id": "docs_index_reality",
@@ -57732,7 +57732,7 @@
       "node_kind": "heading",
       "norm_label": "reality/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L165"
+      "source_location": "L163"
     },
     {
       "id": "docs_index_reports",
@@ -57744,7 +57744,7 @@
       "node_kind": "heading",
       "norm_label": "reports/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L169"
+      "source_location": "L167"
     },
     {
       "id": "docs_index_templates",
@@ -57756,7 +57756,7 @@
       "node_kind": "heading",
       "norm_label": "templates/",
       "source_file": "docs/INDEX.md",
-      "source_location": "L173"
+      "source_location": "L171"
     },
     {
       "id": "docs_index_use",
@@ -57768,7 +57768,7 @@
       "node_kind": "heading",
       "norm_label": "use",
       "source_file": "docs/INDEX.md",
-      "source_location": "L61"
+      "source_location": "L59"
     },
     {
       "id": "parametrize",
@@ -148713,13 +148713,13 @@
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_385",
+      "target": "docs_index_383",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L385",
+      "source_location": "L383",
       "weight": 1.0
     },
     {
@@ -148730,29 +148730,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L389",
+      "source_location": "L387",
       "weight": 1.0
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_audit_395",
+      "target": "docs_index_audit_393",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L395",
+      "source_location": "L393",
       "weight": 1.0
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_docs_411",
+      "target": "docs_index_docs_409",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L411",
+      "source_location": "L409",
       "weight": 1.0
     },
     {
@@ -148763,51 +148763,51 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L452",
+      "source_location": "L450",
       "weight": 1.0
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_engineering_excellence_458",
+      "target": "docs_index_engineering_excellence_456",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L458",
+      "source_location": "L456",
       "weight": 1.0
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_experience_471",
+      "target": "docs_index_experience_469",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L471",
+      "source_location": "L469",
       "weight": 1.0
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_experience_3_485",
+      "target": "docs_index_experience_3_483",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L485",
+      "source_location": "L483",
       "weight": 1.0
     },
     {
       "source": "docs_index_archive",
-      "target": "docs_index_factory_497",
+      "target": "docs_index_factory_495",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L497",
+      "source_location": "L495",
       "weight": 1.0
     },
     {
@@ -148933,24 +148933,24 @@
     },
     {
       "source": "docs_index_contribute",
-      "target": "docs_index_347",
+      "target": "docs_index_345",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L347",
+      "source_location": "L345",
       "weight": 1.0
     },
     {
       "source": "docs_index_contribute",
-      "target": "docs_index_agentic_353",
+      "target": "docs_index_agentic_351",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L353",
+      "source_location": "L351",
       "weight": 1.0
     },
     {
@@ -148961,29 +148961,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L369",
+      "source_location": "L367",
       "weight": 1.0
     },
     {
       "source": "docs_index_contribute",
-      "target": "docs_index_docs_373",
+      "target": "docs_index_docs_371",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L373",
+      "source_location": "L371",
       "weight": 1.0
     },
     {
       "source": "docs_index_contribute",
-      "target": "docs_index_onboarding_377",
+      "target": "docs_index_onboarding_375",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L377",
+      "source_location": "L375",
       "weight": 1.0
     },
     {
@@ -149016,7 +149016,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L23",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -149027,7 +149027,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L27",
+      "source_location": "L25",
       "weight": 1.0
     },
     {
@@ -149038,7 +149038,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L33",
+      "source_location": "L31",
       "weight": 1.0
     },
     {
@@ -149049,7 +149049,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L37",
+      "source_location": "L35",
       "weight": 1.0
     },
     {
@@ -149060,18 +149060,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L57",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
       "source": "docs_index_operate",
-      "target": "docs_index_adapters_312",
+      "target": "docs_index_adapters_310",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L312",
+      "source_location": "L310",
       "weight": 1.0
     },
     {
@@ -149082,51 +149082,51 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L317",
+      "source_location": "L315",
       "weight": 1.0
     },
     {
       "source": "docs_index_operate",
-      "target": "docs_index_graph_studio_323",
+      "target": "docs_index_graph_studio_321",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L323",
+      "source_location": "L321",
       "weight": 1.0
     },
     {
       "source": "docs_index_operate",
-      "target": "docs_index_hub_327",
+      "target": "docs_index_hub_325",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L327",
+      "source_location": "L325",
       "weight": 1.0
     },
     {
       "source": "docs_index_operate",
-      "target": "docs_index_installation_331",
+      "target": "docs_index_installation_329",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L331",
+      "source_location": "L329",
       "weight": 1.0
     },
     {
       "source": "docs_index_operate",
-      "target": "docs_index_portable_installation_338",
+      "target": "docs_index_portable_installation_336",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L338",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -149137,18 +149137,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L187",
+      "source_location": "L185",
       "weight": 1.0
     },
     {
       "source": "docs_index_reference",
-      "target": "docs_index_docs_191",
+      "target": "docs_index_docs_189",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L191",
+      "source_location": "L189",
       "weight": 1.0
     },
     {
@@ -149159,51 +149159,51 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L195",
+      "source_location": "L193",
       "weight": 1.0
     },
     {
       "source": "docs_index_reference",
-      "target": "docs_index_factory_200",
+      "target": "docs_index_factory_198",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L200",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
       "source": "docs_index_reference",
-      "target": "docs_index_graph_studio_204",
+      "target": "docs_index_graph_studio_202",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L204",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
       "source": "docs_index_reference",
-      "target": "docs_index_portable_installation_209",
+      "target": "docs_index_portable_installation_207",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L209",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
       "source": "docs_index_reference",
-      "target": "docs_index_reference_213",
+      "target": "docs_index_reference_211",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L213",
+      "source_location": "L211",
       "weight": 1.0
     },
     {
@@ -149214,7 +149214,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L183",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -149225,7 +149225,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L217",
+      "source_location": "L215",
       "weight": 1.0
     },
     {
@@ -149236,7 +149236,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L308",
+      "source_location": "L306",
       "weight": 1.0
     },
     {
@@ -149247,7 +149247,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L343",
+      "source_location": "L341",
       "weight": 1.0
     },
     {
@@ -149258,7 +149258,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L381",
+      "source_location": "L379",
       "weight": 1.0
     },
     {
@@ -149269,7 +149269,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L61",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -149291,51 +149291,51 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L221",
+      "source_location": "L219",
       "weight": 1.0
     },
     {
       "source": "docs_index_understand",
-      "target": "docs_index_docs_285",
+      "target": "docs_index_docs_283",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L285",
+      "source_location": "L283",
       "weight": 1.0
     },
     {
       "source": "docs_index_understand",
-      "target": "docs_index_experience_290",
+      "target": "docs_index_experience_288",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L290",
+      "source_location": "L288",
       "weight": 1.0
     },
     {
       "source": "docs_index_understand",
-      "target": "docs_index_experience_3_294",
+      "target": "docs_index_experience_3_292",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L294",
+      "source_location": "L292",
       "weight": 1.0
     },
     {
       "source": "docs_index_understand",
-      "target": "docs_index_graph_studio_299",
+      "target": "docs_index_graph_studio_297",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L299",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -149346,29 +149346,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L304",
+      "source_location": "L302",
       "weight": 1.0
     },
     {
       "source": "docs_index_use",
-      "target": "docs_index_factory_101",
+      "target": "docs_index_graph_studio_103",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L101",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index_use",
-      "target": "docs_index_graph_studio_105",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L105",
+      "source_location": "L103",
       "weight": 1.0
     },
     {
@@ -149379,29 +149368,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L111",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
       "source": "docs_index_use",
-      "target": "docs_index_installation_117",
+      "target": "docs_index_installation_115",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L117",
+      "source_location": "L115",
       "weight": 1.0
     },
     {
       "source": "docs_index_use",
-      "target": "docs_index_learn_129",
+      "target": "docs_index_learn_127",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L129",
+      "source_location": "L127",
       "weight": 1.0
     },
     {
@@ -149412,7 +149401,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L142",
+      "source_location": "L140",
       "weight": 1.0
     },
     {
@@ -149423,7 +149412,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L157",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -149434,7 +149423,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L161",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -149445,7 +149434,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L165",
+      "source_location": "L163",
       "weight": 1.0
     },
     {
@@ -149456,7 +149445,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L169",
+      "source_location": "L167",
       "weight": 1.0
     },
     {
@@ -149467,7 +149456,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L173",
+      "source_location": "L171",
       "weight": 1.0
     },
     {
@@ -149478,7 +149467,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L65",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -149489,7 +149478,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L75",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -149500,7 +149489,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L82",
+      "source_location": "L80",
       "weight": 1.0
     },
     {
@@ -149511,7 +149500,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L88",
+      "source_location": "L86",
       "weight": 1.0
     },
     {
@@ -149522,18 +149511,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L93",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
       "source": "docs_index_use",
-      "target": "docs_index_experience_3_97",
+      "target": "docs_index_experience_3_95",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L97",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index_use",
+      "target": "docs_index_factory_99",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L99",
       "weight": 1.0
     },
     {
@@ -162781,838 +162781,838 @@
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline",
-      "target": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "target": "factory_specs_active_cyc0_01_program_baseline_outcome",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "target": "factory_specs_active_cyc0_01_program_baseline_grill_gate",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "target": "factory_specs_active_cyc0_01_program_baseline_acceptance",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "target": "factory_specs_active_cyc0_01_program_baseline_constraints",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L42",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "target": "factory_specs_active_cyc0_01_program_baseline_rejected",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L48",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
-      "target": "factory_specs_active_cyc0_01_program_baseline_pending",
+      "source": "factory_specs_archive_2026_cyc0_01_program_baseline_baseline_do_programa_ecosystem_2026",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc0-01-program-baseline.md",
+      "source_file": "factory/specs/archive/2026/cyc0-01-program-baseline.md",
       "source_location": "L53",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_outcome",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_grill_gate",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_acceptance",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_constraints",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L40",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_rejected",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L45",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths_pending",
+      "source": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_onboarding_getting_started_e_golden_paths",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-01-onboarding-golden-paths.md",
+      "source_file": "factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md",
       "source_location": "L49",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_02_docs_github",
-      "target": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "source": "factory_specs_archive_2026_cyc10_02_docs_github",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
-      "target": "factory_specs_active_cyc10_02_docs_github_outcome",
+      "source": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
-      "target": "factory_specs_active_cyc10_02_docs_github_grill_gate",
+      "source": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
-      "target": "factory_specs_active_cyc10_02_docs_github_acceptance",
+      "source": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
-      "target": "factory_specs_active_cyc10_02_docs_github_constraints",
+      "source": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L40",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
-      "target": "factory_specs_active_cyc10_02_docs_github_pending",
+      "source": "factory_specs_archive_2026_cyc10_02_docs_github_documenta\u00e7\u00e3o_unificada_posicionamento_e_github_experience",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-02-docs-github.md",
+      "source_file": "factory/specs/archive/2026/cyc10-02-docs-github.md",
       "source_location": "L44",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_outcome",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_grill_gate",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_acceptance",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_constraints",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L42",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_rejected",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L47",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness_pending",
+      "source": "factory_specs_archive_2026_cyc10_03_adoption_readiness_public_readiness_contribui\u00e7\u00e3o_distribui\u00e7\u00e3o_templates_demos_e_feedback",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc10-03-adoption-readiness.md",
+      "source_file": "factory/specs/archive/2026/cyc10-03-adoption-readiness.md",
       "source_location": "L53",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_outcome",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_grill_gate",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_acceptance",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_constraints",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L42",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_rejected",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L47",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
-      "target": "factory_specs_active_cyc8_01_compat_manifest_pending",
+      "source": "factory_specs_archive_2026_cyc8_01_compat_manifest_pol\u00edtica_de_vers\u00f5es_compatibility_manifest",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-01-compat-manifest.md",
+      "source_file": "factory/specs/archive/2026/cyc8-01-compat-manifest.md",
       "source_location": "L52",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging",
-      "target": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "target": "factory_specs_active_cyc8_02_packaging_outcome",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "target": "factory_specs_active_cyc8_02_packaging_grill_gate",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "target": "factory_specs_active_cyc8_02_packaging_acceptance",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "target": "factory_specs_active_cyc8_02_packaging_constraints",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L41",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "target": "factory_specs_active_cyc8_02_packaging_rejected",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L46",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
-      "target": "factory_specs_active_cyc8_02_packaging_pending",
+      "source": "factory_specs_archive_2026_cyc8_02_packaging_conformidade_de_empacotamento_dos_nove_repos",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-02-packaging.md",
+      "source_file": "factory/specs/archive/2026/cyc8-02-packaging.md",
       "source_location": "L51",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain",
-      "target": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
-      "target": "factory_specs_active_cyc8_03_supply_chain_outcome",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
-      "target": "factory_specs_active_cyc8_03_supply_chain_grill_gate",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
-      "target": "factory_specs_active_cyc8_03_supply_chain_acceptance",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
-      "target": "factory_specs_active_cyc8_03_supply_chain_constraints",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L41",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
-      "target": "factory_specs_active_cyc8_03_supply_chain_rejected",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L46",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
-      "target": "factory_specs_active_cyc8_03_supply_chain_pending",
+      "source": "factory_specs_archive_2026_cyc8_03_supply_chain_supply_chain_security_dos_artefatos",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-03-supply-chain.md",
+      "source_file": "factory/specs/archive/2026/cyc8-03-supply-chain.md",
       "source_location": "L50",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_outcome",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_grill_gate",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_acceptance",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_constraints",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L41",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_rejected",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L47",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates_pending",
+      "source": "factory_specs_archive_2026_cyc8_04_ci_release_gates_gates_de_ci_cd_e_release_candidate",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc8-04-ci-release-gates.md",
+      "source_file": "factory/specs/archive/2026/cyc8-04-ci-release-gates.md",
       "source_location": "L52",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_outcome",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_grill_gate",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_acceptance",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_constraints",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L43",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_rejected",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L49",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator_pending",
+      "source": "factory_specs_archive_2026_cyc9_01_lab_coordinator_forge_lab_coordenador_federado_e_harness",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-01-lab-coordinator.md",
+      "source_file": "factory/specs/archive/2026/cyc9-01-lab-coordinator.md",
       "source_location": "L54",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_outcome",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_grill_gate",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_acceptance",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_constraints",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L41",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_rejected",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L46",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
-      "target": "factory_specs_active_cyc9_02_eval_integrity_pending",
+      "source": "factory_specs_archive_2026_cyc9_02_eval_integrity_integridade_de_avalia\u00e7\u00e3o_m\u00e9tricas_ground_truth_e_regression_gates",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-02-eval-integrity.md",
+      "source_file": "factory/specs/archive/2026/cyc9-02-eval-integrity.md",
       "source_location": "L51",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L18",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_outcome",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_outcome",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L20",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_grill_gate",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_grill_gate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L24",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_acceptance",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_acceptance",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_constraints",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_constraints",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L40",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_rejected",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_rejected",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L45",
       "weight": 1.0
     },
     {
-      "source": "factory_specs_active_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge_pending",
+      "source": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_cen\u00e1rios_multi_forge_do_forge_lab",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge_pending",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "factory/specs/active/cyc9-03-scenarios-multiforge.md",
+      "source_file": "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
       "source_location": "L50",
       "weight": 1.0
     },
@@ -163657,7 +163657,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "factory/specs/PROGRAM-ecosystem-2026.md",
-      "source_location": "L43",
+      "source_location": "L49",
       "weight": 1.0
     },
     {
@@ -163668,7 +163668,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "factory/specs/PROGRAM-ecosystem-2026.md",
-      "source_location": "L49",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
@@ -198974,7 +198974,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L159",
+      "source_location": "L157",
       "weight": 1.0
     },
     {
@@ -198985,7 +198985,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L163",
+      "source_location": "L161",
       "weight": 1.0
     },
     {
@@ -198996,7 +198996,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L175",
+      "source_location": "L173",
       "weight": 1.0
     },
     {
@@ -199007,7 +199007,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L176",
+      "source_location": "L174",
       "weight": 1.0
     },
     {
@@ -199018,7 +199018,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L177",
+      "source_location": "L175",
       "weight": 1.0
     },
     {
@@ -199029,7 +199029,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L178",
+      "source_location": "L176",
       "weight": 1.0
     },
     {
@@ -199040,7 +199040,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L179",
+      "source_location": "L177",
       "weight": 1.0
     },
     {
@@ -199051,7 +199051,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L180",
+      "source_location": "L178",
       "weight": 1.0
     },
     {
@@ -199062,18 +199062,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L181",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc10_01_onboarding_golden_paths",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L20",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -199084,7 +199073,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L211",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -199095,7 +199084,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L215",
+      "source_location": "L213",
       "weight": 1.0
     },
     {
@@ -199106,7 +199095,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L282",
+      "source_location": "L280",
       "weight": 1.0
     },
     {
@@ -199117,7 +199106,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L283",
+      "source_location": "L281",
       "weight": 1.0
     },
     {
@@ -199128,7 +199117,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L351",
+      "source_location": "L349",
       "weight": 1.0
     },
     {
@@ -199139,18 +199128,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L371",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "docs_onboarding_getting_started_codex",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L379",
+      "source_location": "L369",
       "weight": 1.0
     },
     {
@@ -199161,40 +199139,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L39",
+      "source_location": "L37",
       "weight": 1.0
     },
     {
       "source": "docs_index",
-      "target": "github_issue_template_bug_report",
+      "target": "docs_onboarding_getting_started_codex",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L391",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "github_issue_template_feature_request",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L392",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "github_pull_request_template",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L393",
+      "source_location": "L377",
       "weight": 1.0
     },
     {
@@ -199205,7 +199161,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L40",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "github_issue_template_bug_report",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L389",
       "weight": 1.0
     },
     {
@@ -199216,7 +199183,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L41",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "github_issue_template_feature_request",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L390",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "github_pull_request_template",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L391",
       "weight": 1.0
     },
     {
@@ -199227,18 +199216,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L42",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "docs_cli",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L420",
+      "source_location": "L40",
       "weight": 1.0
     },
     {
@@ -199249,7 +199227,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L43",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "docs_cli",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L418",
       "weight": 1.0
     },
     {
@@ -199260,7 +199249,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L44",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -199271,7 +199260,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L45",
+      "source_location": "L43",
       "weight": 1.0
     },
     {
@@ -199282,7 +199271,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L46",
+      "source_location": "L44",
       "weight": 1.0
     },
     {
@@ -199293,7 +199282,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L47",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -199304,7 +199293,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L48",
+      "source_location": "L46",
       "weight": 1.0
     },
     {
@@ -199315,12 +199304,34 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L49",
+      "source_location": "L47",
       "weight": 1.0
     },
     {
       "source": "docs_index",
       "target": "docs_onboarding_getting_started_portal",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "docs_onboarding_golden_paths_readme",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "docs_onboarding_golden_paths_api",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -199337,139 +199348,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L509",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "docs_onboarding_golden_paths_readme",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L51",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc0_01_program_baseline",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L510",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc10_02_docs_github",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L511",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc10_03_adoption_readiness",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L512",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc8_01_compat_manifest",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L513",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc8_02_packaging",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L514",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc8_03_supply_chain",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L515",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc8_04_ci_release_gates",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L516",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc9_01_lab_coordinator",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L517",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc9_02_eval_integrity",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L518",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "factory_specs_active_cyc9_03_scenarios_multiforge",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L519",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_index",
-      "target": "docs_onboarding_golden_paths_api",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/INDEX.md",
-      "source_location": "L52",
+      "source_location": "L508",
       "weight": 1.0
     },
     {
@@ -199480,7 +199359,95 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L53",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc0_01_program_baseline",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L512",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc10_01_onboarding_golden_paths",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L513",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc10_02_docs_github",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L514",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc10_03_adoption_readiness",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L515",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc8_01_compat_manifest",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L516",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc8_02_packaging",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L517",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc8_03_supply_chain",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L518",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc8_04_ci_release_gates",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L519",
       "weight": 1.0
     },
     {
@@ -199491,7 +199458,40 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L54",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc9_01_lab_coordinator",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L520",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc9_02_eval_integrity",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L521",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_index",
+      "target": "factory_specs_archive_2026_cyc9_03_scenarios_multiforge",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/INDEX.md",
+      "source_location": "L522",
       "weight": 1.0
     },
     {
@@ -199502,7 +199502,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L55",
+      "source_location": "L53",
       "weight": 1.0
     },
     {
@@ -199722,7 +199722,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L68",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -199733,7 +199733,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L72",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
@@ -199744,7 +199744,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/INDEX.md",
-      "source_location": "L73",
+      "source_location": "L71",
       "weight": 1.0
     },
     {
@@ -210084,5 +210084,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0b5e0cd82226a6a45426f276d7368bef336a1e4e"
+  "built_at_commit": "ab933f95916408355ae69bb4a8e6adba35fe1920"
 }
