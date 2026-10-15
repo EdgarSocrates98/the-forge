@@ -16,8 +16,9 @@ _Start here — installation, first run, tutorials._
 
 ### factory/
 
+- [cyc10-01 — Onboarding, Getting Started e Golden Paths](../factory/runs/cyc10-01-onboarding-golden-paths.md)
+- [Onboarding, Getting Started e Golden Paths](../factory/specs/active/cyc10-01-onboarding-golden-paths.md)
 - [Grill Gate](../factory/specs/active/lf-0004-family-onboarding-router.md)
-- [Onboarding, Getting Started e Golden Paths](../factory/specs/inbox/cyc10-01-onboarding-golden-paths.md)
 
 ### graph-studio/
 
@@ -64,9 +65,12 @@ _Task-oriented guides and workflows._
 ### ./
 
 - [Changelog](../CHANGELOG.md)
+- [Código de Conduta — Contributor Covenant 2.1](../CODE_OF_CONDUCT.md)
 - [FORGE KNOWLEDGE — final program report (prompt_evo_docs2.md)](../FORGE_KNOWLEDGE_FINAL_REPORT.md)
 - [FORGE ULTIMATE COMPLETION — Relatório Final](../FORGE_ULTIMATE_COMPLETION_FINAL_REPORT.md)
 - [The Forge](../README.md)
+- [Política de Segurança](../SECURITY.md)
+- [Suporte](../SUPPORT.md)
 
 ### adapters/
 
@@ -149,6 +153,10 @@ _Task-oriented guides and workflows._
 - [the-forge](portable-installation/reports/the-forge.md)
 - [Risk Matrix — portable installation](portable-installation/risk-matrix.md)
 - [Scope Cut — what's in this wave](portable-installation/scope-cut.md)
+
+### portal/
+
+- [Forge Ecosystem — Portal de Documentação (§10.5)](portal/README.md)
 
 ### programs/
 
@@ -330,6 +338,7 @@ _Agent instructions, skills and internal process._
 
 - [The Forge — instruções para Codex e Devin](../AGENTS.md)
 - [The Forge — guia para agentes](../CLAUDE.md)
+- [Contribuindo](../CONTRIBUTING.md)
 
 ### agentic/
 
@@ -362,6 +371,12 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### ./
 
 - [Forge Experience 3.0 — Final Report](../FORGE_EXPERIENCE_3_FINAL_REPORT.md) `RELEASE_REPORT`
+
+### .github/
+
+- [bug_report](../.github/ISSUE_TEMPLATE/bug_report.md) `UNKNOWN`
+- [feature_request](../.github/ISSUE_TEMPLATE/feature_request.md) `UNKNOWN`
+- [PULL_REQUEST_TEMPLATE](../.github/PULL_REQUEST_TEMPLATE.md) `UNKNOWN`
 
 ### audit/
 
@@ -543,6 +558,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 - [The Forge — do zero à execução multi-especialista](learn/zero-to-multi-specialist.md) `UNKNOWN`
 
+### portal/
+
+- [FAQ do ecossistema](portal/faq.md) `UNKNOWN`
+- [Releases & compatibilidade](portal/releases.md) `RELEASE_REPORT`
+
 ### programs/
 
 - [Baseline — 2026-10-15](programs/ecosystem-2026/baseline.md) `UNKNOWN`
@@ -552,6 +572,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Cycle 10 — decisões de produto pendentes (memo para o dono)](programs/ecosystem-2026/cycle-10-decisions.md) `UNKNOWN`
 - [Cycle 8 — Release readiness (RC evidence)](programs/ecosystem-2026/cycle-8-release-readiness.md) `RELEASE_REPORT`
 - [Dependency map — ecosystem-2026](programs/ecosystem-2026/dependency-map.md) `UNKNOWN`
+- [GitHub Experience — checklist §10.7 (cyc10-02)](programs/ecosystem-2026/github-experience.md) `UNKNOWN`
 - [Open gaps — ecosystem-2026 (Wave 0)](programs/ecosystem-2026/open-gaps.md) `UNKNOWN`
 - [Matriz de empacotamento — ecosystem-2026](programs/ecosystem-2026/packaging-matrix.md) `UNKNOWN`
 - [Supply chain — ecosystem-2026](programs/ecosystem-2026/security.md) `UNKNOWN`

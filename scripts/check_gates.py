@@ -62,6 +62,7 @@ GATES: list[tuple[str, Step]] = [
     ("agentic audit", _cmd("scripts/agentic/audit_assets.py")),
     ("zero runtime deps", _cmd("scripts/ci/check_zero_deps.py")),
     ("onboarding docs", _cmd("scripts/check_onboarding.py")),
+    ("docs portal", _cmd("scripts/check_docs_portal.py")),
 ]
 
 SLOW_GATES: list[tuple[str, Step]] = [

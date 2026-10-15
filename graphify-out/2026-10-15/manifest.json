@@ -8808,9 +8808,9 @@
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/open-gaps.md": {
-    "mtime": 1792101334.1178243,
-    "seen": 1792101354.4169288,
-    "ast_hash": "f4845f21698bcda2a603561a5dac5372",
+    "mtime": 1792102307.673169,
+    "seen": 1792102592.6263478,
+    "ast_hash": "850b52ce24c10676d03ba76bab56945b",
     "semantic_hash": ""
   },
   "docs/programs/ecosystem-2026/packaging-matrix.md": {
@@ -9765,6 +9765,12 @@
     "mtime": 1792101916.423696,
     "seen": 1792102046.5309215,
     "ast_hash": "a7d51451b5303af581f15eb23cf6144d",
+    "semantic_hash": ""
+  },
+  "docs/programs/ecosystem-2026/cycle-10-decisions.md": {
+    "mtime": 1792102307.6730144,
+    "seen": 1792102592.6263428,
+    "ast_hash": "f32a9daffbd90ec339b285889d342f69",
     "semantic_hash": ""
   }
 }

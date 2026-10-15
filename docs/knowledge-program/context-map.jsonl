@@ -1,3 +1,6 @@
+{"path": ".github/ISSUE_TEMPLATE/bug_report.md", "title": "bug_report", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": ".github/ISSUE_TEMPLATE/feature_request.md", "title": "feature_request", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": ".github/PULL_REQUEST_TEMPLATE.md", "title": "PULL_REQUEST_TEMPLATE", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": ".kiro/settings/rules/design-discovery-full.md", "title": "Full Discovery Process for Technical Design", "category": "SDD_ARTIFACT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": ".kiro/settings/rules/design-discovery-light.md", "title": "Light Discovery Process for Extensions", "category": "SDD_ARTIFACT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": ".kiro/settings/rules/design-principles.md", "title": "Technical Design Rules and Principles", "category": "SDD_ARTIFACT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -28,10 +31,14 @@
 {"path": "AGENTS.md", "title": "The Forge \u2014 instru\u00e7\u00f5es para Codex e Devin", "category": "AGENT_INSTRUCTIONS", "audience": "agent", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "CHANGELOG.md", "title": "Changelog", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "CLAUDE.md", "title": "The Forge \u2014 guia para agentes", "category": "AGENT_INSTRUCTIONS", "audience": "agent", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "CODE_OF_CONDUCT.md", "title": "C\u00f3digo de Conduta \u2014 Contributor Covenant 2.1", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "CONTRIBUTING.md", "title": "Contribuindo", "category": "INTERNAL", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "FORGE_EXPERIENCE_3_FINAL_REPORT.md", "title": "Forge Experience 3.0 \u2014 Final Report", "category": "RELEASE_REPORT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "FORGE_KNOWLEDGE_FINAL_REPORT.md", "title": "FORGE KNOWLEDGE \u2014 final program report (prompt_evo_docs2.md)", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "FORGE_ULTIMATE_COMPLETION_FINAL_REPORT.md", "title": "FORGE ULTIMATE COMPLETION \u2014 Relat\u00f3rio Final", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "README.md", "title": "The Forge", "category": "USER_GUIDE", "audience": "public", "related_commands": ["ask", "capabilities", "doctor", "explain", "init", "install", "installations", "plan", "portal", "providers"], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "SECURITY.md", "title": "Pol\u00edtica de Seguran\u00e7a", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "SUPPORT.md", "title": "Suporte", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "adapters/apiforge/README.md", "title": "theforge-apiforge-adapter", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "adapters/doctorapi/README.md", "title": "theforge-doctorapi-adapter", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "adapters/doctordata/README.md", "title": "theforge-doctordata-adapter", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -308,6 +315,9 @@
 {"path": "docs/portable-installation/reports/the-forge.md", "title": "the-forge", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/portable-installation/risk-matrix.md", "title": "Risk Matrix \u2014 portable installation", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/portable-installation/scope-cut.md", "title": "Scope Cut \u2014 what's in this wave", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "docs/portal/README.md", "title": "Forge Ecosystem \u2014 Portal de Documenta\u00e7\u00e3o (\u00a710.5)", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "docs/portal/faq.md", "title": "FAQ do ecossistema", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "docs/portal/releases.md", "title": "Releases & compatibilidade", "category": "RELEASE_REPORT", "audience": "maintainer", "related_commands": ["doctor"], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/README.md", "title": "Programa ecosystem-2026", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/baseline.md", "title": "Baseline \u2014 2026-10-15", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/benchmarks/2026-10-15-A.md", "title": "Benchmark report \u2014 2026-10-15 (mode A)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -316,6 +326,7 @@
 {"path": "docs/programs/ecosystem-2026/cycle-10-decisions.md", "title": "Cycle 10 \u2014 decis\u00f5es de produto pendentes (memo para o dono)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/cycle-8-release-readiness.md", "title": "Cycle 8 \u2014 Release readiness (RC evidence)", "category": "RELEASE_REPORT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/dependency-map.md", "title": "Dependency map \u2014 ecosystem-2026", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "docs/programs/ecosystem-2026/github-experience.md", "title": "GitHub Experience \u2014 checklist \u00a710.7 (cyc10-02)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/open-gaps.md", "title": "Open gaps \u2014 ecosystem-2026 (Wave 0)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/packaging-matrix.md", "title": "Matriz de empacotamento \u2014 ecosystem-2026", "category": "UNKNOWN", "audience": "public", "related_commands": ["portal"], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/programs/ecosystem-2026/security.md", "title": "Supply chain \u2014 ecosystem-2026", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -381,8 +392,10 @@
 {"path": "factory/runs/2026-10-15.cyc9-01.md", "title": "Run note \u2014 cyc9-01 forge-lab-coordinator", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/runs/2026-10-15.cyc9-02.md", "title": "Run \u2014 cyc9-02 eval-integrity (the-forge)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/runs/2026-10-15.cyc9-03.md", "title": "Run \u2014 cyc9-03 multi-forge scenarios (the-forge)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "factory/runs/cyc10-01-onboarding-golden-paths.md", "title": "cyc10-01 \u2014 Onboarding, Getting Started e Golden Paths", "category": "GETTING_STARTED", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/PROGRAM-ecosystem-2026.md", "title": "Programa ecosystem-2026 \u2014 \u00edndice de specs", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc0-01-program-baseline.md", "title": "Baseline do programa ecosystem-2026", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "factory/specs/active/cyc10-01-onboarding-golden-paths.md", "title": "Onboarding, Getting Started e Golden Paths", "category": "GETTING_STARTED", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc8-01-compat-manifest.md", "title": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc8-02-packaging.md", "title": "Conformidade de empacotamento dos nove repos", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc8-03-supply-chain.md", "title": "Supply chain security dos artefatos", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -397,7 +410,6 @@
 {"path": "factory/specs/active/lf-0005-engineering-excellence.md", "title": "Engineering Excellence Grill", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/lf-0006-zero-touch-router.md", "title": "Grill Gate", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md", "title": "Grill Gate", "category": "HISTORICAL", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
-{"path": "factory/specs/inbox/cyc10-01-onboarding-golden-paths.md", "title": "Onboarding, Getting Started e Golden Paths", "category": "GETTING_STARTED", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/inbox/cyc10-02-docs-github.md", "title": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/inbox/cyc10-03-adoption-readiness.md", "title": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/templates/review.md", "title": "Review Template", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
