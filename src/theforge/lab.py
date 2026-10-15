@@ -49,6 +49,7 @@ from theforge.contracts.benchmark import (
 )
 from theforge.contracts.types import Producer
 from theforge.install.providers import manifest_python
+from theforge.lab_stats import scenario_metrics, summarize
 from theforge.security.redact import redact_text
 
 LAB_MODES = ("A", "B", "C")
@@ -123,6 +124,10 @@ def _safe_env(mode: LabMode) -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if k in _SAFE_ENV_KEYS}
     env["FORGE_LAB_MODE"] = mode
     env["FORGE_LAB_SANDBOX"] = "1"
+    # recursion guard: a lab that is itself a participant of a multi-forge
+    # scenario must know it runs nested (labs propagate it explicitly)
+    if os.environ.get("FORGE_LAB_NESTED"):
+        env["FORGE_LAB_NESTED"] = "1"
     return env
 
 
@@ -477,11 +482,34 @@ def _report_md(
                 metrics = (
                     ", ".join(
                         f"{k}={v.value}{(' ' + v.unit) if v.unit else ''}"
+                        if v.measured
+                        else f"{k}={v.state}"
                         for k, v in sorted(r.metrics.items())
                     )
                     or "—"
                 )
-                lines.append(f"| {r.scenario_id} | {r.verdict} | {metrics} |")
+                judge = f" judge={r.judge.model}" if r.judge else ""
+                lines.append(f"| {r.scenario_id} | {r.verdict} | {metrics}{judge} |")
+        if len(o.runs) > 1:
+            lines += ["", f"#### {o.forge_id} — dispersion over {len(o.runs)} runs", ""]
+            lines += [
+                "| Scenario | Metric | n | median | spread (min–max) |",
+                "|---|---|---|---|---|",
+            ]
+            scenario_ids = sorted({r.scenario_id for run in o.runs for r in run.results})
+            for sid in scenario_ids:
+                for name, ms in sorted(scenario_metrics(o.runs, sid).items()):
+                    smry = summarize(name, ms)
+                    if smry.median is None:
+                        state = "/".join(f"{k}×{v}" for k, v in sorted(smry.states.items()))
+                        lines.append(f"| {sid} | {name} | {smry.n} | — | {state} |")
+                    else:
+                        rng = (
+                            f"{smry.min}–{smry.max}"
+                            if smry.min is not None and smry.min != smry.max
+                            else f"±{smry.mad}"
+                        )
+                        lines.append(f"| {sid} | {name} | {smry.n} | {smry.median} | {rng} |")
     lines += ["", "## Limitations", ""]
     if skipped:
         names = ", ".join(f"`{o.forge_id}` ({o.status})" for o in skipped)
