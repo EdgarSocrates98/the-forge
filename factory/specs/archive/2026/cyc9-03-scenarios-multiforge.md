@@ -1,7 +1,7 @@
 ---
 id: cyc9-03
 title: scenarios-multiforge
-status: active
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

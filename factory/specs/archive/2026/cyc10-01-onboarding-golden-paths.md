@@ -1,7 +1,7 @@
 ---
 id: cyc10-01
 title: onboarding-golden-paths
-status: inbox
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

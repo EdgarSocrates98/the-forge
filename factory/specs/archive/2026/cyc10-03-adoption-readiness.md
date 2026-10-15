@@ -1,7 +1,7 @@
 ---
 id: cyc10-03
 title: public-readiness-contribution-distribution
-status: inbox
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

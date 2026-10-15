@@ -1,7 +1,7 @@
 ---
 id: cyc8-01
 title: versioning-policy-compat-manifest
-status: active
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

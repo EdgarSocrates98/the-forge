@@ -1,7 +1,7 @@
 ---
 id: cyc10-02
 title: unified-docs-github-experience
-status: inbox
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

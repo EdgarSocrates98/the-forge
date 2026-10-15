@@ -1,7 +1,7 @@
 ---
 id: cyc9-02
 title: eval-integrity-metrics-groundtruth
-status: active
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

@@ -1,7 +1,7 @@
 ---
 id: cyc0-01
 title: program-baseline-ecosystem-2026
-status: active
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

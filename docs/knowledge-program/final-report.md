@@ -4,7 +4,7 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `main` |
-| commit | `b4c679f` |
+| commit | `0b5e0cd` |
 | docs inventoried | 593 (excl. GENERATED mirrors: 441; vendored upstream: 0) |
 
 ## Review levels (honest)
@@ -19,14 +19,15 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
-- `UNKNOWN`: 162
+- `UNKNOWN`: 154
 - `GENERATED`: 152
 - `USER_GUIDE`: 66
 - `ADR`: 61
 - `SDD_ARTIFACT`: 35
-- `RELEASE_REPORT`: 35
-- `GETTING_STARTED`: 26
+- `RELEASE_REPORT`: 34
+- `GETTING_STARTED`: 24
 - `SKILL`: 16
+- `HISTORICAL`: 12
 - `HOW_TO`: 11
 - `CONTRACT`: 7
 - `ARCHITECTURE`: 5
@@ -36,12 +37,11 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - `INTERNAL`: 2
 - `REFERENCE`: 2
 - `TUTORIAL`: 1
-- `HISTORICAL`: 1
 
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 9 (active docs: 1; remainder in frozen/historical trees)
+- broken internal links total: 22 (active docs: 14; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 

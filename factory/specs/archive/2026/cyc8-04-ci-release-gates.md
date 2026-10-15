@@ -1,7 +1,7 @@
 ---
 id: cyc8-04
 title: ci-release-gates-rc
-status: active
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

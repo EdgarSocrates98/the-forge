@@ -1,7 +1,7 @@
 ---
 id: cyc8-03
 title: supply-chain-security
-status: active
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem
