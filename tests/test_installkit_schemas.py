@@ -95,6 +95,7 @@ def test_schema_files_exist():
         "EcosystemCompatibility",
         "BenchmarkSuite",
         "BenchmarkResult",
+        "MultiForgeScenario",
     ):
         assert (SCHEMAS / f"{name}.schema.json").exists(), name
 

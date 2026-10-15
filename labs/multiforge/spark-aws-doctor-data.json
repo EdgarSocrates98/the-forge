@@ -1,0 +1,15 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "spark-aws-doctor-data",
+  "title": "AWS data pipeline + data-quality diagnosis",
+  "intent": "spark-forge-aws plans a Glue/EMR pipeline change; forge-doctor-data validates data-quality expectations — doctor findings gate the plan",
+  "participants": ["spark-forge-aws", "forge-doctor-data"],
+  "expected": {
+    "participants_present": true,
+    "min_labs_ok": 0
+  },
+  "mode": "A",
+  "notes": [
+    "spark-forge-aws declares lab:false by design until its cyc9-04 suite lands; doctor-data emitter is cyc9-08"
+  ]
+}

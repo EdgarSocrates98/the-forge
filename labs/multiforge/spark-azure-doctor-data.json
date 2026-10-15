@@ -1,0 +1,15 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "spark-azure-doctor-data",
+  "title": "Azure data pipeline + data-quality diagnosis",
+  "intent": "spark-forge-azure plans a Fabric/Synapse pipeline change; forge-doctor-data validates data-quality expectations — no false AWS↔Azure equivalence (AGENTS invariant)",
+  "participants": ["spark-forge-azure", "forge-doctor-data"],
+  "expected": {
+    "participants_present": true,
+    "min_labs_ok": 0
+  },
+  "mode": "A",
+  "notes": [
+    "Azure services stay Azure-named — Fabric ≠ Synapse, ADF ≠ Glue; spark-forge-azure declares lab:false until cyc9-05"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "api-plus-infra",
+  "title": "API change + infrastructure impact",
+  "intent": "api-forge analyses an API surface change; platform-forge assesses infra posture impact — the handoff transports the diagnosis context without re-analysis",
+  "participants": ["api-forge", "platform-forge"],
+  "expected": {
+    "participants_present": true,
+    "min_labs_ok": 0
+  },
+  "mode": "A",
+  "notes": [
+    "Composition exercisable once cyc9-06/cyc9-07 declare lab emitters; until then the scenario verifies declaration integrity and reports skipped"
+  ]
+}

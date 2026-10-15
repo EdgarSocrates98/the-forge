@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theforge.dev/schemas/MultiForgeScenario.schema.json",
+  "title": "forge/MultiForgeScenario/v1",
+  "$comment": "participants requires >= 2 forge ids — a single-specialist scenario is not multi-forge (cyc9-03 rejection). expected{} is free-form declared data: the runner interprets participants_present/labs_declared/min_labs_ok.",
+  "type": "object",
+  "required": ["schema", "id", "title", "intent", "participants"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "forge/MultiForgeScenario/v1"},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"},
+    "title": {"type": "string", "minLength": 1},
+    "intent": {"type": "string", "minLength": 1},
+    "participants": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"}
+    },
+    "expected": {
+      "type": "object",
+      "default": {},
+      "properties": {
+        "participants_present": {"type": "boolean"},
+        "labs_declared": {"type": "array", "items": {"type": "string"}},
+        "min_labs_ok": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "mode": {"enum": ["A", "B", "C"], "default": "A"},
+    "ground_truth": {"type": ["string", "null"]},
+    "notes": {"type": "array", "items": {"type": "string"}, "default": []}
+  }
+}

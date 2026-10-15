@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `main` |
-| commit | `db7d343` |
-| docs inventoried | 547 (excl. GENERATED mirrors: 395; vendored upstream: 0) |
+| commit | `ba461d6` |
+| docs inventoried | 548 (excl. GENERATED mirrors: 396; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 547
+- `AUTOMATICALLY_CHECKED`: 548
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -20,7 +20,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Category counts
 
 - `GENERATED`: 152
-- `UNKNOWN`: 149
+- `UNKNOWN`: 150
 - `ADR`: 61
 - `USER_GUIDE`: 55
 - `SDD_ARTIFACT`: 35
@@ -40,7 +40,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 8 (active docs: 0; remainder in frozen/historical trees)
+- broken internal links total: 9 (active docs: 1; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 
@@ -70,4 +70,4 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - Hub site build not executed (dev-only, `mkdocs-material`); the markdown hub is the verified deliverable.
 - Screen-reader and POSIX-terminal validation remain UNVERIFIED on this host.
 
-## Final status: **PASS**
+## Final status: **PARTIAL**

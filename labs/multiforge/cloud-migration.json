@@ -1,0 +1,15 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "cloud-migration",
+  "title": "AWS → Azure pipeline migration",
+  "intent": "spark-forge-aws inventories a pipeline; spark-forge-azure plans the migration target — each side keeps its own naming (Glue ≠ ADF), no equivalence asserted by the harness",
+  "participants": ["spark-forge-aws", "spark-forge-azure"],
+  "expected": {
+    "participants_present": true,
+    "min_labs_ok": 0
+  },
+  "mode": "A",
+  "notes": [
+    "Both sparks declare lab:false pending cyc9-04/cyc9-05; the scenario verifies the migration pair is resolvable without conflating services"
+  ]
+}

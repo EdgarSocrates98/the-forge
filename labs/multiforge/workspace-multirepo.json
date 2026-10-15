@@ -1,0 +1,16 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "workspace-multirepo",
+  "title": "Multi-repo workspace posture",
+  "intent": "the-forge enumerates registered checkouts; platform-forge would collect posture across repos — transport is the install registry + forge.json declarations, not re-discovery",
+  "participants": ["the-forge", "platform-forge"],
+  "expected": {
+    "participants_present": true,
+    "labs_declared": ["the-forge"],
+    "min_labs_ok": 1
+  },
+  "mode": "A",
+  "notes": [
+    "the-forge's lab runs today — this scenario exercises a real handoff (coordinator → declared lab) while platform-forge's emitter is pending cyc9-07"
+  ]
+}

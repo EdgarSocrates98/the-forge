@@ -360,6 +360,7 @@
 {"path": "factory/runs/2026-10-15.cyc8-03.md", "title": "Run \u2014 cyc8-03 supply-chain-security", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/runs/2026-10-15.cyc8-04.md", "title": "Run \u2014 cyc8-04 ci-release-gates-rc", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/runs/2026-10-15.cyc9-01.md", "title": "Run note \u2014 cyc9-01 forge-lab-coordinator", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "factory/runs/2026-10-15.cyc9-02.md", "title": "Run \u2014 cyc9-02 eval-integrity (the-forge)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/PROGRAM-ecosystem-2026.md", "title": "Programa ecosystem-2026 \u2014 \u00edndice de specs", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc0-01-program-baseline.md", "title": "Baseline do programa ecosystem-2026", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc8-01-compat-manifest.md", "title": "Pol\u00edtica de vers\u00f5es + Compatibility Manifest", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -367,6 +368,7 @@
 {"path": "factory/specs/active/cyc8-03-supply-chain.md", "title": "Supply chain security dos artefatos", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc8-04-ci-release-gates.md", "title": "Gates de CI/CD e Release Candidate", "category": "RELEASE_REPORT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/cyc9-01-lab-coordinator.md", "title": "Forge Lab \u2014 coordenador federado e harness", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "factory/specs/active/cyc9-02-eval-integrity.md", "title": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/lf-0001-loop-factory-smoke.md", "title": "Grill Gate", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/lf-0002-install-contract-wizard.md", "title": "Grill Gate", "category": "CONTRACT", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/active/lf-0003-bare-install-wizard.md", "title": "LF-0003 \u2014 Bare install wizard", "category": "USER_GUIDE", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
@@ -377,7 +379,6 @@
 {"path": "factory/specs/inbox/cyc10-01-onboarding-golden-paths.md", "title": "Onboarding, Getting Started e Golden Paths", "category": "GETTING_STARTED", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/inbox/cyc10-02-docs-github.md", "title": "Documenta\u00e7\u00e3o unificada, posicionamento e GitHub Experience", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/inbox/cyc10-03-adoption-readiness.md", "title": "Public Readiness: contribui\u00e7\u00e3o, distribui\u00e7\u00e3o, templates, demos e feedback", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
-{"path": "factory/specs/inbox/cyc9-02-eval-integrity.md", "title": "Integridade de avalia\u00e7\u00e3o: m\u00e9tricas, ground truth e regression gates", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/specs/inbox/cyc9-03-scenarios-multiforge.md", "title": "Cen\u00e1rios multi-Forge do Forge Lab", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/templates/review.md", "title": "Review Template", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/templates/spec.md", "title": "Grill Gate", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}

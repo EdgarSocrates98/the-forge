@@ -1,0 +1,16 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "specialist-orchestration",
+  "title": "Coordinator orchestrates three specialists",
+  "intent": "the-forge collects from the declared labs of forge-doctor-data, forge-doctor-api and itself — receipts validated strict, failures routed to honest statuses",
+  "participants": ["the-forge", "forge-doctor-api", "forge-doctor-data"],
+  "expected": {
+    "participants_present": true,
+    "labs_declared": ["the-forge"],
+    "min_labs_ok": 1
+  },
+  "mode": "A",
+  "notes": [
+    "Real execution today for the-forge; doctor emitters are cyc9-08/cyc9-09 — the scenario is the regression surface for the whole wave"
+  ]
+}

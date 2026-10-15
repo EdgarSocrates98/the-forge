@@ -1,0 +1,16 @@
+{
+  "schema": "forge/MultiForgeScenario/v1",
+  "id": "api-forge-doctor-api",
+  "title": "API diagnosis + remediation chain",
+  "intent": "forge-doctor-api diagnoses API findings offline; api-forge plans the remediation — findings must not be duplicated or re-derived",
+  "participants": ["forge-doctor-api", "api-forge"],
+  "expected": {
+    "participants_present": true,
+    "labs_declared": ["forge-doctor-api"],
+    "min_labs_ok": 0
+  },
+  "mode": "A",
+  "notes": [
+    "forge-doctor-api lab exists as a deterministic CLI; the forge.json declaration + emitter lands in cyc9-09 — until then labs_declared fails honestly and the scenario reports it"
+  ]
+}

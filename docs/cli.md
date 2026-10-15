@@ -71,6 +71,7 @@
 | `remote check [--data-classification X] [--locality L] ...` | avalia cada alvo remoto declarado contra a política — `allow`/`deny` por alvo com as razões; nunca executa nada | 0 |
 | `lab list [--repo CHECKOUT]...` | inspeciona a declaração `lab` do `forge.json` de cada forge registrada (+ checkouts explícitos): `declared`/`undeclared`/`none`/`invalid` — read-only, nunca executa | 0 |
 | `lab collect [--mode A\|B\|C] [--forge id] [--repo CHECKOUT]... [--timeout s] [--repeats n] [--jobs n] [--allow-external] [--out DIR]` | Forge Lab federado (ADR-0060): invoca os labs declarados sob os guardrails do §9.11 — env sanitizado, timeout/repetições/jobs limitados, modo C recusado sem `--allow-external` — e grava relatório + `results-*.jsonl` em `docs/programs/ecosystem-2026/benchmarks/`; labs `undeclared`/`none`/`invalid` são reportados honestamente, nunca como falha | 0 / 1 / 2 |
+| `lab gate --results FILE --baseline FILE [--policy FILE]` | gate de regressão (§9.10): compara receipts atuais contra um baseline real por (forge, suite, cenário, subject); tolerância = policy explícita → spread do baseline → exata; `unmeasured`/`unknown`/`no-baseline` reportados, nunca gateados | 0 pass / 1 fail / 2 uso |
 
 ## Exit codes gerais
 

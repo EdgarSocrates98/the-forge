@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-15T21:27:24Z",
+  "generated_at": "2026-10-15T21:34:40Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 85,
+  "command_count": 86,
   "commands": [
     {
       "path": "init",
@@ -4375,6 +4375,78 @@
           "choices": null,
           "positional": false,
           "help": "report directory override"
+        }
+      ]
+    },
+    {
+      "path": "lab gate",
+      "help": "compare current results-*.jsonl against a baseline — regression gate (cyc9-02)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--results"
+          ],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "current results JSONL (or single BenchmarkResult JSON)"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--baseline"
+          ],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "baseline results JSONL — the calibration source, never an invented threshold"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--policy"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "forge/LabGatePolicy/v1 JSON — explicit tolerances; absent → baseline spread, then exact comparison"
         }
       ]
     },

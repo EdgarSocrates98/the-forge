@@ -20,7 +20,7 @@
     "modes": [
       "A"
     ],
-    "suite": "theforge-contracts",
+    "suite": "theforge-lab",
     "timeout_s": 120
   }
 }

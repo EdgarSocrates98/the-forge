@@ -20,7 +20,7 @@ Rationale coverage: **30/31** first-level groups curated in `command-rationale.j
 - [`install`](#install) — 10 command(s)
 - [`installations`](#installations) — 2 command(s)
 - [`knowledge`](#knowledge) — 4 command(s)
-- [`lab`](#lab) — 3 command(s)
+- [`lab`](#lab) — 4 command(s)
 - [`memory`](#memory) — 7 command(s)
 - [`plan`](#plan) — 1 command(s)
 - [`portal`](#portal) — 1 command(s)
@@ -1050,6 +1050,29 @@ theforge lab collect [root] [json] [debug] [mode] [forge] [CHECKOUT] [timeout] [
 | `jobs` | no | — | parallel labs (max 4; default sequential) |
 | `allow_external` | no | — | required for mode C — real external resources, receipt marked external |
 | `DIR` | no | — | report directory override |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `lab gate`
+
+**para que:** compare current results-*.jsonl against a baseline — regression gate (cyc9-02)
+
+**Syntax**
+
+```text
+theforge lab gate [root] [json] [debug] <FILE> <FILE> [FILE]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `FILE` | yes | — | current results JSONL (or single BenchmarkResult JSON) |
+| `FILE` | yes | — | baseline results JSONL — the calibration source, never an invented threshold |
+| `FILE` | no | — | forge/LabGatePolicy/v1 JSON — explicit tolerances; absent → baseline spread, then exact comparison |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
