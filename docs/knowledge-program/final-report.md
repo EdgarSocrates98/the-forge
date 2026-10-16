@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `cycle-10.1/program` |
-| commit | `7d62888` |
-| docs inventoried | 603 (excl. GENERATED mirrors: 451; vendored upstream: 0) |
+| commit | `288db59` |
+| docs inventoried | 604 (excl. GENERATED mirrors: 452; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 603
+- `AUTOMATICALLY_CHECKED`: 604
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -19,7 +19,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
-- `UNKNOWN`: 162
+- `UNKNOWN`: 163
 - `GENERATED`: 152
 - `USER_GUIDE`: 66
 - `ADR`: 61
@@ -41,7 +41,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 9 (active docs: 1; remainder in frozen/historical trees)
+- broken internal links total: 10 (active docs: 2; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 
