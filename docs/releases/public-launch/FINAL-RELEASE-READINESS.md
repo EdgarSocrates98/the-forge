@@ -1,10 +1,25 @@
 # Release 1 — Readiness final
 
-**Estado: `READY_FOR_APPROVAL`** — nada publicado; aprovação humana
-pendente.
+**Estado: `PARTIALLY_PUBLISHED`** — aprovado pelo owner
+("se estiver tudo certo, feito e os ci verde, pode considerar aprovado",
+2026-10-16) e executado até onde as credenciais permitem:
 
-Data: 2026-10-16. Programa: `prompt_evo_release1.md`. Escopo: preparar
-(Audit→Stage) — publicação só após autorização explícita.
+- **Publicado (GitHub)**: tags `v*` + GitHub Releases nos 9 repos com
+  wheel/sdist/tarball + `SHA256SUMS.txt` anexados. Verificação
+  pós-release: wheel baixada do release `the-forge v0.5.0`, checksum
+  conferido, instala em venv limpa → `theforge 0.5.0`.
+- **Pendente (registries)**: PyPI e npm **não** publicados — sem
+  credenciais (`npm whoami` falha; sem `~/.pypirc`/tokens; Trusted
+  Publishing requer setup do owner nos portais). Artifacts prontos
+  para `gh release download` → `twine upload` / `npm publish` quando
+  as credenciais existirem.
+- **Promovido**: `forge-doctor-data 1.0.0rc1 → 1.0.0` (PR #46 mergeado,
+  `c799eca`; rc-baseline re-selado com 2668 testes + cobertura medida).
+- **Manifesto**: `ecosystem-compatibility.json` consistente com os
+  nomes finais de distribuição e versões GA.
+
+Data: 2026-10-16. Programa: `prompt_evo_release1.md`. Escopo executado:
+Audit→Approve→Publish(GitHub)→Verify; registries aguardam credenciais.
 
 ## Resumo executivo
 
