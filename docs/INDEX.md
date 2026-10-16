@@ -406,6 +406,11 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Implementation roadmap — Agentic Ecosystem Control Plane](audit/implementation-roadmap.md) `UNKNOWN`
 - [Provider capability matrix (FASE 0)](audit/provider-capability-matrix.md) `UNKNOWN`
 
+### certification/
+
+- [Baseline — Cycle 10.1 Fresh Audit (Wave 0)](certification/cycle-10.1/baseline.md) `UNKNOWN`
+- [Gap Register — Cycle 10.1](certification/cycle-10.1/gap-register.md) `UNKNOWN`
+
 ### docs/
 
 - [A2A bridge (experimental)](a2a-bridge.md) `UNKNOWN`
@@ -510,6 +515,16 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Integridade de avaliação: métricas, ground truth e regression gates](../factory/specs/archive/2026/cyc9-02-eval-integrity.md) `HISTORICAL`
 - [Cenários multi-Forge do Forge Lab](../factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md) `HISTORICAL`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
+- [Fresh audit das nove mains + baseline verificável](../factory/specs/inbox/cyc101-01-fresh-audit-baseline.md) `UNKNOWN`
+- [Reexecutar H0–H7 e atualizar a homologação do ecossistema](../factory/specs/inbox/cyc101-02-certification-gates.md) `UNKNOWN`
+- [Forge CLI: homologar lifecycle completo (install→update→rollback→uninstall)](../factory/specs/inbox/cyc101-03-cli-lifecycle.md) `UNKNOWN`
+- [Portal cross-forge E2E real + testes visuais + segurança](../factory/specs/inbox/cyc101-04-portal-e2e.md) `UNKNOWN`
+- [Certificação real de hosts (Codex/Claude Code/Devin/Copilot) e MCP](../factory/specs/inbox/cyc101-05-hosts-mcp-certification.md) `UNKNOWN`
+- [Forge Lab: validar o conteúdo das evidências, não só a coleta](../factory/specs/inbox/cyc101-06-forge-lab-validation.md) `UNKNOWN`
+- [Auditoria de segurança e dependências nos commits do baseline](../factory/specs/inbox/cyc101-07-security-dependency-closure.md) `UNKNOWN`
+- [Release candidates verificáveis por projeto — sem publicar](../factory/specs/inbox/cyc101-08-release-candidates.md) `RELEASE_REPORT`
+- [E2E global obrigatório: app de exemplo com problemas conhecidos](../factory/specs/inbox/cyc101-09-global-e2e.md) `UNKNOWN`
+- [Certificação final + relatório obrigatório §16](../factory/specs/inbox/cyc101-10-final-certification.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
 - [Grill Gate](../factory/templates/spec.md) `UNKNOWN`
 
