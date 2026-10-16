@@ -47,12 +47,12 @@ jobs:
       - name: sdist→wheel roundtrip
         run: |
           mkdir -p /tmp/sdist-src /tmp/sdist-wheel
-          tar xzf dist/the_forge-*.tar.gz -C /tmp/sdist-src
-          python -m build --wheel --outdir /tmp/sdist-wheel /tmp/sdist-src/the_forge-*/
+          tar xzf dist/theforge_core-*.tar.gz -C /tmp/sdist-src
+          python -m build --wheel --outdir /tmp/sdist-wheel /tmp/sdist-src/theforge_core-*/
           python - <<'EOF'
           import glob, zipfile
-          direct = zipfile.ZipFile(glob.glob("dist/the_forge-*-py3-none-any.whl")[0])
-          rebuilt = zipfile.ZipFile(glob.glob("/tmp/sdist-wheel/the_forge-*-py3-none-any.whl")[0])
+          direct = zipfile.ZipFile(glob.glob("dist/theforge_core-*-py3-none-any.whl")[0])
+          rebuilt = zipfile.ZipFile(glob.glob("/tmp/sdist-wheel/theforge_core-*-py3-none-any.whl")[0])
           payload = lambda z: {n for n in z.namelist() if ".dist-info/" not in n}
           a, b = payload(direct), payload(rebuilt)
           assert a == b, f"payload delta — only-direct: {sorted(a-b)[:10]} only-sdist: {sorted(b-a)[:10]}"
