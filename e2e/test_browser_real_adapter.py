@@ -41,7 +41,10 @@ def server():
 @pytest.fixture(scope="module")
 def browser():
     with sync_playwright() as p:
-        b = p.chromium.launch(channel="chrome", headless=True)
+        try:
+            b = p.chromium.launch(channel="chrome", headless=True)
+        except Exception:
+            pytest.skip("system Chrome channel unavailable")
         yield b
         b.close()
 
@@ -80,8 +83,8 @@ def test_first_paint_shell(page, server):
     _shot(page, "01-shell")
 
 
-def test_nav_routes_render_real_data(page, server):
-    """Every route the real adapter declares must render without a blank page."""
+def test_nav_routes_render(page, server):
+    """Every route the real adapter declares must render non-empty content."""
     routes = sorted({item["route"] for item in TheForgePortal().nav() if item.get("route")})
     # plus routes the SPA exposes for the adapter's declared capabilities
     routes += ["/lab", "/versions", "/hosts", "/specialists"]
@@ -146,7 +149,8 @@ def test_no_console_errors_on_routes(page, server):
     errors: list[str] = []
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     # listener antes da navegação canônica: captura erros do boot real
-    # (reload() rejeitaria a sessão de uso único → 403 espúrios, não bug do app)
+    # (reload() produziu 403s de API neste ambiente — o caminho suportado é
+    # entrar pela URL com sessão, não recarregar sobre hash-route)
     page.goto(server.url, wait_until="networkidle")
     for route in ("", "federation", "lab", "tasks", "graph"):
         page.evaluate(f"location.hash = '#/{route}'")

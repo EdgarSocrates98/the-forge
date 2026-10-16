@@ -159,7 +159,7 @@ def main() -> int:
         python_fell_back = False
         if not posix_python.is_file():
             posix_python = Path(sys.executable)
-            python_fell_back = True
+            python_fell_back = os.name == "posix"
         if os.name == "posix":
             python = posix_python
         for shell, executable in powershells:
@@ -191,7 +191,7 @@ def main() -> int:
                 artifact_dir=artifact_dir,
                 timeout=parsed.timeout,
             )
-            if python_fell_back:
+            if python_fell_back and command is not None:
                 res["python"] = str(python)
                 res["python_fallback"] = "repo .venv missing; used sys.executable"
             cases.append(res)
@@ -242,7 +242,7 @@ def main() -> int:
             artifact_dir=artifact_dir,
             timeout=parsed.timeout,
         )
-        if python_fell_back:
+        if python_fell_back and linux_command is not None:
             res["python"] = str(posix_python)
             res["python_fallback"] = "repo .venv missing; used sys.executable"
         cases.append(res)

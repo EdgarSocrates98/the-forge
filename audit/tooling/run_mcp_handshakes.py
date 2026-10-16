@@ -54,9 +54,15 @@ def _command(repo: str, declared: list[str], root: Path | None = None) -> list[s
         if first.is_file():
             return [str(first), *declared[1:]]
     if root is not None and shutil.which(declared[0]) is None:
-        venv_bin = root / ".venv" / "bin" / declared[0]
-        if venv_bin.is_file():
-            return [str(venv_bin), *declared[1:]]
+        # Repo-local venv fallback: POSIX layout first, Windows Scripts/ after.
+        candidates = [
+            root / ".venv" / "bin" / declared[0],
+            root / ".venv" / "Scripts" / f"{declared[0]}.exe",
+            root / ".venv" / "Scripts" / declared[0],
+        ]
+        for venv_bin in candidates:
+            if venv_bin.is_file():
+                return [str(venv_bin), *declared[1:]]
     return declared
 
 
@@ -172,7 +178,8 @@ def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
     finally:
         with contextlib.suppress(OSError):
             process.kill()
-        process.wait(timeout=2)
+        with contextlib.suppress(TimeoutError, OSError):
+            process.wait(timeout=2)
     return result
 
 

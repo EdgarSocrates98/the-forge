@@ -1,8 +1,9 @@
-# Planted: no test step, unpinned actions (P6).
+# Planted: no test step, unpinned actions (P6) — válido como GHA, ruim como CI.
 name: ci
 on: push
 jobs:
   deploy:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: ./deploy.sh
