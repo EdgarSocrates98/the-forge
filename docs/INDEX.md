@@ -415,6 +415,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Hosts & MCP certification — Cycle 10.1 §6 / Wave 4](certification/cycle-10.1/hosts-mcp.md) `UNKNOWN`
 - [Linux Acceptance — Cycle 10.1](certification/cycle-10.1/linux-acceptance.md) `UNKNOWN`
 - [Portal E2E multi-forge — Cycle 10.1 §4 / Wave 3](certification/cycle-10.1/portal-e2e.md) `UNKNOWN`
+- [Release matrix — Cycle 10.1 §7 / Wave 5](certification/cycle-10.1/release-matrix.md) `RELEASE_REPORT`
 - [Security & dependency audit — Cycle 10.1 §9 / Wave 5](certification/cycle-10.1/security.md) `UNKNOWN`
 
 ### docs/

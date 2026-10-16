@@ -1,0 +1,16 @@
+abbcba74d61d301c285a003fa7a60b26b786ceef8eb2674844da49bdafa32818  apiforge-0.1.0-py3-none-any.whl
+e7866a4dcd8f5b36b1e8d669b81304018a5fb7f6a61af56b7b132a2e2db98884  apiforge-0.1.0.tar.gz
+baece167d496fa216933730a24fe224089b69f93041debec00cdde576647aadd  forge-cli-0.1.0.tgz
+a2f105037fc7ab00c4ae6f0922288141d6be83eae16be8c92525cdad1d550b45  forge_doctor_api-0.2.0-py3-none-any.whl
+d5e39653963e6f63f84a6c0d3a299b2b3007a93ecd1f1ac5e78a4402c413a3ec  forge_doctor_api-0.2.0.tar.gz
+99fc33b65ca97dd53a483a727fe34d825c94f778cc8bdcd5631f6d836fc48328  forge_doctor_data-1.0.0rc1-py3-none-any.whl
+a87bd1cd0823a5c280c14c5640ddd3c63d4c5ae2abb513db05c10f4c4c67f8ac  forge_doctor_data-1.0.0rc1.tar.gz
+234ea86e3ae9cf9d6a7b981e0d6c2078a3d3903b003a45346e97c20c1653c715  forge-portal-app-0.1.0-dist.tar.gz
+79f601bcf3fb5b546846d61ae4dfcc03538e28da9364ec18b599f4e9efdde0ab  platformforge-0.1.0-py3-none-any.whl
+c0680aea295f595601f442f3060a80fe2abdc51ca1af6e728cd4b9d79902ba3d  platformforge-0.1.0.tar.gz
+6c12cec9725cdbcf36ce84ac575d17aad880bd8402ba18a4d46b70e2d8a60dc9  sparkforge_aws-0.5.0-py3-none-any.whl
+3915bcab9e86a465179edc251572d9fc28aa107a77f1a3f365b562066f41e3df  sparkforge_aws-0.5.0.tar.gz
+61f2ea4fe7b5096d766e08b4d45feb200c247b57058a08dbf3a9f9e05c1160a8  sparkforge_azure-0.1.0-py3-none-any.whl
+7410fd3899681a1f378e32030efa94285fbccdad09649167da316f36e7dfadcd  sparkforge_azure-0.1.0.tar.gz
+9a4182986bb4d19407f794466ef54ed8e6e854ba82e27dc7ce27096909e8705f  theforge-0.5.0-py3-none-any.whl
+e2b7e9f510fc9cd4bd167d510aabfdab50707a713288551912f9d2ba0dc634b0  theforge-0.5.0.tar.gz

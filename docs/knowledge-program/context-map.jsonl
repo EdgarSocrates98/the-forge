@@ -156,6 +156,7 @@
 {"path": "docs/certification/cycle-10.1/hosts-mcp.md", "title": "Hosts & MCP certification \u2014 Cycle 10.1 \u00a76 / Wave 4", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/certification/cycle-10.1/linux-acceptance.md", "title": "Linux Acceptance \u2014 Cycle 10.1", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/certification/cycle-10.1/portal-e2e.md", "title": "Portal E2E multi-forge \u2014 Cycle 10.1 \u00a74 / Wave 3", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "docs/certification/cycle-10.1/release-matrix.md", "title": "Release matrix \u2014 Cycle 10.1 \u00a77 / Wave 5", "category": "RELEASE_REPORT", "audience": "maintainer", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/certification/cycle-10.1/security.md", "title": "Security & dependency audit \u2014 Cycle 10.1 \u00a79 / Wave 5", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/cli.md", "title": "CLI", "category": "UNKNOWN", "audience": "public", "related_commands": ["graph", "lab", "plan"], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "docs/context-roi.md", "title": "Context ROI", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}

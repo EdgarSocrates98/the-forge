@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `cycle-10.1/program` |
-| commit | `980c501` |
-| docs inventoried | 601 (excl. GENERATED mirrors: 449; vendored upstream: 0) |
+| commit | `923ddca` |
+| docs inventoried | 602 (excl. GENERATED mirrors: 450; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 601
+- `AUTOMATICALLY_CHECKED`: 602
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -23,8 +23,8 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - `GENERATED`: 152
 - `USER_GUIDE`: 66
 - `ADR`: 61
+- `RELEASE_REPORT`: 36
 - `SDD_ARTIFACT`: 35
-- `RELEASE_REPORT`: 35
 - `GETTING_STARTED`: 24
 - `SKILL`: 16
 - `HISTORICAL`: 12
@@ -41,7 +41,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 9 (active docs: 1; remainder in frozen/historical trees)
+- broken internal links total: 8 (active docs: 0; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 
@@ -71,4 +71,4 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - Hub site build not executed (dev-only, `mkdocs-material`); the markdown hub is the verified deliverable.
 - Screen-reader and POSIX-terminal validation remain UNVERIFIED on this host.
 
-## Final status: **PARTIAL**
+## Final status: **PASS**
