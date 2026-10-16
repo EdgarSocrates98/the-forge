@@ -219,9 +219,11 @@ def test_ci_gates_fail_on_artificial_runtime_dependency(built_wheel: Path, tmp_p
 # --- adapters are separate distributions (real-provider-integration 1.4) -------------------
 
 
+# Host mirrors and local-only state never ship (agentic-maintainability 5.2).
+# `.agents/skills` DOES ship in the sdist: ADR-0058 force-includes it into the
+# wheel, so wheel-from-sdist rebuilds require it (Cycle 10.2 F-RC-1 closure).
 AGENTIC_SDIST_EXCLUDES = (
     "/.claude",
-    "/.agents",
     "/.devin",
     "/.codex",
     "/.kiro",
@@ -283,4 +285,9 @@ def test_built_sdist_excludes_adapters_and_has_no_runtime_dependency(built_sdist
     assert not [m for m in members if m == "adapters" or m.startswith("adapters/")]
     agentic = tuple(d.lstrip("/") for d in AGENTIC_SDIST_EXCLUDES)
     assert not [m for m in members if m.split("/")[0] in agentic]
+    # F-RC-1: the sdist must carry `.agents/skills` so wheel-from-sdist works,
+    # and nothing else under `.agents/`.
+    agents_members = [m for m in members if m.split("/")[0] == ".agents"]
+    assert agents_members
+    assert {m.split("/")[1] for m in agents_members} == {"skills"}
     assert _runtime_requirements(metadata) == []

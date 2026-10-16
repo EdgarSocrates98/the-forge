@@ -39,10 +39,13 @@ packages = ["src/theforge"]
 
 [tool.hatch.build.targets.sdist]
 # The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
-# Agentic assets (host instructions, skills) and local-only state never ship (ADR 0020).
+# Local-only state and host mirrors never ship (ADR 0020). `.agents/skills` DOES
+# ship in the sdist: ADR-0058 force-includes it into the wheel, so the sdist must
+# carry it for wheel-from-sdist rebuilds (Cycle 10.2 F-RC-1 closure). The same
+# bytes already ship inside every wheel — nothing extra is disclosed.
 exclude = [
     "/adapters",
-    "/.claude", "/.agents", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
+    "/.claude", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
 ]
 
 [tool.pytest.ini_options]

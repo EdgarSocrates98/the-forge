@@ -1,0 +1,48 @@
+{
+  "run_id": "20261016T044800Z-1abc64f2",
+  "status": "ok",
+  "selected": [
+    {
+      "action": "analyze",
+      "capability": "api.analyze",
+      "provider": "api-forge",
+      "role": "primary"
+    }
+  ],
+  "findings": [
+    {
+      "id": "finding:e998714d64c28d99",
+      "title": "AF-CONTRACT-001: Contract operation has no implementation"
+    },
+    {
+      "id": "finding:46567c39986bd4b1",
+      "title": "AF-CODE-002: Code route missing from contract"
+    },
+    {
+      "id": "finding:9ce4239735b899bb",
+      "title": "AF-CODE-002: Code route missing from contract"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "case/api-ir.json",
+      "sha256": "fc5b02e486225212c09348c1b711bcb70b117dc1317f023a75da71a5925b41d0"
+    },
+    {
+      "path": "case/case.json",
+      "sha256": "43ec75c9532b2d83c2daa1d0bc86f55f637dfc513f1cece0ac7b1b56b9280550"
+    },
+    {
+      "path": "case/facts.json",
+      "sha256": "d1a2e06d8512ddb6513e51abe172531c34f9b6f6bfe0e3572c9b4d7f454dc70c"
+    },
+    {
+      "path": "case/findings.json",
+      "sha256": "cea874c573fc0e88df26a3f34f7696e5ec95805b9e54a4bde2f57b31ca171178"
+    }
+  ],
+  "provider_receipt": {
+    "ref": "case:f5168d24d38238cb",
+    "sha256": "43ec75c9532b2d83c2daa1d0bc86f55f637dfc513f1cece0ac7b1b56b9280550"
+  }
+}
