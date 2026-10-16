@@ -1,0 +1,69 @@
+# Release 1 — manifesto de release coordenada (proposto; sem publicação)
+schema: forge/EcosystemRelease/v1
+channel: stable-candidate
+captured_at: "2026-10-16"
+policy: "no publish without owner approval — see approval-checklist.md"
+components:
+  the-forge:
+    version: "0.5.0"
+    commit: "20f0105"
+    pypi_dist: "the-forge"        # renomeado — `theforge` ocupado por terceiro
+    tag: "v0.5.0"
+    python: ">=3.11"
+    role: control-plane
+  forge-cli:
+    version: "0.1.0"
+    commit: "d547691"
+    npm_dist: "theforge-cli"      # renomeado — `forge-cli` ocupado por terceiro
+    tag: "v0.1.0"
+    node: ">=20"
+    role: installer
+  forge-portal:
+    version: "0.1.0"
+    commit: "55e01d5"
+    distribution: vendored-wheel  # assets+manifest dentro do wheel the-forge
+    tag: "v0.1.0"
+    role: portal
+  api-forge:
+    version: "0.1.0"
+    commit: "4c95613"
+    pypi_dist: "apiforge"
+    tag: "v0.1.0"
+    python: ">=3.12"
+    role: specialist
+  platform-forge:
+    version: "0.1.0"
+    commit: "fd68e67"
+    pypi_dist: "platformforge"
+    tag: "v0.1.0"
+    python: ">=3.10"
+    role: specialist
+  spark-forge-aws:
+    version: "0.5.0"
+    commit: "bf5f108"
+    pypi_dist: "sparkforge-aws"
+    tag: "v0.5.0"
+    python: ">=3.10"
+    role: specialist
+  spark-forge-azure:
+    version: "0.1.0"
+    commit: "620e698"
+    pypi_dist: "sparkforge-azure"
+    tag: "v0.1.0"
+    python: ">=3.10"
+    role: specialist
+  forge-doctor-data:
+    version: "1.0.0"              # proposta: graduação de 1.0.0rc1
+    commit: "c1c5de7"
+    pypi_dist: "forge-doctor-data"
+    tag: "v1.0.0"
+    python: ">=3.11"
+    role: specialist
+    approval_required: "rc1->1.0.0 promotion"
+  forge-doctor-api:
+    version: "0.2.0"
+    commit: "80918a6"
+    pypi_dist: "forge-doctor-api"
+    tag: "v0.2.0"
+    python: ">=3.11"
+    role: specialist
