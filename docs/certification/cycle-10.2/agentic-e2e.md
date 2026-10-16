@@ -39,3 +39,5 @@ standalone sem theforge — 0 dependência reversa.
 - spark-forge-aws: handoff executado via `--capability pyspark.static-analysis`
   → finding real `SF-PY-002` (collect sem limite) sobre `jobs/etl_job.py`.
   Evidência: `audit/artifacts/cycle-10.2/handoff-sparkforge-aws.json`.
+
+Códigos `FORGE-*` citados: lista canônica em [docs/errors.md](../../errors.md).
