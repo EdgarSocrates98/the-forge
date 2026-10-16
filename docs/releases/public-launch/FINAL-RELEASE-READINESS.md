@@ -1,6 +1,6 @@
 # Release 1 — Readiness final
 
-**Estado: `PARTIALLY_PUBLISHED`** — aprovado pelo owner
+**Estado: `PUBLISHED`** — verificado por instalação pública real.
 ("se estiver tudo certo, feito e os ci verde, pode considerar aprovado",
 2026-10-16) e executado até onde as credenciais permitem:
 
@@ -11,22 +11,21 @@
 - **npm publicado**: `theforge-cli@0.1.0` live em
   npmjs.com — verificado com install limpo do registry (`npm install
   theforge-cli` → `forge-cli --help`/`doctor` OK).
-- **PyPI parcial (4/7)**: `platformforge`, `sparkforge-aws`,
-  `sparkforge-azure`, `forge-doctor-data` publicados e verificados
-  (pypi.org 200). Pendentes por rate-limit "too many new projects"
-  de conta nova: `theforge-core`, `apiforge`, `forge-doctor-api` —
-  artifacts prontos, `twine upload` quando o limite resetar.
-- **Nome final PyPI do core**: `theforge-core` — `the-forge` foi
-  rejeitado pela política similar-name (normalização ignora hífens).
-  PR #69 aplicou o rename; release `v0.5.0` re-emitido com artifacts
-  `theforge_core-*`.
+- **PyPI completo (7/7)**: `theforge-core@0.5.0`, `apiforge-af@0.1.0`,
+  `platformforge@0.1.0`, `sparkforge-aws@0.5.0`, `sparkforge-azure@0.1.0`,
+  `forge-doctor-data@1.0.0`, `forge-doctor-api@0.2.0` — todos
+  verificados com `pip install` limpo do registry público + `--version`.
+- **Nomes finais PyPI**: `theforge-core` e `apiforge-af` — `the-forge`
+  e `apiforge` rejeitados pela política similar-name. Os 3 últimos
+  foram publicados via OIDC trusted publishing (pending publisher),
+  furando o rate-limit de conta nova — sem token.
 - **Promovido**: `forge-doctor-data 1.0.0rc1 → 1.0.0` (PR #46 mergeado,
   `c799eca`; rc-baseline re-selado com 2668 testes + cobertura medida).
 - **Manifesto**: `ecosystem-compatibility.json` consistente com os
   nomes finais de distribuição e versões GA.
 
 Data: 2026-10-16. Programa: `prompt_evo_release1.md`. Escopo executado:
-Audit→Approve→Publish(GitHub+npm+PyPI 4/7)→Verify; 3 dists aguardam rate-limit.
+Audit→Approve→Publish→Verify — GitHub Releases 9/9, npm 1/1, PyPI 7/7.
 
 ## Resumo executivo
 
