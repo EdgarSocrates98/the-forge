@@ -21,6 +21,7 @@ from theforge import _installkit as kit
 from theforge.install import providers, render
 
 FORGE_ID = "the-forge"
+DIST_NAME = "the-forge"  # PyPI dist name — import package stays `theforge`
 STATE_DIR = ".forge/install"
 PROFILES: tuple[str, ...] = ("minimal", "recommended", "full")
 SCOPES: tuple[str, ...] = ("project", "workspace", "user")
@@ -31,7 +32,7 @@ def _spec() -> kit.ForgeSpec:
     return kit.ForgeSpec(
         forge_id=FORGE_ID,
         package="theforge",
-        distribution="the-forge",
+        distribution=DIST_NAME,
         cli_name="theforge",
         python_spec=">=3.11",
         state_dir=STATE_DIR,

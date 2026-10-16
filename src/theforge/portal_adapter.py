@@ -43,7 +43,7 @@ _PROFILE_MAP = {"economy": "minimal", "balanced": "recommended", "full": "full"}
 
 def _version() -> str:
     try:
-        return importlib_metadata.version("theforge")
+        return importlib_metadata.version(service.DIST_NAME)
     except importlib_metadata.PackageNotFoundError:
         return "0.0.0+local"
 
@@ -250,7 +250,7 @@ class TheForgePortal(fp.PortalAdapter):
         version = _version()
         origin: str | None = None
         try:
-            dist = importlib_metadata.distribution("theforge")
+            dist = importlib_metadata.distribution(service.DIST_NAME)
             origin = "site-packages"
             direct = dist.read_text("direct_url.json")
             if direct and json.loads(direct).get("dir_info", {}).get("editable"):
