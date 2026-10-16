@@ -8,18 +8,20 @@
   wheel/sdist/tarball + `SHA256SUMS.txt` anexados. Verificação
   pós-release: wheel baixada do release `the-forge v0.5.0`, checksum
   conferido, instala em venv limpa → `theforge 0.5.0`.
-- **Pendente (registries)**: PyPI e npm **não** publicados — sem
-  credenciais (`npm whoami` falha; sem `~/.pypirc`/tokens; Trusted
-  Publishing requer setup do owner nos portais). Artifacts prontos
-  para `gh release download` → `twine upload` / `npm publish` quando
-  as credenciais existirem.
+- **npm publicado**: `theforge-cli@0.1.0` live em
+  npmjs.com — verificado com install limpo do registry (`npm install
+  theforge-cli` → `forge-cli --help`/`doctor` OK).
+- **Pendente (registries)**: PyPI **não** publicado — sem
+  credenciais (`~/.pypirc`/tokens ausentes; Trusted Publishing requer
+  setup do owner). Artifacts prontos para `gh release download` →
+  `twine upload` quando as credenciais existirem.
 - **Promovido**: `forge-doctor-data 1.0.0rc1 → 1.0.0` (PR #46 mergeado,
   `c799eca`; rc-baseline re-selado com 2668 testes + cobertura medida).
 - **Manifesto**: `ecosystem-compatibility.json` consistente com os
   nomes finais de distribuição e versões GA.
 
 Data: 2026-10-16. Programa: `prompt_evo_release1.md`. Escopo executado:
-Audit→Approve→Publish(GitHub)→Verify; registries aguardam credenciais.
+Audit→Approve→Publish(GitHub+npm)→Verify; PyPI aguarda credenciais.
 
 ## Resumo executivo
 
