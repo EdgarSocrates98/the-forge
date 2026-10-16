@@ -1,0 +1,8 @@
+# Planted: no test step, unpinned actions (P6).
+name: ci
+on: push
+jobs:
+  deploy:
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./deploy.sh

@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `cycle-10.1/program` |
-| commit | `923ddca` |
-| docs inventoried | 602 (excl. GENERATED mirrors: 450; vendored upstream: 0) |
+| commit | `7d62888` |
+| docs inventoried | 603 (excl. GENERATED mirrors: 451; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 602
+- `AUTOMATICALLY_CHECKED`: 603
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -19,7 +19,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
-- `UNKNOWN`: 161
+- `UNKNOWN`: 162
 - `GENERATED`: 152
 - `USER_GUIDE`: 66
 - `ADR`: 61
@@ -41,7 +41,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 8 (active docs: 0; remainder in frozen/historical trees)
+- broken internal links total: 9 (active docs: 1; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 
@@ -71,4 +71,4 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - Hub site build not executed (dev-only, `mkdocs-material`); the markdown hub is the verified deliverable.
 - Screen-reader and POSIX-terminal validation remain UNVERIFIED on this host.
 
-## Final status: **PASS**
+## Final status: **PARTIAL**

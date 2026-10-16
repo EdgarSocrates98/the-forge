@@ -1,0 +1,5 @@
+Usage: apiforge discover [OPTIONS]
+Try 'apiforge discover --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ Missing option '--project'.                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯

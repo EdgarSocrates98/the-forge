@@ -1,0 +1,101 @@
+{
+  "cache": {
+    "enabled": true,
+    "hit": false,
+    "key": "0c203b3a87b72f15"
+  },
+  "diagnostics": [],
+  "input_hashes": {
+    "app/main.py": "7defec1d21e381c3c6f6241a3e36e05e8f8f0cea425c9a2658a217ccd56e0fe7"
+  },
+  "routes": [
+    {
+      "attrs": {
+        "function": "list_users",
+        "reachable": true,
+        "router": "app",
+        "via": null
+      },
+      "fact_id": "fact:cde2c394402c11db",
+      "kind": "code.route",
+      "measures": {
+        "method": "get",
+        "path": "/admin/users"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 25,
+        "path": "app/main.py",
+        "sha256": "7defec1d21e381c3c6f6241a3e36e05e8f8f0cea425c9a2658a217ccd56e0fe7"
+      },
+      "version": 1
+    },
+    {
+      "attrs": {
+        "function": "health",
+        "reachable": true,
+        "router": "app",
+        "via": null
+      },
+      "fact_id": "fact:d372ff4c4ca7fdcc",
+      "kind": "code.route",
+      "measures": {
+        "method": "get",
+        "path": "/health"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 10,
+        "path": "app/main.py",
+        "sha256": "7defec1d21e381c3c6f6241a3e36e05e8f8f0cea425c9a2658a217ccd56e0fe7"
+      },
+      "version": 1
+    },
+    {
+      "attrs": {
+        "function": "create_payment",
+        "reachable": true,
+        "router": "app",
+        "via": null
+      },
+      "fact_id": "fact:957f33578f368b0a",
+      "kind": "code.route",
+      "measures": {
+        "method": "post",
+        "path": "/payments"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 15,
+        "path": "app/main.py",
+        "sha256": "7defec1d21e381c3c6f6241a3e36e05e8f8f0cea425c9a2658a217ccd56e0fe7"
+      },
+      "version": 1
+    },
+    {
+      "attrs": {
+        "function": "fee",
+        "reachable": true,
+        "router": "app",
+        "via": null
+      },
+      "fact_id": "fact:2fdddf2173f4d6c7",
+      "kind": "code.route",
+      "measures": {
+        "method": "get",
+        "path": "/payments/{payment_id}/fee"
+      },
+      "source": {
+        "column": null,
+        "extractor": "fastapi",
+        "line": 20,
+        "path": "app/main.py",
+        "sha256": "7defec1d21e381c3c6f6241a3e36e05e8f8f0cea425c9a2658a217ccd56e0fe7"
+      },
+      "version": 1
+    }
+  ]
+}

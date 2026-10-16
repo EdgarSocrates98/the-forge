@@ -410,6 +410,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 - [Baseline — Cycle 10.1 Fresh Audit (Wave 0)](certification/cycle-10.1/baseline.md) `UNKNOWN`
 - [Forge CLI lifecycle — Cycle 10.1 §5.2](certification/cycle-10.1/cli-lifecycle.md) `UNKNOWN`
+- [Global E2E — Cycle 10.1 §10 / Wave 6](certification/cycle-10.1/e2e-results.md) `UNKNOWN`
 - [Forge Lab evidence audit — Cycle 10.1 §7 / Wave 5-6 prep](certification/cycle-10.1/forge-lab.md) `UNKNOWN`
 - [Gap Register — Cycle 10.1](certification/cycle-10.1/gap-register.md) `UNKNOWN`
 - [Hosts & MCP certification — Cycle 10.1 §6 / Wave 4](certification/cycle-10.1/hosts-mcp.md) `UNKNOWN`
@@ -514,6 +515,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Certificação real de hosts (Codex/Claude Code/Devin/Copilot) e MCP](../factory/specs/active/cyc101-05-hosts-mcp-certification.md) `UNKNOWN`
 - [Forge Lab: validar o conteúdo das evidências, não só a coleta](../factory/specs/active/cyc101-06-forge-lab-validation.md) `UNKNOWN`
 - [Auditoria de segurança e dependências nos commits do baseline](../factory/specs/active/cyc101-07-security-dependency-closure.md) `UNKNOWN`
+- [Release candidates verificáveis por projeto — sem publicar](../factory/specs/active/cyc101-08-release-candidates.md) `RELEASE_REPORT`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
@@ -529,7 +531,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Integridade de avaliação: métricas, ground truth e regression gates](../factory/specs/archive/2026/cyc9-02-eval-integrity.md) `HISTORICAL`
 - [Cenários multi-Forge do Forge Lab](../factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md) `HISTORICAL`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
-- [Release candidates verificáveis por projeto — sem publicar](../factory/specs/inbox/cyc101-08-release-candidates.md) `RELEASE_REPORT`
 - [E2E global obrigatório: app de exemplo com problemas conhecidos](../factory/specs/inbox/cyc101-09-global-e2e.md) `UNKNOWN`
 - [Certificação final + relatório obrigatório §16](../factory/specs/inbox/cyc101-10-final-certification.md) `UNKNOWN`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`

@@ -1,10 +1,11 @@
 # Broken link report
 Forge: `the-forge`
 
-Internal-link findings: 8
+Internal-link findings: 9
 
 | File | Link | Problem |
 |---|---|---|
+| `docs/INDEX.md` | `../factory/specs/inbox/cyc101-08-release-candidates.md` | broken internal link |
 | `docs/superpowers/plans/2026-10-02-the-forge-cycle1-core.md` | `docs/architecture.md` | broken internal link |
 | `docs/superpowers/plans/2026-10-02-the-forge-cycle1-core.md` | `docs/protocol.md` | broken internal link |
 | `docs/superpowers/plans/2026-10-02-the-forge-cycle1-core.md` | `docs/provider-authoring.md` | broken internal link |

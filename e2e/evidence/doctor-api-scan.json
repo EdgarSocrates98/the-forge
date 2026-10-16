@@ -1,0 +1,558 @@
+{
+  "schema_version": "1.0",
+  "tool_version": "0.2.0",
+  "knowledge_versions": {
+    "asyncapi-versions": "2026.10",
+    "aws-api-gateway-capabilities": "2026.10",
+    "envoy-capabilities": "2026.10",
+    "express-capabilities": "2026.10",
+    "fastapi-capabilities": "2026.10",
+    "gateway-capability-map": "2026.10",
+    "graphql-spec": "2026.10",
+    "grpc-behaviors": "2026.10",
+    "http-semantics": "2026.10",
+    "jsonschema-dialects": "2026.10",
+    "kong-capabilities": "2026.10",
+    "nginx-capabilities": "2026.10",
+    "openapi-versions": "2026.10",
+    "owasp-api-security-top-10": "2023",
+    "spring-capabilities": "2026.10"
+  },
+  "gate_passed": true,
+  "gate_failures": [],
+  "findings": [
+    {
+      "confidence": "UNKNOWN",
+      "description": "[unknown] (API2) GET /health: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])",
+      "entity_ids": [],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 5,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "GET /health: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "APISEC011",
+      "remediation": null,
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": null,
+        "line": 5,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Ambiguous auth-coverage chain",
+      "unknowns": [
+        {
+          "missing": "global or operation security requirement",
+          "resolution": "declare security schemes and requirements, or gateway auth evidence",
+          "subject": "method_path:GET /health"
+        }
+      ]
+    },
+    {
+      "confidence": "UNKNOWN",
+      "description": "[unknown] (API2) POST /payments: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])",
+      "entity_ids": [],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 6,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /payments: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "APISEC011",
+      "remediation": null,
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": null,
+        "line": 6,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Ambiguous auth-coverage chain",
+      "unknowns": [
+        {
+          "missing": "global or operation security requirement",
+          "resolution": "declare security schemes and requirements, or gateway auth evidence",
+          "subject": "method_path:POST /payments"
+        }
+      ]
+    },
+    {
+      "confidence": "UNKNOWN",
+      "description": "[unknown] (API2) POST /refunds: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])",
+      "entity_ids": [],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 7,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /refunds: no security evidence at any level - effective authentication is unknown (global_schemes=[] op_security=False op_reqs=0 scopes=[] unresolvable=[])"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "APISEC011",
+      "remediation": null,
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": null,
+        "line": 7,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Ambiguous auth-coverage chain",
+      "unknowns": [
+        {
+          "missing": "global or operation security requirement",
+          "resolution": "declare security schemes and requirements, or gateway auth evidence",
+          "subject": "method_path:POST /refunds"
+        }
+      ]
+    },
+    {
+      "confidence": "HIGH",
+      "description": "documented POST /refunds has no implementation",
+      "entity_ids": [
+        "operation:openapi:method_path:POST /refunds"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 7,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "documented POST /refunds has no implementation"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "DRIFT001",
+      "remediation": "implement the operation or correct the contract",
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": 14,
+        "line": 7,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Documented operation missing implementation",
+      "unknowns": [
+        {
+          "missing": "which side of the drift is authoritative",
+          "resolution": "declare contract_authority: openapi | implementation | gateway | none",
+          "subject": "contract_authority"
+        }
+      ]
+    },
+    {
+      "confidence": "HIGH",
+      "description": "implemented GET /payments/{payment_id}/fee is absent from the contract",
+      "entity_ids": [
+        "operation:fastapi:app.main.fee"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 20,
+          "offset": null,
+          "source": "app/main.py",
+          "summary": "implemented GET /payments/{payment_id}/fee is absent from the contract"
+        },
+        {
+          "kind": "STATIC",
+          "line": 20,
+          "offset": null,
+          "source": "app/main.py",
+          "summary": "implementation: GET /payments/{payment_id}/fee -> app.main.fee"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "DRIFT002",
+      "remediation": null,
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": 2,
+        "line": 20,
+        "path": "app/main.py"
+      },
+      "title": "Implemented route absent from contract",
+      "unknowns": [
+        {
+          "missing": "which side of the drift is authoritative",
+          "resolution": "declare contract_authority: openapi | implementation | gateway | none",
+          "subject": "contract_authority"
+        }
+      ]
+    },
+    {
+      "confidence": "HIGH",
+      "description": "implemented GET /admin/users is absent from the contract",
+      "entity_ids": [
+        "operation:fastapi:app.main.list_users"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 25,
+          "offset": null,
+          "source": "app/main.py",
+          "summary": "implemented GET /admin/users is absent from the contract"
+        },
+        {
+          "kind": "STATIC",
+          "line": 25,
+          "offset": null,
+          "source": "app/main.py",
+          "summary": "implementation: GET /admin/users -> app.main.list_users"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "DRIFT002",
+      "remediation": null,
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": 2,
+        "line": 25,
+        "path": "app/main.py"
+      },
+      "title": "Implemented route absent from contract",
+      "unknowns": [
+        {
+          "missing": "which side of the drift is authoritative",
+          "resolution": "declare contract_authority: openapi | implementation | gateway | none",
+          "subject": "contract_authority"
+        }
+      ]
+    },
+    {
+      "confidence": "MEDIUM",
+      "description": "POST /payments: implemented parameter 'amount' (query) absent from contract; implemented parameter 'currency' (query) absent from contract",
+      "entity_ids": [
+        "operation:openapi:method_path:POST /payments",
+        "operation:fastapi:app.main.create_payment"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 15,
+          "offset": null,
+          "source": "app/main.py",
+          "summary": "POST /payments: implemented parameter 'amount' (query) absent from contract; implemented parameter 'currency' (query) absent from contract"
+        },
+        {
+          "kind": "STATIC",
+          "line": 15,
+          "offset": null,
+          "source": "app/main.py",
+          "summary": "implementation: POST /payments -> app.main.create_payment"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "DRIFT004",
+      "remediation": null,
+      "severity": "MEDIUM",
+      "source_location": {
+        "column": 2,
+        "line": 15,
+        "path": "app/main.py"
+      },
+      "title": "Parameter mismatch",
+      "unknowns": []
+    },
+    {
+      "confidence": "HIGH",
+      "description": "GET /health has no operationId",
+      "entity_ids": [
+        "operation:openapi:method_path:GET /health"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 5,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "GET /health has no operationId"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS004",
+      "remediation": "add a unique operationId",
+      "severity": "LOW",
+      "source_location": {
+        "column": 13,
+        "line": 5,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Operation without operationId",
+      "unknowns": []
+    },
+    {
+      "confidence": "HIGH",
+      "description": "POST /payments has no operationId",
+      "entity_ids": [
+        "operation:openapi:method_path:POST /payments"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 6,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /payments has no operationId"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS004",
+      "remediation": "add a unique operationId",
+      "severity": "LOW",
+      "source_location": {
+        "column": 15,
+        "line": 6,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Operation without operationId",
+      "unknowns": []
+    },
+    {
+      "confidence": "HIGH",
+      "description": "POST /refunds has no operationId",
+      "entity_ids": [
+        "operation:openapi:method_path:POST /refunds"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 7,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /refunds has no operationId"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS004",
+      "remediation": "add a unique operationId",
+      "severity": "LOW",
+      "source_location": {
+        "column": 14,
+        "line": 7,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Operation without operationId",
+      "unknowns": []
+    },
+    {
+      "confidence": "LOW",
+      "description": "app/openapi.yaml: no document-level security requirement protects 3 operations",
+      "entity_ids": [
+        "api:openapi:app/openapi.yaml"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 2,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "app/openapi.yaml: no document-level security requirement protects 3 operations"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS010",
+      "remediation": "if this API is partner/public, add a document-level `security` requirement",
+      "severity": "HIGH",
+      "source_location": {
+        "column": 1,
+        "line": 2,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Public API without security requirement (candidate)",
+      "unknowns": [
+        {
+          "missing": "API exposure classification (internal/partner/public)",
+          "resolution": "declare exposure via gateway/org metadata or add a security requirement so the question is moot",
+          "subject": "app/openapi.yaml"
+        }
+      ]
+    },
+    {
+      "confidence": "LOW",
+      "description": "GET /health has no tags or domain grouping",
+      "entity_ids": [
+        "operation:openapi:method_path:GET /health"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 5,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "GET /health has no tags or domain grouping"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS020",
+      "remediation": null,
+      "severity": "INFO",
+      "source_location": {
+        "column": 13,
+        "line": 5,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Operation without tags/domain ownership (candidate)",
+      "unknowns": [
+        {
+          "missing": "domain/owner attribution for the operation",
+          "resolution": "add tags or declare ownership metadata",
+          "subject": "method_path:GET /health"
+        }
+      ]
+    },
+    {
+      "confidence": "LOW",
+      "description": "POST /payments has no tags or domain grouping",
+      "entity_ids": [
+        "operation:openapi:method_path:POST /payments"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 6,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /payments has no tags or domain grouping"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS020",
+      "remediation": null,
+      "severity": "INFO",
+      "source_location": {
+        "column": 15,
+        "line": 6,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Operation without tags/domain ownership (candidate)",
+      "unknowns": [
+        {
+          "missing": "domain/owner attribution for the operation",
+          "resolution": "add tags or declare ownership metadata",
+          "subject": "method_path:POST /payments"
+        }
+      ]
+    },
+    {
+      "confidence": "LOW",
+      "description": "POST /refunds has no tags or domain grouping",
+      "entity_ids": [
+        "operation:openapi:method_path:POST /refunds"
+      ],
+      "evidence": [
+        {
+          "kind": "STATIC",
+          "line": 7,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /refunds has no tags or domain grouping"
+        }
+      ],
+      "evidence_kind": "STATIC",
+      "id": "OAS020",
+      "remediation": null,
+      "severity": "INFO",
+      "source_location": {
+        "column": 14,
+        "line": 7,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Operation without tags/domain ownership (candidate)",
+      "unknowns": [
+        {
+          "missing": "domain/owner attribution for the operation",
+          "resolution": "add tags or declare ownership metadata",
+          "subject": "method_path:POST /refunds"
+        }
+      ]
+    },
+    {
+      "confidence": "LOW",
+      "description": "POST /payments: mutating operation with no declared idempotency-key or contract metadata - safe replay cannot be evidenced",
+      "entity_ids": [],
+      "evidence": [
+        {
+          "kind": "CONFIG",
+          "line": null,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /payments: mutating operation with no declared idempotency-key or contract metadata - safe replay cannot be evidenced"
+        }
+      ],
+      "evidence_kind": "CONFIG",
+      "id": "RELAPI008",
+      "remediation": "declare an Idempotency-Key header or contract idempotency metadata for the mutating operation",
+      "severity": "LOW",
+      "source_location": {
+        "column": null,
+        "line": null,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Mutation operation without declared idempotency evidence",
+      "unknowns": [
+        {
+          "missing": "idempotency evidence (idempotency key, contract metadata, db uniqueness)",
+          "resolution": "declare idempotency_key/x-idempotent for the operation, or accept retry-unsafety",
+          "subject": "method_path:POST /payments"
+        }
+      ]
+    },
+    {
+      "confidence": "LOW",
+      "description": "POST /refunds: mutating operation with no declared idempotency-key or contract metadata - safe replay cannot be evidenced",
+      "entity_ids": [],
+      "evidence": [
+        {
+          "kind": "CONFIG",
+          "line": null,
+          "offset": null,
+          "source": "app/openapi.yaml",
+          "summary": "POST /refunds: mutating operation with no declared idempotency-key or contract metadata - safe replay cannot be evidenced"
+        }
+      ],
+      "evidence_kind": "CONFIG",
+      "id": "RELAPI008",
+      "remediation": "declare an Idempotency-Key header or contract idempotency metadata for the mutating operation",
+      "severity": "LOW",
+      "source_location": {
+        "column": null,
+        "line": null,
+        "path": "app/openapi.yaml"
+      },
+      "title": "Mutation operation without declared idempotency evidence",
+      "unknowns": [
+        {
+          "missing": "idempotency evidence (idempotency key, contract metadata, db uniqueness)",
+          "resolution": "declare idempotency_key/x-idempotent for the operation, or accept retry-unsafety",
+          "subject": "method_path:POST /refunds"
+        }
+      ]
+    }
+  ],
+  "unknowns": [
+    {
+      "missing": "source evidence for this plane",
+      "resolution": "provide the corresponding artifacts",
+      "subject": "DESIRED state"
+    },
+    {
+      "missing": "source evidence for this plane",
+      "resolution": "provide the corresponding artifacts",
+      "subject": "OBSERVED state"
+    },
+    {
+      "missing": "source evidence for this plane",
+      "resolution": "provide the corresponding artifacts",
+      "subject": "HYPOTHETICAL state"
+    }
+  ]
+}
