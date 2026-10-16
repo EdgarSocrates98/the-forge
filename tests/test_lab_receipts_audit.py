@@ -17,11 +17,7 @@ from theforge.contracts.base import ContractError
 from theforge.contracts.benchmark import parse_result
 
 BENCH = (
-    Path(__file__).resolve().parent.parent
-    / "docs"
-    / "programs"
-    / "ecosystem-2026"
-    / "benchmarks"
+    Path(__file__).resolve().parent.parent / "docs" / "programs" / "ecosystem-2026" / "benchmarks"
 )
 RECEIPTS = sorted(BENCH.glob("results-*.jsonl"))
 
@@ -82,8 +78,7 @@ def test_metric_states_disciplined():
                     )
                 else:
                     assert m.get("value") is None, (
-                        f"{f.name}/{sid}.{name}: {state} must carry null, "
-                        f"got {m.get('value')!r}"
+                        f"{f.name}/{sid}.{name}: {state} must carry null, got {m.get('value')!r}"
                     )
 
 

@@ -6,7 +6,7 @@ Capturado em: 2026-10-15 · Programa: `prompt_evo_cycle10.1.md` · Escopo: 9 rep
 
 | Repositório | default_branch | head_sha | runtime | package_version | latest_ci_status | open_prs | latest_release |
 |---|---|---|---|---|---|---|---|
-| the-forge | main | `5ef50f0` | Python ≥3.11 | 0.5.0 | success | 0 | — |
+| the-forge | main | `530ea52` | Python ≥3.11 | 0.5.0 | success | 0 | — |
 | forge-cli | main | `6109f6a` | Node/TypeScript | 0.1.0 | success | 0 | — |
 | forge-portal | main | `ab5a3ef` | Angular/TypeScript | 0.1.0 | success | 0 | — |
 | api-forge | main | `6b7ede6` | Python ≥3.11 | 0.1.0 | success | 0 | — |

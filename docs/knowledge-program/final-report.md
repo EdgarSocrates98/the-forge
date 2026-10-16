@@ -4,7 +4,7 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `cycle-10.1/program` |
-| commit | `288db59` |
+| commit | `8430d90` |
 | docs inventoried | 604 (excl. GENERATED mirrors: 452; vendored upstream: 0) |
 
 ## Review levels (honest)
@@ -41,7 +41,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 ## Findings
 
 - duplicate groups (non-generated): 0
-- broken internal links total: 10 (active docs: 2; remainder in frozen/historical trees)
+- broken internal links total: 8 (active docs: 0; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
 - undocumented public commands: 0
 
@@ -71,4 +71,4 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - Hub site build not executed (dev-only, `mkdocs-material`); the markdown hub is the verified deliverable.
 - Screen-reader and POSIX-terminal validation remain UNVERIFIED on this host.
 
-## Final status: **PARTIAL**
+## Final status: **PASS**

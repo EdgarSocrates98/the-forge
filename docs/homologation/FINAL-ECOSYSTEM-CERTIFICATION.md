@@ -97,7 +97,11 @@ routing do orquestrador retornou `ambiguous` corretamente.
 - Claims/locks re-estampados com prova real: spark-azure (`--stamp` em HEAD),
   spark-aws (doc+lock re-ancorados, corpus +1 arquivo), platform-forge
   (receipt de economia ligado ao HEAD), doctor-api (baseline self-scan).
-- `discover_scenarios` path Windows corrigido com `.as_posix()`.
+- `portal_adapter.py`: lab dir emitido com `.as_posix()` (`5ef50f0`) — CI
+  Windows estava vermelho por separador `\`.
+- `forge-doctor-api` (`008f295`): `discover_scenarios` ignora dot-directories
+  (skip por `rel.split("/")`) — o `.as_posix()` ali já existia via
+  `context.relative()`.
 
 ## 8. PRs e regressão
 

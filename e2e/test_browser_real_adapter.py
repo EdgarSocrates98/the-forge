@@ -114,9 +114,9 @@ def test_specialists_federation_real(page, server):
 def test_lab_real_receipts(page, server):
     """§4.6 — /lab serves real benchmark receipts or honest empty state."""
     lab = _api(server, "/lab")
-    assert isinstance(lab, dict) and (
-        "runs" in lab or "reports" in lab
-    ), f"/lab payload missing runs/reports: {sorted(lab)}"
+    assert isinstance(lab, dict) and ("runs" in lab or "reports" in lab), (
+        f"/lab payload missing runs/reports: {sorted(lab)}"
+    )
     page.goto(server.url)
     page.evaluate("location.hash = '#/lab'")
     page.wait_for_timeout(1500)
@@ -145,6 +145,9 @@ def test_install_plan_preview_only(page, server):
 def test_no_console_errors_on_routes(page, server):
     errors: list[str] = []
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    # listener antes da navegação canônica: captura erros do boot real
+    # (reload() rejeitaria a sessão de uso único → 403 espúrios, não bug do app)
+    page.goto(server.url, wait_until="networkidle")
     for route in ("", "federation", "lab", "tasks", "graph"):
         page.evaluate(f"location.hash = '#/{route}'")
         page.wait_for_timeout(1000)

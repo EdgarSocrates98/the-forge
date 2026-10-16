@@ -156,8 +156,10 @@ def main() -> int:
         target_base = artifact_dir / "targets" / repo
         python = runtime_root / repo / ".venv" / "Scripts" / "python.exe"
         posix_python = runtime_root / repo / ".venv" / "bin" / "python"
+        python_fell_back = False
         if not posix_python.is_file():
             posix_python = Path(sys.executable)
+            python_fell_back = True
         if os.name == "posix":
             python = posix_python
         for shell, executable in powershells:
@@ -180,17 +182,19 @@ def main() -> int:
                 if executable and script.is_file()
                 else None
             )
-            cases.append(
-                run_case(
-                    repo=repo,
-                    shell=shell,
-                    script=script,
-                    command=command,
-                    target=target_base / shell,
-                    artifact_dir=artifact_dir,
-                    timeout=parsed.timeout,
-                )
+            res = run_case(
+                repo=repo,
+                shell=shell,
+                script=script,
+                command=command,
+                target=target_base / shell,
+                artifact_dir=artifact_dir,
+                timeout=parsed.timeout,
             )
+            if python_fell_back:
+                res["python"] = str(python)
+                res["python_fallback"] = "repo .venv missing; used sys.executable"
+            cases.append(res)
         script = source / "install.sh"
         if bash and script.is_file():
             command = [
@@ -229,17 +233,19 @@ def main() -> int:
             ]
         else:
             linux_command = None
-        cases.append(
-            run_case(
-                repo=repo,
-                shell="linux-bash",
-                script=script,
-                command=linux_command,
-                target=target_base / "linux-bash",
-                artifact_dir=artifact_dir,
-                timeout=parsed.timeout,
-            )
+        res = run_case(
+            repo=repo,
+            shell="linux-bash",
+            script=script,
+            command=linux_command,
+            target=target_base / "linux-bash",
+            artifact_dir=artifact_dir,
+            timeout=parsed.timeout,
         )
+        if python_fell_back:
+            res["python"] = str(posix_python)
+            res["python_fallback"] = "repo .venv missing; used sys.executable"
+        cases.append(res)
     payload = {
         "schema": "forge/installer-matrix/v1",
         "generated_at": datetime.now(UTC).isoformat(),

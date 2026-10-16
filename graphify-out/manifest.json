@@ -588,9 +588,9 @@
     "semantic_hash": ""
   },
   "audit/tooling/run_installers.py": {
-    "mtime": 1792112247.735297,
-    "seen": 1792112802.6435976,
-    "ast_hash": "eb14b704854f9c69633ee882ac62c06a",
+    "mtime": 1792115515.3173907,
+    "seen": 1792115673.667593,
+    "ast_hash": "ed9c32fb5ede5edb85f61f4cedf1cb5e",
     "semantic_hash": ""
   },
   "audit/tooling/run_mcp_handshakes.py": {
@@ -8346,9 +8346,9 @@
     "semantic_hash": ""
   },
   "docs/homologation/FINAL-ECOSYSTEM-CERTIFICATION.md": {
-    "mtime": 1792112760.1413615,
-    "seen": 1792112802.6452646,
-    "ast_hash": "eb540c26b2a1565696d2474f99562343",
+    "mtime": 1792115493.9492896,
+    "seen": 1792115673.669353,
+    "ast_hash": "c22e20b942f86b36e6593309a5e03421",
     "semantic_hash": ""
   },
   "docs/homologation/prompt_evo_auditabilidade.md": {
@@ -10692,9 +10692,9 @@
     "semantic_hash": ""
   },
   "tests/test_lab_receipts_audit.py": {
-    "mtime": 1792114156.4586587,
-    "seen": 1792114174.1996853,
-    "ast_hash": "e1fafc05047ca4ef2b0c33e59e9fe87e",
+    "mtime": 1792115422.7459867,
+    "seen": 1792115673.6684482,
+    "ast_hash": "bc8adfbcd0da5fd7e16fe82e078a52fa",
     "semantic_hash": ""
   },
   "docs/certification/cycle-10.1/forge-lab.md": {
@@ -10734,9 +10734,9 @@
     "semantic_hash": ""
   },
   "factory/specs/active/cyc101-08-release-candidates.md": {
-    "mtime": 1792112019.6560507,
-    "seen": 1792114748.613646,
-    "ast_hash": "df62222126ba90ebbae1746404532807",
+    "mtime": 1792115569.7486467,
+    "seen": 1792115673.6695588,
+    "ast_hash": "ed50f36c72a8ad16d5e9fd941253dda6",
     "semantic_hash": ""
   },
   "e2e/evidence/apiforge-analyze.json": {
@@ -10800,9 +10800,9 @@
     "semantic_hash": ""
   },
   "factory/specs/active/cyc101-09-global-e2e.md": {
-    "mtime": 1792112020.405322,
-    "seen": 1792114845.5017025,
-    "ast_hash": "0af555042165a673a2b2e734e20a15cc",
+    "mtime": 1792115569.7487984,
+    "seen": 1792115673.6695597,
+    "ast_hash": "8d8a8a65dd5e40e7eff4e95bd28af837",
     "semantic_hash": ""
   },
   "e2e/example-app/infra/main.tf": {
@@ -10818,9 +10818,9 @@
     "semantic_hash": ""
   },
   "factory/specs/active/cyc101-10-final-certification.md": {
-    "mtime": 1792112021.1735072,
-    "seen": 1792114867.077948,
-    "ast_hash": "ddfb9982f6b8a7a1936f99180440192b",
+    "mtime": 1792115569.748891,
+    "seen": 1792115673.669561,
+    "ast_hash": "6c450d90aef159c2c84fc6a9ce80f9cf",
     "semantic_hash": ""
   }
 }

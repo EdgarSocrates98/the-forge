@@ -2,6 +2,7 @@
 Planted: P1 route without auth dependency, P2 unhandled div-by-zero,
 P3 OpenAPI spec drift (documented route missing here), P4 no rate limit.
 """
+
 from fastapi import FastAPI
 
 app = FastAPI(title="payments-example", version="0.1.0")

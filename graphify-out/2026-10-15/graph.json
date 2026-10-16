@@ -21378,7 +21378,7 @@
       "file_type": "code",
       "norm_label": "test_capabilities_real()",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L129"
+      "source_location": "L128"
     },
     {
       "id": "e2e_test_browser_real_adapter_test_first_paint_shell",
@@ -21402,7 +21402,7 @@
       "file_type": "code",
       "norm_label": "test_install_plan_preview_only()",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L135"
+      "source_location": "L134"
     },
     {
       "id": "e2e_test_browser_real_adapter_test_lab_real_receipts",
@@ -21414,7 +21414,7 @@
       "file_type": "code",
       "norm_label": "test_lab_real_receipts()",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L115"
+      "source_location": "L114"
     },
     {
       "id": "e2e_test_browser_real_adapter_test_mobile_viewport",
@@ -21426,7 +21426,7 @@
       "file_type": "code",
       "norm_label": "test_mobile_viewport()",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L156"
+      "source_location": "L155"
     },
     {
       "id": "e2e_test_browser_real_adapter_test_nav_routes_render_real_data",
@@ -21450,7 +21450,7 @@
       "file_type": "code",
       "norm_label": "test_no_console_errors_on_routes()",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L146"
+      "source_location": "L145"
     },
     {
       "id": "e2e_test_browser_real_adapter_test_specialists_federation_real",
@@ -21462,7 +21462,7 @@
       "file_type": "code",
       "norm_label": "test_specialists_federation_real()",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L103"
+      "source_location": "L102"
     },
     {
       "id": "src_theforge_portal_adapter_build_server",
@@ -34713,7 +34713,7 @@
       "label": "EcosystemCompatibility.schema.json",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "ecosystemcompatibility.schema.json",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34724,62 +34724,18 @@
       "label": "additionalProperties",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "additionalproperties",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
       "source_location": "L98"
     },
     {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_components_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L38"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_components_minitems",
-      "label": "minItems",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "minitems",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L37"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_components_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L36"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_contracts_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L68"
-    },
-    {
       "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_contracts_type",
       "label": "type",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34790,7 +34746,7 @@
       "label": "pattern",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "pattern",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34801,7 +34757,7 @@
       "label": "type",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34812,73 +34768,18 @@
       "label": "$id",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "$id",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
       "source_location": "L3"
     },
     {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_additionalproperties",
-      "label": "additionalProperties",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "additionalproperties",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L63"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_comment",
-      "label": "$comment",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "$comment",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L41"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_required",
-      "label": "required",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "required",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L40"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L39"
-    },
-    {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_notes_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L95"
-    },
-    {
       "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_notes_type",
       "label": "type",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34889,29 +34790,18 @@
       "label": "properties",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "properties",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
       "source_location": "L14"
     },
     {
-      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_properties_components",
-      "label": "components",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "code",
-      "norm_label": "components",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L35"
-    },
-    {
       "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_properties_contracts",
       "label": "contracts",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "contracts",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34922,7 +34812,7 @@
       "label": "created_at",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "created_at",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34933,7 +34823,7 @@
       "label": "notes",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "notes",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34944,7 +34834,7 @@
       "label": "release",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "release",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34955,7 +34845,7 @@
       "label": "schema",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "schema",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34966,7 +34856,7 @@
       "label": "pattern",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "pattern",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34977,7 +34867,7 @@
       "label": "type",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34988,7 +34878,7 @@
       "label": "$schema",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "$schema",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -34999,7 +34889,7 @@
       "label": "const",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "const",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -35010,7 +34900,7 @@
       "label": "title",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "title",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
@@ -35021,55 +34911,11 @@
       "label": "type",
       "_origin": "ast",
       "community": 103,
-      "community_name": "required",
+      "community_name": "properties",
       "file_type": "code",
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
       "source_location": "L5"
-    },
-    {
-      "id": "ref_component",
-      "label": "component",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "concept",
-      "norm_label": "component",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L40"
-    },
-    {
-      "id": "ref_contract",
-      "label": "contract",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "concept",
-      "norm_label": "contract",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L70"
-    },
-    {
-      "id": "ref_family",
-      "label": "family",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "concept",
-      "norm_label": "family",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L70"
-    },
-    {
-      "id": "ref_scheme",
-      "label": "scheme",
-      "_origin": "ast",
-      "community": 103,
-      "community_name": "required",
-      "file_type": "concept",
-      "norm_label": "scheme",
-      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
-      "source_location": "L40"
     },
     {
       "id": "docs_programs_ecosystem_2026_supply_chain_sbom_forge_cli_deps_dependencies_get_stream",
@@ -37651,28 +37497,6 @@
       "source_location": "L21"
     },
     {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_labs_declared_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 129,
-      "community_name": "expected",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L25"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_labs_declared_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 129,
-      "community_name": "expected",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L25"
-    },
-    {
       "id": "docs_portable_installation_schemas_multiforgescenario_schema_min_labs_ok_minimum",
       "label": "minimum",
       "_origin": "ast",
@@ -37715,17 +37539,6 @@
       "norm_label": "expected",
       "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
       "source_location": "L20"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_labs_declared",
-      "label": "labs_declared",
-      "_origin": "ast",
-      "community": 129,
-      "community_name": "expected",
-      "file_type": "code",
-      "norm_label": "labs_declared",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L25"
     },
     {
       "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_min_labs_ok",
@@ -43587,72 +43400,6 @@
       "source_location": "L3"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_items_additionalproperties",
-      "label": "additionalProperties",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "additionalproperties",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L38"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_items_required",
-      "label": "required",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "required",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L37"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_items_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L36"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_notes_default",
-      "label": "default",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "default",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L90"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_notes_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L90"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_notes_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L90"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarkresult_schema_properties",
       "label": "properties",
       "_origin": "ast",
@@ -43697,28 +43444,6 @@
       "source_location": "L12"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_properties_notes",
-      "label": "notes",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "notes",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L90"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_properties_results",
-      "label": "results",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "results",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L33"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarkresult_schema_properties_schema",
       "label": "schema",
       "_origin": "ast",
@@ -43739,28 +43464,6 @@
       "norm_label": "suite",
       "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
       "source_location": "L11"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_results_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L35"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarkresult_schema_results_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L34"
     },
     {
       "id": "docs_portable_installation_schemas_benchmarkresult_schema_schema",
@@ -43827,28 +43530,6 @@
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
       "source_location": "L6"
-    },
-    {
-      "id": "ref_scenario_id",
-      "label": "scenario_id",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "scenario_id",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L37"
-    },
-    {
-      "id": "ref_verdict",
-      "label": "verdict",
-      "_origin": "ast",
-      "community": 198,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "verdict",
-      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
-      "source_location": "L37"
     },
     {
       "id": "docs_portable_installation_schemas_benchmarkresult_schema_judge_additionalproperties",
@@ -44555,6 +44236,160 @@
       "source_location": "L843"
     },
     {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_components_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L38"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_components_minitems",
+      "label": "minItems",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "minitems",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_components_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L36"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_contracts_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L68"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_additionalproperties",
+      "label": "additionalProperties",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "additionalproperties",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L63"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_comment",
+      "label": "$comment",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "$comment",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L41"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_required",
+      "label": "required",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "required",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L40"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_items_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L39"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_notes_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L95"
+    },
+    {
+      "id": "docs_portable_installation_schemas_ecosystemcompatibility_schema_properties_components",
+      "label": "components",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "components",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "ref_component",
+      "label": "component",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "component",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L40"
+    },
+    {
+      "id": "ref_contract",
+      "label": "contract",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "contract",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L70"
+    },
+    {
+      "id": "ref_family",
+      "label": "family",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "family",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L70"
+    },
+    {
+      "id": "ref_scheme",
+      "label": "scheme",
+      "_origin": "ast",
+      "community": 207,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "scheme",
+      "source_file": "docs/portable-installation/schemas/EcosystemCompatibility.schema.json",
+      "source_location": "L40"
+    },
+    {
       "id": "docs_onboarding_golden_paths_api",
       "label": "api.md",
       "_origin": "ast",
@@ -44993,6 +44828,292 @@
       "norm_label": "status \u2014 2026-10-15 (fim de sessao)",
       "source_file": "factory/specs/PROGRAM-ecosystem-2026.md",
       "source_location": "L55"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_items_pattern",
+      "label": "pattern",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "pattern",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_items_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_labs_declared_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_labs_declared_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_notes_default",
+      "label": "default",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "default",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_notes_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_notes_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_minitems",
+      "label": "minItems",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "minitems",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_uniqueitems",
+      "label": "uniqueItems",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "uniqueitems",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_labs_declared",
+      "label": "labs_declared",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "labs_declared",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_notes",
+      "label": "notes",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "notes",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_participants",
+      "label": "participants",
+      "_origin": "ast",
+      "community": 216,
+      "community_name": "participants",
+      "file_type": "code",
+      "norm_label": "participants",
+      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_items_additionalproperties",
+      "label": "additionalProperties",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "additionalproperties",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L38"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_items_required",
+      "label": "required",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "required",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_items_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L36"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_notes_default",
+      "label": "default",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "default",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L90"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_notes_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L90"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_notes_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L90"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_properties_notes",
+      "label": "notes",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "notes",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L90"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_properties_results",
+      "label": "results",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "results",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L33"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_results_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarkresult_schema_results_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L34"
+    },
+    {
+      "id": "ref_scenario_id",
+      "label": "scenario_id",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "concept",
+      "norm_label": "scenario_id",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "ref_verdict",
+      "label": "verdict",
+      "_origin": "ast",
+      "community": 217,
+      "community_name": "items",
+      "file_type": "concept",
+      "norm_label": "verdict",
+      "source_file": "docs/portable-installation/schemas/BenchmarkResult.schema.json",
+      "source_location": "L37"
     },
     {
       "id": "portal_manifest_chunk_7_l_b4tr_js_bytes",
@@ -46245,17 +46366,6 @@
       "source_location": "L3"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_required",
-      "label": "required",
-      "_origin": "ast",
-      "community": 241,
-      "community_name": "BenchmarkSuite.schema.json",
-      "file_type": "code",
-      "norm_label": "required",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_schema",
       "label": "$schema",
       "_origin": "ast",
@@ -46287,61 +46397,6 @@
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
       "source_location": "L6"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_created_at",
-      "label": "created_at",
-      "_origin": "ast",
-      "community": 241,
-      "community_name": "BenchmarkSuite.schema.json",
-      "file_type": "concept",
-      "norm_label": "created_at",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_schema",
-      "label": "schema",
-      "_origin": "ast",
-      "community": 241,
-      "community_name": "BenchmarkSuite.schema.json",
-      "file_type": "concept",
-      "norm_label": "schema",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
-    },
-    {
-      "id": "ref_owner_forge",
-      "label": "owner_forge",
-      "_origin": "ast",
-      "community": 241,
-      "community_name": "BenchmarkSuite.schema.json",
-      "file_type": "concept",
-      "norm_label": "owner_forge",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
-    },
-    {
-      "id": "ref_scenarios",
-      "label": "scenarios",
-      "_origin": "ast",
-      "community": 241,
-      "community_name": "BenchmarkSuite.schema.json",
-      "file_type": "concept",
-      "norm_label": "scenarios",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
-    },
-    {
-      "id": "ref_source",
-      "label": "source",
-      "_origin": "ast",
-      "community": 241,
-      "community_name": "BenchmarkSuite.schema.json",
-      "file_type": "concept",
-      "norm_label": "source",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
     },
     {
       "id": "portal_manifest_chunk_c4gpbtbp_js_bytes",
@@ -46476,127 +46531,6 @@
       "source_location": "L13"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_id_pattern",
-      "label": "pattern",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "pattern",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L11"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_id_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L11"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_additionalproperties",
-      "label": "additionalProperties",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "additionalproperties",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L22"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_properties",
-      "label": "properties",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "properties",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L23"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_required",
-      "label": "required",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "required",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L21"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L20"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_mode_default",
-      "label": "default",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "default",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_mode_enum",
-      "label": "enum",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "enum",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_notes_default",
-      "label": "default",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "default",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L31"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_notes_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L31"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_notes_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L31"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_owner_forge_pattern",
       "label": "pattern",
       "_origin": "ast",
@@ -46617,28 +46551,6 @@
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
       "source_location": "L12"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_path_minlength",
-      "label": "minLength",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "minlength",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L25"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_path_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L25"
     },
     {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties",
@@ -46663,39 +46575,6 @@
       "source_location": "L13"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_id",
-      "label": "id",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "id",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L11"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_mode",
-      "label": "mode",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "mode",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_notes",
-      "label": "notes",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "notes",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L31"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_owner_forge",
       "label": "owner_forge",
       "_origin": "ast",
@@ -46705,28 +46584,6 @@
       "norm_label": "owner_forge",
       "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
       "source_location": "L12"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_path",
-      "label": "path",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L25"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_scenarios",
-      "label": "scenarios",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "scenarios",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L16"
     },
     {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_schema",
@@ -46740,17 +46597,6 @@
       "source_location": "L10"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_sha256",
-      "label": "sha256",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "sha256",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L26"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_source",
       "label": "source",
       "_origin": "ast",
@@ -46762,39 +46608,6 @@
       "source_location": "L14"
     },
     {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_scenarios_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L19"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_scenarios_minitems",
-      "label": "minItems",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "minitems",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L18"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_scenarios_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L17"
-    },
-    {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_schema_const",
       "label": "const",
       "_origin": "ast",
@@ -46804,28 +46617,6 @@
       "norm_label": "const",
       "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
       "source_location": "L10"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_sha256_pattern",
-      "label": "pattern",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "pattern",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L26"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_sha256_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L26"
     },
     {
       "id": "docs_portable_installation_schemas_benchmarksuite_schema_source_minlength",
@@ -46848,61 +46639,6 @@
       "norm_label": "type",
       "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
       "source_location": "L14"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_a",
-      "label": "A",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "a",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_b",
-      "label": "B",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "b",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_c",
-      "label": "C",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "c",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_id",
-      "label": "id",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "id",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L7"
-    },
-    {
-      "id": "ref_path",
-      "label": "path",
-      "_origin": "ast",
-      "community": 245,
-      "community_name": "properties",
-      "file_type": "concept",
-      "norm_label": "path",
-      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
-      "source_location": "L21"
     },
     {
       "id": "docs_portable_installation_schemas_benchmarkresult_schema_additionalproperties_additionalproperties",
@@ -49232,6 +48968,116 @@
       "source_location": "L44"
     },
     {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_id_pattern",
+      "label": "pattern",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "pattern",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_id_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_properties",
+      "label": "properties",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "properties",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_path_minlength",
+      "label": "minLength",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "minlength",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_path_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_id",
+      "label": "id",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "id",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_path",
+      "label": "path",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_sha256",
+      "label": "sha256",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "sha256",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_sha256_pattern",
+      "label": "pattern",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "pattern",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_sha256_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 291,
+      "community_name": "properties",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L26"
+    },
+    {
       "id": "docs_programs_ecosystem_2026_supply_chain_sbom_forge_cli_deps_dependencies_json_stable_stringify_without_jsonify",
       "label": "json-stable-stringify-without-jsonify",
       "_origin": "ast",
@@ -50229,6 +50075,94 @@
       "source_location": "L1"
     },
     {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_additionalproperties",
+      "label": "additionalProperties",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "additionalproperties",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_required",
+      "label": "required",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "required",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_scenarios",
+      "label": "scenarios",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "scenarios",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_scenarios_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_scenarios_minitems",
+      "label": "minItems",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "minitems",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_scenarios_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_id",
+      "label": "id",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "concept",
+      "norm_label": "id",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "ref_path",
+      "label": "path",
+      "_origin": "ast",
+      "community": 308,
+      "community_name": "items",
+      "file_type": "concept",
+      "norm_label": "path",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L21"
+    },
+    {
       "id": "factory_specs_active_cyc101_02_certification_gates",
       "label": "cyc101-02-certification-gates.md",
       "_origin": "ast",
@@ -50492,6 +50426,72 @@
       "norm_label": "respeitar",
       "source_file": "factory/specs/active/cyc101-08-release-candidates.md",
       "source_location": "L35"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_mode_default",
+      "label": "default",
+      "_origin": "ast",
+      "community": 312,
+      "community_name": "enum",
+      "file_type": "code",
+      "norm_label": "default",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_mode_enum",
+      "label": "enum",
+      "_origin": "ast",
+      "community": 312,
+      "community_name": "enum",
+      "file_type": "code",
+      "norm_label": "enum",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_mode",
+      "label": "mode",
+      "_origin": "ast",
+      "community": 312,
+      "community_name": "enum",
+      "file_type": "code",
+      "norm_label": "mode",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_a",
+      "label": "A",
+      "_origin": "ast",
+      "community": 312,
+      "community_name": "enum",
+      "file_type": "concept",
+      "norm_label": "a",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_b",
+      "label": "B",
+      "_origin": "ast",
+      "community": 312,
+      "community_name": "enum",
+      "file_type": "concept",
+      "norm_label": "b",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_c",
+      "label": "C",
+      "_origin": "ast",
+      "community": 312,
+      "community_name": "enum",
+      "file_type": "concept",
+      "norm_label": "c",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L15"
     },
     {
       "id": "docs_onboarding_readme_golden_paths",
@@ -51517,6 +51517,72 @@
       "source_location": "L24"
     },
     {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_required",
+      "label": "required",
+      "_origin": "ast",
+      "community": 336,
+      "community_name": "required",
+      "file_type": "code",
+      "norm_label": "required",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_created_at",
+      "label": "created_at",
+      "_origin": "ast",
+      "community": 336,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "created_at",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_json_ref_schema",
+      "label": "schema",
+      "_origin": "ast",
+      "community": 336,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "schema",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "ref_owner_forge",
+      "label": "owner_forge",
+      "_origin": "ast",
+      "community": 336,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "owner_forge",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "ref_scenarios",
+      "label": "scenarios",
+      "_origin": "ast",
+      "community": 336,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "scenarios",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "ref_source",
+      "label": "source",
+      "_origin": "ast",
+      "community": 336,
+      "community_name": "required",
+      "file_type": "concept",
+      "norm_label": "source",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L7"
+    },
+    {
       "id": "factory_specs_active_cyc101_01_fresh_audit_baseline",
       "label": "cyc101-01-fresh-audit-baseline.md",
       "_origin": "ast",
@@ -51589,6 +51655,61 @@
       "norm_label": "fresh audit das nove mains + baseline verificavel",
       "source_file": "factory/specs/active/cyc101-01-fresh-audit-baseline.md",
       "source_location": "L18"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_items_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 339,
+      "community_name": "notes",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_notes_default",
+      "label": "default",
+      "_origin": "ast",
+      "community": 339,
+      "community_name": "notes",
+      "file_type": "code",
+      "norm_label": "default",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_notes_items",
+      "label": "items",
+      "_origin": "ast",
+      "community": 339,
+      "community_name": "notes",
+      "file_type": "code",
+      "norm_label": "items",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_notes_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 339,
+      "community_name": "notes",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "docs_portable_installation_schemas_benchmarksuite_schema_properties_notes",
+      "label": "notes",
+      "_origin": "ast",
+      "community": 339,
+      "community_name": "notes",
+      "file_type": "code",
+      "norm_label": "notes",
+      "source_file": "docs/portable-installation/schemas/BenchmarkSuite.schema.json",
+      "source_location": "L31"
     },
     {
       "id": "tests_test_installkit_rationale_566",
@@ -53361,7 +53482,7 @@
       "source_location": "L1"
     },
     {
-      "id": "e2e_test_browser_real_adapter_rationale_104",
+      "id": "e2e_test_browser_real_adapter_rationale_103",
       "label": "Federation view shows the real specialists collect \u2014 not fabricated rows.",
       "_origin": "ast",
       "community": 42,
@@ -53369,10 +53490,10 @@
       "file_type": "rationale",
       "norm_label": "federation view shows the real specialists collect \u2014 not fabricated rows.",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L104"
+      "source_location": "L103"
     },
     {
-      "id": "e2e_test_browser_real_adapter_rationale_116",
+      "id": "e2e_test_browser_real_adapter_rationale_115",
       "label": "\u00a74.6 \u2014 /lab serves real benchmark receipts or honest empty state.",
       "_origin": "ast",
       "community": 42,
@@ -53380,10 +53501,10 @@
       "file_type": "rationale",
       "norm_label": "\u00a74.6 \u2014 /lab serves real benchmark receipts or honest empty state.",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L116"
+      "source_location": "L115"
     },
     {
-      "id": "e2e_test_browser_real_adapter_rationale_136",
+      "id": "e2e_test_browser_real_adapter_rationale_135",
       "label": "\u00a74.4 \u2014 install plan renders; apply is NOT exercised here (mutating).",
       "_origin": "ast",
       "community": 42,
@@ -53391,7 +53512,7 @@
       "file_type": "rationale",
       "norm_label": "\u00a74.4 \u2014 install plan renders; apply is not exercised here (mutating).",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L136"
+      "source_location": "L135"
     },
     {
       "id": "e2e_test_browser_real_adapter_rationale_84",
@@ -59495,105 +59616,6 @@
       "source_location": "L13"
     },
     {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_items_pattern",
-      "label": "pattern",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "pattern",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L18"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_items_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L18"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_notes_default",
-      "label": "default",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "default",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L32"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_notes_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L32"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_notes_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L32"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_items",
-      "label": "items",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "items",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L18"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_minitems",
-      "label": "minItems",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "minitems",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L16"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L15"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_participants_uniqueitems",
-      "label": "uniqueItems",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "uniqueitems",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L17"
-    },
-    {
       "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties",
       "label": "properties",
       "_origin": "ast",
@@ -59625,28 +59647,6 @@
       "norm_label": "intent",
       "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
       "source_location": "L13"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_notes",
-      "label": "notes",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "notes",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L32"
-    },
-    {
-      "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_participants",
-      "label": "participants",
-      "_origin": "ast",
-      "community": 90,
-      "community_name": "properties",
-      "file_type": "code",
-      "norm_label": "participants",
-      "source_file": "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
-      "source_location": "L14"
     },
     {
       "id": "docs_portable_installation_schemas_multiforgescenario_schema_properties_schema",
@@ -61622,7 +61622,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L130",
+      "source_location": "L129",
       "weight": 1.0
     },
     {
@@ -61646,7 +61646,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L137",
+      "source_location": "L136",
       "weight": 1.0
     },
     {
@@ -61658,7 +61658,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L143",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -61670,7 +61670,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L117",
+      "source_location": "L116",
       "weight": 1.0
     },
     {
@@ -61682,7 +61682,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L126",
+      "source_location": "L125",
       "weight": 1.0
     },
     {
@@ -61694,7 +61694,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L99",
+      "source_location": "L98",
       "weight": 1.0
     },
     {
@@ -61706,7 +61706,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L105",
+      "source_location": "L104",
       "weight": 1.0
     },
     {
@@ -61718,7 +61718,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L112",
+      "source_location": "L111",
       "weight": 1.0
     },
     {
@@ -167372,7 +167372,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L103",
+      "source_location": "L102",
       "weight": 1.0
     },
     {
@@ -167383,7 +167383,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L115",
+      "source_location": "L114",
       "weight": 1.0
     },
     {
@@ -167394,7 +167394,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L129",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -167405,7 +167405,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L135",
+      "source_location": "L134",
       "weight": 1.0
     },
     {
@@ -167416,7 +167416,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L146",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -167427,7 +167427,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L156",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -201472,36 +201472,36 @@
       "weight": 1.0
     },
     {
-      "source": "e2e_test_browser_real_adapter_rationale_104",
+      "source": "e2e_test_browser_real_adapter_rationale_103",
       "target": "e2e_test_browser_real_adapter_test_specialists_federation_real",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "weight": 1.0
     },
     {
-      "source": "e2e_test_browser_real_adapter_rationale_116",
+      "source": "e2e_test_browser_real_adapter_rationale_115",
       "target": "e2e_test_browser_real_adapter_test_lab_real_receipts",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L116",
+      "source_location": "L115",
       "weight": 1.0
     },
     {
-      "source": "e2e_test_browser_real_adapter_rationale_136",
+      "source": "e2e_test_browser_real_adapter_rationale_135",
       "target": "e2e_test_browser_real_adapter_test_install_plan_preview_only",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "e2e/test_browser_real_adapter.py",
-      "source_location": "L136",
+      "source_location": "L135",
       "weight": 1.0
     },
     {
@@ -215915,5 +215915,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ba701d504b22b0bfe5a7e3fbec895b8dc3190b00"
+  "built_at_commit": "d1c7078590963a9051e03452255336e2fedcbbbc"
 }
