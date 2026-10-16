@@ -44,7 +44,7 @@
     },
     {
       "component": "forge-doctor-data",
-      "version": "1.0.0rc1",
+      "version": "1.0.0",
       "scheme": "pep440",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-data"
