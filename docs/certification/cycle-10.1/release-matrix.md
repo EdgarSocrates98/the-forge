@@ -24,7 +24,7 @@ All 9 `main` workflows green at baseline SHAs (cyc101-01/02 fresh evidence); for
 
 ## Findings
 
-- **F-RC-1 (MEDIUM)** — the-forge `uv build` (sdist→wheel path) fails: wheel `force-include` refs `.agents/skills` + `portal/assets`, both intentionally sdist-excluded (ADR-0020/0058). Consequence: `pip install` from the sdist will fail at wheel-build time; wheel install is fine. **Recommended fix before public RC**: either include the assets in the sdist, or mark sdist as not-installable and distribute wheel-only. Not fixed here (packaging policy decision).
+- **F-RC-1 (RESOLVED as design)** — the-forge sdist cannot produce the wheel (`force-include` of sdist-excluded assets). This is the deliberate ADR-0020/0058 contract: host/portal assets ship **wheel-only**; the sdist is a source archive. CI gates now build `--sdist` and `--wheel` separately (`release-gates.yml` aligned with `ci.yml` — was the one job still using the broken sdist→wheel roundtrip). Install path = wheel; sdist is not installable by design.
 - **F-RC-2** — spark-forge-aws console script is `sparkforge-aws` (not `sparkforge` — that's reserved); verified working.
 - SBOMs are `pip freeze` / `package-lock.json` snapshots — real installed dependency lists, not CycloneDX-format SBOMs. Formal SBOM generation (syft/cyclonedx) = follow-up (SEC-08).
 - Git tags / GitHub releases / PyPI / npm: **none created** — per spec, prepare-only.

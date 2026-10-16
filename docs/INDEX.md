@@ -556,7 +556,8 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### graphify-out/
 
 - [Graph Report - the-forge  (2026-10-15)](../graphify-out/2026-10-15/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - the-forge  (2026-10-15)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - the-forge  (2026-10-15)](../graphify-out/2026-10-16/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - the-forge  (2026-10-16)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
 
 ### homologation/
 

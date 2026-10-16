@@ -432,7 +432,8 @@
 {"path": "factory/templates/review.md", "title": "Review Template", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "factory/templates/spec.md", "title": "Grill Gate", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "graphify-out/2026-10-15/GRAPH_REPORT.md", "title": "Graph Report - the-forge  (2026-10-15)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
-{"path": "graphify-out/GRAPH_REPORT.md", "title": "Graph Report - the-forge  (2026-10-15)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "graphify-out/2026-10-16/GRAPH_REPORT.md", "title": "Graph Report - the-forge  (2026-10-15)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
+{"path": "graphify-out/GRAPH_REPORT.md", "title": "Graph Report - the-forge  (2026-10-16)", "category": "UNKNOWN", "audience": "public", "related_commands": [], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "templates/api-apiforge/README.md", "title": "API + API Forge", "category": "USER_GUIDE", "audience": "public", "related_commands": ["install"], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "templates/custom-specialist/README.md", "title": "Custom specialist capability", "category": "USER_GUIDE", "audience": "public", "related_commands": ["provider"], "review_level": "AUTOMATICALLY_CHECKED"}
 {"path": "templates/mcp-host-config/README.md", "title": "MCP host configuration", "category": "USER_GUIDE", "audience": "public", "related_commands": ["setup"], "review_level": "AUTOMATICALLY_CHECKED"}
