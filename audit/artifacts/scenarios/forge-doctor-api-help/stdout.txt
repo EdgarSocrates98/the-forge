@@ -1,0 +1,35 @@
+                                                                                
+ Usage: forge-doctor-api [OPTIONS] COMMAND [ARGS]...                            
+                                                                                
+ Deterministic, offline-first API architecture intelligence.                    
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --version          Show version and exit.                                    │
+│ --help             Show this message and exit.                               │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ scan          §177 full scan: every deterministic pipeline + optional §178   │
+│               gate.                                                          │
+│ inventory     §159 inventory: services, APIs, operations, protocols, owners. │
+│ lab           §199-§201 Forge Lab: run every scenario + report per-family    │
+│               precision.                                                     │
+│ diff          Semantic contract diff (§66): typed change events + optional   │
+│               PR summary.                                                    │
+│ fingerprint   Print the semantic fingerprint of a contract (§180).           │
+│ graph         Show the service graph built from contract + implementation +  │
+│               client evidence (§161).                                        │
+│ blast-radius  §68 blast radius: changed operation -> clients -> services ->  │
+│               business paths.                                                │
+│ diagnose      §165 cluster findings into symptom/candidate causes/affected   │
+│               services/unknowns.                                             │
+│ explain       §166 render the evidence chain + rule rationale for a finding. │
+│ mcp           §216 serve the Doctor over MCP (requires the `mcp` extra).     │
+│ contract      Inspect, diff and check API contracts.                         │
+│ runtime       Analyze exported runtime evidence.                             │
+│ security      Passive security analysis.                                     │
+│ reliability   Reliability analysis.                                          │
+│ plugins       Plugin manifests, registry and conformance.                    │
+│ snapshot      Temporal snapshots + architectural regressions.                │
+│ knowledge     Knowledge-pack manifests, compat and precedence.               │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

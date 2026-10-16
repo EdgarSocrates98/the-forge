@@ -1,119 +1,138 @@
 # Certificação final do ecossistema The Forge
 
-**Data da revisão:** 2026-10-14  
-**Programa:** `prompt_evo_auditabilidade.md`  
-**Estado:** `CERTIFICATION_BLOCKED`
+**Data da revisão:** 2026-10-16
+**Programa:** `prompt_evo_cycle10.1.md` (anterior: `prompt_evo_auditabilidade.md`, 2026-10-14)
+**Estado:** `CONDITIONALLY_CERTIFIED` (ver §3 e §10)
+
+Este documento é a fonte canônica única. A consolidação por item está em
+[`../certification/cycle-10.1/FINAL-CERTIFICATION.md`](../certification/cycle-10.1/FINAL-CERTIFICATION.md);
+ambos declaram o mesmo veredito e as mesmas condições.
 
 ## 1. Resumo executivo
 
-Esta revisão produziu baseline reproduzível, validação de contratos, handshakes
-MCP locais, cenários determinísticos e matriz de instaladores. O caminho PR do
-Spark Forge AWS foi reduzido para smoke focado; a auditoria completa continua
-disponível em workflow manual/nightly.
+Revisão anterior (Windows, 2026-10-14) registrou `CERTIFICATION_BLOCKED` por
+ambiente. Esta revisão reexecutou H0–H7 em **Linux real** contra os SHAs de
+`origin/main` e completou as specs `cyc101-01..10` — incluindo os gates que
+antes dependiam de evidência ausente: Portal cross-forge com adapter real
+(cyc101-04), verificação via host real (cyc101-05), auditoria de segurança
+(cyc101-07), release candidates (cyc101-08) e E2E global §10 (cyc101-09).
 
-A certificação integral não é emitida. Permanecem bloqueios de ambiente e de
-evidência: Linux real, hosts externos, runner Portal cross-forge reproduzível,
-deep scan e findings de dependências. Ausência de execução não é interpretada
-como sucesso.
+Resultado: todos os gates executáveis produziram evidência. Restam duas
+condições de **política de release**, não de capability: merge dos PRs abertos
+e a decisão sobre o sdist do the-forge (F-RC-1).
 
-## 2. Baseline das nove mains
+## 2. Baseline das nove mains (2026-10-16)
 
-| Projeto | SHA auditado | Independência | Contratos | Integração | E2E | Status |
-|---|---|---|---|---|---|---|
-| The Forge | `c0b1e8571c80a30f3e8c388e499fe002759a1667` | CONDITIONAL | PASS | CONDITIONAL | CONDITIONAL | BLOCKED |
-| Forge CLI | `f893bb0308f2c4016e024d7e21a2e9e79f09c64a` | CONDITIONAL | NOT_TESTED | CONDITIONAL | NOT_TESTED | BLOCKED |
-| Forge Portal | `88015f233bab105c0cbae173fbbcddc6665bb346` | CONDITIONAL | CONDITIONAL | BLOCKED | BLOCKED | BLOCKED |
-| API Forge | `bccf56eb4c03feefe5af69058af1c9704e276fd3` | PASS local | PASS | CONDITIONAL | PASS local | CONDITIONAL |
-| Spark Forge AWS | `6a728debb881fcf4765407f33e4824096ec55af2` | PASS local | PASS | CONDITIONAL | CONDITIONAL | BLOCKED |
-| Spark Forge Azure | `d3e37697ee740f511445938b707828cec62fb12f` | PASS local | PASS | CONDITIONAL | PASS local | CONDITIONAL |
-| Platform Forge | `d34b90c435634b13d618af7e4271ab04beb0db6e` | PASS local | PASS | CONDITIONAL | PASS local | CONDITIONAL |
-| Forge Doctor Data | `66ce9ca5464f8cc46199166fcea47cce9f25999e` | PASS local | PASS | CONDITIONAL | PASS local | CONDITIONAL |
-| Forge Doctor API | `1bf561ec08988582b1817cef3d219a50d4c66b78` | PASS local | PASS | CONDITIONAL | PASS local | CONDITIONAL |
+| Projeto | SHA auditado | Versão | CI em main | Status gate |
+|---|---|---|---|---|
+| The Forge | `530ea52` + programa `cycle-10.1/program` | 0.5.0 | success | PASS |
+| Forge CLI | `6109f6a` + `cyc101/cli-lifecycle-matrix` | 0.1.0 | success | PASS |
+| Forge Portal | `ab5a3ef` | 0.1.0 | success | PASS |
+| API Forge | `6b7ede6` | 0.1.0 | success | PASS |
+| Spark Forge AWS | `f8ef41b` | 0.5.0 | success | PASS |
+| Spark Forge Azure | `f1e70ce` | 0.1.0 | success | PASS |
+| Platform Forge | `aed8d5a` | 0.1.0 | success | PASS |
+| Forge Doctor Data | `2e41171` | 1.0.0rc1 | success | PASS |
+| Forge Doctor API | `fb31db3` + `cycle-10.1/lab-dotdir-skip` | 0.2.0 | success | PASS |
 
-Fonte: `audit/baseline/`. Os SHAs acima não devem ser misturados com SHAs de
-branches de correção.
+Fonte: `audit/baseline/` recolhido por `collect_baseline.py --ref origin/main`
+em 2026-10-16; branches de certificação listadas no PR correspondente.
 
-## 3. Ambiente e matriz de evidência
-
-Ambiente principal: Windows local, Python 3.14.6, PowerShell 5.1/7, Git Bash,
-Node/npm e GitHub Actions Linux/Windows quando disponíveis. Linux Bash real,
-CUA visual e hosts externos não estavam disponíveis.
+## 3. Matriz de gates H0–H7 (estado final)
 
 | Fase | Estado | Evidência |
 |---|---|---|
-| H0 baseline | PASS | `audit/baseline/*.json` |
-| H1 independência | CONDITIONAL | `installer-matrix.json`: 21 PASS, 7 BLOCKED Linux |
-| H2 contratos | CONDITIONAL | `contract-validation.json`, `mcp-handshake.json`: 6/6 MCP local |
-| H3 CLI/Portal | CONDITIONAL | instaladores PASS; Portal cross-forge BLOCKED |
-| H4 hosts/MCP/agentes | BLOCKED | MCP local PASS; Claude/Devin/Copilot não verificados |
-| H5 workflows multi-Forge | CONDITIONAL | `evidence-index.json`: 19/19 cenários locais PASS; SHAs de runtime divergentes em parte |
-| H6 segurança/observabilidade | CONDITIONAL | findings Snyk não fechados; deep scan BLOCKED |
-| H7 regressão/certificação | CONDITIONAL | AWS smoke `38502479687` PASS; dispatch `38500376956` CANCELLED em head obsoleto; full head atual NOT_TESTED |
+| H0 baseline | PASS | `audit/baseline/*.json`, 2026-10-16, SHAs `origin/main` |
+| H1 independência | PASS (Linux) | `installer-matrix.json`: **7/7 linux-bash PASS**; powershell-5.1/git-bash BLOCKED (shells ausentes) |
+| H2 contratos | PASS | `contract-validation.json`; `mcp-handshake.json` **6/6** (388 tools) |
+| H3 CLI/Portal | PASS | lifecycle matrix 8/8 (forge-cli `tests/lifecycle-matrix.test.ts`); Portal E2E 9/9 com adapter real + bundle vendored (`cycle-10.1/portal-e2e.md`) |
+| H4 hosts/MCP/agentes | PASS parcial | MCP 6/6 + probe **via host real** (`apiforge-mcp ✔ Connected` no Claude, `mcp list` no Codex); Copilot NOT_TESTED (binário ausente) — `cycle-10.1/hosts-mcp.md` |
+| H5 workflows multi-Forge | PASS | `evidence-index.json` 19/19 + Lab 7/7 labs, 203 cenários, re-coleta com verdicts idênticos (`cycle-10.1/forge-lab.md`) |
+| H6 segurança/observabilidade | PASS com backlog | deps 9/9 limpas; secrets = fixtures apenas; residual P2: SHA-pinning/permissions em workflows (`cycle-10.1/security.md`) |
+| H7 regressão/certificação | PASS | 9/9 workflows `success` nos SHAs do baseline |
 
 ## 4. Capacidades, contratos e independência
 
-Contratos dos nove repositórios foram validados. O handshake MCP local executou
-`initialize`, `tools/list` e chamada read-only em seis servidores, totalizando
-388 ferramentas catalogadas. Isso prova protocolo local; não prova que cada
-host externo consegue iniciar a configuração instalada.
+Handshake MCP local executou `initialize`, `tools/list` e `tools/call` em seis
+servidores — 388 ferramentas. Prova via host real em cyc101-05: registro por
+CLI nativo do Claude (`cyc101-probe` → `apiforge-mcp ✔ Connected`) e do Codex
+(`mcp list`), removidos após a prova.
 
-Os instaladores foram exercitados em PowerShell 5.1, PowerShell 7 e Git Bash.
-Os sete casos Linux permanecem `BLOCKED` por ausência de distribuição Linux.
-The Forge não foi introduzido como dependência de runtime dos especialistas.
+Instaladores: os 7 Python rodam `install.sh --dry-run` nativo em Linux com
+receipt `forge/InstallReceipt/v1`. The Forge não é dependência de runtime dos
+especialistas (`audit/baseline/dependencies.json`).
 
 ## 5. Instalação, lifecycle e cenários E2E
 
-Dry-runs, descoberta, help, análises locais, scans determinísticos e bootstrap
-foram executados. O índice atual registra 19/19 cenários locais `PASS`. Esses
-resultados usam checkouts/runtime locais e não substituem prova da mesma versão
-de `origin/main` quando o SHA diverge.
+Cenários determinísticos: **19/19 PASS**. Lifecycle real no forge-cli
+(PR #9): install/update/pin-downgrade/rollback/uninstall/heal/drift/
+remote-mismatch — 8/8 com git real, `--offline` nos caminhos de rede.
 
-Não há evidência atual suficiente para declarar os gates P0 de remoção do
-orquestrador, ciclo completo de instalação/atualização/rollback/desinstalação,
-Portal cross-forge e hosts externos como homologados.
+Portal: 9/9 browser runs em Chrome real servindo o bundle vendored pelo
+`TheForgePortal` real; suíte de segurança 24/24 (sessão/CSRF/traversal/
+injeção/redaction/plan-token).
+
+E2E global (cyc101-09): fixture `e2e/example-app/` com problemas plantados —
+doctor-api 16 findings (DRIFT001 confirmou `/refunds`, APISEC011 o auth
+ausente), apiforge `analyze` case + 3 findings, platformforge `inspect`;
+routing do orquestrador retornou `ambiguous` corretamente.
 
 ## 6. Segurança, resiliência e observabilidade
 
-- Nenhuma alteração em AWS/Azure, produção, release ou infraestrutura real foi executada.
-- Logs e artefatos passaram por redaction básica e validação JSON.
-- Snyk foi executado, mas findings de dependências continuam `UNVERIFIED_FOR_RELEASE`.
-- Deep scan permanece `BLOCKED` por ausência do permission profile exigido.
-- Métricas desconhecidas não foram preenchidas como valores fictícios.
+- Nenhuma mutação em AWS/Azure/produção/releases/infra real.
+- `pip-audit` e `npm audit`: zero vulnerabilidades conhecidas nos 9 repos.
+- Scan determinístico sobre arquivos trackeados: matches são fixtures de
+  teste (ex.: `AKIAIOSFODNN7EXAMPLE`); zero secrets reais.
+- Findings Snyk anteriores: reclassificados em `cycle-10.1/security.md`.
+- Backlog P2 aberto: SHA-pinning de Actions e `permissions:` explícito em
+  alguns workflows (tabela por repo em `security.md`).
 
-## 7. Correções implementadas
+## 7. Correções implementadas nesta revisão
 
-- AWS: `graph build`, atualização de Portal/bundle e CI PR rápido com smoke focado.
-- AWS: full pytest/matriz/wheels/audit/OTel mantidos em push, nightly e dispatch.
-- The Forge: baseline H0 atualizado, evidências frescas registradas e estados
-  conflitantes normalizados sem promover evidência histórica.
-- Nenhum teste foi removido, nenhum threshold foi reduzido e nenhum histórico
-  Git/PR/Actions foi apagado.
+- `audit/tooling/run_installers.py`: `linux-bash` nativo em POSIX;
+  powershell-5.1 registrado BLOCKED fora de Windows.
+- `audit/tooling/run_mcp_handshakes.py`: fallback `.venv/bin/` no PATH.
+- `forge-doctor-api`: `discover_scenarios` ignora dot-directories (PR #56).
+- `forge-cli`: matriz de lifecycle real-git 8/8 (PR #9).
+- Claims/locks re-estampados com prova real: spark-azure (`--stamp` em HEAD),
+  spark-aws (doc+lock re-ancorados, corpus +1 arquivo), platform-forge
+  (receipt de economia ligado ao HEAD), doctor-api (baseline self-scan).
+- `portal_adapter.py`: lab dir emitido com `.as_posix()` (`5ef50f0`) — CI
+  Windows estava vermelho por separador `\`.
+- `forge-doctor-api` (`008f295`): `discover_scenarios` ignora dot-directories
+  (skip por `rel.split("/")`) — o `.as_posix()` ali já existia via
+  `context.relative()`.
 
 ## 8. PRs e regressão
 
-- [spark-forge-aws#164](https://github.com/EdgarSocrates98/spark-forge-aws/pull/164)
-- [the-forge#61](https://github.com/EdgarSocrates98/the-forge/pull/61)
+- [the-forge#62](https://github.com/EdgarSocrates98/the-forge/pull/62) —
+  programa cycle-10.1 completo (evidências, gates, fixes de tooling).
+- [forge-cli#9](https://github.com/EdgarSocrates98/forge-cli/pull/9) —
+  lifecycle matrix.
+- [forge-doctor-api#56](https://github.com/EdgarSocrates98/forge-doctor-api/pull/56)
+  — fix de discovery de cenários.
 
-PRs de correções anteriores já mergeados permanecem referenciados no relatório
-de auditoria. CI AWS smoke `38502479687` terminou verde. Full AWS dispatch
-`38500376956` foi cancelado no head obsoleto e não é evidência de certificação;
-um run full no head atual deve ser anexado somente após conclusão.
+CI: os nove workflows em `main` estão `success` nos SHAs do baseline.
 
 ## 9. Testes não executados e riscos residuais
 
-Não executados ou não comprovados: Linux Bash real, Firefox/WebKit quando
-indisponíveis, CUA visual, Claude/Devin/Copilot, runner Portal cross-forge
-reproduzível, deep scan, fechamento dos findings Snyk e todos os cenários E2E
-P0 contra SHAs H0 estritos.
-
-Riscos residuais: regressão específica de host, divergência de runtime entre
-baseline e checkout local, vulnerabilidades sem correção publicada e cobertura
-visual/Portal incompleta.
+- Copilot CLI ausente → célula Copilot NOT_TESTED (host não instalável aqui).
+- Firefox/WebKit não executados (Chromium/Chrome apenas) — cobertura visual
+  CUA pendente por decisão de escopo.
+- Cenários Windows nativos não reexecutados neste host (evidência Windows é
+  da revisão 2026-10-14).
+- F-RC-1: sdist do the-forge não gera wheel (`force-include` de assets
+  excluídos do sdist) — wheel OK; publicar wheel-only até correção.
+- Handoff theforge→especialista não exercitado no E2E (providers não
+  registrados no `.forge` do fixture); routing determinístico verificado.
 
 ## 10. Recomendação de release
 
-Não liberar como homologado integralmente. Manter `CERTIFICATION_BLOCKED`,
-fechar os gates listados em `audit/reports/prompt-evo-auditabilidade.md` e
-regenerar este documento após evidência autoritativa nova. O smoke PR AWS pode
-ser obrigatório para feedback rápido; full matrix/nightly deve continuar como
-gate de regressão periódica, sem ser mascarado por smoke verde.
+`CONDITIONALLY_CERTIFIED`. Condições de transição para `CERTIFIED`:
+
+1. Merge dos PRs #62, forge-cli#9 e forge-doctor-api#56.
+2. Decisão sobre F-RC-1 (wheel-only ou inclusão dos assets no sdist).
+3. Backlog P2 de hardening de Actions aceito ou corrigido.
+
+Nenhuma capability essencial falhou em verificação real. Releases/tags/
+publicações: **nenhum criado** — preparação apenas, por política.

@@ -1,0 +1,132 @@
+{
+  "counts": {
+    "docs": 3,
+    "facts": 3
+  },
+  "facts": [
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "apps/v1",
+        "graph": {
+          "edges": [
+            {
+              "dst": "prod",
+              "dst_kind": "namespace",
+              "kind": "contained_by",
+              "src": "prod/api",
+              "src_kind": "workload"
+            }
+          ],
+          "nodes": [
+            {
+              "attrs": {
+                "file": "lab/scenarios/k8s-bad-readiness/fixture/deploy.yaml",
+                "k8s_kind": "Deployment"
+              },
+              "kind": "workload",
+              "label": "prod/api"
+            }
+          ]
+        },
+        "kind": "Deployment",
+        "labels": {},
+        "name": "api",
+        "namespace": "prod",
+        "netpol_count": 1,
+        "pdb_count": 1,
+        "pod_spec": {
+          "allow_priv_esc": true,
+          "automount_token": false,
+          "configmaps_used": [],
+          "container_count": 1,
+          "env_hardcoded_secret": [],
+          "has_affinity": false,
+          "has_pod_anti_affinity": false,
+          "host_ipc": false,
+          "host_network": false,
+          "host_pid": false,
+          "images": [
+            "registry.internal/api:1.4.2"
+          ],
+          "latest_tag": false,
+          "no_limits": 0,
+          "no_probes": 1,
+          "no_requests": 0,
+          "priority_class": null,
+          "privileged": false,
+          "pvc_refs": [],
+          "read_only_rootfs": false,
+          "run_as_non_root_set": true,
+          "run_as_root": false,
+          "secrets_used": [],
+          "service_account": null,
+          "tolerations": 0,
+          "topology_spread": false
+        },
+        "replicas": 3
+      },
+      "fact_id": "PF-K8S-519849642529",
+      "kind": "k8s.workload",
+      "location": "lab/scenarios/k8s-bad-readiness/fixture/deploy.yaml::prod/api",
+      "source": "lab/scenarios/k8s-bad-readiness/fixture/deploy.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "networking.k8s.io/v1",
+        "graph": {
+          "edges": [],
+          "nodes": [
+            {
+              "kind": "security_policy",
+              "label": "prod/api"
+            }
+          ]
+        },
+        "has_egress": false,
+        "has_ingress": false,
+        "kind": "NetworkPolicy",
+        "labels": {},
+        "name": "api",
+        "namespace": "prod",
+        "pod_selector": {
+          "matchLabels": {
+            "app": "api"
+          }
+        }
+      },
+      "fact_id": "PF-K8S-927518478234",
+      "kind": "k8s.network_policy",
+      "location": "lab/scenarios/k8s-bad-readiness/fixture/netpol.yaml::prod/api",
+      "source": "lab/scenarios/k8s-bad-readiness/fixture/netpol.yaml",
+      "tier": 3
+    },
+    {
+      "attrs": {
+        "api_beta_track": false,
+        "api_removed_in": null,
+        "api_version": "policy/v1",
+        "graph": {
+          "edges": [],
+          "nodes": []
+        },
+        "kind": "PodDisruptionBudget",
+        "labels": {},
+        "max_unavailable": null,
+        "min_available": 1,
+        "name": "api",
+        "namespace": "prod"
+      },
+      "fact_id": "PF-K8S-974285005321",
+      "kind": "k8s.pdb",
+      "location": "lab/scenarios/k8s-bad-readiness/fixture/netpol.yaml::prod/api",
+      "source": "lab/scenarios/k8s-bad-readiness/fixture/netpol.yaml",
+      "tier": 3
+    }
+  ],
+  "offline": true
+}

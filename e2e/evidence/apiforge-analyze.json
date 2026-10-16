@@ -1,0 +1,19 @@
+{
+  "artifacts": {
+    "api_ir": "api-ir.json",
+    "facts": "facts.json",
+    "findings": "findings.json"
+  },
+  "cache": {
+    "enabled": true,
+    "hit": false,
+    "key": "0c203b3a87b72f15"
+  },
+  "case_id": "case:8279fa6ebdfe6669",
+  "changes": 0,
+  "diagnostics": 0,
+  "findings": 3,
+  "operations": 5,
+  "out_dir": ".apiforge",
+  "upstream": 0
+}

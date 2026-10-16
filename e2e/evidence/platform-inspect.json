@@ -1,0 +1,27 @@
+{
+  "artifacts": {
+    "argocd": [
+      "app/openapi.yaml"
+    ],
+    "crossplane": [
+      "app/openapi.yaml"
+    ],
+    "kubernetes": [
+      "app/openapi.yaml",
+      "ci/pipeline.yml"
+    ],
+    "terraform": [
+      "infra/main.tf"
+    ]
+  },
+  "counts": {
+    "argocd": 1,
+    "crossplane": 1,
+    "kubernetes": 2,
+    "terraform": 1
+  },
+  "members": [
+    "/home/edgar/Documentos/projetos/forjas/the-forge/e2e/example-app"
+  ],
+  "root": "/home/edgar/Documentos/projetos/forjas/the-forge/e2e/example-app"
+}

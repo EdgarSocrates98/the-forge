@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `the-forge` |
-| branch | `main` |
-| commit | `8b0bf2b` |
-| docs inventoried | 582 (excl. GENERATED mirrors: 430; vendored upstream: 0) |
+| branch | `cycle-10.1/program` |
+| commit | `27e45e7` |
+| docs inventoried | 605 (excl. GENERATED mirrors: 453; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 582
+- `AUTOMATICALLY_CHECKED`: 605
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -19,12 +19,12 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
+- `UNKNOWN`: 164
 - `GENERATED`: 152
-- `UNKNOWN`: 143
 - `USER_GUIDE`: 66
 - `ADR`: 61
+- `RELEASE_REPORT`: 36
 - `SDD_ARTIFACT`: 35
-- `RELEASE_REPORT`: 34
 - `GETTING_STARTED`: 24
 - `SKILL`: 16
 - `HISTORICAL`: 12

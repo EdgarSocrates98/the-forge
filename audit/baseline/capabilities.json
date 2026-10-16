@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-14T01:25:57.638345+00:00",
+  "generated_at": "2026-10-16T00:55:50.338928+00:00",
   "ref": "origin/main",
   "data": {
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "c0b1e8571c80a30f3e8c388e499fe002759a1667",
+      "sha": "530ea52121a485b41067e8650d72a8d27c061de6",
       "entrypoints": {
         "theforge": "theforge.cli.main:main",
         "forge": "theforge.cli.main:main"
@@ -17,13 +17,31 @@
           "distribution": "theforge",
           "cli": "theforge",
           "python": ">=3.11",
-          "extras": []
+          "extras": [],
+          "lab": {
+            "command": [
+              "{python}",
+              "scripts/lab/theforge_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "theforge-lab",
+            "timeout_s": 120
+          }
         },
         "forge_agentic_json": null,
         "mcp_json": null
       },
       "tests": {
-        "count": 365,
+        "count": 369,
         "paths": [
           "tests/conftest.py",
           "tests/cross_workspace.py",
@@ -245,6 +263,7 @@
           "tests/test_agentic_parity.py",
           "tests/test_agentic_security.py",
           "tests/test_bench.py",
+          "tests/test_benchmark_contract.py",
           "tests/test_broker.py",
           "tests/test_canonical.py",
           "tests/test_capability_catalog_doc.py",
@@ -287,6 +306,7 @@
           "tests/test_echo_provider.py",
           "tests/test_economy.py",
           "tests/test_economy_bench.py",
+          "tests/test_ecosystem_compat.py",
           "tests/test_ecosystem_contracts.py",
           "tests/test_env_isolation.py",
           "tests/test_error_taxonomy.py",
@@ -322,9 +342,7 @@
           "tests/test_install_orchestration.py",
           "tests/test_install_plan.py",
           "tests/test_installation.py",
-          "tests/test_installkit.py",
-          "tests/test_installkit_bootstrap.py",
-          "tests/test_installkit_schemas.py"
+          "tests/test_installkit.py"
         ]
       },
       "provenance": {
@@ -332,43 +350,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:51.867535+00:00"
+          "collected_at": "2026-10-16T00:55:50.058591+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:51.867553+00:00"
+          "collected_at": "2026-10-16T00:55:50.058616+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:51.867556+00:00"
+          "collected_at": "2026-10-16T00:55:50.058621+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:51.867558+00:00"
+          "collected_at": "2026-10-16T00:55:50.058625+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:51.867560+00:00"
+          "collected_at": "2026-10-16T00:55:50.058628+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:51.867562+00:00"
+          "collected_at": "2026-10-16T00:55:50.058632+00:00"
         }
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "6a728debb881fcf4765407f33e4824096ec55af2",
+      "sha": "f8ef41b6112dcac78edc32d1c0e1ca1d3b3b79f7",
       "entrypoints": {
         "sparkforge-aws": "sparkforge_aws.adapters.cli:main",
         "sparkforge-aws-tools": "sparkforge_aws.tools.cli:main"
@@ -388,7 +406,25 @@
           ],
           "extras": [
             "mcp"
-          ]
+          ],
+          "lab": {
+            "command": [
+              "{checkout}/.venv/bin/python",
+              "scripts/lab/sparkforge_aws_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "spark-forge-aws-lab",
+            "timeout_s": 120
+          }
         },
         "forge_agentic_json": {
           "schema": "forge/SpecialistAgenticManifest/v1",
@@ -784,43 +820,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:52.736617+00:00"
+          "collected_at": "2026-10-16T00:55:50.115105+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:52.736628+00:00"
+          "collected_at": "2026-10-16T00:55:50.115124+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:52.736631+00:00"
+          "collected_at": "2026-10-16T00:55:50.115127+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:52.736633+00:00"
+          "collected_at": "2026-10-16T00:55:50.115129+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:52.736634+00:00"
+          "collected_at": "2026-10-16T00:55:50.115131+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:52.736637+00:00"
+          "collected_at": "2026-10-16T00:55:50.115133+00:00"
         }
       }
     },
     "spark-forge-azure": {
       "repository": "EdgarSocrates98/spark-forge-azure",
-      "sha": "d3e37697ee740f511445938b707828cec62fb12f",
+      "sha": "f1e70ceedd4609e834e01e19313bbac3680e2fdb",
       "entrypoints": {
         "sparkforge-azure": "sparkforge_azure.cli.main:main"
       },
@@ -839,7 +875,25 @@
           ],
           "extras": [
             "mcp"
-          ]
+          ],
+          "lab": {
+            "command": [
+              "{checkout}/.venv/bin/python",
+              "scripts/lab/sparkforge_azure_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "spark-forge-azure-lab",
+            "timeout_s": 120
+          }
         },
         "forge_agentic_json": {
           "schema": "forge/SpecialistAgenticManifest/v1",
@@ -1200,43 +1254,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:53.569675+00:00"
+          "collected_at": "2026-10-16T00:55:50.149970+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:53.569687+00:00"
+          "collected_at": "2026-10-16T00:55:50.149992+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:53.569689+00:00"
+          "collected_at": "2026-10-16T00:55:50.149997+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:53.569691+00:00"
+          "collected_at": "2026-10-16T00:55:50.150002+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:53.569693+00:00"
+          "collected_at": "2026-10-16T00:55:50.150007+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:53.569695+00:00"
+          "collected_at": "2026-10-16T00:55:50.150011+00:00"
         }
       }
     },
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "bccf56eb4c03feefe5af69058af1c9704e276fd3",
+      "sha": "6b7ede67ecb8871fd585730850f00ef7ff1bb1c4",
       "entrypoints": {
         "apiforge": "apiforge.cli:app",
         "apiforge-mcp": "apiforge.mcp.main:main",
@@ -1255,7 +1309,25 @@
           ],
           "extras": [
             "mcp"
-          ]
+          ],
+          "lab": {
+            "command": [
+              "{checkout}/.venv/bin/python",
+              "scripts/lab/apiforge_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "api-forge-lab",
+            "timeout_s": 120
+          }
         },
         "forge_agentic_json": {
           "schema": "forge/SpecialistAgenticManifest/v1",
@@ -1614,43 +1686,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:54.340498+00:00"
+          "collected_at": "2026-10-16T00:55:50.191641+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:54.340511+00:00"
+          "collected_at": "2026-10-16T00:55:50.191653+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:54.340513+00:00"
+          "collected_at": "2026-10-16T00:55:50.191655+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:54.340515+00:00"
+          "collected_at": "2026-10-16T00:55:50.191657+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:54.340517+00:00"
+          "collected_at": "2026-10-16T00:55:50.191659+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:54.340518+00:00"
+          "collected_at": "2026-10-16T00:55:50.191660+00:00"
         }
       }
     },
     "platform-forge": {
       "repository": "EdgarSocrates98/platform-forge",
-      "sha": "d34b90c435634b13d618af7e4271ab04beb0db6e",
+      "sha": "aed8d5a1798b7fde9e2b860943c4cdcd737b3c49",
       "entrypoints": {
         "platformforge": "platformforge.cli.main:main",
         "platformforge-mcp": "platformforge.mcp.server:main"
@@ -1668,7 +1740,25 @@
           ],
           "extras": [
             "mcp"
-          ]
+          ],
+          "lab": {
+            "command": [
+              "{checkout}/.venv/bin/python",
+              "scripts/lab/platformforge_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "platform-forge-lab",
+            "timeout_s": 300
+          }
         },
         "forge_agentic_json": {
           "schema": "forge/SpecialistAgenticManifest/v1",
@@ -1999,43 +2089,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:54.912292+00:00"
+          "collected_at": "2026-10-16T00:55:50.223370+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:54.912304+00:00"
+          "collected_at": "2026-10-16T00:55:50.223381+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:54.912307+00:00"
+          "collected_at": "2026-10-16T00:55:50.223383+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:54.912310+00:00"
+          "collected_at": "2026-10-16T00:55:50.223385+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:54.912311+00:00"
+          "collected_at": "2026-10-16T00:55:50.223386+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:54.912313+00:00"
+          "collected_at": "2026-10-16T00:55:50.223388+00:00"
         }
       }
     },
     "forge-doctor-api": {
       "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "1bf561ec08988582b1817cef3d219a50d4c66b78",
+      "sha": "fb31db3f91deedc4a35a82560ac3437d7350dcf8",
       "entrypoints": {
         "forge-doctor-api": "forge_doctor_api.cli:main"
       },
@@ -2057,7 +2147,25 @@
           "install_command": [
             "{python}",
             "{checkout}/scripts/forge_install.py"
-          ]
+          ],
+          "lab": {
+            "command": [
+              "{python}",
+              "scripts/lab/forge_doctor_api_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "forge-doctor-api-lab",
+            "timeout_s": 300
+          }
         },
         "forge_agentic_json": {
           "schema": "forge/SpecialistAgenticManifest/v1",
@@ -2357,43 +2465,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:55.598390+00:00"
+          "collected_at": "2026-10-16T00:55:50.253334+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:55.598402+00:00"
+          "collected_at": "2026-10-16T00:55:50.253356+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:55.598404+00:00"
+          "collected_at": "2026-10-16T00:55:50.253362+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:55.598406+00:00"
+          "collected_at": "2026-10-16T00:55:50.253366+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:55.598408+00:00"
+          "collected_at": "2026-10-16T00:55:50.253371+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:55.598410+00:00"
+          "collected_at": "2026-10-16T00:55:50.253375+00:00"
         }
       }
     },
     "forge-doctor-data": {
       "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "66ce9ca5464f8cc46199166fcea47cce9f25999e",
+      "sha": "2e411717a6bfeecc6543bea319ed8993c2558a68",
       "entrypoints": {
         "forge-doctor-data": "forge_doctor_data.cli:app"
       },
@@ -2409,7 +2517,25 @@
             "forge-doctor-data",
             "mcp"
           ],
-          "extras": []
+          "extras": [],
+          "lab": {
+            "command": [
+              "{python}",
+              "scripts/lab/forge_doctor_data_lab.py",
+              "--checkout",
+              "{checkout}",
+              "--mode",
+              "{mode}",
+              "--result-out",
+              "{receipt}"
+            ],
+            "receipt": ".forge/lab-result.json",
+            "modes": [
+              "A"
+            ],
+            "suite": "forge-doctor-data-lab",
+            "timeout_s": 300
+          }
         },
         "forge_agentic_json": {
           "schema": "forge/SpecialistAgenticManifest/v1",
@@ -2697,43 +2823,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:56.259104+00:00"
+          "collected_at": "2026-10-16T00:55:50.286466+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:56.259117+00:00"
+          "collected_at": "2026-10-16T00:55:50.286487+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:56.259119+00:00"
+          "collected_at": "2026-10-16T00:55:50.286493+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:56.259121+00:00"
+          "collected_at": "2026-10-16T00:55:50.286498+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:56.259123+00:00"
+          "collected_at": "2026-10-16T00:55:50.286502+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:56.259124+00:00"
+          "collected_at": "2026-10-16T00:55:50.286507+00:00"
         }
       }
     },
     "forge-cli": {
       "repository": "EdgarSocrates98/forge-cli",
-      "sha": "f893bb0308f2c4016e024d7e21a2e9e79f09c64a",
+      "sha": "6109f6ae445a06423744fbbb36fbbb52a3332f80",
       "entrypoints": {
         "dev": "tsx src/index.ts",
         "build": "tsup",
@@ -2753,27 +2879,48 @@
         "mcp_json": null
       },
       "tests": {
-        "count": 26,
+        "count": 47,
         "paths": [
+          "tests/ai-bridge.test.ts",
+          "tests/ai-proposal.test.ts",
+          "tests/ai-sanitize.test.ts",
           "tests/artifacts.test.ts",
           "tests/cli-args.test.ts",
           "tests/commands.test.ts",
+          "tests/compat.test.ts",
           "tests/config.test.ts",
           "tests/configs.test.ts",
+          "tests/contracts.test.ts",
+          "tests/discovery.test.ts",
           "tests/doctor.test.ts",
+          "tests/doctor2.test.ts",
           "tests/e2e-cli.test.ts",
           "tests/env.test.ts",
+          "tests/envintel.test.ts",
           "tests/git-revs.test.ts",
+          "tests/heal.test.ts",
+          "tests/hosts-mapping.test.ts",
+          "tests/hosts.test.ts",
           "tests/independence.test.ts",
           "tests/install.test.ts",
+          "tests/intel-context.test.ts",
+          "tests/intel-contracts.test.ts",
+          "tests/intel-engine.test.ts",
+          "tests/intel-predict.test.ts",
+          "tests/keyless-gate.test.ts",
+          "tests/learning.test.ts",
           "tests/lifecycle.test.ts",
+          "tests/maintenance.test.ts",
           "tests/manifest.test.ts",
           "tests/menu.test.ts",
           "tests/native-install.test.ts",
           "tests/plan.test.ts",
+          "tests/planner.test.ts",
+          "tests/portability.test.ts",
           "tests/preflight-fail.test.ts",
           "tests/preflight.test.ts",
           "tests/prereqs.test.ts",
+          "tests/recommend.test.ts",
           "tests/report.test.ts",
           "tests/repos.test.ts",
           "tests/runner.test.ts",
@@ -2788,43 +2935,43 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:56.872698+00:00"
+          "collected_at": "2026-10-16T00:55:50.310718+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:56.872711+00:00"
+          "collected_at": "2026-10-16T00:55:50.310734+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:56.872714+00:00"
+          "collected_at": "2026-10-16T00:55:50.310739+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:56.872716+00:00"
+          "collected_at": "2026-10-16T00:55:50.310742+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:56.872718+00:00"
+          "collected_at": "2026-10-16T00:55:50.310745+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:56.872719+00:00"
+          "collected_at": "2026-10-16T00:55:50.310748+00:00"
         }
       }
     },
     "forge-portal": {
       "repository": "EdgarSocrates98/forge-portal",
-      "sha": "88015f233bab105c0cbae173fbbcddc6665bb346",
+      "sha": "ab5a3ef0ffd4d08f2fa6c381bf3910a0ca7a6c1f",
       "entrypoints": {
         "ng": "ng",
         "start": "ng serve",
@@ -2838,20 +2985,28 @@
         "mcp_json": null
       },
       "tests": {
-        "count": 23,
+        "count": 32,
         "paths": [
           "e2e/artifacts/01-dashboard.png",
           "e2e/artifacts/02-language-toggle.png",
           "e2e/artifacts/03-install-plan.png",
           "e2e/artifacts/04-install-applied.png",
           "e2e/artifacts/05-command-palette.png",
+          "e2e/artifacts/05-config-center.png",
+          "e2e/artifacts/06-explorer.png",
           "e2e/artifacts/06-task-plan.png",
+          "e2e/artifacts/07-forge-detail.png",
           "e2e/artifacts/07-mobile.png",
           "e2e/artifacts/08-offline.png",
+          "e2e/artifacts/08-palette-search.png",
           "e2e/artifacts/real-spark-aws-dashboard.png",
           "e2e/artifacts/real-spark-aws-install.png",
           "e2e/artifacts/real-spark-aws-tasks.png",
           "e2e/artifacts/route-agents.png",
+          "e2e/artifacts/route-config.png",
+          "e2e/artifacts/route-federation.png",
+          "e2e/artifacts/route-forges.png",
+          "e2e/artifacts/route-forges/self.png",
           "e2e/artifacts/route-graph.png",
           "e2e/artifacts/route-hosts.png",
           "e2e/artifacts/route-install.png",
@@ -2862,7 +3017,8 @@
           "e2e/artifacts/route-tasks.png",
           "e2e/test_browser_e2e.py",
           "tests/test_forge_portal.py",
-          "tests/test_portal_e2e_harness.py"
+          "tests/test_portal_e2e_harness.py",
+          "tests/test_security_c5.py"
         ]
       },
       "provenance": {
@@ -2870,37 +3026,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-10-14T01:25:57.638312+00:00"
+          "collected_at": "2026-10-16T00:55:50.338853+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:57.638325+00:00"
+          "collected_at": "2026-10-16T00:55:50.338887+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:57.638327+00:00"
+          "collected_at": "2026-10-16T00:55:50.338892+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-10-14T01:25:57.638329+00:00"
+          "collected_at": "2026-10-16T00:55:50.338897+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:57.638331+00:00"
+          "collected_at": "2026-10-16T00:55:50.338902+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-10-14T01:25:57.638333+00:00"
+          "collected_at": "2026-10-16T00:55:50.338907+00:00"
         }
       }
     }

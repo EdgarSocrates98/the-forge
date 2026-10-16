@@ -1,0 +1,3 @@
+json report written: 
+/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge
+-doctor-data-scan/doctor-data.json

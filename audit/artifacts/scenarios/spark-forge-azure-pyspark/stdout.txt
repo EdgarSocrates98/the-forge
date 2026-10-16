@@ -1,0 +1,65 @@
+{
+  "count": 2,
+  "facts": [
+    {
+      "attrs": {
+        "decorators": [],
+        "def_kind": "module",
+        "enclosing": "",
+        "exported": false,
+        "is_async": false
+      },
+      "id": "f_0ab510",
+      "kind": "pyspark.function_def",
+      "measures": {
+        "name_reference_count": 0
+      },
+      "provenance": {
+        "artifact": "examples/workspace/databricks/notebooks/silver_orders.py",
+        "artifact_sha256": "04943c6e0b998225c8215b6ba49b029f488518a417f31a18a7e381f14562cfcd",
+        "extractor": "pyspark_ast@0.1.0"
+      },
+      "schema_version": 1,
+      "subject": {
+        "col": 0,
+        "end_line": 7,
+        "file": "examples/workspace/databricks/notebooks/silver_orders.py",
+        "line": 6,
+        "snippet": "def run(rows):",
+        "symbol": "run",
+        "type": "source_location"
+      }
+    },
+    {
+      "attrs": {
+        "parsed": true,
+        "referenced_names": [
+          "rows",
+          "silver_orders"
+        ]
+      },
+      "id": "f_d2f6f9",
+      "kind": "pyspark.module_analyzed",
+      "measures": {
+        "resolved_calls": 1,
+        "unresolved_count": 0
+      },
+      "provenance": {
+        "artifact": "examples/workspace/databricks/notebooks/silver_orders.py",
+        "artifact_sha256": "04943c6e0b998225c8215b6ba49b029f488518a417f31a18a7e381f14562cfcd",
+        "extractor": "pyspark_ast@0.1.0"
+      },
+      "schema_version": 1,
+      "subject": {
+        "col": 0,
+        "file": "examples/workspace/databricks/notebooks/silver_orders.py",
+        "line": 0,
+        "snippet": "",
+        "symbol": "",
+        "type": "source_location"
+      }
+    }
+  ],
+  "out": null,
+  "status": "ok"
+}

@@ -406,6 +406,20 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Implementation roadmap — Agentic Ecosystem Control Plane](audit/implementation-roadmap.md) `UNKNOWN`
 - [Provider capability matrix (FASE 0)](audit/provider-capability-matrix.md) `UNKNOWN`
 
+### certification/
+
+- [FINAL-CERTIFICATION — Cycle 10.1](certification/cycle-10.1/FINAL-CERTIFICATION.md) `UNKNOWN`
+- [Baseline — Cycle 10.1 Fresh Audit (Wave 0)](certification/cycle-10.1/baseline.md) `UNKNOWN`
+- [Forge CLI lifecycle — Cycle 10.1 §5.2](certification/cycle-10.1/cli-lifecycle.md) `UNKNOWN`
+- [Global E2E — Cycle 10.1 §10 / Wave 6](certification/cycle-10.1/e2e-results.md) `UNKNOWN`
+- [Forge Lab evidence audit — Cycle 10.1 §7 / Wave 5-6 prep](certification/cycle-10.1/forge-lab.md) `UNKNOWN`
+- [Gap Register — Cycle 10.1](certification/cycle-10.1/gap-register.md) `UNKNOWN`
+- [Hosts & MCP certification — Cycle 10.1 §6 / Wave 4](certification/cycle-10.1/hosts-mcp.md) `UNKNOWN`
+- [Linux Acceptance — Cycle 10.1](certification/cycle-10.1/linux-acceptance.md) `UNKNOWN`
+- [Portal E2E multi-forge — Cycle 10.1 §4 / Wave 3](certification/cycle-10.1/portal-e2e.md) `UNKNOWN`
+- [Release matrix — Cycle 10.1 §7 / Wave 5](certification/cycle-10.1/release-matrix.md) `RELEASE_REPORT`
+- [Security & dependency audit — Cycle 10.1 §9 / Wave 5](certification/cycle-10.1/security.md) `UNKNOWN`
+
 ### docs/
 
 - [A2A bridge (experimental)](a2a-bridge.md) `UNKNOWN`
@@ -495,6 +509,16 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### factory/
 
 - [Programa ecosystem-2026 — índice de specs](../factory/specs/PROGRAM-ecosystem-2026.md) `UNKNOWN`
+- [Fresh audit das nove mains + baseline verificável](../factory/specs/active/cyc101-01-fresh-audit-baseline.md) `UNKNOWN`
+- [Reexecutar H0–H7 e atualizar a homologação do ecossistema](../factory/specs/active/cyc101-02-certification-gates.md) `UNKNOWN`
+- [Forge CLI: homologar lifecycle completo (install→update→rollback→uninstall)](../factory/specs/active/cyc101-03-cli-lifecycle.md) `UNKNOWN`
+- [Portal cross-forge E2E real + testes visuais + segurança](../factory/specs/active/cyc101-04-portal-e2e.md) `UNKNOWN`
+- [Certificação real de hosts (Codex/Claude Code/Devin/Copilot) e MCP](../factory/specs/active/cyc101-05-hosts-mcp-certification.md) `UNKNOWN`
+- [Forge Lab: validar o conteúdo das evidências, não só a coleta](../factory/specs/active/cyc101-06-forge-lab-validation.md) `UNKNOWN`
+- [Auditoria de segurança e dependências nos commits do baseline](../factory/specs/active/cyc101-07-security-dependency-closure.md) `UNKNOWN`
+- [Release candidates verificáveis por projeto — sem publicar](../factory/specs/active/cyc101-08-release-candidates.md) `RELEASE_REPORT`
+- [E2E global obrigatório: app de exemplo com problemas conhecidos](../factory/specs/active/cyc101-09-global-e2e.md) `UNKNOWN`
+- [Certificação final + relatório obrigatório §16](../factory/specs/active/cyc101-10-final-certification.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
@@ -532,7 +556,8 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### graphify-out/
 
 - [Graph Report - the-forge  (2026-10-15)](../graphify-out/2026-10-15/GRAPH_REPORT.md) `UNKNOWN`
-- [Graph Report - the-forge  (2026-10-15)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - the-forge  (2026-10-15)](../graphify-out/2026-10-16/GRAPH_REPORT.md) `UNKNOWN`
+- [Graph Report - the-forge  (2026-10-16)](../graphify-out/GRAPH_REPORT.md) `UNKNOWN`
 
 ### homologation/
 
@@ -573,6 +598,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [FINAL PROGRAM REPORT — ecosystem-2026](programs/ecosystem-2026/FINAL-PROGRAM-REPORT.md) `UNKNOWN`
 - [Baseline — 2026-10-15](programs/ecosystem-2026/baseline.md) `UNKNOWN`
 - [Benchmark report — 2026-10-15 (mode A)](programs/ecosystem-2026/benchmarks/2026-10-15-A.md) `UNKNOWN`
+- [Benchmark report — 2026-10-16 (mode A)](programs/ecosystem-2026/benchmarks/2026-10-16-A.md) `UNKNOWN`
 - [Forge Lab — methodology (cyc9-01, ADR-0060)](programs/ecosystem-2026/benchmarks/methodology.md) `UNKNOWN`
 - [Compatibility matrix — draft inicial](programs/ecosystem-2026/compatibility-matrix.md) `UNKNOWN`
 - [Cycle 10 — decisões de produto pendentes (memo para o dono)](programs/ecosystem-2026/cycle-10-decisions.md) `UNKNOWN`

@@ -1,0 +1,97 @@
+{
+  "cli": "sparkforge-azure",
+  "created_at": "2026-10-16T01:01:32Z",
+  "environment": {
+    "prefix": "SPARK_FORGE_AZURE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "variables": {
+      "SPARK_FORGE_AZURE_CLI": "/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge-bootstrap-spark-forge-azure-dry-run/install-spark-forge-azure/.venv/bin/sparkforge-azure",
+      "SPARK_FORGE_AZURE_HOME": "/tmp/forge-e2e-worktrees/spark-forge-azure",
+      "SPARK_FORGE_AZURE_INSTALL_ROOT": "/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge-bootstrap-spark-forge-azure-dry-run/install-spark-forge-azure",
+      "SPARK_FORGE_AZURE_LAUNCHER": "/home/edgar/.local/bin/sparkforge-azure",
+      "SPARK_FORGE_AZURE_PYTHON": "/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge-bootstrap-spark-forge-azure-dry-run/install-spark-forge-azure/.venv/bin/python",
+      "SPARK_FORGE_AZURE_VENV": "/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge-bootstrap-spark-forge-azure-dry-run/install-spark-forge-azure/.venv"
+    },
+    "windows_aliases": {}
+  },
+  "forge_id": "spark-forge-azure",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "/home/edgar/.local/bin/claude",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "/home/edgar/.local/bin/codex",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": false,
+      "cli_path": null,
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "/home/edgar/.local/bin/devin",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_root": "/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge-bootstrap-spark-forge-azure-dry-run/install-spark-forge-azure",
+  "operation": "install",
+  "platform": {
+    "arch": "x86_64",
+    "os": "Linux",
+    "python": "3.13.15"
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "/home/edgar/.local/bin",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "/home/edgar/Documentos/projetos/forjas/the-forge/audit/artifacts/scenarios/forge-bootstrap-spark-forge-azure-dry-run/install-spark-forge-azure"
+}

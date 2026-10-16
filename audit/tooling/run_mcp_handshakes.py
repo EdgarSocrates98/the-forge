@@ -7,6 +7,7 @@ import contextlib
 import json
 import os
 import queue
+import shutil
 import subprocess
 import threading
 import time
@@ -45,14 +46,23 @@ def _read_env(name: str) -> str | None:
         return None
 
 
-def _command(repo: str, declared: list[str]) -> list[str]:
+def _command(repo: str, declared: list[str], root: Path | None = None) -> list[str]:
     prefix = PREFIX_BY_REPO.get(repo)
     cli = _read_env(f"{prefix}_CLI") if prefix else None
-    if not cli:
-        return declared
-    first = Path(cli).parent / f"{declared[0]}.exe"
-    if first.is_file():
-        return [str(first), *declared[1:]]
+    if cli:
+        first = Path(cli).parent / f"{declared[0]}.exe"
+        if first.is_file():
+            return [str(first), *declared[1:]]
+    if root is not None and shutil.which(declared[0]) is None:
+        # Repo-local venv fallback: POSIX layout first, Windows Scripts/ after.
+        candidates = [
+            root / ".venv" / "bin" / declared[0],
+            root / ".venv" / "Scripts" / f"{declared[0]}.exe",
+            root / ".venv" / "Scripts" / declared[0],
+        ]
+        for venv_bin in candidates:
+            if venv_bin.is_file():
+                return [str(venv_bin), *declared[1:]]
     return declared
 
 
@@ -82,7 +92,7 @@ def _next_json(out: queue.Queue[str], deadline: float) -> dict:
 
 
 def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
-    command = _command(repo, declared)
+    command = _command(repo, declared, root)
     result: dict[str, object] = {"repo": repo, "command": command}
     process = subprocess.Popen(
         command,
@@ -168,7 +178,8 @@ def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
     finally:
         with contextlib.suppress(OSError):
             process.kill()
-        process.wait(timeout=2)
+        with contextlib.suppress(subprocess.TimeoutExpired, OSError):
+            process.wait(timeout=2)
     return result
 
 

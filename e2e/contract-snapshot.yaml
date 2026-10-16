@@ -1,0 +1,7 @@
+# Planted drift: documents /refunds route absent from code; versions differ.
+openapi: "3.1.0"
+info: {title: payments-example, version: "0.2.0"}
+paths:
+  /health: {get: {responses: {"200": {description: ok}}}}
+  /payments: {post: {responses: {"200": {description: ok}}}}
+  /refunds: {post: {responses: {"200": {description: ok}}}}   # P3: not implemented

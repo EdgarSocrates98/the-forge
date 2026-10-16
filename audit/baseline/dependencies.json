@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-14T01:25:57.638345+00:00",
+  "generated_at": "2026-10-16T00:55:50.338928+00:00",
   "ref": "origin/main",
   "data": {
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "c0b1e8571c80a30f3e8c388e499fe002759a1667",
+      "sha": "530ea52121a485b41067e8650d72a8d27c061de6",
       "dependencies": {
         "python_project_dependencies": [
           "build-backend",
@@ -125,16 +125,20 @@
           "agentic/skills/forge-troubleshooting.md",
           "agentic/skills/forge-verification.md",
           "audit/artifacts/scenarios-2026-10-12/forge-doctor-data-scan/doctor-data.json",
+          "audit/artifacts/scenarios-20261014/forge-doctor-data-scan/doctor-data.json",
           "audit/reports/THE_FORGE_FULL_ECOSYSTEM_CERTIFICATION.md",
           "docs/adr/0004-no-forge-kernel-yet.md",
           "docs/adr/0042-forge-contracts-audit.md",
           "docs/adr/0052-forge-knowledge-layer.md",
           "docs/adr/0059-forge-portal-command-center.md",
+          "docs/adr/0060-forge-lab-coordinator.md",
+          "docs/contributing/external-forges.md",
           "docs/cross-forge-orchestration.md",
           "docs/forge-knowledge.md",
           "docs/hub/which-forge.md",
           "docs/learn/recipes/federacao-multi-forge.md",
           "docs/learn/recipes/instalar-theforge.md",
+          "docs/onboarding/golden-paths/multi-forge.md",
           "docs/portable-installation/reports/api-forge.md",
           "docs/portable-installation/reports/forge-doctor-api.md",
           "docs/portable-installation/reports/forge-doctor-data.md",
@@ -142,9 +146,27 @@
           "docs/portable-installation/reports/spark-forge-aws.md",
           "docs/portable-installation/reports/spark-forge-azure.md",
           "docs/portable-installation/reports/the-forge.md",
+          "docs/portable-installation/schemas/MultiForgeScenario.schema.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/api-forge.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/forge-cli-npm.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/forge-doctor-api.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/forge-doctor-data.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/platform-forge.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/spark-forge-aws.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/spark-forge-azure.json",
+          "docs/programs/ecosystem-2026/supply-chain/audit/the-forge.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/api-forge.cdx.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/forge-cli-deps.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/forge-doctor-api.cdx.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/forge-doctor-data.cdx.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/platform-forge.cdx.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/spark-forge-aws.cdx.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/spark-forge-azure.cdx.json",
+          "docs/programs/ecosystem-2026/supply-chain/sbom/the-forge.cdx.json",
           "docs/reports/forge-experience.md",
           "docs/superpowers/plans/2026-10-02-the-forge-cycle1-core.md",
           "docs/superpowers/specs/2026-10-02-the-forge-protocol-core-design.md",
+          "factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md",
           "forge-knowledge/api-forge.json",
           "forge-knowledge/forge-doctor-api.json",
           "forge-knowledge/forge-doctor-data.json",
@@ -152,9 +174,18 @@
           "forge-knowledge/spark-forge-aws.json",
           "forge-knowledge/spark-forge-azure.json",
           "forge.json",
+          "labs/multiforge/api-forge-doctor-api.json",
+          "labs/multiforge/api-plus-infra.json",
+          "labs/multiforge/cloud-migration.json",
+          "labs/multiforge/spark-aws-doctor-data.json",
+          "labs/multiforge/spark-azure-doctor-data.json",
+          "labs/multiforge/specialist-orchestration.json",
+          "labs/multiforge/workspace-multirepo.json",
           "schemas/ForgeKnowledge.schema.json",
           "schemas/ForgeManifest.schema.json",
           "schemas/ForgeRegistryEntry.schema.json",
+          "templates/api-apiforge/README.md",
+          "templates/multi-repo-theforge/README.md",
           "tests/fixtures/native/apiforge/default/api.analyze.analyze.json",
           "tests/fixtures/native/apiforge/default/api.change-control.run.json",
           "tests/fixtures/native/apiforge/default/environment.json",
@@ -187,50 +218,19 @@
           "tests/fixtures/native/doctorapi/scenarios/delta/health.json",
           "tests/fixtures/native/doctorapi/scenarios/native-error/api.diagnose.analyze.error.json",
           "tests/fixtures/native/doctorapi/scenarios/native-error/environment.json",
-          "tests/fixtures/native/doctorapi/scenarios/native-error/health.json",
-          "tests/fixtures/native/doctorapi/scenarios/specialist-missing/environment.json",
-          "tests/fixtures/native/doctorapi/scenarios/version-skew/environment.json",
-          "tests/fixtures/native/doctorapi/scenarios/version-skew/health.json",
-          "tests/fixtures/native/doctordata/default/data.scan.analyze.json",
-          "tests/fixtures/native/doctordata/default/data.verify.verify.json",
-          "tests/fixtures/native/doctordata/default/environment.json",
-          "tests/fixtures/native/doctordata/default/health.json",
-          "tests/fixtures/native/doctordata/scenarios/boundary-missing/environment.json",
-          "tests/fixtures/native/doctordata/scenarios/boundary-missing/health.json",
-          "tests/fixtures/native/doctordata/scenarios/delta/data.scan.analyze.json",
-          "tests/fixtures/native/doctordata/scenarios/delta/data.verify.verify.json",
-          "tests/fixtures/native/doctordata/scenarios/delta/environment.json",
-          "tests/fixtures/native/doctordata/scenarios/delta/health.json",
-          "tests/fixtures/native/doctordata/scenarios/native-error/data.scan.analyze.error.json",
-          "tests/fixtures/native/doctordata/scenarios/native-error/environment.json",
-          "tests/fixtures/native/doctordata/scenarios/native-error/health.json",
-          "tests/fixtures/native/doctordata/scenarios/specialist-missing/environment.json",
-          "tests/fixtures/native/doctordata/scenarios/version-skew/environment.json",
-          "tests/fixtures/native/doctordata/scenarios/version-skew/health.json",
-          "tests/fixtures/native/platformforge/default/catalog.analyze.analyze.json",
-          "tests/fixtures/native/platformforge/default/environment.json",
-          "tests/fixtures/native/platformforge/default/gha.analyze.analyze.json",
-          "tests/fixtures/native/platformforge/default/gitops.analyze.analyze.json",
-          "tests/fixtures/native/platformforge/default/health.json",
-          "tests/fixtures/native/platformforge/default/iac.analyze.analyze.json",
-          "tests/fixtures/native/platformforge/default/iac.plan-review.analyze.json",
-          "tests/fixtures/native/platformforge/default/iac.state.analyze.json",
-          "tests/fixtures/native/platformforge/default/k8s.analyze.analyze.json",
-          "tests/fixtures/native/platformforge/default/platform.manifest.report.json",
-          "tests/fixtures/native/platformforge/default/secrets.scan.scan.json",
-          "tests/fixtures/native/platformforge/scenarios/boundary-missing/environment.json"
+          "tests/fixtures/native/doctorapi/scenarios/native-error/health.json"
         ]
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:57.798971+00:00"
+        "collected_at": "2026-10-16T00:55:50.352037+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "6a728debb881fcf4765407f33e4824096ec55af2",
+      "sha": "f8ef41b6112dcac78edc32d1c0e1ca1d3b3b79f7",
       "dependencies": {
         "python_project_dependencies": [
           "Homepage",
@@ -457,12 +457,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:57.986965+00:00"
+        "collected_at": "2026-10-16T00:55:50.369595+00:00"
       }
     },
     "spark-forge-azure": {
       "repository": "EdgarSocrates98/spark-forge-azure",
-      "sha": "d3e37697ee740f511445938b707828cec62fb12f",
+      "sha": "f1e70ceedd4609e834e01e19313bbac3680e2fdb",
       "dependencies": {
         "python_project_dependencies": [
           "Homepage",
@@ -660,12 +660,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:58.149695+00:00"
+        "collected_at": "2026-10-16T00:55:50.381542+00:00"
       }
     },
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "bccf56eb4c03feefe5af69058af1c9704e276fd3",
+      "sha": "6b7ede67ecb8871fd585730850f00ef7ff1bb1c4",
       "dependencies": {
         "python_project_dependencies": [
           "PyYAML",
@@ -893,12 +893,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:58.307458+00:00"
+        "collected_at": "2026-10-16T00:55:50.395431+00:00"
       }
     },
     "platform-forge": {
       "repository": "EdgarSocrates98/platform-forge",
-      "sha": "d34b90c435634b13d618af7e4271ab04beb0db6e",
+      "sha": "aed8d5a1798b7fde9e2b860943c4cdcd737b3c49",
       "dependencies": {
         "python_project_dependencies": [
           "PyYAML",
@@ -969,18 +969,19 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:58.520655+00:00"
+        "collected_at": "2026-10-16T00:55:50.408379+00:00"
       }
     },
     "forge-doctor-api": {
       "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "1bf561ec08988582b1817cef3d219a50d4c66b78",
+      "sha": "fb31db3f91deedc4a35a82560ac3437d7350dcf8",
       "dependencies": {
         "python_project_dependencies": [
           "authors",
           "classifiers",
           "dependencies",
           "description",
+          "license",
           "name",
           "pyyaml",
           "readme",
@@ -1016,6 +1017,7 @@
           "factory/specs/archive/2026/074-forge-contracts-conformance.md",
           "factory/specs/archive/2026/075-forger-boundary-hardening.md",
           "factory/specs/archive/2026/082-cross-doctor-conformance-final.md",
+          "factory/specs/archive/2026/cyc9-09-scenarios-doctor-api.md",
           "forge.agentic.json",
           "forge.json",
           "labs/golden/microservices-topology/forge-doctor-api.workspace.yaml",
@@ -1041,12 +1043,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:58.687625+00:00"
+        "collected_at": "2026-10-16T00:55:50.418754+00:00"
       }
     },
     "forge-doctor-data": {
       "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "66ce9ca5464f8cc46199166fcea47cce9f25999e",
+      "sha": "2e411717a6bfeecc6543bea319ed8993c2558a68",
       "dependencies": {
         "python_project_dependencies": [
           "authors",
@@ -1076,6 +1078,7 @@
           "factory/specs/archive/113-iceberg-doctor.md",
           "factory/specs/archive/114-lakeformation-doctor.md",
           "factory/specs/archive/192-forge-lab.md",
+          "factory/specs/archive/2026/cyc9-08-scenarios-doctor-data.md",
           "factory/specs/archive/211-forge-ecosystem-contracts.md",
           "factory/specs/archive/267-cross-doctor-conformance.md",
           "factory/specs/archive/280-cross-doctor-contract-finalization.md",
@@ -1200,12 +1203,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:58.835043+00:00"
+        "collected_at": "2026-10-16T00:55:50.430408+00:00"
       }
     },
     "forge-cli": {
       "repository": "EdgarSocrates98/forge-cli",
-      "sha": "f893bb0308f2c4016e024d7e21a2e9e79f09c64a",
+      "sha": "6109f6ae445a06423744fbbb36fbbb52a3332f80",
       "dependencies": {
         "npm_dependencies": [
           "@clack/prompts",
@@ -1223,18 +1226,27 @@
           "typescript-eslint",
           "vitest"
         ],
-        "internal_forge_references": []
+        "internal_forge_references": [
+          "contracts/schemas/ForgeCapability.v1.json",
+          "contracts/schemas/ForgeDescriptor.v1.json",
+          "contracts/schemas/ForgeEnvironmentSchema.v1.json",
+          "contracts/schemas/ForgeHealthReport.v1.json",
+          "contracts/schemas/ForgeHostDescriptor.v1.json",
+          "contracts/schemas/ForgeInstallContract.v1.json",
+          "contracts/schemas/ForgeOperationPlan.v1.json",
+          "contracts/schemas/ForgeOperationReceipt.v1.json"
+        ]
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:59.009360+00:00"
+        "collected_at": "2026-10-16T00:55:50.438700+00:00"
       }
     },
     "forge-portal": {
       "repository": "EdgarSocrates98/forge-portal",
-      "sha": "88015f233bab105c0cbae173fbbcddc6665bb346",
+      "sha": "ab5a3ef0ffd4d08f2fa6c381bf3910a0ca7a6c1f",
       "dependencies": {
         "npm_dependencies": [
           "@angular/build",
@@ -1259,7 +1271,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-10-14T01:25:59.168576+00:00"
+        "collected_at": "2026-10-16T00:55:50.449473+00:00"
       }
     }
   }

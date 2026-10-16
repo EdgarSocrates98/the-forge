@@ -41,3 +41,4 @@ uv.lock
 .env
 .env.*
 graphify-out/.rebuild.lock
+e2e/artifacts/
