@@ -1,7 +1,7 @@
 ---
 id: cyc101-03
 title: cli-lifecycle-matrix
-status: inbox
+status: active
 created: 2026-10-15
 owner: forge-cli
 scope: forge-cli
