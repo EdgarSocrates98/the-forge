@@ -39,18 +39,18 @@ def _run_script(
 
 def _write_pyproject(path: Path, dependencies: str) -> Path:
     path.write_text(
-        f'[project]\nname = "theforge"\nversion = "0.1.0"\ndependencies = {dependencies}\n',
+        f'[project]\nname = "the-forge"\nversion = "0.1.0"\ndependencies = {dependencies}\n',
         encoding="utf-8",
     )
     return path
 
 
 def _fake_wheel(path: Path, requires: list[str]) -> Path:
-    metadata = "Metadata-Version: 2.3\nName: theforge\nVersion: 0.1.0\n"
+    metadata = "Metadata-Version: 2.3\nName: the-forge\nVersion: 0.1.0\n"
     metadata += "".join(f"Requires-Dist: {req}\n" for req in requires)
     with zipfile.ZipFile(path, "w") as zf:
         zf.writestr("theforge/__init__.py", "")
-        zf.writestr("theforge-0.1.0.dist-info/METADATA", metadata)
+        zf.writestr("the_forge-0.1.0.dist-info/METADATA", metadata)
     return path
 
 
@@ -84,7 +84,7 @@ def test_zero_deps_gate_rejects_declared_runtime_dependency(tmp_path: Path) -> N
 def test_zero_deps_gate_rejects_unmarked_wheel_requirement(tmp_path: Path) -> None:
     pyproject = _write_pyproject(tmp_path / "pyproject.toml", "[]")
     wheel = _fake_wheel(
-        tmp_path / "theforge-0.1.0-py3-none-any.whl",
+        tmp_path / "the_forge-0.1.0-py3-none-any.whl",
         ['pytest>=8.0; extra == "dev"', 'requests; python_version >= "3.11"'],
     )
     out = _run_script(ZERO_DEPS, "--pyproject", pyproject, wheel)
@@ -96,7 +96,7 @@ def test_zero_deps_gate_rejects_unmarked_wheel_requirement(tmp_path: Path) -> No
 def test_zero_deps_gate_accepts_extra_only_wheel_requirements(tmp_path: Path) -> None:
     pyproject = _write_pyproject(tmp_path / "pyproject.toml", "[]")
     wheel = _fake_wheel(
-        tmp_path / "theforge-0.1.0-py3-none-any.whl",
+        tmp_path / "the_forge-0.1.0-py3-none-any.whl",
         ['pytest>=8.0; extra == "dev"', "mypy>=1.10 ; extra=='dev'"],
     )
     out = _run_script(ZERO_DEPS, "--pyproject", pyproject, wheel)
@@ -139,7 +139,7 @@ def test_fresh_install_metadata_check_rejects_bad_installs(
     # path is only compared, never created.
     venv = Path(tempfile.gettempdir()) / f"theforge-probe-{tmp_path.name}" / "venv"
     probe: dict[str, Any] = {
-        "name": "theforge",
+        "name": "the-forge",
         "version": "1.2.3",
         "requires_python": ">=3.11",
         "requires": ["pytest; extra == 'dev'", "ruff; extra=='dev'"],
@@ -150,7 +150,7 @@ def test_fresh_install_metadata_check_rejects_bad_installs(
         "module_file": str(venv / "Lib" / "site-packages" / "theforge" / "__init__.py"),
         "direct_url": '{"url": "file:///w.whl", "archive_info": {}}',
     }
-    wheel = tmp_path / "theforge-1.2.3-py3-none-any.whl"
+    wheel = tmp_path / "the_forge-1.2.3-py3-none-any.whl"
     gate.check_metadata(probe, wheel, venv)  # the baseline probe is accepted
     probe.update(change)
     if probe["module_file"] == "REPO":
