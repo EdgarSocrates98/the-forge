@@ -419,6 +419,30 @@ def test_portal_verb_serves_and_answers(target: Path) -> None:
         proc.wait(timeout=10)
 
 
+def test_version_lookup_uses_real_dist_name() -> None:
+    """Release-1 regression: a dist rename must keep the metadata lookup
+    working. The name comes from pyproject — not a hardcoded literal —
+    so this fails if `service.DIST_NAME` drifts from the shipped name."""
+    import importlib.metadata as md
+    import tomllib
+
+    from theforge import portal_adapter
+    from theforge.install import service
+
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))["project"]
+    assert project["name"] == service.DIST_NAME, (
+        f"DIST_NAME {service.DIST_NAME!r} diverged from pyproject name {project['name']!r}"
+    )
+    # Resolves via the real dist metadata when the package is installed
+    # (editable or wheel). Absent metadata stays honest, never guessed.
+    try:
+        installed_version = md.version(project["name"])
+    except md.PackageNotFoundError:
+        installed_version = None
+    expected = installed_version if installed_version else "0.0.0+local"
+    assert portal_adapter._version() == expected
+
+
 def test_versions_reports_real_local_state(target: Path) -> None:
     """cyc8-06: GET /versions assembles real data — dist version, the
     committed ecosystem manifest (sha256 + verdict), CHANGELOG.md and
