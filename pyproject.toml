@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "the-forge"
+name = "theforge-core"
 version = "0.5.0"
 description = "Local-first control plane that discovers, routes and governs specialist Forges."
 readme = "README.md"

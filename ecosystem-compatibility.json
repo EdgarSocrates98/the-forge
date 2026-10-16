@@ -12,7 +12,7 @@
       "version": "0.5.0",
       "scheme": "semver",
       "source": "pyproject.toml",
-      "distribution": "the-forge"
+      "distribution": "theforge-core"
     },
     {
       "component": "api-forge",

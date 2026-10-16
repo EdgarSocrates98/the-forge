@@ -21,7 +21,7 @@ em bloco para 1.0. Versões honestas por estado real de interface.
 
 | Componente | Nome desejado | Status | Nome aplicado |
 |---|---|---|---|
-| the-forge | `theforge` | **OCUPADO no PyPI** (produto alheio "TheForge SDK") | **`the-forge`** |
+| the-forge | `theforge` | **OCUPADO** — `the-forge` também bloqueado (similar-name PyPI) | **`theforge-core`** |
 | forge-cli | `forge-cli` | **OCUPADO no npm** (pacote alheio 0.2.1) | **`theforge-cli`** |
 | api-forge | `apiforge` | livre (404) | `apiforge` |
 | platform-forge | `platformforge` | livre | `platformforge` |

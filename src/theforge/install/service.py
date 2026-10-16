@@ -21,7 +21,7 @@ from theforge import _installkit as kit
 from theforge.install import providers, render
 
 FORGE_ID = "the-forge"
-DIST_NAME = "the-forge"  # PyPI dist name — import package stays `theforge`
+DIST_NAME = "theforge-core"  # PyPI dist name — import package stays `theforge`
 STATE_DIR = ".forge/install"
 PROFILES: tuple[str, ...] = ("minimal", "recommended", "full")
 SCOPES: tuple[str, ...] = ("project", "workspace", "user")

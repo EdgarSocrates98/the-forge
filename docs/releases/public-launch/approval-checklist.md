@@ -21,7 +21,7 @@
 
 1. **Nomes de distribuição** (bloqueante — `theforge`/`forge-cli`
    ocupados):
-   - [ ] PyPI: `the-forge` (aplicado) — alternativa `theforge-core`
+   - [x] PyPI: `theforge-core` (aplicado) — `theforge`/`the-forge` ambos bloqueados
    - [ ] npm: `theforge-cli` (aplicado) — alternativa `@theforge/cli`
 2. **Versões** (`version-plan.md`):
    - [ ] Aprovar conjunto (7× 0.x + doctor-data 1.0.0)

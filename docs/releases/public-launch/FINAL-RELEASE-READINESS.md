@@ -41,7 +41,7 @@ Audit→Approve→Publish(GitHub+npm)→Verify; PyPI aguarda credenciais.
 
 | # | Severidade | Item | Estado |
 |---|---|---|---|
-| F-R1-1 | P0 | `theforge` PyPI ocupado por terceiro | ✅ renomeado `the-forge` |
+| F-R1-1 | P0 | `theforge` PyPI ocupado; `the-forge` barrado por similar-name | ✅ `theforge-core` |
 | F-R1-2 | P0 | `forge-cli` npm ocupado por terceiro | ✅ renomeado `theforge-cli` |
 | F-R1-3 | P2 | 346 links relativos quebram no PyPI | ⏳ decisão owner |
 | — | info | `apiforge` exige Python>=3.12 | documentado |
@@ -49,7 +49,8 @@ Audit→Approve→Publish(GitHub+npm)→Verify; PyPI aguarda credenciais.
 
 ## Mudanças desta branch (release-1/prep)
 
-- the-forge: rename dist → `the-forge`; docs de release completos.
+- the-forge: rename dist → `theforge-core` (PyPI rejeitou `the-forge`
+  por similar-name ao existente `theforge`); docs de release completos.
 - forge-cli: rename npm → `theforge-cli`; self-update usa novo nome.
 
 ## Pendências externas (bloqueiam Wave 11)
