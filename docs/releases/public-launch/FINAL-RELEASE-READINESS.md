@@ -11,17 +11,22 @@
 - **npm publicado**: `theforge-cli@0.1.0` live em
   npmjs.com — verificado com install limpo do registry (`npm install
   theforge-cli` → `forge-cli --help`/`doctor` OK).
-- **Pendente (registries)**: PyPI **não** publicado — sem
-  credenciais (`~/.pypirc`/tokens ausentes; Trusted Publishing requer
-  setup do owner). Artifacts prontos para `gh release download` →
-  `twine upload` quando as credenciais existirem.
+- **PyPI parcial (4/7)**: `platformforge`, `sparkforge-aws`,
+  `sparkforge-azure`, `forge-doctor-data` publicados e verificados
+  (pypi.org 200). Pendentes por rate-limit "too many new projects"
+  de conta nova: `theforge-core`, `apiforge`, `forge-doctor-api` —
+  artifacts prontos, `twine upload` quando o limite resetar.
+- **Nome final PyPI do core**: `theforge-core` — `the-forge` foi
+  rejeitado pela política similar-name (normalização ignora hífens).
+  PR #69 aplicou o rename; release `v0.5.0` re-emitido com artifacts
+  `theforge_core-*`.
 - **Promovido**: `forge-doctor-data 1.0.0rc1 → 1.0.0` (PR #46 mergeado,
   `c799eca`; rc-baseline re-selado com 2668 testes + cobertura medida).
 - **Manifesto**: `ecosystem-compatibility.json` consistente com os
   nomes finais de distribuição e versões GA.
 
 Data: 2026-10-16. Programa: `prompt_evo_release1.md`. Escopo executado:
-Audit→Approve→Publish(GitHub+npm)→Verify; PyPI aguarda credenciais.
+Audit→Approve→Publish(GitHub+npm+PyPI 4/7)→Verify; 3 dists aguardam rate-limit.
 
 ## Resumo executivo
 
