@@ -32,14 +32,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-DIST_NAME = "theforge"
+DIST_NAME = "the-forge"
 ENTRY_POINT = "theforge.cli.main:main"
 CONSOLE_SCRIPTS = ("theforge", "forge")
 STEP_TIMEOUT = 600
 
 METADATA_PROBE = """
 import importlib.metadata as md, json, theforge
-dist = md.distribution("theforge")
+dist = md.distribution("the-forge")
 print(json.dumps({
     "name": dist.metadata["Name"],
     "version": dist.version,
