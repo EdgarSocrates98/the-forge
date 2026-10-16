@@ -1,7 +1,7 @@
 ---
 id: cyc101-06
 title: forge-lab-validation-evidence
-status: inbox
+status: active
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem
