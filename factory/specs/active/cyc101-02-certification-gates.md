@@ -1,7 +1,7 @@
 ---
 id: cyc101-02
 title: certification-gates-h0-h7
-status: inbox
+status: active
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

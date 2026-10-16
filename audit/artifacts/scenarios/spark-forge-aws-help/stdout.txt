@@ -1,0 +1,175 @@
+usage: sparkforge-aws [-h] [--version]
+                      {lab,analyze,architecture,migrate,glue,iceberg,release,controlm,benchmark,workload,capacity,finops,dq-ai,tune,economy,decision,context,distribution,workspace,agentops,agents,blackboard,decisions,budget,autonomy,funcval,sdd,fuse,judge,arbitrate,case,next-step,resume,handoff,journal,playbook,runtime,code,graph,pack,knowledge,debate,root-cause,lakeformation,rules,validate,report,telemetry,receipt,proof,simulate,gain,scan,doctor,integrate,detach,ai,install,status,repair,update,uninstall,mcp,portal,policy,change,collect} ...
+
+Analise deterministica de jobs AWS Glue PySpark: extracao de facts, julgamento
+contra o catalogo de regras, e o ciclo de vida do case que atravessa sessoes.
+
+positional arguments:
+  {lab,analyze,architecture,migrate,glue,iceberg,release,controlm,benchmark,workload,capacity,finops,dq-ai,tune,economy,decision,context,distribution,workspace,agentops,agents,blackboard,decisions,budget,autonomy,funcval,sdd,fuse,judge,arbitrate,case,next-step,resume,handoff,journal,playbook,runtime,code,graph,pack,knowledge,debate,root-cause,lakeformation,rules,validate,report,telemetry,receipt,proof,simulate,gain,scan,doctor,integrate,detach,ai,install,status,repair,update,uninstall,mcp,portal,policy,change,collect}
+    lab                 Planeja e inspeciona experimentos Forge Lab; execução
+                        mutável exige confirmação explícita.
+    analyze             Extrai facts deterministicos de codigo-fonte.
+    architecture        Avalia arquitetura declarada sem escolher por
+                        preferência ou custo inventado.
+    migrate             Avalia migracao entre versoes de runtime com o
+                        catalogo.
+    glue                Comandos especificos do runtime AWS Glue.
+    iceberg             Comandos especificos de Apache Iceberg.
+    release             O que uma release publica, e o que muda entre duas. Le
+                        matriz de versao; NAO avalia se algo quebra.
+    controlm            Conhecimento versionado do Control-M Automation API.
+                        Le matriz de versao; NAO le artefato, NAO chama BMC e
+                        NAO julga.
+    benchmark           Compara duas execucoes a partir dos facts de event log
+                        de cada uma. Nao executa nada e nao mede relogio.
+    workload            Perfil de workload por eixos, a partir de facts ja
+                        extraidos.
+    capacity            Escolhe a capacidade mais barata que cumpre o SLA,
+                        entre as capacidades que o job JA rodou. Nunca aplica
+                        a mudanca.
+    finops              O relatorio financeiro: custo, a troca recurso-tempo,
+                        e onde a alavanca esta -- capacidade ou codigo.
+    dq-ai               Avalia governanca Glue DQ ADVANCED sobre facts e
+                        artefatos observados.
+    tune                Configuracao Spark derivada da medida, com a
+                        procedencia de cada propriedade. Nunca aplica a
+                        mudanca.
+    economy             O que a execucao poe na janela de contexto: byte
+                        medido, nunca token estimado.
+    decision            Valida e observa decisões declarativas sem alterar o
+                        dispatch atual.
+    context             Descobre capabilities e empacota contexto
+                        deterministico sob limite explicito.
+    distribution        Inspeção e inicialização portátil offline.
+    workspace           Workspace virtual declarado e descoberta limitada.
+    agentops            Inspeciona runs locais, compara baseline e atribui
+                        desperdicio observado.
+    agents              Lista e inspeciona agentes do runtime agêntico.
+    blackboard          Lê o shared blackboard (.sparkforge_aws/blackboard/).
+    decisions           Lista e explica decisões registradas.
+    budget              Mostra estado do budget do case.
+    autonomy            Mostra níveis de autonomia L0-L5.
+    funcval             Validacao funcional: deriva o que medir nos dois lados
+                        de uma mudanca e compara antes contra depois. Nao
+                        executa nada.
+    sdd                 Confere os artefatos de spec em
+                        docs/sdd/<FEATURE>/<fase>.md: recusa por nome o que
+                        nao fecha, sem julgar a prosa.
+    fuse                Correlaciona facts de SQL com schema do catalogo
+                        (sparkforge_aws.facts.fusion), antes de judge.
+    judge               Aplica o catalogo de regras versionado sobre facts ja
+                        extraidos.
+    arbitrate           Executor agentico deterministico: arbitra findings ja
+                        julgados e grava claim, evidencia, contradicao, lacuna
+                        e decisao no blackboard do case. Nao estima ganho, nao
+                        publica score, nao executa debate.
+    case                Gerencia o estado do case em
+                        .sparkforge_aws/case.yaml.
+    next-step           Rota deterministica a partir de routing.yaml (nunca
+                        julgamento do agente).
+    resume              Payload de rehidratacao do case.
+    handoff             Escreve .sparkforge_aws/handoff.md e imprime o
+                        payload.
+    journal             Journal de eventos do case
+                        (.sparkforge_aws/journal.jsonl): um started e um
+                        finished por verbo que muda estado, encadeados por
+                        hash.
+    playbook            Decomposicao de um coordenador em passos sequenciais
+                        -- o PISO de orquestracao das cinco plataformas: unico
+                        caminho em Codex e Copilot CI, e o caminho em Claude
+                        Code, Devin CLI e Devin Local agent quando o despacho
+                        de subagente esta desligado -- e, no Devin, tambem
+                        quando ele esta ligado, porque subagente nao gera
+                        subagente por default. Le agents/, nunca repete a
+                        lista de executores.
+    runtime             Deteccao de runtime
+                        Glue/EMR/Databricks/Spark/Python/Iceberg/Athena.
+    code                Indice local de codigo: prepara, sincroniza, busca
+                        simbolo, monta contexto e diagnostica.
+    graph               Grafo do indice de codigo: status, ForgeGraphView e
+                        Graph Studio local.
+    pack                Forge Packs: regras, knowledge e fixtures de terceiro
+                        (SPARKFORGE_AWS_PACKS).
+    knowledge           Localiza os arquivos de conhecimento versionado.
+    debate              Conduz e arbitra o protocolo de debate do case. Nao
+                        gera argumento: quem escreve cada submissao e o host.
+    root-cause          Ordena os achados por consequencia declarada e nomeia
+                        a lacuna. Nao calcula confianca e nao estima ganho.
+    lakeformation       Eixo de VERSAO de Lake Formation por runtime Glue --
+                        capacidade, nao versao de componente.
+    rules               Consulta o catalogo de regras versionado.
+    validate            Valida findings contra o JSON Schema e a regra de
+                        ganho sem benchmark_ref.
+    report              Assinatura de CORRESPONDENCIA do relatorio: prova que
+                        o texto foi derivado daquela evidencia com aquele
+                        catalogo. Nunca autoria.
+    telemetry           Os spans de tool e o transcript do host em OTLP/JSON,
+                        para um OTLP Collector.
+    receipt             Recibo content-addressed da execucao do case: prova
+                        CORRESPONDENCIA entre o recibo e os artefatos, nunca
+                        autoria.
+    proof               Obrigacoes de prova de cada recomendacao APLICADA:
+                        resolucao (a regra deixou de disparar no depois?) e um
+                        eixo por item de action.moves (funcval, benchmark ou
+                        sem comparador). Desfechos: refuted, not_refuted,
+                        inconclusive, unproven -- nunca provado.
+    simulate            O que uma mudanca de configuracao move,
+                        estruturalmente: altera o valor de facts que ja
+                        existem, rederiva e julga os dois lados, e diz que
+                        achados somem e aparecem. Nunca preve spill, tempo ou
+                        custo.
+    gain                Ganho OBSERVADO entre runs medidos antes e depois de
+                        uma mudanca: por lado, N, mediana, minimo e maximo de
+                        tempo, DPU-segundos e custo, e o delta das medianas.
+                        Nunca projeta economia nem atribui causa.
+    scan                Roda sozinho os analyzes que cabem num repositorio:
+                        artefato coletado pelo manifesto, codigo pela
+                        extensao; depois fuse, judge e um resumo em
+                        .sparkforge_aws/scan/. Sem rede.
+    doctor              Confere se o ambiente esta pronto: pacote, extras,
+                        MCP, catalogo, packs, knowledge, indice de codigo,
+                        artefatos, credencial AWS e a integracao de usuario de
+                        cada host. Sai 1 com alguma falha.
+    integrate           Instala skills, agents e o MCP do SparkForge nos
+                        diretorios de USUARIO do host (Claude Code por
+                        marketplace local; Devin, Codex e Copilot CLI), a
+                        partir do pacote instalado. Nada e escrito no
+                        repositorio, exceto a remocao da copia vendorizada que
+                        o operador escolher.
+    detach              Remove a integracao de usuario do host: so o que o
+                        manifesto ~/.sparkforge_aws/integrations.json
+                        registrou e ainda tem o sha256 gravado.
+    ai                  Abre o host de IA no repositorio: detecta o binario,
+                        le a versao, confere autenticacao pelo subcomando
+                        oficial de status e o estado da integracao. Com
+                        `--launch` e TTY, executa o CLI do host no diretorio;
+                        sem eles, o recibo traz `launch_command` para o
+                        operador. Host deslogado nao e lancado — `login_hint`
+                        aponta o login oficial.
+    install             Instala o SparkForge no projeto/workspace (--scope) ou
+                        no HOME (--scope user, delegado ao integrate). Escreve
+                        so arquivos gerenciados; --dry-run mostra o plano.
+    status              Estado da instalacao (ledger + drift + health doc).
+    repair              Regrava assets gerenciados que sumiram ou mudaram.
+    update              Atualiza o runtime instalado pelo bootstrap.
+    uninstall           Remove so o que o manifesto declara como gerenciado.
+    mcp                 Operacoes do servidor MCP.
+    portal              Abre o portal web local do SparkForge (127.0.0.1,
+                        sessão por token): dashboard de instalação, hosts de
+                        IA, MCP, skills, agents, tarefas, grafo e docs — os
+                        mesmos serviços e receipts do CLI. Opcional: o
+                        ecossistema inteiro funciona sem ele. --no-browser só
+                        imprime a URL.
+    policy              Politica de seguranca do repositorio
+                        (.sparkforge_aws/policy.yaml): validar, explicar uma
+                        decisao e gerar as regras ask do
+                        .claude/settings.json.
+    change              Autonomia L1-L2: gera o diff de um valor de
+                        configuracao (plan) e aplica um diff numa copia
+                        isolada para ver o que ele move nos achados (sandbox).
+    collect             Coleta artefatos AWS reais (event log, job Glue,
+                        CloudWatch, metadata Iceberg).
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit

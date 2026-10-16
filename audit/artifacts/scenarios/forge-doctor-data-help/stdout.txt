@@ -1,0 +1,160 @@
+                                                                                
+ Usage: forge-doctor-data [OPTIONS] COMMAND [ARGS]...                           
+                                                                                
+ Deterministic diagnostics for data engineering projects.                       
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --version                                                                    │
+│ --install-completion            Install completion for the current shell.    │
+│ --show-completion               Show completion for the current shell, to    │
+│                                 copy it or customize the installation.       │
+│ --help                -h        Show this message and exit.                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ portal         Serve the optional local portal over the real services        │
+│                (127.0.0.1).                                                  │
+│ incident       Dependency-aware incident intelligence (offline).             │
+│ inspect        Domain inspection: `inspect <domain> ` (alias of `<domain>    │
+│                inspect`).                                                    │
+│ reliability    End-to-end SLO & critical-path intelligence.                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Estate & change ────────────────────────────────────────────────────────────╮
+│ advise         Rank findings into a cited action list.                       │
+│ compatibility  Detect runtimes and show Glue migration risks (knowledge      │
+│                packs).                                                       │
+│ capabilities   Platform capability registry.                                 │
+│ migrate        Migration intelligence.                                       │
+│ contract       Platform contract files.                                      │
+│ architecture   Architecture drift detection.                                 │
+│ fleet          Fleet/estate intelligence across many repos. Bare:            │
+│                Fleet/estate intelligence over a manifest of repositories.    │
+│ history        Recorded scan snapshots: list, diff, trend. Bare: List        │
+│                recorded snapshots (scan --record).                           │
+│ optimize       Optimization candidates + multi-objective opportunities.      │
+│                Bare: Enumerate optimization candidates (v1) when no          │
+│                subcommand given.                                             │
+│ twin           Formal digital twin: validated platform snapshot.             │
+│ what-if        Evaluate a hypothetical change without executing it. Bare:    │
+│                Evaluate --change target=value specs against the project.     │
+│ workspace      Discover and orchestrate sub-projects. Bare: Discover         │
+│                sub-projects (pyproject.toml) under a workspace root.         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Scan & findings ────────────────────────────────────────────────────────────╮
+│ diff           Diff findings: NEW in <new> vs <old>, or in a 'base...head'   │
+│                git range.                                                    │
+│ fix            Preview (or apply) deterministic safe fixes for findings.     │
+│ explain        Explain what a check looks for, when it is OK, and how to fix │
+│                it.                                                           │
+│ checks         List every registered check id, category and title.           │
+│ suppressions   Audit configured suppressions: ACTIVE / EXPIRED / UNUSED.     │
+│ diagnose       Fingerprint log errors against known signatures               │
+│                (deterministic, offline).                                     │
+│ trace          Explain ONE finding: evidence, enclosing symbol, receiver     │
+│                chain.                                                        │
+│ remediate      Print deterministic remediation plans for findings / root     │
+│                causes.                                                       │
+│ root-cause     Correlate scan findings with runtime evidence into causal     │
+│                clusters.                                                     │
+│ scan           Scan a project for data-engineering problems.                 │
+│ repo           Run only repository checks.                                   │
+│ python         Run only python checks.                                       │
+│ dependencies   Run only dependencies checks.                                 │
+│ git            Run only git checks.                                          │
+│ aws            Run only aws checks.                                          │
+│ docker         Run only docker checks.                                       │
+│ glue           Run only glue checks.                                         │
+│ ci             Run only ci checks.                                           │
+│ iac            Run only iac checks.                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Setup & integrations ───────────────────────────────────────────────────────╮
+│ export         Emit a portable handoff bundle: findings + graph +            │
+│                capabilities + plans.                                         │
+│ hosts          Observe AI host CLIs and this project's integration with      │
+│                them.                                                         │
+│ init           Scaffold a new Python project (pyproject, .gitignore, README, │
+│                src/, tests/).                                                │
+│ info           Quick project stats - files, languages, tooling - no checks   │
+│                run.                                                          │
+│ mcp            Start a zero-dep MCP (JSON-RPC stdio) server for agent        │
+│                integrations.                                                 │
+│ lsp            Start a stdio LSP server (requires the optional 'lsp' extra). │
+│ doctor         Self-check: config, plugins, cache dir, git, environment      │
+│                health.                                                       │
+│ version        Print the installed Forge Doctor Data version.                │
+│ agent          Deterministic, budget-aware agent context.                    │
+│ install        Install Forge Doctor Data into a project, workspace or the    │
+│                user home; manage the lifecycle (status, doctor, repair,      │
+│                update, uninstall).                                           │
+│ cache          Inspect or clear the incremental analysis cache. Bare: Show   │
+│                cache statistics for the project.                             │
+│ project        Project self-inspection: generated status and doc-drift       │
+│                checks.                                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Platform intelligence ──────────────────────────────────────────────────────╮
+│ lineage        Static lineage: which jobs read/write which datasets.         │
+│ airflow        Airflow intelligence: inspect DAGs, tasks, sensors.           │
+│ analytical     Real-time OLAP engines: ClickHouse / Pinot / Druid            │
+│                inspection.                                                   │
+│ bigquery       BigQuery intelligence: inspect the vendor model.              │
+│ catalog        Metadata catalogs: DataHub/OpenMetadata/Glue/Unity declared   │
+│                estate.                                                       │
+│ cloud          Multi-cloud abstractions: vendor-neutral view over detected   │
+│                services.                                                     │
+│ controlm       Control-M intelligence: inspect workflows-as-code.            │
+│ data-model     Cross-domain access-style inspection.                         │
+│ dbt            dbt intelligence: inspect the transformation model.           │
+│ dynamodb       DynamoDB intelligence.                                        │
+│ graph          Graph intelligence.                                           │
+│ iceberg        Iceberg intelligence: inspect, maintenance, compatibility.    │
+│ runtime        Offline runtime evidence (exported artifacts).                │
+│ lakeformation  Lake Formation governance intelligence.                       │
+│ schema         Schema extraction and diffing.                                │
+│ neptune        Neptune Database + Analytics intelligence.                    │
+│ parquet        Parquet intelligence: inspect.                                │
+│ platform       Canonical platform graph.                                     │
+│ emr            EMR deep intelligence (EC2/Serverless/EKS).                   │
+│ databricks     Databricks workspace/job/UC intelligence.                     │
+│ delta          Delta Lake feature and ops intelligence.                      │
+│ quality        Data quality: Deequ/GX/SodaCL/dbt suites, coverage, gate      │
+│                wiring.                                                       │
+│ redshift       Redshift intelligence: inspect the vendor model.              │
+│ spark          Spark checks and runtime diagnosis. Bare: Run only spark      │
+│                checks (default) or a runtime subcommand.                     │
+│ search         Search platforms: OpenSearch/Elasticsearch indices, policies, │
+│                domains.                                                      │
+│ athena         Athena workgroup/query intelligence.                          │
+│ lambda         Lambda function/trigger intelligence.                         │
+│ snowflake      Snowflake intelligence: inspect the vendor model.             │
+│ stepfunctions  Step Functions intelligence.                                  │
+│ streaming      Streaming intelligence.                                       │
+│ kafka          Kafka/MSK deep intelligence.                                  │
+│ kinesis        Kinesis deep intelligence.                                    │
+│ flink          Flink deep intelligence.                                      │
+│ terraform      Terraform intelligence: inspect.                              │
+│ trino          Trino intelligence: inspect catalogs, coordinator, lineage.   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Quality gates & supply chain ───────────────────────────────────────────────╮
+│ sbom           Emit a CycloneDX 1.5 SBOM: deps, plugins, knowledge packs,    │
+│                images.                                                       │
+│ bench          Performance & scale benchmark.                                │
+│ collector      Validate normalized evidence bundles.                         │
+│ golden         Golden repositories - snapshot regression suites.             │
+│ lab            Forge Lab - reproducible scenarios with ground truth.         │
+│ contracts      Published artifact contracts (verify handoff bundles,         │
+│                schemas).                                                     │
+│ ontology       Canonical platform vocabulary (entity/rel kinds, planes,      │
+│                domains). Bare: Print the canonical vocabulary (entity kinds, │
+│                rel kinds, evidence                                           │
+│ knowledge      Knowledge-pack provenance. Bare: List all bundled knowledge   │
+│                packs with provenance.                                        │
+│ plugins        Inspect and validate external plugins. Bare: List built-in    │
+│                categories and discovered external plugins.                   │
+│ policy         Organization policy packs.                                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+                                                                                
+ Start here: forge-doctor-data scan .  |  forge-doctor-data checks  |           
+ forge-doctor-data explain <CHECK-ID>                                           
+                                                                                
+ Docs & issues: https://github.com/EdgarSocrates98/forge-doctor-data            
+                                                                                
+

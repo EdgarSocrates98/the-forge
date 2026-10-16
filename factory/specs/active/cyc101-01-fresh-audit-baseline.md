@@ -1,7 +1,7 @@
 ---
 id: cyc101-01
 title: fresh-audit-baseline
-status: inbox
+status: done
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

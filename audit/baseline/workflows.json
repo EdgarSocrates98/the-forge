@@ -1,28 +1,29 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-14T01:25:57.638345+00:00",
+  "generated_at": "2026-10-16T00:55:50.338928+00:00",
   "ref": "origin/main",
   "data": {
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "c0b1e8571c80a30f3e8c388e499fe002759a1667",
+      "sha": "530ea52121a485b41067e8650d72a8d27c061de6",
       "workflows": [
         ".github/workflows/ci.yml",
         ".github/workflows/compat.yml",
         ".github/workflows/ecosystem-real.yml",
         ".github/workflows/provider-surface-drift.yml",
-        ".github/workflows/release-compat.yml"
+        ".github/workflows/release-compat.yml",
+        ".github/workflows/release-gates.yml"
       ],
       "provenance": {
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:51.867562+00:00"
+        "collected_at": "2026-10-16T00:55:50.058632+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "6a728debb881fcf4765407f33e4824096ec55af2",
+      "sha": "f8ef41b6112dcac78edc32d1c0e1ca1d3b3b79f7",
       "workflows": [
         ".github/workflows/ci.yml",
         ".github/workflows/refresh-knowledge.yml",
@@ -32,12 +33,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:52.736637+00:00"
+        "collected_at": "2026-10-16T00:55:50.115133+00:00"
       }
     },
     "spark-forge-azure": {
       "repository": "EdgarSocrates98/spark-forge-azure",
-      "sha": "d3e37697ee740f511445938b707828cec62fb12f",
+      "sha": "f1e70ceedd4609e834e01e19313bbac3680e2fdb",
       "workflows": [
         ".github/workflows/ci.yml",
         ".github/workflows/scheduled.yml"
@@ -46,12 +47,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:53.569695+00:00"
+        "collected_at": "2026-10-16T00:55:50.150011+00:00"
       }
     },
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "bccf56eb4c03feefe5af69058af1c9704e276fd3",
+      "sha": "6b7ede67ecb8871fd585730850f00ef7ff1bb1c4",
       "workflows": [
         ".github/workflows/api-change-control.yml",
         ".github/workflows/change-control-pages.yml",
@@ -61,12 +62,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:54.340518+00:00"
+        "collected_at": "2026-10-16T00:55:50.191660+00:00"
       }
     },
     "platform-forge": {
       "repository": "EdgarSocrates98/platform-forge",
-      "sha": "d34b90c435634b13d618af7e4271ab04beb0db6e",
+      "sha": "aed8d5a1798b7fde9e2b860943c4cdcd737b3c49",
       "workflows": [
         ".github/workflows/ci.yml"
       ],
@@ -74,12 +75,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:54.912313+00:00"
+        "collected_at": "2026-10-16T00:55:50.223388+00:00"
       }
     },
     "forge-doctor-api": {
       "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "1bf561ec08988582b1817cef3d219a50d4c66b78",
+      "sha": "fb31db3f91deedc4a35a82560ac3437d7350dcf8",
       "workflows": [
         ".github/workflows/doctor-scan.yml",
         ".github/workflows/quality.yml",
@@ -89,12 +90,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:55.598410+00:00"
+        "collected_at": "2026-10-16T00:55:50.253375+00:00"
       }
     },
     "forge-doctor-data": {
       "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "66ce9ca5464f8cc46199166fcea47cce9f25999e",
+      "sha": "2e411717a6bfeecc6543bea319ed8993c2558a68",
       "workflows": [
         ".github/workflows/benchmarks.yml",
         ".github/workflows/ci.yml",
@@ -105,12 +106,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:56.259124+00:00"
+        "collected_at": "2026-10-16T00:55:50.286507+00:00"
       }
     },
     "forge-cli": {
       "repository": "EdgarSocrates98/forge-cli",
-      "sha": "f893bb0308f2c4016e024d7e21a2e9e79f09c64a",
+      "sha": "6109f6ae445a06423744fbbb36fbbb52a3332f80",
       "workflows": [
         ".github/workflows/ci.yml",
         ".github/workflows/release.yml"
@@ -119,12 +120,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:56.872719+00:00"
+        "collected_at": "2026-10-16T00:55:50.310748+00:00"
       }
     },
     "forge-portal": {
       "repository": "EdgarSocrates98/forge-portal",
-      "sha": "88015f233bab105c0cbae173fbbcddc6665bb346",
+      "sha": "ab5a3ef0ffd4d08f2fa6c381bf3910a0ca7a6c1f",
       "workflows": [
         ".github/workflows/ci.yml"
       ],
@@ -132,7 +133,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-10-14T01:25:57.638333+00:00"
+        "collected_at": "2026-10-16T00:55:50.338907+00:00"
       }
     }
   }
