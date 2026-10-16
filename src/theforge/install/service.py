@@ -31,7 +31,7 @@ def _spec() -> kit.ForgeSpec:
     return kit.ForgeSpec(
         forge_id=FORGE_ID,
         package="theforge",
-        distribution="theforge",
+        distribution="the-forge",
         cli_name="theforge",
         python_spec=">=3.11",
         state_dir=STATE_DIR,

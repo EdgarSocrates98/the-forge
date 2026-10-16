@@ -181,7 +181,7 @@ def built_wheel(tmp_path_factory: pytest.TempPathFactory) -> Path:
         check=True,
         timeout=600,
     )
-    wheels = sorted(dist.glob("theforge-*.whl"))
+    wheels = sorted(dist.glob("the_forge-*.whl"))
     assert len(wheels) == 1, wheels
     return wheels[0]
 
@@ -258,7 +258,7 @@ def built_sdist(tmp_path_factory: pytest.TempPathFactory) -> Path:
         timeout=600,
         capture_output=True,
     )
-    sdists = sorted(dist.glob("theforge-*.tar.gz"))
+    sdists = sorted(dist.glob("the_forge-*.tar.gz"))
     assert len(sdists) == 1, sdists
     return sdists[0]
 

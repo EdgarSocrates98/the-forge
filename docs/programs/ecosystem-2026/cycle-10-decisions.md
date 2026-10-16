@@ -26,7 +26,7 @@ G-21, metade de cyc10-03 (contribuição exige licença clara).
 
 | Opção | Trade-off |
 |---|---|
-| **A. PyPI + diretórios MCP primeiro** (recomendada) | 7 dos 9 produtos são Python; `pip install theforge` é o golden path já documentável; diretório MCP é onde usuários de host realmente procuram. npm fica para forge-cli/forge-portal depois |
+| **A. PyPI + diretórios MCP primeiro** (recomendada) | 7 dos 9 produtos são Python; `pip install the-forge` é o golden path já documentável; diretório MCP é onde usuários de host realmente procuram. npm fica para forge-cli/forge-portal depois |
 | B. GitHub Releases only | Zero risco de registry (sem token, sem nome squatting); mas instalação vira `pip install git+https://...` — onboarding mais frágil |
 | C. Tudo de uma vez (PyPI+npm+MCP+marketplaces) | Máximo alcance; mais superfície de supply-chain antes da homologação madura |
 
