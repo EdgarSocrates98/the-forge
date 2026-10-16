@@ -816,15 +816,15 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.generated.json": {
-    "mtime": 1792114831.5018492,
-    "seen": 1792114845.4267707,
-    "ast_hash": "7b19c685d21d522e7ca8c7e58bd9ceda",
+    "mtime": 1792114853.2667353,
+    "seen": 1792114867.0761023,
+    "ast_hash": "b623378d15738291d9a316f48ed40976",
     "semantic_hash": ""
   },
   "docs/reference/divergence.generated.json": {
-    "mtime": 1792114831.5310385,
-    "seen": 1792114845.4267719,
-    "ast_hash": "5f0699452694c880ba603f6b2ba027d7",
+    "mtime": 1792114853.291203,
+    "seen": 1792114867.0761044,
+    "ast_hash": "11ec4fd064da19be621986e7758918c1",
     "semantic_hash": ""
   },
   "docs/reports/agentic-polish-closure.json": {
@@ -7410,9 +7410,9 @@
     "semantic_hash": ""
   },
   "docs/INDEX.md": {
-    "mtime": 1792114832.192364,
-    "seen": 1792114845.4868186,
-    "ast_hash": "5ccf15dd3d84c9c8aee0fdeaf075b968",
+    "mtime": 1792114853.9353046,
+    "seen": 1792114867.077547,
+    "ast_hash": "ba6d1a6baa90308015870e7a253a4769",
     "semantic_hash": ""
   },
   "docs/README.md": {
@@ -8424,8 +8424,8 @@
     "semantic_hash": ""
   },
   "docs/hub/which-forge.md": {
-    "mtime": 1792114832.2208018,
-    "seen": 1792114845.4947586,
+    "mtime": 1792114853.961946,
+    "seen": 1792114867.0777495,
     "ast_hash": "1f2a16d5b955d8f754b276d8447f9503",
     "semantic_hash": ""
   },
@@ -8550,39 +8550,39 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/broken-link-report.md": {
-    "mtime": 1792114832.1476183,
-    "seen": 1792114845.495623,
-    "ast_hash": "52ff7d5da6a21942bf24e42a44903ae4",
+    "mtime": 1792114853.8899348,
+    "seen": 1792114867.077773,
+    "ast_hash": "92fae8d9388d6dfc9ce90e47d7215779",
     "semantic_hash": ""
   },
   "docs/knowledge-program/classification-report.md": {
-    "mtime": 1792114832.1474657,
-    "seen": 1792114845.4956248,
-    "ast_hash": "526021a55b4fb07f500a586bf97e1901",
+    "mtime": 1792114853.889777,
+    "seen": 1792114867.077774,
+    "ast_hash": "7d135ccb6d6e65bd99e0fd03c2c6a1c1",
     "semantic_hash": ""
   },
   "docs/knowledge-program/command-drift-report.md": {
-    "mtime": 1792114832.1477413,
-    "seen": 1792114845.495626,
+    "mtime": 1792114853.8900583,
+    "seen": 1792114867.077775,
     "ast_hash": "a9d4fa20e0baf611738c05a85d93c312",
     "semantic_hash": ""
   },
   "docs/knowledge-program/documentation-quality-report.md": {
-    "mtime": 1792114832.1478615,
-    "seen": 1792114845.4956279,
+    "mtime": 1792114853.890177,
+    "seen": 1792114867.0777762,
     "ast_hash": "9b131ca56e39add1558956e011260501",
     "semantic_hash": ""
   },
   "docs/knowledge-program/duplicate-content-report.md": {
-    "mtime": 1792114832.1475456,
-    "seen": 1792114845.4956288,
+    "mtime": 1792114853.8898542,
+    "seen": 1792114867.0777776,
     "ast_hash": "1bba782b953dc9472dfac839e7d1d258",
     "semantic_hash": ""
   },
   "docs/knowledge-program/final-report.md": {
-    "mtime": 1792114832.2645264,
-    "seen": 1792114845.4956312,
-    "ast_hash": "e4bf08f6a63d2b9017a66fcc6faaef2e",
+    "mtime": 1792114854.012185,
+    "seen": 1792114867.0777786,
+    "ast_hash": "94fdce10f6272e2c7f1db381e8796713",
     "semantic_hash": ""
   },
   "docs/knowledge-program/hub-evaluation.md": {
@@ -8592,14 +8592,14 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/obsolete-document-report.md": {
-    "mtime": 1792114832.1476803,
-    "seen": 1792114845.4956775,
+    "mtime": 1792114853.8899972,
+    "seen": 1792114867.0777807,
     "ast_hash": "9332ba74314019005fcde3dfe48ba185",
     "semantic_hash": ""
   },
   "docs/knowledge-program/tutorial-coverage-report.md": {
-    "mtime": 1792114832.1478007,
-    "seen": 1792114845.4956787,
+    "mtime": 1792114853.8901186,
+    "seen": 1792114867.0777814,
     "ast_hash": "2b83b7d264ae186bce1297211a4fcf2e",
     "semantic_hash": ""
   },
@@ -8874,8 +8874,8 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.md": {
-    "mtime": 1792114831.6034794,
-    "seen": 1792114845.4991517,
+    "mtime": 1792114853.3562934,
+    "seen": 1792114867.0778718,
     "ast_hash": "868df1f5589604809ee016169180fc21",
     "semantic_hash": ""
   },
@@ -10139,12 +10139,6 @@
     "ast_hash": "adadc721f76acd10ae4d9b8f097ba3da",
     "semantic_hash": ""
   },
-  "factory/specs/inbox/cyc101-10-final-certification.md": {
-    "mtime": 1792112021.1735072,
-    "seen": 1792112040.9551928,
-    "ast_hash": "ddfb9982f6b8a7a1936f99180440192b",
-    "semantic_hash": ""
-  },
   "audit/artifacts/scenarios/forge-doctor-data-scan/doctor-data.json": {
     "mtime": 1792112491.7641554,
     "seen": 1792112802.643574,
@@ -10809,6 +10803,24 @@
     "mtime": 1792112020.405322,
     "seen": 1792114845.5017025,
     "ast_hash": "0af555042165a673a2b2e734e20a15cc",
+    "semantic_hash": ""
+  },
+  "e2e/example-app/infra/main.tf": {
+    "mtime": 1792114777.818343,
+    "seen": 1792114867.0761223,
+    "ast_hash": "a9b5e4cb198a61bcd5d3dba189f8fd57",
+    "semantic_hash": ""
+  },
+  "docs/certification/cycle-10.1/FINAL-CERTIFICATION.md": {
+    "mtime": 1792114849.7111452,
+    "seen": 1792114867.077631,
+    "ast_hash": "7a6d45bba0bb54179a1119fd677e0ae6",
+    "semantic_hash": ""
+  },
+  "factory/specs/active/cyc101-10-final-certification.md": {
+    "mtime": 1792112021.1735072,
+    "seen": 1792114867.077948,
+    "ast_hash": "ddfb9982f6b8a7a1936f99180440192b",
     "semantic_hash": ""
   }
 }

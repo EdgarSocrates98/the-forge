@@ -1,7 +1,7 @@
 ---
 id: cyc101-08
 title: release-candidates-supply-chain
-status: inbox
+status: active
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

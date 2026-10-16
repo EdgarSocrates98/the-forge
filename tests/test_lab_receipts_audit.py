@@ -102,11 +102,11 @@ def test_verdict_histogram_and_failures_preserved():
         for r in doc.get("results", []):
             hist[r["verdict"]] = hist.get(r["verdict"], 0) + 1
             total += 1
-    (BENCH / "audit-histogram.json").parent.mkdir(parents=True, exist_ok=True)
-    assert total >= 200, f"expected 203+ scenarios across receipts, got {total}"
+    assert total >= 203, f"expected 203+ scenarios across receipts, got {total}"
     assert hist.get("pass", 0) > 0
-    # failure-allowing receipts are honest: record them, don't require zero
-    (Path("/tmp") / "lab-audit-histogram.json").write_text(json.dumps({"total": total, **hist}))
+    # The lab corpus deliberately includes negative scenarios; their verdicts
+    # must survive into the stored receipts (no silent filtering to green).
+    assert hist.get("fail", 0) >= 1, f"failure verdicts filtered out? {hist}"
 
 
 @pytest.mark.parametrize("fname", [r.name for r in RECEIPTS])

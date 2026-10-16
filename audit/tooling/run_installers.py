@@ -158,6 +158,8 @@ def main() -> int:
         posix_python = runtime_root / repo / ".venv" / "bin" / "python"
         if not posix_python.is_file():
             posix_python = Path(sys.executable)
+        if os.name == "posix":
+            python = posix_python
         for shell, executable in powershells:
             script = source / "install.ps1"
             command = (

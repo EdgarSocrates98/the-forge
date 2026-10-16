@@ -1,7 +1,7 @@
 ---
 id: cyc101-09
 title: global-e2e-scenario
-status: inbox
+status: active
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem
