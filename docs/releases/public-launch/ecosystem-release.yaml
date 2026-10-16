@@ -7,7 +7,7 @@ components:
   the-forge:
     version: "0.5.0"
     commit: "20f0105"
-    pypi_dist: "the-forge"        # renomeado — `theforge` ocupado por terceiro
+    pypi_dist: "theforge-core"    # `theforge`/`the-forge` ambos bloqueados (PyPI similar-name)
     tag: "v0.5.0"
     python: ">=3.11"
     role: control-plane

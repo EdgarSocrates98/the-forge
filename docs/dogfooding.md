@@ -6,7 +6,7 @@ reais e coletar evidência, não expandir features.
 
 ## Como usar
 
-1. Instale no projeto real: `pip install the-forge` (ou editable para dev).
+1. Instale no projeto real: `pip install theforge-core` (ou editable para dev).
 2. `theforge init` no workspace; registre os providers reais
    (`theforge providers add`).
 3. Trabalhe normalmente: `ask`/`plan`/`execute`/`explain`/`replay`.

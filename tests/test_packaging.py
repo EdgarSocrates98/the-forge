@@ -39,14 +39,14 @@ def _run_script(
 
 def _write_pyproject(path: Path, dependencies: str) -> Path:
     path.write_text(
-        f'[project]\nname = "the-forge"\nversion = "0.1.0"\ndependencies = {dependencies}\n',
+        f'[project]\nname = "theforge-core"\nversion = "0.1.0"\ndependencies = {dependencies}\n',
         encoding="utf-8",
     )
     return path
 
 
 def _fake_wheel(path: Path, requires: list[str]) -> Path:
-    metadata = "Metadata-Version: 2.3\nName: the-forge\nVersion: 0.1.0\n"
+    metadata = "Metadata-Version: 2.3\nName: theforge-core\nVersion: 0.1.0\n"
     metadata += "".join(f"Requires-Dist: {req}\n" for req in requires)
     with zipfile.ZipFile(path, "w") as zf:
         zf.writestr("theforge/__init__.py", "")
@@ -139,7 +139,7 @@ def test_fresh_install_metadata_check_rejects_bad_installs(
     # path is only compared, never created.
     venv = Path(tempfile.gettempdir()) / f"theforge-probe-{tmp_path.name}" / "venv"
     probe: dict[str, Any] = {
-        "name": "the-forge",
+        "name": "theforge-core",
         "version": "1.2.3",
         "requires_python": ">=3.11",
         "requires": ["pytest; extra == 'dev'", "ruff; extra=='dev'"],
