@@ -1,0 +1,56 @@
+{
+  "run_id": "20261016T044939Z-2c7890f4",
+  "status": "ok",
+  "selected": [
+    {
+      "action": "analyze",
+      "capability": "data.scan",
+      "provider": "forge-doctor-data",
+      "role": "primary"
+    }
+  ],
+  "findings_count": 72,
+  "sample": [
+    {
+      "id": "a1dd3ab3ee0a6a00",
+      "title": "AIR000: Airflow usage"
+    },
+    {
+      "id": "a3220d0892512feb",
+      "title": "ATH000: Athena usage"
+    },
+    {
+      "id": "5fab4cbb7c1789a4",
+      "title": "AWS001: AWS CLI"
+    },
+    {
+      "id": "10679ac97bf915c3",
+      "title": "AWS002: AWS region"
+    },
+    {
+      "id": "9907f7abe0b0b0a9",
+      "title": "AWS003: AWS credentials"
+    },
+    {
+      "id": "187ab1da4763c9d9",
+      "title": "AWS004: AWS profile"
+    },
+    {
+      "id": "3d05a8b713404da5",
+      "title": "AZ000: Azure data-platform surface"
+    },
+    {
+      "id": "7e0558bddf46f2e9",
+      "title": "BQ000: BigQuery surface"
+    },
+    {
+      "id": "0cb325d0289fb66d",
+      "title": "CI001: CI configured"
+    },
+    {
+      "id": "d6d71ca2683bea1c",
+      "title": "CLOUD000: Multi-cloud abstraction surface"
+    }
+  ],
+  "provider_receipt": null
+}

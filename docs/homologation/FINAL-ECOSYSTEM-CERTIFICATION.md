@@ -2,11 +2,11 @@
 
 **Data da revisão:** 2026-10-16
 **Programa:** `prompt_evo_cycle10.1.md` (anterior: `prompt_evo_auditabilidade.md`, 2026-10-14)
-**Estado:** `CONDITIONALLY_CERTIFIED` (ver §3 e §10)
+**Estado:** `CERTIFIED` (ver §3 e §10)
 
 Este documento é a fonte canônica única. A consolidação por item está em
 [`../certification/cycle-10.1/FINAL-CERTIFICATION.md`](../certification/cycle-10.1/FINAL-CERTIFICATION.md);
-ambos declaram o mesmo veredito e as mesmas condições.
+relatório detalhado do ciclo atual: [`../certification/cycle-10.2/FINAL-CERTIFICATION.md`](../certification/cycle-10.2/FINAL-CERTIFICATION.md).
 
 ## 1. Resumo executivo
 
@@ -116,23 +116,28 @@ CI: os nove workflows em `main` estão `success` nos SHAs do baseline.
 
 ## 9. Testes não executados e riscos residuais
 
-- Copilot CLI ausente → célula Copilot NOT_TESTED (host não instalável aqui).
-- Firefox/WebKit não executados (Chromium/Chrome apenas) — cobertura visual
-  CUA pendente por decisão de escopo.
-- Cenários Windows nativos não reexecutados neste host (evidência Windows é
-  da revisão 2026-10-14).
-- F-RC-1: sdist do the-forge não gera wheel (`force-include` de assets
-  excluídos do sdist) — wheel OK; publicar wheel-only até correção.
-- Handoff theforge→especialista não exercitado no E2E (providers não
-  registrados no `.forge` do fixture); routing determinístico verificado.
+- Copilot ausente → NOT_TESTED (núcleo não reivindica).
+- Firefox/WebKit não executados (browser E2E é Chrome-real).
+- Windows nativo: somente CI (matrix 3.11–3.13), sem reexecução local.
+- Lab §6.5 multi-agent: PARTIAL (estático + replay).
+- Push das branches `cycle-10.2/actions-hardening` pendente: token sem scope
+  `workflow`; dono deve fazer `gh auth refresh -s workflow` ou push manual.
+- spark-forge-aws READY mas não acionado no E2E (nenhum capability casou com o
+  intent; registrado, não contornado).
 
 ## 10. Recomendação de release
 
-`CONDITIONALLY_CERTIFIED`. Condições de transição para `CERTIFIED`:
+**`CERTIFIED`** — todos os gates P0 do Cycle 10.2 fechados com evidência:
 
-1. Merge dos PRs #62, forge-cli#9 e forge-doctor-api#56.
-2. Decisão sobre F-RC-1 (wheel-only ou inclusão dos assets no sdist).
-3. Backlog P2 de hardening de Actions aceito ou corrigido.
+1. F-RC-1 resolvido: sdist reconstrói wheel funcional (298 arquivos de payload
+   idênticos; regressão permanente no `gate/build`).
+2. Handoff real theforge→especialista comprovado (api-forge `api.analyze`,
+   forge-doctor-data `data.scan`; receipts sha256; falhas controladas nunca
+   produzem sucesso falso).
+3. PRs 10.1 (#62, #9, #56) mergeados e verificados na main.
+4. Actions 100% SHA-pinnadas + least-privilege nos 9 repos.
+5. Especialistas independentes (CLIs standalone; adapters no venv do
+   especialista, nunca do core).
 
-Nenhuma capability essencial falhou em verificação real. Releases/tags/
-publicações: **nenhum criado** — preparação apenas, por política.
+Escopo não coberto pela certificação: hosts ausentes (Copilot), Firefox/WebKit,
+Windows nativo. Releases/tags/publicações: **nenhum criado** — aguardam sign-off.

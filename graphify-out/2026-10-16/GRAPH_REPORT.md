@@ -1,7 +1,7 @@
 # Graph Report - the-forge  (2026-10-16)
 
 ## Corpus Check
-- 1456 files · ~1,186,173 words
+- 1456 files · ~1,186,218 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `adbed46b`
+- Built from commit: `fcff74f8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -384,14 +384,14 @@
 10. `jI()` - 127 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `test_nav_routes_render()` --calls--> `TheForgePortal`  [INFERRED]
-  tests/test_browser_real_adapter.py → src/theforge/portal_adapter.py
 - `_result()` --uses--> `BenchmarkResult`  [INFERRED]
   tests/test_lab_gate.py → src/theforge/contracts/benchmark.py
 - `test_gate_string_metrics_equal_direction()` --uses--> `GatePolicy`  [INFERRED]
   tests/test_lab_gate.py → src/theforge/lab_gate.py
 - `test_gate_string_metrics_equal_direction()` --uses--> `GateRule`  [INFERRED]
   tests/test_lab_gate.py → src/theforge/lab_gate.py
+- `test_nav_routes_render()` --calls--> `TheForgePortal`  [INFERRED]
+  tests/test_browser_real_adapter.py → src/theforge/portal_adapter.py
 - `_multiforge_scenario()` --calls--> `dump_result()`  [INFERRED]
   scripts/lab/theforge_lab.py → src/theforge/contracts/benchmark.py
 
@@ -1569,7 +1569,7 @@ Cohesion: 0.50
 Nodes (4): graph(), ``p/c`` matches exactly; bare ``c`` matches ``capability:*/c``., The capability graph (``theforge graph``): every edge of the persisted…, _ref_match()
 
 ## Knowledge Gaps
-- **1256 isolated node(s):** `Fresh collection`, `Audit results — `tests/test_lab_receipts_audit.py` (permanent regression, 9 tests)`, `§7 line items`, `Findings`, `Gap Register — Cycle 10.1` (+1251 more)
+- **1256 isolated node(s):** `experience-3/`, `factory/`, `graph-studio/`, `installation/`, `knowledge-program/` (+1251 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **63 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -1577,12 +1577,12 @@ Nodes (4): graph(), ``p/c`` matches exactly; bare ``c`` matches ``capability:*/c
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `./` connect `./` to `Results by forge`, `Cenários multi-Forge do Forge Lab`, `Open gaps — ecosystem-2026 (Wave 0)`, `Onboarding, Getting Started e Golden Paths`, `Public Readiness: contribuição, distribuição, templates, demos e feedback`, `Política de versões + Compatibility Manifest`, `Conformidade de empacotamento dos nove repos`, `Programa ecosystem-2026`, `the-forge — Documentation Index`, `Cycle 8 — Release readiness (RC evidence)`, `Matriz de empacotamento — ecosystem-2026`, `getting-started/README.md`, `Getting Started — Usuário de Codex`, `Cycle 10 — Public Adoption (cyc10-03)`, `Security & dependency audit — Cycle 10.1 §9 / Wave 5`, `feature_request.md`, `Documentação unificada, posicionamento e GitHub Experience`, `PULL_REQUEST_TEMPLATE.md`, `Política de Segurança`, `Global E2E — Cycle 10.1 §10 / Wave 6`, `Cycle 10 — decisões de produto pendentes (memo para o dono)`, `Golden Path — Platform`, `Hosts & MCP certification — Cycle 10.1 §6 / Wave 4`, `Getting Started — Usuário novo no ecossistema`, `FINAL PROGRAM REPORT — ecosystem-2026`, `Portal cross-forge E2E real + testes visuais + segurança`, `Baseline do programa ecosystem-2026`, `Linux Acceptance — Cycle 10.1`, `Release matrix — Cycle 10.1 §7 / Wave 5`, `Supply chain security dos artefatos`, `Reexecutar H0–H7 e atualizar a homologação do ecossistema`, `Portal E2E multi-forge — Cycle 10.1 §4 / Wave 3`, `Forge Lab evidence audit — Cycle 10.1 §7 / Wave 5-6 prep`, `Contribuindo`, `Getting Started — Data Engineer AWS`, `Results by forge`, `Plano de distribuição (cyc10-03, decisão D2)`, `Release candidates verificáveis por projeto — sem publicar`, `bug_report.md`, `Custom specialist capability`, `Auditoria de segurança e dependências nos commits do baseline`, `Baseline — Cycle 10.1 Fresh Audit (Wave 0)`, `GitHub Experience — checklist §10.7 (cyc10-02)`, `PySpark + Spark Forge AWS`, `Golden Path — API`, `Getting Started — Usuário de Claude Code`, `Fresh audit das nove mains + baseline verificável`, `Forge CLI lifecycle — Cycle 10.1 §5.2`, `Modelo de contribuição — Forjas externas (§10.9)`, `Baseline — 2026-10-15`, `Forge Lab: validar o conteúdo das evidências, não só a coleta`, `Forge CLI: homologar lifecycle completo (install→update→rollback→uninstall)`, `Gates de CI/CD e Release Candidate`, `Programa ecosystem-2026 — índice de specs`, `Suporte`, `API + API Forge`, `Multi-repo + The Forge`, `PySpark + Spark Forge Azure`, `Terraform + Platform Forge`, `Use`, `Getting Started — Usuário de Forge Portal`, `Getting Started — Platform Engineer`, `Getting Started — Usuário de Devin`, `Certificação real de hosts (Codex/Claude Code/Devin/Copilot) e MCP`, `E2E global obrigatório: app de exemplo com problemas conhecidos`, `Forge Knowledge Program — final report`, `Supply chain — ecosystem-2026`, `Forge Lab — coordenador federado e harness`, `Dependency map — ecosystem-2026`, `Certificação final + relatório obrigatório §16`, `Integridade de avaliação: métricas, ground truth e regression gates`, `Getting Started — Desenvolvedor backend`?**
-  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+  _High betweenness centrality (0.074) - this node is a cross-community bridge._
 - **Why does `args()` connect `run_installers.py` to `commands.py`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
-- **Why does `_t()` connect `_t` to `main-QDFVZK3T.js`, `chunk-BGUitn2r.js`, `chunk-B0Iad6pD.js`, `r`, `.handleRouterEvent`, `sw`, `l`, `lE`, `e`, `chunk-kXRFMGqe.js`, `pl`, `jI`, `e`, `Wr`, `.ngOnChanges`, `.getContext`, `.isActive`, `.createUrlTree`, `.constructor`, `t`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **What connects `Fresh collection`, `Audit results — `tests/test_lab_receipts_audit.py` (permanent regression, 9 tests)`, `§7 line items` to the rest of the system?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `run_case()` connect `run_installers.py` to `Any`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **What connects `experience-3/`, `factory/`, `graph-studio/` to the rest of the system?**
   _1256 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `test_install_orchestration.py` be split into smaller, more focused modules?**
   _Cohesion score 0.09408033826638477 - nodes in this community are weakly interconnected._
