@@ -14,7 +14,7 @@ Arquivos alterados: 16 workflows em 8 repos (the-forge já estava 100% pinado).
 
 ## Least privilege (§4.3)
 `permissions: contents: read` adicionado a 4 workflows sem bloco
-(forge-doctor-data benchmarks+ci, forge-portal ci, platform-forge ci).
+em todos os 4 workflows sem bloco (forge-doctor-data benchmarks.yml + ci.yml, forge-portal ci.yml, platform-forge ci.yml).
 Release workflows já tinham `contents: write` (+`id-token`/`attestations` onde OIDC).
 
 ## Auditoria (§4.1)

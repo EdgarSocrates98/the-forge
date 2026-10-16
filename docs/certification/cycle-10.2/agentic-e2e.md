@@ -36,5 +36,6 @@ standalone sem theforge — 0 dependência reversa.
 ## Observações honestas
 - Intent genérico sobre PySpark roteou `ambiguous` (data.scan de doctor-data é
   genérico; `--capability` resolveu — comportamento correto: sem chute).
-- spark-forge-aws pronto (READY) mas não acionado: nenhum capability dele casou
-  com o intent testado — registrado, não contornado.
+- spark-forge-aws: handoff executado via `--capability pyspark.static-analysis`
+  → finding real `SF-PY-002` (collect sem limite) sobre `jobs/etl_job.py`.
+  Evidência: `audit/artifacts/cycle-10.2/handoff-sparkforge-aws.json`.

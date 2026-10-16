@@ -7,13 +7,18 @@
 | Gate | Estado | Evidência |
 |---|---|---|
 | F-RC-1 sdist packaging | ✅ RESOLVIDO | wheel-from-sdist 298 arquivos idênticos; regressão permanente na CI |
-| Handoff real theforge→especialista | ✅ COMPROVADO | api-forge api.analyze ok + receipt sha256; doctor-data data.scan 72 findings |
+| Handoff real theforge→especialista | ✅ COMPROVADO | api-forge api.analyze (3 findings+receipt sha256); doctor-data data.scan (72 findings); spark-forge-aws pyspark.static-analysis (SF-PY-002) |
 | Falhas controladas sem sucesso falso | ✅ | NOT-READY/UNTRUSTED/ambiguous observados, nunca ok |
 | Independência especialistas | ✅ | CLIs standalone; adapters só no venv do especialista |
 | PRs 10.1 integrados | ✅ | #62, #9, #56 mergeados e presentes na main |
 | Actions hardening | ✅ local | SHA-pin 100% + permissions; push pendente de scope |
 | Suítes/regressão | ✅ | 9/9 audit, 9/9 browser, 8/8 lifecycle, 32/32 lab, 11/11 gates (ciclo 10.1; nada tocado em src) |
 | Segurança deps/secrets | ✅ | zero vulns; secrets só test fixtures |
+
+## Docs deste ciclo
+baseline · pull-request-reconciliation · packaging · security-hardening ·
+agentic-e2e · hosts-mcp · portal-integration · regression · release-matrix ·
+residual-risks · FINAL-CERTIFICATION
 
 ## Condições NÃO essenciais remanescentes (escopo, não bloqueio)
 - Copilot host: ausente → NOT_TESTED (núcleo não reivindica).

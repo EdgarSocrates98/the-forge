@@ -58,6 +58,7 @@ jobs:
           assert a == b, f"payload delta — only-direct: {sorted(a-b)[:10]} only-sdist: {sorted(b-a)[:10]}"
           print(f"roundtrip OK: {len(a)} payload files identical")
           EOF
+      - run: sha256sum dist/* | tee dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist
