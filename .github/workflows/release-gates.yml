@@ -93,7 +93,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ env.PY_MAIN }}
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: dist
           path: dist/
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ env.PY_MAIN }}
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: dist
           path: dist/
@@ -161,7 +161,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ env.PY_MAIN }}
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: dist
           path: dist/
@@ -226,7 +226,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ env.PY_MAIN }}
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99c062dccc450e # v5.0.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: dist
           path: dist/
