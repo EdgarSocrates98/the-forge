@@ -1,7 +1,7 @@
 ---
 id: cyc101-04
 title: portal-multiforge-e2e
-status: inbox
+status: active
 created: 2026-10-15
 owner: forge-portal
 scope: forge-portal+the-forge

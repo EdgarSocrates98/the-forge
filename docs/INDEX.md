@@ -412,6 +412,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Forge CLI lifecycle — Cycle 10.1 §5.2](certification/cycle-10.1/cli-lifecycle.md) `UNKNOWN`
 - [Gap Register — Cycle 10.1](certification/cycle-10.1/gap-register.md) `UNKNOWN`
 - [Linux Acceptance — Cycle 10.1](certification/cycle-10.1/linux-acceptance.md) `UNKNOWN`
+- [Portal E2E multi-forge — Cycle 10.1 §4 / Wave 3](certification/cycle-10.1/portal-e2e.md) `UNKNOWN`
 
 ### docs/
 
@@ -505,6 +506,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Fresh audit das nove mains + baseline verificável](../factory/specs/active/cyc101-01-fresh-audit-baseline.md) `UNKNOWN`
 - [Reexecutar H0–H7 e atualizar a homologação do ecossistema](../factory/specs/active/cyc101-02-certification-gates.md) `UNKNOWN`
 - [Forge CLI: homologar lifecycle completo (install→update→rollback→uninstall)](../factory/specs/active/cyc101-03-cli-lifecycle.md) `UNKNOWN`
+- [Portal cross-forge E2E real + testes visuais + segurança](../factory/specs/active/cyc101-04-portal-e2e.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
@@ -520,7 +522,6 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Integridade de avaliação: métricas, ground truth e regression gates](../factory/specs/archive/2026/cyc9-02-eval-integrity.md) `HISTORICAL`
 - [Cenários multi-Forge do Forge Lab](../factory/specs/archive/2026/cyc9-03-scenarios-multiforge.md) `HISTORICAL`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
-- [Portal cross-forge E2E real + testes visuais + segurança](../factory/specs/inbox/cyc101-04-portal-e2e.md) `UNKNOWN`
 - [Certificação real de hosts (Codex/Claude Code/Devin/Copilot) e MCP](../factory/specs/inbox/cyc101-05-hosts-mcp-certification.md) `UNKNOWN`
 - [Forge Lab: validar o conteúdo das evidências, não só a coleta](../factory/specs/inbox/cyc101-06-forge-lab-validation.md) `UNKNOWN`
 - [Auditoria de segurança e dependências nos commits do baseline](../factory/specs/inbox/cyc101-07-security-dependency-closure.md) `UNKNOWN`
