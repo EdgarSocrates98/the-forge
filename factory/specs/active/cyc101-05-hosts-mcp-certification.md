@@ -1,7 +1,7 @@
 ---
 id: cyc101-05
 title: hosts-mcp-certification
-status: inbox
+status: active
 created: 2026-10-15
 owner: the-forge
 scope: ecosystem

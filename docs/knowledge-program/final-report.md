@@ -4,13 +4,13 @@
 |---|---|
 | repository | `the-forge` |
 | branch | `cycle-10.1/program` |
-| commit | `2446940` |
-| docs inventoried | 598 (excl. GENERATED mirrors: 446; vendored upstream: 0) |
+| commit | `5ae94cc` |
+| docs inventoried | 599 (excl. GENERATED mirrors: 447; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 598
+- `AUTOMATICALLY_CHECKED`: 599
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -19,7 +19,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
-- `UNKNOWN`: 158
+- `UNKNOWN`: 159
 - `GENERATED`: 152
 - `USER_GUIDE`: 66
 - `ADR`: 61
