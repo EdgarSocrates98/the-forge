@@ -19,10 +19,10 @@ import pytest
 
 playwright = pytest.importorskip("playwright.sync_api", reason="playwright not installed")
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright  # noqa: E402
 
-from theforge import _forge_portal as fp
-from theforge.portal_adapter import TheForgePortal, build_server
+from theforge import _forge_portal as fp  # noqa: E402
+from theforge.portal_adapter import TheForgePortal, build_server  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 ARTIFACTS = Path(__file__).resolve().parent / "artifacts"
@@ -89,8 +89,7 @@ def test_nav_routes_render_real_data(page, server):
     assert routes, "adapter declared no routes"
     rendered = []
     for route in routes:
-        page.goto(f"{server.url.split('?')[0].rstrip('/')}/#{route.lstrip('/')}" if "#" not in page.url else page.url)
-        # Angular SPA — client-side routing
+        # Angular SPA — client-side routing via hash
         page.evaluate(f"location.hash = '#{route.lstrip('/')}'")
         page.wait_for_timeout(1200)
         text = page.locator("body").inner_text().strip()

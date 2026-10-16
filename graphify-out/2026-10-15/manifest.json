@@ -816,15 +816,15 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.generated.json": {
-    "mtime": 1792114732.6581929,
-    "seen": 1792114748.6117687,
-    "ast_hash": "9fbde78c4f77c8835476c16cfe69a5ab",
+    "mtime": 1792114831.5018492,
+    "seen": 1792114845.4267707,
+    "ast_hash": "7b19c685d21d522e7ca8c7e58bd9ceda",
     "semantic_hash": ""
   },
   "docs/reference/divergence.generated.json": {
-    "mtime": 1792114732.6849146,
-    "seen": 1792114748.6117704,
-    "ast_hash": "e136e1e0a4029dbbe4b720a3d48a8005",
+    "mtime": 1792114831.5310385,
+    "seen": 1792114845.4267719,
+    "ast_hash": "5f0699452694c880ba603f6b2ba027d7",
     "semantic_hash": ""
   },
   "docs/reports/agentic-polish-closure.json": {
@@ -7410,9 +7410,9 @@
     "semantic_hash": ""
   },
   "docs/INDEX.md": {
-    "mtime": 1792114733.3393455,
-    "seen": 1792114748.6132607,
-    "ast_hash": "590cfdab2c86db2c390bedae821f650a",
+    "mtime": 1792114832.192364,
+    "seen": 1792114845.4868186,
+    "ast_hash": "5ccf15dd3d84c9c8aee0fdeaf075b968",
     "semantic_hash": ""
   },
   "docs/README.md": {
@@ -8424,8 +8424,8 @@
     "semantic_hash": ""
   },
   "docs/hub/which-forge.md": {
-    "mtime": 1792114733.3656795,
-    "seen": 1792114748.613464,
+    "mtime": 1792114832.2208018,
+    "seen": 1792114845.4947586,
     "ast_hash": "1f2a16d5b955d8f754b276d8447f9503",
     "semantic_hash": ""
   },
@@ -8550,39 +8550,39 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/broken-link-report.md": {
-    "mtime": 1792114733.2942379,
-    "seen": 1792114748.6134863,
-    "ast_hash": "10eb60dbbc9088243f5a5035ce9eeb6e",
+    "mtime": 1792114832.1476183,
+    "seen": 1792114845.495623,
+    "ast_hash": "52ff7d5da6a21942bf24e42a44903ae4",
     "semantic_hash": ""
   },
   "docs/knowledge-program/classification-report.md": {
-    "mtime": 1792114733.2940547,
-    "seen": 1792114748.6134872,
-    "ast_hash": "659c97c3f77bc50116b0cd27507fa791",
+    "mtime": 1792114832.1474657,
+    "seen": 1792114845.4956248,
+    "ast_hash": "526021a55b4fb07f500a586bf97e1901",
     "semantic_hash": ""
   },
   "docs/knowledge-program/command-drift-report.md": {
-    "mtime": 1792114733.2943976,
-    "seen": 1792114748.6134882,
+    "mtime": 1792114832.1477413,
+    "seen": 1792114845.495626,
     "ast_hash": "a9d4fa20e0baf611738c05a85d93c312",
     "semantic_hash": ""
   },
   "docs/knowledge-program/documentation-quality-report.md": {
-    "mtime": 1792114733.294553,
-    "seen": 1792114748.6134892,
+    "mtime": 1792114832.1478615,
+    "seen": 1792114845.4956279,
     "ast_hash": "9b131ca56e39add1558956e011260501",
     "semantic_hash": ""
   },
   "docs/knowledge-program/duplicate-content-report.md": {
-    "mtime": 1792114733.2941499,
-    "seen": 1792114748.61349,
+    "mtime": 1792114832.1475456,
+    "seen": 1792114845.4956288,
     "ast_hash": "1bba782b953dc9472dfac839e7d1d258",
     "semantic_hash": ""
   },
   "docs/knowledge-program/final-report.md": {
-    "mtime": 1792114733.412206,
-    "seen": 1792114748.6134913,
-    "ast_hash": "3fc05adf7f0acedc4cbf3539d065910f",
+    "mtime": 1792114832.2645264,
+    "seen": 1792114845.4956312,
+    "ast_hash": "e4bf08f6a63d2b9017a66fcc6faaef2e",
     "semantic_hash": ""
   },
   "docs/knowledge-program/hub-evaluation.md": {
@@ -8592,14 +8592,14 @@
     "semantic_hash": ""
   },
   "docs/knowledge-program/obsolete-document-report.md": {
-    "mtime": 1792114733.2943182,
-    "seen": 1792114748.6134932,
+    "mtime": 1792114832.1476803,
+    "seen": 1792114845.4956775,
     "ast_hash": "9332ba74314019005fcde3dfe48ba185",
     "semantic_hash": ""
   },
   "docs/knowledge-program/tutorial-coverage-report.md": {
-    "mtime": 1792114733.2944767,
-    "seen": 1792114748.613494,
+    "mtime": 1792114832.1478007,
+    "seen": 1792114845.4956787,
     "ast_hash": "2b83b7d264ae186bce1297211a4fcf2e",
     "semantic_hash": ""
   },
@@ -8874,8 +8874,8 @@
     "semantic_hash": ""
   },
   "docs/reference/commands.md": {
-    "mtime": 1792114732.7522588,
-    "seen": 1792114748.61358,
+    "mtime": 1792114831.6034794,
+    "seen": 1792114845.4991517,
     "ast_hash": "868df1f5589604809ee016169180fc21",
     "semantic_hash": ""
   },
@@ -10139,12 +10139,6 @@
     "ast_hash": "adadc721f76acd10ae4d9b8f097ba3da",
     "semantic_hash": ""
   },
-  "factory/specs/inbox/cyc101-09-global-e2e.md": {
-    "mtime": 1792112020.405322,
-    "seen": 1792112040.9551919,
-    "ast_hash": "0af555042165a673a2b2e734e20a15cc",
-    "semantic_hash": ""
-  },
   "factory/specs/inbox/cyc101-10-final-certification.md": {
     "mtime": 1792112021.1735072,
     "seen": 1792112040.9551928,
@@ -10749,6 +10743,72 @@
     "mtime": 1792112019.6560507,
     "seen": 1792114748.613646,
     "ast_hash": "df62222126ba90ebbae1746404532807",
+    "semantic_hash": ""
+  },
+  "e2e/evidence/apiforge-analyze.json": {
+    "mtime": 1792114811.0825348,
+    "seen": 1792114845.427087,
+    "ast_hash": "c3448c449b57ba308966c5d9b17fc30b",
+    "semantic_hash": ""
+  },
+  "e2e/evidence/apiforge-discover.json": {
+    "mtime": 1792114790.0481226,
+    "seen": 1792114845.427089,
+    "ast_hash": "2eec093e7e57843661e4657463cbf031",
+    "semantic_hash": ""
+  },
+  "e2e/evidence/doctor-api-scan.json": {
+    "mtime": 1792114783.7390583,
+    "seen": 1792114845.42709,
+    "ast_hash": "563bd1ffecd1820beff9f6362af4808b",
+    "semantic_hash": ""
+  },
+  "e2e/evidence/platform-inspect.json": {
+    "mtime": 1792114784.6829984,
+    "seen": 1792114845.4270911,
+    "ast_hash": "502ab9c53cb958a8b148e8febcc1db6e",
+    "semantic_hash": ""
+  },
+  "e2e/example-app/app/main.py": {
+    "mtime": 1792114777.8163166,
+    "seen": 1792114845.4270923,
+    "ast_hash": "7e6287bec8b03617ab70af29233d616c",
+    "semantic_hash": ""
+  },
+  "docs/certification/cycle-10.1/e2e-results.md": {
+    "mtime": 1792114827.384781,
+    "seen": 1792114845.4903448,
+    "ast_hash": "7189d9c79910fca2220ac68f8417c6e1",
+    "semantic_hash": ""
+  },
+  "e2e/contract-snapshot.yaml": {
+    "mtime": 1792114810.393744,
+    "seen": 1792114845.5012593,
+    "ast_hash": "782e52a814015ef8fd6418645fbcfd1e",
+    "semantic_hash": ""
+  },
+  "e2e/evidence/apiforge-discover.txt": {
+    "mtime": 1792114784.43207,
+    "seen": 1792114845.5012608,
+    "ast_hash": "8366124eb87af3df3a787d95d95a7e77",
+    "semantic_hash": ""
+  },
+  "e2e/example-app/app/openapi.yaml": {
+    "mtime": 1792114799.7823257,
+    "seen": 1792114845.5012624,
+    "ast_hash": "782e52a814015ef8fd6418645fbcfd1e",
+    "semantic_hash": ""
+  },
+  "e2e/example-app/ci/pipeline.yml": {
+    "mtime": 1792114777.8189592,
+    "seen": 1792114845.501264,
+    "ast_hash": "c0efc8e5128d16ebb9a48e5372e6c8a3",
+    "semantic_hash": ""
+  },
+  "factory/specs/active/cyc101-09-global-e2e.md": {
+    "mtime": 1792112020.405322,
+    "seen": 1792114845.5017025,
+    "ast_hash": "0af555042165a673a2b2e734e20a15cc",
     "semantic_hash": ""
   }
 }
