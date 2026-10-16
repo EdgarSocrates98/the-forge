@@ -10,7 +10,7 @@
 ```
 cd the-forge
 .venv/bin/pip install playwright
-.venv/bin/python -m pytest e2e/test_browser_real_adapter.py -q   # 9/9 PASS
+.venv/bin/python -m pytest tests/test_browser_real_adapter.py -q   # 9/9 PASS
 
 cd forge-portal
 uv run --with pytest python -m pytest tests/test_security_c5.py -q  # 24/24 PASS
@@ -31,7 +31,7 @@ uv run --with pytest python -m pytest tests/test_security_c5.py -q  # 24/24 PASS
 
 ## Tests added
 
-`the-forge/e2e/test_browser_real_adapter.py` — 9 testes: bundle vendored, first paint, todas as rotas declaradas pelo adapter real renderizam, federation com dados reais, `/lab` real, capabilities com ids, install preview, zero console errors em todas as rotas, viewport mobile. Screenshots em `e2e/artifacts/` (gitignored).
+`the-forge/tests/test_browser_real_adapter.py` — 9 testes: bundle vendored, first paint, todas as rotas declaradas pelo adapter real renderizam, federation com dados reais, `/lab` real, capabilities com ids, install preview, zero console errors em todas as rotas, viewport mobile. Screenshots em `e2e/artifacts/` (gitignored).
 
 ## Findings
 

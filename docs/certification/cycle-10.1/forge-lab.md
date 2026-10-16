@@ -41,7 +41,7 @@
 | 7. reprodutibilidade | verdict-identical re-run diff (git diff evidence) |
 | 8. mocks | emitters are deterministic `lab-script` producers (`external:false`); no LLM-assisted scenario found — all results machine-generated from repo fixtures |
 | 9. baseline vs Forge-enabled | not computable — no baseline-mode receipts exist; honestly absent |
-| 10. Portal rendering | `/lab` real-adapter route exercised in `e2e/test_browser_real_adapter.py` (cyc101-04) |
+| 10. Portal rendering | `/lab` real-adapter route exercised in `tests/test_browser_real_adapter.py` (cyc101-04) |
 | 11. regressões permanentes | this test file added to the suite |
 
 ## Findings

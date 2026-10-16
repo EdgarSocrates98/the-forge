@@ -5,8 +5,8 @@ adapter backed by the real install/service/specialists/federation
 services — serving the vendored production bundle in ``portal/assets``.
 No stub adapter: every field on screen comes from a real service call.
 
-Requires playwright + system Chrome (``channel="chrome"``).
-Run:  python -m pytest e2e/ -q
+Requires playwright + system Chrome (``channel="chrome"``); self-skips when
+either is absent. Lives in ``tests/`` so the default suite sees it.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from theforge import _forge_portal as fp  # noqa: E402
 from theforge.portal_adapter import TheForgePortal, build_server  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
-ARTIFACTS = Path(__file__).resolve().parent / "artifacts"
+ARTIFACTS = REPO / "e2e" / "artifacts"
 ASSETS = REPO / "portal" / "assets"
 
 

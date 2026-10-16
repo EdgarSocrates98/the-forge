@@ -178,7 +178,7 @@ def probe(repo: str, root: Path, declared: list[str], timeout: float) -> dict:
     finally:
         with contextlib.suppress(OSError):
             process.kill()
-        with contextlib.suppress(TimeoutError, OSError):
+        with contextlib.suppress(subprocess.TimeoutExpired, OSError):
             process.wait(timeout=2)
     return result
 
