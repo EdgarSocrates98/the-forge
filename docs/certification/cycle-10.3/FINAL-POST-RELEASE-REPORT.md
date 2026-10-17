@@ -44,7 +44,11 @@ forge-doctor-api `ca2df7b` — CI verde nos 9 HEADs.
 
 ## Achados e correções
 
-**Corrigido no ciclo** (PRs abertos, não mergeados — aguardam revisão):
+**Corrigido no ciclo** (⚠️ errata 2026-10-17: todos os PRs desta tabela
+foram **mergeados em `main`** e as branches deletadas — incluindo a
+remediação review-4: #76, #82, #52, #169, #63, #49, #62 e forge-cli#14.
+A condição de readiness abaixo está **satisfeita** quanto ao merge; restam
+apenas as publicações de patch §10):
 
 | PR | Repo | Conteúdo | CI |
 |---|---|---|---|
@@ -109,6 +113,13 @@ forge-cli (npm) e forge-portal (vendored) **não** precisam de versão nova.
 ## Adoption-readiness decision
 
 **CONDITIONALLY READY — GO condicionado aos 7 patches.**
+
+> **Errata (2026-10-17):** os 8 PRs do ciclo **foram mergeados** e as
+> branches deletadas (verificado via `gh pr view`/`gh api`). O critério de
+> merge está satisfeito; a recomendação vira `READY` assim que os 7 patch
+> releases publicarem. `tested_surface` das 6 entries de
+> `forge-knowledge/` foi re-medido contra as wheels publicadas no PyPI
+> (venv fresca + `pip install` + `describe` real): **6/6 match**.
 
 Justificativa honesta: a trilha central (achar → instalar → executar →
 findings → portal → remover) funciona de ponta a ponta em artefatos
