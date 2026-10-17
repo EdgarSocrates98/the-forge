@@ -8,7 +8,10 @@ import sys
 
 SCENARIOS = ("S1", "S2", "S3")
 ARMS = ("A", "B", "C", "D")
-METRICS = ("wall_seconds", "tokens_input", "tokens_output", "cost_usd", "human_interventions", "handoffs")
+METRICS = (
+    "wall_seconds", "tokens_input", "tokens_output",
+    "cost_usd", "human_interventions", "handoffs",
+)
 
 
 def number(value):
@@ -36,7 +39,8 @@ def assess(path):
         rows = list(reader)
         columns = set(reader.fieldnames or ())
     required = {"scenario", "repeat", "arm", "run_id", "repo_sha", "model", "effort",
-                "completed", "security_pass", "quality_passed", "quality_total", "evidence_uri", *METRICS}
+                "completed", "security_pass", "quality_passed", "quality_total",
+                "evidence_uri", *METRICS}
     if not required.issubset(columns):
         return {"status": "invalid_schema", "missing_columns": sorted(required - columns)}
     clean, errors, seen = [], [], set()
@@ -54,10 +58,15 @@ def assess(path):
             passed, total = number(r["quality_passed"]), number(r["quality_total"])
             if (passed is None) != (total is None):
                 raise ValueError("partial quality score")
-            if total is not None and (total <= 0 or passed > total or not passed.is_integer() or not total.is_integer()):
+            if total is not None and (
+                total <= 0 or passed > total
+                or not passed.is_integer() or not total.is_integer()
+            ):
                 raise ValueError("invalid test counts")
             metrics = {k: number(r[k]) for k in METRICS}
-            if completed is True and (secure is None or total is None or not r.get("evidence_uri", "").strip()):
+            if completed is True and (
+                secure is None or total is None or not r.get("evidence_uri", "").strip()
+            ):
                 raise ValueError("completed without independent evidence")
             clean.append({"key": key, "completed": completed, "security": secure,
                           "quality": passed / total if total else None, "metrics": metrics})
@@ -77,19 +86,28 @@ def assess(path):
                         "quality_delta": b["quality"] - a["quality"],
                         "both_secure": a["security"] is True and b["security"] is True,
                         "cost_delta_usd": b["metrics"]["cost_usd"] - a["metrics"]["cost_usd"]
-                        if b["metrics"]["cost_usd"] is not None and a["metrics"]["cost_usd"] is not None else None
+                        if (b["metrics"]["cost_usd"] is not None
+                            and a["metrics"]["cost_usd"] is not None) else None
                     })
         pairs[arm + "_vs_A"] = {
             "n": len(aligned), "observations": aligned,
-            "median_quality_delta": statistics.median(x["quality_delta"] for x in aligned) if aligned else None
+            "median_quality_delta": (
+                statistics.median(x["quality_delta"] for x in aligned) if aligned else None
+            )
         }
     completed = sum(r["completed"] is True for r in clean)
-    status = "invalid_input" if errors else "complete_requires_independent_review" if completed == 36 else "incomplete"
+    if errors:
+        status = "invalid_input"
+    elif completed == 36:
+        status = "complete_requires_independent_review"
+    else:
+        status = "incomplete"
     return {"schema": "theforge-pov/v1", "status": status, "observed": len(clean),
             "completed": completed, "required": 36, "invalid_rows": errors,
             "pairs": pairs, "proof_of_superiority": False,
             "limitations": ["Results require blinded independent acceptance and security review.",
-                            "Three repeats per cell are exploratory, not statistically conclusive."]}
+                            "Three repeats per cell are exploratory, "
+                            "not statistically conclusive."]}
 
 
 if __name__ == "__main__":
