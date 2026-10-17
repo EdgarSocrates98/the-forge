@@ -2111,3 +2111,50 @@ def test_record_execute_validates_its_inputs(
     }
     with pytest.raises(record_execute.RecordingError, match=match):
         record_execute.record_action(**{**base, **kwargs})
+
+
+def test_specialist_version_prefers_the_canonical_dist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A clean ``pip install apiforge-af`` env has no ``apiforge`` dist; the probe
+    must resolve the renamed distribution first and only then the legacy name."""
+    import importlib.metadata as im
+
+    calls: list[str] = []
+
+    def fake_version(dist: str) -> str:
+        calls.append(dist)
+        if dist == "apiforge-af":
+            return "0.1.0"
+        raise im.PackageNotFoundError(dist)
+
+    monkeypatch.setattr(im, "version", fake_version)
+    assert record_execute._specialist_version() == "0.1.0"
+    assert calls == ["apiforge-af"]
+
+
+def test_specialist_version_falls_back_to_legacy_dist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dev checkouts installed pre-rename still resolve via ``apiforge``."""
+    import importlib.metadata as im
+
+    def fake_version(dist: str) -> str:
+        if dist == "apiforge":
+            return "0.0.0.dev0"
+        raise im.PackageNotFoundError(dist)
+
+    monkeypatch.setattr(im, "version", fake_version)
+    assert record_execute._specialist_version() == "0.0.0.dev0"
+
+
+def test_specialist_version_is_unknown_when_neither_dist_exists(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import importlib.metadata as im
+
+    def fake_version(dist: str) -> str:
+        raise im.PackageNotFoundError(dist)
+
+    monkeypatch.setattr(im, "version", fake_version)
+    assert record_execute._specialist_version() == "unknown"
