@@ -5,6 +5,7 @@ import json
 import math
 import statistics
 import sys
+from typing import Any
 
 SCENARIOS = ("S1", "S2", "S3")
 ARMS = ("A", "B", "C", "D")
@@ -14,7 +15,7 @@ METRICS = (
 )
 
 
-def number(value):
+def number(value: str | None) -> float | None:
     if value is None or value.strip().lower() in ("", "null", "unknown"):
         return None
     x = float(value)
@@ -23,7 +24,7 @@ def number(value):
     return x
 
 
-def flag(value):
+def flag(value: str | None) -> bool | None:
     if value is None or value.strip().lower() in ("", "null", "unknown"):
         return None
     if value.strip().lower() in ("true", "yes", "1"):
@@ -33,7 +34,7 @@ def flag(value):
     raise ValueError("invalid boolean")
 
 
-def assess(path):
+def assess(path: str) -> dict[str, Any]:
     with open(path, encoding="utf-8", newline="") as fp:
         reader = csv.DictReader(fp)
         rows = list(reader)
@@ -59,8 +60,8 @@ def assess(path):
             if (passed is None) != (total is None):
                 raise ValueError("partial quality score")
             if total is not None and (
-                total <= 0 or passed > total
-                or not passed.is_integer() or not total.is_integer()
+                total <= 0 or (passed is not None and passed > total)
+                or passed is None or not passed.is_integer() or not total.is_integer()
             ):
                 raise ValueError("invalid test counts")
             metrics = {k: number(r[k]) for k in METRICS}
