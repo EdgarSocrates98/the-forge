@@ -50,7 +50,8 @@ forge-doctor-api `ca2df7b` — CI verde nos 9 HEADs.
 |---|---|---|---|
 | #74 | the-forge | metadata + 80 links/img absolutos + pip section + rename real-providers | 13✓ |
 | #81 | api-forge | rename completo + metadata + 57 links/img + AF-MCP-UNAVAILABLE | 11✓ |
-| #46 | platform-forge | 67 links/img absolutos + pip section | novo |
+| #47 | platform-forge | 67 links/img absolutos + pip section | 5✓ |
+| #51 | platform-forge | OIDC comment + doc-gate resolver + receipt rebind | 5✓ |
 | #168 | spark-forge-aws | 87 links/img absolutos | novo |
 | #62 | spark-forge-azure | 9 links/img absolutos + pip line | novo |
 | #48 | forge-doctor-data | urls + classifier + 18 links/img | 13✓ |

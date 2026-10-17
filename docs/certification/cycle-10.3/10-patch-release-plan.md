@@ -27,8 +27,8 @@ publica artifacts `apiforge_af-*` e fecha tudo. Tag proposta: `v0.1.1`.
 
 ### platformforge 0.1.0 → **0.1.1** (docs)
 
-Conteúdo: PR #46 — 66 links + 1 img absolutos; `pip install platformforge`
-na Install. Tag proposta: `v0.1.1`.
+Conteúdo: PRs #47 + #51 — 66 links + 1 img absolutos; `pip install platformforge`
+na Install; doc-gate resolver + comentário OIDC. Tag proposta: `v0.1.1`.
 
 ### sparkforge-aws 0.5.0 → **0.5.1** (docs)
 

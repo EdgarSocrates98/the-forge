@@ -22,7 +22,7 @@ Encontrado pelo revisor do ciclo (a auditoria original certificou "1 link").
 343 links markdown + 7 imagens nos 7 READMEs registry-bound eram 404
 garantidos no PyPI (ele não reescreve relativos). Reescritos para URLs
 absolutas pinadas na tag da release (`blob/` arquivo, `tree/` dir,
-`raw.githubusercontent/` imagem), 0 alvos faltantes. PRs: #74, #81, #46, #168,
+`raw.githubusercontent/` imagem), 0 alvos faltantes. PRs: #74, #81, #47+#51, #168,
 #62, #48, #60.
 
 ## G-DOCS-3 — CLI npm não referenciado nos READMEs (média) — parcial

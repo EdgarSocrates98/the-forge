@@ -35,7 +35,7 @@ def flag(value: str | None) -> bool | None:
 
 
 def assess(path: str) -> dict[str, Any]:
-    with open(path, encoding="utf-8", newline="") as fp:
+    with open(path, encoding="utf-8-sig", newline="") as fp:
         reader = csv.DictReader(fp)
         rows = list(reader)
         columns = set(reader.fieldnames or ())
@@ -76,8 +76,13 @@ def assess(path: str) -> dict[str, Any]:
                           "quality": quality, "metrics": metrics})
         except (ValueError, TypeError, KeyError) as exc:
             errors.append({"line": line, "error": str(exc)})
+    # Security failure is a disqualifier (README §primary endpoint): an
+    # insecure-but-completed run is still an observation but never enters
+    # the quality comparison pairs.
     by_key: dict[tuple[str, int, str], dict[str, Any]] = {
-        r["key"]: r for r in clean if r["completed"] is True
+        r["key"]: r
+        for r in clean
+        if r["completed"] is True and r["security"] is True
     }
     pairs: dict[str, Any] = {}
     for arm in ("B", "C", "D"):
