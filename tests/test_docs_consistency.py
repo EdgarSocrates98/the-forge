@@ -9,6 +9,7 @@ Requirements: 7.1 (``docs/errors.md`` canonical), 7.2, 7.3, 7.5, 7.6, 8.3, 8.4, 
 
 import argparse
 import os
+import posixpath
 import re
 import shutil
 from collections.abc import Callable, Iterator
@@ -188,7 +189,7 @@ def resolve_repo_url(target: str) -> tuple[str | None, str]:
     if not REPO_URL_RE.match(target):
         return None, unquote(anchor)
     path = REPO_URL_RE.sub("", target).partition("#")[0].partition("?")[0]
-    path = os.path.normpath(unquote(path))
+    path = posixpath.normpath(unquote(path))
     if path.startswith(("..", "/", "\\")):
         return None, unquote(anchor)
     return path, unquote(anchor)
