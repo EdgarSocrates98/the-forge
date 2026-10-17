@@ -44,7 +44,9 @@ def assess(path: str) -> dict[str, Any]:
                 "evidence_uri", *METRICS}
     if not required.issubset(columns):
         return {"status": "invalid_schema", "missing_columns": sorted(required - columns)}
-    clean, errors, seen = [], [], set()
+    clean: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    seen: set[tuple[str, int, str]] = set()
     for line, r in enumerate(rows, 2):
         try:
             key = (r["scenario"], int(r["repeat"]), r["arm"])
@@ -70,13 +72,15 @@ def assess(path: str) -> dict[str, Any]:
             ):
                 raise ValueError("completed without independent evidence")
             clean.append({"key": key, "completed": completed, "security": secure,
-                          "quality": passed / total if total else None, "metrics": metrics})
+                          "quality": passed / total if total and passed is not None else None, "metrics": metrics})
         except (ValueError, TypeError, KeyError) as exc:
             errors.append({"line": line, "error": str(exc)})
-    by_key = {r["key"]: r for r in clean if r["completed"] is True}
-    pairs = {}
+    by_key: dict[tuple[str, int, str], dict[str, Any]] = {
+        r["key"]: r for r in clean if r["completed"] is True
+    }
+    pairs: dict[str, Any] = {}
     for arm in ("B", "C", "D"):
-        aligned = []
+        aligned: list[dict[str, Any]] = []
         for scenario in SCENARIOS:
             for rep in (1, 2, 3):
                 a = by_key.get((scenario, rep, "A"))
@@ -96,15 +100,15 @@ def assess(path: str) -> dict[str, Any]:
                 statistics.median(x["quality_delta"] for x in aligned) if aligned else None
             )
         }
-    completed = sum(r["completed"] is True for r in clean)
+    completed_count = sum(r["completed"] is True for r in clean)
     if errors:
         status = "invalid_input"
-    elif completed == 36:
+    elif completed_count == 36:
         status = "complete_requires_independent_review"
     else:
         status = "incomplete"
     return {"schema": "theforge-pov/v1", "status": status, "observed": len(clean),
-            "completed": completed, "required": 36, "invalid_rows": errors,
+            "completed": completed_count, "required": 36, "invalid_rows": errors,
             "pairs": pairs, "proof_of_superiority": False,
             "limitations": ["Results require blinded independent acceptance and security review.",
                             "Three repeats per cell are exploratory, "
