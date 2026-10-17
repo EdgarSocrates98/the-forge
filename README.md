@@ -16,7 +16,7 @@ python3.11 -m venv .venv                      # qualquer Python >= 3.11
 .venv/bin/python -m pip install -e ".[dev]"   # Windows: .venv\Scripts\python
 ```
 
-O runtime só usa a stdlib. O comando canônico é `theforge`, usado em todos os exemplos; `forge` é um alias de conveniência ([ADR 0008](docs/adr/0008-cli-name.md)). Use `theforge` se `forge` colidir com Foundry ou Laravel Forge no seu PATH. Para rodar a suíte de testes, instale também os adapters (ver [Desenvolvimento](#desenvolvimento)).
+O runtime só usa a stdlib. O comando canônico é `theforge`, usado em todos os exemplos; `forge` é um alias de conveniência ([ADR 0008](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/adr/0008-cli-name.md)). Use `theforge` se `forge` colidir com Foundry ou Laravel Forge no seu PATH. Para rodar a suíte de testes, instale também os adapters (ver [Desenvolvimento](#desenvolvimento)).
 
 ## Instalação portátil (uso, não desenvolvimento)
 
