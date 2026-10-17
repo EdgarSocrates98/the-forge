@@ -111,6 +111,48 @@ def test_bootstrap_requires_session(target: Path) -> None:
         srv.server_close()
 
 
+def _call_with_headers(srv: fp.PortalServer, path: str, headers: dict) -> tuple[int, dict]:
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{srv.port}/api/v1{path}",
+        headers={"Content-Type": "application/json", **headers},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return r.status, json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return e.code, json.loads(e.read())
+
+
+def test_session_cookie_authenticates_and_stays_bound(target: Path) -> None:
+    srv = _server(TheForgePortal(target))
+    try:
+        # Cookie-only (SPA reload: in-memory header token is gone) → 200.
+        code, doc = _call_with_headers(
+            srv, "/bootstrap", {"Cookie": f"forge_session={srv.session_token}"}
+        )
+        assert code == 200 and "data" in doc
+        # Forged cookie alone → 403.
+        code, _ = _call_with_headers(srv, "/bootstrap", {"Cookie": "forge_session=forged"})
+        assert code == 403
+        # Valid header + forged cookie → 403 (cookie is bound, not ignored).
+        code, _ = _call_with_headers(
+            srv,
+            "/bootstrap",
+            {"X-Forge-Session": srv.session_token, "Cookie": "forge_session=forged"},
+        )
+        assert code == 403
+        # Invalid header + valid cookie → 403 (header decides when present).
+        code, _ = _call_with_headers(
+            srv,
+            "/bootstrap",
+            {"X-Forge-Session": "bad", "Cookie": f"forge_session={srv.session_token}"},
+        )
+        assert code == 403
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
 def test_install_plan_then_apply_roundtrip(target: Path) -> None:
     srv = _server(TheForgePortal(target))
     try:
