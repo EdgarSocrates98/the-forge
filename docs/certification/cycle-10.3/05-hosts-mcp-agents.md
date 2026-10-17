@@ -8,7 +8,7 @@ em Wave 1), não contra checkouts locais.
 
 ### forge-cli (theforge-cli@0.1.0, npm)
 
-`forge-cli hosts` em 2026-10-19:
+`forge-cli hosts` em 2026-10-17:
 
 | Host | Estado reportado | Versão detectada | Auth |
 |---|---|---|---|

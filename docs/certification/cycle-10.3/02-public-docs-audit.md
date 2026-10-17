@@ -16,15 +16,40 @@ inalterados — pré-publicação, preservados por §4.2.
 
 ## 2. Links relativos em READMEs (§4.4)
 
-Auditoria refeita contra os READMEs que viram `long_description` no PyPI
-(os 7 pacotes com `readme =` após o fix do api-forge):
+> **Errata 2026-10-17** — a versão anterior desta seção certificava "1 link
+> relativo / 0 imagens". Recontagem com parser dedicado (markdown + `<img>`,
+> fenced code excluído) provou o contrário: **~350 relativos**. A versão
+> original desta seção estava errada — corrigido aqui e implementado abaixo.
 
-- **Apenas 1 link relativo em 7 READMEs**: `the-forge/README.md` →
-  `docs/adr/0008-cli-name.md` → trocado por URL absoluta pinada na tag
-  `v0.5.0`.
-- 0 imagens relativas, 0 `src=` locais.
-- Os "346 links" da auditoria anterior eram de **docs internos**, não dos
-  READMEs publicados — o risco PyPI real era 1 link. Resolvido.
+Contagem real nos 7 READMEs registry-bound (script `/tmp/fix_links.py`,
+verificação de cada alvo em disco):
+
+| Repo | md links | `<img>` | Tag-pin aplicado |
+|---|---|---|---|
+| the-forge | 79 | 1 | v0.5.0 |
+| api-forge | 56 | 1 | v0.1.0 |
+| platform-forge | 66 | 1 | v0.1.0 |
+| spark-forge-aws | 86 | 1 | v0.5.0 |
+| spark-forge-azure | 8 | 1 | v0.1.0 |
+| forge-doctor-data | 17 | 1 | v1.0.0 |
+| forge-doctor-api | 31 | 1 | v0.2.0 |
+| **total** | **343** | **7** | **0 unresolved** |
+
+Regra aplicada: arquivo → `…/blob/<tag>/`, diretório → `…/tree/<tag>/`,
+`<img src>` → `raw.githubusercontent.com/<org>/<repo>/<tag>/` (PyPI não serve
+`blob/` como imagem). Âncoras e query preservadas. **0 alvos faltantes** —
+todo caminho existe no checkout.
+
+**Decisão de pin**: links apontam para a tag da release publicada — o que o
+PyPI serve naquele release corresponde ao doc daquela versão. Chore de
+release: re-pin ao bump (documentado no patch plan).
+
+O PyPI **não** reescreve links relativos (npm reescreve via `repository` —
+forge-cli está isento). Cada link era um 404 garantido na página do pacote.
+
+Também corrigido nesta rodada: `docs/real-providers.md` usava o dist morto
+`apiforge` em 4 posições (support table, specialist list, `pip install`) →
+`apiforge-af` (nomes de módulo/CLI `apiforge` preservados — existem).
 
 ## 3. Metadados PyPI (§4.5)
 
@@ -32,7 +57,7 @@ Antes → depois (verificado por build `uv build` + leitura do METADATA):
 
 | Pacote | classifiers | project.urls | readme | Dev Status |
 |---|---|---|---|---|
-| theforge-core | 0→7 | 0→5 | ok | **Beta** (0.5.x) |
+| theforge-core | 0→6 | 0→5 | ok | **Beta** (0.5.x) |
 | apiforge-af | 0→6 | 0→5 | 0→ok | **Alpha** (0.1.0) |
 | forge-doctor-api | 4→7 | 0→6 | ok | **Beta** |
 | forge-doctor-data | 9→9 | 2→5 | ok | **Alpha→Beta** ⚠ |

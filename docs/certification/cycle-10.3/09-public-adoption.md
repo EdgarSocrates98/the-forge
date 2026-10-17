@@ -1,6 +1,6 @@
 # Cycle 10.3 — Wave 9: Community & Public Adoption Surfaces
 
-Auditoria via GitHub API (`/community/profile`, `/repos/*`), 2026-10-19.
+Auditoria via GitHub API (`/community/profile`, `/repos/*`), 2026-10-17.
 
 ## 9.1 Community health — 9/9 em 100%
 

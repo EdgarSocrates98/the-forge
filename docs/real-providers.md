@@ -1,13 +1,13 @@
 # Providers reais: os seis especialistas
 
-The Forge fala com os especialistas através de adapters Forge Protocol v1 instalados **no interpretador de cada especialista**, nunca no interpretador do core: Spark Forge AWS (`sparkforge-aws`), API Forge (`apiforge`), os observadores determinísticos Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`) e, desde o ciclo 5.1 (ecossistema 4→6), Spark Forge Azure (`sparkforge-azure`) e Platform Forge (`platformforge`). O porquê está no [ADR 0014](adr/0014-provider-adapter-location.md).
+The Forge fala com os especialistas através de adapters Forge Protocol v1 instalados **no interpretador de cada especialista**, nunca no interpretador do core: Spark Forge AWS (`sparkforge-aws`), API Forge (`apiforge-af`), os observadores determinísticos Forge Doctor Data (`forge-doctor-data`) e Forge Doctor API (`forge-doctor-api`) e, desde o ciclo 5.1 (ecossistema 4→6), Spark Forge Azure (`sparkforge-azure`) e Platform Forge (`platformforge`). O porquê está no [ADR 0014](adr/0014-provider-adapter-location.md).
 
 | | Spark Forge AWS | Spark Forge Azure | API Forge | Platform Forge | Doctor Data | Doctor API |
 |---|---|---|---|---|---|---|
 | Distribuição do adapter | `theforge-sparkforge-aws-adapter` (`adapters/sparkforge_aws`) | `theforge-sparkforge-azure-adapter` (`adapters/sparkforge_azure`) | `theforge-apiforge-adapter` (`adapters/apiforge`) | `theforge-platformforge-adapter` (`adapters/platformforge`) | `theforge-doctordata-adapter` (`adapters/doctordata`) | `theforge-doctorapi-adapter` (`adapters/doctorapi`) |
 | Módulo | `theforge_sparkforge_aws` | `theforge_sparkforge_azure` | `theforge_apiforge` | `theforge_platformforge` | `theforge_doctordata` | `theforge_doctorapi` |
 | id do provider | `spark-forge-aws` | `spark-forge-azure` | `api-forge` | `platform-forge` | `forge-doctor-data` | `forge-doctor-api` |
-| Especialista suportado | `sparkforge-aws >=0.5.0,<0.6.0` | `sparkforge-azure >=0.1.0,<0.2.0` | `apiforge >=0.1.0,<0.2.0` | `platformforge >=0.1.0,<0.2.0` | `forge-doctor-data >=1.0.0rc1,<2.0.0` | `forge-doctor-api >=0.2.0,<0.3.0` |
+| Especialista suportado | `sparkforge-aws >=0.5.0,<0.6.0` | `sparkforge-azure >=0.1.0,<0.2.0` | `apiforge-af >=0.1.0,<0.2.0` | `platformforge >=0.1.0,<0.2.0` | `forge-doctor-data >=1.0.0rc1,<2.0.0` | `forge-doctor-api >=0.2.0,<0.3.0` |
 | Interpretador | Python ≥ 3.10 (o CI usa 3.11) | Python ≥ 3.10 | Python 3.12 (exigido pelo API Forge) | Python ≥ 3.10 | Python ≥ 3.11 | Python ≥ 3.11 |
 | Seam nativo | `sparkforge_aws.adapters.tools` (`sparkforge.*` antes do rename do pacote; resolvido por `native_pkg`) | seams públicas `sdd.checks`/`sdd.status` + `azure.pipeline`/`fabric.pipeline` + `doctor` | `apiforge` CLI pública | seams públicas `analyze_*` + `capability_manifest()` (manifest v3) | `accept_request` + `check_conformance` (`forge-contracts/1`) | `DoctorBoundary` (spec 070) + strict parse |
 
@@ -59,7 +59,7 @@ O API Forge só roda em Python 3.12. Instale um 3.12 (python.org, gerenciador do
 ```bash
 python3.12 -m venv <api-venv>
 <api-python> -m pip install --upgrade pip
-<api-python> -m pip install "apiforge>=0.1,<0.2"              # ou: <checkout-api-forge>
+<api-python> -m pip install "apiforge-af>=0.1,<0.2"           # ou: <checkout-api-forge>
 <api-python> -m pip install <the-forge>/adapters/apiforge
 <api-python> -c "import apiforge, theforge_apiforge"           # deve sair 0
 ```
@@ -224,7 +224,7 @@ Só capabilities read-only e offline são declaradas. Tools que pedem rede, cred
 |---|---|---|---|
 | `protocol-real` | provider *fixture* (`tests/fixtures/providers/*`) num subprocesso real, com envelopes Forge Protocol v1 reais | roteamento, envelopes, registry, planos, recibos e hash chain ponta a ponta | nada do especialista — a lógica é canned |
 | `specialist-replay` | adapter real num subprocesso real, respondendo gravações (`--replay <cenário>`) do especialista | todo o caminho do adapter (describe/execute/health, staging, tradução de evidência, handoff, artifacts) com determinismo offline | o especialista não é importado: sem comportamento vivo, sem custo nativo |
-| `specialist-real` | o pacote do especialista instalado (`sparkforge-aws`, `sparkforge-azure`, `apiforge`, `platformforge`, `forge-doctor-data`, `forge-doctor-api`), via adapter no venv dele | integração viva completa, inclusive consumo real de handoff e versões | nada é simulado — exige os venvs da [conformance](#contrato-de-ambiente-da-conformance-de-integração) |
+| `specialist-real` | o pacote do especialista instalado (`sparkforge-aws`, `sparkforge-azure`, `apiforge-af`, `platformforge`, `forge-doctor-data`, `forge-doctor-api`), via adapter no venv dele | integração viva completa, inclusive consumo real de handoff e versões | nada é simulado — exige os venvs da [conformance](#contrato-de-ambiente-da-conformance-de-integração) |
 
 Regras de uso: a suíte offline mistura `protocol-real` (fixtures) e `specialist-replay` (gravações); os testes marcados `real_provider` são `specialist-real` e nunca rodam sem as variáveis de ambiente. Um resultado `specialist-replay` nunca é apresentado como `specialist-real`; quando a afirmação precisa do especialista vivo, o teste pula com motivo explícito ou falha sob `THEFORGE_REAL_PROVIDERS_REQUIRED=1`/`THEFORGE_ECOSYSTEM_REQUIRED=1` — nunca um skip silencioso. O benchmark de economia (`scripts/bench/run_context_economy.py`) declara `provider_mode` no relatório exatamente por isso: hoje é `specialist-replay`.
 

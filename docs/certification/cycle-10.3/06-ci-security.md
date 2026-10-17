@@ -16,7 +16,7 @@ Ferramenta: `pip-audit` (resolvendo cada pacote publicado + deps).
 
 npm: `npm audit` em projeto com `theforge-cli@0.1.0` instalado → **0 vulnerabilities**.
 
-**7/7 PyPI + 1/1 npm limpos** na data da auditoria (2026-10-19). Snapshot —
+**7/7 PyPI + 1/1 npm limpos** na data da auditoria (2026-10-17). Snapshot —
 não é garantia futura; dependências novas podem introduzir CVEs depois.
 
 ## 6.2 Action pinning (SHA-pin audit)

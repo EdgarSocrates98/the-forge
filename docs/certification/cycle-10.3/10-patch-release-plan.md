@@ -24,7 +24,8 @@ Tag proposta: `v0.1.1`.
 ### forge-doctor-data 1.0.0 → **1.0.1** (metadata)
 
 Conteúdo: PR #48 — project.urls + correção de classifier
-(`Development Status` Alpha→Production/Stable num 1.0.0 é incoerente).
+(`Development Status` Alpha→Beta — ainda é um 1.0.0 jovem; Alpha num release
+de major era incoerente).
 **Justificativa**: metadata publicado errado num release de major.
 Tag proposta: `v1.0.1`.
 

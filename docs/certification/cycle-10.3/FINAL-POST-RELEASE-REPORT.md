@@ -2,7 +2,7 @@
 
 **Escopo**: auditoria pós-publicação das 9 forjas + distribuições públicas
 (7 PyPI + 1 npm + 9 GitHub Releases). Modo: Audit → Reproduce → Fix → Test →
-Benchmark → Certify → Prepare Patch. Data: 2026-10-19.
+Benchmark → Certify → Prepare Patch. Data: 2026-10-17.
 
 ## Executive summary
 
