@@ -1,0 +1,1 @@
+scenario,repeat,arm,run_id,repo_sha,model,effort,completed,security_pass,quality_passed,quality_total,wall_seconds,tokens_input,tokens_output,cost_usd,human_interventions,handoffs,evidence_uri,notes
