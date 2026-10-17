@@ -161,7 +161,9 @@ def test_write_report_persists_md_and_jsonl(tmp_path):
     assert data["summary"] == {
         "ran": 1,
         "skipped": 1,
+        "blocked": 0,
         "failed": 0,
+        "states": {"PASS": 1, "SKIPPED": 1},
         "scenarios": 1,
         "interrupted": False,
     }

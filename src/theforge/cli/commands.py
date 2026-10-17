@@ -233,15 +233,26 @@ def cmd_lab(args: argparse.Namespace) -> int:
     from theforge import _installkit as kit
     from theforge import lab as forgeslab
     from theforge.contracts.types import Producer
-    from theforge.install.providers import manifest_python
 
     root = _root(args)
     manifests = kit.installed_forges()
     repos = tuple(Path(r).expanduser() for r in getattr(args, "repo", []) or [])
+    explicit_python = getattr(args, "python", None)
 
-    def _lab_row(fid: str, checkout: Path, interp: str) -> dict[str, Any]:
+    def _lab_row(
+        fid: str, checkout: Path, manifest: dict[str, Any] | None
+    ) -> dict[str, Any]:
+        resolution = forgeslab.resolve_interpreter(
+            forge_id=fid,
+            checkout=checkout,
+            manifest=manifest,
+            explicit=explicit_python,
+            validate=False,  # inspect-only — never spawns a probe
+        )
         try:
-            decl = forgeslab.load_lab_decl(fid, checkout, interp)
+            decl = forgeslab.load_lab_decl(
+                fid, checkout, resolution.python or sys.executable
+            )
         except Exception as exc:  # noqa: BLE001 - broken decl reports, not crashes
             return {"forge": fid, "status": "invalid", "detail": str(exc)[:200]}
         if decl is None:
@@ -253,6 +264,8 @@ def cmd_lab(args: argparse.Namespace) -> int:
             "status": "declared",
             "modes": list(decl.modes),
             "checkout": str(checkout),
+            "python": resolution.python,
+            "python_source": resolution.source,
         }
 
     if args.lab_command == "list":
@@ -264,7 +277,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
             if not fid or checkout is None or fid in seen:
                 continue
             seen.add(fid)
-            rows.append(_lab_row(fid, checkout, manifest_python(manifest) or sys.executable))
+            rows.append(_lab_row(fid, checkout, manifest))
         for repo in repos:
             fid = repo.name
             decl_doc = repo.resolve() / "forge.json"
@@ -276,7 +289,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
             if fid in seen:
                 continue
             seen.add(fid)
-            rows.append(_lab_row(fid, repo.resolve(), sys.executable))
+            rows.append(_lab_row(fid, repo.resolve(), None))
         _emit(args, {"labs": sorted(rows, key=lambda r: r["forge"])}, render.lab_list)
         return 0
 
@@ -290,6 +303,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
             repeats=args.repeats,
             jobs=args.jobs,
             allow_external=args.allow_external,
+            python=explicit_python,
         )
     except forgeslab.LabError as exc:
         raise UsageError(str(exc)) from exc
@@ -313,7 +327,9 @@ def cmd_lab(args: argparse.Namespace) -> int:
     _emit(args, data, render.lab_collect)
     if interrupted:
         return 130
-    return 4 if data["summary"]["failed"] else 0
+    summary = data["summary"]
+    # FAIL/ERROR and BLOCKED both fail the gate — a refused lab is not a pass
+    return 4 if summary["failed"] or summary.get("blocked") else 0
 
 
 def _load_results_file(path: Path) -> "list[BenchmarkResult]":

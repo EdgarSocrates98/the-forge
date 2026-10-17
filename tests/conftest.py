@@ -140,6 +140,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_ecosystem_compat.py": ("unit", "contract"),
     "test_benchmark_contract.py": ("unit", "contract"),
     "test_lab.py": ("unit", "integration"),
+    "test_lab_interpreter.py": ("unit", "integration"),
     "test_lab_gate.py": ("unit", "contract"),
     "test_lab_receipts_audit.py": ("unit", "contract"),
     "test_browser_real_adapter.py": ("e2e", "integration"),

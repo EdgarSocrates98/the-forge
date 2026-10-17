@@ -882,6 +882,13 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="CHECKOUT",
         help="explicit repo checkout to include beyond the install registry",
     )
+    lab_list.add_argument(
+        "--python",
+        default=None,
+        metavar="PATH",
+        help="explicit authorized interpreter — wins over managed receipt, "
+        "manifest and env candidates (inspect-only here: no probe spawned)",
+    )
     lab_list.set_defaults(handler=commands.cmd_lab)
     lab_collect = lab.add_parser(
         "collect",
@@ -914,6 +921,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--allow-external",
         action="store_true",
         help="required for mode C — real external resources, receipt marked external",
+    )
+    lab_collect.add_argument(
+        "--python",
+        default=None,
+        metavar="PATH",
+        help="explicit authorized interpreter for every lab — wins over the "
+        "managed receipt, install manifest, checkout .venv and the "
+        "documented sys.executable fallback",
     )
     lab_collect.add_argument("--out", default=None, metavar="DIR", help="report directory override")
     lab_collect.set_defaults(handler=commands.cmd_lab)
