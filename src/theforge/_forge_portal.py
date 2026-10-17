@@ -334,6 +334,51 @@ def detect_forge_portal() -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# forge-cli registry state — read-only projection of
+# ~/.forge-cli/forges/state.json. Shared contract: forge-cli is the only
+# writer (docs/registry-state-contract.md); readers never invent fields.
+# Absent or malformed state is reported, never fabricated.
+
+
+def _scalarish(value: Any) -> Any:
+    """Whitelist receipts to scalars/small containers — state stays data."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, list):
+        return [_scalarish(v) for v in value[:200]]
+    if isinstance(value, dict):
+        return {str(k): _scalarish(v) for k, v in list(value.items())[:50]}
+    return str(value)
+
+
+def read_registry_state(home: Path | None = None) -> dict[str, Any]:
+    """Read forge-cli registry receipts from `~/.forge-cli/forges/state.json`.
+
+    `FORGE_HOME_OVERRIDE` (same var `detect_forge_portal` uses) relocates the
+    home for tests/containers. Returns `present: False` for absent or
+    malformed state — the portal renders "not installed", never a lie.
+    """
+    base = home or Path(os.environ.get("FORGE_HOME_OVERRIDE") or Path.home())
+    state_path = base / ".forge-cli" / "forges" / "state.json"
+    base_doc = {"schema": "forge-cli/RegistryState/v1", "state_path": str(state_path)}
+    if not state_path.is_file():
+        return {**base_doc, "present": False, "forges": {}}
+    try:
+        doc = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {**base_doc, "present": False, "forges": {}, "error": "malformed"}
+    forges = doc.get("forges") if isinstance(doc, dict) else None
+    if not isinstance(forges, dict):
+        return {**base_doc, "present": False, "forges": {}, "error": "malformed"}
+    clean = {
+        str(name): _scalarish(receipt)
+        for name, receipt in forges.items()
+        if isinstance(receipt, dict)
+    }
+    return {**base_doc, "present": True, "forges": clean}
+
+
 def _with_portal_presence(data: Any) -> Any:
     """Attach local forge-portal presence to health/status payloads."""
     if not isinstance(data, dict):
@@ -786,6 +831,7 @@ class PortalServer(ThreadingHTTPServer):
         self.adapter = adapter
         self.session_token = secrets.token_urlsafe(24)
         self._plan_secret = secrets.token_bytes(32)
+        self._used_plans: set[str] = set()
         self.rate_limiter = RateLimiter()
         self._quiet = quiet
         self._executor = __import__("concurrent.futures", fromlist=["ThreadPoolExecutor"]).ThreadPoolExecutor(
@@ -807,6 +853,18 @@ class PortalServer(ThreadingHTTPServer):
 
     def check_plan(self, token: str, plan: dict) -> bool:
         return check_plan_token(self._plan_secret, token, plan)
+
+    def consume_plan(self, token: str, plan: dict) -> bool:
+        """check_plan + marca uso — replay da mesma confirmação recusa."""
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        if digest in self._used_plans:
+            return False
+        if not check_plan_token(self._plan_secret, token, plan):
+            return False
+        self._used_plans.add(digest)
+        if len(self._used_plans) > 4096:
+            self._used_plans = set(list(self._used_plans)[-2048:])
+        return True
 
     # -- public API ---------------------------------------------------------
     @property
@@ -850,6 +908,7 @@ def default_operations(adapter: PortalAdapter) -> list[Operation]:
         Operation("GET", "/health", _environment_presence_op(_presence_op(_get("health", None)), adapter)),
         Operation("GET", "/environment", lambda ctx: adapter.account_environment()),
         Operation("GET", "/capabilities", lambda ctx: adapter.capabilities()),
+        Operation("GET", "/registry/state", lambda ctx: read_registry_state()),
         Operation(
             "GET",
             "/installation/status",
