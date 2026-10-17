@@ -168,7 +168,12 @@ def _specialist_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("apiforge")
+        for dist in ("apiforge-af", "apiforge"):
+            try:
+                return version(dist)
+            except Exception:  # noqa: BLE001 - try the other dist name
+                continue
+        return "unknown"
     except Exception:  # noqa: BLE001 - version is provenance text, never a failure
         return "unknown"
 

@@ -21,7 +21,7 @@ Replay (`--replay <dir>`, antes da op): `environment.json` (`{python, specialist
 Instale o adapter **no mesmo interpretador Python 3.12 do API Forge**:
 
 ```bash
-<python-3.12-do-api-forge> -m pip install apiforge   # >=0.1,<0.2
+<python-3.12-do-api-forge> -m pip install apiforge-af   # >=0.1,<0.2
 <python-3.12-do-api-forge> -m pip install ./adapters/apiforge
 ```
 
