@@ -143,8 +143,8 @@ def _multiforge_scenario(checkout: Path, repos_root: Path, sc_path: Path) -> dic
             finally:
                 os.environ.pop("FORGE_LAB_NESTED", None)
 
-        ok = [o for o in outcomes if o.status == "ok"]
-        failed = [o for o in outcomes if o.status in ("exit", "timeout", "invalid")]
+        ok = [o for o in outcomes if o.state == "PASS"]
+        failed = [o for o in outcomes if o.state in ("FAIL", "ERROR", "BLOCKED")]
         receipts = [r for o in ok for r in o.runs]
         metrics["labs_invoked"] = {"value": len(ok)}
         metrics["handoffs"] = {"value": len(ok)}

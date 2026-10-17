@@ -1824,6 +1824,8 @@ def lab_list(data: dict[str, Any]) -> str:
         line = f"  {_clean(r.get('forge')):<22} {_clean(r.get('status'))}"
         if r.get("modes"):
             line += f"  modes={','.join(r['modes'])}"
+        if r.get("python_source") and r["python_source"] != "none":
+            line += f"  py={_clean(r['python_source'])}"
         lines.append(line)
         if r.get("detail"):
             lines.append(f"    {_clean(r['detail'])}")
@@ -1834,17 +1836,23 @@ def lab_collect(data: dict[str, Any]) -> str:
     s = data.get("summary") or {}
     lines = [
         f"lab collect — ran={s.get('ran', 0)} skipped={s.get('skipped', 0)} "
-        f"failed={s.get('failed', 0)} scenarios={s.get('scenarios', 0)}"
+        f"blocked={s.get('blocked', 0)} failed={s.get('failed', 0)} "
+        f"scenarios={s.get('scenarios', 0)}"
     ]
     if s.get("interrupted"):
         lines.append("  INTERRUPTED — partial report, no conclusions")
     for f in data.get("forges") or []:
-        line = f"  {_clean(f.get('forge')):<22} {_clean(f.get('status'))}"
+        line = f"  {_clean(f.get('forge')):<22} {_clean(f.get('state'))}/{_clean(f.get('status'))}"
+        interp = f.get("interpreter") or {}
         if f.get("runs"):
             line += f"  runs={f['runs']}"
+        if interp.get("source") and interp["source"] != "none":
+            line += f"  py={_clean(interp['source'])}"
         if f.get("duration_ms") is not None:
             line += f"  {f['duration_ms']}ms"
         lines.append(line)
+        if f.get("reason") and f["reason"] != "ok":
+            lines.append(f"    reason={_clean(f['reason'])}")
         if f.get("detail"):
             lines.append(f"    {_clean(f['detail'])}")
     lines.append(f"report: {_clean(data.get('report'))}")
