@@ -49,6 +49,7 @@ EXCLUDE_DIRS = {
     ".pytest-tmp",
     ".pytest_tmp",
     "site",
+    "graphify-out",  # generated knowledge-graph cache — never a doc source
 }
 _EXCLUDE_PREFIXES = (".venv", ".pytest_tmp", ".pytest-tmp")  # .venv, .venv-verify, .venv-*
 
