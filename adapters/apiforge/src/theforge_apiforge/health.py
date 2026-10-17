@@ -103,7 +103,7 @@ def _cli_check(found: bool, where: str) -> Check:
         "cli",
         False,
         f"{CLI_MODULE}, the CLI entry point the adapter runs, is not "
-        f"importable with {where}; reinstall apiforge "
+        f"importable with {where}; reinstall apiforge-af "
         f"{SUPPORTED_SPECIALIST} in this interpreter",
     )
 
@@ -133,7 +133,7 @@ def _live_environment() -> tuple[list[Check], str | None]:
                 "import",
                 False,
                 f"apiforge is not importable with {sys.executable} (Python "
-                f"{running}); install apiforge {SUPPORTED_SPECIALIST} in this "
+                f"{running}); install apiforge-af {SUPPORTED_SPECIALIST} in this "
                 "interpreter",
             )
         )
@@ -161,7 +161,7 @@ def _replay_environment(environment: Mapping[str, Any]) -> tuple[list[Check], st
                 "import",
                 False,
                 f"apiforge is not importable in the replay environment "
-                f"({ENVIRONMENT_FILE}, Python {python}); install apiforge "
+                f"({ENVIRONMENT_FILE}, Python {python}); install apiforge-af "
                 f"{SUPPORTED_SPECIALIST}",
             )
         )

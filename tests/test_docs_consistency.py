@@ -188,7 +188,10 @@ def resolve_repo_url(target: str) -> tuple[str | None, str]:
     if not REPO_URL_RE.match(target):
         return None, unquote(anchor)
     path = REPO_URL_RE.sub("", target).partition("#")[0].partition("?")[0]
-    return unquote(path), unquote(anchor)
+    path = os.path.normpath(unquote(path))
+    if path.startswith(("..", "/", "\\")):
+        return None, unquote(anchor)
+    return path, unquote(anchor)
 
 
 def table_rows(lines: list[str]) -> list[list[str]]:

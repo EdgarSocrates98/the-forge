@@ -70,7 +70,7 @@ def live_environment_problem(
     if find_spec("apiforge") is None:
         return (
             f"apiforge is not importable with {executable} (Python {found}); "
-            f"install apiforge {SUPPORTED_SPECIALIST} in this interpreter"
+            f"install apiforge-af {SUPPORTED_SPECIALIST} in this interpreter"
         )
     return None
 
@@ -137,7 +137,7 @@ def replay_environment_problem(environment: dict[str, Any]) -> str | None:
     if environment.get("specialist_version") is None:
         return (
             f"apiforge is not importable in the replay environment ({ENVIRONMENT_FILE}, "
-            f"Python {python}); install apiforge {SUPPORTED_SPECIALIST}"
+            f"Python {python}); install apiforge-af {SUPPORTED_SPECIALIST}"
         )
     return None
 
