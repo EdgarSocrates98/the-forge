@@ -55,6 +55,14 @@ def _fake_venv(root: Path, name: str, version: str | None = None) -> Path:
     return venv
 
 
+def _venv_py(venv: Path) -> Path:
+    return venv / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
+
+
+def _venv_bin(venv: Path) -> Path:
+    return venv / ("Scripts" if os.name == "nt" else "bin")
+
+
 def _receipt_home(tmp_path: Path, forge_id: str, doc: object) -> Path:
     """Forge-cli managed receipt home: <home>/.forge-cli/forges/<f>/install.json."""
     home = tmp_path / "cli-home"
@@ -123,7 +131,7 @@ def test_version_tuple_and_satisfies():
 def test_resolution_priority_order(tmp_path):
     repo = _repo(tmp_path, "prio-forge", DECL)
     bare = _repo(tmp_path, "prio-bare", DECL)  # no .venv — fallback reachable
-    explicit_py = _fake_venv(tmp_path, "v-explicit") / "bin" / "python"
+    explicit_py = _venv_py(_fake_venv(tmp_path, "v-explicit"))
     receipt_venv = _fake_venv(tmp_path, "v-receipt")
     home = _receipt_home(tmp_path, "prio-forge", {"venv": str(receipt_venv)})
     manifest_venv = _fake_venv(tmp_path, "v-manifest")
@@ -137,15 +145,15 @@ def test_resolution_priority_order(tmp_path):
         ),
         (
             dict(checkout=repo, home=home, manifest=manifest),
-            ("managed-receipt", str(receipt_venv / "bin" / "python")),
+            ("managed-receipt", str(str(_venv_py(receipt_venv)))),
         ),
         (
             dict(checkout=repo, home=empty, manifest=manifest),
-            ("manifest", str(manifest_venv / "bin" / "python")),
+            ("manifest", str(str(_venv_py(manifest_venv)))),
         ),
         (
             dict(checkout=repo, home=empty),
-            ("specialist-env", str(spec_env / "bin" / "python")),
+            ("specialist-env", str(str(_venv_py(spec_env)))),
         ),
         (dict(checkout=bare, home=empty), ("fallback", sys.executable)),
     ]
@@ -157,12 +165,12 @@ def test_resolution_priority_order(tmp_path):
 def test_managed_receipt_bin_sibling(tmp_path):
     repo = _repo(tmp_path, "sib-forge", DECL)
     venv = _fake_venv(tmp_path, "v-sib")
-    fake_bin = venv / "bin" / "sib-forge"
+    fake_bin = _venv_bin(venv) / "sib-forge"
     fake_bin.write_text("#!/bin/sh\n")
     home = _receipt_home(tmp_path, "sib-forge", {"bin": str(fake_bin)})
     res = resolve_interpreter(forge_id="sib-forge", checkout=repo, home=home)
     assert res.source == "managed-receipt"
-    assert res.python == str(venv / "bin" / "python")
+    assert res.python == str(_venv_py(venv))
 
 
 # ---------------------------------------------------------------------------
@@ -230,8 +238,8 @@ def test_corrupted_environment_undeterminable_version(tmp_path):
     """venv python exists but cannot prove a version → rejected under a spec."""
     repo = _repo(tmp_path, "corrupt-forge", DECL)
     venv = tmp_path / "broken-venv"
-    (venv / "bin").mkdir(parents=True)
-    (venv / "bin" / "python").write_text("garbage-not-a-python\n")
+    _venv_bin(venv).mkdir(parents=True)
+    _venv_py(venv).write_text("garbage-not-a-python\n")
     manifest = {
         "forge_id": "corrupt-forge",
         "venv": str(venv),
@@ -305,7 +313,7 @@ def test_specialist_env_beats_collector_fallback(tmp_path):
         forge_id="envforge", checkout=repo, home=tmp_path / "empty"
     )
     assert res.source == "specialist-env"
-    assert res.python == str(venv / "bin" / "python")
+    assert res.python == str(_venv_py(venv))
 
 
 # ---------------------------------------------------------------------------
@@ -376,10 +384,10 @@ def test_version_probe_free_and_spawned(tmp_path):
     # pyvenv.cfg is the env's own declaration — read without spawn, and it
     # wins over the resolved binary identity
     venv = _fake_venv(tmp_path, "v-cfg", version="3.12.1")
-    assert _interpreter_version(str(venv / "bin" / "python"), probe=False) == (3, 12, 1)
+    assert _interpreter_version(str(_venv_py(venv)), probe=False) == (3, 12, 1)
     # a symlinked interpreter without pyvenv.cfg resolves to sys.executable
     venv2 = _fake_venv(tmp_path, "v-nocfg")
-    assert _interpreter_version(str(venv2 / "bin" / "python"), probe=True) == tuple(
+    assert _interpreter_version(str(str(_venv_py(venv2))), probe=True) == tuple(
         sys.version_info[:3]
     )
     # a non-interpreter returns None — never fabricated
