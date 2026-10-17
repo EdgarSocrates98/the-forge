@@ -78,6 +78,7 @@ GOLDEN_PATHS = {
 }
 
 _THEFORGE_VERB = re.compile(r"\btheforge\s+([a-z][a-z0-9-]*)")
+_THEFORGE_CMD = re.compile(r"\btheforge[ \t]+([a-z][a-z0-9-]*)[ \t]+([a-z][a-z0-9-]*)")
 _DOC_PATH = re.compile(r"docs/[A-Za-z0-9_./-]+")
 
 
@@ -92,6 +93,21 @@ def _theforge_verbs() -> set[str]:
         return set()
     m = re.search(r"\{([^}]+)\}", out.stdout)
     return set(m.group(1).split(",")) if m else set()
+
+
+def _subcommands(verb: str) -> set[str] | None:
+    """Subcommand group of ``theforge <verb>``, or None when the verb takes
+    positional arguments instead of a closed subcommand set."""
+    out = subprocess.run(
+        [PY, "-m", "theforge", verb, "--help"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+    )
+    if out.returncode != 0:
+        return None
+    m = re.search(r"\{([^}]+)\}", out.stdout)
+    return set(m.group(1).split(",")) if m else None
 
 
 def _failures() -> list[str]:
@@ -128,12 +144,23 @@ def _failures() -> list[str]:
                 fails.append(f"{f.relative_to(REPO)}: missing stage '{st}'")
 
     verbs = _theforge_verbs()
+    subs_cache: dict[str, set[str] | None] = {}
     docs = list(ONB.rglob("*.md"))
     for f in docs:
         text = f.read_text(encoding="utf-8")
         for verb in set(_THEFORGE_VERB.findall(text)):
             if verbs and verb not in verbs:
                 fails.append(f"{f.relative_to(REPO)}: 'theforge {verb}' is not a real verb")
+        for verb, sub in set(_THEFORGE_CMD.findall(text)):
+            if verbs and verb not in verbs:
+                continue
+            if verb not in subs_cache:
+                subs_cache[verb] = _subcommands(verb)
+            subs = subs_cache[verb]
+            if subs and sub not in subs:
+                fails.append(
+                    f"{f.relative_to(REPO)}: 'theforge {verb} {sub}' is not a real subcommand"
+                )
         for ref in set(_DOC_PATH.findall(text)):
             if not (REPO / ref).exists():
                 fails.append(f"{f.relative_to(REPO)}: referenced path '{ref}' does not exist")

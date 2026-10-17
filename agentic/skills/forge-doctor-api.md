@@ -4,7 +4,7 @@ description = "When and how to use forge-doctor-api: independent verification an
 
 [freshness]
 specialists = ["forge-doctor-api"]
-tested_version = "0.3.0"
+tested_version = "0.2.0"
 [claude]
 allowed_tools = "Read, Bash, Grep"
 argument_hint = "<verify-or-diagnose-task>"

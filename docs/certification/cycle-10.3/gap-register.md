@@ -54,6 +54,15 @@ mensagens `install apiforge` no adapter theforge_apiforge; `README.pt-BR.md`
 com `pip install 'apiforge[all]'`. Corrigido: lookup `apiforge-af`→`apiforge`
 (fallback dev), mensagens e doc apontam `apiforge-af`.
 
+**Errata (review 4):** a marcação anterior estava incompleta — o rename não
+havia alcançado o control plane: `forge-knowledge/api-forge.json`
+(`package`/`install.command` = `apiforge>=0.1,<0.2`, 404 no PyPI — o comando
+era executado verbatim por `install auto`) e `agentic/skills/forge-api.md`
+(mesmo spec morto + `tested_version 0.3.0`, propagado aos mirrors
+`.claude`/`.agents`/`.devin` e ao wheel `host_assets`). Corrigido agora:
+`apiforge-af>=0.1,<0.2` em ambos, mirrors re-renderizados, `tested_version`
+alinhado ao publicado (0.1.0).
+
 ## G-TEST-1 — doc gates irmãos pulavam URLs absolutas (média) — ✅ CORRIGIDO
 
 `doc_manifest._check_links` ignorava `https://` → os ~330 links convertidos
@@ -117,3 +126,23 @@ por acidente. **Destino**: verificar conteúdo ou desligar (settings).
 
 Token `pypi-AgEI...` circulou em texto. OIDC já cobre publicações.
 **Destino**: rotação/revogação pelo dono — já recomendado, ação humana.
+
+## G-ONB-1 — Golden paths falhavam no primeiro comando (alta) — ✅ CORRIGIDO
+
+`docs/onboarding/golden-paths/{api,platform,spark-aws}.md` e 4 guias
+getting-started instruíam `theforge install <pkg>` — `install` só aceita
+subcomandos (`plan|apply|status|doctor|repair|uninstall|update|auto|mcp-verify`)
+e `apiforge` nem era o provider id. Corrigido: `theforge install auto --forge <id>`
+(api-forge, platform-forge, spark-forge-aws, spark-forge-azure). Gate
+`check_onboarding.py` endurecido: valida `theforge <verb> <sub>` contra o
+grupo `{...}` de cada `--help` (falso positivo anterior impossível —
+comando inválido reproduzido em teste negativo).
+
+## G-TEST-2 — `_check_links` ignorava `#fragment` em URLs mapeadas (média) — ✅ CORRIGIDO
+
+`_repo_url_path` stripa `#` internamente; `mapped.partition("#")` retornava
+frag vazio → anchors nunca verificados em links tag-pinned (7 READMEs com
+`#frag` vivos desprotegidos). Corrigido nos 7 `doc_manifest.py`: frag vem de
+`raw.partition("#")`; `%23` decodificado dentro do path é caractere de nome,
+não separador; `#L10`/`#L10-L20` (line anchors GitHub) isentos do check.
++3 testes novos por repo (missing-anchor, valid-anchor, line-ref).

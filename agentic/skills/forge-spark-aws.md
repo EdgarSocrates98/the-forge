@@ -4,7 +4,7 @@ description = "When and how to use spark-forge-aws: AWS Spark engineering (Glue,
 
 [freshness]
 specialists = ["spark-forge-aws"]
-tested_version = "0.3.0"
+tested_version = "0.5.0"
 [claude]
 allowed_tools = "Read, Bash, Grep"
 argument_hint = "<aws-spark-task>"

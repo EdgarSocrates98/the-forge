@@ -71,7 +71,7 @@
     "independently verify the spark-forge-aws tuning result",
     "diagnose the data-quality finding bundle"
   ],
-  "tested_version": "0.3.0",
+  "tested_version": "1.0.0",
   "recorded_at": "2026-10-08T00:00:00Z",
   "tested_surface": "39cf2d922efef82fd6336155621291775fd1b41e4f88db81dcc956a07ae935b1"
 }

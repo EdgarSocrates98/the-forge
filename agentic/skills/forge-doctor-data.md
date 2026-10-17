@@ -4,7 +4,7 @@ description = "When and how to use forge-doctor-data: independent verification a
 
 [freshness]
 specialists = ["forge-doctor-data"]
-tested_version = "0.3.0"
+tested_version = "1.0.0"
 [claude]
 allowed_tools = "Read, Bash, Grep"
 argument_hint = "<verify-or-diagnose-task>"

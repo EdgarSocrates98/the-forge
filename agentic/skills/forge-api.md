@@ -4,7 +4,7 @@ description = "When and how to use api-forge: API design and evolution (REST/Ope
 
 [freshness]
 specialists = ["api-forge"]
-tested_version = "0.3.0"
+tested_version = "0.1.0"
 [claude]
 allowed_tools = "Read, Bash, Grep"
 argument_hint = "<api-task>"
@@ -30,7 +30,7 @@ REST/OpenAPI spec design or review · AsyncAPI event contracts · GraphQL schema
 
 ## Operate
 
-1. `theforge knowledge show api-forge` — install needs a 3.12 venv (`apiforge>=0.1,<0.2` + adapter).
+1. `theforge knowledge show api-forge` — install needs a 3.12 venv (`apiforge-af>=0.1,<0.2` + adapter).
 2. Cross-forge intake requires the specialist's post-PR-34 main (or published `>=0.1` carrying the intake); without it the adapter degrades with a named limitation.
 3. Runtime `describe` is authoritative for capabilities.
 

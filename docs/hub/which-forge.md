@@ -34,7 +34,7 @@ API engineering specialist: REST/OpenAPI, AsyncAPI, GraphQL, gRPC, contract evol
 review this OpenAPI spec for breaking changes
 ```
 
-- pacote: `apiforge>=0.1,<0.2` · binário: `apiforge` · python `>=3.12,<3.13`
+- pacote: `apiforge-af>=0.1,<0.2` · binário: `apiforge` · python `>=3.12,<3.13`
 
 ### Forge Doctor API (`forge-doctor-api`)
 

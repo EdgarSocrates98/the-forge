@@ -13,7 +13,7 @@
 ```bash
 theforge setup
 # ou:
-theforge install platform-forge
+theforge install auto --forge platform-forge
 ```
 
 `platformforge` é inteligência de plataforma determinística e offline-first:

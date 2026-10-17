@@ -13,7 +13,7 @@
 ```bash
 theforge setup
 # ou, explicitamente:
-theforge install api-forge
+theforge install auto --forge api-forge
 ```
 
 O API Forge é o especialista de engenharia de API: discovery, contratos,
