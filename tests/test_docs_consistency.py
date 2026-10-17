@@ -72,6 +72,11 @@ LINK_RE = re.compile(r"!?\[(?:[^\[\]]|\[[^\]]*\])*\]\(\s*(<[^>]*>|[^)\s]+)(?:\s+
 REF_DEF_RE = re.compile(r"^ {0,3}\[[^\]]+\]:\s+(<[^>]*>|\S+)")
 HTML_ANCHOR_RE = re.compile(r"<a\s+(?:name|id)=\"([^\"]+)\"")
 SCHEME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")
+# Tag-pinned absolute URLs to this repo's own files (PyPI-renderable READMEs)
+# still count as links to those files for indexing/anchor purposes.
+REPO_URL_RE = re.compile(
+    r"^https://github\.com/EdgarSocrates98/the-forge/(?:blob|tree)/[^/]+/"
+)
 CODE_CELL_RE = re.compile(r"FORGE-[A-Z0-9-]+")
 ADR_FILE_RE = re.compile(r"^(\d{4})-.+\.md$")
 
@@ -176,6 +181,16 @@ def resolve(root: Path, doc: Path, target: str) -> tuple[str | None, str]:
         return None, unquote(anchor)
 
 
+def resolve_repo_url(target: str) -> tuple[str | None, str]:
+    """Map ``https://github.com/.../blob|tree/<ref>/<path>#anchor`` back to the
+    repo-relative path, or (None, anchor) for other absolute URLs."""
+    _, _, anchor = target.partition("#")
+    if not REPO_URL_RE.match(target):
+        return None, unquote(anchor)
+    path = REPO_URL_RE.sub("", target).partition("#")[0].partition("?")[0]
+    return unquote(path), unquote(anchor)
+
+
 def table_rows(lines: list[str]) -> list[list[str]]:
     """Rows of the first Markdown table in ``lines`` (header included, separator dropped)."""
     rows: list[list[str]] = []
@@ -222,6 +237,21 @@ def link_problems(root: Path) -> list[str]:
         name = rel(root, doc)
         for text, target in iter_links(read_md(doc)):
             if SCHEME_RE.match(target):
+                url_path, anchor = resolve_repo_url(target)
+                if url_path is None:
+                    continue
+                target_file = root / url_path
+                if not target_file.exists():
+                    problems.append(f"{name}: {text} points to a missing file ({target})")
+                    continue
+                if anchor and target_file.suffix == ".md" and target_file.is_file():
+                    if url_path not in anchor_cache:
+                        anchor_cache[url_path] = anchors(read_md(target_file))
+                    if anchor not in anchor_cache[url_path]:
+                        problems.append(
+                            f"{name}: {text} points to a missing anchor #{anchor} "
+                            f"in {url_path}"
+                        )
                 continue
             path, anchor = resolve(root, doc, target)
             if path is None:
@@ -252,10 +282,14 @@ def link_problems(root: Path) -> list[str]:
 def linked_paths(root: Path, doc: Path) -> set[str]:
     paths = set()
     for _, target in iter_links(read_md(doc)):
-        if not SCHEME_RE.match(target):
-            path, _ = resolve(root, doc, target)
-            if path is not None:
-                paths.add(path)
+        if SCHEME_RE.match(target):
+            url_path, _ = resolve_repo_url(target)
+            if url_path is not None:
+                paths.add(url_path)
+            continue
+        path, _ = resolve(root, doc, target)
+        if path is not None:
+            paths.add(path)
     return paths
 
 
@@ -507,11 +541,19 @@ VALID_REPORT = "# Relatório final do Cycle 2\n\n" + "".join(
 @pytest.mark.parametrize(
     ("doc", "old", "new", "expected"),
     [
-        ("README.md", "](docs/cli.md#exit-codes-gerais)", "](docs/missing.md)", "missing file"),
         (
             "README.md",
-            "](docs/cli.md#exit-codes-gerais)",
-            "](docs/cli.md#nao-existe)",
+            "](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md"
+            "#exit-codes-gerais)",
+            "](docs/missing.md)",
+            "missing file",
+        ),
+        (
+            "README.md",
+            "](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md"
+            "#exit-codes-gerais)",
+            "](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md"
+            "#nao-existe)",
             "missing anchor",
         ),
         ("docs/cli.md", "## Exit codes gerais", "## Exit codes", "missing anchor"),
@@ -558,7 +600,7 @@ def test_readme_index_detects_unindexed_doc(docs_copy: Path) -> None:
         (docs_copy / REPORT).write_text(VALID_REPORT, encoding="utf-8")
         readme = docs_copy / "README.md"  # the real README already links the real report
         readme.write_text(
-            re.sub(rf"\[[^\]]*\]\({re.escape(REPORT)}\)", "relatório", read_md(readme)),
+            re.sub(rf"\[[^\]]*\]\([^)]*{re.escape(REPORT)}\)", "relatório", read_md(readme)),
             encoding="utf-8",
         )
 
