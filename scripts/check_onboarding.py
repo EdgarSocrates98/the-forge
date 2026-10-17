@@ -80,6 +80,30 @@ GOLDEN_PATHS = {
 _THEFORGE_VERB = re.compile(r"\btheforge\s+([a-z][a-z0-9-]*)")
 _THEFORGE_CMD = re.compile(r"\btheforge[ \t]+([a-z][a-z0-9-]*)[ \t]+([a-z][a-z0-9-]*)")
 _DOC_PATH = re.compile(r"docs/[A-Za-z0-9_./-]+")
+_FENCE = re.compile(r"^```")
+_INLINE_CODE = re.compile(r"`[^`\n]*`")
+
+
+def _code_spans(text: str) -> list[str]:
+    """Command lines visible to the gate: fenced-block lines + inline code.
+
+    Prose is dropped so a sentence like "use theforge install the forges"
+    cannot false-fail as an invented ``install the`` subcommand — commands
+    that are meant to run belong in code spans. Each fenced line and each
+    inline span is returned separately so two adjacent spans on different
+    lines cannot combine into a phantom command.
+    """
+    parts: list[str] = []
+    inside = False
+    for line in text.splitlines():
+        if _FENCE.match(line.strip()):
+            inside = not inside
+            continue
+        if inside:
+            parts.append(line)
+        else:
+            parts.extend(m.group(0)[1:-1] for m in _INLINE_CODE.finditer(line))
+    return parts
 
 
 def _theforge_verbs() -> set[str]:
@@ -106,7 +130,17 @@ def _subcommands(verb: str) -> set[str] | None:
     )
     if out.returncode != 0:
         return None
-    m = re.search(r"\{([^}]+)\}", out.stdout)
+    # A ``{...}`` group is a closed subcommand set only when argparse puts it
+    # under ``positional arguments:``; under ``options:`` it is an option's
+    # choices (e.g. ``--scope {project,workspace,user}``), not a grammar.
+    pos = out.stdout.find("positional arguments:")
+    if pos < 0:
+        return None
+    section = out.stdout[pos:]
+    end = section.find("\noptions:")
+    if end >= 0:
+        section = section[:end]
+    m = re.search(r"\{([^}]+)\}", section)
     return set(m.group(1).split(",")) if m else None
 
 
@@ -148,10 +182,19 @@ def _failures() -> list[str]:
     docs = list(ONB.rglob("*.md"))
     for f in docs:
         text = f.read_text(encoding="utf-8")
-        for verb in set(_THEFORGE_VERB.findall(text)):
+        code_lines = _code_spans(text)
+        for verb in {
+            v
+            for line in code_lines
+            for v in _THEFORGE_VERB.findall(line)
+        }:
             if verbs and verb not in verbs:
                 fails.append(f"{f.relative_to(REPO)}: 'theforge {verb}' is not a real verb")
-        for verb, sub in set(_THEFORGE_CMD.findall(text)):
+        for verb, sub in {
+            pair
+            for line in code_lines
+            for pair in _THEFORGE_CMD.findall(line)
+        }:
             if verbs and verb not in verbs:
                 continue
             if verb not in subs_cache:
