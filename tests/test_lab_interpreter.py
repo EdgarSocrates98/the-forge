@@ -56,7 +56,9 @@ def _fake_venv(root: Path, name: str, version: str | None = None) -> Path:
 
 
 def _venv_py(venv: Path) -> Path:
-    return venv / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
+    return venv / ("Scripts" if os.name == "nt" else "bin") / (
+        "python.exe" if os.name == "nt" else "python"
+    )
 
 
 def _venv_bin(venv: Path) -> Path:
