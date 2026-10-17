@@ -71,8 +71,9 @@ def assess(path: str) -> dict[str, Any]:
                 secure is None or total is None or not r.get("evidence_uri", "").strip()
             ):
                 raise ValueError("completed without independent evidence")
+            quality = passed / total if total and passed is not None else None
             clean.append({"key": key, "completed": completed, "security": secure,
-                          "quality": passed / total if total and passed is not None else None, "metrics": metrics})
+                          "quality": quality, "metrics": metrics})
         except (ValueError, TypeError, KeyError) as exc:
             errors.append({"line": line, "error": str(exc)})
     by_key: dict[tuple[str, int, str], dict[str, Any]] = {
