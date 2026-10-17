@@ -70,7 +70,7 @@ o PR #34 (`1745f87`; endurecida no ciclo 3.1 com namespaces `upstream:`/`upstrea
 e a recusa `AF-UPSTREAM-FORBIDDEN` de chaves imperativas). Com um `apiforge` sem
 ela o adapter degrada com a limitação de consumo ausente (correto como
 comportamento) e a prova falha: o teste real precisa da main pós-#34 (ou de
-`apiforge>=0.1` publicado com o intake), também no workflow (`api_forge_ref`).
+`apiforge-af>=0.1` publicado com o intake), também no workflow (`api_forge_ref`).
 
 O adapter roda em Python ≥ 3.10. Num interpretador que não é 3.12, porém, `describe` recusa com o motivo e `health` responde `unavailable` (ver [Troubleshooting](#troubleshooting)).
 

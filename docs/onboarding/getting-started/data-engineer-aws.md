@@ -13,7 +13,7 @@
 ```bash
 theforge setup
 # ou:
-theforge install spark-forge-aws
+theforge install auto --forge spark-forge-aws
 ```
 
 O Spark Forge AWS (`sparkforge-aws`) faz análise determinística de jobs —

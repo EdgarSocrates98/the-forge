@@ -6,7 +6,7 @@
 ## 1. Instalação
 
 ```bash
-theforge install platform-forge
+theforge install auto --forge platform-forge
 platformforge doctor
 ```
 

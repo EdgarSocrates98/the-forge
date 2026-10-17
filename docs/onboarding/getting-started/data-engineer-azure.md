@@ -13,7 +13,7 @@
 ```bash
 theforge setup
 # ou:
-theforge install spark-forge-azure
+theforge install auto --forge spark-forge-azure
 ```
 
 `sparkforge-azure` é o irmão Azure do Spark Forge — mesma disciplina

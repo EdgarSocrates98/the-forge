@@ -6,7 +6,7 @@
 ## 1. Instalação
 
 ```bash
-theforge install apiforge
+theforge install auto --forge api-forge
 ```
 
 ## 2. Seleção de especialista

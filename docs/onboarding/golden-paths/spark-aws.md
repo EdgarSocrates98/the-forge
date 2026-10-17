@@ -6,7 +6,7 @@
 ## 1. Instalação
 
 ```bash
-theforge install spark-forge-aws   # ou dentro do `theforge setup`
+theforge install auto --forge spark-forge-aws   # ou dentro do `theforge setup`
 sparkforge-aws doctor              # confirma o ambiente
 ```
 

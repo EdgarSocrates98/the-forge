@@ -222,7 +222,7 @@ def test_knowledge_check_fresh_and_not_installed(
     from theforge.contracts.manifest import ForgeManifest
     from theforge.registry.surface import surface_fingerprint
 
-    manifest_path = _manifest(tmp_path / "apiforge.json", "api-forge", "0.3.0")
+    manifest_path = _manifest(tmp_path / "apiforge.json", "api-forge", "0.1.0")
     make_workspace(tmp_path, [_entry("api-forge", manifest_path)])
     # Real packages now record measured surfaces; a fixture manifest can't
     # reproduce them, so the package under test borrows the fixture's own
@@ -238,7 +238,7 @@ def test_knowledge_check_fresh_and_not_installed(
     rows = _check(capsys, tmp_path)
     api = rows["api-forge"]
     assert api["status"] == "fresh"
-    assert api["version"] == "match" and api["installed_version"] == "0.3.0"
+    assert api["version"] == "match" and api["installed_version"] == "0.1.0"
     assert api["surface"] == "match"
     assert rows["spark-forge-aws"]["status"] == "not_installed"
 

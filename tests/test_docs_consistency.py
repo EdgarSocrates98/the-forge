@@ -8,10 +8,11 @@ Requirements: 7.1 (``docs/errors.md`` canonical), 7.2, 7.3, 7.5, 7.6, 8.3, 8.4, 
 """
 
 import argparse
+import importlib.util
 import os
-import posixpath
 import re
 import shutil
+import sys
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from urllib.parse import unquote
@@ -74,10 +75,10 @@ REF_DEF_RE = re.compile(r"^ {0,3}\[[^\]]+\]:\s+(<[^>]*>|\S+)")
 HTML_ANCHOR_RE = re.compile(r"<a\s+(?:name|id)=\"([^\"]+)\"")
 SCHEME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")
 # Tag-pinned absolute URLs to this repo's own files (PyPI-renderable READMEs)
-# still count as links to those files for indexing/anchor purposes.
-REPO_URL_RE = re.compile(
-    r"^https://github\.com/EdgarSocrates98/the-forge/(?:blob|tree)/[^/]+/"
-)
+# still count as links to those files for indexing/anchor purposes. The
+# canonical resolver lives in scripts/docs/doc_manifest.py (vendored to the
+# sibling forges); it is reused here so both gates share one implementation.
+REPO_SLUG = "EdgarSocrates98/the-forge"
 CODE_CELL_RE = re.compile(r"FORGE-[A-Z0-9-]+")
 ADR_FILE_RE = re.compile(r"^(\d{4})-.+\.md$")
 
@@ -182,17 +183,29 @@ def resolve(root: Path, doc: Path, target: str) -> tuple[str | None, str]:
         return None, unquote(anchor)
 
 
-def resolve_repo_url(target: str) -> tuple[str | None, str]:
-    """Map ``https://github.com/.../blob|tree/<ref>/<path>#anchor`` back to the
-    repo-relative path, or (None, anchor) for other absolute URLs."""
+def _load_doc_manifest():
+    spec = importlib.util.spec_from_file_location(
+        "doc_manifest", REPO / "scripts" / "docs" / "doc_manifest.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_DOC_MANIFEST = _load_doc_manifest()
+
+
+def resolve_repo_url(target: str, root: Path) -> tuple[str | None, str]:
+    """Map ``https://github.com/<slug>/blob|tree/<ref>/<path>#anchor`` back to
+    the repo-relative path, or (None, anchor) for other absolute URLs.
+    ``<ref>/<path>`` disambiguation (slash-refs, git-known refs), ``?``/``%XX``
+    normalization and ``..``/``\\\\`` escape rejection all come from
+    ``doc_manifest._repo_url_path`` — one resolver for both doc gates."""
     _, _, anchor = target.partition("#")
-    if not REPO_URL_RE.match(target):
-        return None, unquote(anchor)
-    path = REPO_URL_RE.sub("", target).partition("#")[0].partition("?")[0]
-    path = posixpath.normpath(unquote(path))
-    if path.startswith(("..", "/", "\\")):
-        return None, unquote(anchor)
-    return path, unquote(anchor)
+    path = _DOC_MANIFEST._repo_url_path(target, REPO_SLUG, root)
+    return (path, unquote(anchor)) if path is not None else (None, unquote(anchor))
 
 
 def table_rows(lines: list[str]) -> list[list[str]]:
@@ -241,7 +254,7 @@ def link_problems(root: Path) -> list[str]:
         name = rel(root, doc)
         for text, target in iter_links(read_md(doc)):
             if SCHEME_RE.match(target):
-                url_path, anchor = resolve_repo_url(target)
+                url_path, anchor = resolve_repo_url(target, root)
                 if url_path is None:
                     continue
                 target_file = root / url_path
@@ -287,7 +300,7 @@ def linked_paths(root: Path, doc: Path) -> set[str]:
     paths = set()
     for _, target in iter_links(read_md(doc)):
         if SCHEME_RE.match(target):
-            url_path, _ = resolve_repo_url(target)
+            url_path, _ = resolve_repo_url(target, root)
             if url_path is not None:
                 paths.add(url_path)
             continue
