@@ -19,30 +19,29 @@ Jornada simulada de usuário novo usando **apenas documentação pública**
 
 ## 8.2 Fricções reais encontradas (com evidência)
 
-**F-1 — PyPI README não ensina `pip install`** (alto impacto)
-A página pública de `theforge-core` mostra "Instalação (desenvolvimento)"
-(clone+`-e .[dev]`) e "Instalação portátil" (`./setup.sh`) — **ambos exigem o
-checkout git**. Nenhuma linha diz `pip install theforge-core`. Um usuário que
-chega pela página do PyPI — o caso de uso natural — não descobre o caminho
-mais simples. → gap register **G-DOCS-1** (patch candidato: adicionar seção
-"Instalação" com `pip install` no README).
+**F-1 — PyPI README não ensinava `pip install`** (alto impacto) — ✅ corrigido
+A página pública de `theforge-core` mostrava só instalação por checkout.
+`pip install <dist>` agora lidera Install nos 7 READMEs. → **G-DOCS-1**.
 
-**F-2 — Logo quebrado no PyPI** (baixo)
-`<img src="docs/assets/logo_forge.png">` relativo não renderiza fora do repo.
-→ **G-DOCS-2**.
+**F-2 — Logo quebrado no PyPI** (baixo) — ✅ corrigido
+7 imagens relativas → `raw.githubusercontent.com/.../<tag>/`. → **G-DOCS-2**.
+
+**F-2b — ~350 links relativos quebrados** (achado pelo revisor) — ✅ corrigido
+343 links + 7 imagens nos READMEs registry-bound eram 404 garantidos no PyPI.
+Reescritos para absolutos tag-pinned, 0 unresolved. → **G-DOCS-4**.
 
 **F-3 — forge-cli é clone-only** (conhecido, confirmado)
 Instalar forjas exige `git` + build local; o caminho `pip install` existe nos
 registries mas o CLI não o usa. Já registrado como feature gap — spec futura.
 → **G-CLI-1**.
 
-**F-4 — `apiforge-mcp` sem extra → traceback cru**
-`ModuleNotFoundError: mcp.server.mcpserver` em vez de mensagem guiada.
-→ **G-DX-1** (patch candidato: catch + "instale apiforge-af[mcp]").
+**F-4 — `apiforge-mcp` sem extra → traceback cru** — ✅ corrigido
+`except ImportError` não cobria o `RuntimeError` de `build_server` — a
+mensagem guiada era inalcançável. Agora imprime `AF-MCP-UNAVAILABLE` + unlock,
+exit 2. → **G-DX-1**.
 
-**F-5 — npm package não mencionado nos READMEs das forjas**
-Usuário do PyPI não descobre que `theforge-cli` existe. Cross-referência
-ausente. → **G-DOCS-3**.
+**F-5 — npm package não mencionado nos READMEs das forjas** — parcial
+`theforge-cli` agora é referenciado no README do the-forge. → **G-DOCS-3**.
 
 ## 8.3 O que funcionou sem fricção
 

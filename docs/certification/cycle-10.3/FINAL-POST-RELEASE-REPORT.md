@@ -48,14 +48,21 @@ forge-doctor-api `ca2df7b` — CI verde nos 9 HEADs.
 
 | PR | Repo | Conteúdo | CI |
 |---|---|---|---|
-| #74 | the-forge | metadata + link PyPI | 13✓ (1 pend) |
-| #81 | api-forge | rename apiforge-af + metadata | 11✓ |
-| #60 | forge-doctor-api | urls/classifiers | 5✓ |
-| #48 | forge-doctor-data | urls + classifier Alpha | 13✓ |
+| #74 | the-forge | metadata + 80 links/img absolutos + pip section + rename real-providers | 13✓ |
+| #81 | api-forge | rename completo + metadata + 57 links/img + AF-MCP-UNAVAILABLE | 11✓ |
+| #46 | platform-forge | 67 links/img absolutos + pip section | novo |
+| #168 | spark-forge-aws | 87 links/img absolutos | novo |
+| #62 | spark-forge-azure | 9 links/img absolutos + pip line | novo |
+| #48 | forge-doctor-data | urls + classifier + 18 links/img | 13✓ |
+| #60 | forge-doctor-api | metadata + 32 links/img + pip section | 5✓ |
 | #61 | forge-doctor-api | lab emitter skip→skipped | rodando |
 
-**Bug real**: lab emitter reportava `skipped` como `fail` — install mínimo
-parecia quebrado. Causa raiz dupla documentada em 07-forge-lab.md.
+**Bugs reais encontrados**: (1) lab emitter reportava `skipped` como `fail` —
+install mínimo parecia quebrado (PR #61); (2) `apiforge-mcp` sem extra dava
+traceback cru — a mensagem guiada existia mas `except ImportError` não cobria
+o `RuntimeError` de `build_server` (PR #81). **Auditoria interna corrigida**:
+a Wave-2 original certificou "1 link relativo" — recontagem provou ~350;
+reescritos todos para absolutos tag-pinned (errata registrada no doc).
 
 ## Resultados por frente
 
@@ -75,9 +82,11 @@ parecia quebrado. Causa raiz dupla documentada em 07-forge-lab.md.
 
 ## Documentação
 
-Problemas de doc reais: READMEs do PyPI não ensinam `pip install` (G-DOCS-1),
-logo relativo quebrado (G-DOCS-2), npm não referenciado (G-DOCS-3),
-refs antigas `apiforge` corrigidas no #81.
+Problemas de doc reais corrigidos no ciclo: ~350 links/imagens relativos nos
+READMEs registry-bound → absolutos tag-pinned (G-DOCS-4, errata da Wave-2);
+`pip install` agora lidera Install nos READMEs (G-DOCS-1); logos corrigidos
+(G-DOCS-2); rename `apiforge`→`apiforge-af` completado em `mcp/main.py`,
+`__init__.py` e `real-providers.md`.
 
 ## Residual risks
 
@@ -90,22 +99,22 @@ refs antigas `apiforge` corrigidas no #81.
 
 ## Patch recommendations
 
-4 patches justificados (mudança distribuível): `theforge-core 0.5.1`,
-`apiforge-af 0.1.1`, `forge-doctor-data 1.0.1`, `forge-doctor-api 0.2.1`.
-Detalhes e checklist em `10-patch-release-plan.md`. Os outros 5 projetos
-**não** precisam de versão nova.
+7 patches justificados (mudança distribuível em README/metadata — vão na
+wheel): `theforge-core 0.5.1`, `apiforge-af 0.1.1`, `platformforge 0.1.1`,
+`sparkforge-aws 0.5.1`, `sparkforge-azure 0.1.1`, `forge-doctor-data 1.0.1`,
+`forge-doctor-api 0.2.1`. Detalhes e checklist em `10-patch-release-plan.md`.
+forge-cli (npm) e forge-portal (vendored) **não** precisam de versão nova.
 
 ## Adoption-readiness decision
 
-**CONDITIONALLY READY — GO condicionado aos 4 patches.**
+**CONDITIONALLY READY — GO condicionado aos 7 patches.**
 
 Justificativa honesta: a trilha central (achar → instalar → executar →
 findings → portal → remover) funciona de ponta a ponta em artefatos
-públicos. O que falta é polish de descoberta (um usuário PyPI não aprende o
-caminho pip) e o alinhamento do contrato Python. Nada disso quebra o
-produto — mas para "sem depender do autor" ser literalmente verdade, o
-README precisa ensinar o caminho que existe. Depois dos 4 patches + merge
-dos 5 PRs, a recomendação vira `READY` sem ressalvas de documentação;
+públicos. As fricções de descoberta (links quebrados, ausência de
+`pip install` nos READMEs) foram corrigidas nos PRs pendentes — mas só
+chegam ao usuário quando os patches publicarem. Depois dos 7 patches + merge
+dos 8 PRs, a recomendação vira `READY` sem ressalvas de documentação;
 G-CLI-1 e G-E2E-1 ficam como roadmap explícito.
 
 ---

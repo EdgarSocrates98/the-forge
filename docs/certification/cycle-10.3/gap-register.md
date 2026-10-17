@@ -3,23 +3,33 @@
 Gaps reais encontrados durante a auditoria. Cada item tem severidade, evidência
 e destino proposto. Nada aqui é hipótese — tudo tem reprodução ou fonte citada.
 
-## G-DOCS-1 — PyPI README não ensina `pip install` (alta)
+## G-DOCS-1 — PyPI README não ensina `pip install` (alta) — ✅ CORRIGIDO
 
-`theforge-core` no PyPI mostra "Instalação (desenvolvimento)" (clone + `-e
-.[dev]`) e "Instalação portátil" (`./setup.sh`) — ambos exigem checkout git.
-Nenhuma menção a `pip install theforge-core`. Usuário que chega pela página do
-pacote não descobre o caminho trivial. **Destino**: patch docs (adicionar à
-PR #74 ou PR nova). Mesmo problema em outros pacotes que só documentam clone.
+`theforge-core` no PyPI mostrava só instalação por checkout (clone + `-e
+.[dev]` + `./setup.sh`). Corrigido 2026-10-17: `pip install <dist>` agora
+lidera a seção Install dos 7 READMEs (the-forge, api-forge, platform-forge,
+spark-forge-azure, forge-doctor-api ganharam a seção; spark-forge-aws e
+forge-doctor-data já tinham registry install).
 
-## G-DOCS-2 — Logo quebrado no PyPI (baixa)
+## G-DOCS-2 — Logo quebrado no PyPI (baixa) — ✅ CORRIGIDO
 
-`<img src="docs/assets/logo_forge.png">` relativo → não renderiza no
-long_description. **Destino**: patch docs (URL absoluto pinado).
+`<img src="docs/assets/logo_forge.png">` e as outras 6 imagens relativas →
+`raw.githubusercontent.com/.../<tag>/` — todas as 7 logos agora renderizam.
 
-## G-DOCS-3 — CLI npm não referenciado nos READMEs (média)
+## G-DOCS-4 — ~350 links relativos quebrados no PyPI (alta) — ✅ CORRIGIDO
 
-`theforge-cli` existe no npm mas nenhum README de forja o menciona — usuário
-PyPI não descobre o instalador. **Destino**: patch docs.
+Encontrado pelo revisor do ciclo (a auditoria original certificou "1 link").
+343 links markdown + 7 imagens nos 7 READMEs registry-bound eram 404
+garantidos no PyPI (ele não reescreve relativos). Reescritos para URLs
+absolutas pinadas na tag da release (`blob/` arquivo, `tree/` dir,
+`raw.githubusercontent/` imagem), 0 alvos faltantes. PRs: #74, #81, #46, #168,
+#62, #48, #60.
+
+## G-DOCS-3 — CLI npm não referenciado nos READMEs (média) — parcial
+
+`theforge-cli` (npm) agora é referenciado no README do the-forge. Os READMEs
+das forjas individuais não o mencionam — decisão razoável (cada forja é
+independente; o instalador é opt-in). Mantido como observação, não bloqueio.
 
 ## G-CLI-1 — forge-cli é clone-only (feature)
 
@@ -27,10 +37,13 @@ PyPI não descobre o instalador. **Destino**: patch docs.
 fallback. Funciona (23s medido) mas exige git e compilação local. **Destino**:
 spec de feature (cyc11), não patch — muda o mecanismo central.
 
-## G-DX-1 — `apiforge-mcp` sem extra → traceback cru (baixa)
+## G-DX-1 — `apiforge-mcp` sem extra → traceback cru (baixa) — ✅ CORRIGIDO
 
-`ModuleNotFoundError: mcp.server.mcpserver` em vez de mensagem guiada.
-**Destino**: patch — catch + "instale apiforge-af[mcp]".
+Causa raiz encontrada no review: `build_server` levanta `RuntimeError`
+(AF-MCP-OPTIONAL-UNAVAILABLE) mas `main.py` só capturava `ImportError` → a
+mensagem guiada existia e era **inalcançável**. Fix: `except (ImportError,
+RuntimeError)` + unlock `apiforge-af[mcp]` (era o nome morto `apiforge[mcp]`).
+Verificado em venv mínima: `AF-MCP-UNAVAILABLE` + unlock, exit 2.
 
 ## G-MATRIX-1 — requires-python floor não testado em CI (média)
 
