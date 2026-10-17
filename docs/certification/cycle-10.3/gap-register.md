@@ -41,9 +41,26 @@ spec de feature (cyc11), não patch — muda o mecanismo central.
 
 Causa raiz encontrada no review: `build_server` levanta `RuntimeError`
 (AF-MCP-OPTIONAL-UNAVAILABLE) mas `main.py` só capturava `ImportError` → a
-mensagem guiada existia e era **inalcançável**. Fix: `except (ImportError,
-RuntimeError)` + unlock `apiforge-af[mcp]` (era o nome morto `apiforge[mcp]`).
-Verificado em venv mínima: `AF-MCP-UNAVAILABLE` + unlock, exit 2.
+mensagem guiada existia e era **inalcançável**. Fix (refinado no 2º review):
+`except ImportError` + `except RuntimeError` filtrado por
+`AF-MCP-OPTIONAL-UNAVAILABLE` (RuntimeErrors reais propagam), unlock
+`apiforge-af[mcp]`, exit 2 — com teste de contrato
+(`test_main_missing_extra.py`, 3 casos).
+
+## G-RENAME-1 — dist name morto em runtime do adapter (alta) — ✅ CORRIGIDO
+
+`version("apiforge")` (dist morta → provenance "unknown" silenciosa) e 5
+mensagens `install apiforge` no adapter theforge_apiforge; `README.pt-BR.md`
+com `pip install 'apiforge[all]'`. Corrigido: lookup `apiforge-af`→`apiforge`
+(fallback dev), mensagens e doc apontam `apiforge-af`.
+
+## G-TEST-1 — doc gates irmãos pulavam URLs absolutas (média) — ✅ CORRIGIDO
+
+`doc_manifest._check_links` ignorava `https://` → os ~330 links convertidos
+perderam cobertura missing-file/anchor. Resolver portado aos 6 repos (slug
+derivado de `pyproject.urls`, escapes `..` rejeitados); the-forge ganhou
+`resolve_repo_url` com a mesma semântica. READMEs convertidos validam 0
+findings.
 
 ## G-MATRIX-1 — requires-python floor não testado em CI (média)
 
