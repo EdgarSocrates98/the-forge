@@ -8,6 +8,15 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-18
+
+### 0.5.1 — Agentic Ecosystem
+
+### Fixed
+- Ship `forge_knowledge/*.json` no wheel (resolve provider argv fora do checkout)
+- Portal vendored 2.1 final (Cycles 0-6)
+
+
 ### Dogfooding hardening (pós-0.5.0)
 
 Melhorias de atrito real observadas no uso da própria plataforma — sem
