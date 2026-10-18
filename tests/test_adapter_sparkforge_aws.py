@@ -481,10 +481,10 @@ def test_snapshot_rerecording_is_deterministic() -> None:
     }
     assert first["tools"]["sparkforge_a"]["required"] == []
     changed = record.build_snapshot(
-        _tools(["sparkforge_a"]), "0.5.1", today="2026-10-05", previous=first
+        _tools(["sparkforge_a"]), "0.5.2", today="2026-10-05", previous=first
     )
     assert changed["recorded_at"] == "2026-10-05"
-    assert changed["specialist_version"] == "0.5.1"
+    assert changed["specialist_version"] == "0.5.2"
     rendered = record.render(first)
     assert rendered.endswith("\n") and list(json.loads(rendered)) == sorted(first)
 

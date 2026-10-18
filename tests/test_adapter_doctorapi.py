@@ -411,11 +411,11 @@ def test_replay_health_without_the_specialist_is_unavailable() -> None:
 
 def test_assume_specialist_version_overrides_the_probe() -> None:
     _, report = _health(
-        ("--replay", str(SCENARIOS / "version-skew"), "--assume-specialist-version", "0.2.1")
+        ("--replay", str(SCENARIOS / "version-skew"), "--assume-specialist-version", "0.2.2")
     )
     checks = _checks(report)
     assert report.status == "ok"
-    assert checks["version"].ok and "0.2.1" in checks["version"].detail
+    assert checks["version"].ok and "0.2.2" in checks["version"].detail
     assert "assumed" in checks["version"].detail
 
 
