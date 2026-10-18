@@ -52,6 +52,10 @@ packages = ["src/theforge"]
 # Portal SPA ships inside the wheel so `theforge portal` works from a pip
 # install, not just the clone (same class as host_assets).
 "portal/assets" = "theforge/portal_assets"
+# Bootstrap specialist catalog — without it a pip-installed `theforge`
+# discovers zero providers (Cycle 11.2.1 E2E-M: knowledge_for() resolved
+# repo-root forge-knowledge/, which is absent outside the checkout).
+"forge-knowledge" = "theforge/forge_knowledge"
 
 [tool.hatch.build.targets.sdist]
 # The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.

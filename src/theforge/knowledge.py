@@ -21,7 +21,13 @@ from theforge.errors import PersistenceError, UsageError
 
 __all__ = ["DEFAULT_KNOWLEDGE_DIR", "families", "knowledge_for", "load_all", "load_package"]
 
-DEFAULT_KNOWLEDGE_DIR = Path(__file__).resolve().parents[2] / "forge-knowledge"
+_REPO_KNOWLEDGE_DIR = Path(__file__).resolve().parents[2] / "forge-knowledge"
+# Wheel-shipped copy (pyproject force-include) — source of truth when the
+# package runs outside a repository checkout.
+_BUNDLED_KNOWLEDGE_DIR = Path(__file__).resolve().parent / "forge_knowledge"
+DEFAULT_KNOWLEDGE_DIR = (
+    _REPO_KNOWLEDGE_DIR if _REPO_KNOWLEDGE_DIR.is_dir() else _BUNDLED_KNOWLEDGE_DIR
+)
 
 
 def load_package(path: Path) -> ForgeKnowledge:
