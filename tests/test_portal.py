@@ -556,3 +556,43 @@ def test_lab_reads_real_benchmark_artifacts(target: Path) -> None:
         assert out["runs"] == [] and out["reports"] == []
 
     assert isinstance(out["notes"], list)
+
+
+# --- forge/PortalEvent/1 telemetry ---------------------------------------------
+
+
+def test_telemetry_events_and_metrics_over_http(target: Path) -> None:
+    """Vendored telemetry opt-in: the server records real op boundaries
+    into the adapter's EventRecorder; GET /events + /metrics expose them
+    as forge/PortalEvent/1 — nothing fabricated, empty means idle."""
+    srv = _server(TheForgePortal(target))
+    try:
+        code, _health = _call(srv, "GET", "/health")
+        assert code == 200
+
+        code, events_env = _call(srv, "GET", "/events")
+        assert code == 200
+        events_doc = events_env["data"]
+        assert events_doc["schema"] == "forge/PortalEventReport/1"
+        assert events_doc["forge_id"] == "the-forge"
+        ends = [e for e in events_doc["events"] if e.get("event_type") == "operation.end"]
+        assert ends, "an authenticated GET /health must record operation.end"
+        ev = ends[-1]
+        assert ev["schema"] == "forge/PortalEvent/1"
+        assert ev["status"] == "ok"
+        assert isinstance(ev["duration_ms"], (int, float))
+        assert ev["correlation_id"]
+        assert ev["source"] and ev["target"]
+        assert ev["timestamp"]
+
+        code, metrics_env = _call(srv, "GET", "/metrics")
+        assert code == 200
+        metrics = metrics_env["data"]
+        assert metrics["counters"]["operation.end"] >= 1
+        kinds = {e["kind"] for e in metrics["events"]}
+        assert "operation.end" in kinds
+        assert metrics["events"][-1]["correlation_id"]
+        assert metrics["truncated"] is False
+    finally:
+        srv.shutdown()
+        srv.server_close()

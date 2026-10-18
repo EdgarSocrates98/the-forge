@@ -109,6 +109,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 # Vendored Forge Portal server — byte-identical canonical source shared
 # across all Forges (same class as _installkit).
 "src/theforge/_forge_portal.py" = ["ALL"]
+"src/theforge/_portal_telemetry.py" = ["ALL"]
 
 [tool.ruff.format]
 # Same byte-parity set as per-file-ignores: vendored/canonical shared
@@ -118,6 +119,7 @@ exclude = [
     "scripts/forge_bootstrap.py",
     "src/theforge/_installkit.py",
     "src/theforge/_forge_portal.py",
+    "src/theforge/_portal_telemetry.py",
 ]
 
 [tool.mypy]
@@ -147,5 +149,5 @@ ignore_missing_imports = true
 # Vendored byte-identical shared sources — canonical copies
 # (forge-portal/portal_core, scripts/installkit/) are the typecheck
 # target; do not diverge the vendored files for typing.
-module = ["theforge._forge_portal", "theforge._installkit"]
+module = ["theforge._forge_portal", "theforge._portal_telemetry", "theforge._installkit"]
 ignore_errors = true
