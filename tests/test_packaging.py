@@ -5,6 +5,7 @@ re-implementing the checks, so local runs and CI cannot drift apart.
 """
 
 import importlib.util
+import json
 import shutil
 import subprocess
 import sys
@@ -181,7 +182,7 @@ def built_wheel(tmp_path_factory: pytest.TempPathFactory) -> Path:
         check=True,
         timeout=600,
     )
-    wheels = sorted(dist.glob("the_forge-*.whl"))
+    wheels = sorted(dist.glob("theforge_core-*.whl"))
     assert len(wheels) == 1, wheels
     return wheels[0]
 
@@ -258,7 +259,7 @@ def built_sdist(tmp_path_factory: pytest.TempPathFactory) -> Path:
         timeout=600,
         capture_output=True,
     )
-    sdists = sorted(dist.glob("the_forge-*.tar.gz"))
+    sdists = sorted(dist.glob("theforge_core-*.tar.gz"))
     assert len(sdists) == 1, sdists
     return sdists[0]
 
@@ -270,7 +271,14 @@ def test_built_wheel_excludes_adapters_and_has_no_runtime_dependency(built_wheel
         metadata = next(n for n in names if n.endswith(".dist-info/METADATA"))
         assert _runtime_requirements(zf.read(metadata).decode("utf-8")) == []
     assert names
-    assert not [n for n in names if n.startswith("adapters/") or "theforge_" in n.split("/")[0]]
+    # Adapter distributions (theforge_adapter_*) never ship; the dist-info dir
+    # (theforge_core-*.dist-info) is the wheel's own metadata, not an adapter.
+    assert not [
+        n
+        for n in names
+        if n.startswith("adapters/")
+        or (n.split("/")[0].startswith("theforge_") and not n.startswith("theforge_core-"))
+    ]
 
 
 @pytest.mark.slow
@@ -291,3 +299,27 @@ def test_built_sdist_excludes_adapters_and_has_no_runtime_dependency(built_sdist
     assert agents_members
     assert {m.split("/")[1] for m in agents_members} == {"skills"}
     assert _runtime_requirements(metadata) == []
+
+
+# --- wheel carries the bootstrap knowledge catalog (cycle-11.2.1 E2E-M) -------
+
+
+@pytest.mark.slow
+def test_built_wheel_carries_forge_knowledge(built_wheel: Path) -> None:
+    expected = {
+        f"theforge/forge_knowledge/{p.name}" for p in (REPO / "forge-knowledge").glob("*.json")
+    }
+    assert expected, "repo forge-knowledge is empty"
+    with zipfile.ZipFile(built_wheel) as zf:
+        names = set(zf.namelist())
+        assert expected <= names
+        for member in sorted(expected):
+            pkg = json.loads(zf.read(member).decode("utf-8"))
+            assert pkg["id"] == Path(member).stem
+
+
+@pytest.mark.slow
+def test_built_sdist_carries_forge_knowledge_for_wheel_rebuilds(built_sdist: Path) -> None:
+    with tarfile.open(built_sdist) as tf:
+        members = [m.name.partition("/")[2] for m in tf.getmembers()]
+    assert "forge-knowledge/api-forge.json" in members
