@@ -94,7 +94,7 @@ def test_declared_versions_match_project_files(manifest):
 
 
 def test_check_verdicts(manifest):
-    assert manifest.check("the-forge", "0.5.0") == "certified"
+    assert manifest.check("the-forge", "0.5.1") == "certified"
     assert manifest.check("the-forge", "9.9.9") == "incompatible"
     assert manifest.check("no-such-component", "0.5.0") == "unknown"
 
