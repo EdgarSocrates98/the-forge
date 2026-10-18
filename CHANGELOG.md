@@ -8,6 +8,15 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-18
+
+### 0.5.2 — Agentic Ecosystem
+
+### Changed
+- Portal 2.2 vendored generation (44-asset frontend, telemetry,
+  py3.10-safe server); hardened PyPI pipeline (build-once/
+  publish-same-artifact, version gate, post-publish verify)
+
 ## [0.5.1] - 2026-10-18
 
 ### 0.5.1 — Agentic Ecosystem
