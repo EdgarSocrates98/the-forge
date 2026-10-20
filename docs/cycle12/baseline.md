@@ -443,3 +443,31 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   Azure `_evals_dir` ganha `SPARKFORGE_AZURE_EVALS`/`SPARK_FORGE_AZURE_EVALS`
   (paridade com o override do AWS — 3 testes); `_evals_section` comenta que
   `--root` absoluto nunca remapeia (intencional); data do header corrigida.
+
+### Rodada 10 (review) — leak no install_package, spec composto, SourcesError
+
+- **Leak de credencial em `install_package`** (C): log imprimia o spec cru
+  e a recusa `FORGE-INSTALL-RUNTIME-FAILED` embutia `dist` + `r.stderr` do
+  pip (que ecoa a URL da requirement) — e `stage()` copiava o detail para
+  `report["stages"]`, `report["error"]` e o recibo persistido. Agora log e
+  recusa usam `redact_url_userinfo(req)` e `redact_url_userinfo(stderr)`.
+  Teste novo prova: log e detail sem `sekret`, stderr do pip redigido.
+  Re-vendado: bootstrap `b6f21b3f` byte-idêntico ×7.
+- **`source.spec` perdia extras merged** (W): persistia
+  `redact_url_userinfo(args.dist)` — o spec digitado — enquanto pip
+  instalava `compose_dist_req`. `--dist pkg==1.0` + extra `mcp` registrava
+  `pkg==1.0` e um `update` futuro derrubava `[mcp]`. Agora persiste
+  `redact_url_userinfo(compose_dist_req(args.dist, extras))`.
+- **`SourcesError` vazava como traceback** (W): `measure_surface()` e
+  `available_coordinators()` sobem `SourcesError` quando nem checkout nem
+  bundle existem; `main()` só envelopava `AdapterError`/`PortableError`.
+  Adicionado catch explícito (`rc=2`, mensagem nomeada, sem traceback) no
+  CLI e no dispatch MCP (converte em erro estruturado do envelope). Teste
+  de regressão no CLI.
+- **Decisão documentada — `knowledge list|search` sem MCP** (sugestão):
+  os verbos ficam CLI-only de propósito. §4.6 pede MCP "onde faz sentido";
+  `knowledge_drift` já é tool (mapa de impacto que o host consulta antes
+  de agir), mas `list`/`search` são folhas de leitura — expô-los custa
+  +2 tools no surface lock e no denominador do economy sem ganho de
+  orquestração (o host pode rodar o CLI). Se surgir caso de uso de
+  agente-precisa-buscar-knowledge-sem-shell, reabrir.

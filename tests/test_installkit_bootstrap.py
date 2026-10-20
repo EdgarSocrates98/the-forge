@@ -308,3 +308,31 @@ def test_dist_url_refusal_redacts_userinfo(tmp_path, capsys):
 def test_redact_url_userinfo_strips_credentials():
     assert fb.redact_url_userinfo("x @ https://u:t@host/f.whl") == "x @ https://***@host/f.whl"
     assert fb.redact_url_userinfo("x @ https://host/f.whl") == "x @ https://host/f.whl"
+
+
+def test_install_package_never_leaks_url_credentials(tmp_path, monkeypatch):
+    """R10: log e Refusal levam so' o spec redigido; stderr do pip tambe'm."""
+    import subprocess
+
+    lines: list[str] = []
+
+    def fake_run(cmd, timeout=300, **kw):
+        return subprocess.CompletedProcess(
+            cmd, 2, "", "ERROR: no matching distribution 'https://u:sekret@h/x.whl'"
+        )
+
+    monkeypatch.setattr(fb, "_run", fake_run)
+    dist = "theforge-core @ https://u:sekret@h/x.whl"
+    try:
+        fb.install_package(
+            tmp_path, tmp_path / ".venv", ["mcp"], False, False, lines.append, dist=dist
+        )
+    except fb.Refusal as exc:
+        detail = exc.detail
+    else:  # pragma: no cover
+        raise AssertionError("expected Refusal")
+    blob = detail + "\n".join(lines)
+    assert "sekret" not in blob
+    assert "https://***@h/x.whl" in detail
+    assert "theforge-core[mcp]" in detail  # spec composto, extras preservados
+    assert any("theforge-core[mcp]" in line and "sekret" not in line for line in lines)
