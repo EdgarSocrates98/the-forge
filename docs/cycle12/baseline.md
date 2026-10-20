@@ -261,3 +261,27 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   knowledge 44 pass, ruff limpo nos 4 repos tocados.
 - Reds pré-existentes inalterados: freeze 1.0.0/1.0.2 (doctor-data),
   0.2.1/0.2.2 (forge-cli).
+
+### Review remediation 3 — gates do próprio repo verdes de novo
+
+- **forge-doctor-api `test_package_carries_install_surface`**: repo carrega
+  DOIS artefatos vendored do installkit (`src/.../_installkit.py` +
+  `scripts/forge_installkit.py`); a re-vendorização só tocava o primeiro.
+  `vendor.py` agora emite `scripts/forge_installkit.py` em lockstep quando o
+  repo já o possui; os 6 especialistas sincronizados, `--check` CLEAN ×7.
+- **platform-forge `test_economy_closure`**: `VALIDATION-RECEIPT.json`
+  regerado via `scripts/validate.py --economy-receipt` — `validated_sha`
+  volta a ∈ {HEAD, HEAD~1}; commit funcional → rebind commit é o ritual.
+- **AWS `knowledge list|search`** implementados de verdade (o commit anterior
+  alegava; só existiam `path|drift`): `list` projeta `available` de
+  `knowledge_path`; `search` varre conteúdo offline com hits bounded.
+- **api-forge `resolve_evals_path`**: fallback ancorado só no PRIMEIRO
+  segmento — `mydata/evals/x` não remapeia mais (teste novo).
+- Ambientais resolvidos: doctor-data `.venv` tinha dist-info 1.0.0 (reinstall
+  editable → freeze 6/6 verde, red pré-existente eliminada);
+  `ecosystem-compatibility.json` forge-cli 0.2.1 → 0.2.2 (seu package.json
+  já era 0.2.2).
+- Gates re-rodados: doctor-api 13, platform-forge 33, the-forge 45,
+  AWS knowledge 11, api-forge 7 — todos verdes; worktrees limpos.
+- Resta ambiental não-causada: `test_codeintel_security` no AWS falha sob
+  Python 3.13 builtin `resource` (design de teste dependente de plataforma).
