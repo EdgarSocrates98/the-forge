@@ -69,3 +69,8 @@ Nota `--dist`: a porção *nome* do requirement é verificada contra
 recusadas por default (`FORGE-INSTALL-DIST-URL`) e só passam com o flag
 explícito `--allow-url` — o check cobre só o nome, o URL segue verbatim
 para o pip, então a origem fica a critério do operador.
+
+Nota de precedência (divergência deliberada vs §4.3 do prompt): overrides
+explícitos de env (`SPARKFORGE_AWS_EVALS`, etc.) vencem o workspace — a
+variável é uma escolha consciente do operador; o prompt lista env abaixo
+de config de workspace, e o desvio fica registrado aqui.

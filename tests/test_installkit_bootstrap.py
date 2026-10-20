@@ -268,3 +268,12 @@ def test_dist_url_with_allow_url_passes_name_check(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "FORGE-INSTALL-DIST-URL" not in out
     assert "FORGE-INSTALL-DIST-MISMATCH" not in out
+
+
+def test_dist_malformed_spec_returns_json_refusal(tmp_path, capsys):
+    """Refusal fora do try principal nao pode virar traceback (review R7)."""
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(["--repo", str(tmp_path), "--dist", "==1.0", "--dry-run", "--quiet"])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-DIST-INVALID" in out

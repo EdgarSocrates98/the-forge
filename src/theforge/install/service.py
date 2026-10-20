@@ -229,13 +229,28 @@ def update(
     src = repo or (Path(p) if (p := source.get("path")) else None)
     if source.get("kind") == "pypi":
         # installacao via --dist: update e `pip install -U <spec>`, nao
-        # re-install de checkout. `--to X` compoe `dist==X`; sem ele cai
-        # no spec registrado (ou na distribution pura para -U latest real).
+        # re-install de checkout. `--to X` compoe `dist[extras]==X`
+        # preservando os extras do spec registrado; sem ele cai no spec
+        # (ou na distribution pura para -U latest real).
         dist_name = manifest.get("distribution")
+        spec = source.get("spec") or ""
+        spec_name, spec_extras = _split_spec_extras(spec)
+        if spec and _canonical(spec_name) != _canonical(dist_name or ""):
+            return _receipt(
+                "update",
+                [
+                    {
+                        "id": "source",
+                        "status": "BLOCKED",
+                        "detail": f"spec registrado {spec!r} diverge de {dist_name!r}",
+                    }
+                ],
+                "failed",
+            )
         target = (
-            f"{dist_name}=={to}"
+            f"{dist_name}{spec_extras}=={to}"
             if to and dist_name
-            else (source.get("spec") or dist_name)
+            else (spec or dist_name)
         )
         if not target or (to and not dist_name):
             return _receipt(
@@ -283,6 +298,22 @@ def update(
     return _run_pip("update", cmd, dry_run=dry_run)
 
 
+def _split_spec_extras(spec: str) -> tuple[str, str]:
+    """``name[e1]==v`` -> ("name", "[e1]"); extras preservados no pin de --to."""
+    import re
+
+    m = re.match(r"^\s*([A-Za-z0-9._-]+)(\[[^\]]*\])?", spec)
+    if not m:
+        return spec, ""
+    return m.group(1), m.group(2) or ""
+
+
+def _canonical(name: str) -> str:
+    import re
+
+    return re.sub(r"[-_.]+", "-", name.strip().lower())
+
+
 def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
     if not Path(cmd[0]).is_file():
         return _receipt(
@@ -292,7 +323,7 @@ def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
         )
     if dry_run:
         return _receipt(
-            "update", [{"id": "pip", "status": "UNVERIFIED", "detail": " ".join(cmd)}], "planned"
+            verb, [{"id": "pip", "status": "UNVERIFIED", "detail": " ".join(cmd)}], "planned"
         )
     import subprocess
 
@@ -306,7 +337,7 @@ def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
             "detail": (proc.stdout or proc.stderr)[-300:],
         }
     ]
-    return _receipt("update", checks, "completed" if proc.returncode == 0 else "failed")
+    return _receipt(verb, checks, "completed" if proc.returncode == 0 else "failed")
 
 
 # --------------------------------------------------------------------------

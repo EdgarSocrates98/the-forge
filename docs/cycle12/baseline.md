@@ -366,3 +366,27 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   slicing); `matched_files` dedupado entre core e packs; `playbook()`
   captura `SourcesError` no envelope `AdapterError`.
 - **Re-vendor**: `forge_bootstrap.py` `02a8ef29` ×8 byte-identico.
+
+### Review remediation 7 — Refusal fora do envelope, CI gate, `..`
+
+- **`Refusal` fora do try (canonico)**: `split_dist_spec` corria antes do
+  bloco que envelopa erros em JSON — `--dist '==1.0'` virava traceback rc=1
+  sem recibo. Agora capturado no mesmo formato (envelope + rc 2) dos
+  siblings. Teste `test_dist_malformed_spec_returns_json_refusal`. Hash
+  `811b31f3` re-vendored ×8.
+- **CI gate do api-forge**: `build>=1.0` entra nos dev extras —
+  `test_artifact_contents` nao mais pula silenciosamente no job de unit
+  (`.[dev,mcp]` passa a trazer `python -m build`).
+- **`..` nos resolvers**: `resolve_evals_path` e `resolve_task_resource`
+  rejeitam `..` em parts — paridade com `suite_dir` do AWS; paths ficam
+  intactos e o caller reporta ENOENT honesto. Teste
+  `test_dotdot_never_remaps`.
+- **update() refinado**: `--to X` preserva os extras do spec registrado
+  (`theforge-core[mcp]==X`); spec divergente do `distribution` → BLOCKED;
+  `_run_pip` honra `verb` (era literal `"update"`).
+- **AWS**: `evals list` liga `suites_disponiveis` a `python -m
+  sparkforge_aws.evals list` (4 suites). `doctor-api lab` migrado de
+  `Path(__file__)` para `as_file`+`ExitStack` (zipimport-safe, paridade
+  com doctor-data).
+- Nota de precedencia env>workspace registrada no env-contract como
+  divergencia deliberada vs §4.3.

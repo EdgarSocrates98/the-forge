@@ -565,3 +565,40 @@ def test_update_missing_venv_python_fails(monkeypatch, forge_home: Path) -> None
     out = service.update()
     assert out["status"] == "failed"
     assert "venv" in out["checks"][0]["id"]
+
+
+def test_update_pypi_to_preserves_extras(monkeypatch, forge_home: Path, tmp_path: Path) -> None:
+    fake_py = tmp_path / "bin" / "python"
+    fake_py.parent.mkdir()
+    fake_py.write_text("")
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core[mcp]==1.0.0"},
+            "distribution": "theforge-core",
+            "venv": str(tmp_path),
+        },
+    )
+    out = service.update(to="0.5.2", dry_run=True)
+    assert "theforge-core[mcp]==0.5.2" in out["checks"][0]["detail"]
+
+
+def test_update_pypi_spec_name_divergence_blocks(
+    monkeypatch, forge_home: Path, tmp_path: Path
+) -> None:
+    fake_py = tmp_path / "bin" / "python"
+    fake_py.parent.mkdir()
+    fake_py.write_text("")
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "outro-pacote==1.0.0"},
+            "distribution": "theforge-core",
+            "venv": str(tmp_path),
+        },
+    )
+    out = service.update(dry_run=True)
+    assert out["status"] == "failed"
+    assert "diverge" in out["checks"][0]["detail"]
