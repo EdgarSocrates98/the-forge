@@ -54,6 +54,7 @@ Fonte única. As colunas dos especialistas mostram a janela `SUPPORTED_SPECIALIS
 | 0.5.1 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | patch `forge_knowledge` + portal vendored |
 | 0.5.2 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | portal 2.2.1 vendored (keyboard nav + layout guard) + pipeline hardening |
 | 0.5.3 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | cycle 12 portable dist (`--dist`, registry bridge, wheel-safe resolvers) |
+| 0.5.4 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | cycle 12.1 install portability (`install.windows.sh`, python discovery, vendored bootstrap sync) |
 
 ## Identidade de superfície
 `version` não é identidade: a mesma versão pode carregar uma superfície diferente (observado em sparkforge-aws 0.5.0 e apiforge 0.1.0). O contrato `theforge/ProviderSurfaceIdentity/v1` pareia as versões declaradas com dois fingerprints determinísticos que o core computa do manifest em uso:

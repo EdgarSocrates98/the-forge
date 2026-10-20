@@ -8,6 +8,13 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-10-20
+
+### 0.5.4 — Agentic Ecosystem
+
+### Changed
+- Cycle 12.1 install portability: real `install.windows.sh` (Git Bash/MSYS route, never delegates to powershell.exe), ruff-formatted canonical `scripts/installkit/forge_bootstrap.py` re-vendored byte-identical to all 7 specialist forges (`_SOURCE_SHA256` stamps sync via `--check`), Windows-path-aware fake-venv helper in update/preflight tests.
+
 ## [0.5.3] - 2026-10-20
 
 ### 0.5.3 — Agentic Ecosystem

@@ -656,7 +656,7 @@ def test_assumed_version_overrides_the_found_one_in_replay() -> None:
     assert f"found 9.9.9, supported {SUPPORTED_SPECIALIST}" in detail
     assert "assumed" in detail and "0.5.0" in detail
     fixed = _health(
-        "--replay", str(SCENARIOS / "version-skew"), "--assume-specialist-version", "0.5.3"
+        "--replay", str(SCENARIOS / "version-skew"), "--assume-specialist-version", "0.5.4"
     )
     assert fixed.status == "ok", fixed
 

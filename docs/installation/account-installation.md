@@ -13,7 +13,7 @@ Installer publishes user-scoped variables:
 
 Names use underscores because POSIX shells reject hyphens. Windows also receives compatibility aliases such as `THE-FORGE-HOME`, without administrator permission.
 
-POSIX installer writes `~/.config/forjas/env.sh` and a guarded shell-init line. Open a new shell or run `source ~/.config/forjas/env.sh`. Windows processes opened after installation receive HKCU variables. When `install.sh` runs under Windows Git Bash (`MSYSTEM=MSYS/MINGW/UCRT`), it writes both HKCU variables and the same Bash environment file; use `source ~/.config/forjas/env.sh` to reload the current shell.
+POSIX installer writes `~/.config/forjas/env.sh` and a guarded shell-init line. Open a new shell or run `source ~/.config/forjas/env.sh`. Windows processes opened after installation receive HKCU variables. When `install.sh` runs under Windows Git Bash (`MSYSTEM=MSYS/MINGW/UCRT`), it writes both HKCU variables and the same Bash environment file; use `source ~/.config/forjas/env.sh` to reload the current shell. When PowerShell is unavailable or blocked by policy, `install.windows.sh` is the dedicated Git Bash route — it runs the same shared bootstrap and never spawns `powershell.exe`/`pwsh`.
 
 `setup.sh`/`setup.ps1` remains compatibility mode for wheel-style installation. `theforge doctor` validates published account paths. Portal exposes same check at `/api/v1/environment`.
 
