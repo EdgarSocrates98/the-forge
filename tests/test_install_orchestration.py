@@ -36,6 +36,15 @@ def forge_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return home
 
 
+def _fake_venv_python(venv: Path) -> Path:
+    """Cria o python do venv no layout da plataforma real — `Scripts/`
+    no Windows, `bin/` em POSIX, que e o que `service.update` resolve."""
+    py = venv / "Scripts" / "python.exe" if sys.platform == "win32" else venv / "bin" / "python"
+    py.parent.mkdir(parents=True)
+    py.write_text("")
+    return py
+
+
 def test_vendored_kit_matches_canonical() -> None:
     def _norm(p: Path) -> bytes:
         # Vendored copies carry the stamped canonical hash where the source
@@ -489,9 +498,7 @@ def test_wizard_opt_out_installs_no_host_assets(tmp_path: Path) -> None:
 
 
 def test_update_pypi_uses_pip_upgrade_spec(monkeypatch, forge_home: Path, tmp_path: Path) -> None:
-    fake_py = tmp_path / "bin" / "python"
-    fake_py.parent.mkdir()
-    fake_py.write_text("")
+    _fake_venv_python(tmp_path)
     monkeypatch.setattr(
         service,
         "_manifest",
@@ -516,9 +523,7 @@ def test_update_pypi_without_spec_or_dist_blocks(monkeypatch, forge_home: Path) 
 
 
 def test_update_pypi_to_composes_pin(monkeypatch, forge_home: Path, tmp_path: Path) -> None:
-    fake_py = tmp_path / "bin" / "python"
-    fake_py.parent.mkdir()
-    fake_py.write_text("")
+    _fake_venv_python(tmp_path)
     monkeypatch.setattr(
         service,
         "_manifest",
@@ -560,9 +565,7 @@ def test_update_missing_venv_python_fails(monkeypatch, forge_home: Path) -> None
 
 
 def test_update_pypi_to_preserves_extras(monkeypatch, forge_home: Path, tmp_path: Path) -> None:
-    fake_py = tmp_path / "bin" / "python"
-    fake_py.parent.mkdir()
-    fake_py.write_text("")
+    _fake_venv_python(tmp_path)
     monkeypatch.setattr(
         service,
         "_manifest",
@@ -579,9 +582,7 @@ def test_update_pypi_to_preserves_extras(monkeypatch, forge_home: Path, tmp_path
 def test_update_pypi_spec_name_divergence_blocks(
     monkeypatch, forge_home: Path, tmp_path: Path
 ) -> None:
-    fake_py = tmp_path / "bin" / "python"
-    fake_py.parent.mkdir()
-    fake_py.write_text("")
+    _fake_venv_python(tmp_path)
     monkeypatch.setattr(
         service,
         "_manifest",
@@ -694,9 +695,7 @@ def test_update_to_on_unspaced_url_spec_refuses_origin_swap(monkeypatch, forge_h
 
 def test_update_url_spec_no_to_keeps_same_origin(monkeypatch, forge_home: Path, tmp_path) -> None:
     """Sem `--to`, `-U` re-executa o spec da mesma origem (não troca)."""
-    fake_py = tmp_path / "bin" / "python"
-    fake_py.parent.mkdir()
-    fake_py.write_text("")
+    _fake_venv_python(tmp_path)
     monkeypatch.setattr(
         service,
         "_manifest",
