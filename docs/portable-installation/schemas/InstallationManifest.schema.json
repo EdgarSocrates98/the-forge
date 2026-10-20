@@ -40,9 +40,11 @@
         "path": {"type": "string"},
         "ref": {"type": "string"},
         "rev": {"type": "string"},
-        "editable": {"type": "boolean"}
+        "editable": {"type": "boolean"},
+        "spec": {"type": "string"}
       }
     },
+    "installation_method": {"enum": ["git-checkout", "wheel", "pypi", "pypi-wheel"]},
     "mcp": {
       "type": "object",
       "required": ["server_name", "command", "verified"],

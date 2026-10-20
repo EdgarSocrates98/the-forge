@@ -1301,6 +1301,9 @@ def manifest_for(
             "satisfies": spec.python_spec,
         },
         "source": source,
+        "installation_method": (
+            "pypi-wheel" if source.get("kind") == "pypi" else source.get("kind")
+        ),
         "installed_at": _utc_now(),
         "installed_by": {"agent": "forge_bootstrap", "version": _INSTALLKIT_VERSION},
     }

@@ -34,7 +34,7 @@ from typing import Any
 _INSTALLKIT_VERSION = "1.0.0"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "e2623a522e431c34"
+_SOURCE_SHA256 = "f7b61d76f6fc2d5e"
 
 SCHEMA_MANIFEST = "forge/InstallationManifest/v1"
 SCHEMA_RECEIPT = "forge/InstallReceipt/v1"
@@ -1301,6 +1301,9 @@ def manifest_for(
             "satisfies": spec.python_spec,
         },
         "source": source,
+        "installation_method": (
+            "pypi-wheel" if source.get("kind") == "pypi" else source.get("kind")
+        ),
         "installed_at": _utc_now(),
         "installed_by": {"agent": "forge_bootstrap", "version": _INSTALLKIT_VERSION},
     }

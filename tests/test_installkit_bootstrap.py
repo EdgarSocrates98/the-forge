@@ -149,3 +149,87 @@ def test_registry_has_value_uses_winreg_function(monkeypatch):
 
     monkeypatch.setitem(sys.modules, "winreg", types.SimpleNamespace(QueryValueEx=missing))
     assert not fb._registry_has_value(key, "Missing")
+
+
+# --------------------------------------------------------------------------
+# --dist: published-distribution install path
+# --------------------------------------------------------------------------
+
+
+def test_split_dist_spec_bare_name():
+    assert fb.split_dist_spec("sparkforge-aws") == ("sparkforge-aws", "")
+
+
+def test_split_dist_spec_version():
+    assert fb.split_dist_spec("sparkforge-aws==0.5.2") == ("sparkforge-aws", "==0.5.2")
+
+
+def test_split_dist_spec_existing_extras():
+    assert fb.split_dist_spec("sparkforge-aws[mcp]==0.5.2") == (
+        "sparkforge-aws",
+        "[mcp]==0.5.2",
+    )
+
+
+def test_compose_dist_req_inserts_extras_before_specifier():
+    req = fb.compose_dist_req("sparkforge-aws==0.5.2", ["mcp"])
+    assert req == "sparkforge-aws[mcp]==0.5.2"
+
+
+def test_compose_dist_req_no_extras_returns_spec():
+    assert fb.compose_dist_req("sparkforge-aws==0.5.2", []) == "sparkforge-aws==0.5.2"
+
+
+def test_compose_dist_req_merges_declared_extras():
+    req = fb.compose_dist_req("sparkforge-aws[mcp]==0.5.2", ["mcp", "web"])
+    assert req == "sparkforge-aws[mcp,web]==0.5.2"
+
+
+def test_environment_contract_omits_home_without_checkout(tmp_path):
+    cfg = {"forge_id": "spark-forge-aws", "cli": "sparkforge-aws"}
+    venv = tmp_path / "install" / ".venv"
+    contract = fb.environment_contract(
+        cfg,
+        tmp_path / "config-dir",
+        tmp_path / "install",
+        venv,
+        None,
+        has_checkout=False,
+    )
+    assert "SPARK_FORGE_AWS_HOME" not in contract["variables"]
+    assert "SPARK_FORGE_AWS_HOME" not in contract["windows_aliases"]
+
+
+def _write_forge_json(path: Path) -> None:
+    path.write_text(
+        '{"forge_id": "spark-forge-aws", "package": "sparkforge_aws",'
+        ' "distribution": "sparkforge-aws", "cli": "sparkforge-aws",'
+        ' "python": ">=3.10"}'
+    )
+
+
+def test_dist_mode_conflict_refuses(tmp_path, capsys):
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(
+        [
+            "--repo",
+            str(tmp_path),
+            "--dist",
+            "sparkforge-aws==0.5.2",
+            "--editable",
+            "--dry-run",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-MODE-CONFLICT" in out
+
+
+def test_dist_mismatch_refuses(tmp_path, capsys):
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(
+        ["--repo", str(tmp_path), "--dist", "outro-pacote==1.0", "--dry-run", "--quiet"]
+    )
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-DIST-MISMATCH" in out

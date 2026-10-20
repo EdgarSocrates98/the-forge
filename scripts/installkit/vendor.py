@@ -59,8 +59,10 @@ exit $LASTEXITCODE
 """
 
 INSTALL_SH = """#!/usr/bin/env bash
-# Forge account install — editable runtime + user-scoped environment.
+# Forge account install — wheel runtime + user-scoped environment.
 # Works from POSIX shells and native Windows Git Bash.
+# The default installs a built wheel (no checkout dependence). Pass --editable
+# for the development flow (CLI tied to this checkout).
 set -euo pipefail
 
 _forge_is_sourced=0
@@ -97,7 +99,7 @@ if [ -z "$PY" ]; then
   if [ "$_forge_is_sourced" -eq 1 ]; then return 2; fi
   exit 2
 fi
-ARGS=(--editable --persist-env --allow-download "$@")
+ARGS=(--persist-env --allow-download "$@")
 if "$PY" "${PY_ARGS[@]}" scripts/forge_bootstrap.py "${ARGS[@]}"; then
   status=0
 else
@@ -126,8 +128,10 @@ fi
 exit "$status"
 """
 
-INSTALL_PS1 = r"""# Forge account install — editable runtime + user-scoped environment.
+INSTALL_PS1 = r"""# Forge account install — wheel runtime + user-scoped environment.
 # Persists HKCU variables and can refresh current session when dot-sourced.
+# The default installs a built wheel (no checkout dependence). Pass --editable
+# for the development flow (CLI tied to this checkout).
 $ErrorActionPreference = "Stop"
 $isDotSourced = $MyInvocation.InvocationName -eq "."
 $oldLocation = Get-Location
@@ -144,7 +148,7 @@ try {
         }
     }
     if (-not $py) { throw "install: no Python executable on PATH (need $PYTHON_SPEC)" }
-    $installArgs = @("--editable", "--persist-env", "--allow-download") + $args
+    $installArgs = @("--persist-env", "--allow-download") + $args
     & $py @pyArgs scripts/forge_bootstrap.py @installArgs
     $status = $LASTEXITCODE
     if ($status -eq 0) {
