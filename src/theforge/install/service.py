@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -279,7 +280,7 @@ def update(
                 ],
                 "failed",
             )
-        if to and " @ " in spec:
+        if to and re.search(r"@\s*https?://", spec):
             return _receipt(
                 "update",
                 [

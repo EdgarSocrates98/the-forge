@@ -563,3 +563,24 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
 
 Estado: the-forge check_gates 11/11; forge-cli vitest registry 105/105
 + typecheck/lint limpos; forge-portal 63 testes verdes.
+
+### Rodada 13 (review) — dois gates quebrados pelo próprio changeset
+
+- **`ecosystem-compatibility.json` dessincronizado**: a trilha única do
+  portal (package.json → 1.0.0) não foi rebatida no manifesto do
+  ecossistema — `test_declared_versions_match_project_files` reprovava
+  `0.1.0 != 1.0.0`. Entrada e nota corrigidas para 1.0.0.
+- **Receipt do platform-forge stale**: `VALIDATION-RECEIPT.json` ligava
+  `118fdf5` mas HEAD funcional era `23a613b` — ritual rerodado
+  (`validate.py --economy-receipt` com o venv no PATH); economy-receipt
+  + economy-closure em fixpoint PASS e `test_economy_closure` verde.
+- **`update --to` heurística de URL** (sugestão): `" @ "` só pegava a
+  forma espaçada; `name@https://h/x.whl` (pip aceita) escapava e o --to
+  trocaria URL→PyPI em silêncio. Agora `re.search(r"@\s*https?://")`.
+- **`_packaged_dir` doctor-data** (sugestão): `as_file()` sob zipimport
+  com âncora ausente levantava FileNotFoundError — agora testa
+  `traversable.is_dir()` antes (padrão doctor-api) e devolve Path
+  inexistente para o caller decidir.
+- **`registryUninstall` forge-cli** (sugestão): remove o shim pelo
+  `receipt.shim` gravado quando existe — `bin` movido não deixaria mais
+  launcher órfão em `~/.forge-cli/bin`.
