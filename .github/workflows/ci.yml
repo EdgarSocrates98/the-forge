@@ -44,6 +44,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .[dev] -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure -e ./adapters/apiforge -e ./adapters/platformforge -e ./adapters/doctordata -e ./adapters/doctorapi
 
+      # lf-0019 B2 — o shim de instalação via Git Bash é bash puro: o gate
+      # de sintaxe roda nos dois SOs (no Windows o shell default já é o
+      # Git Bash por `defaults.run.shell: bash`).
+      - name: Git Bash installer syntax (lf-0019)
+        run: bash -n install.windows.sh
+
       - name: Lint
         run: ruff check .
 
