@@ -125,7 +125,7 @@ def test_forge_json_distribution_matches_pyproject_name():
 
 
 def test_check_verdicts(manifest):
-    assert manifest.check("the-forge", "0.5.2") == "certified"
+    assert manifest.check("the-forge", "0.5.3") == "certified"
     assert manifest.check("the-forge", "9.9.9") == "incompatible"
     assert manifest.check("no-such-component", "0.5.0") == "unknown"
 

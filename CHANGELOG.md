@@ -8,6 +8,17 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-20
+
+### Changed
+- Cycle 12 universal packaging: `--dist` install path in the shared
+  bootstrap (PEP 503 name check, `--allow-url` gate, credential
+  redaction, smoke-verify before register); `installation_method` in
+  `forge/InstallationManifest/v1`; `update()` PyPI path with named
+  refusals on direct-reference origin swaps (`https://`, `file://`,
+  unspaced `@`); forge-cli registry bridge in `specialists.collect()`
+  (`FORGE_CLI_HOME`-aware); `install.sh|ps1` default wheel over editable.
+
 ## [0.5.2] - 2026-10-18
 
 ### 0.5.2 — Agentic Ecosystem
