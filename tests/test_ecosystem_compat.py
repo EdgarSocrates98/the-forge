@@ -93,6 +93,37 @@ def test_declared_versions_match_project_files(manifest):
     assert checked >= 1  # the-forge itself must always be verified
 
 
+def test_forge_json_distribution_matches_pyproject_name():
+    """`forge.json.distribution` is the PyPI name `--dist` validates against.
+    A stale value makes the guard reject the real package and accept a
+    homonymous foreign one — the exact name-confusion path §12.1 targets.
+    Each repo with a forge.json is checked when its checkout is present."""
+    import re
+
+    def canon(name: str) -> str:
+        return re.sub(r"[-_.]+", "-", name.strip().lower())
+
+    workspace = ROOT.parent
+    checked = 0
+    for repo_dir in sorted(workspace.iterdir()):
+        forge_json = repo_dir / "forge.json"
+        pyproject = repo_dir / "pyproject.toml"
+        if not (repo_dir.is_dir() and forge_json.is_file() and pyproject.is_file()):
+            continue
+        dist = json.loads(forge_json.read_text(encoding="utf-8")).get("distribution")
+        project = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        name = (project.get("project") or {}).get("name") or (
+            (project.get("tool") or {}).get("poetry") or {}
+        ).get("name")
+        if not dist or not name:
+            continue
+        assert canon(dist) == canon(name), (
+            f"{repo_dir.name}: forge.json distribution {dist!r} != pyproject name {name!r}"
+        )
+        checked += 1
+    assert checked >= 1  # the-forge's own forge.json must always be verified
+
+
 def test_check_verdicts(manifest):
     assert manifest.check("the-forge", "0.5.2") == "certified"
     assert manifest.check("the-forge", "9.9.9") == "incompatible"

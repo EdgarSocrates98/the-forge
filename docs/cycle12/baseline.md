@@ -285,3 +285,32 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   AWS knowledge 11, api-forge 7 — todos verdes; worktrees limpos.
 - Resta ambiental não-causada: `test_codeintel_security` no AWS falha sob
   Python 3.13 builtin `resource` (design de teste dependente de plataforma).
+
+### Review remediation 4 — `forge.json.distribution` apontava para pacote errado
+
+- **Crítico**: `api-forge/forge.json` dizia `apiforge` (dist real:
+  `apiforge-af`); `the-forge/forge.json` dizia `theforge` (dist real:
+  `theforge-core`). Com o valor stale, `--dist` recusava o pacote real
+  (`FORGE-INSTALL-DIST-MISMATCH`) e aceitaria um homônimo estrangeiro —
+  a ameaça §12.1/§13.5 que o guard existe para impedir. Corrigidos.
+- **Gate novo** (`test_forge_json_distribution_matches_pyproject_name` em
+  `test_ecosystem_compat.py`): `forge.json.distribution` ≡
+  `pyproject [project].name` (PEP 503) para todo sibling com checkout —
+  impede a classe de erro de voltar.
+- **PEP 503**: `canonical_dist_name()` (stdlib `re`, sem dep em `packaging`)
+  nas duas pontas do check — `apiforge_af==0.1.2` agora equivale a
+  `apiforge-af`. Verificado: aceita os dois, recusa `apiforge==9.9`.
+- **`suite_dir(nome)`** (AWS): sanitizado — separadores/`..`/absoluto viram
+  `EvalsError`; callers CLI/MCP não atravessam mais as raízes de eval.
+- **doctor-data scaffold**: guard de escrita agora sonda se o traversable
+  bundled É um `Path` real (`isinstance(t, Path)`) — sob zipimport a
+  materialização cai fora de `purelib` e o check de contenção falharia;
+  agora recusa também por "não é fs real". 29 testes knowledge/scaffold verdes.
+- **`knowledge_search`**: `truncated` só quando há hits não reportados;
+  `matched` capped em 100 + `matched_total`.
+- **ADR-deviation registrada**: `forge/RuntimeDistribution/v1` (§3.1) NÃO é
+  contrato nomeado — a evolução foi absorvida em `InstallationManifest/v1`
+  (`installation_method`, `source.spec`), decisão tomada no ciclo e aqui
+  formalizada: novo contrato adiaria a homologação sem ganho semântico, e o
+  schema já evoluiu de forma compatível.
+- `vendor.py --check` CLEAN ×7 após re-vendor do bootstrap canônico.
