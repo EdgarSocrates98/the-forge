@@ -227,9 +227,7 @@ def test_dist_mode_conflict_refuses(tmp_path, capsys):
 
 def test_dist_mismatch_refuses(tmp_path, capsys):
     _write_forge_json(tmp_path / "forge.json")
-    code = fb.run(
-        ["--repo", str(tmp_path), "--dist", "outro-pacote==1.0", "--dry-run", "--quiet"]
-    )
+    code = fb.run(["--repo", str(tmp_path), "--dist", "outro-pacote==1.0", "--dry-run", "--quiet"])
     out = capsys.readouterr().out
     assert code == 2
     assert "FORGE-INSTALL-DIST-MISMATCH" in out
@@ -277,3 +275,36 @@ def test_dist_malformed_spec_returns_json_refusal(tmp_path, capsys):
     out = capsys.readouterr().out
     assert code == 2
     assert "FORGE-INSTALL-DIST-INVALID" in out
+
+
+def test_dist_empty_string_refuses(tmp_path, capsys):
+    """--dist '' e' falsy mas deve recusar, nao cair no checkout (review R9)."""
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(["--repo", str(tmp_path), "--dist", "", "--dry-run", "--quiet"])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-DIST-INVALID" in out
+
+
+def test_dist_url_refusal_redacts_userinfo(tmp_path, capsys):
+    """A recusa echoa o spec mas nunca a credencial embutida (§6.5)."""
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(
+        [
+            "--repo",
+            str(tmp_path),
+            "--dist",
+            "theforge-core @ https://u:sekret@h/w.whl",
+            "--dry-run",
+            "--quiet",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "sekret" not in out
+    assert "FORGE-INSTALL-DIST-URL" in out
+
+
+def test_redact_url_userinfo_strips_credentials():
+    assert fb.redact_url_userinfo("x @ https://u:t@host/f.whl") == "x @ https://***@host/f.whl"
+    assert fb.redact_url_userinfo("x @ https://host/f.whl") == "x @ https://host/f.whl"

@@ -373,15 +373,9 @@ def _probe_interpreter(
         return None, None
     raw_v, raw_m = doc.get("v"), doc.get("m")
     version = (
-        tuple(raw_v)
-        if isinstance(raw_v, list) and all(isinstance(p, int) for p in raw_v)
-        else None
+        tuple(raw_v) if isinstance(raw_v, list) and all(isinstance(p, int) for p in raw_v) else None
     )
-    missing = (
-        tuple(m for m in raw_m if isinstance(m, str))
-        if isinstance(raw_m, list)
-        else None
-    )
+    missing = tuple(m for m in raw_m if isinstance(m, str)) if isinstance(raw_m, list) else None
     return version, missing
 
 
@@ -450,9 +444,7 @@ def _managed_receipt_python(forge_id: str, home: Path) -> tuple[str | None, str 
         return None, f"managed receipt venv {venv!r} has no interpreter"
     bin_path = doc.get("bin")
     if isinstance(bin_path, str) and bin_path:
-        exe = Path(bin_path).expanduser().parent / (
-            "python.exe" if os.name == "nt" else "python"
-        )
+        exe = Path(bin_path).expanduser().parent / ("python.exe" if os.name == "nt" else "python")
         if exe.is_file():
             return str(exe), None
     return None, f"managed receipt {receipt} declares no usable interpreter"
@@ -496,16 +488,12 @@ def resolve_interpreter(
                 f"explicit interpreter {explicit!r} is not a file",
             )
         )
-    receipt_py, receipt_warn = _managed_receipt_python(
-        forge_id, _managed_receipt_home(home)
-    )
+    receipt_py, receipt_warn = _managed_receipt_python(forge_id, _managed_receipt_home(home))
     if receipt_warn:
         warnings.append(receipt_warn)
     ordered.append(("managed-receipt", receipt_py, "no managed-receipt interpreter"))
     if manifest is not None:
-        ordered.append(
-            ("manifest", manifest_python(manifest), "manifest declares no interpreter")
-        )
+        ordered.append(("manifest", manifest_python(manifest), "manifest declares no interpreter"))
     ordered.append(
         (
             "specialist-env",
@@ -519,9 +507,7 @@ def resolve_interpreter(
     unparseable_warned = False
     for source, path, missing_note in ordered:
         if path is None:
-            rejected.append(
-                InterpreterCandidate(source=source, path=None, verdict=missing_note)
-            )
+            rejected.append(InterpreterCandidate(source=source, path=None, verdict=missing_note))
             continue
         missing: tuple[str, ...] = ()
         if validate and extras:
@@ -560,9 +546,7 @@ def resolve_interpreter(
             verdict = _version_satisfies(version, spec)
             if verdict is None:
                 if not unparseable_warned:
-                    warnings.append(
-                        f"unparseable python spec {spec!r} — compatibility unverified"
-                    )
+                    warnings.append(f"unparseable python spec {spec!r} — compatibility unverified")
                     unparseable_warned = True
             elif not verdict:
                 rejected.append(
@@ -580,10 +564,7 @@ def resolve_interpreter(
                     source=source,
                     path=path,
                     version=version_s,
-                    verdict=(
-                        f"missing extras {sorted(missing)} — "
-                        f"declared {list(extras)}"
-                    ),
+                    verdict=(f"missing extras {sorted(missing)} — declared {list(extras)}"),
                 )
             )
             continue
@@ -1032,9 +1013,7 @@ def _report_md(
     ]
     for o in outcomes:
         n = sum(len(r.results) for r in o.runs)
-        lines.append(
-            f"| {o.forge_id} | {o.state} | {o.status} | {n} | {o.detail or '—'} |"
-        )
+        lines.append(f"| {o.forge_id} | {o.state} | {o.status} | {n} | {o.detail or '—'} |")
     for o in ran:
         for run in o.runs:
             lines += [

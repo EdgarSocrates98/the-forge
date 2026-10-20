@@ -56,8 +56,10 @@ def _fake_venv(root: Path, name: str, version: str | None = None) -> Path:
 
 
 def _venv_py(venv: Path) -> Path:
-    return venv / ("Scripts" if os.name == "nt" else "bin") / (
-        "python.exe" if os.name == "nt" else "python"
+    return (
+        venv
+        / ("Scripts" if os.name == "nt" else "bin")
+        / ("python.exe" if os.name == "nt" else "python")
     )
 
 
@@ -189,7 +191,9 @@ def test_incompatible_python_rejected(tmp_path):
         "python": {"satisfies": ">=3.11"},
     }
     res = resolve_interpreter(
-        forge_id="old-forge", checkout=repo, manifest=manifest,
+        forge_id="old-forge",
+        checkout=repo,
+        manifest=manifest,
         home=tmp_path / "empty",
     )
     assert res.source == "fallback"  # sys.executable satisfies >=3.11
@@ -207,12 +211,13 @@ def test_all_candidates_rejected_blocks(tmp_path):
         "source": {"path": str(repo)},
     }
     res = resolve_interpreter(
-        forge_id="noble-forge", checkout=repo, manifest=manifest,
+        forge_id="noble-forge",
+        checkout=repo,
+        manifest=manifest,
         home=tmp_path / "empty",
     )
     assert res.python is None and res.source == "none"
-    outcomes, _ = collect(manifests=[manifest], mode="A",
-                          home=tmp_path / "empty")
+    outcomes, _ = collect(manifests=[manifest], mode="A", home=tmp_path / "empty")
     (out,) = outcomes
     assert out.forge_id == "noble-forge"
     assert out.status == "blocked" and out.state == "BLOCKED"
@@ -226,8 +231,10 @@ def test_missing_explicit_and_manifest_interpreter(tmp_path):
         forge_id="gone-forge",
         checkout=repo,
         explicit=str(tmp_path / "no-such-python"),
-        manifest={"forge_id": "gone-forge",
-                  "python": {"executable": str(tmp_path / "gone-python")}},
+        manifest={
+            "forge_id": "gone-forge",
+            "python": {"executable": str(tmp_path / "gone-python")},
+        },
         home=tmp_path / "empty",
     )
     assert res.source == "fallback"
@@ -248,7 +255,9 @@ def test_corrupted_environment_undeterminable_version(tmp_path):
         "python": {"satisfies": ">=3.11"},
     }
     res = resolve_interpreter(
-        forge_id="corrupt-forge", checkout=repo, manifest=manifest,
+        forge_id="corrupt-forge",
+        checkout=repo,
+        manifest=manifest,
         home=tmp_path / "empty",
     )
     assert res.source == "fallback"
@@ -283,14 +292,11 @@ def test_missing_declared_extras_blocks(tmp_path):
     """forge.json ``extras`` the candidate cannot import → rejected at every
     level → BLOCKED with the precise missing-extras reason."""
     repo = _repo(tmp_path, "mcp-forge", DECL, extras=["definitely_missing_extra_xyz"])
-    res = resolve_interpreter(
-        forge_id="mcp-forge", checkout=repo, home=tmp_path / "empty"
-    )
+    res = resolve_interpreter(forge_id="mcp-forge", checkout=repo, home=tmp_path / "empty")
     assert res.python is None and res.source == "none"
     assert res.extras == ("definitely_missing_extra_xyz",)
     assert any("missing extras" in c.verdict for c in res.rejected)
-    outcomes, _ = collect(manifests=[], repos=(repo,), mode="A",
-                          home=tmp_path / "empty")
+    outcomes, _ = collect(manifests=[], repos=(repo,), mode="A", home=tmp_path / "empty")
     (out,) = outcomes
     assert out.state == "BLOCKED" and out.reason == "no-interpreter"
     assert "missing extras" in out.detail
@@ -311,9 +317,7 @@ def test_specialist_env_beats_collector_fallback(tmp_path):
     env no longer decides which extras exist."""
     repo = _repo(tmp_path, "envforge", DECL)
     venv = _fake_venv(repo, ".venv")
-    res = resolve_interpreter(
-        forge_id="envforge", checkout=repo, home=tmp_path / "empty"
-    )
+    res = resolve_interpreter(forge_id="envforge", checkout=repo, home=tmp_path / "empty")
     assert res.source == "specialist-env"
     assert res.python == str(_venv_py(venv))
 
@@ -365,8 +369,12 @@ def test_states_and_reasons_in_report(tmp_path):
     assert by_forge["blk"].state == "BLOCKED"
     assert by_forge["blk"].reason == "no-interpreter"
     data = write_report(
-        root=tmp_path, mode="A", outcomes=outcomes, producer=PRODUCER,
-        out=tmp_path / "bench", guardrails={"mode": "A"},
+        root=tmp_path,
+        mode="A",
+        outcomes=outcomes,
+        producer=PRODUCER,
+        out=tmp_path / "bench",
+        guardrails={"mode": "A"},
     )
     summary = data["summary"]
     assert summary["states"] == {"PASS": 1, "SKIPPED": 1, "BLOCKED": 1}
@@ -380,9 +388,7 @@ def test_states_and_reasons_in_report(tmp_path):
 
 def test_version_probe_free_and_spawned(tmp_path):
     # sys.executable resolves without spawn
-    assert _interpreter_version(sys.executable, probe=False) == tuple(
-        sys.version_info[:3]
-    )
+    assert _interpreter_version(sys.executable, probe=False) == tuple(sys.version_info[:3])
     # pyvenv.cfg is the env's own declaration — read without spawn, and it
     # wins over the resolved binary identity
     venv = _fake_venv(tmp_path, "v-cfg", version="3.12.1")

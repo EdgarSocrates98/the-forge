@@ -488,9 +488,7 @@ def test_wizard_opt_out_installs_no_host_assets(tmp_path: Path) -> None:
     assert not (target / ".mcp.json").exists()
 
 
-def test_update_pypi_uses_pip_upgrade_spec(
-    monkeypatch, forge_home: Path, tmp_path: Path
-) -> None:
+def test_update_pypi_uses_pip_upgrade_spec(monkeypatch, forge_home: Path, tmp_path: Path) -> None:
     fake_py = tmp_path / "bin" / "python"
     fake_py.parent.mkdir()
     fake_py.write_text("")
@@ -510,12 +508,8 @@ def test_update_pypi_uses_pip_upgrade_spec(
     assert "--upgrade" in out["checks"][0]["detail"]
 
 
-def test_update_pypi_without_spec_or_dist_blocks(
-    monkeypatch, forge_home: Path
-) -> None:
-    monkeypatch.setattr(
-        service, "_manifest", lambda: {"source": {"kind": "pypi"}, "venv": "/v"}
-    )
+def test_update_pypi_without_spec_or_dist_blocks(monkeypatch, forge_home: Path) -> None:
+    monkeypatch.setattr(service, "_manifest", lambda: {"source": {"kind": "pypi"}, "venv": "/v"})
     out = service.update(dry_run=True)
     assert out["status"] == "failed"
     assert out["checks"][0]["status"] == "BLOCKED"
@@ -539,9 +533,7 @@ def test_update_pypi_to_composes_pin(monkeypatch, forge_home: Path, tmp_path: Pa
     assert "theforge-core==0.5.2" in out["checks"][0]["detail"]
 
 
-def test_update_pypi_to_without_distribution_blocks(
-    monkeypatch, forge_home: Path
-) -> None:
+def test_update_pypi_to_without_distribution_blocks(monkeypatch, forge_home: Path) -> None:
     monkeypatch.setattr(
         service,
         "_manifest",

@@ -1,6 +1,6 @@
 # Cycle 12.0 — Baseline do ecossistema (Discovery & Contracts)
 
-Data: 2025-11 (sessão Devin CLI). Método: auditoria read-only por repositório (9 relatórios
+Data: 2026-10 (sessão Devin CLI). Método: auditoria read-only por repositório (9 relatórios
 de subagente) + verificação empírica wheel-only pelo agente principal.
 Nada foi modificado durante a auditoria. `data-sentinel-forge` excluído por instrução do
 dono (outro processo Devin evoluindo o checkout).
@@ -417,3 +417,29 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   deliberadamente em `baseline.md` + `env-contract.md` (matriz §2, gaps §5,
   requisitos §6 cobertos no conteúdo). Desvio de forma registrado, não de
   conteúdo — se a homologação exigir o split literal, derivar é mecânico.
+
+### Rodada 9 (review) — format gate, receipt rebind, segredo no spec
+
+- **`ruff format` no the-forge**: os 3 arquivos novos + 7 com drift
+  pre-existente formatados — `ruff format --check .` agora 1123 limpos
+  (o gate `check_gates.py` volta a fechar).
+- **platform-forge `VALIDATION-RECEIPT.json`**: rebind do `validated_sha`
+  para HEAD via `validate.py --economy-receipt` (ritual funcional→rebind);
+  `economy-receipt` + `economy-closure` PASS em fixpoint.
+- **Segredo no `source.spec`** (W3): `redact_url_userinfo` no installkit
+  canônico + bootstrap — `name @ https://user:tok@host/x.whl` persiste como
+  `https://***@host/x.whl` no manifesto (§6.5); echo da recusa `DIST-URL`
+  redigido; `_run_pip` redige cmd e tail do pip; `update()` recusa spec
+  redigido com FAIL nomeado (reinstale via bootstrap — re-auth exige a
+  credencial de novo). 3 testes novos (empty-string, redação no echo,
+  helper).
+- **`--dist ""`** (sugestão): string vazia era falsy → caía no checkout
+  silenciosamente. `FORGE-INSTALL-DIST-INVALID` + envelope + rc=2.
+- **Nits**: `matched_files` do `knowledge search` (AWS `_core`) dedupado
+  por origem — pack docs endereçados `packs/<id>/<rel>` (esquema que
+  `_pack_do_arquivo` já lê), sem colapsar homônimos; `data_path` docstring
+  corrigida (probe = path pedido, não sentinel fixo) + `threading.Lock` na
+  materialização; `knowledge_new` captura `RuntimeError` de `resolve()`;
+  Azure `_evals_dir` ganha `SPARKFORGE_AZURE_EVALS`/`SPARK_FORGE_AZURE_EVALS`
+  (paridade com o override do AWS — 3 testes); `_evals_section` comenta que
+  `--root` absoluto nunca remapeia (intencional); data do header corrigida.

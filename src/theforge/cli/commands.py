@@ -239,9 +239,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
     repos = tuple(Path(r).expanduser() for r in getattr(args, "repo", []) or [])
     explicit_python = getattr(args, "python", None)
 
-    def _lab_row(
-        fid: str, checkout: Path, manifest: dict[str, Any] | None
-    ) -> dict[str, Any]:
+    def _lab_row(fid: str, checkout: Path, manifest: dict[str, Any] | None) -> dict[str, Any]:
         resolution = forgeslab.resolve_interpreter(
             forge_id=fid,
             checkout=checkout,
@@ -250,9 +248,7 @@ def cmd_lab(args: argparse.Namespace) -> int:
             validate=False,  # inspect-only — never spawns a probe
         )
         try:
-            decl = forgeslab.load_lab_decl(
-                fid, checkout, resolution.python or sys.executable
-            )
+            decl = forgeslab.load_lab_decl(fid, checkout, resolution.python or sys.executable)
         except Exception as exc:  # noqa: BLE001 - broken decl reports, not crashes
             return {"forge": fid, "status": "invalid", "detail": str(exc)[:200]}
         if decl is None:

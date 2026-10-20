@@ -264,11 +264,7 @@ def update(
                 ],
                 "failed",
             )
-        target = (
-            f"{dist_name}{spec_extras}=={to}"
-            if to and dist_name
-            else (spec or dist_name)
-        )
+        target = f"{dist_name}{spec_extras}=={to}" if to and dist_name else (spec or dist_name)
         if not target or (to and not dist_name):
             return _receipt(
                 "update",
@@ -300,9 +296,8 @@ def update(
                 {
                     "id": "version",
                     "status": "FAIL",
-                                        "detail": (
-                        "--to so se aplica a instalacoes pypi (--dist); "
-                        "checkout atualiza para HEAD"
+                    "detail": (
+                        "--to so se aplica a instalacoes pypi (--dist); checkout atualiza para HEAD"
                     ),
                 }
             ],
@@ -357,7 +352,15 @@ def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
         )
     if dry_run:
         return _receipt(
-            verb, [{"id": "pip", "status": "UNVERIFIED", "detail": " ".join(cmd)}], "planned"
+            verb,
+            [
+                {
+                    "id": "pip",
+                    "status": "UNVERIFIED",
+                    "detail": kit.redact_url_userinfo(" ".join(cmd)),
+                }
+            ],
+            "planned",
         )
     import subprocess
 
@@ -368,7 +371,7 @@ def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
         {
             "id": "pip",
             "status": "PASS" if proc.returncode == 0 else "FAIL",
-            "detail": (proc.stdout or proc.stderr)[-300:],
+            "detail": kit.redact_url_userinfo((proc.stdout or proc.stderr)[-300:]),
         }
     ]
     return _receipt(verb, checks, "completed" if proc.returncode == 0 else "failed")

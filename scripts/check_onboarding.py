@@ -183,18 +183,10 @@ def _failures() -> list[str]:
     for f in docs:
         text = f.read_text(encoding="utf-8")
         code_lines = _code_spans(text)
-        for verb in {
-            v
-            for line in code_lines
-            for v in _THEFORGE_VERB.findall(line)
-        }:
+        for verb in {v for line in code_lines for v in _THEFORGE_VERB.findall(line)}:
             if verbs and verb not in verbs:
                 fails.append(f"{f.relative_to(REPO)}: 'theforge {verb}' is not a real verb")
-        for verb, sub in {
-            pair
-            for line in code_lines
-            for pair in _THEFORGE_CMD.findall(line)
-        }:
+        for verb, sub in {pair for line in code_lines for pair in _THEFORGE_CMD.findall(line)}:
             if verbs and verb not in verbs:
                 continue
             if verb not in subs_cache:

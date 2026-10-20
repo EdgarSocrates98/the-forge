@@ -380,9 +380,7 @@ def _check_links(repo: Path, rel: Path, links: list[str]) -> list[dict[str, str]
             continue
         # Root-relative targets are external-site paths (e.g. quoted
         # devin.ai docs), never repo files — skip alongside http/mailto.
-        if mapped is None and raw.startswith(
-            ("http://", "https://", "mailto:", "#", "/")
-        ):
+        if mapped is None and raw.startswith(("http://", "https://", "mailto:", "#", "/")):
             continue
         # The fragment lives in the raw URL — mapped paths never carry it.
         # Percent-decode so ``#%C3%A7`` matches the heading ``a ç ã`` —
@@ -410,9 +408,7 @@ def _check_links(repo: Path, rel: Path, links: list[str]) -> list[dict[str, str]
             continue
         if frag and not _LINE_REF_RE.fullmatch(frag) and p.suffix == ".md":
             try:
-                _, anchors = _links_and_anchors(
-                    p.read_text(encoding="utf-8", errors="replace")
-                )
+                _, anchors = _links_and_anchors(p.read_text(encoding="utf-8", errors="replace"))
                 if frag.lower() not in anchors:
                     findings.append(
                         {

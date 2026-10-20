@@ -266,8 +266,7 @@ def link_problems(root: Path) -> list[str]:
                         anchor_cache[url_path] = anchors(read_md(target_file))
                     if anchor not in anchor_cache[url_path]:
                         problems.append(
-                            f"{name}: {text} points to a missing anchor #{anchor} "
-                            f"in {url_path}"
+                            f"{name}: {text} points to a missing anchor #{anchor} in {url_path}"
                         )
                 continue
             path, anchor = resolve(root, doc, target)
@@ -569,8 +568,7 @@ VALID_REPORT = "# Relatório final do Cycle 2\n\n" + "".join(
             "README.md",
             "](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md"
             "#exit-codes-gerais)",
-            "](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md"
-            "#nao-existe)",
+            "](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md#nao-existe)",
             "missing anchor",
         ),
         ("docs/cli.md", "## Exit codes gerais", "## Exit codes", "missing anchor"),

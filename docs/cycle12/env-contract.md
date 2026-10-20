@@ -35,6 +35,7 @@ override → workspace/cwd → checkout (se houver) → dados empacotados no whe
 | `SPARKFORGE_AWS_FIXTURES` | dev fixtures | — |
 | `SPARKFORGE_AZURE_CATALOG` | rules catalog | `SPARK_FORGE_AZURE_CATALOG` |
 | `SPARKFORGE_AZURE_KNOWLEDGE` | knowledge packs | `SPARK_FORGE_AZURE_KNOWLEDGE` |
+| `SPARKFORGE_AZURE_EVALS` | eval suites | `SPARK_FORGE_AZURE_EVALS` |
 
 Depreciação: a forma `<FORGE>_<RES>` (do prefixo de install) é aceita como
 alias para que um único prefixo mental baste; a forma documentada continua
@@ -68,7 +69,10 @@ Nota `--dist`: a porção *nome* do requirement é verificada contra
 `forge.json.distribution` (PEP 503). Referências diretas `name @ URL` são
 recusadas por default (`FORGE-INSTALL-DIST-URL`) e só passam com o flag
 explícito `--allow-url` — o check cobre só o nome, o URL segue verbatim
-para o pip, então a origem fica a critério do operador.
+para o pip, então a origem fica a critério do operador. Userinfo
+(`user:tok@`) nunca é persistido: `source.spec`, recibos e logs levam
+`https://***@host/…` (§6.5); um manifesto com spec redigido exige
+reinstalação via bootstrap para re-autenticar o wheelhouse.
 
 Nota de precedência (divergência deliberada vs §4.3 do prompt): overrides
 explícitos de env (`SPARKFORGE_AWS_EVALS`, etc.) vencem o workspace — a

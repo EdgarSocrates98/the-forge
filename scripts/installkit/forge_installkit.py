@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import sys
 import tempfile
 import time
@@ -87,6 +88,20 @@ class InstallError(Exception):
             "checks": [],
             "managed_files": [],
         }
+
+
+_URL_USERINFO_RE = re.compile(r"(https?://)[^/@\s]+@")
+
+
+def redact_url_userinfo(text: str) -> str:
+    """Strip ``user:pass@`` userinfo from URLs in persisted/logged text.
+
+    ``--dist "name @ https://user:token@host/x.whl"`` must never land in
+    manifests, receipts or stdout verbatim (prompt §6.5 — nunca registrar
+    valores secretos). Host and path survive so diagnostics still identify
+    the wheelhouse.
+    """
+    return _URL_USERINFO_RE.sub(r"\1***@", text)
 
 
 def _utc_now() -> str:
