@@ -228,6 +228,23 @@ def update(
     source = manifest.get("source") or {}
     src = repo or (Path(p) if (p := source.get("path")) else None)
     if source.get("kind") == "pypi":
+        # `--repo` trocaria a origem para checkout — e' um re-install, nao
+        # um update. Recusar em vez de ignorar a flag silenciosamente.
+        if repo is not None:
+            return _receipt(
+                "update",
+                [
+                    {
+                        "id": "source",
+                        "status": "FAIL",
+                        "detail": (
+                            "--repo nao se aplica a instalacao pypi; "
+                            "para trocar de origem reinstale com forge_bootstrap.py --repo"
+                        ),
+                    }
+                ],
+                "failed",
+            )
         # installacao via --dist: update e `pip install -U <spec>`, nao
         # re-install de checkout. `--to X` compoe `dist[extras]==X`
         # preservando os extras do spec registrado; sem ele cai no spec
@@ -274,6 +291,23 @@ def update(
         venv_py = Path(venv) / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
         cmd = [str(venv_py), "-m", "pip", "install", "--upgrade", str(target)]
         return _run_pip("update", cmd, dry_run=dry_run)
+    if to is not None:
+        # checkout re-instala do path registrado; um pin de versao exige
+        # um spec pypi. Antes era ignorado em silencio — recusar nomeado.
+        return _receipt(
+            "update",
+            [
+                {
+                    "id": "version",
+                    "status": "FAIL",
+                                        "detail": (
+                        "--to so se aplica a instalacoes pypi (--dist); "
+                        "checkout atualiza para HEAD"
+                    ),
+                }
+            ],
+            "failed",
+        )
     if src is None or not src.exists():
         return _receipt(
             "update",

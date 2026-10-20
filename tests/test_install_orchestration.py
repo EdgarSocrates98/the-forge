@@ -602,3 +602,33 @@ def test_update_pypi_spec_name_divergence_blocks(
     out = service.update(dry_run=True)
     assert out["status"] == "failed"
     assert "diverge" in out["checks"][0]["detail"]
+
+
+def test_update_pypi_with_repo_fails_named(monkeypatch, forge_home: Path) -> None:
+    # --repo num manifesto pypi trocaria a origem: recusa nomeada, nao ignora.
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core==1.0.0"},
+            "distribution": "theforge-core",
+            "venv": str(forge_home / "v"),
+        },
+    )
+    out = service.update(repo=forge_home, dry_run=True)
+    assert out["status"] == "failed"
+    check = out["checks"][0]
+    assert check["status"] == "FAIL" and "--repo" in check["detail"]
+
+
+def test_update_checkout_with_to_fails_named(monkeypatch, forge_home: Path) -> None:
+    # --to num checkout antes era ignorado: agora recusa nomeada.
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {"source": {"kind": "git", "path": str(forge_home)}},
+    )
+    out = service.update(to="0.5.2", dry_run=True)
+    assert out["status"] == "failed"
+    check = out["checks"][0]
+    assert check["status"] == "FAIL" and "--to" in check["detail"]

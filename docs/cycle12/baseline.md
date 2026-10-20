@@ -390,3 +390,30 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   com doctor-data).
 - Nota de precedencia env>workspace registrada no env-contract como
   divergencia deliberada vs §4.3.
+
+### Rodada 8 (review) — api-forge default-root + Azure evals + MCP paridade
+
+- **`apiforge knowledge freshness|drift` crash** (CRIT): `--root` virou `None`
+  mas os corpos ainda faziam `load_pack(root / domain)` — TypeError mascarado
+  como `AF-CLI-INPUT`. Corrigido para `load_pack(default_root(root) / domain)`.
+  `tests/test_knowledge_cli_defaults.py` (6 testes) cobre freshness/drift sem
+  `--root` de cwd estrangeiro (resolver empacotado), `--root` explícito
+  honrado, e os 4 verbos MCP migrados.
+- **MCP knowledge tools meio-migrados** (W): `knowledge_show|check|drift|impact`
+  tinham `root: str = "knowledge"` (cwd-bound) enquanto `knowledge_list` já
+  usava `default_root`. Todos os 4 migrados para `root: str | None = None` +
+  `default_root` — paridade CLI/MCP nos mesmos verbos.
+- **Azure evals cwd-bound** (W): `sparkforge_azure/evals/cli.py` resolvia
+  `Path.cwd()/"evals"` e não empacotava o corpus. Novo `_evals_dir()`
+  (workspace → `group_dir("evals")` → honest-missing) cobre suite comum e
+  `grade` do debate; `"evals" = "sparkforge_azure/_data/evals"` no
+  force-include + sdist. Wheel real: 108 arquivos `_data/evals` (suites +
+  baselines). `tests/test_evals_dir_resolution.py` (4 testes): precedência
+  workspace, fallback, recusa honesta.
+- **`update()` flags silenciosos** (sugestões): `--repo` em manifesto pypi e
+  `--to` em checkout agora FAIL nomeado (antes ignorados). 2 testes novos;
+  suite de update 42 verde.
+- **Shape §2.4**: o prompt pede 7 arquivos em `docs/cycle12/`; consolidado
+  deliberadamente em `baseline.md` + `env-contract.md` (matriz §2, gaps §5,
+  requisitos §6 cobertos no conteúdo). Desvio de forma registrado, não de
+  conteúdo — se a homologação exigir o split literal, derivar é mecânico.
