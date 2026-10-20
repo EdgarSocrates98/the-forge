@@ -314,3 +314,39 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   formalizada: novo contrato adiaria a homologação sem ganho semântico, e o
   schema já evoluiu de forma compatível.
 - `vendor.py --check` CLEAN ×7 após re-vendor do bootstrap canônico.
+
+### Review remediation 5 — eval loaders e gates do api-forge
+
+- **api-forge ruff**: `PLW1510` (`check=False` no subprocess do wheel test),
+  `PIE810` (tuple `endswith`), `ruff format` — `check` e `format --check`
+  limpos em `src`/`tests` (1018 arquivos).
+- **`knowledge-drift` vacuous-pass**: `run_knowledge_drift` agora chama
+  `resolve_evals_path` e recusa corpus vazio com `AF-EVALS-INVALID` — antes
+  retornava `{"cases": [], "passed": true}` wheel-only. Verificado em venv
+  limpo de cwd vazio: 5 casos do `_data`, `passed: true` real.
+- **`graph-quality`/`economy-matrix`**: `run_graph_quality` e `run_matrix`
+  resolvidos; `verdict_for` resolve refs `tests/fixtures/…` via novo
+  `resolve_task_resource` (workspace → `_data/tests` → checkout com
+  pyproject) e `tests/fixtures` virou force-include
+  (`apiforge/_data/tests/fixtures`). Wheel-only: graph-quality emite
+  casos/precision reais; economy-matrix `passed:true` (16 tasks, mutação
+  10/10).
+- **`the-forge update()` pypi**: manifest `source.kind="pypi"` segue
+  `pip install -U <spec>` (dry_run → UNVERIFIED), sem spec/dist → BLOCKED;
+  `_run_pip` fatorado. Testes novos cobrem os dois ramos.
+- **`manifest_for` fallback alinhado**: aceita `installation_method`
+  explícito; sem ele deriva `pypi→pypi-wheel`, `editable→git-checkout`,
+  wheel-build→`wheel` — mesma semântica do bootstrap.
+- **platform-forge `data_path`**: `as_file` + `ExitStack` ate `atexit` —
+  zip-safe igual ao `_packaged_dir` do doctor-data.
+- **doctor-data resolver tests** (`test_packaged_resolvers.py`): 9 testes
+  cobrindo `_packaged_dir`, `_golden_root` (+ refusal `for_write` rc=2),
+  `_default_labs` (cwd vence + fallback packaged) e o guard de escrita do
+  `knowledge_new` (purelib e traversable-não-Path); 6 pass / 3 skip fora
+  de wheel.
+- **AWS**: mensagem de override nomeia a var realmente usada
+  (`SPARKFORGE_AWS_EVALS` ou alias `SPARK_FORGE_AWS_EVALS`); regressão do
+  `knowledge drift`/`list` retornando `None` corrigida (`return 0`) —
+  `test_fixtures_golden_knowledge_drift` 11/11.
+- **Re-vendor**: `_installkit.py` + `scripts/forge_installkit.py` em
+  lockstep novo (`29a1d628` ×12); `--check` silencioso nos 7.

@@ -486,3 +486,31 @@ def test_wizard_opt_out_installs_no_host_assets(tmp_path: Path) -> None:
     receipt = service.install(scope="project", root=target, yes=True, host="none")
     assert receipt["status"] == "completed"
     assert not (target / ".mcp.json").exists()
+
+
+def test_update_pypi_uses_pip_upgrade_spec(monkeypatch, forge_home: Path) -> None:
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core[mcp]==1.2.3"},
+            "distribution": "theforge-core",
+            "venv": "/v",
+        },
+    )
+    out = service.update(dry_run=True)
+    assert out["status"] == "planned"
+    assert "pip" in out["checks"][0]["id"]
+    assert "theforge-core[mcp]==1.2.3" in out["checks"][0]["detail"]
+    assert "--upgrade" in out["checks"][0]["detail"]
+
+
+def test_update_pypi_without_spec_or_dist_blocks(
+    monkeypatch, forge_home: Path
+) -> None:
+    monkeypatch.setattr(
+        service, "_manifest", lambda: {"source": {"kind": "pypi"}, "venv": "/v"}
+    )
+    out = service.update(dry_run=True)
+    assert out["status"] == "failed"
+    assert out["checks"][0]["status"] == "BLOCKED"

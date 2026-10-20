@@ -225,7 +225,35 @@ def update(
             "failed",
         )
     manifest = _manifest()
-    src = repo or (Path(p) if (p := (manifest.get("source") or {}).get("path")) else None)
+    source = manifest.get("source") or {}
+    src = repo or (Path(p) if (p := source.get("path")) else None)
+    if source.get("kind") == "pypi":
+        # installacao via --dist: update e `pip install -U <spec>`, nao
+        # re-install de checkout. `spec` carrega a versao pedida; sem ela
+        # cai na distribution registrada no manifesto.
+        target = to or source.get("spec") or manifest.get("distribution")
+        if not target:
+            return _receipt(
+                "update",
+                [{"id": "source", "status": "BLOCKED", "detail": "spec pypi ausente"}],
+                "failed",
+            )
+        venv = manifest.get("venv")
+        if not venv:
+            return _receipt(
+                "update",
+                [
+                    {
+                        "id": "venv",
+                        "status": "FAIL",
+                        "detail": "sem venv; rode scripts/forge_bootstrap.py",
+                    }
+                ],
+                "failed",
+            )
+        venv_py = Path(venv) / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+        cmd = [str(venv_py), "-m", "pip", "install", "--upgrade", str(target)]
+        return _run_pip("update", cmd, dry_run=dry_run)
     if src is None or not src.exists():
         return _receipt(
             "update",
@@ -247,6 +275,10 @@ def update(
         )
     venv_py = Path(venv) / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
     cmd = [str(venv_py), "-m", "pip", "install", "--upgrade", str(src)]
+    return _run_pip("update", cmd, dry_run=dry_run)
+
+
+def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
     if dry_run:
         return _receipt(
             "update", [{"id": "pip", "status": "UNVERIFIED", "detail": " ".join(cmd)}], "planned"

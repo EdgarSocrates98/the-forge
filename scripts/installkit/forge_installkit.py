@@ -1286,6 +1286,7 @@ def manifest_for(
     version: str,
     source: dict[str, Any],
     shim: Path | None,
+    installation_method: str | None = None,
 ) -> dict[str, Any]:
     doc = {
         "schema": SCHEMA_MANIFEST,
@@ -1301,8 +1302,15 @@ def manifest_for(
             "satisfies": spec.python_spec,
         },
         "source": source,
-        "installation_method": (
-            "pypi-wheel" if source.get("kind") == "pypi" else source.get("kind")
+        "installation_method": installation_method
+        or (
+            "pypi-wheel"
+            if source.get("kind") == "pypi"
+            else (
+                "git-checkout"
+                if source.get("editable", source.get("kind") == "git-checkout")
+                else "wheel"
+            )
         ),
         "installed_at": _utc_now(),
         "installed_by": {"agent": "forge_bootstrap", "version": _INSTALLKIT_VERSION},

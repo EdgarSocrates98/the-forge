@@ -63,3 +63,7 @@ pacote não depende desse path.
 - Nenhum valor secreto vai para `env.sh`, manifesto ou logs.
 - `.env` de projeto não é tocado; templates só para chaves do componente
   efetivamente instalado.
+
+Nota `--dist`: a porção *nome* do requirement é verificada contra
+`forge.json.distribution` (PEP 503). Referências diretas `name @ URL` são
+aceitas — o check cobre só o nome, o URL é repassado ao pip verbatim.
