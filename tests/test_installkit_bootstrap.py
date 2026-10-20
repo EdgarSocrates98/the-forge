@@ -336,3 +336,24 @@ def test_install_package_never_leaks_url_credentials(tmp_path, monkeypatch):
     assert "https://***@h/x.whl" in detail
     assert "theforge-core[mcp]" in detail  # spec composto, extras preservados
     assert any("theforge-core[mcp]" in line and "sekret" not in line for line in lines)
+
+
+def test_dist_mismatch_refusal_redacts_userinfo(tmp_path, capsys):
+    """R11: name-mismatch + URL com credencial nao ecoa userinfo (§6.5)."""
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(
+        [
+            "--repo",
+            str(tmp_path),
+            "--dist",
+            "other-pkg @ https://u:sekret@h/x.whl",
+            "--allow-url",
+            "--dry-run",
+            "--quiet",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-DIST-MISMATCH" in out
+    assert "sekret" not in out
+    assert "https://***@h/x.whl" in out

@@ -471,3 +471,43 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   +2 tools no surface lock e no denominador do economy sem ganho de
   orquestração (o host pode rodar o CLI). Se surgir caso de uso de
   agente-precisa-buscar-knowledge-sem-shell, reabrir.
+
+### Rodada 11 (review) — ecos de spec cru, AST purity, receipt, prova de wheel
+
+- **Dois ecos de `--dist` sem redação** (C): `DIST-MISMATCH` imprimia
+  `args.dist!r` e o fallback de `split_dist_spec` imprimia `spec!r` —
+  `bad @ https://u:sekret@h/x` vazava userinfo no envelope JSON. Ambos
+  passam por `redact_url_userinfo`. Teste novo trava o MISMATCH com
+  credencial (re-vendor `405176fb` ×7).
+- **AST purity no doctor-api** (C): `cli/__init__.py` importava
+  `importlib.resources` fora do allowlist. Resolução de `_data/labs`
+  movida para `lab/packaged.py` (allowlisted, com justificativa no
+  boundary test); `cli` chama `packaged_labs_dir()`. Boundary 11 verdes.
+- **Receipt stale no platform-forge** (C): rebind tardio — commit da
+  re-vendor chegou depois do receipt; rebindado por último nesta rodada.
+- **Prova de wheel nos doctors** (W4): `test_artifact_contents.py` nos
+  dois (padrão api-forge) — constroem a wheel real e asserem
+  `_data/labs` (+`_data/golden` no data) e igualdade arquivo-a-arquivo
+  com o checkout; `build>=1.0` nos dev-deps dos dois. doctor-api:
+  dev-deps allowlist do `test_package` atualizado; rc-baseline
+  regenerado (91 test files).
+- **`update --to` em spec de URL direta** (W5): `theforge-core @ URL`
+  + `--to X` virava `dist==X` — troca URL→PyPI silenciosa. Agora FAIL
+  nomeado apontando reinstalação via bootstrap; `-U` sem `--to`
+  continua re-usando a mesma origem (2 testes).
+- **`knowledge list|search` no MCP do AWS** (sugestão, aplicada): tools
+  `sparkforge_aws_knowledge_list|search` com schemas `_may_fail`,
+  handlers e registro — surface lock regenerado (146→148 tools),
+  números rebatidos em AGENTS/README/GUIA/CLAUDE/STATUS
+  (`check_status_numbers --strict`: 0 divergências), construtores de
+  args reais no teste de schema-conformance.
+- **`suites_disponiveis` escondia override quebrado** (S7): `evals
+  list` devolvia `[]` com `SPARKFORGE_AWS_EVALS` apontando para lugar
+  inexistente; agora `EvalsError` nomeia a var (paridade `suite_dir`)
+  e `evals list` envelopa em `EvalError` rc=2 (2 testes).
+- **Nits**: `_conjunto` nomeia o `suite_dir` resolvido (não literal
+  `evals/agentic/`); `knowledge_search` recusa `limit<=0` na camada
+  core (MCP `limit:0` → erro envelopado); `knowledge_new` (doctor-data)
+  recusa quando `resolve()` não prova fora-de-site-packages;
+  `data_path` (platform) deduplica a materialização `as_file` por
+  path sob zipimport.

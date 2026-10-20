@@ -641,3 +641,39 @@ def test_update_redacted_spec_fails_named(monkeypatch, forge_home: Path) -> None
     assert out["status"] == "failed"
     check = out["checks"][0]
     assert check["status"] == "FAIL" and "redigido" in check["detail"]
+
+
+def test_update_to_on_url_spec_refuses_origin_swap(monkeypatch, forge_home: Path) -> None:
+    """`--to` num spec de referência direta trocaria URL→PyPI: recusa nomeada."""
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core @ https://h/x.whl"},
+            "distribution": "theforge-core",
+            "venv": "/v",
+        },
+    )
+    out = service.update(to="1.4.0", dry_run=True)
+    assert out["status"] == "failed"
+    assert out["checks"][0]["status"] == "FAIL"
+    assert "PyPI" in out["checks"][0]["detail"]
+
+
+def test_update_url_spec_no_to_keeps_same_origin(monkeypatch, forge_home: Path, tmp_path) -> None:
+    """Sem `--to`, `-U` re-executa o spec da mesma origem (não troca)."""
+    fake_py = tmp_path / "bin" / "python"
+    fake_py.parent.mkdir()
+    fake_py.write_text("")
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core @ https://h/x.whl"},
+            "distribution": "theforge-core",
+            "venv": str(tmp_path),
+        },
+    )
+    out = service.update(dry_run=True)
+    assert out["status"] == "planned"
+    assert "theforge-core @ https://h/x.whl" in out["checks"][0]["detail"]
