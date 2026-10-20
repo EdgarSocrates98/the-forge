@@ -264,6 +264,21 @@ def update(
                 ],
                 "failed",
             )
+        if "***@" in spec:
+            return _receipt(
+                "update",
+                [
+                    {
+                        "id": "source",
+                        "status": "FAIL",
+                        "detail": (
+                            "spec redigido (credencial removida na persistencia); "
+                            "reinstale via forge_bootstrap.py --dist --allow-url"
+                        ),
+                    }
+                ],
+                "failed",
+            )
         target = f"{dist_name}{spec_extras}=={to}" if to and dist_name else (spec or dist_name)
         if not target or (to and not dist_name):
             return _receipt(
