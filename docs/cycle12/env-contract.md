@@ -66,4 +66,6 @@ pacote não depende desse path.
 
 Nota `--dist`: a porção *nome* do requirement é verificada contra
 `forge.json.distribution` (PEP 503). Referências diretas `name @ URL` são
-aceitas — o check cobre só o nome, o URL é repassado ao pip verbatim.
+recusadas por default (`FORGE-INSTALL-DIST-URL`) e só passam com o flag
+explícito `--allow-url` — o check cobre só o nome, o URL segue verbatim
+para o pip, então a origem fica a critério do operador.

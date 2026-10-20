@@ -350,3 +350,19 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   `test_fixtures_golden_knowledge_drift` 11/11.
 - **Re-vendor**: `_installkit.py` + `scripts/forge_installkit.py` em
   lockstep novo (`29a1d628` ×12); `--check` silencioso nos 7.
+
+### Review remediation 6 — update --to, --allow-url, hardening fina
+
+- **`update --to` pypi**: compoe `distribution==<to>` (era `pip install -U
+  <to>` solto — requirement invalido). Sem `distribution` no manifesto →
+  BLOCKED. `_run_pip` recusa `venv` inexistente com FAIL nomeado em vez de
+  FileNotFoundError (cobre checkout e pypi).
+- **`--dist` URL gate**: referencia direta `name @ URL` agora exige
+  `--allow-url` (`FORGE-INSTALL-DIST-URL` sem ele) — o escape-hatch de
+  wheelhouse fica opt-in. Testes cobrem recusa e aceite.
+- **`register()` fallback**: `installation_method` alinha com bootstrap —
+  `editable→git-checkout`, wheel-build→`wheel`.
+- **AWS**: `--limit >= 1` via `_positive_int` (negativos invertiam o
+  slicing); `matched_files` dedupado entre core e packs; `playbook()`
+  captura `SourcesError` no envelope `AdapterError`.
+- **Re-vendor**: `forge_bootstrap.py` `02a8ef29` ×8 byte-identico.

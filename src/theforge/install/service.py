@@ -229,10 +229,15 @@ def update(
     src = repo or (Path(p) if (p := source.get("path")) else None)
     if source.get("kind") == "pypi":
         # installacao via --dist: update e `pip install -U <spec>`, nao
-        # re-install de checkout. `spec` carrega a versao pedida; sem ela
-        # cai na distribution registrada no manifesto.
-        target = to or source.get("spec") or manifest.get("distribution")
-        if not target:
+        # re-install de checkout. `--to X` compoe `dist==X`; sem ele cai
+        # no spec registrado (ou na distribution pura para -U latest real).
+        dist_name = manifest.get("distribution")
+        target = (
+            f"{dist_name}=={to}"
+            if to and dist_name
+            else (source.get("spec") or dist_name)
+        )
+        if not target or (to and not dist_name):
             return _receipt(
                 "update",
                 [{"id": "source", "status": "BLOCKED", "detail": "spec pypi ausente"}],
@@ -279,6 +284,12 @@ def update(
 
 
 def _run_pip(verb: str, cmd: list[str], *, dry_run: bool) -> dict[str, Any]:
+    if not Path(cmd[0]).is_file():
+        return _receipt(
+            verb,
+            [{"id": "venv", "status": "FAIL", "detail": f"venv python ausente: {cmd[0]}"}],
+            "failed",
+        )
     if dry_run:
         return _receipt(
             "update", [{"id": "pip", "status": "UNVERIFIED", "detail": " ".join(cmd)}], "planned"

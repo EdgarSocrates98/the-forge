@@ -233,3 +233,38 @@ def test_dist_mismatch_refuses(tmp_path, capsys):
     out = capsys.readouterr().out
     assert code == 2
     assert "FORGE-INSTALL-DIST-MISMATCH" in out
+
+
+def test_dist_url_requires_allow_url(tmp_path, capsys):
+    _write_forge_json(tmp_path / "forge.json")
+    code = fb.run(
+        [
+            "--repo",
+            str(tmp_path),
+            "--dist",
+            "forge-test @ https://example.com/x.whl",
+            "--dry-run",
+            "--quiet",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-DIST-URL" in out
+
+
+def test_dist_url_with_allow_url_passes_name_check(tmp_path, capsys):
+    _write_forge_json(tmp_path / "forge.json")
+    fb.run(
+        [
+            "--repo",
+            str(tmp_path),
+            "--dist",
+            "sparkforge-aws @ https://example.com/x.whl",
+            "--allow-url",
+            "--dry-run",
+            "--quiet",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert "FORGE-INSTALL-DIST-URL" not in out
+    assert "FORGE-INSTALL-DIST-MISMATCH" not in out
