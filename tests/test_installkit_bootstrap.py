@@ -9,6 +9,7 @@ interpreter satisfy any floor and no interpreter satisfy any ceiling.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
@@ -383,3 +384,249 @@ def test_smoke_failure_never_writes_installation(tmp_path, monkeypatch, capsys):
         if not p.name.startswith(".")
     ]
     assert not manifests
+
+
+# --------------------------------------------------------------------------
+# lf-0018 — shared InstallReceipt contract: python{}, environment{shell,
+# msystem, execution_environment}, source provenance, install_method,
+# managed_files; FORGE-* surfacing.
+# --------------------------------------------------------------------------
+
+
+def _gitless_forge(path: Path, *, structure: bool = True) -> Path:
+    """Gitless source fixture: forge.json (+ pyproject + the bootstrap
+    file) with NO .git — the GITLESS_VALID_FORGE shape."""
+    path.mkdir(parents=True, exist_ok=True)
+    _write_forge_json(path / "forge.json")
+    if structure:
+        (path / "pyproject.toml").write_text("[project]\nname = 'x'\n", encoding="utf-8")
+        (path / "scripts").mkdir(exist_ok=True)
+        (path / "scripts" / "forge_bootstrap.py").write_text("# vendored\n", encoding="utf-8")
+    return path
+
+
+def _stub_stages(monkeypatch, tmp_path):
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(tmp_path / "home"))
+    monkeypatch.setattr(fb, "detect_hosts", lambda: {})
+    monkeypatch.setattr(fb, "create_venv", lambda *a, **k: tmp_path / "venv")
+    monkeypatch.setattr(fb, "install_package", lambda *a, **k: None)
+    monkeypatch.setattr(fb, "write_launcher", lambda *a, **k: tmp_path / "shim")
+    monkeypatch.setattr(fb, "smoke", lambda *a, **k: {"status": "PASS", "version": "1.0.0"})
+
+
+def _receipt(out: str) -> dict:
+    return json.loads(out[out.index("{") :])
+
+
+def test_source_provenance_gitless_valid(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    prov = fb._source_provenance(repo, manifest_valid=True)
+    assert prov == {
+        "is_git": False,
+        "source_trust": "B",
+        "manifest_valid": True,
+        "integrity": "unverified",
+    }
+
+
+def test_source_provenance_gitless_partial(tmp_path):
+    repo = _gitless_forge(tmp_path / "src", structure=False)
+    prov = fb._source_provenance(repo, manifest_valid=True)
+    assert prov["is_git"] is False
+    assert prov["source_trust"] == "C"
+
+
+def test_source_provenance_git_repo(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    (repo / ".git").mkdir()
+    prov = fb._source_provenance(repo, manifest_valid=True)
+    assert prov["is_git"] is True
+    assert prov["source_trust"] == "B"  # checksums unverified → never A
+
+
+def test_source_provenance_git_verified_checksums(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    (repo / ".git").mkdir()
+    target = repo / "pyproject.toml"
+    import hashlib
+
+    digest = hashlib.sha256(target.read_bytes()).hexdigest()
+    (repo / "SHA256SUMS").write_text(f"{digest}  pyproject.toml\n", encoding="utf-8")
+    prov = fb._source_provenance(repo, manifest_valid=True)
+    assert prov["integrity"] == "verified"
+    assert prov["source_trust"] == "A"
+
+
+def test_source_provenance_worktree_caps_at_b(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    (repo / ".git").write_text("gitdir: /elsewhere/x\n", encoding="utf-8")
+    import hashlib
+
+    digest = hashlib.sha256((repo / "pyproject.toml").read_bytes()).hexdigest()
+    (repo / "SHA256SUMS").write_text(f"{digest}  pyproject.toml\n", encoding="utf-8")
+    prov = fb._source_provenance(repo, manifest_valid=True)
+    assert prov["is_git"] is True
+    assert prov["integrity"] == "verified"
+    assert prov["source_trust"] == "B"  # worktree file, not a repo dir
+
+
+def test_checksum_integrity_partial_on_divergence(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    (repo / "SHA256SUMS").write_text(
+        "0" * 64 + "  pyproject.toml\n" + "1" * 64 + "  missing.txt\n", encoding="utf-8"
+    )
+    assert fb._checksum_integrity(repo) == "partial"
+
+
+def test_checksum_integrity_partial_on_traversal(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    (repo / "checksums.sha256").write_text("a" * 64 + "  ../outside.txt\n", encoding="utf-8")
+    assert fb._checksum_integrity(repo) == "partial"
+
+
+def test_checksum_integrity_unverified_without_manifest(tmp_path):
+    repo = _gitless_forge(tmp_path / "src")
+    assert fb._checksum_integrity(repo) == "unverified"
+
+
+def test_explicit_python_argv_never_splits_real_path(tmp_path):
+    spaced = tmp_path / "dir with space" / "python"
+    spaced.parent.mkdir()
+    spaced.write_text("", encoding="utf-8")
+    assert fb._explicit_python_argv(str(spaced)) == [str(spaced)]
+    assert fb._explicit_python_argv("py -3.11") == ["py", "-3.11"]
+    assert fb._explicit_python_argv("python3") == ["python3"]
+
+
+def test_find_python_fills_provenance_for_explicit(tmp_path):
+    prov: dict = {}
+    exe = fb.find_python(">=3.0", sys.executable, False, lambda _m: None, prov)
+    assert exe == sys.executable or exe.endswith("python")
+    assert prov["source"] == "explicit"
+    assert prov["version"]
+
+
+def test_find_python_fills_provenance_for_path_scan():
+    prov: dict = {}
+    exe = fb.find_python(">=3.0", None, False, lambda _m: None, prov)
+    assert exe
+    assert prov["source"] == "path"
+    assert "PATH" in prov["selection_reason"]
+
+
+def test_receipt_gitless_carries_contract_fields(tmp_path, monkeypatch, capsys):
+    """The fixture-based parity case: a gitless install emits a receipt
+    with is_git:false + source_trust + manifest_valid + the python{} and
+    environment{} contract objects — same names as forge-cli's receipt."""
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    code = fb.run(["--repo", str(repo), "--python", sys.executable])
+    rcpt = _receipt(capsys.readouterr().out)
+    assert code == 0
+    assert rcpt["schema"] == "forge/InstallReceipt/v1"
+    assert rcpt["is_git"] is False
+    assert rcpt["source_trust"] == "B"
+    assert rcpt["manifest_valid"] is True
+    assert rcpt["integrity"] == "unverified"
+    assert rcpt["install_method"] == "wheel"
+    py = rcpt["python"]
+    assert py["source"] == "flag"
+    assert py["executable"] == sys.executable
+    assert py["version"] and py["selection_reason"]
+    env = rcpt["environment"]
+    assert env["schema"] == "forge/InstallEnvironment/v1"
+    assert env["execution_environment"] in ("posix", "windows", "git-bash")
+    assert env["shell"]
+    managed = rcpt["managed_files"]
+    assert str(tmp_path / "home" / ".forge" / "installs" / "spark-forge-aws") in managed
+    assert any(p.endswith("spark-forge-aws.json") for p in managed)
+    assert any(p.endswith(".spark-forge-aws-bootstrap.json") for p in managed)
+
+
+def test_receipt_forge_python_env_marks_source_env(tmp_path, monkeypatch, capsys):
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    monkeypatch.setenv("FORGE_PYTHON", sys.executable)
+    code = fb.run(["--repo", str(repo)])
+    rcpt = _receipt(capsys.readouterr().out)
+    assert code == 0
+    assert rcpt["python"]["source"] == "env"
+    assert rcpt["python"]["version"]
+
+
+def test_receipt_managed_files_parity_between_routes(tmp_path, monkeypatch):
+    """install.sh-route vs install.windows.sh-route: the managed set
+    differs only by the artifacts each platform owns (.cmd launcher on
+    nt) — stages, fields and semantics are identical. The home/shim/env
+    roots are stubbed so `os.name` can flip without WindowsPath."""
+    cfg = {
+        "forge_id": "spark-forge-aws",
+        "cli": "sparkforge-aws",
+    }
+    monkeypatch.setattr(fb, "forge_home", lambda: tmp_path / "home" / ".forge")
+    monkeypatch.setattr(fb, "shim_dir", lambda: tmp_path / "shim")
+    monkeypatch.setattr(fb, "_posix_env_paths", lambda: (tmp_path / "env.sh", tmp_path / "rc"))
+
+    monkeypatch.setattr(fb.os, "name", "posix")
+    monkeypatch.setattr(fb, "_is_git_bash", lambda: False)
+    posix_set = set(fb.managed_files(cfg, tmp_path / "install", True, False))
+
+    monkeypatch.setattr(fb.os, "name", "nt")
+    monkeypatch.setattr(fb, "_is_git_bash", lambda: True)
+    gitbash_set = set(fb.managed_files(cfg, tmp_path / "install", True, False))
+
+    common = posix_set & gitbash_set
+    assert str(tmp_path / "install") in common
+    assert any(p.endswith("spark-forge-aws.json") for p in common)
+    assert any(p.endswith("env.sh") for p in common)  # Git Bash keeps env.sh too
+    # The delta is exactly the Windows .cmd companion launcher.
+    assert gitbash_set - posix_set == {
+        str(tmp_path / "shim" / "sparkforge-aws.cmd"),
+    }
+    assert not (posix_set - gitbash_set)
+
+
+def test_receipt_git_bash_environment_fields(tmp_path, monkeypatch, capsys):
+    """Under simulated Git Bash (_is_git_bash + MSYSTEM) the environment
+    block marks shell/execution_environment 'git-bash' and carries
+    msystem — the fields that legitimately differ between shell routes."""
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    # _shell_label/_execution_environment consult _is_git_bash() first —
+    # no os.name flip needed (it would force WindowsPath on POSIX).
+    monkeypatch.setattr(fb, "_is_git_bash", lambda: True)
+    monkeypatch.setenv("MSYSTEM", "MINGW64")
+    monkeypatch.setattr(fb, "_posix_env_paths", lambda: (tmp_path / "env.sh", tmp_path / "rc"))
+    persisted = []
+    monkeypatch.setattr(
+        fb,
+        "persist_environment",
+        lambda env, shim, log: persisted.append(env) or env,
+    )
+    code = fb.run(["--repo", str(repo), "--persist-env", "--python", sys.executable])
+    rcpt = _receipt(capsys.readouterr().out)
+    assert code == 0
+    env = rcpt["environment"]
+    assert env["shell"] == "git-bash"
+    assert env["execution_environment"] == "git-bash"
+    assert env["msystem"] == "MINGW64"
+    assert persisted  # --persist-env ran the persist stage
+
+
+def test_persist_failure_is_named_refusal(tmp_path, monkeypatch, capsys):
+    """OS-level persistence failure → FORGE-ENV-PERSISTENCE-FAILED in the
+    receipt's error{kind,detail} — never a bare traceback."""
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+
+    def boom(_env, _shim, _log):
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(fb, "persist_environment", boom)
+    code = fb.run(["--repo", str(repo), "--persist-env", "--python", sys.executable])
+    rcpt = _receipt(capsys.readouterr().out)
+    assert code == 2
+    assert rcpt["error"]["kind"] == "FORGE-ENV-PERSISTENCE-FAILED"
+    stage = next(s for s in rcpt["stages"] if s["stage"] == "persist-environment")
+    assert stage["status"] == "refused"
+    assert stage["kind"] == "FORGE-ENV-PERSISTENCE-FAILED"
