@@ -228,6 +228,11 @@ def vendor(
     if installkit_pkg:
         kit_sha = _sha(CANON_INSTALLKIT.read_bytes())[:16]
         put(f"{installkit_pkg}/_installkit.py", _vendored(CANON_INSTALLKIT, kit_sha))
+        # Repos that also carry the reference-engine copy at scripts/ must be
+        # updated in lockstep — drift gates (e.g. forge-doctor-api's
+        # test_package_carries_install_surface) compare the two byte-wise.
+        if (repo / "scripts" / "forge_installkit.py").exists():
+            put("scripts/forge_installkit.py", _vendored(CANON_INSTALLKIT, kit_sha))
 
     if check:
         for rel in drifted:
