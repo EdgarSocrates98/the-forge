@@ -13,7 +13,7 @@ def test_release_version_is_consistent() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     version = pyproject["project"]["version"]
     assert version == theforge.__version__
-    assert version == "0.5.2"
+    assert version == "0.5.3"
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")

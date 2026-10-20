@@ -10,6 +10,8 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.5.3] - 2026-10-20
 
+### 0.5.3 — Agentic Ecosystem
+
 ### Changed
 - Cycle 12 universal packaging: `--dist` install path in the shared
   bootstrap (PEP 503 name check, `--allow-url` gate, credential
