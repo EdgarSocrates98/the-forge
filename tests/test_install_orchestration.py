@@ -624,3 +624,20 @@ def test_update_checkout_with_to_fails_named(monkeypatch, forge_home: Path) -> N
     assert out["status"] == "failed"
     check = out["checks"][0]
     assert check["status"] == "FAIL" and "--to" in check["detail"]
+
+
+def test_update_redacted_spec_fails_named(monkeypatch, forge_home: Path) -> None:
+    # manifesto com spec redigido (***@) nao pode re-autenticar: FAIL nomeado.
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core @ https://***@h/x.whl"},
+            "distribution": "theforge-core",
+            "venv": str(forge_home / "v"),
+        },
+    )
+    out = service.update(dry_run=True)
+    assert out["status"] == "failed"
+    check = out["checks"][0]
+    assert check["status"] == "FAIL" and "redigido" in check["detail"]
