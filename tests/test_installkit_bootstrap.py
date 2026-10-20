@@ -357,3 +357,29 @@ def test_dist_mismatch_refusal_redacts_userinfo(tmp_path, capsys):
     assert "FORGE-INSTALL-DIST-MISMATCH" in out
     assert "sekret" not in out
     assert "https://***@h/x.whl" in out
+
+
+def test_smoke_failure_never_writes_installation(tmp_path, monkeypatch, capsys):
+    """Smoke FAIL → FORGE-INSTALL-VERIFY-FAILED antes do register:
+    nenhum manifesto em installations/, nenhuma etapa 'register' no report."""
+    _write_forge_json(tmp_path / "forge.json")
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(tmp_path / "home"))
+    monkeypatch.setattr(fb, "detect_hosts", lambda: {})
+    monkeypatch.setattr(fb, "find_python", lambda *a, **k: sys.executable)
+    monkeypatch.setattr(fb, "create_venv", lambda *a, **k: tmp_path / "venv")
+    monkeypatch.setattr(fb, "install_package", lambda *a, **k: None)
+    monkeypatch.setattr(fb, "write_launcher", lambda *a, **k: tmp_path / "shim")
+    monkeypatch.setattr(fb, "smoke", lambda *a, **k: {"status": "FAIL", "detail": "boom"})
+    registered = []
+    monkeypatch.setattr(fb, "register", lambda *a, **k: registered.append(1))
+    code = fb.run(["--repo", str(tmp_path)])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "FORGE-INSTALL-VERIFY-FAILED" in out
+    assert not registered
+    manifests = [
+        p
+        for p in (tmp_path / "home").glob(".forge/installations/*.json")
+        if not p.name.startswith(".")
+    ]
+    assert not manifests

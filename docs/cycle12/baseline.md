@@ -511,3 +511,55 @@ security/test-matrix/homologação (12.10-12.13), data-sentinel-forge por últim
   recusa quando `resolve()` não prova fora-de-site-packages;
   `data_path` (platform) deduplica a materialização `as_file` por
   path sob zipimport.
+
+### Rodada 12 (review) — completude §7.3/§7.4/§6.3 + artefatos sem skip
+
+- **`forge-cli install` é registry-first** (§7.3, era crítico): o dispatch
+  em `src/index.ts` agora roteia `install <nomes>|--all|--only|não-
+  interativo` para `runRegistryInstall` (PyPI+venv). Checkout git só por
+  opt-in explícito (`--method git` ou o comando `clone`); `install` sem
+  nomes em TTY continua no wizard, que já abre em registry. Help text
+  rebatido. e2e (41 testes) e registry-install (45) verdes.
+- **Launchers para installs registry** (§7.4, era crítico): novo
+  `src/registry/shims.ts` emite `~/.forge-cli/bin/<cli>` — o diretório
+  que o self-install do forge-cli já coloca no PATH — como shim `exec`
+  POSIX ou `.cmd` no Windows, apontando para o bin da venv. Emitido
+  dentro do `registryInstall` (todos os call sites ganham), persistido
+  no receipt/state (`shim`/`shimRefused`), removido no
+  `registryUninstall` (`shimRemoved`). 3 testes (POSIX, .cmd,
+  uninstall).
+- **Descoberta unificada** (§6.3/§16, era crítico):
+  `specialists.collect()` agora lê `~/.forge-cli/forges/state.json`
+  (`_forge_cli_state`, respeita `FORGE_HOME_OVERRIDE`) além do registry
+  canônico, knowledge e checkouts. Installs forge-cli sobem a mesma
+  escada INSTALLED→CONFIGURED→REGISTERED por evidência (venv OU launcher
+  rodável; verify.ok=false vira nota); manifesto canônico vence em
+  dedup com nota "also installed via forge-cli". `catalog_ids` faz a
+  união dos ids. 4 testes (registry-only, degraded, dedup, estado
+  corrompido).
+- **Smoke antes de register** (W5): `forge_bootstrap.py` reordena —
+  `smoke` FAIL → `FORGE-INSTALL-VERIFY-FAILED` ANTES de gravar
+  `installations/<id>.json` (sem manifesto saudável órfão). Regressão:
+  `test_smoke_failure_never_writes_installation`. Re-vendor ×8
+  (`67e70a66`).
+- **Artefatos sem skip** (W6): `build>=1.0` instalado nos venvs locais de
+  api-forge e platform-forge; `test_artifact_contents` agora roda de
+  verdade nos dois (6+5 testes, zero skip) — platform-forge ganhou o
+  teste novo asserindo `platformforge/data/{rules,knowledge,contracts,
+  evals}` na wheel real.
+- **forge-portal trilha única de versão** (W7): `PORTAL_VERSION` vive
+  em `portal_core/forge_portal.py` (vendored verbatim → wheels); vendor.py
+  importa dela; `package.json` alinhado a 1.0.0; `test_version_track`
+  trava a paridade. `--check` byte-parity ok nos 7 repos. O `WORKSPACE`
+  sibling é só dev tooling (`vendor.py`, `release_dumps.py` — ambos com
+  flag `--workspace`); `portal_core` runtime não assume checkout.
+- **Evidência Fase G parcial (a executar Windows/macOS/publicação)**:
+  em `/tmp/c12-e2e` — `python -m build` construiu sdist E refez a wheel
+  A PARTIR do sdist (`apiforge_af-0.1.2`, ambos artefatos); venv
+  descartável instalou a wheel e `apiforge --version`/`knowledge list`
+  responderam 40 packs do `_data` sem checkout. Matriz Windows/macOS e
+  publicação real em PyPI/npm continuam "A executar" — exigem runners e
+  credenciais que esta sessão não tem.
+
+Estado: the-forge check_gates 11/11; forge-cli vitest registry 105/105
++ typecheck/lint limpos; forge-portal 63 testes verdes.

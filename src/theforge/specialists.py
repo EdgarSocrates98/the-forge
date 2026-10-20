@@ -6,6 +6,9 @@ Composes the honest lifecycle state from real sources, highest first:
    least INSTALLED; a runnable ``--version`` promotes to CONFIGURED;
    a provider-registry entry promotes to REGISTERED; a passing health
    probe promotes to HEALTHY.
+1b. forge-cli registry (``~/.forge-cli/forges/state.json``) → same
+   ladder (receipt ``venv`` + ``shim``/``bin`` probe); the canonical
+   manifest wins when both exist.
 2. workspace checkouts carrying ``forge.json`` → DISCOVERED /
    INSTALLABLE (bootstrap present).
 3. nothing → UNKNOWN / NOT_INSTALLED (declared catalog forges only).
@@ -31,6 +34,23 @@ from theforge.contracts.specialist import (
 )
 
 
+def _forge_cli_state() -> dict[str, dict[str, Any]]:
+    """forge-cli registry — ``~/.forge-cli/forges/state.json`` name → receipt.
+
+    Installs feitos pelo `forge-cli install` (PyPI+venv) vivem neste
+    registro separado; esta é a ponte que faz o lifecycle do The Forge
+    enxergá-los. Ausente/corrompido → {} (nunca quebra a coleta).
+    """
+    path = kit._home() / ".forge-cli" / "forges" / "state.json"
+    doc = kit._load_json(path, None)
+    if not isinstance(doc, dict):
+        return {}
+    forges = doc.get("forges")
+    if not isinstance(forges, dict):
+        return {}
+    return {k: v for k, v in forges.items() if isinstance(v, dict)}
+
+
 def catalog_ids(workspace_root: Path | None = None) -> list[str]:
     """The specialist catalog, data-driven — never a code literal.
 
@@ -38,6 +58,7 @@ def catalog_ids(workspace_root: Path | None = None) -> list[str]:
     1. ``~/.forge/installations/*.json`` — registered installations.
     2. bundled ``forge-knowledge/*.json`` packages — bootstrap metadata.
     3. workspace checkouts declaring ``forge.json`` ids.
+    4. ``~/.forge-cli/forges/state.json`` — forge-cli registry installs.
 
     A new specialist onboards by shipping data, not by editing core.
     """
@@ -50,6 +71,7 @@ def catalog_ids(workspace_root: Path | None = None) -> list[str]:
             doc = kit._load_json(path, None)
             if doc and doc.get("forge_id"):
                 ids.add(doc["forge_id"])
+    ids.update(_forge_cli_state().keys())
     ids.update(knowledge.load_all().keys())
     if workspace_root is not None:
         for member in kit.discover_projects(workspace_root):
@@ -131,9 +153,11 @@ def collect(
     registered = registered or set()
     views: list[SpecialistView] = []
     install_dir = kit.installations_dir()
+    cli_registry = _forge_cli_state()
 
     for forge_id in catalog_ids(workspace_root):
         manifest_doc = kit._load_json(install_dir / f"{forge_id}.json", None)
+        cli_receipt = cli_registry.get(forge_id)
         checkout = _checkout_for(forge_id, workspace_root)
         notes: list[str] = []
 
@@ -169,6 +193,41 @@ def collect(
                     state = "CONFIGURED"
                 else:
                     notes.append("cli not runnable; version probe failed")
+            if state == "CONFIGURED" and forge_id in registered:
+                state = "REGISTERED"
+            if cli_receipt is not None:
+                notes.append("also installed via forge-cli registry (PyPI+venv)")
+        elif cli_receipt is not None:
+            # Install registry-first do forge-cli: venv isolada + receipt.
+            # A escada de evidência é a mesma do manifesto canônico —
+            # INSTALLED exige venv OU cli vivo; CONFIGURED exige probe.
+            state = "DISCOVERED"
+            install_root = cli_receipt.get("venv")
+            version = cli_receipt.get("version", "unknown")
+            launcher = cli_receipt.get("shim") or cli_receipt.get("bin") or ""
+            cli_name = Path(launcher).stem if launcher else None
+            notes.append("installed via forge-cli registry (PyPI+venv)")
+            if cli_receipt.get("verify", {}).get("ok") is False:
+                notes.append("install-time verify falhou no receipt do forge-cli")
+            cli_ok = False
+            if probe_cli:
+                if shim := cli_receipt.get("shim"):
+                    cli_ok = _cli_runnable([shim, "--version"])
+                if not cli_ok and cli_receipt.get("bin"):
+                    cli_ok = _cli_runnable([cli_receipt["bin"], "--version"])
+            root_ok = bool(install_root and Path(install_root).is_dir())
+            if root_ok or cli_ok:
+                state = "INSTALLED"
+                if not root_ok:
+                    notes.append("venv missing on disk; launcher still runnable")
+            else:
+                state = "DEGRADED"
+                notes.append("venv missing on disk and launcher not runnable")
+            if state == "INSTALLED" and probe_cli:
+                if cli_ok:
+                    state = "CONFIGURED"
+                else:
+                    notes.append("launcher not runnable; version probe failed")
             if state == "CONFIGURED" and forge_id in registered:
                 state = "REGISTERED"
         elif checkout is not None:

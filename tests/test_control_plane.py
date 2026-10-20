@@ -265,3 +265,94 @@ def test_collect_installed_manifest(tmp_path, monkeypatch):
     api = next(v for v in views if v.lifecycle.provider == "api-forge")
     # version_cmd resolves to python --version → runnable → CONFIGURED
     assert api.lifecycle.installation_state == "CONFIGURED"
+
+
+def _forge_cli_receipt(home: Path, name: str, venv: Path, bin_path: Path) -> None:
+    state = home / ".forge-cli" / "forges"
+    state.mkdir(parents=True)
+    venv.mkdir(parents=True)
+    bin_path.parent.mkdir(parents=True)
+    bin_path.write_text("#!/bin/sh\n", encoding="utf-8")
+    (state / "state.json").write_text(
+        json.dumps(
+            {
+                "forges": {
+                    name: {
+                        "forge": name,
+                        "method": "pypi",
+                        "version": "1.0.0",
+                        "venv": str(venv),
+                        "bin": str(bin_path),
+                        "verify": {"command": [str(bin_path), "--help"], "ok": True},
+                    }
+                }
+            }
+        )
+    )
+
+
+def test_collect_forge_cli_registry_only(tmp_path, monkeypatch):
+    """forge-cli install (sem manifesto canônico) aparece INSTALLED."""
+    home = tmp_path / "home"
+    _forge_cli_receipt(home, "api-forge", tmp_path / "venv", tmp_path / "venv" / "bin" / "apiforge")
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(home))
+    views = specialists.collect(workspace_root=tmp_path / "ws", probe_cli=False)
+    api = next(v for v in views if v.lifecycle.provider == "api-forge")
+    assert api.lifecycle.installation_state == "INSTALLED"
+    assert api.cli == "apiforge"
+    assert api.lifecycle.version == "1.0.0"
+
+
+def test_collect_forge_cli_degraded(tmp_path, monkeypatch):
+    """Receipt sem venv e sem launcher rodável → DEGRADED, nunca INSTALLED."""
+    home = tmp_path / "home"
+    _forge_cli_receipt(
+        home,
+        "api-forge",
+        tmp_path / "venv",  # venv criado pelo helper…
+        tmp_path / "venv" / "bin" / "apiforge",
+    )
+    import shutil
+
+    shutil.rmtree(tmp_path / "venv")  # …mas removido depois → receipt órfão
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(home))
+    views = specialists.collect(workspace_root=tmp_path / "ws", probe_cli=False)
+    api = next(v for v in views if v.lifecycle.provider == "api-forge")
+    assert api.lifecycle.installation_state == "DEGRADED"
+
+
+def test_collect_dedup_canonical_wins(tmp_path, monkeypatch):
+    """Mesmo forge nos dois registros → uma view, manifesto canônico manda."""
+    home = tmp_path / "home"
+    install_dir = home / ".forge" / "installations"
+    install_dir.mkdir(parents=True)
+    (tmp_path / "install-root").mkdir()
+    (install_dir / "api-forge.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/InstallationManifest/v1",
+                "forge_id": "api-forge",
+                "version": "0.2.0",
+                "install_root": str(tmp_path / "install-root"),
+                "cli": {"name": "apiforge"},
+            }
+        )
+    )
+    _forge_cli_receipt(home, "api-forge", tmp_path / "venv", tmp_path / "venv" / "bin" / "apiforge")
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(home))
+    views = specialists.collect(workspace_root=tmp_path / "ws", probe_cli=False)
+    apis = [v for v in views if v.lifecycle.provider == "api-forge"]
+    assert len(apis) == 1
+    assert apis[0].lifecycle.version == "0.2.0"  # do manifesto, não do receipt
+    assert any("forge-cli" in n for n in apis[0].notes)
+
+
+def test_collect_forge_cli_corrupt_state(tmp_path, monkeypatch):
+    """state.json corrompido não quebra a coleta."""
+    home = tmp_path / "home"
+    state_dir = home / ".forge-cli" / "forges"
+    state_dir.mkdir(parents=True)
+    (state_dir / "state.json").write_text("{ não é json")
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(home))
+    views = specialists.collect(workspace_root=tmp_path / "ws", probe_cli=False)
+    assert all(v.lifecycle.installation_state == "NOT_INSTALLED" for v in views)
