@@ -584,3 +584,23 @@ Estado: the-forge check_gates 11/11; forge-cli vitest registry 105/105
 - **`registryUninstall` forge-cli** (sugestão): remove o shim pelo
   `receipt.shim` gravado quando existe — `bin` movido não deixaria mais
   launcher órfão em `~/.forge-cli/bin`.
+
+### Rodada 14 (review) — origin-swap file://, FORGE_CLI_HOME, pack traversal
+
+- **`update --to` em wheelhouse `file://`** (warning): o guard virou
+  `"@" in spec` — PEP 508 só usa `@` em direct reference (http/https/
+  file/unspaced). Antes `file:///wheels/x.whl` + `--to` trocaria a
+  origem para PyPI em silêncio. 2 testes novos (file:// + unspaced).
+- **`_forge_cli_state` honra `FORGE_CLI_HOME`** (sugestão): o forge-cli
+  resolve seu home por `FORGE_CLI_HOME || homedir`; a ponte agora segue
+  a mesma ordem — installs em modo hermético ficam visíveis (1 teste).
+- **`knowledge <domain>` traversal api-forge** (sugestão): `pack_dir()`
+  recusa `../`, absolutos e separadores com `AF-KNOW-DOMAIN` catalogado
+  (5 call sites CLI/MCP rewirados; 2 testes).
+- **lockfile libc** (sugestão): `libc` constraints restauradas nos
+  platform bins (24 entries — npm 10.9.8 dropou na regeneração);
+  `npm ci` resolve limpo.
+- **§2.4 entregáveis**: os 7 arquivos nomeados criados em
+  `docs/cycle12/` — `ecosystem-baseline.md` indexa as seções do
+  `baseline.md` (fonte única, zero duplicação); os outros 6 carregam a
+  substância por tópico.

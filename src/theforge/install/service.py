@@ -280,7 +280,11 @@ def update(
                 ],
                 "failed",
             )
-        if to and re.search(r"@\s*https?://", spec):
+        if to and "@" in spec:
+            # Qualquer referencia direta PEP 508 (`name @ <url>` — http,
+            # https OU file:// wheelhouse): `--to` trocaria a origem para
+            # PyPI em silencio. "@" so aparece em direct reference — sem
+            # falso positivo em extras/markers.
             return _receipt(
                 "update",
                 [

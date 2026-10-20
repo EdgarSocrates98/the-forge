@@ -660,6 +660,38 @@ def test_update_to_on_url_spec_refuses_origin_swap(monkeypatch, forge_home: Path
     assert "PyPI" in out["checks"][0]["detail"]
 
 
+def test_update_to_on_file_spec_refuses_origin_swap(monkeypatch, forge_home: Path) -> None:
+    """Wheelhouse `file://` também é direct reference: `--to` recusa a troca."""
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core @ file:///wheels/x.whl"},
+            "distribution": "theforge-core",
+            "venv": "/v",
+        },
+    )
+    out = service.update(to="1.4.0", dry_run=True)
+    assert out["status"] == "failed"
+    assert out["checks"][0]["status"] == "FAIL"
+    assert "PyPI" in out["checks"][0]["detail"]
+
+
+def test_update_to_on_unspaced_url_spec_refuses_origin_swap(monkeypatch, forge_home: Path) -> None:
+    """`name@https://…` sem espaços também é direct reference PEP 508."""
+    monkeypatch.setattr(
+        service,
+        "_manifest",
+        lambda: {
+            "source": {"kind": "pypi", "spec": "theforge-core@https://h/x.whl"},
+            "distribution": "theforge-core",
+            "venv": "/v",
+        },
+    )
+    out = service.update(to="1.4.0", dry_run=True)
+    assert out["status"] == "failed"
+
+
 def test_update_url_spec_no_to_keeps_same_origin(monkeypatch, forge_home: Path, tmp_path) -> None:
     """Sem `--to`, `-U` re-executa o spec da mesma origem (não troca)."""
     fake_py = tmp_path / "bin" / "python"

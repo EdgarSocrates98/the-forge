@@ -40,8 +40,13 @@ def _forge_cli_state() -> dict[str, dict[str, Any]]:
     Installs feitos pelo `forge-cli install` (PyPI+venv) vivem neste
     registro separado; esta é a ponte que faz o lifecycle do The Forge
     enxergá-los. Ausente/corrompido → {} (nunca quebra a coleta).
+    `FORGE_CLI_HOME` tem prioridade — o forge-cli resolve seu home por
+    `FORGE_CLI_HOME || os.homedir()` (modo hermético/bench).
     """
-    path = kit._home() / ".forge-cli" / "forges" / "state.json"
+    import os
+
+    home = Path(os.environ["FORGE_CLI_HOME"]) if os.environ.get("FORGE_CLI_HOME") else kit._home()
+    path = home / ".forge-cli" / "forges" / "state.json"
     doc = kit._load_json(path, None)
     if not isinstance(doc, dict):
         return {}

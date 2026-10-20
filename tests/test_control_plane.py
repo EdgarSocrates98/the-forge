@@ -347,6 +347,19 @@ def test_collect_dedup_canonical_wins(tmp_path, monkeypatch):
     assert any("forge-cli" in n for n in apis[0].notes)
 
 
+def test_collect_forge_cli_home_env_wins(tmp_path, monkeypatch):
+    """`FORGE_CLI_HOME` tem prioridade — modo hermético/bench do forge-cli."""
+    cli_home = tmp_path / "cli-home"
+    _forge_cli_receipt(
+        cli_home, "api-forge", tmp_path / "venv", tmp_path / "venv" / "bin" / "apiforge"
+    )
+    monkeypatch.setenv("FORGE_CLI_HOME", str(cli_home))
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(tmp_path / "empty-home"))
+    views = specialists.collect(workspace_root=tmp_path / "ws", probe_cli=False)
+    api = next(v for v in views if v.lifecycle.provider == "api-forge")
+    assert api.lifecycle.installation_state == "INSTALLED"
+
+
 def test_collect_forge_cli_corrupt_state(tmp_path, monkeypatch):
     """state.json corrompido não quebra a coleta."""
     home = tmp_path / "home"
