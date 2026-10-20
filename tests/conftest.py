@@ -157,6 +157,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_command_rationale.py": ("unit",),
     "test_experience_parity.py": ("contract", "integration"),
     "test_graphstudio.py": ("unit", "contract", "integration"),
+    # lf-0020: headless reproduction of the studio force-loop blow-up (node subprocess)
+    "test_graphstudio_physics.py": ("unit", "integration"),
     "test_install_orchestration.py": ("integration", "security"),
     "test_provider_sync.py": ("integration", "security"),
     "test_install_e2e.py": ("e2e", "integration"),
