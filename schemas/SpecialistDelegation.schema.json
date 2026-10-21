@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "chain": {
+      "anyOf": [
+        {
+          "properties": {
+            "cancellation_token": {
+              "type": "string"
+            },
+            "cancelled": {
+              "type": "boolean"
+            },
+            "correlation_id": {
+              "type": "string"
+            },
+            "delegation_depth": {
+              "type": "integer"
+            },
+            "max_hops": {
+              "type": "integer"
+            },
+            "timeout_budget_s": {
+              "type": "integer"
+            },
+            "visited_providers": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "consumer": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "policy": {
+      "properties": {
+        "discovery": {
+          "enum": [
+            "runtime",
+            "declared",
+            "off"
+          ]
+        },
+        "execution": {
+          "enum": [
+            "governed",
+            "manual",
+            "forbidden"
+          ]
+        },
+        "fallback": {
+          "type": "string"
+        },
+        "preserve_evidence": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "specialists": {
+      "items": {
+        "properties": {
+          "intents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "provider": {
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "consumer"
+  ],
+  "title": "SpecialistDelegation",
+  "type": "object"
+}

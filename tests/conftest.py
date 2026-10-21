@@ -246,6 +246,11 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # lf-0027: SpecialistCapability/v1 + universal sibling discovery
     "test_specialist_capability.py": ("unit", "contract"),
     "test_discovery.py": ("unit", "integration"),
+    # lf-0028: SpecialistDelegation/v1 + EvidenceHandoff/v1 + governance
+    "test_specialist_delegation.py": ("unit", "contract"),
+    "test_evidence_handoff.py": ("unit", "contract"),
+    "test_delegation_governance.py": ("unit", "security"),
+    "test_delegation_router.py": ("unit",),
 }
 
 

@@ -28,6 +28,7 @@ from theforge.contracts import (
     EconomyRollup,
     EngineeringMemoryEntry,
     Evidence,
+    EvidenceHandoff,
     ExecuteRequest,
     ExecutionObservation,
     ExecutionPlan,
@@ -72,6 +73,7 @@ from theforge.contracts import (
     RunTelemetry,
     SemanticPlanProposal,
     SpecialistCapability,
+    SpecialistDelegation,
     StrategyExperiment,
     StrategyPolicy,
     TargetNegotiation,
@@ -176,6 +178,9 @@ EXPORTED: tuple[type[Any], ...] = (
     FederatedCapabilityDescriptor,
     # universal specialist discovery (lf-0027, PHASE 1)
     SpecialistCapability,
+    # specialist delegation policy + evidence handoff (lf-0028, PHASES 3/10/14)
+    SpecialistDelegation,
+    EvidenceHandoff,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open

@@ -1293,6 +1293,70 @@ SEEDS: dict[str, dict[str, Any]] = {
         "health": {"supported": True, "detail": "forge/v1 health op"},
         "handoff": {"supported": True},
     },
+    # lf-0028: declarative delegation policy + chain control (PHASE 3/14)
+    "SpecialistDelegation": {
+        "schema": "theforge/SpecialistDelegation/v1",
+        "consumer": "demo-forge",
+        "specialists": [
+            {
+                "provider": "demo-sentinel",
+                "optional": True,
+                "intents": ["runtime-failure", "log-analysis"],
+            },
+            {"provider": "demo-doctor", "optional": True, "intents": ["static-analysis"]},
+        ],
+        "policy": {
+            "discovery": "runtime",
+            "execution": "governed",
+            "preserve_evidence": True,
+            "fallback": "native-analysis",
+        },
+        "chain": {
+            "correlation_id": "corr-1",
+            "delegation_depth": 1,
+            "visited_providers": ["demo-forge", "demo-sentinel"],
+            "max_hops": 4,
+            "timeout_budget_s": 600,
+            "cancellation_token": "cancel-1",
+            "cancelled": False,
+        },
+    },
+    # lf-0028: specialist→consumer evidence envelope (PHASE 10)
+    "EvidenceHandoff": {
+        "schema": "theforge/EvidenceHandoff/v1",
+        "run_id": "run-1",
+        "correlation_id": "corr-1",
+        "idempotency_key": "idem-1",
+        "source_provider": "demo-sentinel",
+        "source_version": "1.0.0",
+        "consumer_provider": "demo-forge",
+        "capability": "sentinel.log-analyze",
+        "capability_version": "1.0.0",
+        "status": "completed",
+        "input_refs": [
+            {"kind": "path", "value": "logs/run-1.log", "sha256": SHA},
+            {"kind": "ref", "value": "sentinel:artifact/9", "detail": "tail"},
+        ],
+        "result_refs": [{"kind": "summary", "value": "top 200 lines summarized"}],
+        "findings": [
+            {
+                "id": "f1",
+                "severity": "high",
+                "confidence": "POSSIBLE",
+                "summary": "suspected skew",
+                "evidence_refs": ["log:tail-200"],
+            }
+        ],
+        "limitations": ["sampled"],
+        "created_at": "t",
+        "started_at": "t0",
+        "finished_at": "t1",
+        "resources": {"elapsed_ms": 12, "provider_tokens": None},
+        "integrity": SHA,
+        "redacted": True,
+        "truncated": True,
+        "dropped": 2,
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

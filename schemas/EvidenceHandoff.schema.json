@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "capability": {
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+      "type": "string"
+    },
+    "capability_version": {
+      "type": "string"
+    },
+    "consumer_provider": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "dropped": {
+      "type": "integer"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "properties": {
+            "code": {
+              "enum": [
+                "provider-absent",
+                "version-incompatible",
+                "capability-absent",
+                "invalid-input",
+                "permission-denied",
+                "timeout",
+                "runtime-error",
+                "invalid-output",
+                "insufficient-evidence",
+                "policy-refusal",
+                "cycle-detected",
+                "budget-exhausted",
+                "cancelled"
+              ]
+            },
+            "detail": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "findings": {
+      "items": {
+        "properties": {
+          "confidence": {
+            "enum": [
+              "POSSIBLE",
+              "LIKELY",
+              "CONFIRMED",
+              "UNKNOWN"
+            ]
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "finished_at": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "input_refs": {
+      "items": {
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "path",
+              "ref",
+              "summary"
+            ]
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "integrity": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "redacted": {
+      "type": "boolean"
+    },
+    "resources": {
+      "anyOf": [
+        {
+          "properties": {
+            "elapsed_ms": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "provider_tokens": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "stderr_bytes": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "stdout_bytes": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "result_refs": {
+      "items": {
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "path",
+              "ref",
+              "summary"
+            ]
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source_provider": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "source_version": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "partial",
+        "failed",
+        "refused",
+        "cancelled"
+      ]
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "run_id",
+    "correlation_id",
+    "idempotency_key",
+    "source_provider",
+    "consumer_provider",
+    "capability"
+  ],
+  "title": "EvidenceHandoff",
+  "type": "object"
+}

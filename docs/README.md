@@ -33,6 +33,7 @@ vence e o doc é consertado.
 - [provider-distribution.md](provider-distribution.md) — Installation Plan v2: candidato remoto → instalado.
 - [remote-discovery.md](remote-discovery.md) — descoberta de providers não instalados.
 - [discovery.md](discovery.md) — descoberta universal de especialistas presentes: fontes, estados, `SpecialistCapability/v1`.
+- [delegation.md](delegation.md) — delegação governada: `SpecialistDelegation/v1`, `EvidenceHandoff/v1`, gates de risco, router determinístico.
 - [installation-orchestration.md](installation-orchestration.md) — o caminho governado de instalação.
 - [security.md](security.md) — threat model, redaction, trust, limites do modelo.
 
