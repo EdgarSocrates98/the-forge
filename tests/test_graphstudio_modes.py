@@ -400,7 +400,8 @@ try {
 """
         + _WAIT
         + """\
-  SIM_MS = 1; // force the slicing path regardless of host speed
+  SIM_MS = -1; // expired deadline forces slicing on any timer resolution
+               // (Windows Date.now() is ~15.6ms — SIM_MS=1 may never trip)
   let ran = 0;
   while (__raf && !settled && ran < 60000) {
     const cb = __raf; __raf = null; cb(); ran++;
