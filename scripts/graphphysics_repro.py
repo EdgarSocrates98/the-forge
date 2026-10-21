@@ -131,12 +131,20 @@ try {
     if (Date.now() > __deadline) throw new Error('fixture graph never loaded');
     await new Promise((r) => setTimeout(r, 1));
   }
+  // lf-0022: an optional mode override is applied right after load — the
+  // pending RAF chain just continues on the new render set.
+  const __m = '__MODE__';
+  if (__m && typeof setMode === 'function') setMode(__m);
   const __wall0 = Date.now();
   const __samples = [{tick: 0, ...__stats()}];
   const __tickMs = [];
   let ran = 0, firstBlow = -1;
-  // loadGraph() already ran one synchronous tick(); __raf holds the next one.
-  while (ran < __TICKS && __raf) {
+  // lf-0022: a logical tick may span several RAF frames (SIM_MS slicing), so
+  // __TICKS counts LOGICAL ticks (the studio's lticks counter) — the RAF cap
+  // of 64× only bounds pathological slowness, never convergence.
+  const __lt = () => (typeof lticks !== 'undefined' ? lticks : ran);
+  const __RAF_CAP = __TICKS * 64;
+  while (__raf && ran < __RAF_CAP && __lt() < __TICKS && !settled) {
     const cb = __raf; __raf = null;
     const t0 = process.hrtime.bigint();
     cb();
@@ -150,6 +158,7 @@ try {
     if (firstBlow > 0 && (s.non_finite > 0 || ran >= firstBlow + 30)) break;
   }
   const __total = __tickMs.reduce((a, b) => a + b, 0);
+  const __lticks = __lt();
   // lf-0021: a loop that stops because the layout converged (alpha decayed or
   // every node quiet) is NOT starvation — only an unexpected stop counts.
   const __settled = (typeof settled !== 'undefined') ? settled : false;
@@ -159,9 +168,16 @@ try {
     nodes: G.nodes.length,
     edges: G.edges.length,
     edges_dropped: (__doc.edges || []).length - G.edges.length,
-    ticks_completed: ran + 1, // +1: the synchronous tick() inside loadGraph
+    mode: (typeof mode !== 'undefined') ? mode : null,
+    render_nodes: (typeof R !== 'undefined') ? R.nodes.length : null,
+    render_edges: (typeof R !== 'undefined') ? R.edges.length : null,
+    clusters: (typeof clusters !== 'undefined' && clusters) ? clusters.length : null,
+    notice: document.getElementById('notice').textContent || '',
+    raf_frames: ran,
+    logical_ticks: __lticks,
+    ticks_completed: __lticks + 1, // back-compat: logical ticks replayed +1
     first_blow_tick: firstBlow,
-    raf_starved: ran < __TICKS && !__raf && !__settled,
+    raf_starved: ran < __RAF_CAP && !__raf && !__settled,
     settled: __settled,
     resets: (typeof resets !== 'undefined') ? resets : null,
     generation: (typeof gen !== 'undefined') ? gen : null,
@@ -205,19 +221,22 @@ def build_harness(
     sample_every: int,
     viewport: int,
     driver: str | None = None,
+    mode: str = "",
 ) -> str:
     """Prelude + verbatim studio script + driver, as one ``.mjs`` source.
 
     ``driver`` replaces the default tick-replay driver — tests that need to
     poke studio internals (double ``loadGraph``, poisoned nodes, thrown
     exceptions) compose their own and get the same stubs/preamble.
+    ``mode`` (lf-0022) is applied through ``setMode`` right after load.
     """
     preamble = (
         HARNESS_PREAMBLE.replace("__TICKS__", str(ticks))
         .replace("__SAMPLE_EVERY__", str(sample_every))
         .replace("__VIEWPORT__", str(viewport))
     )
-    return preamble + script + (driver if driver is not None else HARNESS_DRIVER)
+    harness = preamble + script + (driver if driver is not None else HARNESS_DRIVER)
+    return harness.replace("__MODE__", mode)
 
 
 def run_harness(
@@ -333,11 +352,16 @@ def run(
     node: str = "node",
     timeout: int = 900,
     sample_every: int = 25,
+    mode: str = "",
 ) -> dict[str, Any]:
     """Build the harness, run it under node on ``fixture``, return the report."""
     script = extract_script()
     harness = build_harness(
-        script, ticks=ticks, sample_every=sample_every, viewport=VIEWPORT_HALF_PX
+        script,
+        ticks=ticks,
+        sample_every=sample_every,
+        viewport=VIEWPORT_HALF_PX,
+        mode=mode,
     )
     report = run_harness(fixture, harness, node=node, timeout=timeout)
     if "error" in report:
@@ -360,6 +384,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--node", default=None, help="path to node (default: PATH lookup)")
     parser.add_argument("--timeout", type=int, default=900, help="node timeout, seconds")
     parser.add_argument("--sample-every", type=int, default=25)
+    parser.add_argument(
+        "--mode",
+        default="",
+        choices=("", "overview", "explore", "full"),
+        help="lf-0022: force a scale mode right after load (default: studio's pick)",
+    )
     args = parser.parse_args(argv)
 
     node = args.node or shutil.which("node")
@@ -377,6 +407,7 @@ def main(argv: list[str] | None = None) -> int:
         node=node,
         timeout=args.timeout,
         sample_every=args.sample_every,
+        mode=args.mode,
     )
     report["node_version"] = version
     blob = json.dumps(report, indent=1, ensure_ascii=False) + "\n"
