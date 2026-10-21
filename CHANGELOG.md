@@ -10,7 +10,7 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.5.5] - 2026-10-21
 
-### 0.5.5 — Graph Studio Cycle 13
+### 0.5.5 — Agentic Ecosystem
 
 ### Fixed
 - Graph Studio physics: NaN/Infinity blow-up on hubs/star topologies (corrected repulsion normalization, linear springs, velocity cap, finite guards, RAF generation guard), simulated-annealing termination; `graphview.py` edge subquery no longer returns dangling edges (federation subprocess `cwd` fix).
