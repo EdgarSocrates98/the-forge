@@ -8,6 +8,16 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-10-21
+
+### 0.5.5 — Graph Studio Cycle 13
+
+### Fixed
+- Graph Studio physics: NaN/Infinity blow-up on hubs/star topologies (corrected repulsion normalization, linear springs, velocity cap, finite guards, RAF generation guard), simulated-annealing termination; `graphview.py` edge subquery no longer returns dangling edges (federation subprocess `cwd` fix).
+
+### Added
+- Scalable visualization modes (overview clustering ≤250, explore BFS depth 1–5, full 10k budget with explicit truncation), deterministic seeded layout, navigation (search/filters/minimap/breadcrumbs/keyboard), inspectors, bounded analysis (shortest-path, blast-radius, communities), time-sliced physics, `ForgeGraphView/v1` federation fixes, security/a11y/reliability hardening, perf baseline + headless reproduction harness.
+
 ## [0.5.4] - 2026-10-20
 
 ### 0.5.4 — Agentic Ecosystem
