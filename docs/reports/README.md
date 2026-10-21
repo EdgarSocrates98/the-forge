@@ -8,6 +8,7 @@ relatório principal; waves e auditorias têm documentos próprios.
 | Documento | Conteúdo |
 |---|---|
 | [dogfooding-2026-10-08.md](dogfooding-2026-10-08.md) | Primeira sessão real no próprio repo, seis especialistas: trust deny-by-default, binding de evidência ao vivo, 5 observações (poluição de contexto por basetemp, fronteira do `secrets.scan`, custo de scan) |
+| [dogfooding-2026-10-21.md](dogfooding-2026-10-21.md) | Observação de compatibilidade: lf-0027 sancionado no freeze — `SpecialistCapability/v1` + descoberta universal sem imports de siblings |
 
 ## Cycle 5.1 — Ecosystem Expansion Validation
 

@@ -1261,6 +1261,38 @@ SEEDS: dict[str, dict[str, Any]] = {
         "max_skills": 4,
         "rendered_hosts": ["codex"],
     },
+    # lf-0027: specialist capability advertisement (discovery surface)
+    "SpecialistCapability": {
+        "schema": "theforge/SpecialistCapability/v1",
+        "specialist": {
+            "id": "demo-sentinel",
+            "version": "1.0.0",
+            "domain": "demo",
+        },
+        "capabilities": [
+            {
+                "id": "demo.cap-one",
+                "description": "x",
+                "version": "1.0.0",
+                "input_schema": "theforge/TaskSpec/v1",
+                "output_schema": "theforge/ExecutionResult/v1",
+                "entrypoint": ["{cli}", "cap-one"],
+                "execution_mode": "local",
+                "risk": "read_only",
+                "requires": ["python>=3.11"],
+                "optional_deps": [],
+                "permissions": ["fs:read"],
+                "network": False,
+                "external_cost": "none",
+                "timeout_s": 30,
+                "limitations": ["bounded"],
+                "discovery_mode": "manifest",
+                "verification_mode": "probe",
+            }
+        ],
+        "health": {"supported": True, "detail": "forge/v1 health op"},
+        "handoff": {"supported": True},
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

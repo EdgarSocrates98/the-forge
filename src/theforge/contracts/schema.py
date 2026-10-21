@@ -71,6 +71,7 @@ from theforge.contracts import (
     RunBudget,
     RunTelemetry,
     SemanticPlanProposal,
+    SpecialistCapability,
     StrategyExperiment,
     StrategyPolicy,
     TargetNegotiation,
@@ -173,6 +174,8 @@ EXPORTED: tuple[type[Any], ...] = (
     # specialized agent registry (W3)
     AgentSpec,
     FederatedCapabilityDescriptor,
+    # universal specialist discovery (lf-0027, PHASE 1)
+    SpecialistCapability,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open

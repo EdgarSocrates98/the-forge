@@ -243,6 +243,9 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # engineering excellence evidence audit
     "test_excellence_audit.py": ("unit",),
     "test_excellence_contract.py": ("contract",),
+    # lf-0027: SpecialistCapability/v1 + universal sibling discovery
+    "test_specialist_capability.py": ("unit", "contract"),
+    "test_discovery.py": ("unit", "integration"),
 }
 
 

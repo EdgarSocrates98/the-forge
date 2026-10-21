@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "capabilities": {
+      "items": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discovery_mode": {
+            "enum": [
+              "manifest",
+              "package",
+              "registry",
+              "entry-point",
+              "probe"
+            ]
+          },
+          "entrypoint": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "execution_mode": {
+            "enum": [
+              "local",
+              "remote",
+              "hybrid"
+            ]
+          },
+          "external_cost": {
+            "enum": [
+              "none",
+              "possible",
+              "metered",
+              "unknown"
+            ]
+          },
+          "id": {
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+            "type": "string"
+          },
+          "input_schema": {
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "network": {
+            "type": "boolean"
+          },
+          "optional_deps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "output_schema": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "requires": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "risk": {
+            "enum": [
+              "read_only",
+              "local_mutation",
+              "external_read",
+              "external_mutation",
+              "destructive"
+            ]
+          },
+          "timeout_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verification_mode": {
+            "enum": [
+              "self-declared",
+              "handshake",
+              "probe"
+            ]
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "handoff": {
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "supported": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "health": {
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "supported": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "specialist": {
+      "properties": {
+        "domain": {
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "specialist"
+  ],
+  "title": "SpecialistCapability",
+  "type": "object"
+}

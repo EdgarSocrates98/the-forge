@@ -32,6 +32,7 @@ vence e o doc é consertado.
 - [registry-sources.md](registry-sources.md) — builtin / user / workspace, fronteiras de trust.
 - [provider-distribution.md](provider-distribution.md) — Installation Plan v2: candidato remoto → instalado.
 - [remote-discovery.md](remote-discovery.md) — descoberta de providers não instalados.
+- [discovery.md](discovery.md) — descoberta universal de especialistas presentes: fontes, estados, `SpecialistCapability/v1`.
 - [installation-orchestration.md](installation-orchestration.md) — o caminho governado de instalação.
 - [security.md](security.md) — threat model, redaction, trust, limites do modelo.
 
