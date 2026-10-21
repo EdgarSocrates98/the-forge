@@ -104,6 +104,11 @@ class TheForgePortal(fp.PortalAdapter):
             fp.Operation("GET", "/agents", lambda ctx: self._agents()),
             fp.Operation("GET", "/tasks", lambda ctx: list(self._tasks)),
             fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
+            fp.Operation("GET", "/specialists", lambda ctx: self._specialists_view()),
+            fp.Operation("GET", "/delegations", lambda ctx: self._delegations()),
+            fp.Operation(
+                "GET", "/delegations/graph", lambda ctx: self._delegations_graph()
+            ),
             fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
             fp.Operation("GET", "/versions", lambda ctx: self._versions()),
             fp.Operation("GET", "/lab", lambda ctx: self._lab()),
@@ -186,6 +191,8 @@ class TheForgePortal(fp.PortalAdapter):
                 "id": "graph",
                 "state": "supported" if self._graph_view() is not None else "unverified",
             },
+            {"id": "specialists", "state": "supported"},
+            {"id": "delegations", "state": "supported"},
         ]
 
     def nav(self) -> list[dict[str, Any]]:
@@ -207,6 +214,18 @@ class TheForgePortal(fp.PortalAdapter):
                 "label_key": "nav.graph",
                 "route": "/graph",
                 "requires_capability": "graph",
+            },
+            {
+                "id": "specialists",
+                "label_key": "nav.specialists",
+                "route": "/specialists",
+                "requires_capability": "specialists",
+            },
+            {
+                "id": "delegations",
+                "label_key": "nav.delegations",
+                "route": "/delegations",
+                "requires_capability": "delegations",
             },
         ]
 
@@ -1102,6 +1121,341 @@ class TheForgePortal(fp.PortalAdapter):
             "availability": {"state": "available"},
             "views": [view],
             "studio_url": None,
+        }
+
+    # ------------------------------------------------------------------
+    # specialists / delegations — discovery and orchestration projections
+    # (lf-0032: Specialist Explorer + Delegation Explorer data plane)
+    # ------------------------------------------------------------------
+    def _specialists_view(self) -> dict[str, Any]:
+        """GET /specialists — real discovery pass plus *declared* relations.
+
+        ``probe=False`` keeps this metadata/files-only, so a state can never
+        reach VERIFIED from this endpoint — the persisted ``generated_at`` of
+        the discovery report is the honest "last check", cached or fresh.
+        """
+        try:
+            from theforge import knowledge
+            from theforge.discovery import discover_specialists
+        except Exception:  # noqa: BLE001
+            return {
+                "availability": {
+                    "state": "unverified",
+                    "detail": "discovery module unavailable",
+                },
+                "specialists": [],
+            }
+        try:
+            report = discover_specialists(workspace_root=self._root, probe=False)
+        except Exception as exc:  # noqa: BLE001 — a failed pass is unverified state
+            return {
+                "availability": {
+                    "state": "unverified",
+                    "detail": f"discovery failed: {exc}",
+                },
+                "specialists": [],
+            }
+        try:
+            packs = knowledge.load_all()
+        except Exception:  # noqa: BLE001 — knowledge absent is honest: no declared relations
+            packs = {}
+        rows = []
+        for entry in report.entries:
+            pack = packs.get(entry.forge_id)
+            capabilities = []
+            manifest = entry.capability_manifest
+            if manifest is not None:
+                for cap in manifest.capabilities:
+                    capabilities.append(
+                        {
+                            "id": cap.id,
+                            "description": cap.description,
+                            "version": cap.version,
+                            "finding_class": cap.finding_class or None,
+                            "execution_mode": cap.execution_mode,
+                            "risk": cap.risk,
+                            "requires": list(cap.requires),
+                            "external_cost": cap.external_cost,
+                            "limitations": list(cap.limitations),
+                        }
+                    )
+            incompat_note = next(
+                (n for n in (*entry.notes, *entry.limitations) if "incompat" in n.lower()),
+                "",
+            )
+            rows.append(
+                {
+                    "provider": entry.forge_id,
+                    "state": entry.state,
+                    "version": entry.version,
+                    "checks": dict(entry.checks),
+                    "notes": list(entry.notes),
+                    "limitations": list(entry.limitations),
+                    "capabilities": capabilities,
+                    "capability_count": len(capabilities),
+                    "compatibility": {
+                        "state": (
+                            "incompatible"
+                            if entry.state == "INCOMPATIBLE"
+                            else ("compatible" if entry.state == "VERIFIED" else "unverified")
+                        ),
+                        "detail": incompat_note,
+                    },
+                    "relations": {
+                        "declared": {
+                            "family": pack.family if pack else None,
+                            "composes_with": list(pack.composes_with) if pack else [],
+                            "preferred_verifiers": list(pack.preferred_verifiers) if pack else [],
+                            "fallback": list(pack.fallback) if pack else [],
+                        }
+                    },
+                    "last_check": report.generated_at,
+                }
+            )
+        return {
+            "schema": "theforge/PortalSpecialists/v1",
+            "availability": {
+                "state": "available" if rows else "no_specialists",
+                "probed": report.probed,
+            },
+            "generated_at": report.generated_at,
+            "probed": report.probed,
+            "truncated": report.truncated,
+            "limitations": list(report.limitations),
+            "specialists": rows,
+        }
+
+    def _orchestration_docs(self, *, limit: int = 100) -> tuple[list[dict[str, Any]], list[str]]:
+        """Read persisted orchestration reports — they are redacted at write
+        time (``persist_report`` refuses secret-shaped values), so what is on
+        disk is already safe to project."""
+        directory = self._root / ".forge" / "orchestrations"
+        notes: list[str] = []
+        if not directory.is_dir():
+            return [], notes
+        docs: list[dict[str, Any]] = []
+        paths = sorted(directory.glob("*.json"), key=lambda p: p.name)
+        for path in paths[-limit:]:
+            try:
+                doc = json.loads(path.read_text(encoding="utf-8"))
+            except Exception as exc:  # noqa: BLE001
+                notes.append(f"{path.name}: unreadable report ({exc.__class__.__name__})")
+                continue
+            if isinstance(doc, dict) and doc.get("schema") == "theforge/OrchestrationReport/v1":
+                doc["_file"] = path.name
+                docs.append(doc)
+        if len(paths) > limit:
+            notes.append(f"history truncated to last {limit} of {len(paths)} reports")
+        return docs, notes
+
+    @staticmethod
+    def _delegation_row(doc: dict[str, Any], prior_same_intent: int) -> dict[str, Any]:
+        entries = []
+        for e in doc.get("entries") or []:
+            entries.append(
+                {
+                    "coordinator": "the-forge",
+                    "specialist": e.get("provider"),
+                    "capability": e.get("capability"),
+                    "status": e.get("status"),
+                    "finding_class": e.get("finding_class"),
+                    "risks": e.get("risks") or [],
+                    "cost_bearing": "COST_BEARING" in (e.get("risks") or []),
+                    "justification": e.get("justification") or [],
+                    "command": e.get("command") or [],
+                    "delegation_stage": e.get("delegation_stage") or "",
+                    "handoff_status": e.get("handoff_status") or "",
+                    "notes": e.get("notes") or [],
+                }
+            )
+        return {
+            "file": doc.get("_file"),
+            "correlation_id": doc.get("correlation_id"),
+            "kind": doc.get("kind"),
+            "intent": doc.get("intent"),
+            "generated_at": doc.get("generated_at"),
+            "plan_status": doc.get("plan_status"),
+            "duration_ms": None,  # not persisted by OrchestrationReport — honest gap
+            "entries": entries,
+            "findings": doc.get("findings") or [],
+            "unresolved": doc.get("unresolved") or [],
+            "recommended": doc.get("recommended") or [],
+            "provenance": doc.get("provenance") or {},
+            "limitations": doc.get("limitations") or [],
+            "unknowns": doc.get("unknowns") or [],
+            "prior_runs_same_intent": prior_same_intent,
+        }
+
+    def _delegations(self) -> dict[str, Any]:
+        """GET /delegations — delegation history projected from persisted
+        orchestration reports; every field echoes the document, nothing is
+        inferred."""
+        docs, notes = self._orchestration_docs()
+        seen: dict[str, int] = {}
+        runs = []
+        for doc in docs:
+            intent = doc.get("intent") or ""
+            prior = seen.get(intent, 0)
+            seen[intent] = prior + 1
+            runs.append(self._delegation_row(doc, prior))
+        runs.reverse()  # newest first
+        return {
+            "schema": "theforge/PortalDelegations/v1",
+            "availability": {
+                "state": "available" if runs else "no_delegations",
+                "detail": (
+                    "no persisted orchestration reports under .forge/orchestrations/"
+                    if not runs
+                    else None
+                ),
+            },
+            "notes": notes,
+            "runs": runs,
+        }
+
+    def _delegations_graph(self) -> dict[str, Any]:
+        """GET /delegations/graph — GraphBundle-shaped projection of the
+        required relation kinds. Declared edges come from capability/agentic
+        manifests and forge-knowledge; observed edges come from persisted
+        orchestration reports. Every edge carries ``provenance`` — nothing is
+        fabricated: an absent source means an absent edge, not a guessed one.
+        """
+        nodes: dict[str, dict[str, Any]] = {}
+        edges: list[dict[str, Any]] = []
+        notes: list[str] = []
+
+        def node(nid: str, kind: str, label: str | None = None, **extra: Any) -> None:
+            if nid not in nodes:
+                nodes[nid] = {"id": nid, "kind": kind, "label": label or nid, **extra}
+
+        def edge(source: str, target: str, kind: str, provenance: str, detail: str = "") -> None:
+            if source in nodes and target in nodes:
+                edges.append(
+                    {
+                        "source": source,
+                        "target": target,
+                        "kind": kind,
+                        "provenance": provenance,
+                        "detail": detail,
+                    }
+                )
+
+        # --- declared: Forge → Specialist, Agent → Capability, Capability → Tool
+        declared_state = "no_manifests"
+        try:
+            from theforge import knowledge
+            from theforge.discovery import discover_specialists
+        except Exception:  # noqa: BLE001
+            pass
+        else:
+            try:
+                report = discover_specialists(workspace_root=self._root, probe=False)
+                packs = knowledge.load_all()
+            except Exception as exc:  # noqa: BLE001
+                notes.append(f"declared relations skipped: {exc.__class__.__name__}")
+            else:
+                declared_state = "available"
+                for entry in report.entries:
+                    fid = entry.forge_id
+                    node(f"specialist:{fid}", "specialist", fid, state=entry.state)
+                    pack = packs.get(fid)
+                    if pack is not None:
+                        family_id = f"family:{pack.family}"
+                        node(family_id, "family", pack.family)
+                        edge(family_id, f"specialist:{fid}", "forge-specialist", "declared")
+                        for rel_kind, ids in (
+                            ("specialist-composes", pack.composes_with),
+                            ("specialist-verifier", pack.preferred_verifiers),
+                            ("specialist-fallback", pack.fallback),
+                        ):
+                            for other in ids:
+                                node(f"specialist:{other}", "specialist", other)
+                                edge(
+                                    f"specialist:{fid}",
+                                    f"specialist:{other}",
+                                    rel_kind,
+                                    "declared",
+                                )
+                    manifest = entry.capability_manifest
+                    if manifest is not None:
+                        for cap in manifest.capabilities:
+                            cap_id = f"capability:{fid}:{cap.id}"
+                            node(cap_id, "capability", cap.id)
+                            edge(f"specialist:{fid}", cap_id, "agent-capability", "declared")
+                            if cap.entrypoint:
+                                tool = cap.entrypoint[0]
+                                tool_id = f"tool:{tool}"
+                                node(tool_id, "tool", tool)
+                                edge(cap_id, tool_id, "capability-tool", "declared")
+
+        # --- observed: Delegation → Execution, Execution → Evidence,
+        #     Finding → Source (persisted orchestration reports only)
+        docs, read_notes = self._orchestration_docs(limit=50)
+        notes.extend(read_notes)
+        for doc in docs:
+            cid = doc.get("correlation_id") or doc.get("_file") or "unknown"
+            delegation_id = f"delegation:{cid}"
+            node(delegation_id, "delegation", cid, intent=doc.get("intent"))
+            for e in doc.get("entries") or []:
+                provider = e.get("provider") or "unknown"
+                capability = e.get("capability") or "unknown"
+                spec_id = f"specialist:{provider}"
+                node(spec_id, "specialist", provider)
+                cap_id = f"capability:{provider}:{capability}"
+                node(cap_id, "capability", capability)
+                edge(delegation_id, spec_id, "delegation-specialist", "observed")
+                edge(spec_id, cap_id, "delegation-capability", "observed")
+                exec_id = f"execution:{cid}:{provider}:{capability}"
+                node(exec_id, "execution", f"{provider}::{capability}", status=e.get("status"))
+                edge(cap_id, exec_id, "delegation-execution", "observed")
+                handoff = e.get("handoff_status") or ""
+                if handoff:
+                    ev_id = f"evidence:{cid}:{provider}:{capability}"
+                    node(ev_id, "evidence", f"handoff:{handoff}")
+                    edge(exec_id, ev_id, "execution-evidence", "observed")
+            for finding in doc.get("findings") or []:
+                fid = finding.get("id")
+                if not fid:
+                    continue
+                fnode = f"finding:{cid}:{fid}"
+                node(
+                    fnode,
+                    "finding",
+                    fid,
+                    severity=finding.get("severity"),
+                    finding_class=finding.get("finding_class"),
+                )
+                for provider in finding.get("providers") or []:
+                    spec_id = f"specialist:{provider}"
+                    node(spec_id, "specialist", provider)
+                    edge(fnode, spec_id, "finding-source", "observed")
+                remediation = finding.get("remediation")
+                if remediation:
+                    rem_id = f"remediation:{cid}:{fid}"
+                    node(rem_id, "remediation", str(remediation)[:80])
+                    edge(fnode, rem_id, "finding-remediation", "observed")
+
+        return {
+            "schema": "theforge/PortalDelegationGraph/v1",
+            "availability": {
+                "state": "available" if nodes else "no_graph",
+                "detail": (
+                    None
+                    if nodes
+                    else "no declared manifests and no persisted delegations"
+                ),
+                "declared": declared_state,
+                "observed_reports": len(docs),
+            },
+            "notes": notes,
+            "views": [
+                {
+                    "nodes": list(nodes.values()),
+                    "edges": edges,
+                    "edge_kinds": sorted({e["kind"] for e in edges}),
+                    "provenances": sorted({e["provenance"] for e in edges}),
+                }
+            ],
         }
 
     # ------------------------------------------------------------------

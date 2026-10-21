@@ -34,3 +34,4 @@ A multi-forge plan is a DAG of steps bound by artifact dependencies: the capabil
 - Planner proposes the DAG; `check_plan` decides validity. A semantic proposal can't waive verification or skip a dependency.
 - Every handoff is a structured contract (`Handoff`, artifact refs) — not a prose dump between specialists.
 - If ordering is ambiguous, prefer the doctor/verifier AFTER the producer; independence is checked, not assumed.
+- For capability-routed fan-out where the *question itself* selects the specialists (no artifact DAG), use the `orchestrate` lane — see `forge-orchestration`.

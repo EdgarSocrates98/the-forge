@@ -70,7 +70,7 @@ def test_real_repository_outputs_are_in_sync() -> None:
     assert result.returncode == 0, result.stderr
 
 
-def test_all_sixteen_ecosystem_skills_render() -> None:
+def test_all_seventeen_ecosystem_skills_render() -> None:
     sources = render.load_sources()
     names = {s.name for s in sources}
     assert names == {
@@ -90,8 +90,9 @@ def test_all_sixteen_ecosystem_skills_render() -> None:
         "forge-platform",
         "forge-doctor-data",
         "forge-doctor-api",
+        "forge-orchestration",
     }
-    assert len(names) == 16
+    assert len(names) == 17
 
 
 def test_rendered_outputs_exist_for_every_host() -> None:

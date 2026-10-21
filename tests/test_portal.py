@@ -596,3 +596,124 @@ def test_telemetry_events_and_metrics_over_http(target: Path) -> None:
     finally:
         srv.shutdown()
         srv.server_close()
+
+
+# --- specialists / delegations (lf-0032) --------------------------------------
+
+_MINIMAL_REPORT = {
+    "schema": "theforge/OrchestrationReport/v1",
+    "kind": "run",
+    "intent": "diagnose spark job",
+    "correlation_id": "corr-test-1",
+    "generated_at": "2026-10-20T00:00:00Z",
+    "plan_status": "planned",
+    "entries": [
+        {
+            "provider": "spark-forge-aws",
+            "capability": "sentinel.databricks-logs",
+            "status": "completed",
+            "finding_class": "RUNTIME",
+            "risks": ["LOCAL_READ"],
+            "justification": ["intent matched"],
+            "command": ["sentinel", "scan"],
+            "delegation_stage": "executed",
+            "handoff_status": "received",
+            "notes": [],
+        }
+    ],
+    "findings": [
+        {
+            "id": "F-1",
+            "finding_class": "RUNTIME",
+            "severity": "high",
+            "confidence": "confirmed",
+            "summary": "skew detected",
+            "providers": ["spark-forge-aws"],
+            "capabilities": ["sentinel.databricks-logs"],
+            "correlated": False,
+            "evidence_refs": ["h1"],
+        }
+    ],
+    "unresolved": [],
+    "recommended": [],
+    "provenance": {},
+    "limitations": [],
+    "unknowns": [],
+}
+
+
+def _seed_orchestrations(target: Path, *docs: dict) -> None:
+    directory = target / ".forge" / "orchestrations"
+    directory.mkdir(parents=True, exist_ok=True)
+    for i, doc in enumerate(docs):
+        (directory / f"r{i}.json").write_text(json.dumps(doc), encoding="utf-8")
+
+
+def test_specialists_view_projects_discovery(target: Path) -> None:
+    doc = TheForgePortal(target)._specialists_view()
+    assert doc["schema"] == "theforge/PortalSpecialists/v1"
+    providers = {r["provider"] for r in doc["specialists"]}
+    assert "spark-forge-aws" in providers
+    for row in doc["specialists"]:
+        assert row["last_check"] == doc["generated_at"]
+        assert set(row["relations"]["declared"]) == {
+            "family",
+            "composes_with",
+            "preferred_verifiers",
+            "fallback",
+        }
+
+
+def test_delegations_empty_is_named_state(target: Path) -> None:
+    doc = TheForgePortal(target)._delegations()
+    assert doc["availability"]["state"] == "no_delegations"
+    assert doc["runs"] == []
+
+
+def test_delegations_projects_persisted_report(target: Path) -> None:
+    _seed_orchestrations(target, dict(_MINIMAL_REPORT))
+    doc = TheForgePortal(target)._delegations()
+    assert doc["availability"]["state"] == "available"
+    run = doc["runs"][0]
+    assert run["correlation_id"] == "corr-test-1"
+    assert run["duration_ms"] is None  # not persisted — honest gap
+    entry = run["entries"][0]
+    assert entry["coordinator"] == "the-forge"
+    assert entry["specialist"] == "spark-forge-aws"
+    assert entry["handoff_status"] == "received"
+    assert entry["cost_bearing"] is False
+    assert run["findings"][0]["id"] == "F-1"
+
+
+def test_delegations_graph_emits_observed_edges_only(target: Path) -> None:
+    _seed_orchestrations(target, dict(_MINIMAL_REPORT))
+    doc = TheForgePortal(target)._delegations_graph()
+    view = doc["views"][0]
+    provs = {(e["kind"], e["provenance"]) for e in view["edges"]}
+    assert ("delegation-execution", "observed") in provs
+    assert ("execution-evidence", "observed") in provs
+    assert ("finding-source", "observed") in provs
+    # declared edges exist only where manifests actually resolved
+    declared = [e for e in view["edges"] if e["provenance"] == "declared"]
+    assert all(e["kind"] in {"forge-specialist", "specialist-composes",
+                             "specialist-verifier", "specialist-fallback",
+                             "agent-capability", "capability-tool"}
+               for e in declared)
+
+
+def test_specialists_and_delegations_endpoints_serve(target: Path) -> None:
+    _seed_orchestrations(target, dict(_MINIMAL_REPORT))
+    srv = _server(TheForgePortal(target))
+    try:
+        code, env = _call(srv, "GET", "/specialists")
+        assert code == 200
+        assert env["data"]["schema"] == "theforge/PortalSpecialists/v1"
+        code, env = _call(srv, "GET", "/delegations")
+        assert code == 200
+        assert env["data"]["runs"][0]["correlation_id"] == "corr-test-1"
+        code, env = _call(srv, "GET", "/delegations/graph")
+        assert code == 200
+        assert env["data"]["views"][0]["edges"]
+    finally:
+        srv.shutdown()
+        srv.server_close()
