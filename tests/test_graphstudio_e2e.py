@@ -126,9 +126,9 @@ def test_studio_e2e_3k_load_stabilize_pan_zoom_inspect(browser, studio):
     _wait_nodes(page, 3000)
     load_ms = (time.monotonic() - t0) * 1000
 
-    assert page.evaluate(
-        "() => matchMedia('(prefers-reduced-motion)').matches"
-    ), "context did not apply reduced-motion emulation"
+    assert page.evaluate("() => matchMedia('(prefers-reduced-motion)').matches"), (
+        "context did not apply reduced-motion emulation"
+    )
 
     # P0 surface: force the FULL render of all 3000 nodes (the scenario from
     # the original disappearance report), then wait for the sim to settle.

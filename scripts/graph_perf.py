@@ -267,9 +267,11 @@ def write_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], path: Path)
         body += [
             "## Flags",
             "",
-            *[f"- `{r['fixture_name']}` mode={r['mode']}: settled={r['settled']} "
-              f"non_finite={r['non_finite']} err={r['err']!r} notice={r['notice']!r}"
-              for r in flags],
+            *[
+                f"- `{r['fixture_name']}` mode={r['mode']}: settled={r['settled']} "
+                f"non_finite={r['non_finite']} err={r['err']!r} notice={r['notice']!r}"
+                for r in flags
+            ],
             "",
         ]
     else:
@@ -281,19 +283,28 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--fixtures-dir", type=Path, default=DEFAULT_FIXTURES_DIR)
     p.add_argument(
-        "--sizes", type=int, nargs="*",
+        "--sizes",
+        type=int,
+        nargs="*",
         default=[100, 500, 1000, 3000, 5000, 10000, 25000],
     )
     p.add_argument(
-        "--topology", default=None,
+        "--topology",
+        default=None,
         help="preferred topology per size (fallback: first alphabetical)",
     )
     p.add_argument(
-        "--full", type=int, nargs="*", default=[],
+        "--full",
+        type=int,
+        nargs="*",
+        default=[],
         help="also run these sizes in --mode full",
     )
     p.add_argument(
-        "--fixture", type=Path, nargs="*", default=None,
+        "--fixture",
+        type=Path,
+        nargs="*",
+        default=None,
         help="explicit fixture paths (overrides --sizes)",
     )
     p.add_argument("--mode", default="", choices=("", "overview", "explore", "full"))
@@ -315,9 +326,7 @@ def main(argv: list[str] | None = None) -> int:
             for fx in args.fixture
         ]
         for r, fx in zip(rows, args.fixture, strict=True):
-            r["size"] = (
-                int(fx.stem.split("_")[1]) if fx.stem.split("_")[1].isdigit() else 0
-            )
+            r["size"] = int(fx.stem.split("_")[1]) if fx.stem.split("_")[1].isdigit() else 0
     else:
         rows = run_matrix(
             args.fixtures_dir,

@@ -313,9 +313,7 @@ try {
 def test_resize_storm_is_debounced(tmp_path):
     """40 rapid onresize events must collapse into ONE fit+draw — dragging a
     window edge otherwise re-fits every pixel for the whole gesture."""
-    report = _run_driver(
-        tmp_path, _view(60, [(i, i + 1) for i in range(59)]), _DRIVER_RESIZE
-    )
+    report = _run_driver(tmp_path, _view(60, [(i, i + 1) for i in range(59)]), _DRIVER_RESIZE)
     assert "error" not in report, report
     assert report["stormFits"] == 1  # the 40-event storm → one fit
     assert report["afterFits"] == 2  # the follow-up event fits once more
@@ -354,9 +352,7 @@ def test_reduced_motion_throttles_paint_but_still_settles(tmp_path):
     """Under prefers-reduced-motion the sim still converges (positions are the
     layout) but intermediate frames paint at most every RM_TICKS-th logical
     tick — far fewer draws than RAF frames, with the settled frame painted."""
-    report = _run_driver(
-        tmp_path, _view(200, [(i, i + 1) for i in range(199)]), _DRIVER_REDUCED
-    )
+    report = _run_driver(tmp_path, _view(200, [(i, i + 1) for i in range(199)]), _DRIVER_REDUCED)
     assert "error" not in report, report
     assert report["settled"] is True
     assert report["non_finite"] == 0
@@ -398,17 +394,17 @@ def test_graph_labels_and_metadata_are_escaped_in_dom(tmp_path):
     appear only entity-escaped in every innerHTML sink."""
     doc = _view(30, [(0, 1)] + [(i, i + 1) for i in range(1, 29)])
     doc["nodes"][0].update(
-        label='<img src=x onerror=alert(9)>',
-        kind='<svg onload=alert(1)>',
+        label="<img src=x onerror=alert(9)>",
+        kind="<svg onload=alert(1)>",
         evidence_refs=["<script>alert(1)</script>"],
-        source_provider='<u onfocus=alert(4)>',
+        source_provider="<u onfocus=alert(4)>",
         attributes={"x": "<img src=z onerror=alert(8)>"},
     )
     doc["edges"][0].update(
-        kind='<i onclick=alert(3)>',
-        confidence='<svg onload=alert(7)>',
-        provenance='<b onmouseover=alert(2)>',
-        epistemic_state='<img src=y onerror=alert(5)>',
+        kind="<i onclick=alert(3)>",
+        confidence="<svg onload=alert(7)>",
+        provenance="<b onmouseover=alert(2)>",
+        epistemic_state="<img src=y onerror=alert(5)>",
         evidence_refs=["<script>alert(6)</script>"],
         temporal={"t": "<img src=w onerror=alert(10)>"},
     )
