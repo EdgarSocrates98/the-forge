@@ -328,6 +328,9 @@ try {
     await new Promise((r) => setTimeout(r, 1));
   }
   globalThis.matchMedia = () => ({matches: true});     // prefers-reduced-motion
+  SIM_MS = -1; // expired deadline: one stepSlice per frame on any host —
+               // otherwise fast boxes complete >RM_TICKS ticks per frame and
+               // the throttle legitimately never engages (draws==raf flake)
   let draws = 0;
   const __origDraw = draw;
   draw = function () { draws++; return __origDraw(); };
