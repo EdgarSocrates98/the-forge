@@ -106,3 +106,7 @@ atinge VERIFIED; todo pick vira `provider-absent` (ou
 `capability-absent`) — recusa nomeada + recomendação opcional, nunca
 silêncio e nunca diagnóstico fabricado. Um adapter mínimo é escopo de spec
 futura; até lá, o relatório diz o que falta.
+
+Evidência E2E do ciclo de integrações (caso D — plano justificado +
+relatório persistido, e limites honestos do scan budget):
+`forge-cli/docs/integration/cases/d/`.
