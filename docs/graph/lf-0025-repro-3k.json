@@ -1,0 +1,356 @@
+{
+ "fixture": "../spark-forge-aws/tests/graph/fixtures/graph_3000_chain.json",
+ "graph_id": "synthetic/3000-chain",
+ "nodes": 3000,
+ "edges": 2999,
+ "edges_dropped": 0,
+ "mode": "overview",
+ "render_nodes": 250,
+ "render_edges": 249,
+ "clusters": 250,
+ "notice": "",
+ "raf_frames": 556,
+ "logical_ticks": 316,
+ "ticks_completed": 317,
+ "first_blow_tick": -1,
+ "raf_starved": false,
+ "settled": true,
+ "resets": 0,
+ "generation": 1,
+ "raf_requests": 556,
+ "final": {
+  "non_finite": 0,
+  "max_abs_coord": 299.98833602294326,
+  "max_abs_speed": 0,
+  "outside_10k": 0
+ },
+ "samples": [
+  {
+   "tick": 0,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 25,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 50,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 75,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 100,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 125,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 150,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 175,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 200,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 225,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 250,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 275,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 300,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 325,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 350,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 375,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 400,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 425,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 450,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 475,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 500,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 525,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 550,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  }
+ ],
+ "tick_ms": {
+  "total": 6596.77,
+  "mean": 11.86,
+  "max": 21.44
+ },
+ "wall_ms": 6888,
+ "positions_sample": [
+  {
+   "id": "n000000",
+   "x": -228,
+   "y": -57
+  },
+  {
+   "id": "n000001",
+   "x": -205,
+   "y": -270
+  },
+  {
+   "id": "n000002",
+   "x": -257,
+   "y": 271
+  },
+  {
+   "id": "n000003",
+   "x": 132,
+   "y": -261
+  },
+  {
+   "id": "n000004",
+   "x": -122,
+   "y": 236
+  },
+  {
+   "id": "n000005",
+   "x": -110,
+   "y": 127
+  },
+  {
+   "id": "n000006",
+   "x": -74,
+   "y": -20
+  },
+  {
+   "id": "n000007",
+   "x": 273,
+   "y": 96
+  },
+  {
+   "id": "n000008",
+   "x": 169,
+   "y": -201
+  },
+  {
+   "id": "n000009",
+   "x": 210,
+   "y": -278
+  },
+  {
+   "id": "n000010",
+   "x": 231,
+   "y": -160
+  },
+  {
+   "id": "n000011",
+   "x": 255,
+   "y": 68
+  },
+  {
+   "id": "n000012",
+   "x": 276,
+   "y": -57
+  },
+  {
+   "id": "n000013",
+   "x": 198,
+   "y": 183
+  },
+  {
+   "id": "n000014",
+   "x": -292,
+   "y": -237
+  },
+  {
+   "id": "n000015",
+   "x": -87,
+   "y": -93
+  },
+  {
+   "id": "n000016",
+   "x": 27,
+   "y": -213
+  },
+  {
+   "id": "n000017",
+   "x": -13,
+   "y": -254
+  },
+  {
+   "id": "n000018",
+   "x": -248,
+   "y": -228
+  },
+  {
+   "id": "n000019",
+   "x": -24,
+   "y": 20
+  }
+ ],
+ "verdict": "STABLE",
+ "verdict_reason": "coordinates stayed finite and inside reach — not reproduced",
+ "candidate_causes": [
+  {
+   "cause": "numeric instability — NaN/±Infinity coordinates",
+   "verdict": "ruled_out",
+   "evidence": "non_finite=0/3000"
+  },
+  {
+   "cause": "extreme coordinates — vertices carried off-world",
+   "verdict": "ruled_out",
+   "evidence": "max_abs_coord=300"
+  },
+  {
+   "cause": "vertices off-viewport under the fixed camera (no fit-to-view)",
+   "verdict": "ruled_out",
+   "evidence": "outside_10k=0/3000"
+  },
+  {
+   "cause": "main-thread saturation (tick slower than one 16.6 ms frame)",
+   "verdict": "ruled_out",
+   "evidence": "mean_tick_ms=11.86"
+  },
+  {
+   "cause": "requestAnimationFrame interruption (loop stopped scheduling)",
+   "verdict": "ruled_out",
+   "evidence": "raf_starved=False"
+  },
+  {
+   "cause": "unhandled JavaScript errors",
+   "verdict": "ruled_out",
+   "evidence": "no exception reached the driver"
+  },
+  {
+   "cause": "progressive vertex expansion",
+   "verdict": "unmeasured",
+   "evidence": "headless run has no observer; max_abs_coord samples cover the same effect"
+  },
+  {
+   "cause": "layout re-initialization",
+   "verdict": "unmeasured",
+   "evidence": "single load per run; RAF-stacking across loadGraph() calls not replayed"
+  },
+  {
+   "cause": "canvas outside visible area / resize / context loss",
+   "verdict": "unmeasured",
+   "evidence": "no real DOM or compositor in the node harness"
+  },
+  {
+   "cause": "memory limits",
+   "verdict": "unmeasured",
+   "evidence": "not instrumented"
+  }
+ ],
+ "ticks_requested": 600,
+ "fixture_bytes": 1611573,
+ "extracted_script_sha256": "da0e16434924b3a264074513ba8b498a783389a767d0751145a4adf3f4744ece",
+ "node_version": "v22.23.2"
+}

@@ -131,8 +131,12 @@ def _view_from_cli(
         checkout / ".venv" / "bin" / "python",  # POSIX
     ]
     interpreter = next((str(p) for p in candidates if p.is_file()), sys.executable)
-    # Every producer must emit ForgeGraphView JSON on `graph view`; flag
-    # dialects differ (`--json` vs default-json), so try both.
+    # cwd=checkout, not inherited: producers resolve `graph view` without an
+    # explicit root against "." — running them from OUR cwd made every sibling
+    # read the caller's state dir and refuse "no index" even when its own
+    # checkout carried a built graph. The checkout cwd is also what makes the
+    # producer's *relative* state dir (`.<forge>/`, `.forge/`) resolve to the
+    # workspace it was built in.
     for flags in (["--json"], []):
         argv = [interpreter, "-c", code_t.format(p=provider_id, flags=flags)]
         try:
@@ -144,6 +148,7 @@ def _view_from_cli(
                 errors="replace",
                 timeout=timeout,
                 check=False,
+                cwd=checkout,
             )
         except (OSError, subprocess.TimeoutExpired):
             continue

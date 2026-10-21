@@ -258,6 +258,43 @@ def _fake_checkout(tmp_path: Path, body: str, *, manifest: bool = True) -> Path:
     return tmp_path
 
 
+def test_view_from_cli_runs_producer_in_its_own_checkout(tmp_path):
+    """lf-0025: the producer's cwd is ITS checkout, not ours.
+
+    Producers resolve `graph view` with root="." — without cwd=checkout the
+    subprocess reads the CALLER's state dir, so every sibling answered
+    "no index" even with a built graph (observed live: all six refused
+    SF-GRAPH-NO-INDEX / SFA-GRAPH-NO-GRAPH / PF-GRAPH-NOGRAPH from a
+    the-forge cwd while spark-forge-aws held a 16k-node index).
+    The fake CLI encodes Path.cwd().name in the node id — green only when
+    the subprocess actually ran inside the checkout.
+    """
+    from theforge.contracts.graphview import ForgeGraphView, new_descriptor
+    from theforge.graphview import _view_from_cli
+
+    doc = ForgeGraphView(
+        descriptor=new_descriptor(provider_id="fake", domain="d", graph_id="fake/g")
+    ).to_dict()
+    checkout = _fake_checkout(
+        tmp_path / "own_checkout_dir",
+        "import json, os\n"
+        "from pathlib import Path\n"
+        "def main():\n"
+        "    cwd = Path.cwd().name\n"
+        f"    doc = {doc!r}\n"
+        "    doc['nodes'] = [{'id': cwd, 'kind': 'k', 'label': cwd}]\n"
+        "    doc['edges'] = []\n"
+        "    print(json.dumps(doc))\n"
+        "    return 0\n",
+    )
+    view, reason = _view_from_cli(checkout, "fake", timeout=20)
+    assert view is not None, reason
+    assert view.nodes[0].id == "own_checkout_dir", (
+        f"producer ran in cwd={view.nodes[0].id!r}, not its checkout — "
+        "sibling graphs would be read from the caller's state dir"
+    )
+
+
 def test_view_from_cli_real_subprocess(tmp_path):
     """End-to-end: a sibling CLI emits a view doc; federation parses it."""
     from theforge.contracts.graphview import ForgeGraphView, GraphNodeView, new_descriptor

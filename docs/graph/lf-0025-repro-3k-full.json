@@ -1,0 +1,986 @@
+{
+ "fixture": "../spark-forge-aws/tests/graph/fixtures/graph_3000_chain.json",
+ "graph_id": "synthetic/3000-chain",
+ "nodes": 3000,
+ "edges": 2999,
+ "edges_dropped": 0,
+ "mode": "full",
+ "render_nodes": 3000,
+ "render_edges": 2999,
+ "clusters": 250,
+ "notice": "",
+ "raf_frames": 2810,
+ "logical_ticks": 352,
+ "ticks_completed": 353,
+ "first_blow_tick": -1,
+ "raf_starved": false,
+ "settled": true,
+ "resets": 0,
+ "generation": 1,
+ "raf_requests": 2810,
+ "final": {
+  "non_finite": 0,
+  "max_abs_coord": 1783.3478836356305,
+  "max_abs_speed": 0.18806156961278808,
+  "outside_10k": 0
+ },
+ "samples": [
+  {
+   "tick": 0,
+   "non_finite": 0,
+   "max_abs_coord": 299.98833602294326,
+   "max_abs_speed": 0,
+   "outside_10k": 0
+  },
+  {
+   "tick": 25,
+   "non_finite": 0,
+   "max_abs_coord": 349.67142543986023,
+   "max_abs_speed": 267.99559302140057,
+   "outside_10k": 0
+  },
+  {
+   "tick": 50,
+   "non_finite": 0,
+   "max_abs_coord": 499.330296642063,
+   "max_abs_speed": 192.28770060513662,
+   "outside_10k": 0
+  },
+  {
+   "tick": 75,
+   "non_finite": 0,
+   "max_abs_coord": 648.9084552916898,
+   "max_abs_speed": 155.07201243350124,
+   "outside_10k": 0
+  },
+  {
+   "tick": 100,
+   "non_finite": 0,
+   "max_abs_coord": 798.3394884484076,
+   "max_abs_speed": 153.2193807195752,
+   "outside_10k": 0
+  },
+  {
+   "tick": 125,
+   "non_finite": 0,
+   "max_abs_coord": 945.4082198623428,
+   "max_abs_speed": 141.20756184387596,
+   "outside_10k": 0
+  },
+  {
+   "tick": 150,
+   "non_finite": 0,
+   "max_abs_coord": 1076.2981061853384,
+   "max_abs_speed": 141.10535709177734,
+   "outside_10k": 0
+  },
+  {
+   "tick": 175,
+   "non_finite": 0,
+   "max_abs_coord": 1181.6862831067986,
+   "max_abs_speed": 70.71053332875243,
+   "outside_10k": 0
+  },
+  {
+   "tick": 200,
+   "non_finite": 0,
+   "max_abs_coord": 1230.8210106392744,
+   "max_abs_speed": 109.4618586443488,
+   "outside_10k": 0
+  },
+  {
+   "tick": 225,
+   "non_finite": 0,
+   "max_abs_coord": 1280.3160553215148,
+   "max_abs_speed": 110.90465020613098,
+   "outside_10k": 0
+  },
+  {
+   "tick": 250,
+   "non_finite": 0,
+   "max_abs_coord": 1357.9122184139424,
+   "max_abs_speed": 108.20319669757897,
+   "outside_10k": 0
+  },
+  {
+   "tick": 275,
+   "non_finite": 0,
+   "max_abs_coord": 1420.513823971926,
+   "max_abs_speed": 74.22783035799631,
+   "outside_10k": 0
+  },
+  {
+   "tick": 300,
+   "non_finite": 0,
+   "max_abs_coord": 1460.0823316452136,
+   "max_abs_speed": 70.44584394092293,
+   "outside_10k": 0
+  },
+  {
+   "tick": 325,
+   "non_finite": 0,
+   "max_abs_coord": 1482.3143453681932,
+   "max_abs_speed": 70.43612793997882,
+   "outside_10k": 0
+  },
+  {
+   "tick": 350,
+   "non_finite": 0,
+   "max_abs_coord": 1493.218381747525,
+   "max_abs_speed": 69.60716077010014,
+   "outside_10k": 0
+  },
+  {
+   "tick": 375,
+   "non_finite": 0,
+   "max_abs_coord": 1497.8129111269639,
+   "max_abs_speed": 71.825043510977,
+   "outside_10k": 0
+  },
+  {
+   "tick": 400,
+   "non_finite": 0,
+   "max_abs_coord": 1510.6890875437007,
+   "max_abs_speed": 55.02086501814672,
+   "outside_10k": 0
+  },
+  {
+   "tick": 425,
+   "non_finite": 0,
+   "max_abs_coord": 1528.7965437915464,
+   "max_abs_speed": 54.257058724469175,
+   "outside_10k": 0
+  },
+  {
+   "tick": 450,
+   "non_finite": 0,
+   "max_abs_coord": 1542.8538870388352,
+   "max_abs_speed": 45.15692349559109,
+   "outside_10k": 0
+  },
+  {
+   "tick": 475,
+   "non_finite": 0,
+   "max_abs_coord": 1554.062008542636,
+   "max_abs_speed": 43.728882720590626,
+   "outside_10k": 0
+  },
+  {
+   "tick": 500,
+   "non_finite": 0,
+   "max_abs_coord": 1563.3860272244108,
+   "max_abs_speed": 40.52441499525207,
+   "outside_10k": 0
+  },
+  {
+   "tick": 525,
+   "non_finite": 0,
+   "max_abs_coord": 1571.6235378354772,
+   "max_abs_speed": 29.986051795963178,
+   "outside_10k": 0
+  },
+  {
+   "tick": 550,
+   "non_finite": 0,
+   "max_abs_coord": 1581.7673787389779,
+   "max_abs_speed": 20.006138206617624,
+   "outside_10k": 0
+  },
+  {
+   "tick": 575,
+   "non_finite": 0,
+   "max_abs_coord": 1588.9835825436146,
+   "max_abs_speed": 18.546548126273464,
+   "outside_10k": 0
+  },
+  {
+   "tick": 600,
+   "non_finite": 0,
+   "max_abs_coord": 1599.792711479389,
+   "max_abs_speed": 17.554792922505627,
+   "outside_10k": 0
+  },
+  {
+   "tick": 625,
+   "non_finite": 0,
+   "max_abs_coord": 1607.5989645583707,
+   "max_abs_speed": 18.500762273768782,
+   "outside_10k": 0
+  },
+  {
+   "tick": 650,
+   "non_finite": 0,
+   "max_abs_coord": 1621.684854426189,
+   "max_abs_speed": 15.576359694973505,
+   "outside_10k": 0
+  },
+  {
+   "tick": 675,
+   "non_finite": 0,
+   "max_abs_coord": 1631.09303136686,
+   "max_abs_speed": 20.285457986803806,
+   "outside_10k": 0
+  },
+  {
+   "tick": 700,
+   "non_finite": 0,
+   "max_abs_coord": 1639.884523786841,
+   "max_abs_speed": 15.454021212436563,
+   "outside_10k": 0
+  },
+  {
+   "tick": 725,
+   "non_finite": 0,
+   "max_abs_coord": 1648.2609603641365,
+   "max_abs_speed": 15.589270051601867,
+   "outside_10k": 0
+  },
+  {
+   "tick": 750,
+   "non_finite": 0,
+   "max_abs_coord": 1658.8422144206666,
+   "max_abs_speed": 12.970748776946134,
+   "outside_10k": 0
+  },
+  {
+   "tick": 775,
+   "non_finite": 0,
+   "max_abs_coord": 1666.1804030281073,
+   "max_abs_speed": 11.583395128853127,
+   "outside_10k": 0
+  },
+  {
+   "tick": 800,
+   "non_finite": 0,
+   "max_abs_coord": 1672.9122691790224,
+   "max_abs_speed": 10.907332094782006,
+   "outside_10k": 0
+  },
+  {
+   "tick": 825,
+   "non_finite": 0,
+   "max_abs_coord": 1678.9037696973955,
+   "max_abs_speed": 10.420034356168198,
+   "outside_10k": 0
+  },
+  {
+   "tick": 850,
+   "non_finite": 0,
+   "max_abs_coord": 1684.0229129519278,
+   "max_abs_speed": 9.539820244944769,
+   "outside_10k": 0
+  },
+  {
+   "tick": 875,
+   "non_finite": 0,
+   "max_abs_coord": 1688.2060028414016,
+   "max_abs_speed": 10.429478647560776,
+   "outside_10k": 0
+  },
+  {
+   "tick": 900,
+   "non_finite": 0,
+   "max_abs_coord": 1692.4015072123548,
+   "max_abs_speed": 8.356573068385277,
+   "outside_10k": 0
+  },
+  {
+   "tick": 925,
+   "non_finite": 0,
+   "max_abs_coord": 1694.6803846460987,
+   "max_abs_speed": 8.44216478504979,
+   "outside_10k": 0
+  },
+  {
+   "tick": 950,
+   "non_finite": 0,
+   "max_abs_coord": 1696.4056879835105,
+   "max_abs_speed": 7.995213666649474,
+   "outside_10k": 0
+  },
+  {
+   "tick": 975,
+   "non_finite": 0,
+   "max_abs_coord": 1698.828036606867,
+   "max_abs_speed": 6.701539032901451,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1000,
+   "non_finite": 0,
+   "max_abs_coord": 1702.8069492551906,
+   "max_abs_speed": 6.519115957557051,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1025,
+   "non_finite": 0,
+   "max_abs_coord": 1707.8386161635035,
+   "max_abs_speed": 5.8179167588263665,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1050,
+   "non_finite": 0,
+   "max_abs_coord": 1711.3835981446591,
+   "max_abs_speed": 5.493022724084687,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1075,
+   "non_finite": 0,
+   "max_abs_coord": 1714.7420350518698,
+   "max_abs_speed": 5.923768634921051,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1100,
+   "non_finite": 0,
+   "max_abs_coord": 1717.932466703852,
+   "max_abs_speed": 5.615910812445542,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1125,
+   "non_finite": 0,
+   "max_abs_coord": 1720.961621472809,
+   "max_abs_speed": 5.3873280883114045,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1150,
+   "non_finite": 0,
+   "max_abs_coord": 1724.7673878529524,
+   "max_abs_speed": 5.667954067364223,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1175,
+   "non_finite": 0,
+   "max_abs_coord": 1727.4592434864946,
+   "max_abs_speed": 5.640660952310904,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1200,
+   "non_finite": 0,
+   "max_abs_coord": 1730.0210719879476,
+   "max_abs_speed": 5.257016503413268,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1225,
+   "non_finite": 0,
+   "max_abs_coord": 1732.4634435818944,
+   "max_abs_speed": 4.752459048530066,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1250,
+   "non_finite": 0,
+   "max_abs_coord": 1735.5485894732872,
+   "max_abs_speed": 3.9361095448359364,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1275,
+   "non_finite": 0,
+   "max_abs_coord": 1737.7396089933516,
+   "max_abs_speed": 3.750327819566127,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1300,
+   "non_finite": 0,
+   "max_abs_coord": 1739.8249478343905,
+   "max_abs_speed": 4.117233993005142,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1325,
+   "non_finite": 0,
+   "max_abs_coord": 1741.8251644247387,
+   "max_abs_speed": 3.848835217927139,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1350,
+   "non_finite": 0,
+   "max_abs_coord": 1743.746665534685,
+   "max_abs_speed": 3.68634561380199,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1375,
+   "non_finite": 0,
+   "max_abs_coord": 1745.5889330057446,
+   "max_abs_speed": 3.608997295611715,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1400,
+   "non_finite": 0,
+   "max_abs_coord": 1747.9253813723674,
+   "max_abs_speed": 2.877849237915628,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1425,
+   "non_finite": 0,
+   "max_abs_coord": 1749.5904896495647,
+   "max_abs_speed": 2.7090996566050682,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1450,
+   "non_finite": 0,
+   "max_abs_coord": 1751.1870704167054,
+   "max_abs_speed": 2.509479489997167,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1475,
+   "non_finite": 0,
+   "max_abs_coord": 1752.7344009972787,
+   "max_abs_speed": 2.596413823205948,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1500,
+   "non_finite": 0,
+   "max_abs_coord": 1754.2292027450312,
+   "max_abs_speed": 2.900863678362689,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1525,
+   "non_finite": 0,
+   "max_abs_coord": 1755.6678879597566,
+   "max_abs_speed": 2.8914298651456916,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1550,
+   "non_finite": 0,
+   "max_abs_coord": 1757.4952102526984,
+   "max_abs_speed": 2.3991142714592124,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1575,
+   "non_finite": 0,
+   "max_abs_coord": 1758.7987055770466,
+   "max_abs_speed": 2.2098316489618477,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1600,
+   "non_finite": 0,
+   "max_abs_coord": 1760.045093967333,
+   "max_abs_speed": 2.082125059585142,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1625,
+   "non_finite": 0,
+   "max_abs_coord": 1761.2349695602236,
+   "max_abs_speed": 2.126738284831427,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1650,
+   "non_finite": 0,
+   "max_abs_coord": 1762.3695216395115,
+   "max_abs_speed": 1.9957543497894907,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1675,
+   "non_finite": 0,
+   "max_abs_coord": 1763.4500127022677,
+   "max_abs_speed": 1.8841888872375787,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1700,
+   "non_finite": 0,
+   "max_abs_coord": 1764.8128635873322,
+   "max_abs_speed": 1.6799771674302213,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1725,
+   "non_finite": 0,
+   "max_abs_coord": 1765.778126377024,
+   "max_abs_speed": 1.659719519572688,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1750,
+   "non_finite": 0,
+   "max_abs_coord": 1766.6978497315315,
+   "max_abs_speed": 1.6973017965841244,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1775,
+   "non_finite": 0,
+   "max_abs_coord": 1767.5742884133292,
+   "max_abs_speed": 1.6022094151205157,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1800,
+   "non_finite": 0,
+   "max_abs_coord": 1768.409403768573,
+   "max_abs_speed": 1.4943013454117753,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1825,
+   "non_finite": 0,
+   "max_abs_coord": 1769.204943442706,
+   "max_abs_speed": 1.4564292357582556,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1850,
+   "non_finite": 0,
+   "max_abs_coord": 1770.2073703715187,
+   "max_abs_speed": 1.2811756153681437,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1875,
+   "non_finite": 0,
+   "max_abs_coord": 1770.917873596582,
+   "max_abs_speed": 1.2190254404963188,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1900,
+   "non_finite": 0,
+   "max_abs_coord": 1771.5947776438513,
+   "max_abs_speed": 1.1512573616913773,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1925,
+   "non_finite": 0,
+   "max_abs_coord": 1772.2397982144992,
+   "max_abs_speed": 1.0729396600177017,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1950,
+   "non_finite": 0,
+   "max_abs_coord": 1772.8545749178797,
+   "max_abs_speed": 1.0484851044743255,
+   "outside_10k": 0
+  },
+  {
+   "tick": 1975,
+   "non_finite": 0,
+   "max_abs_coord": 1773.4404919273597,
+   "max_abs_speed": 0.9993737967089219,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2000,
+   "non_finite": 0,
+   "max_abs_coord": 1773.9986959976904,
+   "max_abs_speed": 0.9397528531803463,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2025,
+   "non_finite": 0,
+   "max_abs_coord": 1774.5306220187579,
+   "max_abs_speed": 1.021021719712742,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2050,
+   "non_finite": 0,
+   "max_abs_coord": 1775.0375690581166,
+   "max_abs_speed": 0.9670014423398067,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2075,
+   "non_finite": 0,
+   "max_abs_coord": 1775.5206813205211,
+   "max_abs_speed": 0.9126349982014739,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2100,
+   "non_finite": 0,
+   "max_abs_coord": 1776.129740067984,
+   "max_abs_speed": 0.7230713912979826,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2125,
+   "non_finite": 0,
+   "max_abs_coord": 1776.5616806461305,
+   "max_abs_speed": 0.7203130279040828,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2150,
+   "non_finite": 0,
+   "max_abs_coord": 1776.9740105449353,
+   "max_abs_speed": 0.7351484585533528,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2175,
+   "non_finite": 0,
+   "max_abs_coord": 1777.3677196187712,
+   "max_abs_speed": 0.7298834739520568,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2200,
+   "non_finite": 0,
+   "max_abs_coord": 1777.743516287172,
+   "max_abs_speed": 0.7206038862191896,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2225,
+   "non_finite": 0,
+   "max_abs_coord": 1778.10214573998,
+   "max_abs_speed": 0.7156452397670783,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2250,
+   "non_finite": 0,
+   "max_abs_coord": 1778.5549465926151,
+   "max_abs_speed": 0.6048293045290647,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2275,
+   "non_finite": 0,
+   "max_abs_coord": 1778.8764673222836,
+   "max_abs_speed": 0.5818267045951193,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2300,
+   "non_finite": 0,
+   "max_abs_coord": 1779.1832666624853,
+   "max_abs_speed": 0.6303422085366095,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2325,
+   "non_finite": 0,
+   "max_abs_coord": 1779.4760142355176,
+   "max_abs_speed": 0.5877738058679972,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2350,
+   "non_finite": 0,
+   "max_abs_coord": 1779.7553676073212,
+   "max_abs_speed": 0.5577788752831115,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2375,
+   "non_finite": 0,
+   "max_abs_coord": 1780.1080903984,
+   "max_abs_speed": 0.47108984999113446,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2400,
+   "non_finite": 0,
+   "max_abs_coord": 1780.358620285245,
+   "max_abs_speed": 0.4557271121610441,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2425,
+   "non_finite": 0,
+   "max_abs_coord": 1780.5977820047333,
+   "max_abs_speed": 0.43928916373495597,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2450,
+   "non_finite": 0,
+   "max_abs_coord": 1780.8260892863586,
+   "max_abs_speed": 0.43289572627050404,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2475,
+   "non_finite": 0,
+   "max_abs_coord": 1781.0440470291162,
+   "max_abs_speed": 0.4494167402408013,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2500,
+   "non_finite": 0,
+   "max_abs_coord": 1781.2521383355504,
+   "max_abs_speed": 0.42924752181431397,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2525,
+   "non_finite": 0,
+   "max_abs_coord": 1781.51501325224,
+   "max_abs_speed": 0.3586986306886843,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2550,
+   "non_finite": 0,
+   "max_abs_coord": 1781.701785118988,
+   "max_abs_speed": 0.33985619106142495,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2575,
+   "non_finite": 0,
+   "max_abs_coord": 1781.8801074490584,
+   "max_abs_speed": 0.3596681278496935,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2600,
+   "non_finite": 0,
+   "max_abs_coord": 1782.0503673826606,
+   "max_abs_speed": 0.340306330065342,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2625,
+   "non_finite": 0,
+   "max_abs_coord": 1782.2654757198127,
+   "max_abs_speed": 0.2826441110789216,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2650,
+   "non_finite": 0,
+   "max_abs_coord": 1782.4183272163739,
+   "max_abs_speed": 0.281982517846213,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2675,
+   "non_finite": 0,
+   "max_abs_coord": 1782.5642836292348,
+   "max_abs_speed": 0.2817732185381895,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2700,
+   "non_finite": 0,
+   "max_abs_coord": 1782.7487296574338,
+   "max_abs_speed": 0.23373605395752434,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2725,
+   "non_finite": 0,
+   "max_abs_coord": 1782.8798232420759,
+   "max_abs_speed": 0.23611992439770235,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2750,
+   "non_finite": 0,
+   "max_abs_coord": 1783.0050245449443,
+   "max_abs_speed": 0.24050894484077812,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2775,
+   "non_finite": 0,
+   "max_abs_coord": 1783.1632538474692,
+   "max_abs_speed": 0.2276370820898445,
+   "outside_10k": 0
+  },
+  {
+   "tick": 2800,
+   "non_finite": 0,
+   "max_abs_coord": 1783.2757234147707,
+   "max_abs_speed": 0.2181396976090289,
+   "outside_10k": 0
+  }
+ ],
+ "tick_ms": {
+  "total": 127469.9,
+  "mean": 45.36,
+  "max": 171.96
+ },
+ "wall_ms": 128569,
+ "positions_sample": [
+  {
+   "id": "n000000",
+   "x": -1737,
+   "y": -371
+  },
+  {
+   "id": "n000001",
+   "x": -1632,
+   "y": -194
+  },
+  {
+   "id": "n000002",
+   "x": -1484,
+   "y": 39
+  },
+  {
+   "id": "n000003",
+   "x": -1243,
+   "y": 264
+  },
+  {
+   "id": "n000004",
+   "x": -856,
+   "y": 438
+  },
+  {
+   "id": "n000005",
+   "x": -362,
+   "y": 414
+  },
+  {
+   "id": "n000006",
+   "x": 160,
+   "y": 222
+  },
+  {
+   "id": "n000007",
+   "x": 666,
+   "y": -23
+  },
+  {
+   "id": "n000008",
+   "x": 1061,
+   "y": -296
+  },
+  {
+   "id": "n000009",
+   "x": 1341,
+   "y": -515
+  },
+  {
+   "id": "n000010",
+   "x": 1495,
+   "y": -590
+  },
+  {
+   "id": "n000011",
+   "x": 1435,
+   "y": -479
+  },
+  {
+   "id": "n000012",
+   "x": 1149,
+   "y": -607
+  },
+  {
+   "id": "n000013",
+   "x": 754,
+   "y": -810
+  },
+  {
+   "id": "n000014",
+   "x": 267,
+   "y": -1032
+  },
+  {
+   "id": "n000015",
+   "x": -133,
+   "y": -1216
+  },
+  {
+   "id": "n000016",
+   "x": -466,
+   "y": -1233
+  },
+  {
+   "id": "n000017",
+   "x": -699,
+   "y": -1015
+  },
+  {
+   "id": "n000018",
+   "x": -600,
+   "y": -657
+  },
+  {
+   "id": "n000019",
+   "x": -273,
+   "y": -306
+  }
+ ],
+ "verdict": "STABLE",
+ "verdict_reason": "coordinates stayed finite and inside reach — not reproduced",
+ "candidate_causes": [
+  {
+   "cause": "numeric instability — NaN/±Infinity coordinates",
+   "verdict": "ruled_out",
+   "evidence": "non_finite=0/3000"
+  },
+  {
+   "cause": "extreme coordinates — vertices carried off-world",
+   "verdict": "ruled_out",
+   "evidence": "max_abs_coord=1.78e+03"
+  },
+  {
+   "cause": "vertices off-viewport under the fixed camera (no fit-to-view)",
+   "verdict": "ruled_out",
+   "evidence": "outside_10k=0/3000"
+  },
+  {
+   "cause": "main-thread saturation (tick slower than one 16.6 ms frame)",
+   "verdict": "proven",
+   "evidence": "mean_tick_ms=45.36"
+  },
+  {
+   "cause": "requestAnimationFrame interruption (loop stopped scheduling)",
+   "verdict": "ruled_out",
+   "evidence": "raf_starved=False"
+  },
+  {
+   "cause": "unhandled JavaScript errors",
+   "verdict": "ruled_out",
+   "evidence": "no exception reached the driver"
+  },
+  {
+   "cause": "progressive vertex expansion",
+   "verdict": "unmeasured",
+   "evidence": "headless run has no observer; max_abs_coord samples cover the same effect"
+  },
+  {
+   "cause": "layout re-initialization",
+   "verdict": "unmeasured",
+   "evidence": "single load per run; RAF-stacking across loadGraph() calls not replayed"
+  },
+  {
+   "cause": "canvas outside visible area / resize / context loss",
+   "verdict": "unmeasured",
+   "evidence": "no real DOM or compositor in the node harness"
+  },
+  {
+   "cause": "memory limits",
+   "verdict": "unmeasured",
+   "evidence": "not instrumented"
+  }
+ ],
+ "ticks_requested": 900,
+ "fixture_bytes": 1611573,
+ "extracted_script_sha256": "da0e16434924b3a264074513ba8b498a783389a767d0751145a4adf3f4744ece",
+ "node_version": "v22.23.2"
+}

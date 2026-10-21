@@ -2,8 +2,8 @@
  "fixture": "graph_3000_chain.json",
  "nodes": 3000,
  "mode": "full",
- "load_ms": 2323,
- "settle_ms_browser": 88125,
+ "load_ms": 2311,
+ "settle_ms_browser": 56462,
  "coordinate_audit": {
   "non_finite": 0,
   "inside": 3000,
