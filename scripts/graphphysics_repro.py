@@ -98,7 +98,10 @@ globalThis.devicePixelRatio = 1;
 globalThis.localStorage = {getItem: () => null, setItem: () => {}, removeItem: () => {}};
 // The RAF queue is a single slot: the driver replays it synchronously.
 let __raf = null;
-globalThis.requestAnimationFrame = (cb) => { __raf = cb; return 1; };
+let __rafCount = 0;
+globalThis.requestAnimationFrame = (cb) => { __raf = cb; __rafCount++; return __rafCount; };
+globalThis.cancelAnimationFrame = (id) => { __raf = null; };
+globalThis.window = globalThis; // the studio installs window.onresize
 // fetch serves the fixture through the studio's real endpoints.
 globalThis.fetch = async (url) => {
   if (url === '/api/graphs') return {json: async () => ({graphs: [__doc.descriptor]})};
@@ -147,6 +150,9 @@ try {
     if (firstBlow > 0 && (s.non_finite > 0 || ran >= firstBlow + 30)) break;
   }
   const __total = __tickMs.reduce((a, b) => a + b, 0);
+  // lf-0021: a loop that stops because the layout converged (alpha decayed or
+  // every node quiet) is NOT starvation — only an unexpected stop counts.
+  const __settled = (typeof settled !== 'undefined') ? settled : false;
   const __report = {
     fixture: __fixturePath,
     graph_id: __doc.descriptor.graph_id,
@@ -155,7 +161,11 @@ try {
     edges_dropped: (__doc.edges || []).length - G.edges.length,
     ticks_completed: ran + 1, // +1: the synchronous tick() inside loadGraph
     first_blow_tick: firstBlow,
-    raf_starved: ran < __TICKS && !__raf,
+    raf_starved: ran < __TICKS && !__raf && !__settled,
+    settled: __settled,
+    resets: (typeof resets !== 'undefined') ? resets : null,
+    generation: (typeof gen !== 'undefined') ? gen : null,
+    raf_requests: __rafCount,
     final: __stats(),
     samples: __samples,
     tick_ms: {
@@ -188,14 +198,49 @@ def extract_script() -> str:
     return match.group(1)
 
 
-def build_harness(script: str, *, ticks: int, sample_every: int, viewport: int) -> str:
-    """Prelude + verbatim studio script + driver, as one ``.mjs`` source."""
+def build_harness(
+    script: str,
+    *,
+    ticks: int,
+    sample_every: int,
+    viewport: int,
+    driver: str | None = None,
+) -> str:
+    """Prelude + verbatim studio script + driver, as one ``.mjs`` source.
+
+    ``driver`` replaces the default tick-replay driver — tests that need to
+    poke studio internals (double ``loadGraph``, poisoned nodes, thrown
+    exceptions) compose their own and get the same stubs/preamble.
+    """
     preamble = (
         HARNESS_PREAMBLE.replace("__TICKS__", str(ticks))
         .replace("__SAMPLE_EVERY__", str(sample_every))
         .replace("__VIEWPORT__", str(viewport))
     )
-    return preamble + script + HARNESS_DRIVER
+    return preamble + script + (driver if driver is not None else HARNESS_DRIVER)
+
+
+def run_harness(
+    fixture: Path, harness: str, *, node: str = "node", timeout: int = 900
+) -> dict[str, Any]:
+    """Write ``harness`` to a temp ``.mjs``, run it under node, return the
+    parsed stdout JSON (raw — no verdict computed)."""
+    with tempfile.TemporaryDirectory(prefix="graphrepro-") as td:
+        mjs = Path(td) / "graphrepro.mjs"
+        mjs.write_text(harness, encoding="utf-8")
+        proc = subprocess.run(
+            [node, str(mjs), str(fixture)],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    try:
+        report: dict[str, Any] = json.loads(proc.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        report = {"error": "no JSON report on stdout", "stdout": proc.stdout[:2000]}
+    if proc.returncode != 0 or "error" in report:
+        report.setdefault("error", proc.stderr[:2000] or f"node exited {proc.returncode}")
+    return report
 
 
 def _verdict(report: dict[str, Any]) -> tuple[str, str]:
@@ -294,22 +339,8 @@ def run(
     harness = build_harness(
         script, ticks=ticks, sample_every=sample_every, viewport=VIEWPORT_HALF_PX
     )
-    with tempfile.TemporaryDirectory(prefix="graphrepro-") as td:
-        mjs = Path(td) / "graphrepro.mjs"
-        mjs.write_text(harness, encoding="utf-8")
-        proc = subprocess.run(
-            [node, str(mjs), str(fixture)],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    report: dict[str, Any]
-    try:
-        report = json.loads(proc.stdout.strip().splitlines()[-1])
-    except (ValueError, IndexError):
-        report = {"error": "no JSON report on stdout", "stdout": proc.stdout[:2000]}
-    if proc.returncode != 0 or "error" in report:
-        report.setdefault("error", proc.stderr[:2000] or f"node exited {proc.returncode}")
+    report = run_harness(fixture, harness, node=node, timeout=timeout)
+    if "error" in report:
         report["verdict"] = "HARNESS-ERROR"
         report["verdict_reason"] = "node run failed — see error"
     else:
