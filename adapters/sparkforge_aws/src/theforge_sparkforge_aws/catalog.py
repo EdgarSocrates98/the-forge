@@ -82,6 +82,9 @@ class CapabilitySpec:
     unbound: Mapping[str, str] = field(default_factory=dict)  # tool -> why no binding
     accepts_handoff: bool = False
     consumes: tuple[str, ...] = ()
+    # The analysis class the capability's findings declare (lf-0031): static |
+    # runtime | architectural. "" declares none — consumers report UNSPECIFIED.
+    finding_class: str = ""
 
 
 def action_name(tool: str) -> str:
@@ -132,6 +135,7 @@ def _path(globs: tuple[str, ...], *, directory: bool = True) -> ArgBinding:
 CAPABILITIES: tuple[CapabilitySpec, ...] = (
     CapabilitySpec(
         id="pyspark.static-analysis",
+        finding_class="static",
         description=(
             "Static analysis of PySpark code by AST (never imported nor executed): "
             "partitioning, joins, UDFs, cache, driver actions and GraphFrames usage."
@@ -153,6 +157,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="spark.runtime-analysis",
+        finding_class="runtime",
         description=(
             "Spark runtime evidence already on disk: event logs (stage duration and "
             "skew, spill, GC, per-plan-node SQL metrics) and saved physical plans."
@@ -170,6 +175,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="streaming.analysis",
+        finding_class="runtime",
         description=(
             "Saved streaming evidence: schema registry dumps and Structured Streaming "
             "checkpoint, Kafka Connect, Kafka Streams and OpenLineage dumps."
@@ -213,6 +219,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="glue.analysis",
+        finding_class="architectural",
         description=(
             "Saved AWS Glue evidence: Data Catalog resource-link topology collected "
             "by the Spark Forge AWS."
@@ -240,6 +247,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="emr.analysis",
+        finding_class="architectural",
         description=(
             "Saved Amazon EMR dumps (on EC2, Serverless, on EKS): release, "
             "applications, capacity and configuration."
@@ -257,6 +265,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="athena.analysis",
+        finding_class="static",
         description=("SQL text (projection, predicates, LIMIT) and saved Athena workgroup dumps."),
         actions=_actions(_analyze("sql"), _analyze("athena_workgroup")),
         signals=SignalsSpec(
@@ -269,6 +278,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="iceberg.analysis",
+        finding_class="static",
         description=(
             "Saved Iceberg metadata-table dumps: small files, delete files, snapshot "
             "cadence, manifest size and partition skew."
@@ -286,6 +296,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="parquet.footer-analysis",
+        finding_class="static",
         description=(
             "Saved Parquet footer artifacts: row groups, column statistics, "
             "dictionaries, page index, bloom filters and codecs."
@@ -299,6 +310,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="terraform.analysis",
+        finding_class="architectural",
         description=(
             "Terraform HCL of AWS Glue jobs: Glue version, workers, default "
             "arguments and Spark UI observability."
@@ -315,6 +327,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="orchestration.analysis",
+        finding_class="architectural",
         description=(
             "Orchestration definitions: Step Functions ASL and Airflow DAG files "
             "(read by AST, never executed)."
@@ -343,6 +356,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="data-quality.analysis",
+        finding_class="static",
         description=(
             "Data validation found in PySpark code: where each check runs, what it "
             "costs and whether it has a consequence."
@@ -369,6 +383,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="lakeformation.access-analysis",
+        finding_class="architectural",
         description=(
             "Collected Lake Formation grants and simulated IAM decisions, with the "
             "layer that decided."
@@ -400,6 +415,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="cloudwatch.analysis",
+        finding_class="runtime",
         description="Collected CloudWatch metrics and job run logs (already redacted).",
         actions=_actions(
             _analyze("cloudwatch"), _analyze("cloudwatch_logs"), _analyze("error_signatures")
@@ -416,6 +432,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="platform.graph-analysis",
+        finding_class="architectural",
         description=(
             "Declared platform inventories: dbt artifacts and the table consumers inventory."
         ),
@@ -449,6 +466,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="migration.assessment",
+        finding_class="static",
         description="Release and migration assessment from the Spark Forge AWS's version matrices.",
         actions=_actions(
             _tool("migration_assess"),
@@ -474,6 +492,7 @@ CAPABILITIES: tuple[CapabilitySpec, ...] = (
     ),
     CapabilitySpec(
         id="finops.performance-analysis",
+        finding_class="static",
         description="Declared workload inventory: SLA and primary source of each job.",
         actions=_actions(
             _tool("benchmark"),
@@ -668,6 +687,8 @@ def _capability(entry: CapabilitySpec, actions: Sequence[str]) -> dict[str, Any]
     }
     if entry.consumes:
         capability["relations"] = {"consumes": list(entry.consumes)}
+    if entry.finding_class:
+        capability["finding_class"] = entry.finding_class
     return capability
 
 

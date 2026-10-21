@@ -24,6 +24,15 @@ Outcome = Literal[
 ]
 Severity = Literal["info", "low", "medium", "high", "critical"]
 HealthStatus = Literal["ok", "degraded", "unavailable"]
+# The analysis class of the findings a capability emits (lf-0031): the
+# consolidated orchestration report groups findings by this declared class —
+# ``static`` (source/artifact review, no run), ``runtime`` (logs, metrics,
+# event evidence of an execution) and ``architectural`` (contract, topology
+# and boundary structure). ``""`` is the honest default: the capability
+# never declared a class and its findings report as UNSPECIFIED, never
+# laundered into a bucket it did not claim.
+FindingClass = Literal["", "static", "runtime", "architectural"]
+FINDING_CLASSES: Final = ("static", "runtime", "architectural")
 Tier = Literal["metadata", "reference", "excerpt", "requested"]
 VerificationLevel = Literal["minimal", "conditional", "strong"]
 # Tier of a single ContextPack item ("metadata" is the pack-level workspace summary).

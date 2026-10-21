@@ -37,7 +37,15 @@ from typing import Literal
 from theforge.contracts.base import ContractError
 from theforge.contracts.manifest import CAPABILITY_ID, PROVIDER_ID
 from theforge.contracts.semver import parse_semver
-from theforge.contracts.types import OperationClass
+from theforge.contracts.types import (
+    FINDING_CLASSES as FINDING_CLASSES,
+)
+from theforge.contracts.types import (
+    FindingClass as FindingClass,
+)
+from theforge.contracts.types import (
+    OperationClass,
+)
 
 SPECIALIST_CAPABILITY_SCHEMA = "theforge/SpecialistCapability/v1"
 
@@ -78,6 +86,10 @@ CapabilityVerificationMode = Literal["self-declared", "handshake", "probe"]
 # the honest default — "no external cost" is a positive claim
 # (Observed != Estimated; undeclared is never "free").
 ExternalCost = Literal["none", "possible", "metered", "unknown"]
+
+# ``FindingClass``/``FINDING_CLASSES`` are imported from ``contracts.types``
+# (above) so the ForgeManifest's ``Capability`` declares the same vocabulary
+# (lf-0031) without importing this module; they stay importable from here.
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -137,6 +149,9 @@ class DeclaredCapability:
     limitations: list[str] = field(default_factory=list)
     discovery_mode: CapabilityDiscoveryMode = "manifest"
     verification_mode: CapabilityVerificationMode = "self-declared"
+    # Declared analysis class of emitted findings (lf-0031). Data, never an
+    # instruction: consumers group by it, nothing executes on it.
+    finding_class: FindingClass = ""
 
     def __post_init__(self) -> None:
         if not CAPABILITY_ID.match(self.id):
@@ -148,6 +163,11 @@ class DeclaredCapability:
         if self.timeout_s is not None and self.timeout_s <= 0:
             raise ContractError(
                 f"capability {self.id}: timeout_s must be a positive integer"
+            )
+        if self.finding_class not in ("", "static", "runtime", "architectural"):
+            raise ContractError(
+                f"capability {self.id}: finding_class {self.finding_class!r} is not "
+                "one of '', 'static', 'runtime', 'architectural'"
             )
         if self.execution_mode == "local" and self.network:
             # An honest declaration never pairs "runs locally" with "needs

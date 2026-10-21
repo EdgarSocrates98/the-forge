@@ -1908,6 +1908,83 @@ def cmd_task_explain(args: argparse.Namespace) -> int:
     return 0
 
 
+# -- orchestrate (lf-0031): intent -> discovery -> justified governed plan ------
+
+
+def _orchestrate_common(args: argparse.Namespace) -> dict[str, Any]:
+    """Shared options of ``orchestrate plan|run``: delegation doc override,
+    declared inputs, authorized risks, budget and discovery flags."""
+    from theforge.contracts import from_dict
+    from theforge.contracts.specialist_delegation import (
+        DELEGATION_RISKS,
+        SpecialistDelegation,
+    )
+    from theforge.delegation_governance import ExecutionBudget
+
+    delegation_doc = None
+    if args.delegation:
+        path = Path(args.delegation)
+        if not path.is_file():
+            raise UsageError(f"delegation file {path} does not exist")
+        delegation_doc = from_dict(
+            SpecialistDelegation, json.loads(path.read_text(encoding="utf-8"))
+        )
+    risks = set(args.authorize or ()) | {"LOCAL_READ"}
+    unknown = sorted(r for r in risks if r not in DELEGATION_RISKS)
+    if unknown:
+        raise UsageError(
+            f"unknown risk levels {unknown} — one of {', '.join(DELEGATION_RISKS)}"
+        )
+    return {
+        "delegation_doc": delegation_doc,
+        "inputs": set(args.input or ()),
+        "authorized_risks": risks,
+        "budget": ExecutionBudget(
+            max_hops=args.max_hops,
+            timeout_budget_s=args.timeout_budget,
+            max_providers=args.max_providers,
+        ),
+        "probe": not args.no_probe,
+        "allow_unverified": args.allow_unverified,
+    }
+
+
+def cmd_orchestrate_plan(args: argparse.Namespace) -> int:
+    """``orchestrate plan <intent>`` — deterministic, justified delegation plan."""
+    from theforge import orchestrate
+    from theforge.contracts import to_dict
+
+    root = _root(args)
+    outcome = orchestrate.orchestrate_plan(
+        args.intent, workspace_root=root, **_orchestrate_common(args)
+    )
+    _emit(args, {"report": to_dict(outcome.report)}, render.orchestration)
+    return 0 if outcome.plan.status == "planned" else 1
+
+
+def cmd_orchestrate_run(args: argparse.Namespace) -> int:
+    """``orchestrate run <intent>`` — plan then execute each pick governed."""
+    from theforge import orchestrate
+    from theforge.contracts import to_dict
+
+    root = _root(args)
+    outcome = orchestrate.orchestrate_run(
+        args.intent,
+        workspace_root=root,
+        target=args.target or str(root),
+        correlation_id=args.correlation_id,
+        **_orchestrate_common(args),
+    )
+    report = outcome.report
+    try:
+        path = orchestrate.persist_report(report, root)
+    except ContractError as exc:
+        raise UsageError(str(exc)) from exc
+    data: dict[str, Any] = {"report": to_dict(report), "path": str(path)}
+    _emit(args, data, render.orchestration)
+    return 0 if outcome.plan.status == "planned" and not report.unresolved else 1
+
+
 def cmd_install_wizard(args: argparse.Namespace) -> int:
     """Bare ``install``: guided wizard on a TTY, subcommand help otherwise."""
     from theforge.install import service

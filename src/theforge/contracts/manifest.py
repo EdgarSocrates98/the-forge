@@ -7,8 +7,10 @@ from theforge.contracts.base import ContractError
 from theforge.contracts.negotiation import CapabilityOffer
 from theforge.contracts.types import (
     FEATURE_ID_RE,
+    FINDING_CLASSES,
     SHA256_RE,
     CapabilityState,
+    FindingClass,
     OperationClass,
     RevalidationStrategy,
 )
@@ -119,6 +121,10 @@ class Capability:
     resolves_ambiguity: bool = False
     # Optional declared relationships feeding the capability graph (v1 additive).
     relations: CapabilityRelations = field(default_factory=CapabilityRelations)
+    # Declared analysis class of the findings this capability emits (lf-0031,
+    # additive): the orchestration report groups findings by it; "" means the
+    # provider declared none and the findings report as UNSPECIFIED.
+    finding_class: FindingClass = ""
     # Richer self-description for capability negotiation v2 (additive): None =
     # legacy mode — the negotiator answers demands from the plain fields only.
     offer: "CapabilityOffer | None" = None
@@ -141,6 +147,11 @@ class Capability:
             )
         if self.replaced_by == self.id:
             raise ContractError(f"capability {self.id}: replaced_by equal to its own id")
+        if self.finding_class not in ("", *FINDING_CLASSES):
+            raise ContractError(
+                f"capability {self.id}: finding_class {self.finding_class!r} is not "
+                "one of '', 'static', 'runtime', 'architectural'"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)

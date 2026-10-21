@@ -87,7 +87,7 @@ def test_checkout_state_real_repo():
 def test_contract_counts_match_schema_parity():
     counts = reality._contract_counts()
     schemas = len(list((reality.ROOT / "schemas").glob("*.json")))
-    assert counts["contracts"] == schemas == 70
+    assert counts["contracts"] == schemas == 74
     assert counts.get("closed_contracts", 39) >= 39
 
 

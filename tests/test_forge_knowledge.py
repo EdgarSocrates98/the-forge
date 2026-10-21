@@ -25,6 +25,7 @@ def test_all_packages_load_and_match_known_providers() -> None:
         "platform-forge",
         "forge-doctor-data",
         "forge-doctor-api",
+        "data-sentinel-forge",
     }
     for pid, package in packages.items():
         assert package.id == pid
@@ -33,7 +34,13 @@ def test_all_packages_load_and_match_known_providers() -> None:
 
 def test_adapter_paths_point_at_real_adapters() -> None:
     for package in load_all().values():
-        assert package.adapter, package.id
+        if package.adapter is None:
+            # lf-0031: an unadapted specialist is an honest, documented gap —
+            # the package must say so, never pretend a surface exists.
+            assert "unadapted" in package.limitations_note.lower(), (
+                f"{package.id}: no adapter and the gap is undocumented"
+            )
+            continue
         adapter_dir = REPO / package.adapter
         assert adapter_dir.is_dir(), f"{package.id}: {package.adapter} missing"
         assert (adapter_dir / "pyproject.toml").is_file()
@@ -48,11 +55,15 @@ def test_packages_never_grant_trust_or_capabilities() -> None:
 
 
 def test_family_model_is_metadata_not_hardcode() -> None:
-    """§36: family routing comes from package metadata; the six-specialist
+    """§36: family routing comes from package metadata; the seven-specialist
     list is the current ecosystem, not the universe."""
     fams = families(load_all())
     assert fams["spark-engineering"] == ["spark-forge-aws", "spark-forge-azure"]
-    assert set(fams["verification"]) == {"forge-doctor-api", "forge-doctor-data"}
+    assert set(fams["verification"]) == {
+        "forge-doctor-api",
+        "forge-doctor-data",
+        "data-sentinel-forge",
+    }
 
 
 def test_every_package_has_install_and_verify() -> None:

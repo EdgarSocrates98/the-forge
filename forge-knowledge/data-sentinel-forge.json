@@ -1,0 +1,76 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "data-sentinel-forge",
+  "name": "Data Sentinel",
+  "family": "verification",
+  "summary": "Runtime/log diagnostics specialist for Spark and data platforms: event-log and failure diagnosis, Glue/EMR run inspection, SQL and plan analysis, doctor-bundle import. Diagnoses from runtime evidence; it is not an engineering producer.",
+  "repository": "https://github.com/EdgarSocrates98/data-sentinel-forge.git",
+  "package": "data-sentinel-forge>=0.1.0,<0.2.0",
+  "binary": "data-sentinel",
+  "adapter": null,
+  "python": ">=3.11",
+  "appropriate_for": [
+    "runtime failure diagnosis of Spark/Glue/EMR jobs from event logs, plans and run dumps",
+    "SQL and Spark physical-plan analysis",
+    "importing forge-doctor-data handoff bundles for independent diagnosis"
+  ],
+  "inappropriate_for": [
+    "producing Spark code or pipelines — it is a diagnostician, not a producer",
+    "static source review of a repository — route to spark-forge-* or forge-doctor-data",
+    "any run without the logs/plans/data its diagnostics require"
+  ],
+  "intents": [
+    "diagnose spark failure",
+    "spark runtime diagnosis",
+    "analyze spark logs",
+    "sentinel diagnosis",
+    "pyspark"
+  ],
+  "technologies": [
+    "spark",
+    "pyspark",
+    "aws glue",
+    "emr",
+    "event-logs",
+    "openlineage"
+  ],
+  "environments": [
+    "local"
+  ],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <sentinel-venv> && <sentinel-python> -m pip install --upgrade pip && <sentinel-python> -m pip install \"data-sentinel-forge>=0.1.0,<0.2.0\"",
+      "verify": "<sentinel-python> -c \"import data_sentinel\" && data-sentinel version",
+      "prerequisites": [
+        "python>=3.11",
+        "pip"
+      ]
+    },
+    {
+      "kind": "editable",
+      "command": "<sentinel-python> -m pip install -e <checkout-data-sentinel-forge>",
+      "verify": "<sentinel-python> -c \"import data_sentinel\" && data-sentinel version",
+      "prerequisites": [
+        "local checkout of data-sentinel-forge",
+        "python>=3.11"
+      ]
+    }
+  ],
+  "verify_install": "data-sentinel version",
+  "discover_command": "theforge providers add data-sentinel-forge --python <sentinel-python>",
+  "preferred_verifiers": [],
+  "independent_verification": true,
+  "composes_with": [
+    "forge-doctor-data",
+    "spark-forge-aws",
+    "spark-forge-azure"
+  ],
+  "fallback": [],
+  "limitations_note": "UNADAPTED (lf-0031 documented gap): data-sentinel-forge ships forge.agentic.json + forge.json and a governed CLI, but has no the-forge adapter — no Forge Protocol describe/health/execute surface, so it can never become VERIFIED today and every orchestration pick resolves to a provider-absent/degraded refusal, never a silent skip. Its diagnostics also require runtime evidence (event logs, plans, run dumps): the orchestration lane refuses to force a sentinel diagnosis when the caller declares no such inputs. A full sentinel adapter is the scope of a later spec.",
+  "examples": [
+    "diagnose the glue job failure from its run logs",
+    "explain the spark physical plan"
+  ],
+  "recorded_at": "2026-10-16T00:00:00Z"
+}

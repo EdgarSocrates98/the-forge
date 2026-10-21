@@ -41,6 +41,7 @@ vence e o doc é consertado.
 
 - [execution-targets.md](execution-targets.md) — onde executar + classificação de dados.
 - [cross-forge-orchestration.md](cross-forge-orchestration.md) — composição multi-especialista determinística.
+- [orchestration.md](orchestration.md) — lane de orquestração por capability: intent → descoberta → plano justificado → execução governada → `OrchestrationReport/v1`.
 - [trace-federation.md](trace-federation.md) — o trace cross-provider em `RunTelemetry.spans`.
 - [global-stop.md](global-stop.md) — continuação cross-provider e stop conditions.
 - [information-gain.md](information-gain.md) — estimativa qualitativa de evidência incremental.

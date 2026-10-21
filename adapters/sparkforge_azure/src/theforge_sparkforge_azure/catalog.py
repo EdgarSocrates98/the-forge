@@ -104,10 +104,14 @@ class CapabilitySpec:
     stage_root: bool = True
     needs_input: bool = True
     relations: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    # The analysis class the capability's findings declare (lf-0031): static |
+    # runtime | architectural. "" declares none — consumers report UNSPECIFIED.
+    finding_class: str = ""
 
 
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "sdd.check": CapabilitySpec(
+        finding_class="static",
         seam=SEAM_SDD_CHECK,
         actions=("check",),
         input_globs=SDD_GLOBS,
@@ -126,6 +130,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (SDD_REPORT,)},
     ),
     "sdd.status": CapabilitySpec(
+        finding_class="static",
         seam=SEAM_SDD_STATUS,
         actions=("status",),
         input_globs=SDD_GLOBS,
@@ -136,6 +141,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (SDD_STATUS_REPORT,)},
     ),
     "azure.access-diagnose": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_ACCESS_DIAGNOSE,
         actions=("analyze",),
         input_globs=AZURE_CASE_GLOBS,
@@ -157,6 +163,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (ACCESS_DIAGNOSIS,)},
     ),
     "fabric.access-diagnose": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_FABRIC_DIAGNOSE,
         actions=("analyze",),
         input_globs=FABRIC_CASE_GLOBS,
@@ -173,6 +180,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (FABRIC_DIAGNOSIS,)},
     ),
     "azure.doctor": CapabilitySpec(
+        finding_class="runtime",
         seam=SEAM_DOCTOR,
         actions=("report",),
         input_globs=(),
@@ -268,6 +276,8 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
     }
     if spec.relations:
         entry["relations"] = {name: list(refs) for name, refs in spec.relations.items()}
+    if spec.finding_class:
+        entry["finding_class"] = spec.finding_class
     return entry
 
 

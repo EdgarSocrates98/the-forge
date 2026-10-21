@@ -56,6 +56,10 @@ class CapabilitySpec:
     stage_root: bool = True
     verify_input: bool = False
     relations: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    # The analysis class the capability's findings declare (lf-0031):
+    # static | runtime | architectural. "" declares none — consumers
+    # report UNSPECIFIED.
+    finding_class: str = ""
 
 
 # A scan consumes the whole staged tree; a ``*`` requirement means "any staged file".
@@ -117,6 +121,7 @@ VERIFIES: tuple[str, ...] = tuple(
 
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "data.scan": CapabilitySpec(
+        finding_class="static",
         seam=SEAM_SCAN,
         actions=("analyze",),
         input_globs=PROJECT_GLOBS,
@@ -138,6 +143,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (DIAGNOSTIC_EVIDENCE,)},
     ),
     "data.verify": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_CONFORMANCE,
         actions=("verify",),
         input_globs=CONTRACT_GLOBS,
@@ -237,6 +243,8 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
     }
     if spec.relations:
         entry["relations"] = {name: list(refs) for name, refs in spec.relations.items()}
+    if spec.finding_class:
+        entry["finding_class"] = spec.finding_class
     return entry
 
 

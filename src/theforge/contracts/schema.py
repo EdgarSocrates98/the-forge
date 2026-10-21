@@ -51,6 +51,7 @@ from theforge.contracts import (
     McpServerEntry,
     MemoryPack,
     MemorySummary,
+    OrchestrationReport,
     PlanEstimate,
     PlanRequest,
     PlanResult,
@@ -181,6 +182,8 @@ EXPORTED: tuple[type[Any], ...] = (
     # specialist delegation policy + evidence handoff (lf-0028, PHASES 3/10/14)
     SpecialistDelegation,
     EvidenceHandoff,
+    # orchestrator lane consolidated report (lf-0031, PHASE 9+12)
+    OrchestrationReport,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open

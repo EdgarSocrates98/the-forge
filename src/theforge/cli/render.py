@@ -1881,3 +1881,57 @@ def lab_gate(data: dict[str, Any]) -> str:
     if counts:
         lines.append("counts: " + " ".join(f"{k}={v}" for k, v in sorted(counts.items())))
     return "\n".join(lines)
+
+
+def orchestration(data: dict[str, Any]) -> str:
+    """The consolidated OrchestrationReport (lf-0031): picks with their
+    justification, classed findings, named unresolved gaps, recommendations."""
+    report = data.get("report") or {}
+    lines = [
+        f"orchestration {report.get('kind')} — {_clean(report.get('intent'))}",
+        f"plan: {_clean(report.get('plan_status'))}"
+        + (
+            f"  correlation: {_clean(report['correlation_id'])}"
+            if report.get("correlation_id")
+            else ""
+        ),
+    ]
+    for entry in report.get("entries") or []:
+        line = (
+            f"  {_clean(entry.get('provider')):<22} {_clean(entry.get('capability')):<28} "
+            f"{_clean(entry.get('status'))}"
+        )
+        if entry.get("finding_class") and entry["finding_class"] != "UNSPECIFIED":
+            line += f"  [{_clean(entry['finding_class'])}]"
+        if entry.get("risks"):
+            line += f"  risks:{','.join(entry['risks'])}"
+        lines.append(line)
+        if entry.get("handoff_status"):
+            lines.append(f"    handoff: {_clean(entry['handoff_status'])}")
+        for why in (entry.get("justification") or [])[:4]:
+            lines.append(f"    - {_clean(why)}")
+        for note in entry.get("notes") or []:
+            lines.append(f"    note: {_clean(note)}")
+    for f in report.get("findings") or []:
+        mark = "*" if f.get("correlated") else " "
+        lines.append(
+            f"{mark} finding {_clean(f.get('id'))} [{_clean(f.get('finding_class'))}] "
+            f"{_clean(f.get('severity'))}/{_clean(f.get('confidence'))} "
+            f"— {_clean(f.get('summary'))} ({', '.join(f.get('providers') or [])})"
+        )
+    for u in report.get("unresolved") or []:
+        prov = f" [{_clean(u['provider'])}]" if u.get("provider") else ""
+        lines.append(f"  unresolved {_clean(u.get('code'))}{prov}: {_clean(u.get('detail'))}")
+    for rec in report.get("recommended") or []:
+        lines.append(f"  next: {_clean(rec.get('action'))} — {_clean(rec.get('why'))}")
+    for lim in report.get("limitations") or []:
+        lines.append(f"  note: {_clean(lim)}")
+    for unk in report.get("unknowns") or []:
+        lines.append(f"  unknown: {_clean(unk)}")
+    provenance = report.get("provenance") or {}
+    if provenance.get("receipts"):
+        for receipt in provenance["receipts"]:
+            lines.append(f"receipt: {_clean(receipt)}")
+    if data.get("path"):
+        lines.append(f"report: {_clean(data['path'])}")
+    return "\n".join(lines)

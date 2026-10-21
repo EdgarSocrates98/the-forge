@@ -146,10 +146,15 @@ class CapabilitySpec:
     stage_root: bool = True
     needs_input: bool = True
     relations: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    # The analysis class the capability's findings declare (lf-0031):
+    # static | runtime | architectural. "" declares none — consumers
+    # report UNSPECIFIED.
+    finding_class: str = ""
 
 
 CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
     "iac.analyze": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_IAC_ANALYZE,
         actions=("analyze",),
         input_globs=IAC_GLOBS,
@@ -168,6 +173,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (IAC_FACTS,)},
     ),
     "iac.plan-review": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_PLAN_REVIEW,
         actions=("analyze",),
         input_globs=PLAN_GLOBS,
@@ -184,6 +190,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (PLAN_REVIEW,)},
     ),
     "iac.state": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_STATE,
         actions=("analyze",),
         input_globs=STATE_GLOBS,
@@ -194,6 +201,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (STATE_FACTS,)},
     ),
     "k8s.analyze": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_K8S,
         actions=("analyze",),
         input_globs=K8S_GLOBS,
@@ -212,6 +220,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (K8S_FACTS,)},
     ),
     "secrets.scan": CapabilitySpec(
+        finding_class="static",
         seam=SEAM_SECRETS,
         actions=("scan",),
         input_globs=SECRETS_GLOBS,
@@ -232,6 +241,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (SECRETS_REPORT,)},
     ),
     "gha.analyze": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_GHA,
         actions=("analyze",),
         input_globs=GHA_GLOBS,
@@ -248,6 +258,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (GHA_FACTS,)},
     ),
     "gitops.analyze": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_GITOPS,
         actions=("analyze",),
         input_globs=GITOPS_GLOBS,
@@ -264,6 +275,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (GITOPS_FACTS,)},
     ),
     "catalog.analyze": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_CATALOG,
         actions=("analyze",),
         input_globs=CATALOG_GLOBS,
@@ -280,6 +292,7 @@ CAPABILITY_MAP: Mapping[str, CapabilitySpec] = {
         relations={"produces": (CATALOG_FACTS,)},
     ),
     "platform.manifest": CapabilitySpec(
+        finding_class="architectural",
         seam=SEAM_MANIFEST,
         actions=("report",),
         input_globs=(),
@@ -380,6 +393,8 @@ def capability_entry(spec: CapabilitySpec) -> dict[str, Any]:
     }
     if spec.relations:
         entry["relations"] = {name: list(refs) for name, refs in spec.relations.items()}
+    if spec.finding_class:
+        entry["finding_class"] = spec.finding_class
     return entry
 
 

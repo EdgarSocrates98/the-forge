@@ -74,6 +74,9 @@ class VerbSpec:
     # upstream intake is generic facts with provenance, so every diagnostic
     # evidence type a Doctor declares is consumable.
     consumes: tuple[str, ...] = ()
+    # The analysis class the capability's findings declare (lf-0031): static |
+    # runtime | architectural. "" declares none — consumers report UNSPECIFIED.
+    finding_class: str = ""
 
 
 OPENAPI_GLOBS = ("openapi.yaml", "openapi.json", "*.openapi.yaml", "*.openapi.json")
@@ -101,6 +104,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         "implements it (API Forge `analyze`).",
         upstream="--upstream",
         consumes=("api.diagnostic-evidence", "data.diagnostic-evidence"),
+        finding_class="static",
     ),
     "api.change-control": VerbSpec(
         argv=("change-control", "run"),
@@ -118,6 +122,7 @@ VERB_MAP: Mapping[str, VerbSpec] = {
         native_cwd="stage",
         case_subdir="case",
         bundle_input="bundle",
+        finding_class="architectural",
     ),
 }
 
@@ -241,6 +246,8 @@ def capability_entry(record: Mapping[str, Any], spec: VerbSpec) -> dict[str, Any
     }
     if spec.consumes:
         entry["relations"] = {"consumes": list(spec.consumes)}
+    if spec.finding_class:
+        entry["finding_class"] = spec.finding_class
     return entry
 
 

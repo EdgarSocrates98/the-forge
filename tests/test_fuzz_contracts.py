@@ -1357,6 +1357,64 @@ SEEDS: dict[str, dict[str, Any]] = {
         "truncated": True,
         "dropped": 2,
     },
+    # lf-0031: the consolidated orchestrator-lane report (PHASE 12)
+    "OrchestrationReport": {
+        "schema": "theforge/OrchestrationReport/v1",
+        "kind": "run",
+        "intent": "audit a pyspark project",
+        "correlation_id": "corr-1",
+        "generated_at": "t",
+        "plan_status": "planned",
+        "entries": [
+            {
+                "provider": "demo-sentinel",
+                "capability": "sentinel.log-analyze",
+                "status": "completed",
+                "finding_class": "RUNTIME",
+                "risks": ["LOCAL_READ"],
+                "justification": ["declared intent matched"],
+                "command": ["{cli}", "analyze"],
+                "delegation_stage": "COMPLETED",
+                "handoff_status": "received",
+                "notes": ["sealed handoff"],
+            }
+        ],
+        "findings": [
+            {
+                "id": "f1",
+                "finding_class": "RUNTIME",
+                "severity": "high",
+                "confidence": "POSSIBLE",
+                "summary": "suspected skew",
+                "providers": ["demo-sentinel", "demo-doctor"],
+                "capabilities": ["sentinel.log-analyze", "data.scan"],
+                "correlated": True,
+                "evidence_refs": ["log:tail-200"],
+            }
+        ],
+        "unresolved": [
+            {
+                "code": "provider-absent",
+                "detail": "data-sentinel-forge: discovery state NOT_INSTALLED",
+                "provider": "data-sentinel-forge",
+            }
+        ],
+        "recommended": [
+            {
+                "action": "install data-sentinel-forge — optional",
+                "why": "declared delegate absent",
+                "provider": "data-sentinel-forge",
+            }
+        ],
+        "provenance": {
+            "discovery_digest": "abc123",
+            "plan_sha256": SHA,
+            "delegation_tasks": ["task-1"],
+            "receipts": [".forge/orchestrations/corr-1.json"],
+        },
+        "limitations": ["bounded scan"],
+        "unknowns": ["ambiguous claim kept"],
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

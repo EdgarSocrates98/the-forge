@@ -64,6 +64,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from theforge import _installkit as kit
+from theforge import capability_manifest as capman
 from theforge import specialists
 from theforge.contracts.base import ContractError, from_dict, to_dict
 from theforge.contracts.canonical import sha256_hex, sha256_of, utc_now
@@ -560,6 +561,49 @@ def _version_argv(cand: _Candidate) -> list[str] | None:
     return None
 
 
+def _fetch_capability_manifest(
+    record: RegistryRecord,
+    forge_id: str,
+    *,
+    transport_factory: TransportFactory,
+    timeout: float,
+    allow_unverified: bool,
+) -> tuple[SpecialistCapability | None, str | None]:
+    """Call the governed ``capabilities`` op of a ready registry record.
+
+    Same trust rules as ``check_health``: blocked/unverified entries are
+    never executed without explicit allowance. Returns (manifest, note);
+    a failed/absent op is honest scan evidence, not an exception.
+    """
+    entry = record.entry
+    if entry.trust == "blocked" or (entry.trust == "unverified" and not allow_unverified):
+        return None, f"capabilities op not called: provider {forge_id} is {entry.trust}"
+    assert record.manifest is not None  # ready records only
+    from theforge.protocol import TransportError
+    from theforge.registry.registry import provider_cwd
+
+    try:
+        with provider_cwd() as cwd:
+            response = transport_factory(entry.argv).call(
+                "capabilities", {}, timeout=timeout, cwd=Path(cwd)
+            )
+    except TransportError as exc:
+        return None, f"capabilities op failed for {forge_id}: {exc.code} {exc.detail}"
+    except OSError as exc:
+        return None, f"capabilities op failed for {forge_id}: {exc}"
+    if response.status != "ok":
+        detail = response.error.detail if response.error else response.status
+        return None, f"capabilities op answered {response.status} for {forge_id}: {detail}"
+    manifest, error = _parse_capability_manifest(response.payload, forge_id)
+    if manifest is None:
+        return None, f"capabilities op payload invalid for {forge_id}: {error}"
+    if response.producer.id != forge_id:
+        return None, (
+            f"capabilities op producer {response.producer.id!r} does not match {forge_id!r}"
+        )
+    return manifest, f"capabilities op answered ({len(manifest.capabilities)} capabilities)"
+
+
 def _probe_version(cand: _Candidate, timeout: float) -> tuple[bool, str | None]:
     """Run ``<cli> --version`` — argv only, scrubbed env, bounded, no shell."""
     argv = _version_argv(cand)
@@ -972,6 +1016,31 @@ def _resolve(
             checks["manifest"] = "PASS"
             version = record.manifest.version
             notes.append(f"registry describe ok (protocol {record.protocol})")
+            if (
+                probe
+                and cand.capability_manifest is None
+                and "capabilities" in record.manifest.ops
+                and not budget.exhausted()
+            ):
+                # The adapter's governed capability surface is authoritative:
+                # prefer its SpecialistCapability document over the fallback
+                # derivation (lf-0031). A refused/absent/invalid answer is
+                # recorded, never fatal to the rest of the scan.
+                fetched, note = _fetch_capability_manifest(
+                    record,
+                    cand.forge_id,
+                    transport_factory=transport_factory,
+                    timeout=min(PROBE_TIMEOUT_S, max(0.1, budget.remaining())),
+                    allow_unverified=allow_unverified,
+                )
+                if fetched is not None:
+                    cand.capability_manifest = fetched
+                    cand.seen(
+                        "registry",
+                        "capabilities op answered the SpecialistCapability manifest",
+                    )
+                if note:
+                    notes.append(note)
             if probe:
                 outcome = check_health(
                     record,
@@ -1053,6 +1122,20 @@ def _resolve(
         declared_untrusted = True
         checks["manifest"] = "FAIL"
         notes.append(f"manifest rejected: {cand.manifest_error}")
+
+    # -- fallback: derive the advertisement from a live describe ------------
+    if cand.capability_manifest is None and record is not None and record.manifest is not None:
+        try:
+            cand.capability_manifest = capman.specialist_capability_from_manifest(
+                record.manifest, expected_id=cand.forge_id
+            )
+        except ContractError as exc:
+            notes.append(f"capability manifest derivation failed: {exc}")
+        else:
+            notes.append(
+                "capability manifest derived from the ForgeManifest "
+                "(no capabilities op or bundled manifest)"
+            )
 
     # -- typed-argv handshake / liveness (non-registry path) -----------------
     # A metadata handshake (installed dist, cached record) proves presence, not

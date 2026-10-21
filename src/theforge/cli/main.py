@@ -584,6 +584,75 @@ def build_parser() -> argparse.ArgumentParser:
     task_explain.add_argument("task_id")
     task_explain.set_defaults(handler=commands.cmd_task_explain)
 
+    orchestrate = sub.add_parser(
+        "orchestrate",
+        help="capability-routed multi-specialist orchestration (justified, governed)",
+    ).add_subparsers(dest="orchestrate_command", required=True)
+
+    def _orchestrate_flags(p: argparse.ArgumentParser) -> None:
+        p.add_argument("intent", help="the task intent, e.g. 'audit a pyspark project'")
+        p.add_argument(
+            "--delegation",
+            metavar="FILE",
+            help="a theforge/SpecialistDelegation/v1 JSON document "
+            "overriding the default declaration",
+        )
+        p.add_argument(
+            "--input",
+            action="append",
+            metavar="KIND",
+            help="declared input kind available to capabilities (repeatable) — "
+            "a capability whose 'requires' is not declared is refused, never forced",
+        )
+        p.add_argument(
+            "--authorize",
+            action="append",
+            metavar="RISK",
+            help="risk level to authorize beyond LOCAL_READ (repeatable): "
+            "LOCAL_WRITE EXTERNAL_READ EXTERNAL_WRITE DESTRUCTIVE COST_BEARING",
+        )
+        p.add_argument(
+            "--no-probe",
+            action="store_true",
+            help="metadata scan only — never executes a probe",
+        )
+        p.add_argument(
+            "--allow-unverified",
+            action="store_true",
+            help="probe providers whose trust is 'unverified'",
+        )
+        p.add_argument(
+            "--max-hops", type=int, default=4, help="chain hop budget (default 4)"
+        )
+        p.add_argument(
+            "--timeout-budget",
+            type=int,
+            default=600,
+            metavar="S",
+            help="chain timeout budget in seconds",
+        )
+        p.add_argument(
+            "--max-providers",
+            type=int,
+            default=4,
+            help="max specialists per plan (default 4)",
+        )
+
+    orchestrate_plan = orchestrate.add_parser(
+        "plan", parents=[common], help="build the justified delegation plan"
+    )
+    _orchestrate_flags(orchestrate_plan)
+    orchestrate_plan.set_defaults(handler=commands.cmd_orchestrate_plan)
+    orchestrate_run = orchestrate.add_parser(
+        "run", parents=[common], help="plan, then execute each pick via governed delegation"
+    )
+    _orchestrate_flags(orchestrate_run)
+    orchestrate_run.add_argument(
+        "--target", help="path the specialists analyze (default: workspace root)"
+    )
+    orchestrate_run.add_argument("--correlation-id", help="reuse an existing chain correlation id")
+    orchestrate_run.set_defaults(handler=commands.cmd_orchestrate_run)
+
     provider = sub.add_parser(
         "provider", help="provider authoring: scaffold and conformance"
     ).add_subparsers(dest="provider_command", required=True)

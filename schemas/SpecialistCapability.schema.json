@@ -37,6 +37,14 @@
               "unknown"
             ]
           },
+          "finding_class": {
+            "enum": [
+              "",
+              "static",
+              "runtime",
+              "architectural"
+            ]
+          },
           "id": {
             "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
             "type": "string"

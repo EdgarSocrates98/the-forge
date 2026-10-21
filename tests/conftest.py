@@ -251,6 +251,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_evidence_handoff.py": ("unit", "contract"),
     "test_delegation_governance.py": ("unit", "security"),
     "test_delegation_router.py": ("unit",),
+    # lf-0031: orchestrator lane + consolidated OrchestrationReport
+    "test_orchestrate.py": ("unit", "contract"),
 }
 
 

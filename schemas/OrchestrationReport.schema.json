@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "correlation_id": {
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "properties": {
+          "capability": {
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+            "type": "string"
+          },
+          "command": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "delegation_stage": {
+            "type": "string"
+          },
+          "finding_class": {
+            "enum": [
+              "STATIC",
+              "RUNTIME",
+              "ARCHITECTURAL",
+              "UNSPECIFIED"
+            ]
+          },
+          "handoff_status": {
+            "type": "string"
+          },
+          "justification": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "type": "string"
+          },
+          "risks": {
+            "items": {
+              "enum": [
+                "LOCAL_READ",
+                "LOCAL_WRITE",
+                "EXTERNAL_READ",
+                "EXTERNAL_WRITE",
+                "DESTRUCTIVE",
+                "COST_BEARING"
+              ]
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "prepared",
+              "completed",
+              "failed",
+              "blocked",
+              "refused"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "capability"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "properties": {
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "correlated": {
+            "type": "boolean"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "finding_class": {
+            "enum": [
+              "STATIC",
+              "RUNTIME",
+              "ARCHITECTURAL",
+              "UNSPECIFIED"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "providers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "finding_class",
+          "severity",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "intent": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "plan",
+        "run"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "plan_status": {
+      "type": "string"
+    },
+    "provenance": {
+      "properties": {
+        "delegation_tasks": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "discovery_digest": {
+          "type": "string"
+        },
+        "plan_sha256": {
+          "type": "string"
+        },
+        "receipts": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "recommended": {
+      "items": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "why"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "unresolved": {
+      "items": {
+        "properties": {
+          "code": {
+            "enum": [
+              "provider-absent",
+              "version-incompatible",
+              "capability-absent",
+              "invalid-input",
+              "permission-denied",
+              "timeout",
+              "runtime-error",
+              "invalid-output",
+              "insufficient-evidence",
+              "policy-refusal",
+              "cycle-detected",
+              "budget-exhausted",
+              "cancelled"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "detail"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "kind",
+    "intent"
+  ],
+  "title": "OrchestrationReport",
+  "type": "object"
+}
