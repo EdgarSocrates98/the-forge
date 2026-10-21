@@ -152,6 +152,7 @@ Mapa completo por preocupação em [docs/README.md](https://github.com/EdgarSocr
 - [Remote discovery](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/remote-discovery.md) (candidatos por requirement; discovery ≠ instalação)
 - [Specialist discovery](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/discovery.md) (especialistas presentes: fontes, proveniência, DISCOVERED ≠ VERIFIED)
 - [Delegação governada](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/delegation.md) (SpecialistDelegation/v1 + EvidenceHandoff/v1: ciclos, risk gates, router determinístico)
+- [Orquestração por capabilities](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/orchestration.md) (orchestrate plan|run: intents → plano justificado → execução governada → relatório consolidado)
 - [Provider distribution](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/provider-distribution.md) (InstallationPlan/v2: plano gated, pinned, rollback)
 - [Economy observations](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/economy-observations.md) (ExecutionObservation/v1, GlobalEconomyReceipt, maturidade por surface)
 - [Adaptive strategy](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/adaptive-strategy.md) (shadow champion/challenger — advisory, nunca promove sozinho)
