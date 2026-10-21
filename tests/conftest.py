@@ -161,6 +161,10 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_graphstudio_physics.py": ("unit", "integration"),
     # lf-0022: scale modes (overview/explore/full) under the same node harness
     "test_graphstudio_modes.py": ("unit", "integration"),
+    # lf-0024: real-browser E2E (playwright) for the studio canvas app
+    "test_graphstudio_e2e.py": ("e2e", "integration"),
+    # lf-0024: perf regression gate against docs/graph/perf-baseline.json
+    "test_graphstudio_perf.py": ("unit", "integration"),
     "test_install_orchestration.py": ("integration", "security"),
     "test_provider_sync.py": ("integration", "security"),
     "test_install_e2e.py": ("e2e", "integration"),

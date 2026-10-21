@@ -1,0 +1,16 @@
+{
+ "fixture": "graph_3000_chain.json",
+ "nodes": 3000,
+ "mode": "full",
+ "load_ms": 2323,
+ "settle_ms_browser": 88125,
+ "coordinate_audit": {
+  "non_finite": 0,
+  "inside": 3000,
+  "render": 3000,
+  "err": "",
+  "stats": "full \u00b7 3000 nodes \u00b7 2999 edges \u00b7 2999 drawn"
+ },
+ "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+ "note": "wall-clock in a real headless Chromium \u2014 includes RAF vsync pacing; not comparable to the node harness numbers"
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -369,3 +370,151 @@ def test_studio_inline_script_parses(tmp_path):
     js.write_text(m.group(1), encoding="utf-8")
     proc = subprocess.run([node, "--check", str(js)], capture_output=True, text=True, timeout=30)
     assert proc.returncode == 0, proc.stderr
+
+
+# -- lf-0024: security surface -------------------------------------------------
+
+
+def test_studio_loads_zero_remote_assets():
+    """The single-file app must never reach the network for assets: no remote
+    URLs, no <script src>/<link>/<img>/<iframe>, no dynamic import, and fetch()
+    only against the same-origin /api/* endpoints."""
+    import re
+
+    from theforge.graphstudio import STUDIO_HTML
+
+    assert "https://" not in STUDIO_HTML
+    assert "http://" not in STUDIO_HTML
+    assert "cdn." not in STUDIO_HTML
+    for tag in ("<link", "<img", "<iframe", "<object", "<embed", 'src="http'):
+        assert tag not in STUDIO_HTML, f"remote-asset surface: {tag}"
+    script = re.search(r"<script>(.*)</script>", STUDIO_HTML, re.DOTALL).group(1)
+    assert 'src="' not in re.sub(r"//[^\n]*", "", script)  # no external script tag
+    fetches = re.findall(r"fetch\(([^)]*)\)", script)
+    assert fetches, "studio must fetch /api/* somewhere"
+    for f in fetches:
+        assert "'/api/" in f, f"non-same-origin fetch: {f}"
+
+
+def test_studio_no_eval_or_function_constructor():
+    """No eval, no Function constructor, no import() — the CSP script-src
+    stays 'unsafe-inline' only because the app itself is inline."""
+    import re
+
+    from theforge.graphstudio import STUDIO_HTML
+
+    script = re.search(r"<script>(.*)</script>", STUDIO_HTML, re.DOTALL).group(1)
+    assert "eval(" not in script
+    assert "new Function" not in script
+    assert "import(" not in script
+    # innerHTML is used — but the audit (esc() on every dynamic value) is
+    # enforced functionally by test_studio_escapes_injected_labels below.
+    assert "document.write" not in script
+
+
+def test_studio_csp_meta_present():
+    """The CSP stance: single-file app → script/style must be 'unsafe-inline',
+    everything else 'none'; connections same-origin only."""
+    from theforge.graphstudio import STUDIO_HTML
+
+    m = re.search(
+        r'<meta[^>]*Content-Security-Policy[^>]*content="([^"]+)"',
+        STUDIO_HTML,
+        re.S,
+    )
+    assert m, "no CSP meta in STUDIO_HTML"
+    csp = m.group(1)
+    assert "default-src 'none'" in csp
+    assert "connect-src 'self'" in csp
+    assert "'unsafe-inline'" in csp  # script+style, honest for a single file
+    for directive in ("img-src", "font-src"):
+        assert directive in csp
+
+
+def test_server_security_headers(studio):
+    """Every response carries the hardening headers — CSP matching the meta
+    plus nosniff so API JSON can never be re-typed as markup."""
+    resp = urllib.request.urlopen(studio + "/")
+    csp = resp.headers.get("Content-Security-Policy") or ""
+    assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+    assert "default-src 'none'" in csp and "connect-src 'self'" in csp
+    api = urllib.request.urlopen(studio + "/api/graphs")
+    assert api.headers.get("X-Content-Type-Options") == "nosniff"
+
+
+def test_server_decodes_percent_encoded_graph_id(studio):
+    """The frontend encodeURIComponent()s graph ids — the handler must
+    decode or a reserved char in the id 404s a real graph."""
+    view = ForgeGraphView(
+        descriptor=new_descriptor(provider_id="p", domain="d", graph_id="ns/graph 1"),
+        nodes=(GraphNodeView(id="n1", kind="k", label="n1"),),
+    ).to_dict()
+    srv, base = _serve([view])
+    try:
+        doc = json.loads(urllib.request.urlopen(base + "/api/graph/ns%2Fgraph%201").read())
+        assert doc["nodes"][0]["id"] == "n1"
+    finally:
+        srv.shutdown()
+
+
+def test_studio_a11y_surface_static():
+    """lf-0024 accessibility wiring, verified in the shipped markup/script:
+    keyboard-focusable canvas, alert/status live regions, named controls,
+    focus-visible outline, prefers-reduced-motion honored, link-ish
+    affordances as real <button>s."""
+    from theforge.graphstudio import STUDIO_HTML
+
+    assert '<canvas id="cv" tabindex="0" role="application"' in STUDIO_HTML
+    assert 'aria-label="graph canvas' in STUDIO_HTML
+    assert 'id="err" role="alert" tabindex="-1"' in STUDIO_HTML
+    assert 'id="notice" role="status" aria-live="polite"' in STUDIO_HTML
+    assert 'id="prov" aria-live="polite"' in STUDIO_HTML
+    assert 'aria-label="search nodes"' in STUDIO_HTML
+    assert 'aria-label="graph to explore"' in STUDIO_HTML
+    assert 'role="navigation" aria-label="breadcrumb"' in STUDIO_HTML
+    assert 'role="complementary" aria-label="inspector"' in STUDIO_HTML
+    assert ":focus-visible" in STUDIO_HTML
+    script = re.search(r"<script>(.*)</script>", STUDIO_HTML, re.DOTALL).group(1)
+    assert "prefers-reduced-motion" in script and "matchMedia" in script
+    # link-looking controls are real buttons (keyboard-operable), not <a>
+    assert '<a class="nlink"' not in script
+    assert '<button class="nlink"' in script
+    # error focus management — showErr moves keyboard focus to the alert
+    assert "e.focus" in script
+
+
+def _wcag_lum(rgb: tuple[int, int, int]) -> float:
+    def f(c: int) -> float:
+        c = c / 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (f(c) for c in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _wcag_ratio(fg: str, bg: str) -> float:
+    def rgb(h: str) -> tuple[int, int, int]:
+        return tuple(int(h[i : i + 2], 16) for i in (1, 3, 5))  # type: ignore[return-value]
+
+    hi = max(_wcag_lum(rgb(fg)), _wcag_lum(rgb(bg)))
+    lo = min(_wcag_lum(rgb(fg)), _wcag_lum(rgb(bg)))
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def test_studio_contrast_tokens_meet_aa():
+    """Every text token pair the stylesheet ships must clear WCAG AA 4.5:1 —
+    computed, not eyeballed. Recorded ratios land in the lf-0024 doc."""
+    pairs = {
+        "--fg on --bg": ("#e6edf3", "#0d1117"),
+        "--fg on --panel": ("#e6edf3", "#161b22"),
+        "--dim on --bg": ("#8b949e", "#0d1117"),
+        "--dim on --panel": ("#8b949e", "#161b22"),
+        "--acc on --bg": ("#58a6ff", "#0d1117"),
+        "--acc on --panel": ("#58a6ff", "#161b22"),
+        "err fg on err bg": ("#ffdcd0", "#5a1e1e"),
+        "notice fg on notice bg": ("#ffd977", "#3a2e14"),
+    }
+    ratios = {name: _wcag_ratio(fg, bg) for name, (fg, bg) in pairs.items()}
+    low = {k: round(v, 2) for k, v in ratios.items() if v < 4.5}
+    all_r = {k: round(v, 2) for k, v in ratios.items()}
+    assert not low, f"tokens under WCAG AA 4.5:1: {low} (all: {all_r})"

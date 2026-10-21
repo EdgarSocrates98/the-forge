@@ -1,0 +1,362 @@
+{
+ "tool": "graph_perf.py (lf-0024)",
+ "generated_at": "2026-10-21T05:50:26+00:00",
+ "node_version": "v22.23.2",
+ "platform": "Linux x86_64",
+ "ticks": 1200,
+ "extracted_script_sha256": "da0e16434924b3a264074513ba8b498a783389a767d0751145a4adf3f4744ece",
+ "json_name": "perf-baseline.json",
+ "runs": [
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_100_chain.json",
+   "graph_id": "synthetic/100-chain",
+   "requested_mode": null,
+   "mode": "full",
+   "nodes": 100,
+   "edges": 99,
+   "edges_dropped": 0,
+   "render_nodes": 100,
+   "render_edges": 99,
+   "clusters": 0,
+   "draw": {
+    "nodes": 100,
+    "edges": 99,
+    "edgesOk": 99,
+    "labels": 100
+   },
+   "load_ms": 85,
+   "settle_ms": 1051,
+   "settled": true,
+   "logical_ticks": 290,
+   "raf_frames": 85,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 12.35,
+    "p50": 11.5,
+    "p95": 15.31,
+    "max": 38.11
+   },
+   "heap_mb": {
+    "t0": 4.67,
+    "after_load": 5.91,
+    "end": 6.52,
+    "rss_end": 57.91
+   },
+   "cpu_ms": {
+    "user": 1549.38,
+    "system": 111.16
+   },
+   "non_finite": 0,
+   "max_abs_coord": 540,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_100_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 53049,
+   "size": 100
+  },
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_500_chain.json",
+   "graph_id": "synthetic/500-chain",
+   "requested_mode": null,
+   "mode": "full",
+   "nodes": 500,
+   "edges": 499,
+   "edges_dropped": 0,
+   "render_nodes": 500,
+   "render_edges": 499,
+   "clusters": 0,
+   "draw": {
+    "nodes": 500,
+    "edges": 499,
+    "edgesOk": 499,
+    "labels": 500
+   },
+   "load_ms": 106,
+   "settle_ms": 30466,
+   "settled": true,
+   "logical_ticks": 343,
+   "raf_frames": 2230,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 13.65,
+    "p50": 13.37,
+    "p95": 15.04,
+    "max": 29.42
+   },
+   "heap_mb": {
+    "t0": 5.23,
+    "after_load": 7.04,
+    "end": 9.46,
+    "rss_end": 75.54
+   },
+   "cpu_ms": {
+    "user": 31067.35,
+    "system": 266.74
+   },
+   "non_finite": 0,
+   "max_abs_coord": 956,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_500_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 266216,
+   "size": 500
+  },
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_1000_chain.json",
+   "graph_id": "synthetic/1000-chain",
+   "requested_mode": null,
+   "mode": "full",
+   "nodes": 1000,
+   "edges": 999,
+   "edges_dropped": 0,
+   "render_nodes": 1000,
+   "render_edges": 999,
+   "clusters": 0,
+   "draw": {
+    "nodes": 1000,
+    "edges": 999,
+    "edgesOk": 999,
+    "labels": 1000
+   },
+   "load_ms": 163,
+   "settle_ms": 23143,
+   "settled": true,
+   "logical_ticks": 352,
+   "raf_frames": 727,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 31.82,
+    "p50": 32.02,
+    "p95": 39.05,
+    "max": 77.81
+   },
+   "heap_mb": {
+    "t0": 6.16,
+    "after_load": 8.56,
+    "end": 22.92,
+    "rss_end": 92.8
+   },
+   "cpu_ms": {
+    "user": 24310.3,
+    "system": 366.76
+   },
+   "non_finite": 0,
+   "max_abs_coord": 1224,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_1000_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 533689,
+   "size": 1000
+  },
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_3000_chain.json",
+   "graph_id": "synthetic/3000-chain",
+   "requested_mode": null,
+   "mode": "overview",
+   "nodes": 3000,
+   "edges": 2999,
+   "edges_dropped": 0,
+   "render_nodes": 250,
+   "render_edges": 249,
+   "clusters": 250,
+   "draw": {
+    "nodes": 250,
+    "edges": 249,
+    "edgesOk": 249,
+    "labels": 255
+   },
+   "load_ms": 1702,
+   "settle_ms": 6140,
+   "settled": true,
+   "logical_ticks": 316,
+   "raf_frames": 530,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 11.57,
+    "p50": 11.09,
+    "p95": 13.58,
+    "max": 22.14
+   },
+   "heap_mb": {
+    "t0": 10.11,
+    "after_load": 21.9,
+    "end": 28.87,
+    "rss_end": 102.29
+   },
+   "cpu_ms": {
+    "user": 8371.63,
+    "system": 260.15
+   },
+   "non_finite": 0,
+   "max_abs_coord": 300,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_3000_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 1611573,
+   "size": 3000
+  },
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_5000_heterogeneous.json",
+   "graph_id": "synthetic/5000-heterogeneous",
+   "requested_mode": null,
+   "mode": "overview",
+   "nodes": 5000,
+   "edges": 10000,
+   "edges_dropped": 0,
+   "render_nodes": 2,
+   "render_edges": 0,
+   "clusters": 2,
+   "draw": {
+    "nodes": 2,
+    "edges": 0,
+    "edgesOk": 0,
+    "labels": 3
+   },
+   "load_ms": 1329,
+   "settle_ms": 6,
+   "settled": true,
+   "logical_ticks": 223,
+   "raf_frames": 2,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 3.15,
+    "p50": 4.7,
+    "p95": 4.7,
+    "max": 4.7
+   },
+   "heap_mb": {
+    "t0": 18.89,
+    "after_load": 35.23,
+    "end": 35.63,
+    "rss_end": 104.91
+   },
+   "cpu_ms": {
+    "user": 1485.15,
+    "system": 166.66
+   },
+   "non_finite": 0,
+   "max_abs_coord": 300,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_5000_heterogeneous.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 3967838,
+   "size": 5000
+  },
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_10000_chain.json",
+   "graph_id": "synthetic/10000-chain",
+   "requested_mode": null,
+   "mode": "overview",
+   "nodes": 10000,
+   "edges": 9999,
+   "edges_dropped": 0,
+   "render_nodes": 250,
+   "render_edges": 249,
+   "clusters": 250,
+   "draw": {
+    "nodes": 250,
+    "edges": 249,
+    "edgesOk": 249,
+    "labels": 255
+   },
+   "load_ms": 14720,
+   "settle_ms": 6094,
+   "settled": true,
+   "logical_ticks": 325,
+   "raf_frames": 533,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 11.42,
+    "p50": 11.05,
+    "p95": 13.56,
+    "max": 20.25
+   },
+   "heap_mb": {
+    "t0": 23.92,
+    "after_load": 41.48,
+    "end": 54.52,
+    "rss_end": 128.32
+   },
+   "cpu_ms": {
+    "user": 21684.3,
+    "system": 329.31
+   },
+   "non_finite": 0,
+   "max_abs_coord": 300,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_10000_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 5394154,
+   "size": 10000
+  },
+  {
+   "error": "harness timeout (900s) — recorded, not hidden",
+   "fixture_name": "graph_10000_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 5394154,
+   "size": 10000,
+   "requested_mode": "full"
+  },
+  {
+   "fixture": "/home/edgar/Documentos/projetos/forjas/spark-forge-aws/tests/graph/fixtures/graph_25000_chain.json",
+   "graph_id": "synthetic/25000-chain",
+   "requested_mode": null,
+   "mode": "overview",
+   "nodes": 25000,
+   "edges": 24999,
+   "edges_dropped": 0,
+   "render_nodes": 250,
+   "render_edges": 249,
+   "clusters": 250,
+   "draw": {
+    "nodes": 250,
+    "edges": 249,
+    "edgesOk": 249,
+    "labels": 256
+   },
+   "load_ms": 100318,
+   "settle_ms": 6584,
+   "settled": true,
+   "logical_ticks": 337,
+   "raf_frames": 566,
+   "resets": 0,
+   "tick_ms": {
+    "mean": 11.62,
+    "p50": 11.21,
+    "p95": 13.79,
+    "max": 23.75
+   },
+   "heap_mb": {
+    "t0": 53.71,
+    "after_load": 74.99,
+    "end": 65.41,
+    "rss_end": 151.21
+   },
+   "cpu_ms": {
+    "user": 99093.47,
+    "system": 10061.66
+   },
+   "non_finite": 0,
+   "max_abs_coord": 300,
+   "outside_10k": 0,
+   "notice": "",
+   "err": "",
+   "fixture_name": "graph_25000_chain.json",
+   "ticks_requested": 1200,
+   "fixture_bytes": 13568251,
+   "size": 25000
+  }
+ ]
+}
