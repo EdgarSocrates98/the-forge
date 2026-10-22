@@ -11,6 +11,7 @@ Writes (idempotent):
 - ``install.windows.sh``     Windows Git Bash route (thin adapter, no PowerShell)
 - ``scripts/forge_bootstrap.py``  vendored, _SOURCE_SHA256-stamped
 - ``<pkg>/_installkit.py``   runtime engine (when --installkit-pkg given)
+- ``<pkg>/_forgecontext.py`` context-registry engine (when --installkit-pkg given)
 
 The vendored copies carry the canonical sha256 so ``--check`` can detect
 drift. Edit the canonical file here, then re-vendor — never edit a copy.
@@ -28,6 +29,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 CANON_BOOTSTRAP = HERE / "forge_bootstrap.py"
 CANON_INSTALLKIT = HERE / "forge_installkit.py"
+CANON_CONTEXT = HERE / "forge_context.py"
 
 
 def _sha(b: bytes) -> str:
@@ -397,6 +399,9 @@ def vendor(
         # test_package_carries_install_surface) compare the two byte-wise.
         if (repo / "scripts" / "forge_installkit.py").exists():
             put("scripts/forge_installkit.py", _vendored(CANON_INSTALLKIT, kit_sha))
+        if CANON_CONTEXT.exists():
+            ctx_sha = _sha(CANON_CONTEXT.read_bytes())[:16]
+            put(f"{installkit_pkg}/_forgecontext.py", _vendored(CANON_CONTEXT, ctx_sha))
 
     if check:
         for rel in drifted:

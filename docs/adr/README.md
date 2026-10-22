@@ -102,6 +102,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | instalação portátil: kit vendored, escopos project/workspace/user, família | [0058](0058-portable-installation.md) | `agentic` |
 | portal web local opcional + command center da federação | [0059](0059-forge-portal-command-center.md) | `agentic` |
 | Forge Lab federado: agregador fino (contrato + consumer) vs. subsistema novo | [0060](0060-forge-lab-coordinator.md) | `agentic` |
+| `.forge/context/`: registry de contexto por workspace + contrato `forge/context/v1` | [0061](0061-forge-context-registry.md) | `agentic` |
 
 ## Novo ADR
 

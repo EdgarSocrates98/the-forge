@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from theforge import __version__
+from theforge import _forgecontext as fctx
 from theforge import _installkit as kit
 from theforge.install import providers, render
 
@@ -148,7 +149,190 @@ def install(
             )
     if not dry_run and receipt.get("status") == "completed":
         kit._write_receipt(ctx.state_dir, receipt)
+        _register_context(ctx, receipt)
     return receipt
+
+
+# --------------------------------------------------------------------------
+# forge-context/v1 wiring (install-2.0 cycle 2, ADR-0061)
+# `.forge/context/` is the workspace-level capability registry — written at
+# the install target, shared across forges, owned per forge_id.
+# --------------------------------------------------------------------------
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
+_THEFORGE_DOMAINS: tuple[str, ...] = (
+    "forge-ecosystem",
+    "specialist-orchestration",
+    "capability-negotiation",
+    "economy-tracking",
+)
+
+
+def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
+    """forge/context/v1 manifest for the-forge, built from real metadata:
+    forge.json (when the checkout is present), the bundled skill/agent
+    sources and the forge-knowledge catalog."""
+    from theforge import agents as agents_mod
+    from theforge import knowledge as knowledge_mod
+
+    forge_json = kit._load_json(_REPO_ROOT / "forge.json", None)
+    forge_json = forge_json if isinstance(forge_json, dict) else None
+
+    skills: list[str] = []
+    skills_src = render._skills_src()
+    if skills_src is not None:
+        skills = sorted(d.name for d in skills_src.iterdir() if d.is_dir())
+    agent_ids: list[str] = []
+    try:
+        agent_ids = sorted(agents_mod.load_all())
+    except Exception:  # agent specs are optional outside a checkout
+        agent_ids = []
+    providers_: list[dict[str, Any]] = []
+    try:
+        providers_ = [
+            {"id": pid, "interface": "native-runtime"} for pid in sorted(knowledge_mod.load_all())
+        ]
+    except Exception:
+        providers_ = []
+
+    checks: list[dict[str, Any]] = [
+        {
+            "id": "knowledge-catalog",
+            "status": "PASS" if providers_ else "UNVERIFIED",
+            "detail": f"{len(providers_)} knowledge packages",
+        },
+        {
+            "id": "agent-specs",
+            "status": "PASS" if agent_ids else "UNVERIFIED",
+            "detail": f"{len(agent_ids)} agent specs",
+        },
+    ]
+    return fctx.build_manifest(
+        forge_id=FORGE_ID,
+        name="The Forge",
+        version=__version__,
+        cli="theforge",
+        package="theforge",
+        distribution=DIST_NAME,
+        python_spec=">=3.11",
+        scope=ctx.scope,
+        profile=ctx.profile,
+        hosts=ctx.hosts,
+        forge_json=forge_json,
+        domains=_THEFORGE_DOMAINS,
+        skills=skills,
+        agents=agent_ids,
+        knowledge_providers=providers_,
+        protocols=(
+            {"id": "forge/v1", "version": "1"},
+            {"id": "forge/context/v1", "version": "1"},
+            {"id": "forge/context-registry/v1", "version": "1"},
+        ),
+        discovery_commands=(
+            {
+                "id": "knowledge-list",
+                "argv": ["theforge", "knowledge", "list"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "list bootstrap knowledge packages",
+            },
+            {
+                "id": "agents-list",
+                "argv": ["theforge", "agents", "list"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "list registered agent specs and authorities",
+            },
+            {
+                "id": "install-status",
+                "argv": ["theforge", "install", "status"],
+                "mode": "diagnostic-only",
+                "read_only": True,
+                "description": "install ledger drift + health of the target",
+            },
+        ),
+        resources={
+            "skills-bundle": {
+                "kind": "bundled",
+                "location": "theforge/host_assets/skills",
+                "optional": False,
+            },
+            "agents-bundle": {
+                "kind": "bundled",
+                "location": "theforge/host_assets/agents",
+                "optional": False,
+            },
+            "knowledge-bundle": {
+                "kind": "bundled",
+                "location": "theforge/forge_knowledge",
+                "optional": True,
+            },
+            "install-ledger": {
+                "kind": "referenced",
+                "location": ".forge/install/install-ledger.json",
+                "optional": True,
+            },
+        },
+        mutating_verbs=(
+            "install apply",
+            "install uninstall",
+            "install update",
+            "install repair",
+            "install auto",
+            "provider install",
+        ),
+        requires_approval=(
+            "install apply",
+            "install uninstall",
+            "install update",
+            "provider install",
+        ),
+        offline_available=True,
+        health={
+            "status": "healthy" if providers_ and agent_ids else "degraded",
+            "checks": checks,
+        },
+        components=ctx.options or None,
+        recorded_by="theforge",
+    )
+
+
+def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
+    """Write `.forge/context/` — capability manifest + registry entry +
+    ROUTING.md. A context failure is a named BLOCKED check on the receipt,
+    never a silent skip."""
+    try:
+        manifest = _context_manifest(ctx)
+        out = fctx.register_forge(ctx.root, manifest, owner=FORGE_ID)
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "context-registry",
+                "status": "PASS",
+                "detail": f".forge/context {out['status']} ({len(out['written'])} writes)",
+            }
+        )
+    except fctx.ContextError as exc:
+        receipt.setdefault("checks", []).append(
+            {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
+        )
+
+
+def _unregister_context(root: Path, receipt: dict[str, Any]) -> None:
+    """Remove our own context manifest + registry entry on uninstall."""
+    try:
+        out = fctx.unregister_forge(root, FORGE_ID, owner=FORGE_ID)
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "context-registry",
+                "status": "PASS",
+                "detail": f".forge/context {out['status']}",
+            }
+        )
+    except fctx.ContextError as exc:
+        receipt.setdefault("checks", []).append(
+            {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
+        )
 
 
 def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any]:
@@ -204,6 +388,7 @@ def uninstall(
         }
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.uninstall(ctx, purge_state=purge)
+        _unregister_context(ctx.root, r)
         if lock.recovered:
             r.setdefault("checks", []).append(
                 {

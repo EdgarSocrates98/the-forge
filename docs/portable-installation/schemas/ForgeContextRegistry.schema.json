@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/context-registry/v1",
+  "title": "ForgeContextRegistry",
+  "description": "Workspace registry at .forge/context/registry.json — the shared document regenerated deterministically from per-forge capability manifests. Validated structurally by the vendored forge_context engine.",
+  "type": "object",
+  "required": ["schema", "version", "workspace_root", "forges", "domains_index",
+               "ownership", "updated_at"],
+  "properties": {
+    "schema": {"const": "forge/context-registry/v1"},
+    "version": {"const": 1},
+    "workspace_root": {"type": "string", "minLength": 1},
+    "forges": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "domains_index": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string", "pattern": "^[a-z0-9-]{1,64}$"}
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "properties": {
+        "policy": {"type": "string"},
+        "files": {"type": "object"},
+        "kinds": {
+          "type": "array",
+          "items": {"enum": ["fully-managed", "shared", "managed-block", "user",
+                             "preexisting", "foreign-installer"]}
+        }
+      },
+      "additionalProperties": false
+    },
+    "updated_at": {"type": "string",
+                   "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["forge_id", "owner", "name", "version", "state", "scope",
+                   "profile", "hosts", "domains", "manifest", "installed_by",
+                   "installed_at", "updated_at"],
+      "properties": {
+        "forge_id": {"type": "string", "pattern": "^[a-z0-9-]{1,64}$"},
+        "owner": {"type": "string", "pattern": "^[a-z0-9-]{1,64}$"},
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "state": {"enum": ["available", "degraded", "unavailable"]},
+        "scope": {"enum": ["project", "workspace", "user"]},
+        "profile": {"enum": ["minimal", "recommended", "full"]},
+        "hosts": {
+          "type": "array",
+          "items": {"enum": ["claude", "devin", "codex", "copilot"]}
+        },
+        "domains": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[a-z0-9-]{1,64}$"}
+        },
+        "manifest": {
+          "type": "object",
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+          },
+          "additionalProperties": false
+        },
+        "installed_by": {
+          "type": "object",
+          "required": ["agent", "version"],
+          "properties": {
+            "agent": {"type": "string", "minLength": 1},
+            "version": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "installed_at": {"type": "string",
+                         "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"},
+        "updated_at": {"type": "string",
+                       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
