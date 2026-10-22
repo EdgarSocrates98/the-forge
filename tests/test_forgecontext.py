@@ -120,6 +120,75 @@ def test_command_and_path_validation():
         jsonschema.validate(doc, _schema("ForgeContext.schema.json"))
 
 
+def test_discovery_ops_map_conceptual_ops_to_declared_commands():
+    """`discovery.ops` resolves a §6.2 conceptual op to a declared command
+    id — the manifest carries the mapping, consumers never guess verbs."""
+    cmds = (
+        {
+            "id": "rules-lookup",
+            "argv": ["sparkforge-aws", "rules", "lookup"],
+            "read_only": True,
+        },
+        {
+            "id": "knowledge-path",
+            "argv": ["sparkforge-aws", "knowledge", "path"],
+            "read_only": True,
+        },
+    )
+    doc = _manifest(
+        discovery_commands=cmds,
+        discovery_ops={
+            "rules.search": "rules-lookup",
+            "knowledge.get": "knowledge-path",
+        },
+    )
+    assert fctx.validate_manifest(doc) == []
+    jsonschema.validate(doc, _schema("ForgeContext.schema.json"))
+    assert doc["discovery"]["ops"] == {
+        "rules.search": "rules-lookup",
+        "knowledge.get": "knowledge-path",
+    }
+
+
+def test_discovery_ops_rejects_unknown_op_and_dangling_ref():
+    cmds = (
+        {
+            "id": "rules-lookup",
+            "argv": ["sparkforge-aws", "rules", "lookup"],
+            "read_only": True,
+        },
+    )
+    # build_manifest refuses to emit an invalid doc — mutate a valid one
+    bad_op = _manifest(
+        discovery_commands=cmds, discovery_ops={"rules.search": "rules-lookup"}
+    )
+    bad_op["discovery"]["ops"]["telemetry.export"] = "rules-lookup"
+    assert any("unknown op" in p for p in fctx.validate_manifest(bad_op))
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(bad_op, _schema("ForgeContext.schema.json"))
+
+    dangling = _manifest(
+        discovery_commands=cmds, discovery_ops={"rules.search": "rules-lookup"}
+    )
+    dangling["discovery"]["ops"]["rules.get"] = "no-such-command"
+    problems = fctx.validate_manifest(dangling)
+    assert any("undeclared command" in p for p in problems)
+
+    with pytest.raises(fctx.ContextError):
+        _manifest(
+            discovery_commands=cmds, discovery_ops={"rules.search": "undeclared"}
+        )
+
+    not_a_map = _manifest()
+    not_a_map["discovery"]["ops"] = ["rules.search"]
+    assert fctx.validate_manifest(not_a_map)
+
+
+def test_discovery_ops_absent_by_default():
+    doc = _manifest()
+    assert "ops" not in doc["discovery"]
+
+
 # --- registry round-trip ------------------------------------------------------
 
 

@@ -254,6 +254,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_delegation_router.py": ("unit",),
     # lf-0031: orchestrator lane + consolidated OrchestrationReport
     "test_orchestrate.py": ("unit", "contract"),
+    # lf-0039 §8.4: clean-venv wheel isolation (build + install lifecycle)
+    "test_wheel_isolation.py": ("e2e", "integration", "slow"),
 }
 
 
