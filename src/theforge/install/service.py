@@ -41,14 +41,11 @@ def _spec() -> kit.ForgeSpec:
         mcp_server_name=None,
         version_cmd=("--version",),
         render_assets=_render_for,
-        marker_files=("AGENTS.md", "CLAUDE.md"),
-        marker_body=(
-            "**The Forge** esta instalado neste projeto.\n\n"
-            "- Skills: mirrors gerenciados nos diretorios de host\n"
-            "- Ciclo de vida: `theforge install status|doctor|repair|uninstall`\n\n"
-            "Conteudo entre os marcadores `the-forge:managed` e gerenciado; "
-            "o que estiver fora e do usuario."
-        ),
+        # Consumer docs (AGENTS.md/CLAUDE.md/AGENT_PROTOCOL.md) pertencem a
+        # camada forge_context — blocos `forge:<forge-id>` + protocolo
+        # consolidado, nao markers `the-forge:managed` (lf-0036).
+        marker_files=(),
+        marker_body="",
         user_state_dir="~/.forge",
     )
 
@@ -150,6 +147,7 @@ def install(
     if not dry_run and receipt.get("status") == "completed":
         kit._write_receipt(ctx.state_dir, receipt)
         _register_context(ctx, receipt)
+        _drop_stale_doc_entries(ctx)
     return receipt
 
 
@@ -298,10 +296,32 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
     )
 
 
+# Legacy markers from previous installkit generations
+# (`the-forge:managed:begin`); `install_docs` strips them while converging
+# AGENTS.md/CLAUDE.md to the `forge:<tag>` contract (lf-0036).
+_LEGACY_DOC_TAGS: tuple[str, ...] = ("the-forge:managed",)
+_CONSUMER_DOCS: tuple[str, ...] = ("AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
+
+
+def _drop_stale_doc_entries(ctx: kit.InstallContext) -> None:
+    """Drop ledger entries for the consumer docs: they are owned by the
+    forge_context docs layer now (managed `forge:*` blocks), not by a
+    whole-file hash — user content outside the markers is not drift."""
+    ledger = kit.Ledger.load(ctx.state_dir)
+    changed = False
+    for name in _CONSUMER_DOCS:
+        if ledger.get(name) is not None:
+            ledger.drop(name)
+            changed = True
+    if changed:
+        ledger.save()
+
+
 def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
     """Write `.forge/context/` — capability manifest + registry entry +
-    ROUTING.md. A context failure is a named BLOCKED check on the receipt,
-    never a silent skip."""
+    ROUTING.md + the consumer docs (managed `forge:*` blocks and the shared
+    AGENT_PROTOCOL.md). A context failure is a named BLOCKED check on the
+    receipt, never a silent skip."""
     try:
         manifest = _context_manifest(ctx)
         out = fctx.register_forge(ctx.root, manifest, owner=FORGE_ID)
@@ -315,6 +335,25 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
     except fctx.ContextError as exc:
         receipt.setdefault("checks", []).append(
             {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
+        )
+        return
+    try:
+        docs = fctx.install_docs(
+            ctx.root, manifest, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
+        )
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "consumer-docs",
+                "status": "PASS",
+                "detail": (
+                    f"{docs['status']}: {len(docs['written'])} written, "
+                    f"{len(docs['kept'])} kept"
+                ),
+            }
+        )
+    except fctx.ContextError as exc:
+        receipt.setdefault("checks", []).append(
+            {"id": "consumer-docs", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
         )
 
 
@@ -335,6 +374,51 @@ def _unregister_context(root: Path, receipt: dict[str, Any]) -> None:
         )
 
 
+def _docs_leftovers(root: Path) -> bool:
+    """True when the target still carries forge_context residue: a context
+    dir, our managed block, the shared ecosystem block, the managed
+    protocol sentinel, or a legacy marker. Reading is lock-free — only a
+    hit justifies the write path."""
+    if (root / fctx.CONTEXT_DIR).exists():
+        return True
+    needles = (
+        f"forge:{FORGE_ID}:", f"{fctx.DOC_TAG_ECOSYSTEM}:",
+        fctx.PROTOCOL_SENTINEL, *_LEGACY_DOC_TAGS,
+    )
+    for name in _CONSUMER_DOCS:
+        path = root / name
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if any(n in text for n in needles):
+            return True
+    return False
+
+
+def _uninstall_docs(root: Path, receipt: dict[str, Any]) -> None:
+    """Strip the `forge:the-forge` (+ legacy) blocks from the consumer docs;
+    runs after `_unregister_context` so the shared protocol regenerates
+    without our section. Last-forge teardown deletes generated-only docs."""
+    try:
+        out = fctx.uninstall_docs(
+            root, FORGE_ID, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
+        )
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "consumer-docs",
+                "status": "PASS",
+                "detail": f"{out['status']}: {len(out['written'])} changed",
+            }
+        )
+    except fctx.ContextError as exc:
+        receipt.setdefault("checks", []).append(
+            {"id": "consumer-docs", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
+        )
+
+
 def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any]:
     return kit.status(_ctx(scope, root, (), "recommended", True))
 
@@ -351,6 +435,26 @@ def repair(
         return kit.status(ctx)
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.repair(ctx)
+        # Consumer docs: re-assert `forge:*` blocks from the manifests under
+        # `.forge/context/`; a named refusal lands as a BLOCKED check.
+        try:
+            out_docs = fctx.repair_docs(ctx.root, legacy_tags=_LEGACY_DOC_TAGS)
+            r["repaired"].extend(f"docs:{w}" for w in out_docs["written"])
+            r.setdefault("checks", []).append(
+                {
+                    "id": "consumer-docs",
+                    "status": "PASS",
+                    "detail": (
+                        f"{out_docs['status']} ({len(out_docs['written'])} writes)"
+                    ),
+                }
+            )
+        except fctx.ContextError as exc:
+            r["skipped"].append(f"docs:{exc.kind}")
+            r.setdefault("checks", []).append(
+                {"id": "consumer-docs", "status": "BLOCKED",
+                 "detail": f"{exc.kind}: {exc.detail}"}
+            )
         if lock.recovered:
             r.setdefault("checks", []).append(
                 {
@@ -368,12 +472,19 @@ def uninstall(
     ctx = _ctx(scope, root, (), "recommended", dry_run)
     if not ctx.state_dir.exists() or dry_run:
         if not dry_run:
-            # Nothing installed: idempotent no-op that writes no state.
-            return _receipt(
+            # Nothing installed: idempotent no-op that writes no state —
+            # unless context/doc leftovers remain (state dir gone but the
+            # registry entry or `forge:*` blocks linger). Both ops are
+            # lock-acquiring writers, so they only run when residue exists.
+            r = _receipt(
                 "uninstall",
                 [{"id": "uninstall", "status": "PASS", "detail": "0 removed, 0 kept"}],
                 "completed",
             ) | {"removed": [], "kept": [], "scope": scope, "target_root": str(ctx.root)}
+            if _docs_leftovers(ctx.root):
+                _unregister_context(ctx.root, r)
+                _uninstall_docs(ctx.root, r)
+            return r
         st = kit.status(ctx)
         return {
             "schema": kit.SCHEMA_RECEIPT,
@@ -389,6 +500,7 @@ def uninstall(
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.uninstall(ctx, purge_state=purge)
         _unregister_context(ctx.root, r)
+        _uninstall_docs(ctx.root, r)
         if lock.recovered:
             r.setdefault("checks", []).append(
                 {

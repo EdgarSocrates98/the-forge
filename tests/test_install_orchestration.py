@@ -103,10 +103,10 @@ def test_apply_preserves_user_agents(target: Path) -> None:
     (target / "AGENTS.md").write_text("# my rules\nuser content\n", "utf-8")
     service.install(scope="project", root=target, yes=True, host="claude")
     body = (target / "AGENTS.md").read_text("utf-8")
-    assert "user content" in body and "the-forge:managed" in body
+    assert "user content" in body and "forge:the-forge:begin" in body
     service.uninstall(scope="project", root=target)
     body = (target / "AGENTS.md").read_text("utf-8")
-    assert "user content" in body and "the-forge:managed" not in body
+    assert "user content" in body and "forge:the-forge" not in body
 
 
 def test_host_filter(target: Path) -> None:

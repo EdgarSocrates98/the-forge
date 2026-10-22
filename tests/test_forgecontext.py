@@ -403,3 +403,149 @@ def test_dry_run_writes_no_context(tmp_path):
     (target / ".git").mkdir(parents=True)
     service.install(scope="project", root=target, host="none", dry_run=True)
     assert not (target / ".forge" / "context").exists()
+
+
+# --- consumer docs — install-2.0 ciclo 3 (lf-0036) ---------------------------
+#
+# The canonical engine owns AGENTS.md/CLAUDE.md managed blocks and the shared
+# AGENT_PROTOCOL.md. These tests exercise the module standalone (same import
+# trick as above) plus one service-level wiring check.
+
+
+def test_install_docs_creates_three_docs(tmp_path):
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    out = fctx.install_docs(tmp_path, m, owner="forge-x")
+    assert out["status"] == "written"
+    agents = (tmp_path / "AGENTS.md").read_text(encoding="utf-8")
+    claude = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+    proto = (tmp_path / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "<!-- forge:ecosystem:begin -->" in agents
+    assert "<!-- forge:forge-x:begin -->" in agents
+    assert "@AGENTS.md" in claude
+    assert proto.startswith(fctx.PROTOCOL_SENTINEL)
+    for sec in (
+        "1. Discovery", "2. Classification", "3. Routing",
+        "4. Context Retrieval", "5. Planning", "6. Execution",
+        "7. Evaluation", "8. Verification", "9. Reporting",
+    ):
+        assert sec in proto
+
+
+def test_install_docs_is_byte_idempotent(tmp_path):
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    fctx.install_docs(tmp_path, m, owner="forge-x")
+    snap = {p.name: p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
+    out = fctx.install_docs(tmp_path, m, owner="forge-x")
+    assert out["status"] == "unchanged"
+    assert snap == {p.name: p.read_bytes() for p in tmp_path.iterdir()
+                    if p.is_file()}
+
+
+def test_install_docs_preserves_user_content(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("# mine\nuser text\n", "utf-8")
+    (tmp_path / "CLAUDE.md").write_text("# claude notes\n", "utf-8")
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    fctx.install_docs(tmp_path, m, owner="forge-x")
+    assert (tmp_path / "AGENTS.md").read_text().startswith("# mine\nuser text\n")
+    assert (tmp_path / "CLAUDE.md").read_text().startswith("# claude notes\n")
+
+
+def test_install_docs_strips_legacy_markers(tmp_path):
+    (tmp_path / "AGENTS.md").write_text(
+        "# mine\n\n<!-- forge-x:managed:begin -->\nold\n"
+        "<!-- forge-x:managed:end -->\n", "utf-8")
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    out = fctx.install_docs(tmp_path, m, owner="forge-x",
+                            legacy_tags=("forge-x:managed",))
+    assert "managed:begin" not in (tmp_path / "AGENTS.md").read_text()
+    assert out["legacy_stripped"] == ["forge-x:managed"]
+
+
+def test_install_docs_refuses_ambiguous_markers(tmp_path):
+    (tmp_path / "AGENTS.md").write_text(
+        "# x\n<!-- forge:forge-x:begin -->\na\n"
+        "<!-- forge:forge-x:begin -->\nb\n<!-- forge:forge-x:end -->\n",
+        "utf-8")
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    with pytest.raises(fctx.ContextError) as exc:
+        fctx.install_docs(tmp_path, m, owner="forge-x")
+    assert exc.value.kind == fctx.E_CONFLICT
+    assert "ambiguous" in exc.value.detail
+
+
+def test_install_docs_refuses_foreign_protocol(tmp_path):
+    (tmp_path / "AGENT_PROTOCOL.md").write_text("# custom protocol\n", "utf-8")
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    with pytest.raises(fctx.ContextError) as exc:
+        fctx.install_docs(tmp_path, m, owner="forge-x")
+    assert exc.value.kind == fctx.E_CONFLICT
+    assert (tmp_path / "AGENT_PROTOCOL.md").read_text() == "# custom protocol\n"
+
+
+def test_two_forges_one_protocol_selective_uninstall(tmp_path):
+    m1, m2 = _manifest("forge-x"), _manifest("forge-y")
+    fctx.register_forge(tmp_path, m1, owner="forge-x")
+    fctx.install_docs(tmp_path, m1, owner="forge-x")
+    fctx.register_forge(tmp_path, m2, owner="forge-y")
+    fctx.install_docs(tmp_path, m2, owner="forge-y")
+
+    agents = (tmp_path / "AGENTS.md").read_text()
+    assert agents.count("forge:ecosystem:begin") == 1
+    assert "forge:forge-x:begin" in agents and "forge:forge-y:begin" in agents
+    proto = (tmp_path / "AGENT_PROTOCOL.md").read_text()
+    assert "forge:forge-x:begin" in proto and "forge:forge-y:begin" in proto
+
+    fctx.unregister_forge(tmp_path, "forge-x", owner="forge-x")
+    fctx.uninstall_docs(tmp_path, "forge-x", owner="forge-x")
+    agents = (tmp_path / "AGENTS.md").read_text()
+    assert "forge:forge-x" not in agents and "forge:forge-y" in agents
+    proto = (tmp_path / "AGENT_PROTOCOL.md").read_text()
+    assert "forge:forge-y" in proto and "forge-x" not in proto
+
+    fctx.unregister_forge(tmp_path, "forge-y", owner="forge-y")
+    fctx.uninstall_docs(tmp_path, "forge-y", owner="forge-y")
+    assert not (tmp_path / "AGENT_PROTOCOL.md").exists()
+    assert not (tmp_path / "AGENTS.md").exists()  # generated-only → removed
+    assert not (tmp_path / "CLAUDE.md").exists()
+
+
+def test_uninstall_docs_keeps_user_file(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("# mine\nuser text\n", "utf-8")
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    fctx.install_docs(tmp_path, m, owner="forge-x")
+    fctx.unregister_forge(tmp_path, "forge-x", owner="forge-x")
+    fctx.uninstall_docs(tmp_path, "forge-x", owner="forge-x")
+    assert (tmp_path / "AGENTS.md").read_text() == "# mine\nuser text\n"
+
+
+def test_repair_docs_heals_damaged_block(tmp_path):
+    m = _manifest("forge-x")
+    fctx.register_forge(tmp_path, m, owner="forge-x")
+    fctx.install_docs(tmp_path, m, owner="forge-x")
+    p = tmp_path / "AGENTS.md"
+    p.write_text(p.read_text().replace("Forge forge-x", "ADULTERADO"), "utf-8")
+    out = fctx.repair_docs(tmp_path)
+    assert "AGENTS.md" in out["written"]
+    assert "ADULTERADO" not in p.read_text()
+
+
+def test_service_install_writes_consumer_docs(tmp_path):
+    from theforge.install import service
+
+    target = tmp_path / "consumer"
+    (target / ".git").mkdir(parents=True)
+    receipt = service.install(scope="project", root=target, host="none",
+                              yes=True)
+    check = next(c for c in receipt["checks"] if c["id"] == "consumer-docs")
+    assert check["status"] == "PASS"
+    assert (target / "AGENTS.md").is_file()
+    assert (target / "CLAUDE.md").is_file()
+    assert (target / "AGENT_PROTOCOL.md").is_file()
+    assert "forge:the-forge:begin" in (target / "AGENTS.md").read_text()
