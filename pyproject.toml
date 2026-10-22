@@ -49,6 +49,11 @@ packages = ["src/theforge"]
 # installer renders them into consumer repos; they remain sdist-excluded.
 [tool.hatch.build.targets.wheel.force-include]
 ".agents/skills" = "theforge/host_assets/skills"
+# Canonical AgentSpec TOMLs — without them a pip-installed `theforge agents
+# list` reports "no agent specs" and `install --components agents` writes 0
+# files (Install-2.0 audit P0-1). `agentic/` already ships in the sdist, so
+# wheel-from-sdist rebuilds keep working.
+"agentic/agents" = "theforge/host_assets/agents"
 # Portal SPA ships inside the wheel so `theforge portal` works from a pip
 # install, not just the clone (same class as host_assets).
 "portal/assets" = "theforge/portal_assets"

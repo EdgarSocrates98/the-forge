@@ -23,7 +23,12 @@ from theforge.errors import PersistenceError, UsageError
 
 __all__ = ["DEFAULT_AGENTS_DIR", "agent_for", "check_authority", "load_all", "load_spec"]
 
-DEFAULT_AGENTS_DIR = Path(__file__).resolve().parents[2] / "agentic" / "agents"
+_REPO_AGENTS_DIR = Path(__file__).resolve().parents[2] / "agentic" / "agents"
+# Wheel-shipped copy (pyproject force-include) — source of truth when the
+# package runs outside a repository checkout (same fallback pattern as
+# knowledge.py; Install-2.0 audit P0-1).
+_BUNDLED_AGENTS_DIR = Path(__file__).resolve().parent / "host_assets" / "agents"
+DEFAULT_AGENTS_DIR = _REPO_AGENTS_DIR if _REPO_AGENTS_DIR.is_dir() else _BUNDLED_AGENTS_DIR
 
 # Authority → the strongest actions it may ever take. Anything not listed is
 # denied. ``execute-approved`` reaches execution — including running an

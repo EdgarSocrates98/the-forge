@@ -1,7 +1,7 @@
 # Documentação — índice
 
 Mapa dos documentos vivos de `docs/`, agrupados por preocupação. Fatos
-históricos ficam em [adr/](adr/) (58 ADRs) e [reports/](reports/) (31
+históricos ficam em [adr/](adr/) (61 ADRs) e [reports/](reports/) (31
 relatórios de ciclo); evidência medida em [reality/](reality/). Docs aqui
 descrevem o sistema **como ele é** — quando divergir do código, o código
 vence e o doc é consertado.

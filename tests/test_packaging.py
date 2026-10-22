@@ -323,3 +323,34 @@ def test_built_sdist_carries_forge_knowledge_for_wheel_rebuilds(built_sdist: Pat
     with tarfile.open(built_sdist) as tf:
         members = [m.name.partition("/")[2] for m in tf.getmembers()]
     assert "forge-knowledge/api-forge.json" in members
+
+
+# --- wheel carries the canonical agent specs (Install-2.0 audit P0-1) -------
+
+
+def test_build_config_force_includes_agent_specs() -> None:
+    """Non-slow gate: the force-include mapping is what makes the wheel carry
+    `agentic/agents` — assert it before paying for a build."""
+    with (REPO / "pyproject.toml").open("rb") as fh:
+        data = tomllib.load(fh)
+    force = data["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
+    assert force["agentic/agents"] == "theforge/host_assets/agents"
+
+
+@pytest.mark.slow
+def test_built_wheel_carries_agent_specs(built_wheel: Path) -> None:
+    expected = {
+        f"theforge/host_assets/agents/{p.name}"
+        for p in (REPO / "agentic" / "agents").glob("*.toml")
+    }
+    assert expected, "repo agentic/agents is empty"
+    with zipfile.ZipFile(built_wheel) as zf:
+        names = set(zf.namelist())
+        assert expected <= names
+
+
+@pytest.mark.slow
+def test_built_sdist_carries_agent_specs_for_wheel_rebuilds(built_sdist: Path) -> None:
+    with tarfile.open(built_sdist) as tf:
+        members = [m.name.partition("/")[2] for m in tf.getmembers()]
+    assert any(m.startswith("agentic/agents/") and m.endswith(".toml") for m in members)
