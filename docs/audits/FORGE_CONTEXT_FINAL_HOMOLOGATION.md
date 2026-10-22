@@ -341,3 +341,5 @@ grep -c 'def test_' tests/test_{forgecontext,forgecontext_txn,
   multi_forge_e2e,installkit,installkit_bootstrap,…}.py  → contagens §7
 git log v0.5.6..HEAD -- src/theforge/install/render.py → (vazio — P1-1 aberto)
 ```
+
+Referências canônicas: [docs/errors.md](../errors.md) (taxonomia FORGE-*).
