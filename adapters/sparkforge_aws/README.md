@@ -4,7 +4,7 @@ Provider [Forge Protocol v1](../../docs/protocol.md) que expõe o Spark Forge AW
 
 - id do provider: `spark-forge-aws`
 - versão: `0.2.0`
-- especialista suportado: `sparkforge-aws >=0.5.0,<0.6.0`
+- especialista suportado: `sparkforge-aws >=0.5.0,<0.7.0`
 
 > Estado: `describe`, `health` e `execute` implementados, ao vivo e em replay. Decisão e contenção no [ADR 0014](../../docs/adr/0014-provider-adapter-location.md); catálogo de capabilities no [ADR 0017](../../docs/adr/0017-capability-taxonomy.md) e em [capabilities.md](../../docs/capabilities.md); guia completo em [real-providers.md](../../docs/real-providers.md).
 

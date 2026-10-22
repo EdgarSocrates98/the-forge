@@ -403,7 +403,7 @@ def test_default_scenario_records_a_supported_environment() -> None:
     assert set(environment) == {"python", "specialist_version"}
     assert environment["python"].startswith("3.11.")
     assert environment["specialist_version"] == "0.5.0"
-    assert SUPPORTED_SPECIALIST == ">=0.5.0,<0.6.0"
+    assert SUPPORTED_SPECIALIST == ">=0.5.0,<0.7.0"
     loaded = backend.load_environment(DEFAULT)
     assert isinstance(loaded, backend.Environment)
     assert loaded.specialist_version == "0.5.0"

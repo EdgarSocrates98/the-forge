@@ -44,9 +44,9 @@ ADAPTERS = {
         "theforge-sparkforge-aws-adapter",
         "theforge_sparkforge_aws",
         "spark-forge-aws",
-        ">=0.5.0,<0.6.0",
+        ">=0.5.0,<0.7.0",
     ),
-    "apiforge": ("theforge-apiforge-adapter", "theforge_apiforge", "api-forge", ">=0.1.0,<0.2.0"),
+    "apiforge": ("theforge-apiforge-adapter", "theforge_apiforge", "api-forge", ">=0.1.0,<0.3.0"),
     "doctordata": (
         "theforge-doctordata-adapter",
         "theforge_doctordata",
@@ -63,13 +63,13 @@ ADAPTERS = {
         "theforge-sparkforge-azure-adapter",
         "theforge_sparkforge_azure",
         "spark-forge-azure",
-        ">=0.1.0,<0.2.0",
+        ">=0.1.0,<0.3.0",
     ),
     "platformforge": (
         "theforge-platformforge-adapter",
         "theforge_platformforge",
         "platform-forge",
-        ">=0.1.0,<0.2.0",
+        ">=0.1.0,<0.3.0",
     ),
 }
 # Adapter release versions (semver of each distribution): bumps track surface
