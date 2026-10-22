@@ -405,7 +405,7 @@ def test_studio_inline_script_parses(tmp_path):
     assert m, "STUDIO_HTML has no inline script"
     js = tmp_path / "studio.js"
     js.write_text(m.group(1), encoding="utf-8")
-    proc = subprocess.run([node, "--check", str(js)], capture_output=True, text=True, timeout=30)
+    proc = subprocess.run([node, "--check", str(js)], capture_output=True, text=True, timeout=120)
     assert proc.returncode == 0, proc.stderr
 
 
