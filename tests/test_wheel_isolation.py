@@ -187,9 +187,11 @@ def test_wheel_install_lifecycle_outside_checkout(tmp_path: Path):
     assert capability["forge_id"] == FORGE_ID
     for cap in ("skills", "agents", "knowledge", "protocols"):
         assert capability["capabilities"][cap]["available"] is True, cap
-    # The control plane honestly ships no rule catalog / eval suites.
+    # The control plane honestly ships no rule catalog; eval suites are
+    # declared since lf-0038 (§7 classified surface).
     assert capability["capabilities"]["rules"]["available"] is False
-    assert capability["capabilities"]["evals"]["available"] is False
+    assert capability["capabilities"]["evals"]["available"] is True
+    assert capability["capabilities"]["evals"]["count"] >= 1
     # ownership ledger of the installer
     ledger = json.loads((target / STATE_DIR / LEDGER).read_text(encoding="utf-8"))
     assert ledger["entries"], "install-ledger.json without entries"
