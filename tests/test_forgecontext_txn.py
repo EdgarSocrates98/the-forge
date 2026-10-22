@@ -224,7 +224,7 @@ def test_txn_restore_rejects_tampered_meta_paths(tmp_path):
     }
     (ctx / fctx.TXN_DIR / fctx.TXN_META).write_text(json.dumps(meta), "utf-8")
     leftovers = fctx._txn_restore(ctx, tmp_path)
-    assert len(leftovers) == 5 and all("unsafe" in l for l in leftovers)
+    assert len(leftovers) == 5 and all("unsafe" in item for item in leftovers)
     assert not (tmp_path / "escape.txt").exists()
     assert not (tmp_path.parent / "escape.txt").exists()
     # the one safe entry WAS restored inside the root
