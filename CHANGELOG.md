@@ -9,6 +9,29 @@ existing cycle without intentionally breaking the Forge Protocol.
 ## [Unreleased]
 
 
+## [0.6.0] - 2026-10-22
+
+### 0.6.0 — Agentic Ecosystem
+
+### Added
+
+- Install 2.0: `forge-context/v1` registry (`.forge/context/registry.json`),
+  transactional multi-forge composition engine (`install_transaction`/
+  `uninstall_transaction` — preflight, lock, journal recovery, durable backup,
+  post-state verify, commit/rollback), `qualified_ids`, and read-only `route()`
+  candidate listing.
+- Evals classification and verification; consumer-doc managed blocks.
+
+### Fixed
+
+- `_txn_restore` rejects unsafe journal paths (`..`, absolute, `\`, drive
+  prefixes; blob names must match `^\d{1,8}$`); `KeyboardInterrupt`/`SystemExit`
+  re-raised bare after rollback.
+- `_Lock._is_stale` falls back to the lock's `created_at` when `_pid_alive` is
+  undecidable (Windows); `_forgecontext`/`_installkit` vendored sha-identical
+  across all forges (v1.3.1 / v1.0.1); `forge_bootstrap` v1.1.1 backports
+  userinfo redaction, argv trim, and empty-stdout smoke fixes.
+
 ## [0.5.6] - 2026-10-21
 
 ### 0.5.6 — Agentic Ecosystem

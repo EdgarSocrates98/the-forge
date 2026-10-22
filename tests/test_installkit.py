@@ -582,9 +582,7 @@ def test_stale_lock_undecidable_pid_uses_created_at(tmp_path, monkeypatch):
         counter["n"] += 1
         state = tmp_path / f".forge-{counter['n']}"
         state.mkdir(parents=True)
-        (state / kit.LOCK_NAME).write_text(
-            json.dumps({"pid": 424242, "created_at": created_at})
-        )
+        (state / kit.LOCK_NAME).write_text(json.dumps({"pid": 424242, "created_at": created_at}))
         return state
 
     # Old created_at -> stale -> reclaimed.

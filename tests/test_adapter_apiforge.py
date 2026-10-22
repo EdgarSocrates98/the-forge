@@ -628,7 +628,13 @@ def test_replay_health_unavailable_with_the_interpreter_or_import_reason(
 
 @pytest.mark.parametrize(
     ("assumed", "expected"),
-    [("9.9.9", "degraded"), ("0.0.9", "degraded"), ("0.2.0", "degraded"), ("0.1.7", "ok")],
+    [
+        ("9.9.9", "degraded"),
+        ("0.0.9", "degraded"),
+        ("0.3.0", "degraded"),
+        ("0.2.0", "ok"),
+        ("0.1.7", "ok"),
+    ],
 )
 def test_health_accepts_the_assumed_specialist_version(assumed: str, expected: str) -> None:
     _, report = _health(("--assume-specialist-version", assumed, "--replay", str(DEFAULT)))
@@ -637,13 +643,13 @@ def test_health_accepts_the_assumed_specialist_version(assumed: str, expected: s
     assert version.ok is (expected == "ok")
     assert assumed in version.detail and "--assume-specialist-version" in version.detail
     if expected == "degraded":
-        assert f"found {assumed}, supported >=0.1.0,<0.2.0" in version.detail
+        assert f"found {assumed}, supported >=0.1.0,<0.3.0" in version.detail
 
 
 def test_unparseable_specialist_version_is_degraded() -> None:
     _, report = _health(("--assume-specialist-version", "banana", "--replay", str(DEFAULT)))
     assert report.status == "degraded"
-    assert "found banana, supported >=0.1.0,<0.2.0" in _checks(report)["version"].detail
+    assert "found banana, supported >=0.1.0,<0.3.0" in _checks(report)["version"].detail
 
 
 def test_out_of_window_version_keeps_a_missing_cli_unavailable() -> None:

@@ -4,40 +4,40 @@
   "created_at": "2026-10-15",
   "producer": {
     "id": "the-forge",
-    "version": "0.5.6"
+    "version": "0.6.0"
   },
   "components": [
     {
       "component": "the-forge",
-      "version": "0.5.6",
+      "version": "0.6.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "theforge-core"
     },
     {
       "component": "api-forge",
-      "version": "0.1.6",
+      "version": "0.2.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "apiforge-af"
     },
     {
       "component": "platform-forge",
-      "version": "0.1.6",
+      "version": "0.2.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "platformforge"
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.5.6",
+      "version": "0.6.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
     },
     {
       "component": "spark-forge-azure",
-      "version": "0.1.6",
+      "version": "0.2.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-azure"
@@ -58,7 +58,7 @@
     },
     {
       "component": "forge-cli",
-      "version": "0.2.6",
+      "version": "0.3.0",
       "scheme": "semver",
       "source": "package.json",
       "distribution": "theforge-cli"
