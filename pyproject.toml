@@ -121,6 +121,9 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 # across all Forges (same class as _installkit).
 "src/theforge/_forge_portal.py" = ["ALL"]
 "src/theforge/_portal_telemetry.py" = ["ALL"]
+# Vendored forge-context library — byte-identical shared source across all
+# Forges with a Python 3.10 floor (UP017 conflicts with the 3.10 compat).
+"src/theforge/_forgecontext.py" = ["ALL"]
 
 [tool.ruff.format]
 # Same byte-parity set as per-file-ignores: vendored/canonical shared
@@ -131,6 +134,7 @@ exclude = [
     "src/theforge/_installkit.py",
     "src/theforge/_forge_portal.py",
     "src/theforge/_portal_telemetry.py",
+    "src/theforge/_forgecontext.py",
 ]
 
 [tool.mypy]
