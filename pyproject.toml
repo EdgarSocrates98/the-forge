@@ -61,6 +61,12 @@ packages = ["src/theforge"]
 # discovers zero providers (Cycle 11.2.1 E2E-M: knowledge_for() resolved
 # repo-root forge-knowledge/, which is absent outside the checkout).
 "forge-knowledge" = "theforge/forge_knowledge"
+# Forge identity manifest (install-2.0 §8.2): install/service._context_manifest
+# reads `forge.json` from the checkout root to compose forge/context/v1
+# (integrity digests, host_adapters, discovery gaps). Under a wheel the root
+# does not exist — ship the manifest inside the package so the bundled-path
+# resolver can serve it without a checkout.
+"forge.json" = "theforge/forge.json"
 
 [tool.hatch.build.targets.sdist]
 # The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.
