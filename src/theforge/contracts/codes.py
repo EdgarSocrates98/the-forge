@@ -59,6 +59,13 @@ class Codes:
     # Context, receipt, registry, manifest
     CONTEXT_BYTES: Final = "FORGE-CONTEXT-BYTES"
     CONTEXT_PATH: Final = "FORGE-CONTEXT-PATH"
+    # forge/context-registry layer (vendored `_forgecontext.py`, install-2.0):
+    # registry entry owned by another forge, lock held, ambiguous managed
+    # blocks or manifest schema invalid — all refused, never silent.
+    CONTEXT_OWNERSHIP: Final = "FORGE-CONTEXT-OWNERSHIP"
+    CONTEXT_LOCKED: Final = "FORGE-CONTEXT-LOCKED"
+    CONTEXT_CONFLICT: Final = "FORGE-CONTEXT-CONFLICT"
+    CONTEXT_SCHEMA: Final = "FORGE-CONTEXT-SCHEMA"
     # Context negotiation (ExecutionResult.context_request): all end in provider_failure.
     CONTEXT_REQUEST_UNSUPPORTED: Final = "FORGE-CONTEXT-REQUEST-UNSUPPORTED"
     CONTEXT_REQUEST_LIMIT: Final = "FORGE-CONTEXT-REQUEST-LIMIT"
@@ -148,6 +155,10 @@ CODE_FAMILIES: Final[Mapping[str, ErrorFamily]] = MappingProxyType(
         Codes.RESULT_ARTIFACT_PATH: "provider",
         Codes.CONTEXT_BYTES: "context",
         Codes.CONTEXT_PATH: "context",
+        Codes.CONTEXT_OWNERSHIP: "context",
+        Codes.CONTEXT_LOCKED: "context",
+        Codes.CONTEXT_CONFLICT: "context",
+        Codes.CONTEXT_SCHEMA: "context",
         Codes.CONTEXT_REQUEST_UNSUPPORTED: "context",
         Codes.CONTEXT_REQUEST_LIMIT: "context",
         Codes.CONTEXT_REQUEST_INVALID: "context",
