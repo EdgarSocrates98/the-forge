@@ -11,6 +11,8 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.5.6] - 2026-10-21
 
+### 0.5.6 — Agentic Ecosystem
+
 ### Added
 
 - Integrations cycle (lf-0026-lf-0033): `theforge/SpecialistCapability/v1` + universal evidence-backed discovery; `theforge/SpecialistDelegation/v1` + `theforge/EvidenceHandoff/v1` contracts with governance (six risk classes, cycle/budget/cancel admission, integrity sealing, bounded redacted evidence); deterministic delegation router (`planned`/`ambiguous`/`unavailable`/`refused`); capability-routed orchestration lane + `OrchestrationReport/v1`; `forge-orchestration` skill; portal bundle re-vendored with Specialist/Delegation Explorer pages.

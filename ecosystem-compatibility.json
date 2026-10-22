@@ -4,61 +4,61 @@
   "created_at": "2026-10-15",
   "producer": {
     "id": "the-forge",
-    "version": "0.5.5"
+    "version": "0.5.6"
   },
   "components": [
     {
       "component": "the-forge",
-      "version": "0.5.5",
+      "version": "0.5.6",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "theforge-core"
     },
     {
       "component": "api-forge",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "apiforge-af"
     },
     {
       "component": "platform-forge",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "platformforge"
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.5.5",
+      "version": "0.5.6",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
     },
     {
       "component": "spark-forge-azure",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-azure"
     },
     {
       "component": "forge-doctor-data",
-      "version": "1.0.4",
+      "version": "1.0.6",
       "scheme": "pep440",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-data"
     },
     {
       "component": "forge-doctor-api",
-      "version": "0.2.4",
+      "version": "0.2.6",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-api"
     },
     {
       "component": "forge-cli",
-      "version": "0.2.4",
+      "version": "0.2.6",
       "scheme": "semver",
       "source": "package.json",
       "distribution": "theforge-cli"
@@ -110,7 +110,7 @@
     }
   ],
   "notes": [
-    "Baseline certificada: combinação de SHAs/versões observada em 2026-10-15 (docs/programs/ecosystem-2026/baseline.md). Todos os repositórios possuem tags v* desde a rodada 2.2.1 (2026-10-18).",
+    "Baseline certificada: combinação de SHAs/versões observada em 2026-10-21 (ciclo de integrações lf-0026..lf-0033). Todos os repositórios possuem tags v* desde a rodada 2.2.1 (2026-10-18).",
     "portal_api usa o envelope `forge/PortalApi/1` servido por `<cli> portal` (the-forge `_forge_portal.py`); o pacote do app forge-portal declara 1.0.0 — eixo separado do contrato (ver versioning-policy.md).",
     "portal_assets cobre o manifesto `forge/PortalAssets/1` (sha256 por arquivo) vendored em cada Forja via `forge-portal/scripts/vendor.py` — integridade de bundle verificável.",
     "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) — scheme declarado por componente, SemVer onde apropriado."
