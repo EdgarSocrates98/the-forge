@@ -174,7 +174,11 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
     from theforge import agents as agents_mod
     from theforge import knowledge as knowledge_mod
 
-    forge_json = kit._load_json(_REPO_ROOT / "forge.json", None)
+    forge_json = kit._load_json(
+        Path(__file__).resolve().parents[1] / "forge.json", None
+    )
+    if not isinstance(forge_json, dict):
+        forge_json = kit._load_json(_REPO_ROOT / "forge.json", None)
     forge_json = forge_json if isinstance(forge_json, dict) else None
 
     skills: list[str] = []
