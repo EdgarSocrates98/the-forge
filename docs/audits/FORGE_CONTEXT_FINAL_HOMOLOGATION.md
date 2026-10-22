@@ -343,3 +343,14 @@ git log v0.5.6..HEAD -- src/theforge/install/render.py → (vazio — P1-1 abert
 ```
 
 Referências canônicas: [docs/errors.md](../errors.md) (taxonomia FORGE-*).
+
+## Pós-release — evidência de publicação (2026-10-23 UTC)
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Tag | CRIADA | `v0.6.0` no merge commit da release PR |
+| GitHub Release | CRIADO | `gh release view v0.6.0` |
+| PyPI | PUBLICADO | `pypi.org/pypi/theforge-core/json` → `0.6.0` |
+| Wheel smoke (venv limpo) | PASS | `pip install theforge-core==0.6.0` + `theforge --version` → `0.6.0` |
+
+Notas: installkit canônico 1.0.2 (`_SOURCE_SHA256 a15ca78bb34a0109`), bootstrap 1.1.1 — propagados aos 7 carriers; `vendor.py --check` CLEAN ×7. `data-sentinel-forge`: **deferido pelo dono** (outro CLI evoluindo).
