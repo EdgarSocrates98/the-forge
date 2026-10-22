@@ -1027,6 +1027,103 @@ def build_parser() -> argparse.ArgumentParser:
     )
     lab_gate.set_defaults(handler=commands.cmd_lab_gate)
 
+    evals = sub.add_parser(
+        "evals", help="classified eval suites + receipts (install-2.0 §7)"
+    ).add_subparsers(dest="evals_command", required=True)
+    evals.add_parser(
+        "list",
+        parents=[common],
+        help="§7.1 catalog: every declared suite with its kind — metadata only",
+    ).set_defaults(handler=commands.cmd_evals)
+    evals_describe = evals.add_parser(
+        "describe",
+        parents=[common],
+        help="one suite's kind, inputs, environment, hash-pinned "
+        "baselines/holdouts — never expected answers",
+    )
+    evals_describe.add_argument("suite", help="suite id from `evals list`")
+    evals_describe.set_defaults(handler=commands.cmd_evals)
+    evals_run = evals.add_parser(
+        "run",
+        parents=[common],
+        help="execute a declared suite's allowlisted argv; writes a "
+        "receipt — missing inputs block, never skip",
+    )
+    evals_run.add_argument("suite", help="suite id from `evals list`")
+    evals_run.add_argument(
+        "--input",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="fill a declared input (repeatable)",
+    )
+    evals_run.set_defaults(handler=commands.cmd_evals)
+    evals_result = evals.add_parser(
+        "result",
+        parents=[common],
+        help="read a persisted receipt by id (or list every receipt)",
+    )
+    evals_result.add_argument(
+        "receipt_id", nargs="?", default=None, help="receipt id under .forge/evals/"
+    )
+    evals_result.set_defaults(handler=commands.cmd_evals)
+
+    verify = sub.add_parser(
+        "verify", help="verification plan → run → evidence (install-2.0 §7.4)"
+    ).add_subparsers(dest="verify_command", required=True)
+    verify_plan = verify.add_parser(
+        "plan",
+        parents=[common],
+        help="select applicable checks for changed paths; emits the "
+        "validation plan — never executes",
+    )
+    verify_plan.add_argument(
+        "changed",
+        nargs="*",
+        metavar="PATH",
+        help="changed paths to impact-select against (default: full sweep floor)",
+    )
+    verify_plan.add_argument(
+        "--risk",
+        choices=["micro", "low", "medium", "high"],
+        default="low",
+        help="sweep floor: micro/low = impacted only, medium adds developer "
+        "evals, high runs the whole catalog",
+    )
+    verify_plan.add_argument(
+        "--authorize",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="declare an input name the caller will supply at run time",
+    )
+    verify_plan.add_argument(
+        "--out",
+        metavar="FILE",
+        help="write the plan document for `verify run --plan <file>`",
+    )
+    verify_plan.set_defaults(handler=commands.cmd_verify)
+    verify_run = verify.add_parser(
+        "run",
+        parents=[common],
+        help="execute the plan's authorized checks and record evidence; "
+        "blocked/inconclusive stay explicit",
+    )
+    verify_run.add_argument(
+        "--plan",
+        required=True,
+        metavar="FILE",
+        help="plan document written by `verify plan --out`",
+    )
+    verify_run.add_argument(
+        "--input",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="fill a declared suite input (repeatable)",
+    )
+    verify_run.set_defaults(handler=commands.cmd_verify)
+
     remote = sub.add_parser(
         "remote", help="remote-execution trust layer (remote-policy.toml)"
     ).add_subparsers(dest="remote_command", required=True)

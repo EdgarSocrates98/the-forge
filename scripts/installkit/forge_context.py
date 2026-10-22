@@ -83,7 +83,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.1.0"
+_FORGECONTEXT_VERSION = "1.2.0"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
 _SOURCE_SHA256 = "canonical"
@@ -118,7 +118,8 @@ COMMAND_MODES = ("direct-capability", "diagnostic-only", "specialist-workflow", 
 RESOURCE_KINDS = ("copied", "referenced", "bundled", "materialized")
 EVAL_KINDS = ("developer", "runtime-decision", "output-verification", "host-conformance")
 
-# The eight conceptual discovery ops of the install-2.0 contract (§6.2).
+# The conceptual discovery ops of the install-2.0 contract — the eight
+# retrieval ops of §6.2 plus the six evals/verification ops of §7.2.
 # ``discovery.ops`` maps each op name to the id of a *declared* discovery
 # command — consumers resolve "knowledge.search" to a real argv without
 # guessing verb names, and a forge that has no rule catalog honestly leaves
@@ -132,6 +133,12 @@ DISCOVERY_OPS = (
     "knowledge.get",
     "context.build",
     "health.check",
+    "evals.list",
+    "evals.describe",
+    "evals.run",
+    "evals.result",
+    "verification.plan",
+    "verification.run",
 )
 
 # Refusal codes — forge-specific codes may extend these.

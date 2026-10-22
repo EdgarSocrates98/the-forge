@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-16T03:50:10Z",
+  "generated_at": "2026-10-22T06:31:01Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 86,
+  "command_count": 97,
   "commands": [
     {
       "path": "init",
@@ -2772,6 +2772,306 @@
       ]
     },
     {
+      "path": "orchestrate",
+      "help": "capability-routed multi-specialist orchestration (justified, governed)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "orchestrate plan",
+      "help": "build the justified delegation plan",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "intent",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "the task intent, e.g. 'audit a pyspark project'"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--delegation"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "a theforge/SpecialistDelegation/v1 JSON document overriding the default declaration"
+        },
+        {
+          "name": "KIND",
+          "flags": [
+            "--input"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "declared input kind available to capabilities (repeatable) — a capability whose 'requires' is not declared is refused, never forced"
+        },
+        {
+          "name": "RISK",
+          "flags": [
+            "--authorize"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "risk level to authorize beyond LOCAL_READ (repeatable): LOCAL_WRITE EXTERNAL_READ EXTERNAL_WRITE DESTRUCTIVE COST_BEARING"
+        },
+        {
+          "name": "no_probe",
+          "flags": [
+            "--no-probe"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "metadata scan only — never executes a probe"
+        },
+        {
+          "name": "allow_unverified",
+          "flags": [
+            "--allow-unverified"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "probe providers whose trust is 'unverified'"
+        },
+        {
+          "name": "max_hops",
+          "flags": [
+            "--max-hops"
+          ],
+          "required": false,
+          "default": "4",
+          "choices": null,
+          "positional": false,
+          "help": "chain hop budget (default 4)"
+        },
+        {
+          "name": "S",
+          "flags": [
+            "--timeout-budget"
+          ],
+          "required": false,
+          "default": "600",
+          "choices": null,
+          "positional": false,
+          "help": "chain timeout budget in seconds"
+        },
+        {
+          "name": "max_providers",
+          "flags": [
+            "--max-providers"
+          ],
+          "required": false,
+          "default": "4",
+          "choices": null,
+          "positional": false,
+          "help": "max specialists per plan (default 4)"
+        }
+      ]
+    },
+    {
+      "path": "orchestrate run",
+      "help": "plan, then execute each pick via governed delegation",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "intent",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "the task intent, e.g. 'audit a pyspark project'"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--delegation"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "a theforge/SpecialistDelegation/v1 JSON document overriding the default declaration"
+        },
+        {
+          "name": "KIND",
+          "flags": [
+            "--input"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "declared input kind available to capabilities (repeatable) — a capability whose 'requires' is not declared is refused, never forced"
+        },
+        {
+          "name": "RISK",
+          "flags": [
+            "--authorize"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "risk level to authorize beyond LOCAL_READ (repeatable): LOCAL_WRITE EXTERNAL_READ EXTERNAL_WRITE DESTRUCTIVE COST_BEARING"
+        },
+        {
+          "name": "no_probe",
+          "flags": [
+            "--no-probe"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "metadata scan only — never executes a probe"
+        },
+        {
+          "name": "allow_unverified",
+          "flags": [
+            "--allow-unverified"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "probe providers whose trust is 'unverified'"
+        },
+        {
+          "name": "max_hops",
+          "flags": [
+            "--max-hops"
+          ],
+          "required": false,
+          "default": "4",
+          "choices": null,
+          "positional": false,
+          "help": "chain hop budget (default 4)"
+        },
+        {
+          "name": "S",
+          "flags": [
+            "--timeout-budget"
+          ],
+          "required": false,
+          "default": "600",
+          "choices": null,
+          "positional": false,
+          "help": "chain timeout budget in seconds"
+        },
+        {
+          "name": "max_providers",
+          "flags": [
+            "--max-providers"
+          ],
+          "required": false,
+          "default": "4",
+          "choices": null,
+          "positional": false,
+          "help": "max specialists per plan (default 4)"
+        },
+        {
+          "name": "target",
+          "flags": [
+            "--target"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "path the specialists analyze (default: workspace root)"
+        },
+        {
+          "name": "correlation_id",
+          "flags": [
+            "--correlation-id"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "reuse an existing chain correlation id"
+        }
+      ]
+    },
+    {
       "path": "provider",
       "help": "provider authoring: scaffold and conformance",
       "arguments": [],
@@ -4244,6 +4544,17 @@
           "choices": null,
           "positional": false,
           "help": "explicit repo checkout to include beyond the install registry"
+        },
+        {
+          "name": "PATH",
+          "flags": [
+            "--python"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "explicit authorized interpreter — wins over managed receipt, manifest and env candidates (inspect-only here: no probe spawned)"
         }
       ]
     },
@@ -4366,6 +4677,17 @@
           "help": "required for mode C — real external resources, receipt marked external"
         },
         {
+          "name": "PATH",
+          "flags": [
+            "--python"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "explicit authorized interpreter for every lab — wins over the managed receipt, install manifest, checkout .venv and the documented sys.executable fallback"
+        },
+        {
           "name": "DIR",
           "flags": [
             "--out"
@@ -4447,6 +4769,359 @@
           "choices": null,
           "positional": false,
           "help": "forge/LabGatePolicy/v1 JSON — explicit tolerances; absent → baseline spread, then exact comparison"
+        }
+      ]
+    },
+    {
+      "path": "evals",
+      "help": "classified eval suites + receipts (install-2.0 §7)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "evals list",
+      "help": "§7.1 catalog: every declared suite with its kind — metadata only",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
+      "path": "evals describe",
+      "help": "one suite's kind, inputs, environment, hash-pinned baselines/holdouts — never expected answers",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "suite",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "suite id from `evals list`"
+        }
+      ]
+    },
+    {
+      "path": "evals run",
+      "help": "execute a declared suite's allowlisted argv; writes a receipt — missing inputs block, never skip",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "suite",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "suite id from `evals list`"
+        },
+        {
+          "name": "NAME=VALUE",
+          "flags": [
+            "--input"
+          ],
+          "required": false,
+          "default": "[]",
+          "choices": null,
+          "positional": false,
+          "help": "fill a declared input (repeatable)"
+        }
+      ]
+    },
+    {
+      "path": "evals result",
+      "help": "read a persisted receipt by id (or list every receipt)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "receipt_id",
+          "flags": [],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "receipt id under .forge/evals/"
+        }
+      ]
+    },
+    {
+      "path": "verify",
+      "help": "verification plan → run → evidence (install-2.0 §7.4)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "verify plan",
+      "help": "select applicable checks for changed paths; emits the validation plan — never executes",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "PATH",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "changed paths to impact-select against (default: full sweep floor)"
+        },
+        {
+          "name": "risk",
+          "flags": [
+            "--risk"
+          ],
+          "required": false,
+          "default": "low",
+          "choices": [
+            "micro",
+            "low",
+            "medium",
+            "high"
+          ],
+          "positional": false,
+          "help": "sweep floor: micro/low = impacted only, medium adds developer evals, high runs the whole catalog"
+        },
+        {
+          "name": "NAME",
+          "flags": [
+            "--authorize"
+          ],
+          "required": false,
+          "default": "[]",
+          "choices": null,
+          "positional": false,
+          "help": "declare an input name the caller will supply at run time"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--out"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "write the plan document for `verify run --plan <file>`"
+        }
+      ]
+    },
+    {
+      "path": "verify run",
+      "help": "execute the plan's authorized checks and record evidence; blocked/inconclusive stay explicit",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--plan"
+          ],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "plan document written by `verify plan --out`"
+        },
+        {
+          "name": "NAME=VALUE",
+          "flags": [
+            "--input"
+          ],
+          "required": false,
+          "default": "[]",
+          "choices": null,
+          "positional": false,
+          "help": "fill a declared suite input (repeatable)"
         }
       ]
     },

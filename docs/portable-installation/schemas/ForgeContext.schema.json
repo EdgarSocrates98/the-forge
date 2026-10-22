@@ -93,11 +93,14 @@
         "manifest": {"$ref": "#/$defs/path"},
         "ops": {
           "type": "object",
-          "maxProperties": 8,
+          "maxProperties": 14,
           "propertyNames": {"enum": ["capabilities.list", "protocol.describe",
                                      "rules.search", "rules.get",
                                      "knowledge.search", "knowledge.get",
-                                     "context.build", "health.check"]},
+                                     "context.build", "health.check",
+                                     "evals.list", "evals.describe",
+                                     "evals.run", "evals.result",
+                                     "verification.plan", "verification.run"]},
           "additionalProperties": {"$ref": "#/$defs/item_id"}
         }
       },

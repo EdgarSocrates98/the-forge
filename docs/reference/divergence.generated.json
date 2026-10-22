@@ -2,6 +2,8 @@
   "schema": "forge/DocDivergence/v1",
   "cli": "theforge",
   "documented_missing": [],
-  "undocumented_commands": [],
-  "generated_at": "2026-10-16T03:50:10Z"
+  "undocumented_commands": [
+    "orchestrate"
+  ],
+  "generated_at": "2026-10-22T06:31:01Z"
 }

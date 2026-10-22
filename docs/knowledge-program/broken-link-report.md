@@ -1,5 +1,5 @@
 # Broken link report
-Forge: `theforge`
+Forge: `the-forge`
 
 Internal-link findings: 8
 
