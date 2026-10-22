@@ -628,7 +628,13 @@ def test_replay_health_unavailable_with_the_interpreter_or_import_reason(
 
 @pytest.mark.parametrize(
     ("assumed", "expected"),
-    [("9.9.9", "degraded"), ("0.0.9", "degraded"), ("0.3.0", "degraded"), ("0.2.0", "ok"), ("0.1.7", "ok")],
+    [
+        ("9.9.9", "degraded"),
+        ("0.0.9", "degraded"),
+        ("0.3.0", "degraded"),
+        ("0.2.0", "ok"),
+        ("0.1.7", "ok"),
+    ],
 )
 def test_health_accepts_the_assumed_specialist_version(assumed: str, expected: str) -> None:
     _, report = _health(("--assume-specialist-version", assumed, "--replay", str(DEFAULT)))
