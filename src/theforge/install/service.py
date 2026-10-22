@@ -172,6 +172,7 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
     forge.json (when the checkout is present), the bundled skill/agent
     sources and the forge-knowledge catalog."""
     from theforge import agents as agents_mod
+    from theforge import evals as evals_mod
     from theforge import knowledge as knowledge_mod
 
     forge_json = kit._load_json(
@@ -226,6 +227,7 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
         skills=skills,
         agents=agent_ids,
         knowledge_providers=providers_,
+        eval_suites=evals_mod.manifest_suites(),
         protocols=(
             {"id": "forge/v1", "version": "1"},
             {"id": "forge/context/v1", "version": "1"},
@@ -297,6 +299,63 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
                 "read_only": True,
                 "description": "install ledger drift + health of the target",
             },
+            {
+                "id": "evals-list",
+                "argv": ["theforge", "evals", "list", "--json"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": (
+                    "evals.list (§7.2) — classified catalog of declared eval "
+                    "suites (metadata only, never holdout answers)"
+                ),
+            },
+            {
+                "id": "evals-describe",
+                "argv": ["theforge", "evals", "describe", "{suite}", "--json"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": (
+                    "evals.describe (§7.2) — one suite's kind, inputs, "
+                    "environment and hash-pinned baselines/holdouts"
+                ),
+            },
+            {
+                "id": "evals-run",
+                "argv": ["theforge", "evals", "run", "{suite}", "--json"],
+                "mode": "specialist-workflow",
+                "read_only": False,
+                "description": (
+                    "evals.run (§7.2) — execute a declared suite's allowlisted "
+                    "argv and persist a receipt; missing inputs block, never skip"
+                ),
+            },
+            {
+                "id": "evals-result",
+                "argv": ["theforge", "evals", "result", "{receipt}", "--json"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "evals.result (§7.2) — read a persisted eval receipt",
+            },
+            {
+                "id": "verify-plan",
+                "argv": ["theforge", "verify", "plan", "--json"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": (
+                    "verification.plan (§7.2/§7.4) — select applicable checks "
+                    "and emit the validation plan; never executes"
+                ),
+            },
+            {
+                "id": "verify-run",
+                "argv": ["theforge", "verify", "run", "--plan", "{plan}", "--json"],
+                "mode": "specialist-workflow",
+                "read_only": False,
+                "description": (
+                    "verification.run (§7.2/§7.4) — execute the plan's "
+                    "authorized checks and record evidence"
+                ),
+            },
         ),
         discovery_ops={
             "capabilities.list": "capabilities-list",
@@ -305,6 +364,12 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
             "knowledge.get": "knowledge-get",
             "context.build": "context-build",
             "health.check": "health-check",
+            "evals.list": "evals-list",
+            "evals.describe": "evals-describe",
+            "evals.run": "evals-run",
+            "evals.result": "evals-result",
+            "verification.plan": "verify-plan",
+            "verification.run": "verify-run",
             # rules.* — the-forge is the control plane and owns no domain
             # rule catalog; those ops stay unmapped (absent = honestly
             # unavailable, §6.6 — never invent a rules surface).

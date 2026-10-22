@@ -1935,3 +1935,128 @@ def orchestration(data: dict[str, Any]) -> str:
     if data.get("path"):
         lines.append(f"report: {_clean(data['path'])}")
     return "\n".join(lines)
+
+
+def evals_list(data: dict[str, Any]) -> str:
+    rows = data.get("suites") or []
+    if not rows:
+        return "no eval suites declared"
+    lines = [f"{len(rows)} eval suite(s) — install-2.0 §7.1 classified catalog:"]
+    for r in rows:
+        line = f"  {r['id']:<24} {r['kind']:<22} env={_clean(r.get('environment'))}"
+        if r.get("inputs"):
+            line += f"  inputs={','.join(r['inputs'])}"
+        if r.get("destructive"):
+            line += "  [destructive — evals never run it]"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def evals_describe(data: dict[str, Any]) -> str:
+    lines = [
+        f"{data.get('id')} — {_clean(data.get('kind'))}  env={_clean(data.get('environment'))}",
+        f"  {_clean(data.get('description'))}",
+        f"  command: {_clean(' '.join(data.get('command') or []))}",
+        f"  proof: {_clean(data.get('proof_note'))}",
+    ]
+    for item in data.get("inputs") or []:
+        lines.append(f"  input: {item['name']} (required)")
+    if data.get("triggers"):
+        lines.append(f"  triggers: {', '.join(data['triggers'])}")
+    for key in ("baselines", "holdouts"):
+        block = data.get(key) or {}
+        if not block:
+            continue
+        lines.append(f"  {key}: {block.get('count', 0)} — {_clean(block.get('content'))}")
+        for entry in block.get("resolved") or []:
+            lines.append(
+                f"    {entry['path']}  sha256={entry['sha256'][:16]}…  {entry['bytes']}B"
+            )
+    if data.get("destructive"):
+        lines.append("  destructive: yes — evals never execute this suite")
+    return "\n".join(lines)
+
+
+def evals_result(data: dict[str, Any]) -> str:
+    lines = [
+        f"eval receipt {_clean(data.get('receipt_id'))}",
+        f"  suite: {_clean(data.get('suite'))}  verdict: {_clean(data.get('verdict'))}"
+        f"  env={_clean(data.get('environment'))}",
+    ]
+    if data.get("simulated_proof"):
+        lines.append("  note: simulated evidence — not a real-environment proof")
+    if data.get("argv"):
+        lines.append(f"  argv: {_clean(' '.join(str(a) for a in data['argv']))}")
+    if data.get("exit_code") is not None:
+        lines.append(f"  exit: {data['exit_code']}")
+    for name, rec in sorted((data.get("inputs_recorded") or {}).items()):
+        lines.append(f"  input {name}: {rec['path']}  sha256={rec['sha256'][:16]}…")
+    for ev in data.get("evidence") or []:
+        lines.append(f"  evidence: {_clean(ev)}")
+    for u in data.get("unresolved") or []:
+        lines.append(f"  unresolved: {_clean(u)}")
+    return "\n".join(lines)
+
+
+def evals_results(data: dict[str, Any]) -> str:
+    rows = data.get("receipts") or []
+    if not rows:
+        return "no eval receipts under .forge/evals/ — run `theforge evals run <suite>` first"
+    lines = [f"{len(rows)} receipt(s):"]
+    for r in rows:
+        line = (
+            f"  {_clean(r.get('receipt_id'))}  {_clean(r.get('suite'))}  "
+            f"{_clean(r.get('verdict'))}"
+        )
+        if r.get("environment"):
+            line += f"  env={r['environment']}"
+        if r.get("recorded_at"):
+            line += f"  {_clean(r['recorded_at'])}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def verify_plan(data: dict[str, Any]) -> str:
+    lines = [
+        f"verification plan — risk={_clean(data.get('risk'))}  "
+        f"schema={_clean(data.get('schema'))}",
+        f"  changed: {', '.join(data.get('changed') or []) or '(none declared)'}",
+    ]
+    for reason in data.get("reasons") or []:
+        lines.append(f"  reason: {_clean(reason)}")
+    selected = data.get("selected") or []
+    lines.append(f"  selected: {len(selected)}")
+    for s in selected:
+        line = f"    {s['suite']:<24} {_clean(s.get('status')):<10} {_clean(s.get('reason'))}"
+        if s.get("missing_inputs"):
+            line += f"  missing={','.join(s['missing_inputs'])}"
+        lines.append(line)
+    for s in data.get("skipped") or []:
+        lines.append(f"  skipped:  {s['suite']:<24} {_clean(s.get('reason'))}")
+    if data.get("written_to"):
+        lines.append(f"  plan written: {_clean(data['written_to'])}")
+    lines.append(f"  {_clean(data.get('note'))}")
+    return "\n".join(lines)
+
+
+def verify_run(data: dict[str, Any]) -> str:
+    counts = data.get("counts") or {}
+    lines = [
+        f"verify run {_clean(data.get('receipt_id'))} — verdict: {_clean(data.get('verdict'))}",
+        "  counts: "
+        + " ".join(
+            f"{k}={counts.get(k, 0)}" for k in ("pass", "fail", "inconclusive", "blocked")
+        ),
+    ]
+    for r in data.get("results") or []:
+        line = f"    {r['suite']:<24} {_clean(r.get('verdict'))}"
+        if r.get("environment"):
+            line += f"  env={r['environment']}"
+        if r.get("receipt_id"):
+            line += f"  receipt={_clean(r['receipt_id'])}"
+        lines.append(line)
+    for ev in data.get("evidence") or []:
+        lines.append(f"  evidence: {_clean(ev)}")
+    if data.get("conclusion"):
+        lines.append(f"  {_clean(data['conclusion'])}")
+    return "\n".join(lines)

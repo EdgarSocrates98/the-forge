@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `the-forge` |
-| branch | `cycle-10.1/program` |
-| commit | `27e45e7` |
-| docs inventoried | 605 (excl. GENERATED mirrors: 453; vendored upstream: 0) |
+| branch | `cycle/install-evals` |
+| commit | `785a9c1` |
+| docs inventoried | 692 (excl. GENERATED mirrors: 537; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 605
+- `AUTOMATICALLY_CHECKED`: 692
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -19,20 +19,20 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
-- `UNKNOWN`: 164
-- `GENERATED`: 152
-- `USER_GUIDE`: 66
-- `ADR`: 61
-- `RELEASE_REPORT`: 36
+- `UNKNOWN`: 219
+- `GENERATED`: 155
+- `USER_GUIDE`: 69
+- `ADR`: 62
+- `RELEASE_REPORT`: 57
 - `SDD_ARTIFACT`: 35
 - `GETTING_STARTED`: 24
-- `SKILL`: 16
+- `SKILL`: 17
 - `HISTORICAL`: 12
 - `HOW_TO`: 11
-- `CONTRACT`: 7
-- `ARCHITECTURE`: 5
+- `CONTRACT`: 8
+- `ARCHITECTURE`: 6
+- `TEST_EVIDENCE`: 5
 - `AGENT_INSTRUCTIONS`: 4
-- `TEST_EVIDENCE`: 4
 - `CONCEPT`: 3
 - `INTERNAL`: 2
 - `REFERENCE`: 2
@@ -43,7 +43,7 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 - duplicate groups (non-generated): 0
 - broken internal links total: 8 (active docs: 0; remainder in frozen/historical trees)
 - documented-but-missing commands: 0 (active docs: 0)
-- undocumented public commands: 0
+- undocumented public commands: 1
 
 ## Educational layer delivered
 

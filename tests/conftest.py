@@ -256,6 +256,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_orchestrate.py": ("unit", "contract"),
     # lf-0039 §8.4: clean-venv wheel isolation (build + install lifecycle)
     "test_wheel_isolation.py": ("e2e", "integration", "slow"),
+    # lf-0038 §7: evals taxonomy, holdout sealing, verification plan→run→receipt
+    "test_evals_cycle5.py": ("unit", "contract"),
 }
 
 

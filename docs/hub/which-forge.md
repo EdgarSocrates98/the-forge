@@ -12,6 +12,7 @@ de cada ForgeKnowledge/v1). Em dúvida: `theforge knowledge list` e
 | Se o seu problema é… | Use | Não use para… |
 |---|---|---|
 | API design and review: REST, OpenAPI, AsyncAPI, GraphQL, gRPC; contract evolution, versioning and breaking-change analysis; API architecture, testing strategy and upstream fact intake (apiforge/upstream-facts/v1) | **api-forge** | Spark/data engineering — route to the spark-engineering family; platform/IDP or CI/CD estate analysis — route to platform-forge; independent verification of API |
+| runtime failure diagnosis of Spark/Glue/EMR jobs from event logs, plans and run dumps; SQL and Spark physical-plan analysis; importing forge-doctor-data handoff bundles for independent diagnosis | **data-sentinel-forge** | producing Spark code or pipelines — it is a diagnostician, not a producer; static source review of a repository — route to spark-forge-* or forge-doctor-data; a |
 | independent verification of api-forge results (api.verify); diagnosis of API contract findings from ApiHandoffBundle documents; reviewing evidence produced by the api-engineering family | **forge-doctor-api** | producing API designs or code — it is a doctor, not a producer; data/Spark verification — route to forge-doctor-data; any task where it would verify its own out |
 | independent verification of Spark/data engineering results (producer/verifier separation); diagnosis of data-pipeline findings from forge-contracts/1 documents; reviewing evidence bundles produced by the spark-engineerin | **forge-doctor-data** | producing Spark code or pipelines — it is a doctor, not a producer; API verification — route to forge-doctor-api; any task where it would verify its own output |
 | repository/platform posture: GHA workflows, k8s manifests, IaC, GitOps state, service catalog; secrets scanning of a repo tree (with the staging boundary — see limitations); developer-experience / golden-path / SRE evide | **platform-forge** | Spark or cloud-data engineering — route to the spark-engineering family; API contract design — route to api-forge; verifying its own output — use an independent |
@@ -35,6 +36,22 @@ review this OpenAPI spec for breaking changes
 ```
 
 - pacote: `apiforge-af>=0.1,<0.2` · binário: `apiforge` · python `>=3.12,<3.13`
+
+### Data Sentinel (`data-sentinel-forge`)
+
+Runtime/log diagnostics specialist for Spark and data platforms: event-log and failure diagnosis, Glue/EMR run inspection, SQL and plan analysis, doctor-bundle import. Diagnoses from runtime evidence; it is not an engineering producer.
+
+**Intents declarados:** `diagnose spark failure`, `spark runtime diagnosis`, `analyze spark logs`, `sentinel diagnosis`, `pyspark`
+
+**Compõe com:** `forge-doctor-data`, `spark-forge-aws`, `spark-forge-azure`
+
+**Limite honesto:** UNADAPTED (lf-0031 documented gap): data-sentinel-forge ships forge.agentic.json + forge.json and a governed CLI, but has no the-forge adapter — no Forge Protocol describe/health/execute surface, so it can never become VERIFIED today and every orchestration pick resolves to a provider-absent/degraded refusal, never a silent skip. Its diagnostics also require runtime evidence (event logs, plans, run dumps): the orchestration lane refuses to force a sentinel diagnosis when the caller declares no such inputs. A full sentinel adapter is the scope of a later spec.
+
+```bash
+diagnose the glue job failure from its run logs
+```
+
+- pacote: `data-sentinel-forge>=0.1.0,<0.2.0` · binário: `data-sentinel` · python `>=3.11`
 
 ### Forge Doctor API (`forge-doctor-api`)
 

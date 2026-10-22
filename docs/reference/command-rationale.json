@@ -145,5 +145,37 @@
  "lab gate": {
   "why": "comparar um run contra baseline calibrado e falhar em regressão de métricas",
   "when": "CI/release: gate de regressão sobre métricas medidas"
+ },
+ "orchestrate": {
+  "why": "orquestração multi-especialista roteada por capability — delegação justificada e governada",
+  "when": "plan/run quando o task exige composição de especialistas com plano justificado (nunca delegação implícita)"
+ },
+ "evals": {
+  "why": "superfície de avaliação da Forge: catálogo de suítes (developer, runtime-decision, output-verification, host-conformance), execução determinística e receipts",
+  "when": "descobrir (list), descrever sem expor holdouts (describe), executar (run) ou ler um receipt gravado (result) — ops §7.2 do install-2.0"
+ },
+ "evals describe": {
+  "why": "metadados de uma suíte: kind, ambiente, entradas, baseline/holdout hash-pinned — sem respostas esperadas",
+  "when": "antes de executar: ver o que a suíte mede e quais entradas ela exige"
+ },
+ "evals run": {
+  "why": "executa uma suíte declarada via comando allowlisted e grava um receipt com veredito e evidências",
+  "when": "produzir prova determinística offline; entradas faltantes viram blocked nomeado, nunca skip silencioso"
+ },
+ "evals result": {
+  "why": "lê o receipt de um run já gravado: veredito, ambiente, evidências e unresolved",
+  "when": "auditar uma execução passada ou relatar prova a um host/verificador"
+ },
+ "verify": {
+  "why": "fluxo §7.4: selecionar verificações aplicáveis, produzir plano de validação, executar checagens autorizadas e registrar evidência",
+  "when": "antes de declarar um artefato verificado — falhas e inconclusivos são explícitos e a conclusão é proporcional à evidência"
+ },
+ "verify plan": {
+  "why": "seleciona as checagens de verificação aplicáveis a um alvo e emite o plano (checks + motivos)",
+  "when": "antes de executar: ver quais verificações se aplicam e por quê"
+ },
+ "verify run": {
+  "why": "executa as checagens autorizadas do plano e grava o receipt de evidência",
+  "when": "produzir o verdict verificado; checagens não autorizadas/destrutivas ficam bloqueadas com a razão nomeada"
  }
 }

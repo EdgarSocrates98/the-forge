@@ -1,7 +1,7 @@
 # Duplicate content report
-Forge: `theforge`
+Forge: `the-forge`
 Real exact-duplicate groups (>=2 non-generated copies): 0
-Canonical+mirror groups (intentional host renders): 35
+Canonical+mirror groups (intentional host renders): 36
 
 No exact duplicates found.
 

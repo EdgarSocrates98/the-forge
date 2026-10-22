@@ -2107,3 +2107,83 @@ def cmd_portal(args: argparse.Namespace) -> int:
     if args.root != ".":
         argv.extend(["--root", str(args.root)])
     return portal_main(argv)
+
+
+# ---------------------------------------------------------------------------
+# evals & verification surface (install-2.0 §7, lf-0038)
+# ---------------------------------------------------------------------------
+
+_EVAL_VERDICT_EXIT: Final = {"pass": 0, "fail": 1, "blocked": 4, "inconclusive": 4}
+
+
+def _named_inputs(pairs: list[str]) -> dict[str, str]:
+    """``--input NAME=VALUE`` pairs → the run's declared-input map."""
+    out: dict[str, str] = {}
+    for item in pairs:
+        name, sep, value = item.partition("=")
+        if not sep or not name.strip():
+            raise UsageError(f"--input expects NAME=VALUE, got {item!r}")
+        out[name.strip()] = value
+    return out
+
+
+def cmd_evals(args: argparse.Namespace) -> int:
+    """§7.2 ops: evals.list / evals.describe / evals.run / evals.result.
+
+    The executor-facing surfaces never inline holdout answers (§7.3):
+    describe reports path + sha256 + count, list is metadata only.
+    """
+    from theforge import evals as fevals
+
+    root = _root(args)
+    if args.evals_command == "list":
+        _emit(args, {"suites": fevals.catalog()}, render.evals_list)
+        return 0
+    if args.evals_command == "describe":
+        _emit(args, fevals.describe(args.suite, root=root), render.evals_describe)
+        return 0
+    if args.evals_command == "result":
+        if args.receipt_id:
+            _emit(args, fevals.result(root, args.receipt_id), render.evals_result)
+        else:
+            _emit(args, {"receipts": fevals.results(root)}, render.evals_results)
+        return 0
+    receipt = fevals.run_suite(
+        root, args.suite, inputs=_named_inputs(getattr(args, "input", []))
+    )
+    _emit(args, receipt, render.evals_result)
+    return _EVAL_VERDICT_EXIT.get(receipt["verdict"], 1)
+
+
+def cmd_verify(args: argparse.Namespace) -> int:
+    """§7.4 flow: verification.plan selects (never executes) → verification.run
+    executes the authorized checks and persists the evidence receipt."""
+    from theforge import evals as fevals
+
+    root = _root(args)
+    if args.verify_command == "plan":
+        doc = fevals.plan(
+            args.changed or [], risk=args.risk, authorized=args.authorize
+        )
+        if args.out:
+            out_path = Path(args.out).expanduser()
+            out_path.write_text(
+                json.dumps(doc, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            doc = {**doc, "written_to": str(out_path)}
+        _emit(args, doc, render.verify_plan)
+        return 0
+    plan_path = Path(args.plan).expanduser()
+    if not plan_path.is_file():
+        raise UsageError(
+            f"verify run: no plan file {plan_path} — "
+            "run `theforge verify plan --out <file>` first"
+        )
+    try:
+        plan_doc = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise UsageError(f"verify run: unreadable plan document — {exc}") from exc
+    doc = fevals.run_plan(root, plan_doc, inputs=_named_inputs(getattr(args, "input", [])))
+    _emit(args, doc, render.verify_run)
+    return _EVAL_VERDICT_EXIT.get(doc["verdict"], 1)

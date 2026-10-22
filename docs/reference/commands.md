@@ -2,7 +2,7 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **31/31** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **34/34** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
@@ -12,6 +12,7 @@ Rationale coverage: **31/31** first-level groups curated in `command-rationale.j
 - [`decisions`](#decisions) — 1 command(s)
 - [`doctor`](#doctor) — 1 command(s)
 - [`economy`](#economy) — 3 command(s)
+- [`evals`](#evals) — 5 command(s)
 - [`excellence`](#excellence) — 2 command(s)
 - [`explain`](#explain) — 1 command(s)
 - [`graph`](#graph) — 1 command(s)
@@ -22,6 +23,7 @@ Rationale coverage: **31/31** first-level groups curated in `command-rationale.j
 - [`knowledge`](#knowledge) — 4 command(s)
 - [`lab`](#lab) — 4 command(s)
 - [`memory`](#memory) — 7 command(s)
+- [`orchestrate`](#orchestrate) — 3 command(s)
 - [`plan`](#plan) — 1 command(s)
 - [`portal`](#portal) — 1 command(s)
 - [`provider`](#provider) — 3 command(s)
@@ -36,6 +38,7 @@ Rationale coverage: **31/31** first-level groups curated in `command-rationale.j
 - [`targets`](#targets) — 3 command(s)
 - [`task`](#task) — 4 command(s)
 - [`trace`](#trace) — 1 command(s)
+- [`verify`](#verify) — 3 command(s)
 - [`workspace`](#workspace) — 2 command(s)
 
 ## agents
@@ -365,6 +368,121 @@ theforge economy report [root] [json] [debug]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## evals
+
+### `evals`
+
+**para que:** classified eval suites + receipts (install-2.0 §7)
+
+- **por que:** superfície de avaliação da Forge: catálogo de suítes (developer, runtime-decision, output-verification, host-conformance), execução determinística e receipts
+- **quando usar:** descobrir (list), descrever sem expor holdouts (describe), executar (run) ou ler um receipt gravado (result) — ops §7.2 do install-2.0
+
+**Syntax**
+
+```text
+theforge evals
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `evals describe`
+
+**para que:** one suite's kind, inputs, environment, hash-pinned baselines/holdouts — never expected answers
+
+- **por que:** metadados de uma suíte: kind, ambiente, entradas, baseline/holdout hash-pinned — sem respostas esperadas
+- **quando usar:** antes de executar: ver o que a suíte mede e quais entradas ela exige
+
+**Syntax**
+
+```text
+theforge evals describe [root] [json] [debug] <suite>
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `suite` | yes | — | suite id from `evals list` |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `evals list`
+
+**para que:** §7.1 catalog: every declared suite with its kind — metadata only
+
+- **por que:** superfície de avaliação da Forge: catálogo de suítes (developer, runtime-decision, output-verification, host-conformance), execução determinística e receipts
+- **quando usar:** descobrir (list), descrever sem expor holdouts (describe), executar (run) ou ler um receipt gravado (result) — ops §7.2 do install-2.0
+
+**Syntax**
+
+```text
+theforge evals list [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `evals result`
+
+**para que:** read a persisted receipt by id (or list every receipt)
+
+- **por que:** lê o receipt de um run já gravado: veredito, ambiente, evidências e unresolved
+- **quando usar:** auditar uma execução passada ou relatar prova a um host/verificador
+
+**Syntax**
+
+```text
+theforge evals result [root] [json] [debug] [receipt_id]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `receipt_id` | no | — | receipt id under .forge/evals/ |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `evals run`
+
+**para que:** execute a declared suite's allowlisted argv; writes a receipt — missing inputs block, never skip
+
+- **por que:** executa uma suíte declarada via comando allowlisted e grava um receipt com veredito e evidências
+- **quando usar:** produzir prova determinística offline; entradas faltantes viram blocked nomeado, nunca skip silencioso
+
+**Syntax**
+
+```text
+theforge evals run [root] [json] [debug] <suite> [NAME=VALUE]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `suite` | yes | — | suite id from `evals list` |
+| `NAME=VALUE` | no | — | fill a declared input (repeatable) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1040,7 +1158,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge lab collect [root] [json] [debug] [mode] [forge] [CHECKOUT] [timeout] [repeats] [jobs] [allow_external] [DIR]
+theforge lab collect [root] [json] [debug] [mode] [forge] [CHECKOUT] [timeout] [repeats] [jobs] [allow_external] [PATH] [DIR]
 ```
 
 | argument/flag | required | default | description |
@@ -1055,6 +1173,7 @@ theforge lab collect [root] [json] [debug] [mode] [forge] [CHECKOUT] [timeout] [
 | `repeats` | no | — | repetitions per lab (max 10) |
 | `jobs` | no | — | parallel labs (max 4; default sequential) |
 | `allow_external` | no | — | required for mode C — real external resources, receipt marked external |
+| `PATH` | no | — | explicit authorized interpreter for every lab — wins over the managed receipt, install manifest, checkout .venv and the documented sys.executable fallback |
 | `DIR` | no | — | report directory override |
 
 <!-- keep:start -->
@@ -1097,7 +1216,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge lab list [root] [json] [debug] [CHECKOUT]
+theforge lab list [root] [json] [debug] [CHECKOUT] [PATH]
 ```
 
 | argument/flag | required | default | description |
@@ -1106,6 +1225,7 @@ theforge lab list [root] [json] [debug] [CHECKOUT]
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `CHECKOUT` | no | — | explicit repo checkout to include beyond the install registry |
+| `PATH` | no | — | explicit authorized interpreter — wins over managed receipt, manifest and env candidates (inspect-only here: no probe spawned) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1280,6 +1400,91 @@ theforge memory summarize [root] [json] [debug] <subject> <claim> <ENTRY_ID> [co
 | `claim` | yes | — | the distilled statement |
 | `ENTRY_ID` | yes | — | source entry id (repeatable) |
 | `coverage` | no | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## orchestrate
+
+### `orchestrate`
+
+**para que:** capability-routed multi-specialist orchestration (justified, governed)
+
+- **por que:** orquestração multi-especialista roteada por capability — delegação justificada e governada
+- **quando usar:** plan/run quando o task exige composição de especialistas com plano justificado (nunca delegação implícita)
+
+**Syntax**
+
+```text
+theforge orchestrate
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `orchestrate plan`
+
+**para que:** build the justified delegation plan
+
+- **por que:** orquestração multi-especialista roteada por capability — delegação justificada e governada
+- **quando usar:** plan/run quando o task exige composição de especialistas com plano justificado (nunca delegação implícita)
+
+**Syntax**
+
+```text
+theforge orchestrate plan [root] [json] [debug] <intent> [FILE] [KIND] [RISK] [no_probe] [allow_unverified] [max_hops] [S] [max_providers]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `intent` | yes | — | the task intent, e.g. 'audit a pyspark project' |
+| `FILE` | no | — | a theforge/SpecialistDelegation/v1 JSON document overriding the default declaration |
+| `KIND` | no | — | declared input kind available to capabilities (repeatable) — a capability whose 'requires' is not declared is refused, never forced |
+| `RISK` | no | — | risk level to authorize beyond LOCAL_READ (repeatable): LOCAL_WRITE EXTERNAL_READ EXTERNAL_WRITE DESTRUCTIVE COST_BEARING |
+| `no_probe` | no | — | metadata scan only — never executes a probe |
+| `allow_unverified` | no | — | probe providers whose trust is 'unverified' |
+| `max_hops` | no | — | chain hop budget (default 4) |
+| `S` | no | — | chain timeout budget in seconds |
+| `max_providers` | no | — | max specialists per plan (default 4) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `orchestrate run`
+
+**para que:** plan, then execute each pick via governed delegation
+
+- **por que:** orquestração multi-especialista roteada por capability — delegação justificada e governada
+- **quando usar:** plan/run quando o task exige composição de especialistas com plano justificado (nunca delegação implícita)
+
+**Syntax**
+
+```text
+theforge orchestrate run [root] [json] [debug] <intent> [FILE] [KIND] [RISK] [no_probe] [allow_unverified] [max_hops] [S] [max_providers] [target] [correlation_id]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `intent` | yes | — | the task intent, e.g. 'audit a pyspark project' |
+| `FILE` | no | — | a theforge/SpecialistDelegation/v1 JSON document overriding the default declaration |
+| `KIND` | no | — | declared input kind available to capabilities (repeatable) — a capability whose 'requires' is not declared is refused, never forced |
+| `RISK` | no | — | risk level to authorize beyond LOCAL_READ (repeatable): LOCAL_WRITE EXTERNAL_READ EXTERNAL_WRITE DESTRUCTIVE COST_BEARING |
+| `no_probe` | no | — | metadata scan only — never executes a probe |
+| `allow_unverified` | no | — | probe providers whose trust is 'unverified' |
+| `max_hops` | no | — | chain hop budget (default 4) |
+| `S` | no | — | chain timeout budget in seconds |
+| `max_providers` | no | — | max specialists per plan (default 4) |
+| `target` | no | — | path the specialists analyze (default: workspace root) |
+| `correlation_id` | no | — | reuse an existing chain correlation id |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -2061,6 +2266,77 @@ theforge trace [root] [json] [debug] <run_id>
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `run_id` | yes | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## verify
+
+### `verify`
+
+**para que:** verification plan → run → evidence (install-2.0 §7.4)
+
+- **por que:** fluxo §7.4: selecionar verificações aplicáveis, produzir plano de validação, executar checagens autorizadas e registrar evidência
+- **quando usar:** antes de declarar um artefato verificado — falhas e inconclusivos são explícitos e a conclusão é proporcional à evidência
+
+**Syntax**
+
+```text
+theforge verify
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `verify plan`
+
+**para que:** select applicable checks for changed paths; emits the validation plan — never executes
+
+- **por que:** seleciona as checagens de verificação aplicáveis a um alvo e emite o plano (checks + motivos)
+- **quando usar:** antes de executar: ver quais verificações se aplicam e por quê
+
+**Syntax**
+
+```text
+theforge verify plan [root] [json] [debug] <PATH> [risk] [NAME] [FILE]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `PATH` | yes | — | changed paths to impact-select against (default: full sweep floor) |
+| `risk` | no | — | sweep floor: micro/low = impacted only, medium adds developer evals, high runs the whole catalog |
+| `NAME` | no | — | declare an input name the caller will supply at run time |
+| `FILE` | no | — | write the plan document for `verify run --plan <file>` |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `verify run`
+
+**para que:** execute the plan's authorized checks and record evidence; blocked/inconclusive stay explicit
+
+- **por que:** executa as checagens autorizadas do plano e grava o receipt de evidência
+- **quando usar:** produzir o verdict verificado; checagens não autorizadas/destrutivas ficam bloqueadas com a razão nomeada
+
+**Syntax**
+
+```text
+theforge verify run [root] [json] [debug] <FILE> [NAME=VALUE]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `FILE` | yes | — | plan document written by `verify plan --out` |
+| `NAME=VALUE` | no | — | fill a declared suite input (repeatable) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
