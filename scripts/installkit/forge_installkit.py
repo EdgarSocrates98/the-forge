@@ -394,6 +394,19 @@ class _Lock:
                 return True
             if alive is True:
                 return False
+            # PID undecidable (e.g. Windows) — fall back to the lock's
+            # declared age; mtime alone lies on fresh checkouts.
+            created = holder.get("created_at")
+            if isinstance(created, str):
+                try:
+                    from datetime import datetime, timezone
+
+                    stamp = datetime.strptime(created, "%Y-%m-%dT%H:%M:%SZ").replace(
+                        tzinfo=timezone.utc
+                    )
+                    return (datetime.now(timezone.utc) - stamp).total_seconds() > self._stale
+                except ValueError:
+                    pass
         try:
             age = time.time() - self._lock.stat().st_mtime
         except OSError:

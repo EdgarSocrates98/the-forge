@@ -145,9 +145,9 @@ def install(
                 }
             )
     if not dry_run and receipt.get("status") == "completed":
-        kit._write_receipt(ctx.state_dir, receipt)
         _register_context(ctx, receipt)
         _drop_stale_doc_entries(ctx)
+        kit._write_receipt(ctx.state_dir, receipt)
     return receipt
 
 
@@ -449,6 +449,17 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
     try:
         manifest = _context_manifest(ctx)
         out = fctx.register_forge(ctx.root, manifest, owner=FORGE_ID)
+        cap = ctx.root / ".forge" / "context" / "capabilities" / f"{FORGE_ID}.json"
+        if cap.is_file():
+            rel = cap.relative_to(ctx.root).as_posix()
+            ledger = kit.Ledger.load(ctx.state_dir)
+            ledger.record(
+                rel,
+                cap.read_bytes(),
+                "state",
+                "created" if ledger.get(rel) is None else "updated",
+            )
+            ledger.save()
         receipt.setdefault("checks", []).append(
             {
                 "id": "context-registry",
