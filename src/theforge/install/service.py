@@ -443,12 +443,15 @@ def _drop_stale_doc_entries(ctx: kit.InstallContext) -> None:
 
 def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
     """Write `.forge/context/` — capability manifest + registry entry +
-    ROUTING.md + the consumer docs (managed `forge:*` blocks and the shared
-    AGENT_PROTOCOL.md). A context failure is a named BLOCKED check on the
-    receipt, never a silent skip."""
+    ROUTING.md + the consumer docs — as ONE transaction (install-2.0
+    §9.2: preflight → lock → plan → conflicts → backup → write → verify
+    → commit, rollback on failure). A context failure is a named BLOCKED
+    check on the receipt, never a silent skip."""
     try:
         manifest = _context_manifest(ctx)
-        out = fctx.register_forge(ctx.root, manifest, owner=FORGE_ID)
+        out = fctx.install_transaction(
+            ctx.root, manifest, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
+        )
         cap = ctx.root / ".forge" / "context" / "capabilities" / f"{FORGE_ID}.json"
         if cap.is_file():
             rel = cap.relative_to(ctx.root).as_posix()
@@ -467,15 +470,7 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
                 "detail": f".forge/context {out['status']} ({len(out['written'])} writes)",
             }
         )
-    except fctx.ContextError as exc:
-        receipt.setdefault("checks", []).append(
-            {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
-        )
-        return
-    try:
-        docs = fctx.install_docs(
-            ctx.root, manifest, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
-        )
+        docs = out["docs"]
         receipt.setdefault("checks", []).append(
             {
                 "id": "consumer-docs",
@@ -488,19 +483,31 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
         )
     except fctx.ContextError as exc:
         receipt.setdefault("checks", []).append(
-            {"id": "consumer-docs", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
+            {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
         )
 
 
 def _unregister_context(root: Path, receipt: dict[str, Any]) -> None:
-    """Remove our own context manifest + registry entry on uninstall."""
+    """Remove our own context manifest + registry entry + consumer-doc
+    blocks on uninstall — ONE transaction (§9.2). Only owned artifacts:
+    our capability file, our registry entry, our `forge:*` blocks."""
     try:
-        out = fctx.unregister_forge(root, FORGE_ID, owner=FORGE_ID)
+        out = fctx.uninstall_transaction(
+            root, FORGE_ID, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
+        )
         receipt.setdefault("checks", []).append(
             {
                 "id": "context-registry",
                 "status": "PASS",
                 "detail": f".forge/context {out['status']}",
+            }
+        )
+        docs = out["docs"]
+        receipt.setdefault("checks", []).append(
+            {
+                "id": "consumer-docs",
+                "status": "PASS",
+                "detail": f"{docs['status']}: {len(docs['written'])} changed",
             }
         )
     except fctx.ContextError as exc:
@@ -533,33 +540,52 @@ def _docs_leftovers(root: Path) -> bool:
     return False
 
 
-def _uninstall_docs(root: Path, receipt: dict[str, Any]) -> None:
-    """Strip the `forge:the-forge` (+ legacy) blocks from the consumer docs;
-    runs after `_unregister_context` so the shared protocol regenerates
-    without our section. Last-forge teardown deletes generated-only docs."""
-    try:
-        out = fctx.uninstall_docs(
-            root, FORGE_ID, owner=FORGE_ID, legacy_tags=_LEGACY_DOC_TAGS
-        )
-        receipt.setdefault("checks", []).append(
-            {
-                "id": "consumer-docs",
-                "status": "PASS",
-                "detail": f"{out['status']}: {len(out['written'])} changed",
-            }
-        )
-    except fctx.ContextError as exc:
-        receipt.setdefault("checks", []).append(
-            {"id": "consumer-docs", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
-        )
+def _context_registry_truth(root: Path | None) -> bool:
+    """Whether `.forge/context/registry.json` lists this forge.
+
+    install-2.0 moved consumer docs out of the install ledger into the
+    context registry; an install that manages ONLY docs (minimal profile)
+    leaves the kit ledger empty while being fully installed. The registry
+    entry is the authoritative "installed here" signal in that case."""
+    if root is None:
+        return False
+    reg = fctx.load_registry(Path(root).resolve())
+    if not reg:
+        return False
+    return any(e.get("forge_id") == FORGE_ID for e in reg.get("forges", []))
 
 
 def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any]:
-    return kit.status(_ctx(scope, root, (), "recommended", True))
+    ctx = _ctx(scope, root, (), "recommended", True)
+    doc = kit.status(ctx)
+    if doc.get("status") == "unverified" and _context_registry_truth(ctx.root):
+        # Empty ledger + registry entry = docs-only install — report the
+        # truth instead of a false NOT_INSTALLED.
+        doc["status"] = "healthy"
+        doc["context_registered"] = True
+    return doc
 
 
 def doctor(*, scope: str = "project", root: Path | None = None) -> dict[str, Any]:
-    return kit.doctor(_ctx(scope, root, (), "recommended", True))
+    ctx = _ctx(scope, root, (), "recommended", True)
+    doc = kit.doctor(ctx)
+    if doc.get("status") == "unverified" and _context_registry_truth(ctx.root):
+        doc["status"] = "healthy"
+        for c in doc.get("checks", []):
+            if c.get("id") == "ledger":
+                c["status"] = "NOT_APPLICABLE"
+                c["detail"] = (
+                    "0 managed entries — consumer docs owned by "
+                    ".forge/context registry (docs-only install)"
+                )
+        doc.setdefault("checks", []).append(
+            {
+                "id": "context-registry",
+                "status": "PASS",
+                "detail": f"{FORGE_ID} present in .forge/context/registry.json",
+            }
+        )
+    return doc
 
 
 def repair(
@@ -570,6 +596,30 @@ def repair(
         return kit.status(ctx)
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.repair(ctx)
+        # Context registry (§9.2 recovery): redo a stranded transaction
+        # journal, reclaim a stale context lock and rebuild registry +
+        # ROUTING.md from the capability manifests on disk. Only when a
+        # context dir already exists — repair never creates residue on a
+        # workspace that never had one.
+        if fctx.context_dir(ctx.root).exists():
+            try:
+                out_ctx = fctx.repair_context(ctx.root)
+                r["repaired"].extend(f"context:{w}" for w in out_ctx["written"])
+                rec = out_ctx.get("recovered")
+                detail = (
+                    f"{out_ctx['status']} ({len(out_ctx['written'])} writes)"
+                    + (f"; recovered {rec['op']}:{rec['forge_id']}" if rec else "")
+                    + ("; stale lock reclaimed" if out_ctx.get("lock_recovered") else "")
+                )
+                r.setdefault("checks", []).append(
+                    {"id": "context-registry", "status": "PASS", "detail": detail}
+                )
+            except fctx.ContextError as exc:
+                r["skipped"].append(f"context:{exc.kind}")
+                r.setdefault("checks", []).append(
+                    {"id": "context-registry", "status": "BLOCKED",
+                     "detail": f"{exc.kind}: {exc.detail}"}
+                )
         # Consumer docs: re-assert `forge:*` blocks from the manifests under
         # `.forge/context/`; a named refusal lands as a BLOCKED check.
         try:
@@ -618,7 +668,6 @@ def uninstall(
             ) | {"removed": [], "kept": [], "scope": scope, "target_root": str(ctx.root)}
             if _docs_leftovers(ctx.root):
                 _unregister_context(ctx.root, r)
-                _uninstall_docs(ctx.root, r)
             return r
         st = kit.status(ctx)
         return {
@@ -635,7 +684,6 @@ def uninstall(
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.uninstall(ctx, purge_state=purge)
         _unregister_context(ctx.root, r)
-        _uninstall_docs(ctx.root, r)
         if lock.recovered:
             r.setdefault("checks", []).append(
                 {
