@@ -571,9 +571,18 @@ def test_install_order_independence(tmp_path):
     # registry.json differs only in volatile fields (timestamps, abs root)
     t1 = json.loads((root1 / ".forge/context/registry.json").read_text())
     t2 = json.loads((root2 / ".forge/context/registry.json").read_text())
-    assert {
-        k: v for k, v in t1.items() if k not in ("updated_at", "workspace_root")
-    } == {k: v for k, v in t2.items() if k not in ("updated_at", "workspace_root")}
+    volatile = ("installed_at", "updated_at")
+
+    def _stable(reg: dict) -> dict:
+        out = {
+            k: v for k, v in reg.items() if k not in ("updated_at", "workspace_root")
+        }
+        out["forges"] = [
+            {k: v for k, v in e.items() if k not in volatile} for e in reg["forges"]
+        ]
+        return out
+
+    assert _stable(t1) == _stable(t2)
     # AGENTS.md blocks: same set per forge (order may differ — appended)
     for fid in ("a-forge", "b-forge"):
         for root in (root1, root2):
