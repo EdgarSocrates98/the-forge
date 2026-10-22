@@ -104,13 +104,13 @@ import sys
 import tempfile
 import time
 from collections.abc import Iterable, Mapping
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.3.0"
+_FORGECONTEXT_VERSION = "1.3.1"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "071152177e2d0bd0"
+_SOURCE_SHA256 = "d2303540ae727338"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -185,6 +185,8 @@ _ITEM_ID_RE = re.compile(r"^[a-z0-9-_]{1,128}$")
 # manifests already declare (items, ``provider/x`` paths, ``forge/v1``
 # protocol ids); it is an index namespace, never a rename (§9.4).
 _QID_RE = re.compile(r"^[a-z0-9-]{1,64}:[A-Za-z0-9-_./]{1,190}$")
+_TXN_BLOB_RE = re.compile(r"^\d{1,8}$")
+_TXN_DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+([-.+][0-9A-Za-z.]+)?$")
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
@@ -2477,6 +2479,21 @@ def _txn_backup(ctx: Path, root: Path) -> None:
     _atomic_write(txn / TXN_META, _json_bytes(meta))
 
 
+def _txn_safe_rel(rel: object) -> bool:
+    """``txn/meta.json`` is data, never authority: a restore target must
+    be a plain workspace-relative POSIX path — no ``..``, no absolute or
+    drive prefix, no separators that smuggle a parent escape."""
+    if not isinstance(rel, str) or not rel:
+        return False
+    p = PurePosixPath(rel)
+    return (
+        not p.is_absolute()
+        and ".." not in p.parts
+        and "\\" not in rel
+        and _TXN_DRIVE_RE.match(rel) is None
+    )
+
+
 def _txn_restore(ctx: Path, root: Path) -> list[str]:
     """Rollback: restore every backed-up file, delete files the failed
     transaction created, drop the backup. Returns the paths it could
@@ -2493,7 +2510,11 @@ def _txn_restore(ctx: Path, root: Path) -> list[str]:
             except OSError:
                 leftovers.append(rel)
     for rel, info in sorted(recorded.items()):
-        blob = txn / TXN_FILES / str((info or {}).get("blob", ""))
+        blob_name = str((info or {}).get("blob", ""))
+        if not _txn_safe_rel(rel) or _TXN_BLOB_RE.match(blob_name) is None:
+            leftovers.append(f"{rel} (unsafe backup entry)")
+            continue
+        blob = txn / TXN_FILES / blob_name
         if not blob.is_file():
             leftovers.append(f"{rel} (backup blob missing)")
             continue
@@ -2636,6 +2657,10 @@ def install_transaction(
             leftovers = _txn_restore(ctx, root)
             with contextlib.suppress(OSError):
                 (ctx / JOURNAL_NAME).unlink()
+            if not isinstance(exc, Exception):
+                # KeyboardInterrupt/SystemExit propagate bare after the
+                # rollback — never re-typed as ContextError.
+                raise
             note = "; ".join(leftovers) if leftovers else "clean"
             if isinstance(exc, ContextError):
                 exc.detail = f"{exc.detail} — transaction rolled back ({note})"
@@ -2710,6 +2735,10 @@ def uninstall_transaction(
             leftovers = _txn_restore(ctx, root)
             with contextlib.suppress(OSError):
                 (ctx / JOURNAL_NAME).unlink()
+            if not isinstance(exc, Exception):
+                # KeyboardInterrupt/SystemExit propagate bare after the
+                # rollback — never re-typed as ContextError.
+                raise
             note = "; ".join(leftovers) if leftovers else "clean"
             if isinstance(exc, ContextError):
                 exc.detail = f"{exc.detail} — transaction rolled back ({note})"

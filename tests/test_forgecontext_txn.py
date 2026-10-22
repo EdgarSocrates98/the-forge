@@ -188,6 +188,50 @@ def test_install_transaction_rollback_on_verify_failure(tmp_path, monkeypatch):
     assert _tree(tmp_path) == baseline
 
 
+def test_install_transaction_interrupt_propagates_bare(tmp_path, monkeypatch):
+    """KeyboardInterrupt mid-write still rolls back, then propagates as
+    itself — never re-typed into ContextError."""
+    fctx.install_transaction(tmp_path, _manifest("forge-x"), owner="forge-x")
+    baseline = _tree(tmp_path)
+
+    def boom(root, manifest, tags):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(fctx, "_docs_install_apply", boom)
+    with pytest.raises(KeyboardInterrupt):
+        fctx.install_transaction(tmp_path, _manifest("forge-y"), owner="forge-y")
+    assert _tree(tmp_path) == baseline
+    assert not (_ctx(tmp_path) / fctx.TXN_DIR).exists()
+
+
+def test_txn_restore_rejects_tampered_meta_paths(tmp_path):
+    """A tampered ``txn/meta.json`` must not write outside the workspace:
+    ``..``, absolute, drive and backslash paths are reported as leftovers,
+    never restored."""
+    ctx = _ctx(tmp_path)
+    files = ctx / fctx.TXN_DIR / fctx.TXN_FILES
+    files.mkdir(parents=True)
+    (files / "0000").write_bytes(b"pwned")
+    meta = {
+        "files": {
+            "../escape.txt": {"blob": "0000", "sha256": "x"},
+            "/abs/escape.txt": {"blob": "0000", "sha256": "x"},
+            "C:/drive.txt": {"blob": "0000", "sha256": "x"},
+            "a\\b.txt": {"blob": "0000", "sha256": "x"},
+            "AGENTS.md": {"blob": "oops", "sha256": "x"},
+            "OK.md": {"blob": "0000", "sha256": "x"},
+        }
+    }
+    (ctx / fctx.TXN_DIR / fctx.TXN_META).write_text(json.dumps(meta), "utf-8")
+    leftovers = fctx._txn_restore(ctx, tmp_path)
+    assert len(leftovers) == 5 and all("unsafe" in l for l in leftovers)
+    assert not (tmp_path / "escape.txt").exists()
+    assert not (tmp_path.parent / "escape.txt").exists()
+    # the one safe entry WAS restored inside the root
+    assert (tmp_path / "OK.md").read_bytes() == b"pwned"
+    assert not (ctx / fctx.TXN_DIR).exists()
+
+
 def test_interrupted_install_journal_redone(tmp_path):
     """Kill between journal and apply → next op redoes install+docs."""
     ctx = _ctx(tmp_path)
