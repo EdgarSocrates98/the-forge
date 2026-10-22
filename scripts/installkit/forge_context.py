@@ -63,6 +63,29 @@ Write protocol (multi-installer safe):
 A kill between 3 and 5 leaves the journal; the next op — or an explicit
 ``repair_context`` — redoes the recorded op and converges.
 
+Transactions (install-2.0 §9.2): ``install_transaction`` and
+``uninstall_transaction`` compose the registry op and the consumer-docs
+op under ONE lock with the full pipeline — preflight → registry
+read/validate → lock → journal recovery → plan → conflict detection →
+backup → journal → transactional write → verify → commit, with rollback
+from a durable backup (``.forge/context/txn/``) on failure. Journaled
+``install``/``uninstall`` ops are redone by ``_recover_journal`` like
+the single ops, so an interrupted transaction converges on the next op.
+
+Stable resource ids (install-2.0 §9.4): registry entries carry
+``qualified_ids`` — every declared resource id namespaced as
+``<forge-id>:<resource-id>`` so two forges can never collide on a name.
+Existing skills/agents are never renamed; the qualified form is an
+index, not a rewrite.
+
+Routing (install-2.0 §9.5): ``route`` is a READ op — it returns the
+candidate forges for a domain/scope/capability/host query with the
+declared signals a caller needs to pick (state, runtime requirements,
+security posture, health, evidence, qualified ids) and marks ambiguity
+explicitly. Ordering is deterministic — state rank, capability count,
+then ``forge_id`` — never installation order. The registry is not an
+orchestrator: it reports, it never dispatches.
+
 Determinism: JSON is ``sort_keys`` + indent 2 + trailing LF; registry
 entries are sorted by ``forge_id``; ``ROUTING.md`` embeds no timestamps.
 Re-registering an unchanged manifest performs zero writes — the second
@@ -76,14 +99,15 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
 from collections.abc import Iterable, Mapping
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.2.1"
+_FORGECONTEXT_VERSION = "1.3.1"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
 _SOURCE_SHA256 = "canonical"
@@ -98,6 +122,9 @@ CAPABILITIES_DIR = "capabilities"
 ROUTING_NAME = "ROUTING.md"
 JOURNAL_NAME = "journal.json"
 LOCK_NAME = ".context.lock"
+TXN_DIR = "txn"
+TXN_META = "meta.json"
+TXN_FILES = "files"
 
 OWNERSHIP_KINDS = (
     "fully-managed",
@@ -154,6 +181,12 @@ CORE_CAPABILITY_KINDS = ("knowledge", "rules", "evals", "protocols", "skills", "
 _FORGE_ID_RE = re.compile(r"^[a-z0-9-]{1,64}$")
 _DOMAIN_RE = re.compile(r"^[a-z0-9-]{1,64}$")
 _ITEM_ID_RE = re.compile(r"^[a-z0-9-_]{1,128}$")
+# ``<forge-id>:<resource-id>`` — the resource part keeps the ids the
+# manifests already declare (items, ``provider/x`` paths, ``forge/v1``
+# protocol ids); it is an index namespace, never a rename (§9.4).
+_QID_RE = re.compile(r"^[a-z0-9-]{1,64}:[A-Za-z0-9-_./]{1,190}$")
+_TXN_BLOB_RE = re.compile(r"^\d{1,8}$")
+_TXN_DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+([-.+][0-9A-Za-z.]+)?$")
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
@@ -877,6 +910,7 @@ _REGISTRY_ENTRY_KEYS = (
     "hosts",
     "domains",
     "manifest",
+    "qualified_ids",
     "installed_by",
     "installed_at",
     "updated_at",
@@ -938,6 +972,8 @@ def _registry_entry(v: Any, problems: list[str], path: str) -> None:
                 _sha256_ref(man["sha256"], problems, f"{path}.manifest.sha256")
     elif "manifest" in v:
         _err(problems, f"{path}.manifest", "expected object")
+    if "qualified_ids" in v:
+        _str_list(v["qualified_ids"], problems, f"{path}.qualified_ids", pattern=_QID_RE)
     ib = v.get("installed_by")
     if isinstance(ib, dict):
         if _closed(ib, ("agent", "version"), problems, f"{path}.installed_by"):
@@ -1338,6 +1374,46 @@ def _domains_index(forges: list[dict[str, Any]]) -> dict[str, list[str]]:
     return {d: sorted(set(fids)) for d, fids in sorted(idx.items())}
 
 
+# --------------------------------------------------------------------------
+# stable resource ids (install-2.0 §9.4) — ``<forge-id>:<resource-id>``
+# --------------------------------------------------------------------------
+
+
+def qualified_id(forge_id: str, resource_id: str) -> str:
+    """``<forge-id>:<resource-id>`` — the collision-proof id a registry
+    entry advertises for each resource its manifest declares. An index
+    namespace, never a rename: skills/agents keep their existing ids."""
+    return f"{forge_id}:{resource_id}"
+
+
+def split_qualified_id(qid: str) -> tuple[str, str]:
+    """Inverse of ``qualified_id`` — split on the first ``:``."""
+    fid, _, rid = qid.partition(":")
+    return fid, rid
+
+
+def _qualified_ids(manifest: Mapping[str, Any]) -> list[str]:
+    """Every resource id a manifest declares, namespaced by its forge —
+    skills, agents, coordinators, rule areas, knowledge providers, eval
+    suites, protocols and discovery commands. Deterministic (sorted,
+    deduplicated)."""
+    fid = str(manifest.get("forge_id") or "")
+    out: set[str] = set()
+    for key in ("skills", "agents", "coordinators", "rule_areas"):
+        for rid in manifest.get(key) or ():
+            out.add(qualified_id(fid, str(rid)))
+    for key in ("knowledge_providers", "eval_suites", "protocols"):
+        for item in manifest.get(key) or ():
+            if isinstance(item, Mapping) and item.get("id"):
+                out.add(qualified_id(fid, str(item["id"])))
+    disc = manifest.get("discovery")
+    if isinstance(disc, Mapping):
+        for cmd in disc.get("commands") or ():
+            if isinstance(cmd, Mapping) and cmd.get("id"):
+                out.add(qualified_id(fid, str(cmd["id"])))
+    return sorted(out)
+
+
 def _entry_from_manifest(
     manifest: dict[str, Any], cap_sha: str, prev: dict[str, Any] | None, now: str
 ) -> dict[str, Any]:
@@ -1356,6 +1432,7 @@ def _entry_from_manifest(
             "path": _capability_rel(manifest["forge_id"]),
             "sha256": f"sha256:{cap_sha}",
         },
+        "qualified_ids": _qualified_ids(manifest),
         "installed_by": dict(manifest["recorded_by"]),
         "installed_at": (prev or {}).get("installed_at") or now,
         "updated_at": now,
@@ -1447,9 +1524,12 @@ def _apply_unregister(ctx: Path, root: Path, forge_id: str, now: str) -> list[st
 
 def _recover_journal(ctx: Path, root: Path) -> dict[str, Any] | None:
     """Redo an interrupted op. Journaled ops were authorized before the
-    journal was written, so redo does not re-check ownership."""
+    journal was written, so redo does not re-check ownership. A leftover
+    ``txn/`` backup dir is dropped once the journaled intent converged —
+    it only matters while the transaction is in flight."""
     jpath = ctx / JOURNAL_NAME
     if not jpath.exists():
+        _txn_drop(ctx)
         return None
     journal = _load_json(jpath)
     recovered: dict[str, Any] | None = None
@@ -1463,14 +1543,34 @@ def _recover_journal(ctx: Path, root: Path) -> dict[str, Any] | None:
         elif op == "unregister" and isinstance(journal.get("forge_id"), str):
             _apply_unregister(ctx, root, journal["forge_id"], now)
             recovered = {"op": "unregister", "forge_id": journal["forge_id"]}
+        elif op == "install" and isinstance(journal.get("manifest"), dict):
+            if not validate_manifest(journal["manifest"]):
+                _apply_register(ctx, root, journal["manifest"], now)
+                if journal.get("docs", True):
+                    _docs_install_apply(
+                        root, journal["manifest"], tuple(journal.get("legacy_tags") or ())
+                    )
+                recovered = {
+                    "op": "install",
+                    "forge_id": journal["manifest"]["forge_id"],
+                }
+        elif op == "uninstall" and isinstance(journal.get("forge_id"), str):
+            _apply_unregister(ctx, root, journal["forge_id"], now)
+            _docs_uninstall_apply(
+                root, journal["forge_id"], tuple(journal.get("legacy_tags") or ())
+            )
+            recovered = {"op": "uninstall", "forge_id": journal["forge_id"]}
         if recovered is None:
             _quarantine(jpath, now.replace(":", ""))
+            _txn_drop(ctx)
             return {"op": "unknown", "quarantined": True}
     else:
         _quarantine(jpath, now.replace(":", ""))
+        _txn_drop(ctx)
         return {"op": "unparseable", "quarantined": True}
     with contextlib.suppress(OSError):
         jpath.unlink()
+    _txn_drop(ctx)
     return recovered
 
 
@@ -2122,6 +2222,120 @@ def _teardown_marked_file(
     _write_doc(path, text, written, kept)
 
 
+def _install_block_plan(
+    manifest: Mapping[str, Any],
+) -> tuple[tuple[str, str, list[tuple[str, str]]], ...]:
+    """``(name, preamble, blocks)`` per consumer doc — shared by the
+    conflict preflight and the write path so both apply identical
+    transforms (a refusal the write could hit is a refusal the plan
+    already saw)."""
+    fid = str(manifest["forge_id"])
+    return (
+        (
+            AGENTS_NAME,
+            _AGENTS_PREAMBLE,
+            [
+                (DOC_TAG_ECOSYSTEM, _ecosystem_block()),
+                (f"forge:{fid}", _forge_block(manifest)),
+            ],
+        ),
+        (CLAUDE_NAME, _CLAUDE_PREAMBLE, [(DOC_TAG_ECOSYSTEM, _claude_block())]),
+    )
+
+
+def _protocol_conflict_check(root: Path) -> None:
+    """The only pre-write refusal the shared protocol raises: a file
+    that exists and is not ours."""
+    path = root / PROTOCOL_NAME
+    if path.exists():
+        text = path.read_text(encoding="utf-8")
+        if not _is_our_protocol(text):
+            raise ContextError(
+                E_CONFLICT,
+                f"{PROTOCOL_NAME} exists and is not forge-managed — rename "
+                "it or remove it, then re-run",
+            )
+
+
+def _docs_install_conflicts(
+    root: Path, manifest: Mapping[str, Any], legacy_tags: Iterable[str]
+) -> None:
+    """Run the doc merge transforms in memory — surfaces every
+    E_CONFLICT the write path could hit BEFORE anything is written
+    (transaction §9.2 step 5: conflict detection precedes backup)."""
+    for name, preamble, blocks in _install_block_plan(manifest):
+        path = root / name
+        text = path.read_text(encoding="utf-8") if path.exists() else preamble
+        text, _ = strip_legacy_blocks(text, legacy_tags, name=name)
+        for tag, body in blocks:
+            text = apply_managed_block(text, tag, body, name=name)
+    _protocol_conflict_check(root)
+
+
+def _docs_uninstall_conflicts(root: Path, forge_id: str, legacy_tags: Iterable[str]) -> None:
+    """Same preflight for the teardown path — marker ambiguity and a
+    foreign protocol refuse before the transaction writes anything."""
+    keep_shared = any(
+        fid != forge_id for fid in _load_manifests(context_dir(root))
+    )
+    for name in (AGENTS_NAME, CLAUDE_NAME):
+        path = root / name
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        text, _ = strip_legacy_blocks(text, legacy_tags, name=name)
+        text = remove_managed_block(text, f"forge:{forge_id}", name=name)
+        if not keep_shared:
+            text = remove_managed_block(text, DOC_TAG_ECOSYSTEM, name=name)
+    _protocol_conflict_check(root)
+
+
+def _docs_install_apply(
+    root: Path, manifest: Mapping[str, Any], legacy_tags: Iterable[str]
+) -> dict[str, Any]:
+    """Doc write path shared by ``install_docs`` and
+    ``install_transaction`` — the caller holds the lock."""
+    written: list[str] = []
+    kept: list[str] = []
+    removed_legacy: list[str] = []
+    for name, preamble, blocks in _install_block_plan(manifest):
+        _sync_marked_file(
+            root, name, preamble, blocks, legacy_tags, written, kept, removed_legacy
+        )
+    _sync_protocol(root, written, [])
+    return {
+        "status": "written" if written else "unchanged",
+        "written": written,
+        "kept": kept,
+        "legacy_stripped": removed_legacy,
+    }
+
+
+def _docs_uninstall_apply(
+    root: Path, forge_id: str, legacy_tags: Iterable[str]
+) -> dict[str, Any]:
+    """Doc teardown shared by ``uninstall_docs`` and
+    ``uninstall_transaction`` — the caller holds the lock and the
+    registry op has already run (protocol renders without us)."""
+    ctx = context_dir(root)
+    written: list[str] = []
+    kept: list[str] = []
+    removed_legacy: list[str] = []
+    keep_shared = bool(_load_manifests(ctx))
+    for name, preamble in ((AGENTS_NAME, _AGENTS_PREAMBLE), (CLAUDE_NAME, _CLAUDE_PREAMBLE)):
+        _teardown_marked_file(
+            root, name, preamble, forge_id, legacy_tags,
+            keep_shared, written, kept, removed_legacy,
+        )
+    _sync_protocol(root, written, [])
+    return {
+        "status": "removed" if written else "unchanged",
+        "written": written,
+        "kept": kept,
+        "legacy_stripped": removed_legacy,
+    }
+
+
 def install_docs(
     root: Path | str,
     manifest: dict[str, Any],
@@ -2143,37 +2357,9 @@ def install_docs(
         raise ContextError(E_OWNERSHIP, f"{owner!r} may not write docs for {fid!r}")
     root = Path(root).resolve()
     ctx = context_dir(root)
-    written: list[str] = []
-    kept: list[str] = []
-    removed_legacy: list[str] = []
     with acquire_lock(ctx):
-        _sync_marked_file(
-            root,
-            AGENTS_NAME,
-            _AGENTS_PREAMBLE,
-            [(DOC_TAG_ECOSYSTEM, _ecosystem_block()), (f"forge:{fid}", _forge_block(manifest))],
-            legacy_tags,
-            written,
-            kept,
-            removed_legacy,
-        )
-        _sync_marked_file(
-            root,
-            CLAUDE_NAME,
-            _CLAUDE_PREAMBLE,
-            [(DOC_TAG_ECOSYSTEM, _claude_block())],
-            legacy_tags,
-            written,
-            kept,
-            removed_legacy,
-        )
-        _sync_protocol(root, written, [])
-    return {
-        "status": "written" if written else "unchanged",
-        "written": written,
-        "kept": kept,
-        "legacy_stripped": removed_legacy,
-    }
+        out = _docs_install_apply(root, manifest, tuple(legacy_tags))
+    return out
 
 
 def uninstall_docs(
@@ -2191,26 +2377,9 @@ def uninstall_docs(
         raise ContextError(E_OWNERSHIP, f"{owner!r} may not remove docs for {forge_id!r}")
     root = Path(root).resolve()
     ctx = context_dir(root)
-    written: list[str] = []
-    kept: list[str] = []
-    removed_legacy: list[str] = []
     with acquire_lock(ctx):
-        keep_shared = bool(_load_manifests(ctx))
-        _teardown_marked_file(
-            root, AGENTS_NAME, _AGENTS_PREAMBLE, forge_id, legacy_tags,
-            keep_shared, written, kept, removed_legacy,
-        )
-        _teardown_marked_file(
-            root, CLAUDE_NAME, _CLAUDE_PREAMBLE, forge_id, legacy_tags,
-            keep_shared, written, kept, removed_legacy,
-        )
-        _sync_protocol(root, written, [])
-    return {
-        "status": "removed" if written else "unchanged",
-        "written": written,
-        "kept": kept,
-        "legacy_stripped": removed_legacy,
-    }
+        out = _docs_uninstall_apply(root, forge_id, tuple(legacy_tags))
+    return out
 
 
 def repair_docs(
@@ -2254,6 +2423,493 @@ def repair_docs(
     }
 
 
+# --------------------------------------------------------------------------
+# transactions (install-2.0 §9.2) — registry + consumer docs in ONE op
+# --------------------------------------------------------------------------
+#
+# Phase order, all under the single ``.context.lock``:
+#
+#   1. preflight    manifest schema + ownership — pure, before any disk
+#   2. registry     read/validate (a corrupt file is quarantined, never
+#                   silently replaced)
+#   3. lock         O_EXCL; stale locks reclaimed; an interrupted journal
+#                   is redone first (roll-forward recovery)
+#   4. plan         the managed-path set + intended op
+#   5. conflicts    ownership + doc-merge refusals — every named refusal
+#                   fires here, before a single byte is written
+#   6. backup       durable snapshot of the managed set → ctx/txn/
+#   7. journal      intent recorded (kill-safe: recovery redoes it)
+#   8. write        capability → registry → ROUTING.md → consumer docs
+#   9. verify       post-state invariants re-read from disk
+#  10. commit       journal + backup dropped — on failure, rollback
+#                   restores the backup and re-raises the named refusal
+#
+# A kill inside 8–9 leaves journal + backup: the next op (or
+# ``repair_context``) redoes the journaled intent, then drops both.
+
+
+def _managed_paths(root: Path, ctx: Path) -> list[Path]:
+    """Every file a transaction may create or modify: the whole context
+    dir (minus the live lock and the txn backup itself) plus the three
+    consumer docs at the root."""
+    out: list[Path] = []
+    if ctx.is_dir():
+        for p in sorted(ctx.rglob("*")):
+            if not p.is_file():
+                continue
+            rel = p.relative_to(ctx)
+            if rel.parts[0] == TXN_DIR or p.name == LOCK_NAME:
+                continue
+            out.append(p)
+    for name in (AGENTS_NAME, CLAUDE_NAME, PROTOCOL_NAME):
+        p = root / name
+        if p.is_file():
+            out.append(p)
+    return out
+
+
+def _txn_drop(ctx: Path) -> None:
+    """Remove a finished or stale backup dir — never raises."""
+    with contextlib.suppress(OSError):
+        shutil.rmtree(ctx / TXN_DIR)
+
+
+def _txn_backup(ctx: Path, root: Path) -> None:
+    """Durable pre-write snapshot of the managed set into ``ctx/txn/``:
+    ``files/`` holds the blobs by index, ``meta.json`` maps each
+    workspace-relative path to its blob + sha256."""
+    txn = ctx / TXN_DIR
+    _txn_drop(ctx)  # a dir already here belongs to a dead transaction
+    files_dir = txn / TXN_FILES
+    meta: dict[str, Any] = {"started_at": _utc_now(), "files": {}}
+    for i, p in enumerate(_managed_paths(root, ctx)):
+        rel = p.relative_to(root).as_posix()
+        dest = files_dir / f"{i:04d}"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(p, dest)
+        meta["files"][rel] = {"blob": f"{i:04d}", "sha256": _sha_file(p)}
+    files_dir.mkdir(parents=True, exist_ok=True)
+    _atomic_write(txn / TXN_META, _json_bytes(meta))
+
+
+def _txn_safe_rel(rel: object) -> bool:
+    """``txn/meta.json`` is data, never authority: a restore target must
+    be a plain workspace-relative POSIX path — no ``..``, no absolute or
+    drive prefix, no separators that smuggle a parent escape."""
+    if not isinstance(rel, str) or not rel:
+        return False
+    p = PurePosixPath(rel)
+    return (
+        not p.is_absolute()
+        and ".." not in p.parts
+        and "\\" not in rel
+        and _TXN_DRIVE_RE.match(rel) is None
+    )
+
+
+def _txn_restore(ctx: Path, root: Path) -> list[str]:
+    """Rollback: restore every backed-up file, delete files the failed
+    transaction created, drop the backup. Returns the paths it could
+    not fully undo (empty = clean rollback)."""
+    txn = ctx / TXN_DIR
+    meta = _load_json(txn / TXN_META) or {}
+    recorded = meta.get("files") or {}
+    leftovers: list[str] = []
+    for p in _managed_paths(root, ctx):
+        rel = p.relative_to(root).as_posix()
+        if rel not in recorded:
+            try:
+                p.unlink()
+            except OSError:
+                leftovers.append(rel)
+    for rel, info in sorted(recorded.items()):
+        blob_name = str((info or {}).get("blob", ""))
+        if not _txn_safe_rel(rel) or _TXN_BLOB_RE.match(blob_name) is None:
+            leftovers.append(f"{rel} (unsafe backup entry)")
+            continue
+        blob = txn / TXN_FILES / blob_name
+        if not blob.is_file():
+            leftovers.append(f"{rel} (backup blob missing)")
+            continue
+        target = root / rel
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            _atomic_write(target, blob.read_bytes())
+        except OSError:
+            leftovers.append(rel)
+    _txn_drop(ctx)
+    return leftovers
+
+
+def _verify_install(root: Path, forge_id: str, *, docs: bool) -> list[str]:
+    """Post-write invariants, re-read from disk — a failed check rolls
+    the transaction back via the caller."""
+    verified: list[str] = []
+    reg = load_registry(root)
+    if reg is None:
+        raise ContextError(E_SCHEMA, "verify: registry.json invalid after write")
+    verified.append("registry")
+    entry = next((e for e in reg["forges"] if e.get("forge_id") == forge_id), None)
+    if entry is None:
+        raise ContextError(E_SCHEMA, f"verify: no registry entry for {forge_id!r}")
+    if entry.get("owner") != forge_id:
+        raise ContextError(
+            E_OWNERSHIP,
+            f"verify: registry entry owner {entry.get('owner')!r} != {forge_id!r}",
+        )
+    verified.append("entry")
+    problems = validate_manifest(_load_json(capability_path(root, forge_id)))
+    if problems:
+        raise ContextError(
+            E_SCHEMA, f"verify: manifest invalid after write: {problems[:3]}"
+        )
+    verified.append("manifest")
+    if docs:
+        agents = root / AGENTS_NAME
+        text = agents.read_text(encoding="utf-8") if agents.exists() else ""
+        if f"forge:{forge_id}:begin" not in text:
+            raise ContextError(
+                E_SCHEMA, f"verify: {AGENTS_NAME} lacks the forge:{forge_id} block"
+            )
+        verified.append("docs")
+    return verified
+
+
+def _verify_uninstall(root: Path, forge_id: str) -> list[str]:
+    """Post-teardown invariants — our resources gone, nothing else's
+    touched (the latter is guaranteed by construction: the ops only
+    ever write their own manifest/entry/blocks)."""
+    verified: list[str] = []
+    reg = load_registry(root)
+    if reg is not None and any(
+        e.get("forge_id") == forge_id for e in reg.get("forges") or []
+    ):
+        raise ContextError(
+            E_SCHEMA, f"verify: registry entry for {forge_id!r} still present"
+        )
+    verified.append("registry")
+    if capability_path(root, forge_id).exists():
+        raise ContextError(E_SCHEMA, f"verify: manifest for {forge_id!r} still present")
+    verified.append("manifest")
+    for name in (AGENTS_NAME, CLAUDE_NAME, PROTOCOL_NAME):
+        p = root / name
+        if p.is_file() and f"forge:{forge_id}:" in p.read_text(
+            encoding="utf-8", errors="replace"
+        ):
+            raise ContextError(
+                E_SCHEMA, f"verify: {name} still carries a forge:{forge_id} block"
+            )
+    verified.append("docs")
+    return verified
+
+
+def install_transaction(
+    root: Path | str,
+    manifest: dict[str, Any],
+    *,
+    owner: str,
+    legacy_tags: Iterable[str] = (),
+    docs: bool = True,
+) -> dict[str, Any]:
+    """Composed install — registry entry + consumer docs under ONE lock
+    with backup/verify/rollback (install-2.0 §9.2). ``docs=False``
+    covers scopes that register without consumer docs (e.g. user)."""
+    phases: list[str] = []
+    # 1. preflight — pure validation before any disk state
+    problems = validate_manifest(manifest)
+    if problems:
+        raise ContextError(E_SCHEMA, f"manifest invalid: {'; '.join(problems[:8])}")
+    fid = manifest["forge_id"]
+    if owner != fid:
+        raise ContextError(E_OWNERSHIP, f"{owner!r} may not install for {fid!r}")
+    phases.append("preflight")
+    tags = tuple(legacy_tags)
+    root = Path(root).resolve()
+    ctx = context_dir(root)
+    with acquire_lock(ctx) as lock:
+        phases.append("lock")
+        recovered = _recover_journal(ctx, root)
+        phases.append("recover")
+        # 2. read/validate registry (a corrupt file is quarantined here)
+        _reg, reg_notes = _load_registry_for_write(ctx, root)
+        phases.append("registry")
+        # 4/5. plan + conflict detection — every refusal before writes
+        _check_foreign_manifest(ctx, fid)
+        _check_registry_owner(ctx, root, fid)
+        if docs:
+            _docs_install_conflicts(root, manifest, tags)
+        phases.append("conflicts")
+        # 6. backup
+        _txn_backup(ctx, root)
+        phases.append("backup")
+        # 7. journal the intent, then 8. transactional write
+        _atomic_write(
+            ctx / JOURNAL_NAME,
+            _json_bytes(
+                {
+                    "op": "install",
+                    "manifest": manifest,
+                    "legacy_tags": list(tags),
+                    "docs": bool(docs),
+                }
+            ),
+        )
+        try:
+            written = _apply_register(ctx, root, manifest, _utc_now())
+            doc_out = (
+                _docs_install_apply(root, manifest, tags)
+                if docs
+                else {"status": "skipped", "written": [], "kept": [], "legacy_stripped": []}
+            )
+            phases.append("write")
+            # 9. verify the post-state
+            verified = _verify_install(root, fid, docs=docs)
+            phases.append("verify")
+        except BaseException as exc:
+            # 10. rollback — restore the backup, drop the journal, re-raise
+            leftovers = _txn_restore(ctx, root)
+            with contextlib.suppress(OSError):
+                (ctx / JOURNAL_NAME).unlink()
+            if not isinstance(exc, Exception):
+                # KeyboardInterrupt/SystemExit propagate bare after the
+                # rollback — never re-typed as ContextError.
+                raise
+            note = "; ".join(leftovers) if leftovers else "clean"
+            if isinstance(exc, ContextError):
+                exc.detail = f"{exc.detail} — transaction rolled back ({note})"
+                raise
+            raise ContextError(
+                E_PATH,
+                f"install transaction failed after phase {phases[-1]!r}; "
+                f"rolled back ({note}): {exc}",
+            ) from exc
+        # commit — intent fulfilled: drop journal + backup
+        with contextlib.suppress(OSError):
+            (ctx / JOURNAL_NAME).unlink()
+        _txn_drop(ctx)
+        phases.append("commit")
+    return {
+        "forge_id": fid,
+        "status": "installed" if (written or doc_out["written"]) else "unchanged",
+        "phases": phases,
+        "written": written + list(doc_out["written"]),
+        "docs": doc_out,
+        "verified": verified,
+        "recovered": recovered,
+        "lock_recovered": bool(getattr(lock, "recovered", False)),
+        "registry_notes": reg_notes,
+        "registry": str(ctx / REGISTRY_NAME),
+    }
+
+
+def uninstall_transaction(
+    root: Path | str,
+    forge_id: str,
+    *,
+    owner: str,
+    legacy_tags: Iterable[str] = (),
+) -> dict[str, Any]:
+    """Composed uninstall — registry entry + our doc blocks under ONE
+    lock. Only owned artifacts are removed: our capability file, our
+    registry entry, our ``forge:<fid>`` blocks; shared docs regenerate
+    for the survivors; user content is never touched."""
+    phases: list[str] = []
+    if owner != forge_id:
+        raise ContextError(E_OWNERSHIP, f"{owner!r} may not uninstall {forge_id!r}")
+    phases.append("preflight")
+    tags = tuple(legacy_tags)
+    root = Path(root).resolve()
+    ctx = context_dir(root)
+    with acquire_lock(ctx) as lock:
+        phases.append("lock")
+        recovered = _recover_journal(ctx, root)
+        phases.append("recover")
+        _reg, reg_notes = _load_registry_for_write(ctx, root)
+        phases.append("registry")
+        _check_foreign_manifest(ctx, forge_id)
+        _check_registry_owner(ctx, root, forge_id)
+        _docs_uninstall_conflicts(root, forge_id, tags)
+        phases.append("conflicts")
+        _txn_backup(ctx, root)
+        phases.append("backup")
+        _atomic_write(
+            ctx / JOURNAL_NAME,
+            _json_bytes(
+                {"op": "uninstall", "forge_id": forge_id, "legacy_tags": list(tags)}
+            ),
+        )
+        try:
+            removed = _apply_unregister(ctx, root, forge_id, _utc_now())
+            doc_out = _docs_uninstall_apply(root, forge_id, tags)
+            phases.append("write")
+            verified = _verify_uninstall(root, forge_id)
+            phases.append("verify")
+        except BaseException as exc:
+            leftovers = _txn_restore(ctx, root)
+            with contextlib.suppress(OSError):
+                (ctx / JOURNAL_NAME).unlink()
+            if not isinstance(exc, Exception):
+                # KeyboardInterrupt/SystemExit propagate bare after the
+                # rollback — never re-typed as ContextError.
+                raise
+            note = "; ".join(leftovers) if leftovers else "clean"
+            if isinstance(exc, ContextError):
+                exc.detail = f"{exc.detail} — transaction rolled back ({note})"
+                raise
+            raise ContextError(
+                E_PATH,
+                f"uninstall transaction failed after phase {phases[-1]!r}; "
+                f"rolled back ({note}): {exc}",
+            ) from exc
+        with contextlib.suppress(OSError):
+            (ctx / JOURNAL_NAME).unlink()
+        _txn_drop(ctx)
+        phases.append("commit")
+    return {
+        "forge_id": forge_id,
+        "status": "uninstalled" if (removed or doc_out["written"]) else "absent",
+        "phases": phases,
+        "removed": removed,
+        "docs": doc_out,
+        "verified": verified,
+        "recovered": recovered,
+        "lock_recovered": bool(getattr(lock, "recovered", False)),
+        "registry_notes": reg_notes,
+    }
+
+
+# --------------------------------------------------------------------------
+# routing (install-2.0 §9.5) — READ op, candidates + declared signals
+# --------------------------------------------------------------------------
+#
+# Selection considers domain, scope, capability, evidence, runtime,
+# risk, availability, permissions and ambiguity — never installation
+# order. The registry is not an orchestrator: it returns the eligible
+# forges and the signals a caller needs to pick; it never dispatches.
+
+_ROUTE_STATE_RANK = {"available": 0, "degraded": 1, "unavailable": 2}
+
+
+def _route_candidate(entry: Mapping[str, Any], manifest: Mapping[str, Any]) -> dict[str, Any]:
+    caps = manifest.get("capabilities") or {}
+    rt = manifest.get("runtime") or {}
+    sec = manifest.get("security") or {}
+    health = manifest.get("health") or {}
+    integ = manifest.get("integrity") or {}
+    return {
+        "forge_id": entry["forge_id"],
+        "state": entry.get("state", "unavailable"),
+        "scope": entry.get("scope"),
+        "profile": entry.get("profile"),
+        "domains": sorted(entry.get("domains") or []),
+        "hosts": sorted(entry.get("hosts") or []),
+        "available_capabilities": sorted(
+            k for k, c in caps.items() if isinstance(c, Mapping) and c.get("available")
+        ),
+        "runtime": {
+            "python": rt.get("python"),
+            "requires_network": rt.get("requires_network"),
+            "requires_credentials": rt.get("requires_credentials"),
+            "offline_available": rt.get("offline_available"),
+        },
+        "security": {
+            "read_only_default": sec.get("read_only_default"),
+            "mutating_verbs": sorted(sec.get("mutating_verbs") or []),
+            "requires_approval": sorted(sec.get("requires_approval") or []),
+        },
+        "health": health.get("status", "unverified"),
+        "evidence": integ.get("attestation"),
+        "qualified_ids": list(entry.get("qualified_ids") or _qualified_ids(manifest)),
+        "manifest": (entry.get("manifest") or {}).get("path"),
+    }
+
+
+def route(
+    root: Path | str,
+    *,
+    domain: str | None = None,
+    scope: str | None = None,
+    capability: str | None = None,
+    host: str | None = None,
+    include_unavailable: bool = False,
+) -> dict[str, Any]:
+    """Candidate forges for a query, with the declared signals to pick
+    among them. READ-only — no lock, no writes, no dispatch.
+
+    Filters: ``domain`` must be claimed by the forge; ``scope`` and
+    ``host`` must match the entry; ``capability`` must be declared
+    available in the manifest; ``state: unavailable`` is excluded unless
+    ``include_unavailable``. Ordering is deterministic — registry state
+    (available → degraded → unavailable), then capability count, then
+    ``forge_id`` — never installation order. ``ambiguous`` marks the
+    >1-candidate case; ``unclaimed`` a requested domain nobody serves."""
+    root = Path(root).resolve()
+    ctx = context_dir(root)
+    reg = load_registry(root)
+    manifests = _load_manifests(ctx)
+    entries = sorted(
+        (reg or {}).get("forges") or [], key=lambda e: e.get("forge_id", "")
+    )
+    registered = {e.get("forge_id") for e in entries}
+    unregistered = sorted(set(manifests) - registered)
+
+    candidates: list[dict[str, Any]] = []
+    excluded: list[dict[str, str]] = []
+    for e in entries:
+        fid = e.get("forge_id")
+        if not isinstance(fid, str):
+            continue
+        reason = None
+        if domain is not None and domain not in (e.get("domains") or []):
+            reason = f"domain {domain!r} not claimed"
+        elif scope is not None and e.get("scope") != scope:
+            reason = f"scope {e.get('scope')!r} != {scope!r}"
+        elif host is not None and host not in (e.get("hosts") or []):
+            reason = f"host {host!r} not supported"
+        elif e.get("state") == "unavailable" and not include_unavailable:
+            reason = "state unavailable"
+        elif capability is not None:
+            cap = (manifests.get(fid) or {}).get("capabilities") or {}
+            c = cap.get(capability)
+            if not isinstance(c, Mapping) or not c.get("available"):
+                reason = f"capability {capability!r} not available"
+        if reason is not None:
+            excluded.append({"forge_id": fid, "reason": reason})
+            continue
+        candidates.append(_route_candidate(e, manifests.get(fid) or {}))
+    candidates.sort(
+        key=lambda c: (
+            _ROUTE_STATE_RANK.get(c["state"], 3),
+            -len(c["available_capabilities"]),
+            c["forge_id"],
+        )
+    )
+    return {
+        "status": "ok" if reg is not None else "empty",
+        "query": {
+            k: v
+            for k, v in (
+                ("domain", domain),
+                ("scope", scope),
+                ("capability", capability),
+                ("host", host),
+            )
+            if v is not None
+        },
+        "candidates": candidates,
+        "excluded": excluded,
+        "ambiguous": len(candidates) > 1,
+        "unclaimed": domain is not None and not candidates,
+        "unregistered_manifests": unregistered,
+        "selection": (
+            "signals only — the registry never picks and never dispatches: "
+            "route by domain, scope, capability, runtime, risk and "
+            "permissions; ordering is deterministic (state, capability "
+            "count, forge_id), never installation order"
+        ),
+    }
+
+
 __all__ = [
     "AGENTS_NAME",
     "CAPABILITY_DISCOVERY",
@@ -2288,25 +2944,31 @@ __all__ = [
     "SCHEMA_MANIFEST",
     "SCHEMA_REGISTRY",
     "SCOPES",
+    "TXN_DIR",
     "acquire_lock",
     "apply_managed_block",
     "build_manifest",
     "capability_path",
     "context_dir",
     "install_docs",
+    "install_transaction",
     "list_capabilities",
     "load_registry",
     "protocol_document",
+    "qualified_id",
     "register_forge",
     "registry_path",
     "remove_managed_block",
     "repair_context",
     "repair_docs",
+    "route",
     "routing_document",
     "routing_path",
     "source_digest",
+    "split_qualified_id",
     "strip_legacy_blocks",
     "uninstall_docs",
+    "uninstall_transaction",
     "unregister_forge",
     "validate_manifest",
     "validate_registry",

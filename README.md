@@ -159,6 +159,7 @@ Mapa completo por preocupação em [docs/README.md](https://github.com/EdgarSocr
 - [Adaptive strategy](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/adaptive-strategy.md) (shadow champion/challenger — advisory, nunca promove sozinho)
 - [Global Stop](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/global-stop.md) (autoridade cross-provider e decisão receipted)
 - [Information Gain](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/information-gain.md) (ganho qualitativo, sem probabilidades inventadas)
+- [Evals taxonomy & verification](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/evals-taxonomy.md) (suites classificadas §7.1, ops `evals`/`verify`, regras §7.3)
 - [Trace federation](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/trace-federation.md) (trace global + refs nativos opacos)
 - [Context ROI](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/context-roi.md) (utilização medida; recomendação advisory, não causal)
 - [Adaptive experiments](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/adaptive-experiments.md) (champion/challenger governado, sem auto-promoção)

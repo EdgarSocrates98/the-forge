@@ -258,6 +258,10 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_wheel_isolation.py": ("e2e", "integration", "slow"),
     # lf-0038 §7: evals taxonomy, holdout sealing, verification plan→run→receipt
     "test_evals_cycle5.py": ("unit", "contract"),
+    # lf-0040 §9: context transactions, stable ids, multi-forge routing
+    "test_forgecontext_txn.py": ("unit", "contract", "integration"),
+    # lf-0040 §9: 5-forge wheel matrix — real installs in every order
+    "test_multi_forge_e2e.py": ("e2e", "integration", "slow"),
 }
 
 
