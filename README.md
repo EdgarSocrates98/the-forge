@@ -144,6 +144,7 @@ Mapa completo por preocupação em [docs/README.md](https://github.com/EdgarSocr
 - [CLI](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cli.md)
 - [Control plane](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/control-plane.md) (lifecycle dos especialistas, detecção/ativação de hosts, delegação real)
 - [Códigos de erro](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/errors.md) (lista canônica dos códigos `FORGE-*`)
+- [Taxonomia de evals](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/evals-taxonomy.md) (classificação §7.1 das suites e selagem §7.3)
 - [Semântica de falha](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/failure-semantics.md) (modos de falha → código, superfície, recuperação)
 - [Ontologia compartilhada](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/ontology.md) (vocabulário epistêmico e proveniência entre providers)
 - [Performance: benchmark, baseline e budgets](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/performance.md)

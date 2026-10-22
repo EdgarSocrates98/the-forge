@@ -269,6 +269,14 @@ CODE_HINTS: Final[Mapping[str, str]] = MappingProxyType(
         "delivered pack",
         Codes.CONTEXT_REQUEST_INVALID: "a context request must carry 1-64 items; fix the "
         "provider's request",
+        Codes.CONTEXT_OWNERSHIP: "the context entry or manifest belongs to another forge; remove "
+        "the foreign block or run the owning forge's install",
+        Codes.CONTEXT_LOCKED: "the context registry is locked by a stale or live install; wait or "
+        "remove the stale lock under .forge/context/",
+        Codes.CONTEXT_CONFLICT: "the managed block markers are ambiguous; remove the duplicated "
+        "or partial forge: block and re-run install",
+        Codes.CONTEXT_SCHEMA: "the context registry entry is off-schema; fix the entry under "
+        ".forge/context/ or reinstall",
         Codes.RECEIPT_INVALID: "the run's hash chain diverges; `theforge explain <run>` shows the "
         "divergence",
         Codes.REGISTRY_MANIFEST_CHANGED: "the manifest changed mid-run; keep the registry stable "

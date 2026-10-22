@@ -9,3 +9,7 @@ adapters/**/native_*.json text eol=lf
 tests/fixtures/native/** text eol=lf
 # The cross proof workspace is hashed by its replay recordings (scenarios/cross).
 tests/fixtures/workspaces/** text eol=lf
+# Vendored/canonical forge-context library is compared byte for byte across all
+# five Forges (same drift contract as _shell.py — stamp aside, bytes must match).
+scripts/installkit/forge_context.py text eol=lf
+src/theforge/_forgecontext.py text eol=lf
