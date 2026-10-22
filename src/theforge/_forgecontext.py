@@ -83,10 +83,10 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.2.0"
+_FORGECONTEXT_VERSION = "1.2.1"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "3d58d1fa7a1f7779"
+_SOURCE_SHA256 = "0a46b643aeaacdac"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -182,9 +182,9 @@ class LockError(ContextError):
 
 
 def _utc_now() -> str:
-    from datetime import UTC, datetime
+    from datetime import datetime, timezone
 
-    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _sha(data: bytes) -> str:
