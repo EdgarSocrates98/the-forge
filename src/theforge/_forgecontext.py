@@ -83,10 +83,10 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.0.0"
+_FORGECONTEXT_VERSION = "1.1.0"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "f9fc7495518d42e9"
+_SOURCE_SHA256 = "838973cefe857e9e"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -117,6 +117,22 @@ CAPABILITY_DISCOVERY = ("native-runtime", "cli", "mcp", "bundled", "workspace-fi
 COMMAND_MODES = ("direct-capability", "diagnostic-only", "specialist-workflow", "read-only")
 RESOURCE_KINDS = ("copied", "referenced", "bundled", "materialized")
 EVAL_KINDS = ("developer", "runtime-decision", "output-verification", "host-conformance")
+
+# The eight conceptual discovery ops of the install-2.0 contract (§6.2).
+# ``discovery.ops`` maps each op name to the id of a *declared* discovery
+# command — consumers resolve "knowledge.search" to a real argv without
+# guessing verb names, and a forge that has no rule catalog honestly leaves
+# ``rules.*`` out of the map (absence = unavailable, never invented).
+DISCOVERY_OPS = (
+    "capabilities.list",
+    "protocol.describe",
+    "rules.search",
+    "rules.get",
+    "knowledge.search",
+    "knowledge.get",
+    "context.build",
+    "health.check",
+)
 
 # Refusal codes — forge-specific codes may extend these.
 E_SCHEMA = "FORGE-CONTEXT-SCHEMA"
@@ -578,7 +594,7 @@ def validate_manifest(doc: Any) -> list[str]:
 
     disc = doc.get("discovery")
     if isinstance(disc, dict):
-        _closed(disc, ("commands", "manifest"), problems, "$.discovery")
+        _closed(disc, ("commands", "manifest", "ops"), problems, "$.discovery")
         _required(disc, ("commands",), problems, "$.discovery")
         cmds = disc.get("commands")
         if isinstance(cmds, list):
@@ -590,6 +606,21 @@ def validate_manifest(doc: Any) -> list[str]:
             _err(problems, "$.discovery.commands", "expected array")
         if "manifest" in disc:
             _path_str(disc["manifest"], problems, "$.discovery.manifest")
+        ops = disc.get("ops")
+        if isinstance(ops, dict):
+            declared = {c.get("id") for c in cmds or () if isinstance(c, dict)}
+            for op, cmd_id in sorted(ops.items()):
+                op_path = f"$.discovery.ops.{op}"
+                if op not in DISCOVERY_OPS:
+                    _err(problems, op_path, f"unknown op — expected one of {list(DISCOVERY_OPS)}")
+                    continue
+                if not isinstance(cmd_id, str) or not _ITEM_ID_RE.match(cmd_id):
+                    _err(problems, op_path, "expected a declared command id")
+                    continue
+                if isinstance(cmds, list) and cmd_id not in declared:
+                    _err(problems, op_path, f"references undeclared command {cmd_id!r}")
+        elif "ops" in disc:
+            _err(problems, "$.discovery.ops", "expected object")
     elif "discovery" in doc:
         _err(problems, "$.discovery", "expected object")
 
@@ -1052,6 +1083,7 @@ def build_manifest(
     protocols: Iterable[Mapping[str, Any]] = (),
     rule_areas: Iterable[str] = (),
     discovery_commands: Iterable[Mapping[str, Any]] = (),
+    discovery_ops: Mapping[str, str] | None = None,
     agentic: Mapping[str, Any] | None = None,
     forge_json: Mapping[str, Any] | None = None,
     mcp: Mapping[str, Any] | None = None,
@@ -1078,7 +1110,9 @@ def build_manifest(
     Explicit arguments win; ``agentic`` (``forge.agentic.json``) and
     ``forge_json`` fill gaps — workflows become discovery commands, host
     adapters become supported hosts, the MCP block comes from whichever
-    source declares it."""
+    source declares it. ``discovery_ops`` is the §6.2 conceptual-op map
+    (``knowledge.search`` → declared command id) — the validator rejects
+    unknown op names and references to undeclared commands."""
     agentic = dict(agentic or {})
     forge_json = dict(forge_json or {})
 
@@ -1089,6 +1123,7 @@ def build_manifest(
     eval_list = [dict(e) for e in eval_suites]
     proto_list = [dict(p) for p in protocols]
     commands = [dict(c) for c in discovery_commands] or _agentic_commands(agentic)
+    ops = {str(k): str(v) for k, v in (discovery_ops or {}).items()}
     host_list = sorted(set(hosts) | set(agentic.get("host_adapters") or ()))
 
     if capabilities is None:
@@ -1187,7 +1222,7 @@ def build_manifest(
         "eval_suites": eval_list,
         "protocols": proto_list,
         "rule_areas": sorted(set(rule_areas)),
-        "discovery": {"commands": commands},
+        "discovery": {"commands": commands, **({"ops": ops} if ops else {})},
         "interfaces": interfaces,
         "resources": res,
         "runtime": runtime,
@@ -2208,6 +2243,7 @@ __all__ = [
     "COMMAND_MODES",
     "CONTEXT_DIR",
     "ContextError",
+    "DISCOVERY_OPS",
     "DOC_TAG_ECOSYSTEM",
     "E_CONFLICT",
     "E_LOCKED",

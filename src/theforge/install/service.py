@@ -229,11 +229,48 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
         ),
         discovery_commands=(
             {
+                "id": "capabilities-list",
+                "argv": ["theforge", "capabilities", "list", "--json"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "capabilities.list (§6.2) — declared capability descriptors",
+            },
+            {
+                "id": "protocol-describe",
+                "argv": ["theforge", "providers", "health", "--json"],
+                "mode": "diagnostic-only",
+                "read_only": True,
+                "description": (
+                    "protocol.describe (§6.2) — observed provider protocol "
+                    "surfaces + fingerprints"
+                ),
+            },
+            {
                 "id": "knowledge-list",
                 "argv": ["theforge", "knowledge", "list"],
                 "mode": "direct-capability",
                 "read_only": True,
-                "description": "list bootstrap knowledge packages",
+                "description": (
+                    "knowledge.search (§6.2) — bounded bootstrap knowledge "
+                    "catalog (domain → providers → packages)"
+                ),
+            },
+            {
+                "id": "knowledge-get",
+                "argv": ["theforge", "knowledge", "show", "{id}"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": "knowledge.get (§6.2) — one package by provider id",
+            },
+            {
+                "id": "context-build",
+                "argv": ["theforge", "workspace", "show", "--json"],
+                "mode": "direct-capability",
+                "read_only": True,
+                "description": (
+                    "context.build (§6.2) — bounded workspace context "
+                    "description from cached manifests"
+                ),
             },
             {
                 "id": "agents-list",
@@ -243,6 +280,13 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
                 "description": "list registered agent specs and authorities",
             },
             {
+                "id": "health-check",
+                "argv": ["theforge", "doctor", "--json"],
+                "mode": "diagnostic-only",
+                "read_only": True,
+                "description": "health.check (§6.2) — host, workspace and provider health",
+            },
+            {
                 "id": "install-status",
                 "argv": ["theforge", "install", "status"],
                 "mode": "diagnostic-only",
@@ -250,6 +294,17 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
                 "description": "install ledger drift + health of the target",
             },
         ),
+        discovery_ops={
+            "capabilities.list": "capabilities-list",
+            "protocol.describe": "protocol-describe",
+            "knowledge.search": "knowledge-list",
+            "knowledge.get": "knowledge-get",
+            "context.build": "context-build",
+            "health.check": "health-check",
+            # rules.* — the-forge is the control plane and owns no domain
+            # rule catalog; those ops stay unmapped (absent = honestly
+            # unavailable, §6.6 — never invent a rules surface).
+        },
         resources={
             "skills-bundle": {
                 "kind": "bundled",

@@ -90,7 +90,16 @@
             "additionalProperties": false
           }
         },
-        "manifest": {"$ref": "#/$defs/path"}
+        "manifest": {"$ref": "#/$defs/path"},
+        "ops": {
+          "type": "object",
+          "maxProperties": 8,
+          "propertyNames": {"enum": ["capabilities.list", "protocol.describe",
+                                     "rules.search", "rules.get",
+                                     "knowledge.search", "knowledge.get",
+                                     "context.build", "health.check"]},
+          "additionalProperties": {"$ref": "#/$defs/item_id"}
+        }
       },
       "additionalProperties": false
     },
