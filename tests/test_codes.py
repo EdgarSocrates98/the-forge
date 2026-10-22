@@ -12,7 +12,11 @@ CODES_FILE = SRC / "contracts" / "codes.py"
 # across every Forge, so it cannot import contracts.codes — it carries the
 # same FORGE-INSTALL-* literals the contract freezes. Exempt like the
 # ruff/mypy exemptions for the same file.
-EXEMPT = {SRC / "_installkit.py"}
+# `_forgecontext.py` (canonical: scripts/installkit/forge_context.py) is
+# vendored byte-identically into every specialist forge — like _installkit
+# it cannot import contracts.codes and carries its own FORGE-CONTEXT-*
+# literals; the same codes are frozen in contracts/codes.py + errors.md.
+EXEMPT = {SRC / "_installkit.py", SRC / "_forgecontext.py"}
 
 
 def _forge_literals(path: Path) -> list[tuple[int, str]]:

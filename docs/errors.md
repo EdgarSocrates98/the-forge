@@ -58,7 +58,11 @@ Por que `routing` não tem códigos: um pedido que casa com mais de um especiali
 | `FORGE-PLAN-ESTIMATE` | plan | a op `plan` do provider falhou (limitação no nó; o plano segue sem estimativa) |
 | `FORGE-PLAN-GLOBAL-STOP` | plan | nó `skipped` por decisão de global stop (opcionais são podados; `verification_required` nunca) ou por `condition` não satisfeita pelos resultados gravados |
 | `FORGE-CONTEXT-BYTES` | context | ContextPack com `used_bytes` > `budget_bytes` ou ≠ soma dos arquivos (erro do core: o run sai com `FORGE-INTERNAL` e este código no detalhe) |
-| `FORGE-CONTEXT-PATH` | context | arquivo do ContextPack fora das regras de caminho (erro do core, como acima) |
+| `FORGE-CONTEXT-PATH` | context | arquivo do ContextPack fora das regras de caminho (erro do core, como acima); também caminho fora das raízes permitidas no context-registry do workspace |
+| `FORGE-CONTEXT-OWNERSHIP` | context | entrada do `.forge/context/` registry pertence a outra forge — recusa de posse, preserva o dono |
+| `FORGE-CONTEXT-LOCKED` | context | registry de contexto sob lock; lock velho é recuperado, lock válido recusa |
+| `FORGE-CONTEXT-CONFLICT` | context | marcadores de consumer docs (`forge:*`) ambíguos ou protocolo estrangeiro — recusa modificar conteúdo do usuário |
+| `FORGE-CONTEXT-SCHEMA` | context | manifesto ou registry `forge/context*/v1` inválido contra o schema |
 | `FORGE-CONTEXT-REQUEST-UNSUPPORTED` | context | `context_request` de uma capability que não declara `context.requests` (`provider_failure`) |
 | `FORGE-CONTEXT-REQUEST-LIMIT` | context | `context_request` além das rodadas do perfil, inclusive qualquer pedido em `economy` (`provider_failure`) |
 | `FORGE-CONTEXT-REQUEST-INVALID` | context | `context_request` com 0 itens ou mais de 64 (`provider_failure`) |
