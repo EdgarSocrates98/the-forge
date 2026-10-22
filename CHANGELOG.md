@@ -11,6 +11,8 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.6.0] - 2026-10-22
 
+### 0.6.0 — Agentic Ecosystem
+
 ### Added
 
 - Install 2.0: `forge-context/v1` registry (`.forge/context/registry.json`),
