@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-_INSTALLKIT_VERSION = "1.0.0"
+_INSTALLKIT_VERSION = "1.0.1"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
 _SOURCE_SHA256 = "canonical"

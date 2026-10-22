@@ -570,6 +570,39 @@ def test_live_lock_still_refuses(tmp_path):
         pass
 
 
+def test_stale_lock_undecidable_pid_uses_created_at(tmp_path, monkeypatch):
+    """Windows/PermissionError make ``_pid_alive`` undecidable (None): the
+    declared ``created_at`` decides staleness — an old lock is reclaimed,
+    a future/unparseable one is conservatively refused."""
+    monkeypatch.setattr(kit, "_pid_alive", lambda pid: None)
+
+    counter = {"n": 0}
+
+    def write_lock(created_at: str) -> Path:
+        counter["n"] += 1
+        state = tmp_path / f".forge-{counter['n']}"
+        state.mkdir(parents=True)
+        (state / kit.LOCK_NAME).write_text(
+            json.dumps({"pid": 424242, "created_at": created_at})
+        )
+        return state
+
+    # Old created_at -> stale -> reclaimed.
+    old = write_lock("2020-01-01T00:00:00Z")
+    with kit.acquire_lock(old) as lock:
+        assert lock.recovered is True
+
+    # Future created_at -> conservative refusal (never steal).
+    future = write_lock("2999-01-01T00:00:00Z")
+    with pytest.raises(kit.LockError), kit.acquire_lock(future, timeout_s=0.0):
+        pass
+
+    # Unparseable created_at + fresh mtime -> refusal via mtime fallback.
+    fresh = write_lock("not-a-timestamp")
+    with pytest.raises(kit.LockError), kit.acquire_lock(fresh, timeout_s=0.0):
+        pass
+
+
 def test_rollback_on_write_failure(tmp_path, monkeypatch):
     """A mid-apply failure removes created files and restores backups."""
     ctx = _ctx(tmp_path, profile="recommended")
