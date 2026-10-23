@@ -367,3 +367,61 @@ consumidor não-UTF-8 quebrava install **e** uninstall.
 | PyPI | PUBLICADO | `pypi.org/pypi/theforge-core/json` → `0.6.1` |
 | Wheel smoke | PASS | wheel publicado contém `_forgecontext` v1.3.2 (`_read_doc` presente) — verificado via `pip download theforge-core==0.6.1` |
 | Regressão | PASS | teste cp1252 `AGENTS.md` → `FORGE-CONTEXT-CONFLICT` nomeado em install e uninstall |
+
+## Pós-release hardening waves — evidência (2026-10-23 UTC)
+
+Duas ondas de patch: `0.6.2` (install 2.0 hardening — traversal containment, lock token, journal quarantine, repair schema, atomic-write mode) e `0.6.3` (receipt truthfulness, user-scope no-op, unsafe drift surfacing).
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Tags | CRIADAS | `v0.6.2`, `v0.6.3` nos merge commits |
+| GitHub Release | CRIADO | `gh release view v0.6.3` |
+| PyPI | PUBLICADO | `pypi.org/pypi/theforge-core/json` → `0.6.3` |
+| Wheel conteúdo | VERIFICADO | `pip download theforge-core==0.6.3` → `_installkit` 1.0.4 (`_INSTALLKIT_VERSION`) |
+| Install E2E (wheel→workspace) | PASS | ver secção Cycle 8 abaixo |
+
+## Cycle 8 — E2E real em host Devin (EXECUTADO 2026-10-23)
+
+Setup: venv limpa + `pip install` dos wheels PyPI publicados →
+`sparkforge-aws install --root /tmp/e2e-host/proj --host devin -y` →
+receipt `forge/InstallReceipt/v1` `status=completed`, `verification=PASS`.
+
+Jornada do host (esta sessão Devin CLI), cada passo verificado por saída
+de ferramenta, não por afirmação textual:
+
+| Passo | Resultado | Evidência |
+|---|---|---|
+| Descobrir Forge | ✓ | bloco managed `forge:ecosystem` em `AGENTS.md` do workspace |
+| Registry | ✓ | `.forge/context/registry.json` → `spark-forge-aws: available` |
+| Protocolo | ✓ | `AGENT_PROTOCOL.md` (4 130 B) + `ROUTING.md` |
+| Capacidades | ✓ | `sparkforge-aws capabilities` → `forge/capabilities/v1`, 0.6.3 |
+| Rules | ✓ | `rules lookup --id SF-PY-001` → catálogo retorna a regra |
+| Knowledge (wheel, sem git) | ✓ | `knowledge search "glue worker"` → `glue/workers-and-capacity.md`, `knowledge_origin=package` (site-packages) |
+| Regra aplicada a caso real | ✓ | `analyze pyspark job.py` → `judge --glue 5.1` → finding `SF-PY-002` P1 (`df.collect()` job.py:5), evidência `f_6bba98` |
+| Receipt auditável | ✓ | `.sparkforge_aws/receipts/install-*.json` |
+
+Outros hosts: Claude Code / Codex CLI / Copilot — não instalados neste
+ambiente; marcados `não verificado` (não como sucesso). A matriz de hosts
+por path renderizado é coberta pelos testes de render (`rendered_hosts`).
+
+## Cycle 9 — economia/observabilidade (medido, não estimado)
+
+| Métrica | Observado |
+|---|---|
+| Bytes adicionados ao workspace | 37 897 (knowledge stubs) + 28 169 (.forge) + docs |
+| `AGENTS.md` / `CLAUDE.md` / `AGENT_PROTOCOL.md` | 1 978 / 418 / 4 130 B |
+| `registry.json` + `ROUTING.md` + capability manifest | 9 094 / 1 508 / 17 567 B |
+| Knowledge stubs | 43 ponteiros (37 897 B); conteúdo carregado lazy do pacote |
+| Host mirrors (.agents + .devin) | 1 723 209 B cada (perfis+skills renderizados) |
+| Latência cold-start (spawn+exec) | capabilities ≈25 s, rules ≈15 s, knowledge ≈5 s (1ª chamada, inclui startup do intérprete) |
+| Tokens de provider | `unresolved` — sem transcript de host, não estimado |
+
+Sentinel: release `v0.2.2` existe no GitHub; publicação PyPI
+**bloqueada** — workflow `Release` gated no environment `pypi`
+(trusted publisher + approval humana). Job `publish to PyPI (OIDC, gated)`
+falhou por design até o dono aprovar.
+
+forge-cli: o release `v0.3.0` (npm `theforge-cli`) foi cortado na mesma
+onda para manter o CLI alinhado aos docs de install que ele referencia;
+mudança docs-only — registrado aqui retroativamente como decisão, não
+necessidade crítica. Sem nova funcionalidade de CLI.

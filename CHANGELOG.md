@@ -6,7 +6,7 @@ The project follows Semantic Versioning while pre-1.0: minor versions may
 introduce new public capability surfaces; patch versions close or harden an
 existing cycle without intentionally breaking the Forge Protocol.
 
-## [0.6.3] - 2026-10-24
+## [0.6.3] - 2026-10-23
 
 ### 0.6.3 — Agentic Ecosystem
 
@@ -23,7 +23,7 @@ existing cycle without intentionally breaking the Forge Protocol.
 ## [Unreleased]
 
 
-## [0.6.2] - 2026-10-29
+## [0.6.2] - 2026-10-23
 
 ### 0.6.2 — Agentic Ecosystem
 
