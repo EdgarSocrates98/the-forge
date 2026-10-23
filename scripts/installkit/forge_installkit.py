@@ -1354,11 +1354,18 @@ def _prune_empty_dirs(root: Path, removed: list[str]) -> None:
     first non-empty ancestor or ``root``. User dirs are never touched —
     ``rmdir`` refuses on non-empty directories by design."""
     seen: set[Path] = set()
+    resolved_root = root.resolve()
     for rel in removed:
-        if not _safe_rel(rel):
+        # Entries may be ledger-relative keys or already-absolute paths
+        # (detach receipts). Both must resolve INSIDE root before rmdir.
+        try:
+            fpath = Path(rel) if Path(rel).is_absolute() else root / rel
+            fpath.resolve().relative_to(resolved_root)
+        except (OSError, ValueError):
             continue
-        parent = (root / rel).parent
-        while parent != root and root in parent.parents and parent not in seen:
+        parent = fpath.resolve().parent
+        while parent != resolved_root and resolved_root in parent.parents \
+                and parent not in seen:
             try:
                 parent.rmdir()
             except OSError:

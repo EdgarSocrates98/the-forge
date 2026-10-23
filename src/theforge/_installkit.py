@@ -38,7 +38,7 @@ from typing import Any
 _INSTALLKIT_VERSION = "1.0.3"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "4048a48713054db3"
+_SOURCE_SHA256 = "b102bf086301aa0d"
 
 SCHEMA_MANIFEST = "forge/InstallationManifest/v1"
 SCHEMA_RECEIPT = "forge/InstallReceipt/v1"
@@ -1354,11 +1354,18 @@ def _prune_empty_dirs(root: Path, removed: list[str]) -> None:
     first non-empty ancestor or ``root``. User dirs are never touched —
     ``rmdir`` refuses on non-empty directories by design."""
     seen: set[Path] = set()
+    resolved_root = root.resolve()
     for rel in removed:
-        if not _safe_rel(rel):
+        # Entries may be ledger-relative keys or already-absolute paths
+        # (detach receipts). Both must resolve INSIDE root before rmdir.
+        try:
+            fpath = Path(rel) if Path(rel).is_absolute() else root / rel
+            fpath.resolve().relative_to(resolved_root)
+        except (OSError, ValueError):
             continue
-        parent = (root / rel).parent
-        while parent != root and root in parent.parents and parent not in seen:
+        parent = fpath.resolve().parent
+        while parent != resolved_root and resolved_root in parent.parents \
+                and parent not in seen:
             try:
                 parent.rmdir()
             except OSError:
