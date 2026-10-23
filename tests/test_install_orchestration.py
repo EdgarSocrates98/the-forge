@@ -708,3 +708,37 @@ def test_update_url_spec_no_to_keeps_same_origin(monkeypatch, forge_home: Path, 
     out = service.update(dry_run=True)
     assert out["status"] == "planned"
     assert "theforge-core @ https://h/x.whl" in out["checks"][0]["detail"]
+
+
+def test_uninstall_receipt_persisted_after_context_failure(
+    target: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """kit.uninstall grava o receipt antes do unregister do contexto — a
+    mutação (BLOCKED -> failed) tem que chegar ao disco, senão o arquivo
+    conta uma história diferente do receipt emitido."""
+    service.install(scope="project", root=target, yes=True, host="claude")
+
+    def boom(*_a, **_k):
+        raise service.fctx.ContextError(service.fctx.E_CONFLICT, "simulated unregister failure")
+
+    monkeypatch.setattr(service.fctx, "uninstall_transaction", boom)
+    out = service.uninstall(scope="project", root=target)
+    assert out["status"] == "failed"
+    assert any(
+        c["id"] == "context-registry" and c["status"] == "BLOCKED" for c in out["checks"]
+    )
+    receipts = sorted((target / ".forge" / "install" / "receipts").glob("uninstall-*.json"))
+    assert receipts, "receipt should have been persisted"
+    persisted = json.loads(receipts[-1].read_text("utf-8"))
+    assert persisted["status"] == out["status"]
+    assert [c["id"] for c in persisted["checks"]] == [c["id"] for c in out["checks"]]
+
+
+def test_uninstall_user_scope_pristine_creates_no_context(
+    forge_home: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`--scope user` nunca registra contexto de workspace — o uninstall
+    não pode criar `~/.forge/context/` (registry/ROUTING) num root limpo."""
+    (forge_home / ".forge").mkdir()  # state dir existe: exercita o caminho installed
+    service.uninstall(scope="user")
+    assert not (forge_home / ".forge" / "context").exists()

@@ -694,7 +694,16 @@ def uninstall(
         }
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.uninstall(ctx, purge_state=purge)
-        _unregister_context(ctx.root, r)
+        # Só roda a camada de contexto quando há resíduo — num root sem
+        # `.forge/context` o unregister criaria registry/ROUTING num
+        # uninstall (scope=user incluso). O gate cobre registros legados
+        # <=0.6.1 em `~`: a entrada existe exatamente quando há resíduo.
+        if _docs_leftovers(ctx.root):
+            _unregister_context(ctx.root, r)
+            if not purge:
+                # kit.uninstall persistiu o receipt antes do unregister —
+                # regrava para que o arquivo reflita checks/status finais.
+                kit._write_receipt(ctx.state_dir, r)
         if lock.recovered:
             r.setdefault("checks", []).append(
                 {
