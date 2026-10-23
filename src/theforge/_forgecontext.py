@@ -107,10 +107,10 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.3.1"
+_FORGECONTEXT_VERSION = "1.3.2"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "e72e93eab21ade74"
+_SOURCE_SHA256 = "2aab49d08c331431"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -2126,9 +2126,23 @@ def _is_our_protocol(text: str) -> bool:
     return text.startswith(PROTOCOL_SENTINEL)
 
 
+def _read_doc(path: Path) -> str:
+    """Read a consumer doc as UTF-8 — a file that does not decode is a
+    named refusal, never an untyped internal error (conflicts precede
+    writes per §9.2; errors are typed per §13.1)."""
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        raise ContextError(
+            E_CONFLICT,
+            f"{path.name}: not valid UTF-8 — convert the file to UTF-8 or "
+            "remove it, then re-run",
+        ) from None
+
+
 def _write_doc(path: Path, text: str, written: list[str], kept: list[str]) -> None:
     rel = path.name
-    old = path.read_text(encoding="utf-8") if path.exists() else None
+    old = _read_doc(path) if path.exists() else None
     if old == text:
         kept.append(rel)
         return
@@ -2143,7 +2157,7 @@ def _sync_protocol(root: Path, written: list[str], notes: list[str]) -> None:
     manifests = _load_manifests(context_dir(root))
     if not manifests:
         if path.exists():
-            text = path.read_text(encoding="utf-8")
+            text = _read_doc(path)
             if _is_our_protocol(text):
                 path.unlink()
                 written.append(f"{PROTOCOL_NAME} (removed — last forge)")
@@ -2157,14 +2171,14 @@ def _sync_protocol(root: Path, written: list[str], notes: list[str]) -> None:
     reg = load_registry(root) or {}
     doc = protocol_document(reg, manifests)
     if path.exists():
-        cur = path.read_text(encoding="utf-8")
+        cur = _read_doc(path)
         if not _is_our_protocol(cur):
             raise ContextError(
                 E_CONFLICT,
                 f"{PROTOCOL_NAME} exists and is not forge-managed — rename "
                 "it or remove it, then re-run",
             )
-    old = path.read_text(encoding="utf-8") if path.exists() else None
+    old = _read_doc(path) if path.exists() else None
     if old != doc:
         _atomic_write(path, doc.encode("utf-8"))
         written.append(PROTOCOL_NAME)
@@ -2184,7 +2198,7 @@ def _sync_marked_file(
     ``preamble`` when absent. ``blocks`` is ordered (ecosystem, then the
     forge's)."""
     path = root / name
-    text = path.read_text(encoding="utf-8") if path.exists() else preamble
+    text = _read_doc(path) if path.exists() else preamble
     text, removed = strip_legacy_blocks(text, legacy_tags, name=name)
     removed_legacy.extend(removed)
     for tag, body in blocks:
@@ -2209,7 +2223,7 @@ def _teardown_marked_file(
     path = root / name
     if not path.exists():
         return
-    text = path.read_text(encoding="utf-8")
+    text = _read_doc(path)
     text, removed = strip_legacy_blocks(text, legacy_tags, name=name)
     removed_legacy.extend(removed)
     text = remove_managed_block(text, f"forge:{forge_id}", name=name)
@@ -2248,7 +2262,7 @@ def _protocol_conflict_check(root: Path) -> None:
     that exists and is not ours."""
     path = root / PROTOCOL_NAME
     if path.exists():
-        text = path.read_text(encoding="utf-8")
+        text = _read_doc(path)
         if not _is_our_protocol(text):
             raise ContextError(
                 E_CONFLICT,
@@ -2265,7 +2279,7 @@ def _docs_install_conflicts(
     (transaction §9.2 step 5: conflict detection precedes backup)."""
     for name, preamble, blocks in _install_block_plan(manifest):
         path = root / name
-        text = path.read_text(encoding="utf-8") if path.exists() else preamble
+        text = _read_doc(path) if path.exists() else preamble
         text, _ = strip_legacy_blocks(text, legacy_tags, name=name)
         for tag, body in blocks:
             text = apply_managed_block(text, tag, body, name=name)
@@ -2282,7 +2296,7 @@ def _docs_uninstall_conflicts(root: Path, forge_id: str, legacy_tags: Iterable[s
         path = root / name
         if not path.exists():
             continue
-        text = path.read_text(encoding="utf-8")
+        text = _read_doc(path)
         text, _ = strip_legacy_blocks(text, legacy_tags, name=name)
         text = remove_managed_block(text, f"forge:{forge_id}", name=name)
         if not keep_shared:
@@ -2566,7 +2580,7 @@ def _verify_install(root: Path, forge_id: str, *, docs: bool) -> list[str]:
     verified.append("manifest")
     if docs:
         agents = root / AGENTS_NAME
-        text = agents.read_text(encoding="utf-8") if agents.exists() else ""
+        text = _read_doc(agents) if agents.exists() else ""
         if f"forge:{forge_id}:begin" not in text:
             raise ContextError(
                 E_SCHEMA, f"verify: {AGENTS_NAME} lacks the forge:{forge_id} block"
