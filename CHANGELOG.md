@@ -9,6 +9,42 @@ existing cycle without intentionally breaking the Forge Protocol.
 ## [Unreleased]
 
 
+## [0.6.2] - 2026-10-29
+
+### 0.6.2 — Agentic Ecosystem
+
+### Fixed
+
+- `_forgecontext` v1.3.3: `repair_context` no longer crashes with an
+  untyped `KeyError` on a malformed capability file — manifests failing
+  schema validation are reported per file under `invalid` while valid
+  forges still converge. `_Lock` now carries a unique token: `__exit__`
+  only unlinks the lock file when the on-disk token is ours (a re-claimed
+  lock can no longer admit a third process), the reclaim race surfaces
+  as `FORGE-CONTEXT-LOCKED`, and `held` always resets. A journal redo
+  that hits a post-crash conflict (foreign doc, non-UTF-8 file) is
+  quarantined and reported instead of wedging every later context op.
+- `_installkit` v1.0.3: asset/ledger paths are validated before touching
+  disk — a rel containing `..`, an absolute/drive form or a backslash
+  is refused as `FORGE-INSTALL-UNSAFE-PATH` on plan/apply, skipped on
+  repair and kept (never unlinked) on uninstall; `_prune_empty_dirs`
+  skips unsafe rels; `Ledger.drift` reports them as `unsafe`. The kit
+  `_Lock` gains the same token-ownership fix as the context engine.
+- `_atomic_write` (both engines) preserves an existing file's mode —
+  mkstemp's 0600 no longer downgrades a user's 0644 doc.
+- `install --scope user` no longer writes workspace context under `~`:
+  `.forge/context/` is workspace-level, and the divergent behavior
+  across the five forges (the-forge and apiforge wrote it; the others
+  did not) is now uniform — matching the documented account-level model.
+- A `BLOCKED` check on the mandatory context-registry component now
+  reports the receipt as `failed` (nonzero exit) instead of
+  `completed` — CI/automation can no longer miss a context failure.
+- `contracts/codes.py`: removed the dead duplicated `CODE_HINTS` keys
+  for the `FORGE-CONTEXT-*` codes (second occurrence silently won).
+- `vendor.py --check` reads the repo's own `forge.json` for the
+  `$PYTHON_SPEC` substitution — no more false drift on shell scripts
+  for repos pinned to another spec.
+
 
 ## [0.6.1] - 2026-10-22
 

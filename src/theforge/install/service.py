@@ -446,7 +446,13 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
     ROUTING.md + the consumer docs — as ONE transaction (install-2.0
     §9.2: preflight → lock → plan → conflicts → backup → write → verify
     → commit, rollback on failure). A context failure is a named BLOCKED
-    check on the receipt, never a silent skip."""
+    check on the receipt, never a silent skip.
+    ``scope=user`` targets ``~``: ``~/.forge/`` is account-level state;
+    workspace context is never written there — otherwise the registry at
+    ``~`` would list this forge with no matching workspace semantics
+    (sibling forges skip user scope the same way)."""
+    if ctx.scope == "user":
+        return
     try:
         manifest = _context_manifest(ctx)
         out = fctx.install_transaction(
@@ -485,6 +491,10 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
         receipt.setdefault("checks", []).append(
             {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
         )
+        # A BLOCKED check on a mandatory component must not exit 0 — the
+        # assets landed but the install-2.0 contract (registry + docs)
+        # failed, so the receipt reports it.
+        receipt["status"] = "failed"
 
 
 def _unregister_context(root: Path, receipt: dict[str, Any]) -> None:
@@ -514,6 +524,7 @@ def _unregister_context(root: Path, receipt: dict[str, Any]) -> None:
         receipt.setdefault("checks", []).append(
             {"id": "context-registry", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
         )
+        receipt["status"] = "failed"
 
 
 def _docs_leftovers(root: Path) -> bool:
