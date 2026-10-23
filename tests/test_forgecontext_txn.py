@@ -697,9 +697,8 @@ def test_lock_reclaim_race_is_named_lock_error(tmp_path, monkeypatch):
         real_create(self)
 
     monkeypatch.setattr(fctx._Lock, "_create", _racer)
-    with pytest.raises(fctx.LockError) as exc:
-        with lock:
-            pass  # pragma: no cover — never reached
+    with pytest.raises(fctx.LockError) as exc, lock:
+        pass  # pragma: no cover — never reached
     assert exc.value.kind == fctx.E_LOCKED
     assert calls["n"] == 2
 
