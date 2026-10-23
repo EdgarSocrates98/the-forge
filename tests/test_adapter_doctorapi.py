@@ -422,7 +422,7 @@ def test_assume_specialist_version_overrides_the_probe() -> None:
 def test_in_window_plain_semver() -> None:
     window = ">=0.2.0,<0.3.0"
     assert health.in_window("0.2.0", window) is True
-    assert health.in_window("0.2.9", window) is True
+    assert health.in_window("0.3.0", window) is True
     assert health.in_window("0.3.0", window) is False
     assert health.in_window("0.1.0", window) is False
     assert health.in_window("banana", window) is None

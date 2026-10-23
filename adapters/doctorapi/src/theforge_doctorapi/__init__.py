@@ -9,7 +9,7 @@ PROVIDER_ID = "forge-doctor-api"
 VERSION = "0.3.0"
 # Forge Doctor API is pre-1.0: its public surface may change per minor release, so the
 # adapter pins a tight window and drifts to ``degraded`` outside it.
-SUPPORTED_SPECIALIST = ">=0.2.0,<0.3.0"
+SUPPORTED_SPECIALIST = ">=0.2.0,<0.4.0"
 # Interpreter the specialist needs (``requires-python >= 3.11``); the adapter itself runs on
 # Python >= 3.10 for ``--replay`` and environment refusals.
 REQUIRED_PYTHON = (3, 11)
