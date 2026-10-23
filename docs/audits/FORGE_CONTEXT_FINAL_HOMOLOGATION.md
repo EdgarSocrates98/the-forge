@@ -448,3 +448,11 @@ necessidade crítica. O pacote está publicado; deprecar/remover exige ação
 do dono (`npm deprecate theforge-cli@0.3.0` ou retenção como baseline).
 Nenhum novo release do forge-cli foi cortado nesta wave — as mudanças
 foram Python-only.
+
+## Nota — escopo "projetos atualizados" (forge-cli/lens/portal)
+
+A instrução de bump cobria os projetos **atualizados** pela wave. forge-lens
+não recebeu nenhuma mudança neste ciclo — sem delta, sem bump, sem release
+(mesmo critério que forge-portal, que é `private: true`/não publicável). O
+forge-cli v0.3.0 da wave anterior segue registrado como exceção de escopo
+(ver nota acima), não como precedente.
