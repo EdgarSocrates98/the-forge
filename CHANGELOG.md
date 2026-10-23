@@ -12,6 +12,8 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.6.1] - 2026-10-22
 
+### 0.6.1 — Agentic Ecosystem
+
 ### Fixed
 
 - `_forgecontext` v1.3.2: consumer docs that are not valid UTF-8

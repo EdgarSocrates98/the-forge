@@ -4,12 +4,12 @@
   "created_at": "2026-10-15",
   "producer": {
     "id": "the-forge",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "components": [
     {
       "component": "the-forge",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "theforge-core"
@@ -30,7 +30,7 @@
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
