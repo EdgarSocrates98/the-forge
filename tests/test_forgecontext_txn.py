@@ -736,6 +736,7 @@ def test_poisoned_journal_quarantines_instead_of_wedging(tmp_path):
     assert "AGENT_PROTOCOL.md" in exc.value.detail
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX modes unsupported on Windows")
 def test_atomic_write_preserves_file_mode(tmp_path):
     """_atomic_write must keep an existing file's mode — mkstemp's 0600
     would silently downgrade a user's 0644 doc."""
