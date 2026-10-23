@@ -6,6 +6,20 @@ The project follows Semantic Versioning while pre-1.0: minor versions may
 introduce new public capability surfaces; patch versions close or harden an
 existing cycle without intentionally breaking the Forge Protocol.
 
+## [0.6.3] - 2026-10-24
+
+### 0.6.3 — Agentic Ecosystem
+
+### Fixed
+
+- Uninstall receipt is re-persisted after context unregistration so the
+  emitted and archived receipts match on failure.
+- `uninstall --scope user` no longer creates `~/.forge/context/` artifacts on
+  pristine roots (context cleanup is gated on `_docs_leftovers`).
+- `_installkit` 1.0.4: unsafe ledger keys surface in `status().drift.unsafe`
+  and are reported non-repairable in `doctor` with an unlock hint.
+- `ecosystem-compatibility.json` written UTF-8 (`ensure_ascii=False`).
+
 ## [Unreleased]
 
 

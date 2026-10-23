@@ -772,3 +772,34 @@ def test_doctor_forge_portal_check_pass_when_installed(tmp_path, isolated_forge_
     check = next(c for c in health["checks"] if c["id"] == "forge-portal")
     assert check["status"] == "PASS"
     assert check["detail"] == str(root)
+
+
+def test_unsafe_ledger_entry_visible_and_not_repairable(tmp_path):
+    """Chave envenenada no ledger (path fora da raiz) deve aparecer em
+    `status().drift.unsafe`, falhar em `doctor` como não-repairável com
+    hint de unlock, e `repair` não a resolve nem escreve fora da raiz."""
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    ledger = kit.Ledger.load(ctx.state_dir)
+    ledger.doc["entries"]["../escape.md"] = {
+        "sha256": "0" * 64,
+        "kind": "file",
+        "action": "written",
+        "managed": True,
+        "updated_at": "2026-01-01T00:00:00Z",
+    }
+    ledger.save()
+
+    st = kit.status(ctx)
+    assert st["status"] != "healthy"
+    assert [d["path"] for d in st["drift"]["unsafe"]] == ["../escape.md"]
+
+    health = kit.doctor(ctx)
+    check = next(c for c in health["checks"] if c["id"] == "drift:../escape.md")
+    assert check["status"] == "FAIL"
+    assert check["repairable"] is False
+    assert check.get("unlock") or "ledger" in check.get("detail", "").lower()
+
+    out = kit.repair(ctx)
+    assert "../escape.md" not in out.get("repaired", [])
+    assert not (tmp_path.parent / "escape.md").exists()
