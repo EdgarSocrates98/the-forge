@@ -8,6 +8,8 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.6.3] - 2026-10-24
 
+### 0.6.3 — Agentic Ecosystem
+
 ### Fixed
 
 - Uninstall receipt is re-persisted after context unregistration so the
