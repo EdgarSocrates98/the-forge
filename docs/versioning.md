@@ -83,3 +83,5 @@ Vocabulário conhecido deste core: `handoff/v1`, `verify/v1`, `plan-proposal/v1`
 - Toda mudança na versão de um adapter ou no seu `SUPPORTED_SPECIALIST` atualiza a linha da versão atual de The Forge no mesmo commit.
 - `tests/test_compat_matrix.py` confere a matriz contra o código: linha para `theforge.__version__`, versões dos adapters iguais às dos `pyproject.toml`, janelas iguais a `SUPPORTED_SPECIALIST` e major de protocolo em `SUPPORTED_PROTOCOLS`. A falha nomeia a versão sem linha e cita esta regra.
 - Mudar a versão de The Forge é gatilho de revalidação para as waves seguintes.
+
+Referência canônica: [docs/errors.md](errors.md) (taxonomia `FORGE-*`).
