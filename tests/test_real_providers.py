@@ -113,7 +113,7 @@ CASES = {
         FIXTURES / "workspaces" / "spark",
         "pyspark.static-analysis",
         "pyspark",
-        ">=0.5.0,<0.7.0",
+        ">=0.5.0,<0.8.0",
         ADAPTERS / "sparkforge_aws" / "src" / "theforge_sparkforge_aws" / "native_catalog.json",
     ),
     "api": Case(
@@ -121,7 +121,7 @@ CASES = {
         FIXTURES / "workspaces" / "api",
         "api.analyze",
         "analyze",
-        ">=0.1.0,<0.3.0",
+        ">=0.1.0,<0.4.0",
         ADAPTERS / "apiforge" / "src" / "theforge_apiforge" / "native_matrix.json",
     ),
     "doctordata": Case(
@@ -137,7 +137,7 @@ CASES = {
         FIXTURES / "workspaces" / "cross" / "orders-api",
         "api.diagnose",
         "analyze",
-        ">=0.2.0,<0.3.0",
+        ">=0.2.0,<0.4.0",
         ADAPTERS / "doctorapi" / "src" / "theforge_doctorapi" / "native_surface.json",
     ),
     "sparkazure": Case(
@@ -145,7 +145,7 @@ CASES = {
         FIXTURES / "workspaces" / "azure" / "access-case",
         "azure.access-diagnose",
         "analyze",
-        ">=0.1.0,<0.3.0",
+        ">=0.1.0,<0.4.0",
         ADAPTERS / "sparkforge_azure" / "src" / "theforge_sparkforge_azure" / "native_surface.json",
     ),
     "platform": Case(
@@ -153,7 +153,7 @@ CASES = {
         FIXTURES / "workspaces" / "platform" / "iac",
         "iac.analyze",
         "analyze",
-        ">=0.1.0,<0.3.0",
+        ">=0.1.0,<0.4.0",
         ADAPTERS / "platformforge" / "src" / "theforge_platformforge" / "native_surface.json",
     ),
 }

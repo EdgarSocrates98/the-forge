@@ -83,7 +83,7 @@ SPARK = Adapter(
     FIXTURES / "workspaces" / "spark",
     "pyspark.static-analysis",
     "pyspark",
-    ">=0.5.0,<0.7.0",
+    ">=0.5.0,<0.8.0",
 )
 API = Adapter(
     "api-forge",
@@ -92,7 +92,7 @@ API = Adapter(
     FIXTURES / "workspaces" / "api",
     "api.analyze",
     "analyze",
-    ">=0.1.0,<0.3.0",
+    ">=0.1.0,<0.4.0",
 )
 AZURE = Adapter(
     "spark-forge-azure",
@@ -101,7 +101,7 @@ AZURE = Adapter(
     FIXTURES / "workspaces" / "azure" / "access-case",
     "azure.access-diagnose",
     "analyze",
-    ">=0.1.0,<0.3.0",
+    ">=0.1.0,<0.4.0",
 )
 PLATFORM = Adapter(
     "platform-forge",
@@ -110,7 +110,7 @@ PLATFORM = Adapter(
     FIXTURES / "workspaces" / "platform",
     "iac.analyze",
     "analyze",
-    ">=0.1.0,<0.3.0",
+    ">=0.1.0,<0.4.0",
 )
 ADAPTERS = {"spark": SPARK, "api": API, "azure": AZURE, "platform": PLATFORM}
 
@@ -401,7 +401,7 @@ def test_large_output_is_a_partial_result_with_the_persisted_artifact(
 
 VERSION_SKEW = {
     # Spark: the recorded scenario whose specialist is outside the window.
-    "spark": (lambda: (SPARK.scenario("version-skew"), ()), "found 0.7.1"),
+    "spark": (lambda: (SPARK.scenario("version-skew"), ()), "found 0.8.1"),
     # API: the default scenario with the adapter's assumed-version option.
     "api": (lambda: (API.default, ("--assume-specialist-version", "9.9.9")), "found 9.9.9"),
     "azure": (lambda: (AZURE.scenario("version-skew"), ()), "found 9.9.0"),
