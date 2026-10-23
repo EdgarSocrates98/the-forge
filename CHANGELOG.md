@@ -9,6 +9,20 @@ existing cycle without intentionally breaking the Forge Protocol.
 ## [Unreleased]
 
 
+
+## [0.6.1] - 2026-10-22
+
+### 0.6.1 — Agentic Ecosystem
+
+### Fixed
+
+- `_forgecontext` v1.3.2: consumer docs that are not valid UTF-8
+  (AGENTS.md / CLAUDE.md / AGENT_PROTOCOL.md — e.g. cp1252/latin-1 files
+  common on Windows) now refuse with a named `FORGE-CONTEXT-CONFLICT`
+  naming the file and the remediation, instead of escaping as an untyped
+  `UnicodeDecodeError` that left a half-installed forge and no way to
+  uninstall. Applies to install *and* uninstall paths.
+
 ## [0.6.0] - 2026-10-22
 
 ### 0.6.0 — Agentic Ecosystem

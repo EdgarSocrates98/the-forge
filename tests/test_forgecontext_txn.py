@@ -587,3 +587,40 @@ def test_install_order_independence(tmp_path):
     for fid in ("a-forge", "b-forge"):
         for root in (root1, root2):
             assert f"forge:{fid}:begin" in (root / "AGENTS.md").read_text()
+
+
+# --- §13.1 typed errors: non-UTF-8 consumer docs ----------------------------
+
+CP1252 = b"# guia do agente - configura\xe7\xe3o v\xe1lida\r\n"
+
+
+def test_install_non_utf8_doc_is_typed_refusal_not_crash(tmp_path):
+    """A pre-existing cp1252 AGENTS.md (common on Windows) must surface
+    E_CONFLICT naming the file — never UnicodeDecodeError as an internal
+    error leaving a half-installed forge."""
+    (tmp_path / "AGENTS.md").write_bytes(CP1252)
+    with pytest.raises(fctx.ContextError) as exc:
+        fctx.install_transaction(tmp_path, _manifest("forge-x"), owner="forge-x")
+    assert exc.value.kind == fctx.E_CONFLICT
+    assert "AGENTS.md" in exc.value.detail and "UTF-8" in exc.value.detail
+    assert "re-run" in exc.value.detail
+    assert not (_ctx(tmp_path) / "capabilities" / "forge-x.json").exists()
+
+
+def test_uninstall_non_utf8_doc_is_typed_refusal_not_crash(tmp_path):
+    """Same doc state on the teardown path: uninstall also fails with a
+    named refusal instead of a bare UnicodeDecodeError."""
+    fctx.install_transaction(tmp_path, _manifest("forge-x"), owner="forge-x")
+    (tmp_path / "AGENTS.md").write_bytes(CP1252)
+    with pytest.raises(fctx.ContextError) as exc:
+        fctx.uninstall_transaction(tmp_path, "forge-x", owner="forge-x")
+    assert exc.value.kind == fctx.E_CONFLICT
+    assert "AGENTS.md" in exc.value.detail
+
+
+def test_protocol_non_utf8_is_typed_refusal(tmp_path):
+    (tmp_path / "AGENT_PROTOCOL.md").write_bytes(CP1252)
+    with pytest.raises(fctx.ContextError) as exc:
+        fctx.install_transaction(tmp_path, _manifest("forge-x"), owner="forge-x")
+    assert exc.value.kind == fctx.E_CONFLICT
+    assert "AGENT_PROTOCOL.md" in exc.value.detail

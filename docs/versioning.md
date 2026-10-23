@@ -58,6 +58,7 @@ Fonte única. As colunas dos especialistas mostram a janela `SUPPORTED_SPECIALIS
 | 0.5.5 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | cycle 13 Graph Studio (P0 physics fix, overview/explore/full modes, navigation, inspectors, federation parity, hardening) |
 | 0.5.6 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.6.0` | 0.3.0 | `>=0.1.0,<0.2.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.2.0` | 0.1.0 | `>=0.1.0,<0.2.0` | integrations cycle (SpecialistCapability/SpecialistDelegation/EvidenceHandoff contracts, governed delegation, orchestration lane, portal explorer bundle) |
 | 0.6.0 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.7.0` | 0.3.0 | `>=0.1.0,<0.3.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.3.0` | Install 2.0 (forge-context/v1, transactional multi-forge composition, consumer doc blocks, evals classification, wheel isolation, installkit 1.0.2 + bootstrap 1.1.1 security backports) |
+| 0.6.1 | `forge/v1` | 0.3.0 | `>=0.5.0,<0.7.0` | 0.3.0 | `>=0.1.0,<0.3.0` | 0.3.0 | `>=1.0.0rc1,<2.0.0` | 0.3.0 | `>=0.2.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.3.0` | 0.1.0 | `>=0.1.0,<0.3.0` | patch — _forgecontext 1.3.2 (non-UTF-8 consumer docs → named FORGE-CONTEXT-CONFLICT on install+uninstall) |
 
 ## Identidade de superfície
 `version` não é identidade: a mesma versão pode carregar uma superfície diferente (observado em sparkforge-aws 0.5.0 e apiforge 0.1.0). O contrato `theforge/ProviderSurfaceIdentity/v1` pareia as versões declaradas com dois fingerprints determinísticos que o core computa do manifest em uso:
@@ -82,3 +83,5 @@ Vocabulário conhecido deste core: `handoff/v1`, `verify/v1`, `plan-proposal/v1`
 - Toda mudança na versão de um adapter ou no seu `SUPPORTED_SPECIALIST` atualiza a linha da versão atual de The Forge no mesmo commit.
 - `tests/test_compat_matrix.py` confere a matriz contra o código: linha para `theforge.__version__`, versões dos adapters iguais às dos `pyproject.toml`, janelas iguais a `SUPPORTED_SPECIALIST` e major de protocolo em `SUPPORTED_PROTOCOLS`. A falha nomeia a versão sem linha e cita esta regra.
 - Mudar a versão de The Forge é gatilho de revalidação para as waves seguintes.
+
+Referência canônica: [docs/errors.md](errors.md) (taxonomia `FORGE-*`).
