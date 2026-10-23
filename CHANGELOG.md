@@ -6,6 +6,19 @@ The project follows Semantic Versioning while pre-1.0: minor versions may
 introduce new public capability surfaces; patch versions close or harden an
 existing cycle without intentionally breaking the Forge Protocol.
 
+## [Unreleased]
+
+
+## [0.7.0] - 2026-10-23
+
+### 0.7.0 — Agentic Ecosystem
+
+### Fixed
+
+- `ui._has_vcs_root`/`ui.home`: stray `forge.json` in an ancestor no longer
+  marks a project root — requires `pyproject.toml` alongside (`.git` still
+  suffices). Regression tests added. Changelog dates/order corrected.
+
 ## [0.6.3] - 2026-10-23
 
 ### 0.6.3 — Agentic Ecosystem
@@ -19,9 +32,6 @@ existing cycle without intentionally breaking the Forge Protocol.
 - `_installkit` 1.0.4: unsafe ledger keys surface in `status().drift.unsafe`
   and are reported non-repairable in `doctor` with an unlock hint.
 - `ecosystem-compatibility.json` written UTF-8 (`ensure_ascii=False`).
-
-## [Unreleased]
-
 
 ## [0.6.2] - 2026-10-23
 

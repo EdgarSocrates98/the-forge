@@ -9,49 +9,49 @@
   "components": [
     {
       "component": "the-forge",
-      "version": "0.6.3",
+      "version": "0.7.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "theforge-core"
     },
     {
       "component": "api-forge",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "apiforge-af"
     },
     {
       "component": "platform-forge",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "platformforge"
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.6.3",
+      "version": "0.7.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
     },
     {
       "component": "spark-forge-azure",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-azure"
     },
     {
       "component": "forge-doctor-data",
-      "version": "1.0.9",
+      "version": "1.1.0",
       "scheme": "pep440",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-data"
     },
     {
       "component": "forge-doctor-api",
-      "version": "0.2.9",
+      "version": "0.3.0",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-api"

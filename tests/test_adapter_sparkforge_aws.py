@@ -403,7 +403,7 @@ def test_default_scenario_records_a_supported_environment() -> None:
     assert set(environment) == {"python", "specialist_version"}
     assert environment["python"].startswith("3.11.")
     assert environment["specialist_version"] == "0.5.0"
-    assert SUPPORTED_SPECIALIST == ">=0.5.0,<0.7.0"
+    assert SUPPORTED_SPECIALIST == ">=0.5.0,<0.8.0"
     loaded = backend.load_environment(DEFAULT)
     assert isinstance(loaded, backend.Environment)
     assert loaded.specialist_version == "0.5.0"
@@ -645,7 +645,7 @@ def test_replay_health_out_of_window_is_degraded_with_version_and_window() -> No
     assert report.status == "degraded"
     version = _check(report, "specialist-version")
     assert not version.ok
-    assert f"found 0.7.1, supported {SUPPORTED_SPECIALIST}" in version.detail
+    assert f"found 0.8.1, supported {SUPPORTED_SPECIALIST}" in version.detail
     assert all(check.ok for check in report.checks if check.name != "specialist-version")
 
 
@@ -866,7 +866,7 @@ def test_import_tools_falls_back_to_the_legacy_package(monkeypatch: pytest.Monke
         ("0.5.9", True),
         ("0.6.0", True),
         ("0.6.99", True),
-        ("0.7.0", False),
+        ("0.8.0", False),
         ("0.4.99", False),
         ("1.0.0", False),
         ("0.5", False),
