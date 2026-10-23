@@ -261,14 +261,6 @@ CODE_HINTS: Final[Mapping[str, str]] = MappingProxyType(
         Codes.CONTEXT_PATH: "the context pack contains a path outside the rules — a core bug; "
         "report with "
         "--debug output",
-        Codes.CONTEXT_OWNERSHIP: "a forge tried to mutate an artifact owned by another forge; "
-        "uninstall or repair from the owning forge's CLI",
-        Codes.CONTEXT_LOCKED: "the context registry lock is held by another install; retry, or "
-        "remove `.forge/context/.context.lock` when its holder is dead",
-        Codes.CONTEXT_CONFLICT: "ambiguous managed-marker or ownership state; fix the file or "
-        "remove the stray marker, then re-run the install",
-        Codes.CONTEXT_SCHEMA: "the registry or capability manifest failed validation; run "
-        "`theforge install repair` or fix the json under `.forge/context/`",
         Codes.CONTEXT_REQUEST_UNSUPPORTED: "the capability does not declare `context.requests`; "
         "update the manifest or the "
         "provider",

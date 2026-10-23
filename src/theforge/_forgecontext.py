@@ -100,6 +100,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import sys
 import tempfile
 import time
@@ -107,10 +108,10 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.3.2"
+_FORGECONTEXT_VERSION = "1.3.3"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "2aab49d08c331431"
+_SOURCE_SHA256 = "18ebe75c6281a3f5"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -241,12 +242,17 @@ def _load_json(path: Path, default: Any = None) -> Any:
 
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    # mkstemp lands 0600 — preserve an existing file's mode so a managed
+    # merge never downgrades the user's permissions.
+    mode = stat.S_IMODE(path.stat().st_mode) if path.is_file() else None
     fd, tmp = tempfile.mkstemp(prefix=path.name, dir=str(path.parent))
     try:
         with os.fdopen(fd, "wb") as fh:
             fh.write(data)
             fh.flush()
             os.fsync(fh.fileno())
+        if mode is not None:
+            os.chmod(tmp, mode)
         os.replace(tmp, path)
     finally:
         if os.path.exists(tmp):
@@ -269,15 +275,18 @@ def _pid_alive(pid: int) -> bool | None:
 
 
 class _Lock:
-    """O_EXCL lockfile carrying ``{pid, created_at}``. Stale locks — dead
-    holder or older than ``stale_after_s`` — are reclaimed once so an
-    interrupted op never bricks the registry."""
+    """O_EXCL lockfile carrying ``{pid, created_at, token}``. Stale locks —
+    dead holder or older than ``stale_after_s`` — are reclaimed once so an
+    interrupted op never bricks the registry. The token guards release:
+    a file reclaimed or rewritten by another claimant is never unlinked
+    by ``__exit__``."""
 
     def __init__(self, lock: Path, stale_after_s: float = 900.0) -> None:
         self._lock = lock
         self._stale = stale_after_s
         self.held = False
         self.recovered = False
+        self._token: str | None = None
 
     def __enter__(self) -> _Lock:
         try:
@@ -294,12 +303,30 @@ class _Lock:
                     E_LOCKED, f"context lock at {self._lock} could not be reclaimed"
                 ) from exc
             self.recovered = True
-            self._create()
+            try:
+                self._create()
+            except FileExistsError:
+                raise LockError(
+                    E_LOCKED,
+                    f"context lock at {self._lock} lost to a concurrent reclaimer",
+                ) from None
             return self
 
     def _create(self) -> None:
+        self._token = hashlib.sha256(
+            f"{os.getpid()}:{time.time_ns()}:{self._lock}".encode()
+        ).hexdigest()[:24]
         fd = os.open(str(self._lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        os.write(fd, _json_bytes({"pid": os.getpid(), "created_at": _utc_now()}))
+        os.write(
+            fd,
+            _json_bytes(
+                {
+                    "pid": os.getpid(),
+                    "created_at": _utc_now(),
+                    "token": self._token,
+                }
+            ),
+        )
         os.close(fd)
         self.held = True
 
@@ -331,9 +358,16 @@ class _Lock:
         return age > self._stale
 
     def __exit__(self, *exc: object) -> None:
-        if self.held:
-            with contextlib.suppress(OSError):
-                self._lock.unlink()
+        try:
+            if self.held:
+                # Only release a lock that still carries OUR token — a
+                # reclaimed/stolen file belongs to its current claimant.
+                doc = _load_json(self._lock)
+                if isinstance(doc, dict) and doc.get("token") == self._token:
+                    with contextlib.suppress(OSError):
+                        self._lock.unlink()
+        finally:
+            self.held = False
 
 
 def acquire_lock(ctx_dir: Path) -> _Lock:
@@ -1417,7 +1451,23 @@ def _qualified_ids(manifest: Mapping[str, Any]) -> list[str]:
 def _entry_from_manifest(
     manifest: dict[str, Any], cap_sha: str, prev: dict[str, Any] | None, now: str
 ) -> dict[str, Any]:
-    inst = manifest["installed"]
+    fid = str(manifest.get("forge_id") or "?")
+    inst = manifest.get("installed")
+    if not isinstance(inst, Mapping):
+        raise ContextError(
+            E_SCHEMA,
+            f"{_capability_rel(fid)}: missing required 'installed' — "
+            "repair or remove the capability file",
+        )
+    missing = [
+        k for k in ("forge_id", "name", "version", "state", "recorded_by") if k not in manifest
+    ]
+    if missing:
+        raise ContextError(
+            E_SCHEMA,
+            f"{_capability_rel(fid)}: missing required keys {missing} — "
+            "repair or remove the capability file",
+        )
     return {
         "forge_id": manifest["forge_id"],
         "owner": manifest["forge_id"],
@@ -1535,31 +1585,44 @@ def _recover_journal(ctx: Path, root: Path) -> dict[str, Any] | None:
     recovered: dict[str, Any] | None = None
     now = _utc_now()
     if isinstance(journal, dict):
-        op = journal.get("op")
-        if op == "register" and isinstance(journal.get("manifest"), dict):
-            if not validate_manifest(journal["manifest"]):
-                _apply_register(ctx, root, journal["manifest"], now)
-                recovered = {"op": "register", "forge_id": journal["manifest"]["forge_id"]}
-        elif op == "unregister" and isinstance(journal.get("forge_id"), str):
-            _apply_unregister(ctx, root, journal["forge_id"], now)
-            recovered = {"op": "unregister", "forge_id": journal["forge_id"]}
-        elif op == "install" and isinstance(journal.get("manifest"), dict):
-            if not validate_manifest(journal["manifest"]):
-                _apply_register(ctx, root, journal["manifest"], now)
-                if journal.get("docs", True):
-                    _docs_install_apply(
-                        root, journal["manifest"], tuple(journal.get("legacy_tags") or ())
-                    )
-                recovered = {
-                    "op": "install",
-                    "forge_id": journal["manifest"]["forge_id"],
-                }
-        elif op == "uninstall" and isinstance(journal.get("forge_id"), str):
-            _apply_unregister(ctx, root, journal["forge_id"], now)
-            _docs_uninstall_apply(
-                root, journal["forge_id"], tuple(journal.get("legacy_tags") or ())
-            )
-            recovered = {"op": "uninstall", "forge_id": journal["forge_id"]}
+        try:
+            op = journal.get("op")
+            if op == "register" and isinstance(journal.get("manifest"), dict):
+                if not validate_manifest(journal["manifest"]):
+                    _apply_register(ctx, root, journal["manifest"], now)
+                    recovered = {"op": "register", "forge_id": journal["manifest"]["forge_id"]}
+            elif op == "unregister" and isinstance(journal.get("forge_id"), str):
+                _apply_unregister(ctx, root, journal["forge_id"], now)
+                recovered = {"op": "unregister", "forge_id": journal["forge_id"]}
+            elif op == "install" and isinstance(journal.get("manifest"), dict):
+                if not validate_manifest(journal["manifest"]):
+                    _apply_register(ctx, root, journal["manifest"], now)
+                    if journal.get("docs", True):
+                        _docs_install_apply(
+                            root, journal["manifest"], tuple(journal.get("legacy_tags") or ())
+                        )
+                    recovered = {
+                        "op": "install",
+                        "forge_id": journal["manifest"]["forge_id"],
+                    }
+            elif op == "uninstall" and isinstance(journal.get("forge_id"), str):
+                _apply_unregister(ctx, root, journal["forge_id"], now)
+                _docs_uninstall_apply(
+                    root, journal["forge_id"], tuple(journal.get("legacy_tags") or ())
+                )
+                recovered = {"op": "uninstall", "forge_id": journal["forge_id"]}
+        except ContextError as exc:
+            # A poisoned journal must not wedge every later op: the redo hit a
+            # conflict that post-dates the crash (foreign doc, non-UTF-8 file).
+            # Quarantine the intent — evidence preserved — and report it,
+            # instead of failing forever on the same journal.
+            _quarantine(jpath, now.replace(":", ""))
+            _txn_drop(ctx)
+            return {
+                "op": str(journal.get("op") or "?"),
+                "quarantined": True,
+                "error": f"{exc.kind}: {exc.detail}",
+            }
         if recovered is None:
             _quarantine(jpath, now.replace(":", ""))
             _txn_drop(ctx)
@@ -1685,8 +1748,16 @@ def repair_context(root: Path | str) -> dict[str, Any]:
         now = _utc_now()
         previous = {e["forge_id"]: e for e in reg["forges"]}
         entries = []
+        invalid: list[dict[str, Any]] = []
         for fid in sorted(manifests):
             doc = manifests[fid]
+            # A capability file that fails schema validation is reported and
+            # kept out of the rebuilt registry — never an untyped crash on
+            # the one path meant to converge a broken context.
+            problems = validate_manifest(doc)
+            if problems:
+                invalid.append({"forge_id": fid, "problems": problems[:5]})
+                continue
             cap_sha = _sha_file(ctx / CAPABILITIES_DIR / f"{fid}.json")
             entries.append(_entry_from_manifest(doc, cap_sha, previous.get(fid), now))
         reg["forges"] = entries
@@ -1698,7 +1769,8 @@ def repair_context(root: Path | str) -> dict[str, Any]:
         # foreign-installer content is never ours to remove.
     return {
         "status": "repaired",
-        "forges": sorted(manifests),
+        "forges": sorted(e["forge_id"] for e in entries),
+        "invalid": invalid,
         "recovered": recovered,
         "notes": notes,
         "written": written,

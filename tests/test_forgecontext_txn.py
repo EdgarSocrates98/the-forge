@@ -22,7 +22,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import stat
 import sys
+import time
 from pathlib import Path
 
 import jsonschema
@@ -624,3 +627,122 @@ def test_protocol_non_utf8_is_typed_refusal(tmp_path):
         fctx.install_transaction(tmp_path, _manifest("forge-x"), owner="forge-x")
     assert exc.value.kind == fctx.E_CONFLICT
     assert "AGENT_PROTOCOL.md" in exc.value.detail
+
+
+# --- repair resilience: malformed capability files -------------------------
+
+
+def test_repair_context_malformed_capability_is_reported_not_crash(tmp_path):
+    """A capability file whose manifest lacks `installed` (corrupted or
+    hand-edited) must not raise KeyError on the repair path — the one
+    path meant to converge a broken context. It is skipped and reported
+    in `invalid` while valid forges still register."""
+    fctx.install_transaction(tmp_path, _manifest("forge-a"), owner="forge-a")
+    (tmp_path / ".forge/context/capabilities/bad.json").write_text(
+        json.dumps({"forge_id": "bad"}), encoding="utf-8"
+    )
+    out = fctx.repair_context(tmp_path)
+    assert out["status"] == "repaired"
+    assert "forge-a" in out["forges"]
+    assert "bad" not in out["forges"]
+    invalid_ids = {e["forge_id"] for e in out["invalid"]}
+    assert "bad" in invalid_ids
+    reg = json.loads((tmp_path / ".forge/context/registry.json").read_text())
+    assert [e["forge_id"] for e in reg["forges"]] == ["forge-a"]
+
+
+# --- lock ownership: token guard -------------------------------------------
+
+
+def test_lock_exit_never_unlinks_foreign_lock(tmp_path):
+    """After a stale reclaim the on-disk lock may belong to a newer
+    claimant; __exit__ must only unlink when the token is ours, and
+    `held` must reset either way."""
+    lock_file = tmp_path / ".forge/context/.context.lock"
+    lock_file.parent.mkdir(parents=True)
+    lock = fctx._Lock(lock_file)
+    with lock:
+        assert lock_file.exists()
+        held_doc = json.loads(lock_file.read_text())
+        assert held_doc["token"] == lock._token
+        # Simulate a foreign claimant writing the lock over ours.
+        lock_file.write_text(
+            json.dumps({"pid": 9_999_999, "token": "foreign", "created_at": "x"})
+        )
+    assert lock_file.exists()  # foreign lock preserved
+    assert json.loads(lock_file.read_text())["token"] == "foreign"
+    assert lock.held is False
+
+
+def test_lock_reclaim_race_is_named_lock_error(tmp_path, monkeypatch):
+    """If a third party wins the reclaim race after we unlink a stale
+    lock, the second FileExistsError surfaces as LockError(E_LOCKED),
+    not a bare exception."""
+    lock_file = tmp_path / ".forge/context/.context.lock"
+    lock_file.parent.mkdir(parents=True)
+    # Holder undecidable (no pid field) and older than stale_after.
+    lock_file.write_text(json.dumps({"note": "ancient"}))
+    old = time.time() - 10_000
+    os.utime(lock_file, (old, old))
+    lock = fctx._Lock(lock_file)
+    calls = {"n": 0}
+    real_create = fctx._Lock._create
+
+    def _racer(self):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            # A foreign claimant lands between our unlink and our create.
+            lock_file.write_text(json.dumps({"token": "racer"}))
+            raise FileExistsError
+        real_create(self)
+
+    monkeypatch.setattr(fctx._Lock, "_create", _racer)
+    with pytest.raises(fctx.LockError) as exc:
+        with lock:
+            pass  # pragma: no cover — never reached
+    assert exc.value.kind == fctx.E_LOCKED
+    assert calls["n"] == 2
+
+
+def test_poisoned_journal_quarantines_instead_of_wedging(tmp_path):
+    """A journal redo that hits a post-crash conflict (foreign
+    AGENT_PROTOCOL.md) quarantines the intent and reports it — later
+    context ops keep working instead of failing on the same journal
+    forever."""
+    root = tmp_path
+    # Simulate an interrupted install: journal present, no registry.
+    ctx = root / ".forge/context"
+    ctx.mkdir(parents=True)
+    manifest = _manifest("forge-x")
+    (ctx / "journal.json").write_text(json.dumps({"op": "install", "manifest": manifest}))
+    # A foreign protocol file appeared during the crash window — its
+    # sentinel claims a *different* installer, so the redo must conflict.
+    (root / "AGENT_PROTOCOL.md").write_text(
+        "# protocol\n<!-- agent-protocol:another-installer -->\n", encoding="utf-8"
+    )
+    # repair_context triggers _recover_journal: conflict → quarantine.
+    out = fctx.repair_context(root)
+    rec = out["recovered"]
+    assert rec and rec.get("quarantined") is True
+    assert not (ctx / "journal.json").exists()
+    assert any(p.name.startswith("journal") and p.name != "journal.json" for p in ctx.iterdir())
+    # Subsequent ops are not wedged on the same journal — a second repair
+    # converges cleanly, and install's refusal is the REAL foreign-doc
+    # conflict (a named E_CONFLICT), not a journal failure.
+    out2 = fctx.repair_context(root)
+    assert out2["status"] == "repaired"
+    with pytest.raises(fctx.ContextError) as exc:
+        fctx.install_transaction(root, _manifest("forge-y"), owner="forge-y")
+    assert exc.value.kind == fctx.E_CONFLICT
+    assert "AGENT_PROTOCOL.md" in exc.value.detail
+
+
+def test_atomic_write_preserves_file_mode(tmp_path):
+    """_atomic_write must keep an existing file's mode — mkstemp's 0600
+    would silently downgrade a user's 0644 doc."""
+    doc = tmp_path / "AGENTS.md"
+    doc.write_text("v1")
+    doc.chmod(0o644)
+    fctx._atomic_write(doc, b"v2")
+    assert doc.read_text() == "v2"
+    assert stat.S_IMODE(doc.stat().st_mode) == 0o644

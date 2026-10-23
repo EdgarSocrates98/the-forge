@@ -379,7 +379,19 @@ def vendor(
             fj.write_text(json.dumps(config, indent=2) + "\n")
             written.append("forge.json")
 
-    py_spec = (config or {}).get("python", ">=3.10")
+    # `python` spec: explicit --config wins; otherwise read the repo's own
+    # forge.json so `--check` compares against what was actually vendored
+    # (a hard-coded default reports false drift for repos on another spec).
+    py_spec = (config or {}).get("python")
+    if py_spec is None:
+        fj = repo / "forge.json"
+        if fj.exists():
+            try:
+                py_spec = json.loads(fj.read_text()).get("python")
+            except (OSError, json.JSONDecodeError):
+                py_spec = None
+    if py_spec is None:
+        py_spec = ">=3.10"
     put("setup.sh", SETUP_SH.replace("$PYTHON_SPEC", py_spec).encode(), "exec")
     put("setup.ps1", SETUP_PS1.replace("$PYTHON_SPEC", py_spec).encode())
     put("install.sh", INSTALL_SH.replace("$PYTHON_SPEC", py_spec).encode(), "exec")

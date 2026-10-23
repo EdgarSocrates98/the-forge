@@ -4,54 +4,54 @@
   "created_at": "2026-10-15",
   "producer": {
     "id": "the-forge",
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "components": [
     {
       "component": "the-forge",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "theforge-core"
     },
     {
       "component": "api-forge",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "apiforge-af"
     },
     {
       "component": "platform-forge",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "platformforge"
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
     },
     {
       "component": "spark-forge-azure",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-azure"
     },
     {
       "component": "forge-doctor-data",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "scheme": "pep440",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-data"
     },
     {
       "component": "forge-doctor-api",
-      "version": "0.2.7",
+      "version": "0.2.8",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "forge-doctor-api"
@@ -110,9 +110,9 @@
     }
   ],
   "notes": [
-    "Baseline certificada: combinação de SHAs/versões observada em 2026-10-21 (ciclo de integrações lf-0026..lf-0033). Todos os repositórios possuem tags v* desde a rodada 2.2.1 (2026-10-18).",
-    "portal_api usa o envelope `forge/PortalApi/1` servido por `<cli> portal` (the-forge `_forge_portal.py`); o pacote do app forge-portal declara 1.0.0 — eixo separado do contrato (ver versioning-policy.md).",
-    "portal_assets cobre o manifesto `forge/PortalAssets/1` (sha256 por arquivo) vendored em cada Forja via `forge-portal/scripts/vendor.py` — integridade de bundle verificável.",
-    "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) — scheme declarado por componente, SemVer onde apropriado."
+    "Baseline certificada: combina\u00e7\u00e3o de SHAs/vers\u00f5es observada em 2026-10-21 (ciclo de integra\u00e7\u00f5es lf-0026..lf-0033). Todos os reposit\u00f3rios possuem tags v* desde a rodada 2.2.1 (2026-10-18).",
+    "portal_api usa o envelope `forge/PortalApi/1` servido por `<cli> portal` (the-forge `_forge_portal.py`); o pacote do app forge-portal declara 1.0.0 \u2014 eixo separado do contrato (ver versioning-policy.md).",
+    "portal_assets cobre o manifesto `forge/PortalAssets/1` (sha256 por arquivo) vendored em cada Forja via `forge-portal/scripts/vendor.py` \u2014 integridade de bundle verific\u00e1vel.",
+    "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) \u2014 scheme declarado por componente, SemVer onde apropriado."
   ]
 }
