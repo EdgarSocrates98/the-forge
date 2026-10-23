@@ -125,7 +125,7 @@ Honesto — abertos na data deste relatório:
 - **E2E real de hosts (ciclo 8, §10.2) — NÃO EXECUTADO.** Devin/Claude/Codex/
   Copilot não foram exercitados ponta-a-ponta contra uma instalação por
   wheel; ver §9.
-- **Economia/observabilidade (ciclo 9, §11) — pendente.** Sem medições de
+- **Economia/observabilidade (ciclo 9, §11) — MEDIDO** (ver secção Cycle 9; tokens `unresolved`, nunca estimados). Sem medições de
   progressive disclosure/cache/eventos.
 - **Publicação PyPI — pendente** (§10): versões bumpadas em worktree, não
   publicadas.
@@ -314,11 +314,11 @@ Entregue neste ciclo:
 
 | Forge | `forge/context/v1` | `_forgecontext` | `_installkit` | `forge_bootstrap` | Wheel testada | Status |
 |---|---|---|---|---|---|---|
-| **the-forge** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim (lf-0039 + matriz 5!) | **merged, pendente de release** (0.6.0) |
-| **spark-forge-aws** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **merged, pendente de release** (0.6.0) |
-| **spark-forge-azure** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **merged, pendente de release** (0.2.0) |
-| **api-forge** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **merged, pendente de release** (0.2.0) |
-| **platform-forge** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **merged, pendente de release** (0.2.0) |
+| **the-forge** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim (lf-0039 + matriz 5!) | **released** (0.7.0) |
+| **spark-forge-aws** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **released** (0.7.0) |
+| **spark-forge-azure** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **released** (0.7.0) |
+| **api-forge** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **released** (0.7.0) |
+| **platform-forge** | registry + docs + txn | v1.3.1 (`e72e93ea`) | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | sim | **released** (0.7.0) |
 | **forge-doctor-api** | — (boundary: sem wall-clock no core) | ausente | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | installkit-only | **installkit only (boundary)** |
 | **forge-doctor-data** | — (idem) | ausente | v1.0.1 (`4c446922`) | v1.1.1 (`978862eb`) | installkit-only | **installkit only (boundary)**; certifi bumpado (PYSEC-2026-4320) |
 | **data-sentinel-forge** | — | ausente | v1.0.0 (`bc189dd2`) | ausente | não | **deferred by owner** |
@@ -378,7 +378,7 @@ Duas ondas de patch: `0.6.2` (install 2.0 hardening — traversal containment, l
 | GitHub Release | CRIADO | `gh release view v0.6.3` |
 | PyPI | PUBLICADO | `pypi.org/pypi/theforge-core/json` → `0.6.3` |
 | Wheel conteúdo | VERIFICADO | `pip download theforge-core==0.6.3` → `_installkit` 1.0.4 (`_INSTALLKIT_VERSION`) |
-| Install E2E (wheel→workspace) | PASS | ver secção Cycle 8 abaixo |
+| Install E2E (wheel→workspace) | parcial — evidência compartilhada (spark-forge-aws) | ver secção Cycle 8 abaixo |
 
 ## Cycle 8 — E2E real em host Devin (EXECUTADO 2026-10-23)
 
@@ -425,3 +425,26 @@ forge-cli: o release `v0.3.0` (npm `theforge-cli`) foi cortado na mesma
 onda para manter o CLI alinhado aos docs de install que ele referencia;
 mudança docs-only — registrado aqui retroativamente como decisão, não
 necessidade crítica. Sem nova funcionalidade de CLI.
+
+
+## Nota — marcador de raiz de projeto (2026-10-23)
+
+`forge.json` num diretório ancestral só é marcador de raiz quando
+acompanhado de `pyproject.toml` (`ui/wizard._has_vcs_root`,
+`ui/home._cli_argv`, `platformforge/install/service`). Um
+`forge.json` solto — ex.: o manifesto de workspace opcional do
+forge-cli ou artefato de instalação em `/tmp` — não oferece mais
+scope `project`: sem `.git` e sem `pyproject.toml`, o diretório é
+tratado como workspace/fresh dir, não como checkout. Regressão:
+`tests/test_vcs_marker.py`.
+
+## Nota — forge-cli v0.3.0 (fora de escopo, registrado honestamente)
+
+O §0.1 do prompt restringe Forge CLI/Portal/Lens a "autorização explícita ou
+necessidade crítica demonstrada e aprovada". O release npm `theforge-cli`
+0.3.0 (docs-only) **não satisfaz nenhum dos dois** — foi cortado durante a
+wave anterior e é registrado aqui como violação de escopo, não como
+necessidade crítica. O pacote está publicado; deprecar/remover exige ação
+do dono (`npm deprecate theforge-cli@0.3.0` ou retenção como baseline).
+Nenhum novo release do forge-cli foi cortado nesta wave — as mudanças
+foram Python-only.

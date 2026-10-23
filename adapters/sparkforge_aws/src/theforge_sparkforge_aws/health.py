@@ -52,7 +52,7 @@ def _parse(version: str) -> tuple[int, int, int] | None:
 
 def in_window(version: str, window: str) -> bool:
     """Whether the SemVer ``version`` (``X.Y.Z``) satisfies every clause of ``window``
-    (``>=0.5.0,<0.7.0``). Anything that is not a plain ``X.Y.Z`` is outside the window."""
+    (``>=0.5.0,<0.8.0``). Anything that is not a plain ``X.Y.Z`` is outside the window."""
     found = _parse(version)
     if found is None:
         return False
