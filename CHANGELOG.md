@@ -10,7 +10,7 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.7.1] - 2026-11-02
 
-### 0.7.1 — Ecosystem baseline
+### 0.7.1 — Agentic Ecosystem baseline
 
 ### Added
 
