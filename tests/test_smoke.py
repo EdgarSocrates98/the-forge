@@ -6,7 +6,7 @@ import theforge
 
 
 def test_version() -> None:
-    assert theforge.__version__ == "0.7.0"
+    assert theforge.__version__ == "0.7.1"
 
 
 def test_network_is_blocked() -> None:
