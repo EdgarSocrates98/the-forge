@@ -97,7 +97,13 @@ def detect_hosts(
     env: dict[str, str] | None = None,
 ) -> HostDetectionResult:
     """Evidence-based host detection; never raises on a missing host."""
+    supplied_env = env is not None
     env = dict(os.environ if env is None else env)
+    # Tests, Portal probes and callers that pass an explicit environment must
+    # get deterministic binary evidence too.  Falling back to the process
+    # PATH when ``env={}`` made an unrelated installed binary look like host
+    # evidence in an isolated probe.
+    binary_path = (env.get("PATH") or "") if supplied_env else None
     detections: list[HostDetection] = []
     for host in KNOWN_HOSTS:
         ev: list[HostEvidence] = []
@@ -107,7 +113,7 @@ def detect_hosts(
                 ev.append(HostEvidence(kind="env", detail=f"{marker} set"))
                 running = True
         for binname in _HOST_BINS[host]:
-            if shutil.which(binname):
+            if shutil.which(binname, path=binary_path):
                 ev.append(HostEvidence(kind="binary", detail=f"{binname} on PATH"))
                 break
         if project_root is not None:

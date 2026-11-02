@@ -26,6 +26,10 @@ def test_all_packages_load_and_match_known_providers() -> None:
         "forge-doctor-data",
         "forge-doctor-api",
         "data-sentinel-forge",
+        "code-atlas-forge",
+        "forge-lens",
+        "product-forge",
+        "forge-agent-bridge",
     }
     for pid, package in packages.items():
         assert package.id == pid

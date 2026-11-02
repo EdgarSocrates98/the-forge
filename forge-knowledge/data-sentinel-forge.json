@@ -5,7 +5,7 @@
   "family": "verification",
   "summary": "Runtime/log diagnostics specialist for Spark and data platforms: event-log and failure diagnosis, Glue/EMR run inspection, SQL and plan analysis, doctor-bundle import. Diagnoses from runtime evidence; it is not an engineering producer.",
   "repository": "https://github.com/EdgarSocrates98/data-sentinel-forge.git",
-  "package": "data-sentinel-forge>=0.1.0,<0.2.0",
+  "package": "data-sentinel-forge>=0.4.0,<0.5.0",
   "binary": "data-sentinel",
   "adapter": null,
   "python": ">=3.11",

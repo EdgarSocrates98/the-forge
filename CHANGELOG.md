@@ -8,6 +8,21 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-02
+
+### 0.7.1 — Agentic Ecosystem
+
+### Added
+
+- Full specialist catalog and Ecosystem 2.0 baseline, capability matrix and
+  integration-gap documentation.
+- Honest bootstrap metadata for Data Sentinel, Code Atlas, Forge Lens, Product
+  Forge and Forge Agent Bridge.
+
+### Fixed
+
+- Explicit host probes no longer inherit binary evidence from the ambient PATH.
+
 
 ## [0.7.0] - 2026-10-23
 
