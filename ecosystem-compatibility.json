@@ -1,10 +1,10 @@
 {
   "schema": "forge/EcosystemCompatibility/v1",
-  "release": "2026.10",
-  "created_at": "2026-10-15",
+  "release": "2026.11",
+  "created_at": "2026-11-02",
   "producer": {
     "id": "the-forge",
-    "version": "0.6.3"
+    "version": "0.7.0"
   },
   "components": [
     {
@@ -16,28 +16,28 @@
     },
     {
       "component": "api-forge",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "apiforge-af"
     },
     {
       "component": "platform-forge",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "platformforge"
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
     },
     {
       "component": "spark-forge-azure",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-azure"
@@ -69,6 +69,41 @@
       "scheme": "semver",
       "source": "package.json",
       "distribution": "forge-portal-app"
+    },
+    {
+      "component": "data-sentinel-forge",
+      "version": "0.4.0",
+      "scheme": "semver",
+      "source": "pyproject.toml",
+      "distribution": "data-sentinel-forge"
+    },
+    {
+      "component": "code-atlas-forge",
+      "version": "1.0.0",
+      "scheme": "semver",
+      "source": "pyproject.toml",
+      "distribution": "code-atlas-forge"
+    },
+    {
+      "component": "forge-lens",
+      "version": "0.1.0",
+      "scheme": "semver",
+      "source": "pyproject.toml",
+      "distribution": "forge-lens"
+    },
+    {
+      "component": "product-forge",
+      "version": "0.1.0",
+      "scheme": "semver",
+      "source": "pyproject.toml",
+      "distribution": "product-forge"
+    },
+    {
+      "component": "forge-agent-bridge",
+      "version": "0.1.0",
+      "scheme": "semver",
+      "source": "pyproject.toml",
+      "distribution": "forge-agent-bridge"
     }
   ],
   "contracts": [
@@ -110,9 +145,10 @@
     }
   ],
   "notes": [
-    "Baseline certificada: combinação de SHAs/versões observada em 2026-10-21 (ciclo de integrações lf-0026..lf-0033). Todos os repositórios possuem tags v* desde a rodada 2.2.1 (2026-10-18).",
+    "Baseline de integração 2.0: combinação de SHAs/versões observada em 2026-11-02; especialistas novos entram na matriz mesmo quando a superfície de adapter ainda está pendente.",
     "portal_api usa o envelope `forge/PortalApi/1` servido por `<cli> portal` (the-forge `_forge_portal.py`); o pacote do app forge-portal declara 1.0.0 — eixo separado do contrato (ver versioning-policy.md).",
     "portal_assets cobre o manifesto `forge/PortalAssets/1` (sha256 por arquivo) vendored em cada Forja via `forge-portal/scripts/vendor.py` — integridade de bundle verificável.",
-    "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) — scheme declarado por componente, SemVer onde apropriado."
+    "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) — scheme declarado por componente, SemVer onde apropriado.",
+    "Knowledge bootstrap é unverified e runtime_discovery; Code Atlas, Lens, Product Forge, Data Sentinel e Agent Bridge ainda não são promovidos a VERIFIED pelo The Forge sem adapters Forge Protocol e evidência de health real."
   ]
 }

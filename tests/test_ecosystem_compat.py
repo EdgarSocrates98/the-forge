@@ -40,7 +40,7 @@ def test_committed_manifest_conforms_to_json_schema(manifest):
     jsonschema.validate(doc, json.loads(SCHEMA_PATH.read_text(encoding="utf-8")))
 
 
-def test_manifest_declares_the_nine_components(manifest):
+def test_manifest_declares_the_full_ecosystem_components(manifest):
     assert {c.component for c in manifest.components} == {
         "the-forge",
         "api-forge",
@@ -51,6 +51,11 @@ def test_manifest_declares_the_nine_components(manifest):
         "forge-doctor-api",
         "forge-cli",
         "forge-portal",
+        "data-sentinel-forge",
+        "code-atlas-forge",
+        "forge-lens",
+        "product-forge",
+        "forge-agent-bridge",
     }
 
 
