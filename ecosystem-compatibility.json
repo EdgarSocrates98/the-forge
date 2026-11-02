@@ -9,7 +9,7 @@
   "components": [
     {
       "component": "the-forge",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "theforge-core"
