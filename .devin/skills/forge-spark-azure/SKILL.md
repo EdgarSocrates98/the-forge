@@ -1,6 +1,6 @@
 ---
 name: forge-spark-azure
-description: When and how to use spark-forge-azure: Azure Spark engineering (Databricks, ADLS, Synapse, Event Hubs, Fabric, ADF, Unity Catalog). Load when the task is Spark-on-Azure; NOT for AWS estates (that is spark-forge-aws).
+description: "When and how to use spark-forge-azure: Azure Spark engineering (Databricks, ADLS, Synapse, Event Hubs, Fabric, ADF, Unity Catalog). Load when the task is Spark-on-Azure; NOT for AWS estates (that is spark-forge-aws)."
 ---
 
 # forge-spark-azure

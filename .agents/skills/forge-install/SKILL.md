@@ -1,6 +1,6 @@
 ---
 name: forge-install
-description: Governed specialist installation: install plans, staged approval, pinned distributions, idempotent INSTALL/UPDATE/REPAIR/RECORD intents, and evidence receipts. Load when a task needs a specialist that is missing, broken, incompatible or stale.
+description: "Governed specialist installation: install plans, staged approval, pinned distributions, idempotent INSTALL/UPDATE/REPAIR/RECORD intents, and evidence receipts. Load when a task needs a specialist that is missing, broken, incompatible or stale."
 ---
 
 # forge-install

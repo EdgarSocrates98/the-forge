@@ -1,6 +1,6 @@
 ---
 name: forge-discovery
-description: Provider discovery and health in The Forge: executables, manifests, surface fingerprints, health states and staleness. Load when a specialist is missing, broken, stale, or its reported state is in doubt.
+description: "Provider discovery and health in The Forge: executables, manifests, surface fingerprints, health states and staleness. Load when a specialist is missing, broken, stale, or its reported state is in doubt."
 ---
 
 # forge-discovery

@@ -1,8 +1,7 @@
 ---
 name: forge-platform
-description: When and how to use platform-forge: platform engineering and repo posture (GHA workflows, k8s, GitOps, IaC, observability, SRE, service catalog, secrets scanning). Load for CI/CD/platform-estate analysis; NOT for app code, Spark or API contracts.
-allowed-tools: Read, Bash, Grep
-argument-hint: <platform-task>
+description: "When and how to use platform-forge: platform engineering and repo posture (GHA workflows, k8s, GitOps, IaC, observability, SRE, service catalog, secrets scanning). Load for CI/CD/platform-estate analysis; NOT for app code, Spark or API contracts."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-platform

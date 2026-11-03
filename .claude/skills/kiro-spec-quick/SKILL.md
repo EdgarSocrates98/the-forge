@@ -2,7 +2,6 @@
 name: kiro-spec-quick
 description: Generate a complete spec quickly — requirements, design and tasks in one pass, interactive or automatic. Use for fast-track features where the staged per-phase workflow would be unnecessary overhead.
 allowed-tools: Read, Skill, Bash, Write, Glob, Agent
-argument-hint: <project-description> [--auto]
 ---
 
 # Quick Spec Generator

@@ -1,8 +1,7 @@
 ---
 name: forge-api
-description: When and how to use api-forge: API design and evolution (REST/OpenAPI, AsyncAPI, GraphQL, gRPC; Java/Go/Python). Load for API contracts, versioning, breaking changes; NOT for deployment estates (platform-forge) or verification (forge-doctor-api).
-allowed-tools: Read, Bash, Grep
-argument-hint: <api-task>
+description: "When and how to use api-forge: API design and evolution (REST/OpenAPI, AsyncAPI, GraphQL, gRPC; Java/Go/Python). Load for API contracts, versioning, breaking changes; NOT for deployment estates (platform-forge) or verification (forge-doctor-api)."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-api

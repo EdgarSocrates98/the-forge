@@ -8,6 +8,13 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-11-02
+
+### 0.7.2 — Agentic Ecosystem
+
+- Integrates the ecosystem baseline with the release metadata and verified
+  installed-package CI gates.
+
 ## [0.7.1] - 2026-11-02
 
 ### 0.7.1 — Agentic Ecosystem baseline

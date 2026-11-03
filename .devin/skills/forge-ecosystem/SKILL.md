@@ -1,6 +1,6 @@
 ---
 name: forge-ecosystem
-description: Map of The Forge specialist ecosystem: the six specialists, their families, and how the control plane routes between them. Load when the task may span multiple specialists or when choosing the right specialist is unclear.
+description: "Map of The Forge specialist ecosystem: the six specialists, their families, and how the control plane routes between them. Load when the task may span multiple specialists or when choosing the right specialist is unclear."
 ---
 
 # forge-ecosystem

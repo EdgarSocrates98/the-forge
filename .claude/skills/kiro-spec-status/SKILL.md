@@ -2,7 +2,6 @@
 name: kiro-spec-status
 description: Show specification status, approval state and task progress for a feature or all specs. Use when asked how a spec is progressing, what is pending or approved, or what to work on next.
 allowed-tools: Read, Glob, Grep
-argument-hint: <feature-name>
 ---
 
 # kiro-spec-status Skill

@@ -1,8 +1,7 @@
 ---
 name: forge-bootstrap
-description: Onboard a new specialist into The Forge: scaffold the provider skeleton, write its forge-knowledge package, wire the adapter, and reach routing — all through the generic path with zero core conditionals.
-allowed-tools: Read, Write, Bash, Grep, Glob
-argument-hint: <new-provider-name>
+description: "Onboard a new specialist into The Forge: scaffold the provider skeleton, write its forge-knowledge package, wire the adapter, and reach routing — all through the generic path with zero core conditionals."
+allowed-tools: "Read, Write, Bash, Grep, Glob"
 ---
 
 # forge-bootstrap
