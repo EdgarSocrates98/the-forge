@@ -111,8 +111,10 @@ def test_rendered_outputs_exist_for_every_host() -> None:
 def test_claude_gets_tools_and_plain_sections(tmp_path: Path) -> None:
     src = render.parse_source(_write(tmp_path, MINIMAL))
     out = render.render_claude(src, tmp_path)
-    assert "allowed-tools: Read, Bash" in out
-    assert "argument-hint: <x>" in out
+    assert 'allowed-tools: "Read, Bash"' in out
+    # Skill Creator's portable frontmatter contract intentionally excludes
+    # Claude-only argument-hint metadata from generated mirrors.
+    assert "argument-hint:" not in out
     assert "## Overview" in out
     assert "<background_information>" not in out
     assert "Devin-only note" not in out

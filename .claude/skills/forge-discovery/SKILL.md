@@ -1,8 +1,7 @@
 ---
 name: forge-discovery
-description: Provider discovery and health in The Forge: executables, manifests, surface fingerprints, health states and staleness. Load when a specialist is missing, broken, stale, or its reported state is in doubt.
-allowed-tools: Read, Bash
-argument-hint: <provider-or-symptom>
+description: "Provider discovery and health in The Forge: executables, manifests, surface fingerprints, health states and staleness. Load when a specialist is missing, broken, stale, or its reported state is in doubt."
+allowed-tools: "Read, Bash"
 ---
 
 # forge-discovery

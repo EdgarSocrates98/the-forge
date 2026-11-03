@@ -1,8 +1,7 @@
 ---
 name: forge-capability-negotiation
-description: Capability requirements vs offers: how the negotiation contract matches a CapabilityRequirement against manifest offers and the capability graph, and what negotiable means. Load when a task fails routing on capability shape rather than provider identity.
-allowed-tools: Read, Bash, Grep
-argument-hint: <capability-question>
+description: "Capability requirements vs offers: how the negotiation contract matches a CapabilityRequirement against manifest offers and the capability graph, and what negotiable means. Load when a task fails routing on capability shape rather than provider identity."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-capability-negotiation

@@ -1,6 +1,6 @@
 ---
 name: forge-factory
-description: Loop Factory spec queue in this repository: factory/specs/{inbox,active,archive} where the folder is the state. Load when picking up a factory spec, dispatching work, verifying criteria, or deciding whether a spec may move state.
+description: "Loop Factory spec queue in this repository: factory/specs/{inbox,active,archive} where the folder is the state. Load when picking up a factory spec, dispatching work, verifying criteria, or deciding whether a spec may move state."
 ---
 
 # forge-factory

@@ -1,8 +1,7 @@
 ---
 name: forge-doctor-data
-description: When and how to use forge-doctor-data: independent verification and diagnosis of data/Spark engineering output. Load when a result from a spark/platform specialist needs independent review; NEVER for producing engineering work.
-allowed-tools: Read, Bash, Grep
-argument-hint: <verify-or-diagnose-task>
+description: "When and how to use forge-doctor-data: independent verification and diagnosis of data/Spark engineering output. Load when a result from a spark/platform specialist needs independent review; NEVER for producing engineering work."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-doctor-data

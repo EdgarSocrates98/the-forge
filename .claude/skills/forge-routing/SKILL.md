@@ -1,8 +1,7 @@
 ---
 name: forge-routing
-description: How deterministic routing works in The Forge: capability match, context/policy gates, ambiguity, and the bounded semantic fallback. Load when interpreting a routing decision, an ambiguous result, or a no_route outcome.
-allowed-tools: Read, Bash, Grep
-argument-hint: <routing-question>
+description: "How deterministic routing works in The Forge: capability match, context/policy gates, ambiguity, and the bounded semantic fallback. Load when interpreting a routing decision, an ambiguous result, or a no_route outcome."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-routing

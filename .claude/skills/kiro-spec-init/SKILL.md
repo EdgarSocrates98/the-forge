@@ -2,7 +2,6 @@
 name: kiro-spec-init
 description: Initialize a new Kiro specification for a feature (spec.json and initial structure under .kiro/specs/). Use when starting spec-driven work on a named feature — after kiro-discovery produced a brief, or directly when the scope is already clear.
 allowed-tools: Bash, Read, Write, Glob, AskUserQuestion
-argument-hint: <project-description>
 ---
 
 # Spec Initialization

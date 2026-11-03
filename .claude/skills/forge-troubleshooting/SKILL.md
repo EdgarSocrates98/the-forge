@@ -1,8 +1,7 @@
 ---
 name: forge-troubleshooting
-description: Root-cause-first debugging of the control plane: discovery failures, CLI/provider errors, adapter bridge issues, surface/manifest drift, install failures and health problems. Load when a specialist is unreachable, a describe fails, or a run refuses.
-allowed-tools: Read, Bash, Grep
-argument-hint: <failure>
+description: "Root-cause-first debugging of the control plane: discovery failures, CLI/provider errors, adapter bridge issues, surface/manifest drift, install failures and health problems. Load when a specialist is unreachable, a describe fails, or a run refuses."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-troubleshooting

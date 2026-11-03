@@ -1,8 +1,7 @@
 ---
 name: forge-verification
-description: Independent verification in The Forge: verifier selection, producer/verifier separation, verification requests and verdicts. Load when a plan needs a verify step or a result needs independent confirmation.
-allowed-tools: Read, Bash, Grep
-argument-hint: <verify-question>
+description: "Independent verification in The Forge: verifier selection, producer/verifier separation, verification requests and verdicts. Load when a plan needs a verify step or a result needs independent confirmation."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-verification

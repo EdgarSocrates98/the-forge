@@ -1,6 +1,6 @@
 ---
 name: forge-api
-description: When and how to use api-forge: API design and evolution (REST/OpenAPI, AsyncAPI, GraphQL, gRPC; Java/Go/Python). Load for API contracts, versioning, breaking changes; NOT for deployment estates (platform-forge) or verification (forge-doctor-api).
+description: "When and how to use api-forge: API design and evolution (REST/OpenAPI, AsyncAPI, GraphQL, gRPC; Java/Go/Python). Load for API contracts, versioning, breaking changes; NOT for deployment estates (platform-forge) or verification (forge-doctor-api)."
 ---
 
 # forge-api

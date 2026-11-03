@@ -1,8 +1,7 @@
 ---
 name: forge-cross-domain-planning
-description: Multi-specialist plan construction: artifact dependencies, produces/consumes relations in the capability graph, DAG ordering, and check_plan validation. Load for tasks spanning two or more specialists (e.g. API design + platform deploy, Spark AWS + doctor review).
-allowed-tools: Read, Bash, Grep
-argument-hint: <multi-domain-task>
+description: "Multi-specialist plan construction: artifact dependencies, produces/consumes relations in the capability graph, DAG ordering, and check_plan validation. Load for tasks spanning two or more specialists (e.g. API design + platform deploy, Spark AWS + doctor review)."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-cross-domain-planning

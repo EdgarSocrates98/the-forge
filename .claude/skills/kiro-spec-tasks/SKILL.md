@@ -2,7 +2,6 @@
 name: kiro-spec-tasks
 description: Generate implementation tasks from requirements and design. Use when creating actionable task lists.
 allowed-tools: Read, Write, Edit, Glob, Grep, Agent
-argument-hint: <feature-name> [-y] [--sequential]
 metadata:
   shared-rules: "tasks-generation.md, tasks-parallel-analysis.md"
 ---

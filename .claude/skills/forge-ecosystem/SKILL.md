@@ -1,8 +1,7 @@
 ---
 name: forge-ecosystem
-description: Map of The Forge specialist ecosystem: the six specialists, their families, and how the control plane routes between them. Load when the task may span multiple specialists or when choosing the right specialist is unclear.
-allowed-tools: Read, Bash, Grep, Glob
-argument-hint: <task-or-question>
+description: "Map of The Forge specialist ecosystem: the six specialists, their families, and how the control plane routes between them. Load when the task may span multiple specialists or when choosing the right specialist is unclear."
+allowed-tools: "Read, Bash, Grep, Glob"
 ---
 
 # forge-ecosystem

@@ -1,8 +1,7 @@
 ---
 name: forge-orchestration
-description: Capability-routed orchestration: `theforge orchestrate plan|run` — discovery, deterministic pre-selection, governed delegation, sealed EvidenceHandoffs and the consolidated OrchestrationReport. Load when a task must fan out to several specialists at once, when interpreting an orchestration report, or when deciding whether orchestrate fits instead of single-target `theforge ask`.
-allowed-tools: Read, Bash, Grep
-argument-hint: <multi-specialist-intent>
+description: "Capability-routed orchestration: `theforge orchestrate plan|run` — discovery, deterministic pre-selection, governed delegation, sealed EvidenceHandoffs and the consolidated OrchestrationReport. Load when a task must fan out to several specialists at once, when interpreting an orchestration report, or when deciding whether orchestrate fits instead of single-target `theforge ask`."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-orchestration

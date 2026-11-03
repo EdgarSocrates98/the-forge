@@ -10,7 +10,7 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.7.2] - 2026-11-02
 
-### 0.7.2 — Product ecosystem final integration
+### 0.7.2 — Agentic Ecosystem
 
 - Integrates the ecosystem baseline with the release metadata and verified
   installed-package CI gates.

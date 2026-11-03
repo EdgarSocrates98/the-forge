@@ -1,6 +1,6 @@
 ---
 name: forge-doctor-data
-description: When and how to use forge-doctor-data: independent verification and diagnosis of data/Spark engineering output. Load when a result from a spark/platform specialist needs independent review; NEVER for producing engineering work.
+description: "When and how to use forge-doctor-data: independent verification and diagnosis of data/Spark engineering output. Load when a result from a spark/platform specialist needs independent review; NEVER for producing engineering work."
 ---
 
 # forge-doctor-data

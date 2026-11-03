@@ -1,8 +1,7 @@
 ---
 name: forge-spark-aws
-description: When and how to use spark-forge-aws: AWS Spark engineering (Glue, EMR, Lake Formation, S3, Athena, Iceberg, AWS lakehouse). Load when the task is Spark-on-AWS; NOT for Azure estates (that is spark-forge-azure).
-allowed-tools: Read, Bash, Grep
-argument-hint: <aws-spark-task>
+description: "When and how to use spark-forge-aws: AWS Spark engineering (Glue, EMR, Lake Formation, S3, Athena, Iceberg, AWS lakehouse). Load when the task is Spark-on-AWS; NOT for Azure estates (that is spark-forge-azure)."
+allowed-tools: "Read, Bash, Grep"
 ---
 
 # forge-spark-aws

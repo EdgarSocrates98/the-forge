@@ -2,7 +2,6 @@
 name: kiro-debug
 description: Investigate implementation failures using root-cause-first debugging. Use when an implementer is blocked, verification fails, or repeated remediation does not converge.
 allowed-tools: Read, Bash, Grep, Glob, WebSearch, WebFetch
-argument-hint: <failure-summary>
 ---
 
 # kiro-debug

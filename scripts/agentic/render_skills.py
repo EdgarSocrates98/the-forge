@@ -42,6 +42,7 @@ the drift gate the manual mirrors never had.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -80,6 +81,17 @@ def _require(table: dict[str, object], key: str, path: Path) -> str:
     if not isinstance(value, str) or not value.strip():
         raise RenderError(f"{path.name}: missing or empty `{key}`")
     return value.strip()
+
+
+def _yaml_scalar(value: str) -> str:
+    """Render a string as a YAML scalar without ambiguous punctuation.
+
+    Skill descriptions commonly contain colons, braces, backticks and shell
+    syntax.  Leaving those values unquoted produces host files that are valid
+    Markdown but invalid YAML frontmatter.  JSON strings are valid YAML 1.2
+    double-quoted scalars and keep the renderer dependency-free.
+    """
+    return json.dumps(value, ensure_ascii=False)
 
 
 def parse_source(path: Path) -> SkillSource:
@@ -188,11 +200,9 @@ def _freshness_marker(src: SkillSource) -> str:
 
 
 def render_claude(src: SkillSource, out_dir: Path) -> str:
-    lines = ["---", f"name: {src.name}", f"description: {src.description}"]
+    lines = ["---", f"name: {src.name}", f"description: {_yaml_scalar(src.description)}"]
     if src.allowed_tools:
-        lines.append(f"allowed-tools: {src.allowed_tools}")
-    if src.argument_hint:
-        lines.append(f"argument-hint: {src.argument_hint}")
+        lines.append(f"allowed-tools: {_yaml_scalar(src.allowed_tools)}")
     lines.append("---")
     body = _rewrite_links(src.body, src_dir=SOURCES, out_dir=out_dir)
     return "\n".join(lines) + "\n" + _resolve_host_blocks(body, "claude") + _freshness_marker(src)
@@ -203,7 +213,7 @@ def render_envelope(src: SkillSource, host: str, out_dir: Path) -> str:
     body = _resolve_host_blocks(body, host)
     overview, rest = _split_overview(body)
     return (
-        f"---\nname: {src.name}\ndescription: {src.description}\n---\n\n"
+        f"---\nname: {src.name}\ndescription: {_yaml_scalar(src.description)}\n---\n\n"
         f"# {src.name}\n\n"
         f"<background_information>\n{overview}\n</background_information>\n\n"
         f"<instructions>\n{rest}\n</instructions>\n" + _freshness_marker(src)

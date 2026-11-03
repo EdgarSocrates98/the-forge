@@ -1,6 +1,6 @@
 ---
 name: forge-doctor-api
-description: When and how to use forge-doctor-api: independent verification and diagnosis of API engineering output (ApiHandoffBundle intake, api.verify). Load when api-forge output needs independent review; NEVER for producing API work.
+description: "When and how to use forge-doctor-api: independent verification and diagnosis of API engineering output (ApiHandoffBundle intake, api.verify). Load when api-forge output needs independent review; NEVER for producing API work."
 ---
 
 # forge-doctor-api
