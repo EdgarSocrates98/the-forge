@@ -1,0 +1,58 @@
+{
+ "api-forge": {
+  "sha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+  "dirty": false
+ },
+ "code-atlas-forge": {
+  "sha": "c7f1f2e6d5279dc6921cca2121c327c8100bd3ce",
+  "dirty": false
+ },
+ "data-sentinel-forge": {
+  "sha": "c36942e0184c73c7350eacd2852f48c79191cc9b",
+  "dirty": false
+ },
+ "forge-agent-bridge": {
+  "sha": "a8c36601df1fd302b3724e3b62247489579a1b44",
+  "dirty": false
+ },
+ "forge-cli": {
+  "sha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231",
+  "dirty": false
+ },
+ "forge-doctor-api": {
+  "sha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+  "dirty": false
+ },
+ "forge-doctor-data": {
+  "sha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+  "dirty": false
+ },
+ "forge-lens": {
+  "sha": "27a146680e9b59e7cbf969358eac51a0ffa13c47",
+  "dirty": false
+ },
+ "forge-portal": {
+  "sha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
+  "dirty": false
+ },
+ "platform-forge": {
+  "sha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
+  "dirty": false
+ },
+ "product-forge": {
+  "sha": "9650e28102ad660d7c8da191342159504298eb55",
+  "dirty": false
+ },
+ "spark-forge-aws": {
+  "sha": "f0e5b280664039b421c2bf976336040ce803c7f8",
+  "dirty": false
+ },
+ "spark-forge-azure": {
+  "sha": "801f3fb49214acd5197e638879d2696245db90f6",
+  "dirty": false
+ },
+ "the-forge": {
+  "sha": "3fa8c1f7bfb3aa3d82d74cb1943ae1bebf87c380",
+  "dirty": false
+ }
+}

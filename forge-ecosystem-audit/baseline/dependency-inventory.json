@@ -1,0 +1,58 @@
+{
+ "api-forge": {
+  "package_version": "0.3.1",
+  "forge_json_version": null
+ },
+ "code-atlas-forge": {
+  "package_version": "1.1.0",
+  "forge_json_version": null
+ },
+ "data-sentinel-forge": {
+  "package_version": "0.5.0",
+  "forge_json_version": "0.5.0"
+ },
+ "forge-agent-bridge": {
+  "package_version": "0.2.0",
+  "forge_json_version": "0.2.0"
+ },
+ "forge-cli": {
+  "package_version": null,
+  "forge_json_version": null
+ },
+ "forge-doctor-api": {
+  "package_version": "0.3.0",
+  "forge_json_version": null
+ },
+ "forge-doctor-data": {
+  "package_version": "1.1.0",
+  "forge_json_version": null
+ },
+ "forge-lens": {
+  "package_version": "0.2.0",
+  "forge_json_version": null
+ },
+ "forge-portal": {
+  "package_version": null,
+  "forge_json_version": null
+ },
+ "platform-forge": {
+  "package_version": null,
+  "forge_json_version": null
+ },
+ "product-forge": {
+  "package_version": "0.1.0",
+  "forge_json_version": "0.2.0"
+ },
+ "spark-forge-aws": {
+  "package_version": null,
+  "forge_json_version": null
+ },
+ "spark-forge-azure": {
+  "package_version": null,
+  "forge_json_version": null
+ },
+ "the-forge": {
+  "package_version": "0.7.2",
+  "forge_json_version": null
+ }
+}

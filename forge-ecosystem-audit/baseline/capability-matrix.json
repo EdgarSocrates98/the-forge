@@ -1,0 +1,68 @@
+{
+ "api-forge": {
+  "forge_id": "api-forge",
+  "version": null,
+  "package": "apiforge",
+  "cli": "apiforge"
+ },
+ "data-sentinel-forge": {
+  "forge_id": "data-sentinel-forge",
+  "version": "0.5.0",
+  "package": "data_sentinel",
+  "cli": "data-sentinel"
+ },
+ "forge-agent-bridge": {
+  "forge_id": "forge-agent-bridge",
+  "version": "0.2.0",
+  "package": "forge_agent_bridge",
+  "cli": "forge-bridge"
+ },
+ "forge-doctor-api": {
+  "forge_id": "forge-doctor-api",
+  "version": null,
+  "package": "forge_doctor_api",
+  "cli": "forge-doctor-api"
+ },
+ "forge-doctor-data": {
+  "forge_id": "forge-doctor-data",
+  "version": null,
+  "package": "forge_doctor_data",
+  "cli": "forge-doctor-data"
+ },
+ "forge-lens": {
+  "forge_id": "forge-lens",
+  "version": null,
+  "package": "forge_lens",
+  "cli": "forge-lens"
+ },
+ "platform-forge": {
+  "forge_id": "platform-forge",
+  "version": null,
+  "package": "platformforge",
+  "cli": "platformforge"
+ },
+ "product-forge": {
+  "forge_id": "product-forge",
+  "version": "0.2.0",
+  "package": "product_forge",
+  "cli": "productforge"
+ },
+ "spark-forge-aws": {
+  "forge_id": "spark-forge-aws",
+  "version": null,
+  "package": "sparkforge_aws",
+  "cli": "sparkforge-aws"
+ },
+ "spark-forge-azure": {
+  "forge_id": "spark-forge-azure",
+  "version": null,
+  "package": "sparkforge_azure",
+  "cli": "sparkforge-azure"
+ },
+ "the-forge": {
+  "forge_id": "the-forge",
+  "version": null,
+  "package": "theforge",
+  "cli": "theforge"
+ }
+}
