@@ -8,6 +8,12 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-11-04
+
+### Fixed
+
+- Synced the hardened Forge Portal runtime and refreshed bundled portal assets.
+
 ## [0.7.2] - 2026-11-02
 
 ### 0.7.2 — Agentic Ecosystem
