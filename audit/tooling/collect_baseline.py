@@ -1,4 +1,4 @@
-"""Collect a reproducible, read-only baseline for the nine Forge repositories."""
+"""Collect a reproducible, read-only baseline for the Forge ecosystem."""
 
 from __future__ import annotations
 
@@ -12,15 +12,20 @@ from pathlib import Path
 from typing import Any
 
 REPOSITORIES = {
-    "the-forge": "EdgarSocrates98/the-forge",
-    "spark-forge-aws": "EdgarSocrates98/spark-forge-aws",
-    "spark-forge-azure": "EdgarSocrates98/spark-forge-azure",
     "api-forge": "EdgarSocrates98/api-forge",
-    "platform-forge": "EdgarSocrates98/platform-forge",
+    "code-atlas-forge": "EdgarSocrates98/code-atlas-forge",
+    "data-sentinel-forge": "EdgarSocrates98/data-sentinel-forge",
+    "forge-agent-bridge": "EdgarSocrates98/forge-agent-bridge",
+    "forge-cli": "EdgarSocrates98/forge-cli",
     "forge-doctor-api": "EdgarSocrates98/forge-doctor-api",
     "forge-doctor-data": "EdgarSocrates98/forge-doctor-data",
-    "forge-cli": "EdgarSocrates98/forge-cli",
+    "forge-lens": "EdgarSocrates98/forge-lens",
     "forge-portal": "EdgarSocrates98/forge-portal",
+    "platform-forge": "EdgarSocrates98/platform-forge",
+    "product-forge": "EdgarSocrates98/product-forge",
+    "spark-forge-aws": "EdgarSocrates98/spark-forge-aws",
+    "spark-forge-azure": "EdgarSocrates98/spark-forge-azure",
+    "the-forge": "EdgarSocrates98/the-forge",
 }
 
 SAFE_REF = re.compile(r"^[A-Za-z0-9_./-]+$")
@@ -43,6 +48,71 @@ def run(repo: Path, *args: str) -> str:
         errors="replace",
     )
     return result.stdout.strip()
+
+
+def gh_json(repo: str, *args: str) -> Any:
+    """Read optional GitHub metadata without turning a missing CLI into PASS."""
+    result = subprocess.run(
+        ("gh", *args, "--repo", repo),
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if result.returncode != 0:
+        return {"status": "NOT_RUN", "reason": result.stderr.strip() or "gh failed"}
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {"status": "NOT_RUN", "reason": "gh returned invalid JSON"}
+
+
+def github_summary(repo: str) -> dict[str, Any]:
+    runs = gh_json(
+        repo,
+        "run",
+        "list",
+        "--branch",
+        "main",
+        "--limit",
+        "1",
+        "--json",
+        "databaseId,status,conclusion,headSha",
+    )
+    prs = gh_json(repo, "pr", "list", "--state", "open", "--json", "number")
+    release = gh_json(repo, "release", "view", "--json", "tagName,publishedAt,url")
+    latest_run = runs[0] if isinstance(runs, list) and runs else runs
+    return {
+        "latest_ci": latest_run,
+        "open_prs": len(prs) if isinstance(prs, list) else prs,
+        "latest_release": release,
+        "provenance": {
+            "source": "GitHub CLI",
+            "commands": [
+                "gh run list --branch main --limit 1",
+                "gh pr list --state open",
+                "gh release view",
+            ],
+        },
+    }
+
+
+def contract_versions(contracts: dict[str, Any]) -> list[str]:
+    found: set[str] = set()
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in {"contract_version", "schema_version"} and isinstance(item, str):
+                    found.add(item)
+                visit(item)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item)
+
+    visit(contracts)
+    return sorted(found)
 
 
 def provenance(ref: str, source: str, command: str) -> dict[str, str]:
@@ -167,20 +237,28 @@ def collect(repo_name: str, repo: Path, ref: str) -> dict[str, Any]:
         if Path(path).name.lower() in {"install.sh", "install.ps1", "setup.sh", "setup.ps1"}
     ]
     metadata = pyproject_summary(pyproject) if pyproject else package_summary(package or "")
+    forge_contracts = {
+        "forge_json": json_summary(forge),
+        "forge_agentic_json": json_summary(agentic),
+        "mcp_json": json_summary(mcp),
+    }
+    github = github_summary(REPOSITORIES[repo_name])
     return {
         "repository": REPOSITORIES[repo_name],
         "local_path": str(repo),
         "ref": ref,
         "sha": run(repo, "git", "rev-parse", ref),
+        "default_branch": run(repo, "git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+        or "main",
         "remote": run(repo, "git", "remote", "get-url", "origin"),
         "metadata": metadata,
         "installation": install_files,
         "entrypoints": metadata.get("scripts", {}),
-        "contracts": {
-            "forge_json": json_summary(forge),
-            "forge_agentic_json": json_summary(agentic),
-            "mcp_json": json_summary(mcp),
-        },
+        "contracts": forge_contracts,
+        "contract_versions": contract_versions(forge_contracts),
+        "github": github,
+        "security_status": "NOT_RUN; see cycle-10.1/security.md",
+        "test_status": github["latest_ci"],
         "tests": {"count": len(tests), "paths": tests[:300]},
         "workflows": workflows,
         "tags": run(repo, "git", "tag", "--list").splitlines(),
@@ -218,7 +296,17 @@ def main() -> int:
             name: {
                 key: value
                 for key, value in record.items()
-                if key in {"repository", "local_path", "ref", "sha", "remote", "provenance"}
+                if key
+                in {
+                    "repository",
+                    "local_path",
+                    "ref",
+                    "sha",
+                    "default_branch",
+                    "remote",
+                    "provenance",
+                    "github",
+                }
             }
             for name, record in collected.items()
         },
@@ -227,7 +315,11 @@ def main() -> int:
                 "repository": record["repository"],
                 "sha": record["sha"],
                 "metadata": record["metadata"],
+                "contract_versions": record["contract_versions"],
                 "tags": record["tags"],
+                "github": record["github"],
+                "security_status": record["security_status"],
+                "test_status": record["test_status"],
                 "provenance": record["provenance"]["metadata"],
             }
             for name, record in collected.items()

@@ -1,0 +1,125 @@
+{
+  "cli": "productforge",
+  "created_at": "2026-11-04T06:40:36Z",
+  "environment": {
+    "execution_environment": "windows",
+    "prefix": "PRODUCT_FORGE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "shell": "windows",
+    "variables": {
+      "PRODUCT_FORGE_CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7\\.venv\\Scripts\\productforge.exe",
+      "PRODUCT_FORGE_HOME": "E:\\projetos\\FORJAS\\product-forge",
+      "PRODUCT_FORGE_INSTALL_ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7",
+      "PRODUCT_FORGE_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\productforge",
+      "PRODUCT_FORGE_PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7\\.venv\\Scripts\\python.exe",
+      "PRODUCT_FORGE_VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7\\.venv"
+    },
+    "windows_aliases": {
+      "PRODUCT-FORGE-CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7\\.venv\\Scripts\\productforge.exe",
+      "PRODUCT-FORGE-HOME": "E:\\projetos\\FORJAS\\product-forge",
+      "PRODUCT-FORGE-INSTALL-ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7",
+      "PRODUCT-FORGE-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\productforge",
+      "PRODUCT-FORGE-PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7\\.venv\\Scripts\\python.exe",
+      "PRODUCT-FORGE-VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7\\.venv"
+    }
+  },
+  "forge_id": "product-forge",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\copilot-shim\\copilot.EXE",
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_method": "wheel",
+  "install_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7",
+  "integrity": "unverified",
+  "is_git": true,
+  "managed_files": [
+    "C:\\Users\\edgar\\.forge\\installations\\.product-forge-bootstrap.json",
+    "C:\\Users\\edgar\\.forge\\installations\\product-forge.json",
+    "C:\\Users\\edgar\\.local\\bin\\productforge",
+    "C:\\Users\\edgar\\.local\\bin\\productforge.cmd",
+    "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7"
+  ],
+  "manifest_valid": true,
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "python": {
+    "executable": null,
+    "selection_reason": "--python flag",
+    "source": "flag",
+    "version": null
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "source_trust": "B",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-04-v2\\targets\\product-forge\\powershell-7"
+}
+Install plan complete. No files, variables or registry entries were written.

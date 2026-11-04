@@ -1,73 +1,14 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-16T00:55:50.338928+00:00",
+  "generated_at": "2026-11-04T06:43:09.844035+00:00",
   "ref": "origin/main",
   "data": {
-    "the-forge": {
-      "repository": "EdgarSocrates98/the-forge",
-      "sha": "530ea52121a485b41067e8650d72a8d27c061de6",
-      "metadata": {
-        "name": "theforge",
-        "version": "0.5.0",
-        "requires_python": ">=3.11",
-        "scripts": {
-          "theforge": "theforge.cli.main:main",
-          "forge": "theforge.cli.main:main"
-        }
-      },
-      "tags": [],
-      "provenance": {
-        "ref": "origin/main",
-        "source": "pyproject.toml or package.json",
-        "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.058621+00:00"
-      }
-    },
-    "spark-forge-aws": {
-      "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "f8ef41b6112dcac78edc32d1c0e1ca1d3b3b79f7",
-      "metadata": {
-        "name": "sparkforge-aws",
-        "version": "0.5.0",
-        "requires_python": ">=3.10",
-        "scripts": {
-          "sparkforge-aws": "sparkforge_aws.adapters.cli:main",
-          "sparkforge-aws-tools": "sparkforge_aws.tools.cli:main"
-        }
-      },
-      "tags": [],
-      "provenance": {
-        "ref": "origin/main",
-        "source": "pyproject.toml or package.json",
-        "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.115127+00:00"
-      }
-    },
-    "spark-forge-azure": {
-      "repository": "EdgarSocrates98/spark-forge-azure",
-      "sha": "f1e70ceedd4609e834e01e19313bbac3680e2fdb",
-      "metadata": {
-        "name": "sparkforge-azure",
-        "version": "0.1.0",
-        "requires_python": ">=3.10",
-        "scripts": {
-          "sparkforge-azure": "sparkforge_azure.cli.main:main"
-        }
-      },
-      "tags": [],
-      "provenance": {
-        "ref": "origin/main",
-        "source": "pyproject.toml or package.json",
-        "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.149997+00:00"
-      }
-    },
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "6b7ede67ecb8871fd585730850f00ef7ff1bb1c4",
+      "sha": "2d09bd58dfc520314aaab939562cfb06914546ff",
       "metadata": {
-        "name": "apiforge",
-        "version": "0.1.0",
+        "name": "apiforge-af",
+        "version": "0.3.1",
         "requires_python": ">=3.12",
         "scripts": {
           "apiforge": "apiforge.cli:app",
@@ -75,78 +16,223 @@
           "apiforge-tui": "apiforge.cli_tui:tui_app"
         }
       },
-      "tags": [],
-      "provenance": {
-        "ref": "origin/main",
-        "source": "pyproject.toml or package.json",
-        "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.191655+00:00"
-      }
-    },
-    "platform-forge": {
-      "repository": "EdgarSocrates98/platform-forge",
-      "sha": "aed8d5a1798b7fde9e2b860943c4cdcd737b3c49",
-      "metadata": {
-        "name": "platformforge",
-        "version": "0.1.0",
-        "requires_python": ">=3.10",
-        "scripts": {
-          "platformforge": "platformforge.cli.main:main",
-          "platformforge-mcp": "platformforge.mcp.server:main"
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.1.1",
+        "v0.1.2",
+        "v0.1.3",
+        "v0.1.4",
+        "v0.1.5",
+        "v0.1.6",
+        "v0.2.0",
+        "v0.2.1",
+        "v0.2.2",
+        "v0.2.3",
+        "v0.3.0",
+        "v0.3.1"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41623045424,
+          "headSha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-10-23T13:28:16Z",
+          "tagName": "v0.3.1",
+          "url": "https://github.com/EdgarSocrates98/api-forge/releases/tag/v0.3.1"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
         }
       },
-      "tags": [],
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41623045424,
+        "headSha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+        "status": "completed"
+      },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.223383+00:00"
+        "collected_at": "2026-11-04T06:42:41.969414+00:00"
       }
     },
-    "forge-doctor-api": {
-      "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "fb31db3f91deedc4a35a82560ac3437d7350dcf8",
+    "code-atlas-forge": {
+      "repository": "EdgarSocrates98/code-atlas-forge",
+      "sha": "7898e855d75b04bc3d87cee1fa84fc692ab5cb2b",
       "metadata": {
-        "name": "forge-doctor-api",
+        "name": "code-atlas-forge",
+        "version": null,
+        "requires_python": ">=3.12",
+        "scripts": {
+          "code-atlas": "code_atlas.cli:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v1.1.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41766925506,
+          "headSha": "7898e855d75b04bc3d87cee1fa84fc692ab5cb2b",
+          "status": "completed"
+        },
+        "open_prs": 5,
+        "latest_release": {
+          "status": "NOT_RUN",
+          "reason": "release not found"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41766925506,
+        "headSha": "7898e855d75b04bc3d87cee1fa84fc692ab5cb2b",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:42:44.141482+00:00"
+      }
+    },
+    "data-sentinel-forge": {
+      "repository": "EdgarSocrates98/data-sentinel-forge",
+      "sha": "c36942e0184c73c7350eacd2852f48c79191cc9b",
+      "metadata": {
+        "name": "data-sentinel-forge",
+        "version": null,
+        "requires_python": ">=3.11",
+        "scripts": {
+          "data-sentinel": "data_sentinel.cli:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.2.0",
+        "v0.2.1",
+        "v0.2.2",
+        "v0.3.0",
+        "v0.4.0",
+        "v0.5.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41753812981,
+          "headSha": "c36942e0184c73c7350eacd2852f48c79191cc9b",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-10-23T11:36:09Z",
+          "tagName": "v0.3.0",
+          "url": "https://github.com/EdgarSocrates98/data-sentinel-forge/releases/tag/v0.3.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41753812981,
+        "headSha": "c36942e0184c73c7350eacd2852f48c79191cc9b",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:42:46.236300+00:00"
+      }
+    },
+    "forge-agent-bridge": {
+      "repository": "EdgarSocrates98/forge-agent-bridge",
+      "sha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+      "metadata": {
+        "name": "forge-agent-bridge",
         "version": "0.2.0",
         "requires_python": ">=3.11",
         "scripts": {
-          "forge-doctor-api": "forge_doctor_api.cli:main"
+          "forge-bridge": "forge_agent_bridge.cli:main"
         }
       },
-      "tags": [],
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.2.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41768133805,
+          "headSha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-11-02T19:38:35Z",
+          "tagName": "v0.1.0",
+          "url": "https://github.com/EdgarSocrates98/forge-agent-bridge/releases/tag/v0.1.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41768133805,
+        "headSha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+        "status": "completed"
+      },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.253362+00:00"
-      }
-    },
-    "forge-doctor-data": {
-      "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "2e411717a6bfeecc6543bea319ed8993c2558a68",
-      "metadata": {
-        "name": "forge-doctor-data",
-        "version": "1.0.0rc1",
-        "requires_python": ">=3.11",
-        "scripts": {
-          "forge-doctor-data": "forge_doctor_data.cli:app"
-        }
-      },
-      "tags": [],
-      "provenance": {
-        "ref": "origin/main",
-        "source": "pyproject.toml or package.json",
-        "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.286493+00:00"
+        "collected_at": "2026-11-04T06:42:48.333803+00:00"
       }
     },
     "forge-cli": {
       "repository": "EdgarSocrates98/forge-cli",
-      "sha": "6109f6ae445a06423744fbbb36fbbb52a3332f80",
+      "sha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231",
       "metadata": {
-        "name": "forge-cli",
-        "version": "0.1.0",
+        "name": "theforge-cli",
+        "version": "0.4.0",
         "engines": {
           "node": ">=20"
         },
@@ -165,20 +251,232 @@
           "pack": "npm pack --dry-run"
         }
       },
-      "tags": [],
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.2.1",
+        "v0.2.2",
+        "v0.2.3",
+        "v0.2.4",
+        "v0.2.5",
+        "v0.2.6",
+        "v0.3.0",
+        "v0.4.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "failure",
+          "databaseId": 41765856797,
+          "headSha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-10-22T23:32:39Z",
+          "tagName": "v0.3.0",
+          "url": "https://github.com/EdgarSocrates98/forge-cli/releases/tag/v0.3.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "failure",
+        "databaseId": 41765856797,
+        "headSha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231",
+        "status": "completed"
+      },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.310739+00:00"
+        "collected_at": "2026-11-04T06:42:50.591067+00:00"
+      }
+    },
+    "forge-doctor-api": {
+      "repository": "EdgarSocrates98/forge-doctor-api",
+      "sha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+      "metadata": {
+        "name": "forge-doctor-api",
+        "version": "0.3.0",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "forge-doctor-api": "forge_doctor_api.cli:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.2.0",
+        "v0.2.1",
+        "v0.2.2",
+        "v0.2.3",
+        "v0.2.4",
+        "v0.2.5",
+        "v0.2.6",
+        "v0.2.7",
+        "v0.2.8",
+        "v0.2.9",
+        "v0.3.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41323796783,
+          "headSha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+          "status": "completed"
+        },
+        "open_prs": 7,
+        "latest_release": {
+          "publishedAt": "2026-10-23T11:52:40Z",
+          "tagName": "v0.3.0",
+          "url": "https://github.com/EdgarSocrates98/forge-doctor-api/releases/tag/v0.3.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41323796783,
+        "headSha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:42:52.718781+00:00"
+      }
+    },
+    "forge-doctor-data": {
+      "repository": "EdgarSocrates98/forge-doctor-data",
+      "sha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+      "metadata": {
+        "name": "forge-doctor-data",
+        "version": "1.1.0",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "forge-doctor-data": "forge_doctor_data.cli:app"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v1.0.0",
+        "v1.0.1",
+        "v1.0.2",
+        "v1.0.3",
+        "v1.0.4",
+        "v1.0.5",
+        "v1.0.6",
+        "v1.0.7",
+        "v1.0.8",
+        "v1.0.9",
+        "v1.1.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41445469904,
+          "headSha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+          "status": "completed"
+        },
+        "open_prs": 7,
+        "latest_release": {
+          "publishedAt": "2026-10-23T11:36:13Z",
+          "tagName": "v1.1.0",
+          "url": "https://github.com/EdgarSocrates98/forge-doctor-data/releases/tag/v1.1.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41445469904,
+        "headSha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:42:54.854560+00:00"
+      }
+    },
+    "forge-lens": {
+      "repository": "EdgarSocrates98/forge-lens",
+      "sha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+      "metadata": {
+        "name": "forge-lens-fl",
+        "version": "0.2.0",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "forge-lens": "forge_lens.cli.main:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.2.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41771727663,
+          "headSha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+          "status": "completed"
+        },
+        "open_prs": 13,
+        "latest_release": {
+          "status": "NOT_RUN",
+          "reason": "release not found"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41771727663,
+        "headSha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:42:57.114917+00:00"
       }
     },
     "forge-portal": {
       "repository": "EdgarSocrates98/forge-portal",
-      "sha": "ab5a3ef0ffd4d08f2fa6c381bf3910a0ca7a6c1f",
+      "sha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
       "metadata": {
         "name": "forge-portal-app",
-        "version": "0.1.0",
+        "version": "1.1.0",
         "engines": {},
         "package_manager": "npm@12.0.2",
         "scripts": {
@@ -189,12 +487,354 @@
           "test": "ng test"
         }
       },
-      "tags": [],
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v1.0.0",
+        "v1.1.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "failure",
+          "databaseId": 41745025927,
+          "headSha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-11-02T19:38:33Z",
+          "tagName": "v1.0.0",
+          "url": "https://github.com/EdgarSocrates98/forge-portal/releases/tag/v1.0.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "failure",
+        "databaseId": 41745025927,
+        "headSha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
+        "status": "completed"
+      },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-10-16T00:55:50.338892+00:00"
+        "collected_at": "2026-11-04T06:42:59.145951+00:00"
+      }
+    },
+    "platform-forge": {
+      "repository": "EdgarSocrates98/platform-forge",
+      "sha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
+      "metadata": {
+        "name": "platformforge",
+        "version": "0.3.1",
+        "requires_python": ">=3.10",
+        "scripts": {
+          "platformforge": "platformforge.cli.main:main",
+          "platformforge-mcp": "platformforge.mcp.server:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.1.1",
+        "v0.1.2",
+        "v0.1.3",
+        "v0.1.4",
+        "v0.1.5",
+        "v0.1.6",
+        "v0.2.0",
+        "v0.2.1",
+        "v0.2.2",
+        "v0.2.3",
+        "v0.3.0",
+        "v0.3.1"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "failure",
+          "databaseId": 41502233403,
+          "headSha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-10-23T13:19:56Z",
+          "tagName": "v0.3.1",
+          "url": "https://github.com/EdgarSocrates98/platform-forge/releases/tag/v0.3.1"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "failure",
+        "databaseId": 41502233403,
+        "headSha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:43:01.315424+00:00"
+      }
+    },
+    "product-forge": {
+      "repository": "EdgarSocrates98/product-forge",
+      "sha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+      "metadata": {
+        "name": "product-forge",
+        "version": null,
+        "requires_python": ">=3.11",
+        "scripts": {
+          "productforge": "product_forge.cli:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.2.0"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41771846709,
+          "headSha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-11-02T19:38:36Z",
+          "tagName": "v0.1.0",
+          "url": "https://github.com/EdgarSocrates98/product-forge/releases/tag/v0.1.0"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41771846709,
+        "headSha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:43:03.498202+00:00"
+      }
+    },
+    "spark-forge-aws": {
+      "repository": "EdgarSocrates98/spark-forge-aws",
+      "sha": "f0e5b280664039b421c2bf976336040ce803c7f8",
+      "metadata": {
+        "name": "sparkforge-aws",
+        "version": "0.7.1",
+        "requires_python": ">=3.10",
+        "scripts": {
+          "sparkforge-aws": "sparkforge_aws.adapters.cli:main",
+          "sparkforge-aws-tools": "sparkforge_aws.tools.cli:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.5.0",
+        "v0.5.1",
+        "v0.5.2",
+        "v0.5.3",
+        "v0.5.4",
+        "v0.5.5",
+        "v0.5.6",
+        "v0.6.0",
+        "v0.6.1",
+        "v0.6.2",
+        "v0.6.3",
+        "v0.7.0",
+        "v0.7.1"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "failure",
+          "databaseId": 41623585874,
+          "headSha": "f0e5b280664039b421c2bf976336040ce803c7f8",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-10-23T13:20:06Z",
+          "tagName": "v0.7.1",
+          "url": "https://github.com/EdgarSocrates98/spark-forge-aws/releases/tag/v0.7.1"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "failure",
+        "databaseId": 41623585874,
+        "headSha": "f0e5b280664039b421c2bf976336040ce803c7f8",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:43:05.649977+00:00"
+      }
+    },
+    "spark-forge-azure": {
+      "repository": "EdgarSocrates98/spark-forge-azure",
+      "sha": "801f3fb49214acd5197e638879d2696245db90f6",
+      "metadata": {
+        "name": "sparkforge-azure",
+        "version": "0.3.1",
+        "requires_python": ">=3.10",
+        "scripts": {
+          "sparkforge-azure": "sparkforge_azure.cli.main:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.1.0",
+        "v0.1.1",
+        "v0.1.2",
+        "v0.1.3",
+        "v0.1.4",
+        "v0.1.5",
+        "v0.1.6",
+        "v0.2.0",
+        "v0.2.1",
+        "v0.2.2",
+        "v0.2.3",
+        "v0.3.0",
+        "v0.3.1"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41761446618,
+          "headSha": "801f3fb49214acd5197e638879d2696245db90f6",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-10-23T13:27:39Z",
+          "tagName": "v0.3.1",
+          "url": "https://github.com/EdgarSocrates98/spark-forge-azure/releases/tag/v0.3.1"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41761446618,
+        "headSha": "801f3fb49214acd5197e638879d2696245db90f6",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:43:07.754245+00:00"
+      }
+    },
+    "the-forge": {
+      "repository": "EdgarSocrates98/the-forge",
+      "sha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
+      "metadata": {
+        "name": "theforge-core",
+        "version": "0.7.2",
+        "requires_python": ">=3.11",
+        "scripts": {
+          "theforge": "theforge.cli.main:main",
+          "forge": "theforge.cli.main:main"
+        }
+      },
+      "contract_versions": [],
+      "tags": [
+        "v0.5.0",
+        "v0.5.1",
+        "v0.5.2",
+        "v0.5.3",
+        "v0.5.4",
+        "v0.5.5",
+        "v0.5.6",
+        "v0.6.0",
+        "v0.6.1",
+        "v0.6.2",
+        "v0.6.3",
+        "v0.7.0",
+        "v0.7.1",
+        "v0.7.2"
+      ],
+      "github": {
+        "latest_ci": {
+          "conclusion": "success",
+          "databaseId": 41784506970,
+          "headSha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
+          "status": "completed"
+        },
+        "open_prs": 0,
+        "latest_release": {
+          "publishedAt": "2026-11-03T00:41:39Z",
+          "tagName": "v0.7.2",
+          "url": "https://github.com/EdgarSocrates98/the-forge/releases/tag/v0.7.2"
+        },
+        "provenance": {
+          "source": "GitHub CLI",
+          "commands": [
+            "gh run list --branch main --limit 1",
+            "gh pr list --state open",
+            "gh release view"
+          ]
+        }
+      },
+      "security_status": "NOT_RUN; see cycle-10.1/security.md",
+      "test_status": {
+        "conclusion": "success",
+        "databaseId": 41784506970,
+        "headSha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
+        "status": "completed"
+      },
+      "provenance": {
+        "ref": "origin/main",
+        "source": "pyproject.toml or package.json",
+        "command": "git show REF:FILE",
+        "collected_at": "2026-11-04T06:43:09.843989+00:00"
       }
     }
   }

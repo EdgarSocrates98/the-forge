@@ -2,7 +2,7 @@
 
 Auditoria evidence-first do ecossistema Forge.
 
-O programa de referência atual é `prompt_evo_auditabilidade.md`, no workspace
+O programa de referência atual é `prompt_evo_mastering_melhorias.md`, no workspace
 pai. A leitura de estado consolidada fica em
 `reports/prompt-evo-auditabilidade.md`; ela aplica H0–H7 e mantém
 `BLOCKED`/`UNVERIFIED` explícitos.
@@ -16,8 +16,9 @@ por nenhuma Forge e não participa do runtime de produção.
 
 ## Baseline
 
-O baseline é coletado contra `origin/main` de cada repositório, sem trocar o
-checkout ativo:
+O baseline é coletado contra `origin/main` de cada checkout do ecossistema,
+sem trocar o checkout ativo. A lista canônica fica em
+`audit/tooling/collect_baseline.py` e cobre as 14 raízes presentes no workspace:
 
 ```powershell
 python audit/tooling/collect_baseline.py --workspace-root .. --ref origin/main
@@ -37,7 +38,7 @@ documentação em `PASS`.
 
 ## Instaladores
 
-Os sete repositórios Python que distribuem `install.ps1` e `install.sh` são
+Os dez repositórios Python que distribuem `install.ps1` e `install.sh` são
 exercitados em modo seguro, sem alterar HKCU, PATH, perfis de shell ou o
 checkout:
 

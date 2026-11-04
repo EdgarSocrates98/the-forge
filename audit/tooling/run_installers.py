@@ -16,13 +16,16 @@ from pathlib import Path
 from typing import Any
 
 REPOSITORIES = (
-    "the-forge",
-    "spark-forge-aws",
-    "spark-forge-azure",
     "api-forge",
-    "platform-forge",
+    "forge-agent-bridge",
     "forge-doctor-api",
     "forge-doctor-data",
+    "forge-lens",
+    "platform-forge",
+    "product-forge",
+    "spark-forge-aws",
+    "spark-forge-azure",
+    "the-forge",
 )
 
 

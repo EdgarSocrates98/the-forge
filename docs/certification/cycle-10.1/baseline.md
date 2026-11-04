@@ -1,37 +1,50 @@
-# Baseline — Cycle 10.1 Fresh Audit (Wave 0)
+# Baseline — ecossistema Forge (captura atualizada)
 
-Capturado em: 2026-10-15 · Programa: `prompt_evo_cycle10.1.md` · Escopo: 9 repositórios oficiais
+Capturado em: 2026-11-04T06:43:09Z · referência: `origin/main` · workspace
+`E:/projetos/FORJAS` · coletor: `audit/tooling/collect_baseline.py`
+
+Esta captura cobre as 14 raízes presentes no workspace. Ela substitui a
+baseline histórica de nove repositórios de 2026-10-15 para qualquer decisão
+atual. Ausência de versão dinâmica, release ou consulta GitHub é registrada
+como `NOT_RUN`, nunca como sucesso.
 
 ## Matriz de baseline
 
-| Repositório | default_branch | head_sha | runtime | package_version | latest_ci_status | open_prs | latest_release |
-|---|---|---|---|---|---|---|---|
-| the-forge | main | `530ea52` | Python ≥3.11 | 0.5.0 | success | 0 | — |
-| forge-cli | main | `6109f6a` | Node/TypeScript | 0.1.0 | success | 0 | — |
-| forge-portal | main | `ab5a3ef` | Angular/TypeScript | 0.1.0 | success | 0 | — |
-| api-forge | main | `6b7ede6` | Python ≥3.11 | 0.1.0 | success | 0 | — |
-| platform-forge | main | `aed8d5a` | Python ≥3.11 | 0.1.0 | success | 0 | — |
-| spark-forge-aws | main | `f8ef41b` | Python ≥3.11 | 0.5.0 | in_progress (run 38826592343) | 0 | — |
-| spark-forge-azure | main | `f1e70ce` | Python ≥3.11 | 0.1.0 | success | 0 | — |
-| forge-doctor-data | main | `2e41171` | Python ≥3.11 | 1.0.0rc1 | success | 0 | — |
-| forge-doctor-api | main | `fb31db3` | Python ≥3.11 | 0.2.0 | success | 0 | — |
+| Repositório | SHA `origin/main` | Versão declarada | Último CI | PRs abertos | Última release |
+|---|---|---:|---|---:|---|
+| api-forge | `2d09bd5` | 0.3.1 | success | 0 | v0.3.1 |
+| code-atlas-forge | `7898e85` | dinâmica | success | 5 | NOT_RUN |
+| data-sentinel-forge | `c36942e` | dinâmica | success | 0 | v0.3.0 |
+| forge-agent-bridge | `2b396cf` | 0.2.0 | success | 0 | v0.1.0 |
+| forge-cli | `9bcf672` | 0.4.0 | failure | 0 | v0.3.0 |
+| forge-doctor-api | `b0589ea` | 0.3.0 | success | 7 | v0.3.0 |
+| forge-doctor-data | `f6e7a6a` | 1.1.0 | success | 7 | v1.1.0 |
+| forge-lens | `ad3d692` | 0.2.0 | success | 13 | NOT_RUN |
+| forge-portal | `f63d771` | 1.1.0 | failure | 0 | v1.0.0 |
+| platform-forge | `5d24f62` | 0.3.1 | failure | 0 | v0.3.1 |
+| product-forge | `254d74b` | dinâmica | success | 0 | v0.1.0 |
+| spark-forge-aws | `f0e5b28` | 0.7.1 | failure | 0 | v0.7.1 |
+| spark-forge-azure | `801f3fb` | 0.3.1 | success | 0 | v0.3.1 |
+| the-forge | `c0e15f6` | 0.7.2 | success | 0 | v0.7.2 |
 
-## Versões de contrato
+## Fontes verificáveis
 
-- `forge/EcosystemCompatibility/v1` — release `2026.10`, producer the-forge 0.5.0
-- `forge/BenchmarkResult/v1`, `forge/MultiForgeScenario/v1` — Forge Lab (Cycles 9)
-- `theforge/<Name>/v1` — contratos internos do core
+- JSON completo e provenance por registro: `audit/baseline/_raw.json`.
+- Visões derivadas: `repositories.json`, `versions.json`,
+  `capabilities.json`, `dependencies.json` e `workflows.json`.
+- O coletor consultou `git` para SHA/tree e GitHub CLI para CI, PRs e
+  releases; falhas de autenticação/consulta ficam como `NOT_RUN` no JSON.
+- A última coluna de CI é o último workflow em `main` observado na captura;
+  ela não substitui a verificação do commit específico de uma mudança.
 
-## Estado de segurança (re-executar em profundidade no GAP 07)
+## Interpretação inicial
 
-- Sem releases publicadas em nenhum repo — RCs a preparar (GAP 05, sem publicação).
-- `cryptography` do api-forge: correção anterior documentada — revalidar na versão atual.
-- doctor-api: self-scan baseline re-gravado em `fb31db3` (mesmo finding revisado, novo asset hash).
-
-## Notas
-
-- SHAs capturados via `git fetch` + `rev-parse FETCH_HEAD` em 2026-10-15.
-- `latest_ci_status` = conclusão do último workflow run em `main` no momento da captura.
-- spark-forge-aws `f8ef41b` ainda executando a suíte no momento da captura (histórico do repo: 40–90 min).
-- Nenhum PR aberto; nenhuma release/tag publicada nos nove repos.
-- Localmente: 8/9 repos limpos e sincronizados; the-forge tinha regen `graphify-out/` do hook pós-commit — commitado como `530ea52` (artefato gerado, sem mudança funcional).
+- A baseline atual não sustenta uma certificação global `CERTIFIED`: há CI
+  vermelho em Forge CLI, Forge Portal, Platform Forge e Spark Forge AWS, além
+  de PRs abertos em Code Atlas, Doctor API/Data e Forge Lens.
+- Os 10 instaladores Python foram exercitados em Windows: 30 casos Git Bash
+  passaram, 20 casos PowerShell passaram após a correção de seleção de Python,
+  e 10 casos Linux Bash ficaram `BLOCKED` por runtime Linux ausente.
+- A execução detalhada está em
+  `audit/reports/installer-matrix-2026-11-04-v2.json`; os artefatos stdout/
+  stderr correspondentes estão em `audit/artifacts/installers-2026-11-04-v2/`.
