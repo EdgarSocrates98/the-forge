@@ -16,7 +16,7 @@ owner-gated repositories.
 | forge-agent-bridge | forge-agent-bridge | 0.2.1 | Windows executable selection and bridge hardening | published and verified — PyPI `41826176206` |
 | forge-cli | theforge-cli | 0.4.1 | deterministic target-platform environment paths | published and verified — npm `41827629104` |
 | forge-lens | forge-lens-fl | 0.2.1 | cross-platform Python executable selection | published and verified — PyPI `41829420060` |
-| spark-forge-aws | sparkforge-aws | 0.7.2 | Windows integration, health state and claims drift | CI rerun after manifest fix — `41836226066` |
+| spark-forge-aws | sparkforge-aws | 0.7.2 | Windows integration, health state and claims drift | published and verified — CI `41836226066`, PyPI `41849595982` |
 
 Each candidate was bumped only after the registry check confirmed that the new
 patch version did not already exist. Publication remains gated by the native
