@@ -1,0 +1,78 @@
+{
+  "dir": "E:\\projetos\\FORJAS\\forge-cli",
+  "file_count": 11,
+  "files": [
+    {
+      "bytes": 38668,
+      "mode": 420,
+      "path": "CHANGELOG.md"
+    },
+    {
+      "bytes": 1078,
+      "mode": 420,
+      "path": "LICENSE"
+    },
+    {
+      "bytes": 15144,
+      "mode": 420,
+      "path": "README.md"
+    },
+    {
+      "bytes": 1036295,
+      "mode": 420,
+      "path": "dist/index.js"
+    },
+    {
+      "bytes": 9039,
+      "mode": 420,
+      "path": "docs/arquitetura.md"
+    },
+    {
+      "bytes": 12370,
+      "mode": 420,
+      "path": "docs/capabilities.md"
+    },
+    {
+      "bytes": 12413,
+      "mode": 420,
+      "path": "docs/installation.md"
+    },
+    {
+      "bytes": 6308,
+      "mode": 420,
+      "path": "docs/registry-state-contract.md"
+    },
+    {
+      "bytes": 7017,
+      "mode": 420,
+      "path": "docs/solucao-de-problemas.md"
+    },
+    {
+      "bytes": 10631,
+      "mode": 420,
+      "path": "docs/troubleshooting.md"
+    },
+    {
+      "bytes": 1692,
+      "mode": 420,
+      "path": "package.json"
+    }
+  ],
+  "forbidden": [],
+  "generated_at_utc": "2026-11-04T14:59:45Z",
+  "mode": "safe",
+  "package": {
+    "filename": "theforge-cli-0.4.1.tgz",
+    "integrity": "sha512-xPatcC2DmFBWw5BeBMPV06k+hy7zO9qINwMDS/E7cXDZSB2GFhBX8xRFOxHTF25xHFAh0RfrFqqxcjaZpJUZQg==",
+    "name": "theforge-cli",
+    "package_size": null,
+    "shasum": "5f1ebe847abccd2553c0a12e6877fee91ac2105c",
+    "total_files": null,
+    "unpacked_size": 1150655,
+    "version": "0.4.1"
+  },
+  "problems": [],
+  "schema": "forge/NpmPackManifest/1",
+  "status": "OK",
+  "total_bytes": 1150655
+}
