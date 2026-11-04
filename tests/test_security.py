@@ -146,6 +146,8 @@ def test_allowed_env_entries_have_justification() -> None:
         "SYSTEMDRIVE",
         "WINDIR",
         "COMSPEC",
+        "APPDATA",
+        "LOCALAPPDATA",
         "HOME",
         "USERPROFILE",
         "TEMP",

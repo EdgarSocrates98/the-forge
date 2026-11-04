@@ -20,6 +20,8 @@ ALLOWED_ENV: Final[Mapping[str, str]] = MappingProxyType(
         "SYSTEMDRIVE": "Windows: system drive used by runtime and temp-path resolution",
         "WINDIR": "Windows: Windows directory expected by system libraries",
         "COMSPEC": "Windows: command interpreter used by subprocess/shell helpers",
+        "APPDATA": "Windows: user-site packages and per-user application data",
+        "LOCALAPPDATA": "Windows: local user-site/cache and per-user application data",
         "HOME": "POSIX: Path.home() and tool config lookup in the child process",
         "USERPROFILE": "Windows: Path.home() and tool config lookup in the child process",
         "TEMP": "Windows: temporary directory for tempfile",
