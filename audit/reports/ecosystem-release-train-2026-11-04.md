@@ -11,12 +11,12 @@ owner-gated repositories.
 
 | Repository | Distribution | Version | Rationale | State |
 |---|---|---:|---|---|
-| code-atlas-forge | code-atlas-forge | 1.1.1 | deterministic SBOM and cross-platform release evidence | CI pending |
-| data-sentinel-forge | data-sentinel-forge | 0.5.1 | install receipt human rendering and manifest repair | CI pending |
-| forge-agent-bridge | forge-agent-bridge | 0.2.1 | Windows executable selection and bridge hardening | CI pending |
-| forge-cli | theforge-cli | 0.4.1 | deterministic target-platform environment paths | CI pending |
-| forge-lens | forge-lens-fl | 0.2.1 | cross-platform Python executable selection | CI pending |
-| spark-forge-aws | sparkforge-aws | 0.7.2 | Windows integration, health state and claims drift | CI pending |
+| code-atlas-forge | code-atlas-forge | 1.1.1 | deterministic SBOM and cross-platform release evidence | published and verified — CI `41835980337`, PyPI `41838461181` |
+| data-sentinel-forge | data-sentinel-forge | 0.5.1 | install receipt human rendering and manifest repair | published and verified — PyPI `41826322495` |
+| forge-agent-bridge | forge-agent-bridge | 0.2.1 | Windows executable selection and bridge hardening | published and verified — PyPI `41826176206` |
+| forge-cli | theforge-cli | 0.4.1 | deterministic target-platform environment paths | published and verified — npm `41827629104` |
+| forge-lens | forge-lens-fl | 0.2.1 | cross-platform Python executable selection | published and verified — PyPI `41829420060` |
+| spark-forge-aws | sparkforge-aws | 0.7.2 | Windows integration, health state and claims drift | CI rerun after manifest fix — `41836226066` |
 
 Each candidate was bumped only after the registry check confirmed that the new
 patch version did not already exist. Publication remains gated by the native
@@ -38,6 +38,6 @@ workflow's build, provenance and clean-install verification.
 ## Dump evidence
 
 The sanitized inventory bundle for every repository is stored under
-`audit/release-dumps/2026-11-04-ecosystem-v8/`. Each repository has a
+`audit/release-dumps/2026-11-04-ecosystem-v9/`. Each repository has a
 `release-inventory.json`, `release-summary.md` and `checksums.sha256`; all
 collectors passed `--check`.
