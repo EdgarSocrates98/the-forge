@@ -100,8 +100,12 @@ def _catalog() -> tuple[EvalSuite, ...]:
             kind="developer",
             description="forge/context/v1 engine: vendored parity, manifest validation, docs layer",
             argv=(
-                "{python}", "-m", "pytest",
-                "tests/test_forgecontext.py", "tests/test_installkit_schemas.py", "-q",
+                "{python}",
+                "-m",
+                "pytest",
+                "tests/test_forgecontext.py",
+                "tests/test_installkit_schemas.py",
+                "-q",
             ),
             environment="real",
             triggers=(
@@ -116,8 +120,12 @@ def _catalog() -> tuple[EvalSuite, ...]:
             kind="developer",
             description="agent specs + host mirrors parity (AgentSpec/v1, canonical protocol refs)",
             argv=(
-                "{python}", "-m", "pytest",
-                "tests/test_agent_registry.py", "tests/test_agentic_parity.py", "-q",
+                "{python}",
+                "-m",
+                "pytest",
+                "tests/test_agent_registry.py",
+                "tests/test_agentic_parity.py",
+                "-q",
             ),
             environment="real",
             triggers=("agentic/**", ".codex/agents/**", "src/theforge/agents.py"),
@@ -138,8 +146,15 @@ def _catalog() -> tuple[EvalSuite, ...]:
             kind="runtime-decision",
             description="regression gate: current BenchmarkResult receipts vs a recorded baseline",
             argv=(
-                "{python}", "-m", "theforge", "lab", "gate",
-                "--results", "{results}", "--baseline", "{baseline}",
+                "{python}",
+                "-m",
+                "theforge",
+                "lab",
+                "gate",
+                "--results",
+                "{results}",
+                "--baseline",
+                "{baseline}",
             ),
             environment="real",
             triggers=(),
@@ -238,9 +253,7 @@ def describe(suite_id: str, *, root: Path | None = None) -> dict[str, Any]:
         "description": suite.description,
         "environment": suite.environment,
         "command": [str(a) for a in suite.argv],
-        "inputs": [
-            {"name": name, "required": True} for name in suite.inputs
-        ],
+        "inputs": [{"name": name, "required": True} for name in suite.inputs],
         "triggers": list(suite.triggers),
         "timeout_s": suite.timeout_s,
         "destructive": suite.destructive,
@@ -375,9 +388,7 @@ def _resolve_argv(suite: EvalSuite, root: Path, inputs: Mapping[str, str]) -> li
         arg = arg.replace("{python}", sys.executable).replace("{root}", str(root))
         # A whole-arg placeholder expands to tokens (a provider argv may be
         # several words); an embedded one substitutes inline.
-        whole = next(
-            (name for name in inputs if arg == "{" + name + "}"), None
-        )
+        whole = next((name for name in inputs if arg == "{" + name + "}"), None)
         if whole is not None:
             out.extend(shlex.split(inputs[whole]))
             continue

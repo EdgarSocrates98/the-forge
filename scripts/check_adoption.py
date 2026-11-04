@@ -46,7 +46,7 @@ def main() -> int:
         d = REPO / "templates" / t
         if not (d / "README.md").is_file():
             fails.append(f"templates/{t}/README.md missing")
-        elif "Instalação" not in (d / "README.md").read_text():
+        elif "Instalação" not in (d / "README.md").read_text(encoding="utf-8"):
             fails.append(f"templates/{t}: no install instructions")
         chk = d / "check.sh"
         if not chk.is_file() or not os.access(chk, os.X_OK):
@@ -59,7 +59,7 @@ def main() -> int:
             continue
         if not os.access(fp, os.X_OK):
             fails.append(f"demos/{demo}.sh not executable")
-        body = fp.read_text()
+        body = fp.read_text(encoding="utf-8")
         for bad in FORBIDDEN_DEMO:
             if bad in body:
                 fails.append(f"demos/{demo}.sh contains '{bad}' — not synthetic")
@@ -68,7 +68,7 @@ def main() -> int:
     if not contrib.is_file():
         fails.append("docs/contributing/external-forges.md missing")
     else:
-        body = contrib.read_text()
+        body = contrib.read_text(encoding="utf-8")
         for needle in ("nunca é confiável por padrão", "manifesto", "proveniência", "untrusted"):
             if needle not in body.lower() and needle not in body:
                 fails.append(f"external-forges.md missing '{needle}'")
@@ -76,7 +76,7 @@ def main() -> int:
     if not (REPO / "scripts" / "feedback_bundle.py").is_file():
         fails.append("scripts/feedback_bundle.py missing")
     else:
-        body = (REPO / "scripts" / "feedback_bundle.py").read_text()
+        body = (REPO / "scripts" / "feedback_bundle.py").read_text(encoding="utf-8")
         if "requests.post" in body or "urllib.request.urlopen" in body.replace(
             "urllib.request.Request", ""
         ):
@@ -85,7 +85,9 @@ def main() -> int:
     dist = REPO / "docs" / "programs" / "ecosystem-2026" / "distribution-plan.md"
     if not dist.is_file():
         fails.append("distribution-plan.md missing")
-    elif "PyPI" not in dist.read_text() or "MCP" not in dist.read_text():
+    elif "PyPI" not in dist.read_text(encoding="utf-8") or "MCP" not in dist.read_text(
+        encoding="utf-8"
+    ):
         fails.append("distribution-plan.md lacks the D2 channels")
 
     bench = REPO / "docs" / "programs" / "ecosystem-2026" / "benchmarks"

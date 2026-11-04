@@ -42,9 +42,7 @@ def test_portal_graphs_serves_identical_federated_view_as_cli_ui(
     # Capture the document `graph --federated --ui` would hand to the
     # Graph Studio — same code path as the real CLI verb.
     captured: dict = {}
-    monkeypatch.setattr(
-        "theforge.graphstudio.graph_studio_enabled", lambda *a, **kw: True
-    )
+    monkeypatch.setattr("theforge.graphstudio.graph_studio_enabled", lambda *a, **kw: True)
 
     def _studio(views, **_kw):
         captured["views"] = views
@@ -83,16 +81,10 @@ def test_portal_graphs_serves_identical_federated_view_as_cli_ui(
     # Neither is graph data; node/edge sets below pin the real parity.
     portal_notes = portal_doc.pop("federation_notes", [])
     cli_wire.pop("federation_notes", None)
-    portal_doc["descriptor"]["generated_at"] = cli_wire["descriptor"][
-        "generated_at"
-    ]
+    portal_doc["descriptor"]["generated_at"] = cli_wire["descriptor"]["generated_at"]
     assert portal_doc == cli_wire
-    assert {n["id"] for n in portal_doc["nodes"]} == {
-        n["id"] for n in cli_wire["nodes"]
-    }
-    assert {e["id"] for e in portal_doc["edges"]} == {
-        e["id"] for e in cli_wire["edges"]
-    }
+    assert {n["id"] for n in portal_doc["nodes"]} == {n["id"] for n in cli_wire["nodes"]}
+    assert {e["id"] for e in portal_doc["edges"]} == {e["id"] for e in cli_wire["edges"]}
     # producer notes honestly name every forge that could not serve a
     # view — they are strings, never silent omissions
     assert all(isinstance(n, str) for n in portal_notes)

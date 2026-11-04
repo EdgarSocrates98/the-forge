@@ -134,14 +134,13 @@ def test_baselines_hash_recorded(tmp_path, monkeypatch):
     assert receipt["verdict"] == "pass"
     import hashlib
 
-    assert receipt["inputs_recorded"]["baseline"]["sha256"] == hashlib.sha256(
-        baseline.read_bytes()
-    ).hexdigest()
+    assert (
+        receipt["inputs_recorded"]["baseline"]["sha256"]
+        == hashlib.sha256(baseline.read_bytes()).hexdigest()
+    )
     # tamper: rewriting the file yields a different recorded digest on re-run
     baseline.write_text('{"tampered": true}\n', encoding="utf-8")
-    receipt2 = fevals.run_suite(
-        tmp_path, "synthetic-baseline", inputs={"baseline": str(baseline)}
-    )
+    receipt2 = fevals.run_suite(tmp_path, "synthetic-baseline", inputs={"baseline": str(baseline)})
     assert (
         receipt2["inputs_recorded"]["baseline"]["sha256"]
         != receipt["inputs_recorded"]["baseline"]["sha256"]

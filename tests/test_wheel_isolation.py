@@ -29,6 +29,7 @@ drift) are exercised for structure, not for every id — the-forge has no
 rule catalog or eval suites, so `rules`/`evals` capabilities are honestly
 absent and asserted as such.
 """
+
 from __future__ import annotations
 
 import json
@@ -90,7 +91,12 @@ def _clean_env() -> dict[str, str]:
 
 def _run(argv: list[str], *, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess:
     return subprocess.run(  # noqa: S603 - CLI/venv created by the test itself
-        argv, cwd=str(cwd), env=env, capture_output=True, text=True, timeout=300,
+        argv,
+        cwd=str(cwd),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
 
 
@@ -169,9 +175,7 @@ def test_wheel_install_lifecycle_outside_checkout(tmp_path: Path):
         cwd=target,
         env=env,
     )
-    assert out.returncode == 0, (
-        f"install apply failed:\n{out.stdout[-800:]}\n{out.stderr[-800:]}"
-    )
+    assert out.returncode == 0, f"install apply failed:\n{out.stdout[-800:]}\n{out.stderr[-800:]}"
     receipt = _json(out, "install apply")
     assert receipt["status"] == "completed", receipt
     assert receipt["checks"], "receipt without checks"
@@ -209,8 +213,7 @@ def test_wheel_install_lifecycle_outside_checkout(tmp_path: Path):
     assert out.returncode == 0, out.stderr[-400:]
     agents = _json(out, "agents list")
     assert agents["agents"], (
-        "agents list empty under the wheel — host_assets/agents regression "
-        "(Install-2.0 audit P0-1)"
+        "agents list empty under the wheel — host_assets/agents regression (Install-2.0 audit P0-1)"
     )
 
     # -- verify protocol / install health ----------------------------------------
@@ -225,10 +228,7 @@ def test_wheel_install_lifecycle_outside_checkout(tmp_path: Path):
     assert health["status"] in ("healthy", "degraded"), health.get("status")
     # Package/state integrity must be fine; host/workspace presence is
     # environment-dependent and tolerated.
-    assert any(
-        c["status"] in ("PASS", "HEALTHY", "OK")
-        for c in health["checks"]
-    ), health["checks"]
+    assert any(c["status"] in ("PASS", "HEALTHY", "OK") for c in health["checks"]), health["checks"]
 
     # -- offline verification ------------------------------------------------------
     # `doctor` is offline by contract; under the wheel it must never traceback.

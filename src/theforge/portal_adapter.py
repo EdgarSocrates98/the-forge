@@ -106,9 +106,7 @@ class TheForgePortal(fp.PortalAdapter):
             fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
             fp.Operation("GET", "/specialists", lambda ctx: self._specialists_view()),
             fp.Operation("GET", "/delegations", lambda ctx: self._delegations()),
-            fp.Operation(
-                "GET", "/delegations/graph", lambda ctx: self._delegations_graph()
-            ),
+            fp.Operation("GET", "/delegations/graph", lambda ctx: self._delegations_graph()),
             fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
             fp.Operation("GET", "/versions", lambda ctx: self._versions()),
             fp.Operation("GET", "/lab", lambda ctx: self._lab()),
@@ -1439,11 +1437,7 @@ class TheForgePortal(fp.PortalAdapter):
             "schema": "theforge/PortalDelegationGraph/v1",
             "availability": {
                 "state": "available" if nodes else "no_graph",
-                "detail": (
-                    None
-                    if nodes
-                    else "no declared manifests and no persisted delegations"
-                ),
+                "detail": (None if nodes else "no declared manifests and no persisted delegations"),
                 "declared": declared_state,
                 "observed_reports": len(docs),
             },

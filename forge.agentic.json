@@ -1,0 +1,59 @@
+{
+  "schema": "forge/SpecialistAgenticManifest/v1",
+  "provider": "the-forge",
+  "version": "0.7.2",
+  "cli": "theforge",
+  "cli_entry": "theforge.cli.main:main",
+  "workflows": [
+    {
+      "id": "doctor",
+      "mode": "DIAGNOSTIC_ONLY",
+      "command": ["{cli}", "doctor", "--json"],
+      "description": "Inspect host, workspace and provider health",
+      "read_only": true
+    },
+    {
+      "id": "capabilities",
+      "mode": "DIAGNOSTIC_ONLY",
+      "command": ["{cli}", "capabilities"],
+      "description": "List declared and observed specialist capabilities",
+      "read_only": true
+    },
+    {
+      "id": "graph",
+      "mode": "DIAGNOSTIC_ONLY",
+      "command": ["{cli}", "graph"],
+      "description": "Inspect the cached capability graph",
+      "read_only": true
+    },
+    {
+      "id": "plan",
+      "mode": "DIRECT_CAPABILITY",
+      "command": ["{cli}", "plan", "{task}"],
+      "description": "Create a governed multi-provider task plan",
+      "read_only": true
+    },
+    {
+      "id": "ask",
+      "mode": "DIRECT_CAPABILITY",
+      "command": ["{cli}", "ask", "{task}"],
+      "description": "Route a task to a justified specialist",
+      "read_only": false
+    },
+    {
+      "id": "orchestrate",
+      "mode": "DIRECT_CAPABILITY",
+      "command": ["{cli}", "orchestrate", "{task}"],
+      "description": "Execute a governed multi-specialist DAG",
+      "read_only": false
+    }
+  ],
+  "skills": [],
+  "agents": [],
+  "coordinators": [],
+  "mcp_command": [],
+  "host_adapters": ["claude", "devin", "codex", "copilot"],
+  "read_only_default": true,
+  "requires_credentials": false,
+  "requires_network": false
+}

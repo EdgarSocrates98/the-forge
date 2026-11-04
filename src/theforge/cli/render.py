@@ -1969,9 +1969,7 @@ def evals_describe(data: dict[str, Any]) -> str:
             continue
         lines.append(f"  {key}: {block.get('count', 0)} — {_clean(block.get('content'))}")
         for entry in block.get("resolved") or []:
-            lines.append(
-                f"    {entry['path']}  sha256={entry['sha256'][:16]}…  {entry['bytes']}B"
-            )
+            lines.append(f"    {entry['path']}  sha256={entry['sha256'][:16]}…  {entry['bytes']}B")
     if data.get("destructive"):
         lines.append("  destructive: yes — evals never execute this suite")
     return "\n".join(lines)
@@ -2005,8 +2003,7 @@ def evals_results(data: dict[str, Any]) -> str:
     lines = [f"{len(rows)} receipt(s):"]
     for r in rows:
         line = (
-            f"  {_clean(r.get('receipt_id'))}  {_clean(r.get('suite'))}  "
-            f"{_clean(r.get('verdict'))}"
+            f"  {_clean(r.get('receipt_id'))}  {_clean(r.get('suite'))}  {_clean(r.get('verdict'))}"
         )
         if r.get("environment"):
             line += f"  env={r['environment']}"
@@ -2018,8 +2015,7 @@ def evals_results(data: dict[str, Any]) -> str:
 
 def verify_plan(data: dict[str, Any]) -> str:
     lines = [
-        f"verification plan — risk={_clean(data.get('risk'))}  "
-        f"schema={_clean(data.get('schema'))}",
+        f"verification plan — risk={_clean(data.get('risk'))}  schema={_clean(data.get('schema'))}",
         f"  changed: {', '.join(data.get('changed') or []) or '(none declared)'}",
     ]
     for reason in data.get("reasons") or []:
@@ -2044,9 +2040,7 @@ def verify_run(data: dict[str, Any]) -> str:
     lines = [
         f"verify run {_clean(data.get('receipt_id'))} — verdict: {_clean(data.get('verdict'))}",
         "  counts: "
-        + " ".join(
-            f"{k}={counts.get(k, 0)}" for k in ("pass", "fail", "inconclusive", "blocked")
-        ),
+        + " ".join(f"{k}={counts.get(k, 0)}" for k in ("pass", "fail", "inconclusive", "blocked")),
     ]
     for r in data.get("results") or []:
         line = f"    {r['suite']:<24} {_clean(r.get('verdict'))}"

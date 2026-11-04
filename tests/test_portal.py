@@ -695,10 +695,18 @@ def test_delegations_graph_emits_observed_edges_only(target: Path) -> None:
     assert ("finding-source", "observed") in provs
     # declared edges exist only where manifests actually resolved
     declared = [e for e in view["edges"] if e["provenance"] == "declared"]
-    assert all(e["kind"] in {"forge-specialist", "specialist-composes",
-                             "specialist-verifier", "specialist-fallback",
-                             "agent-capability", "capability-tool"}
-               for e in declared)
+    assert all(
+        e["kind"]
+        in {
+            "forge-specialist",
+            "specialist-composes",
+            "specialist-verifier",
+            "specialist-fallback",
+            "agent-capability",
+            "capability-tool",
+        }
+        for e in declared
+    )
 
 
 def test_specialists_and_delegations_endpoints_serve(target: Path) -> None:

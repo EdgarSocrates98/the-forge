@@ -67,6 +67,7 @@ packages = ["src/theforge"]
 # does not exist — ship the manifest inside the package so the bundled-path
 # resolver can serve it without a checkout.
 "forge.json" = "theforge/forge.json"
+"forge.agentic.json" = "theforge/forge.agentic.json"
 
 [tool.hatch.build.targets.sdist]
 # The adapters are separate distributions (adapters/*/pyproject.toml), never part of theforge.

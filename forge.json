@@ -4,6 +4,7 @@
   "distribution": "theforge-core",
   "cli": "theforge",
   "python": ">=3.11",
+  "version": "0.7.2",
   "extras": [],
   "lab": {
     "command": [

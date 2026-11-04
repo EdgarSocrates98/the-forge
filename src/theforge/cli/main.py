@@ -621,9 +621,7 @@ def build_parser() -> argparse.ArgumentParser:
             action="store_true",
             help="probe providers whose trust is 'unverified'",
         )
-        p.add_argument(
-            "--max-hops", type=int, default=4, help="chain hop budget (default 4)"
-        )
+        p.add_argument("--max-hops", type=int, default=4, help="chain hop budget (default 4)")
         p.add_argument(
             "--timeout-budget",
             type=int,

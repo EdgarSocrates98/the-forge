@@ -153,15 +153,11 @@ def build_delegation(
                 slug = _intent_slug(phrase)
                 if slug is not None:
                     intents.add(slug)
-        refs.append(
-            SpecialistRef(provider=forge_id, optional=True, intents=sorted(intents))
-        )
+        refs.append(SpecialistRef(provider=forge_id, optional=True, intents=sorted(intents)))
     return SpecialistDelegation(
         consumer=consumer,
         specialists=refs,
-        policy=DelegationPolicy(
-            discovery="runtime", execution="governed", preserve_evidence=True
-        ),
+        policy=DelegationPolicy(discovery="runtime", execution="governed", preserve_evidence=True),
     )
 
 
@@ -551,8 +547,7 @@ def orchestrate_run(
                 )
             else:
                 notes.append(
-                    "run completed without an EvidenceHandoff document — "
-                    "no findings consolidated"
+                    "run completed without an EvidenceHandoff document — no findings consolidated"
                 )
         elif result.stage in _STAGE_FAILURE:
             detail = "; ".join(result.limitations) or f"delegation {result.stage}"
@@ -679,8 +674,7 @@ def _recommend(plan: DelegationPlan, report: DiscoveryReport) -> list[Orchestrat
             recs.append(
                 OrchestrationRecommendation(
                     action=(
-                        f"upgrade {provider} or its adapter to emit a "
-                        "SpecialistCapability manifest"
+                        f"upgrade {provider} or its adapter to emit a SpecialistCapability manifest"
                     ),
                     why=refusal.detail,
                     provider=provider,

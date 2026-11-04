@@ -50,9 +50,7 @@ OrchestrationKind = Literal["plan", "run"]
 # How far one picked delegation got: the plan pick (``planned``), an argv
 # execution result (``prepared``/``completed``/``failed``/``blocked`` — the
 # DelegationStage vocabulary lower-cased) or a refusal (``refused``).
-EntryStatus = Literal[
-    "planned", "prepared", "completed", "failed", "blocked", "refused"
-]
+EntryStatus = Literal["planned", "prepared", "completed", "failed", "blocked", "refused"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -107,9 +105,7 @@ class OrchestrationFinding:
         if not self.providers:
             raise ContractError(f"finding {self.id!r}: providers must not be empty")
         if self.correlated and len(set(self.providers)) < 2:
-            raise ContractError(
-                f"finding {self.id!r}: correlated requires two distinct providers"
-            )
+            raise ContractError(f"finding {self.id!r}: correlated requires two distinct providers")
 
 
 @dataclass(frozen=True, kw_only=True)

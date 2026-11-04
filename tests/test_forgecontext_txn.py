@@ -72,9 +72,7 @@ def _ctx(root: Path) -> Path:
 
 def _tree(root: Path) -> dict[str, bytes]:
     return {
-        str(p.relative_to(root)): p.read_bytes()
-        for p in sorted(root.rglob("*"))
-        if p.is_file()
+        str(p.relative_to(root)): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()
     }
 
 
@@ -86,8 +84,15 @@ def test_install_transaction_full_pipeline(tmp_path):
     out = fctx.install_transaction(tmp_path, m, owner="forge-x")
     assert out["status"] == "installed"
     assert out["phases"] == [
-        "preflight", "lock", "recover", "registry", "conflicts",
-        "backup", "write", "verify", "commit",
+        "preflight",
+        "lock",
+        "recover",
+        "registry",
+        "conflicts",
+        "backup",
+        "write",
+        "verify",
+        "commit",
     ]
     assert out["verified"] == ["registry", "entry", "manifest", "docs"]
     ctx = _ctx(tmp_path)
@@ -123,9 +128,7 @@ def test_install_transaction_user_docs_preserved(tmp_path):
 def test_install_transaction_docs_optional(tmp_path):
     """``docs=False`` covers scopes that register without consumer docs —
     the registry path still runs the full pipeline."""
-    out = fctx.install_transaction(
-        tmp_path, _manifest("forge-x"), owner="forge-x", docs=False
-    )
+    out = fctx.install_transaction(tmp_path, _manifest("forge-x"), owner="forge-x", docs=False)
     assert out["status"] == "installed"
     assert out["verified"] == ["registry", "entry", "manifest"]
     assert not (tmp_path / "AGENTS.md").exists()
@@ -182,9 +185,7 @@ def test_install_transaction_rollback_on_verify_failure(tmp_path, monkeypatch):
     monkeypatch.setattr(
         fctx,
         "_verify_install",
-        lambda *a, **kw: (_ for _ in ()).throw(
-            fctx.ContextError(fctx.E_SCHEMA, "verify boom")
-        ),
+        lambda *a, **kw: (_ for _ in ()).throw(fctx.ContextError(fctx.E_SCHEMA, "verify boom")),
     )
     with pytest.raises(fctx.ContextError):
         fctx.install_transaction(tmp_path, _manifest("forge-y"), owner="forge-y")
@@ -241,9 +242,7 @@ def test_interrupted_install_journal_redone(tmp_path):
     ctx.mkdir(parents=True)
     zombie = _manifest("zombie")
     (ctx / fctx.JOURNAL_NAME).write_text(
-        json.dumps(
-            {"op": "install", "manifest": zombie, "legacy_tags": [], "docs": True}
-        ),
+        json.dumps({"op": "install", "manifest": zombie, "legacy_tags": [], "docs": True}),
         encoding="utf-8",
     )
     # partial state: capability written, registry+docs not
@@ -270,9 +269,7 @@ def test_interrupted_uninstall_journal_redone(tmp_path):
     )
     out = fctx.repair_context(tmp_path)
     assert out["recovered"] == {"op": "uninstall", "forge_id": "doomed"}
-    assert [e["forge_id"] for e in fctx.load_registry(tmp_path)["forges"]] == [
-        "keeper"
-    ]
+    assert [e["forge_id"] for e in fctx.load_registry(tmp_path)["forges"]] == ["keeper"]
     assert "forge:doomed" not in (tmp_path / "AGENTS.md").read_text()
 
 
@@ -310,9 +307,7 @@ def test_uninstall_transaction_removes_only_own(tmp_path):
     ctx = _ctx(tmp_path)
     assert not (ctx / "capabilities" / "forge-x.json").exists()
     assert (ctx / "capabilities" / "forge-y.json").exists()
-    assert [e["forge_id"] for e in fctx.load_registry(tmp_path)["forges"]] == [
-        "forge-y"
-    ]
+    assert [e["forge_id"] for e in fctx.load_registry(tmp_path)["forges"]] == ["forge-y"]
     agents = (tmp_path / "AGENTS.md").read_text()
     assert "forge:forge-x" not in agents and "forge:forge-y" in agents
     proto = (tmp_path / "AGENT_PROTOCOL.md").read_text()
@@ -577,12 +572,8 @@ def test_install_order_independence(tmp_path):
     volatile = ("installed_at", "updated_at")
 
     def _stable(reg: dict) -> dict:
-        out = {
-            k: v for k, v in reg.items() if k not in ("updated_at", "workspace_root")
-        }
-        out["forges"] = [
-            {k: v for k, v in e.items() if k not in volatile} for e in reg["forges"]
-        ]
+        out = {k: v for k, v in reg.items() if k not in ("updated_at", "workspace_root")}
+        out["forges"] = [{k: v for k, v in e.items() if k not in volatile} for e in reg["forges"]]
         return out
 
     assert _stable(t1) == _stable(t2)
@@ -666,9 +657,7 @@ def test_lock_exit_never_unlinks_foreign_lock(tmp_path):
         held_doc = json.loads(lock_file.read_text())
         assert held_doc["token"] == lock._token
         # Simulate a foreign claimant writing the lock over ours.
-        lock_file.write_text(
-            json.dumps({"pid": 9_999_999, "token": "foreign", "created_at": "x"})
-        )
+        lock_file.write_text(json.dumps({"pid": 9_999_999, "token": "foreign", "created_at": "x"}))
     assert lock_file.exists()  # foreign lock preserved
     assert json.loads(lock_file.read_text())["token"] == "foreign"
     assert lock.held is False

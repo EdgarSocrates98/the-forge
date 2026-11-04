@@ -370,9 +370,7 @@ def test_install_order_equivalence(forge_venv, tmp_path, order):
                 "order": list(order),
                 "registry": _normalize_reg(reg),
                 "capabilities": caps,
-                "routing_sha": _sha(
-                    (root / ".forge" / "context" / "ROUTING.md").read_bytes()
-                ),
+                "routing_sha": _sha((root / ".forge" / "context" / "ROUTING.md").read_bytes()),
                 "protocol_sha": _sha((root / "AGENT_PROTOCOL.md").read_bytes()),
                 "agents_blocks": sorted(_forge_blocks(root, "AGENTS.md")),
             },
@@ -417,8 +415,7 @@ def test_reinstall_idempotent(forge_venv, tmp_path):
     for key in ("spark-forge-aws", "api-forge"):
         _install(forge_venv, key, root)
     docs_before = {
-        name: (root / name).read_bytes()
-        for name in ("AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
+        name: (root / name).read_bytes() for name in ("AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
     }
     ctx_before = {
         str(p.relative_to(root)): p.read_bytes()
@@ -429,8 +426,7 @@ def test_reinstall_idempotent(forge_venv, tmp_path):
         out = _install(forge_venv, key, root)
         assert out.get("status") in ("completed", "unchanged", "ok"), out.get("status")
     docs_after = {
-        name: (root / name).read_bytes()
-        for name in ("AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
+        name: (root / name).read_bytes() for name in ("AGENTS.md", "CLAUDE.md", "AGENT_PROTOCOL.md")
     }
     ctx_after = {
         str(p.relative_to(root)): p.read_bytes()

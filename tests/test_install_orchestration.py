@@ -724,9 +724,7 @@ def test_uninstall_receipt_persisted_after_context_failure(
     monkeypatch.setattr(service.fctx, "uninstall_transaction", boom)
     out = service.uninstall(scope="project", root=target)
     assert out["status"] == "failed"
-    assert any(
-        c["id"] == "context-registry" and c["status"] == "BLOCKED" for c in out["checks"]
-    )
+    assert any(c["id"] == "context-registry" and c["status"] == "BLOCKED" for c in out["checks"])
     receipts = sorted((target / ".forge" / "install" / "receipts").glob("uninstall-*.json"))
     assert receipts, "receipt should have been persisted"
     persisted = json.loads(receipts[-1].read_text("utf-8"))

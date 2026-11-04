@@ -159,25 +159,19 @@ def test_discovery_ops_rejects_unknown_op_and_dangling_ref():
         },
     )
     # build_manifest refuses to emit an invalid doc — mutate a valid one
-    bad_op = _manifest(
-        discovery_commands=cmds, discovery_ops={"rules.search": "rules-lookup"}
-    )
+    bad_op = _manifest(discovery_commands=cmds, discovery_ops={"rules.search": "rules-lookup"})
     bad_op["discovery"]["ops"]["telemetry.export"] = "rules-lookup"
     assert any("unknown op" in p for p in fctx.validate_manifest(bad_op))
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(bad_op, _schema("ForgeContext.schema.json"))
 
-    dangling = _manifest(
-        discovery_commands=cmds, discovery_ops={"rules.search": "rules-lookup"}
-    )
+    dangling = _manifest(discovery_commands=cmds, discovery_ops={"rules.search": "rules-lookup"})
     dangling["discovery"]["ops"]["rules.get"] = "no-such-command"
     problems = fctx.validate_manifest(dangling)
     assert any("undeclared command" in p for p in problems)
 
     with pytest.raises(fctx.ContextError):
-        _manifest(
-            discovery_commands=cmds, discovery_ops={"rules.search": "undeclared"}
-        )
+        _manifest(discovery_commands=cmds, discovery_ops={"rules.search": "undeclared"})
 
     not_a_map = _manifest()
     not_a_map["discovery"]["ops"] = ["rules.search"]
@@ -494,9 +488,15 @@ def test_install_docs_creates_three_docs(tmp_path):
     assert "@AGENTS.md" in claude
     assert proto.startswith(fctx.PROTOCOL_SENTINEL)
     for sec in (
-        "1. Discovery", "2. Classification", "3. Routing",
-        "4. Context Retrieval", "5. Planning", "6. Execution",
-        "7. Evaluation", "8. Verification", "9. Reporting",
+        "1. Discovery",
+        "2. Classification",
+        "3. Routing",
+        "4. Context Retrieval",
+        "5. Planning",
+        "6. Execution",
+        "7. Evaluation",
+        "8. Verification",
+        "9. Reporting",
     ):
         assert sec in proto
 
@@ -508,8 +508,7 @@ def test_install_docs_is_byte_idempotent(tmp_path):
     snap = {p.name: p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
     out = fctx.install_docs(tmp_path, m, owner="forge-x")
     assert out["status"] == "unchanged"
-    assert snap == {p.name: p.read_bytes() for p in tmp_path.iterdir()
-                    if p.is_file()}
+    assert snap == {p.name: p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
 
 
 def test_install_docs_preserves_user_content(tmp_path):
@@ -524,12 +523,11 @@ def test_install_docs_preserves_user_content(tmp_path):
 
 def test_install_docs_strips_legacy_markers(tmp_path):
     (tmp_path / "AGENTS.md").write_text(
-        "# mine\n\n<!-- forge-x:managed:begin -->\nold\n"
-        "<!-- forge-x:managed:end -->\n", "utf-8")
+        "# mine\n\n<!-- forge-x:managed:begin -->\nold\n<!-- forge-x:managed:end -->\n", "utf-8"
+    )
     m = _manifest("forge-x")
     fctx.register_forge(tmp_path, m, owner="forge-x")
-    out = fctx.install_docs(tmp_path, m, owner="forge-x",
-                            legacy_tags=("forge-x:managed",))
+    out = fctx.install_docs(tmp_path, m, owner="forge-x", legacy_tags=("forge-x:managed",))
     assert "managed:begin" not in (tmp_path / "AGENTS.md").read_text()
     assert out["legacy_stripped"] == ["forge-x:managed"]
 
@@ -538,7 +536,8 @@ def test_install_docs_refuses_ambiguous_markers(tmp_path):
     (tmp_path / "AGENTS.md").write_text(
         "# x\n<!-- forge:forge-x:begin -->\na\n"
         "<!-- forge:forge-x:begin -->\nb\n<!-- forge:forge-x:end -->\n",
-        "utf-8")
+        "utf-8",
+    )
     m = _manifest("forge-x")
     fctx.register_forge(tmp_path, m, owner="forge-x")
     with pytest.raises(fctx.ContextError) as exc:
@@ -610,8 +609,7 @@ def test_service_install_writes_consumer_docs(tmp_path):
 
     target = tmp_path / "consumer"
     (target / ".git").mkdir(parents=True)
-    receipt = service.install(scope="project", root=target, host="none",
-                              yes=True)
+    receipt = service.install(scope="project", root=target, host="none", yes=True)
     check = next(c for c in receipt["checks"] if c["id"] == "consumer-docs")
     assert check["status"] == "PASS"
     assert (target / "AGENTS.md").is_file()

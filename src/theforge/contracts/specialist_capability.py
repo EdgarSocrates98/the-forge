@@ -72,9 +72,7 @@ CapabilityExecutionMode = Literal["local", "remote", "hybrid"]
 # metadata), ``registry`` (a provider/registry listing), ``entry-point``
 # (Python entry point or console script), ``probe`` (a governed probe — the
 # specialist's own surface answers).
-CapabilityDiscoveryMode = Literal[
-    "manifest", "package", "registry", "entry-point", "probe"
-]
+CapabilityDiscoveryMode = Literal["manifest", "package", "registry", "entry-point", "probe"]
 
 # How the declaration can be validated before execution: ``self-declared``
 # (the manifest is the only evidence — honest floor), ``handshake`` (a
@@ -103,10 +101,7 @@ class SpecialistIdentity:
     def __post_init__(self) -> None:
         if not PROVIDER_ID.match(self.id):
             raise ContractError(f"invalid specialist id {self.id!r}")
-        if (
-            self.version not in (RUNTIME_DETECTED, "unknown")
-            and parse_semver(self.version) is None
-        ):
+        if self.version not in (RUNTIME_DETECTED, "unknown") and parse_semver(self.version) is None:
             raise ContractError(
                 f"specialist {self.id}: version {self.version!r} is not SemVer 2.0.0 "
                 f"(or {RUNTIME_DETECTED!r})"
@@ -161,9 +156,7 @@ class DeclaredCapability:
                 f"capability {self.id}: version {self.version!r} is not SemVer 2.0.0"
             )
         if self.timeout_s is not None and self.timeout_s <= 0:
-            raise ContractError(
-                f"capability {self.id}: timeout_s must be a positive integer"
-            )
+            raise ContractError(f"capability {self.id}: timeout_s must be a positive integer")
         if self.finding_class not in ("", "static", "runtime", "architectural"):
             raise ContractError(
                 f"capability {self.id}: finding_class {self.finding_class!r} is not "

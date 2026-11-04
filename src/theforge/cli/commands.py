@@ -1932,9 +1932,7 @@ def _orchestrate_common(args: argparse.Namespace) -> dict[str, Any]:
     risks = set(args.authorize or ()) | {"LOCAL_READ"}
     unknown = sorted(r for r in risks if r not in DELEGATION_RISKS)
     if unknown:
-        raise UsageError(
-            f"unknown risk levels {unknown} — one of {', '.join(DELEGATION_RISKS)}"
-        )
+        raise UsageError(f"unknown risk levels {unknown} — one of {', '.join(DELEGATION_RISKS)}")
     return {
         "delegation_doc": delegation_doc,
         "inputs": set(args.input or ()),
@@ -2148,9 +2146,7 @@ def cmd_evals(args: argparse.Namespace) -> int:
         else:
             _emit(args, {"receipts": fevals.results(root)}, render.evals_results)
         return 0
-    receipt = fevals.run_suite(
-        root, args.suite, inputs=_named_inputs(getattr(args, "input", []))
-    )
+    receipt = fevals.run_suite(root, args.suite, inputs=_named_inputs(getattr(args, "input", [])))
     _emit(args, receipt, render.evals_result)
     return _EVAL_VERDICT_EXIT.get(receipt["verdict"], 1)
 
@@ -2162,9 +2158,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
     root = _root(args)
     if args.verify_command == "plan":
-        doc = fevals.plan(
-            args.changed or [], risk=args.risk, authorized=args.authorize
-        )
+        doc = fevals.plan(args.changed or [], risk=args.risk, authorized=args.authorize)
         if args.out:
             out_path = Path(args.out).expanduser()
             out_path.write_text(
@@ -2177,8 +2171,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
     plan_path = Path(args.plan).expanduser()
     if not plan_path.is_file():
         raise UsageError(
-            f"verify run: no plan file {plan_path} — "
-            "run `theforge verify plan --out <file>` first"
+            f"verify run: no plan file {plan_path} — run `theforge verify plan --out <file>` first"
         )
     try:
         plan_doc = json.loads(plan_path.read_text(encoding="utf-8"))

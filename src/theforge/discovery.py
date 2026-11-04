@@ -377,9 +377,7 @@ def _parse_capability_manifest(
     except ContractError as exc:
         return None, str(exc)
     if manifest.specialist.id != expected_id:
-        return None, (
-            f"manifest specialist.id {manifest.specialist.id!r} != {expected_id!r}"
-        )
+        return None, (f"manifest specialist.id {manifest.specialist.id!r} != {expected_id!r}")
     return manifest, None
 
 
@@ -706,9 +704,7 @@ def discover_specialists(
     extra_paths = [*(Path(p) for p in configured_paths), *(p for _i, p in declared)]
     declared_ids = {i for i, _p in declared if i}
 
-    candidates = {
-        cid: _Candidate(forge_id=cid) for cid in specialists.catalog_ids(workspace_root)
-    }
+    candidates = {cid: _Candidate(forge_id=cid) for cid in specialists.catalog_ids(workspace_root)}
     for cid in declared_ids:
         candidates.setdefault(cid, _Candidate(forge_id=cid))
 
@@ -863,9 +859,7 @@ def discover_specialists(
     for forge_id in sorted(candidates):
         if spend("verification"):
             entries.append(
-                _finalize(
-                    candidates[forge_id], note="budget exhausted before verification"
-                )
+                _finalize(candidates[forge_id], note="budget exhausted before verification")
             )
             continue
         entries.append(
@@ -928,9 +922,7 @@ def _cache_path(cache_root: Path, context_digest: str) -> Path:
     return cache_root / f"report-{context_digest[:16]}.json"
 
 
-def _read_cache(
-    cache_root: Path, context_digest: str, ttl_s: float
-) -> DiscoveryReport | None:
+def _read_cache(cache_root: Path, context_digest: str, ttl_s: float) -> DiscoveryReport | None:
     path = _cache_path(cache_root, context_digest)
     try:
         if not path.is_file():
@@ -951,9 +943,7 @@ def _write_cache(cache_root: Path, report: DiscoveryReport, warnings: list[str])
     try:
         document = to_dict(report)
         if redact(document) != document:
-            warnings.append(
-                "discovery cache not written: the report contains secret-shaped values"
-            )
+            warnings.append("discovery cache not written: the report contains secret-shaped values")
             return
         cache_root.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
@@ -986,9 +976,9 @@ def _resolve(
     notes: list[str] = []
     limitations: list[str] = []
     version = "unknown"
-    receipt_version = (cand.cli_receipt or {}).get("version") or (
-        cand.install_manifest or {}
-    ).get("version")
+    receipt_version = (cand.cli_receipt or {}).get("version") or (cand.install_manifest or {}).get(
+        "version"
+    )
     if isinstance(receipt_version, str) and receipt_version:
         version = receipt_version
 
@@ -1000,10 +990,15 @@ def _resolve(
     verified = False
 
     # -- registry path (governed describe + health over Forge Protocol) ------
-    if cand.registry_entry is not None and cand.registry_entry.trust in (
-        "unverified",
-        "blocked",
-    ) and not (allow_unverified and cand.registry_entry.trust == "unverified"):
+    if (
+        cand.registry_entry is not None
+        and cand.registry_entry.trust
+        in (
+            "unverified",
+            "blocked",
+        )
+        and not (allow_unverified and cand.registry_entry.trust == "unverified")
+    ):
         entry_untrusted = True
         limitations.append(
             f"providers.toml entry is {cand.registry_entry.trust} — not executed "
@@ -1089,9 +1084,7 @@ def _resolve(
                 f"{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}"
             )
         elif satisfied is None and cand.dist.requires_python:
-            notes.append(
-                f"requires-python {cand.dist.requires_python!r} unparsed (not enforced)"
-            )
+            notes.append(f"requires-python {cand.dist.requires_python!r} unparsed (not enforced)")
         if checks["handshake"] == "SKIP" and any(
             group == "console_scripts" for group, _name, _v in cand.dist.entry_points
         ):
@@ -1146,9 +1139,7 @@ def _resolve(
     if probe and not verified and not budget.exhausted():
         argv = _version_argv(cand)
         if argv is not None:
-            ok, observed = _probe_version(
-                cand, min(PROBE_TIMEOUT_S, max(0.1, budget.remaining()))
-            )
+            ok, observed = _probe_version(cand, min(PROBE_TIMEOUT_S, max(0.1, budget.remaining())))
             if ok:
                 checks["handshake"] = "PASS"
                 ran_version_probe = True
@@ -1168,9 +1159,9 @@ def _resolve(
         notes.append("health: liveness via the version probe")
 
     # -- installed-but-broken ladder (mirrors specialists.collect evidence) ---
-    if (
-        cand.install_manifest is not None or cand.cli_receipt is not None
-    ) and checks["handshake"] != "PASS":
+    if (cand.install_manifest is not None or cand.cli_receipt is not None) and checks[
+        "handshake"
+    ] != "PASS":
         install_root = (cand.install_manifest or {}).get("install_root") or (
             cand.cli_receipt or {}
         ).get("venv")
@@ -1190,9 +1181,7 @@ def _resolve(
         # no health surface was declared or needed — recorded, not hidden.
         verified = True
     if checks["handshake"] == "PASS" and not (verified or ran_version_probe):
-        limitations.append(
-            "identity evidence is cached/metadata only — rerun with probe to verify"
-        )
+        limitations.append("identity evidence is cached/metadata only — rerun with probe to verify")
     if checks["manifest"] == "SKIP" and cand.evidence:
         limitations.append("no capability/agentic manifest found to parse")
 
@@ -1268,8 +1257,6 @@ def _final_state(
     return "NOT_INSTALLED"
 
 
-def discover_specialist(
-    forge_id: str, **kwargs: Any
-) -> SpecialistDiscovery | None:
+def discover_specialist(forge_id: str, **kwargs: Any) -> SpecialistDiscovery | None:
     """Resolve a single specialist; None when it is not in the catalog."""
     return discover_specialists(**kwargs).entry(forge_id)

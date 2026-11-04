@@ -43,7 +43,12 @@ REPO = Path(__file__).resolve().parents[1]
 DEFAULT_FIXTURES_DIR = REPO.parent / "spark-forge-aws" / "tests" / "graph" / "fixtures"
 
 sys.path.insert(0, str(REPO / "scripts"))
-from graphphysics_repro import VIEWPORT_HALF_PX, build_harness, extract_script, run_harness  # noqa: E402
+from graphphysics_repro import (  # noqa: E402
+    VIEWPORT_HALF_PX,
+    build_harness,
+    extract_script,
+    run_harness,
+)
 
 PERF_DRIVER = """\
 try {

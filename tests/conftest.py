@@ -15,6 +15,21 @@ from typing import Any
 
 import pytest
 
+# This repository intentionally keeps ``scripts/`` as a namespace directory.
+# In the FORJAS multi-repo workspace, a sibling checkout may expose a regular
+# package with the same name; pin the test import to this checkout so tests do
+# not depend on the order of sibling directories on ``sys.path``.
+_LOCAL_SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+_loaded_scripts = sys.modules.get("scripts")
+if (
+    _loaded_scripts is None
+    or Path(getattr(_loaded_scripts, "__path__", [""])[0]).resolve() != _LOCAL_SCRIPTS.resolve()
+):
+    _scripts_namespace = types.ModuleType("scripts")
+    _scripts_namespace.__path__ = [str(_LOCAL_SCRIPTS)]
+    _scripts_namespace.__package__ = "scripts"
+    sys.modules["scripts"] = _scripts_namespace
+
 # Windows-only module: tests simulate the msvcrt key path on every OS, so a
 # stub must exist for `import msvcrt`/`monkeypatch.setattr("msvcrt.getwch")`.
 if sys.platform != "win32":
@@ -33,6 +48,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_conformance.py": ("contract",),
     "test_contracts_base.py": ("contract",),
     "test_contracts_models.py": ("contract",),
+    "test_control_plane_manifest.py": ("contract",),
     "test_doctor.py": ("integration",),
     "test_e2e.py": ("e2e",),
     "test_echo_provider.py": ("integration", "security"),

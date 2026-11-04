@@ -175,9 +175,7 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
     from theforge import evals as evals_mod
     from theforge import knowledge as knowledge_mod
 
-    forge_json = kit._load_json(
-        Path(__file__).resolve().parents[1] / "forge.json", None
-    )
+    forge_json = kit._load_json(Path(__file__).resolve().parents[1] / "forge.json", None)
     if not isinstance(forge_json, dict):
         forge_json = kit._load_json(_REPO_ROOT / "forge.json", None)
     forge_json = forge_json if isinstance(forge_json, dict) else None
@@ -247,8 +245,7 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
                 "mode": "diagnostic-only",
                 "read_only": True,
                 "description": (
-                    "protocol.describe (§6.2) — observed provider protocol "
-                    "surfaces + fingerprints"
+                    "protocol.describe (§6.2) — observed provider protocol surfaces + fingerprints"
                 ),
             },
             {
@@ -482,8 +479,7 @@ def _register_context(ctx: kit.InstallContext, receipt: dict[str, Any]) -> None:
                 "id": "consumer-docs",
                 "status": "PASS",
                 "detail": (
-                    f"{docs['status']}: {len(docs['written'])} written, "
-                    f"{len(docs['kept'])} kept"
+                    f"{docs['status']}: {len(docs['written'])} written, {len(docs['kept'])} kept"
                 ),
             }
         )
@@ -535,8 +531,10 @@ def _docs_leftovers(root: Path) -> bool:
     if (root / fctx.CONTEXT_DIR).exists():
         return True
     needles = (
-        f"forge:{FORGE_ID}:", f"{fctx.DOC_TAG_ECOSYSTEM}:",
-        fctx.PROTOCOL_SENTINEL, *_LEGACY_DOC_TAGS,
+        f"forge:{FORGE_ID}:",
+        f"{fctx.DOC_TAG_ECOSYSTEM}:",
+        fctx.PROTOCOL_SENTINEL,
+        *_LEGACY_DOC_TAGS,
     )
     for name in _CONSUMER_DOCS:
         path = root / name
@@ -628,8 +626,11 @@ def repair(
             except fctx.ContextError as exc:
                 r["skipped"].append(f"context:{exc.kind}")
                 r.setdefault("checks", []).append(
-                    {"id": "context-registry", "status": "BLOCKED",
-                     "detail": f"{exc.kind}: {exc.detail}"}
+                    {
+                        "id": "context-registry",
+                        "status": "BLOCKED",
+                        "detail": f"{exc.kind}: {exc.detail}",
+                    }
                 )
         # Consumer docs: re-assert `forge:*` blocks from the manifests under
         # `.forge/context/`; a named refusal lands as a BLOCKED check.
@@ -640,16 +641,13 @@ def repair(
                 {
                     "id": "consumer-docs",
                     "status": "PASS",
-                    "detail": (
-                        f"{out_docs['status']} ({len(out_docs['written'])} writes)"
-                    ),
+                    "detail": (f"{out_docs['status']} ({len(out_docs['written'])} writes)"),
                 }
             )
         except fctx.ContextError as exc:
             r["skipped"].append(f"docs:{exc.kind}")
             r.setdefault("checks", []).append(
-                {"id": "consumer-docs", "status": "BLOCKED",
-                 "detail": f"{exc.kind}: {exc.detail}"}
+                {"id": "consumer-docs", "status": "BLOCKED", "detail": f"{exc.kind}: {exc.detail}"}
             )
         if lock.recovered:
             r.setdefault("checks", []).append(

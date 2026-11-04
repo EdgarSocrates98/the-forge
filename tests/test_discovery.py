@@ -240,9 +240,7 @@ def _manifest(forge_id: str, version: str = "1.0.0") -> ForgeManifest:
 
 def test_registry_record_verified_through_governed_transport(tmp_path, monkeypatch):
     _home(tmp_path, monkeypatch)
-    entry = ProviderEntry(
-        id="probe-forge", argv=["fake", "argv"], trust="trusted", source="user"
-    )
+    entry = ProviderEntry(id="probe-forge", argv=["fake", "argv"], trust="trusted", source="user")
     record = RegistryRecord(entry=entry, state="ready", manifest=_manifest("probe-forge"))
     report = _scan(
         registry=_FakeRegistry([entry], [record]),
@@ -258,9 +256,7 @@ def test_registry_record_verified_through_governed_transport(tmp_path, monkeypat
 
 def test_registry_ready_without_probe_stays_discovered(tmp_path, monkeypatch):
     _home(tmp_path, monkeypatch)
-    entry = ProviderEntry(
-        id="probe-forge", argv=["fake", "argv"], trust="trusted", source="user"
-    )
+    entry = ProviderEntry(id="probe-forge", argv=["fake", "argv"], trust="trusted", source="user")
     record = RegistryRecord(entry=entry, state="ready", manifest=_manifest("probe-forge"))
     report = _scan(registry=_FakeRegistry([entry], [record]), probe=False)
     found = report.entry("probe-forge")
@@ -272,9 +268,7 @@ def test_registry_ready_without_probe_stays_discovered(tmp_path, monkeypatch):
 
 def test_unreachable_registry_record_is_unavailable(tmp_path, monkeypatch):
     _home(tmp_path, monkeypatch)
-    entry = ProviderEntry(
-        id="ghost-forge", argv=["fake"], trust="trusted", source="user"
-    )
+    entry = ProviderEntry(id="ghost-forge", argv=["fake"], trust="trusted", source="user")
     record = RegistryRecord(entry=entry, state="unreachable", error="spawn failed")
     report = _scan(registry=_FakeRegistry([entry], [record]))
     assert report.entry("ghost-forge").state == "UNAVAILABLE"
@@ -319,8 +313,7 @@ def test_configured_path_with_spaces_needs_no_git(tmp_path, monkeypatch):
     assert entry is not None
     assert entry.state == "DISCOVERED"
     assert any(
-        e.source == "configured-path" and "dir with spaces" in (e.path or "")
-        for e in entry.sources
+        e.source == "configured-path" and "dir with spaces" in (e.path or "") for e in entry.sources
     )
 
 
@@ -330,9 +323,7 @@ def test_discovery_toml_declares_paths(tmp_path, monkeypatch, user_config_dir):
     root.mkdir(parents=True)
     _write_json(root / "forge.json", {"forge_id": "sentinel-forge"})
     toml_path = str(root).replace("\\", "\\\\")  # TOML basic-string escaping
-    (user_config_dir / "discovery.toml").write_text(
-        f'paths = ["{toml_path}"]\n', encoding="utf-8"
-    )
+    (user_config_dir / "discovery.toml").write_text(f'paths = ["{toml_path}"]\n', encoding="utf-8")
     paths = discovery.configured_specialist_paths(config_dir=user_config_dir)
     assert (None, root) in paths
     report = _scan(config_dir=user_config_dir)
@@ -342,9 +333,7 @@ def test_discovery_toml_declares_paths(tmp_path, monkeypatch, user_config_dir):
 def test_entry_point_group_discovers_unknown_specialist(tmp_path, monkeypatch):
     _home(tmp_path, monkeypatch)
     report = _scan(
-        entry_point_scan=lambda: [
-            ("theforge.specialists", "weird-forge", "weird_forge.spec:main")
-        ]
+        entry_point_scan=lambda: [("theforge.specialists", "weird-forge", "weird_forge.spec:main")]
     )
     entry = report.entry("weird-forge")
     assert entry is not None
@@ -459,9 +448,10 @@ def test_cache_serves_same_context_and_redacts_nothing(tmp_path, monkeypatch):
     cached = list(cache_dir.glob("discovery/report-*.json"))
     assert cached, "cache report was not written"
     # Mutate the source, keep the context — the cached report still answers.
-    _write_json(root / "forge.capabilities.json", CAPABILITY_DOC | {
-        "specialist": {"id": "data-sentinel", "version": "9.9.9", "domain": "x"}
-    })
+    _write_json(
+        root / "forge.capabilities.json",
+        CAPABILITY_DOC | {"specialist": {"id": "data-sentinel", "version": "9.9.9", "domain": "x"}},
+    )
     second = _scan(configured_paths=[root], use_cache=True, cache_dir=cache_dir)
     assert second.entry("data-sentinel").capability_manifest is None
     third = _scan(configured_paths=[root], use_cache=False, cache_dir=cache_dir)
