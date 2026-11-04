@@ -1,0 +1,17 @@
+{
+  "id": "lf-0007",
+  "result": "ACCEPTED",
+  "reviewed_at": "2026-11-04T12:00:00-03:00",
+  "findings": [],
+  "verification": [
+    "python scripts/cli_install_matrix.py --check",
+    "pytest -q tests/test_cli_tui_install_contract.py",
+    "data-sentinel-forge: pytest -q tests/e2e/test_install_matrix.py",
+    "forge-cli: focused TUI/JSON tests and npm run typecheck",
+    "forge-portal/scripts/release_dumps.py all --check"
+  ],
+  "notes": [
+    "Full forge-cli suite is environment-limited by Node child-process git ENOENT; focused surface tests pass.",
+    "forge-portal is intentionally web-only and is not counted as a CLI/TUI installer."
+  ]
+}
