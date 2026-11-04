@@ -1,0 +1,124 @@
+{
+  "cli": "forge-doctor-data",
+  "created_at": "2026-11-04T07:23:59Z",
+  "environment": {
+    "execution_environment": "windows",
+    "prefix": "FORGE_DOCTOR_DATA",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "shell": "windows",
+    "variables": {
+      "FORGE_DOCTOR_DATA_CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data\\.venv\\Scripts\\forge-doctor-data.exe",
+      "FORGE_DOCTOR_DATA_HOME": "E:\\projetos\\FORJAS\\forge-doctor-data",
+      "FORGE_DOCTOR_DATA_INSTALL_ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data",
+      "FORGE_DOCTOR_DATA_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\forge-doctor-data",
+      "FORGE_DOCTOR_DATA_PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data\\.venv\\Scripts\\python.exe",
+      "FORGE_DOCTOR_DATA_VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data\\.venv"
+    },
+    "windows_aliases": {
+      "FORGE-DOCTOR-DATA-CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data\\.venv\\Scripts\\forge-doctor-data.exe",
+      "FORGE-DOCTOR-DATA-HOME": "E:\\projetos\\FORJAS\\forge-doctor-data",
+      "FORGE-DOCTOR-DATA-INSTALL-ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data",
+      "FORGE-DOCTOR-DATA-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\forge-doctor-data",
+      "FORGE-DOCTOR-DATA-PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data\\.venv\\Scripts\\python.exe",
+      "FORGE-DOCTOR-DATA-VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data\\.venv"
+    }
+  },
+  "forge_id": "forge-doctor-data",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\copilot-shim\\copilot.EXE",
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_method": "git-checkout",
+  "install_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data",
+  "integrity": "unverified",
+  "is_git": true,
+  "managed_files": [
+    "C:\\Users\\edgar\\.forge\\installations\\.forge-doctor-data-bootstrap.json",
+    "C:\\Users\\edgar\\.forge\\installations\\forge-doctor-data.json",
+    "C:\\Users\\edgar\\.local\\bin\\forge-doctor-data",
+    "C:\\Users\\edgar\\.local\\bin\\forge-doctor-data.cmd",
+    "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data"
+  ],
+  "manifest_valid": true,
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.14.6"
+  },
+  "python": {
+    "executable": null,
+    "selection_reason": "PATH scan",
+    "source": "path",
+    "version": null
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "source_trust": "B",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\scenarios-2026-11-04-v2\\forge-bootstrap-forge-doctor-data-dry-run\\install-forge-doctor-data"
+}

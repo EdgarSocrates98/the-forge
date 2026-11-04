@@ -64,9 +64,13 @@ def runtime_python(repo: str, runtimes: Path | None) -> Path:
     candidates: list[Path] = []
     if runtimes:
         root = runtimes / repo
-        candidates.extend(
-            (root / ".venv" / "Scripts" / "python.exe", root / ".venv" / "bin" / "python")
-        )
+        for env_name in (".venv", "venv"):
+            candidates.extend(
+                (
+                    root / env_name / "Scripts" / "python.exe",
+                    root / env_name / "bin" / "python",
+                )
+            )
     candidates.append(Path(sys.executable))
     for candidate in candidates:
         if candidate.is_file():
@@ -77,8 +81,16 @@ def runtime_python(repo: str, runtimes: Path | None) -> Path:
 def runtime_entrypoint(repo: str, entrypoint: str, runtimes: Path | None) -> Path:
     if not runtimes:
         raise FileNotFoundError(f"runtime root required for CLI scenario {repo}")
-    root = runtimes / repo / ".venv"
-    candidates = [root / "Scripts" / f"{entrypoint}.exe", root / "bin" / entrypoint]
+    root = runtimes / repo
+    candidates = []
+    for env_name in (".venv", "venv"):
+        env_root = root / env_name
+        candidates.extend(
+            [
+                env_root / "Scripts" / f"{entrypoint}.exe",
+                env_root / "bin" / entrypoint,
+            ]
+        )
     for candidate in candidates:
         if candidate.is_file():
             return candidate

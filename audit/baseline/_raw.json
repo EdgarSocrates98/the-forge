@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-11-04T06:43:09.844035+00:00",
+  "generated_at": "2026-11-04T07:05:58.618483+00:00",
   "ref": "origin/main",
   "repositories": {
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
       "local_path": "E:\\projetos\\FORJAS\\api-forge",
       "ref": "origin/main",
-      "sha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+      "sha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/api-forge.git",
       "metadata": {
@@ -117,8 +117,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41623045424,
-          "headSha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+          "databaseId": 41787785584,
+          "headSha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
           "status": "completed"
         },
         "open_prs": 0,
@@ -139,8 +139,8 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41623045424,
-        "headSha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+        "databaseId": 41787785584,
+        "headSha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
         "status": "completed"
       },
       "tests": {
@@ -474,37 +474,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:41.969395+00:00"
+          "collected_at": "2026-11-04T07:05:29.834711+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:41.969411+00:00"
+          "collected_at": "2026-11-04T07:05:29.834729+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:41.969414+00:00"
+          "collected_at": "2026-11-04T07:05:29.834732+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:41.969416+00:00"
+          "collected_at": "2026-11-04T07:05:29.834734+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:41.969418+00:00"
+          "collected_at": "2026-11-04T07:05:29.834736+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:41.969420+00:00"
+          "collected_at": "2026-11-04T07:05:29.834738+00:00"
         }
       }
     },
@@ -967,37 +967,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:44.141468+00:00"
+          "collected_at": "2026-11-04T07:05:32.174331+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:44.141480+00:00"
+          "collected_at": "2026-11-04T07:05:32.174342+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:44.141482+00:00"
+          "collected_at": "2026-11-04T07:05:32.174344+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:44.141484+00:00"
+          "collected_at": "2026-11-04T07:05:32.174346+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:44.141486+00:00"
+          "collected_at": "2026-11-04T07:05:32.174348+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:44.141488+00:00"
+          "collected_at": "2026-11-04T07:05:32.174350+00:00"
         }
       }
     },
@@ -1284,37 +1284,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:46.236288+00:00"
+          "collected_at": "2026-11-04T07:05:34.387145+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:46.236298+00:00"
+          "collected_at": "2026-11-04T07:05:34.387155+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:46.236300+00:00"
+          "collected_at": "2026-11-04T07:05:34.387157+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:46.236302+00:00"
+          "collected_at": "2026-11-04T07:05:34.387159+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:46.236304+00:00"
+          "collected_at": "2026-11-04T07:05:34.387161+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:46.236306+00:00"
+          "collected_at": "2026-11-04T07:05:34.387163+00:00"
         }
       }
     },
@@ -1322,7 +1322,7 @@
       "repository": "EdgarSocrates98/forge-agent-bridge",
       "local_path": "E:\\projetos\\FORJAS\\forge-agent-bridge",
       "ref": "origin/main",
-      "sha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+      "sha": "06f7f13b49549ff53bfe58e1137fb17b0389ed3f",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/forge-agent-bridge.git",
       "metadata": {
@@ -1429,8 +1429,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41768133805,
-          "headSha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+          "databaseId": 41787784525,
+          "headSha": "06f7f13b49549ff53bfe58e1137fb17b0389ed3f",
           "status": "completed"
         },
         "open_prs": 0,
@@ -1451,8 +1451,8 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41768133805,
-        "headSha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+        "databaseId": 41787784525,
+        "headSha": "06f7f13b49549ff53bfe58e1137fb17b0389ed3f",
         "status": "completed"
       },
       "tests": {
@@ -1494,37 +1494,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:48.333790+00:00"
+          "collected_at": "2026-11-04T07:05:36.589515+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:48.333801+00:00"
+          "collected_at": "2026-11-04T07:05:36.589525+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:48.333803+00:00"
+          "collected_at": "2026-11-04T07:05:36.589528+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:48.333805+00:00"
+          "collected_at": "2026-11-04T07:05:36.589530+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:48.333807+00:00"
+          "collected_at": "2026-11-04T07:05:36.589531+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:48.333808+00:00"
+          "collected_at": "2026-11-04T07:05:36.589533+00:00"
         }
       }
     },
@@ -1710,37 +1710,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:50.591053+00:00"
+          "collected_at": "2026-11-04T07:05:38.772231+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:50.591063+00:00"
+          "collected_at": "2026-11-04T07:05:38.772242+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:50.591067+00:00"
+          "collected_at": "2026-11-04T07:05:38.772245+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:50.591069+00:00"
+          "collected_at": "2026-11-04T07:05:38.772247+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:50.591071+00:00"
+          "collected_at": "2026-11-04T07:05:38.772249+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:50.591073+00:00"
+          "collected_at": "2026-11-04T07:05:38.772251+00:00"
         }
       }
     },
@@ -1748,7 +1748,7 @@
       "repository": "EdgarSocrates98/forge-doctor-api",
       "local_path": "E:\\projetos\\FORJAS\\forge-doctor-api",
       "ref": "origin/main",
-      "sha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+      "sha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/forge-doctor-api.git",
       "metadata": {
@@ -1861,8 +1861,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41323796783,
-          "headSha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+          "databaseId": 41787786190,
+          "headSha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
           "status": "completed"
         },
         "open_prs": 7,
@@ -1883,8 +1883,8 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41323796783,
-        "headSha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+        "databaseId": 41787786190,
+        "headSha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
         "status": "completed"
       },
       "tests": {
@@ -2165,37 +2165,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:52.718768+00:00"
+          "collected_at": "2026-11-04T07:05:41.020094+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:52.718778+00:00"
+          "collected_at": "2026-11-04T07:05:41.020104+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:52.718781+00:00"
+          "collected_at": "2026-11-04T07:05:41.020106+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:52.718783+00:00"
+          "collected_at": "2026-11-04T07:05:41.020108+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:52.718785+00:00"
+          "collected_at": "2026-11-04T07:05:41.020110+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:52.718786+00:00"
+          "collected_at": "2026-11-04T07:05:41.020112+00:00"
         }
       }
     },
@@ -2203,7 +2203,7 @@
       "repository": "EdgarSocrates98/forge-doctor-data",
       "local_path": "E:\\projetos\\FORJAS\\forge-doctor-data",
       "ref": "origin/main",
-      "sha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+      "sha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/forge-doctor-data.git",
       "metadata": {
@@ -2308,8 +2308,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41445469904,
-          "headSha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+          "databaseId": 41787784131,
+          "headSha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
           "status": "completed"
         },
         "open_prs": 7,
@@ -2330,8 +2330,8 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41445469904,
-        "headSha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+        "databaseId": 41787784131,
+        "headSha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
         "status": "completed"
       },
       "tests": {
@@ -2594,37 +2594,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:54.854547+00:00"
+          "collected_at": "2026-11-04T07:05:43.205421+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:54.854558+00:00"
+          "collected_at": "2026-11-04T07:05:43.205434+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:54.854560+00:00"
+          "collected_at": "2026-11-04T07:05:43.205436+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:54.854562+00:00"
+          "collected_at": "2026-11-04T07:05:43.205438+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:54.854564+00:00"
+          "collected_at": "2026-11-04T07:05:43.205439+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:54.854566+00:00"
+          "collected_at": "2026-11-04T07:05:43.205441+00:00"
         }
       }
     },
@@ -2632,7 +2632,7 @@
       "repository": "EdgarSocrates98/forge-lens",
       "local_path": "E:\\projetos\\FORJAS\\forge-lens",
       "ref": "origin/main",
-      "sha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+      "sha": "f1a7792cba1c30fc5ed9f479bd0cf0665661a2c0",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/forge-lens.git",
       "metadata": {
@@ -2762,8 +2762,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41771727663,
-          "headSha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+          "databaseId": 41787785183,
+          "headSha": "f1a7792cba1c30fc5ed9f479bd0cf0665661a2c0",
           "status": "completed"
         },
         "open_prs": 13,
@@ -2783,8 +2783,8 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41771727663,
-        "headSha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+        "databaseId": 41787785183,
+        "headSha": "f1a7792cba1c30fc5ed9f479bd0cf0665661a2c0",
         "status": "completed"
       },
       "tests": {
@@ -2909,37 +2909,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:57.114904+00:00"
+          "collected_at": "2026-11-04T07:05:45.648110+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:57.114915+00:00"
+          "collected_at": "2026-11-04T07:05:45.648120+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:57.114917+00:00"
+          "collected_at": "2026-11-04T07:05:45.648122+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:57.114919+00:00"
+          "collected_at": "2026-11-04T07:05:45.648124+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:57.114921+00:00"
+          "collected_at": "2026-11-04T07:05:45.648126+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:57.114922+00:00"
+          "collected_at": "2026-11-04T07:05:45.648128+00:00"
         }
       }
     },
@@ -3136,37 +3136,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:42:59.145938+00:00"
+          "collected_at": "2026-11-04T07:05:47.874729+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:59.145949+00:00"
+          "collected_at": "2026-11-04T07:05:47.874739+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:59.145951+00:00"
+          "collected_at": "2026-11-04T07:05:47.874742+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:42:59.145953+00:00"
+          "collected_at": "2026-11-04T07:05:47.874743+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:59.145955+00:00"
+          "collected_at": "2026-11-04T07:05:47.874745+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:42:59.145957+00:00"
+          "collected_at": "2026-11-04T07:05:47.874747+00:00"
         }
       }
     },
@@ -3174,7 +3174,7 @@
       "repository": "EdgarSocrates98/platform-forge",
       "local_path": "E:\\projetos\\FORJAS\\platform-forge",
       "ref": "origin/main",
-      "sha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
+      "sha": "4281954fa0f64254db7c3adff8619df8896df634",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/platform-forge.git",
       "metadata": {
@@ -3279,10 +3279,10 @@
       "contract_versions": [],
       "github": {
         "latest_ci": {
-          "conclusion": "failure",
-          "databaseId": 41502233403,
-          "headSha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
-          "status": "completed"
+          "conclusion": "",
+          "databaseId": 41789796634,
+          "headSha": "4281954fa0f64254db7c3adff8619df8896df634",
+          "status": "in_progress"
         },
         "open_prs": 0,
         "latest_release": {
@@ -3301,10 +3301,10 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "failure",
-        "databaseId": 41502233403,
-        "headSha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
-        "status": "completed"
+        "conclusion": "",
+        "databaseId": 41789796634,
+        "headSha": "4281954fa0f64254db7c3adff8619df8896df634",
+        "status": "in_progress"
       },
       "tests": {
         "count": 277,
@@ -3612,37 +3612,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:43:01.315412+00:00"
+          "collected_at": "2026-11-04T07:05:49.991364+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:01.315422+00:00"
+          "collected_at": "2026-11-04T07:05:49.991375+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:01.315424+00:00"
+          "collected_at": "2026-11-04T07:05:49.991377+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:01.315427+00:00"
+          "collected_at": "2026-11-04T07:05:49.991380+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:01.315429+00:00"
+          "collected_at": "2026-11-04T07:05:49.991381+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:01.315431+00:00"
+          "collected_at": "2026-11-04T07:05:49.991383+00:00"
         }
       }
     },
@@ -3650,7 +3650,7 @@
       "repository": "EdgarSocrates98/product-forge",
       "local_path": "E:\\projetos\\FORJAS\\product-forge",
       "ref": "origin/main",
-      "sha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+      "sha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/product-forge.git",
       "metadata": {
@@ -3778,8 +3778,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41771846709,
-          "headSha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+          "databaseId": 41787784365,
+          "headSha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
           "status": "completed"
         },
         "open_prs": 0,
@@ -3800,8 +3800,8 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41771846709,
-        "headSha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+        "databaseId": 41787784365,
+        "headSha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
         "status": "completed"
       },
       "tests": {
@@ -3849,37 +3849,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:43:03.498189+00:00"
+          "collected_at": "2026-11-04T07:05:51.984470+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:03.498200+00:00"
+          "collected_at": "2026-11-04T07:05:51.984484+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:03.498202+00:00"
+          "collected_at": "2026-11-04T07:05:51.984487+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:03.498204+00:00"
+          "collected_at": "2026-11-04T07:05:51.984489+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:03.498205+00:00"
+          "collected_at": "2026-11-04T07:05:51.984490+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:03.498207+00:00"
+          "collected_at": "2026-11-04T07:05:51.984492+00:00"
         }
       }
     },
@@ -3887,7 +3887,7 @@
       "repository": "EdgarSocrates98/spark-forge-aws",
       "local_path": "E:\\projetos\\FORJAS\\spark-forge-aws",
       "ref": "origin/main",
-      "sha": "f0e5b280664039b421c2bf976336040ce803c7f8",
+      "sha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/spark-forge-aws.git",
       "metadata": {
@@ -4033,10 +4033,10 @@
       "contract_versions": [],
       "github": {
         "latest_ci": {
-          "conclusion": "failure",
-          "databaseId": 41623585874,
-          "headSha": "f0e5b280664039b421c2bf976336040ce803c7f8",
-          "status": "completed"
+          "conclusion": "",
+          "databaseId": 41787785515,
+          "headSha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
+          "status": "in_progress"
         },
         "open_prs": 0,
         "latest_release": {
@@ -4055,10 +4055,10 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "failure",
-        "databaseId": 41623585874,
-        "headSha": "f0e5b280664039b421c2bf976336040ce803c7f8",
-        "status": "completed"
+        "conclusion": "",
+        "databaseId": 41787785515,
+        "headSha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
+        "status": "in_progress"
       },
       "tests": {
         "count": 624,
@@ -4391,37 +4391,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:43:05.649964+00:00"
+          "collected_at": "2026-11-04T07:05:54.128491+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:05.649975+00:00"
+          "collected_at": "2026-11-04T07:05:54.128502+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:05.649977+00:00"
+          "collected_at": "2026-11-04T07:05:54.128504+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:05.649979+00:00"
+          "collected_at": "2026-11-04T07:05:54.128506+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:05.649981+00:00"
+          "collected_at": "2026-11-04T07:05:54.128508+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:05.649982+00:00"
+          "collected_at": "2026-11-04T07:05:54.128510+00:00"
         }
       }
     },
@@ -4429,7 +4429,7 @@
       "repository": "EdgarSocrates98/spark-forge-azure",
       "local_path": "E:\\projetos\\FORJAS\\spark-forge-azure",
       "ref": "origin/main",
-      "sha": "801f3fb49214acd5197e638879d2696245db90f6",
+      "sha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/spark-forge-azure.git",
       "metadata": {
@@ -4536,10 +4536,10 @@
       "contract_versions": [],
       "github": {
         "latest_ci": {
-          "conclusion": "success",
-          "databaseId": 41761446618,
-          "headSha": "801f3fb49214acd5197e638879d2696245db90f6",
-          "status": "completed"
+          "conclusion": "",
+          "databaseId": 41787785380,
+          "headSha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
+          "status": "in_progress"
         },
         "open_prs": 0,
         "latest_release": {
@@ -4558,10 +4558,10 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "success",
-        "databaseId": 41761446618,
-        "headSha": "801f3fb49214acd5197e638879d2696245db90f6",
-        "status": "completed"
+        "conclusion": "",
+        "databaseId": 41787785380,
+        "headSha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
+        "status": "in_progress"
       },
       "tests": {
         "count": 698,
@@ -4893,37 +4893,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:43:07.754233+00:00"
+          "collected_at": "2026-11-04T07:05:56.278990+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:07.754243+00:00"
+          "collected_at": "2026-11-04T07:05:56.279001+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:07.754245+00:00"
+          "collected_at": "2026-11-04T07:05:56.279003+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:07.754247+00:00"
+          "collected_at": "2026-11-04T07:05:56.279005+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:07.754249+00:00"
+          "collected_at": "2026-11-04T07:05:56.279007+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:07.754250+00:00"
+          "collected_at": "2026-11-04T07:05:56.279009+00:00"
         }
       }
     },
@@ -4931,7 +4931,7 @@
       "repository": "EdgarSocrates98/the-forge",
       "local_path": "E:\\projetos\\FORJAS\\the-forge",
       "ref": "origin/main",
-      "sha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
+      "sha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
       "default_branch": "origin/main",
       "remote": "https://github.com/EdgarSocrates98/the-forge.git",
       "metadata": {
@@ -5072,10 +5072,10 @@
       "contract_versions": [],
       "github": {
         "latest_ci": {
-          "conclusion": "success",
-          "databaseId": 41784506970,
-          "headSha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
-          "status": "completed"
+          "conclusion": "",
+          "databaseId": 41787827030,
+          "headSha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
+          "status": "in_progress"
         },
         "open_prs": 0,
         "latest_release": {
@@ -5094,13 +5094,13 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "success",
-        "databaseId": 41784506970,
-        "headSha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
-        "status": "completed"
+        "conclusion": "",
+        "databaseId": 41787827030,
+        "headSha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
+        "status": "in_progress"
       },
       "tests": {
-        "count": 403,
+        "count": 404,
         "paths": [
           "e2e/contract-snapshot.yaml",
           "e2e/evidence/apiforge-analyze.json",
@@ -5434,37 +5434,37 @@
           "ref": "origin/main",
           "source": "git",
           "command": "git rev-parse origin/main",
-          "collected_at": "2026-11-04T06:43:09.843976+00:00"
+          "collected_at": "2026-11-04T07:05:58.618423+00:00"
         },
         "tree": {
           "ref": "origin/main",
           "source": "git",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:09.843987+00:00"
+          "collected_at": "2026-11-04T07:05:58.618435+00:00"
         },
         "metadata": {
           "ref": "origin/main",
           "source": "pyproject.toml or package.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:09.843989+00:00"
+          "collected_at": "2026-11-04T07:05:58.618437+00:00"
         },
         "contracts": {
           "ref": "origin/main",
           "source": "forge*.json/.mcp.json",
           "command": "git show REF:FILE",
-          "collected_at": "2026-11-04T06:43:09.843991+00:00"
+          "collected_at": "2026-11-04T07:05:58.618438+00:00"
         },
         "tests": {
           "ref": "origin/main",
           "source": "git tree",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:09.843993+00:00"
+          "collected_at": "2026-11-04T07:05:58.618440+00:00"
         },
         "workflows": {
           "ref": "origin/main",
           "source": ".github/workflows",
           "command": "git ls-tree -r --name-only origin/main",
-          "collected_at": "2026-11-04T06:43:09.843995+00:00"
+          "collected_at": "2026-11-04T07:05:58.618442+00:00"
         }
       }
     }

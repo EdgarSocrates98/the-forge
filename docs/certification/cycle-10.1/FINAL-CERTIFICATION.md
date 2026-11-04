@@ -1,4 +1,9 @@
-# FINAL-CERTIFICATION — Cycle 10.1
+# FINAL-CERTIFICATION — Cycle 10.1 (historical)
+
+> Historical evidence only. This nine-repository Linux certification does not
+> certify the current 14-root execution of `prompt_evo_mastering_melhorias.md`.
+> See `audit/reports/prompt-evo-mastering-melhorias.md` for the current
+> decision, which remains `CERTIFICATION_BLOCKED` until fresh gates close.
 
 - **Date**: 2026-10-16 (UTC-3) · Executed on Linux · evidence in `docs/certification/cycle-10.1/`
 - **Classification**: **CONDITIONALLY_CERTIFIED**

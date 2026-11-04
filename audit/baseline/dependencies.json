@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-11-04T06:43:09.844035+00:00",
+  "generated_at": "2026-11-04T07:05:58.618483+00:00",
   "ref": "origin/main",
   "data": {
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "2d09bd58dfc520314aaab939562cfb06914546ff",
+      "sha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
       "dependencies": {
         "python_project_dependencies": [
           "Changelog",
@@ -241,7 +241,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:09.958553+00:00"
+        "collected_at": "2026-11-04T07:05:58.739634+00:00"
       }
     },
     "code-atlas-forge": {
@@ -278,7 +278,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.073123+00:00"
+        "collected_at": "2026-11-04T07:05:58.853396+00:00"
       }
     },
     "data-sentinel-forge": {
@@ -336,12 +336,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.188189+00:00"
+        "collected_at": "2026-11-04T07:05:58.969523+00:00"
       }
     },
     "forge-agent-bridge": {
       "repository": "EdgarSocrates98/forge-agent-bridge",
-      "sha": "2b396cfffb21f36d014e7bcf655e04905815eb4a",
+      "sha": "06f7f13b49549ff53bfe58e1137fb17b0389ed3f",
       "dependencies": {
         "python_project_dependencies": [
           "build-backend",
@@ -363,7 +363,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.300581+00:00"
+        "collected_at": "2026-11-04T07:05:59.083740+00:00"
       }
     },
     "forge-cli": {
@@ -420,12 +420,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.413454+00:00"
+        "collected_at": "2026-11-04T07:05:59.198649+00:00"
       }
     },
     "forge-doctor-api": {
       "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "b0589eafba74a57c90a015e5243cf79bb0277a15",
+      "sha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
       "dependencies": {
         "python_project_dependencies": [
           "Changelog",
@@ -500,12 +500,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.522715+00:00"
+        "collected_at": "2026-11-04T07:05:59.312830+00:00"
       }
     },
     "forge-doctor-data": {
       "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2",
+      "sha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
       "dependencies": {
         "python_project_dependencies": [
           "authors",
@@ -660,12 +660,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.632017+00:00"
+        "collected_at": "2026-11-04T07:05:59.423697+00:00"
       }
     },
     "forge-lens": {
       "repository": "EdgarSocrates98/forge-lens",
-      "sha": "ad3d69283d46b83eb61c58ce1f04f7d0fb35b87a",
+      "sha": "f1a7792cba1c30fc5ed9f479bd0cf0665661a2c0",
       "dependencies": {
         "python_project_dependencies": [
           "authors",
@@ -714,7 +714,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.743174+00:00"
+        "collected_at": "2026-11-04T07:05:59.537823+00:00"
       }
     },
     "forge-portal": {
@@ -759,12 +759,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.853497+00:00"
+        "collected_at": "2026-11-04T07:05:59.648414+00:00"
       }
     },
     "platform-forge": {
       "repository": "EdgarSocrates98/platform-forge",
-      "sha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8",
+      "sha": "4281954fa0f64254db7c3adff8619df8896df634",
       "dependencies": {
         "python_project_dependencies": [
           "PyYAML",
@@ -837,12 +837,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:10.962648+00:00"
+        "collected_at": "2026-11-04T07:05:59.760175+00:00"
       }
     },
     "product-forge": {
       "repository": "EdgarSocrates98/product-forge",
-      "sha": "254d74be0fa921829ce3e650fa47447bf8b592c1",
+      "sha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
       "dependencies": {
         "python_project_dependencies": [
           "authors",
@@ -877,12 +877,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:11.072256+00:00"
+        "collected_at": "2026-11-04T07:05:59.873085+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "f0e5b280664039b421c2bf976336040ce803c7f8",
+      "sha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
       "dependencies": {
         "python_project_dependencies": [
           "Changelog",
@@ -1111,12 +1111,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:11.198201+00:00"
+        "collected_at": "2026-11-04T07:06:00.001160+00:00"
       }
     },
     "spark-forge-azure": {
       "repository": "EdgarSocrates98/spark-forge-azure",
-      "sha": "801f3fb49214acd5197e638879d2696245db90f6",
+      "sha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
       "dependencies": {
         "python_project_dependencies": [
           "Changelog",
@@ -1324,12 +1324,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:11.319991+00:00"
+        "collected_at": "2026-11-04T07:06:00.127301+00:00"
       }
     },
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "c0e15f634cb237b8cdcb3b7cefff5b29c3784dde",
+      "sha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
       "dependencies": {
         "python_project_dependencies": [
           "Changelog",
@@ -1556,7 +1556,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml/package.json/git tree",
         "command": "git show REF:FILE; git ls-tree",
-        "collected_at": "2026-11-04T06:43:11.437432+00:00"
+        "collected_at": "2026-11-04T07:06:00.254017+00:00"
       }
     }
   }

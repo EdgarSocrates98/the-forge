@@ -1,17 +1,19 @@
 # Unresolved gaps
 
-| Priority | Gap | State | Closure |
+| Priority | Gap | State | Unlock condition |
 |---|---|---|---|
-| P1 | Six specialist PR checks | PASS | current specialist PR checks are green; AWS run 38502479687 is focused PR smoke, not full audit |
-| P1 | Central The Forge PR CI | PASS | run 38498576625 green: package jobs and Python matrix completed successfully |
-| P1 | Linux Bash real runtime | BLOCKED | provision WSL distribution or Linux runner |
-| P1 | CUA visual Windows Terminal evidence | BLOCKED | restore CUA kernel assets/permission profile |
-| P1 | Portal cross-forge runner | BLOCKED | current audit checkout has no reproducible runner; previous 7-forge/126-assertion PASS is historical and requires rerun |
-| P2 | Firefox/WebKit browser matrix | UNVERIFIED | run browsers when installed |
-| P2 | Actual PowerShell 7 persistent install | PASS | 7/7 real account installs passed |
-| P2 | External host MCP handshake (Claude/Devin/Copilot) | UNVERIFIED | execute on each installed host; local MCP protocol probes PASS |
-| P2 | Deep security scan | BLOCKED | provide managed filesystem permission profile |
-| P2 | Snyk findings | UNVERIFIED_FOR_RELEASE | upgrade fixture Pygments; assess Portal zod high |
-| P3 | Full The Forge regression after final branch merge | PASS | central CI matrix green; merge remains protected by required checks |
+| P0 | Current 14-root certification | BLOCKED | regenerate H0 after all current CI runs and reconcile every mandatory gate |
+| P1 | Linux Bash installer path | BLOCKED | run the same matrix on a real Linux runner or WSL distribution |
+| P1 | CUA visual Windows Terminal evidence | BLOCKED | restore the CUA kernel/assets and capture the required visual journey |
+| P1 | Portal cross-forge runner | UNVERIFIED | execute the real runner against the current checkout matrix; historical PASS is not reused |
+| P1 | External host MCP integrations | UNVERIFIED | execute Claude/Codex/Devin/Copilot host handshakes where installed |
+| P1 | Deep security/history scan | UNVERIFIED | run gitleaks/detect-secrets/Snyk or equivalent with the required environment |
+| P1 | Current CI closure | IN_FLIGHT | Platform Forge and Spark AWS runs must finish successfully; Portal was fixed and re-run |
+| P2 | Firefox/WebKit browser matrix | UNVERIFIED | install browsers and execute the matrix |
+| P2 | Open PR inventory | OBSERVED | merge or explicitly disposition open PRs before release approval |
+| P2 | Published artifact verification | PARTIAL | compare registry metadata/checksums after the existing duplicate-version release gates |
 
-Environment, external-host, Portal and dependency gaps prevent `CERTIFIED`. Final decision: `CERTIFICATION_BLOCKED`.
+The state is intentionally conservative. No missing runtime, unavailable host,
+or old evidence is converted into PASS. Until the P0/P1 rows are closed or
+formally accepted by the release owner, the final decision remains
+`CERTIFICATION_BLOCKED`.

@@ -1,4 +1,9 @@
-# Prompt Evo — auditoria de auditabilidade
+# Prompt Evo — auditoria de auditabilidade (historical)
+
+> This report is retained for provenance only. The current authoritative
+> report for `prompt_evo_mastering_melhorias.md` is
+> `prompt-evo-mastering-melhorias.md`; its 14-root baseline and current CI
+> state supersede the nine-root evidence below.
 
 Status: `CERTIFICATION_BLOCKED`
 
