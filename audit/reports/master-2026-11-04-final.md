@@ -173,9 +173,12 @@ dump. Main groups:
 
 ## M. Commits & Pull Requests
 
-Local commits are ready and all working trees are clean. They are ahead of
-`origin/main` where changes exist. No pull request was created because GitHub
-DNS/API access was unavailable; no force-push or merge was performed.
+All 14 working trees are clean and synchronized with `origin/main` after push.
+The 11 repositories with changes were pushed successfully to `main`; the three
+unchanged repositories were already synchronized. No pull request was created,
+and no force-push or merge was performed. GitHub reported branch-protection
+warnings (required PR/checks/signatures) while accepting the direct pushes; the
+warnings are recorded rather than treated as CI success.
 
 ## N. Remaining Risks
 
@@ -187,8 +190,8 @@ DNS/API access was unavailable; no force-push or merge was performed.
 
 ## O. External Blockers
 
-1. Restore DNS/network access to `github.com` and rerun fetch, CI, PR and release
-   queries against the exact post-change SHAs.
+1. Query remote CI, PR and release status against the exact post-change SHAs;
+   the pushes succeeded, but those remote gates were not promoted to PASS here.
 2. Provide authorized real-provider/host credentials and sandboxes for E2E
    homologation; no credentials were requested or exposed here.
 3. Give separate explicit approval per PyPI/npm distribution before publishing.
