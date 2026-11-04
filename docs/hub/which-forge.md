@@ -12,10 +12,14 @@ de cada ForgeKnowledge/v1). Em dúvida: `theforge knowledge list` e
 | Se o seu problema é… | Use | Não use para… |
 |---|---|---|
 | API design and review: REST, OpenAPI, AsyncAPI, GraphQL, gRPC; contract evolution, versioning and breaking-change analysis; API architecture, testing strategy and upstream fact intake (apiforge/upstream-facts/v1) | **api-forge** | Spark/data engineering — route to the spark-engineering family; platform/IDP or CI/CD estate analysis — route to platform-forge; independent verification of API |
+| symbol and dependency discovery; bounded context preparation; impact and graph analysis | **code-atlas-forge** | editing source files; executing untrusted repository code; provider authentication |
 | runtime failure diagnosis of Spark/Glue/EMR jobs from event logs, plans and run dumps; SQL and Spark physical-plan analysis; importing forge-doctor-data handoff bundles for independent diagnosis | **data-sentinel-forge** | producing Spark code or pipelines — it is a diagnostician, not a producer; static source review of a repository — route to spark-forge-* or forge-doctor-data; a |
+| session lifecycle; provider event replay; approval and cancellation handoff | **forge-agent-bridge** | choosing specialist capabilities; granting permissions; persisting bearer tokens in browser storage |
 | independent verification of api-forge results (api.verify); diagnosis of API contract findings from ApiHandoffBundle documents; reviewing evidence produced by the api-engineering family | **forge-doctor-api** | producing API designs or code — it is a doctor, not a producer; data/Spark verification — route to forge-doctor-data; any task where it would verify its own out |
 | independent verification of Spark/data engineering results (producer/verifier separation); diagnosis of data-pipeline findings from forge-contracts/1 documents; reviewing evidence bundles produced by the spark-engineerin | **forge-doctor-data** | producing Spark code or pipelines — it is a doctor, not a producer; API verification — route to forge-doctor-api; any task where it would verify its own output |
+| trace ingestion; failure and loop investigation; cost and evaluation analysis | **forge-lens** | authorizing mutations; choosing providers; deleting user observations by default |
 | repository/platform posture: GHA workflows, k8s manifests, IaC, GitOps state, service catalog; secrets scanning of a repo tree (with the staging boundary — see limitations); developer-experience / golden-path / SRE evide | **platform-forge** | Spark or cloud-data engineering — route to the spark-engineering family; API contract design — route to api-forge; verifying its own output — use an independent |
+| product context and discovery; requirements and roadmap analysis; read-only product analytics | **product-forge** | deploying production systems; mutating product state without approval; replacing the control plane governance |
 | PySpark/Spark jobs on AWS (Glue jobs, EMR steps, Spark on EC2/EKS); AWS lakehouse work: Lake Formation governance, Glue Catalog, Athena queries, S3 tables, Iceberg tables; Spark performance analysis (event logs, Spark UI | **spark-forge-aws** | Azure Spark estates — route to spark-forge-azure (no AWS↔Azure equivalence); API design or contract work — route to api-forge; platform/IDP engineering — route  |
 | Spark on Azure: Databricks jobs, Synapse Spark pools, Fabric Spark; Azure data estate: ADLS Gen2, Event Hubs, ADF pipelines, Unity Catalog governance; SDD-gated Spark change on Azure (sdd.check/sdd.status) | **spark-forge-azure** | AWS Spark estates — route to spark-forge-aws (Unity Catalog is not Lake Formation; ADF is not Glue); API contract work — route to api-forge; platform engineerin |
 
@@ -37,6 +41,22 @@ review this OpenAPI spec for breaking changes
 
 - pacote: `apiforge-af>=0.1,<0.2` · binário: `apiforge` · python `>=3.12,<3.13`
 
+### Code Atlas (`code-atlas-forge`)
+
+Read-only structural code intelligence for symbols, dependencies, context packs, graphs and impact analysis.
+
+**Intents declarados:** `find symbol`, `understand dependencies`, `prepare code context`, `analyze impact`, `explore code graph`
+
+**Compõe com:** `api-forge`, `platform-forge`, `product-forge`, `forge-lens`
+
+**Limite honesto:** UNADAPTED: the native Code Atlas runtime is read-only; context and impact remain advisory until a Forge Protocol adapter validates snapshots, health and authorization.
+
+```bash
+prepare bounded context for an API change
+```
+
+- pacote: `code-atlas-forge>=1.0.0,<2.0.0` · binário: `code-atlas` · python `>=3.12`
+
 ### Data Sentinel (`data-sentinel-forge`)
 
 Runtime/log diagnostics specialist for Spark and data platforms: event-log and failure diagnosis, Glue/EMR run inspection, SQL and plan analysis, doctor-bundle import. Diagnoses from runtime evidence; it is not an engineering producer.
@@ -51,7 +71,23 @@ Runtime/log diagnostics specialist for Spark and data platforms: event-log and f
 diagnose the glue job failure from its run logs
 ```
 
-- pacote: `data-sentinel-forge>=0.1.0,<0.2.0` · binário: `data-sentinel` · python `>=3.11`
+- pacote: `data-sentinel-forge>=0.4.0,<0.5.0` · binário: `data-sentinel` · python `>=3.11`
+
+### Forge Agent Bridge (`forge-agent-bridge`)
+
+Governed local session gateway for Claude Code, Codex CLI and Devin host integrations.
+
+**Intents declarados:** `open agent session`, `resume agent session`, `approve agent action`, `cancel agent session`
+
+**Compõe com:** `forge-lens`, `product-forge`
+
+**Limite honesto:** UNADAPTED: a provider session is not READY without real host authentication; bridge availability is separate from provider authorization until a Forge Protocol adapter is available.
+
+```bash
+link an approved run to a Codex session
+```
+
+- pacote: `forge-agent-bridge>=0.1.0,<0.2.0` · binário: `forge-bridge` · python `>=3.11`
 
 ### Forge Doctor API (`forge-doctor-api`)
 
@@ -85,6 +121,22 @@ independently verify the spark-forge-aws tuning result
 
 - pacote: `forge-doctor-data>=1.0.0rc1,<2.0.0` · binário: `forge-doctor-data` · python `>=3.11`
 
+### Forge Lens (`forge-lens`)
+
+Local-first trace, cost, failure and evaluation intelligence for agent executions.
+
+**Intents declarados:** `inspect agent trace`, `analyze execution failure`, `compare evaluations`, `analyze token cost`
+
+**Compõe com:** `product-forge`, `code-atlas-forge`, `data-sentinel-forge`, `forge-agent-bridge`
+
+**Limite honesto:** UNADAPTED: Lens is advisory observability; offline mode must not block the primary run and external credentials are not implied until a Forge Protocol adapter is available.
+
+```bash
+correlate a run with provider and capability
+```
+
+- pacote: `forge-lens>=0.1.0,<0.2.0` · binário: `forge-lens` · python `>=3.11`
+
 ### Platform Forge (`platform-forge`)
 
 Platform engineering specialist: IDP posture, golden paths, Kubernetes, GitOps, CI/CD (GitHub Actions), IaC, observability, SRE, service catalog and secrets scanning. Exposes nine analyze_* seams plus a native capability manifest.
@@ -100,6 +152,22 @@ analyze this repo's GitHub Actions posture
 ```
 
 - pacote: `platformforge>=0.1,<0.2` · binário: `platformforge` · python `>=3.10`
+
+### Product Forge (`product-forge`)
+
+Product management and product analytics specialist for context, requirements, roadmaps, SQL and governed product operations.
+
+**Intents declarados:** `product discovery`, `write requirements`, `review roadmap`, `validate product SQL`, `analyze product metrics`
+
+**Compõe com:** `code-atlas-forge`, `api-forge`, `data-sentinel-forge`, `forge-lens`
+
+**Limite honesto:** UNADAPTED: mutating product operations require explicit approval; runtime capability and provider health remain authoritative over this bootstrap package until a Forge Protocol adapter is available.
+
+```bash
+turn approved product proposal into requirements
+```
+
+- pacote: `product-forge>=0.1.0,<0.2.0` · binário: `productforge` · python `>=3.11`
 
 ### Spark Forge AWS (`spark-forge-aws`)
 

@@ -2,7 +2,7 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-10-22T06:31:01Z",
+  "generated_at": "2026-11-04T10:57:57Z",
   "generated_by": "doc_inventory.py/1",
   "command_count": 97,
   "commands": [
@@ -3187,7 +3187,7 @@
         {
           "name": "ARGV",
           "flags": [],
-          "required": true,
+          "required": false,
           "default": null,
           "choices": null,
           "positional": true,
@@ -5018,7 +5018,7 @@
         {
           "name": "PATH",
           "flags": [],
-          "required": true,
+          "required": false,
           "default": null,
           "choices": null,
           "positional": true,

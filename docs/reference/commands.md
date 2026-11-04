@@ -1588,7 +1588,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge provider check [root] [json] [debug] <ARGV>
+theforge provider check [root] [json] [debug] [ARGV]
 ```
 
 | argument/flag | required | default | description |
@@ -1596,7 +1596,7 @@ theforge provider check [root] [json] [debug] <ARGV>
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
-| `ARGV` | yes | — | the provider argv (prefix with -- when it starts with a dash) |
+| `ARGV` | no | — | the provider argv (prefix with -- when it starts with a dash) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -2300,7 +2300,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge verify plan [root] [json] [debug] <PATH> [risk] [NAME] [FILE]
+theforge verify plan [root] [json] [debug] [PATH] [risk] [NAME] [FILE]
 ```
 
 | argument/flag | required | default | description |
@@ -2308,7 +2308,7 @@ theforge verify plan [root] [json] [debug] <PATH> [risk] [NAME] [FILE]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
-| `PATH` | yes | — | changed paths to impact-select against (default: full sweep floor) |
+| `PATH` | no | — | changed paths to impact-select against (default: full sweep floor) |
 | `risk` | no | — | sweep floor: micro/low = impacted only, medium adds developer evals, high runs the whole catalog |
 | `NAME` | no | — | declare an input name the caller will supply at run time |
 | `FILE` | no | — | write the plan document for `verify run --plan <file>` |
