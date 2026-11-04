@@ -4,19 +4,19 @@
   "source_prompt": "prompt_evo_mastering_melhorias.md",
   "repositories": {
     "api-forge": {"branch": "main", "sha": "2d09bd58dfc520314aaab939562cfb06914546ff"},
-    "code-atlas-forge": {"branch": "main", "sha": "c7f1f2e6d5279dc6921cca2121c327c8100bd3ce"},
+    "code-atlas-forge": {"branch": "main", "sha": "7898e85"},
     "data-sentinel-forge": {"branch": "main", "sha": "c36942e0184c73c7350eacd2852f48c79191cc9b"},
-    "forge-agent-bridge": {"branch": "main", "sha": "a8c36601df1fd302b3724e3b62247489579a1b44"},
+    "forge-agent-bridge": {"branch": "main", "sha": "2b396cf"},
     "forge-cli": {"branch": "main", "sha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231"},
     "forge-doctor-api": {"branch": "main", "sha": "b0589eafba74a57c90a015e5243cf79bb0277a15"},
     "forge-doctor-data": {"branch": "main", "sha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2"},
-    "forge-lens": {"branch": "main", "sha": "27a146680e9b59e7cbf969358eac51a0ffa13c47"},
+    "forge-lens": {"branch": "main", "sha": "d845279"},
     "forge-portal": {"branch": "main", "sha": "f63d771602f2acd38446f95e885ac9877fecb8c8"},
     "platform-forge": {"branch": "main", "sha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8"},
-    "product-forge": {"branch": "main", "sha": "30aa2a2e4c82af42ae06a7634665f8ac1c7bd552"},
+    "product-forge": {"branch": "main", "sha": "eceb534"},
     "spark-forge-aws": {"branch": "main", "sha": "f0e5b280664039b421c2bf976336040ce803c7f8"},
     "spark-forge-azure": {"branch": "main", "sha": "801f3fb49214acd5197e638879d2696245db90f6"},
-    "the-forge": {"branch": "main", "sha": "e343fcab7de342d5b73564ac62125a0e1ea059ad"}
+    "the-forge": {"branch": "main", "sha": "139d10b"}
   },
-  "baseline_note": "SHAs are the heads inspected before this pass's source changes; generated graph indexes are not release artifacts."
+  "baseline_note": "SHAs are the heads after this pass's pushed source changes where applicable; generated graph indexes are not release artifacts."
 }
