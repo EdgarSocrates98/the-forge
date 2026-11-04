@@ -1,7 +1,7 @@
 # Master evolution prompt — fresh audit and execution record
 
-Date: 2026-11-04 (America/Sao_Paulo)  
-Source: `E:/projetos/FORJAS/prompt_evo_mastering_melhorias.md`  
+Date: 2026-11-04 (America/Sao_Paulo)
+Source: `E:/projetos/FORJAS/prompt_evo_mastering_melhorias.md`
 Method: repository inspection, code-graph orientation, targeted tests, package
 builds, Loop Factory dispatch/review, and explicit evidence classification.
 
