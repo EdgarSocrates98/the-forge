@@ -63,6 +63,7 @@ The strongest verified outcomes are:
 | FORGE-AUDIT-0008 | P1 | VERIFIED_FIXED | Path-based run/snapshot persistence allowed unsafe locations. | Platform/Doctor Data adversarial focused tests PASS. |
 | FORGE-AUDIT-0009 | P1 | VERIFIED_FIXED | Doctor API malformed frames could terminate the MCP transport. | 26 focused MCP tests PASS. |
 | FORGE-AUDIT-0010 | P1 | VERIFIED_FIXED | Product Forge vendored Portal production assets were out of parity. | Canonical `vendor.py` refresh; release dump `vendor-integrity [OK]`. |
+| FORGE-AUDIT-0011 | P1 | VERIFIED_FIXED | Compatibility catalog versions for Spark AWS, Forge CLI, Portal, Lens and Bridge were stale against current package manifests. | Catalog updated; `test_declared_versions_match_project_files` PASS. |
 
 ## D. Architectural Changes
 
@@ -142,11 +143,18 @@ verificado” in Portuguese and equivalent English states.
 | Performance | NOT_RUN | no new benchmark baseline |
 | Experience | PASS locally | TTY/TUI/approval and Portal focused journeys |
 | Release readiness | CONDITIONAL | artifacts are prepared; publication intentionally withheld |
-| Full The Forge pytest gate | IN_PROGRESS/NOT_FINAL | long-running full suite was not promoted to PASS before delivery |
+| Full The Forge pytest gate | FAIL | `5437 passed`, `23 skipped`, `186 deselected`, `19 failed`, `7 errors` in `3373.44s`; failures are recorded below |
 
 Explicit Windows Bridge failures: POSIX file-mode assertions are not portable
 to NTFS, and the fake provider spawn test requires a POSIX `sleep` executable.
 They remain visible failures, not skips or false passes.
+
+Full-suite failure clusters: seven Playwright Portal setup/navigation timeouts;
+Spark adapter tests could not exercise the expected specialist intake in the
+current Windows checkout environment; two registry tests observed `ready` where
+the legacy fixture expected `invalid`; and the compatibility test found
+`ecosystem-compatibility.json` declaring Spark AWS `0.7.1` while its current
+`pyproject.toml` declares `0.7.2`. These are open findings, not accepted gates.
 
 ## L. Changed Files
 

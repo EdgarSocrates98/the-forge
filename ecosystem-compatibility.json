@@ -30,7 +30,7 @@
     },
     {
       "component": "spark-forge-aws",
-      "version": "0.7.1",
+      "version": "0.7.2",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "sparkforge-aws"
@@ -58,14 +58,14 @@
     },
     {
       "component": "forge-cli",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "scheme": "semver",
       "source": "package.json",
       "distribution": "theforge-cli"
     },
     {
       "component": "forge-portal",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "scheme": "semver",
       "source": "package.json",
       "distribution": "forge-portal-app"
@@ -86,7 +86,7 @@
     },
     {
       "component": "forge-lens",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "forge-lens"
@@ -100,7 +100,7 @@
     },
     {
       "component": "forge-agent-bridge",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "scheme": "semver",
       "source": "pyproject.toml",
       "distribution": "forge-agent-bridge"
