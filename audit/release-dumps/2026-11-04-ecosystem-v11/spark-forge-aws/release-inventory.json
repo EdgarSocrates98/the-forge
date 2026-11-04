@@ -1,0 +1,40 @@
+{
+  "commit": {
+    "branch": "main",
+    "dirty": false,
+    "sha": "209c821a8efda59e82798413037569ab5a977010"
+  },
+  "generated_at_utc": "2026-11-04T14:40:38Z",
+  "latest_tag": "v0.7.1",
+  "mode": "safe",
+  "notes": [
+    "published_version is unresolved: registry lookups are outside the offline boundary; compare `commit.sha`/`package.version` against the registry record externally"
+  ],
+  "package": {
+    "ecosystem": "python",
+    "name": "sparkforge-aws",
+    "source_file": "pyproject.toml",
+    "version": "0.7.2"
+  },
+  "platform": {
+    "implementation": "CPython",
+    "python": "3.14.6",
+    "release": "11",
+    "system": "Windows"
+  },
+  "published_version": "unresolved",
+  "repository": {
+    "name": "spark-forge-aws",
+    "remote": "https://github.com/EdgarSocrates98/spark-forge-aws"
+  },
+  "schema": "forge/ReleaseInventory/1",
+  "tag": null,
+  "workflow_file": "publish-pypi.yml",
+  "workflow_path": ".github/workflows/publish-pypi.yml",
+  "workflows": [
+    "ci.yml",
+    "publish-pypi.yml",
+    "refresh-knowledge.yml",
+    "release.yml"
+  ]
+}
