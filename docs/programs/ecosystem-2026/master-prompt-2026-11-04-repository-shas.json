@@ -16,7 +16,7 @@
     "product-forge": {"branch": "main", "sha": "254d74b"},
     "spark-forge-aws": {"branch": "main", "sha": "f0e5b280664039b421c2bf976336040ce803c7f8"},
     "spark-forge-azure": {"branch": "main", "sha": "801f3fb49214acd5197e638879d2696245db90f6"},
-    "the-forge": {"branch": "main", "sha": "483fbd8"}
+    "the-forge": {"branch": "main", "sha": "24380e5"}
   },
   "baseline_note": "SHAs are the heads after this pass's pushed source changes where applicable; generated graph indexes are not release artifacts."
 }

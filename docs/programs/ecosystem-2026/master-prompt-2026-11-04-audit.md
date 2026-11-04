@@ -52,6 +52,9 @@ bounded corrections and refreshed the audit trail:
   The generator now excludes both ignored Loop Factory prompts and runs, the
   inventory/context artifacts were regenerated, and the focused documentation
   tests plus all 11 static gates pass again locally.
+- The corrected commit `24380e5` passed the complete The Forge CI matrix in
+  run `41782655867`: both package jobs and all Ubuntu/Windows offline test
+  jobs for Python 3.11, 3.12, 3.13 and 3.14 are green.
 
 ## Evidence classification
 
@@ -66,7 +69,7 @@ bounded corrections and refreshed the audit trail:
 | VERIFIED_FIXED | The Forge static gate had 19 formatter violations and Windows adoption checks decoded UTF-8 with the locale | Ruff formatter run, UTF-8 reads in `check_adoption.py`; static gates green |
 | VERIFIED_FIXED | The Forge builtin provider was unreachable from a Windows subprocess with sanitized env | `APPDATA`/`LOCALAPPDATA` allowlisted with credential filtering; `echo-forge` ready and CLI acceptance tests green |
 | VERIFIED_FIXED | Archiving Loop Factory specs left generated documentation indexes pointing at deleted active paths | `docs/INDEX.md`, `inventory.jsonl`, `context-map.jsonl`; focused doc tests green |
-| VERIFIED_FIXED | Documentation inventory was not reproducible in a clean checkout because ignored local Loop Factory prompts were inventoried | `scripts/docs/doc_manifest.py` excludes `factory/prompts/` and `factory/runs/`; clean-checkout failure reproduced in CI run `41780534145`; focused doc tests and static gates green after fix |
+| VERIFIED_FIXED | Documentation inventory was not reproducible in a clean checkout because ignored local Loop Factory prompts were inventoried | `scripts/docs/doc_manifest.py` excludes `factory/prompts/` and `factory/runs/`; clean-checkout failure reproduced in CI run `41780534145`; fixed at `24380e5`, with full CI run `41782655867` green |
 | CONFIRMED | The Forge full default pytest run is long in this Windows multi-repo workspace | Started with `python scripts/check_gates.py --pytest`; no failure was emitted before the local run was stopped; targeted contract/parity suite passed |
 | CONFIRMED | The Forge CLI tests have two baseline failures | `tests/test_cli.py`: missing `demo.echo` in fixture output and `doctor` returns 1 in the current environment |
 | BLOCKED | Loop Factory smoke's documented `.venv/Scripts/loop-factory` path is absent in The Forge venv | `lf-0001` verification; spec remains active |
