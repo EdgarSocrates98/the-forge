@@ -1,7 +1,7 @@
 {
   "schema": "forge/SpecialistAgenticManifest/v1",
   "provider": "the-forge",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "cli": "theforge",
   "cli_entry": "theforge.cli.main:main",
   "workflows": [

@@ -8,6 +8,16 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-11-04
+
+### Changed
+
+- Prepared the release after `0.7.3` was already present on PyPI.
+
+### 0.7.4 — Agentic Ecosystem
+
+- Carries the corrected release identity and the final Portal lifecycle hardening.
+
 ## [0.7.3] - 2026-11-04
 
 ### Fixed
