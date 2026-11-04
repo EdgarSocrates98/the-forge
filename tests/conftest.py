@@ -207,6 +207,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # planned by design (agentic-maintainability)
     "test_agentic_parity.py": ("integration",),
     "test_docs_consistency.py": ("unit",),
+    "test_collect_baseline.py": ("unit", "contract"),
     "test_root_hygiene.py": ("unit",),
     # cycle-3.1 surface identity / feature negotiation
     "test_surface_identity.py": ("unit", "contract", "integration"),

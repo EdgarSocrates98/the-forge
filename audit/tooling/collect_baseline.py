@@ -50,16 +50,20 @@ def run(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def gh_json(repo: str, *args: str) -> Any:
+def gh_json(repo: str, *args: str, timeout: float = 15.0) -> Any:
     """Read optional GitHub metadata without turning a missing CLI into PASS."""
-    result = subprocess.run(
-        ("gh", *args, "--repo", repo),
-        check=False,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        result = subprocess.run(
+            ("gh", *args, "--repo", repo),
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return {"status": "NOT_RUN", "reason": f"gh timed out after {timeout:g}s"}
     if result.returncode != 0:
         return {"status": "NOT_RUN", "reason": result.stderr.strip() or "gh failed"}
     try:
@@ -68,7 +72,19 @@ def gh_json(repo: str, *args: str) -> Any:
         return {"status": "NOT_RUN", "reason": "gh returned invalid JSON"}
 
 
-def github_summary(repo: str) -> dict[str, Any]:
+def github_summary(repo: str, *, enabled: bool = True) -> dict[str, Any]:
+    if not enabled:
+        return {
+            "status": "NOT_RUN",
+            "reason": "remote GitHub collection disabled by --offline",
+            "latest_ci": {"status": "NOT_RUN", "reason": "--offline"},
+            "open_prs": {"status": "NOT_RUN", "reason": "--offline"},
+            "latest_release": {"status": "NOT_RUN", "reason": "--offline"},
+            "provenance": {
+                "source": "not collected",
+                "commands": [],
+            },
+        }
     runs = gh_json(
         repo,
         "run",
@@ -168,9 +184,35 @@ def pyproject_summary(text: str) -> dict[str, Any]:
     return {
         "name": project_name,
         "version": version,
+        "version_source": "pyproject.toml" if version else None,
         "requires_python": python,
         "scripts": scripts,
     }
+
+
+def dynamic_version(
+    repo: Path, ref: str, pyproject: str, paths: list[str]
+) -> tuple[str | None, str | None]:
+    """Resolve common build-backend version indirections without importing code."""
+    candidates: list[str] = []
+    attr = re.search(r'version\s*=\s*\{\s*attr\s*=\s*["\']([^"\']+)', pyproject)
+    if attr:
+        module = attr.group(1).rsplit(".", 1)[0].replace(".", "/")
+        candidates.extend([f"src/{module}/__init__.py", f"{module}/__init__.py"])
+    path = re.search(
+        r'\[tool\.hatch\.version\][\s\S]*?^path\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE
+    )
+    if path:
+        candidates.append(path.group(1))
+    for candidate in candidates:
+        if candidate not in paths:
+            continue
+        source = show(repo, ref, candidate)
+        if source:
+            match = re.search(r'^__version__\s*=\s*["\']([^"\']+)', source, re.MULTILINE)
+            if match:
+                return match.group(1), f"{candidate}:__version__"
+    return None, None
 
 
 def package_summary(text: str) -> dict[str, Any]:
@@ -219,7 +261,13 @@ def dependencies(repo: Path, ref: str, paths: list[str]) -> dict[str, Any]:
     return result
 
 
-def collect(repo_name: str, repo: Path, ref: str) -> dict[str, Any]:
+def collect(
+    repo_name: str,
+    repo: Path,
+    ref: str,
+    *,
+    fetch_remote: bool = True,
+) -> dict[str, Any]:
     paths = tree(repo, ref)
     pyproject = show(repo, ref, "pyproject.toml")
     package = show(repo, ref, "package.json")
@@ -239,12 +287,17 @@ def collect(repo_name: str, repo: Path, ref: str) -> dict[str, Any]:
         if Path(path).name.lower() in {"install.sh", "install.ps1", "setup.sh", "setup.ps1"}
     ]
     metadata = pyproject_summary(pyproject) if pyproject else package_summary(package or "")
+    if pyproject and not metadata.get("version"):
+        resolved_version, version_source = dynamic_version(repo, ref, pyproject, paths)
+        if resolved_version:
+            metadata["version"] = resolved_version
+            metadata["version_source"] = version_source
     forge_contracts = {
         "forge_json": json_summary(forge),
         "forge_agentic_json": json_summary(agentic),
         "mcp_json": json_summary(mcp),
     }
-    github = github_summary(REPOSITORIES[repo_name])
+    github = github_summary(REPOSITORIES[repo_name], enabled=fetch_remote)
     return {
         "repository": REPOSITORIES[repo_name],
         "local_path": str(repo),
@@ -280,12 +333,20 @@ def main() -> int:
     parser.add_argument("--workspace-root", type=Path, required=True)
     parser.add_argument("--ref", default="origin/main")
     parser.add_argument("--output", type=Path, default=Path("audit/baseline"))
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="skip GitHub API collection and mark remote fields NOT_RUN",
+    )
     args = parser.parse_args()
     validate_ref(args.ref)
     workspace = args.workspace_root.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    collected = {name: collect(name, workspace / name, args.ref) for name in REPOSITORIES}
+    collected = {
+        name: collect(name, workspace / name, args.ref, fetch_remote=not args.offline)
+        for name in REPOSITORIES
+    }
     generated = datetime.now(UTC).isoformat()
     envelope = {
         "schema_version": "1.0",

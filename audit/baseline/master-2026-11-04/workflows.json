@@ -1,0 +1,223 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-11-04T16:07:02.412561+00:00",
+  "ref": "origin/main",
+  "data": {
+    "api-forge": {
+      "repository": "EdgarSocrates98/api-forge",
+      "sha": "974a680fb215ae5606319deeb2293cbcbe5434f3",
+      "workflows": [
+        ".github/workflows/api-change-control.yml",
+        ".github/workflows/change-control-pages.yml",
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:38.422636+00:00"
+      }
+    },
+    "code-atlas-forge": {
+      "repository": "EdgarSocrates98/code-atlas-forge",
+      "sha": "0fb9b2643265e75e24cce9901cbaf583c40bebd6",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:41.017653+00:00"
+      }
+    },
+    "data-sentinel-forge": {
+      "repository": "EdgarSocrates98/data-sentinel-forge",
+      "sha": "d4d6a1b5baafa0a768c58fed1221e165399101e5",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/frontend.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:42.855761+00:00"
+      }
+    },
+    "forge-agent-bridge": {
+      "repository": "EdgarSocrates98/forge-agent-bridge",
+      "sha": "874641c23002ef46b350cbe2969faa1f081d6ad2",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/provider-homologation.yml",
+        ".github/workflows/publish-pypi.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:45.018183+00:00"
+      }
+    },
+    "forge-cli": {
+      "repository": "EdgarSocrates98/forge-cli",
+      "sha": "c4679258625d3e1a531aa8ffc25f92969fd008cd",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-npm.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:46.748724+00:00"
+      }
+    },
+    "forge-doctor-api": {
+      "repository": "EdgarSocrates98/forge-doctor-api",
+      "sha": "d4804a5a876c59fd756777973f730b2e604c2dcf",
+      "workflows": [
+        ".github/workflows/doctor-scan.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/quality.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:48.279166+00:00"
+      }
+    },
+    "forge-doctor-data": {
+      "repository": "EdgarSocrates98/forge-doctor-data",
+      "sha": "0b19d58b60439aeaf557009cfa22da2301f864ce",
+      "workflows": [
+        ".github/workflows/benchmarks.yml",
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/release.yml",
+        ".github/workflows/security.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:49.847606+00:00"
+      }
+    },
+    "forge-lens": {
+      "repository": "EdgarSocrates98/forge-lens",
+      "sha": "191cd310aa3b7f4b50545034ff2c2952483671ee",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:51.169286+00:00"
+      }
+    },
+    "forge-portal": {
+      "repository": "EdgarSocrates98/forge-portal",
+      "sha": "5a934c4bb6eacc08df0d36d8f8a8d5a790165cef",
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:54.351558+00:00"
+      }
+    },
+    "platform-forge": {
+      "repository": "EdgarSocrates98/platform-forge",
+      "sha": "94c44ccef431cd48dbcf3e9e56e77081ac212112",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:55.626476+00:00"
+      }
+    },
+    "product-forge": {
+      "repository": "EdgarSocrates98/product-forge",
+      "sha": "bf3f5a4f5c917423591b852e9d26285700288ff7",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:56.918847+00:00"
+      }
+    },
+    "spark-forge-aws": {
+      "repository": "EdgarSocrates98/spark-forge-aws",
+      "sha": "209c821a8efda59e82798413037569ab5a977010",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/refresh-knowledge.yml",
+        ".github/workflows/release.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:06:59.130449+00:00"
+      }
+    },
+    "spark-forge-azure": {
+      "repository": "EdgarSocrates98/spark-forge-azure",
+      "sha": "fdb365536981d20bcd793ec140cf75c399e2efa0",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/scheduled.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:07:00.681776+00:00"
+      }
+    },
+    "the-forge": {
+      "repository": "EdgarSocrates98/the-forge",
+      "sha": "644b8d38bad90f7523f10c6187de70f7d4a016ac",
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/compat.yml",
+        ".github/workflows/ecosystem-real.yml",
+        ".github/workflows/provider-surface-drift.yml",
+        ".github/workflows/publish-pypi.yml",
+        ".github/workflows/release-compat.yml",
+        ".github/workflows/release-gates.yml"
+      ],
+      "provenance": {
+        "ref": "origin/main",
+        "source": ".github/workflows",
+        "command": "git ls-tree -r --name-only origin/main",
+        "collected_at": "2026-11-04T16:07:02.412505+00:00"
+      }
+    }
+  }
+}
