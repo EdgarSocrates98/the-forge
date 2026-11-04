@@ -118,7 +118,10 @@ def _walk_md(repo: Path) -> list[Path]:
         rel = p.relative_to(repo)
         if any(part in EXCLUDE_DIRS or part.startswith(_EXCLUDE_PREFIXES) for part in rel.parts):
             continue
-        if rel.parts[:2] == ("factory", "runs"):  # gitignored local run evidence
+        if rel.parts[:2] in {
+            ("factory", "prompts"),
+            ("factory", "runs"),
+        }:  # gitignored local Loop Factory artifacts
             continue
         out.append(p)
     return out
