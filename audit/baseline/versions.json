@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-11-04T08:02:36.366715+00:00",
+  "generated_at": "2026-11-04T10:39:15.442955+00:00",
   "ref": "origin/main",
   "data": {
     "api-forge": {
@@ -65,7 +65,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:06.838023+00:00"
+        "collected_at": "2026-11-04T10:38:43.247393+00:00"
       }
     },
     "code-atlas-forge": {
@@ -115,7 +115,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:09.191183+00:00"
+        "collected_at": "2026-11-04T10:38:45.779069+00:00"
       }
     },
     "data-sentinel-forge": {
@@ -172,7 +172,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:11.368415+00:00"
+        "collected_at": "2026-11-04T10:38:48.160838+00:00"
       }
     },
     "forge-agent-bridge": {
@@ -224,7 +224,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:13.540495+00:00"
+        "collected_at": "2026-11-04T10:38:50.485646+00:00"
       }
     },
     "forge-cli": {
@@ -296,7 +296,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:15.851339+00:00"
+        "collected_at": "2026-11-04T10:38:53.197379+00:00"
       }
     },
     "forge-doctor-api": {
@@ -353,7 +353,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:17.677271+00:00"
+        "collected_at": "2026-11-04T10:38:55.256077+00:00"
       }
     },
     "forge-doctor-data": {
@@ -414,7 +414,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:19.840017+00:00"
+        "collected_at": "2026-11-04T10:38:57.906358+00:00"
       }
     },
     "forge-lens": {
@@ -464,7 +464,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:22.323215+00:00"
+        "collected_at": "2026-11-04T10:39:00.417032+00:00"
       }
     },
     "forge-portal": {
@@ -522,7 +522,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:24.499997+00:00"
+        "collected_at": "2026-11-04T10:39:02.815324+00:00"
       }
     },
     "platform-forge": {
@@ -586,7 +586,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:26.791084+00:00"
+        "collected_at": "2026-11-04T10:39:05.285043+00:00"
       }
     },
     "product-forge": {
@@ -638,12 +638,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:29.625338+00:00"
+        "collected_at": "2026-11-04T10:39:07.674078+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
+      "sha": "d697bb5af496f372c3881051d52351d968748e59",
       "metadata": {
         "name": "sparkforge-aws",
         "version": "0.7.1",
@@ -671,10 +671,10 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "",
-          "databaseId": 41794959060,
-          "headSha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
-          "status": "in_progress"
+          "conclusion": "success",
+          "databaseId": 41807209339,
+          "headSha": "d697bb5af496f372c3881051d52351d968748e59",
+          "status": "completed"
         },
         "open_prs": 0,
         "latest_release": {
@@ -693,16 +693,16 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "",
-        "databaseId": 41794959060,
-        "headSha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
-        "status": "in_progress"
+        "conclusion": "success",
+        "databaseId": 41807209339,
+        "headSha": "d697bb5af496f372c3881051d52351d968748e59",
+        "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:31.860761+00:00"
+        "collected_at": "2026-11-04T10:39:10.188385+00:00"
       }
     },
     "spark-forge-azure": {
@@ -765,12 +765,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:34.066905+00:00"
+        "collected_at": "2026-11-04T10:39:12.985142+00:00"
       }
     },
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
+      "sha": "8520a49cfc929a971c4662795cded3e5be7b8aa3",
       "metadata": {
         "name": "theforge-core",
         "version": "0.7.2",
@@ -800,8 +800,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41793165231,
-          "headSha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
+          "databaseId": 41796552377,
+          "headSha": "8520a49cfc929a971c4662795cded3e5be7b8aa3",
           "status": "completed"
         },
         "open_prs": 0,
@@ -822,15 +822,15 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41793165231,
-        "headSha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
+        "databaseId": 41796552377,
+        "headSha": "8520a49cfc929a971c4662795cded3e5be7b8aa3",
         "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T08:02:36.366665+00:00"
+        "collected_at": "2026-11-04T10:39:15.442904+00:00"
       }
     }
   }

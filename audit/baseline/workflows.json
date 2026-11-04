@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-11-04T08:02:36.366715+00:00",
+  "generated_at": "2026-11-04T10:39:15.442955+00:00",
   "ref": "origin/main",
   "data": {
     "api-forge": {
@@ -16,7 +16,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:06.838029+00:00"
+        "collected_at": "2026-11-04T10:38:43.247400+00:00"
       }
     },
     "code-atlas-forge": {
@@ -31,7 +31,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:09.191189+00:00"
+        "collected_at": "2026-11-04T10:38:45.779075+00:00"
       }
     },
     "data-sentinel-forge": {
@@ -47,7 +47,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:11.368420+00:00"
+        "collected_at": "2026-11-04T10:38:48.160843+00:00"
       }
     },
     "forge-agent-bridge": {
@@ -62,7 +62,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:13.540501+00:00"
+        "collected_at": "2026-11-04T10:38:50.485651+00:00"
       }
     },
     "forge-cli": {
@@ -77,7 +77,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:15.851344+00:00"
+        "collected_at": "2026-11-04T10:38:53.197384+00:00"
       }
     },
     "forge-doctor-api": {
@@ -93,7 +93,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:17.677276+00:00"
+        "collected_at": "2026-11-04T10:38:55.256082+00:00"
       }
     },
     "forge-doctor-data": {
@@ -110,7 +110,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:19.840022+00:00"
+        "collected_at": "2026-11-04T10:38:57.906363+00:00"
       }
     },
     "forge-lens": {
@@ -125,7 +125,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:22.323221+00:00"
+        "collected_at": "2026-11-04T10:39:00.417037+00:00"
       }
     },
     "forge-portal": {
@@ -138,7 +138,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:24.500002+00:00"
+        "collected_at": "2026-11-04T10:39:02.815330+00:00"
       }
     },
     "platform-forge": {
@@ -152,7 +152,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:26.791090+00:00"
+        "collected_at": "2026-11-04T10:39:05.285049+00:00"
       }
     },
     "product-forge": {
@@ -166,12 +166,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:29.625344+00:00"
+        "collected_at": "2026-11-04T10:39:07.674083+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
+      "sha": "d697bb5af496f372c3881051d52351d968748e59",
       "workflows": [
         ".github/workflows/ci.yml",
         ".github/workflows/publish-pypi.yml",
@@ -182,7 +182,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:31.860766+00:00"
+        "collected_at": "2026-11-04T10:39:10.188390+00:00"
       }
     },
     "spark-forge-azure": {
@@ -197,12 +197,12 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:34.066911+00:00"
+        "collected_at": "2026-11-04T10:39:12.985147+00:00"
       }
     },
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
+      "sha": "8520a49cfc929a971c4662795cded3e5be7b8aa3",
       "workflows": [
         ".github/workflows/ci.yml",
         ".github/workflows/compat.yml",
@@ -216,7 +216,7 @@
         "ref": "origin/main",
         "source": ".github/workflows",
         "command": "git ls-tree -r --name-only origin/main",
-        "collected_at": "2026-11-04T08:02:36.366671+00:00"
+        "collected_at": "2026-11-04T10:39:15.442909+00:00"
       }
     }
   }
