@@ -10,13 +10,13 @@
     "forge-cli": {"branch": "main", "sha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231"},
     "forge-doctor-api": {"branch": "main", "sha": "b0589eafba74a57c90a015e5243cf79bb0277a15"},
     "forge-doctor-data": {"branch": "main", "sha": "f6e7a6a3e8af2f019bcaedb8eecfd5b1ed12d8e2"},
-    "forge-lens": {"branch": "main", "sha": "d845279"},
+    "forge-lens": {"branch": "main", "sha": "ad3d692"},
     "forge-portal": {"branch": "main", "sha": "f63d771602f2acd38446f95e885ac9877fecb8c8"},
     "platform-forge": {"branch": "main", "sha": "5d24f62bdd3b97819a0e6d5a333c719d74003ee8"},
-    "product-forge": {"branch": "main", "sha": "eceb534"},
+    "product-forge": {"branch": "main", "sha": "254d74b"},
     "spark-forge-aws": {"branch": "main", "sha": "f0e5b280664039b421c2bf976336040ce803c7f8"},
     "spark-forge-azure": {"branch": "main", "sha": "801f3fb49214acd5197e638879d2696245db90f6"},
-    "the-forge": {"branch": "main", "sha": "139d10b"}
+    "the-forge": {"branch": "main", "sha": "adbeed3"}
   },
   "baseline_note": "SHAs are the heads after this pass's pushed source changes where applicable; generated graph indexes are not release artifacts."
 }

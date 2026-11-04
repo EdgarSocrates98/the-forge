@@ -39,6 +39,9 @@ bounded corrections and refreshed the audit trail:
   `factory/specs/archive/2026/control-plane-agentic-manifest.md`.
 - The changed repositories were pushed to their `main` branches. No package
   version was bumped solely to bypass an existing public release.
+- The Windows provider environment correction also closed Loop Factory
+  `lf-0002`, `lf-0004`, and `lf-0006`; each spec's acceptance tests passed and
+  the spec was moved from `active/` to `archive/2026/`.
 
 ## Evidence classification
 
@@ -51,11 +54,12 @@ bounded corrections and refreshed the audit trail:
 | VERIFIED_FIXED | Forge Lens help crashed under Windows cp1252 output | UTF-8 stream reconfiguration plus subprocess regression test; `--help` exits 0 |
 | VERIFIED_FIXED | Forge Agent Bridge lacked agentic/package parity and its lockfile was stale | manifest package copies, parity tests, lockfile update, wheel build |
 | VERIFIED_FIXED | The Forge static gate had 19 formatter violations and Windows adoption checks decoded UTF-8 with the locale | Ruff formatter run, UTF-8 reads in `check_adoption.py`; static gates green |
+| VERIFIED_FIXED | The Forge builtin provider was unreachable from a Windows subprocess with sanitized env | `APPDATA`/`LOCALAPPDATA` allowlisted with credential filtering; `echo-forge` ready and CLI acceptance tests green |
 | CONFIRMED | The Forge full default pytest run is long in this Windows multi-repo workspace | Started with `python scripts/check_gates.py --pytest`; no failure was emitted before the local run was stopped; targeted contract/parity suite passed |
 | CONFIRMED | The Forge CLI tests have two baseline failures | `tests/test_cli.py`: missing `demo.echo` in fixture output and `doctor` returns 1 in the current environment |
 | BLOCKED | Loop Factory smoke's documented `.venv/Scripts/loop-factory` path is absent in The Forge venv | `lf-0001` verification; spec remains active |
 | NOT_TESTED | Real Claude/Codex/Devin provider homologation, cloud sandboxes, Linux/macOS/WSL corporate matrix | Requires external hosts/accounts/platforms; no claim made |
-| VERIFIED_FIXED | Public release workflows were exercised safely | Product Forge and Code Atlas PyPI runs stopped at duplicate-version gates; Forge CLI npm run stopped at its duplicate-version gate; no overwrite occurred |
+| VERIFIED_FIXED | Public release workflows were exercised safely | Product Forge run `41765856521`, Code Atlas run `41765856286`, and Forge CLI run `41765856797` stopped at duplicate-version gates; no overwrite occurred |
 | NOT_TESTED | A new public publication with a new version | No version bump or owner release decision was authorized; duplicate-version gates prevented unsafe republishing |
 
 ## Loop Factory state
@@ -63,15 +67,13 @@ bounded corrections and refreshed the audit trail:
 The following The Forge specs were inspected:
 
 - `lf-0001`: active; blocked by missing canonical local CLI path.
-- `lf-0002`: active; targeted install tests passed, global gate blocked by
-  format drift.
+- `lf-0002`: archived after install contract tests and all 11 static gates passed.
 - `lf-0003`: active; grill gate incomplete; not dispatched.
-- `lf-0004`: active; grill complete, but CLI suite has two failing baseline
-  assertions; not archived.
+- `lf-0004`: archived after family onboarding, CLI, portal and UI acceptance
+  tests passed.
 - `lf-0005`: active; grill gate incomplete; not dispatched.
-- `lf-0006`: active; targeted provider/registry tests were started, but the
-  global gate remains blocked by the same pre-existing format drift; not
-  archived.
+- `lf-0006`: archived after provider sync, registry, install, CLI/UI tests and
+  all 11 static gates passed.
 
 The new `control-plane-agentic-manifest` spec was dispatched, implemented,
 reviewed against its acceptance commands, and archived as `done` after the
@@ -91,12 +93,9 @@ it is not a release by itself.
 
 ## Next bounded work
 
-1. Rerun all `lf-0002`/`lf-0006` verification commands against the now-clean
-   formatter gate.
-2. Fix the two concrete `lf-0004` CLI regressions with a separate reviewed spec.
-3. Complete the grill decisions for `lf-0003` and `lf-0005` before dispatch.
-4. Re-run the full 13-repository packaging/interoperability matrix (plus the
+1. Complete the grill decisions for `lf-0003` and `lf-0005` before dispatch.
+2. Re-run the full 13-repository packaging/interoperability matrix (plus the
    Portal integration surface) against the
    SHAs in `master-prompt-2026-11-04-repository-shas.json`.
-5. Only after those gates are green, use the repository's release workflows for
+3. Only after those gates are green, use the repository's release workflows for
    PyPI/npm as applicable.
