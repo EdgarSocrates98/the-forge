@@ -487,9 +487,7 @@ class TheForgePortal(fp.PortalAdapter):
                 from theforge.state import find_forge_dir
 
                 registry = Registry(find_forge_dir(self._root))
-                registered = {
-                    r.entry.id for r in registry.records() if r.state in ("ok", "degraded")
-                }
+                registered = {r.entry.id for r in registry.records() if r.state == "ready"}
             except Exception:  # noqa: BLE001 — no .forge dir is a valid state
                 registered = set()
             views = specialists.collect(

@@ -224,6 +224,52 @@ def test_federation_reports_catalog_and_registry(target: Path) -> None:
     assert fed["summary"]["catalog"] == len(fed["specialists"])
 
 
+def test_federation_promotes_ready_registry_record_to_registered(
+    target: Path, _isolate_home: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """RegistryRecord uses ``ready``; stale lifecycle names must not hide registration."""
+    install_root = _isolate_home / ".forge" / "installs" / "api-forge"
+    install_root.mkdir(parents=True)
+    (_isolate_home / ".forge" / "installations" / "api-forge.json").parent.mkdir(
+        parents=True, exist_ok=True
+    )
+    (_isolate_home / ".forge" / "installations" / "api-forge.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/InstallationManifest/v1",
+                "forge_id": "api-forge",
+                "package": "api_forge",
+                "distribution": "api-forge",
+                "cli": {"name": "python", "version_cmd": [sys.executable, "--version"]},
+                "install_root": str(install_root),
+                "version": "0.3.1",
+                "installed_at": "2026-01-01T00:00:00Z",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class _Record:
+        state = "ready"
+
+        class _Entry:
+            id = "api-forge"
+
+        entry = _Entry()
+
+    class _Registry:
+        def __init__(self, _forge_dir: Path | None) -> None:
+            pass
+
+        def records(self) -> list[_Record]:
+            return [_Record()]
+
+    monkeypatch.setattr("theforge.registry.Registry", _Registry)
+    rows = TheForgePortal(target)._specialists_rows()
+    row = next(item for item in rows if item["provider"] == "api-forge")
+    assert row["state"] == "REGISTERED"
+
+
 def _seed_registry(home: Path, *forge_ids: str) -> None:
     """A minimal `forge/InstallationManifest/v1` per forge — what the real
     bootstrap writes into ~/.forge/installations/."""
