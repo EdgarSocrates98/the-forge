@@ -16,7 +16,7 @@ _Start here — installation, first run, tutorials._
 
 ### factory/
 
-- [Grill Gate](../factory/specs/active/lf-0004-family-onboarding-router.md)
+- [Grill Gate — archived](../factory/specs/archive/2026/lf-0004-family-onboarding-router.md) `DONE`
 
 ### graph-studio/
 
@@ -210,7 +210,7 @@ _Command, contract, schema and tool references._
 
 ### factory/
 
-- [Grill Gate](../factory/specs/active/lf-0002-install-contract-wizard.md)
+- [Grill Gate — archived](../factory/specs/archive/2026/lf-0002-install-contract-wizard.md) `DONE`
 
 ### graph-studio/
 
@@ -589,7 +589,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Certificação final + relatório obrigatório §16](../factory/specs/active/cyc101-10-final-certification.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
-- [Grill Gate](../factory/specs/active/lf-0006-zero-touch-router.md) `UNKNOWN`
+- [Grill Gate — archived](../factory/specs/archive/2026/lf-0006-zero-touch-router.md) `DONE`
 - [Baseline do programa ecosystem-2026](../factory/specs/archive/2026/cyc0-01-program-baseline.md) `HISTORICAL`
 - [Onboarding, Getting Started e Golden Paths](../factory/specs/archive/2026/cyc10-01-onboarding-golden-paths.md) `HISTORICAL`
 - [Documentação unificada, posicionamento e GitHub Experience](../factory/specs/archive/2026/cyc10-02-docs-github.md) `HISTORICAL`
