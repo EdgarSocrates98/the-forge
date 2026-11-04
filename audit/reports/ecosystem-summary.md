@@ -16,15 +16,16 @@ Known current facts:
 
 - The Forge installer matrix: 30 PASS, 10 BLOCKED because Linux Bash is not
   available on this Windows host.
-- The Forge CI is green for the installer-fix commit.
-- Product Forge, Code Atlas, Forge Lens, Forge Agent Bridge, API Forge,
-  Doctor API, Doctor Data and Spark Azure have green evidence at their
-  recorded SHAs; the final baseline must be regenerated after the remaining
-  in-flight runs.
-- Platform Forge, Forge Portal and Spark AWS require their current CI runs to
-  finish before certification status can be decided.
+- The Forge, Platform Forge, Forge Portal, Product Forge, Code Atlas, Forge
+  Lens, Forge Agent Bridge, API Forge, Doctor Data and Spark Azure have green
+  CI evidence at their recorded SHAs.
+- Doctor API and Spark AWS are the only current CI records still in flight;
+  their conclusions must be captured before the final certification snapshot.
 - Security deep scans and external-host integrations remain UNVERIFIED or
   BLOCKED where the required tool/runtime is absent.
+
+Fresh local evidence also includes 19/19 deterministic scenarios, 6/6 MCP
+handshakes and PASS contract validation.
 
 See `prompt-evo-mastering-melhorias.md` for the item-by-item gate matrix and
 `unresolved-gaps.md` for the explicit unlock conditions.

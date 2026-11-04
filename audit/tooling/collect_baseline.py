@@ -73,6 +73,8 @@ def github_summary(repo: str) -> dict[str, Any]:
         repo,
         "run",
         "list",
+        "--workflow",
+        "ci.yml",
         "--branch",
         "main",
         "--limit",
@@ -90,7 +92,7 @@ def github_summary(repo: str) -> dict[str, Any]:
         "provenance": {
             "source": "GitHub CLI",
             "commands": [
-                "gh run list --branch main --limit 1",
+                "gh run list --workflow ci.yml --branch main --limit 1",
                 "gh pr list --state open",
                 "gh release view",
             ],

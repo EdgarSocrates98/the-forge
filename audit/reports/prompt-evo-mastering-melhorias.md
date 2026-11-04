@@ -35,9 +35,9 @@ report.
 |---|---|---|
 | A — integrity and versions | PASS with findings | baseline JSON and manifest parity; dynamic versions and registry state remain explicit |
 | B — static quality and contracts | CONDITIONAL | repository CI/contract evidence exists; final state follows the latest run per SHA |
-| C — tests and integration | IN_FLIGHT | The Forge, Portal and Platform reruns were executed; Spark AWS full suite was still running at collection time |
+| C — tests and integration | IN_FLIGHT | current The Forge, Portal, Platform, Product, Code Atlas, Lens, Bridge, API, Doctor Data and Azure CI are green; Doctor API and Spark AWS are still running |
 | D — packaging/install | CONDITIONAL | 30 installer PASS, 10 Linux Bash BLOCKED; published duplicate-version gates safely refused overwrite |
-| E — interoperability | UNVERIFIED | local MCP/adapter evidence exists, but the complete 14-root cross-forge runner is not freshly closed |
+| E — interoperability | CONDITIONAL | 19/19 deterministic scenarios, 6/6 MCP handshakes and contract validation pass; external-host and full cross-forge visual evidence remain unverified |
 | F — agentic evals/knowledge | CONDITIONAL | product-specific evals and Platform economy receipt pass where run; external host validation remains unverified |
 | G — release/provenance | CONDITIONAL | checksums/reports and safe duplicate detection exist; registry post-publish verification is incomplete |
 | H — UX/onboarding | CONDITIONAL | bare-install wizard and Windows paths have tests; Linux and CUA visual journeys remain blocked |

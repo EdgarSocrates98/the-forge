@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-11-04T07:05:58.618483+00:00",
+  "generated_at": "2026-11-04T08:02:36.366715+00:00",
   "ref": "origin/main",
   "data": {
     "api-forge": {
       "repository": "EdgarSocrates98/api-forge",
-      "sha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
+      "sha": "974a680fb215ae5606319deeb2293cbcbe5434f3",
       "metadata": {
         "name": "apiforge-af",
         "version": "0.3.1",
@@ -35,8 +35,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41787785584,
-          "headSha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
+          "databaseId": 41793107692,
+          "headSha": "974a680fb215ae5606319deeb2293cbcbe5434f3",
           "status": "completed"
         },
         "open_prs": 0,
@@ -48,7 +48,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -57,15 +57,15 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41787785584,
-        "headSha": "7bce00476f8491e2239397bb432df3ac8aa99b33",
+        "databaseId": 41793107692,
+        "headSha": "974a680fb215ae5606319deeb2293cbcbe5434f3",
         "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:29.834732+00:00"
+        "collected_at": "2026-11-04T08:02:06.838023+00:00"
       }
     },
     "code-atlas-forge": {
@@ -98,7 +98,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -115,7 +115,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:32.174344+00:00"
+        "collected_at": "2026-11-04T08:02:09.191183+00:00"
       }
     },
     "data-sentinel-forge": {
@@ -142,7 +142,7 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41753812981,
+          "databaseId": 41753656242,
           "headSha": "c36942e0184c73c7350eacd2852f48c79191cc9b",
           "status": "completed"
         },
@@ -155,7 +155,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -164,7 +164,7 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41753812981,
+        "databaseId": 41753656242,
         "headSha": "c36942e0184c73c7350eacd2852f48c79191cc9b",
         "status": "completed"
       },
@@ -172,7 +172,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:34.387157+00:00"
+        "collected_at": "2026-11-04T08:02:11.368415+00:00"
       }
     },
     "forge-agent-bridge": {
@@ -207,7 +207,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -224,7 +224,7 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:36.589528+00:00"
+        "collected_at": "2026-11-04T08:02:13.540495+00:00"
       }
     },
     "forge-cli": {
@@ -265,8 +265,8 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "failure",
-          "databaseId": 41765856797,
+          "conclusion": "success",
+          "databaseId": 41746518639,
           "headSha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231",
           "status": "completed"
         },
@@ -279,7 +279,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -287,8 +287,8 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "failure",
-        "databaseId": 41765856797,
+        "conclusion": "success",
+        "databaseId": 41746518639,
         "headSha": "9bcf672c9ac46c5ee86e2ed0f2b91d9680e27231",
         "status": "completed"
       },
@@ -296,12 +296,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:38.772245+00:00"
+        "collected_at": "2026-11-04T08:02:15.851339+00:00"
       }
     },
     "forge-doctor-api": {
       "repository": "EdgarSocrates98/forge-doctor-api",
-      "sha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
+      "sha": "d4804a5a876c59fd756777973f730b2e604c2dcf",
       "metadata": {
         "name": "forge-doctor-api",
         "version": "0.3.0",
@@ -326,10 +326,8 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "success",
-          "databaseId": 41787786190,
-          "headSha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
-          "status": "completed"
+          "status": "NOT_RUN",
+          "reason": "HTTP 404: workflow ci.yml not found on the default branch (https://api.github.com/repos/EdgarSocrates98/forge-doctor-api/actions/workflows/ci.yml)"
         },
         "open_prs": 7,
         "latest_release": {
@@ -340,7 +338,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -348,21 +346,19 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "success",
-        "databaseId": 41787786190,
-        "headSha": "c836b1a122767cdd324975f16dd70aaf8da480a2",
-        "status": "completed"
+        "status": "NOT_RUN",
+        "reason": "HTTP 404: workflow ci.yml not found on the default branch (https://api.github.com/repos/EdgarSocrates98/forge-doctor-api/actions/workflows/ci.yml)"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:41.020106+00:00"
+        "collected_at": "2026-11-04T08:02:17.677271+00:00"
       }
     },
     "forge-doctor-data": {
       "repository": "EdgarSocrates98/forge-doctor-data",
-      "sha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
+      "sha": "0b19d58b60439aeaf557009cfa22da2301f864ce",
       "metadata": {
         "name": "forge-doctor-data",
         "version": "1.1.0",
@@ -388,8 +384,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41787784131,
-          "headSha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
+          "databaseId": 41793124911,
+          "headSha": "0b19d58b60439aeaf557009cfa22da2301f864ce",
           "status": "completed"
         },
         "open_prs": 7,
@@ -401,7 +397,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -410,15 +406,15 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41787784131,
-        "headSha": "41293d0ce23198b663a72d7c33b05a92c05ae3a2",
+        "databaseId": 41793124911,
+        "headSha": "0b19d58b60439aeaf557009cfa22da2301f864ce",
         "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:43.205436+00:00"
+        "collected_at": "2026-11-04T08:02:19.840017+00:00"
       }
     },
     "forge-lens": {
@@ -451,7 +447,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -468,12 +464,12 @@
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:45.648122+00:00"
+        "collected_at": "2026-11-04T08:02:22.323215+00:00"
       }
     },
     "forge-portal": {
       "repository": "EdgarSocrates98/forge-portal",
-      "sha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
+      "sha": "5a934c4bb6eacc08df0d36d8f8a8d5a790165cef",
       "metadata": {
         "name": "forge-portal-app",
         "version": "1.1.0",
@@ -495,9 +491,9 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "failure",
-          "databaseId": 41745025927,
-          "headSha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
+          "conclusion": "success",
+          "databaseId": 41795151690,
+          "headSha": "5a934c4bb6eacc08df0d36d8f8a8d5a790165cef",
           "status": "completed"
         },
         "open_prs": 0,
@@ -509,7 +505,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -517,21 +513,21 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "failure",
-        "databaseId": 41745025927,
-        "headSha": "f63d771602f2acd38446f95e885ac9877fecb8c8",
+        "conclusion": "success",
+        "databaseId": 41795151690,
+        "headSha": "5a934c4bb6eacc08df0d36d8f8a8d5a790165cef",
         "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:47.874742+00:00"
+        "collected_at": "2026-11-04T08:02:24.499997+00:00"
       }
     },
     "platform-forge": {
       "repository": "EdgarSocrates98/platform-forge",
-      "sha": "4281954fa0f64254db7c3adff8619df8896df634",
+      "sha": "94c44ccef431cd48dbcf3e9e56e77081ac212112",
       "metadata": {
         "name": "platformforge",
         "version": "0.3.1",
@@ -559,10 +555,10 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "",
-          "databaseId": 41789796634,
-          "headSha": "4281954fa0f64254db7c3adff8619df8896df634",
-          "status": "in_progress"
+          "conclusion": "success",
+          "databaseId": 41793622578,
+          "headSha": "94c44ccef431cd48dbcf3e9e56e77081ac212112",
+          "status": "completed"
         },
         "open_prs": 0,
         "latest_release": {
@@ -573,7 +569,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -581,21 +577,21 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "",
-        "databaseId": 41789796634,
-        "headSha": "4281954fa0f64254db7c3adff8619df8896df634",
-        "status": "in_progress"
+        "conclusion": "success",
+        "databaseId": 41793622578,
+        "headSha": "94c44ccef431cd48dbcf3e9e56e77081ac212112",
+        "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:49.991377+00:00"
+        "collected_at": "2026-11-04T08:02:26.791084+00:00"
       }
     },
     "product-forge": {
       "repository": "EdgarSocrates98/product-forge",
-      "sha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
+      "sha": "bf3f5a4f5c917423591b852e9d26285700288ff7",
       "metadata": {
         "name": "product-forge",
         "version": null,
@@ -612,8 +608,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "success",
-          "databaseId": 41787784365,
-          "headSha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
+          "databaseId": 41793137478,
+          "headSha": "bf3f5a4f5c917423591b852e9d26285700288ff7",
           "status": "completed"
         },
         "open_prs": 0,
@@ -625,7 +621,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -634,20 +630,20 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "success",
-        "databaseId": 41787784365,
-        "headSha": "a07e02003cf6ab0bd8295678b41d71aac2d7cf0d",
+        "databaseId": 41793137478,
+        "headSha": "bf3f5a4f5c917423591b852e9d26285700288ff7",
         "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:51.984487+00:00"
+        "collected_at": "2026-11-04T08:02:29.625338+00:00"
       }
     },
     "spark-forge-aws": {
       "repository": "EdgarSocrates98/spark-forge-aws",
-      "sha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
+      "sha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
       "metadata": {
         "name": "sparkforge-aws",
         "version": "0.7.1",
@@ -676,8 +672,8 @@
       "github": {
         "latest_ci": {
           "conclusion": "",
-          "databaseId": 41787785515,
-          "headSha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
+          "databaseId": 41794959060,
+          "headSha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
           "status": "in_progress"
         },
         "open_prs": 0,
@@ -689,7 +685,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -698,20 +694,20 @@
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
         "conclusion": "",
-        "databaseId": 41787785515,
-        "headSha": "99bc48a78703bd67479d262b3247e87a2b2f1a08",
+        "databaseId": 41794959060,
+        "headSha": "b07fa18caaa9be3b942c2b6fcb6a3055e3ac69c2",
         "status": "in_progress"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:54.128504+00:00"
+        "collected_at": "2026-11-04T08:02:31.860761+00:00"
       }
     },
     "spark-forge-azure": {
       "repository": "EdgarSocrates98/spark-forge-azure",
-      "sha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
+      "sha": "fdb365536981d20bcd793ec140cf75c399e2efa0",
       "metadata": {
         "name": "sparkforge-azure",
         "version": "0.3.1",
@@ -738,10 +734,10 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "",
-          "databaseId": 41787785380,
-          "headSha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
-          "status": "in_progress"
+          "conclusion": "success",
+          "databaseId": 41793156400,
+          "headSha": "fdb365536981d20bcd793ec140cf75c399e2efa0",
+          "status": "completed"
         },
         "open_prs": 0,
         "latest_release": {
@@ -752,7 +748,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -760,21 +756,21 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "",
-        "databaseId": 41787785380,
-        "headSha": "644b77245e011f9de1964a4df385cc9e7c9d5fea",
-        "status": "in_progress"
+        "conclusion": "success",
+        "databaseId": 41793156400,
+        "headSha": "fdb365536981d20bcd793ec140cf75c399e2efa0",
+        "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:56.279003+00:00"
+        "collected_at": "2026-11-04T08:02:34.066905+00:00"
       }
     },
     "the-forge": {
       "repository": "EdgarSocrates98/the-forge",
-      "sha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
+      "sha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
       "metadata": {
         "name": "theforge-core",
         "version": "0.7.2",
@@ -803,10 +799,10 @@
       ],
       "github": {
         "latest_ci": {
-          "conclusion": "",
-          "databaseId": 41787827030,
-          "headSha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
-          "status": "in_progress"
+          "conclusion": "success",
+          "databaseId": 41793165231,
+          "headSha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
+          "status": "completed"
         },
         "open_prs": 0,
         "latest_release": {
@@ -817,7 +813,7 @@
         "provenance": {
           "source": "GitHub CLI",
           "commands": [
-            "gh run list --branch main --limit 1",
+            "gh run list --workflow ci.yml --branch main --limit 1",
             "gh pr list --state open",
             "gh release view"
           ]
@@ -825,16 +821,16 @@
       },
       "security_status": "NOT_RUN; see cycle-10.1/security.md",
       "test_status": {
-        "conclusion": "",
-        "databaseId": 41787827030,
-        "headSha": "8bcacc485d67458b4ab78ccbeeef5ed9393ecf89",
-        "status": "in_progress"
+        "conclusion": "success",
+        "databaseId": 41793165231,
+        "headSha": "b42413c8cd20e56bfa2da8f60000a7c9d32c08e3",
+        "status": "completed"
       },
       "provenance": {
         "ref": "origin/main",
         "source": "pyproject.toml or package.json",
         "command": "git show REF:FILE",
-        "collected_at": "2026-11-04T07:05:58.618437+00:00"
+        "collected_at": "2026-11-04T08:02:36.366665+00:00"
       }
     }
   }

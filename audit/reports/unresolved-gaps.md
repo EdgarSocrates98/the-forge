@@ -8,7 +8,7 @@
 | P1 | Portal cross-forge runner | UNVERIFIED | execute the real runner against the current checkout matrix; historical PASS is not reused |
 | P1 | External host MCP integrations | UNVERIFIED | execute Claude/Codex/Devin/Copilot host handshakes where installed |
 | P1 | Deep security/history scan | UNVERIFIED | run gitleaks/detect-secrets/Snyk or equivalent with the required environment |
-| P1 | Current CI closure | IN_FLIGHT | Platform Forge and Spark AWS runs must finish successfully; Portal was fixed and re-run |
+| P1 | Current CI closure | IN_FLIGHT | Doctor API and Spark AWS runs must finish successfully; the other current CI records are green |
 | P2 | Firefox/WebKit browser matrix | UNVERIFIED | install browsers and execute the matrix |
 | P2 | Open PR inventory | OBSERVED | merge or explicitly disposition open PRs before release approval |
 | P2 | Published artifact verification | PARTIAL | compare registry metadata/checksums after the existing duplicate-version release gates |
