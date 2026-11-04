@@ -154,7 +154,10 @@ Spark adapter tests could not exercise the expected specialist intake in the
 current Windows checkout environment; two registry tests observed `ready` where
 the legacy fixture expected `invalid`; and the compatibility test found
 `ecosystem-compatibility.json` declaring Spark AWS `0.7.1` while its current
-`pyproject.toml` declares `0.7.2`. These are open findings, not accepted gates.
+`pyproject.toml` declares `0.7.2`. The catalog/version drift was corrected after
+that run and `test_declared_versions_match_project_files` now passes; the full
+suite was not rerun, so the original aggregate remains the recorded baseline.
+The other clusters remain open findings, not accepted gates.
 
 ## L. Changed Files
 
