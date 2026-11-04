@@ -1,10 +1,10 @@
 {
   "commit": {
     "branch": "main",
-    "dirty": true,
-    "sha": "fef42b830ccbc10880cec4974bb4b3d23d71d4ae"
+    "dirty": false,
+    "sha": "09886b14c7f528b13f4147c67b817a1e1b99488b"
   },
-  "generated_at_utc": "2026-11-04T16:49:03Z",
+  "generated_at_utc": "2026-11-04T16:53:27Z",
   "latest_tag": "v0.7.2",
   "mode": "safe",
   "notes": [

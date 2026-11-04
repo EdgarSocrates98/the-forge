@@ -1,12 +1,12 @@
 # Release diagnostic summary
 
-Generated: 2026-11-04T16:49:06Z \xb7 mode: `safe`
+Generated: 2026-11-04T16:53:30Z \xb7 mode: `safe`
 
 Safety: no env var values, cookies, tokens, Authorization headers or SSH keys are collected; user paths appear as `<HOME>`; secret-shaped strings appear as `<REDACTED>`.
 
 ## Inventory \u2014 `forge/ReleaseInventory/1`
 
-- repository: `the-forge` @ `fef42b830ccb` (branch `main`, dirty=True)
+- repository: `the-forge` @ `09886b14c7f5` (branch `main`, dirty=False)
 - tag on HEAD: `none` \xb7 latest tag: `v0.7.2`
 - package: `theforge-core` 0.7.2 (python)
 - workflow: `.github/workflows/publish-pypi.yml`
