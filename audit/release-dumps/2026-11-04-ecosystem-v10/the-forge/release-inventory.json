@@ -1,0 +1,43 @@
+{
+  "commit": {
+    "branch": "main",
+    "dirty": true,
+    "sha": "19bf30bd7ddcff8829d484a9a2c9b2a31157d994"
+  },
+  "generated_at_utc": "2026-11-04T13:34:20Z",
+  "latest_tag": "v0.7.2",
+  "mode": "safe",
+  "notes": [
+    "published_version is unresolved: registry lookups are outside the offline boundary; compare `commit.sha`/`package.version` against the registry record externally"
+  ],
+  "package": {
+    "ecosystem": "python",
+    "name": "theforge-core",
+    "source_file": "pyproject.toml",
+    "version": "0.7.2"
+  },
+  "platform": {
+    "implementation": "CPython",
+    "python": "3.14.6",
+    "release": "11",
+    "system": "Windows"
+  },
+  "published_version": "unresolved",
+  "repository": {
+    "name": "the-forge",
+    "remote": "https://github.com/EdgarSocrates98/the-forge"
+  },
+  "schema": "forge/ReleaseInventory/1",
+  "tag": null,
+  "workflow_file": "publish-pypi.yml",
+  "workflow_path": ".github/workflows/publish-pypi.yml",
+  "workflows": [
+    "ci.yml",
+    "compat.yml",
+    "ecosystem-real.yml",
+    "provider-surface-drift.yml",
+    "publish-pypi.yml",
+    "release-compat.yml",
+    "release-gates.yml"
+  ]
+}

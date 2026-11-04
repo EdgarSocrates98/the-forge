@@ -38,6 +38,6 @@ workflow's build, provenance and clean-install verification.
 ## Dump evidence
 
 The sanitized inventory bundle for every repository is stored under
-`audit/release-dumps/2026-11-04-ecosystem-v9/`. Each repository has a
+`audit/release-dumps/2026-11-04-ecosystem-v10/`. Each repository has a
 `release-inventory.json`, `release-summary.md` and `checksums.sha256`; all
 collectors passed `--check`.

@@ -1,0 +1,39 @@
+{
+  "commit": {
+    "branch": "main",
+    "dirty": false,
+    "sha": "c4679258625d3e1a531aa8ffc25f92969fd008cd"
+  },
+  "generated_at_utc": "2026-11-04T13:34:15Z",
+  "latest_tag": "v0.4.1",
+  "mode": "safe",
+  "notes": [
+    "published_version is unresolved: registry lookups are outside the offline boundary; compare `commit.sha`/`package.version` against the registry record externally"
+  ],
+  "package": {
+    "ecosystem": "npm",
+    "name": "theforge-cli",
+    "source_file": "package.json",
+    "version": "0.4.1"
+  },
+  "platform": {
+    "implementation": "CPython",
+    "python": "3.14.6",
+    "release": "11",
+    "system": "Windows"
+  },
+  "published_version": "unresolved",
+  "repository": {
+    "name": "forge-cli",
+    "remote": "https://github.com/EdgarSocrates98/forge-cli"
+  },
+  "schema": "forge/ReleaseInventory/1",
+  "tag": "v0.4.1",
+  "workflow_file": "publish-npm.yml",
+  "workflow_path": ".github/workflows/publish-npm.yml",
+  "workflows": [
+    "ci.yml",
+    "publish-npm.yml",
+    "release.yml"
+  ]
+}
