@@ -71,6 +71,21 @@ O teste `tests/test_agent_roster_conformance.py` cobre:
 - Não foram feitos push, publicação, mutação de produção, execução remota ou
   gasto de cloud.
 
+## Governança operacional nesta fatia
+
+O ADR 0064 fecha os riscos transversais que não pertencem a um provider:
+orçamento é expresso em unidades observáveis com hard stop; custo não medido
+permanece `unknown`; manifestos, skills, paths, comandos, credenciais e
+outputs continuam em trust boundaries distintas; e a receipt local marca
+`partial_trace`/`telemetry_unavailable` quando o provider não entrega
+telemetria suficiente. Histórico de verificação influencia ranking e risco,
+mas não é gate de cold start. Retry, cancelamento e reconexão continuam no
+task id/receipt canônico, sem um segundo ledger.
+
+A evidência de aceitação está no próprio ADR 0064, na conformance de roster e
+no contrato executável do golden path Spark. Esta fatia não afirma execução
+live, custo real de provedor ou verificação independente.
+
 ## Próximos gates
 
 1. Integrar a projeção de roster ao endpoint de catálogo do Portal, mantendo o

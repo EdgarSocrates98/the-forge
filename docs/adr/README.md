@@ -105,6 +105,7 @@ O Cycle 2 exige que estas oito decisões estejam registradas. Cada uma aponta pa
 | `.forge/context/`: registry de contexto por workspace + contrato `forge/context/v1` | [0061](0061-forge-context-registry.md) | `agentic` |
 | catálogo federado de especialistas: bootstrap data-driven sem promover runtime | [0062](0062-ecosystem-specialist-catalog.md) | `ecossistema-the-forge-2` |
 | ownership dos contratos agentic e evidência de roster | [0063](0063-agentic-contract-ownership-and-roster-evidence.md) | `egm-resolve-agentic-ecosystem` |
+| segurança operacional, orçamento, trust e telemetria agentic | [0064](0064-agentic-operational-safety-and-evidence.md) | `egm-resolve-agentic-ecosystem` |
 
 ## Novo ADR
 
