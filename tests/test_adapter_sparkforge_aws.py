@@ -834,6 +834,9 @@ def test_upstream_schema_falls_back_to_legacy_package_then_default(
 ) -> None:
     from theforge_sparkforge_aws import native_pkg
 
+    # Make the fallback branch independent of whether the renamed package is
+    # installed in the pytest interpreter.
+    monkeypatch.setattr(native_pkg, "UPSTREAM_MODULES", ("sparkforge.adapters.upstream",))
     _fake_upstream(monkeypatch, "sparkforge", "sparkforge/upstream-facts/v1")
     assert native_pkg.upstream_schema() == "sparkforge/upstream-facts/v1"
     # with no intake importable the emitted name is the documented default
@@ -853,6 +856,8 @@ def test_import_tools_prefers_the_renamed_package(monkeypatch: pytest.MonkeyPatc
 def test_import_tools_falls_back_to_the_legacy_package(monkeypatch: pytest.MonkeyPatch) -> None:
     from theforge_sparkforge_aws import native_pkg
 
+    # Do not let an installed renamed package mask the legacy branch.
+    monkeypatch.setattr(native_pkg, "DISPATCHERS", ("sparkforge.adapters.tools",))
     _fake_specialist(monkeypatch, "sparkforge", "old")
     tools, _call = native_pkg.import_tools()
     assert tools == {"old": {}}
@@ -937,6 +942,9 @@ def test_broken_sparkforge_version_falls_back_to_metadata(
 
     monkeypatch.delitem(sys.modules, "sparkforge_aws", raising=False)
     monkeypatch.setitem(sys.modules, "sparkforge", _BrokenSparkforge())
+    # Isolate the legacy-package fallback from any canonical package installed
+    # in the interpreter running the suite.
+    monkeypatch.setattr(native_pkg, "PACKAGES", ("sparkforge",))
     monkeypatch.setattr(native_pkg, "metadata_version", fake_metadata)
     assert native_pkg.installed_version() == expected
     observation = health.Observation(
@@ -1754,10 +1762,13 @@ def call_tool(name, arguments):
 
 def _fake_sparkforge(tmp_path: Path, mode: str = "ok") -> tuple[dict[str, str], Path]:
     fake = tmp_path / "fake"
-    (fake / "sparkforge" / "adapters").mkdir(parents=True)
-    (fake / "sparkforge" / "__init__.py").write_text('__version__ = "0.5.0"\n', "utf-8")
-    (fake / "sparkforge" / "adapters" / "__init__.py").write_text("", "utf-8")
-    (fake / "sparkforge" / "adapters" / "tools.py").write_text(FAKE_TOOLS, "utf-8")
+    # The resolver prefers the renamed package.  Provide that package in the
+    # subprocess so the live-backend tests do not accidentally import a real
+    # installation from the host environment.
+    (fake / "sparkforge_aws" / "adapters").mkdir(parents=True)
+    (fake / "sparkforge_aws" / "__init__.py").write_text('__version__ = "0.5.0"\n', "utf-8")
+    (fake / "sparkforge_aws" / "adapters" / "__init__.py").write_text("", "utf-8")
+    (fake / "sparkforge_aws" / "adapters" / "tools.py").write_text(FAKE_TOOLS, "utf-8")
     probe = tmp_path / "probe.jsonl"
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(fake), env.get("PYTHONPATH")]))
@@ -1971,10 +1982,11 @@ def _handoff_item(**over: Any) -> dict[str, Any]:
 
 def test_translate_handoff_maps_each_item_to_a_foreign_fact() -> None:
     from theforge_sparkforge_aws import handoff as upstream
+    from theforge_sparkforge_aws import native_pkg
 
     document, notes = upstream.translate_handoff(_handoff(_handoff_item()))
     assert notes == []
-    assert document["schema"] == "sparkforge/upstream-facts/v1"
+    assert document["schema"] == native_pkg.upstream_schema()
     (fact,) = document["facts"]
     assert fact["id"].startswith("upstream:")
     assert fact["kind"] == "upstream.evidence"
