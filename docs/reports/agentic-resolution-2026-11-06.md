@@ -98,3 +98,22 @@ live, custo real de provedor ou verificação independente.
 O catálogo federado agora é coberto pelo teste Portal
 `test_federation_reports_catalog_and_registry`: cada linha preserva
 `agent_roster` de forma aditiva, sem promovê-lo a lifecycle ou capability.
+
+## Verificação final após as fatias de evolução+
+
+- `bfcf0ec`: o Portal deixou de sondar CLIs no bootstrap do catálogo; Graph
+  passou a ser explícito, limitado e recursão do self foi bloqueada. O E2E
+  real `tests/test_browser_real_adapter.py` passou, incluindo federação,
+  rotas, instalação, ausência de erros de console e viewport móvel.
+- `a7c5252`: o smoke test de doctor ficou independente de variáveis de conta
+  presentes no ambiente do runner; o comportamento de ambiente inválido
+  continua coberto por `tests/test_doctor.py`.
+- `3103310`: a matriz `docs/versioning.md` passou a cobrir `theforge 0.7.4`
+  com as versões e janelas atuais dos seis adapters.
+- `python -m pytest -q --maxfail=1`: concluído em `[100%]`, exit 0.
+- `python scripts/check_gates.py`: 11/11 gates verdes.
+
+Limitações preservadas: execução live AWS/Azure e verificação independente de
+Spark continuam `NOT_RUN`/não afirmadas; o gate visual/axe completo do
+`forge-portal` continua pertencendo ao repositório Portal. Não houve push,
+publicação, execução remota, mutação de produção ou gasto de cloud.
