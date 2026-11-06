@@ -222,6 +222,9 @@ def test_federation_reports_catalog_and_registry(target: Path) -> None:
     assert "api-forge" in providers
     assert fed["registry"]["path"].endswith("installations")
     assert fed["summary"]["catalog"] == len(fed["specialists"])
+    # Roster is additive evidence in the catalog row. It must remain distinct
+    # from lifecycle state and may be None/UNKNOWN when no checkout is visible.
+    assert all("agent_roster" in row for row in fed["specialists"])
 
 
 def test_federation_promotes_ready_registry_record_to_registered(

@@ -88,10 +88,13 @@ live, custo real de provedor ou verificação independente.
 
 ## Próximos gates
 
-1. Integrar a projeção de roster ao endpoint de catálogo do Portal, mantendo o
-   schema de resposta aditivo.
-2. Executar o gate visual/e2e do `forge-portal` para a jornada “Nova
-   investigação”.
-3. Rodar a conformance Spark no ambiente com diretório temporário funcional e
-   separar receipts `REPLAY_VERIFIED`, `LIVE_EXECUTED` e
-   `INDEPENDENTLY_VERIFIED`.
+1. Executar o gate visual/axe completo do `forge-portal`; o E2E focado da
+   jornada “Nova investigação” já passou e o resultado está em
+   `forge-portal` commit `3899a9f`.
+2. Separar receipts live e independentes em ambiente autorizado; o contrato
+   Spark local já passou `5/5` no replay e mantém esses estados como
+   `NOT_RUN`.
+
+O catálogo federado agora é coberto pelo teste Portal
+`test_federation_reports_catalog_and_registry`: cada linha preserva
+`agent_roster` de forma aditiva, sem promovê-lo a lifecycle ou capability.
