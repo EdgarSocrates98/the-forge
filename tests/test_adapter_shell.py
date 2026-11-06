@@ -230,6 +230,22 @@ SHELL_PROVIDERS: dict[str, tuple[list[str], tuple[str, str]]] = {
     ),
 }
 
+# The shell contract test must not depend on whether a real provider happens to
+# be installed in the interpreter running pytest.  Replay scenarios make the
+# unavailable-describe outcome deterministic while preserving the provider's
+# own error code and producer metadata.
+NON_OK_DESCRIBE_REPLAYS = {
+    provider: REPO / "tests" / "fixtures" / "native" / provider / "scenarios" / scenario
+    for provider, scenario in {
+        "sparkforge_aws": "specialist-missing",
+        "sparkforge_azure": "specialist-missing",
+        "apiforge": "apiforge-missing",
+        "doctordata": "specialist-missing",
+        "doctorapi": "specialist-missing",
+        "platformforge": "specialist-missing",
+    }.items()
+}
+
 
 def _adapter_constants(name: str) -> tuple[str, str]:
     namespace: dict[str, Any] = {}
@@ -334,10 +350,12 @@ def test_shell_refuses_undeclared_capability(capability: Any) -> None:
 
 @pytest.mark.parametrize("provider", sorted(SHELL_PROVIDERS))
 def test_shell_execute_surfaces_a_non_ok_describe(provider: str) -> None:
-    # The adapters' describe refuses until 4.1/5.1; the test set refuses on request.
+    # Replay keeps this assertion independent of the host's installed providers.
     options = (
         ("--assume-specialist-version", "describe-refuses") if provider == "test-handlers" else ()
     )
+    if provider in NON_OK_DESCRIBE_REPLAYS:
+        options = ("--replay", str(NON_OK_DESCRIBE_REPLAYS[provider]))
     describe, _ = _call(provider, "describe", _request("describe"), options)
     assert describe.status == "refused" and describe.error is not None
     response, _ = _call(
