@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -199,7 +200,19 @@ def test_persistence_failure_exit_5(tmp_path: Path, capsys: pytest.CaptureFixtur
     assert code == 5 and "persistence error" in err
 
 
-def test_status_and_doctor(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_status_and_doctor(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # This smoke test checks the workspace/doctor command itself. Published
+    # Forge account variables are covered by ``test_doctor`` and must not make
+    # the result depend on whichever local installation the runner has.
+    suffixes = ("_HOME", "_INSTALL_ROOT", "_VENV", "_PYTHON", "_CLI")
+    for key in list(os.environ):
+        upper = key.upper()
+        if "FORGE" in upper and any(upper.endswith(suffix) for suffix in suffixes):
+            monkeypatch.delenv(key, raising=False)
     make_workspace(tmp_path, [])
     root = str(tmp_path)
     code, out, _ = run(capsys, "status", "--root", root, "--json")
