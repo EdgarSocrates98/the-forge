@@ -702,6 +702,7 @@ def test_specialists_view_projects_discovery(target: Path) -> None:
     assert "spark-forge-aws" in providers
     for row in doc["specialists"]:
         assert row["last_check"] == doc["generated_at"]
+        assert "agent_roster" in row
         assert set(row["relations"]["declared"]) == {
             "family",
             "composes_with",

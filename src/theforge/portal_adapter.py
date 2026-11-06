@@ -1158,6 +1158,24 @@ class TheForgePortal(fp.PortalAdapter):
         rows = []
         for entry in report.entries:
             pack = packs.get(entry.forge_id)
+            roster = None
+            if entry.agentic_manifest is not None:
+                # Discovery evidence points to the checkout manifest when the
+                # roster can be inspected locally. Installed distributions may
+                # expose only a packaged manifest; that remains UNKNOWN rather
+                # than being mistaken for an empty roster.
+                from theforge.agent_roster import inspect_roster
+
+                manifest_source = next(
+                    (
+                        Path(source.path)
+                        for source in entry.sources
+                        if source.path and Path(source.path).name == "forge.agentic.json"
+                    ),
+                    None,
+                )
+                if manifest_source is not None:
+                    roster = inspect_roster(entry.agentic_manifest, manifest_source.parent)
             capabilities = []
             manifest = entry.capability_manifest
             if manifest is not None:
@@ -1189,6 +1207,7 @@ class TheForgePortal(fp.PortalAdapter):
                     "limitations": list(entry.limitations),
                     "capabilities": capabilities,
                     "capability_count": len(capabilities),
+                    "agent_roster": roster.as_dict() if roster else None,
                     "compatibility": {
                         "state": (
                             "incompatible"

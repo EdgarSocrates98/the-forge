@@ -49,7 +49,16 @@
     }
   ],
   "skills": [],
-  "agents": [],
+  "agents": [
+    "bootstrap-installation",
+    "capability-negotiator",
+    "cross-forge-planner",
+    "ecosystem-debugger",
+    "ecosystem-router",
+    "execution-orchestrator",
+    "forge-discovery",
+    "verification-orchestrator"
+  ],
   "coordinators": [],
   "mcp_command": [],
   "host_adapters": ["claude", "devin", "codex", "copilot"],

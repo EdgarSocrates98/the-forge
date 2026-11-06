@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 
 from theforge import _installkit as kit
+from theforge.agent_roster import inspect_roster
 from theforge.contracts.base import from_dict
 from theforge.contracts.specialist import AgenticManifest
 
@@ -123,3 +124,19 @@ def test_cli_entry_shape():
                     f"{proc2.stderr[-300:]}"
                 )
         # else: deps missing — import unverifiable, recorded as skipped
+
+
+def test_manifest_roster_matches_native_evidence():
+    """A checkout with a canonical roster must not silently publish drift.
+
+    A repository without a native roster remains ``UNKNOWN``; that is honest
+    and does not grant trust or routing capability.
+    """
+    for checkout, manifest in _manifests():
+        report = inspect_roster(manifest, checkout)
+        if report.state == "UNKNOWN":
+            continue
+        assert report.state == "CONFORMANT", (
+            f"{checkout.name}: manifest roster {report.state}; "
+            f"declared={report.declared}, observed={report.observed}"
+        )
