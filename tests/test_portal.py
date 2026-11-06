@@ -92,6 +92,17 @@ def test_descriptor_is_federated_command_center(target: Path) -> None:
     assert caps["agents"] == "supported"
 
 
+def test_capabilities_do_not_build_live_graph(target: Path) -> None:
+    portal = TheForgePortal(target)
+
+    def fail_if_probed() -> None:
+        raise AssertionError("capability discovery must not run graph federation")
+
+    portal._graph_view = fail_if_probed  # type: ignore[method-assign]
+    caps = {c["id"]: c["state"] for c in portal.capabilities()}
+    assert caps["graph"] == "supported"
+
+
 def test_health_not_installed_on_virgin_workspace(target: Path) -> None:
     h = TheForgePortal(target).health()
     assert h["state"] == "NOT_INSTALLED"
@@ -268,7 +279,7 @@ def test_federation_promotes_ready_registry_record_to_registered(
             return [_Record()]
 
     monkeypatch.setattr("theforge.registry.Registry", _Registry)
-    rows = TheForgePortal(target)._specialists_rows()
+    rows = TheForgePortal(target)._specialists_rows(probe_cli=True)
     row = next(item for item in rows if item["provider"] == "api-forge")
     assert row["state"] == "REGISTERED"
 

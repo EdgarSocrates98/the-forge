@@ -52,7 +52,12 @@ def browser():
 @pytest.fixture()
 def page(browser, server):
     pg = browser.new_page()
-    pg.goto(server.url, wait_until="networkidle")
+    # The real federation adapter may probe installed providers for several
+    # seconds. First-paint evidence only needs the document and shell, not an
+    # idle network; waiting for networkidle made the test fail when a healthy
+    # provider probe stayed pending.
+    pg.goto(server.url, wait_until="domcontentloaded")
+    pg.wait_for_selector("body")
     yield pg
     pg.close()
 
@@ -107,7 +112,9 @@ def test_specialists_federation_real(page, server):
     fed = _api(server, "/federation")
     assert isinstance(fed, dict) and fed, "empty federation payload"
     page.goto(server.url)
-    page.evaluate("location.hash = '#/federation'")
+    # The vendored Angular bundle uses hash-location routes without the
+    # leading slash (the same contract exercised by ``test_nav_routes_render``).
+    page.evaluate("location.hash = '#federation'")
     page.wait_for_timeout(1500)
     text = page.locator("body").inner_text()
     assert "the-forge" in text or "forges" in text.lower() or "federation" in text.lower()
@@ -148,12 +155,11 @@ def test_install_plan_preview_only(page, server):
 def test_no_console_errors_on_routes(page, server):
     errors: list[str] = []
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
-    # listener antes da navegação canônica: captura erros do boot real
-    # (reload() produziu 403s de API neste ambiente — o caminho suportado é
-    # entrar pela URL com sessão, não recarregar sobre hash-route)
-    page.goto(server.url, wait_until="networkidle")
+    # ``page`` already entered through the canonical session URL in the
+    # fixture. Re-loading here would abort that boot's API/assets and create
+    # a browser-level connection error unrelated to route rendering.
     for route in ("", "federation", "lab", "tasks", "graph"):
-        page.evaluate(f"location.hash = '#/{route}'")
+        page.evaluate(f"location.hash = '#{route}'")
         page.wait_for_timeout(1000)
     real = [e for e in errors if "favicon" not in e.lower()]
     assert not real, f"console errors: {real[:5]}"
@@ -162,7 +168,7 @@ def test_no_console_errors_on_routes(page, server):
 def test_mobile_viewport(browser, server):
     ctx = browser.new_context(viewport={"width": 390, "height": 844})
     pg = ctx.new_page()
-    pg.goto(server.url, wait_until="networkidle")
+    pg.goto(server.url, wait_until="domcontentloaded")
     assert pg.locator("body").inner_text().strip()
     pg.screenshot(path=str(ARTIFACTS / "06-mobile.png"))
     ctx.close()
