@@ -40,6 +40,11 @@ _DOCS_DIR = _REPO_ROOT / "docs"
 _HOSTS: tuple[str, ...] = ("claude", "devin", "codex", "copilot")
 _SCOPES = ("project", "workspace", "user")
 _PROFILE_MAP = {"economy": "minimal", "balanced": "recommended", "full": "full"}
+# Graph is an explicit, read-only diagnostic surface. Keep producer probes
+# short so route changes cannot leave the Portal's bounded worker pool full of
+# abandoned subprocesses; the merged response still names every timeout in
+# ``federation_notes``.
+_GRAPH_PROVIDER_TIMEOUT_S = 1
 
 
 def _version() -> str:
@@ -187,7 +192,10 @@ class TheForgePortal(fp.PortalAdapter):
             {"id": "docs", "state": "supported" if _DOCS_DIR.is_dir() else "unverified"},
             {
                 "id": "graph",
-                "state": "supported" if self._graph_view() is not None else "unverified",
+                # Capability discovery is metadata-only. Building the graph
+                # is an explicit, potentially expensive federation operation
+                # served by ``/graphs``; it must never block bootstrap.
+                "state": "supported",
             },
             {"id": "specialists", "state": "supported"},
             {"id": "delegations", "state": "supported"},
@@ -475,7 +483,7 @@ class TheForgePortal(fp.PortalAdapter):
     # federation — the command center: specialists lifecycle + registry +
     # delegated install_auto. Every row is evidence, never assumed state.
     # ------------------------------------------------------------------
-    def _specialists_rows(self) -> list[dict[str, Any]]:
+    def _specialists_rows(self, *, probe_cli: bool = False) -> list[dict[str, Any]]:
         try:
             from theforge import specialists
         except Exception:  # noqa: BLE001
@@ -491,9 +499,15 @@ class TheForgePortal(fp.PortalAdapter):
             except Exception:  # noqa: BLE001 — no .forge dir is a valid state
                 registered = set()
             views = specialists.collect(
-                workspace_root=self._root, registered=registered, probe_cli=True
+                workspace_root=self._root, registered=registered, probe_cli=probe_cli
             )
-            return specialists.to_rows(views)
+            rows = specialists.to_rows(views)
+            if not probe_cli:
+                for row in rows:
+                    row.setdefault("notes", []).append(
+                        "Portal catalog skipped live CLI probe; lifecycle is local evidence"
+                    )
+            return rows
         except Exception:  # noqa: BLE001 — collect failure is unverified, not a crash
             return []
 
@@ -1081,12 +1095,21 @@ class TheForgePortal(fp.PortalAdapter):
     # merged with provider namespacing (graphview.federated_merge).
     # ------------------------------------------------------------------
     def _graph_view(self) -> dict[str, Any] | None:
+        # A graph projection requires the workspace's local Forge state. Do
+        # not bootstrap an index or scan an uninitialized checkout just to
+        # render the Portal shell; the honest result is the documented
+        # ``no_graph`` state until that evidence exists.
+        if not (self._root / ".forge").is_dir():
+            return None
         try:
             from theforge import graphview
         except Exception:  # noqa: BLE001
             return None
         try:
-            views, notes = graphview.federated_views(workspace_root=self._root)
+            views, notes = graphview.federated_views(
+                workspace_root=self._root,
+                timeout=_GRAPH_PROVIDER_TIMEOUT_S,
+            )
         except Exception:  # noqa: BLE001 — federation failure degrades, never crashes
             return None
         if not views:
@@ -1158,6 +1181,24 @@ class TheForgePortal(fp.PortalAdapter):
         rows = []
         for entry in report.entries:
             pack = packs.get(entry.forge_id)
+            roster = None
+            if entry.agentic_manifest is not None:
+                # Discovery evidence points to the checkout manifest when the
+                # roster can be inspected locally. Installed distributions may
+                # expose only a packaged manifest; that remains UNKNOWN rather
+                # than being mistaken for an empty roster.
+                from theforge.agent_roster import inspect_roster
+
+                manifest_source = next(
+                    (
+                        Path(source.path)
+                        for source in entry.sources
+                        if source.path and Path(source.path).name == "forge.agentic.json"
+                    ),
+                    None,
+                )
+                if manifest_source is not None:
+                    roster = inspect_roster(entry.agentic_manifest, manifest_source.parent)
             capabilities = []
             manifest = entry.capability_manifest
             if manifest is not None:
@@ -1189,6 +1230,7 @@ class TheForgePortal(fp.PortalAdapter):
                     "limitations": list(entry.limitations),
                     "capabilities": capabilities,
                     "capability_count": len(capabilities),
+                    "agent_roster": roster.as_dict() if roster else None,
                     "compatibility": {
                         "state": (
                             "incompatible"

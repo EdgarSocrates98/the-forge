@@ -202,6 +202,11 @@ def federated_views(
     notes: list[str] = []
     views.append(capability_view(root=workspace_root))
     for v in specialists.collect(workspace_root=workspace_root, probe_cli=False):
+        # The Forge is already represented by ``capability_view`` above.
+        # Invoking its own graph CLI here would recursively start another
+        # federated collection, making the Portal graph endpoint unbounded.
+        if v.lifecycle.provider == "the-forge":
+            continue
         if not v.checkout:
             notes.append(f"{v.lifecycle.provider}: no checkout — skipped")
             continue

@@ -15,6 +15,18 @@ WORKSPACE = Path(__file__).resolve().parents[2]
 
 REPOS = {
     "api-forge": ("src/apiforge", "src/apiforge/cli.py", "apiforge.ui.home"),
+    "code-atlas-forge": ("src/code_atlas", "src/code_atlas/cli.py", "code_atlas.ui.home"),
+    "data-sentinel-forge": (
+        "src/data_sentinel",
+        "src/data_sentinel/cli/__init__.py",
+        "data_sentinel.ui.home",
+    ),
+    "forge-agent-bridge": (
+        "src/forge_agent_bridge",
+        "src/forge_agent_bridge/cli.py",
+        "forge_agent_bridge.ui.home",
+    ),
+    "forge-lens": ("src/forge_lens", "src/forge_lens/cli/main.py", "forge_lens.ui.home"),
     "spark-forge-aws": (
         "sparkforge_aws",
         "sparkforge_aws/adapters/cli.py",
@@ -31,11 +43,31 @@ REPOS = {
         "src/forge_doctor_data/cli/app.py",
         "forge_doctor_data.ui.home",
     ),
+    "product-forge": (
+        "src/product_forge",
+        "src/product_forge/cli/__init__.py",
+        "product_forge.ui.home",
+    ),
     "forge-doctor-api": (
         "src/forge_doctor_api",
         "src/forge_doctor_api/cli/__init__.py",
         "forge_doctor_api.ui.home",
     ),
+}
+
+# Some older specialists intentionally carry a documented, package-specific
+# wizard copy. Keep the byte-parity assertion limited to the canonical copies;
+# the broader REPOS matrix still enforces the public home/TUI contract.
+KIT_PARITY_REPOS = {
+    name: REPOS[name]
+    for name in (
+        "api-forge",
+        "spark-forge-aws",
+        "spark-forge-azure",
+        "platform-forge",
+        "forge-doctor-data",
+        "forge-doctor-api",
+    )
 }
 
 KIT_FILES = ("kit.py", "i18n.py", "wizard.py")
@@ -55,7 +87,7 @@ def _canonical(fname: str, pkg: str) -> str:
 
 def test_kit_byte_parity_per_repo():
     drift = []
-    for repo, (pkg_rel, _entry, _mod) in REPOS.items():
+    for repo, (pkg_rel, _entry, _mod) in KIT_PARITY_REPOS.items():
         pkg = pkg_rel.split("/")[-1]
         for fname in KIT_FILES:
             vendored = WORKSPACE / repo / pkg_rel / "ui" / fname

@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from theforge import _installkit as kit
+from theforge.agent_roster import RosterConformance, inspect_roster
 from theforge.contracts.base import from_dict
 from theforge.contracts.specialist import (
     AgenticManifest,
@@ -107,6 +108,7 @@ class SpecialistView:
     checkout: str | None = None  # local clone found
     mcp: dict[str, Any] | None = None
     manifest: AgenticManifest | None = None
+    roster: RosterConformance | None = None
     notes: list[str] = field(default_factory=list)
 
 
@@ -254,6 +256,10 @@ def collect(
             activation_state="HOST_ACTIVATION_PENDING",
             evidence=notes,
         )
+        manifest = load_agentic_manifest(forge_id, checkout)
+        roster = inspect_roster(manifest, checkout) if manifest and checkout else None
+        if roster is not None and roster.state != "CONFORMANT":
+            notes.append(f"agent roster evidence: {roster.state.lower()}")
         views.append(
             SpecialistView(
                 lifecycle=lifecycle,
@@ -261,7 +267,8 @@ def collect(
                 cli=cli_name,
                 checkout=str(checkout) if checkout else None,
                 mcp=mcp,
-                manifest=load_agentic_manifest(forge_id, checkout),
+                manifest=manifest,
+                roster=roster,
                 notes=notes,
             )
         )
@@ -347,6 +354,7 @@ def to_rows(views: list[SpecialistView]) -> list[dict[str, Any]]:
             "checkout": v.checkout,
             "mcp": bool(v.mcp and v.mcp.get("command")),
             "agentic_manifest": v.manifest is not None,
+            "agent_roster": v.roster.as_dict() if v.roster else None,
             "notes": v.notes,
         }
         for v in views

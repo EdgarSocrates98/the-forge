@@ -92,6 +92,17 @@ def test_descriptor_is_federated_command_center(target: Path) -> None:
     assert caps["agents"] == "supported"
 
 
+def test_capabilities_do_not_build_live_graph(target: Path) -> None:
+    portal = TheForgePortal(target)
+
+    def fail_if_probed() -> None:
+        raise AssertionError("capability discovery must not run graph federation")
+
+    portal._graph_view = fail_if_probed  # type: ignore[method-assign]
+    caps = {c["id"]: c["state"] for c in portal.capabilities()}
+    assert caps["graph"] == "supported"
+
+
 def test_health_not_installed_on_virgin_workspace(target: Path) -> None:
     h = TheForgePortal(target).health()
     assert h["state"] == "NOT_INSTALLED"
@@ -222,6 +233,9 @@ def test_federation_reports_catalog_and_registry(target: Path) -> None:
     assert "api-forge" in providers
     assert fed["registry"]["path"].endswith("installations")
     assert fed["summary"]["catalog"] == len(fed["specialists"])
+    # Roster is additive evidence in the catalog row. It must remain distinct
+    # from lifecycle state and may be None/UNKNOWN when no checkout is visible.
+    assert all("agent_roster" in row for row in fed["specialists"])
 
 
 def test_federation_promotes_ready_registry_record_to_registered(
@@ -265,7 +279,7 @@ def test_federation_promotes_ready_registry_record_to_registered(
             return [_Record()]
 
     monkeypatch.setattr("theforge.registry.Registry", _Registry)
-    rows = TheForgePortal(target)._specialists_rows()
+    rows = TheForgePortal(target)._specialists_rows(probe_cli=True)
     row = next(item for item in rows if item["provider"] == "api-forge")
     assert row["state"] == "REGISTERED"
 
@@ -702,6 +716,7 @@ def test_specialists_view_projects_discovery(target: Path) -> None:
     assert "spark-forge-aws" in providers
     for row in doc["specialists"]:
         assert row["last_check"] == doc["generated_at"]
+        assert "agent_roster" in row
         assert set(row["relations"]["declared"]) == {
             "family",
             "composes_with",

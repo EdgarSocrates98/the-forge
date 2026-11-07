@@ -26,8 +26,9 @@ Veja o artefato verificável em
 [`audit/reports/cli-tui-install-matrix-2026-11-04.json`](../../audit/reports/cli-tui-install-matrix-2026-11-04.json).
 
 `home+tui+wizard` significa que o CLI nu também abre uma home/dashboard
-interativa. `wizard` significa que o CLI mantém comandos especializados e abre
-uma instalação guiada visual. `forge-cli` usa `@clack/prompts`, enquanto os
+interativa e oferece um comando `tui` explícito. Todos os projetos de terminal
+seguem esse contrato; o wizard continua sendo uma ação real dentro da home.
+`forge-cli` usa `@clack/prompts`, enquanto os
 projetos Python usam o UI kit stdlib canônico e suas cópias vendorizadas.
 
 `forge-portal` é deliberadamente `web-only`: sua superfície visual é o Portal

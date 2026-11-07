@@ -29,21 +29,21 @@ PROJECTS: tuple[dict[str, Any], ...] = (
         "repo": "code-atlas-forge",
         "cli": "code-atlas",
         "install": "code_atlas.install.cli",
-        "surface": "wizard",
+        "surface": "home+tui+wizard",
         "source": "src/code_atlas/cli.py",
     },
     {
         "repo": "data-sentinel-forge",
         "cli": "data-sentinel",
         "install": "data_sentinel.cli.install",
-        "surface": "wizard",
+        "surface": "home+tui+wizard",
         "source": "src/data_sentinel/cli/install.py",
     },
     {
         "repo": "forge-agent-bridge",
         "cli": "forge-bridge",
         "install": "forge_agent_bridge.install.cli",
-        "surface": "wizard",
+        "surface": "home+tui+wizard",
         "source": "src/forge_agent_bridge/cli.py",
     },
     {
@@ -71,7 +71,7 @@ PROJECTS: tuple[dict[str, Any], ...] = (
         "repo": "forge-lens",
         "cli": "forge-lens",
         "install": "forge_lens.install.guided",
-        "surface": "wizard",
+        "surface": "home+tui+wizard",
         "source": "src/forge_lens/install/guided.py",
     },
     {
@@ -92,7 +92,7 @@ PROJECTS: tuple[dict[str, Any], ...] = (
         "repo": "product-forge",
         "cli": "productforge",
         "install": "product_forge.ui.wizard",
-        "surface": "wizard",
+        "surface": "home+tui+wizard",
         "source": "src/product_forge/install/cli.py",
     },
     {
@@ -167,7 +167,9 @@ def collect() -> dict[str, Any]:
             or any(marker in text for marker in ("wizard", "run_guided_install", "@clack/prompts")),
             "json_or_pipeline": item["install"] is None
             or ("json" in text.lower() or "JSON" in text),
-            "non_tty_guard": item["install"] is None or ("isatty" in text),
+            "non_tty_guard": item["install"] is None
+            or ("isatty" in text or "isTTY" in text or "isNonInteractive" in text),
+            "home_tui": item["install"] is None or ("run_home" in text and "run_tui" in text),
         }
         if not row["exists"]:
             errors.append(f"{item['repo']}: repository missing")
@@ -180,6 +182,8 @@ def collect() -> dict[str, Any]:
                 errors.append(f"{item['repo']}: no visual install evidence")
             if not row["json_or_pipeline"]:
                 errors.append(f"{item['repo']}: no JSON/pipeline evidence")
+            if item["surface"] == "home+tui+wizard" and not row["home_tui"]:
+                errors.append(f"{item['repo']}: no home/TUI evidence")
         rows.append(row)
     return {
         "schema": "forge/cli-tui-install-matrix/v1",
