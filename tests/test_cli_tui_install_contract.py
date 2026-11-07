@@ -27,8 +27,8 @@ def test_all_official_projects_have_a_checked_surface() -> None:
     }
 
 
-def test_portal_is_explicitly_web_only() -> None:
+def test_portal_keeps_web_primary_surface_and_cli_companion() -> None:
     matrix = collect()
     portal = next(row for row in matrix["projects"] if row["repo"] == "forge-portal")
-    assert portal["surface"] == "web-only"
-    assert portal["install"] is None
+    assert portal["surface"] == "home+tui+wizard"
+    assert portal["install"] == "tools/portal-cli.mjs"
