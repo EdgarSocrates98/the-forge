@@ -1,8 +1,8 @@
 # Phase 1 remaining gaps
 
-- Defuddle parity and Bases/Canvas validation; the tested stdlib HTML fallback
-  and optional Obsidian Markdown adapter are now implemented without Node or
-  the Obsidian CLI.
+- Defuddle quality/parity benchmarks and Bases/Canvas validation; the optional
+  Defuddle adapter is now explicit and fail-closed, while the stdlib HTML
+  fallback and Obsidian Markdown adapter remain the dependency-light defaults.
 - Portal URL capture is implemented with SSRF/redirect/size/MIME refusal,
   explicit permission, preview, confirmation and receipt. A document explorer
   now shows metadata, indexed chunks, source and persisted source-backed

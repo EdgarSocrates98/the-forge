@@ -26,18 +26,23 @@ one bounded query returns a document and registered source without document
 body leakage, and a second query returns an extracted graph relation. The
 Portal palette consumes this federated contract for the active product while
 deduplicating repeated document chunks. The Product Forge suite remains
-`202 passed, 1 skipped`; the Portal suite remains `588 passed`.
+`206 passed, 1 skipped`; the Portal suite remains `588 passed`. The optional
+Defuddle adapter and Portal selector are covered by focused tests; the default
+stdlib path remains unchanged when Defuddle is unavailable.
 
 The raw audit output is retained locally under
-`E:\projetos\FORJAS\.audit-work\portal-gate-20261107\` and the Portal's
-existing E2E artifacts. Intentional responsive ellipses remain visible in the
-capture counts, but none is an unlabelled or page-breaking clip.
+`E:\projetos\FORJAS\.audit-work\portal-gate-20261107-defuddle\` and the
+Portal's existing E2E artifacts. Intentional responsive ellipses remain visible
+in the capture counts, but none is an unlabelled or page-breaking clip.
 
 The terminal contract was also revalidated after the Portal CLI addition:
 `scripts/cli_install_matrix.py --check` reports `14/14` with no errors. The
 Portal TUI was opened in a real terminal, the wizard was cancelled at its
 confirmation step, and the non-TTY JSON fallback was exercised; cancellation
-left no writes.
+left no writes. A read-only runtime smoke then executed `--version` and
+`--help` for every repository entry point, including the Node Forge CLI and
+Portal CLI: `28/28` returned exit code 0. This is entry-point evidence only;
+it does not represent a cloud run or a mutating install.
 
 ## Cross-Forge contract path
 
@@ -59,13 +64,16 @@ Lens provenance`
 
 ## Remote and vault capture evidence
 
-Product Forge URL capture is intentionally stdlib-only and bounded: only
-public HTTP(S) hosts are accepted, all resolved addresses must be public, URL
+Product Forge URL capture is bounded: only public HTTP(S) hosts are accepted,
+all resolved addresses must be public, URL
 credentials and non-standard ports are refused, redirects are not followed,
 responses are capped at 1 MiB and unsupported MIME types are refused. The
-extractor preserves headings, code, links and table text and emits a content
-hash, metrics and provenance. The full Product Forge suite is `202 passed, 1
-skipped`. Source-backed URL, workspace and Obsidian imports persist a stable
+default extractor preserves headings, code, links and table text and emits a
+content hash, metrics and provenance. The optional Defuddle CLI is selected
+explicitly and receives only the already-fetched, validated HTML over stdin;
+unavailable or malformed CLI output returns a typed refusal and does not fall
+back silently. The full Product Forge suite is `206 passed, 1 skipped`.
+Source-backed URL, workspace and Obsidian imports persist a stable
 document key, version number, current marker and previous-document lineage;
 the explorer exposes the historical family and current document id. Manual
 imports remain current-only unless a stable source key is supplied.

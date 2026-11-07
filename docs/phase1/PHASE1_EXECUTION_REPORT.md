@@ -34,6 +34,11 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   extracted entities and graph relations; the Portal palette consumes it only
   for the active Product Forge product and keeps the legacy document-search
   route available for compatibility.
+- Product Forge + Forge Portal: public URL capture now supports an explicit,
+  opt-in `extractor=defuddle` path. Product Forge invokes the optional Defuddle
+  CLI only after its own SSRF/redirect/size/MIME checks and sends validated HTML
+  over stdin; the dependency-free `stdlib` extractor remains the default and
+  the Portal makes the choice visible in the capture wizard.
 
 ## Verification
 
@@ -47,9 +52,11 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - CLI portability: the 14-repository install matrix is `PASS`; every project
   now exposes a TTY-aware visual surface, TUI/home equivalent and wizard. The
   Portal's browser remains primary, with a dependency-free Node CLI for home,
-  `wizard`, `start` and JSON `status`.
-- Product Forge: full suite `202 passed, 1 skipped`; URL, Obsidian, persisted
-  source-document versioning and document explorer security/route tests pass;
+  `wizard`, `start` and JSON `status`. A read-only runtime smoke passed 28/28
+  entry-point checks across the 14 repositories (`--version` + `--help`).
+- Product Forge: full suite `206 passed, 1 skipped`; URL, optional Defuddle,
+  Obsidian, persisted source-document versioning and document explorer
+  security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.
 - Cross-Forge knowledge smoke: process-level receipt passed across Product
   Forge, Code Atlas, Agent Bridge and Forge Lens; no document body entered
@@ -60,8 +67,9 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   usability `9/9` steps with `0` friction findings. See
   `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
 
-The next checkpoint is Defuddle parity/Bases/Canvas, semantic/ranked search
-quality and scale, persistence/FTS/rendering benchmarks and live cloud
-execution. Obsidian Markdown, URL capture, persisted source-backed document
-history and bounded federated knowledge search are implemented; live cloud
-execution remains pending explicit environment details.
+The next checkpoint is Defuddle quality/parity benchmarking plus Bases/Canvas,
+semantic/ranked search quality and scale, persistence/FTS/rendering benchmarks
+and live cloud execution. Obsidian Markdown, bounded URL capture, optional
+Defuddle extraction, persisted source-backed document history and federated
+knowledge search are implemented; live cloud execution remains pending
+explicit environment details.
