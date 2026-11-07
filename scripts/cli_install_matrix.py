@@ -76,10 +76,10 @@ PROJECTS: tuple[dict[str, Any], ...] = (
     },
     {
         "repo": "forge-portal",
-        "cli": "web",
-        "install": None,
-        "surface": "web-only",
-        "source": "portal",
+        "cli": "forge-portal",
+        "install": "tools/portal-cli.mjs",
+        "surface": "home+tui+wizard",
+        "source": "tools/portal-cli.mjs",
     },
     {
         "repo": "platform-forge",
@@ -169,7 +169,13 @@ def collect() -> dict[str, Any]:
             or ("json" in text.lower() or "JSON" in text),
             "non_tty_guard": item["install"] is None
             or ("isatty" in text or "isTTY" in text or "isNonInteractive" in text),
-            "home_tui": item["install"] is None or ("run_home" in text and "run_tui" in text),
+            "home_tui": item["install"] is None
+            or (
+                ("run_home" in text and "run_tui" in text)
+                # forge-cli names its home TUI "menu" and routes it through
+                # askMenu; treat that real interactive surface equivalently.
+                or ("shouldShowMenu" in text and "askMenu" in text)
+            ),
         }
         if not row["exists"]:
             errors.append(f"{item['repo']}: repository missing")

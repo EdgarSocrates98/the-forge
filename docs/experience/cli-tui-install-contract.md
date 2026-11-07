@@ -31,9 +31,11 @@ seguem esse contrato; o wizard continua sendo uma ação real dentro da home.
 `forge-cli` usa `@clack/prompts`, enquanto os
 projetos Python usam o UI kit stdlib canônico e suas cópias vendorizadas.
 
-`forge-portal` é deliberadamente `web-only`: sua superfície visual é o Portal
-Angular no navegador, não um CLI/TUI. Ele participa da experiência de instalação
-por documentação e onboarding web, sem fingir que possui `install` terminal.
+`forge-portal` mantém o navegador como superfície primária, mas agora também
+oferece uma CLI portátil mínima: a home TUI, `wizard` para host/porta com
+confirmação e `status` em JSON para CI. Ela não duplica o servidor Python nem
+substitui a experiência Angular; apenas torna descoberta e inicialização
+práticas em qualquer workspace.
 
 ## Verificação
 

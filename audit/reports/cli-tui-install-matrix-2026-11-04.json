@@ -1,6 +1,6 @@
 {
   "schema": "forge/cli-tui-install-matrix/v1",
-  "generated_at": "2026-11-04",
+  "generated_at": "2026-11-07",
   "status": "PASS",
   "repository_count": 14,
   "projects": [
@@ -12,7 +12,7 @@
     {"repo": "forge-doctor-api", "cli": "forge-doctor-api", "surface": "home+tui+wizard", "install": "visual wizard + JSON flags"},
     {"repo": "forge-doctor-data", "cli": "forge-doctor-data", "surface": "home+tui+wizard", "install": "visual wizard + JSON flags"},
     {"repo": "forge-lens", "cli": "forge-lens", "surface": "home+tui+wizard", "install": "command centre + visual receipt wizard + JSON flags"},
-    {"repo": "forge-portal", "cli": "web", "surface": "web-only", "install": "browser onboarding; no CLI claim"},
+    {"repo": "forge-portal", "cli": "forge-portal", "surface": "home+tui+wizard", "install": "portable Node CLI + TUI + host/port wizard + JSON status"},
     {"repo": "platform-forge", "cli": "platformforge", "surface": "home+tui+wizard", "install": "visual wizard + JSON flags"},
     {"repo": "product-forge", "cli": "productforge", "surface": "home+tui+wizard", "install": "command centre + visual wizard + JSON flags"},
     {"repo": "spark-forge-aws", "cli": "sparkforge-aws", "surface": "home+tui+wizard", "install": "reference visual wizard + JSON flags"},
@@ -24,6 +24,6 @@
     "non_interactive": "no prompts; --dry-run or explicit --yes",
     "cancel": "exit 130 without writes",
     "automation": "JSON/pipeline output remains parseable",
-    "portal": "web-only intentional exception"
+    "portal": "browser-primary plus portable CLI/TUI/wizard; no duplicate backend"
   }
 }
