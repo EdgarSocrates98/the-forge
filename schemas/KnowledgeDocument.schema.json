@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "classification": {
+      "type": "string"
+    },
+    "content_hash": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "document_id": {
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "normalized_artifact_ref": {
+      "type": "string"
+    },
+    "original_artifact_ref": {
+      "type": "string"
+    },
+    "product_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provenance": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "source_updated_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "trust_state": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "document_id",
+    "source_id",
+    "workspace_id",
+    "title",
+    "content_type",
+    "original_artifact_ref",
+    "normalized_artifact_ref",
+    "content_hash",
+    "version",
+    "classification",
+    "trust_state",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "KnowledgeDocument",
+  "type": "object"
+}

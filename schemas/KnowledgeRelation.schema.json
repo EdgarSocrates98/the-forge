@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "confidence_state": {
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "unknown"
+      ]
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "from_ref": {
+      "type": "string"
+    },
+    "inferred": {
+      "type": "boolean"
+    },
+    "relation_id": {
+      "type": "string"
+    },
+    "relation_type": {
+      "enum": [
+        "references",
+        "documents",
+        "depends_on",
+        "derived_from",
+        "related_to",
+        "observed_during",
+        "validated_by"
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "semantics": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "to_ref": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "relation_id",
+    "relation_type",
+    "source_id",
+    "from_ref",
+    "to_ref",
+    "semantics"
+  ],
+  "title": "KnowledgeRelation",
+  "type": "object"
+}
