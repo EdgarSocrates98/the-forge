@@ -39,7 +39,8 @@ The terminal contract was also revalidated after the Portal CLI addition:
 `scripts/cli_install_matrix.py --check` reports `14/14` with no errors. The
 Portal TUI was opened in a real terminal, the wizard was cancelled at its
 confirmation step, and the non-TTY JSON fallback was exercised; cancellation
-left no writes. A read-only runtime smoke then executed `--version` and
+left no writes. The reproducible read-only runtime smoke
+(`python scripts/cli_runtime_smoke.py`) then executed `--version` and
 `--help` for every repository entry point, including the Node Forge CLI and
 Portal CLI: `28/28` returned exit code 0. This is entry-point evidence only;
 it does not represent a cloud run or a mutating install.
