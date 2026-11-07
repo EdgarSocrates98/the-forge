@@ -42,7 +42,7 @@ one bounded query returns a document and registered source without document
 body leakage, and a second query returns an extracted graph relation. The
 Portal palette consumes this federated contract for the active product while
 deduplicating repeated document chunks. The Product Forge suite remains
-`217 passed, 1 skipped`; the Portal suite remains `589 passed`. The optional
+`218 passed, 1 skipped`; the Portal suite remains `589 passed`. The optional
 Defuddle adapter and Portal selector are covered by focused tests; the default
 stdlib path remains unchanged when Defuddle is unavailable.
 
