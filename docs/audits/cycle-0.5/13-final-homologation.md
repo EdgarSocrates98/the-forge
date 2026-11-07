@@ -15,8 +15,8 @@ live agent session remain blocked by environment/adapter state.
 - Doctor API, Code Atlas, Data Sentinel and Forge Lens real-process path;
 - explicit provider availability, Portal surface and cloud boundaries;
 - Code Atlas identity correction merged in PR #34;
-- The Forge validator/lab/docs merged in PR #150;
-- refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`8223636`);
+- The Forge validator/lab/docs merged in PR #150 and evidence closure merged in PR #151;
+- refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`6ea6351`);
 - federated contract validation report `PASS` against the refreshed local
   heads.
 
