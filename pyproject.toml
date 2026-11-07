@@ -82,6 +82,9 @@ exclude = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Keep checkout-local helper packages importable even when a site package named
+# ``tests`` is present in the interpreter running the suite.
+pythonpath = ["."]
 # Workspace fixtures simulate user repositories; their embedded tests/ trees are data,
 # never collectible tests of this suite.
 norecursedirs = [
