@@ -10,7 +10,7 @@ The Portal gate is green on the current `main` build:
 - responsive reflow: 252 captures; 0 page-level horizontal overflows; 0 bad
   clips outside an approved scroller;
 - keyboard/usability cycle: 9/9 steps, 94 keystrokes, 0 friction findings;
-- browser E2E: 35 passed, 1 skipped; unit suite: 586 passed; production build:
+- browser E2E: 35 passed, 1 skipped; unit suite: 587 passed; production build:
   successful.
 
 After the URL capture and document-explorer UI increments, the Portal unit suite is `587 passed` and
