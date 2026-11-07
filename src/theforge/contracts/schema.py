@@ -47,6 +47,13 @@ from theforge.contracts import (
     HealthReport,
     InstallationPlan,
     InstallationPlanV2,
+    KnowledgeChunk,
+    KnowledgeContextPack,
+    KnowledgeDocument,
+    KnowledgeEvidence,
+    KnowledgeImportReceipt,
+    KnowledgeRelation,
+    KnowledgeSource,
     McpRegistryDocument,
     McpServerEntry,
     MemoryPack,
@@ -174,6 +181,13 @@ EXPORTED: tuple[type[Any], ...] = (
     CounterfactualPlanComparison,
     # agentic knowledge layer (W1)
     ForgeKnowledge,
+    KnowledgeSource,
+    KnowledgeDocument,
+    KnowledgeChunk,
+    KnowledgeEvidence,
+    KnowledgeContextPack,
+    KnowledgeRelation,
+    KnowledgeImportReceipt,
     # specialized agent registry (W3)
     AgentSpec,
     FederatedCapabilityDescriptor,
@@ -241,6 +255,13 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     CounterfactualPlanComparison,
     # knowledge packages are authored core data — unknown keys are drift.
     ForgeKnowledge,
+    KnowledgeSource,
+    KnowledgeDocument,
+    KnowledgeChunk,
+    KnowledgeEvidence,
+    KnowledgeContextPack,
+    KnowledgeRelation,
+    KnowledgeImportReceipt,
     # agent specs are authored core data too.
     AgentSpec,
 )

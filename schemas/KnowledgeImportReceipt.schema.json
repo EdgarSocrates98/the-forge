@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "audit_id": {
+      "type": "string"
+    },
+    "conflicts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "content_hashes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "created_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "duplicates": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "duration_ms": {
+      "type": "integer"
+    },
+    "errors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "new_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "operation": {
+      "enum": [
+        "import",
+        "update",
+        "preview",
+        "rollback"
+      ]
+    },
+    "previous_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "receipt_id": {
+      "type": "string"
+    },
+    "rollback_available": {
+      "type": "boolean"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "skipped_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "updated_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "receipt_id",
+    "operation",
+    "source_id"
+  ],
+  "title": "KnowledgeImportReceipt",
+  "type": "object"
+}

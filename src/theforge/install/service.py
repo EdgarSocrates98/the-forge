@@ -230,6 +230,8 @@ def _context_manifest(ctx: kit.InstallContext) -> dict[str, Any]:
             {"id": "forge/v1", "version": "1"},
             {"id": "forge/context/v1", "version": "1"},
             {"id": "forge/context-registry/v1", "version": "1"},
+            {"id": "theforge/KnowledgeInteroperability/v1", "version": "1"},
+            {"id": "theforge/KnowledgeContextPack/v1", "version": "1"},
         ),
         discovery_commands=(
             {

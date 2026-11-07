@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "budget_tokens": {
+      "type": "integer"
+    },
+    "degraded_state": {
+      "enum": [
+        "none",
+        "partial",
+        "unavailable"
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "estimated_tokens": {
+      "type": "integer"
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "principal": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "selected_items": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "source_versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "truncations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workspace_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "pack_id",
+    "query",
+    "workspace_id",
+    "principal"
+  ],
+  "title": "KnowledgeContextPack",
+  "type": "object"
+}
