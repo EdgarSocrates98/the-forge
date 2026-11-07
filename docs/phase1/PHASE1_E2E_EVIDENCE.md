@@ -57,7 +57,7 @@ public HTTP(S) hosts are accepted, all resolved addresses must be public, URL
 credentials and non-standard ports are refused, redirects are not followed,
 responses are capped at 1 MiB and unsupported MIME types are refused. The
 extractor preserves headings, code, links and table text and emits a content
-hash, metrics and provenance. The full Product Forge suite is `201 passed, 1
+hash, metrics and provenance. The full Product Forge suite is `202 passed, 1
 skipped`. Source-backed URL, workspace and Obsidian imports persist a stable
 document key, version number, current marker and previous-document lineage;
 the explorer exposes the historical family and current document id. Manual

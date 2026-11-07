@@ -43,7 +43,7 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   now exposes a TTY-aware visual surface, TUI/home equivalent and wizard. The
   Portal's browser remains primary, with a dependency-free Node CLI for home,
   `wizard`, `start` and JSON `status`.
-- Product Forge: full suite `201 passed, 1 skipped`; URL, Obsidian, persisted
+- Product Forge: full suite `202 passed, 1 skipped`; URL, Obsidian, persisted
   source-document versioning and document explorer security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.
 - Cross-Forge knowledge smoke: process-level receipt passed across Product
