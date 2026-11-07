@@ -37,7 +37,7 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Code Atlas adapter: `1 passed`.
 - Agent Bridge context hardening: `9 passed`.
 - Lens provenance: `2 passed`.
-- Forge Portal: production build successful; unit suite `587 passed`; source
+- Forge Portal: production build successful; unit suite `588 passed`; source
   capture gate tests passed.
 - Product Forge: full suite `201 passed, 1 skipped`; URL, Obsidian, persisted
   source-document versioning and document explorer security/route tests pass;
