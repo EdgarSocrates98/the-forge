@@ -17,6 +17,11 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   before provider injection; revoked or mismatched sessions fail closed.
 - Forge Lens: trace resource metadata records pack/version/budget provenance
   without copying document contents.
+- Forge Portal: Product Forge knowledge now exposes a real workspace capture
+  flow: source discovery, explicit permission, metadata/content preview,
+  current-product destination, confirmed import and the returned document
+  receipt. URL capture remains explicitly unavailable until a server-side
+  SSRF-safe fetch adapter exists.
 
 ## Verification
 
@@ -25,6 +30,9 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Code Atlas adapter: `1 passed`.
 - Agent Bridge context hardening: `9 passed`.
 - Lens provenance: `2 passed`.
+- Forge Portal: production build successful; unit suite `584 passed`; source
+  capture gate test passed.
 
-The next checkpoint is Defuddle/Obsidian optional adapters plus Portal source
-capture. Live cloud execution remains pending explicit environment details.
+The next checkpoint is Defuddle/Obsidian optional adapters, federated document
+exploration and cross-repository E2E. Live cloud execution remains pending
+explicit environment details.
