@@ -20,8 +20,12 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Forge Portal: Product Forge knowledge now exposes a real workspace capture
   flow: source discovery, explicit permission, metadata/content preview,
   current-product destination, confirmed import and the returned document
-  receipt. URL capture remains explicitly unavailable until a server-side
-  SSRF-safe fetch adapter exists.
+  receipt. It now also exposes a Public URL path with SSRF/DNS, credential,
+  port, redirect, size and MIME refusal, deterministic HTML/text extraction,
+  provenance metrics and the same confirmation/receipt gate.
+- Product Forge: optional Obsidian Markdown import/preview/export is available
+  through `FORGE_OBSIDIAN_VAULT`, with traversal/symlink/size protections and
+  no Obsidian CLI dependency.
 
 ## Verification
 
@@ -30,8 +34,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Code Atlas adapter: `1 passed`.
 - Agent Bridge context hardening: `9 passed`.
 - Lens provenance: `2 passed`.
-- Forge Portal: production build successful; unit suite `584 passed`; source
-  capture gate test passed.
+- Forge Portal: production build successful; unit suite `586 passed`; source
+  capture gate tests passed.
+- Product Forge: full suite `198 passed, 1 skipped`; URL and Obsidian security
+  tests pass; URL/Obsidian API and Portal adapter routes are explicitly gated.
 - Cross-Forge knowledge smoke: process-level receipt passed across Product
   Forge, Code Atlas, Agent Bridge and Forge Lens; no document body entered
   telemetry.
@@ -42,5 +48,7 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
 
 The next checkpoint is Defuddle/Obsidian optional adapters, federated document
-exploration and scale benchmarks. Live cloud execution remains pending
-explicit environment details.
+exploration and scale benchmarks. Obsidian Markdown and URL capture are now
+implemented; the remaining checkpoint is Defuddle parity/Bases/Canvas,
+document/version exploration, persistence/FTS/rendering scale and live cloud
+execution, which remains pending explicit environment details.

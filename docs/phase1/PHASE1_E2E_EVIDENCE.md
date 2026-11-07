@@ -10,8 +10,13 @@ The Portal gate is green on the current `main` build:
 - responsive reflow: 252 captures; 0 page-level horizontal overflows; 0 bad
   clips outside an approved scroller;
 - keyboard/usability cycle: 9/9 steps, 94 keystrokes, 0 friction findings;
-- browser E2E: 35 passed, 1 skipped; unit suite: 584 passed; production build:
+- browser E2E: 35 passed, 1 skipped; unit suite: 586 passed; production build:
   successful.
+
+After the URL capture UI increment, the Portal unit suite is `586 passed` and
+the reflow rerun remains green: 252 captures, 0 page-level overflows and 0 bad
+clips. The focused capture tests cover Workspace/Public URL source choice,
+permission, preview, import receipt and URL error handling.
 
 The raw audit output is retained locally under
 `E:\projetos\FORJAS\.audit-work\portal-gate-20261107\` and the Portal's
@@ -35,3 +40,18 @@ The lower-level contract path remains covered by focused tests as well:
 
 `Code Atlas ContextPack → KnowledgeContextPack → Agent Bridge authorization →
 Lens provenance`
+
+## Remote and vault capture evidence
+
+Product Forge URL capture is intentionally stdlib-only and bounded: only
+public HTTP(S) hosts are accepted, all resolved addresses must be public, URL
+credentials and non-standard ports are refused, redirects are not followed,
+responses are capped at 1 MiB and unsupported MIME types are refused. The
+extractor preserves headings, code, links and table text and emits a content
+hash, metrics and provenance. The full Product Forge suite is `198 passed, 1
+skipped`.
+
+The optional Obsidian adapter reads/writes Markdown under
+`FORGE_OBSIDIAN_VAULT`, refuses traversal/symlinks/non-Markdown/oversized
+documents, and does not invoke Obsidian. Its import/export/security tests are
+included in the same suite.
