@@ -14,13 +14,14 @@ live agent session remain blocked by environment/adapter state.
 - real local HTTP/degradation/telemetry laboratory;
 - Doctor API, Code Atlas, Data Sentinel and Forge Lens real-process path;
 - explicit provider availability, Portal surface and cloud boundaries;
-- correction prepared for Code Atlas identity and validator coverage.
+- Code Atlas identity correction merged in PR #34;
+- The Forge validator/lab/docs merged in PR #150;
+- refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`8223636`);
+- federated contract validation report `PASS` against the refreshed local
+  heads.
 
 ## Required before marking COMPLETED
 
-- Code Atlas PR #34 green and merged;
-- The Forge validator/docs branch green and merged;
-- current local mains refreshed after merge;
 - stale provider registry resolved in an approved local environment;
 - adapter conformance and negative tests for all new specialists;
 - repeat the E2E lab with routable specialists and preserve the final receipt.
