@@ -9,5 +9,9 @@ Executed evidence is recorded in repository CI/local logs and in
   by absent WSL, not a pass.
 - Windows portability fixes were validated in Forge CLI, Agent Bridge, Lens
   and Doctor API.
+- The current six-repository baseline is recorded in `PHASE1_BASELINE.md` and
+  the process-level knowledge path is reproducibly executed by
+  `scripts/knowledge_interop_smoke.py`; its 2026-11-07 receipt is under
+  `.audit-work/phase1-interop-20261107.json`.
 
 No unavailable external account or live Spark run is represented as success.
