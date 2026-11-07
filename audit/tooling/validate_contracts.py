@@ -18,6 +18,22 @@ SPECIALISTS = {
     "platform-forge",
     "forge-doctor-api",
     "forge-doctor-data",
+    "data-sentinel-forge",
+    "forge-agent-bridge",
+    "code-atlas-forge",
+    "forge-lens",
+}
+
+MCP_CAPABLE_SPECIALISTS = {
+    "spark-forge-aws",
+    "spark-forge-azure",
+    "api-forge",
+    "platform-forge",
+    "forge-doctor-api",
+    "forge-doctor-data",
+    "data-sentinel-forge",
+    "code-atlas-forge",
+    "forge-lens",
 }
 
 SAFE_REF = re.compile(r"^[A-Za-z0-9_./-]+$")
@@ -93,6 +109,10 @@ def validate(repo_name: str, repo: Path, ref: str) -> list[dict[str, str]]:
     pyproject = show(repo, ref, "pyproject.toml")
     checks: list[dict[str, str]] = []
     has_install = any(Path(path).name.lower() in {"install.sh", "install.ps1"} for path in paths)
+    # A native ``<cli> install`` is the canonical installer for several
+    # specialists.  Requiring a shell wrapper would reject portable Windows
+    # and workspace-aware installers that are declared in forge.json.
+    has_install = has_install or bool((forge or {}).get("install_command"))
     checks.append(
         check(
             "installers",
@@ -164,7 +184,9 @@ def validate(repo_name: str, repo: Path, ref: str) -> list[dict[str, str]]:
                 checks.append(
                     check(
                         "no_credentials_default",
-                        agentic.get("requires_credentials") is False,
+                        agentic.get("requires_credentials", False) is False
+                        and agentic.get("requires_aws_credentials", False) is False
+                        and agentic.get("requires_llm", False) is False,
                         "fixture workflows do not require credentials",
                         "forge.agentic.json:requires_credentials",
                     )
@@ -183,14 +205,7 @@ def validate(repo_name: str, repo: Path, ref: str) -> list[dict[str, str]]:
                     )
                 )
 
-    if repo_name in {
-        "spark-forge-aws",
-        "spark-forge-azure",
-        "api-forge",
-        "platform-forge",
-        "forge-doctor-api",
-        "forge-doctor-data",
-    }:
+    if repo_name in MCP_CAPABLE_SPECIALISTS:
         cli = (forge or {}).get("cli")
         mcp = (forge or {}).get("mcp_command")
         checks.append(
@@ -272,6 +287,10 @@ def main() -> int:
         "platform-forge",
         "forge-doctor-api",
         "forge-doctor-data",
+        "data-sentinel-forge",
+        "forge-agent-bridge",
+        "code-atlas-forge",
+        "forge-lens",
         "forge-cli",
         "forge-portal",
     ):

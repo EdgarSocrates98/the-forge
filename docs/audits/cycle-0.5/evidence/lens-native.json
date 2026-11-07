@@ -1,0 +1,163 @@
+{
+  "project_id": "cycle-0-5-api-operations",
+  "schema_version": "1.0.0",
+  "sent_at": "2026-11-07T11:47:08.993442Z",
+  "source": {
+    "system": "cycle-0-5-api"
+  },
+  "traces": [
+    {
+      "schema_version": "1.0.0",
+      "project_id": "cycle-0-5-api-operations",
+      "trace_id": "e4eca21a00c84bf0a208b8f61305b377",
+      "root_span_id": "e4eca21a00c84bf0",
+      "started_at": "2026-11-07T11:47:08.930469Z",
+      "ended_at": "2026-11-07T11:47:08.930469Z",
+      "status": {
+        "code": "ok",
+        "message": null
+      },
+      "session_id": null,
+      "source": {
+        "system": "cycle-0-5-api",
+        "sdk_name": "forge-cycle-0-5-lab",
+        "sdk_version": "1",
+        "host": "127.0.0.1",
+        "language": "python",
+        "runtime": "3.12.13"
+      },
+      "resource_attributes": {
+        "service.name": "cycle-0-5-api"
+      },
+      "spans": [
+        {
+          "schema_version": "1.0.0",
+          "trace_id": "e4eca21a00c84bf0a208b8f61305b377",
+          "span_id": "e4eca21a00c84bf0",
+          "parent_span_id": null,
+          "name": "HTTP GET /health",
+          "kind": "tool",
+          "start_time": "2026-11-07T11:47:08.930469Z",
+          "end_time": "2026-11-07T11:47:08.930469Z",
+          "status": {
+            "code": "ok",
+            "message": null
+          },
+          "attributes": {
+            "http.method": "GET",
+            "http.route": "/health",
+            "http.status_code": 200,
+            "http.duration_ms": 0.206
+          },
+          "events": [],
+          "links": [],
+          "integrity_flags": [],
+          "provenance": "observed"
+        }
+      ],
+      "provenance": "observed"
+    },
+    {
+      "schema_version": "1.0.0",
+      "project_id": "cycle-0-5-api-operations",
+      "trace_id": "aa6c75ebe51f495186cacdf982a92037",
+      "root_span_id": "aa6c75ebe51f4951",
+      "started_at": "2026-11-07T11:47:08.931507Z",
+      "ended_at": "2026-11-07T11:47:08.932520Z",
+      "status": {
+        "code": "ok",
+        "message": null
+      },
+      "session_id": null,
+      "source": {
+        "system": "cycle-0-5-api",
+        "sdk_name": "forge-cycle-0-5-lab",
+        "sdk_version": "1",
+        "host": "127.0.0.1",
+        "language": "python",
+        "runtime": "3.12.13"
+      },
+      "resource_attributes": {
+        "service.name": "cycle-0-5-api"
+      },
+      "spans": [
+        {
+          "schema_version": "1.0.0",
+          "trace_id": "aa6c75ebe51f495186cacdf982a92037",
+          "span_id": "aa6c75ebe51f4951",
+          "parent_span_id": null,
+          "name": "HTTP GET /items",
+          "kind": "tool",
+          "start_time": "2026-11-07T11:47:08.931507Z",
+          "end_time": "2026-11-07T11:47:08.932520Z",
+          "status": {
+            "code": "ok",
+            "message": null
+          },
+          "attributes": {
+            "http.method": "GET",
+            "http.route": "/items",
+            "http.status_code": 200,
+            "http.duration_ms": 0.292
+          },
+          "events": [],
+          "links": [],
+          "integrity_flags": [],
+          "provenance": "observed"
+        }
+      ],
+      "provenance": "observed"
+    },
+    {
+      "schema_version": "1.0.0",
+      "project_id": "cycle-0-5-api-operations",
+      "trace_id": "f03200a23ecf4bc08d6c6d9c3de21cd3",
+      "root_span_id": "f03200a23ecf4bc0",
+      "started_at": "2026-11-07T11:47:08.945746Z",
+      "ended_at": "2026-11-07T11:47:08.986406Z",
+      "status": {
+        "code": "error",
+        "message": null
+      },
+      "session_id": null,
+      "source": {
+        "system": "cycle-0-5-api",
+        "sdk_name": "forge-cycle-0-5-lab",
+        "sdk_version": "1",
+        "host": "127.0.0.1",
+        "language": "python",
+        "runtime": "3.12.13"
+      },
+      "resource_attributes": {
+        "service.name": "cycle-0-5-api"
+      },
+      "spans": [
+        {
+          "schema_version": "1.0.0",
+          "trace_id": "f03200a23ecf4bc08d6c6d9c3de21cd3",
+          "span_id": "f03200a23ecf4bc0",
+          "parent_span_id": null,
+          "name": "HTTP GET /degraded",
+          "kind": "tool",
+          "start_time": "2026-11-07T11:47:08.945746Z",
+          "end_time": "2026-11-07T11:47:08.986406Z",
+          "status": {
+            "code": "error",
+            "message": null
+          },
+          "attributes": {
+            "http.method": "GET",
+            "http.route": "/degraded",
+            "http.status_code": 503,
+            "http.duration_ms": 40.457
+          },
+          "events": [],
+          "links": [],
+          "integrity_flags": [],
+          "provenance": "observed"
+        }
+      ],
+      "provenance": "observed"
+    }
+  ]
+}
