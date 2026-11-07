@@ -76,8 +76,8 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 
 The next checkpoint is Defuddle quality/parity benchmarking, full Bases/Canvas
 semantic support only if a stable contract is required, semantic/ranked search
-quality and scale, persistence/FTS/rendering benchmarks and live cloud
-execution. Obsidian Markdown, bounded URL capture, optional Defuddle
-extraction, bounded Bases/Canvas validation, persisted source-backed document
-history and federated knowledge search are implemented; live cloud execution
-remains pending explicit environment details.
+quality and scale, Portal rendering benchmarks and live cloud execution.
+Obsidian Markdown, bounded URL capture, optional Defuddle extraction, bounded
+Bases/Canvas validation, persisted source-backed document history, federated
+knowledge search and local SQLite/FTS scale evidence are implemented; live
+cloud execution remains pending explicit environment details.

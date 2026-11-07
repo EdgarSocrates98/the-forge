@@ -10,9 +10,9 @@
   version history; bounded federated search over Product documents, sources,
   entities and relations is now covered by `KnowledgeSearch/v1`. Ranking,
   scale and richer cross-Forge projections remain.
-- Persistence, FTS and Portal rendering scale benchmarks at 100/1,000/10,000
-  documents; extraction-only scale evidence and the four-repository knowledge
-  interoperability smoke are green.
+- Portal rendering scale benchmarks at 100/1,000/10,000 documents; Product
+  Forge extraction plus local SQLite/FTS scale evidence and the
+  four-repository knowledge interoperability smoke are green.
 - Live Spark/independent verification in an explicitly authorized account.
   The local AWS profile is configured for `us-east-1`, but its session is
   expired and `az` is not installed; no cloud execution is claimed until
