@@ -15,6 +15,18 @@ WORKSPACE = Path(__file__).resolve().parents[2]
 
 REPOS = {
     "api-forge": ("src/apiforge", "src/apiforge/cli.py", "apiforge.ui.home"),
+    "code-atlas-forge": (
+        "src/code_atlas", "src/code_atlas/cli.py", "code_atlas.ui.home"
+    ),
+    "data-sentinel-forge": (
+        "src/data_sentinel", "src/data_sentinel/cli/__init__.py", "data_sentinel.ui.home"
+    ),
+    "forge-agent-bridge": (
+        "src/forge_agent_bridge", "src/forge_agent_bridge/cli.py", "forge_agent_bridge.ui.home"
+    ),
+    "forge-lens": (
+        "src/forge_lens", "src/forge_lens/cli/main.py", "forge_lens.ui.home"
+    ),
     "spark-forge-aws": (
         "sparkforge_aws",
         "sparkforge_aws/adapters/cli.py",
@@ -30,6 +42,9 @@ REPOS = {
         "src/forge_doctor_data",
         "src/forge_doctor_data/cli/app.py",
         "forge_doctor_data.ui.home",
+    ),
+    "product-forge": (
+        "src/product_forge", "src/product_forge/cli/__init__.py", "product_forge.ui.home"
     ),
     "forge-doctor-api": (
         "src/forge_doctor_api",
