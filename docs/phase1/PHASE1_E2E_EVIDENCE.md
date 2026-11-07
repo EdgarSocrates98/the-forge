@@ -13,10 +13,13 @@ The Portal gate is green on the current `main` build:
 - browser E2E: 35 passed, 1 skipped; unit suite: 586 passed; production build:
   successful.
 
-After the URL capture UI increment, the Portal unit suite is `586 passed` and
+After the URL capture and document-explorer UI increments, the Portal unit suite is `587 passed` and
 the reflow rerun remains green: 252 captures, 0 page-level overflows and 0 bad
 clips. The focused capture tests cover Workspace/Public URL source choice,
 permission, preview, import receipt and URL error handling.
+The document explorer route is product-scoped and the UI exposes source,
+content hash, indexed chunks, provenance metadata and a `current_only` version
+state without pretending historical versions are persisted.
 
 The raw audit output is retained locally under
 `E:\projetos\FORJAS\.audit-work\portal-gate-20261107\` and the Portal's

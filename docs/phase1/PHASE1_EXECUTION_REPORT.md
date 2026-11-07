@@ -26,6 +26,9 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Product Forge: optional Obsidian Markdown import/preview/export is available
   through `FORGE_OBSIDIAN_VAULT`, with traversal/symlink/size protections and
   no Obsidian CLI dependency.
+- Forge Portal: the knowledge tab now has an accessible document explorer
+  action showing product-scoped metadata, source, content hash, indexed chunks,
+  provenance metadata and an honest `current_only` version state.
 
 ## Verification
 
@@ -47,8 +50,8 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   usability `9/9` steps with `0` friction findings. See
   `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
 
-The next checkpoint is Defuddle/Obsidian optional adapters, federated document
-exploration and scale benchmarks. Obsidian Markdown and URL capture are now
-implemented; the remaining checkpoint is Defuddle parity/Bases/Canvas,
-document/version exploration, persistence/FTS/rendering scale and live cloud
-execution, which remains pending explicit environment details.
+The next checkpoint is Defuddle parity/Bases/Canvas, persisted document version
+history, deeper federated search over Product documents/sources/relations,
+persistence/FTS/rendering scale and live cloud execution. Obsidian Markdown,
+URL capture and the current-only document explorer are implemented; live cloud
+execution remains pending explicit environment details.
