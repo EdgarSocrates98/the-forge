@@ -51,7 +51,7 @@ public HTTP(S) hosts are accepted, all resolved addresses must be public, URL
 credentials and non-standard ports are refused, redirects are not followed,
 responses are capped at 1 MiB and unsupported MIME types are refused. The
 extractor preserves headings, code, links and table text and emits a content
-hash, metrics and provenance. The full Product Forge suite is `198 passed, 1
+hash, metrics and provenance. The full Product Forge suite is `200 passed, 1
 skipped`.
 
 The optional Obsidian adapter reads/writes Markdown under

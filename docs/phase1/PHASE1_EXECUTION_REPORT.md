@@ -39,8 +39,9 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Lens provenance: `2 passed`.
 - Forge Portal: production build successful; unit suite `586 passed`; source
   capture gate tests passed.
-- Product Forge: full suite `198 passed, 1 skipped`; URL and Obsidian security
-  tests pass; URL/Obsidian API and Portal adapter routes are explicitly gated.
+- Product Forge: full suite `200 passed, 1 skipped`; URL, Obsidian and document
+  explorer security/route tests pass; URL/Obsidian API and Portal adapter
+  routes are explicitly gated.
 - Cross-Forge knowledge smoke: process-level receipt passed across Product
   Forge, Code Atlas, Agent Bridge and Forge Lens; no document body entered
   telemetry.
