@@ -21,6 +21,13 @@ The document explorer route is product-scoped and the UI exposes source,
 content hash, indexed chunks, provenance metadata and a `current_only` version
 state without pretending historical versions are persisted.
 
+The Product Forge integration test also verifies `productforge/KnowledgeSearch/v1`:
+one bounded query returns a document and registered source without document
+body leakage, and a second query returns an extracted graph relation. The
+Portal palette consumes this federated contract for the active product while
+deduplicating repeated document chunks. The Product Forge suite remains
+`202 passed, 1 skipped`; the Portal suite remains `588 passed`.
+
 The raw audit output is retained locally under
 `E:\projetos\FORJAS\.audit-work\portal-gate-20261107\` and the Portal's
 existing E2E artifacts. Intentional responsive ellipses remain visible in the
