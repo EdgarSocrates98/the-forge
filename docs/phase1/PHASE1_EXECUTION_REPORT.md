@@ -39,9 +39,9 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Lens provenance: `2 passed`.
 - Forge Portal: production build successful; unit suite `587 passed`; source
   capture gate tests passed.
-- Product Forge: full suite `200 passed, 1 skipped`; URL, Obsidian and document
-  explorer security/route tests pass; URL/Obsidian API and Portal adapter
-  routes are explicitly gated.
+- Product Forge: full suite `201 passed, 1 skipped`; URL, Obsidian, persisted
+  source-document versioning and document explorer security/route tests pass;
+  URL/Obsidian API and Portal adapter routes are explicitly gated.
 - Cross-Forge knowledge smoke: process-level receipt passed across Product
   Forge, Code Atlas, Agent Bridge and Forge Lens; no document body entered
   telemetry.
@@ -51,8 +51,8 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   usability `9/9` steps with `0` friction findings. See
   `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
 
-The next checkpoint is Defuddle parity/Bases/Canvas, persisted document version
-history, deeper federated search over Product documents/sources/relations,
+The next checkpoint is Defuddle parity/Bases/Canvas, deeper federated search
+over Product documents/sources/relations,
 persistence/FTS/rendering scale and live cloud execution. Obsidian Markdown,
-URL capture and the current-only document explorer are implemented; live cloud
-execution remains pending explicit environment details.
+URL capture and persisted source-backed document history are implemented; live
+cloud execution remains pending explicit environment details.
