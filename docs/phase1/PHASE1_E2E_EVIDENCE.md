@@ -13,6 +13,22 @@ The Portal gate is green on the current `main` build:
 - browser E2E: 35 passed, 1 skipped; unit suite: 588 passed; production build:
   successful.
 
+The Product Forge deep-link gate was added after the generic route matrix and
+passed on the real Portal bundle:
+
+- route: `/pf/products/pf-demo?tab=knowledge`;
+- 8 cases: dark/light × 1920, 1366, 768 and 390 pixel viewports;
+- initial and URL-preview states both passed axe with `0` violations;
+- `0` serious/critical violations, `0` horizontal-overflow cases, `0`
+  focus targets without a visible ring;
+- the explicit Defuddle selector and validated preview were observed in all
+  cases.
+
+The reproducible command is
+`python e2e/pf_knowledge_visual_gate.py --out <evidence-dir>` after
+`npm run build`. It intercepts only typed Product Forge API responses at the
+browser boundary; it does not claim a live engine run.
+
 After the URL capture, document-explorer and federated Product Forge search increments, the Portal unit suite is `588 passed` and
 the reflow rerun remains green: 252 captures, 0 page-level overflows and 0 bad
 clips. The focused capture tests cover Workspace/Public URL source choice,
