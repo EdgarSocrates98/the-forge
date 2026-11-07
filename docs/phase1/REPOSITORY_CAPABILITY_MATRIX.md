@@ -9,6 +9,6 @@
 | product documents/FTS | Product Forge | Portal, agents | existente; Markdown-aware chunks e receipt de import adicionados |
 | visual operation | Forge Portal | usuário técnico | existente; Nova investigação e accessibility gates validados |
 | knowledge interop smoke | The Forge orchestration | Product Forge → Code Atlas → Agent Bridge → Forge Lens | PASS; envelope `theforge/KnowledgeContextPack/v1`, reautorização e telemetry redacted |
-| embedded Bridge parity | Product Forge + Agent Bridge | pacote Product Forge | gate de fontes Python e manifestos JSON; PR de endurecimento em revisão |
+| embedded Bridge parity | Product Forge + Agent Bridge | pacote Product Forge | gate de fontes Python e manifestos JSON; integrado em `main` |
 
 Nenhum novo motor de busca, grafo, broker de sessão ou trace foi criado.

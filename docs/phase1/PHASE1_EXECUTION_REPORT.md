@@ -58,7 +58,7 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   Portal's browser remains primary, with a dependency-free Node CLI for home,
   `wizard`, `start` and JSON `status`. A read-only runtime smoke passed 28/28
   entry-point checks across the 14 repositories (`--version` + `--help`).
-- Product Forge: full suite `216 passed, 1 skipped`; URL, optional Defuddle,
+- Product Forge: full suite `218 passed, 1 skipped`; URL, optional Defuddle,
   Obsidian, persisted source-document versioning and document explorer
   security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.
