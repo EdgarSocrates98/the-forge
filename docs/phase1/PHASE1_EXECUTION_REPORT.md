@@ -65,7 +65,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   serious/critical axe violations, visual audit `214` captures with `0`
   horizontal overflows, reflow `252` captures with `0` bad clips, and keyboard
   usability `9/9` steps with `0` friction findings. See
-  `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
+  `PHASE1_E2E_EVIDENCE.md` for the complete receipt. The Product Forge
+  deep-link gate adds 8 dark/light responsive cases for the Knowledge tab,
+  including the Defuddle preview flow, with zero axe, overflow or focus-ring
+  failures.
 
 The next checkpoint is Defuddle quality/parity benchmarking plus Bases/Canvas,
 semantic/ranked search quality and scale, persistence/FTS/rendering benchmarks

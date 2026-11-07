@@ -13,6 +13,9 @@
   documents; extraction-only scale evidence and the four-repository knowledge
   interoperability smoke are green.
 - Live Spark/independent verification in an explicitly authorized account.
+  The local AWS profile is configured for `us-east-1`, but its session is
+  expired and `az` is not installed; no cloud execution is claimed until
+  authentication, target identity, read-only scope and budget are confirmed.
 
 Each item has a bounded owner and must carry its own test evidence before the
 phase can be marked complete.
