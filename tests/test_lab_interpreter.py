@@ -88,12 +88,14 @@ DECL = {
 }
 
 # Lab that reports per-scenario verdicts by an extras marker next to the
-# interpreter's venv (<venv>/.has-extras) — deterministic, offline.
+# interpreter's venv (<venv>/.has-extras) — deterministic, offline.  The
+# coordinator supplies the selected environment explicitly because inferring
+# it from sys.executable is not portable when Windows uses a symlink.
 EXTRAS_LAB = """\
-import json, sys, pathlib
+import json, os, sys, pathlib
 receipt = pathlib.Path(sys.argv[sys.argv.index("--result-out") + 1])
 receipt.parent.mkdir(parents=True, exist_ok=True)
-venv = pathlib.Path(sys.executable).parent.parent
+venv = pathlib.Path(os.environ["FORGE_LAB_ENV_DIR"])
 has = (venv / ".has-extras").exists()
 receipt.write_text(json.dumps({
     "schema": "forge/BenchmarkResult/v1",

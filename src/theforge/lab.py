@@ -617,12 +617,18 @@ def _checkout_of(manifest: dict[str, Any]) -> Path | None:
     return path if path.is_dir() else None
 
 
-def _safe_env(mode: LabMode) -> dict[str, str]:
+def _safe_env(mode: LabMode, interpreter: str) -> dict[str, str]:
     """Minimal inherited environment — credentials and API keys never
     propagate to a lab subprocess (§9.11 sanitization)."""
     env = {k: v for k, v in os.environ.items() if k in _SAFE_ENV_KEYS}
     env["FORGE_LAB_MODE"] = mode
     env["FORGE_LAB_SANDBOX"] = "1"
+    # Do not make a lab reverse-engineer the selected interpreter from
+    # ``sys.executable``.  On Windows a managed interpreter may be a symlink
+    # and Python can expose the target path, which loses the environment
+    # identity.  The coordinator already resolved the authoritative path, so
+    # pass its venv root as explicit, non-sensitive execution context.
+    env["FORGE_LAB_ENV_DIR"] = str(Path(interpreter).parent.parent)
     # recursion guard: a lab that is itself a participant of a multi-forge
     # scenario must know it runs nested (labs propagate it explicitly)
     if os.environ.get("FORGE_LAB_NESTED"):
@@ -717,7 +723,7 @@ def _run_one(
         proc = subprocess.run(
             argv,
             cwd=decl.checkout,
-            env=_safe_env(mode),
+            env=_safe_env(mode, decl.python),
             capture_output=True,
             text=True,
             encoding="utf-8",
