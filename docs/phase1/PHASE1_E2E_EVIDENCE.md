@@ -20,10 +20,18 @@ capture counts, but none is an unlabelled or page-breaking clip.
 
 ## Cross-Forge contract path
 
-The new cross-Forge contract path is currently covered at adapter/unit level:
+The process-level smoke is green in isolated repository environments:
+
+`Product Forge Markdown → Code Atlas KnowledgeContextPack → Agent Bridge
+re-authorization → Forge Lens redacted provenance`
+
+Receipt: `scripts/knowledge_interop_smoke.py` emitted
+`forge/phase1-knowledge-interop-smoke/v1`, with one chunk, one selected item,
+one evidence reference, seven telemetry attributes and `body_leakage=false`.
+The receipt is retained at
+`E:\projetos\FORJAS\.audit-work\knowledge-interop-20261107.json`.
+
+The lower-level contract path remains covered by focused tests as well:
 
 `Code Atlas ContextPack → KnowledgeContextPack → Agent Bridge authorization →
 Lens provenance`
-
-An end-to-end process test across all four repositories is the next gate and is
-not claimed here.

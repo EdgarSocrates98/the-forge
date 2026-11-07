@@ -32,7 +32,15 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Lens provenance: `2 passed`.
 - Forge Portal: production build successful; unit suite `584 passed`; source
   capture gate test passed.
+- Cross-Forge knowledge smoke: process-level receipt passed across Product
+  Forge, Code Atlas, Agent Bridge and Forge Lens; no document body entered
+  telemetry.
+- Forge Portal UX gate: visual probe `42` route/variant combinations with `0`
+  serious/critical axe violations, visual audit `214` captures with `0`
+  horizontal overflows, reflow `252` captures with `0` bad clips, and keyboard
+  usability `9/9` steps with `0` friction findings. See
+  `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
 
 The next checkpoint is Defuddle/Obsidian optional adapters, federated document
-exploration and cross-repository E2E. Live cloud execution remains pending
+exploration and scale benchmarks. Live cloud execution remains pending
 explicit environment details.
