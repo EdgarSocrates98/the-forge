@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Cycle 0.5 API Operations Lab
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:0
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        '200':
+          description: Service is healthy
+  /items:
+    get:
+      operationId: listItems
+      responses:
+        '200':
+          description: Items returned
+  /degraded:
+    get:
+      operationId: degradedDependency
+      parameters:
+        - in: query
+          name: latency_ms
+          schema:
+            type: integer
+      responses:
+        '503':
+          description: Controlled dependency degradation
