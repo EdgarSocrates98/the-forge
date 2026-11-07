@@ -13,9 +13,9 @@ capture with explicit permission, preview, confirmation and receipt.
 2. Optional Obsidian vault import/export, Bases and Canvas validation.
 3. Portal URL capture, document/version explorer and broader federated search
    projection over documents and sources.
-4. Performance runs at 100/1,000/10,000 documents; the four-repository
-   process-level knowledge smoke is now green, but scale evidence is still
-   absent.
+4. Persistence, FTS and Portal rendering performance at 100/1,000/10,000
+   documents; Product Forge extraction-only scale evidence is now green, and
+   the four-repository process-level knowledge smoke is green.
 5. Authorized live Spark and independent verification evidence.
 
 These are explicit gaps, not inferred support.
