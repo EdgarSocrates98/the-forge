@@ -81,3 +81,8 @@ Obsidian Markdown, bounded URL capture, optional Defuddle extraction, bounded
 Bases/Canvas validation, persisted source-backed document history, federated
 knowledge search and local SQLite/FTS scale evidence are implemented; live
 cloud execution remains pending explicit environment details.
+
+The embedded Agent Bridge audit is now deterministic: Product Forge checks the
+full `.py`/`.json` inventory and byte content against the standalone checkout
+when available, so missing, extra or byte-different vendored assets fail the
+gate instead of remaining invisible.
