@@ -29,6 +29,11 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Forge Portal: the knowledge tab now has an accessible document explorer
   action showing product-scoped metadata, source, content hash, indexed chunks,
   provenance metadata and an honest `current_only` version state.
+- Product Forge + Forge Portal: `productforge/KnowledgeSearch/v1` now federates
+  bounded, body-free hits across indexed documents, registered sources,
+  extracted entities and graph relations; the Portal palette consumes it only
+  for the active Product Forge product and keeps the legacy document-search
+  route available for compatibility.
 
 ## Verification
 
@@ -55,8 +60,8 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   usability `9/9` steps with `0` friction findings. See
   `PHASE1_E2E_EVIDENCE.md` for the complete receipt.
 
-The next checkpoint is Defuddle parity/Bases/Canvas, deeper federated search
-over Product documents/sources/relations,
-persistence/FTS/rendering scale and live cloud execution. Obsidian Markdown,
-URL capture and persisted source-backed document history are implemented; live
-cloud execution remains pending explicit environment details.
+The next checkpoint is Defuddle parity/Bases/Canvas, semantic/ranked search
+quality and scale, persistence/FTS/rendering benchmarks and live cloud
+execution. Obsidian Markdown, URL capture, persisted source-backed document
+history and bounded federated knowledge search are implemented; live cloud
+execution remains pending explicit environment details.

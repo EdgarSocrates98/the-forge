@@ -22,9 +22,10 @@ executed and every import retains provenance and metrics.
 3. Portal URL capture is implemented with explicit permission/preview/confirm
    and receipt. The Portal now exposes a product-scoped document explorer for
    metadata, indexed chunks, source and persisted source-backed version
-   history; bounded product-document search is now projected into the Portal
-   palette, while cross-Forge search over Product sources/relations and richer
-   federated projections remains open.
+   history; bounded `KnowledgeSearch/v1` now projects Product documents,
+   registered sources and extracted graph entities/relations into the Portal
+   palette. Semantic ranking, scale and richer cross-Forge projections remain
+   open.
 4. Persistence, FTS and Portal rendering performance at 100/1,000/10,000
    documents; Product Forge extraction-only scale evidence is now green, and
    the four-repository process-level knowledge smoke is green.
