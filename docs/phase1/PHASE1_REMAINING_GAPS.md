@@ -4,9 +4,10 @@
   and optional Obsidian Markdown adapter are now implemented without Node or
   the Obsidian CLI.
 - Portal URL capture is implemented with SSRF/redirect/size/MIME refusal,
-  explicit permission, preview, confirmation and receipt. Document/version
-  explorer and broader federated search over Product documents/sources/
-  relations remain.
+  explicit permission, preview, confirmation and receipt. A document explorer
+  now shows metadata, indexed chunks, source and current-only version state;
+  persisted historical versions and broader federated search over Product
+  documents/sources/relations remain.
 - Federated knowledge search/document explorer.
 - Persistence, FTS and Portal rendering scale benchmarks at 100/1,000/10,000
   documents; extraction-only scale evidence and the four-repository knowledge
