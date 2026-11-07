@@ -16,9 +16,11 @@ executed and every import retains provenance and metrics.
 
 1. Defuddle parity remains partial: the explicit optional Defuddle extraction
    contract is implemented and tested behind the validated-HTML boundary, but
-   quality/parity benchmarks and Bases/Canvas validation are not yet claimed.
+   quality/parity benchmarks remain open.
 2. Obsidian Markdown import/export is implemented behind
-   `FORGE_OBSIDIAN_VAULT`; Bases and Canvas validation remain open.
+   `FORGE_OBSIDIAN_VAULT`; bounded Bases/Canvas structural validation is now
+   implemented and tested. Full Bases formula/filter semantics and a Canvas
+   editor remain out of scope until their contracts are defined.
 3. Portal URL capture is implemented with explicit permission/preview/confirm
    and receipt. The Portal now exposes a product-scoped document explorer for
    metadata, indexed chunks, source and persisted source-backed version

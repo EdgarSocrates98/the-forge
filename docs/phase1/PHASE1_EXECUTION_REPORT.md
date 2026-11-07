@@ -39,6 +39,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   CLI only after its own SSRF/redirect/size/MIME checks and sends validated HTML
   over stdin; the dependency-free `stdlib` extractor remains the default and
   the Portal makes the choice visible in the capture wizard.
+- Product Forge: bounded Obsidian Canvas and Bases validation now returns
+  versioned envelopes, rejects malformed/invalid UTF-8 input and broken Canvas
+  references, and explicitly reports that full Bases semantics and a Canvas
+  editor are not implemented.
 
 ## Verification
 
@@ -54,7 +58,7 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   Portal's browser remains primary, with a dependency-free Node CLI for home,
   `wizard`, `start` and JSON `status`. A read-only runtime smoke passed 28/28
   entry-point checks across the 14 repositories (`--version` + `--help`).
-- Product Forge: full suite `206 passed, 1 skipped`; URL, optional Defuddle,
+- Product Forge: full suite `216 passed, 1 skipped`; URL, optional Defuddle,
   Obsidian, persisted source-document versioning and document explorer
   security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.
@@ -70,9 +74,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   including the Defuddle preview flow, with zero axe, overflow or focus-ring
   failures.
 
-The next checkpoint is Defuddle quality/parity benchmarking plus Bases/Canvas,
-semantic/ranked search quality and scale, persistence/FTS/rendering benchmarks
-and live cloud execution. Obsidian Markdown, bounded URL capture, optional
-Defuddle extraction, persisted source-backed document history and federated
-knowledge search are implemented; live cloud execution remains pending
-explicit environment details.
+The next checkpoint is Defuddle quality/parity benchmarking, full Bases/Canvas
+semantic support only if a stable contract is required, semantic/ranked search
+quality and scale, persistence/FTS/rendering benchmarks and live cloud
+execution. Obsidian Markdown, bounded URL capture, optional Defuddle
+extraction, bounded Bases/Canvas validation, persisted source-backed document
+history and federated knowledge search are implemented; live cloud execution
+remains pending explicit environment details.
