@@ -27,8 +27,8 @@
 - The Forge: installation gates green; targeted lab/reality regression green;
   full run was not claimed from the interrupted local attempt.
 - Agent Bridge: `117 passed`.
-- Code Atlas Forge: `1659 passed, 21 skipped` locally on the compatibility
-  branch; CI rerun is required after the manifest identity/lint correction.
+- Code Atlas Forge: `1659 passed, 21 skipped` locally; PR #34 CI passed on
+  Linux/Windows, Explorer unit/E2E and dependency/security jobs.
 - Forge Lens: full suite exited successfully in the prior audit.
 - Forge Portal: `54 suites, 588 tests`; deep visual gate axe 0, overflow 0,
   focus-ring failures 0.

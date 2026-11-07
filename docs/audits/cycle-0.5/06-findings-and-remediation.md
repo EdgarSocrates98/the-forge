@@ -9,9 +9,10 @@ Root cause: root and packaged manifests used `code-atlas`, while the repository,
 distribution and The Forge catalog use `code-atlas-forge`.  
 Remediation: align `forge_id` and agentic `provider` to `code-atlas-forge`, keep
 `code-atlas` as CLI/MCP name, and update package parity test.  
-Evidence: branch `cycle-0.5-canonical-identity`, commit `8a09882`, PR #34;
-25 targeted tests and Ruff pass locally.  
-Status: awaiting CI/merge.
+Evidence: branch `cycle-0.5-canonical-identity`, squashed merge commit
+`7e3979f`, PR #34; full CI passed (Linux/Windows, Explorer, security and
+dependency audits), plus 1659 local tests and Ruff.  
+Status: RESOLVED.
 
 ## F-002 — contract validator omitted new specialists
 
@@ -25,8 +26,8 @@ Remediation: include Data Sentinel, Agent Bridge, Code Atlas and Forge Lens;
 separate MCP-capable specialists; accept a declared native installer; accept
 Data Sentinel's explicit `requires_aws_credentials=false` and
 `requires_llm=false`.  
-Status: implemented on Cycle 0.5 branch; regression command executed against
-local HEAD after the Code Atlas changes.
+Status: RESOLVED on The Forge merge commit `8223636`; the validator report now
+passes against the refreshed Code Atlas `main` (`7e3979f`).
 
 ## F-003 — new specialists discovered but not routable
 
