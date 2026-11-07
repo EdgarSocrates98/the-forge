@@ -169,8 +169,7 @@ def collect() -> dict[str, Any]:
             or ("json" in text.lower() or "JSON" in text),
             "non_tty_guard": item["install"] is None
             or ("isatty" in text or "isTTY" in text or "isNonInteractive" in text),
-            "home_tui": item["install"] is None
-            or ("run_home" in text and "run_tui" in text),
+            "home_tui": item["install"] is None or ("run_home" in text and "run_tui" in text),
         }
         if not row["exists"]:
             errors.append(f"{item['repo']}: repository missing")
