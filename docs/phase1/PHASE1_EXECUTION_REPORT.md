@@ -39,6 +39,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Lens provenance: `2 passed`.
 - Forge Portal: production build successful; unit suite `588 passed`; source
   capture gate tests passed.
+- CLI portability: the 14-repository install matrix is `PASS`; every project
+  now exposes a TTY-aware visual surface, TUI/home equivalent and wizard. The
+  Portal's browser remains primary, with a dependency-free Node CLI for home,
+  `wizard`, `start` and JSON `status`.
 - Product Forge: full suite `201 passed, 1 skipped`; URL, Obsidian, persisted
   source-document versioning and document explorer security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.

@@ -26,6 +26,12 @@ The raw audit output is retained locally under
 existing E2E artifacts. Intentional responsive ellipses remain visible in the
 capture counts, but none is an unlabelled or page-breaking clip.
 
+The terminal contract was also revalidated after the Portal CLI addition:
+`scripts/cli_install_matrix.py --check` reports `14/14` with no errors. The
+Portal TUI was opened in a real terminal, the wizard was cancelled at its
+confirmation step, and the non-TTY JSON fallback was exercised; cancellation
+left no writes.
+
 ## Cross-Forge contract path
 
 The process-level smoke is green in isolated repository environments:
