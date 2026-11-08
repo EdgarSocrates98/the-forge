@@ -39,12 +39,10 @@ environment/adapter dependent.
 
 ## Required before marking COMPLETED
 
-- adapter shell/result-boundary conformance and negative tests are green
-  (`tests/test_adapter_shell.py`: 373 passed, 6 skipped; six packaged adapters);
-  native execution coverage beyond the real Spark Forge AWS path remains
-  environment-dependent;
 - an authenticated Agent Bridge provider session, when an approved provider
   credential is available;
+- native execution coverage beyond the real Spark Forge AWS path remains
+  environment-dependent;
 - repeat the real PortalApi matrix in the target release environment when
   promotion evidence is required; the current seven-adapter local matrix is
   persisted by Forge Portal and is no longer surface-only.
