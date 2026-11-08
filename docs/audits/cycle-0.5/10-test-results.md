@@ -17,7 +17,7 @@ machine receipt is retained in the same evidence directory.
 | Forge Lens ingest | PASSED — 3 spans, 3 traces |
 | The Forge doctor | PASSED — healthy after repairing the stale user venv variable |
 | The Forge specialist catalog | PASSED — 12 entries, all rosters `CONFORMANT` and `routable=true` |
-| Agent Bridge session | UNAVAILABLE — inventory only |
+| Agent Bridge session | NOT_RUN — Devin authenticated was detected; no external session was opened |
 | Portal live backend | SURFACE_ONLY — Portal gates pass, no fake backend introduced |
 
 ## Federated conformance
@@ -28,11 +28,22 @@ machine receipt is retained in the same evidence directory.
   references, maturity monotonicity, cross-domain planning, and negative cloud
   routing cases.
 
+- The Forge `tests/test_adapter_shell.py`: **373 passed, 6 skipped** out of
+  379 collected. The coverage includes all six packaged adapters, structured
+  malformed/protocol/provider errors, result-schema validation, truncation and
+  spill artifacts, timeout/process-tree termination, credential isolation,
+  artifact cleanup, symlink/junction traversal and deterministic replay.
+- The six packaged adapters share a byte-identical shell, while their provider
+  entry points and replay fixtures are exercised independently. This closes
+  shell/result-boundary conformance; it does not claim that every native
+  specialist is installed or that a live cloud/provider execution occurred.
+
 The rerun produced real, hashed artifacts for the OpenAPI document, loopback
 telemetry, native Lens payload/database and Data Sentinel report. The
-unavailable agent-provider state is preserved rather than replaced with a fake
-session. The catalog gate proves roster evidence and routing eligibility, not
-live execution of every specialist.
+authenticated-provider state is preserved as `NOT_RUN`: Devin was detected by
+the local Bridge inventory, but the lab did not create an external session.
+The catalog gate proves roster evidence and routing eligibility, not live
+execution of every specialist.
 
 ## Prior repository gates reused as evidence
 

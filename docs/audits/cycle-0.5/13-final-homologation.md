@@ -35,7 +35,9 @@ dependent.
 
 ## Required before marking COMPLETED
 
-- adapter conformance and negative tests for all specialist result contracts;
+- adapter shell/result-boundary conformance and negative tests are green
+  (`tests/test_adapter_shell.py`: 373 passed, 6 skipped; six packaged adapters);
+  live native execution for every specialist is still environment-dependent;
 - an authenticated Agent Bridge provider session, when an approved provider
   credential is available;
 - a real PortalApi backend matrix backed by receipts rather than surface-only
