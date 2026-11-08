@@ -1,6 +1,6 @@
 # Repository baseline — Cycle 0.5
 
-Data da coleta: 2026-11-07 (America/Sao_Paulo)  
+Data da coleta: 2026-11-08 (America/Sao_Paulo)
 Workspace: `E:\projetos\FORJAS`  
 Ambiente de execução: Windows; PowerShell; Python 3.14.6; Node.js v24.16.0;
 npm 12.0.2; uv 0.12.23. Os projetos Python continuam testados com seus
@@ -10,14 +10,14 @@ ambientes `uv` e restrições declaradas em cada `pyproject.toml`.
 
 | Repository | URL | Branch/HEAD observado | Pacote / versão | Manifest | Runtime | Estado local | Riscos iniciais |
 |---|---|---|---|---|---|---|---|
-| api-forge | `github.com/EdgarSocrates98/api-forge` | `main` / `011129ce4bd7` | `apiforge-af` 0.3.2; `apiforge.__version__=0.3.2` | `forge.json` `api-forge`; `forge.agentic.json` 0.3.2 | Python >=3.12 | alterações geradas `.codebase-memory/` | versão e identidade precisam ser consumidas como conceitos distintos |
-| forge-doctor-api | `github.com/EdgarSocrates98/forge-doctor-api` | `main` / `5c04fe78dc11` | `forge-doctor-api` 0.3.1 | `forge.json` `forge-doctor-api`; manifest agentic 0.3.1 | Python >=3.11 | alterações geradas `.codebase-memory/` | múltiplos contratos ForgeRequest/ForgeHandoff exigem negociação explícita |
-| data-sentinel-forge | `github.com/EdgarSocrates98/data-sentinel-forge` | `main` / `a74f15f6dfa8` | `data-sentinel-forge` 0.5.2 | `forge.json` e manifest agentic 0.5.2 | Python >=3.11 | três documentos de benchmark/evaluation modificados pelo usuário | especialista declara superfície rica, mas adaptador The Forge ainda não está provado |
-| the-forge | `github.com/EdgarSocrates98/the-forge` | `cycle-0.5-compatibility-hardening` sobre `main` / `5ba6753cd5ba` | `theforge-core` 0.7.4 | `forge.json` e contratos do control plane | Python >=3.11 | índice `.codebase-memory/` gerado | é o proprietário de descoberta, roteamento e governança; não deve executar domínio alheio |
-| forge-agent-bridge | `github.com/EdgarSocrates98/forge-agent-bridge` | `main` / `963e09b42023` | `forge-agent-bridge` 0.2.1 | `forge.json` e `forge/AgentBridgeEvent/v1` | Python >=3.11 | `uv.lock` modificado localmente | providers reais podem estar indisponíveis; eventos e retenção são P1 |
-| code-atlas-forge | `github.com/EdgarSocrates98/code-atlas-forge` | `main` / `9025ebfbc63e` | `code-atlas-forge`; versão exposta pelo módulo | `forge.json` anuncia `forge_id=code-atlas` | Python >=3.12 | `.codebase-memory/` e `uv.lock` não rastreados | identidade diverge do nome do repositório; precisa de adaptador/correção compatível |
-| forge-lens | `github.com/EdgarSocrates98/forge-lens` | `main` / `a5bba59c72d7` | `forge-lens-fl` 0.2.1 | `forge.json` e manifest agentic 0.2.1 | Python >=3.11 | limpo | correlação opcional com Bridge deve preservar semântica dos traces |
-| forge-portal | `github.com/EdgarSocrates98/forge-portal` | `main` / `5f8258d8eca7` | `forge-portal-app` 1.1.1 | `package.json`/CLI `forge-portal`; não possui `forge.json` | Node/Angular 22; npm | capturas, relatórios e auditorias visuais gerados modificados/não rastreados | PortalApi/1 é a fronteira; não se deve inferir um Forge especialista a partir do app |
+| api-forge | `github.com/EdgarSocrates98/api-forge` | `main` / `72b8304a801a` (igual a `origin/main`) | `apiforge-af` 0.3.2; `apiforge.__version__=0.3.2` | `forge.json` `api-forge`; `forge.agentic.json` 0.3.2 | Python >=3.12 | 1 alteração local pré-existente | versão de pacote, manifest e protocolo continuam eixos distintos |
+| forge-doctor-api | `github.com/EdgarSocrates98/forge-doctor-api` | `main` / `5c04fe78dc11` (igual a `origin/main`) | `forge-doctor-api` 0.3.1 | `forge.json` `forge-doctor-api`; manifest agentic 0.3.1 | Python >=3.11 | 1 alteração local pré-existente | múltiplos contratos ForgeRequest/ForgeHandoff exigem negociação explícita |
+| data-sentinel-forge | `github.com/EdgarSocrates98/data-sentinel-forge` | `main` / `e222af87e000` (igual a `origin/main`) | `data-sentinel-forge` 0.5.2 | `forge.json` e manifest agentic 0.5.2 | Python >=3.11 | 3 documentos de benchmark/evaluation pré-existentes | manifest/roster agora é descoberto; adapter de execução The Forge ainda não é prova de diagnóstico externo |
+| the-forge | `github.com/EdgarSocrates98/the-forge` | `main` / `547be2208ee0` (igual a `origin/main`) | `theforge-core` 0.7.4 | `forge.json` e contratos do control plane | Python >=3.11 | `.audit-work/` e `.codebase-memory/` pré-existentes | é o proprietário de descoberta, roteamento e governança; não deve executar domínio alheio |
+| forge-agent-bridge | `github.com/EdgarSocrates98/forge-agent-bridge` | `main` / `83169b3d3347` (igual a `origin/main`) | `forge-agent-bridge` 0.2.1 | `forge.json` e `forge/AgentBridgeEvent/v1` | Python >=3.11 | `uv.lock` pré-existente | providers reais podem estar indisponíveis; eventos e retenção são P1 |
+| code-atlas-forge | `github.com/EdgarSocrates98/code-atlas-forge` | `main` / `dda7c92998ff` (igual a `origin/main`) | `code-atlas-forge` 1.1.1 | `forge.json` e `forge.agentic.json` anunciam `code-atlas-forge`; CLI continua `code-atlas` | Python >=3.12 | `.codebase-memory/` e `uv.lock` pré-existentes | nome do distribuidor/CLI/provedor continua deliberadamente separado |
+| forge-lens | `github.com/EdgarSocrates98/forge-lens` | `main` / `a5bba59c72d7` (igual a `origin/main`) | `forge-lens-fl` 0.2.1 | `forge.json` e manifest agentic 0.2.1 | Python >=3.11 | limpo | correlação opcional com Bridge deve preservar semântica dos traces |
+| forge-portal | `github.com/EdgarSocrates98/forge-portal` | `main` / `91e4697bff24` (igual a `origin/main`) | `forge-portal-app` 1.1.1 | `package.json`/CLI `forge-portal`; não possui `forge.json` | Node/Angular 22; npm | capturas, relatórios, `.codebase-memory/` e auditorias visuais pré-existentes | PortalApi/1 é a fronteira; não se deve inferir um Forge especialista a partir do app |
 
 ## Superfícies públicas observadas
 
