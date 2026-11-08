@@ -153,6 +153,11 @@ class AgenticManifest:
     skills: list[str] = field(default_factory=list)
     agents: list[str] = field(default_factory=list)
     coordinators: list[str] = field(default_factory=list)
+    # Optional repository-relative evidence locations for providers whose
+    # packaged roster is not rooted at ``agents/`` or ``agentic/agents/``.
+    # The consumer validates the paths stay inside the checkout before reading
+    # them; this field never grants capability or routing trust by itself.
+    agent_roster_paths: list[str] = field(default_factory=list)
     mcp_command: list[str] = field(default_factory=list)
     mcp_verify_tool: str | None = None
     host_adapters: list[str] = field(default_factory=list)  # claude/devin/codex/copilot

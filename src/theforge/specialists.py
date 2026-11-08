@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from theforge import _installkit as kit
-from theforge.agent_roster import RosterConformance, inspect_roster
+from theforge.agent_roster import CANONICAL_ROSTER_DIRS, RosterConformance, inspect_roster
 from theforge.contracts.base import from_dict
 from theforge.contracts.specialist import (
     AgenticManifest,
@@ -257,7 +257,11 @@ def collect(
             evidence=notes,
         )
         manifest = load_agentic_manifest(forge_id, checkout)
-        roster = inspect_roster(manifest, checkout) if manifest and checkout else None
+        roster = None
+        if manifest and checkout:
+            declared_paths = tuple(Path(item) for item in manifest.agent_roster_paths if item)
+            roster_dirs = tuple(dict.fromkeys((*CANONICAL_ROSTER_DIRS, *declared_paths)))
+            roster = inspect_roster(manifest, checkout, roster_dirs=roster_dirs)
         if roster is not None and roster.state != "CONFORMANT":
             notes.append(f"agent roster evidence: {roster.state.lower()}")
         views.append(
