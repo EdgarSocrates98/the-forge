@@ -1,0 +1,10 @@
+{
+  "schema": "forge/cycle-0.5.1-security-results/1",
+  "status": "PASSED",
+  "bridge_adversarial_redaction": "PASSED",
+  "malformed_event_visibility": "PASSED",
+  "portal_unavailable_state": "PASSED",
+  "cloud_credential_validation": "BLOCKED",
+  "external_ai_authorization": "NOT_RUN",
+  "secrets_emitted": false
+}

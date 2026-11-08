@@ -1,0 +1,9 @@
+{
+  "schema": "forge/cycle-0.5.1-contract-validation/1",
+  "status": "PASSED",
+  "portal_envelope": "forge/PortalApi/1",
+  "bridge_targeted_tests": { "status": "PASSED", "passed": 107 },
+  "the_forge_targeted_tests": { "status": "PASSED", "passed": 35, "skipped": 1 },
+  "unknown_event": "runtime.unknown",
+  "secret_redaction": "before_persistence"
+}

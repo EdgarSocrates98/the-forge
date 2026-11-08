@@ -1,0 +1,11 @@
+{
+  "schema": "forge/cycle-0.5.1-portal-e2e/1",
+  "status": "PASSED",
+  "integrated_commit": "324b6287facd45bb4573577410303ca1e0d8600a",
+  "pull_request": 88,
+  "unit_tests": { "files": 55, "passed": 592 },
+  "browser_e2e": { "passed": 45, "skipped": 3 },
+  "visual_audit": { "captures": 224, "horizontal_overflow": 0 },
+  "axe_serious_or_critical": 0,
+  "product_forge_remote_session": "NOT_RUN"
+}
