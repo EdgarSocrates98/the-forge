@@ -42,7 +42,7 @@ one bounded query returns a document and registered source without document
 body leakage, and a second query returns an extracted graph relation. The
 Portal palette consumes this federated contract for the active product while
 deduplicating repeated document chunks. The Product Forge suite remains
-`218 passed, 1 skipped`; the Portal suite remains `589 passed`. The optional
+`219 passed, 1 skipped`; the Portal suite remains `589 passed`. The optional
 Defuddle adapter and Portal selector are covered by focused tests; the default
 stdlib path remains unchanged when Defuddle is unavailable.
 
@@ -89,7 +89,9 @@ default extractor preserves headings, code, links and table text and emits a
 content hash, metrics and provenance. The optional Defuddle CLI is selected
 explicitly and receives only the already-fetched, validated HTML over stdin;
 unavailable or malformed CLI output returns a typed refusal and does not fall
-back silently. The full Product Forge suite is `206 passed, 1 skipped`.
+back silently. The full Product Forge suite is `219 passed, 1 skipped`; the
+Windows legacy-console encoding regression is integrated on `main` via Product
+Forge PR #26.
 Source-backed URL, workspace and Obsidian imports persist a stable
 document key, version number, current marker and previous-document lineage;
 the explorer exposes the historical family and current document id. Manual
@@ -99,3 +101,18 @@ The optional Obsidian adapter reads/writes Markdown under
 `FORGE_OBSIDIAN_VAULT`, refuses traversal/symlinks/non-Markdown/oversized
 documents, and does not invoke Obsidian. Its import/export/security tests are
 included in the same suite.
+
+## Current safety and CLI revalidation
+
+The Spark AWS doctor now treats `--online` as a claim boundary: with no
+resolved AWS identity it returns `healthy: false` and exit code 1, while the
+offline mode remains available for local analysis. The merged fix is Spark AWS
+PR #207; the focused doctor, golden-path and independent-path suite passed
+`28` tests after the merge. No cloud execution is claimed without an
+authorized identity, explicit target, read-only scope and budget.
+
+The cross-repository CLI contract is green on the current 14-repository
+workspace: `cli_install_matrix.py --check` passed `14/14`, and
+`cli_runtime_smoke.py` passed `28/28`. These are entry-point and source-contract
+gates; they do not turn the mutating install wizard or cloud execution into a
+completed live claim.
