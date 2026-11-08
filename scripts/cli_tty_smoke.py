@@ -15,7 +15,6 @@ import argparse
 import json
 import os
 import re
-import socket
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,7 +74,7 @@ def _capture(process: PtyProcess, seconds: float) -> str:
     while time.monotonic() < deadline and process.isalive():
         try:
             value = process.read(4096)
-        except socket.timeout:
+        except TimeoutError:
             # ``PtyProcess.read`` uses a socket-backed reader and blocks by
             # default.  A short timeout keeps the capture window bounded even
             # when the child has not emitted another frame yet.
