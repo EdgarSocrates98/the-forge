@@ -7,6 +7,14 @@ Linux Bash is blocked by the host's missing WSL capability.
 
 The reproducible command is `python scripts/cli_runtime_smoke.py`. It passed
 for all 14 repositories: 28/28 commands (`--version` and `--help`) returned
-exit code 0, including the Node Forge CLI and Portal CLI. This proves installed
-entry-point discoverability and help surfaces; it deliberately does not claim
-that mutating install wizards or live cloud actions were executed.
+exit code 0, including the Node Forge CLI and Portal CLI. The companion
+`python scripts/cli_install_matrix.py --check` also passed 14/14: every
+repository has source evidence for both-stream TTY detection, a visual
+install/wizard surface, a machine-readable path and a no-TTY guard. This is
+the canonical cross-repository contract for the practical CLI experience.
+
+These checks prove discoverability, help surfaces and the declared interactive
+contract. They do not claim that mutating install wizards or live cloud actions
+were executed; those remain governed by a real TTY, explicit approval and
+provider credentials. A non-interactive invocation must remain deterministic
+and must not block waiting for input.
