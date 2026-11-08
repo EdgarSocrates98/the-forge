@@ -6,6 +6,7 @@ import pytest
 
 from theforge.contracts import (
     ContractError,
+    KnowledgeContextItem,
     KnowledgeContextPack,
     KnowledgeDocument,
     KnowledgeRelation,
@@ -68,6 +69,44 @@ def test_over_budget_pack_requires_explicit_truncation() -> None:
             principal="agent-1",
             estimated_tokens=101,
             budget_tokens=100,
+        )
+
+
+def test_context_pack_inline_items_require_origin_and_version() -> None:
+    pack = KnowledgeContextPack(
+        pack_id="pack-1",
+        query="q",
+        workspace_id="ws-1",
+        principal="agent-1",
+        source_versions={"repo-a": "7"},
+        selected_items=["item-1"],
+        items=[KnowledgeContextItem(
+            item_id="item-1",
+            source_id="repo-a",
+            document_id="src/main.py",
+            workspace_id="ws-1",
+            version="7",
+            content_hash="sha256:abc",
+            body="def main(): pass",
+        )],
+    )
+    assert pack.items[0].document_id == "src/main.py"
+    with pytest.raises(ContractError, match="version"):
+        KnowledgeContextPack(
+            pack_id="pack-1",
+            query="q",
+            workspace_id="ws-1",
+            principal="agent-1",
+            source_versions={"repo-a": "7"},
+            selected_items=["item-1"],
+            items=[KnowledgeContextItem(
+                item_id="item-1",
+                source_id="repo-a",
+                document_id="src/main.py",
+                workspace_id="ws-1",
+                version="6",
+                content_hash="sha256:abc",
+            )],
         )
 
 
