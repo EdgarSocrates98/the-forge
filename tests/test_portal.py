@@ -725,6 +725,33 @@ def test_specialists_view_projects_discovery(target: Path) -> None:
         }
 
 
+def test_specialists_view_uses_declared_packaged_roster_path(target: Path) -> None:
+    """Portal roster evidence must follow the manifest's canonical path."""
+    (target / "forge.json").write_text(
+        json.dumps({"forge_id": "packaged-roster-forge"}), encoding="utf-8"
+    )
+    (target / "forge.agentic.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/SpecialistAgenticManifest/v1",
+                "provider": "packaged-roster-forge",
+                "version": "1.0.0",
+                "agents": ["packaged-analyst"],
+                "agent_roster_paths": ["src/provider/assets/agents"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    roster = target / "src" / "provider" / "assets" / "agents"
+    roster.mkdir(parents=True)
+    (roster / "packaged-analyst.md").write_text("# analyst\n", encoding="utf-8")
+
+    doc = TheForgePortal(target)._specialists_view()
+    row = next(item for item in doc["specialists"] if item["provider"] == "packaged-roster-forge")
+    assert row["agent_roster"]["state"] == "CONFORMANT"
+    assert row["agent_roster"]["routable"] is True
+
+
 def test_delegations_empty_is_named_state(target: Path) -> None:
     doc = TheForgePortal(target)._delegations()
     assert doc["availability"]["state"] == "no_delegations"
