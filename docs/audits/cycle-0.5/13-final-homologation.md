@@ -18,6 +18,10 @@ dependent.
 - refreshed eight-repository baseline against current `origin/main`;
 - rerun E2E receipt with real loopback telemetry and hashed artifacts;
 - repaired stale Doctor API venv environment and revalidated `healthy: true`;
+- added conformant packaged specialist rosters for Agent Bridge (PR #12), Forge
+  Lens (PR #29) and Code Atlas (PR #36);
+- refreshed the local catalog: Data Sentinel, Agent Bridge, Code Atlas and
+  Forge Lens report `agent_roster.state=CONFORMANT` and `routable=true`;
 - Code Atlas identity correction merged in PR #34;
 - The Forge validator/lab/docs merged in PR #150 and evidence closure merged in PR #151;
 - refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`6ea6351`);

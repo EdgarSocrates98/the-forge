@@ -34,23 +34,32 @@ passes against the refreshed Code Atlas `main` (`7e3979f`).
 Repositories: The Forge + Data Sentinel/Agent Bridge/Code Atlas/Lens  
 Severity: P0 blocked  
 Category: interoperability  
-Evidence: `forge specialists list --root E:\projetos\FORJAS --json --no-probe`
-reports these checkouts as `DISCOVERED`, `INSTALLABLE` or `UNKNOWN` without
-provider adapters/rosters.  
-Impact: a manifest cannot be treated as a live route.  
-Decision: preserve honest `UNADAPTED`/`SURFACE_ONLY` states and make adapter
-promotion a prerequisite for Cycle 1.
+Initial evidence: `forge specialists list --root E:\projetos\FORJAS --json
+--no-probe` reported the new checkouts without canonical rosters.
+Remediation: Data Sentinel roster was merged previously; Agent Bridge PR #12
+(`71d58b5`), Forge Lens PR #29 (`86bd757`) and Code Atlas PR #36 (`53a8408`)
+now declare and package three domain-specific specialists each. A refreshed
+catalog from all three `origin/main` checkouts reports their rosters as
+`CONFORMANT` and `routable: true`.
+Residual impact: `DISCOVERED`/`INSTALLABLE` still describes installation state,
+not roster conformance; Doctor API and Doctor Data intentionally remain
+`UNKNOWN` until their ownership and specialist boundaries are defined.
+Status: RESOLVED for roster discovery/routing; a routable live execution and
+provider authentication remain separate homologation gates.
 
 ## F-004 — stale installed environment for Doctor API
 
 Repository: local The Forge provider registry  
 Severity: P1 environment  
-Evidence: `forge doctor --root E:\projetos\FORJAS --json` reports an invalid
-`forge-doctor-api` venv and registry paths under `E:\projetos\the-forger`, while
-the source checkout runs successfully through its own `uv` project.  
-Impact: live The Forge provider health is blocked on this machine.  
-Remediation: rerun governed install/sync in a separate approved environment;
-Cycle 0.5 does not mutate the user's provider registry.
+Initial evidence: the installed registry had an invalid `FORGE_DOCTOR_API_VENV`
+value (`/v`).
+Remediation: the variable was corrected to the existing installed venv at
+`C:\Users\edgar\.forge\installs\forge-doctor-api\venv`; a new process then
+returned `healthy: true`, `forge_version: 0.7.4` and `account_environment:
+ready`.
+Residual impact: this is a local environment repair, not proof of a clean
+installation on another machine.
+Status: RESOLVED LOCALLY; cross-machine installation remains a separate gate.
 
 ## F-005 — provider availability must remain explicit
 
