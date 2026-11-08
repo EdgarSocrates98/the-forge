@@ -22,8 +22,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -32,16 +34,57 @@ MULTIFORGE_DIR = "labs/multiforge"
 
 
 def _declared_version(repo: Path, component: str) -> str | None:
+    """Read the project's declared version without importing its code.
+
+    Hatch projects commonly declare ``project.version`` dynamically through
+    ``tool.hatch.version.attr`` or ``tool.hatch.version.path``.  Treating those
+    valid declarations as missing made the compatibility lab report a false
+    failure for otherwise matching checkouts.  Static extraction keeps the lab
+    deterministic and avoids executing provider code while preserving the
+    honest ``None`` state for unsupported version mechanisms.
+    """
     pyproject = repo / "pyproject.toml"
     if pyproject.is_file():
-        text = pyproject.read_text(encoding="utf-8")
-        in_project = False
-        for line in text.splitlines():
-            if line.strip().startswith("["):
-                in_project = line.strip() == "[project]"
-                continue
-            if in_project and line.strip().startswith("version"):
-                return line.split("=", 1)[1].strip().strip('"').strip("'")
+        try:
+            document = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError):
+            return None
+        project = document.get("project") or {}
+        version = project.get("version")
+        if isinstance(version, str):
+            return version
+        project_attr = version.get("attr") if isinstance(version, dict) else None
+        tools = document.get("tool") or {}
+        hatch = tools.get("hatch") or {}
+        setuptools = tools.get("setuptools") or {}
+        dynamic = hatch.get("version") or setuptools.get("dynamic", {}).get("version") or {}
+        source = dynamic.get("path")
+        if isinstance(source, str):
+            version_file = repo / source
+            match = re.search(
+                r"^\s*__version__\s*=\s*['\"]([^'\"]+)['\"]",
+                version_file.read_text(encoding="utf-8"),
+                re.MULTILINE,
+            ) if version_file.is_file() else None
+            if match:
+                return match.group(1)
+        attr = project_attr or dynamic.get("attr")
+        if isinstance(attr, str):
+            module, _, symbol = attr.rpartition(".")
+            if module and symbol:
+                for base in (repo / "src", repo):
+                    module_path = base.joinpath(*module.split("."))
+                    module_files = (module_path.with_suffix(".py"), module_path / "__init__.py")
+                    for module_file in module_files:
+                        if not module_file.is_file():
+                            continue
+                        match = re.search(
+                            rf"^\s*{re.escape(symbol)}\s*=\s*['\"]([^'\"]+)['\"]",
+                            module_file.read_text(encoding="utf-8"),
+                            re.MULTILINE,
+                        )
+                        if match:
+                            return match.group(1)
     pkg = repo / "package.json"
     if pkg.is_file():
         try:
