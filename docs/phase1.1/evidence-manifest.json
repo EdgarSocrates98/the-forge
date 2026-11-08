@@ -1,18 +1,22 @@
 {
-  "schema": "forge/phase1.1/evidence-manifest/v1",
-  "generated_at": "2026-11-08T09:04:17Z",
+  "schema": "forge/phase1.1/evidence-manifest/v2",
+  "generated_at": "2026-11-08T18:00:00Z",
   "environment": {
     "os": "Windows",
     "shell": "PowerShell",
     "python": "3.12",
-    "runner": "local"
+    "runner": "local",
+    "timezone": "America/Sao_Paulo"
   },
+  "decision": "PHASE_1_1_APPROVED_WITH_LIMITATIONS",
   "evidence": [
-    {"repository": "forge-agent-bridge", "head": "1c560542b99c4cb1892e29b9376211341286cf67", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 128, "skips": 0},
-    {"repository": "product-forge", "head": "a73c36f4107d48df7d60f8969764c003ed7c0192", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 225, "skips": 1},
-    {"repository": "code-atlas-forge", "head": "19e703aff08b6973afabad683bd261571dfe1b7f", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 1663, "skips": 21},
-    {"repository": "the-forge", "head": "332bf76114c64a60fff707e4b52f05a8c26701ff", "command": "uv run python scripts/knowledge_interop_smoke.py", "status": "VERIFIED", "passes": 1, "limitations": ["external provider not run", "cloud execution not run"]},
-    {"repository": "product-forge", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED", "limitations": ["remote push-run result not fetched; local parity and dedicated CI gate are present"]},
-    {"repository": "forge-portal", "head": "48b1930", "command": "live homologation matrix", "status": "VERIFIED", "verified": 122, "not_applicable": 18, "not_tested": 7}
+    {"repository": "forge-agent-bridge", "head": "1b8ac82df64cdd53e7ff17324d325e82d8dbaff9", "workflow_id": "42508735903", "command": "uv run ruff check src tests && uv run pytest -q", "status": "VERIFIED", "passes": 129, "skips": 0, "focused_passes": 23, "ci_jobs": ["core", "security"]},
+    {"repository": "product-forge", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "workflow_id": "42462885912", "command": "uv run pytest -q", "status": "VERIFIED", "passes": 225, "skips": 1, "focused_passes": 25},
+    {"repository": "code-atlas-forge", "head": "19e703aff08b6973afabad683bd261571dfe1b7f", "workflow_id": "42464291258", "command": "uv run pytest -q tests/test_knowledge_adapter.py tests/search/test_federated_search.py", "status": "VERIFIED", "passes": 11, "skips": 0, "full_suite_record": "1663 passed, 21 skipped"},
+    {"repository": "the-forge", "head": "301ca662ec90c89c970d795906fa1091b72f902a", "workflow_id": "42507344696", "command": "uv run pytest -q tests/test_knowledge_interop.py tests/test_schemas.py", "status": "VERIFIED", "passes": 23, "skips": 0, "limitations": ["external provider not run", "cloud execution not run"]},
+    {"repository": "forge-lens", "head": "86bd7572f2aecce1c84865b964246ae4513bc76b", "workflow_id": "42448963206", "command": "full suite recorded in prior cycle evidence", "status": "VERIFIED", "limitations": ["no new code changed in this revalidation"]},
+    {"repository": "product-forge-parity", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "workflow_id": "42462885912", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED"},
+    {"repository": "forge-portal", "head": "324b6287facd45bb4573577410303ca1e0d8600a", "workflow_id": "42505763000", "command": "npm test -- --watch=false; python -m pytest e2e -q; visual_probe.py", "status": "VERIFIED", "passes": 637, "skips": 3},
+    {"repository": "federated-lab", "head": "301ca662ec90c89c970d795906fa1091b72f902a", "command": "uv run python scripts/lab/theforge_lab.py --checkout . --mode A", "status": "VERIFIED", "limitations": ["local L1/fake-provider boundary"]}
   ]
 }
