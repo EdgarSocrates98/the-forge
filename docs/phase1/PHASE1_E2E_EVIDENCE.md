@@ -113,6 +113,8 @@ authorized identity, explicit target, read-only scope and budget.
 
 The cross-repository CLI contract is green on the current 14-repository
 workspace: `cli_install_matrix.py --check` passed `14/14`, and
-`cli_runtime_smoke.py` passed `28/28`. These are entry-point and source-contract
-gates; they do not turn the mutating install wizard or cloud execution into a
-completed live claim.
+`cli_runtime_smoke.py` passed `28/28`. The Windows pseudo-terminal gate
+`cli_tty_smoke.py --seconds 12` also passed `14/14`: every first screen had
+visible content and every case was interrupted before mutation. These are
+entry-point and safe-surface gates; they do not turn the mutating install
+wizard or cloud execution into a completed live claim.
