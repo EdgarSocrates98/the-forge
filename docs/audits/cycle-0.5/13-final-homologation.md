@@ -2,10 +2,10 @@
 
 ## Current state
 
-`CONDITIONAL` — the local deterministic laboratory passes with limitations, but
-the cycle is not a full federated homologation because provider promotion, a
-live agent session and a live Portal backend remain environment/adapter
-dependent.
+`CONDITIONAL` — the local deterministic laboratory, one real specialist
+delegation and the live Portal backend matrix pass with limitations; a live
+external agent session and promotion of every specialist remain
+environment/adapter dependent.
 
 ## Completed
 
@@ -32,14 +32,17 @@ dependent.
 - routable-catalog E2E receipt with 12 conformant specialist rosters, real
   loopback HTTP/degradation/telemetry, and real Doctor/API, Code Atlas, Data
   Sentinel and Lens processes.
+- one real Spark Forge AWS control-plane delegation completed through The
+  Forge, with the negative HOST_AGENTIC and missing-provider paths preserved;
+- Forge Portal's seven-adapter live PortalApi matrix persisted with 122
+  `VERIFIED`, 18 `NOT_APPLICABLE`, 7 `NOT_TESTED` and no `PARTIAL`/`BLOCKED`;
 
 ## Required before marking COMPLETED
 
-- adapter shell/result-boundary conformance and negative tests are green
-  (`tests/test_adapter_shell.py`: 373 passed, 6 skipped; six packaged adapters);
-  live native execution for every specialist is still environment-dependent;
 - an authenticated Agent Bridge provider session, when an approved provider
   credential is available;
+- native execution coverage beyond the real Spark Forge AWS path remains
+  environment-dependent;
 - repeat the real PortalApi matrix in the target release environment when
   promotion evidence is required; the current seven-adapter local matrix is
   persisted by Forge Portal and is no longer surface-only.
