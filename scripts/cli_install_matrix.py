@@ -155,6 +155,10 @@ def collect() -> dict[str, Any]:
         repo = WORKSPACE / item["repo"]
         source = repo / item["source"]
         text = _evidence(repo, item["source"])
+        portable_installers = {
+            name: (repo / name).is_file()
+            for name in ("install.sh", "install.ps1", "install.windows.sh")
+        }
         row = {
             **item,
             "exists": repo.is_dir(),
@@ -176,12 +180,17 @@ def collect() -> dict[str, Any]:
                 # askMenu; treat that real interactive surface equivalently.
                 or ("shouldShowMenu" in text and "askMenu" in text)
             ),
+            "portable_install": all(portable_installers.values()),
+            "portable_installers": portable_installers,
         }
         if not row["exists"]:
             errors.append(f"{item['repo']}: repository missing")
         if not row["source_exists"] and item["install"] is not None:
             errors.append(f"{item['repo']}: source missing: {item['source']}")
         if item["install"] is not None:
+            for installer, present in portable_installers.items():
+                if not present:
+                    errors.append(f"{item['repo']}: missing portable installer {installer}")
             if not row["tty_both_streams"]:
                 errors.append(f"{item['repo']}: no both-stream TTY evidence in {item['source']}")
             if not row["visual_install"]:

@@ -37,6 +37,12 @@ confirmação e `status` em JSON para CI. Ela não duplica o servidor Python nem
 substitui a experiência Angular; apenas torna descoberta e inicialização
 práticas em qualquer workspace.
 
+Além do comando de cada projeto, todos os 14 repositórios publicam as três
+entradas de instalação portável (`install.sh`, `install.windows.sh` e
+`install.ps1`). Os projetos Python preservam seus contratos próprios de
+bootstrap; `forge-cli` e `forge-portal` usam um plano Node comum com `--dry-run`
+e `--no-link`, incluindo build e link opcional do comando local.
+
 ## Verificação
 
 Na raiz de `the-forge`:
@@ -46,6 +52,8 @@ python scripts/cli_install_matrix.py --check
 ```
 
 O gate verifica os 14 repositórios, a presença da superfície declarada e a
-evidência estática de TTY de entrada e saída, wizard visual e fallback de
-automação. Isso complementa — não substitui — os testes de cada pacote e os
-smokes em terminal real.
+evidência estática de TTY de entrada e saída, wizard visual, fallback de
+automação e os três instaladores portáveis. Isso complementa — não substitui
+— os testes de cada pacote e os smokes em terminal real. A auditoria segura de
+instaladores usa `audit/tooling/run_installers.py`; shells ausentes aparecem
+como `BLOCKED`, nunca como `PASS`.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise every first-party install.ps1/install.sh in safe dry-run mode."""
+"""Exercise every first-party installer in safe dry-run mode."""
 
 from __future__ import annotations
 
@@ -17,16 +17,23 @@ from typing import Any
 
 REPOSITORIES = (
     "api-forge",
+    "code-atlas-forge",
+    "data-sentinel-forge",
     "forge-agent-bridge",
+    "forge-cli",
     "forge-doctor-api",
     "forge-doctor-data",
     "forge-lens",
+    "forge-portal",
     "platform-forge",
     "product-forge",
     "spark-forge-aws",
     "spark-forge-azure",
     "the-forge",
 )
+
+NODE_REPOSITORIES = {"forge-cli", "forge-portal"}
+INSTALLERS_WITHOUT_TARGET = {"code-atlas-forge", "data-sentinel-forge"}
 
 
 def args() -> argparse.Namespace:
@@ -157,6 +164,88 @@ def main() -> int:
     for repo in REPOSITORIES:
         source = worktree_root / repo
         target_base = artifact_dir / "targets" / repo
+        if repo in NODE_REPOSITORIES:
+            for shell, executable in powershells:
+                script = source / "install.ps1"
+                command = (
+                    [
+                        executable,
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-File",
+                        win_path(script),
+                        "-DryRun",
+                        "-NoLink",
+                        "-Quiet",
+                    ]
+                    if executable and script.is_file()
+                    else None
+                )
+                cases.append(
+                    run_case(
+                        repo=repo,
+                        shell=shell,
+                        script=script,
+                        command=command,
+                        target=target_base / shell,
+                        artifact_dir=artifact_dir,
+                        timeout=parsed.timeout,
+                    )
+                )
+            for shell, executable in (("git-bash", bash),):
+                script = source / "install.sh"
+                command = (
+                    [executable, bash_path(script), "--dry-run", "--no-link", "--quiet"]
+                    if executable and script.is_file()
+                    else None
+                )
+                cases.append(
+                    run_case(
+                        repo=repo,
+                        shell=shell,
+                        script=script,
+                        command=command,
+                        target=target_base / shell,
+                        artifact_dir=artifact_dir,
+                        timeout=parsed.timeout,
+                    )
+                )
+                windows_script = source / "install.windows.sh"
+                windows_command = (
+                    [executable, bash_path(windows_script), "--dry-run", "--no-link", "--quiet"]
+                    if executable and windows_script.is_file()
+                    else None
+                )
+                cases.append(
+                    run_case(
+                        repo=repo,
+                        shell="git-bash-windows-adapter",
+                        script=windows_script,
+                        command=windows_command,
+                        target=target_base / "git-bash-windows-adapter",
+                        artifact_dir=artifact_dir,
+                        timeout=parsed.timeout,
+                    )
+                )
+            if linux and (source / "install.sh").is_file():
+                script = source / "install.sh"
+                linux_command = [linux, str(script), "--dry-run", "--no-link", "--quiet"]
+            else:
+                script = source / "install.sh"
+                linux_command = None
+            cases.append(
+                run_case(
+                    repo=repo,
+                    shell="linux-bash",
+                    script=script,
+                    command=linux_command,
+                    target=target_base / "linux-bash",
+                    artifact_dir=artifact_dir,
+                    timeout=parsed.timeout,
+                )
+            )
+            continue
         python = runtime_root / repo / ".venv" / "Scripts" / "python.exe"
         posix_python = runtime_root / repo / ".venv" / "bin" / "python"
         python_fell_back = False
@@ -167,8 +256,9 @@ def main() -> int:
             python = posix_python
         for shell, executable in powershells:
             script = source / "install.ps1"
-            command = (
-                [
+            command = None
+            if executable and script.is_file():
+                command = [
                     executable,
                     "-NoProfile",
                     "-ExecutionPolicy",
@@ -176,15 +266,12 @@ def main() -> int:
                     "-File",
                     win_path(script),
                     "--dry-run",
-                    "--install-dir",
-                    win_path(target_base / shell),
-                    "--python",
-                    win_path(python),
-                    "--quiet",
                 ]
-                if executable and script.is_file()
-                else None
-            )
+                if repo not in INSTALLERS_WITHOUT_TARGET:
+                    command += ["--install-dir", win_path(target_base / shell)]
+                command += ["--python", win_path(python)]
+                if repo not in INSTALLERS_WITHOUT_TARGET:
+                    command += ["--quiet"]
             res = run_case(
                 repo=repo,
                 shell=shell,
@@ -204,12 +291,12 @@ def main() -> int:
                 bash,
                 bash_path(script),
                 "--dry-run",
-                "--install-dir",
-                win_path(target_base / "git-bash"),
                 "--python",
                 win_path(python),
-                "--quiet",
             ]
+            if repo not in INSTALLERS_WITHOUT_TARGET:
+                command[2:2] = ["--install-dir", win_path(target_base / "git-bash")]
+                command += ["--quiet"]
         else:
             command = None
         cases.append(
@@ -228,12 +315,12 @@ def main() -> int:
                 linux,
                 str(script),
                 "--dry-run",
-                "--install-dir",
-                str(target_base / "linux-bash"),
                 "--python",
                 str(posix_python),
-                "--quiet",
             ]
+            if repo not in INSTALLERS_WITHOUT_TARGET:
+                linux_command[2:2] = ["--install-dir", str(target_base / "linux-bash")]
+                linux_command += ["--quiet"]
         else:
             linux_command = None
         res = run_case(
