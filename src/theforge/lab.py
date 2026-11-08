@@ -47,10 +47,13 @@ declares ``python.satisfies`` / ``"python": ">=3.11"`` and/or ``extras``
 (importable optional packages), each candidate is validated before
 selection — via ``pyvenv.cfg`` / ``sys.version_info`` when readable,
 via one bounded read-only ``-c`` probe otherwise (version and missing
-extras in a single spawn). A candidate that cannot be validated is
-rejected with its precise reason; when every candidate is rejected the
-lab is BLOCKED — it never runs on an unproven interpreter, and an
-interpreter without the declared extras is never silently chosen.
+extras in a single spawn). A lab may declare its own ``lab.extras`` list;
+that list replaces product-level extras for lab resolution. This keeps an
+optional MCP server extra from blocking an offline lab that does not import
+MCP, while still blocking a lab that explicitly requires an unavailable
+extra. A candidate that cannot be validated is rejected with its precise
+reason; when every candidate is rejected the lab is BLOCKED — it never runs
+on an unproven interpreter.
 
 Honest outcome states (PASS / FAIL / SKIPPED / BLOCKED / ERROR) are
 derived from ``status`` + ``reason`` — SKIPPED is never mapped to PASS
@@ -129,6 +132,7 @@ class LabDecl:
     suite: str | None
     timeout_s: int
     python: str
+    extras: tuple[str, ...]
     raw: dict[str, Any]
 
 
@@ -414,6 +418,31 @@ def _extras_of(doc: dict[str, Any]) -> tuple[str, ...]:
     return tuple(e.strip() for e in raw_ex if isinstance(e, str) and e.strip())
 
 
+def _lab_extras_of(checkout: Path) -> tuple[str, ...] | None:
+    """Return explicit lab-only extras, or ``None`` to retain product extras.
+
+    Product-level extras describe the installed specialist surface (for
+    example MCP). A local lab can opt out when its own command only needs the
+    core package; an explicit empty list is therefore meaningful.
+    """
+    doc_path = checkout / "forge.json"
+    if not doc_path.is_file():
+        return None
+    try:
+        doc = json.loads(doc_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    lab = doc.get("lab") if isinstance(doc, dict) else None
+    if not isinstance(lab, dict) or "extras" not in lab:
+        return None
+    raw = lab.get("extras")
+    if not isinstance(raw, list) or any(
+        not isinstance(item, str) or not item.strip() for item in raw
+    ):
+        return None
+    return tuple(item.strip() for item in raw)
+
+
 def _managed_receipt_home(home: Path | None) -> Path:
     """forge-cli state home — ``FORGE_CLI_HOME`` is the tool's own
     documented override; the ``home`` parameter is the test seam."""
@@ -465,6 +494,7 @@ def resolve_interpreter(
     explicit: str | None = None,
     home: Path | None = None,
     validate: bool = True,
+    extras_override: tuple[str, ...] | None = None,
 ) -> InterpreterResolution:
     """Fixed-order interpreter resolution (module docstring authority list).
 
@@ -475,7 +505,11 @@ def resolve_interpreter(
     """
     checkout_spec, checkout_extras = _checkout_requirements(checkout)
     spec = (_python_spec_of(manifest) if manifest is not None else None) or checkout_spec
-    extras = (_extras_of(manifest) if manifest is not None else ()) or checkout_extras
+    extras = (
+        extras_override
+        if extras_override is not None
+        else ((_extras_of(manifest) if manifest is not None else ()) or checkout_extras)
+    )
 
     warnings: list[str] = []
     ordered: list[tuple[str, str | None, str]] = []
@@ -677,6 +711,11 @@ def load_lab_decl(forge_id: str, checkout: Path, python: str) -> LabDecl | Liter
     suite = lab.get("suite")
     if suite is not None and not isinstance(suite, str):
         raise LabError(f"{forge_id}: lab.suite must be a string id")
+    lab_extras = lab.get("extras", [])
+    if not isinstance(lab_extras, list) or any(
+        not isinstance(item, str) or not item.strip() for item in lab_extras
+    ):
+        raise LabError(f"{forge_id}: lab.extras must be a list of non-empty strings")
     return LabDecl(
         forge_id=forge_id,
         checkout=checkout,
@@ -686,6 +725,7 @@ def load_lab_decl(forge_id: str, checkout: Path, python: str) -> LabDecl | Liter
         suite=suite,
         timeout_s=min(timeout_s, MAX_TIMEOUT_S),
         python=python,
+        extras=tuple(item.strip() for item in lab_extras),
         raw=lab,
     )
 
@@ -823,6 +863,7 @@ def collect(
             explicit=python,
             home=home,
             validate=True,
+            extras_override=_lab_extras_of(checkout),
         )
         out.interpreter = resolution
         try:
