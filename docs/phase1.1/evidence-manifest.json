@@ -1,6 +1,6 @@
 {
   "schema": "forge/phase1.1/evidence-manifest/v1",
-  "generated_at": "2026-11-08T08:40:00Z",
+  "generated_at": "2026-11-08T09:04:17Z",
   "environment": {
     "os": "Windows",
     "shell": "PowerShell",
@@ -10,9 +10,9 @@
   "evidence": [
     {"repository": "forge-agent-bridge", "head": "1c560542b99c4cb1892e29b9376211341286cf67", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 128, "skips": 0},
     {"repository": "product-forge", "head": "a73c36f4107d48df7d60f8969764c003ed7c0192", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 225, "skips": 1},
-    {"repository": "code-atlas-forge", "head": "8895381b9b8e3d72312bf0bc29238ccf38b684f8", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 1663, "skips": 21},
-    {"repository": "the-forge", "head": "4955257", "command": "uv run python scripts/knowledge_interop_smoke.py", "status": "VERIFIED", "passes": 1, "limitations": ["external provider not run", "cloud execution not run"]},
-    {"repository": "product-forge", "head": "a73c36f", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED", "limitations": ["local checkout plus dedicated CI gate pending on latest docs commit"]},
+    {"repository": "code-atlas-forge", "head": "19e703aff08b6973afabad683bd261571dfe1b7f", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 1663, "skips": 21},
+    {"repository": "the-forge", "head": "332bf76114c64a60fff707e4b52f05a8c26701ff", "command": "uv run python scripts/knowledge_interop_smoke.py", "status": "VERIFIED", "passes": 1, "limitations": ["external provider not run", "cloud execution not run"]},
+    {"repository": "product-forge", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED", "limitations": ["remote push-run result not fetched; local parity and dedicated CI gate are present"]},
     {"repository": "forge-portal", "head": "48b1930", "command": "live homologation matrix", "status": "VERIFIED", "verified": 122, "not_applicable": 18, "not_tested": 7}
   ]
 }
