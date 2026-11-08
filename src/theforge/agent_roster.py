@@ -109,14 +109,18 @@ def inspect_roster(
 
     checkout = checkout.resolve()
     declared = _declared(manifest)
-    sources = tuple(
-        RosterSource(
-            str((checkout / relative).relative_to(checkout)),
-            _files_in(checkout / relative),
-        )
-        for relative in roster_dirs
-        if (checkout / relative).is_dir()
-    )
+    sources_list: list[RosterSource] = []
+    for relative in roster_dirs:
+        candidate = (checkout / relative).resolve()
+        try:
+            candidate.relative_to(checkout)
+        except ValueError:
+            continue
+        if candidate.is_dir():
+            sources_list.append(
+                RosterSource(str(candidate.relative_to(checkout)), _files_in(candidate))
+            )
+    sources = tuple(sources_list)
     if not sources:
         return RosterConformance(
             provider=manifest.provider,

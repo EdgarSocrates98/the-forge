@@ -57,3 +57,24 @@ def test_conflicting_canonical_sources_are_not_merged_as_truth(tmp_path: Path) -
     report = inspect_roster(_manifest(agents=["planner", "reviewer"]), tmp_path)
     assert report.state == "CONFLICT"
     assert report.observed == ("planner", "reviewer")
+
+
+def test_declared_packaged_roster_path_is_evidence_inside_checkout(tmp_path: Path) -> None:
+    _write_roster(tmp_path, "src/provider/assets/agents", "planner", "reviewer")
+    report = inspect_roster(
+        _manifest(agents=["planner", "reviewer"]),
+        tmp_path,
+        roster_dirs=(Path("agentic/agents"), Path("agents"), Path("src/provider/assets/agents")),
+    )
+    assert report.state == "CONFORMANT"
+    assert report.routable is True
+    assert Path(report.sources[-1].path) == Path("src/provider/assets/agents")
+
+
+def test_roster_path_cannot_escape_checkout(tmp_path: Path) -> None:
+    outside = tmp_path.parent / "agents-outside"
+    _write_roster(outside, "", "planner")
+    report = inspect_roster(
+        _manifest(agents=["planner"]), tmp_path, roster_dirs=(Path("..") / outside.name,)
+    )
+    assert report.state == "UNKNOWN"
