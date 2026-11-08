@@ -22,6 +22,8 @@ dependent.
   Lens (PR #29) and Code Atlas (PR #36);
 - refreshed the local catalog: Data Sentinel, Agent Bridge, Code Atlas and
   Forge Lens report `agent_roster.state=CONFORMANT` and `routable=true`;
+- added and packaged canonical rosters for Doctor API (PR #99) and Doctor Data
+  (PR #78), with Portal parity coverage and catalog routing;
 - Code Atlas identity correction merged in PR #34;
 - The Forge validator/lab/docs merged in PR #150 and evidence closure merged in PR #151;
 - refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`6ea6351`);

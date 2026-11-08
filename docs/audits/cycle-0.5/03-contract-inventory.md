@@ -2,7 +2,7 @@
 
 | Contract | Canonical definition | Producer | Current evidence | Gap |
 |---|---|---|---|---|
-| `forge/SpecialistAgenticManifest/v1` | root `forge.agentic.json` in specialists | API Forge, Doctor API, Data Sentinel, Bridge, Code Atlas, Lens | The Forge manifest parsing/validator plus conformant packaged rosters for Data Sentinel, Bridge, Code Atlas and Lens | Doctor API/Data still have no canonical roster; live execution adapters remain separate |
+| `forge/SpecialistAgenticManifest/v1` | root `forge.agentic.json` in specialists | API Forge, Doctor API, Data Sentinel, Bridge, Code Atlas, Lens | The Forge manifest parsing/validator plus conformant packaged rosters for API Forge, Doctor API, Data Sentinel, Bridge, Code Atlas and Lens | live execution adapters remain separate |
 | `ForgeCapabilityDescriptor/v1` and Forge task/result/evidence family | `api-forge/src/apiforge/contracts/forge_protocol.py` | API Forge | Forge CLI capability/health/evidence commands and tests | no universal consumer conformance suite across all eight |
 | `ForgeRequest`, `ForgeHandoff`, `ForgeReceipt`, `ForgeResult` | `forge-doctor-api/src/forge_doctor_api/handoff/protocol.py` | Doctor API | bounded handoff and SDK tests | names are Doctor-side, not aliases for API Forge task models |
 | `ApiHandoffBundle` | `forge-doctor-api/src/forge_doctor_api/handoff/model.py` | Doctor API | handoff tests | requires explicit adapter when consumed by The Forge |

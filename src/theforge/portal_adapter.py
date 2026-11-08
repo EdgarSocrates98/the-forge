@@ -1187,7 +1187,10 @@ class TheForgePortal(fp.PortalAdapter):
                 # roster can be inspected locally. Installed distributions may
                 # expose only a packaged manifest; that remains UNKNOWN rather
                 # than being mistaken for an empty roster.
-                from theforge.agent_roster import inspect_roster
+                from theforge.agent_roster import (
+                    CANONICAL_ROSTER_DIRS,
+                    inspect_roster,
+                )
 
                 manifest_source = next(
                     (
@@ -1198,7 +1201,19 @@ class TheForgePortal(fp.PortalAdapter):
                     None,
                 )
                 if manifest_source is not None:
-                    roster = inspect_roster(entry.agentic_manifest, manifest_source.parent)
+                    declared_paths = tuple(
+                        Path(item)
+                        for item in entry.agentic_manifest.agent_roster_paths
+                        if item
+                    )
+                    roster_dirs = tuple(
+                        dict.fromkeys((*CANONICAL_ROSTER_DIRS, *declared_paths))
+                    )
+                    roster = inspect_roster(
+                        entry.agentic_manifest,
+                        manifest_source.parent,
+                        roster_dirs=roster_dirs,
+                    )
             capabilities = []
             manifest = entry.capability_manifest
             if manifest is not None:

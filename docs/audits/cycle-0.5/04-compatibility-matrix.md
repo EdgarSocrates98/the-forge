@@ -8,7 +8,8 @@ the environment prevented the check.
 | Producer | Consumer | Contract/boundary | State | Evidence |
 |---|---|---|---|---|
 | API Forge | Doctor API | OpenAPI and bounded evidence/handoff | PASS | Cycle 0.5 lab `contract inspect` over a real OpenAPI file |
-| Doctor API | The Forge | specialist manifest + future handoff adapter | DISCOVERED / UNADAPTED | `specialists list --no-probe`; no direct execution claimed |
+| Doctor API | The Forge | specialist manifest + future handoff adapter | ROSTER CONFORMANT / ROUTABLE | PR #99 roster merged; catalog reports canonical assets and routing; no direct execution claimed |
+| Doctor Data | The Forge | specialist manifest + future handoff adapter | ROSTER CONFORMANT / ROUTABLE | PR #78 roster merged; catalog reports canonical assets and routing; no direct execution claimed |
 | Code Atlas | Doctor/API Operations | repository identity + structural index | PASS locally / adapter pending | real `code-atlas index` produced snapshot 1, 6 files, 60 evidence items |
 | Data Sentinel | The Forge | agentic manifest + diagnostic artifact | PASS locally / roster conformant | real `data-sentinel analyze` over telemetry JSONL; manifest/roster parity |
 | Agent Bridge | The Forge | provider/session/event boundary | ROSTER CONFORMANT / provider inventory PASS | `forge-bridge status`; PR #12 merged; no session fabricated |
