@@ -1,7 +1,9 @@
 # Phase 2 readiness
 
-The four specialist repositories are ready for read-only pre-audit only. Their
+The four specialist repositories are ready for read-only Phase 2 pre-audit. Their
 current capabilities, manifests, skills, MCP surfaces and installation contracts
-were inventoried in the previous cycle. No Phase 2 specialist was modified in this
-cycle. Start Phase 2 migration only after The Forge #174 and Code Atlas #37 pass
-CI and the federated E2E limitations receive an explicit owner decision.
+were inventoried in the previous cycle. Phase 1.1 contract changes are now merged:
+The Forge #174 (`332bf761`) and Code Atlas #37 (`19e703a`), with their required CI
+matrices green. Start specialist migration only with the federated E2E limitations
+tracked explicitly: external-provider execution and cloud execution still require
+credentials/owner decisions.
