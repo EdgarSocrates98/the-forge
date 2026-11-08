@@ -118,3 +118,12 @@ workspace: `cli_install_matrix.py --check` passed `14/14`, and
 visible content and every case was interrupted before mutation. These are
 entry-point and safe-surface gates; they do not turn the mutating install
 wizard or cloud execution into a completed live claim.
+
+The Spark Forge AWS local live boundary was then advanced on 2026-11-08:
+LAB-002 executed a real PySpark skew job through Docker Compose, produced
+partition observations and Spark event-log facts, passed the scenario oracle,
+and finalized a hash-verified receipt. The execution had
+`scenario_actions_executed=true` and was cleaned up with status `STOPPED`.
+The complete evidence and receipt digest are in
+`PHASE1_SPARK_L1_LIVE_EVIDENCE_2026-11-08.md`. This raises local L1 confidence;
+it does not change the cloud/L3 boundary or claim AWS/EMR/Glue execution.
