@@ -29,12 +29,17 @@ dependent.
 - refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`6ea6351`);
 - federated contract validation report `PASS` against the refreshed local
   heads.
+- routable-catalog E2E receipt with 12 conformant specialist rosters, real
+  loopback HTTP/degradation/telemetry, and real Doctor/API, Code Atlas, Data
+  Sentinel and Lens processes.
 
 ## Required before marking COMPLETED
 
-- stale provider registry resolved in an approved local environment;
-- adapter conformance and negative tests for all new specialists;
-- repeat the E2E lab with routable specialists and preserve the final receipt.
+- adapter conformance and negative tests for all specialist result contracts;
+- an authenticated Agent Bridge provider session, when an approved provider
+  credential is available;
+- a real PortalApi backend matrix backed by receipts rather than surface-only
+  validation.
 
 The evidence in this directory is sufficient to continue engineering, not to
 claim production or cloud homologation.

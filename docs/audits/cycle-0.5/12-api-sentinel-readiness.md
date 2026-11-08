@@ -15,9 +15,9 @@ justify a new analyzer, router, trace store or frontend.
 | New contracts | only a versioned composition bundle with provenance, evidence refs, uncertainty and receipts |
 | Required dependencies | The Forge protocol and Doctor/API contract adapter |
 | Optional dependencies | Agent Bridge, Lens live service, Portal, cloud collectors |
-| Doctor integration demonstrated | yes for local OpenAPI inspection; cross-repo handoff adapter still pending |
-| The Forge routing demonstrated | discovery demonstrated; full specialist routing blocked by stale registry/adapters |
-| Code Atlas usable | yes in local lab; canonical identity correction awaits merge |
+| Doctor integration demonstrated | yes for local OpenAPI inspection; cross-repo handoff adapter remains a Cycle 1 design gate |
+| The Forge routing demonstrated | roster conformance and routing eligibility demonstrated for 12 entries; live specialist execution remains unclaimed |
+| Code Atlas usable | yes in local lab; canonical identity correction merged |
 | Bridge governed investigation | inventory and event contracts present; live provider session unavailable |
 | Portal hosting | PortalApi/1 and visual gates pass; live API operations backend not homologated here |
 | Lens without duplication | yes, if Sentinel consumes trace evidence and does not store traces itself |
@@ -25,12 +25,12 @@ justify a new analyzer, router, trace store or frontend.
 
 ### Preconditions for Cycle 1 implementation
 
-- merge the Code Atlas canonical identity PR and update The Forge catalog;
-- provide narrow adapters for Data Sentinel, Code Atlas, Lens and Agent Bridge;
-- repair/sync the local provider registry without mutating production;
-- add producer/consumer contract tests and negative cases;
-- repeat the lab with a real routable The Forge provider and, separately, an
-  authenticated Bridge provider;
+- provide and homologate narrow producer/consumer adapters for the specialist
+  result contracts, including negative cases;
+- repair/sync the local provider registry on each supported installation
+  target without mutating production;
+- repeat the lab with an authenticated Bridge provider when credentials are
+  available;
 - define PortalApi API Operations routes backed by real receipts.
 
 Until those conditions pass, creating `api-sentinel-forge` is a NO-GO.
