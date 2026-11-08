@@ -8,7 +8,7 @@ Comando reproduzível:
 
 ```text
 uv run python scripts/lab/theforge_lab.py --checkout . --mode A \
-  --result-out audit/reports/theforge-lab-2026-11-08-after-portable-command.json
+  --result-out audit/reports/theforge-lab-2026-11-08-final.json
 ```
 
 Resultado:
@@ -23,6 +23,17 @@ Resultado:
 - `specialist-orchestration`: 3/3;
 - `workspace-multirepo`: 2/2;
 - `receipt_integrity`: 1.0 nos cenários executados.
+
+O resultado final foi produzido na `main` do The Forge após a integração dos
+manifestos portáveis dos quatro participantes federados:
+
+- API Forge: `00c458e`;
+- Platform Forge: `519b269`;
+- Spark Forge AWS: `a281b32`;
+- Spark Forge Azure: `dd9a82f`.
+
+O relatório bruto está em
+`audit/reports/theforge-lab-2026-11-08-final.json`.
 
 ## Correções comprovadas
 
