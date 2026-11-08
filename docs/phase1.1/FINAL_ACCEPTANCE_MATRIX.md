@@ -9,7 +9,7 @@
 | G4 parity | `VERIFIED` locally | dedicated CI gate added |
 | G5 persistence | `VERIFIED` | existing Product Forge and interoperability suites |
 | G6 retrieval | `VERIFIED` for baseline corpus | scale limitation documented |
-| G7 E2E | `PARTIAL` | local federated path passes; external/cloud limited |
+| G7 E2E | `PARTIAL` | local federated path and Spark LAB-002 L1 live path pass; external/cloud remains limited |
 | G8 Portal | `VERIFIED` on current main | build, Python/browser/accessibility matrices from cycle 4 |
 | G9 installation | `VERIFIED` for Windows matrix | POSIX/cloud cases not run here |
 | G10 release readiness | `VERIFIED_WITH_LIMITATIONS` | Phase 1.1 changes merged; external-provider and cloud gates remain explicitly out of scope |

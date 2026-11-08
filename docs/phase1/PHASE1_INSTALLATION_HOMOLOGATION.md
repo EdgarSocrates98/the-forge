@@ -28,3 +28,11 @@ contract. They do not claim that mutating install wizards or live cloud actions
 were executed; those remain governed by a real TTY, explicit approval and
 provider credentials. A non-interactive invocation must remain deterministic
 and must not block waiting for input.
+
+The no-flag cancellation path was also exercised with
+`uv run --with pywinpty python scripts/cli_tty_cancel_smoke.py --seconds 3`.
+It passed `14/14`: every bare command rendered a visible home surface, accepted
+its documented cancel interaction (`q`, `Esc` or `q+Enter` according to the
+prompt implementation), and exited before mutation. This is stronger than a
+source-only wizard claim, while still intentionally stopping before applying an
+installation.
