@@ -1,8 +1,8 @@
 # Unresolved risks
 
-1. The Forge's installed provider registry contains stale paths and an invalid
-   Doctor API environment. This blocks a fully live routing proof on this
-   workstation.
+1. The Forge's installed provider registry contains stale/unavailable provider
+   entries. The invalid `FORGE_DOCTOR_API_VENV` user variable was repaired to
+   the existing installed venv and `theforge doctor` is now healthy.
 2. Data Sentinel, Code Atlas, Forge Lens and Agent Bridge are discoverable but
    not uniformly promoted to routable The Forge adapters.
 3. The Agent Bridge provider matrix has no universally authenticated provider;

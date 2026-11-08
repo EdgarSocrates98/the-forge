@@ -3,8 +3,9 @@
 ## Current state
 
 `CONDITIONAL` — the local deterministic laboratory passes with limitations, but
-the cycle is not a full federated homologation because provider promotion and a
-live agent session remain blocked by environment/adapter state.
+the cycle is not a full federated homologation because provider promotion, a
+live agent session and a live Portal backend remain environment/adapter
+dependent.
 
 ## Completed
 
@@ -14,6 +15,9 @@ live agent session remain blocked by environment/adapter state.
 - real local HTTP/degradation/telemetry laboratory;
 - Doctor API, Code Atlas, Data Sentinel and Forge Lens real-process path;
 - explicit provider availability, Portal surface and cloud boundaries;
+- refreshed eight-repository baseline against current `origin/main`;
+- rerun E2E receipt with real loopback telemetry and hashed artifacts;
+- repaired stale Doctor API venv environment and revalidated `healthy: true`;
 - Code Atlas identity correction merged in PR #34;
 - The Forge validator/lab/docs merged in PR #150 and evidence closure merged in PR #151;
 - refreshed local `main` for Code Atlas (`7e3979f`) and The Forge (`6ea6351`);

@@ -2,8 +2,8 @@
 
 ## Cycle 0.5 lab
 
-`PASS_WITH_LIMITATIONS` on 2026-11-07. The receipt is
-`evidence/cycle-0.5-api-operations-receipt.json`.
+`PASS_WITH_LIMITATIONS` on 2026-11-08. The current receipt is
+`evidence/2026-11-08/cycle-0.5-api-operations-receipt.json`.
 
 | Check | Result |
 |---|---|
@@ -14,8 +14,15 @@
 | Code Atlas index | PASSED — snapshot 1, 6 files, 60 evidence items |
 | Data Sentinel artifact analysis | PASSED |
 | Forge Lens ingest | PASSED — 3 spans, 3 traces |
-| The Forge specialist discovery | PASSED as discovery; not all routable |
+| The Forge doctor | PASSED — healthy after repairing the stale user venv variable |
+| The Forge specialist discovery | PASSED as discovery; routability remains per-provider state |
 | Agent Bridge session | UNAVAILABLE — inventory only |
+| Portal live backend | SURFACE_ONLY — Portal gates pass, no fake backend introduced |
+
+The rerun produced real, hashed artifacts for the OpenAPI document, loopback
+telemetry, native Lens payload/database and Data Sentinel report. The
+unavailable agent-provider state is preserved rather than replaced with a fake
+session.
 | Portal live backend | SURFACE_ONLY |
 
 ## Prior repository gates reused as evidence
