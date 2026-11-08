@@ -17,6 +17,9 @@
   The local AWS profile is configured for `us-east-1`, but its session is
   expired and `az` is not installed; no cloud execution is claimed until
   authentication, target identity, read-only scope and budget are confirmed.
+- Cross-checking embedded Agent Bridge assets is implemented and exercised
+  locally; the Product Forge parity PR must still be accepted by its CI before
+  this item is considered part of the integrated `main` baseline.
 
 Each item has a bounded owner and must carry its own test evidence before the
 phase can be marked complete.

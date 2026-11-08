@@ -58,7 +58,7 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   Portal's browser remains primary, with a dependency-free Node CLI for home,
   `wizard`, `start` and JSON `status`. A read-only runtime smoke passed 28/28
   entry-point checks across the 14 repositories (`--version` + `--help`).
-- Product Forge: full suite `216 passed, 1 skipped`; URL, optional Defuddle,
+- Product Forge: full suite `218 passed, 1 skipped`; URL, optional Defuddle,
   Obsidian, persisted source-document versioning and document explorer
   security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.
@@ -81,3 +81,8 @@ Obsidian Markdown, bounded URL capture, optional Defuddle extraction, bounded
 Bases/Canvas validation, persisted source-backed document history, federated
 knowledge search and local SQLite/FTS scale evidence are implemented; live
 cloud execution remains pending explicit environment details.
+
+The embedded Agent Bridge audit is now deterministic: Product Forge checks the
+full `.py`/`.json` inventory and byte content against the standalone checkout
+when available, so missing, extra or byte-different vendored assets fail the
+gate instead of remaining invisible.

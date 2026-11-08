@@ -9,28 +9,22 @@ observed runtime capabilities with declarations and preserve `UNKNOWN`,
 ## Evidence available at handoff
 
 - `spark-forge-azure`: full suite completed with `3180 passed, 9 skipped`.
-- `spark-forge-aws`: full suite stopped after `9739 passed, 14 skipped, 1
-  failed` because `tests/test_package_importable.py::test_every_manifest_declares_the_same_version`
-  found `.claude-plugin/plugin.json = 0.7.2` while the package and
-  `pyproject.toml` declared `0.7.4`.
+- `spark-forge-aws`: full suite reached `15117 passed, 14 skipped`; the three
+  manifest/reference failures were corrected, regenerated and merged in PR
+  #206 (`416266c`).
 - Offline suite audit on 2026-11-07:
-  - `data-sentinel-forge`: `1055 passed, 8 skipped`; the skipped cases are
-    optional MCP/AWS gates, and no source was changed.
+  - `data-sentinel-forge`: `1057 passed, 8 skipped`, with browser/axe and
+    strict build gates green.
   - `forge-lens`: full suite passed, including its 1k/10k/100k scale smoke
     output.
-  - `platform-forge`: 2 failures in `tests/test_economy_closure.py` because a
-    checked-in receipt binds SHA `9875573d...`, outside `{HEAD, HEAD~1}`.
-  - `forge-doctor-data`: `2698 passed, 4 failed, 3 skipped`; all failures are
-    MCP official-model assertions reading `protocolVersion` while the test
-    accesses `protocol_version`.
-  - `forge-doctor-api`: `1980 passed, 4 failed`; install/doctor round-trip,
-    module invocation and malformed-MCP-stdio tests need an environment and
-    packaging audit.
-- No Spark AWS/Azure source was modified in this Phase 1 continuation. The AWS
-  version divergence is therefore a Phase 2 remediation item, not a suppressed
-  Phase 1 pass.
+  - `platform-forge`: economy receipt, interpreter portability and lint fixes
+    were corrected and merged in PR #98 (`830234c`).
+  - `forge-doctor-data`: full suite `2702 passed, 3 skipped`.
+  - `forge-doctor-api`: full suite `1945 passed, 39 skipped, 1 warning`.
+- These Phase 2 repositories are not modified by the current Phase 1 branch;
+  their corrected `main` heads are handed off for specialist audit and live
+  verification only.
 
-The next audit should correct the manifest through its own review flow, rerun
-the full AWS suite, and then perform authorized live diagnostics only after an
+The next audit should focus on authorized live diagnostics only after an
 account/subscription, role/profile, region, workspace/job and budget are
-explicitly supplied.
+explicitly supplied. No unavailable cloud target is represented as a pass.

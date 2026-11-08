@@ -9,8 +9,8 @@ The Portal gate is green on the current `main` build:
 - visual audit: 214 captures; 0 pages with horizontal overflow;
 - responsive reflow: 252 captures; 0 page-level horizontal overflows; 0 bad
   clips outside an approved scroller;
-- keyboard/usability cycle: 9/9 steps, 94 keystrokes, 0 friction findings;
-- browser E2E: 35 passed, 1 skipped; unit suite: 588 passed; production build:
+- keyboard/usability cycle: 9/9 steps, 93 keystrokes, 0 friction findings;
+- browser E2E: 45 passed, 3 explicitly optional skips; unit suite: 589 passed; production build:
   successful.
 
 The Product Forge deep-link gate was added after the generic route matrix and
@@ -29,7 +29,7 @@ The reproducible command is
 `npm run build`. It intercepts only typed Product Forge API responses at the
 browser boundary; it does not claim a live engine run.
 
-After the URL capture, document-explorer and federated Product Forge search increments, the Portal unit suite is `588 passed` and
+After the URL capture, document-explorer and federated Product Forge search increments, the Portal unit suite is `589 passed` and
 the reflow rerun remains green: 252 captures, 0 page-level overflows and 0 bad
 clips. The focused capture tests cover Workspace/Public URL source choice,
 permission, preview, import receipt and URL error handling.
@@ -42,7 +42,7 @@ one bounded query returns a document and registered source without document
 body leakage, and a second query returns an extracted graph relation. The
 Portal palette consumes this federated contract for the active product while
 deduplicating repeated document chunks. The Product Forge suite remains
-`206 passed, 1 skipped`; the Portal suite remains `588 passed`. The optional
+`218 passed, 1 skipped`; the Portal suite remains `589 passed`. The optional
 Defuddle adapter and Portal selector are covered by focused tests; the default
 stdlib path remains unchanged when Defuddle is unavailable.
 
