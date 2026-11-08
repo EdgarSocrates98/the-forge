@@ -114,10 +114,12 @@ authorized identity, explicit target, read-only scope and budget.
 The cross-repository CLI contract is green on the current 14-repository
 workspace: `cli_install_matrix.py --check` passed `14/14`, and
 `cli_runtime_smoke.py` passed `28/28`. The Windows pseudo-terminal gate
-`cli_tty_smoke.py --seconds 12` also passed `14/14`: every first screen had
-visible content and every case was interrupted before mutation. These are
-entry-point and safe-surface gates; they do not turn the mutating install
-wizard or cloud execution into a completed live claim.
+`cli_tty_smoke.py --seconds 8` passed `14/14`: every first screen had visible
+content and every case was interrupted before mutation. The durable cancel
+gate `cli_tty_cancel_smoke.py --seconds 3` also passed `14/14`, exercising the
+actual cancel protocol for each CLI family and confirming no mutation before
+exit. These are entry-point and safe-surface gates; they do not turn the
+mutating install wizard or cloud execution into a completed live claim.
 
 The Spark Forge AWS local live boundary was then advanced on 2026-11-08:
 LAB-002 executed a real PySpark skew job through Docker Compose, produced
@@ -125,5 +127,8 @@ partition observations and Spark event-log facts, passed the scenario oracle,
 and finalized a hash-verified receipt. The execution had
 `scenario_actions_executed=true` and was cleaned up with status `STOPPED`.
 The complete evidence and receipt digest are in
-`PHASE1_SPARK_L1_LIVE_EVIDENCE_2026-11-08.md`. This raises local L1 confidence;
+`PHASE1_SPARK_L1_LIVE_EVIDENCE_2026-11-08.md`. The final federated lab rerun
+also passed all eight declared scenarios after the portable manifest merges;
+its raw report is `audit/reports/theforge-lab-2026-11-08-final.json`. This
+raises local L1 confidence;
 it does not change the cloud/L3 boundary or claim AWS/EMR/Glue execution.
