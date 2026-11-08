@@ -81,5 +81,7 @@ Repository: Agent Bridge
 Severity: P1  
 Evidence: `forge-bridge status` detects Claude unauthenticated, Codex and
 Copilot unverified, Devin authenticated, and a non-installed fake provider.  
-Decision: no session was created by the E2E lab; `UNAVAILABLE` is preserved
-instead of fabricating an agentic homologation.
+Decision: no session was created by the E2E lab; `NOT_RUN` records that Devin
+was detected authenticated but an external invocation was intentionally not
+started. This is distinct from `UNAVAILABLE` and does not fabricate agentic
+homologation.
