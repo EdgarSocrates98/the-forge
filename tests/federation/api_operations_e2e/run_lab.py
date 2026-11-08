@@ -341,22 +341,54 @@ def run(*, workspace_root: Path, output: Path) -> dict[str, Any]:
                 env=env,
             )
         )
-        commands.append(
-            _run(
-                [
-                    "uv",
-                    "run",
-                    "forge",
-                    "specialists",
-                    "list",
-                    "--root",
-                    str(workspace_root),
-                    "--json",
-                    "--no-probe",
-                ],
-                cwd=workspace_root / "the-forge",
-                env=env,
+        specialists_command = _run(
+            [
+                "uv",
+                "run",
+                "forge",
+                "specialists",
+                "list",
+                "--root",
+                str(workspace_root),
+                "--json",
+                "--no-probe",
+            ],
+            cwd=workspace_root / "the-forge",
+            env=env,
+        )
+        commands.append(specialists_command)
+        roster_status = "FAILED"
+        roster_detail: dict[str, Any] | str
+        try:
+            # The CLI receipt deliberately bounds stdout for storage.  Use the
+            # same real collector in-process for the structured roster gate so
+            # a large catalog cannot make JSON validation depend on a log tail.
+            from theforge.specialists import collect, to_rows
+
+            entries = to_rows(collect(workspace_root=workspace_root, probe_cli=False))
+            nonconformant = [
+                entry.get("provider", "?")
+                for entry in entries
+                if (entry.get("agent_roster") or {}).get("state") != "CONFORMANT"
+                or not (entry.get("agent_roster") or {}).get("routable", False)
+            ]
+            roster_status = (
+                "PASSED"
+                if specialists_command["status"] == "PASSED" and entries and not nonconformant
+                else "FAILED"
             )
+            roster_detail = {
+                "catalog_entries": len(entries),
+                "nonconformant": nonconformant,
+            }
+        except (TypeError, AttributeError, OSError, ValueError) as exc:
+            roster_detail = f"catalog parse failed: {exc}"
+        checks.append(
+            {
+                "id": "SPECIALIST_ROSTER",
+                "status": roster_status,
+                "detail": roster_detail,
+            }
         )
         commands.append(
             _run(
@@ -423,8 +455,8 @@ def run(*, workspace_root: Path, output: Path) -> dict[str, Any]:
                 "Agent Bridge provider session was not created because "
                 "availability is environment-dependent.",
                 "Portal was validated as a surface; no fake live Portal backend was introduced.",
-                "The Forge discovery result is evidence of discovered states, "
-                "not a claim that every specialist is routable.",
+                "The specialist catalog proves roster conformance and routing "
+                "evidence only; it does not prove live specialist execution.",
             ],
         }
     receipt_path = output / "cycle-0.5-api-operations-receipt.json"
