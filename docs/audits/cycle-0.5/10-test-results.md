@@ -20,6 +20,14 @@ machine receipt is retained in the same evidence directory.
 | Agent Bridge session | UNAVAILABLE — inventory only |
 | Portal live backend | SURFACE_ONLY — Portal gates pass, no fake backend introduced |
 
+## Federated conformance
+
+- The Forge `tests/test_federation_conformance.py`: **24 passed**.
+- The suite validates six real adapter replay surfaces, namespaced capability
+  IDs, producer/consumer closure, deterministic graph construction, verifier
+  references, maturity monotonicity, cross-domain planning, and negative cloud
+  routing cases.
+
 The rerun produced real, hashed artifacts for the OpenAPI document, loopback
 telemetry, native Lens payload/database and Data Sentinel report. The
 unavailable agent-provider state is preserved rather than replaced with a fake
