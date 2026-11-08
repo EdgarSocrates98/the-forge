@@ -13,6 +13,16 @@ repository has source evidence for both-stream TTY detection, a visual
 install/wizard surface, a machine-readable path and a no-TTY guard. This is
 the canonical cross-repository contract for the practical CLI experience.
 
+The runtime TTY gate was also executed in a real Windows pseudo-terminal with
+`uv run --with pywinpty python scripts/cli_tty_smoke.py --seconds 12`. It passed
+14/14 with a visible first screen for every CLI, including the Portal menu and
+Forge CLI wizard. Each process was interrupted before a selection or
+confirmation; `interrupted_before_mutation=true` for all 14 cases. The JSON
+receipt is retained at
+`E:\projetos\FORJAS\the-forge\.audit-work\cli-tty-runtime-smoke-current.json`.
+This closes the gap between source inspection and an actual TTY surface, but
+still does not claim that a mutating install or live cloud action was run.
+
 These checks prove discoverability, help surfaces and the declared interactive
 contract. They do not claim that mutating install wizards or live cloud actions
 were executed; those remain governed by a real TTY, explicit approval and
