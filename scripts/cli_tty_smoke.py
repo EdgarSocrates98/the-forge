@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from winpty import PtyProcess
+    from winpty import PtyProcess  # type: ignore[import-not-found]
 except ImportError as exc:  # pragma: no cover - exercised by the CLI itself
     raise SystemExit(
         "pywinpty is required; run `uv run --with pywinpty "
