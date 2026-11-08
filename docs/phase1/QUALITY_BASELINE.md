@@ -10,6 +10,10 @@ Executed evidence is recorded in repository CI/local logs, the refreshed
   by absent WSL, not a pass.
 - Windows portability fixes were validated in Forge CLI, Agent Bridge, Lens
   and Doctor API.
+- Current ecosystem revalidation also passed the 14-project CLI installation
+  matrix, 28 version/help runtime checks, and a real Windows PTY smoke for all
+  14 projects. The Portal cross-forge HTTP runner passed 7/7 adapters, and the
+  native MCP handshake matrix passed 6/6.
 - The current six-repository baseline is recorded in `PHASE1_BASELINE.md` and
   the process-level knowledge path is reproducibly executed by
   `scripts/knowledge_interop_smoke.py`; its 2026-11-07 receipt is under
