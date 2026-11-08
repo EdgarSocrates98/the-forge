@@ -3,9 +3,10 @@
 1. The Forge's installed provider registry contains stale/unavailable provider
    entries. The invalid `FORGE_DOCTOR_API_VENV` user variable was repaired to
    the existing installed venv and `theforge doctor` is now healthy.
-2. Data Sentinel, Agent Bridge, Code Atlas and Forge Lens now have conformant
-   canonical rosters and are catalog-routable. The remaining distinction is
-   installation state versus roster state; the catalog keeps both explicit.
+2. API Forge, Doctor API, Doctor Data, Data Sentinel, Agent Bridge, Code Atlas
+   and Forge Lens now have conformant canonical rosters and are catalog-routable.
+   The remaining distinction is installation state versus roster state; the
+   catalog keeps both explicit.
 3. The Agent Bridge provider matrix has no universally authenticated provider;
    Devin is detected authenticated, but no session was opened in this cycle.
 4. Portal visual and CLI compatibility are strong, but live service federation

@@ -38,14 +38,28 @@ Initial evidence: `forge specialists list --root E:\projetos\FORJAS --json
 --no-probe` reported the new checkouts without canonical rosters.
 Remediation: Data Sentinel roster was merged previously; Agent Bridge PR #12
 (`71d58b5`), Forge Lens PR #29 (`86bd757`) and Code Atlas PR #36 (`53a8408`)
-now declare and package three domain-specific specialists each. A refreshed
-catalog from all three `origin/main` checkouts reports their rosters as
-`CONFORMANT` and `routable: true`.
+now declare and package three domain-specific specialists each. Doctor API PR
+#99 and Doctor Data PR #78 subsequently closed the remaining roster gap. A
+refreshed catalog from all relevant `origin/main` checkouts reports their
+rosters as `CONFORMANT` and `routable: true`.
 Residual impact: `DISCOVERED`/`INSTALLABLE` still describes installation state,
-not roster conformance; Doctor API and Doctor Data intentionally remain
-`UNKNOWN` until their ownership and specialist boundaries are defined.
+not roster conformance; the catalog keeps both explicit.
 Status: RESOLVED for roster discovery/routing; a routable live execution and
 provider authentication remain separate homologation gates.
+
+## F-006 — Doctor specialist rosters were not packaged at the Portal boundary
+
+Repositories: Doctor API and Doctor Data
+Severity: P0
+Category: interoperability/catalog
+Root cause: both providers exposed useful diagnostic commands but did not
+publish the canonical specialist assets consumed by the federated catalog.
+Remediation: Doctor API added three packaged API-diagnostics specialists in PR
+#99; Doctor Data added three packaged data-diagnostics specialists in PR #78
+(`2fc30f4`). Both Portal adapters now resolve the declared roster with
+containment checks and parity tests.
+Status: RESOLVED for declaration, packaging and Portal catalog routing. Live
+agent execution, provider authentication and handoff adapters remain separate.
 
 ## F-004 — stale installed environment for Doctor API
 
