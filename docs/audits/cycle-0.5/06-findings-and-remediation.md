@@ -37,16 +37,15 @@ Category: interoperability
 Initial evidence: `forge specialists list --root E:\projetos\FORJAS --json
 --no-probe` reported the new checkouts without canonical rosters.
 Remediation: Data Sentinel roster was merged previously; Agent Bridge PR #12
-(`71d58b5`) and Forge Lens PR #29 (`86bd757`) now declare and package three
-domain-specific specialists each. Code Atlas PR #36 is in CI with the same
-manifest/roster contract. A refreshed local catalog now reports the three
-rosters as `CONFORMANT` and `routable: true` (Code Atlas from its pending
-feature checkout; Bridge/Lens from `origin/main`).
+(`71d58b5`), Forge Lens PR #29 (`86bd757`) and Code Atlas PR #36 (`53a8408`)
+now declare and package three domain-specific specialists each. A refreshed
+catalog from all three `origin/main` checkouts reports their rosters as
+`CONFORMANT` and `routable: true`.
 Residual impact: `DISCOVERED`/`INSTALLABLE` still describes installation state,
 not roster conformance; Doctor API and Doctor Data intentionally remain
 `UNKNOWN` until their ownership and specialist boundaries are defined.
-Status: PARTIALLY RESOLVED; Code Atlas merge and a routable live execution are
-still required for full closure.
+Status: RESOLVED for roster discovery/routing; a routable live execution and
+provider authentication remain separate homologation gates.
 
 ## F-004 — stale installed environment for Doctor API
 

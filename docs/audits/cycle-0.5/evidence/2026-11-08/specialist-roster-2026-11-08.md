@@ -11,7 +11,7 @@ The refreshed local catalog observed the following states:
 | Provider | Install state | Roster state | Routable |
 |---|---|---|---:|
 | api-forge | INSTALLED | CONFORMANT | true |
-| code-atlas-forge | DISCOVERED* | CONFORMANT | true |
+| code-atlas-forge | DISCOVERED | CONFORMANT | true |
 | data-sentinel-forge | DISCOVERED | CONFORMANT | true |
 | forge-agent-bridge | DISCOVERED | CONFORMANT | true |
 | forge-doctor-api | INSTALLED | UNKNOWN | false |
@@ -22,10 +22,6 @@ The refreshed local catalog observed the following states:
 | spark-forge-aws | INSTALLED | CONFORMANT | true |
 | spark-forge-azure | INSTALLED | CONFORMANT | true |
 | the-forge | INSTALLED | CONFORMANT | true |
-
-\* Code Atlas was read from the local feature checkout for PR #36 while its
-full CI was still running. The roster is not treated as merged evidence until
-that PR completes and is promoted from `origin/main`.
 
 The conformant rosters are declarative, packaged assets with manifest parity;
 they do not claim provider authentication or a live agent session. Those
