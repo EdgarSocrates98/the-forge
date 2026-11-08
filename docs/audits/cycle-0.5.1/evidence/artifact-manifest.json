@@ -1,0 +1,12 @@
+{
+  "schema": "forge/cycle-0.5.1-artifact-manifest/1",
+  "status": "PASSED",
+  "artifacts": [
+    "theforge-lab-2026-11-08-final-main.json",
+    "portal-visual-gate-2026-11-08-api-operations",
+    "portal-visual-audit-2026-11-08-api-operations",
+    "Spark AWS LAB-002 receipt d4f32f877590f4c49bff35aa90373d0571596763c149b282d374c3e6f43b2ac6"
+  ],
+  "redactions": "no secrets included",
+  "external_claims": "none"
+}

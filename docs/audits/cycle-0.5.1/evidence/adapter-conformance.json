@@ -1,0 +1,9 @@
+{
+  "schema": "forge/cycle-0.5.1-adapter-conformance/1",
+  "status": "PASSED",
+  "participants": 14,
+  "scenarios": 8,
+  "receipt_integrity": 1.0,
+  "routing": "deterministic-local",
+  "external_ai_provider": "NOT_RUN"
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "forge/cycle-0.5.1-e2e-receipt/1",
+  "status": "PASSED",
+  "lab": "theforge-lab",
+  "mode": "A",
+  "fidelity": "L1-local",
+  "scenarios": 8,
+  "participants": 14,
+  "receipt_integrity": 1.0,
+  "cloud": "BLOCKED",
+  "external_provider": "NOT_RUN",
+  "secrets": "none"
+}

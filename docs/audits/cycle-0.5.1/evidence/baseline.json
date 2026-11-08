@@ -1,0 +1,9 @@
+{
+  "schema": "forge/cycle-0.5.1-baseline/1",
+  "generated_at": "2026-11-08",
+  "the_forge_head": "6ebb7083eea98bc2808e6d5650aafad2e046abd4",
+  "portal_integrated_commit": "324b6287facd45bb4573577410303ca1e0d8600a",
+  "cloud_identity": "BLOCKED",
+  "external_provider_session": "NOT_RUN",
+  "secrets": "none"
+}
