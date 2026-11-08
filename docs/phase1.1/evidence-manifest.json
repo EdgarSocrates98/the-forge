@@ -10,7 +10,7 @@
   },
   "decision": "PHASE_1_1_APPROVED_WITH_LIMITATIONS",
   "evidence": [
-    {"repository": "forge-agent-bridge", "head": "1b8ac82df64cdd53e7ff17324d325e82d8dbaff9", "workflow_id": "42508735903", "command": "uv run ruff check src tests && uv run pytest -q tests/test_cycle26.py tests/test_bridge.py", "status": "VERIFIED", "passes": 23, "skips": 0, "ci_jobs": ["core", "security"]},
+    {"repository": "forge-agent-bridge", "head": "1b8ac82df64cdd53e7ff17324d325e82d8dbaff9", "workflow_id": "42508735903", "command": "uv run ruff check src tests && uv run pytest -q", "status": "VERIFIED", "passes": 129, "skips": 0, "focused_passes": 23, "ci_jobs": ["core", "security"]},
     {"repository": "product-forge", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "workflow_id": "42462885912", "command": "uv run pytest -q", "status": "VERIFIED", "passes": 225, "skips": 1, "focused_passes": 25},
     {"repository": "code-atlas-forge", "head": "19e703aff08b6973afabad683bd261571dfe1b7f", "workflow_id": "42464291258", "command": "uv run pytest -q tests/test_knowledge_adapter.py tests/search/test_federated_search.py", "status": "VERIFIED", "passes": 11, "skips": 0, "full_suite_record": "1663 passed, 21 skipped"},
     {"repository": "the-forge", "head": "301ca662ec90c89c970d795906fa1091b72f902a", "workflow_id": "42507344696", "command": "uv run pytest -q tests/test_knowledge_interop.py tests/test_schemas.py", "status": "VERIFIED", "passes": 23, "skips": 0, "limitations": ["external provider not run", "cloud execution not run"]},

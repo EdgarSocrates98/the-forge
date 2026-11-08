@@ -32,9 +32,10 @@ perform provider probes.
 - The Forge: Knowledge interoperability and schema suite: `23 passed`; merged
   CI is green. The federated local lab and Cycle 0.5.1 evidence remain the
   source for the process-level E2E receipt.
-- Agent Bridge: provider matrix plus catalog regression: `23 passed`; Ruff
-  clean. A previous full local run exposed one intermittent provider-probe
-  timeout; merged `1b8ac82` removes that request-path hazard.
+- Agent Bridge: full suite: `129 passed`; focused provider matrix plus catalog
+  regression: `23 passed`; Ruff clean. A previous full local run exposed one
+  intermittent provider-probe timeout; merged `1b8ac82` removes that request-
+  path hazard.
 - Portal: production build, `592` frontend tests, `45` browser E2E passes and
   `3` skips; visual/accessibility probe found no serious/critical axe issue,
   no invisible focus ring, and no horizontal overflow on audited routes.
