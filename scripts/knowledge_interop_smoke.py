@@ -108,16 +108,26 @@ from pathlib import Path
 from forge_agent_bridge.context import (
     ContextStore, KnowledgeContextPack, ProductAgentSessionContext,
 )
+from forge_agent_bridge.adapter import BridgeError
 
 pack = KnowledgeContextPack.validate_contract(json.load(sys.stdin))
 with tempfile.TemporaryDirectory() as directory:
     store = ContextStore(path=Path(directory))
     store.bind("session-smoke", ProductAgentSessionContext(
-        identity="agent-smoke", allowed_knowledge_sources=["workspace/demo"]
+        identity="agent-smoke", workspace_id="ws-smoke",
+        allowed_knowledge_sources=["workspace/demo"]
     ))
     authorized = store.authorize_knowledge_pack("session-smoke", pack)
+    try:
+        store.authorize_knowledge_pack(
+            "session-smoke", pack.model_copy(update={"workspace_id": "ws-other"}))
+    except BridgeError:
+        workspace_denied = True
+    else:
+        workspace_denied = False
     print(json.dumps(
-        {"pack": authorized.model_dump(mode="json", by_alias=True)}, ensure_ascii=False
+        {"pack": authorized.model_dump(mode="json", by_alias=True),
+         "workspace_denied": workspace_denied}, ensure_ascii=False
     ))
 """
 
@@ -145,6 +155,8 @@ def run() -> dict[str, Any]:
         raise RuntimeError("Code Atlas emitted an unsupported knowledge schema")
     bridge = _run("forge-agent-bridge", BRIDGE_CODE, atlas)
     authorized = bridge.get("pack") or {}
+    if bridge.get("workspace_denied") is not True:
+        raise RuntimeError("Agent Bridge did not reject a cross-workspace pack")
     lens = _run("forge-lens", LENS_CODE, authorized)
     attrs = lens.get("resource_attributes") or {}
     if attrs.get("knowledge.pack_id") != authorized.get("pack_id"):

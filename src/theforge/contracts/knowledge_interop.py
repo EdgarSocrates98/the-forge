@@ -163,12 +163,42 @@ class KnowledgeEvidence:
 
 
 @dataclass(frozen=True, kw_only=True)
+class KnowledgeContextItem:
+    """Authorized inline content with explicit provenance."""
+
+    item_id: str
+    source_id: str
+    document_id: str
+    workspace_id: str
+    version: str
+    content_hash: str
+    product_id: str | None = None
+    body: str = ""
+    kind: str = ""
+    title: str = ""
+    path: str = ""
+    symbol_key: str = ""
+
+    def __post_init__(self) -> None:
+        for name in (
+            "item_id",
+            "source_id",
+            "document_id",
+            "workspace_id",
+            "version",
+            "content_hash",
+        ):
+            _required(getattr(self, name), name)
+
+
+@dataclass(frozen=True, kw_only=True)
 class KnowledgeContextPack:
     schema: str = KNOWLEDGE_CONTEXT_PACK_SCHEMA
     pack_id: str
     query: str
     workspace_id: str
     principal: str
+    product_id: str | None = None
     source_versions: dict[str, str] = field(default_factory=dict)
     selected_items: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
@@ -177,6 +207,7 @@ class KnowledgeContextPack:
     truncations: list[str] = field(default_factory=list)
     degraded_state: Literal["none", "partial", "unavailable"] = "none"
     diagnostics: list[str] = field(default_factory=list)
+    items: list[KnowledgeContextItem] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.schema != KNOWLEDGE_CONTEXT_PACK_SCHEMA:
@@ -188,6 +219,25 @@ class KnowledgeContextPack:
         over_budget = self.budget_tokens and self.estimated_tokens > self.budget_tokens
         if over_budget and not self.truncations:
             raise ContractError("over-budget context packs must record truncations")
+        if self.items and not self.source_versions:
+            raise ContractError("context packs with inline items require source versions")
+        selected = set(self.selected_items)
+        for item in self.items:
+            item_id = item.item_id
+            source_id = item.source_id
+            document_id = item.document_id
+            item_workspace = item.workspace_id
+            version = item.version
+            if not item_id or (selected and item_id not in selected):
+                raise ContractError("context pack inline item is not selected")
+            if not source_id or source_id not in self.source_versions:
+                raise ContractError("context pack inline item source is not declared")
+            if not document_id or item_workspace != self.workspace_id:
+                raise ContractError("context pack inline item workspace is invalid")
+            if not version or version != self.source_versions[source_id]:
+                raise ContractError("context pack inline item version is invalid")
+            if self.product_id and item.product_id != self.product_id:
+                raise ContractError("context pack inline item product is invalid")
 
     def ensure_authorized(self, allowed_item_ids: set[str]) -> None:
         unauthorized = sorted(set(self.selected_items) - allowed_item_ids)
