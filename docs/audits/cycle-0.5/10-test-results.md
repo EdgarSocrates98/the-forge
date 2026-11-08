@@ -17,6 +17,7 @@ machine receipt is retained in the same evidence directory.
 | Forge Lens ingest | PASSED — 3 spans, 3 traces |
 | The Forge doctor | PASSED — healthy after repairing the stale user venv variable |
 | The Forge specialist catalog | PASSED — 12 entries, all rosters `CONFORMANT` and `routable=true` |
+| The Forge control-plane provider execution | PASSED — `tests/test_control_plane_e2e.py`: 4 passed; real Spark Forge AWS checkout delegated and completed |
 | Agent Bridge session | NOT_RUN — Devin authenticated was detected; no external session was opened |
 | Portal live backend | PASSED — Portal Cycle 4 matrix exercised 7 real adapters over HTTP; 122 `VERIFIED`, 18 `NOT_APPLICABLE`, 7 `NOT_TESTED`, 0 `PARTIAL`/`BLOCKED` |
 
@@ -27,6 +28,10 @@ machine receipt is retained in the same evidence directory.
   IDs, producer/consumer closure, deterministic graph construction, verifier
   references, maturity monotonicity, cross-domain planning, and negative cloud
   routing cases.
+- The Forge `tests/test_control_plane_e2e.py`: **4 passed**. One real
+  `spark-forge-aws` specialist workflow was resolved and executed through the
+  The Forge delegation path; the suite also proves HOST_AGENTIC remains
+  `PREPARED`, missing providers remain blocked, and the receipt serializes.
 
 - The Forge `tests/test_adapter_shell.py`: **373 passed, 6 skipped** out of
   379 collected. The coverage includes all six packaged adapters, structured

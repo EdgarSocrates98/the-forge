@@ -12,6 +12,7 @@ the environment prevented the check.
 | Doctor Data | The Forge | specialist manifest + future handoff adapter | ROSTER CONFORMANT / ROUTABLE | PR #78 roster merged; catalog reports canonical assets and routing; no direct execution claimed |
 | Code Atlas | Doctor/API Operations | repository identity + structural index | PASS locally / adapter pending | real `code-atlas index` produced snapshot 1, 6 files, 60 evidence items |
 | Data Sentinel | The Forge | agentic manifest + diagnostic artifact | PASS locally / roster conformant | real `data-sentinel analyze` over telemetry JSONL; manifest/roster parity |
+| Spark Forge AWS | The Forge | native specialist workflow + delegation receipt | PASS locally | `tests/test_control_plane_e2e.py`: real checkout command resolution and subprocess delegation completed; no cloud mutation |
 | Agent Bridge | The Forge | provider/session/event boundary | ROSTER CONFORMANT / provider inventory PASS / session NOT_RUN | `forge-bridge status`; PR #12 merged; Devin authenticated was detected, no external session fabricated |
 | Agent Bridge | Forge Lens | trace/session correlation metadata | OPTIONAL / NOT_HOMOLOGATED | contracts exist separately; no live provider session |
 | Code Atlas | The Forge | manifest + structural-analysis roster | ROSTER CONFORMANT | PR #36 merged; catalog confirms parity and routing |

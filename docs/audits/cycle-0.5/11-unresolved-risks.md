@@ -4,9 +4,10 @@
    entries. The invalid `FORGE_DOCTOR_API_VENV` user variable was repaired to
    the existing installed venv and `theforge doctor` is now healthy.
 2. API Forge, Doctor API, Doctor Data, Data Sentinel, Agent Bridge, Code Atlas
-   and Forge Lens now have conformant canonical rosters and are catalog-routable.
-   The remaining distinction is installation state versus roster state; the
-   catalog keeps both explicit.
+   and Forge Lens now have conformant canonical rosters and are catalog-routable;
+   one real Spark Forge AWS control-plane execution is also proven. The
+   remaining distinction is installation state versus roster state and the
+   execution coverage of the other specialists; the catalog keeps both explicit.
 3. The Agent Bridge provider matrix has no universally authenticated provider;
    Devin is detected authenticated, but no session was opened in this cycle.
 4. Portal visual and CLI compatibility are strong, and the seven-adapter live
