@@ -304,6 +304,28 @@ def test_missing_declared_extras_blocks(tmp_path):
     assert "missing extras" in out.detail
 
 
+def test_explicit_lab_extras_replace_product_extras(tmp_path):
+    """A lab that needs only the core package can opt out of MCP extras."""
+    lab_decl = {**DECL, "extras": []}
+    repo = _repo(
+        tmp_path,
+        "core-only-lab",
+        lab_decl,
+        extras=["definitely_missing_extra_xyz"],
+    )
+    (repo / "fake_lab.py").write_text(
+        EXTRAS_LAB.replace('"fake-forge"', '"core-only-lab"'), encoding="utf-8"
+    )
+    venv = _fake_venv(tmp_path, "v-core")
+    home = _receipt_home(tmp_path, "core-only-lab", {"venv": str(venv)})
+
+    outcomes, _ = collect(manifests=[], repos=(repo,), mode="A", home=home)
+    (out,) = outcomes
+    assert out.state == "PASS"
+    assert out.interpreter is not None
+    assert out.interpreter.extras == ()
+
+
 def test_extras_present_selects_candidate(tmp_path):
     """A stdlib-importable declared extra keeps the candidate eligible."""
     repo = _repo(tmp_path, "ok-forge", DECL, extras=["json"])
