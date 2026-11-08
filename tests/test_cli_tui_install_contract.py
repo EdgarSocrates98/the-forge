@@ -48,3 +48,9 @@ def test_portal_keeps_web_primary_surface_and_cli_companion() -> None:
     portal = next(row for row in matrix["projects"] if row["repo"] == "forge-portal")
     assert portal["surface"] == "home+tui+wizard"
     assert portal["install"] == "tools/portal-cli.mjs"
+
+
+def test_every_project_exposes_portable_installers() -> None:
+    _require_federated_workspace()
+    matrix = collect()
+    assert all(row["portable_install"] for row in matrix["projects"]), matrix["errors"]
