@@ -14,7 +14,11 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - Code Atlas: existing budgeted ContextPack projects to a citable knowledge
   envelope without importing the control plane.
 - Agent Bridge: context packs are re-authorized by principal/source immediately
-  before provider injection; revoked or mismatched sessions fail closed.
+  before provider injection; revoked or mismatched sessions fail closed. The
+  Cycle 0.5.1 hardening now classifies unmapped native events as
+  `runtime.unknown`, enforces durable event/byte retention with an idempotent
+  trim marker, sanitizes normalized payloads/raw data before in-memory
+  consumers, and has a green full lint gate.
 - Forge Lens: trace resource metadata records pack/version/budget provenance
   without copying document contents.
 - Forge Portal: Product Forge knowledge now exposes a real workspace capture
@@ -49,7 +53,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
 - The Forge contract slice: `22 passed` with schema generation successful.
 - Product Forge focused slice: `17 passed`.
 - Code Atlas adapter: `1 passed`.
-- Agent Bridge context hardening: `9 passed`.
+- Agent Bridge: full suite `123 passed`; targeted Cycle 28/30 regression slice
+  `31 passed`; `uv run ruff check src tests` passed. FAB-001, FAB-002 and
+  FAB-003 are integrated on `main` through PRs #8, #9 and #10; the lint cleanup
+  is PR #11.
 - Lens provenance: `2 passed`.
 - Forge Portal: production build successful; unit suite `588 passed`; source
   capture gate tests passed.
@@ -57,8 +64,10 @@ remaining gaps in `INTEGRATION_GAP_ANALYSIS.md` exist.
   now exposes a TTY-aware visual surface, TUI/home equivalent and wizard. The
   Portal's browser remains primary, with a dependency-free Node CLI for home,
   `wizard`, `start` and JSON `status`. A read-only runtime smoke passed 28/28
-  entry-point checks across the 14 repositories (`--version` + `--help`).
-- Product Forge: full suite `218 passed, 1 skipped`; URL, optional Defuddle,
+  entry-point checks across the 14 repositories (`--version` + `--help`), and
+  a real Windows pseudo-terminal smoke passed 14/14 visible first screens,
+  interrupting every process before mutation.
+- Product Forge: full suite `219 passed, 1 skipped`; URL, optional Defuddle,
   Obsidian, persisted source-document versioning and document explorer
   security/route tests pass;
   URL/Obsidian API and Portal adapter routes are explicitly gated.
