@@ -139,7 +139,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
     result = collect(args.timeout)
-    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+    # Keep the receipt serializable from legacy Windows cp1252 consoles.  The
+    # captured child output remains UTF-8; only the outer JSON is escaped.
+    print(json.dumps(result, ensure_ascii=True, indent=2, sort_keys=True))
     return 0 if result["status"] == "PASS" else 1
 
 
