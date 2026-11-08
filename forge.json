@@ -5,7 +5,16 @@
   "cli": "theforge",
   "python": ">=3.11",
   "version": "0.7.4",
-  "extras": [],
+  "mcp_server_name": "theforge",
+  "mcp_command": [
+    "theforge",
+    "mcp",
+    "serve"
+  ],
+  "mcp_verify_tool": "theforge_status",
+  "extras": [
+    "mcp"
+  ],
   "lab": {
     "command": [
       "{python}",

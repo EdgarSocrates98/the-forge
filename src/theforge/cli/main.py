@@ -172,6 +172,25 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", parents=[common], help="summarize workspace state").set_defaults(
         handler=commands.cmd_status
     )
+
+    mcp = sub.add_parser(
+        "mcp",
+        help="The Forge MCP server (stdio by default; Streamable HTTP is opt-in)",
+    ).add_subparsers(dest="mcp_command", required=True)
+    mcp_serve = mcp.add_parser(
+        "serve",
+        parents=[common],
+        help="serve The Forge tools to an MCP host",
+    )
+    mcp_serve.add_argument(
+        "--transport",
+        choices=("stdio", "streamable-http", "http"),
+        default="stdio",
+        help="stdio for local hosts; streamable-http/http for a local HTTP endpoint",
+    )
+    mcp_serve.add_argument("--host", default="127.0.0.1")
+    mcp_serve.add_argument("--port", type=int, default=8000)
+    mcp_serve.set_defaults(handler=commands.cmd_mcp_serve)
     excellence = sub.add_parser(
         "excellence", help="engineering excellence evidence"
     ).add_subparsers(dest="excellence_command", required=True)

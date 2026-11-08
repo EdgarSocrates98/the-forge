@@ -38,7 +38,7 @@ from typing import Any
 _INSTALLKIT_VERSION = "1.0.4"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "7a51eb0c03d7a342"
+_SOURCE_SHA256 = "fe12468ebce188e6"
 
 SCHEMA_MANIFEST = "forge/InstallationManifest/v1"
 SCHEMA_RECEIPT = "forge/InstallReceipt/v1"
@@ -1282,6 +1282,11 @@ def uninstall(ctx: InstallContext, *, purge_state: bool = False) -> dict[str, An
             # the install root — keep it (and the entry) for repair/triage.
             kept.append(rel)
             continue
+        # `.mcp.json` is a shared document. Its managed server key is removed
+        # below while sibling servers and user metadata are preserved; the
+        # generic whole-file deletion path must never win first.
+        if rel == ".mcp.json" and ctx.spec.mcp_server_name:
+            continue
         target = ctx.root / rel
         if rel in ctx.spec.marker_files and target.exists():
             # marker files: excise the block, keep the file
@@ -1605,20 +1610,34 @@ def mcp_verify(spec: ForgeSpec, *, timeout: int = 20) -> dict[str, Any]:
             "detail": "subprocess disabled by policy",
         }
     exe = spec.mcp_command[0]
+    resolved_exe = exe
     if not (os.sep in exe or (os.altsep and os.altsep in exe)):
         import shutil  # noqa: PLC0415
 
-        if shutil.which(exe) is None:
+        resolved_exe = shutil.which(exe)
+        if resolved_exe is None:
             return {
                 "id": "mcp-handshake",
                 "status": "BLOCKED",
                 "detail": f"{exe!r} not resolvable on PATH — install incomplete",
             }
+    spawn_command = list(spec.mcp_command)
+    # Windows PATH launchers are commonly `.cmd`/`.bat` shims. `Popen` with
+    # `shell=False` (the safe default) does not execute those shims when the
+    # command is passed as an argv list, even though the host can launch them
+    # interactively. Route only that wrapper through cmd.exe; real executables
+    # keep the original no-shell path and every declared argument is preserved.
+    if os.name == "nt" and resolved_exe:
+        suffix = Path(resolved_exe).suffix.lower()
+        if suffix in (".cmd", ".bat"):
+            spawn_command = ["cmd.exe", "/d", "/c", resolved_exe, *spec.mcp_command[1:]]
+        elif not (os.sep in exe or (os.altsep and os.altsep in exe)):
+            spawn_command[0] = resolved_exe
     try:
         import subprocess  # noqa: PLC0415
 
         proc = subprocess.Popen(  # noqa: S603 — command is the declared spec
-            list(spec.mcp_command),
+            spawn_command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

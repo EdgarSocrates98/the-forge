@@ -111,7 +111,7 @@ from typing import Any
 _FORGECONTEXT_VERSION = "1.3.3"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "18ebe75c6281a3f5"
+_SOURCE_SHA256 = "3f858de0c5543e70"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -1245,6 +1245,9 @@ def build_manifest(
             "server_name": forge_json.get("mcp_server_name") or agentic.get("cli") or cli,
             "command": forge_json.get("mcp_command") or agentic.get("mcp_command"),
         }
+        verify_tool = forge_json.get("mcp_verify_tool") or agentic.get("mcp_verify_tool")
+        if verify_tool:
+            mcp["verify_tool"] = verify_tool
     if requires_network is None:
         requires_network = bool(agentic.get("requires_network", False))
     if requires_credentials is None:

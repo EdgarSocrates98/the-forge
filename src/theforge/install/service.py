@@ -37,8 +37,9 @@ def _spec() -> kit.ForgeSpec:
         cli_name="theforge",
         python_spec=">=3.11",
         state_dir=STATE_DIR,
-        mcp_command=(),
-        mcp_server_name=None,
+        mcp_command=("theforge", "mcp", "serve"),
+        mcp_server_name="theforge",
+        mcp_verify_tool="theforge_status",
         version_cmd=("--version",),
         render_assets=_render_for,
         # Consumer docs (AGENTS.md/CLAUDE.md/AGENT_PROTOCOL.md) pertencem a
@@ -72,7 +73,14 @@ def _ctx(
     spec = _spec()
     base = Path(cwd or Path.cwd())
     target = kit.resolve_scope(spec, scope, base, root)
-    options = kit.component_options(profile, components)
+    # ``host=none`` is the explicit no-host-assets opt-out. Preserve the
+    # historical default profile behavior by excluding MCP when no component
+    # list was requested; an explicit ``components=("mcp",)`` remains an
+    # intentional override for automation that wants only the shared config.
+    effective_components = components
+    if components is None and not hosts:
+        effective_components = ("skills", "agents")
+    options = kit.component_options(profile, effective_components)
     if gateway_profile is not None:
         if gateway_profile not in GATEWAY_PROFILES:
             raise kit.InstallError(

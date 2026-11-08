@@ -8,9 +8,17 @@ Forge Protocol  = Forge provider orchestration
 A2A             = agent-to-agent interoperability
 ```
 
-Um **MCP server não é um Forge provider** — nunca entra em
-`RegistryDocument.entries`, nunca vira `RemoteProviderCandidate`, nunca é
-instalado ou executado pelo Forge.
+Um **MCP server de terceiro não é um Forge provider** — nunca entra em
+`RegistryDocument.entries`, nunca vira `RemoteProviderCandidate`, e não é
+instalado ou executado automaticamente pelo Forge.
+
+O próprio The Forge também expõe um servidor MCP local, mas ele é uma
+interface do control plane, não um provider federado: `theforge mcp serve`
+publica descoberta de skills/agentes/capabilities, planejamento, execução
+governada e o ciclo de instalação. O extra é opcional no pacote para preservar
+o núcleo stdlib-only; `forge.json` declara `extras: ["mcp"]`, o comando
+`["theforge", "mcp", "serve"]` e o servidor `theforge`, e o installkit escreve
+essa entrada em `.mcp.json` nos escopos `project`, `workspace` e `user`.
 
 ## Fonte `mcp`
 
@@ -36,6 +44,22 @@ body capado, cache verificado por sha256, freshness explícito,
 surfaced, nunca seguido automaticamente.
 
 ## O que o Forge faz com MCP
+
+### MCP nativo do The Forge
+
+Instalação local, sem flags para o caminho comum:
+
+```bash
+theforge install apply --scope project --components mcp --yes
+theforge mcp serve
+```
+
+O servidor usa `stdio` por padrão. Para um cliente HTTP local, use
+`theforge mcp serve --transport streamable-http` e conecte em `/mcp`. As
+tools de leitura carregam anotações de risco e retornam JSON estruturado;
+`theforge_install` só escreve quando recebe `confirm=true`.
+
+### MCP externo
 
 1. **Tooling awareness** — em `theforge capabilities discover`, se o
    `CapabilityRequirement` declara `technologies`, servidores cujo

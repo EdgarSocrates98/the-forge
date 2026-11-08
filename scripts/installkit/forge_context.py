@@ -1245,6 +1245,9 @@ def build_manifest(
             "server_name": forge_json.get("mcp_server_name") or agentic.get("cli") or cli,
             "command": forge_json.get("mcp_command") or agentic.get("mcp_command"),
         }
+        verify_tool = forge_json.get("mcp_verify_tool") or agentic.get("mcp_verify_tool")
+        if verify_tool:
+            mcp["verify_tool"] = verify_tool
     if requires_network is None:
         requires_network = bool(agentic.get("requires_network", False))
     if requires_credentials is None:

@@ -28,6 +28,11 @@ Changelog = "https://github.com/EdgarSocrates98/the-forge/blob/main/CHANGELOG.md
 Issues = "https://github.com/EdgarSocrates98/the-forge/issues"
 
 [project.optional-dependencies]
+mcp = [
+    "mcp>=2,<3",
+    "starlette>=0.37",
+    "uvicorn>=0.30",
+]
 dev = [
     "pytest>=8.0",
     "hypothesis>=6.100",
@@ -36,6 +41,9 @@ dev = [
     "mypy>=1.10",
     "build>=1.2",
     "pyyaml>=6.0",
+    "mcp>=2,<3",
+    "starlette>=0.37",
+    "uvicorn>=0.30",
 ]
 
 [project.scripts]
