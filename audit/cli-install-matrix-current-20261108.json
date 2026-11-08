@@ -1,0 +1,288 @@
+{
+  "errors": [],
+  "projects": [
+    {
+      "cli": "apiforge",
+      "exists": true,
+      "home_tui": true,
+      "install": "apiforge.cli_install",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "api-forge",
+      "source": "src/apiforge/cli_install.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "code-atlas",
+      "exists": true,
+      "home_tui": true,
+      "install": "code_atlas.install.cli",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "code-atlas-forge",
+      "source": "src/code_atlas/cli.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "data-sentinel",
+      "exists": true,
+      "home_tui": true,
+      "install": "data_sentinel.cli.install",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "data-sentinel-forge",
+      "source": "src/data_sentinel/cli/install.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "forge-bridge",
+      "exists": true,
+      "home_tui": true,
+      "install": "forge_agent_bridge.install.cli",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "forge-agent-bridge",
+      "source": "src/forge_agent_bridge/cli.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "forge",
+      "exists": true,
+      "home_tui": true,
+      "install": "@clack/prompts",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "forge-cli",
+      "source": "src/index.ts",
+      "source_exists": true,
+      "surface": "menu+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "forge-doctor-api",
+      "exists": true,
+      "home_tui": true,
+      "install": "forge_doctor_api.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "forge-doctor-api",
+      "source": "src/forge_doctor_api/cli/install_cmd.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "forge-doctor-data",
+      "exists": true,
+      "home_tui": true,
+      "install": "forge_doctor_data.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "forge-doctor-data",
+      "source": "src/forge_doctor_data/cli/install_cmd.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "forge-lens",
+      "exists": true,
+      "home_tui": true,
+      "install": "forge_lens.install.guided",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "forge-lens",
+      "source": "src/forge_lens/install/guided.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "forge-portal",
+      "exists": true,
+      "home_tui": true,
+      "install": "tools/portal-cli.mjs",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "forge-portal",
+      "source": "tools/portal-cli.mjs",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "platformforge",
+      "exists": true,
+      "home_tui": true,
+      "install": "platformforge.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "platform-forge",
+      "source": "platformforge/portable_cli.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "productforge",
+      "exists": true,
+      "home_tui": true,
+      "install": "product_forge.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "product-forge",
+      "source": "src/product_forge/install/cli.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "sparkforge-aws",
+      "exists": true,
+      "home_tui": true,
+      "install": "sparkforge_aws.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "spark-forge-aws",
+      "source": "sparkforge_aws/adapters/cli.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "sparkforge-azure",
+      "exists": true,
+      "home_tui": true,
+      "install": "sparkforge_azure.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "spark-forge-azure",
+      "source": "sparkforge_azure/cli/cmd_install.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    },
+    {
+      "cli": "theforge",
+      "exists": true,
+      "home_tui": true,
+      "install": "theforge.ui.wizard",
+      "json_or_pipeline": true,
+      "non_tty_guard": true,
+      "portable_install": true,
+      "portable_installers": {
+        "install.ps1": true,
+        "install.sh": true,
+        "install.windows.sh": true
+      },
+      "repo": "the-forge",
+      "source": "src/theforge/cli/commands.py",
+      "source_exists": true,
+      "surface": "home+tui+wizard",
+      "tty_both_streams": true,
+      "visual_install": true
+    }
+  ],
+  "repository_count": 14,
+  "schema": "forge/cli-tui-install-matrix/v1",
+  "status": "PASS"
+}
