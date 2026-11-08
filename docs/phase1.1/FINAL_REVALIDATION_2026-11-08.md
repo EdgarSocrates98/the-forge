@@ -57,6 +57,8 @@ perform provider probes.
   4.2.0 plus MinIO, executed scenario actions, and passed the oracle with
   fidelity `L1 / real_local_engine`; receipt
   `5599c0c0ac850b77926bc814a8f72f156e0abd47ce0b58be4fcd3abaf0c403ae`.
+- Spark AWS full suite: `15125 passed, 14 skipped` in `1:51:54`, with no
+  failures in the current Windows run.
 
 ## Findings closure
 
