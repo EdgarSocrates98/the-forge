@@ -1,6 +1,6 @@
 {
   "schema": "forge/phase1.1/evidence-manifest/v2",
-  "generated_at": "2026-11-08T18:00:00Z",
+  "generated_at": "2026-11-08T20:10:00Z",
   "environment": {
     "os": "Windows",
     "shell": "PowerShell",
@@ -11,12 +11,15 @@
   "decision": "PHASE_1_1_APPROVED_WITH_LIMITATIONS",
   "evidence": [
     {"repository": "forge-agent-bridge", "head": "1b8ac82df64cdd53e7ff17324d325e82d8dbaff9", "workflow_id": "42508735903", "command": "uv run ruff check src tests && uv run pytest -q", "status": "VERIFIED", "passes": 129, "skips": 0, "focused_passes": 23, "ci_jobs": ["core", "security"]},
-    {"repository": "product-forge", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "workflow_id": "42462885912", "command": "uv run pytest -q", "status": "VERIFIED", "passes": 225, "skips": 1, "focused_passes": 25},
+    {"repository": "product-forge", "head": "13ce64e78c0976b63b6f9a1a406052f0331f1759", "workflow_id": "PR-32", "command": "uv run pytest -q; python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED", "passes": 225, "skips": 1, "focused_passes": 25},
+    {"repository": "api-forge", "head": "94cb3c77b6dc813478e40b1be17c330bd362cf64", "workflow_id": "PR-118", "command": "uv run ruff check src tests && uv run mypy src && uv run pytest -q", "status": "VERIFIED", "passes": 2026, "skips": 4, "ci_jobs": ["Python 3.12", "Python 3.13", "Python 3.14", "Windows parity"]},
     {"repository": "code-atlas-forge", "head": "19e703aff08b6973afabad683bd261571dfe1b7f", "workflow_id": "42464291258", "command": "uv run pytest -q tests/test_knowledge_adapter.py tests/search/test_federated_search.py", "status": "VERIFIED", "passes": 11, "skips": 0, "full_suite_record": "1663 passed, 21 skipped"},
-    {"repository": "the-forge", "head": "301ca662ec90c89c970d795906fa1091b72f902a", "workflow_id": "42507344696", "command": "uv run pytest -q tests/test_knowledge_interop.py tests/test_schemas.py", "status": "VERIFIED", "passes": 23, "skips": 0, "limitations": ["external provider not run", "cloud execution not run"]},
+    {"repository": "the-forge", "head": "e9791fac00e3d7986985e6375ca7270eb6b8e26a", "workflow_id": "42507344696", "command": "uv run pytest -q tests/test_knowledge_interop.py tests/test_schemas.py", "status": "VERIFIED", "passes": 23, "skips": 0, "limitations": ["external provider not run", "cloud execution not run"]},
     {"repository": "forge-lens", "head": "86bd7572f2aecce1c84865b964246ae4513bc76b", "workflow_id": "42448963206", "command": "full suite recorded in prior cycle evidence", "status": "VERIFIED", "limitations": ["no new code changed in this revalidation"]},
-    {"repository": "product-forge-parity", "head": "79b3a50ea4b4aafc7b5e8baedd8e6e3a523cb0c9", "workflow_id": "42462885912", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED"},
-    {"repository": "forge-portal", "head": "324b6287facd45bb4573577410303ca1e0d8600a", "workflow_id": "42505763000", "command": "npm test -- --watch=false; python -m pytest e2e -q; visual_probe.py", "status": "VERIFIED", "passes": 637, "skips": 3},
-    {"repository": "federated-lab", "head": "301ca662ec90c89c970d795906fa1091b72f902a", "command": "uv run python scripts/lab/theforge_lab.py --checkout . --mode A", "status": "VERIFIED", "limitations": ["local L1/fake-provider boundary"]}
+    {"repository": "product-forge-parity", "head": "13ce64e78c0976b63b6f9a1a406052f0331f1759", "workflow_id": "PR-32", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED"},
+    {"repository": "forge-portal", "head": "324b6287facd45bb4573577410303ca1e0d8600a", "workflow_id": "local-2026-11-08", "command": "npm run build; npm test -- --watch=false; python -m pytest e2e -q; visual_probe.py; visual_audit.py", "status": "VERIFIED", "frontend_passes": 592, "browser_passes": 45, "browser_skips": 3, "captures": 224, "axe_serious_critical": 0, "horizontal_overflow": 0},
+    {"repository": "federated-lab", "head": "e9791fac00e3d7986985e6375ca7270eb6b8e26a", "command": "uv run python scripts/lab/theforge_lab.py --checkout . --mode A", "status": "VERIFIED", "limitations": ["local L1/fake-provider boundary"]},
+    {"repository": "spark-forge-aws", "head": "5374fd6a1a3ea0e783dc27e189098bc447d8bb93", "workflow_id": "PR-213", "command": "uv run sparkforge-aws lab run LAB-002 --repo . --backend compose --execute --confirm --seed 42", "status": "VERIFIED", "fidelity": "L1 / real_local_engine", "oracle": "PASS", "receipt_sha256": "5599c0c0ac850b77926bc814a8f72f156e0abd47ce0b58be4fcd3abaf0c403ae"},
+    {"repository": "forge-cli-installation", "head": "multi-repo-main-heads-2026-11-08", "workflow_id": "local-2026-11-08", "command": "cli_install_matrix.py; cli_runtime_smoke.py; cli_tty_smoke.py; cli_tty_cancel_smoke.py; run_installers.py", "status": "VERIFIED", "projects": 14, "runtime_checks": 28, "tty_launch_pass": 14, "tty_cancel_pass": 14, "windows_installer_pass": 44, "windows_installer_fail": 0, "linux_container_installer_pass": 12}
   ]
 }

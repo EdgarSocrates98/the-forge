@@ -1,0 +1,260 @@
+{
+  "check_count": 28,
+  "checks": [
+    {
+      "command": "uv run apiforge --version",
+      "cwd": "E:\\projetos\\FORJAS\\api-forge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "apiforge 0.3.2",
+      "repo": "api-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run apiforge --help",
+      "cwd": "E:\\projetos\\FORJAS\\api-forge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: apiforge [OPTIONS] COMMAND [ARGS]...",
+      "repo": "api-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run code-atlas --version",
+      "cwd": "E:\\projetos\\FORJAS\\code-atlas-forge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "code-atlas 1.1.1",
+      "repo": "code-atlas-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run code-atlas --help",
+      "cwd": "E:\\projetos\\FORJAS\\code-atlas-forge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "usage: code-atlas [-h] [--version]",
+      "repo": "code-atlas-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run data-sentinel --version",
+      "cwd": "E:\\projetos\\FORJAS\\data-sentinel-forge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "data-sentinel 0.5.2",
+      "repo": "data-sentinel-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run data-sentinel --help",
+      "cwd": "E:\\projetos\\FORJAS\\data-sentinel-forge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: data-sentinel [OPTIONS] COMMAND [ARGS]...",
+      "repo": "data-sentinel-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-bridge --version",
+      "cwd": "E:\\projetos\\FORJAS\\forge-agent-bridge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "forge-bridge 0.2.1",
+      "repo": "forge-agent-bridge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-bridge --help",
+      "cwd": "E:\\projetos\\FORJAS\\forge-agent-bridge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: forge-bridge [OPTIONS] COMMAND [ARGS]...",
+      "repo": "forge-agent-bridge",
+      "status": "PASS"
+    },
+    {
+      "command": "node dist/index.js --version",
+      "cwd": "E:\\projetos\\FORJAS\\forge-cli",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "forge-cli 0.4.1",
+      "repo": "forge-cli",
+      "status": "PASS"
+    },
+    {
+      "command": "node dist/index.js --help",
+      "cwd": "E:\\projetos\\FORJAS\\forge-cli",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "_____ ___  ____   ____ _____",
+      "repo": "forge-cli",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-doctor-api --version",
+      "cwd": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "forge-doctor-api 0.3.1",
+      "repo": "forge-doctor-api",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-doctor-api --help",
+      "cwd": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: forge-doctor-api [OPTIONS] COMMAND [ARGS]...",
+      "repo": "forge-doctor-api",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-doctor-data --version",
+      "cwd": "E:\\projetos\\FORJAS\\forge-doctor-data",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "forge-doctor-data 1.1.1",
+      "repo": "forge-doctor-data",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-doctor-data --help",
+      "cwd": "E:\\projetos\\FORJAS\\forge-doctor-data",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: forge-doctor-data [OPTIONS] COMMAND [ARGS]...",
+      "repo": "forge-doctor-data",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-lens --version",
+      "cwd": "E:\\projetos\\FORJAS\\forge-lens",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "0.2.1",
+      "repo": "forge-lens",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run forge-lens --help",
+      "cwd": "E:\\projetos\\FORJAS\\forge-lens",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: forge-lens [OPTIONS] COMMAND [ARGS]...",
+      "repo": "forge-lens",
+      "status": "PASS"
+    },
+    {
+      "command": "node tools/portal-cli.mjs --version",
+      "cwd": "E:\\projetos\\FORJAS\\forge-portal",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "forge-portal 1.1.1",
+      "repo": "forge-portal",
+      "status": "PASS"
+    },
+    {
+      "command": "node tools/portal-cli.mjs --help",
+      "cwd": "E:\\projetos\\FORJAS\\forge-portal",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "forge-portal \u2014 Portal command center",
+      "repo": "forge-portal",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run platformforge --version",
+      "cwd": "E:\\projetos\\FORJAS\\platform-forge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "platformforge 0.3.2",
+      "repo": "platform-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run platformforge --help",
+      "cwd": "E:\\projetos\\FORJAS\\platform-forge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "usage: platformforge [-h] [--version]",
+      "repo": "platform-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run productforge --version",
+      "cwd": "E:\\projetos\\FORJAS\\product-forge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "0.2.2",
+      "repo": "product-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run productforge --help",
+      "cwd": "E:\\projetos\\FORJAS\\product-forge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "Usage: productforge [OPTIONS] COMMAND [ARGS]...",
+      "repo": "product-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run sparkforge-aws --version",
+      "cwd": "E:\\projetos\\FORJAS\\spark-forge-aws",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "sparkforge-aws 0.7.4",
+      "repo": "spark-forge-aws",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run sparkforge-aws --help",
+      "cwd": "E:\\projetos\\FORJAS\\spark-forge-aws",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "usage: sparkforge-aws [-h] [--version]",
+      "repo": "spark-forge-aws",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run sparkforge-azure --version",
+      "cwd": "E:\\projetos\\FORJAS\\spark-forge-azure",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "sparkforge-azure 0.3.2",
+      "repo": "spark-forge-azure",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run sparkforge-azure --help",
+      "cwd": "E:\\projetos\\FORJAS\\spark-forge-azure",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "usage: sparkforge-azure [-h] [--version] [--format {json,text}] <command> ...",
+      "repo": "spark-forge-azure",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run theforge --version",
+      "cwd": "E:\\projetos\\FORJAS\\the-forge",
+      "exit_code": 0,
+      "flag": "--version",
+      "output": "theforge 0.7.4",
+      "repo": "the-forge",
+      "status": "PASS"
+    },
+    {
+      "command": "uv run theforge --help",
+      "cwd": "E:\\projetos\\FORJAS\\the-forge",
+      "exit_code": 0,
+      "flag": "--help",
+      "output": "usage: theforge [-h] [--version]",
+      "repo": "the-forge",
+      "status": "PASS"
+    }
+  ],
+  "repository_count": 14,
+  "schema": "forge/cli-runtime-smoke/v1",
+  "status": "PASS"
+}

@@ -14,6 +14,6 @@ heads and workflow IDs. Older counts below remain historical gate notes.
 | G5 persistence | `VERIFIED` | existing Product Forge and interoperability suites |
 | G6 retrieval | `VERIFIED` for baseline corpus | scale limitation documented |
 | G7 E2E | `PARTIAL` | local federated path and Spark LAB-002 L1 live path pass; external/cloud remains limited |
-| G8 Portal | `VERIFIED` on current main | build, Python/browser/accessibility matrices from cycle 4 |
-| G9 installation | `VERIFIED` for Windows matrix | POSIX/cloud cases not run here |
+| G8 Portal | `VERIFIED` on current main | build, 592 frontend tests, 45 browser passes, 224 visual captures, zero serious/critical axe violations |
+| G9 installation | `VERIFIED` | 14/14 TUI/wizard surfaces, 28 runtime checks, 14 TTY launches, 14 TTY cancels, Windows 44/44 installer dry-runs, Linux container probes recorded |
 | G10 release readiness | `PHASE_1_1_APPROVED_WITH_LIMITATIONS` | current evidence is reproducible; external-provider and cloud gates remain explicitly out of scope |

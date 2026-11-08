@@ -1,0 +1,161 @@
+{
+  "checks": [
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run apiforge",
+      "cwd": "E:\\projetos\\FORJAS\\api-forge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n API-FORGE  WORKSPACE: API-FORGE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCLI\r\n  command                apiforge\r\n  entry                  apiforge.cli:app\r\n\r\n\r\nEscolha\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > API analysis (project/workspace status)\r\n   Discover API routes (FastAPI)\r\n   Contract explorer\r\n   Architecture explorer (capability matrix)\r\n   Agentic tasks\r\n   Test results (eval catalog)\r\n   Verification plan\r\n   Evidence (field records)\r\n   History ",
+      "repo": "api-forge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run code-atlas",
+      "cwd": "E:\\projetos\\FORJAS\\code-atlas-forge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n CODE ATLAS  COMMAND CENTRE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nWorkspace\r\n  root                   E:\\projetos\\FORJAS\\code-atlas-forge\r\n\r\nActions\r\n  status                 open\r\n  doctor                 open\r\n  install wizard         open\r\n\r\n\r\nWhat do you want to inspect?\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > status\r\n   doctor\r\n   install wizard\r\n   quit\r\n",
+      "repo": "code-atlas-forge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run data-sentinel",
+      "cwd": "E:\\projetos\\FORJAS\\data-sentinel-forge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n DATA SENTINEL  COMMAND CENTRE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nWorkspace\r\n  root                   E:\\projetos\\FORJAS\\data-sentinel-forge\r\n\r\nActions\r\n  status                 open\r\n  doctor                 open\r\n  install wizard         open\r\n\r\n\r\nWhat do you want to inspect?\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > status\r\n   doctor\r\n   install wizard\r\n   quit\r\n",
+      "repo": "data-sentinel-forge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run forge-bridge",
+      "cwd": "E:\\projetos\\FORJAS\\forge-agent-bridge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n FORGE AGENT BRIDGE  COMMAND CENTRE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nWorkspace\r\n  root                   E:\\projetos\\FORJAS\\forge-agent-bridge\r\n\r\nActions\r\n  status                 open\r\n  doctor                 open\r\n  install wizard         open\r\n\r\n\r\nWhat do you want to inspect?\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > status\r\n   doctor\r\n   install wizard\r\n   quit\r\n",
+      "repo": "forge-agent-bridge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "node dist/index.js",
+      "cwd": "E:\\projetos\\FORJAS\\forge-cli",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h  _____ ___  ____   ____ _____ \r\n |  ___/ _ \\|  _ \\ / ___| ____|\r\n | |_ | | | | |_) | |  _|  _|  \r\n |  _|| |_| |  _ <| |_| | |___ \r\n |_|   \\___/|_| \\_\\\\____|_____|\r\n                               \r\nT   forge-cli \u2014 instalador do ecossistema Forge \r\n\u001b[?25l|\r\n*  Como podemos ajudar?\r\n|  > Instalar Forjas (registry (PyPI + venv) ou git)\r\n|    Forjas instaladas\r\n|    Atualizar Forjas\r\n|    Integra\u00e7\u00f5es de host\r\n|    Servidores MCP\r\n|    Skills e agents\r\n|    Assistente inteligen",
+      "repo": "forge-cli",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run forge-doctor-api",
+      "cwd": "E:\\projetos\\FORJAS\\forge-doctor-api",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n FORGE-DOCTOR-API  WORKSPACE: FORGE-DOCTOR-API\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCLI\r\n  command                forge-doctor-api\r\n  entry                  forge_doctor_api.cli:main\r\n\r\n\r\nEscolha\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > Scan this project\r\n   Contracts\r\n   Diff two contract states\r\n   Fingerprint APIs\r\n   Security\r\n   Reliability\r\n   Findings (diagnose)\r\n   Evidence inventory\r\n   Reports (snapshots)\r\n   Installation status\r\n   ",
+      "repo": "forge-doctor-api",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run forge-doctor-data",
+      "cwd": "E:\\projetos\\FORJAS\\forge-doctor-data",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n FORGE-DOCTOR-DATA  WORKSPACE: FORGE-DOCTOR-DATA\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCLI\r\n  command                forge-doctor-data\r\n  entry                  forge_doctor_data.cli:app\r\n\r\n\r\nEscolha\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > Scan this project\r\n   List checks\r\n   Findings ranked (advise)\r\n   Baselines & history\r\n   Export report bundle\r\n   Policies\r\n   Verify environment (doctor)\r\n   Installation status\r\n   AI hosts\r\n   MCP ver",
+      "repo": "forge-doctor-data",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run forge-lens",
+      "cwd": "E:\\projetos\\FORJAS\\forge-lens",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n FORGE LENS  COMMAND CENTRE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nWorkspace\r\n  root                   E:\\projetos\\FORJAS\\forge-lens\r\n\r\nActions\r\n  status                 open\r\n  doctor                 open\r\n  install wizard         open\r\n\r\n\r\nWhat do you want to inspect?\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > status\r\n   doctor\r\n   install wizard\r\n   quit\r\n",
+      "repo": "forge-lens",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "node tools/portal-cli.mjs",
+      "cwd": "E:\\projetos\\FORJAS\\forge-portal",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\u001b[36m\u256d\u2500 Forge Portal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\u001b[0m\r\n\u001b[36m\u2502\u001b[0m Visual workspace for the Forge ecosystem \u001b[36m\u2502\u001b[0m\r\n\u001b[36m\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\u001b[0m\r\n\r\n  1  Start Portal\r\n  2  Guided wizard\r\n  3  Status\r\n  q  Exit\r\n\r\nChoose an action: ",
+      "repo": "forge-portal",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run platformforge",
+      "cwd": "E:\\projetos\\FORJAS\\platform-forge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n PLATFORM-FORGE  WORKSPACE: PLATFORM-FORGE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCLI\r\n  command                platformforge\r\n  entry                  platformforge.cli.main:main\r\n\r\n\r\nEscolha\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > Analyze this project (infrastructure facts)\r\n   Evidence inventory (artifacts in scope)\r\n   Impact explorer (graph stats / blast unlock)\r\n   Risk explorer (change decomposition)\r\n   Explore agents\r\n   AI hosts (observe ",
+      "repo": "platform-forge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run productforge",
+      "cwd": "E:\\projetos\\FORJAS\\product-forge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n PRODUCT FORGE  COMMAND CENTRE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nWorkspace\r\n  root                   E:\\projetos\\FORJAS\\product-forge\r\n\r\nActions\r\n  status                 open\r\n  doctor                 open\r\n  install wizard         open\r\n\r\n\r\nWhat do you want to inspect?\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > status\r\n   doctor\r\n   install wizard\r\n   quit\r\n",
+      "repo": "product-forge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run sparkforge-aws",
+      "cwd": "E:\\projetos\\FORJAS\\spark-forge-aws",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n SPARK-FORGE-AWS  WORKSPACE: SPARK-FORGE-AWS\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCLI\r\n  command                sparkforge-aws\r\n  entry                  sparkforge_aws.adapters.cli:main\r\n\r\n\r\nEscolha\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > Analyze PySpark project\r\n   Judge findings\r\n   Next step (routing)\r\n   Explore agents\r\n   Case evidence\r\n   Glue rules catalog\r\n   EMR rules catalog\r\n   Iceberg rules catalog\r\n   Performance rules (Spark UI ev",
+      "repo": "spark-forge-aws",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run sparkforge-azure",
+      "cwd": "E:\\projetos\\FORJAS\\spark-forge-azure",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n SPARK-FORGE-AZURE  WORKSPACE: SPARK-FORGE-AZURE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCLI\r\n  command                sparkforge-azure\r\n  entry                  sparkforge_azure.cli.main:main\r\n\r\n\r\nEscolha\r\n  setas ou j/k + enter; q ou esc cancela\r\n\r\n > Analyze this project\r\n   Diagnose\r\n   Check installation health\r\n   Installation status (ledger + drift)\r\n   MCP verify (real handshake)\r\n   Graph Studio (browser)\r\n   Open AI host (state + launch)\r\n  ",
+      "repo": "spark-forge-azure",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    },
+    {
+      "cancelled_before_mutation": true,
+      "command": "uv run theforge",
+      "cwd": "E:\\projetos\\FORJAS\\the-forge",
+      "exit_code": 0,
+      "first_screen": "\u001b[1t\u001b[c\u001b[?1004h\u001b[?9001h\r\n THE FORGE  WORKSPACE: THE-FORGE\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nSpecialists\r\n  api-forge              INSTALLED  apiforge\r\n  code-atlas-forge       DISCOVERED  checkout:code-atlas-forge\r\n  data-sentinel-forge    DISCOVERED  checkout:data-sentinel-forge\r\n  forge-agent-bridge     DISCOVERED  checkout:forge-agent-bridge\r\n  forge-doctor-api       INSTALLED  forge-doctor-api\r\n  forge-doctor-data      INSTALLED  forge-doctor-data\r\n  forge-lens             INSTALLA",
+      "repo": "the-forge",
+      "status": "PASS",
+      "tty": true,
+      "visible_home": true
+    }
+  ],
+  "repository_count": 14,
+  "schema": "forge/cli-tty-cancel-smoke/v1",
+  "status": "PASS"
+}
