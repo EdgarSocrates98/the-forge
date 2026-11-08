@@ -170,10 +170,10 @@ def _register(
             description=description,
             annotations=ToolAnnotations(
                 title=description.split(".", 1)[0],
-                readOnlyHint=read_only,
-                destructiveHint=destructive,
-                idempotentHint=idempotent,
-                openWorldHint=open_world,
+                read_only_hint=read_only,
+                destructive_hint=destructive,
+                idempotent_hint=idempotent,
+                open_world_hint=open_world,
             ),
             structured_output=True,
         )
