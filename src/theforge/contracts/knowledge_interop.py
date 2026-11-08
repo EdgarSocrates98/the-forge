@@ -181,7 +181,11 @@ class KnowledgeContextItem:
 
     def __post_init__(self) -> None:
         for name in (
-            "item_id", "source_id", "document_id", "workspace_id", "version",
+            "item_id",
+            "source_id",
+            "document_id",
+            "workspace_id",
+            "version",
             "content_hash",
         ):
             _required(getattr(self, name), name)

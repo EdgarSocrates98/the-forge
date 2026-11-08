@@ -80,15 +80,17 @@ def test_context_pack_inline_items_require_origin_and_version() -> None:
         principal="agent-1",
         source_versions={"repo-a": "7"},
         selected_items=["item-1"],
-        items=[KnowledgeContextItem(
-            item_id="item-1",
-            source_id="repo-a",
-            document_id="src/main.py",
-            workspace_id="ws-1",
-            version="7",
-            content_hash="sha256:abc",
-            body="def main(): pass",
-        )],
+        items=[
+            KnowledgeContextItem(
+                item_id="item-1",
+                source_id="repo-a",
+                document_id="src/main.py",
+                workspace_id="ws-1",
+                version="7",
+                content_hash="sha256:abc",
+                body="def main(): pass",
+            )
+        ],
     )
     assert pack.items[0].document_id == "src/main.py"
     with pytest.raises(ContractError, match="version"):
@@ -99,14 +101,16 @@ def test_context_pack_inline_items_require_origin_and_version() -> None:
             principal="agent-1",
             source_versions={"repo-a": "7"},
             selected_items=["item-1"],
-            items=[KnowledgeContextItem(
-                item_id="item-1",
-                source_id="repo-a",
-                document_id="src/main.py",
-                workspace_id="ws-1",
-                version="6",
-                content_hash="sha256:abc",
-            )],
+            items=[
+                KnowledgeContextItem(
+                    item_id="item-1",
+                    source_id="repo-a",
+                    document_id="src/main.py",
+                    workspace_id="ws-1",
+                    version="6",
+                    content_hash="sha256:abc",
+                )
+            ],
         )
 
 

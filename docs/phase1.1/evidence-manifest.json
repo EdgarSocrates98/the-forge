@@ -1,0 +1,18 @@
+{
+  "schema": "forge/phase1.1/evidence-manifest/v1",
+  "generated_at": "2026-11-08T08:40:00Z",
+  "environment": {
+    "os": "Windows",
+    "shell": "PowerShell",
+    "python": "3.12",
+    "runner": "local"
+  },
+  "evidence": [
+    {"repository": "forge-agent-bridge", "head": "1c560542b99c4cb1892e29b9376211341286cf67", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 128, "skips": 0},
+    {"repository": "product-forge", "head": "a73c36f4107d48df7d60f8969764c003ed7c0192", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 225, "skips": 1},
+    {"repository": "code-atlas-forge", "head": "53a84085bca355187f112b8cf4a2998b98478487", "command": "uv run pytest -q --disable-warnings", "status": "VERIFIED", "passes": 1663, "skips": 21},
+    {"repository": "the-forge", "head": "4955257", "command": "uv run python scripts/knowledge_interop_smoke.py", "status": "VERIFIED", "passes": 1, "limitations": ["external provider not run", "cloud execution not run"]},
+    {"repository": "product-forge", "head": "a73c36f", "command": "uv run python scripts/check_bridge_parity.py --standalone-root ../forge-agent-bridge", "status": "VERIFIED", "limitations": ["local checkout plus dedicated CI gate pending on latest docs commit"]},
+    {"repository": "forge-portal", "head": "48b1930", "command": "live homologation matrix", "status": "VERIFIED", "verified": 122, "not_applicable": 18, "not_tested": 7}
+  ]
+}
