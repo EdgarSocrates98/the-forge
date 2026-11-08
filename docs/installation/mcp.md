@@ -1,5 +1,6 @@
 # MCP — the-forge
 
-O the-forge não expõe servidor MCP próprio — os assets do host
-(skills/agents) são a integração. O doctor reporta MCP como
-NOT_APPLICABLE, não como falha.
+O The Forge expõe um servidor MCP próprio, opcional e instalado sob demanda.
+O transporte padrão é stdio; `streamable-http` também está disponível para
+clientes locais autorizados. O handshake real é validado por
+`theforge install mcp-verify`.

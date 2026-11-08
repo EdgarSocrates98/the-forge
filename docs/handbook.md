@@ -69,9 +69,10 @@ quando a tarefa chega. Ver `docs/economy.md` por repo.
 
 ## MCP
 
-Forjas com servidor MCP expõem tools read-only; o ciclo de vida
+Forjas com servidor MCP expõem tools estruturadas; o ciclo de vida
 (handshake → enumeração → invocação → término) é verificado por
-`<cli> [...] mcp-verify`. Forjas sem MCP: The Forge (NOT_APPLICABLE).
+`<cli> [...] mcp-verify`. O The Forge possui MCP nativo opcional; a ausência
+do extra aparece como `UNVERIFIED`, nunca como capacidade inventada.
 
 ## Limitações honestas
 
