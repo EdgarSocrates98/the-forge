@@ -40,8 +40,9 @@ dependent.
   live native execution for every specialist is still environment-dependent;
 - an authenticated Agent Bridge provider session, when an approved provider
   credential is available;
-- a real PortalApi backend matrix backed by receipts rather than surface-only
-  validation.
+- repeat the real PortalApi matrix in the target release environment when
+  promotion evidence is required; the current seven-adapter local matrix is
+  persisted by Forge Portal and is no longer surface-only.
 
 The evidence in this directory is sufficient to continue engineering, not to
 claim production or cloud homologation.

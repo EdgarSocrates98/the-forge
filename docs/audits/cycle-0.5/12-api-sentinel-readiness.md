@@ -19,7 +19,7 @@ justify a new analyzer, router, trace store or frontend.
 | The Forge routing demonstrated | roster conformance and routing eligibility demonstrated for 12 entries; live specialist execution remains unclaimed |
 | Code Atlas usable | yes in local lab; canonical identity correction merged |
 | Bridge governed investigation | inventory and event contracts present; live provider session unavailable |
-| Portal hosting | PortalApi/1 and visual gates pass; live API operations backend not homologated here |
+| Portal hosting | PortalApi/1, visual gates and the seven-adapter live backend matrix pass; the matrix is persisted in Forge Portal Cycle 4 evidence |
 | Lens without duplication | yes, if Sentinel consumes trace evidence and does not store traces itself |
 | Local-first deployment | yes, the lab is loopback/offline-first |
 
