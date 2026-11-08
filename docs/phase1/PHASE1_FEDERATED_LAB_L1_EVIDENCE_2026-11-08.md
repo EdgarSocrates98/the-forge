@@ -46,3 +46,18 @@ O relatório bruto está em
 Esta é uma prova federada local L1, com subprocessos e receipts reais. Não é
 execução de provider externo, sessão agêntica autenticada ou execução cloud;
 essas fronteiras continuam explicitamente fora da afirmação.
+
+## Revalidação pós-CLI
+
+Após a integração do Forge CLI com a saída JSON encerrada de forma graciosa no
+Windows (`e0ded10` no Forge CLI), a mesma bateria foi executada novamente no
+`main` do The Forge (`6b3524a`):
+
+```text
+uv run python scripts/lab/theforge_lab.py --checkout . --mode A \
+  --result-out audit/reports/theforge-lab-2026-11-08-final-main.json
+```
+
+Resultado: os mesmos 8 cenários passaram, com 14/14 participantes e
+`receipt_integrity: 1.0`. O relatório bruto desta revalidação está em
+`audit/reports/theforge-lab-2026-11-08-final-main.json`.
