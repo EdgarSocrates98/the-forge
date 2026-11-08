@@ -390,20 +390,19 @@ def run(*, workspace_root: Path, output: Path) -> dict[str, Any]:
                 "detail": roster_detail,
             }
         )
-        commands.append(
-            _run(
-                [
-                    "uv",
-                    "run",
-                    "--project",
-                    str(workspace_root / "forge-agent-bridge"),
-                    "forge-bridge",
-                    "status",
-                ],
-                cwd=workspace_root,
-                env=env,
-            )
+        bridge_command = _run(
+            [
+                "uv",
+                "run",
+                "--project",
+                str(workspace_root / "forge-agent-bridge"),
+                "forge-bridge",
+                "status",
+            ],
+            cwd=workspace_root,
+            env=env,
         )
+        commands.append(bridge_command)
 
         for item in commands[:4]:
             checks.append(
@@ -413,11 +412,30 @@ def run(*, workspace_root: Path, output: Path) -> dict[str, Any]:
                     "detail": item["returncode"],
                 }
             )
+        agent_status = "UNAVAILABLE"
+        agent_detail: str = "provider inventory recorded; no session was fabricated"
+        try:
+            bridge_status = json.loads(bridge_command.get("stdout", ""))
+            authenticated = [
+                item.get("id", "?")
+                for item in bridge_status.get("providers", [])
+                if item.get("installed") and item.get("auth_state") == "authenticated"
+            ]
+            if authenticated:
+                agent_status = "NOT_RUN"
+                agent_detail = (
+                    "authenticated provider(s) detected, but this deterministic lab "
+                    f"did not invoke a session: {authenticated}"
+                )
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            if bridge_command["status"] != "PASSED":
+                agent_status = "BLOCKED"
+                agent_detail = "provider inventory command failed"
         checks.append(
             {
                 "id": "AGENT_PROVIDER",
-                "status": "UNAVAILABLE",
-                "detail": "provider inventory recorded; no session was fabricated",
+                "status": agent_status,
+                "detail": agent_detail,
             }
         )
         checks.append(
@@ -446,7 +464,10 @@ def run(*, workspace_root: Path, output: Path) -> dict[str, Any]:
             "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             "workspace_root": str(workspace_root),
             "status": "PASS_WITH_LIMITATIONS"
-            if all(c["status"] in {"PASSED", "UNAVAILABLE", "SURFACE_ONLY"} for c in checks)
+            if all(
+                c["status"] in {"PASSED", "UNAVAILABLE", "NOT_RUN", "SURFACE_ONLY"}
+                for c in checks
+            )
             else "FAILED",
             "checks": checks,
             "commands": commands,
