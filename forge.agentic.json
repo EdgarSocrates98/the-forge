@@ -60,7 +60,12 @@
     "verification-orchestrator"
   ],
   "coordinators": [],
-  "mcp_command": [],
+  "mcp_command": [
+    "{cli}",
+    "mcp",
+    "serve"
+  ],
+  "mcp_verify_tool": "theforge_status",
   "host_adapters": ["claude", "devin", "codex", "copilot"],
   "read_only_default": true,
   "requires_credentials": false,

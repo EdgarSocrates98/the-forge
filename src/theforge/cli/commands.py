@@ -218,6 +218,22 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_mcp_serve(args: argparse.Namespace) -> int:
+    """Run The Forge's optional MCP server from the selected workspace root."""
+    import os
+
+    root = _root(args)
+    os.chdir(root)
+    from theforge.mcp.server import run_server
+
+    return run_server(
+        transport="streamable-http" if args.transport == "http" else args.transport,
+        host=args.host,
+        port=args.port,
+        root=root,
+    )
+
+
 def cmd_excellence_audit(args: argparse.Namespace) -> int:
     """Emit offline evidence projection for all configured Forge repositories."""
 

@@ -7,6 +7,7 @@
 | `init` | cria `.forge/` (idempotente); remove o cache legado `.forge/registry` com aviso | 0 |
 | `doctor` | OS, Python, git, host, workspace, providers | 0 / 1 só se algum check for `fail` (Python < 3.11, `.forge` sem escrita, provider builtin não saudável, `providers.toml` inválido); provider não builtin não saudável e workspace não inicializado são `warn` (exit 0) |
 | `status` | resumo do workspace, incluindo os providers com cache | 0 |
+| `mcp serve [--transport stdio\|streamable-http] [--host HOST] [--port N]` | inicia o servidor MCP nativo do The Forge; stdio é o transporte padrão e `streamable-http` expõe `/mcp` em loopback por padrão; requer o extra opcional `mcp` | 0 / 2 |
 | `excellence audit [--root DIR] [--json]` | auditoria offline das Forjas catalogadas: estado, commit, capabilities, evidência, confiança, custo e próxima ação; não executa código nem rede | 0 / 3 se houver repositório indisponível ou caminho inválido |
 | `registry list` | providers (usa o cache do usuário) | 0 |
 | `registry refresh` | re-`describe` de todos os providers; remove o cache legado `.forge/registry` com aviso | 0 |
@@ -36,7 +37,7 @@
 | `install uninstall [--scope ...] [--purge] [--dry-run]` | remove só o que o ledger declara gerenciado; preserva modificações do usuário e adota, nunca sobrescreve; `--purge` apaga `.forge/install` | 0 / 1 |
 | `install update [--to <version>] [--repo <path>] [--dry-run]` | atualiza o runtime instalado pelo bootstrap (pinned — `latest` é recusado) | 0 / 1 |
 | `install auto [--scope ...] [--forge <id>] [--host all\|none\|claude\|devin\|codex\|copilot] [--profile minimal\|recommended\|full] [--components LIST] [--yes] [--dry-run]` | orquestra a família: lê `~/.forge/installations/`, propaga escolhas e delega `<cli> install` a cada forge registrada (a própria instala em processo); `--forge` limita a uma — cada forge instala a si mesma | 0 / 1 |
-| `install mcp-verify` | handshake JSON-RPC real contra o servidor MCP quando declarado; `NOT_APPLICABLE` na the-forge (sem MCP) | 0 |
+| `install mcp-verify` | handshake JSON-RPC real contra o servidor MCP quando declarado; valida também a ferramenta declarada em `mcp_verify_tool` | 0 |
 | `installations list` | registry do bootstrap (`~/.forge/installations/*.json`) — read-only | 0 |
 | `portal [--no-browser] [--port N] [--root DIR]` | UI web local opcional (loopback + token de sessão) — command center da federação: instalação, hosts, MCP por forja, agents, skills, grafo federado, tasks e knowledge; mutações por plan→confirm→apply com `plan_token` — [ADR 0059](adr/0059-forge-portal-command-center.md) | 0 |
 | `providers health` | health de cada provider | 0 / 1 |
