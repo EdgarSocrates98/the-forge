@@ -18,7 +18,7 @@ machine receipt is retained in the same evidence directory.
 | The Forge doctor | PASSED — healthy after repairing the stale user venv variable |
 | The Forge specialist catalog | PASSED — 12 entries, all rosters `CONFORMANT` and `routable=true` |
 | Agent Bridge session | NOT_RUN — Devin authenticated was detected; no external session was opened |
-| Portal live backend | SURFACE_ONLY — Portal gates pass, no fake backend introduced |
+| Portal live backend | PASSED — Portal Cycle 4 matrix exercised 7 real adapters over HTTP; 122 `VERIFIED`, 18 `NOT_APPLICABLE`, 7 `NOT_TESTED`, 0 `PARTIAL`/`BLOCKED` |
 
 ## Federated conformance
 
@@ -51,13 +51,14 @@ execution of every specialist.
 - Forge Doctor API: PR #99 merged after scan, minimal/full Python matrix,
   packaging, self-scan and release gates passed.
 - Data Sentinel Forge: `1055 passed, 8 skipped`.
-- The Forge: PR #168 merged after release-gates and the full 8-combination
-  Python/Windows/Ubuntu matrix passed.
-- Agent Bridge: `117 passed`.
+- The Forge: PRs #168, #170 and #171 merged after release-gates and the full
+  Python 3.11–3.14 / Windows-Ubuntu matrix passed.
+- Agent Bridge: `124 passed` in the current local suite.
 - Code Atlas Forge: `1659 passed, 21 skipped` locally; PR #34 CI passed on
   Linux/Windows, Explorer unit/E2E and dependency/security jobs.
 - Forge Lens: full suite exited successfully in the prior audit.
-- Forge Portal: `54 suites, 588 tests`; deep visual gate axe 0, overflow 0,
-  focus-ring failures 0.
+- Forge Portal: `54 suites, 589 tests`; deep visual gate axe 0, overflow 0,
+  focus-ring failures 0; live Cycle 4 matrix persisted in
+  `forge-portal/docs/homologation/cycle-4-matrix.{json,md}`.
 
 `NOT_RUN`, `BLOCKED` and `UNAVAILABLE` are never counted as `PASSED`.

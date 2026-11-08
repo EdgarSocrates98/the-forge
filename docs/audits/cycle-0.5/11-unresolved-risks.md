@@ -9,8 +9,10 @@
    catalog keeps both explicit.
 3. The Agent Bridge provider matrix has no universally authenticated provider;
    Devin is detected authenticated, but no session was opened in this cycle.
-4. Portal visual and CLI compatibility are strong, but live service federation
-   still needs a real PortalApi backend matrix.
+4. Portal visual and CLI compatibility are strong, and the seven-adapter live
+   PortalApi matrix is now persisted and green; the isolated The Forge E2E lab
+   still records Portal as a separate cross-repository receipt rather than
+   booting the Portal matrix inline.
 5. Spark/AWS live execution remains blocked by expired AWS SSO and is outside
    this local API lab. No cloud mutation was attempted.
 6. The cycle does not create `api-sentinel-forge`; doing so before adapter,
