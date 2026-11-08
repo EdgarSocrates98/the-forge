@@ -1,0 +1,253 @@
+{
+  "schema": "forge/Cycle05E2EReceipt/v1",
+  "generated_at": "2026-11-08T04:12:21.065162Z",
+  "workspace_root": "E:\\projetos\\FORJAS",
+  "status": "PASS_WITH_LIMITATIONS",
+  "checks": [
+    {
+      "id": "HTTP_REAL",
+      "status": "PASSED",
+      "detail": [
+        {
+          "url": "http://127.0.0.1:58051/health",
+          "status_code": 200,
+          "body": {
+            "service": "cycle-0-5-api",
+            "status": "ok"
+          },
+          "duration_ms": 53.75
+        },
+        {
+          "url": "http://127.0.0.1:58051/items",
+          "status_code": 200,
+          "body": {
+            "items": [
+              {
+                "id": "order-1",
+                "state": "ready"
+              }
+            ]
+          },
+          "duration_ms": 1.564
+        },
+        {
+          "url": "http://127.0.0.1:58051/degraded?latency_ms=40",
+          "status_code": 503,
+          "body": {
+            "error": "dependency_degraded",
+            "retryable": true
+          },
+          "duration_ms": 41.687
+        }
+      ]
+    },
+    {
+      "id": "DEGRADATION_REAL",
+      "status": "PASSED",
+      "detail": "controlled latency and 503 were observed"
+    },
+    {
+      "id": "TELEMETRY_REAL",
+      "status": "PASSED",
+      "detail": "3 JSONL observations"
+    },
+    {
+      "id": "forge-doctor-api",
+      "status": "PASSED",
+      "detail": 0
+    },
+    {
+      "id": "code-atlas",
+      "status": "PASSED",
+      "detail": 0
+    },
+    {
+      "id": "data-sentinel",
+      "status": "PASSED",
+      "detail": 0
+    },
+    {
+      "id": "forge-lens",
+      "status": "PASSED",
+      "detail": 0
+    },
+    {
+      "id": "AGENT_PROVIDER",
+      "status": "UNAVAILABLE",
+      "detail": "provider inventory recorded; no session was fabricated"
+    },
+    {
+      "id": "PORTAL",
+      "status": "SURFACE_ONLY",
+      "detail": "PortalApi/1 and visual gates are validated by forge-portal suites, not by a live API in this isolated lab"
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--project",
+        "E:\\projetos\\FORJAS\\forge-doctor-api",
+        "forge-doctor-api",
+        "contract",
+        "inspect",
+        "E:\\projetos\\FORJAS\\.forge-cycle-0-5-629bwrya\\openapi.yaml",
+        "--json"
+      ],
+      "cwd": "E:\\projetos\\FORJAS",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 1039.506,
+      "stdout": "{\n  \"documents\": [\n    {\n      \"api_version\": \"1.0.0\",\n      \"format\": \"yaml\",\n      \"openapi_version\": \"3.0.3\",\n      \"path\": \"openapi.yaml\",\n      \"status\": \"PARSED\",\n      \"title\": \"Cycle 0.5 API Operations Lab\",\n      \"version_family\": \"3.0\"\n    }\n  ],\n  \"issues\": [],\n  \"operations\": [\n    {\n      \"deprecated\": false,\n      \"method\": \"GET\",\n      \"operation_id\": \"degradedDependency\",\n      \"path\": \"/degraded\"\n    },\n    {\n      \"deprecated\": false,\n      \"method\": \"GET\",\n      \"operation_id\": \"health\",\n      \"path\": \"/health\"\n    },\n    {\n      \"deprecated\": false,\n      \"method\": \"GET\",\n      \"operation_id\": \"listItems\",\n      \"path\": \"/items\"\n    }\n  ],\n  \"schemas\": [],\n  \"security_schemes\": [],\n  \"servers\": [\n    \"http://127.0.0.1:0\"\n  ],\n  \"summary\": {\n    \"documents\": 1,\n    \"issues\": 0,\n    \"operations\": 3,\n    \"schemas\": 0,\n    \"unresolved_external_refs\": 0\n  },\n  \"target\": \"openapi.yaml\",\n  \"unresolved_external_refs\": []\n}\n",
+      "stderr": "warning: `VIRTUAL_ENV=the-forge\\.venv` does not match the project environment path `forge-doctor-api\\.venv` and will be ignored; use `--active` to target the active environment instead\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--project",
+        "E:\\projetos\\FORJAS\\code-atlas-forge",
+        "code-atlas",
+        "index",
+        "E:\\projetos\\FORJAS\\.forge-cycle-0-5-629bwrya",
+        "--json"
+      ],
+      "cwd": "E:\\projetos\\FORJAS",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 726.785,
+      "stdout": "{\"tool\": \"code-atlas\", \"version\": \"1.1.1\", \"schema_version\": \"2\", \"root\": \"E:\\\\projetos\\\\FORJAS\\\\.forge-cycle-0-5-629bwrya\", \"snapshot_id\": 5, \"job_id\": 5, \"status\": \"success\", \"files_indexed\": 6, \"secrets_skipped\": 0, \"warnings\": [], \"noop\": false, \"error\": \"\", \"stats\": {\"files\": 6, \"files_parsed\": 1, \"files_reused\": 0, \"cache_puts\": 1, \"cache_pruned\": 0, \"snapshots_pruned\": 0, \"files_failed\": 0, \"files_with_errors\": 0, \"secrets_skipped\": 0, \"semantic_attempted\": 0, \"semantic_enriched\": 0, \"semantic_diagnostics\": 0, \"evidence\": 60, \"symbols_new\": 12, \"occurrences\": 12, \"relations\": 62, \"edges_skipped\": 6, \"domain_adapters\": 0, \"domain_failures\": 0, \"stage_ms_discovery\": 93, \"stage_ms_hashing\": 15, \"stage_ms_invalidation\": 0, \"stage_ms_parse\": 0, \"stage_ms_graph_build\": 0, \"stage_ms_semantic\": 0, \"stage_ms_domains\": 0, \"stage_ms_validation\": 0, \"stage_ms_persist_rows\": 0, \"stage_ms_fk_check\": 0, \"stage_ms_publish_gc\": 0, \"stage_ms_persist_publish\": 0}, \"plan\": {}, \"diagnostics\": [], \"domains\": [], \"cross_domain\": false}\n",
+      "stderr": "warning: `VIRTUAL_ENV=the-forge\\.venv` does not match the project environment path `code-atlas-forge\\.venv` and will be ignored; use `--active` to target the active environment instead\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--project",
+        "E:\\projetos\\FORJAS\\data-sentinel-forge",
+        "data-sentinel",
+        "analyze",
+        "--file",
+        "E:\\projetos\\FORJAS\\.forge-cycle-0-5-629bwrya\\telemetry.jsonl",
+        "--platform",
+        "generic",
+        "--json",
+        "--no-persist",
+        "--output",
+        "E:\\projetos\\FORJAS\\.forge-cycle-0-5-629bwrya\\data-sentinel-report.json"
+      ],
+      "cwd": "E:\\projetos\\FORJAS",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 936.052,
+      "stdout": "{\n  \"report_id\": \"5e3672a695794d1e86697314a29be711\",\n  \"schema_version\": \"1.0.0\",\n  \"request_id\": \"1909ffa81a6446f5b77dcad14df24c64\",\n  \"created_at\": \"2026-11-08T04:12:15.091922Z\",\n  \"environment\": null,\n  \"analyzer_versions\": {\n    \"spark-glue-log-analyzer\": \"0.1.0\"\n  },\n  \"findings\": [\n    {\n      \"finding_id\": \"4ec54e2b76cc422491bf0cfc91016a3c\",\n      \"category\": \"unknown\",\n      \"severity\": \"INFO\",\n      \"status\": \"UNKNOWN\",\n      \"explanation\": \"Evidência insuficiente: o log não contém nenhuma das 11 assinaturas de falha conhecidas por 'spark-glue-log-analyzer'. Nenhum diagnóstico é afirmado; classifique manualmente ou envie artefatos adicionais.\",\n      \"evidence_ids\": [],\n      \"alternatives\": [\n        \"spark event log\",\n        \"plano físico da query\",\n        \"métricas do CloudWatch/Glue\"\n      ],\n      \"recommendations\": [],\n      \"validation_steps\": []\n    }\n  ],\n  \"limitations\": [\n    \"Baseado em padrões regex curados — não cobre erros fora da biblioteca\",\n    \"Sem métricas de executor (Spark UI/event log não analisados neste ciclo)\",\n    \"Sinal POSSIBLE/PROBABLE exige corroboração humana antes de agir\",\n    \"Nenhum padrão conhecido detectado — envie spark event log, plano físico (EXPLAIN) ou métricas de executor para análise mais profunda.\"\n  ],\n  \"summary\": \"1 achado(s): UNKNOWN=1\",\n  \"references\": [\n    \"E:\\\\projetos\\\\FORJAS\\\\.forge-cycle-0-5-629bwrya\\\\telemetry.jsonl\"\n  ],\n  \"recommendations\": []\n}\n",
+      "stderr": "warning: `VIRTUAL_ENV=the-forge\\.venv` does not match the project environment path `data-sentinel-forge\\.venv` and will be ignored; use `--active` to target the active environment instead\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--project",
+        "E:\\projetos\\FORJAS\\forge-lens",
+        "forge-lens",
+        "ingest",
+        "E:\\projetos\\FORJAS\\.forge-cycle-0-5-629bwrya\\lens-native.json",
+        "--db",
+        "E:\\projetos\\FORJAS\\.forge-cycle-0-5-629bwrya\\forge-lens.db",
+        "--project",
+        "cycle-0-5-api-operations"
+      ],
+      "cwd": "E:\\projetos\\FORJAS",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 911.436,
+      "stdout": "ingested 3 spans (0 updated, 0 duplicates) across 3 trace(s)\n",
+      "stderr": "warning: `VIRTUAL_ENV=the-forge\\.venv` does not match the project environment path `forge-lens\\.venv` and will be ignored; use `--active` to target the active environment instead\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "forge",
+        "doctor",
+        "--root",
+        "E:\\projetos\\FORJAS",
+        "--json"
+      ],
+      "cwd": "E:\\projetos\\FORJAS\\the-forge",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 1374.331,
+      "stdout": "{\n  \"account_environment\": [\n    {\n      \"forge_id\": \"api-forge\",\n      \"prefix\": \"API_FORGE\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"API_FORGE_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"API_FORGE_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"API_FORGE_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"API_FORGE_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"API_FORGE_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    },\n    {\n      \"forge_id\": \"forge-doctor-api\",\n      \"prefix\": \"FORGE_DOCTOR_API\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"FORGE_DOCTOR_API_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_API_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_API_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_API_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_API_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    },\n    {\n      \"forge_id\": \"forge-doctor-data\",\n      \"prefix\": \"FORGE_DOCTOR_DATA\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"FORGE_DOCTOR_DATA_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_DATA_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_DATA_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_DATA_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"FORGE_DOCTOR_DATA_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    },\n    {\n      \"forge_id\": \"platform-forge\",\n      \"prefix\": \"PLATFORM_FORGE\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"PLATFORM_FORGE_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"PLATFORM_FORGE_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"PLATFORM_FORGE_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"PLATFORM_FORGE_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"PLATFORM_FORGE_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    },\n    {\n      \"forge_id\": \"spark-forge-aws\",\n      \"prefix\": \"SPARK_FORGE_AWS\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"SPARK_FORGE_AWS_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AWS_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AWS_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AWS_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AWS_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    },\n    {\n      \"forge_id\": \"spark-forge-azure\",\n      \"prefix\": \"SPARK_FORGE_AZURE\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"SPARK_FORGE_AZURE_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AZURE_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AZURE_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AZURE_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"SPARK_FORGE_AZURE_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    },\n    {\n      \"forge_id\": \"the-forge\",\n      \"prefix\": \"THE_FORGE\",\n      \"state\": \"ready\",\n      \"variables\": [\n        {\n          \"name\": \"THE_FORGE_HOME\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"THE_FORGE_INSTALL_ROOT\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"THE_FORGE_VENV\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"THE_FORGE_PYTHON\",\n          \"present\": true,\n          \"valid\": true\n        },\n        {\n          \"name\": \"THE_FORGE_CLI\",\n          \"present\": true,\n          \"valid\": true\n        }\n      ]\n    }\n  ],\n  \"checks\": [\n    {\n      \"detail\": \"Windows 11\",\n      \"name\": \"os\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"AMD64\",\n      \"name\": \"architecture\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"3.12.13\",\n      \"name\": \"python\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"C:\\\\Program Files\\\\Git\\\\cmd\\\\git.EXE\",\n      \"name\": \"git\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"codex\",\n      \"name\": \"host\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"ready: 7 Forge(s)\",\n      \"name\": \"account-environment\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"E:\\\\projetos\\\\FORJAS\\\\.forge\",\n      \"name\": \"workspace\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"unreachable/error FORGE-PROVIDER-NOT-READY\",\n      \"name\": \"provider:api-forge\",\n      \"status\": \"warn\"\n    },\n    {\n      \"detail\": \"ready/ok surface:0a07cd12ff00\",\n      \"name\": \"provider:echo-forge\",\n      \"status\": \"ok\"\n    },\n    {\n      \"detail\": \"unreachable/error FORGE-PROVIDER-NOT-READY\",\n      \"name\": \"provider:forge-doctor-api\",\n      \"status\": \"warn\"\n    },\n    {\n      \"detail\": \"unreachable/error FORGE-PROVIDER-NOT-READY\",\n      \"name\": \"provider:forge-doctor-data\",\n      \"status\": \"warn\"\n    },\n    {\n      \"detail\": \"unreachable/error FORGE-PROVIDER-NOT-READY\",\n      \"name\": \"provider:platform-forge\",\n      \"status\": \"warn\"\n    },\n    {\n      \"detail\": \"unreachable/error FORGE-PROVIDER-NOT-READY\",\n      \"name\": \"provider:spark-forge-aws\",\n      \"status\": \"warn\"\n    },\n    {\n      \"detail\": \"unreachable/error FORGE-PROVIDER-NOT-READY\",\n      \"name\": \"provider:spark-forge-azure\",\n      \"status\": \"warn\"\n    }\n  ],\n  \"forge_version\": \"0.7.4\",\n  \"healthy\": true,\n  \"root\": \"E:\\\\projetos\\\\FORJAS\",\n  \"schema\": \"theforge/EnvironmentReport/v0\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "forge",
+        "specialists",
+        "list",
+        "--root",
+        "E:\\projetos\\FORJAS",
+        "--json",
+        "--no-probe"
+      ],
+      "cwd": "E:\\projetos\\FORJAS\\the-forge",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 1080.697,
+      "stdout": "orm-sre-specialist\",\n          \"platform-task-spec-reviewer\",\n          \"platform-verifier\"\n        ],\n        \"provider\": \"platform-forge\",\n        \"routable\": true,\n        \"sources\": [\n          {\n            \"agents\": [\n              \"pf-extractor\",\n              \"pf-graph-builder\",\n              \"pf-inventory\",\n              \"pf-judge\",\n              \"pf-reconciler\",\n              \"pf-simulator\",\n              \"pf-synthesizer\",\n              \"pf-verifier\",\n              \"platform-adversarial-critic\",\n              \"platform-ai-infra-specialist\",\n              \"platform-architecture-reviewer\",\n              \"platform-aws-specialist\",\n              \"platform-capacity-specialist\",\n              \"platform-change-coordinator\",\n              \"platform-crossplane-specialist\",\n              \"platform-debate-referee\",\n              \"platform-economy-reviewer\",\n              \"platform-evidence-reviewer\",\n              \"platform-federation-specialist\",\n              \"platform-finops-specialist\",\n              \"platform-fleet-coordinator\",\n              \"platform-fleet-specialist\",\n              \"platform-gitops-specialist\",\n              \"platform-graph-specialist\",\n              \"platform-iac-specialist\",\n              \"platform-incident-coordinator\",\n              \"platform-kubernetes-specialist\",\n              \"platform-operations-safety-reviewer\",\n              \"platform-optimization-coordinator\",\n              \"platform-orchestrator\",\n              \"platform-planner\",\n              \"platform-policy-specialist\",\n              \"platform-privacy-reviewer\",\n              \"platform-product-coordinator\",\n              \"platform-product-specialist\",\n              \"platform-release-guardian\",\n              \"platform-security-reviewer\",\n              \"platform-security-specialist\",\n              \"platform-sre-specialist\",\n              \"platform-task-spec-reviewer\",\n              \"platform-verifier\"\n            ],\n            \"path\": \"agents\"\n          }\n        ],\n        \"state\": \"CONFORMANT\"\n      },\n      \"agentic_manifest\": true,\n      \"checkout\": \"E:\\\\projetos\\\\FORJAS\\\\platform-forge\",\n      \"cli\": \"platformforge\",\n      \"mcp\": true,\n      \"notes\": [],\n      \"provider\": \"platform-forge\",\n      \"state\": \"INSTALLED\",\n      \"version\": \"platformforge 0.1.0\"\n    },\n    {\n      \"agent_roster\": {\n        \"declared\": [\n          \"agent-ops-coordinator\",\n          \"data-analyst-coordinator\",\n          \"integration-coordinator\",\n          \"planning-coordinator\",\n          \"product-intel-coordinator\"\n        ],\n        \"evidence\": [\n          \"manifest and canonical roster are equal\"\n        ],\n        \"observed\": [\n          \"agent-ops-coordinator\",\n          \"data-analyst-coordinator\",\n          \"integration-coordinator\",\n          \"planning-coordinator\",\n          \"product-intel-coordinator\"\n        ],\n        \"provider\": \"product-forge\",\n        \"routable\": true,\n        \"sources\": [\n          {\n            \"agents\": [\n              \"agent-ops-coordinator\",\n              \"data-analyst-coordinator\",\n              \"integration-coordinator\",\n              \"planning-coordinator\",\n              \"product-intel-coordinator\"\n            ],\n            \"path\": \"agents\"\n          }\n        ],\n        \"state\": \"CONFORMANT\"\n      },\n      \"agentic_manifest\": true,\n      \"checkout\": \"E:\\\\projetos\\\\FORJAS\\\\product-forge\",\n      \"cli\": \"productforge\",\n      \"mcp\": true,\n      \"notes\": [],\n      \"provider\": \"product-forge\",\n      \"state\": \"INSTALLED\",\n      \"version\": \"0.2.2\"\n    },\n    {\n      \"agent_roster\": {\n        \"declared\": [\n          \"athena-query-optimizer\",\n          \"cdc-contract-reviewer\",\n          \"data-quality-reviewer\",\n          \"emr-infra-reviewer\",\n          \"glue-incremental-performance-architect\",\n          \"glue-infra-reviewer\",\n          \"iceberg-performance-engineer\",\n          \"pyspark-code-reviewer\",\n          \"sf-lake-formation-specialist\",\n          \"sf-runtime-specialist\",\n          \"sf-security-reviewer\",\n          \"sf-terraform-specialist\",\n          \"spark-performance-architect\",\n          \"streaming-realtime-architect\"\n        ],\n        \"evidence\": [\n          \"manifest and canonical roster are equal\"\n        ],\n        \"observed\": [\n          \"athena-query-optimizer\",\n          \"cdc-contract-reviewer\",\n          \"data-quality-reviewer\",\n          \"emr-infra-reviewer\",\n          \"glue-incremental-performance-architect\",\n          \"glue-infra-reviewer\",\n          \"iceberg-performance-engineer\",\n          \"pyspark-code-reviewer\",\n          \"sf-lake-formation-specialist\",\n          \"sf-runtime-specialist\",\n          \"sf-security-reviewer\",\n          \"sf-terraform-specialist\",\n          \"spark-performance-architect\",\n          \"streaming-realtime-architect\"\n        ],\n        \"provider\": \"spark-forge-aws\",\n        \"routable\": true,\n        \"sources\": [\n          {\n            \"agents\": [\n              \"athena-query-optimizer\",\n              \"cdc-contract-reviewer\",\n              \"data-quality-reviewer\",\n              \"emr-infra-reviewer\",\n              \"glue-incremental-performance-architect\",\n              \"glue-infra-reviewer\",\n              \"iceberg-performance-engineer\",\n              \"pyspark-code-reviewer\",\n              \"sf-lake-formation-specialist\",\n              \"sf-runtime-specialist\",\n              \"sf-security-reviewer\",\n              \"sf-terraform-specialist\",\n              \"spark-performance-architect\",\n              \"streaming-realtime-architect\"\n            ],\n            \"path\": \"agents\"\n          }\n        ],\n        \"state\": \"CONFORMANT\"\n      },\n      \"agentic_manifest\": true,\n      \"checkout\": \"E:\\\\projetos\\\\FORJAS\\\\spark-forge-aws\",\n      \"cli\": \"sparkforge-aws\",\n      \"mcp\": true,\n      \"notes\": [],\n      \"provider\": \"spark-forge-aws\",\n      \"state\": \"INSTALLED\",\n      \"version\": \"0.7.4\"\n    },\n    {\n      \"agent_roster\": {\n        \"declared\": [\n          \"adf-specialist\",\n          \"adls-specialist\",\n          \"analyzer\",\n          \"azure-databricks-specialist\",\n          \"bicep-specialist\",\n          \"coordinator\",\n          \"cosmos-db-specialist\",\n          \"cost-reviewer\",\n          \"critic\",\n          \"databricks-cost-reviewer\",\n          \"databricks-performance-reviewer\",\n          \"databricks-runtime-reviewer\",\n          \"databricks-uc-reviewer\",\n          \"delta-specialist\",\n          \"entra-specialist\",\n          \"evaluation-specialist\",\n          \"event-hubs-specialist\",\n          \"extractor\",\n          \"fabric-specialist\",\n          \"finops-specialist\",\n          \"iceberg-specialist\",\n          \"inventory\",\n          \"judge\",\n          \"migration-reviewer\",\n          \"migration-specialist\",\n          \"networking-specialist\",\n          \"observability-specialist\",\n          \"onelake-specialist\",\n          \"performance-reviewer\",\n          \"purview-specialist\",\n          \"referee\",\n          \"reviewer\",\n          \"security-reviewer\",\n          \"spark-performance-specialist\",\n          \"streaming-specialist\",\n          \"synapse-specialist\",\n          \"synthesizer\",\n          \"terraform-specialist\",\n          \"test-engineer\",\n          \"unity-catalog-specialist\",\n          \"verifier\"\n        ],\n        \"evidence\": [\n          \"manifest and canonical roster are equal\"\n        ],\n        \"observed\": [\n          \"adf-specialist\",\n          \"adls-specialist\",\n          \"analyzer\",\n          \"azure-databricks-specialist\",\n          \"bicep-specialist\",\n          \"coordinator\",\n          \"cosmos-db-specialist\",\n          \"cost-reviewer\",\n          \"critic\",\n          \"databricks-cost-reviewer\",\n          \"databricks-performance-reviewer\",\n          \"databricks-runtime-reviewer\",\n          \"databricks-uc-reviewer\",\n          \"delta-specialist\",\n          \"entra-specialist\",\n          \"evaluation-specialist\",\n          \"event-hubs-specialist\",\n          \"extractor\",\n          \"fabric-specialist\",\n          \"finops-specialist\",\n          \"iceberg-specialist\",\n          \"inventory\",\n          \"judge\",\n          \"migration-reviewer\",\n          \"migration-specialist\",\n          \"networking-specialist\",\n          \"observability-specialist\",\n          \"onelake-specialist\",\n          \"performance-reviewer\",\n          \"purview-specialist\",\n          \"referee\",\n          \"reviewer\",\n          \"security-reviewer\",\n          \"spark-performance-specialist\",\n          \"streaming-specialist\",\n          \"synapse-specialist\",\n          \"synthesizer\",\n          \"terraform-specialist\",\n          \"test-engineer\",\n          \"unity-catalog-specialist\",\n          \"verifier\"\n        ],\n        \"provider\": \"spark-forge-azure\",\n        \"routable\": true,\n        \"sources\": [\n          {\n            \"agents\": [\n              \"adf-specialist\",\n              \"adls-specialist\",\n              \"analyzer\",\n              \"azure-databricks-specialist\",\n              \"bicep-specialist\",\n              \"coordinator\",\n              \"cosmos-db-specialist\",\n              \"cost-reviewer\",\n              \"critic\",\n              \"databricks-cost-reviewer\",\n              \"databricks-performance-reviewer\",\n              \"databricks-runtime-reviewer\",\n              \"databricks-uc-reviewer\",\n              \"delta-specialist\",\n              \"entra-specialist\",\n              \"evaluation-specialist\",\n              \"event-hubs-specialist\",\n              \"extractor\",\n              \"fabric-specialist\",\n              \"finops-specialist\",\n              \"iceberg-specialist\",\n              \"inventory\",\n              \"judge\",\n              \"migration-reviewer\",\n              \"migration-specialist\",\n              \"networking-specialist\",\n              \"observability-specialist\",\n              \"onelake-specialist\",\n              \"performance-reviewer\",\n              \"purview-specialist\",\n              \"referee\",\n              \"reviewer\",\n              \"security-reviewer\",\n              \"spark-performance-specialist\",\n              \"streaming-specialist\",\n              \"synapse-specialist\",\n              \"synthesizer\",\n              \"terraform-specialist\",\n              \"test-engineer\",\n              \"unity-catalog-specialist\",\n              \"verifier\"\n            ],\n            \"path\": \"agents\"\n          }\n        ],\n        \"state\": \"CONFORMANT\"\n      },\n      \"agentic_manifest\": true,\n      \"checkout\": \"E:\\\\projetos\\\\FORJAS\\\\spark-forge-azure\",\n      \"cli\": \"sparkforge-azure\",\n      \"mcp\": true,\n      \"notes\": [],\n      \"provider\": \"spark-forge-azure\",\n      \"state\": \"INSTALLED\",\n      \"version\": \"sparkforge-azure 0.1.0\"\n    },\n    {\n      \"agent_roster\": {\n        \"declared\": [\n          \"bootstrap-installation\",\n          \"capability-negotiator\",\n          \"cross-forge-planner\",\n          \"ecosystem-debugger\",\n          \"ecosystem-router\",\n          \"execution-orchestrator\",\n          \"forge-discovery\",\n          \"verification-orchestrator\"\n        ],\n        \"evidence\": [\n          \"manifest and canonical roster are equal\"\n        ],\n        \"observed\": [\n          \"bootstrap-installation\",\n          \"capability-negotiator\",\n          \"cross-forge-planner\",\n          \"ecosystem-debugger\",\n          \"ecosystem-router\",\n          \"execution-orchestrator\",\n          \"forge-discovery\",\n          \"verification-orchestrator\"\n        ],\n        \"provider\": \"the-forge\",\n        \"routable\": true,\n        \"sources\": [\n          {\n            \"agents\": [\n              \"bootstrap-installation\",\n              \"capability-negotiator\",\n              \"cross-forge-planner\",\n              \"ecosystem-debugger\",\n              \"ecosystem-router\",\n              \"execution-orchestrator\",\n              \"forge-discovery\",\n              \"verification-orchestrator\"\n            ],\n            \"path\": \"agentic\\\\agents\"\n          }\n        ],\n        \"state\": \"CONFORMANT\"\n      },\n      \"agentic_manifest\": true,\n      \"checkout\": \"E:\\\\projetos\\\\FORJAS\\\\the-forge\",\n      \"cli\": \"theforge\",\n      \"mcp\": false,\n      \"notes\": [],\n      \"provider\": \"the-forge\",\n      \"state\": \"INSTALLED\",\n      \"version\": \"theforge 0.5.0\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--project",
+        "E:\\projetos\\FORJAS\\forge-agent-bridge",
+        "forge-bridge",
+        "status"
+      ],
+      "cwd": "E:\\projetos\\FORJAS",
+      "status": "PASSED",
+      "returncode": 0,
+      "duration_ms": 2530.572,
+      "stdout": "{\n  \"version\": \"0.2.1\",\n  \"providers_detected\": 4,\n  \"providers\": [\n    {\n      \"id\": \"claude-code\",\n      \"installed\": true,\n      \"auth_state\": \"unauthenticated\"\n    },\n    {\n      \"id\": \"codex\",\n      \"installed\": true,\n      \"auth_state\": \"unverified\"\n    },\n    {\n      \"id\": \"devin\",\n      \"installed\": true,\n      \"auth_state\": \"authenticated\"\n    },\n    {\n      \"id\": \"github-copilot\",\n      \"installed\": true,\n      \"auth_state\": \"unverified\"\n    },\n    {\n      \"id\": \"fake\",\n      \"installed\": false,\n      \"auth_state\": \"authenticated\"\n    }\n  ]\n}\n",
+      "stderr": "warning: `VIRTUAL_ENV=the-forge\\.venv` does not match the project environment path `forge-agent-bridge\\.venv` and will be ignored; use `--active` to target the active environment instead\n"
+    }
+  ],
+  "artifacts": {
+    "openapi.yaml": {
+      "path": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-cycle05-20261108-3\\openapi.yaml",
+      "sha256": "5317a7f256111b23a5293fbc62ed84a8ab81c67b895c9b92435983e4ee054689",
+      "bytes": 616
+    },
+    "telemetry.jsonl": {
+      "path": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-cycle05-20261108-3\\telemetry.jsonl",
+      "sha256": "546139a850df9bc80e7a3678651d0ffbca36900aaae97e87c446072128066b39",
+      "bytes": 928
+    },
+    "lens-native.json": {
+      "path": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-cycle05-20261108-3\\lens-native.json",
+      "sha256": "b2fdc8ddfaf934d17e2e3c8bd282aaca192e6a0220959b2798dfc8cc3714d5a5",
+      "bytes": 4853
+    },
+    "forge-lens.db": {
+      "path": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-cycle05-20261108-3\\forge-lens.db",
+      "sha256": "95034efc8475ff3c3c5758f0422fc5964488785b770a72ae72da43ca2adb6c41",
+      "bytes": 131072
+    },
+    "data-sentinel-report.json": {
+      "path": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-cycle05-20261108-3\\data-sentinel-report.json",
+      "sha256": "7f82fc876a414354d09d9453db1d417cda59089d81edbe6e1981781e98c4ca3c",
+      "bytes": 1257
+    }
+  },
+  "limitations": [
+    "Agent Bridge provider session was not created because availability is environment-dependent.",
+    "Portal was validated as a surface; no fake live Portal backend was introduced.",
+    "The Forge discovery result is evidence of discovered states, not a claim that every specialist is routable."
+  ]
+}
