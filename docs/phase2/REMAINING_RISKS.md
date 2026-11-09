@@ -5,6 +5,10 @@
    Forge já possuem runs verdes (`42564466899`, `42564466922`). Ainda falta
    uma matriz consolidada de runs verdes no GitHub para todos os branches
    especialistas e para os repositórios sem workflow publicado nesse branch.
+   A consulta de workflow runs associada aos commits atuais (`e669526`,
+   `8e074a5`, `74bbbab`, `34486fa`, `e185960` e `1490ff3`) retornou coleção
+   vazia; portanto não há evidência remota para promover esses resultados
+   locais a CI obrigatório.
 2. **Matriz instalada:** 12/12 wheels Python passaram em venvs isolados no
    Windows e Linux WSL2; a matriz limpa do wheel The Forge passou
    project/workspace/user com apply/uninstall; o Portal também foi instalado
