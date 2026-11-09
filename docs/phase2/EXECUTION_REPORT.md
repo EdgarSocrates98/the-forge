@@ -56,6 +56,19 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
   foram excluídos e a consulta posterior retornou `NoSuchBucket`;
 - E2E federado: `notes_exported=4`, `notes_roundtripped=4`,
   `manual_conflict_detected=true`, `cloud_access=false`.
+- Portal Angular: `npm test -- --no-watch --no-progress` terminou com `57`
+  arquivos e `624` testes verdes; `npm run build` gerou o bundle de produção.
+  A homologação browser real `test_theforge_federated_flow` passou (`1 passed`):
+  o bundle atual foi servido pelo adaptador real do The Forge e percorreu
+  federação, Graph Studio, catálogos, recibo MCP e retorno ao grafo.
+- O endpoint real `/mcp/verify` deixou de bloquear o Portal quando um launcher
+  Windows mantém stderr aberto: `02c3501` drena stderr sem leitura bloqueante e
+  encerra a árvore exata do processo. A regressão do installkit e a
+  homologação real do The Forge passaram; a operação ainda reporta por servidor
+  `PASS`, `FAIL`, `BLOCKED` ou `NOT_APPLICABLE`.
+- Obsidian: `product-forge` executou `55` testes direcionados de vault,
+  segurança, rollback e boundary; `forge-obsidian` foi construído como wheel e
+  sdist e instalado em venv limpo, com import isolado confirmado.
 
 Esses resultados atualizam a prova local, mas não removem os limites externos
 descritos no G12.
