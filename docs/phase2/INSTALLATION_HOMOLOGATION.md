@@ -57,9 +57,14 @@ Executados com `uv run --with pywinpty` no Windows:
 O smoke de superfície usa 5 s por CLI para tolerar inicialização fria do `uv` em
 máquina limpa; a janela pode ser reduzida explicitamente em runs aquecidos.
 
-O MCP nativo foi verificado novamente com `theforge install mcp-verify --json`:
+O MCP nativo do The Forge foi verificado novamente com `theforge install mcp-verify --json`:
 handshake real `PASS`, 15 tools descobertas, chamada estruturada de
 `theforge_status` aprovada e exit code do comando `0`.
+
+O MCP do Product Forge também publica 17 tools quando instalado, incluindo
+`obsidian_files`, que expõe somente um índice limitado de paths Markdown
+autorizados; importação/exportação continuam governadas pela API/CLI e exigem
+confirmação explícita.
 
 Para repetir a matriz Python:
 
