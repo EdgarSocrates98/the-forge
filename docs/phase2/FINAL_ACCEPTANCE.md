@@ -16,7 +16,7 @@ Estado global: **BLOCKED para aceite final**.
 | Bases/Canvas compatíveis com sintaxe declarada | PASS estrutural |
 | E2E federado reproduzível | PASS fixture-only |
 | instalação simples | PARTIAL; Product Forge Windows, TTY/TUI 14/14 e MCP real passaram, matriz wheel global pendente |
-| CI obrigatório verde | NOT_RUN/PENDING nos branches de trabalho |
+| CI obrigatório verde | PASS para The Forge (`42557439135`) e Product Forge (`42557064576`); não consolidado para todos os branches especialistas |
 | recuperação completa | PARTIAL; faults reais pendentes |
 
 O bloqueio é deliberado: não se transforma fixture, teste ignorado ou execução

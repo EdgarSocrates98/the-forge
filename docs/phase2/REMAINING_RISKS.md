@@ -1,7 +1,9 @@
 # Phase 2 — Remaining Risks
 
-1. **CI remoto:** branches de trabalho ainda precisam de runs verdes dos
-   workflows obrigatórios.
+1. **CI remoto global:** The Forge e Product Forge já possuem runs verdes
+   (`42557439135`, `42557064576`); ainda falta uma matriz consolidada de runs
+   verdes para todos os branches especialistas e para os repositórios sem
+   workflow publicado nesse branch.
 2. **Matriz instalada:** Product Forge passou sua lane de wheel/venv/Portal fake
    em Windows; falta repetir a matriz isolada para todas as Forjas em Windows e
    Linux.

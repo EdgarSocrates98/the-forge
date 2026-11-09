@@ -7,7 +7,7 @@ de execução em cloud ou em vault de usuário.
 | Gate | Estado | Evidência principal | Limitação |
 |---|---|---|---|
 | G0 baseline/arquitetura | PASS | `BASELINE.md`, `OWNERSHIP_MATRIX.md` | índices de código são best-effort |
-| G1 correções P0/P1 | PASS local | commits por Forge registrados no baseline; Product regression local 82,07% | CI remoto dos branches ainda pendente |
+| G1 correções P0/P1 | PASS | commits por Forge registrados no baseline; Product regression local 82,07%; The Forge CI `42557439135` e release-gates `42557439232` verdes; Product Actions `42557064576` verde | branches sem workflow publicado e demais branches especialistas ainda não têm um único run global consolidado |
 | G2 contratos/schemas | PASS | `tests/test_schemas.py` — 22 passed; schemas Obsidian v1 | compatibilidade externa não foi exercitada |
 | G3 segurança/autorização | PASS local | traversal, symlink/reparse, hardlink, classificação, raiz autorizada e prompt-safety | permissão real e vault multiusuário não executados |
 | G4 formatos | PASS local | Markdown, frontmatter, links, embeds, Canvas/Bases estruturais | não é parser completo do aplicativo Obsidian |
@@ -18,7 +18,7 @@ de execução em cloud ou em vault de usuário.
 | G9 Portal/UX | PASS local | 597 testes frontend; gate visual 8/8, axe/overflow/foco = 0 | homologação instalável pendente |
 | G10 instalação/distribuição | PARTIAL | Product Forge wheel/venv/Portal fake passou no Windows; matriz TTY/TUI 14/14 e cancelamento 14/14 verdes; MCP handshake real PASS com 15 tools e exit code 0 | matriz wheel Windows/Linux e Portal instalável das outras Forjas pendente |
 | G11 performance/regressão | PASS local | benchmark 100/1.000/10.000 e suíte Product Forge | métricas de memória/reindexação ainda não são baseline completo |
-| G12 release readiness | BLOCKED | base funcional integrada | CI remoto e gates NOT_RUN impedem aceite final |
+| G12 release readiness | BLOCKED | The Forge e Product Forge têm CI remoto verde; base funcional integrada | aceite global ainda depende da matriz instalada de todas as Forjas e dos riscos operacionais descritos em `REMAINING_RISKS.md` |
 
 ## Comandos de referência
 

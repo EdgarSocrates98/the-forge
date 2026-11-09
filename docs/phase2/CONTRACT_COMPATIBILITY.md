@@ -2,7 +2,7 @@
 
 ## Resultado
 
-Estado: **PASS local / CI remoto pendente**. A matriz completa está em
+Estado: **PASS local / CI remoto verde para The Forge e Product Forge**. A matriz completa está em
 [`CONTRACT_MATRIX.md`](CONTRACT_MATRIX.md).
 
 | Contrato | Estado | Regra de compatibilidade |
