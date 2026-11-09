@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -454,6 +455,33 @@ def test_mcp_verify_real_handshake_and_invoke(tmp_path):
         "detail": "structured result returned",
     }
     assert check["process"]["exit"] in ("clean", "terminated")
+    assert check["process"]["returncode"] is not None
+
+
+@pytest.mark.skipif(os.name != "nt", reason="cmd.exe handle inheritance is Windows-specific")
+def test_mcp_verify_does_not_block_on_launcher_descendant_stderr(tmp_path):
+    """A launcher descendant may keep the wrapper stderr pipe open.
+
+    The verification result must still return and the exact Windows process
+    tree must be cleaned up; a blocking ``stderr.read()`` here used to turn
+    the Portal's MCP endpoint into a 504 after the handshake had succeeded.
+    """
+    stub = tmp_path / "stub_mcp_child.py"
+    stub.write_text(
+        "import subprocess, sys\n"
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+        + _MCP_STUB,
+        "utf-8",
+    )
+    spec = _spec(
+        mcp_command=(sys.executable, str(stub)),
+        mcp_server_name="stub-mcp",
+        mcp_verify_tool="ping",
+        spawn_ok=True,
+    )
+    check = kit.mcp_verify(spec, timeout=5)
+    assert check["status"] == "PASS"
+    assert check["invoke"]["status"] == "PASS"
     assert check["process"]["returncode"] is not None
 
 
