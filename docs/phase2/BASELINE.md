@@ -12,9 +12,9 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
-| the-forge | `phase2/baseline-observability-20261108` / `7a4ce18` | artefatos de auditoria não rastreados | schemas/contratos, runner federado local, matriz instalada Windows/Linux e CI `42564466899` verdes; `release-gates` `42564466922` verde |
+| the-forge | `phase2/baseline-observability-20261108` / `b9ee425` | artefatos de auditoria não rastreados | schemas/contratos, runner federado local, matriz instalada Windows/Linux e CI `42564466899` verdes; `release-gates` `42564466922` verde |
 | product-forge | `fix/bridge-embedded-parity-20261108` / `6d74dbd` | `.coverage` não rastreado | 259 passed/1 skipped; regressão CI local 82,62%; jornada instalada Windows `1 passed`; escopo multiusuário de vault, revogação não destrutiva, locks, kill recovery e faults estruturados locais verdes |
-| forge-portal | `feat/api-operations-contract-surface-20261108` / `c3ccad2` + worktree | capturas/auditorias modificadas | build, 599 testes, fluxo Portal de conexão/revogação de vault, gate visual local, pacote npm sem artefatos e instalação externa com start estático verdes |
+| forge-portal | `feat/api-operations-contract-surface-20261108` / `f9b4a6f` | capturas/auditorias modificadas | build, 599 testes, fluxo Portal de conexão/revogação de vault, gate visual local, pacote npm sem artefatos e instalação externa com start estático verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
 | forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
