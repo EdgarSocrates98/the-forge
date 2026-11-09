@@ -8,16 +8,16 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 
 | Repositório | Branch/HEAD observado | Worktree | CI mais recente observado |
 |---|---|---|---|
-| spark-forge-aws | `phase2/remediate-claims-20261108` / `4e4661f` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
-| spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
-| api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
-| platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
+| spark-forge-aws | `phase2/remediate-claims-20261108` / `e669526` | limpo | suíte completa local: 15128 passed/14 skipped; adapter Obsidian e smoke S3 controlado verdes; sem workflow publicado para este branch |
+| spark-forge-azure | `phase2/knowledge-freshness-20261108` / `8e074a5` | limpo | suíte completa local: 3190 passed/9 skipped; freshness e adapter Obsidian verdes; sem workflow publicado para este branch |
+| api-forge | `fix/control-plane-windows-concurrency-20261108` / `74bbbab` | `.codebase-memory/` não rastreado | suíte completa local: 2028 passed/4 skipped; persistência atômica Windows endurecida e adapter Obsidian verde |
+| platform-forge | `phase2/context-integrity-applicability-20261108` / `34486fa` | `uv.lock` modificado | suíte completa local terminou sem falhas; adapter Obsidian verde; sem workflow publicado para este branch |
 | the-forge | `phase2/baseline-observability-20261108` / `9587e13` | artefatos de auditoria não rastreados | schemas/contratos, ciclo de vida governado do conhecimento, metadados comuns dos seis contratos Obsidian, runner federado local usando `forge_obsidian`, contratos `ObsidianNoteRef` validados no E2E, matriz instalada Windows/Linux, smoke TTY/cancelamento 14/14 com default cold-start de 6 s e CI `42564466899` verdes; `release-gates` `42564466922` verde; Portal projeta workflows federados e executa investigação governada |
 | product-forge | `fix/bridge-embedded-parity-20261108` / `1490ff3` | `.coverage` não rastreado | 290 passed/1 skipped; `-m not benchmark`: 287 passed/1 skipped/3 deselected; benchmarks de escala 3 passed com wall-clock observacional; gateway com provider controlado registrando `17/29` tokens no ledger; distribuição `forge-obsidian` construída a partir da fonte canônica e embutida no Product Forge, ciclo de vida captured→validated com evidência, scan bounded até 10.000 e baseline observável com orçamento de contexto/citações fixture, capacidades Obsidian/knowledge publicadas com IDs normativos, export workflow, índice seguro de paths, MCP read-only com 17 tools, Canvas determinístico e `.base` oficial com validação/serialização, catálogo `dashboard_id → YAML`, importação governada de investigações e teste estrutural da pipeline standalone |
 | forge-portal | `feat/api-operations-contract-surface-20261108` / `1e85c28` | capturas/auditorias modificadas | build verde, 603 testes de baseline + 21 testes direcionados, Portal de conexão/revogação de vault, descoberta body-free de paths, ciclo de vida de conhecimento no explorador, deep link Obsidian, handoff explícito de investigação para Product Forge, gate visual local, pacote npm sem artefatos e instalação externa com start estático verdes |
-| code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
-| forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
-| forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
+| code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | suíte completa local: 1667 passed/21 skipped; relações documentais body-free verdes |
+| forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | suíte completa local: 130 passed; reautorização Obsidian verde |
+| forge-lens | `main` / `5687788` | limpo | suíte completa local terminou sem falhas; adapter sanitizado verde |
 
 Artefatos existentes não foram limpos, resetados ou incluídos em mudanças desta
 fase.

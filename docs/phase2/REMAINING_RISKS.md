@@ -1,9 +1,10 @@
 # Phase 2 — Remaining Risks
 
-1. **CI remoto global:** The Forge e Product Forge já possuem runs verdes
-   (`42564466899`, `42564466922`); ainda falta uma matriz consolidada de runs
-   verdes para todos os branches especialistas e para os repositórios sem
-   workflow publicado nesse branch.
+1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
+   componentes federados passaram na revalidação atual; The Forge e Product
+   Forge já possuem runs verdes (`42564466899`, `42564466922`). Ainda falta
+   uma matriz consolidada de runs verdes no GitHub para todos os branches
+   especialistas e para os repositórios sem workflow publicado nesse branch.
 2. **Matriz instalada:** 12/12 wheels Python passaram em venvs isolados no
    Windows e Linux WSL2; a matriz limpa do wheel The Forge passou
    project/workspace/user com apply/uninstall; o Portal também foi instalado

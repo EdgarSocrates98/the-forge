@@ -48,12 +48,18 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
 - Platform Forge: `uv run pytest -q --disable-warnings` terminou sem falhas;
 - Spark Forge Azure: `3190 passed, 9 skipped`; freshness/knowledge focado adicional:
   `54 passed`;
-- API Forge: gateway, refs, trust e projeção Obsidian: `23 passed`;
-- Spark Forge AWS: claims `0 divergências`; status, evals, sincronização de
+- API Forge: a suíte completa terminou com `2028 passed, 4 skipped`; a correção
+  `74bbbab` endureceu temporários únicos e retry de publicação atômica no
+  Windows; gateway, refs, trust e projeção Obsidian permaneceram verdes;
+- Spark Forge AWS: a suíte completa terminou com `15128 passed, 14 skipped`;
+  claims `0 divergências`; status, evals, sincronização de
   skills e bundle offline passaram; `sparkforge-aws collect parquet-footer`
   foi homologado contra S3 real com perfil AWS CLI Login, região explícita,
   `status=ok`, 1 arquivo, 2 linhas e 2 colunas; o bucket/objeto temporários
   foram excluídos e a consulta posterior retornou `NoSuchBucket`;
+- Code Atlas: `1667 passed, 21 skipped`; Agent Bridge: `130 passed`; Forge Lens
+  terminou sem falhas na suíte completa; os skips permanecem classificados por
+  capacidade de ambiente (symlink/LSP/POSIX) e não foram tratados como passes;
 - E2E federado: `notes_exported=4`, `notes_roundtripped=4`,
   `manual_conflict_detected=true`, `cloud_access=false`.
 - Portal Python: `python -m pytest -q tests` terminou com `200 passed, 15 skipped`.
