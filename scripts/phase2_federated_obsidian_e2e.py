@@ -19,6 +19,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
 
 def _add_repo_paths(repos_root: Path) -> None:
     neutral_obsidian = repos_root / "product-forge" / "forge-obsidian" / "src"
@@ -59,7 +61,6 @@ def run(repos_root: Path) -> dict[str, Any]:
         ProductAgentSessionContext,
     )
     from forge_lens.adapters.obsidian import trace_from_obsidian_receipt  # type: ignore[import-not-found]
-    from platformforge.context.obsidian import build_obsidian_operations_review
     from forge_obsidian import (  # type: ignore[import-not-found]
         ObsidianVaultError,
         export_vault_document,
@@ -67,6 +68,7 @@ def run(repos_root: Path) -> dict[str, Any]:
         parse_markdown_document,
         plan_vault_sync,
     )
+    from platformforge.context.obsidian import build_obsidian_operations_review
     from sparkforge_aws.context.obsidian import build_obsidian_diagnostic
     from sparkforge_azure.context.obsidian import build_obsidian_diagnostic as build_azure_note
 
@@ -116,6 +118,20 @@ def run(repos_root: Path) -> dict[str, Any]:
         ]
         notes[0] = _with_link(notes[0], "api/contract-review")
         notes[2] = _with_link(notes[2], "platform/incident-review")
+        note_validator = Draft202012Validator(
+            json.loads(
+                (repos_root / "the-forge" / "schemas" / "ObsidianNoteRef.schema.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        )
+        for note in notes:
+            public_note = {key: value for key, value in note.items() if key != "content"}
+            errors = sorted(
+                note_validator.iter_errors(public_note),
+                key=lambda error: list(error.path),
+            )
+            assert not errors, "; ".join(error.message for error in errors)
         for note in notes:
             (vault / str(note["path"])).parent.mkdir(parents=True, exist_ok=True)
 
@@ -210,6 +226,7 @@ def run(repos_root: Path) -> dict[str, Any]:
             "fixture_only": True,
             "notes_exported": len(receipts),
             "notes_roundtripped": len(imported),
+            "note_contracts_validated": len(notes),
             "atlas_relations": len(atlas["relations"]),
             "lens_spans": len(lens.spans),
             "bridge_authorized": True,

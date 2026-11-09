@@ -30,6 +30,7 @@ export/import pelo `forge_obsidian` e remove o vault ao terminar. Nenhum checkou
   "fixture_only": true,
   "notes_exported": 4,
   "notes_roundtripped": 4,
+  "note_contracts_validated": 4,
   "atlas_relations": 1,
   "lens_spans": 1,
   "bridge_authorized": true,
@@ -41,7 +42,9 @@ export/import pelo `forge_obsidian` e remove o vault ao terminar. Nenhum checkou
 
 O resultado comprova, em conjunto:
 
-- os quatro adapters produzem `theforge/ObsidianNoteRef/v1` com proveniência;
+- os quatro adapters produzem `theforge/ObsidianNoteRef/v1` com proveniência e
+  cada saída é validada contra `schemas/ObsidianNoteRef.schema.json` antes do
+  export;
 - o runner chama diretamente `forge_obsidian`, mantendo o Product Forge fora
   do núcleo técnico de import/export;
 - o Markdown exportado e importado preserva o conteúdo e o hash;
