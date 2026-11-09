@@ -37,3 +37,7 @@ Executados com `uv run --with pywinpty` no Windows:
 
 O smoke de superfície usa 5 s por CLI para tolerar inicialização fria do `uv` em
 máquina limpa; a janela pode ser reduzida explicitamente em runs aquecidos.
+
+O MCP nativo foi verificado novamente com `theforge install mcp-verify --json`:
+handshake real `PASS`, 15 tools descobertas, chamada estruturada de
+`theforge_status` aprovada e exit code do comando `0`.
