@@ -14,7 +14,7 @@ histórico.
 
 1. **Publicação/adoption da biblioteca:** o núcleo foi extraído para o namespace
    técnico `forge_obsidian`, sem imports do runtime Product Forge, e é validado
-   no wheel `product_forge` (`4a872f4`; suíte Product Forge: 274 passed, 1
+   no wheel `product_forge` (`7691fa7`; suíte Product Forge: 274 passed, 1
    skipped). O caminho `product_forge.knowledge.obsidian` é uma fachada de
    compatibilidade. Ainda falta publicar/pinar a distribuição técnica separada
    e executar a suíte de conformidade nos quatro adapters especialistas.

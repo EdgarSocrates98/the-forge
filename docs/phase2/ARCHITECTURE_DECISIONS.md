@@ -16,7 +16,7 @@ Canvas/Bases, planos, escrita atômica, receipts e rollback. O import path
 distribuição separada e a conformidade dos quatro adapters são gates seguintes;
 não são alegadas como concluídas.
 
-Evidência: commit `4a872f4`, 274 testes aprovados e 1 skip esperado, lint verde,
+Evidência: commit `7691fa7`, 274 testes aprovados e 1 skip esperado, lint verde,
 wheel construído e importação do namespace validada a partir do artefato isolado.
 
 ## AD-03 — Mutação sempre é explícita
