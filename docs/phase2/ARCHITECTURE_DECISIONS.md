@@ -6,11 +6,18 @@ Os contratos `theforge/Obsidian*` são versionados no The Forge. Especialistas
 produzem adapters finos e mantêm seus motores de domínio; nenhum adapter cria um
 segundo motor de busca, sync ou autorização.
 
-## AD-02 — Product Forge é a implementação de referência do vault
+## AD-02 — `forge_obsidian` é o núcleo técnico do vault
 
-O Product Forge implementa parser/projeção Markdown, validação de Canvas/Bases,
-planos, escrita atômica, receipts e rollback. A extração para um pacote neutro
-continua uma evolução futura, não uma capacidade alegada antes de existir.
+O Product Forge mantém a implementação canônica em `forge_obsidian`, um
+namespace técnico extraído do módulo legado e sem dependência do runtime
+Product Forge. Ele implementa parser/projeção Markdown, validação de
+Canvas/Bases, planos, escrita atômica, receipts e rollback. O import path
+`product_forge.knowledge.obsidian` é uma fachada compatível. A publicação como
+distribuição separada e a conformidade dos quatro adapters são gates seguintes;
+não são alegadas como concluídas.
+
+Evidência: commit `4a872f4`, 274 testes aprovados e 1 skip esperado, lint verde,
+wheel construído e importação do namespace validada a partir do artefato isolado.
 
 ## AD-03 — Mutação sempre é explícita
 
