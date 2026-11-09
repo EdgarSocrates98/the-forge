@@ -14,6 +14,8 @@
 | pico Python do reindex/search — 100 / 1.000 / 10.000 documentos | PASS; `0,08 / 0,57 / 5,50 MiB` via `tracemalloc`; não é RSS do processo |
 | chunking Markdown — 100 / 1.000 / 10.000 documentos | PASS; melhor caso `1,947 / 18,335 / 193,371 ms` (`~51,4k / 54,5k / 51,7k documentos/s`) |
 | SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `141,960 / 1.399,128 / 14.388,378 ms`; busca `0,397 / 0,422 / 0,892 ms`; DB `143.360 / 843.776 / 7.983.104 bytes` |
+| orçamento de contexto de recuperação — 100 / 1.000 / 10.000 documentos | PASS fixture; máximo estimado `12` tokens e média `11,333` por consulta; uso real de provider permanece `NOT_RUN` |
+| qualidade de citações — 100 / 1.000 / 10.000 documentos | PASS fixture; precision@3 `1,0`, recall@3 `1,0`, completude dos campos de citação `1,0`; não representa qualidade de resposta de provider |
 | suíte Product Forge não-benchmark | 283 passed, 1 skipped, 3 deselected com `-m not benchmark`; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
 | benchmark pytest de filesystem — 10.000 arquivos recém-criados | PARTIAL; 16,90 s contra o limite de 15 s em uma execução Windows; importação direta em árvore quente ficou em ~6–8 s e não houve erro funcional |
 | Forge Portal frontend | 603 testes; build verde sem warning de orçamento de componente |
@@ -39,7 +41,7 @@ Todos os números são baseline comparável para regressões no mesmo ambiente,
 não uma meta universal nem uma medição de produção.
 
 O baseline local agora cobre scan, importação, resolução de wikilinks,
-exportação atômica, reindexação SQLite/FTS e pico de alocação Python. Token
-usage de provider e qualidade de citações continuam `NOT_RUN`, pois exigem um
-provider e corpus de avaliação governados; não são inferidos a partir de
-contagens de palavras.
+exportação atômica, reindexação SQLite/FTS, pico de alocação Python, orçamento
+estimado do contexto de recuperação e qualidade de citações em corpus fixture.
+O uso real de tokens do provider continua `NOT_RUN`, pois exige uma execução
+governada com provider e não é inferido a partir de contagens de palavras.

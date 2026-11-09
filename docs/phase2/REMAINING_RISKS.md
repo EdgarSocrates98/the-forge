@@ -30,9 +30,10 @@
    avaliador próprio e dependem do runtime do Obsidian.
 7. **Observabilidade de escala:** baseline local agora cobre scan, importação,
    resolução de wikilinks, exportação atômica, reindexação/busca SQLite/FTS e
-   pico de alocação Python em 100/1.000/10.000 notas. Token usage real de
-   provider e qualidade de citações continuam `NOT_RUN`, pois exigem provider
-   e corpus de avaliação governados; `tracemalloc` não substitui RSS. O teste
+   pico de alocação Python, orçamento estimado do contexto de recuperação e
+   qualidade de citações fixture (precision/recall/completude) em
+   100/1.000/10.000 notas. Token usage real de provider continua `NOT_RUN`,
+   pois exige provider governado; `tracemalloc` não substitui RSS. O teste
    pytest de 10.000 arquivos recém-criados excedeu 15 s em uma execução
    Windows (16,90 s), enquanto a importação direta em árvore quente ficou em
    ~6–8 s; o caso permanece pendente de estabilização/medição de filesystem.
