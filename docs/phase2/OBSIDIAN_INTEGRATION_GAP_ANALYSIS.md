@@ -20,9 +20,9 @@ histórico.
    são projetados sem reescrita; a resolução contra arquivos reais do vault e
    rename/delete ainda precisam de testes dedicados.
 3. **Estados de sync:** `created`, `unchanged`, `updated`, `conflict` e
-   `rolled_back` estão implementados no Product Forge; `skipped`, `denied` e
-   `failed` continuam representados principalmente por planos/erros estruturados
-   e ainda não têm uma API pública de receipt/recovery equivalente.
+   `rolled_back` estão implementados no Product Forge; `denied` e `failed`
+   agora são expostos nos erros API/Portal como `details.sync_state`. `skipped`
+   ainda não tem uma API pública de receipt/recovery equivalente.
 4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` e,
    opcionalmente, `FORGE_OBSIDIAN_ALLOWED_ROOT`; o Portal já expõe um descritor
    seguro com capacidades e recusa vault fora da raiz autorizada. Ainda falta
