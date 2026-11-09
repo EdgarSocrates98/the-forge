@@ -1,17 +1,13 @@
 # Phase 2 — Remaining Risks
 
 1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
-   componentes federados passaram na revalidação atual; The Forge e Product
-   Forge já possuem runs verdes (`42564466899`, `42564466922`). Ainda falta
-   uma matriz consolidada de runs verdes no GitHub para todos os branches
-   especialistas e para os repositórios sem workflow publicado nesse branch.
-   Desde a última verificação, os runs remotos publicados para API Sentinel,
-   Code Atlas, Data Sentinel, Forge Lens e Product Forge terminaram verdes;
-   The Forge e Agent Bridge continuam sem run para os branches de trabalho,
-   pois seus workflows não disparam em push fora de `main`.
-   A consulta de workflow runs associada aos commits atuais retornou coleção
-   vazia; portanto não há evidência remota para promover esses resultados
-   locais a CI obrigatório. Como hardening adicional, a auditoria local de
+   componentes federados passaram na revalidação atual. The Forge `42688316906`,
+   Agent Bridge `42687526019` e Product Forge `42686444553` possuem runs verdes,
+   assim como API Sentinel, Code Atlas, Data Sentinel e Forge Lens. Ainda falta
+   uma matriz consolidada de runs verdes no GitHub para os branches atuais de
+   AWS/Azure/API/Platform; seus resultados permanecem evidência local até que
+   os workflows correspondentes sejam executados no commit homologado. Como
+   hardening adicional, a auditoria local de
    supply chain percorreu 15 repositórios, 50 workflows e 335 ações externas:
    todas agora usam SHAs imutáveis; a ação local `./` do Forge Doctor Data é a
    única exceção intencional.
