@@ -56,7 +56,8 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
   foram excluídos e a consulta posterior retornou `NoSuchBucket`;
 - E2E federado: `notes_exported=4`, `notes_roundtripped=4`,
   `manual_conflict_detected=true`, `cloud_access=false`.
-- Portal Angular: `npm test -- --no-watch --no-progress` terminou com `57`
+- Portal Python: `python -m pytest -q tests` terminou com `200 passed, 15 skipped`.
+  Portal Angular: `npm test -- --no-watch --no-progress` terminou com `57`
   arquivos e `624` testes verdes; `npm run build` gerou o bundle de produção.
   A homologação browser real `test_theforge_federated_flow` passou (`1 passed`):
   o bundle atual foi servido pelo adaptador real do The Forge e percorreu
