@@ -18,7 +18,7 @@ Integrações complementares:
 
 O catálogo federado do Product Forge publica, com implementação CLI/MCP
 correspondente, os workflows `obsidian.preview`, `obsidian.import`,
-`obsidian.sync.plan`, `obsidian.sync.apply`, `knowledge.evidence.list` e
+`obsidian.export`, `obsidian.sync.plan`, `obsidian.sync.apply`, `knowledge.evidence.list` e
 `knowledge.context.project`. O Portal projeta esses workflows separadamente de
 capabilities nativas, evitando declarar como capability algo que o resolver do
 The Forge não consegue executar.

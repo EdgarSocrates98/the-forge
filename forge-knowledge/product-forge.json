@@ -11,7 +11,7 @@
   "python": ">=3.11",
   "appropriate_for": ["product context and discovery", "requirements and roadmap analysis", "read-only product analytics"],
   "inappropriate_for": ["deploying production systems", "mutating product state without approval", "replacing the control plane governance"],
-  "intents": ["product discovery", "write requirements", "review roadmap", "validate product SQL", "analyze product metrics", "knowledge context", "knowledge evidence", "obsidian knowledge sync"],
+  "intents": ["product discovery", "write requirements", "review roadmap", "validate product SQL", "analyze product metrics", "knowledge context", "knowledge evidence", "obsidian knowledge import", "obsidian knowledge export", "obsidian knowledge sync"],
   "technologies": ["product graph", "sqlite", "sql", "analytics", "roadmap", "obsidian", "markdown"],
   "environments": ["local", "offline"],
   "install": [{"kind": "venv-pip", "command": "python3.11 -m pip install product-forge", "verify": "productforge doctor --json", "prerequisites": ["python>=3.11", "pip"]}],
