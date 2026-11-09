@@ -155,15 +155,16 @@ strict = true
 # Vendored/canonical installkit scripts are shared byte-identical source
 # (Python 3.10 floor) — excluded from collection like the ruff exemption.
 exclude = '(^|/)scripts/(installkit/)?forge_(bootstrap|installkit)\.py$'
-mypy_path = "src:adapters/sparkforge_aws/src:adapters/sparkforge_azure/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src:adapters/platformforge/src"
+mypy_path = "src:adapters/sparkforge_aws/src:adapters/sparkforge_azure/src:adapters/apiforge/src:adapters/doctordata/src:adapters/doctorapi/src:adapters/platformforge/src:adapters/apisentinel/src"
 files = ["src", "scripts", "adapters/sparkforge_aws/src", "adapters/sparkforge_azure/src",
          "adapters/apiforge/src", "adapters/doctordata/src", "adapters/doctorapi/src",
-         "adapters/platformforge/src"]
+         "adapters/platformforge/src", "adapters/apisentinel/src"]
 
 [[tool.mypy.overrides]]
 # The specialists are installed only in their own interpreters, never in the core env.
 module = ["sparkforge_aws.*", "sparkforge.*", "sparkforge_azure.*", "apiforge.*",
-          "forge_doctor_data.*", "forge_doctor_api.*", "platformforge.*"]
+          "forge_doctor_data.*", "forge_doctor_api.*", "platformforge.*",
+          "api_sentinel.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
