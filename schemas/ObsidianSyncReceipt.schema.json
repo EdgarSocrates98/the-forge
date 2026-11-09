@@ -12,6 +12,17 @@
         }
       ]
     },
+    "baseline_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "classification": {
       "enum": [
         "public",
@@ -78,6 +89,9 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "updated_at": {
+      "type": "string"
     },
     "vault_id": {
       "type": "string"

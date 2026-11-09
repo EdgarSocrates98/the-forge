@@ -1,4 +1,5 @@
 import json
+from dataclasses import fields
 from pathlib import Path
 
 import pytest
@@ -107,6 +108,35 @@ def test_obsidian_sync_contracts_validate_and_keep_conflicts_explicit() -> None:
         Draft202012Validator(json_schema(type(contract))).validate(to_dict(contract))
     with pytest.raises(ValueError, match="unresolved"):
         ObsidianSyncPlan(path="note.md", content_hash=digest, outcome="conflict")
+
+
+def test_obsidian_contracts_expose_the_common_interoperability_metadata() -> None:
+    common = {
+        "schema",
+        "version",
+        "workspace",
+        "vault_id",
+        "path",
+        "source",
+        "classification",
+        "content_hash",
+        "previous_hash",
+        "updated_at",
+        "provenance",
+        "outcome",
+        "warnings",
+        "unresolved",
+    }
+    contracts = (
+        ObsidianVaultDescriptor,
+        ObsidianNoteRef,
+        ObsidianSyncPlan,
+        ObsidianSyncReceipt,
+        ObsidianConflict,
+        ObsidianExportProfile,
+    )
+    for contract in contracts:
+        assert common <= {field.name for field in fields(contract)}
 
 
 @pytest.mark.parametrize("outcome", ["skipped", "denied", "failed", "rolled_back"])

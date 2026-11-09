@@ -71,9 +71,11 @@ class ObsidianSyncPlan:
     baseline_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
     workspace: str = ""
     vault_id: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)
     planned_at: str = ""
+    updated_at: str = ""
 
     def __post_init__(self) -> None:
         if self.schema != OBSIDIAN_SYNC_PLAN_SCHEMA:
@@ -108,6 +110,7 @@ class ObsidianSyncReceipt:
     workspace: str = ""
     vault_id: str = ""
     previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    baseline_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
     title: str = ""
     size: int = 0
     source: str = ""
@@ -118,6 +121,7 @@ class ObsidianSyncReceipt:
     warnings: list[str] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)
     exported_at: str = ""
+    updated_at: str = ""
 
     def __post_init__(self) -> None:
         if self.schema != OBSIDIAN_SYNC_RECEIPT_SCHEMA:
@@ -126,6 +130,8 @@ class ObsidianSyncReceipt:
         _hash(self.content_hash, "content_hash")
         if self.previous_hash is not None:
             _hash(self.previous_hash, "previous_hash")
+        if self.baseline_hash is not None:
+            _hash(self.baseline_hash, "baseline_hash")
         if self.backup_path is not None:
             _safe_relative_path(self.backup_path)
         if self.size < 0:
@@ -144,6 +150,10 @@ class ObsidianVaultDescriptor:
     detected: bool = False
     capabilities: list[str] = field(default_factory=list)
     detected_at: str = ""
+    content_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    updated_at: str = ""
+    outcome: str = ""
     provenance: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)
@@ -154,6 +164,10 @@ class ObsidianVaultDescriptor:
         for name in ("workspace", "vault_id", "source"):
             _required(getattr(self, name), name)
         _safe_relative_path(self.path)
+        if self.content_hash is not None:
+            _hash(self.content_hash, "content_hash")
+        if self.previous_hash is not None:
+            _hash(self.previous_hash, "previous_hash")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -197,6 +211,9 @@ class ObsidianConflict:
     vault_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
     candidate_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
     detected_at: str = ""
+    content_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    updated_at: str = ""
     provenance: dict[str, str] = field(default_factory=dict)
     outcome: Literal["conflict", "resolved", "denied"] = "conflict"
     warnings: list[str] = field(default_factory=list)
@@ -210,6 +227,10 @@ class ObsidianConflict:
         _safe_relative_path(self.path)
         for name in ("baseline_hash", "vault_hash", "candidate_hash"):
             _hash(getattr(self, name), name)
+        if self.content_hash is not None:
+            _hash(self.content_hash, "content_hash")
+        if self.previous_hash is not None:
+            _hash(self.previous_hash, "previous_hash")
         if self.outcome == "conflict" and not self.unresolved:
             raise ContractError("unresolved conflict must retain an unresolved reason")
 
@@ -221,6 +242,7 @@ class ObsidianExportProfile:
     workspace: str
     vault_id: str
     source: str
+    path: str = ""
     classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
     mode: Literal["export_only", "import_read_only", "reviewed_sync"] = "export_only"
     include_frontmatter: bool = True
@@ -230,12 +252,22 @@ class ObsidianExportProfile:
     provenance: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)
+    content_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    updated_at: str = ""
+    outcome: str = ""
 
     def __post_init__(self) -> None:
         if self.schema != OBSIDIAN_EXPORT_PROFILE_SCHEMA:
             raise ContractError(f"unsupported Obsidian export profile schema {self.schema!r}")
         for name in ("workspace", "vault_id", "source"):
             _required(getattr(self, name), name)
+        if self.path:
+            _safe_relative_path(self.path)
         if not self.allowed_extensions:
             raise ContractError("allowed_extensions must not be empty")
+        if self.content_hash is not None:
+            _hash(self.content_hash, "content_hash")
+        if self.previous_hash is not None:
+            _hash(self.previous_hash, "previous_hash")
 
