@@ -1,0 +1,174 @@
+{
+  "schema": "product-forge/knowledge-observability-benchmark/v1",
+  "status": "PASS",
+  "scope": "local-observability-only",
+  "sizes": [
+    100,
+    1000,
+    10000
+  ],
+  "iterations": 1,
+  "limitations": [
+    "tracemalloc measures Python allocations, not resident process memory",
+    "export measures one document per size, not a bulk export API",
+    "token usage and citation quality are NOT_RUN without a model/evaluation corpus"
+  ],
+  "results": [
+    {
+      "documents": 100,
+      "scan": {
+        "status": "PASS",
+        "count": 100,
+        "elapsed_ms": 36.89,
+        "peak_python_bytes": 153931
+      },
+      "import": {
+        "status": "PASS",
+        "count": 100,
+        "elapsed_ms": 254.36,
+        "peak_python_bytes": 369042
+      },
+      "wikilink_resolution": {
+        "status": "PASS",
+        "links": 100,
+        "resolved": 100,
+        "unresolved": 0,
+        "elapsed_ms": 2.772,
+        "peak_python_bytes": 14354
+      },
+      "export": {
+        "status": "PASS",
+        "scope": "one atomic document export",
+        "elapsed_ms": 14.027,
+        "peak_python_bytes": 29630
+      },
+      "reindex_search": {
+        "status": "PASS",
+        "scope": "SQLite FTS local benchmark",
+        "elapsed_ms": 206.051,
+        "peak_python_bytes": 84329,
+        "documents": 100,
+        "iterations": 1,
+        "write_ms_median": 156.225,
+        "search_ms_median": 0.682,
+        "write_ms_max": 156.225,
+        "search_ms_max": 0.682,
+        "chunks": 100,
+        "search_hits": 20,
+        "database_bytes": 143360
+      },
+      "token_usage": {
+        "status": "NOT_RUN",
+        "reason": "no model provider is used by the offline benchmark"
+      },
+      "citation_quality": {
+        "status": "NOT_RUN",
+        "reason": "quality requires a governed retrieval/evaluation corpus"
+      }
+    },
+    {
+      "documents": 1000,
+      "scan": {
+        "status": "PASS",
+        "count": 1000,
+        "elapsed_ms": 331.536,
+        "peak_python_bytes": 1485043
+      },
+      "import": {
+        "status": "PASS",
+        "count": 1000,
+        "elapsed_ms": 2235.695,
+        "peak_python_bytes": 2888330
+      },
+      "wikilink_resolution": {
+        "status": "PASS",
+        "links": 1000,
+        "resolved": 1000,
+        "unresolved": 0,
+        "elapsed_ms": 28.158,
+        "peak_python_bytes": 83881
+      },
+      "export": {
+        "status": "PASS",
+        "scope": "one atomic document export",
+        "elapsed_ms": 14.311,
+        "peak_python_bytes": 25979
+      },
+      "reindex_search": {
+        "status": "PASS",
+        "scope": "SQLite FTS local benchmark",
+        "elapsed_ms": 1529.164,
+        "peak_python_bytes": 599410,
+        "documents": 1000,
+        "iterations": 1,
+        "write_ms_median": 1479.026,
+        "search_ms_median": 0.573,
+        "write_ms_max": 1479.026,
+        "search_ms_max": 0.573,
+        "chunks": 1000,
+        "search_hits": 20,
+        "database_bytes": 843776
+      },
+      "token_usage": {
+        "status": "NOT_RUN",
+        "reason": "no model provider is used by the offline benchmark"
+      },
+      "citation_quality": {
+        "status": "NOT_RUN",
+        "reason": "quality requires a governed retrieval/evaluation corpus"
+      }
+    },
+    {
+      "documents": 10000,
+      "scan": {
+        "status": "PASS",
+        "count": 10000,
+        "elapsed_ms": 3729.888,
+        "peak_python_bytes": 14956183
+      },
+      "import": {
+        "status": "PASS",
+        "count": 10000,
+        "elapsed_ms": 23756.37,
+        "peak_python_bytes": 28020147
+      },
+      "wikilink_resolution": {
+        "status": "PASS",
+        "links": 10000,
+        "resolved": 10000,
+        "unresolved": 0,
+        "elapsed_ms": 287.636,
+        "peak_python_bytes": 2947813
+      },
+      "export": {
+        "status": "PASS",
+        "scope": "one atomic document export",
+        "elapsed_ms": 19.483,
+        "peak_python_bytes": 26245
+      },
+      "reindex_search": {
+        "status": "PASS",
+        "scope": "SQLite FTS local benchmark",
+        "elapsed_ms": 15671.245,
+        "peak_python_bytes": 5770394,
+        "documents": 10000,
+        "iterations": 1,
+        "write_ms_median": 15495.369,
+        "search_ms_median": 1.047,
+        "write_ms_max": 15495.369,
+        "search_ms_max": 1.047,
+        "chunks": 10000,
+        "search_hits": 20,
+        "database_bytes": 7974912
+      },
+      "token_usage": {
+        "status": "NOT_RUN",
+        "reason": "no model provider is used by the offline benchmark"
+      },
+      "citation_quality": {
+        "status": "NOT_RUN",
+        "reason": "quality requires a governed retrieval/evaluation corpus"
+      }
+    }
+  ]
+}

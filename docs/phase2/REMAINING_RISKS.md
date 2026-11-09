@@ -26,8 +26,11 @@
    local.
 6. **Parser Obsidian:** Canvas/Bases são validações/projeções estruturais; não
    há promessa de reproduzir todo o runtime do aplicativo ou fórmulas.
-7. **Observabilidade de escala:** memória, scan, busca, reindexação e token
-   budget ainda precisam de baseline quantitativo completo.
+7. **Observabilidade de escala:** baseline local agora cobre scan, importação,
+   resolução de wikilinks, exportação atômica, reindexação/busca SQLite/FTS e
+   pico de alocação Python em 100/1.000/10.000 notas. Token usage real de
+   provider e qualidade de citações continuam `NOT_RUN`, pois exigem provider
+   e corpus de avaliação governados; `tracemalloc` não substitui RSS.
 8. **Distribuição técnica neutra:** `forge_obsidian` já está extraído, testado,
    construído como wheel/sdist `forge-obsidian` e incluído no wheel do Product
    Forge. Ainda não foi publicado em índice remoto nem consumido com versão
