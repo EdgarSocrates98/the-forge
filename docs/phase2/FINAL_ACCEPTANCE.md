@@ -16,7 +16,7 @@ Estado global: **BLOCKED para aceite final**.
 | Bases/Canvas compatíveis com sintaxe declarada | PASS de contrato: Canvas estrutural; Bases YAML oficial com serializer/validador, sem execução de fórmulas |
 | E2E federado reproduzível | PASS fixture-only; 4 notas round-tripped, Atlas/Lens/Bridge e conflito manual |
 | instalação simples | PASS local; 12/12 wheels Python no Windows e Linux WSL2, matriz limpa project/workspace/user, Portal instalado fora do checkout com start estático, Product Forge, TTY/TUI 14/14 e MCP real passaram |
-| CI obrigatório verde | PASS para The Forge (`42564466899`, `42564466922`); Product Forge validado localmente em `cd2fc9a` (283 passed/1 skipped/3 deselected com `-m not benchmark`); pacote `forge-obsidian` construído e instalado isoladamente; não consolidado para todos os branches especialistas |
+| CI obrigatório verde | PASS para The Forge (`42564466899`, `42564466922`); Product Forge validado localmente em `b8a91b4` (283 passed/1 skipped/3 deselected com `-m not benchmark`); pacote `forge-obsidian` construído e instalado isoladamente; não consolidado para todos os branches especialistas |
 | recuperação completa | PARTIAL; faults reais pendentes |
 
 O bloqueio é deliberado: não se transforma fixture, teste ignorado ou execução
