@@ -14,7 +14,7 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
 | the-forge | `phase2/baseline-observability-20261108` / `598ec46` | artefatos de auditoria não rastreados | release-gates em execução após contratos de estados recuperáveis |
 | product-forge | `fix/bridge-embedded-parity-20261108` / `a37ee37` | `.coverage` não rastreado | CI verde em `053f35a`; hardening de preview/authorization aguarda CI |
-| forge-portal | `feat/api-operations-contract-surface-20261108` / `97fad3c` | capturas/auditorias modificadas | build, 595 testes e gate visual local verdes |
+| forge-portal | `feat/api-operations-contract-surface-20261108` / `4ca364e` | capturas/auditorias modificadas | build, 596 testes e gate visual local verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
 | forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
