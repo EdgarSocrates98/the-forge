@@ -49,15 +49,15 @@ def _with_link(note: dict[str, Any], target: str) -> dict[str, Any]:
 def run(repos_root: Path) -> dict[str, Any]:
     _add_repo_paths(repos_root)
     from apiforge.context.obsidian import build_obsidian_contract_review
-    from code_atlas.context.obsidian import project_obsidian_relations
-    from forge_agent_bridge.context import (
+    from code_atlas.context.obsidian import project_obsidian_relations  # type: ignore[import-not-found]
+    from forge_agent_bridge.context import (  # type: ignore[import-not-found]
         ContextStore,
         KnowledgeContextPack,
         ProductAgentSessionContext,
     )
-    from forge_lens.adapters.obsidian import trace_from_obsidian_receipt
+    from forge_lens.adapters.obsidian import trace_from_obsidian_receipt  # type: ignore[import-not-found]
     from platformforge.context.obsidian import build_obsidian_operations_review
-    from product_forge.knowledge.obsidian import (
+    from product_forge.knowledge.obsidian import (  # type: ignore[import-not-found]
         ObsidianVaultError,
         export_vault_document,
         import_vault_document,
