@@ -12,9 +12,9 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
-| the-forge | `phase2/baseline-observability-20261108` / `685a7f5` | artefatos de auditoria não rastreados | release-gates em execução após contratos de estados recuperáveis |
-| product-forge | `fix/bridge-embedded-parity-20261108` / `d24164b` | `.coverage` não rastreado | CI local verde para rollback/Obsidian; run remoto deste commit pendente |
-| forge-portal | `feat/api-operations-contract-surface-20261108` / `4ca364e` | capturas/auditorias modificadas | build, 596 testes e gate visual local verdes |
+| the-forge | `phase2/baseline-observability-20261108` / `a215303` | artefatos de auditoria não rastreados | schemas/contratos e runner federado locais verdes; CI remoto pendente |
+| product-forge | `fix/bridge-embedded-parity-20261108` / `bef4a6d` | `.coverage` não rastreado | 73 testes Obsidian/API, benchmark 100/1.000/10.000 e lint verdes; CI remoto pendente |
+| forge-portal | `feat/api-operations-contract-surface-20261108` / `6454f01` | capturas/auditorias modificadas | build, 596 testes, rollback knowledge e gate visual local verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
 | forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
@@ -68,15 +68,17 @@ fase.
   universal registrados; o MCP nativo continua limitado às operações realmente
   implementadas.
 - Product Forge: parser Markdown aditivo (incluindo aliases, referências de
-  bloco, links relativos e anexos), import/export bounded, plano de sync,
-  baseline/conflict, backup, escrita atômica, receipt, histórico body-free,
-  templates determinísticos e projeções Canvas/Bases estruturais.
+  bloco, links relativos e anexos), import/export bounded, leitura em lote
+  paralela com gate 100/1.000/10.000, plano de sync, baseline/conflict, backup,
+  escrita atômica, rollback condicionado por hash, receipt, histórico
+  body-free, templates determinísticos e projeções Canvas/Bases estruturais.
 - AWS, Azure, API e Platform: adapters read-only com `NoteRef` versionado,
   proveniência, confiança/estado de freshness e redaction de chaves e texto
   sensível; nenhum adapter acessa o vault ou altera cloud.
 - Portal: captura/preview/import, export plan→confirm, baseline de atualização,
-  conflito explícito e histórico de receipts; gate visual de conhecimento passou
-  em 8 combinações com axe=0, overflow=0 e foco sem anel=0.
+  conflito explícito, histórico de receipts e restauração protegida por backup;
+  gate visual de conhecimento passou em 8 combinações com axe=0, overflow=0 e
+  foco sem anel=0.
 
 Code Atlas agora possui projeção body-free de relações Obsidian e Forge Lens
 possui adapter de receipts sanitizados. O runner local
