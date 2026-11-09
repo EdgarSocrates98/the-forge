@@ -30,7 +30,11 @@
         "created",
         "unchanged",
         "conflict",
-        "updated"
+        "updated",
+        "skipped",
+        "denied",
+        "failed",
+        "rolled_back"
       ]
     },
     "path": {

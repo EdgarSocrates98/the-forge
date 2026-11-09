@@ -2,32 +2,34 @@
 
 ## O que já existe
 
-Product Forge oferece o adapter mais completo encontrado: leitura Markdown,
-validação de Canvas/Bases, UTF-8/size limits, path traversal e recusa de
-symlink/reparse points. O Forge Portal possui UI e clientes API reutilizáveis.
-Os especialistas possuem receipts, conhecimento e adapters de portal/MCP em
-graus diferentes.
+Product Forge oferece a implementação de referência: leitura Markdown sem
+reescrita, projeção de frontmatter/wikilinks/embeds/tags/callouts/code blocks,
+validação e geração estrutural de Canvas/Bases, limites UTF-8/tamanho, path
+traversal, symlink/reparse/hardlink, plano de sync, backup, escrita atômica,
+receipts e histórico body-free. O The Forge é dono dos contratos versionados e
+o Portal expõe captura, preview, import, export revisado, baseline/conflict e
+histórico.
 
 ## Gaps P0/P1
 
-1. **Escrita destrutiva:** `export_vault_document` escreve diretamente no destino
-   e não verifica baseline, conflito, snapshot ou hash pós-escrita.
-2. **Round-trip:** não há parser/protocolo comum para frontmatter, wikilinks,
-   embeds, callouts, tags, aliases, block references e Markdown desconhecido.
-3. **Identidade:** falta um `NoteRef` estável independente de título/path, com
-   workspace/vault/classification/provenance.
-4. **Sync:** falta planner explícito com `unchanged/created/updated/skipped/
-   conflict/denied/failed/rolled_back` e receipt versionado.
-5. **Autorização:** o hash `ctx://` ainda não deve ser tratado como prova de
-   leitura; a fronteira precisa receber principal, sessão, escopo e revogação.
-6. **Freshness/applicability:** Platform e Azure ainda expõem estados implícitos
-   que podem promover conhecimento inadequado.
-7. **Portal:** faltam fluxos de configuração de vault, preview, export/import,
-   conflitos e histórico, usando as páginas existentes.
-8. **Observabilidade:** Lens precisa registrar operação e resultado sem corpo de
-   nota; Portal precisa apresentar proveniência e estado de revisão.
-9. **Federation:** Code Atlas/Agent Bridge/The Forge precisam compartilhar
-   referências autorizadas, não conteúdo duplicado ou engines duplicados.
+1. **Extração neutra:** a implementação ainda reside no Product Forge; a
+   superfície de protocolos está definida, mas não há pacote independente
+   instalável pelos quatro especialistas.
+2. **Round-trip semântico:** frontmatter, wikilinks, embeds, tags, callouts,
+   blocos de código, aliases, block references, links relativos e anexos agora
+   são projetados sem reescrita; a resolução contra arquivos reais do vault e
+   rename/delete ainda precisam de testes dedicados.
+3. **Estados de sync:** `created`, `unchanged`, `updated` e `conflict` estão
+   implementados; `skipped`, `denied`, `failed` e `rolled_back` ainda não têm
+   uma API pública completa de resolução/recovery.
+4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` já
+   autorizado pelo backend; falta uma tela de configuração/descritor de vault
+   com workspace, principal, capacidades e revogação explícitos.
+5. **Observabilidade/federation:** Code Atlas já projeta relações body-free e
+   Forge Lens já transforma receipts em traces sanitizados; falta conectar esses
+   adapters à execução cross-Forge e ao source allowlist do Agent Bridge.
+6. **Homologação:** faltam E2E cross-Forge instalável, concorrência/rename/delete
+   completos, teste de disco cheio/permissão e benchmark com 100/1.000 notas.
 
 ## Sequência de implementação
 

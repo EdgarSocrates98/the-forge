@@ -19,7 +19,16 @@ OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA = "theforge/ObsidianVaultDescriptor/v1"
 OBSIDIAN_NOTE_REF_SCHEMA = "theforge/ObsidianNoteRef/v1"
 OBSIDIAN_CONFLICT_SCHEMA = "theforge/ObsidianConflict/v1"
 OBSIDIAN_EXPORT_PROFILE_SCHEMA = "theforge/ObsidianExportProfile/v1"
-_OUTCOMES = ("created", "unchanged", "conflict", "updated")
+_OUTCOMES = (
+    "created",
+    "unchanged",
+    "conflict",
+    "updated",
+    "skipped",
+    "denied",
+    "failed",
+    "rolled_back",
+)
 
 
 def _required(value: str, name: str) -> None:
@@ -46,7 +55,16 @@ class ObsidianSyncPlan:
     version: str = "v1"
     path: str
     content_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
-    outcome: Literal["created", "unchanged", "conflict", "updated"]
+    outcome: Literal[
+        "created",
+        "unchanged",
+        "conflict",
+        "updated",
+        "skipped",
+        "denied",
+        "failed",
+        "rolled_back",
+    ]
     source: str = ""
     classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
     previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
@@ -78,7 +96,15 @@ class ObsidianSyncReceipt:
     version: str = "v1"
     path: str
     content_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
-    sync_state: Literal["created", "updated", "unchanged"]
+    sync_state: Literal[
+        "created",
+        "updated",
+        "unchanged",
+        "skipped",
+        "denied",
+        "failed",
+        "rolled_back",
+    ]
     previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
     title: str = ""
     size: int = 0

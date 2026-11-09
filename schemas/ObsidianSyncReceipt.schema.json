@@ -54,7 +54,11 @@
       "enum": [
         "created",
         "updated",
-        "unchanged"
+        "unchanged",
+        "skipped",
+        "denied",
+        "failed",
+        "rolled_back"
       ]
     },
     "title": {

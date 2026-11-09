@@ -105,6 +105,24 @@ def test_obsidian_sync_contracts_validate_and_keep_conflicts_explicit() -> None:
         ObsidianSyncPlan(path="note.md", content_hash=digest, outcome="conflict")
 
 
+@pytest.mark.parametrize("outcome", ["skipped", "denied", "failed", "rolled_back"])
+def test_obsidian_contracts_cover_recoverable_sync_states(outcome: str) -> None:
+    digest = "a" * 64
+    plan = ObsidianSyncPlan(
+        path="exports/runbook.md",
+        content_hash=digest,
+        outcome=outcome,
+        unresolved=["operator review required"] if outcome != "skipped" else [],
+    )
+    receipt = ObsidianSyncReceipt(
+        path="exports/runbook.md",
+        content_hash=digest,
+        sync_state=outcome,
+    )
+    assert plan.outcome == outcome
+    assert receipt.sync_state == outcome
+
+
 def test_schema_rejects_what_contracts_reject() -> None:
     data = to_dict(MANIFEST)
     data["capabilities"][0]["state"] = "maybe"

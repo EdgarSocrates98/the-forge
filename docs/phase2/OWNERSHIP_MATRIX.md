@@ -9,7 +9,8 @@ contratos/adapters finos e não duplicam motores especializados.
 | Applicability de knowledge pack | Platform Forge | agentes e adapters | inferir aplicabilidade por domínio apenas |
 | Freshness de fontes Azure | Spark Forge Azure | Azure adapter/Portal | tratar ausência de data como fresh |
 | Knowledge retrieval e change-control de API | API Forge | API adapter/Portal | criar busca paralela no adapter |
-| Formatos Obsidian, segurança de vault e sync planner | biblioteca neutra extraída de Product Forge, com contrato no The Forge | quatro Forjas, Portal | fazer cada Forge escrever Markdown próprio |
+| Contratos Obsidian | The Forge | Product Forge, quatro adapters, Portal | redefinir schemas em cada Forge |
+| Formatos Obsidian, segurança de vault e sync planner | Product Forge (implementação de referência atual); extração neutra ainda não realizada | Portal e adapters finos | fazer cada Forge escrever ou sincronizar vault próprio |
 | Motor AWS Spark/Glue/EMR/Athena/Iceberg/LF | Spark Forge AWS | AWS adapter/MCP | alterar o caminho operacional comprovado |
 | Motor Azure/Databricks/Fabric/ADF/Event Hubs | Spark Forge Azure | Azure adapter/MCP | depender do Product Forge |
 | API IR/contratos/graph | API Forge | API adapter/Code Atlas | tratar Obsidian como contrato autoritativo |
@@ -21,12 +22,13 @@ contratos/adapters finos e não duplicam motores especializados.
 
 ## Ownership de contratos
 
-- `forge/Obsidian*` e envelopes de proveniência: The Forge, ou pacote neutro
-  versionado extraído sem runtime do Product Forge.
-- Parser/Writer/Scanner/Sync: pacote neutro; Product Forge é a implementação
-  de referência e mantém compatibilidade.
+- `theforge/Obsidian*` e envelopes de proveniência: The Forge.
+- Parser/Writer/Scanner/Sync: Product Forge é a implementação de referência
+  atual; a futura extração deve manter a superfície protocolar e dependências
+  mínimas, sem ser alegada antes de existir e ser testada.
 - Contratos de domínio (Spark, Azure, API, Platform): cada Forge especialista.
-- Relações documentais: Code Atlas, por extensão aditiva ao grafo existente.
-- Receipts/telemetria: Forge Lens e os receipts nativos de cada Forge, sem
+- Relações documentais: Code Atlas (`context.obsidian` body-free), por extensão
+  aditiva ao grafo existente.
+- Receipts/telemetria: Forge Lens (`adapters.obsidian`) e os receipts nativos de cada Forge, sem
   armazenar payload sensível por padrão.
 
