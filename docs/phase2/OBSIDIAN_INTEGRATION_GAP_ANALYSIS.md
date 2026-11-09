@@ -22,9 +22,11 @@ histórico.
 3. **Estados de sync:** `created`, `unchanged`, `updated` e `conflict` estão
    implementados; `skipped`, `denied`, `failed` e `rolled_back` ainda não têm
    uma API pública completa de resolução/recovery.
-4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` já
-   autorizado pelo backend; falta uma tela de configuração/descritor de vault
-   com workspace, principal, capacidades e revogação explícitos.
+4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` e,
+   opcionalmente, `FORGE_OBSIDIAN_ALLOWED_ROOT`; o Portal já expõe um descritor
+   seguro com capacidades e recusa vault fora da raiz autorizada. Ainda falta
+   uma tela administrativa para provisionamento/revogação multiusuário; essa
+   configuração permanece deliberadamente no serviço, não em input web.
 5. **Observabilidade/federation:** Code Atlas já projeta relações body-free e
    Forge Lens já transforma receipts em traces sanitizados; falta conectar esses
    adapters à execução cross-Forge e ao source allowlist do Agent Bridge.
