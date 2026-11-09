@@ -34,7 +34,7 @@ histórico.
    exige allowlist explícita. O Portal agora dispara uma investigação federada
    governada (`/investigations/plan` → `/investigations/run`) e persiste um
    `OrchestrationReport` redigido. A tela de conhecimento opera preview,
-   import/export, histórico e deep link Obsidian com vault autorizado. O runner
+   descoberta body-free de paths, import/export, histórico e deep link Obsidian com vault autorizado. O runner
    local `scripts/phase2_federated_obsidian_e2e.py` comprova a cadeia Obsidian
    completa somente com fixtures. O Portal agora oferece entrega explícita do
    recibo concluído ao índice Product Forge, com projeção Markdown redigida,

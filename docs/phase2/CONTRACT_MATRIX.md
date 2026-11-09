@@ -16,6 +16,7 @@
 | `forge/ObsidianSyncReceipt/v1` | v1 | implementado no Product Forge e schemas The Forge | receipt auditável e sanitizado |
 | `forge/ObsidianConflict/v1` | v1 | contrato fechado; resolução explícita via Portal | nunca last-write-wins silencioso |
 | `forge/ObsidianExportProfile/v1` | v1 | contrato fechado; geração determinística | perfil declarativo |
+| `theforge/ObsidianVaultFileIndex/v1` | v1 | implementado no Product Forge/API e Portal | índice limitado, body-free e sem caminhos físicos |
 | MCP manifests/tools | existentes por Forge; The Forge recém-adicionado | superfície heterogênea | declarar somente tools implementadas |
 | Portal API | existente no Forge Portal | operações plan/apply existentes | adicionar vault aditivamente |
 
