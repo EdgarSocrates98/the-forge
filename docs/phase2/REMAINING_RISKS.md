@@ -40,9 +40,12 @@
    no recibo para tendência, sem transformar uma meta arbitrária em gate.
 8. **Distribuição técnica neutra:** `forge_obsidian` já está extraído, testado,
    construído como wheel/sdist `forge-obsidian` e incluído no wheel do Product
-   Forge. Ainda não foi publicado em índice remoto nem consumido com versão
-   fixada pelos quatro adapters. Até esse gate, os especialistas permanecem
-   corretamente limitados a projeções read-only `ObsidianNoteRef/v1`.
+  Forge. O Product Forge agora também contém a pipeline standalone
+  `.github/workflows/publish-forge-obsidian.yml`, com build único, checksum,
+  Trusted Publishing/OIDC e instalação limpa de verificação. Ainda não foi
+  executado um dispatch remoto nem consumido com versão fixada pelos quatro
+  adapters. Até esse gate, os especialistas permanecem corretamente limitados
+  a projeções read-only `ObsidianNoteRef/v1`.
 
 Até que esses riscos sejam fechados, a recomendação é manter sync revisado,
 fixtures-only nos E2E e confirmação humana para toda mutação.
