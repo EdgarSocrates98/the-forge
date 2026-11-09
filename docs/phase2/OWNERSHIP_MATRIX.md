@@ -10,7 +10,7 @@ contratos/adapters finos e não duplicam motores especializados.
 | Freshness de fontes Azure | Spark Forge Azure | Azure adapter/Portal | tratar ausência de data como fresh |
 | Knowledge retrieval e change-control de API | API Forge | API adapter/Portal | criar busca paralela no adapter |
 | Contratos Obsidian | The Forge | Product Forge, quatro adapters, Portal | redefinir schemas em cada Forge |
-| Formatos Obsidian, segurança de vault e sync planner | `forge_obsidian` (biblioteca técnica neutra extraída do Product Forge, commit `7691fa7`) | Product Forge, Portal e adapters finos | fazer cada Forge escrever ou sincronizar vault próprio |
+| Formatos Obsidian, segurança de vault e sync planner | `forge_obsidian` (distribuição técnica neutra `forge-obsidian`, fonte canônica no Product Forge, commit `c3424f0`) | Product Forge, Portal e adapters finos | fazer cada Forge escrever ou sincronizar vault próprio |
 | Motor AWS Spark/Glue/EMR/Athena/Iceberg/LF | Spark Forge AWS | AWS adapter/MCP | alterar o caminho operacional comprovado |
 | Motor Azure/Databricks/Fabric/ADF/Event Hubs | Spark Forge Azure | Azure adapter/MCP | depender do Product Forge |
 | API IR/contratos/graph | API Forge | API adapter/Code Atlas | tratar Obsidian como contrato autoritativo |

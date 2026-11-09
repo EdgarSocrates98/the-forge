@@ -11,8 +11,8 @@ Os quatro adapters foram homologados em 2026-11-09 com seus testes de projeção
 e lint: AWS (1 passed), Azure (1 passed), API (1 passed) e Platform (1 passed).
 Eles são deliberadamente read-only e não declaram `obsidian.import`,
 `obsidian.export` ou `obsidian.sync`; esses fluxos continuam pertencendo ao
-Product Forge por meio da biblioteca técnica `forge_obsidian` e exigem a
-publicação/pin da distribuição neutra antes de consumo direto pelos adapters.
+   Product Forge por meio da distribuição técnica `forge-obsidian`; exigem a
+   publicação/pin dessa distribuição antes de consumo direto pelos adapters.
 
 Integrações complementares:
 

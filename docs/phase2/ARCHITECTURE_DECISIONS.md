@@ -16,8 +16,9 @@ Canvas/Bases, planos, escrita atômica, receipts e rollback. O import path
 distribuição separada e a conformidade dos quatro adapters são gates seguintes;
 não são alegadas como concluídas.
 
-Evidência: commit `7691fa7`, 274 testes aprovados e 1 skip esperado, lint verde,
-wheel construído e importação do namespace validada a partir do artefato isolado.
+Evidência: commit `c3424f0`, 275 testes aprovados e 1 skip esperado, lint verde,
+wheel Product Forge e wheel/sdist `forge-obsidian` construídos pelo fluxo
+wheel-from-sdist, com importação validada em ambientes isolados.
 
 ## AD-03 — Mutação sempre é explícita
 

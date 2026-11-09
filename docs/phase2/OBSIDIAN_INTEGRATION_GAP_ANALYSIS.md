@@ -14,10 +14,12 @@ histórico.
 
 1. **Publicação/adoption da biblioteca:** o núcleo foi extraído para o namespace
    técnico `forge_obsidian`, sem imports do runtime Product Forge, e é validado
-   no wheel `product_forge` (`7691fa7`; suíte Product Forge: 274 passed, 1
-   skipped). O caminho `product_forge.knowledge.obsidian` é uma fachada de
-   compatibilidade. Ainda falta publicar/pinar a distribuição técnica separada
-   e executar a suíte de conformidade nos quatro adapters especialistas.
+   no wheel `product_forge` (`c3424f0`; suíte Product Forge: 275 passed, 1
+   skipped). A distribuição `forge-obsidian` também constrói wheel e sdist
+   independentes pelo fluxo wheel-from-sdist e foi instalada isoladamente. O
+   caminho `product_forge.knowledge.obsidian` é uma fachada de compatibilidade.
+   Ainda falta publicar/pinar o artefato em um índice remoto e executar a suíte
+   de conformidade dos quatro adapters contra essa versão publicada.
 2. **Round-trip semântico:** frontmatter, wikilinks, embeds, tags, callouts,
    blocos de código, aliases, block references, links relativos e anexos agora
    são projetados sem reescrita; a resolução contra arquivos reais do vault e
