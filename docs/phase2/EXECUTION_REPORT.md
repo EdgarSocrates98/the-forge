@@ -11,7 +11,7 @@ de execução em cloud ou em vault de usuário.
 | G2 contratos/schemas | PASS | `tests/test_schemas.py` — 22 passed; schemas Obsidian v1 | compatibilidade externa não foi exercitada |
 | G3 segurança/autorização | PASS local | traversal, symlink/reparse, hardlink, classificação, raiz autorizada e prompt-safety | permissão real e vault multiusuário não executados |
 | G4 formatos | PASS local | Markdown, frontmatter, links, embeds, Canvas/Bases estruturais | não é parser completo do aplicativo Obsidian |
-| G5 integridade de sync | PASS local | Product Forge — 255 passed; plan/baseline/conflict/atomic/rollback/skip/lock | processo morto/disco cheio real não executados |
+| G5 integridade de sync | PASS local | Product Forge — 256 passed; plan/baseline/conflict/atomic/rollback/skip/lock | processo morto/disco cheio real não executados |
 | G6 adapters | PASS fixture | AWS, Azure, API e Platform no runner federado | sem cloud real |
 | G7 recuperação agêntica | NOT_RUN | falhas determinísticas cobertas parcialmente | process kill, disk full e permission denied reais pendentes |
 | G8 E2E federado | PASS fixture | `FEDERATED_E2E_EVIDENCE.md` | Portal não dispara o runner em runtime |
@@ -25,7 +25,7 @@ de execução em cloud ou em vault de usuário.
 ```powershell
 cd E:\projetos\FORJAS\product-forge
 uv run pytest -q -rs
-# 255 passed, 1 skipped (installed-system lane opt-in)
+# 256 passed, 1 skipped (installed-system lane opt-in)
 
 cd E:\projetos\FORJAS\the-forge
 uv run python scripts/phase2_federated_obsidian_e2e.py --repos-root E:\projetos\FORJAS

@@ -52,8 +52,7 @@ O resultado comprova, em conjunto:
 
 Ainda não está comprovado por este runner: cloud real, Portal disparando a
 execução federada, provisionamento multiusuário de vault, rename/delete em
-escala, concorrência de escritores entre processos, falha de disco/permissão
-ou ensaio instalável pelo Portal. O Product Forge possui gates locais
-separados para rename/delete, lock concorrente em threads e benchmark de
-10.000 notas; eles não devem ser inferidos como operação federada ou de
-produção a partir deste resultado.
+escala, falha de disco/permissão ou ensaio instalável pelo Portal. O Product
+Forge possui gates locais separados para rename/delete, lock concorrente entre
+processos e benchmark de 10.000 notas; eles não devem ser inferidos como
+operação federada ou de produção a partir deste resultado.
