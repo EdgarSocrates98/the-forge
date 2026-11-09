@@ -49,13 +49,14 @@ considerado um bloqueio local.
 
 `uv run python scripts/cli_install_matrix.py --check` passou para 14 projetos,
 com `home_tui`, `wizard`, guard non-TTY e installers portáteis detectados.
-Executados com `uv run --with pywinpty` no Windows:
+Executados com `uv run --with pywinpty` no Windows, com janela de 6 s por CLI
+para absorver cold-start do `uv`:
 
 - `cli_tty_smoke.py` — 14/14 superfícies visíveis;
 - `cli_tty_cancel_smoke.py` — 14/14 cancelamentos antes de mutação.
 
-O smoke de superfície usa 5 s por CLI para tolerar inicialização fria do `uv` em
-máquina limpa; a janela pode ser reduzida explicitamente em runs aquecidos.
+O smoke usa 6 s por CLI para tolerar inicialização fria do `uv` em máquina limpa;
+a janela pode ser reduzida explicitamente em runs aquecidos.
 
 O MCP nativo do The Forge foi verificado novamente com `theforge install mcp-verify --json`:
 handshake real `PASS`, 15 tools descobertas, chamada estruturada de
