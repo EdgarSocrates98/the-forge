@@ -19,10 +19,9 @@ histórico.
    blocos de código, aliases, block references, links relativos e anexos agora
    são projetados sem reescrita; a resolução contra arquivos reais do vault e
    rename/delete ainda precisam de testes dedicados.
-3. **Estados de sync:** `created`, `unchanged`, `updated`, `conflict` e
-   `rolled_back` estão implementados no Product Forge; `denied` e `failed`
-   agora são expostos nos erros API/Portal como `details.sync_state`. `skipped`
-   ainda não tem uma API pública de receipt/recovery equivalente.
+3. **Estados de sync:** `created`, `unchanged`, `updated`, `conflict`, `skipped`
+   e `rolled_back` estão implementados no Product Forge; `denied` e `failed`
+   são expostos nos erros API/Portal como `details.sync_state`.
 4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` e,
    opcionalmente, `FORGE_OBSIDIAN_ALLOWED_ROOT`; o Portal já expõe um descritor
    seguro com capacidades e recusa vault fora da raiz autorizada. Ainda falta
@@ -34,8 +33,9 @@ histórico.
    comprova a cadeia com fixtures; ainda falta o Portal disparar essa execução
    em runtime.
 6. **Homologação:** benchmark local 100/1.000/10.000 passou com importação em
-   lote; ainda faltam concorrência/rename/delete completos, teste de disco
-   cheio/permissão e ensaio instalável pelo Portal.
+   lote e testes de rename/delete/final-revalidation estão cobertos; ainda
+   faltam concorrência entre processos, teste de disco cheio/permissão real e
+   ensaio instalável pelo Portal.
 
 ## Sequência de implementação
 
