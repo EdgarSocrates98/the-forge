@@ -34,11 +34,10 @@ histórico.
    comprova a cadeia com fixtures; ainda falta o Portal disparar essa execução
    em runtime.
 6. **Homologação:** benchmark local 100/1.000/10.000 passou com importação em
-   lote; rename/delete, final-revalidation, proteção de diretórios internos e
-   concorrência entre threads estão cobertos, e o sync agora usa lock por
-   documento entre processos suportados pelo sistema operacional. Ainda faltam
-   um ensaio concorrente entre processos, falhas reais de disco/permissão e
-   ensaio instalável pelo Portal.
+   lote; rename/delete, final-revalidation, kill recovery, proteção de
+   diretórios internos e concorrência entre processos estão cobertos, e o sync
+   usa lock por documento entre processos suportados pelo sistema operacional.
+   Ainda faltam falhas reais de disco/permissão e ensaio instalável pelo Portal.
 
 ## Sequência de implementação
 

@@ -18,11 +18,11 @@ Estado: **PASS local; lacunas operacionais explicitadas**.
 
 ## Testes executados
 
-`uv run pytest -q -rs` no Product Forge: **256 passed, 1 skipped**. A única
+`uv run pytest -q -rs` no Product Forge: **257 passed, 1 skipped**. A única
 skip é a lane opcional de sistema instalado, não contada como aprovação.
 
 ## Limitações
 
-Ainda falta executar em ambiente controlado uma permissão negada real, disco
-cheio real, interrupção de processo no meio da operação e matriz multiusuário
-com revogação. Até lá, essas condições permanecem gates separados.
+Ainda falta executar em ambiente controlado uma permissão negada real e disco
+cheio real. A interrupção de processo tem teste determinístico local; isso não
+substitui a matriz operacional de produção e multiusuário com revogação.

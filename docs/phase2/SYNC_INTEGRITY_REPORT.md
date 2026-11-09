@@ -20,6 +20,6 @@ receipt, backup e hash atual igual ao receipt.
 | `failed` | erro estruturado de escrita/integridade | fault injection de replace |
 | `rolled_back` | restauração condicionada | teste de rollback |
 
-Rename/delete, mudança após plano, revalidação final, symlink do destino e
-concorrência em threads estão cobertos localmente. Concorrência entre processos,
-process kill, disk full e permission denied reais continuam pendentes.
+Rename/delete, mudança após plano, revalidação final, symlink do destino,
+concorrência entre processos e recuperação após process kill estão cobertos
+localmente. Disk full e permission denied reais continuam pendentes.
