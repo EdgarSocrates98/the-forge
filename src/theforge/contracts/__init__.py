@@ -153,6 +153,12 @@ from theforge.contracts.observation import (
     ExecutionObservation,
     GlobalEconomyReceipt,
 )
+from theforge.contracts.obsidian import (
+    OBSIDIAN_SYNC_PLAN_SCHEMA,
+    OBSIDIAN_SYNC_RECEIPT_SCHEMA,
+    ObsidianSyncPlan,
+    ObsidianSyncReceipt,
+)
 from theforge.contracts.orchestration import (
     ORCHESTRATION_REPORT_SCHEMA,
     OrchestrationEntry,
@@ -458,6 +464,10 @@ __all__ = [
     "KnowledgeRelation",
     "KnowledgeSource",
     "knowledge_canonical_json",
+    "OBSIDIAN_SYNC_PLAN_SCHEMA",
+    "OBSIDIAN_SYNC_RECEIPT_SCHEMA",
+    "ObsidianSyncPlan",
+    "ObsidianSyncReceipt",
     "InstallStep",
     "InstallationItem",
     "InstallationPlan",

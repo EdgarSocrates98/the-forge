@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from jsonschema import Draft202012Validator
 
 from theforge.contracts import (
@@ -11,6 +12,8 @@ from theforge.contracts import (
     ExecutionResult,
     ForgeManifest,
     HealthReport,
+    ObsidianSyncPlan,
+    ObsidianSyncReceipt,
     Request,
     Response,
     RiskAssessment,
@@ -51,6 +54,26 @@ def test_real_instances_validate() -> None:
     Draft202012Validator(json_schema(TaskSpec)).validate(to_dict(task))
     result = ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok")
     Draft202012Validator(json_schema(ExecutionResult)).validate(to_dict(result))
+
+
+def test_obsidian_sync_contracts_validate_and_keep_conflicts_explicit() -> None:
+    digest = "a" * 64
+    plan = ObsidianSyncPlan(
+        path="exports/runbook.md",
+        content_hash=digest,
+        outcome="created",
+        warnings=["confirmation required for mutation"],
+    )
+    receipt = ObsidianSyncReceipt(
+        path="exports/runbook.md",
+        content_hash=digest,
+        sync_state="created",
+        size=10,
+    )
+    Draft202012Validator(json_schema(ObsidianSyncPlan)).validate(to_dict(plan))
+    Draft202012Validator(json_schema(ObsidianSyncReceipt)).validate(to_dict(receipt))
+    with pytest.raises(ValueError, match="unresolved"):
+        ObsidianSyncPlan(path="note.md", content_hash=digest, outcome="conflict")
 
 
 def test_schema_rejects_what_contracts_reject() -> None:
