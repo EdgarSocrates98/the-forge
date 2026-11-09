@@ -11,7 +11,7 @@ Estado global: **BLOCKED para aceite final**.
 | conteúdo recuperável e sem overwrite silencioso | PASS local |
 | classificação/autorização/contexto válido | PASS local |
 | histórico auditável e outputs body-free | PASS local |
-| Portal prático para fluxos implementados | PASS local |
+| Portal prático para fluxos implementados | PASS local; Nova investigação agora tem seleção de evidências, plano assinado, execução governada e recibo exportável |
 | sem Obsidian ainda funcional | PASS por design/testes locais |
 | Bases/Canvas compatíveis com sintaxe declarada | PASS estrutural |
 | E2E federado reproduzível | PASS fixture-only |

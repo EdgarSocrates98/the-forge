@@ -112,6 +112,7 @@ class TheForgePortal(fp.PortalAdapter):
             fp.Operation("GET", "/specialists", lambda ctx: self._specialists_view()),
             fp.Operation("GET", "/delegations", lambda ctx: self._delegations()),
             fp.Operation("GET", "/delegations/graph", lambda ctx: self._delegations_graph()),
+            fp.Operation("GET", "/investigations", lambda ctx: self._investigations()),
             fp.Operation("GET", "/docs/search", lambda ctx: self._docs_search(ctx)),
             fp.Operation("GET", "/versions", lambda ctx: self._versions()),
             fp.Operation("GET", "/lab", lambda ctx: self._lab()),
@@ -170,6 +171,22 @@ class TheForgePortal(fp.PortalAdapter):
                 confirm="execute",
                 needs_plan_token=True,
                 timeout=120,
+            ),
+            fp.Operation(
+                "POST",
+                "/investigations/plan",
+                self._investigation_plan,
+                mutating=True,
+                timeout=120,
+            ),
+            fp.Operation(
+                "POST",
+                "/investigations/run",
+                self._investigation_run,
+                mutating=True,
+                confirm="execute",
+                needs_plan_token=True,
+                timeout=300,
             ),
         ]
 
@@ -1300,6 +1317,170 @@ class TheForgePortal(fp.PortalAdapter):
         if len(paths) > limit:
             notes.append(f"history truncated to last {limit} of {len(paths)} reports")
         return docs, notes
+
+    def _investigations(self) -> dict[str, Any]:
+        """GET /investigations — persisted, governed investigation receipts.
+
+        The Portal does not invent a second history store: investigations are
+        the same redacted ``OrchestrationReport`` documents consumed by the
+        Delegation Explorer.  The dedicated projection gives the UI a stable
+        semantic name while retaining one source of truth and one audit trail.
+        """
+        docs, notes = self._orchestration_docs()
+        runs = [self._delegation_row(doc, 0) for doc in reversed(docs)]
+        return {
+            "schema": "theforge/PortalInvestigations/v1",
+            "availability": {
+                "state": "available" if runs else "no_investigations",
+                "detail": (
+                    None
+                    if runs
+                    else "no persisted investigations under .forge/orchestrations/"
+                ),
+            },
+            "notes": notes,
+            "runs": runs,
+        }
+
+    @staticmethod
+    def _investigation_spec(body: dict[str, Any]) -> dict[str, Any]:
+        """Validate and normalize the Portal's governed investigation input.
+
+        LOCAL_READ is the only implicit authorization.  Any broader risk is
+        an explicit part of the signed plan, so a browser cannot silently turn
+        a diagnostic into a write, destructive, external or cost-bearing run.
+        """
+        from theforge.contracts.specialist_delegation import DELEGATION_RISKS
+
+        intent = str(body.get("intent") or "").strip()
+        if not intent:
+            raise fp.PortalError(
+                "PORTAL-MISSING-FIELD",
+                "field 'intent' is required",
+                details={"field": "intent"},
+            )
+        raw_inputs = body.get("inputs") or []
+        if not isinstance(raw_inputs, list) or any(
+            not isinstance(item, str) for item in raw_inputs
+        ):
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "inputs must be an array of strings",
+                details={"field": "inputs"},
+            )
+        inputs = sorted({item.strip() for item in raw_inputs if item.strip()})[:32]
+        raw_risks = body.get("authorized_risks") or ["LOCAL_READ"]
+        if not isinstance(raw_risks, list) or any(not isinstance(item, str) for item in raw_risks):
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "authorized_risks must be an array of strings",
+                details={"field": "authorized_risks"},
+            )
+        risks = sorted({item.strip().upper() for item in raw_risks if item.strip()})
+        if "LOCAL_READ" not in risks:
+            risks.append("LOCAL_READ")
+        unknown = sorted(set(risks) - set(DELEGATION_RISKS))
+        if unknown:
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "authorized_risks contains unknown values",
+                details={"field": "authorized_risks", "unknown": unknown},
+            )
+        raw_max = body.get("max_providers", 4)
+        try:
+            max_providers = int(raw_max)
+        except (TypeError, ValueError) as exc:
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "max_providers must be an integer between 1 and 8",
+                details={"field": "max_providers"},
+            ) from exc
+        if not 1 <= max_providers <= 8:
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "max_providers must be an integer between 1 and 8",
+                details={"field": "max_providers", "got": max_providers},
+            )
+        return {
+            "operation": "federated_investigation",
+            "intent": intent,
+            "inputs": inputs,
+            "authorized_risks": risks,
+            "max_providers": max_providers,
+            "probe": bool(body.get("probe", True)),
+            "allow_unverified": bool(body.get("allow_unverified", False)),
+        }
+
+    def _investigation_plan(self, ctx: fp.RequestContext) -> dict[str, Any]:
+        """Create a real, signed investigation plan without executing it."""
+        from theforge import orchestrate
+        from theforge.contracts import to_dict
+        from theforge.delegation_governance import ExecutionBudget
+
+        spec = self._investigation_spec(ctx.body or {})
+        outcome = orchestrate.orchestrate_plan(
+            spec["intent"],
+            workspace_root=self._root,
+            inputs=set(spec["inputs"]),
+            authorized_risks=set(spec["authorized_risks"]),
+            budget=ExecutionBudget(max_providers=spec["max_providers"]),
+            probe=spec["probe"],
+            allow_unverified=spec["allow_unverified"],
+        )
+        return {
+            "status": "planned",
+            "plan": spec,
+            "plan_token": ctx.handler.server.sign_plan(spec),
+            "report": to_dict(outcome.report),
+        }
+
+    def _investigation_run(self, ctx: fp.RequestContext) -> dict[str, Any]:
+        """Execute a previously signed plan and persist its real receipt."""
+        from theforge import orchestrate
+        from theforge.contracts import to_dict
+        from theforge.delegation_governance import ExecutionBudget
+
+        body = ctx.body or {}
+        spec = body.get("plan") or {}
+        if not isinstance(spec, dict) or spec.get("operation") != "federated_investigation":
+            raise fp.PortalError(
+                "PORTAL-BAD-FIELD",
+                "plan is not a federated investigation plan",
+                details={"field": "plan"},
+            )
+        if not ctx.handler.server.check_plan(body.get("plan_token", ""), spec):
+            raise fp.PortalError(
+                "PORTAL-PLAN-STALE",
+                "plan token does not match or expired — regenerate the investigation plan",
+                http=409,
+                retryable=True,
+                action="regenerate_plan",
+            )
+        outcome = orchestrate.orchestrate_run(
+            spec["intent"],
+            workspace_root=self._root,
+            target=str(self._root),
+            inputs=set(spec.get("inputs") or []),
+            authorized_risks=set(spec.get("authorized_risks") or ["LOCAL_READ"]),
+            budget=ExecutionBudget(max_providers=int(spec.get("max_providers", 4))),
+            probe=bool(spec.get("probe", True)),
+            allow_unverified=bool(spec.get("allow_unverified", False)),
+        )
+        try:
+            path = orchestrate.persist_report(outcome.report, self._root)
+        except Exception as exc:  # noqa: BLE001 — persistence failure is an honest Portal refusal
+            raise fp.PortalError(
+                "TF-PORTAL-INVESTIGATION-PERSIST",
+                f"investigation ran but its receipt could not be persisted: {exc}",
+                severity="error",
+                action="check workspace write permission",
+            ) from exc
+        return {
+            "status": "completed",
+            "path": str(path),
+            "report": to_dict(outcome.report),
+            "actions": [{"kind": "investigation", "path": str(path), "status": "completed"}],
+        }
 
     @staticmethod
     def _delegation_row(doc: dict[str, Any], prior_same_intent: int) -> dict[str, Any]:

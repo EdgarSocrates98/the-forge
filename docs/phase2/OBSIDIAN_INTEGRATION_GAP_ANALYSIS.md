@@ -25,14 +25,18 @@ histórico.
    são expostos nos erros API/Portal como `details.sync_state`.
 4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` e,
    opcionalmente, `FORGE_OBSIDIAN_ALLOWED_ROOT`; o Portal já expõe um descritor
-   seguro com capacidades e recusa vault fora da raiz autorizada. Ainda falta
-   uma tela administrativa para provisionamento/revogação multiusuário; essa
-   configuração permanece deliberadamente no serviço, não em input web.
+   seguro com capacidades e recusa vault fora da raiz autorizada. A tela de
+   conhecimento também permite provisionar/revogar uma conexão escopada sem
+   expor o caminho do host; identidade OIDC e operação multiusuário de produção
+   continuam pendentes.
 5. **Observabilidade/federation:** Code Atlas já projeta relações body-free,
    Forge Lens já transforma receipts em traces sanitizados e o Agent Bridge já
-   exige allowlist explícita. O runner local `scripts/phase2_federated_obsidian_e2e.py`
-   comprova a cadeia com fixtures; ainda falta o Portal disparar essa execução
-   em runtime.
+   exige allowlist explícita. O Portal agora dispara uma investigação federada
+   governada (`/investigations/plan` → `/investigations/run`) e persiste um
+   `OrchestrationReport` redigido. O runner local
+   `scripts/phase2_federated_obsidian_e2e.py` ainda comprova a cadeia Obsidian
+   completa somente com fixtures; falta o Portal entregar esse resultado ao
+   Product Forge/Obsidian em runtime.
 6. **Homologação:** benchmark local 100/1.000/10.000 passou com importação em
    lote; rename/delete, final-revalidation, kill recovery, proteção de
    diretórios internos e concorrência entre processos estão cobertos, e o sync

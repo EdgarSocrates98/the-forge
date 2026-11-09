@@ -79,6 +79,12 @@ fase.
   conflito explícito, histórico de receipts, restauração protegida por backup e
   gerenciamento visual de conexão/revogação de vault; gate visual de conhecimento
   passou em 8 combinações com axe=0, overflow=0 e foco sem anel=0.
+- Portal/The Forge: a jornada Nova investigação agora usa
+  `POST /investigations/plan` → aprovação por token →
+  `POST /investigations/run`; o run chama a orquestração governada real,
+  persiste `OrchestrationReport` redigido e expõe histórico em
+  `GET /investigations`. O padrão é `LOCAL_READ`, com riscos adicionais
+  explicitamente assinados no plano.
 
 Code Atlas agora possui projeção body-free de relações Obsidian e Forge Lens
 possui adapter de receipts sanitizados. O runner local
@@ -86,9 +92,11 @@ possui adapter de receipts sanitizados. O runner local
 adapters, Product Forge, Code Atlas, Lens e Agent Bridge; o resultado está em
 `docs/phase2/FEDERATED_E2E_EVIDENCE.md`.
 
-O que ainda não está comprovado: execução efetiva disparada pelo Portal,
-geração de artefatos em vault real autorizado, falhas reais de disco/permissão
-e ensaio Portal → runner federado em runtime. O provisionamento/revogação multiusuário agora
+O que ainda não está comprovado: geração automática de artefatos em vault real
+autorizado a partir do recibo federado, falhas reais de disco/permissão e ensaio
+Portal → Product Forge/Obsidian em runtime. A execução da investigação federada
+agora é disparada pelo Portal e chama o orquestrador governado real; o runner
+Obsidian continua explicitamente fixture-only. O provisionamento/revogação multiusuário agora
 possui jornada local real, com escopo por principal/workspace e revogação sem
 exclusão de arquivos; falta validar identidade OIDC e operação em produção.
 Rename/delete,

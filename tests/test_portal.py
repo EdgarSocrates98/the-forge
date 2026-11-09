@@ -22,6 +22,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from theforge import _forge_portal as fp
+from theforge.contracts.orchestration import OrchestrationReport
 from theforge.portal_adapter import TheForgePortal
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -460,6 +461,82 @@ def test_tasks_federation_executes_real_collect(target: Path) -> None:
         receipt = out["task"]["receipt"]
         assert "specialists" in receipt and "summary" in receipt
         assert adapter._tasks[-1]["verb"] == "federation"
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def test_investigation_plan_and_run_are_signed_and_persisted(
+    target: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The Portal's investigation UX must reach the governed orchestrator.
+
+    The specialist subprocesses are deliberately replaced here: this test
+    proves the Portal contract (normalization, signed approval, execution and
+    receipt persistence) without making the unit suite depend on installed
+    specialist binaries.
+    """
+    from types import SimpleNamespace
+
+    from theforge import orchestrate
+
+    plan_report = OrchestrationReport(kind="plan", intent="diagnose spark", plan_status="planned")
+    run_report = OrchestrationReport(
+        kind="run",
+        intent="diagnose spark",
+        correlation_id="orch-portal-test",
+        plan_status="planned",
+    )
+    monkeypatch.setattr(
+        orchestrate,
+        "orchestrate_plan",
+        lambda *args, **kwargs: SimpleNamespace(report=plan_report),
+    )
+    monkeypatch.setattr(
+        orchestrate,
+        "orchestrate_run",
+        lambda *args, **kwargs: SimpleNamespace(report=run_report),
+    )
+    adapter = TheForgePortal(target)
+    srv = _server(adapter)
+    try:
+        code, planned = _call(
+            srv,
+            "POST",
+            "/investigations/plan",
+            {"intent": "diagnose spark", "inputs": ["runtime_log"]},
+        )
+        assert code == 200
+        assert planned["data"]["plan"]["authorized_risks"] == ["LOCAL_READ"]
+        assert planned["data"]["report"]["kind"] == "plan"
+
+        code, stale = _call(
+            srv,
+            "POST",
+            "/investigations/run",
+            {
+                "plan": {**planned["data"]["plan"], "intent": "tampered"},
+                "plan_token": planned["data"]["plan_token"],
+                "confirm": "execute",
+            },
+        )
+        assert code == 409
+        assert stale["error"]["code"] == "PORTAL-PLAN-STALE"
+
+        code, receipt = _call(
+            srv,
+            "POST",
+            "/investigations/run",
+            {
+                "plan": planned["data"]["plan"],
+                "plan_token": planned["data"]["plan_token"],
+                "confirm": "execute",
+            },
+        )
+        assert code == 200
+        assert receipt["data"]["report"]["kind"] == "run"
+        assert Path(receipt["data"]["path"]).is_file()
+        assert adapter._investigations()["runs"][0]["correlation_id"] == "orch-portal-test"
     finally:
         srv.shutdown()
         srv.server_close()
