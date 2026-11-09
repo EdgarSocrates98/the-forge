@@ -2,12 +2,11 @@
 
 1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
    componentes federados passaram na revalidação atual. The Forge `42688316906`,
-   Agent Bridge `42687526019` e Product Forge `42686444553` possuem runs verdes,
-   assim como API Sentinel, Code Atlas, Data Sentinel e Forge Lens. Ainda falta
-   uma matriz consolidada de runs verdes no GitHub para os branches atuais de
-   AWS/Azure/API/Platform; seus resultados permanecem evidência local até que
-   os workflows correspondentes sejam executados no commit homologado. Como
-   hardening adicional, a auditoria local de
+   Agent Bridge `42687526019`, Product Forge `42686444553`, Azure `42693963092`,
+   API `42694647843` e Platform `42692546513` possuem runs verdes, assim como
+   API Sentinel, Code Atlas, Data Sentinel e Forge Lens. AWS `42693341083` ainda
+   está em execução após a correção de compatibilidade Python 3.10; até fechar,
+   o resultado AWS continua evidência local. Como hardening adicional, a auditoria local de
    supply chain percorreu 15 repositórios, 50 workflows e 335 ações externas:
    todas agora usam SHAs imutáveis; a ação local `./` do Forge Doctor Data é a
    única exceção intencional.
