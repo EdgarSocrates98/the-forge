@@ -1248,6 +1248,17 @@ class TheForgePortal(fp.PortalAdapter):
                             "limitations": list(cap.limitations),
                         }
                     )
+            workflows = []
+            if entry.agentic_manifest is not None:
+                workflows = [
+                    {
+                        "id": workflow.id,
+                        "mode": workflow.mode,
+                        "description": workflow.description,
+                        "read_only": workflow.read_only,
+                    }
+                    for workflow in entry.agentic_manifest.workflows
+                ]
             incompat_note = next(
                 (n for n in (*entry.notes, *entry.limitations) if "incompat" in n.lower()),
                 "",
@@ -1262,6 +1273,8 @@ class TheForgePortal(fp.PortalAdapter):
                     "limitations": list(entry.limitations),
                     "capabilities": capabilities,
                     "capability_count": len(capabilities),
+                    "workflows": workflows,
+                    "workflow_count": len(workflows),
                     "agent_roster": roster.as_dict() if roster else None,
                     "compatibility": {
                         "state": (

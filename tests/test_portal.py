@@ -829,6 +829,49 @@ def test_specialists_view_uses_declared_packaged_roster_path(target: Path) -> No
     assert row["agent_roster"]["routable"] is True
 
 
+def test_specialists_view_projects_agentic_workflows_without_claiming_native_caps(
+    target: Path,
+) -> None:
+    (target / "forge.json").write_text(
+        json.dumps({"forge_id": "workflow-forge"}), encoding="utf-8"
+    )
+    (target / "forge.agentic.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/SpecialistAgenticManifest/v1",
+                "provider": "workflow-forge",
+                "version": "1.0.0",
+                "workflows": [
+                    {
+                        "id": "knowledge.evidence.list",
+                        "mode": "DIAGNOSTIC_ONLY",
+                        "description": "List evidence",
+                        "read_only": True,
+                        "command": ["{cli}", "knowledge", "evidence", "{product_id}"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    row = next(
+        item
+        for item in TheForgePortal(target)._specialists_view()["specialists"]
+        if item["provider"] == "workflow-forge"
+    )
+    assert row["capabilities"] == []
+    assert row["workflows"] == [
+        {
+            "id": "knowledge.evidence.list",
+            "mode": "DIAGNOSTIC_ONLY",
+            "description": "List evidence",
+            "read_only": True,
+        }
+    ]
+    assert row["workflow_count"] == 1
+
+
 def test_delegations_empty_is_named_state(target: Path) -> None:
     doc = TheForgePortal(target)._delegations()
     assert doc["availability"]["state"] == "no_delegations"
