@@ -4,9 +4,10 @@
    workflows obrigatórios.
 2. **Sistema instalado:** a composição instalada do Product Forge é uma lane
    opt-in e está explicitamente skipped.
-3. **Falhas de infraestrutura:** disk full e permission denied real ainda não
-   foram ensaiados no ambiente alvo; process kill possui cobertura determinística
-   local, mas não substitui o ensaio operacional.
+3. **Falhas de infraestrutura:** disk full e permission denied possuem fault
+   injection estruturado, mas ainda não foram ensaiados em filesystem real;
+   process kill possui cobertura determinística local, sem substituir o ensaio
+   operacional.
 4. **Multiusuário:** o vault é configuração do serviço, com raiz autorizada e
    escopo de workspace; provisioning/revogação de vault por usuário não existe.
 5. **Portal federado:** o Portal opera os fluxos de conhecimento, mas ainda não

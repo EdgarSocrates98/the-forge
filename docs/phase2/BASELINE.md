@@ -13,7 +13,7 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
 | the-forge | `phase2/baseline-observability-20261108` / `4ccee3e` | artefatos de auditoria não rastreados | schemas/contratos e runner federado locais verdes; CI remoto pendente |
-| product-forge | `fix/bridge-embedded-parity-20261108` / `78eb101` | `.coverage` não rastreado | suíte completa 257 passed/1 skipped; sync skip, rename/delete, final-revalidation, lock concorrente, kill recovery e proteção do estado interno locais verdes; CI remoto pendente |
+| product-forge | `fix/bridge-embedded-parity-20261108` / `fae1bb3` | `.coverage` não rastreado | suíte completa 258 passed/1 skipped; sync skip, rename/delete, final-revalidation, lock concorrente, kill recovery, faults estruturados e proteção do estado interno locais verdes; CI remoto pendente |
 | forge-portal | `feat/api-operations-contract-surface-20261108` / `ce47d5d` | capturas/auditorias modificadas | build, 597 testes, rollback knowledge e gate visual local verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |

@@ -22,4 +22,5 @@ receipt, backup e hash atual igual ao receipt.
 
 Rename/delete, mudança após plano, revalidação final, symlink do destino,
 concorrência entre processos e recuperação após process kill estão cobertos
-localmente. Disk full e permission denied reais continuam pendentes.
+localmente; faults de escrita são convertidos em erro estruturado. Disk full e
+permission denied em filesystem real continuam pendentes.

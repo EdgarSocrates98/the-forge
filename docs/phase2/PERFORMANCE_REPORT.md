@@ -7,7 +7,7 @@
 | import batch — 100 notas | PASS |
 | import batch — 1.000 notas | PASS |
 | import batch — 10.000 notas | PASS; gate interno do benchmark passou |
-| suíte Product Forge | 257 passed, 1 skipped em 61,41 s na execução com `-rs` |
+| suíte Product Forge | 258 passed, 1 skipped em 62,12 s na execução com `-rs` |
 | Forge Portal frontend | 597 testes; build verde |
 | Portal visual knowledge gate | 8 casos; axe=0, overflow=0, foco sem anel=0 |
 | E2E federado | 4 notas exportadas e 4 round-trippadas |
