@@ -14,8 +14,9 @@
 | pico Python do reindex/search — 100 / 1.000 / 10.000 documentos | PASS; `0,08 / 0,57 / 5,50 MiB` via `tracemalloc`; não é RSS do processo |
 | chunking Markdown — 100 / 1.000 / 10.000 documentos | PASS; melhor caso `1,947 / 18,335 / 193,371 ms` (`~51,4k / 54,5k / 51,7k documentos/s`) |
 | SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `141,960 / 1.399,128 / 14.388,378 ms`; busca `0,397 / 0,422 / 0,892 ms`; DB `143.360 / 843.776 / 7.983.104 bytes` |
-| orçamento de contexto de recuperação — 100 / 1.000 / 10.000 documentos | PASS fixture; máximo estimado `12` tokens e média `11,333` por consulta; uso real de provider permanece `NOT_RUN` |
+| orçamento de contexto de recuperação — 100 / 1.000 / 10.000 documentos | PASS fixture; máximo estimado `12` tokens e média `11,333` por consulta; gateway com provider controlado também passa |
 | qualidade de citações — 100 / 1.000 / 10.000 documentos | PASS fixture; precision@3 `1,0`, recall@3 `1,0`, completude dos campos de citação `1,0`; não representa qualidade de resposta de provider |
+| uso de tokens no gateway | PASS fixture; resposta `17/29` tokens e os mesmos valores persistidos no `budget_ledger`, 1 execução; provider real permanece `NOT_RUN` |
 | suíte Product Forge completa | 286 passed, 1 skipped em 79,58 s; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
 | suíte Product Forge não-benchmark | 283 passed, 1 skipped, 3 deselected com `-m not benchmark` |
 | benchmark pytest de filesystem — 10.000 arquivos recém-criados | PASS estrutural; `3 passed`; wall-clock de 16,90 s em uma amostra Windows é registrado para tendência, sem limite fixo de pass/fail; importação direta em árvore quente ficou em ~6–8 s |
@@ -43,6 +44,8 @@ não uma meta universal nem uma medição de produção.
 
 O baseline local agora cobre scan, importação, resolução de wikilinks,
 exportação atômica, reindexação SQLite/FTS, pico de alocação Python, orçamento
-estimado do contexto de recuperação e qualidade de citações em corpus fixture.
-O uso real de tokens do provider continua `NOT_RUN`, pois exige uma execução
-governada com provider e não é inferido a partir de contagens de palavras.
+estimado do contexto de recuperação, qualidade de citações em corpus fixture e
+o caminho real de registro de tokens do gateway contra um provider controlado.
+Esse provider controlado não é um modelo: o uso de tokens de provider real
+continua `NOT_RUN`, pois exige uma execução governada e não é inferido a partir
+de contagens de palavras.

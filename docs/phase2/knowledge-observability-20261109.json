@@ -11,7 +11,7 @@
   "limitations": [
     "tracemalloc measures Python allocations, not resident process memory",
     "export measures one document per size, not a bulk export API",
-    "provider token usage is NOT_RUN without a governed model-provider run",
+    "token usage is proven only through a controlled provider fixture; real provider usage is NOT_RUN",
     "citation quality is fixture-scoped and does not represent provider answer quality"
   ],
   "results": [
@@ -20,40 +20,40 @@
       "scan": {
         "status": "PASS",
         "count": 100,
-        "elapsed_ms": 38.739,
-        "peak_python_bytes": 154909
+        "elapsed_ms": 40.3,
+        "peak_python_bytes": 154775
       },
       "import": {
         "status": "PASS",
         "count": 100,
-        "elapsed_ms": 237.341,
-        "peak_python_bytes": 363711
+        "elapsed_ms": 223.987,
+        "peak_python_bytes": 366642
       },
       "wikilink_resolution": {
         "status": "PASS",
         "links": 100,
         "resolved": 100,
         "unresolved": 0,
-        "elapsed_ms": 3.062,
+        "elapsed_ms": 2.73,
         "peak_python_bytes": 14354
       },
       "export": {
         "status": "PASS",
         "scope": "one atomic document export",
-        "elapsed_ms": 14.338,
-        "peak_python_bytes": 29630
+        "elapsed_ms": 13.352,
+        "peak_python_bytes": 26121
       },
       "reindex_search": {
         "status": "PASS",
         "scope": "SQLite FTS local benchmark",
-        "elapsed_ms": 272.322,
-        "peak_python_bytes": 84999,
+        "elapsed_ms": 184.274,
+        "peak_python_bytes": 83949,
         "documents": 100,
         "iterations": 1,
-        "write_ms_median": 160.653,
-        "search_ms_median": 0.708,
-        "write_ms_max": 160.653,
-        "search_ms_max": 0.708,
+        "write_ms_median": 147.853,
+        "search_ms_median": 0.683,
+        "write_ms_max": 147.853,
+        "search_ms_max": 0.683,
         "chunks": 100,
         "search_hits": 20,
         "database_bytes": 143360
@@ -63,12 +63,22 @@
         "scope": "retrieval-context estimate",
         "max_context_tokens": 12,
         "mean_context_tokens": 11.333,
-        "provider_usage": "NOT_RUN",
-        "provider_usage_reason": "no model provider is used by the offline benchmark"
+        "provider_usage": "FIXTURE_PROVIDER",
+        "real_provider_usage": "NOT_RUN",
+        "provider_usage_reason": "the benchmark uses a controlled provider fixture; real provider usage requires a governed model-provider run"
       },
       "token_usage": {
-        "status": "NOT_RUN",
-        "reason": "provider token usage requires a governed model-provider run"
+        "status": "PASS",
+        "scope": "controlled subprocess provider fixture",
+        "reported_tokens_in": 17,
+        "reported_tokens_out": 29,
+        "ledger_tokens_in": 17,
+        "ledger_tokens_out": 29,
+        "ledger_runs": 1,
+        "profile": "economy",
+        "request_schema": "productforge/SynthesisRequest/v1",
+        "real_provider_usage": "NOT_RUN",
+        "real_provider_usage_reason": "the receipt intentionally runs only a controlled provider fixture"
       },
       "citation_quality": {
         "status": "PASS",
@@ -115,55 +125,65 @@
       "scan": {
         "status": "PASS",
         "count": 1000,
-        "elapsed_ms": 337.361,
-        "peak_python_bytes": 1494489
+        "elapsed_ms": 338.125,
+        "peak_python_bytes": 1494689
       },
       "import": {
         "status": "PASS",
         "count": 1000,
-        "elapsed_ms": 2255.739,
-        "peak_python_bytes": 2871660
+        "elapsed_ms": 2314.873,
+        "peak_python_bytes": 2883963
       },
       "wikilink_resolution": {
         "status": "PASS",
         "links": 1000,
         "resolved": 1000,
         "unresolved": 0,
-        "elapsed_ms": 28.4,
+        "elapsed_ms": 29.1,
         "peak_python_bytes": 83881
       },
       "export": {
         "status": "PASS",
         "scope": "one atomic document export",
-        "elapsed_ms": 13.71,
+        "elapsed_ms": 15.541,
         "peak_python_bytes": 25979
       },
       "reindex_search": {
         "status": "PASS",
         "scope": "SQLite FTS local benchmark",
-        "elapsed_ms": 1528.472,
-        "peak_python_bytes": 600064,
+        "elapsed_ms": 1564.137,
+        "peak_python_bytes": 599866,
         "documents": 1000,
         "iterations": 1,
-        "write_ms_median": 1480.007,
-        "search_ms_median": 0.868,
-        "write_ms_max": 1480.007,
-        "search_ms_max": 0.868,
+        "write_ms_median": 1514.773,
+        "search_ms_median": 0.587,
+        "write_ms_max": 1514.773,
+        "search_ms_max": 0.587,
         "chunks": 1000,
         "search_hits": 20,
-        "database_bytes": 843776
+        "database_bytes": 847872
       },
       "token_budget": {
         "status": "PASS",
         "scope": "retrieval-context estimate",
         "max_context_tokens": 12,
         "mean_context_tokens": 11.333,
-        "provider_usage": "NOT_RUN",
-        "provider_usage_reason": "no model provider is used by the offline benchmark"
+        "provider_usage": "FIXTURE_PROVIDER",
+        "real_provider_usage": "NOT_RUN",
+        "provider_usage_reason": "the benchmark uses a controlled provider fixture; real provider usage requires a governed model-provider run"
       },
       "token_usage": {
-        "status": "NOT_RUN",
-        "reason": "provider token usage requires a governed model-provider run"
+        "status": "PASS",
+        "scope": "controlled subprocess provider fixture",
+        "reported_tokens_in": 17,
+        "reported_tokens_out": 29,
+        "ledger_tokens_in": 17,
+        "ledger_tokens_out": 29,
+        "ledger_runs": 1,
+        "profile": "economy",
+        "request_schema": "productforge/SynthesisRequest/v1",
+        "real_provider_usage": "NOT_RUN",
+        "real_provider_usage_reason": "the receipt intentionally runs only a controlled provider fixture"
       },
       "citation_quality": {
         "status": "PASS",
@@ -210,55 +230,65 @@
       "scan": {
         "status": "PASS",
         "count": 10000,
-        "elapsed_ms": 3724.614,
-        "peak_python_bytes": 14973229
+        "elapsed_ms": 3450.232,
+        "peak_python_bytes": 15917495
       },
       "import": {
         "status": "PASS",
         "count": 10000,
-        "elapsed_ms": 23434.977,
-        "peak_python_bytes": 28021833
+        "elapsed_ms": 23393.521,
+        "peak_python_bytes": 27059078
       },
       "wikilink_resolution": {
         "status": "PASS",
         "links": 10000,
         "resolved": 10000,
         "unresolved": 0,
-        "elapsed_ms": 282.22,
+        "elapsed_ms": 319.115,
         "peak_python_bytes": 2947813
       },
       "export": {
         "status": "PASS",
         "scope": "one atomic document export",
-        "elapsed_ms": 20.904,
-        "peak_python_bytes": 26243
+        "elapsed_ms": 22.045,
+        "peak_python_bytes": 26293
       },
       "reindex_search": {
         "status": "PASS",
         "scope": "SQLite FTS local benchmark",
-        "elapsed_ms": 16034.71,
-        "peak_python_bytes": 5770216,
+        "elapsed_ms": 17745.448,
+        "peak_python_bytes": 5770134,
         "documents": 10000,
         "iterations": 1,
-        "write_ms_median": 15770.46,
-        "search_ms_median": 1.115,
-        "write_ms_max": 15770.46,
-        "search_ms_max": 1.115,
+        "write_ms_median": 17565.553,
+        "search_ms_median": 1.174,
+        "write_ms_max": 17565.553,
+        "search_ms_max": 1.174,
         "chunks": 10000,
         "search_hits": 20,
-        "database_bytes": 7983104
+        "database_bytes": 7929856
       },
       "token_budget": {
         "status": "PASS",
         "scope": "retrieval-context estimate",
         "max_context_tokens": 12,
         "mean_context_tokens": 11.333,
-        "provider_usage": "NOT_RUN",
-        "provider_usage_reason": "no model provider is used by the offline benchmark"
+        "provider_usage": "FIXTURE_PROVIDER",
+        "real_provider_usage": "NOT_RUN",
+        "provider_usage_reason": "the benchmark uses a controlled provider fixture; real provider usage requires a governed model-provider run"
       },
       "token_usage": {
-        "status": "NOT_RUN",
-        "reason": "provider token usage requires a governed model-provider run"
+        "status": "PASS",
+        "scope": "controlled subprocess provider fixture",
+        "reported_tokens_in": 17,
+        "reported_tokens_out": 29,
+        "ledger_tokens_in": 17,
+        "ledger_tokens_out": 29,
+        "ledger_runs": 1,
+        "profile": "economy",
+        "request_schema": "productforge/SynthesisRequest/v1",
+        "real_provider_usage": "NOT_RUN",
+        "real_provider_usage_reason": "the receipt intentionally runs only a controlled provider fixture"
       },
       "citation_quality": {
         "status": "PASS",

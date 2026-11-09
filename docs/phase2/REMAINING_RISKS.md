@@ -31,9 +31,10 @@
 7. **Observabilidade de escala:** baseline local agora cobre scan, importação,
    resolução de wikilinks, exportação atômica, reindexação/busca SQLite/FTS e
    pico de alocação Python, orçamento estimado do contexto de recuperação e
-   qualidade de citações fixture (precision/recall/completude) em
-   100/1.000/10.000 notas. Token usage real de provider continua `NOT_RUN`,
-   pois exige provider governado; `tracemalloc` não substitui RSS. O wall-clock
+   qualidade de citações fixture (precision/recall/completude) e o registro de
+   tokens no gateway com provider controlado em 100/1.000/10.000 notas. Token
+   usage real de provider continua `NOT_RUN`, pois exige provider governado;
+   `tracemalloc` não substitui RSS. O wall-clock
    de 10.000 arquivos recém-criados teve uma amostra Windows de 16,90 s,
    enquanto a importação direta em árvore quente ficou em ~6–8 s; ambos ficam
    no recibo para tendência, sem transformar uma meta arbitrária em gate.
