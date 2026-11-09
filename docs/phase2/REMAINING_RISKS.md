@@ -2,8 +2,9 @@
 
 1. **CI remoto:** branches de trabalho ainda precisam de runs verdes dos
    workflows obrigatórios.
-2. **Sistema instalado:** a composição instalada do Product Forge é uma lane
-   opt-in e está explicitamente skipped.
+2. **Matriz instalada:** Product Forge passou sua lane de wheel/venv/Portal fake
+   em Windows; falta repetir a matriz isolada para todas as Forjas em Windows e
+   Linux.
 3. **Falhas de infraestrutura:** disk full e permission denied possuem fault
    injection estruturado, mas ainda não foram ensaiados em filesystem real;
    process kill possui cobertura determinística local, sem substituir o ensaio

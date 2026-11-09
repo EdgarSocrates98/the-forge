@@ -16,11 +16,12 @@ as Forjas sem Obsidian.
 
 ## Estado
 
-**PARTIAL / NOT_RUN completo.** Os checks locais de installers e CLI anteriores
-foram preservados nos artefatos de auditoria. A lane de sistema instalado do
-Product Forge não foi contada: exige `PRODUCT_FORGE_SYSTEM_HARNESS=1` e aparece
-como o único skip da suíte.
+**PARTIAL.** A lane do Product Forge foi executada em Windows com
+`PRODUCT_FORGE_SYSTEM_HARNESS=1`: wheel/sdist construídos, venv limpo,
+instalação de 15 dependências e jornada Portal → API → task → chat fake → audit
+passaram (`1 passed` em 21,78 s).
 
-Pendências de homologação: executar wheels isoladas em Windows e Linux, verificar
-project/workspace/user em instalação limpa, desconectar sem apagar vault,
-reparar integração e concluir a matriz remota de CI.
+Pendências de homologação global: executar wheels isoladas de todas as Forjas em
+Windows e Linux, verificar project/workspace/user em instalações limpas,
+desconectar sem apagar vault, reparar integração e concluir a matriz remota de
+CI. O teste opt-in do Product Forge deixa de ser considerado um bloqueio local.

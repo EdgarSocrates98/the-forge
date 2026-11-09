@@ -18,8 +18,9 @@ Estado: **PASS local; lacunas operacionais explicitadas**.
 
 ## Testes executados
 
-`uv run pytest -q -rs` no Product Forge: **258 passed, 1 skipped**. A única
-skip é a lane opcional de sistema instalado, não contada como aprovação.
+`uv run pytest -q -rs` no Product Forge: **258 passed, 1 skipped**. A skip é a
+lane opcional de sistema instalado quando o opt-in não está habilitado; a lane
+foi executada separadamente no Windows e passou (`1 passed`).
 
 ## Limitações
 

@@ -16,7 +16,7 @@ de execução em cloud ou em vault de usuário.
 | G7 recuperação agêntica | PARTIAL | processo encerrado durante temporário e recuperação subsequente verificados | disk full e permission denied reais pendentes |
 | G8 E2E federado | PASS fixture | `FEDERATED_E2E_EVIDENCE.md` | Portal não dispara o runner em runtime |
 | G9 Portal/UX | PASS local | 597 testes frontend; gate visual 8/8, axe/overflow/foco = 0 | homologação instalável pendente |
-| G10 instalação/distribuição | NOT_RUN completo | MCP The Forge e installers existentes foram preservados | matriz wheel Windows/Linux e Portal instalável pendente |
+| G10 instalação/distribuição | PARTIAL | Product Forge wheel/venv/Portal fake passou no Windows; MCP The Forge e installers existentes preservados | matriz completa Windows/Linux e Portal instalável das outras Forjas pendente |
 | G11 performance/regressão | PASS local | benchmark 100/1.000/10.000 e suíte Product Forge | métricas de memória/reindexação ainda não são baseline completo |
 | G12 release readiness | BLOCKED | base funcional integrada | CI remoto e gates NOT_RUN impedem aceite final |
 
@@ -32,5 +32,6 @@ uv run python scripts/phase2_federated_obsidian_e2e.py --repos-root E:\projetos\
 # fixture_only=true, notes_roundtripped=4, manual_conflict_detected=true
 ```
 
-O teste ignorado não foi contado como aprovado: ele é a lane de composição
-instalada e requer `PRODUCT_FORGE_SYSTEM_HARNESS=1`.
+O teste ignorado na suíte padrão não foi contado como aprovado; a mesma lane de
+composição instalada foi executada separadamente com
+`PRODUCT_FORGE_SYSTEM_HARNESS=1` e passou no Windows (`1 passed`).

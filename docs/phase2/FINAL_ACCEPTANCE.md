@@ -15,7 +15,7 @@ Estado global: **BLOCKED para aceite final**.
 | sem Obsidian ainda funcional | PASS por design/testes locais |
 | Bases/Canvas compatíveis com sintaxe declarada | PASS estrutural |
 | E2E federado reproduzível | PASS fixture-only |
-| instalação simples | PARTIAL; matriz isolada pendente |
+| instalação simples | PARTIAL; Product Forge Windows passou, matriz global pendente |
 | CI obrigatório verde | NOT_RUN/PENDING nos branches de trabalho |
 | recuperação completa | PARTIAL; faults reais pendentes |
 
