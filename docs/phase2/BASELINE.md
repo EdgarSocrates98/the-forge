@@ -14,7 +14,7 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
 | the-forge | `phase2/baseline-observability-20261108` / `d4b6e59` | artefatos de auditoria não rastreados | schemas/contratos, runner federado local, matriz instalada Windows e CI `42561474908` verdes; `release-gates` `42561474898` verde |
 | product-forge | `fix/bridge-embedded-parity-20261108` / `f33524f` | `.coverage` não rastreado | 259 passed/1 skipped; regressão CI local 82,62%; jornada instalada Windows `1 passed`; escopo multiusuário de vault, revogação não destrutiva, locks, kill recovery e faults estruturados locais verdes |
-| forge-portal | `feat/api-operations-contract-surface-20261108` / `e18bcee` | capturas/auditorias modificadas | build, 597 testes, fluxo Portal de conexão/revogação de vault, gate visual local e pacote npm sem artefatos verdes |
+| forge-portal | `feat/api-operations-contract-surface-20261108` / `c3ccad2` | capturas/auditorias modificadas | build, 599 testes, fluxo Portal de conexão/revogação de vault, gate visual local e pacote npm sem artefatos verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
 | forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
