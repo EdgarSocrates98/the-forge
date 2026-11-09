@@ -6,7 +6,8 @@ Data da execução: 2026-11-09
 
 Este ensaio verifica o contrato e as fronteiras de integração em um vault
 temporário, com fixtures locais produzidas pelos adapters de AWS, Azure, API e
-Platform. Ele não acessa cloud, não usa um vault de usuário e não é evidência
+Platform. A mutação controlada usa a distribuição neutra `forge_obsidian`, não o
+runtime de aplicação do Product Forge. Ele não acessa cloud, não usa um vault de usuário e não é evidência
 de homologação operacional em AWS/Azure.
 
 ## Comando reproduzível
@@ -18,7 +19,7 @@ uv run python scripts/phase2_federated_obsidian_e2e.py `
 ```
 
 O runner cria uma pasta temporária, cria os diretórios dos documentos, executa
-export/import pelo Product Forge e remove o vault ao terminar. Nenhum checkout
+export/import pelo `forge_obsidian` e remove o vault ao terminar. Nenhum checkout
 é modificado.
 
 ## Resultado observado
@@ -41,6 +42,8 @@ export/import pelo Product Forge e remove o vault ao terminar. Nenhum checkout
 O resultado comprova, em conjunto:
 
 - os quatro adapters produzem `theforge/ObsidianNoteRef/v1` com proveniência;
+- o runner chama diretamente `forge_obsidian`, mantendo o Product Forge fora
+  do núcleo técnico de import/export;
 - o Markdown exportado e importado preserva o conteúdo e o hash;
 - o Code Atlas recebe somente relações documentais, sem corpo da nota;
 - o Forge Lens recebe um trace sanitizado, sem corpo da nota;

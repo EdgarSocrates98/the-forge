@@ -21,6 +21,9 @@ from typing import Any
 
 
 def _add_repo_paths(repos_root: Path) -> None:
+    neutral_obsidian = repos_root / "product-forge" / "forge-obsidian" / "src"
+    if neutral_obsidian.is_dir():
+        sys.path.insert(0, str(neutral_obsidian))
     for repo in (
         "product-forge",
         "spark-forge-aws",
@@ -57,7 +60,7 @@ def run(repos_root: Path) -> dict[str, Any]:
     )
     from forge_lens.adapters.obsidian import trace_from_obsidian_receipt  # type: ignore[import-not-found]
     from platformforge.context.obsidian import build_obsidian_operations_review
-    from product_forge.knowledge.obsidian import (  # type: ignore[import-not-found]
+    from forge_obsidian import (  # type: ignore[import-not-found]
         ObsidianVaultError,
         export_vault_document,
         import_vault_document,
