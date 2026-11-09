@@ -105,12 +105,16 @@ class ObsidianSyncReceipt:
         "failed",
         "rolled_back",
     ]
+    workspace: str = ""
+    vault_id: str = ""
     previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
     title: str = ""
     size: int = 0
     source: str = ""
     classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
     backup_path: str | None = None
+    outcome: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)
     exported_at: str = ""

@@ -27,6 +27,9 @@
     "exported_at": {
       "type": "string"
     },
+    "outcome": {
+      "type": "string"
+    },
     "path": {
       "type": "string"
     },
@@ -40,6 +43,12 @@
         }
       ],
       "pattern": "^[0-9a-f]{64}$"
+    },
+    "provenance": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
     },
     "schema": {
       "type": "string"
@@ -70,6 +79,9 @@
       },
       "type": "array"
     },
+    "vault_id": {
+      "type": "string"
+    },
     "version": {
       "type": "string"
     },
@@ -78,6 +90,9 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "workspace": {
+      "type": "string"
     }
   },
   "required": [

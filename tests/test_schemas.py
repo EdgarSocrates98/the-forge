@@ -73,6 +73,10 @@ def test_obsidian_sync_contracts_validate_and_keep_conflicts_explicit() -> None:
         content_hash=digest,
         sync_state="created",
         size=10,
+        workspace="ws",
+        vault_id="vault",
+        outcome="created",
+        provenance={"adapter": "fixture"},
     )
     Draft202012Validator(json_schema(ObsidianSyncPlan)).validate(to_dict(plan))
     Draft202012Validator(json_schema(ObsidianSyncReceipt)).validate(to_dict(receipt))
@@ -270,6 +274,8 @@ def test_new_optional_fields_published_in_schemas() -> None:
     assert {"executable", "fingerprint", "observed_version"} <= set(provider)
     assert "op" in json_schema(Response)["properties"]
     assert "op" not in json_schema(Response)["required"]
+    receipt_contract = json_schema(ObsidianSyncReceipt)["properties"]
+    assert {"workspace", "vault_id", "outcome", "provenance"} <= set(receipt_contract)
     candidate = json_schema(RoutingDecision)["properties"]["candidates"]["items"]
     assert candidate["properties"]["state"]["enum"] == [
         "supported",
