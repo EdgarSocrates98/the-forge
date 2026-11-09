@@ -7,7 +7,7 @@ de execução em cloud ou em vault de usuário.
 | Gate | Estado | Evidência principal | Limitação |
 |---|---|---|---|
 | G0 baseline/arquitetura | PASS | `BASELINE.md`, `OWNERSHIP_MATRIX.md` | índices de código são best-effort |
-| G1 correções P0/P1 | PASS local | commits por Forge registrados no baseline | CI remoto dos branches ainda pendente |
+| G1 correções P0/P1 | PASS local | commits por Forge registrados no baseline; Product regression local 82,07% | CI remoto dos branches ainda pendente |
 | G2 contratos/schemas | PASS | `tests/test_schemas.py` — 22 passed; schemas Obsidian v1 | compatibilidade externa não foi exercitada |
 | G3 segurança/autorização | PASS local | traversal, symlink/reparse, hardlink, classificação, raiz autorizada e prompt-safety | permissão real e vault multiusuário não executados |
 | G4 formatos | PASS local | Markdown, frontmatter, links, embeds, Canvas/Bases estruturais | não é parser completo do aplicativo Obsidian |
