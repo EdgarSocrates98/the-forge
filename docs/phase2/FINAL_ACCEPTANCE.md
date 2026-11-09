@@ -17,7 +17,7 @@ Estado global: **BLOCKED para aceite final**.
 | E2E federado reproduzível | PASS fixture-only; 4 notas round-tripped, Atlas/Lens/Bridge e conflito manual |
 | instalação simples | PASS local; 12/12 wheels Python no Windows e Linux WSL2, matriz limpa project/workspace/user, Portal instalado fora do checkout com start estático, Product Forge, TTY/TUI 14/14 e MCP real passaram |
 | CI obrigatório verde | PASS local para as matrizes completas disponíveis: AWS `15128 passed/14 skipped`, Azure `3190/9`, API `2028/4`, Platform sem falhas, Code Atlas `1667/21`, Bridge `130`, The Forge `42688316906` (pacote Linux/Windows e Python 3.11–3.14) e Product Forge `e68555f` (`290 passed/1 skipped`); CI remoto verde para Azure `42693963092`, API `42694647843`, Platform `42692546513`, API Sentinel, Code Atlas, Data Sentinel, Forge Lens, Agent Bridge, The Forge e Product Forge; AWS `42693341083` ainda está em execução; pacote `forge-obsidian` construído e instalado isoladamente |
-| recuperação completa | PARTIAL; faults reais pendentes |
+| recuperação completa | PARTIAL; ACL de permissão real validado em diretório temporário controlado; disk-full real e recuperação operacional ainda pendentes |
 
 O bloqueio é deliberado: não se transforma fixture, teste ignorado ou execução
 local em prova de produção. O próximo aceite requer fechar as pendências de

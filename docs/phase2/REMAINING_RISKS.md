@@ -15,10 +15,12 @@
    project/workspace/user com apply/uninstall; o Portal também foi instalado
    fora do checkout e respondeu por CLI/TUI/status/start estático. O risco de
    distribuição restante é operacional (OIDC/CI global), não o caminho local.
-3. **Falhas de infraestrutura:** disk full e permission denied possuem fault
-   injection estruturado, mas ainda não foram ensaiados em filesystem real;
-   process kill possui cobertura determinística local, sem substituir o ensaio
-   operacional.
+3. **Falhas de infraestrutura:** permission denied foi ensaiado em Windows com
+   ACL real num diretório temporário controlado: o Product Forge recusou antes
+   da escrita com `OBSIDIAN-PATH-REFUSED`/`sync_state=denied`, nenhum artefato
+   parcial foi criado e o ACL foi restaurado. Disk full ainda possui somente
+   fault injection estruturado; process kill possui cobertura determinística
+   local, sem substituir um ensaio operacional completo.
 4. **Multiusuário:** provisioning e revogação por principal/workspace agora
    existem no Product Forge e no Portal, com raiz autorizada, tokens escopados,
    resposta sem caminho físico e revogação que não apaga arquivos. Falta ensaio
