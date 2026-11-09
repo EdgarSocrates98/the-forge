@@ -11,7 +11,7 @@ Estado global: **BLOCKED para aceite final**.
 | conteúdo recuperável e sem overwrite silencioso | PASS local |
 | classificação/autorização/contexto válido | PASS local |
 | histórico auditável e outputs body-free | PASS local |
-| Portal prático para fluxos implementados | PASS local; Nova investigação tem seleção de evidências, plano assinado, execução governada, histórico e recibo exportável; conhecimento tem vault escopado, preview, import/export, conflitos, histórico e deep link Obsidian |
+| Portal prático para fluxos implementados | PASS local; Nova investigação tem seleção de evidências, plano assinado, execução governada, histórico, recibo exportável e handoff explícito para Product Forge; conhecimento tem vault escopado, preview, import/export, conflitos, histórico e deep link Obsidian |
 | Obsidian opcional e funcional | PASS por design/testes locais; sem Obsidian o restante do ecossistema continua operacional |
 | Bases/Canvas compatíveis com sintaxe declarada | PASS estrutural |
 | E2E federado reproduzível | PASS fixture-only; 4 notas round-tripped, Atlas/Lens/Bridge e conflito manual |
@@ -21,5 +21,6 @@ Estado global: **BLOCKED para aceite final**.
 
 O bloqueio é deliberado: não se transforma fixture, teste ignorado ou execução
 local em prova de produção. O próximo aceite requer fechar as pendências de
-`REMAINING_RISKS.md`, em especial a entrega automática do recibo de investigação
-ao índice Product Forge/Obsidian, ensaios reais de falha e homologação remota.
+`REMAINING_RISKS.md`, em especial a homologação produtiva do handoff para
+Product Forge, a sincronização revisada no vault, ensaios reais de falha e
+homologação remota.

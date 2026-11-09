@@ -36,8 +36,10 @@ histórico.
    `OrchestrationReport` redigido. A tela de conhecimento opera preview,
    import/export, histórico e deep link Obsidian com vault autorizado. O runner
    local `scripts/phase2_federated_obsidian_e2e.py` comprova a cadeia Obsidian
-   completa somente com fixtures; falta automatizar a entrega do recibo da
-   investigação ao índice Product Forge/Obsidian.
+   completa somente com fixtures. O Portal agora oferece entrega explícita do
+   recibo concluído ao índice Product Forge, com projeção Markdown redigida,
+   provenance, classificação, freshness e deduplicação; a gravação do mesmo
+   conteúdo no Obsidian continua exigindo o fluxo revisado de sync.
 6. **Homologação:** benchmark local 100/1.000/10.000 passou com importação em
    lote; rename/delete, final-revalidation, kill recovery, proteção de
    diretórios internos e concorrência entre processos estão cobertos, e o sync
