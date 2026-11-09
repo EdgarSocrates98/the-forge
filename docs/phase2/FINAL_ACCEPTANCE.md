@@ -16,7 +16,7 @@ Estado global: **BLOCKED para aceite final**.
 | Bases/Canvas compatíveis com sintaxe declarada | PASS estrutural |
 | E2E federado reproduzível | PASS fixture-only |
 | instalação simples | PARTIAL; 12/12 wheels Python no Windows, Node build/pack, Product Forge, TTY/TUI 14/14 e MCP real passaram; lane Linux e matriz global de escopos pendentes |
-| CI obrigatório verde | PASS para The Forge (`42557439135`) e Product Forge (`42557064576`); não consolidado para todos os branches especialistas |
+| CI obrigatório verde | PASS para The Forge (`42561474908`, `42561474898`); Product Forge validado localmente em `f33524f`; não consolidado para todos os branches especialistas |
 | recuperação completa | PARTIAL; faults reais pendentes |
 
 O bloqueio é deliberado: não se transforma fixture, teste ignorado ou execução

@@ -12,9 +12,9 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
-| the-forge | `phase2/baseline-observability-20261108` / `3f05453` | artefatos de auditoria não rastreados | schemas/contratos, runner federado local e CI `42557439135` (Ubuntu/Windows, Python 3.11–3.14) verdes; `release-gates` `42557439232` verde |
-| product-forge | `fix/bridge-embedded-parity-20261108` / `dd2c2ae` | `.coverage` não rastreado | suíte base 258 passed/1 skipped; regressão CI local 82,07%; lane instalada Windows `1 passed`; sync skip, rename/delete, final-revalidation, lock concorrente, kill recovery, faults estruturados e proteção do estado interno locais verdes; Actions verde em `42557064576` |
-| forge-portal | `feat/api-operations-contract-surface-20261108` / `c38ba87` | capturas/auditorias modificadas | build, 597 testes, rollback knowledge, gate visual local e pacote npm sem artefatos verdes |
+| the-forge | `phase2/baseline-observability-20261108` / `d4b6e59` | artefatos de auditoria não rastreados | schemas/contratos, runner federado local, matriz instalada Windows e CI `42561474908` verdes; `release-gates` `42561474898` verde |
+| product-forge | `fix/bridge-embedded-parity-20261108` / `f33524f` | `.coverage` não rastreado | 259 passed/1 skipped; regressão CI local 82,62%; jornada instalada Windows `1 passed`; escopo multiusuário de vault, revogação não destrutiva, locks, kill recovery e faults estruturados locais verdes |
+| forge-portal | `feat/api-operations-contract-surface-20261108` / `e18bcee` | capturas/auditorias modificadas | build, 597 testes, fluxo Portal de conexão/revogação de vault, gate visual local e pacote npm sem artefatos verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
 | forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
@@ -76,9 +76,9 @@ fase.
   proveniência, confiança/estado de freshness e redaction de chaves e texto
   sensível; nenhum adapter acessa o vault ou altera cloud.
 - Portal: captura/preview/import, export plan→confirm, baseline de atualização,
-  conflito explícito, histórico de receipts e restauração protegida por backup;
-  gate visual de conhecimento passou em 8 combinações com axe=0, overflow=0 e
-  foco sem anel=0.
+  conflito explícito, histórico de receipts, restauração protegida por backup e
+  gerenciamento visual de conexão/revogação de vault; gate visual de conhecimento
+  passou em 8 combinações com axe=0, overflow=0 e foco sem anel=0.
 
 Code Atlas agora possui projeção body-free de relações Obsidian e Forge Lens
 possui adapter de receipts sanitizados. O runner local
@@ -87,8 +87,11 @@ adapters, Product Forge, Code Atlas, Lens e Agent Bridge; o resultado está em
 `docs/phase2/FEDERATED_E2E_EVIDENCE.md`.
 
 O que ainda não está comprovado: execução efetiva disparada pelo Portal,
-geração de artefatos em vault real autorizado, provisionamento multiusuário,
-falhas reais de disco/permissão e ensaio instalável pelo Portal. Rename/delete,
+geração de artefatos em vault real autorizado, falhas reais de disco/permissão
+e ensaio instalável pelo Portal. O provisionamento/revogação multiusuário agora
+possui jornada local real, com escopo por principal/workspace e revogação sem
+exclusão de arquivos; falta validar identidade OIDC e operação em produção.
+Rename/delete,
 revalidação final, lock concorrente entre processos e benchmark de 10.000 notas
 têm cobertura local explícita no Product Forge, mas não são prova de operação em
 produção.

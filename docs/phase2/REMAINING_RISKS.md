@@ -12,8 +12,10 @@
    injection estruturado, mas ainda não foram ensaiados em filesystem real;
    process kill possui cobertura determinística local, sem substituir o ensaio
    operacional.
-4. **Multiusuário:** o vault é configuração do serviço, com raiz autorizada e
-   escopo de workspace; provisioning/revogação de vault por usuário não existe.
+4. **Multiusuário:** provisioning e revogação por principal/workspace agora
+   existem no Product Forge e no Portal, com raiz autorizada, tokens escopados,
+   resposta sem caminho físico e revogação que não apaga arquivos. Falta ensaio
+   com identidade OIDC e operação concorrente em ambiente produtivo.
 5. **Portal federado:** o Portal opera os fluxos de conhecimento, mas ainda não
    dispara o runner federado de fixtures como uma operação runtime.
 6. **Parser Obsidian:** Canvas/Bases são validações/projeções estruturais; não

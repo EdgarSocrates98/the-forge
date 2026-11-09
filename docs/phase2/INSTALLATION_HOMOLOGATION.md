@@ -35,9 +35,11 @@ O Portal passou a usar `.npmignore`; o `npm pack --dry-run` caiu de cerca de
 descompactados, sem artefatos de auditoria ou E2E.
 
 Pendências de homologação global: executar wheels isoladas de todas as Forjas em
-Windows e Linux, verificar project/workspace/user em instalações limpas,
-desconectar sem apagar vault, reparar integração e concluir a matriz remota de
-CI. O teste opt-in do Product Forge deixa de ser considerado um bloqueio local.
+Windows e Linux, verificar project/workspace/user em instalações limpas, validar
+OIDC e concluir a matriz remota de CI. A conexão/revogação do vault já foi
+homologada localmente com escopo por principal/workspace e garantia de que a
+revogação não apaga arquivos. O teste opt-in do Product Forge deixa de ser
+considerado um bloqueio local.
 
 ## TTY/TUI
 
