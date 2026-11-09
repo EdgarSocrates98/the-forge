@@ -39,3 +39,20 @@ composição instalada foi executada separadamente com
 O detalhamento requisito-a-requisito, com commit, comando, ambiente, resultado,
 limitação e estado de cada G0–G12, está no
 [`QUALITY_GATE_LEDGER.md`](QUALITY_GATE_LEDGER.md).
+
+## Revalidação incremental — 2026-11-09
+
+Após a execução inicial do relatório, as correções foram revalidadas nas
+árvores atuais:
+
+- Platform Forge: `uv run pytest -q --disable-warnings` terminou sem falhas;
+- Spark Forge Azure: `3189 passed, 9 skipped`; freshness focado adicional:
+  `31 passed`;
+- API Forge: gateway, refs, trust e projeção Obsidian: `23 passed`;
+- Spark Forge AWS: claims `0 divergências`; status, evals, sincronização de
+  skills e bundle offline também passaram;
+- E2E federado: `notes_exported=4`, `notes_roundtripped=4`,
+  `manual_conflict_detected=true`, `cloud_access=false`.
+
+Esses resultados atualizam a prova local, mas não removem os limites externos
+descritos no G12.
