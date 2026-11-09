@@ -18,7 +18,8 @@ histórico.
 2. **Round-trip semântico:** frontmatter, wikilinks, embeds, tags, callouts,
    blocos de código, aliases, block references, links relativos e anexos agora
    são projetados sem reescrita; a resolução contra arquivos reais do vault e
-   rename/delete ainda precisam de testes dedicados.
+   rename/delete têm cobertura dedicada local, mas ainda não têm ensaio
+   operacional em vault de usuário.
 3. **Estados de sync:** `created`, `unchanged`, `updated`, `conflict`, `skipped`
    e `rolled_back` estão implementados no Product Forge; `denied` e `failed`
    são expostos nos erros API/Portal como `details.sync_state`.
@@ -33,9 +34,10 @@ histórico.
    comprova a cadeia com fixtures; ainda falta o Portal disparar essa execução
    em runtime.
 6. **Homologação:** benchmark local 100/1.000/10.000 passou com importação em
-   lote e testes de rename/delete/final-revalidation estão cobertos; ainda
-   faltam concorrência entre processos, teste de disco cheio/permissão real e
-   ensaio instalável pelo Portal.
+   lote; rename/delete, final-revalidation e concorrência entre threads estão
+   cobertos, e o sync agora usa lock por documento entre processos suportados
+   pelo sistema operacional. Ainda faltam um ensaio concorrente entre
+   processos, falhas reais de disco/permissão e ensaio instalável pelo Portal.
 
 ## Sequência de implementação
 

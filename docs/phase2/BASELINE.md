@@ -12,8 +12,8 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
-| the-forge | `phase2/baseline-observability-20261108` / `a215303` | artefatos de auditoria não rastreados | schemas/contratos e runner federado locais verdes; CI remoto pendente |
-| product-forge | `fix/bridge-embedded-parity-20261108` / `005f55e` | `.coverage` não rastreado | suíte completa anterior 250 passed/1 skipped; sync skip, rename/delete e final-revalidation locais verdes; CI remoto pendente |
+| the-forge | `phase2/baseline-observability-20261108` / `4ccee3e` | artefatos de auditoria não rastreados | schemas/contratos e runner federado locais verdes; CI remoto pendente |
+| product-forge | `fix/bridge-embedded-parity-20261108` / `77a5a34` | `.coverage` não rastreado | suíte completa 254 passed/1 skipped; sync skip, rename/delete, final-revalidation e lock concorrente locais verdes; CI remoto pendente |
 | forge-portal | `feat/api-operations-contract-surface-20261108` / `ce47d5d` | capturas/auditorias modificadas | build, 597 testes, rollback knowledge e gate visual local verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
@@ -88,8 +88,10 @@ adapters, Product Forge, Code Atlas, Lens e Agent Bridge; o resultado está em
 
 O que ainda não está comprovado: execução efetiva disparada pelo Portal,
 geração de artefatos em vault real autorizado, provisionamento multiusuário,
-rename/delete e concorrência completos, falhas de disco/permissão e carga de
-10.000 notas.
+concorrência entre processos, falhas reais de disco/permissão e ensaio
+instalável pelo Portal. Rename/delete, revalidação final, lock concorrente em
+threads e benchmark de 10.000 notas têm cobertura local explícita no Product
+Forge, mas não são prova de operação em produção.
 
 ## Evidência de CI reproduzida
 
