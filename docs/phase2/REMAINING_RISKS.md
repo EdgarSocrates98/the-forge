@@ -5,6 +5,10 @@
    Forge já possuem runs verdes (`42564466899`, `42564466922`). Ainda falta
    uma matriz consolidada de runs verdes no GitHub para todos os branches
    especialistas e para os repositórios sem workflow publicado nesse branch.
+   Desde a última verificação, os runs remotos publicados para API Sentinel,
+   Code Atlas, Data Sentinel, Forge Lens e Product Forge terminaram verdes;
+   The Forge e Agent Bridge continuam sem run para os branches de trabalho,
+   pois seus workflows não disparam em push fora de `main`.
    A consulta de workflow runs associada aos commits atuais retornou coleção
    vazia; portanto não há evidência remota para promover esses resultados
    locais a CI obrigatório. Como hardening adicional, a auditoria local de
