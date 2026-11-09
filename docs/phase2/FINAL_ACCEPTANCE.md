@@ -15,7 +15,7 @@ Estado global: **BLOCKED para aceite final**.
 | sem Obsidian ainda funcional | PASS por design/testes locais |
 | Bases/Canvas compatíveis com sintaxe declarada | PASS estrutural |
 | E2E federado reproduzível | PASS fixture-only |
-| instalação simples | PARTIAL; Product Forge Windows, TTY/TUI 14/14 e MCP real passaram, matriz wheel global pendente |
+| instalação simples | PARTIAL; 12/12 wheels Python no Windows, Node build/pack, Product Forge, TTY/TUI 14/14 e MCP real passaram; lane Linux e matriz global de escopos pendentes |
 | CI obrigatório verde | PASS para The Forge (`42557439135`) e Product Forge (`42557064576`); não consolidado para todos os branches especialistas |
 | recuperação completa | PARTIAL; faults reais pendentes |
 

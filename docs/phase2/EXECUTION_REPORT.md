@@ -16,7 +16,7 @@ de execução em cloud ou em vault de usuário.
 | G7 recuperação agêntica | PARTIAL | processo encerrado durante temporário e recuperação subsequente verificados | disk full e permission denied reais pendentes |
 | G8 E2E federado | PASS fixture | `FEDERATED_E2E_EVIDENCE.md` | Portal não dispara o runner em runtime |
 | G9 Portal/UX | PASS local | 597 testes frontend; gate visual 8/8, axe/overflow/foco = 0 | homologação instalável pendente |
-| G10 instalação/distribuição | PARTIAL | Product Forge wheel/venv/Portal fake passou no Windows; matriz TTY/TUI 14/14 e cancelamento 14/14 verdes; MCP handshake real PASS com 15 tools e exit code 0 | matriz wheel Windows/Linux e Portal instalável das outras Forjas pendente |
+| G10 instalação/distribuição | PARTIAL | matriz Python 12/12 wheel→venv→CLI passou no Windows; Product Forge wheel/venv/Portal fake passou; `forge-cli` e Portal Node build/pack passaram; matriz TTY/TUI 14/14 e cancelamento 14/14 verdes; MCP handshake real PASS com 15 tools e exit code 0 | execução Linux, project/workspace/user em instalações limpas e Portal instalável global ainda pendentes |
 | G11 performance/regressão | PASS local | benchmark 100/1.000/10.000 e suíte Product Forge | métricas de memória/reindexação ainda não são baseline completo |
 | G12 release readiness | BLOCKED | The Forge e Product Forge têm CI remoto verde; base funcional integrada | aceite global ainda depende da matriz instalada de todas as Forjas e dos riscos operacionais descritos em `REMAINING_RISKS.md` |
 

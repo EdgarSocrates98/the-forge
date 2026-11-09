@@ -21,6 +21,19 @@ as Forjas sem Obsidian.
 instalação de 15 dependências e jornada Portal → API → task → chat fake → audit
 passaram (`1 passed` em 21,78 s).
 
+Além disso, a matriz reproduzível
+`scripts/installed_wheel_matrix.py` passou no Windows 11 / Python 3.12.13 em
+2026-11-09: **12/12** projetos Python construíram sdist/wheel, instalaram em
+venvs independentes e responderam ao CLI publicado com `--help` (`status=PASS`).
+O mesmo runner aceita Windows e POSIX, mas a execução Linux ainda precisa ser
+realizada antes de fechar o gate multiplataforma.
+
+Os dois projetos Node também foram verificados no Windows: `forge-cli` produziu
+o pacote `theforge-cli@0.4.1` e o Portal produziu build Angular e pacote npm.
+O Portal passou a usar `.npmignore`; o `npm pack --dry-run` caiu de cerca de
+304 MB (com auditorias e screenshots) para 1,35 MB compactados / 5,8 MB
+descompactados, sem artefatos de auditoria ou E2E.
+
 Pendências de homologação global: executar wheels isoladas de todas as Forjas em
 Windows e Linux, verificar project/workspace/user em instalações limpas,
 desconectar sem apagar vault, reparar integração e concluir a matriz remota de
@@ -41,3 +54,11 @@ máquina limpa; a janela pode ser reduzida explicitamente em runs aquecidos.
 O MCP nativo foi verificado novamente com `theforge install mcp-verify --json`:
 handshake real `PASS`, 15 tools descobertas, chamada estruturada de
 `theforge_status` aprovada e exit code do comando `0`.
+
+Para repetir a matriz Python:
+
+```powershell
+cd E:\projetos\FORJAS\the-forge
+uv run python scripts/installed_wheel_matrix.py `
+  --repos-root E:\projetos\FORJAS
+```

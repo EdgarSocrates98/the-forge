@@ -4,9 +4,10 @@
    (`42557439135`, `42557064576`); ainda falta uma matriz consolidada de runs
    verdes para todos os branches especialistas e para os repositórios sem
    workflow publicado nesse branch.
-2. **Matriz instalada:** Product Forge passou sua lane de wheel/venv/Portal fake
-   em Windows; falta repetir a matriz isolada para todas as Forjas em Windows e
-   Linux.
+2. **Matriz instalada:** 12/12 wheels Python passaram em venvs isolados no
+   Windows e os dois projetos Node passaram build/pack; falta executar a mesma
+   matriz Python em Linux, além de verificar project/workspace/user em
+   instalações limpas e o Portal instalável fora do checkout.
 3. **Falhas de infraestrutura:** disk full e permission denied possuem fault
    injection estruturado, mas ainda não foram ensaiados em filesystem real;
    process kill possui cobertura determinística local, sem substituir o ensaio
