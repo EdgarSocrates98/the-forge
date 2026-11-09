@@ -24,13 +24,18 @@
    preview/plan/confirm/sync, evitando escrita automática no vault. O runner
    federado de fixtures permanece uma evidência independente e deliberadamente
    local.
-6. **Parser Obsidian:** Canvas/Bases são validações/projeções estruturais; não
-   há promessa de reproduzir todo o runtime do aplicativo ou fórmulas.
+6. **Parser Obsidian:** Canvas continua sendo validação/projeção estrutural e
+   não há promessa de reproduzir o runtime do Canvas. Bases agora têm geração,
+   serialização e validação do YAML oficial; filtros/fórmulas continuam sem
+   avaliador próprio e dependem do runtime do Obsidian.
 7. **Observabilidade de escala:** baseline local agora cobre scan, importação,
    resolução de wikilinks, exportação atômica, reindexação/busca SQLite/FTS e
    pico de alocação Python em 100/1.000/10.000 notas. Token usage real de
    provider e qualidade de citações continuam `NOT_RUN`, pois exigem provider
-   e corpus de avaliação governados; `tracemalloc` não substitui RSS.
+   e corpus de avaliação governados; `tracemalloc` não substitui RSS. O teste
+   pytest de 10.000 arquivos recém-criados excedeu 15 s em uma execução
+   Windows (16,90 s), enquanto a importação direta em árvore quente ficou em
+   ~6–8 s; o caso permanece pendente de estabilização/medição de filesystem.
 8. **Distribuição técnica neutra:** `forge_obsidian` já está extraído, testado,
    construído como wheel/sdist `forge-obsidian` e incluído no wheel do Product
    Forge. Ainda não foi publicado em índice remoto nem consumido com versão

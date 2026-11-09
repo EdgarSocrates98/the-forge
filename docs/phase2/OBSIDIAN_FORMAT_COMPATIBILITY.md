@@ -10,7 +10,7 @@
 | Block references/links relativos/anexos | PASS local | referências preservadas e projetadas |
 | Tabelas/Unicode/arquivo vazio | PASS local | coberto pelo parser e fixtures |
 | Canvas | PASS estrutural | IDs determinísticos e validação; não é runtime completo do Canvas |
-| Bases | PASS estrutural | YAML/sintaxe gerada de forma determinística; sem avaliador próprio de fórmulas |
+| Bases | PASS de contrato | YAML oficial determinístico, validação das seções `filters`/`formulas`/`properties`/`summaries`/`views` e serializer `.base`; sem avaliador próprio de fórmulas |
 | Links quebrados | PASS diagnóstico | são reportados como referência; não são executados |
 
 Nenhum Markdown, YAML, link, HTML ou comando do vault é tratado como instrução
