@@ -6,8 +6,9 @@ ou `captured`; `validated` exige evidência adequada ao domínio.
 
 Adaptações aplicadas:
 
-- Azure mantém freshness explícita e não interpreta ausência de data como
-  atualidade;
+- Azure usa os estados fechados `fresh`, `stale`, `unknown`, `conflicted` e
+  `deprecated`. Datas ausentes, inválidas ou futuras não confirmam atualidade;
+  consumidores legados continuam atendidos pelo adapter `is_stale`;
 - AWS mantém claims e receipts do caminho especialista;
 - Platform filtra applicability por contexto/capsule;
 - API preserva retrieval, contratos e change-control;

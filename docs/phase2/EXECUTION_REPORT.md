@@ -35,3 +35,7 @@ uv run python scripts/phase2_federated_obsidian_e2e.py --repos-root E:\projetos\
 O teste ignorado na suíte padrão não foi contado como aprovado; a mesma lane de
 composição instalada foi executada separadamente com
 `PRODUCT_FORGE_SYSTEM_HARNESS=1` e passou no Windows (`1 passed`).
+
+O detalhamento requisito-a-requisito, com commit, comando, ambiente, resultado,
+limitação e estado de cada G0–G12, está no
+[`QUALITY_GATE_LEDGER.md`](QUALITY_GATE_LEDGER.md).
