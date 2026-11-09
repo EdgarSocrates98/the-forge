@@ -15,6 +15,10 @@ from theforge.contracts.types import SHA256_RE
 
 OBSIDIAN_SYNC_PLAN_SCHEMA = "theforge/ObsidianSyncPlan/v1"
 OBSIDIAN_SYNC_RECEIPT_SCHEMA = "theforge/ObsidianSyncReceipt/v1"
+OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA = "theforge/ObsidianVaultDescriptor/v1"
+OBSIDIAN_NOTE_REF_SCHEMA = "theforge/ObsidianNoteRef/v1"
+OBSIDIAN_CONFLICT_SCHEMA = "theforge/ObsidianConflict/v1"
+OBSIDIAN_EXPORT_PROFILE_SCHEMA = "theforge/ObsidianExportProfile/v1"
 _OUTCOMES = ("created", "unchanged", "conflict", "updated")
 
 
@@ -39,6 +43,7 @@ def _hash(value: str, name: str) -> None:
 @dataclass(frozen=True, kw_only=True)
 class ObsidianSyncPlan:
     schema: str = OBSIDIAN_SYNC_PLAN_SCHEMA
+    version: str = "v1"
     path: str
     content_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
     outcome: Literal["created", "unchanged", "conflict", "updated"]
@@ -70,6 +75,7 @@ class ObsidianSyncPlan:
 @dataclass(frozen=True, kw_only=True)
 class ObsidianSyncReceipt:
     schema: str = OBSIDIAN_SYNC_RECEIPT_SCHEMA
+    version: str = "v1"
     path: str
     content_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
     sync_state: Literal["created", "updated", "unchanged"]
@@ -94,4 +100,112 @@ class ObsidianSyncReceipt:
             _safe_relative_path(self.backup_path)
         if self.size < 0:
             raise ContractError("size must be non-negative")
+
+
+@dataclass(frozen=True, kw_only=True)
+class ObsidianVaultDescriptor:
+    schema: str = OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA
+    version: str = "v1"
+    workspace: str
+    vault_id: str
+    path: str
+    source: str
+    classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
+    detected: bool = False
+    capabilities: list[str] = field(default_factory=list)
+    detected_at: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA:
+            raise ContractError(f"unsupported Obsidian vault schema {self.schema!r}")
+        for name in ("workspace", "vault_id", "source"):
+            _required(getattr(self, name), name)
+        _safe_relative_path(self.path)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ObsidianNoteRef:
+    schema: str = OBSIDIAN_NOTE_REF_SCHEMA
+    version: str = "v1"
+    workspace: str
+    vault_id: str
+    path: str
+    source: str
+    classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
+    content_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
+    previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    updated_at: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
+    outcome: str = ""
+    warnings: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != OBSIDIAN_NOTE_REF_SCHEMA:
+            raise ContractError(f"unsupported Obsidian note ref schema {self.schema!r}")
+        for name in ("workspace", "vault_id", "source"):
+            _required(getattr(self, name), name)
+        _safe_relative_path(self.path)
+        _hash(self.content_hash, "content_hash")
+        if self.previous_hash is not None:
+            _hash(self.previous_hash, "previous_hash")
+
+
+@dataclass(frozen=True, kw_only=True)
+class ObsidianConflict:
+    schema: str = OBSIDIAN_CONFLICT_SCHEMA
+    version: str = "v1"
+    workspace: str
+    vault_id: str
+    path: str
+    source: str
+    classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
+    baseline_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
+    vault_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
+    candidate_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
+    detected_at: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
+    outcome: Literal["conflict", "resolved", "denied"] = "conflict"
+    warnings: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=lambda: ["manual conflict resolution required"])
+
+    def __post_init__(self) -> None:
+        if self.schema != OBSIDIAN_CONFLICT_SCHEMA:
+            raise ContractError(f"unsupported Obsidian conflict schema {self.schema!r}")
+        for name in ("workspace", "vault_id", "source"):
+            _required(getattr(self, name), name)
+        _safe_relative_path(self.path)
+        for name in ("baseline_hash", "vault_hash", "candidate_hash"):
+            _hash(getattr(self, name), name)
+        if self.outcome == "conflict" and not self.unresolved:
+            raise ContractError("unresolved conflict must retain an unresolved reason")
+
+
+@dataclass(frozen=True, kw_only=True)
+class ObsidianExportProfile:
+    schema: str = OBSIDIAN_EXPORT_PROFILE_SCHEMA
+    version: str = "v1"
+    workspace: str
+    vault_id: str
+    source: str
+    classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
+    mode: Literal["export_only", "import_read_only", "reviewed_sync"] = "export_only"
+    include_frontmatter: bool = True
+    include_relations: bool = True
+    template: str = ""
+    allowed_extensions: list[str] = field(default_factory=lambda: [".md"])
+    provenance: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != OBSIDIAN_EXPORT_PROFILE_SCHEMA:
+            raise ContractError(f"unsupported Obsidian export profile schema {self.schema!r}")
+        for name in ("workspace", "vault_id", "source"):
+            _required(getattr(self, name), name)
+        if not self.allowed_extensions:
+            raise ContractError("allowed_extensions must not be empty")
 

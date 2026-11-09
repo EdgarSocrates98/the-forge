@@ -154,10 +154,18 @@ from theforge.contracts.observation import (
     GlobalEconomyReceipt,
 )
 from theforge.contracts.obsidian import (
+    OBSIDIAN_CONFLICT_SCHEMA,
+    OBSIDIAN_EXPORT_PROFILE_SCHEMA,
+    OBSIDIAN_NOTE_REF_SCHEMA,
     OBSIDIAN_SYNC_PLAN_SCHEMA,
     OBSIDIAN_SYNC_RECEIPT_SCHEMA,
+    OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA,
+    ObsidianConflict,
+    ObsidianExportProfile,
+    ObsidianNoteRef,
     ObsidianSyncPlan,
     ObsidianSyncReceipt,
+    ObsidianVaultDescriptor,
 )
 from theforge.contracts.orchestration import (
     ORCHESTRATION_REPORT_SCHEMA,
@@ -466,6 +474,14 @@ __all__ = [
     "knowledge_canonical_json",
     "OBSIDIAN_SYNC_PLAN_SCHEMA",
     "OBSIDIAN_SYNC_RECEIPT_SCHEMA",
+    "OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA",
+    "OBSIDIAN_NOTE_REF_SCHEMA",
+    "OBSIDIAN_CONFLICT_SCHEMA",
+    "OBSIDIAN_EXPORT_PROFILE_SCHEMA",
+    "ObsidianVaultDescriptor",
+    "ObsidianNoteRef",
+    "ObsidianConflict",
+    "ObsidianExportProfile",
     "ObsidianSyncPlan",
     "ObsidianSyncReceipt",
     "InstallStep",

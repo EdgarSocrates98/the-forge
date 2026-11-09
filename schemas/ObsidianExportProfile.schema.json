@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allowed_extensions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted"
+      ]
+    },
+    "include_frontmatter": {
+      "type": "boolean"
+    },
+    "include_relations": {
+      "type": "boolean"
+    },
+    "mode": {
+      "enum": [
+        "export_only",
+        "import_read_only",
+        "reviewed_sync"
+      ]
+    },
+    "provenance": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "template": {
+      "type": "string"
+    },
+    "unresolved": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "vault_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workspace": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "workspace",
+    "vault_id",
+    "source"
+  ],
+  "title": "ObsidianExportProfile",
+  "type": "object"
+}

@@ -12,8 +12,12 @@ from theforge.contracts import (
     ExecutionResult,
     ForgeManifest,
     HealthReport,
+    ObsidianConflict,
+    ObsidianExportProfile,
+    ObsidianNoteRef,
     ObsidianSyncPlan,
     ObsidianSyncReceipt,
+    ObsidianVaultDescriptor,
     Request,
     Response,
     RiskAssessment,
@@ -72,6 +76,31 @@ def test_obsidian_sync_contracts_validate_and_keep_conflicts_explicit() -> None:
     )
     Draft202012Validator(json_schema(ObsidianSyncPlan)).validate(to_dict(plan))
     Draft202012Validator(json_schema(ObsidianSyncReceipt)).validate(to_dict(receipt))
+    descriptor = ObsidianVaultDescriptor(
+        workspace="ws",
+        vault_id="vault",
+        path="notes",
+        source="product-forge",
+    )
+    note = ObsidianNoteRef(
+        workspace="ws",
+        vault_id="vault",
+        path="notes/runbook.md",
+        source="product-forge",
+        content_hash=digest,
+    )
+    conflict = ObsidianConflict(
+        workspace="ws",
+        vault_id="vault",
+        path="notes/runbook.md",
+        source="product-forge",
+        baseline_hash=digest,
+        vault_hash="b" * 64,
+        candidate_hash="c" * 64,
+    )
+    profile = ObsidianExportProfile(workspace="ws", vault_id="vault", source="product-forge")
+    for contract in (descriptor, note, conflict, profile):
+        Draft202012Validator(json_schema(type(contract))).validate(to_dict(contract))
     with pytest.raises(ValueError, match="unresolved"):
         ObsidianSyncPlan(path="note.md", content_hash=digest, outcome="conflict")
 

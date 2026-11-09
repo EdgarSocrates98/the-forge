@@ -66,6 +66,9 @@
       },
       "type": "array"
     },
+    "version": {
+      "type": "string"
+    },
     "warnings": {
       "items": {
         "type": "string"
