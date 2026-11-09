@@ -9,7 +9,7 @@
 | import batch — 10.000 notas | PASS; gate interno do benchmark passou |
 | chunking Markdown — 100 / 1.000 / 10.000 documentos | PASS; melhor caso `1,947 / 18,335 / 193,371 ms` (`~51,4k / 54,5k / 51,7k documentos/s`) |
 | SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `141,960 / 1.399,128 / 14.388,378 ms`; busca `0,397 / 0,422 / 0,892 ms`; DB `143.360 / 843.776 / 7.983.104 bytes` |
-| suíte Product Forge | 275 passed, 1 skipped em 72,04 s na execução isolada com `-q`; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
+| suíte Product Forge | 276 passed, 1 skipped em 78,99 s na execução isolada com `-q`; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
 | Forge Portal frontend | 603 testes; build verde sem warning de orçamento de componente |
 | Portal visual knowledge gate | 8 casos; axe=0, overflow=0, foco sem anel=0 |
 | E2E federado | 4 notas exportadas e 4 round-trippadas |
