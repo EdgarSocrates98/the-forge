@@ -16,7 +16,8 @@
 | SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `141,960 / 1.399,128 / 14.388,378 ms`; busca `0,397 / 0,422 / 0,892 ms`; DB `143.360 / 843.776 / 7.983.104 bytes` |
 | orçamento de contexto de recuperação — 100 / 1.000 / 10.000 documentos | PASS fixture; máximo estimado `12` tokens e média `11,333` por consulta; uso real de provider permanece `NOT_RUN` |
 | qualidade de citações — 100 / 1.000 / 10.000 documentos | PASS fixture; precision@3 `1,0`, recall@3 `1,0`, completude dos campos de citação `1,0`; não representa qualidade de resposta de provider |
-| suíte Product Forge não-benchmark | 283 passed, 1 skipped, 3 deselected com `-m not benchmark`; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
+| suíte Product Forge completa | 286 passed, 1 skipped em 79,58 s; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
+| suíte Product Forge não-benchmark | 283 passed, 1 skipped, 3 deselected com `-m not benchmark` |
 | benchmark pytest de filesystem — 10.000 arquivos recém-criados | PASS estrutural; `3 passed`; wall-clock de 16,90 s em uma amostra Windows é registrado para tendência, sem limite fixo de pass/fail; importação direta em árvore quente ficou em ~6–8 s |
 | Forge Portal frontend | 603 testes; build verde sem warning de orçamento de componente |
 | Portal visual knowledge gate | 8 casos; axe=0, overflow=0, foco sem anel=0 |
