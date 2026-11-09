@@ -46,13 +46,43 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
 árvores atuais:
 
 - Platform Forge: `uv run pytest -q --disable-warnings` terminou sem falhas;
-- Spark Forge Azure: `3189 passed, 9 skipped`; freshness focado adicional:
-  `31 passed`;
+- Spark Forge Azure: `3190 passed, 9 skipped`; freshness/knowledge focado adicional:
+  `54 passed`;
 - API Forge: gateway, refs, trust e projeção Obsidian: `23 passed`;
 - Spark Forge AWS: claims `0 divergências`; status, evals, sincronização de
-  skills e bundle offline também passaram;
+  skills e bundle offline passaram; `sparkforge-aws collect parquet-footer`
+  foi homologado contra S3 real com perfil AWS CLI Login, região explícita,
+  `status=ok`, 1 arquivo, 2 linhas e 2 colunas; o bucket/objeto temporários
+  foram excluídos e a consulta posterior retornou `NoSuchBucket`;
 - E2E federado: `notes_exported=4`, `notes_roundtripped=4`,
   `manual_conflict_detected=true`, `cloud_access=false`.
 
 Esses resultados atualizam a prova local, mas não removem os limites externos
 descritos no G12.
+
+### Evidência cloud AWS — smoke controlado
+
+Com autorização explícita do operador e no perfil `sparkforge`, foi criado um
+único bucket S3 temporário em `us-east-1`, marcado com `Owner=the-forge`,
+`Purpose=phase2-aws-profile-fix` e `ExpiresAt`. Um Parquet de 749 bytes com duas
+linhas foi enviado para um único objeto. O comando executado foi:
+
+```powershell
+uv run --extra aws --extra parquet sparkforge-aws collect parquet-footer `
+  --repo <temp-repo> `
+  --prefix s3://<bucket-temporario>/fixtures/ `
+  --max-files 1 --profile sparkforge --region us-east-1 `
+  --now 2026-11-09T11:37:51Z
+```
+
+Resultado observado: `status=ok`, `files_seen=1`, `files_read=1`, `num_rows=2`,
+`num_columns=2`. O objeto foi removido, o bucket foi excluído, `list-buckets`
+não encontrou nenhum bucket `theforge-phase2-*` e `get-bucket-location` do nome
+exato removido retornou `NoSuchBucket`. Nenhum recurso de compute, Glue, EMR,
+Athena, IAM, KMS ou rede foi criado.
+
+O smoke também encontrou e corrigiu a lacuna de ergonomia: PyArrow não aplicava
+confiavelmente `AWS_PROFILE` sozinho no Windows, e o perfil AWS CLI Login
+exigia `awscrt`. O `spark-forge-aws` agora aceita `--profile/--region` no
+coletor e instala `boto3[crt]`; credenciais não entram no artefato nem no
+comando de recoleta.
