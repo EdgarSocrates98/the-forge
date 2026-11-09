@@ -154,7 +154,10 @@ def collect(seconds: float) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--seconds", type=float, default=1.5, help="capture window per CLI")
+    # A cold ``uv run`` may resolve a project environment before the first
+    # screen.  5s keeps the smoke bounded while avoiding false negatives on a
+    # clean machine; callers can still lower it explicitly for warm runs.
+    parser.add_argument("--seconds", type=float, default=5.0, help="capture window per CLI")
     args = parser.parse_args()
     if args.seconds <= 0:
         parser.error("--seconds must be positive")

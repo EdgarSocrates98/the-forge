@@ -25,3 +25,15 @@ Pendências de homologação global: executar wheels isoladas de todas as Forjas
 Windows e Linux, verificar project/workspace/user em instalações limpas,
 desconectar sem apagar vault, reparar integração e concluir a matriz remota de
 CI. O teste opt-in do Product Forge deixa de ser considerado um bloqueio local.
+
+## TTY/TUI
+
+`uv run python scripts/cli_install_matrix.py --check` passou para 14 projetos,
+com `home_tui`, `wizard`, guard non-TTY e installers portáteis detectados.
+Executados com `uv run --with pywinpty` no Windows:
+
+- `cli_tty_smoke.py` — 14/14 superfícies visíveis;
+- `cli_tty_cancel_smoke.py` — 14/14 cancelamentos antes de mutação.
+
+O smoke de superfície usa 5 s por CLI para tolerar inicialização fria do `uv` em
+máquina limpa; a janela pode ser reduzida explicitamente em runs aquecidos.
