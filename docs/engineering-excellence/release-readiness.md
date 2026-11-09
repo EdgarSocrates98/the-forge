@@ -8,9 +8,9 @@
 - [x] path-boundary adversarial test
 - [x] Rui cp65001 terminal fix
 - [x] relevant docs and generated schema
-- [ ] specialist descriptors across all adapters
+- [x] specialist descriptors across all adapters — manifests e adapters homologados em `docs/phase2/SPECIALIST_ADAPTERS.md`
 - [ ] cross-Forge benchmark baseline
-- [ ] Portal evidence screen backed by API contract
+- [x] Portal evidence screen backed by API contract — fluxo governado e receipts cobertos por `docs/phase2/FINAL_ACCEPTANCE.md`
 - [ ] CI on every branch and required checks green
 
 ## Commands
