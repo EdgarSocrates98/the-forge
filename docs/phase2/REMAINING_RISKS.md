@@ -17,8 +17,11 @@
    existem no Product Forge e no Portal, com raiz autorizada, tokens escopados,
    resposta sem caminho físico e revogação que não apaga arquivos. Falta ensaio
    com identidade OIDC e operação concorrente em ambiente produtivo.
-5. **Portal federado:** o Portal opera os fluxos de conhecimento, mas ainda não
-   dispara o runner federado de fixtures como uma operação runtime.
+5. **Entrega entre superfícies:** o Portal executa a investigação governada em
+   runtime e opera os fluxos de conhecimento do Product Forge, mas ainda não
+   transforma automaticamente o recibo de uma investigação em documento
+   indexado no Product Forge/Obsidian. O runner federado de fixtures permanece
+   uma evidência independente e deliberadamente local.
 6. **Parser Obsidian:** Canvas/Bases são validações/projeções estruturais; não
    há promessa de reproduzir todo o runtime do aplicativo ou fórmulas.
 7. **Observabilidade de escala:** memória, scan, busca, reindexação e token

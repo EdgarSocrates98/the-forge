@@ -11,7 +11,9 @@ Adaptações aplicadas:
 - AWS mantém claims e receipts do caminho especialista;
 - Platform filtra applicability por contexto/capsule;
 - API preserva retrieval, contratos e change-control;
-- Portal expõe proveniência, classificação, revisão e indicators de freshness.
+- Portal expõe proveniência, classificação, revisão e indicators de freshness;
+  a superfície de conhecimento também mostra o estado do vault, histórico e
+  deep link somente quando a conexão escopada está autorizada.
 
 Estado: **PASS local nos adapters; homologação de dados vivos NOT_RUN**. Nenhum
 runbook ou incidente produzido por agente se torna instrução operacional

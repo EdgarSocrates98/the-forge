@@ -51,8 +51,15 @@ O resultado comprova, em conjunto:
 ## Limites da evidência
 
 Ainda não está comprovado por este runner: cloud real, Portal disparando a
-execução federada, provisionamento multiusuário de vault, rename/delete em
+execução do runner de fixtures, entrega automática de um recibo de investigação
+ao índice Product Forge/Obsidian, provisionamento multiusuário de vault, rename/delete em
 escala, falha de disco/permissão ou ensaio instalável pelo Portal. O Product
 Forge possui gates locais separados para rename/delete, lock concorrente entre
 processos, kill recovery e benchmark de 10.000 notas; eles não devem ser
 inferidos como operação federada ou de produção a partir deste resultado.
+
+O Portal possui uma lane runtime independente e validada para
+`/investigations/plan` → `/investigations/run` → `GET /investigations`, com plano
+assinado, confirmação explícita e persistência redigida de
+`OrchestrationReport`. Essa lane não é incorporada ao runner fixture-only para
+manter a evidência de formato e a evidência de orquestração separadas.

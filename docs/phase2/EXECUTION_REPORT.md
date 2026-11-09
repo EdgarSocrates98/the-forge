@@ -11,12 +11,12 @@ de execução em cloud ou em vault de usuário.
 | G2 contratos/schemas | PASS | `tests/test_schemas.py` — 22 passed; schemas Obsidian v1 | compatibilidade externa não foi exercitada |
 | G3 segurança/autorização | PASS local | traversal, symlink/reparse, hardlink, classificação, raiz autorizada e prompt-safety | permissão real e vault multiusuário não executados |
 | G4 formatos | PASS local | Markdown, frontmatter, links, embeds, Canvas/Bases estruturais | não é parser completo do aplicativo Obsidian |
-| G5 integridade de sync | PASS local | Product Forge — 259 passed, 1 skipped; plan/baseline/conflict/atomic/rollback/skip/lock | disk full/permission denied reais não executados |
+| G5 integridade de sync | PASS local | Product Forge — 264 passed, 1 skipped; plan/baseline/conflict/atomic/rollback/skip/lock | disk full/permission denied reais não executados |
 | G6 adapters | PASS fixture | AWS, Azure, API e Platform no runner federado | sem cloud real |
 | G7 recuperação agêntica | PARTIAL | processo encerrado durante temporário e recuperação subsequente verificados | disk full e permission denied reais pendentes |
-| G8 E2E federado | PASS fixture | `FEDERATED_E2E_EVIDENCE.md` | Portal não dispara o runner em runtime |
-| G9 Portal/UX | PASS local | 600 testes frontend; Nova investigação com evidências, plano assinado, execução federada e recibo; gate visual 8/8, axe/overflow/foco = 0; pacote instalado fora do checkout com CLI/TUI/status/start estático e HTTP 200 | Portal ainda não dispara a cadeia Portal → Product Forge/Obsidian em runtime |
-| G10 instalação/distribuição | PASS local | matriz Python 12/12 wheel→venv→CLI passou no Windows e Linux WSL2; matriz limpa do wheel The Forge project/workspace/user passou com apply/uninstall; Product Forge wheel/venv/Portal fake passou; `forge-cli` e Portal Node build/pack passaram; matriz TTY/TUI 14/14 e cancelamento 14/14 verdes; MCP handshake real PASS com 15 tools e exit code 0 | OIDC e matriz remota global ainda pendentes |
+| G8 E2E federado | PASS fixture | `FEDERATED_E2E_EVIDENCE.md`; 4 notas, round-trip, Atlas, Lens, Bridge e conflito manual | não é homologação cloud/vault de usuário; runner de fixtures é separado do endpoint de investigação |
+| G9 Portal/UX | PASS local | 600 testes frontend; Nova investigação com evidências, plano assinado, execução federada e recibo; conhecimento com conexão, preview, import/export, conflitos, histórico e deep link Obsidian; gate visual 8/8, axe/overflow/foco = 0; pacote instalado fora do checkout com CLI/TUI/status/start estático e HTTP 200 | Portal ainda não entrega automaticamente um recibo de investigação ao índice Product Forge/Obsidian |
+| G10 instalação/distribuição | PASS local | matriz Python 12/12 wheel→venv→CLI passou no Windows e Linux WSL2; matriz limpa do wheel The Forge project/workspace/user passou com apply/uninstall; Product Forge wheel/venv/Portal fake passou; `forge-cli` e Portal Node build/pack passaram; matriz TTY/TUI 14/14 e cancelamento 14/14 verdes; MCP handshake real PASS com 15 tools e exit code 0 | OIDC e matriz remota global ainda pendentes; Product Forge agora publica 16 tools quando instalado |
 | G11 performance/regressão | PASS local | benchmark 100/1.000/10.000 e suíte Product Forge | métricas de memória/reindexação ainda não são baseline completo |
 | G12 release readiness | BLOCKED | The Forge e Product Forge têm CI remoto verde; base funcional integrada | aceite global ainda depende da matriz instalada de todas as Forjas e dos riscos operacionais descritos em `REMAINING_RISKS.md` |
 
@@ -25,7 +25,7 @@ de execução em cloud ou em vault de usuário.
 ```powershell
 cd E:\projetos\FORJAS\product-forge
 uv run pytest -q -rs
-# 259 passed, 1 skipped (installed-system lane opt-in)
+# 264 passed, 1 skipped (installed-system lane opt-in)
 
 cd E:\projetos\FORJAS\the-forge
 uv run python scripts/phase2_federated_obsidian_e2e.py --repos-root E:\projetos\FORJAS

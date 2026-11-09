@@ -9,8 +9,8 @@
 | import batch — 10.000 notas | PASS; gate interno do benchmark passou |
 | chunking Markdown — 100 / 1.000 / 10.000 documentos | PASS; melhor caso `1,947 / 18,335 / 193,371 ms` (`~51,4k / 54,5k / 51,7k documentos/s`) |
 | SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `141,960 / 1.399,128 / 14.388,378 ms`; busca `0,397 / 0,422 / 0,892 ms`; DB `143.360 / 843.776 / 7.983.104 bytes` |
-| suíte Product Forge | 258 passed, 1 skipped em 62,12 s na execução com `-rs`; regression gate 82,07% |
-| Forge Portal frontend | 597 testes; build verde |
+| suíte Product Forge | 264 passed, 1 skipped em 89,29 s na execução com `-q` |
+| Forge Portal frontend | 600 testes; build verde |
 | Portal visual knowledge gate | 8 casos; axe=0, overflow=0, foco sem anel=0 |
 | E2E federado | 4 notas exportadas e 4 round-trippadas |
 

@@ -14,7 +14,14 @@ Integrações complementares:
 - Agent Bridge aplica allowlist, workspace, principal, sessão e reautorização;
 - Forge Lens recebe receipts/traces sanitizados;
 - Forge Portal apresenta captura, preview, import, export revisado, conflitos,
-  histórico e rollback.
+  histórico, rollback e deep link guardado para Obsidian.
+
+O catálogo federado do Product Forge publica, com implementação CLI/MCP
+correspondente, os workflows `obsidian.preview`, `obsidian.import`,
+`obsidian.sync.plan`, `obsidian.sync.apply`, `knowledge.evidence.list` e
+`knowledge.context.project`. O Portal projeta esses workflows separadamente de
+capabilities nativas, evitando declarar como capability algo que o resolver do
+The Forge não consegue executar.
 
 O runner `scripts/phase2_federated_obsidian_e2e.py` confirmou quatro notas
 exportadas e round-trippadas, uma relação Atlas, um span Lens e autorização do

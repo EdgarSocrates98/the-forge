@@ -33,10 +33,11 @@ histórico.
    Forge Lens já transforma receipts em traces sanitizados e o Agent Bridge já
    exige allowlist explícita. O Portal agora dispara uma investigação federada
    governada (`/investigations/plan` → `/investigations/run`) e persiste um
-   `OrchestrationReport` redigido. O runner local
-   `scripts/phase2_federated_obsidian_e2e.py` ainda comprova a cadeia Obsidian
-   completa somente com fixtures; falta o Portal entregar esse resultado ao
-   Product Forge/Obsidian em runtime.
+   `OrchestrationReport` redigido. A tela de conhecimento opera preview,
+   import/export, histórico e deep link Obsidian com vault autorizado. O runner
+   local `scripts/phase2_federated_obsidian_e2e.py` comprova a cadeia Obsidian
+   completa somente com fixtures; falta automatizar a entrega do recibo da
+   investigação ao índice Product Forge/Obsidian.
 6. **Homologação:** benchmark local 100/1.000/10.000 passou com importação em
    lote; rename/delete, final-revalidation, kill recovery, proteção de
    diretórios internos e concorrência entre processos estão cobertos, e o sync
