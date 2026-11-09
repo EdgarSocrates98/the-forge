@@ -7,7 +7,7 @@ de execução em cloud ou em vault de usuário.
 | Gate | Estado | Evidência principal | Limitação |
 |---|---|---|---|
 | G0 baseline/arquitetura | PASS | `BASELINE.md`, `OWNERSHIP_MATRIX.md` | índices de código são best-effort |
-| G1 correções P0/P1 | PASS | commits por Forge registrados no baseline; Product regression local 82,62%; The Forge CI `42564466899` e release-gates `42564466922` verdes | branches sem workflow publicado e demais branches especialistas ainda não têm um único run global consolidado |
+| G1 correções P0/P1 | PASS | commits por Forge registrados no baseline; Product regression local 82,62%; The Forge CI `42564466899` e release-gates `42564466922` verdes; auditoria local de 15 repositórios/50 workflows/335 ações externas sem refs mutáveis | branches sem workflow publicado e demais branches especialistas ainda não têm um único run global consolidado |
 | G2 contratos/schemas | PASS | `tests/test_schemas.py` e `tests/test_fuzz_contracts.py` verdes; `KnowledgeDocument/v1` agora valida `knowledge_state`; schemas Obsidian v1 | compatibilidade externa não foi exercitada |
 | G3 segurança/autorização | PASS local | traversal, symlink/reparse, hardlink, classificação, raiz autorizada e prompt-safety | permissão real e vault multiusuário não executados |
 | G4 formatos | PASS local | Markdown, frontmatter, links, embeds, Canvas estrutural e Bases em YAML oficial com serializer/validador de `forge_obsidian` | não é parser/runtime completo do aplicativo Obsidian; fórmulas e filtros não são executados pelo Product Forge |
