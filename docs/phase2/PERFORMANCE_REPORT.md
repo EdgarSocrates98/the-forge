@@ -17,8 +17,8 @@
 | orçamento de contexto de recuperação — 100 / 1.000 / 10.000 documentos | PASS fixture; máximo estimado `12` tokens e média `11,333` por consulta; gateway com provider controlado também passa |
 | qualidade de citações — 100 / 1.000 / 10.000 documentos | PASS fixture; precision@3 `1,0`, recall@3 `1,0`, completude dos campos de citação `1,0`; não representa qualidade de resposta de provider |
 | uso de tokens no gateway | PASS fixture; resposta `17/29` tokens e os mesmos valores persistidos no `budget_ledger`, 1 execução; provider real permanece `NOT_RUN` |
-| suíte Product Forge completa | 286 passed, 1 skipped em 79,58 s; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
-| suíte Product Forge não-benchmark | 283 passed, 1 skipped, 3 deselected com `-m not benchmark` |
+| suíte Product Forge completa | 290 passed, 1 skipped em 91,26 s; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
+| suíte Product Forge não-benchmark | 287 passed, 1 skipped, 3 deselected em 57,07 s com `-m not benchmark` |
 | benchmark pytest de filesystem — 10.000 arquivos recém-criados | PASS estrutural; `3 passed`; wall-clock de 16,90 s em uma amostra Windows é registrado para tendência, sem limite fixo de pass/fail; importação direta em árvore quente ficou em ~6–8 s |
 | Forge Portal frontend | 603 testes; build verde sem warning de orçamento de componente |
 | Portal visual knowledge gate | 8 casos; axe=0, overflow=0, foco sem anel=0 |
