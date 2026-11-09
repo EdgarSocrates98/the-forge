@@ -13,6 +13,7 @@ from theforge.contracts import (
     ExecutionResult,
     ForgeManifest,
     HealthReport,
+    KnowledgeDocument,
     ObsidianConflict,
     ObsidianExportProfile,
     ObsidianNoteRef,
@@ -137,6 +138,51 @@ def test_obsidian_contracts_expose_the_common_interoperability_metadata() -> Non
     )
     for contract in contracts:
         assert common <= {field.name for field in fields(contract)}
+
+
+def test_knowledge_document_exposes_governed_lifecycle_state() -> None:
+    document = KnowledgeDocument(
+        document_id="document-1",
+        source_id="source-1",
+        workspace_id="workspace-1",
+        title="README",
+        content_type="text/markdown",
+        original_artifact_ref="artifact://original/document-1",
+        normalized_artifact_ref="artifact://normalized/document-1",
+        content_hash="a" * 64,
+        version="v1",
+        classification="internal",
+        trust_state="observed",
+        created_at="2026-01-01T00:00:00Z",
+        updated_at="2026-01-01T00:00:00Z",
+        knowledge_state="draft",
+    )
+    assert to_dict(document)["knowledge_state"] == "draft"
+    assert json_schema(KnowledgeDocument)["properties"]["knowledge_state"]["enum"] == [
+        "captured",
+        "draft",
+        "reviewed",
+        "validated",
+        "deprecated",
+        "rejected",
+    ]
+    with pytest.raises(ValueError, match="unsupported knowledge state"):
+        KnowledgeDocument(
+            document_id="document-1",
+            source_id="source-1",
+            workspace_id="workspace-1",
+            title="README",
+            content_type="text/markdown",
+            original_artifact_ref="artifact://original/document-1",
+            normalized_artifact_ref="artifact://normalized/document-1",
+            content_hash="a" * 64,
+            version="v1",
+            classification="internal",
+            trust_state="observed",
+            created_at="2026-01-01T00:00:00Z",
+            updated_at="2026-01-01T00:00:00Z",
+            knowledge_state="authoritative",  # type: ignore[arg-type]
+        )
 
 
 @pytest.mark.parametrize("outcome", ["skipped", "denied", "failed", "rolled_back"])

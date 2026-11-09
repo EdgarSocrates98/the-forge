@@ -17,6 +17,16 @@
     "document_id": {
       "type": "string"
     },
+    "knowledge_state": {
+      "enum": [
+        "captured",
+        "draft",
+        "reviewed",
+        "validated",
+        "deprecated",
+        "rejected"
+      ]
+    },
     "metadata": {
       "additionalProperties": {},
       "type": "object"

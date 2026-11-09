@@ -14,7 +14,14 @@ Adaptações aplicadas:
 - Portal expõe proveniência, classificação, revisão e indicators de freshness;
   a superfície de conhecimento também mostra o estado do vault, histórico e
   deep link somente quando a conexão escopada está autorizada.
+- `KnowledgeDocument/v1` agora carrega `knowledge_state` com o vocabulário
+  fechado; Product Forge persiste a máquina de estados em metadata e expõe a
+  transição pelo Portal/API. `validated` exige referências de evidência,
+  transições inválidas são recusadas e o histórico fica auditável.
+- Documentos importados entram como `captured`; projeções de investigações
+  produzidas por agentes entram como `draft`. A indexação nunca promove
+  conhecimento automaticamente.
 
-Estado: **PASS local nos adapters; homologação de dados vivos NOT_RUN**. Nenhum
-runbook ou incidente produzido por agente se torna instrução operacional
-autoritativa automaticamente.
+Estado: **PASS local nos adapters, contrato, API, Portal e suíte de performance;
+homologação de dados vivos NOT_RUN**. Nenhum runbook ou incidente produzido por
+agente se torna instrução operacional autoritativa automaticamente.
