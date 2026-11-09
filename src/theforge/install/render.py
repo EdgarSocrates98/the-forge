@@ -24,22 +24,25 @@ _AGENT_DIRS = {"codex": ".codex/agents"}
 
 def _skills_src() -> Path | None:
     here = Path(__file__).resolve()
-    for cand in (here, *here.parents):
-        repo_skills = cand / ".agents" / "skills"
-        if repo_skills.is_dir():
-            return repo_skills
     bundled = here.parents[1] / "host_assets" / "skills"
-    return bundled if bundled.is_dir() else None
+    if bundled.is_dir():
+        return bundled
+    # An editable checkout has one well-defined root.  Do not walk every
+    # ancestor: an installed wheel under a user's home would otherwise adopt
+    # unrelated ~/.agents/skills content (including quarantine directories).
+    repo_root = here.parents[3] if len(here.parents) > 3 else None
+    repo_skills = repo_root / ".agents" / "skills" if repo_root else None
+    return repo_skills if repo_skills and repo_skills.is_dir() else None
 
 
 def _agents_src() -> Path | None:
     here = Path(__file__).resolve()
-    for cand in (here, *here.parents):
-        repo_agents = cand / "agentic" / "agents"
-        if repo_agents.is_dir():
-            return repo_agents
     bundled = here.parents[1] / "host_assets" / "agents"
-    return bundled if bundled.is_dir() else None
+    if bundled.is_dir():
+        return bundled
+    repo_root = here.parents[3] if len(here.parents) > 3 else None
+    repo_agents = repo_root / "agentic" / "agents" if repo_root else None
+    return repo_agents if repo_agents and repo_agents.is_dir() else None
 
 
 def render(hosts: tuple[str, ...], *, skills: bool, agents: bool = False) -> dict[str, bytes]:

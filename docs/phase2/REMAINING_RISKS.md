@@ -1,13 +1,14 @@
 # Phase 2 — Remaining Risks
 
 1. **CI remoto global:** The Forge e Product Forge já possuem runs verdes
-   (`42557439135`, `42557064576`); ainda falta uma matriz consolidada de runs
+   (`42564466899`, `42564466922`); ainda falta uma matriz consolidada de runs
    verdes para todos os branches especialistas e para os repositórios sem
    workflow publicado nesse branch.
 2. **Matriz instalada:** 12/12 wheels Python passaram em venvs isolados no
-   Windows e os dois projetos Node passaram build/pack; falta executar a mesma
-   matriz Python em Linux, além de verificar project/workspace/user em
-   instalações limpas e o Portal instalável fora do checkout.
+   Windows e Linux WSL2; a matriz limpa do wheel The Forge passou
+   project/workspace/user com apply/uninstall; o Portal também foi instalado
+   fora do checkout e respondeu por CLI/TUI/status/start estático. O risco de
+   distribuição restante é operacional (OIDC/CI global), não o caminho local.
 3. **Falhas de infraestrutura:** disk full e permission denied possuem fault
    injection estruturado, mas ainda não foram ensaiados em filesystem real;
    process kill possui cobertura determinística local, sem substituir o ensaio

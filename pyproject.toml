@@ -86,6 +86,12 @@ packages = ["src/theforge"]
 exclude = [
     "/adapters",
     "/.claude", "/.devin", "/.codex", "/.kiro", "/.tokensave", "/CLAUDE.md", "/AGENTS.md",
+    # Generated checkout state must never be walked into or shipped in the
+    # source distribution.  Besides bloating the archive, these directories
+    # can contain platform-specific links, caches and local audit material.
+    "/.git", "/.venv", "/.audit-work", "/.codebase-memory", "/.pytest_cache",
+    "/.mypy_cache", "/.ruff_cache", "/.coverage", "/dist", "/build", "/node_modules",
+    "/audit", "/coverage", "/.pytest_tmp", "/.pytest-tmp",
 ]
 
 [tool.pytest.ini_options]
