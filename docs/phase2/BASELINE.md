@@ -12,8 +12,8 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 | spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
-| the-forge | `phase2/baseline-observability-20261108` / `598ec46` | artefatos de auditoria não rastreados | release-gates em execução após contratos de estados recuperáveis |
-| product-forge | `fix/bridge-embedded-parity-20261108` / `a37ee37` | `.coverage` não rastreado | CI verde em `053f35a`; hardening de preview/authorization aguarda CI |
+| the-forge | `phase2/baseline-observability-20261108` / `685a7f5` | artefatos de auditoria não rastreados | release-gates em execução após contratos de estados recuperáveis |
+| product-forge | `fix/bridge-embedded-parity-20261108` / `d24164b` | `.coverage` não rastreado | CI local verde para rollback/Obsidian; run remoto deste commit pendente |
 | forge-portal | `feat/api-operations-contract-surface-20261108` / `4ca364e` | capturas/auditorias modificadas | build, 596 testes e gate visual local verdes |
 | code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
 | forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
@@ -50,9 +50,8 @@ fase.
 - API Forge já possui contracts/knowledge, retrieval e gateway/change-control;
   deve receber adapters e projeções, não um segundo motor de busca.
 - Product Forge contém a implementação Obsidian mais explícita encontrada:
-  validação de Canvas/Bases, import/export Markdown e limites de tamanho/path.
-  A escrita atual ainda precisa ser atomicamente segura e não sobrescrever
-  alterações manuais.
+  validação de Canvas/Bases, import/export Markdown, limites de tamanho/path,
+  escrita atômica, baseline/conflict e rollback condicionado por hash.
 - Forge Portal já possui páginas de federation, versions, tasks, graph,
   installation e operações plan→apply. A integração de vault deve reutilizar a
   API e o design system existentes.
@@ -80,12 +79,15 @@ fase.
   em 8 combinações com axe=0, overflow=0 e foco sem anel=0.
 
 Code Atlas agora possui projeção body-free de relações Obsidian e Forge Lens
-possui adapter de receipts sanitizados; ambos são pontos de integração reais,
-mas ainda não são uma execução cross-Forge automática.
+possui adapter de receipts sanitizados. O runner local
+`scripts/phase2_federated_obsidian_e2e.py` comprova a cadeia com quatro
+adapters, Product Forge, Code Atlas, Lens e Agent Bridge; o resultado está em
+`docs/phase2/FEDERATED_E2E_EVIDENCE.md`.
 
-O que ainda não está comprovado: E2E cross-Forge em um ambiente instalável,
-execução efetiva Code Atlas/Lens a partir do Portal, geração de artefatos em
-vault real autorizado e testes de carga de 100/1.000 notas.
+O que ainda não está comprovado: execução efetiva disparada pelo Portal,
+geração de artefatos em vault real autorizado, provisionamento multiusuário,
+rename/delete e concorrência completos, falhas de disco/permissão e carga de
+10.000 notas.
 
 ## Evidência de CI reproduzida
 

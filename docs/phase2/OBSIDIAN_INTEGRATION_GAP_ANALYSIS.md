@@ -20,25 +20,28 @@ histórico.
    são projetados sem reescrita; a resolução contra arquivos reais do vault e
    rename/delete ainda precisam de testes dedicados.
 3. **Estados de sync:** `created`, `unchanged`, `updated` e `conflict` estão
-   implementados; `skipped`, `denied`, `failed` e `rolled_back` ainda não têm
-   uma API pública completa de resolução/recovery.
+   implementados; `skipped`, `denied`, `failed` e `rolled_back` já existem no
+   contrato versionado, mas ainda não têm uma API pública completa de
+   resolução/recovery no Product Forge.
 4. **Portal vault configuration:** a integração usa `FORGE_OBSIDIAN_VAULT` e,
    opcionalmente, `FORGE_OBSIDIAN_ALLOWED_ROOT`; o Portal já expõe um descritor
    seguro com capacidades e recusa vault fora da raiz autorizada. Ainda falta
    uma tela administrativa para provisionamento/revogação multiusuário; essa
    configuração permanece deliberadamente no serviço, não em input web.
-5. **Observabilidade/federation:** Code Atlas já projeta relações body-free e
-   Forge Lens já transforma receipts em traces sanitizados; falta conectar esses
-   adapters à execução cross-Forge e ao source allowlist do Agent Bridge.
-6. **Homologação:** faltam E2E cross-Forge instalável, concorrência/rename/delete
-   completos, teste de disco cheio/permissão e benchmark com 100/1.000 notas.
+5. **Observabilidade/federation:** Code Atlas já projeta relações body-free,
+   Forge Lens já transforma receipts em traces sanitizados e o Agent Bridge já
+   exige allowlist explícita. O runner local `scripts/phase2_federated_obsidian_e2e.py`
+   comprova a cadeia com fixtures; ainda falta o Portal disparar essa execução
+   em runtime.
+6. **Homologação:** faltam concorrência/rename/delete completos, teste de disco
+   cheio/permissão, benchmark de 10.000 notas e ensaio instalável pelo Portal.
 
 ## Sequência de implementação
 
 1. Remediação AWS claims, Platform gateway/applicability e Azure freshness.
 2. Contratos neutros + core de vault com escrita atômica e sync planner.
 3. Adapters dos quatro especialistas e receipts/proveniência.
-4. Agent Bridge/Code Atlas/Lens integration points.
+4. Agent Bridge/Code Atlas/Lens integration points e E2E federado com fixtures.
 5. Portal flows capture/query/export/history/review.
 6. Round-trip/security/recovery/performance/homologation.
 
