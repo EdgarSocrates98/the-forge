@@ -20,7 +20,7 @@
 | suíte Product Forge completa | 291 passed, 1 skipped em 87,64 s; `forge_obsidian` e o wheel/sdist `forge-obsidian` validados em instalação isolada |
 | suíte Product Forge não-benchmark | 287 passed, 1 skipped, 3 deselected; o teste do benchmark observável e a regressão de RSS também passaram na suíte completa |
 | benchmark pytest de filesystem — 10.000 arquivos recém-criados | PASS estrutural; `3 passed`; wall-clock de 16,90 s em uma amostra Windows é registrado para tendência, sem limite fixo de pass/fail; importação direta em árvore quente ficou em ~6–8 s |
-| Forge Portal frontend | 603 testes; build verde sem warning de orçamento de componente |
+| Forge Portal frontend | 624 testes em 57 arquivos; build verde sem warning de orçamento de componente |
 | Portal visual knowledge gate | 8 casos; axe=0, overflow=0, foco sem anel=0 |
 | E2E federado | 4 notas exportadas e 4 round-trippadas |
 
