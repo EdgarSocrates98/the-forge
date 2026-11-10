@@ -29,6 +29,13 @@ criação do lock e retornou `OBSIDIAN-LOCK-FAILED`/`sync_state=failed`, sem
 nota, receipt ou temporário parcial. Isso não substitui o ensaio em
 host/vault produtivo.
 
+Revalidação controlada em 2026-11-10:
+`uv run pytest -q tests/test_obsidian.py -k "process_exit or rollback or atomic or permission or lock or concurrent"`
+retornou **10 passed, 40 deselected**. O subconjunto inclui subprocesso que
+encerra durante a escrita, recuperação posterior, rollback protegido por hash,
+concorrência entre processos, falha de replace, permissão negada e falha do
+lock por ENOSPC.
+
 ## Evidência de filesystem cheio controlado
 
 Ambiente: Docker `python:3.12-slim`, código canônico montado somente para

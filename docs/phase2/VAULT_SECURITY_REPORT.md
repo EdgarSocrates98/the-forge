@@ -22,6 +22,10 @@ Estado: **PASS local; lacunas operacionais explicitadas**.
 lane opcional de sistema instalado quando o opt-in não está habilitado; a lane
 foi executada separadamente no Windows e passou (`1 passed`).
 
+O subconjunto operacional de sync foi revalidado em 2026-11-10 com
+`uv run pytest -q tests/test_obsidian.py -k "process_exit or rollback or atomic or permission or lock or concurrent"`:
+**10 passed, 40 deselected**.
+
 ## Limitações
 
 Permission denied foi validado com ACL real no Windows e disk full foi
