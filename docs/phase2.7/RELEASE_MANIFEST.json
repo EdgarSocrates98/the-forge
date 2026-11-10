@@ -1,7 +1,7 @@
 {
   "schema": "the-forge/Phase2.7ReleaseManifest/v1",
   "cycle": "2.7",
-  "verified_at": "2026-11-10T13:30:00-03:00",
+  "verified_at": "2026-11-10T13:55:37-03:00",
   "repositories": [
     "spark-forge-aws", "spark-forge-azure", "api-forge", "platform-forge",
     "the-forge", "product-forge", "forge-agent-bridge", "code-atlas-forge",
@@ -9,25 +9,20 @@
     "forge-cli", "forge-doctor-api", "forge-doctor-data"
   ],
   "gates": "see QUALITY_GATE_LEDGER.md",
-  "publication": "PARTIAL",
+  "publication": "COMPLETE_WITH_EXTERNAL_LIMITATIONS",
   "publication_evidence": {
     "pypi_green_runs": [
       42851531014, 42851527774, 42851528551, 42851528286,
       42851528166, 42851528120, 42851527596, 42851527863,
-      42851528746, 42851530500, 42851530188, 42851528617
+      42851528746, 42851530500, 42851530188, 42851528617,
+      42859257773
     ],
     "npm_green_runs": [42853696601],
     "release_dry_run_green_runs": [42854463221],
     "not_applicable": ["forge-portal", "api-sentinel-forge"],
-    "blocked_runs": {
-      "forge-obsidian": {
-        "run": 42854414595,
-        "reason": "PyPI invalid-publisher; Trusted Publisher not configured"
-      }
-    }
+    "blocked_runs": {}
   },
   "limitations": [
-    "forge-obsidian requires a PyPI Trusted Publisher for product-forge/.github/workflows/publish-forge-obsidian.yml",
     "Cycle10.2 S12/S13 remain blocked without external provider credentials"
   ]
 }
