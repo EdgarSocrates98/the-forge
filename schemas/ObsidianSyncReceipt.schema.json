@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "backup_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted"
+      ]
+    },
+    "content_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "exported_at": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    },
+    "previous_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provenance": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "size": {
+      "type": "integer"
+    },
+    "source": {
+      "type": "string"
+    },
+    "sync_state": {
+      "enum": [
+        "created",
+        "updated",
+        "unchanged",
+        "skipped",
+        "denied",
+        "failed",
+        "rolled_back"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "unresolved": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "vault_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workspace": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "path",
+    "content_hash",
+    "sync_state"
+  ],
+  "title": "ObsidianSyncReceipt",
+  "type": "object"
+}

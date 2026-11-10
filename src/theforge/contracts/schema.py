@@ -58,6 +58,12 @@ from theforge.contracts import (
     McpServerEntry,
     MemoryPack,
     MemorySummary,
+    ObsidianConflict,
+    ObsidianExportProfile,
+    ObsidianNoteRef,
+    ObsidianSyncPlan,
+    ObsidianSyncReceipt,
+    ObsidianVaultDescriptor,
     OrchestrationReport,
     PlanEstimate,
     PlanRequest,
@@ -188,6 +194,13 @@ EXPORTED: tuple[type[Any], ...] = (
     KnowledgeContextPack,
     KnowledgeRelation,
     KnowledgeImportReceipt,
+    # Obsidian interoperability (Phase 2)
+    ObsidianSyncPlan,
+    ObsidianSyncReceipt,
+    ObsidianVaultDescriptor,
+    ObsidianNoteRef,
+    ObsidianConflict,
+    ObsidianExportProfile,
     # specialized agent registry (W3)
     AgentSpec,
     FederatedCapabilityDescriptor,
@@ -264,6 +277,12 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     KnowledgeImportReceipt,
     # agent specs are authored core data too.
     AgentSpec,
+    ObsidianSyncPlan,
+    ObsidianSyncReceipt,
+    ObsidianVaultDescriptor,
+    ObsidianNoteRef,
+    ObsidianConflict,
+    ObsidianExportProfile,
 )
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from jsonschema import Draft202012Validator
 
 from theforge.contracts import (
@@ -11,6 +12,12 @@ from theforge.contracts import (
     ExecutionResult,
     ForgeManifest,
     HealthReport,
+    ObsidianConflict,
+    ObsidianExportProfile,
+    ObsidianNoteRef,
+    ObsidianSyncPlan,
+    ObsidianSyncReceipt,
+    ObsidianVaultDescriptor,
     Request,
     Response,
     RiskAssessment,
@@ -51,6 +58,73 @@ def test_real_instances_validate() -> None:
     Draft202012Validator(json_schema(TaskSpec)).validate(to_dict(task))
     result = ExecutionResult(producer=PRODUCER, created_at=utc_now(), status="ok")
     Draft202012Validator(json_schema(ExecutionResult)).validate(to_dict(result))
+
+
+def test_obsidian_sync_contracts_validate_and_keep_conflicts_explicit() -> None:
+    digest = "a" * 64
+    plan = ObsidianSyncPlan(
+        path="exports/runbook.md",
+        content_hash=digest,
+        outcome="created",
+        warnings=["confirmation required for mutation"],
+    )
+    receipt = ObsidianSyncReceipt(
+        path="exports/runbook.md",
+        content_hash=digest,
+        sync_state="created",
+        size=10,
+        workspace="ws",
+        vault_id="vault",
+        outcome="created",
+        provenance={"adapter": "fixture"},
+    )
+    Draft202012Validator(json_schema(ObsidianSyncPlan)).validate(to_dict(plan))
+    Draft202012Validator(json_schema(ObsidianSyncReceipt)).validate(to_dict(receipt))
+    descriptor = ObsidianVaultDescriptor(
+        workspace="ws",
+        vault_id="vault",
+        path="notes",
+        source="product-forge",
+    )
+    note = ObsidianNoteRef(
+        workspace="ws",
+        vault_id="vault",
+        path="notes/runbook.md",
+        source="product-forge",
+        content_hash=digest,
+    )
+    conflict = ObsidianConflict(
+        workspace="ws",
+        vault_id="vault",
+        path="notes/runbook.md",
+        source="product-forge",
+        baseline_hash=digest,
+        vault_hash="b" * 64,
+        candidate_hash="c" * 64,
+    )
+    profile = ObsidianExportProfile(workspace="ws", vault_id="vault", source="product-forge")
+    for contract in (descriptor, note, conflict, profile):
+        Draft202012Validator(json_schema(type(contract))).validate(to_dict(contract))
+    with pytest.raises(ValueError, match="unresolved"):
+        ObsidianSyncPlan(path="note.md", content_hash=digest, outcome="conflict")
+
+
+@pytest.mark.parametrize("outcome", ["skipped", "denied", "failed", "rolled_back"])
+def test_obsidian_contracts_cover_recoverable_sync_states(outcome: str) -> None:
+    digest = "a" * 64
+    plan = ObsidianSyncPlan(
+        path="exports/runbook.md",
+        content_hash=digest,
+        outcome=outcome,
+        unresolved=["operator review required"] if outcome != "skipped" else [],
+    )
+    receipt = ObsidianSyncReceipt(
+        path="exports/runbook.md",
+        content_hash=digest,
+        sync_state=outcome,
+    )
+    assert plan.outcome == outcome
+    assert receipt.sync_state == outcome
 
 
 def test_schema_rejects_what_contracts_reject() -> None:
@@ -200,6 +274,8 @@ def test_new_optional_fields_published_in_schemas() -> None:
     assert {"executable", "fingerprint", "observed_version"} <= set(provider)
     assert "op" in json_schema(Response)["properties"]
     assert "op" not in json_schema(Response)["required"]
+    receipt_contract = json_schema(ObsidianSyncReceipt)["properties"]
+    assert {"workspace", "vault_id", "outcome", "provenance"} <= set(receipt_contract)
     candidate = json_schema(RoutingDecision)["properties"]["candidates"]["items"]
     assert candidate["properties"]["state"]["enum"] == [
         "supported",

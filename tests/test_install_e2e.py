@@ -82,6 +82,7 @@ def test_auto_dry_run(target: Path, tmp_path: Path) -> None:
 
 def test_mcp_verify_native_server(target: Path) -> None:
     proc = cli(target, "install", "mcp-verify", "--json")
+    assert proc.returncode == 0, proc.stderr
     doc = json.loads(proc.stdout)
     assert doc["status"] in ("PASS", "UNVERIFIED")
     assert doc["id"] == "mcp-handshake"
