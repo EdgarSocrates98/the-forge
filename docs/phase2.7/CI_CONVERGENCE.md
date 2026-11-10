@@ -11,7 +11,7 @@ the release evidence of record.
 | api-forge | `076ba0464f60` | run `42851528551` | PASS |
 | platform-forge | `dff655ce669d` | run `42851528286` | PASS |
 | the-forge | `4937393ef8a9` | run `42851528166` | PASS |
-| product-forge | `8ede30c554db` | run `42851528120` | PASS |
+| product-forge | `8ede30c554db` | run `42851528120`; forge-obsidian run `42859257773` | PASS |
 | forge-agent-bridge | `995e59ea9bba` | run `42851527596` | PASS |
 | code-atlas-forge | `c164ea5e2232` | run `42851527863`; release dry-run `42854463221` | PASS |
 | forge-lens | `cd9bba04bf19` | run `42851528746` | PASS |
@@ -22,8 +22,6 @@ the release evidence of record.
 | forge-doctor-api | `3a5a9a860318` | run `42851530188` | PASS |
 | forge-doctor-data | `38b7c67e3298` | run `42851528617` | PASS |
 
-The standalone `forge-obsidian` publish run `42854414595` built and verified
-the artifact, but PyPI rejected its OIDC exchange with `invalid-publisher`.
-The package has no PyPI project yet, so this requires an account owner to add
-the Trusted Publisher for `product-forge/.github/workflows/publish-forge-obsidian.yml`
-with environment `release`, then rerun the workflow.
+The standalone `forge-obsidian` publish run `42859257773` passed artifact
+build, checksum verification, PyPI Trusted Publishing, package visibility and
+clean import verification.

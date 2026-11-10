@@ -12,7 +12,7 @@ revalidated against its current remote main.
 | api-forge | `076ba0464f60` | v0.3.3 publish run 42851528551 PASS |
 | platform-forge | `dff655ce669d` | v0.3.3 publish run 42851528286 PASS |
 | the-forge | `4937393ef8a9` | v0.7.5 publish run 42851528166 PASS |
-| product-forge | `8ede30c554db` | v0.2.3 publish run 42851528120 PASS; forge-obsidian publisher pending |
+| product-forge | `8ede30c554db` | v0.2.3 publish run 42851528120 PASS; forge-obsidian run 42859257773 PASS |
 | forge-agent-bridge | `995e59ea9bba` | v0.2.2 publish run 42851527596 PASS |
 | code-atlas-forge | `c164ea5e2232` | v1.1.2 publish run 42851527863 PASS; release dry-run 42854463221 PASS |
 | forge-lens | `cd9bba04bf19` | v0.2.2 publish run 42851528746 PASS |
