@@ -133,7 +133,10 @@ def run_case(case: Case, seconds: float) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--seconds", type=float, default=3.0)
+    # A cold ``uv run`` may resolve a project environment before the first
+    # screen. Keep the default aligned with cli_tty_smoke so a clean machine
+    # does not turn startup latency into a false cancellation failure.
+    parser.add_argument("--seconds", type=float, default=6.0)
     args = parser.parse_args()
     if args.seconds <= 0:
         parser.error("--seconds must be positive")

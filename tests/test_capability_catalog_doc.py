@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.helpers import adapter_subprocess_env
 
 from theforge.contracts import PROTOCOL_V1
 from theforge.contracts.taxonomy import (
@@ -88,7 +89,14 @@ def _describe(provider: str) -> dict[str, Any]:
         "describe",
     ]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:  # never the repo
-        out = subprocess.run(argv, input=request, capture_output=True, timeout=120, cwd=cwd)
+        out = subprocess.run(
+            argv,
+            input=request,
+            capture_output=True,
+            timeout=120,
+            cwd=cwd,
+            env=adapter_subprocess_env(),
+        )
     assert out.returncode == 0, out.stderr
     response = json.loads(out.stdout)
     assert response["status"] == "ok", response

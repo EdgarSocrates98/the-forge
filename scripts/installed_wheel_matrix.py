@@ -79,7 +79,7 @@ def _project_result(repo: str, cli: str) -> dict[str, Any]:
     }
 
 
-def run(workspace: Path, work_root: Path) -> dict[str, Any]:
+def run(workspace: Path, work_root: Path, *, timeout: int = 900) -> dict[str, Any]:
     if shutil.which("uv") is None:
         raise RuntimeError("uv is required on PATH")
 
@@ -98,6 +98,7 @@ def run(workspace: Path, work_root: Path) -> dict[str, Any]:
         build = _run(
             ["uv", "build", "--wheel", "--sdist", "--out-dir", str(output_dir)],
             cwd=repo,
+            timeout=timeout,
         )
         if build.returncode:
             result["build"] = "FAIL"
@@ -112,12 +113,16 @@ def run(workspace: Path, work_root: Path) -> dict[str, Any]:
         wheel = wheels[0]
         result["wheel"] = wheel.name
 
-        venv_result = _run(["uv", "venv", str(venv)], cwd=workspace)
+        venv_result = _run(["uv", "venv", str(venv)], cwd=workspace, timeout=timeout)
         if venv_result.returncode:
             result["error"] = f"venv creation failed: {_tail(venv_result)}"
             continue
         python = _python_path(venv)
-        install = _run(["uv", "pip", "install", "--python", str(python), str(wheel)], cwd=workspace)
+        install = _run(
+            ["uv", "pip", "install", "--python", str(python), str(wheel)],
+            cwd=workspace,
+            timeout=timeout,
+        )
         if install.returncode:
             result["install"] = "FAIL"
             result["error"] = f"wheel install failed: {_tail(install)}"
@@ -129,7 +134,7 @@ def run(workspace: Path, work_root: Path) -> dict[str, Any]:
             result["cli_help"] = "FAIL"
             result["error"] = f"published CLI entry point missing: {entrypoint.name}"
             continue
-        help_result = _run([str(entrypoint), "--help"], cwd=workspace)
+        help_result = _run([str(entrypoint), "--help"], cwd=workspace, timeout=timeout)
         result["cli_help"] = "PASS" if help_result.returncode == 0 else "FAIL"
         if help_result.returncode:
             result["error"] = f"CLI --help failed: {_tail(help_result)}"
@@ -154,14 +159,20 @@ def main() -> int:
     parser.add_argument("--repos-root", type=Path, default=WORKSPACE)
     parser.add_argument("--work-root", type=Path)
     parser.add_argument("--out", type=Path)
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=900,
+        help="per-command timeout in seconds (default: 900; useful on mounted filesystems)",
+    )
     args = parser.parse_args()
 
     if args.work_root:
         args.work_root.mkdir(parents=True, exist_ok=True)
-        receipt = run(args.repos_root.resolve(), args.work_root.resolve())
+        receipt = run(args.repos_root.resolve(), args.work_root.resolve(), timeout=args.timeout)
     else:
         with tempfile.TemporaryDirectory(prefix="forge-wheel-matrix-") as directory:
-            receipt = run(args.repos_root.resolve(), Path(directory))
+            receipt = run(args.repos_root.resolve(), Path(directory), timeout=args.timeout)
 
     text = json.dumps(receipt, ensure_ascii=False, indent=2) + "\n"
     if args.out:

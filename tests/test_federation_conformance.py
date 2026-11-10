@@ -23,6 +23,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from tests.helpers import adapter_subprocess_env
 
 from theforge.capability_graph import (
     build_capability_graph,
@@ -59,7 +60,14 @@ def _describe(module: str, replay: Path) -> tuple[ForgeManifest, dict]:
     """``python -m <adapter> --replay <dir> describe`` -> (ForgeManifest, raw payload)."""
     argv = [sys.executable, "-m", module, "--replay", str(replay), "describe"]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:
-        out = subprocess.run(argv, input=_REQUEST, capture_output=True, timeout=60, cwd=cwd)
+        out = subprocess.run(
+            argv,
+            input=_REQUEST,
+            capture_output=True,
+            timeout=60,
+            cwd=cwd,
+            env=adapter_subprocess_env(),
+        )
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
     assert response.status == "ok", response.error

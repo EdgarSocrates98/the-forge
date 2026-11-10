@@ -27,6 +27,7 @@ import re
 import stat
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from importlib import metadata as importlib_metadata
@@ -1658,30 +1659,57 @@ def mcp_verify(spec: ForgeSpec, *, timeout: int = 20) -> dict[str, Any]:
     if proc.stdin is None or proc.stdout is None:
         proc.kill()
         return {"id": "mcp-handshake", "status": "FAIL", "detail": "stdio pipes unavailable"}
+
+    # A Windows ``.cmd`` launcher can leave the real provider holding the
+    # wrapper's stderr handle after the wrapper exits.  Reading
+    # ``proc.stderr`` only during cleanup would then block the Portal worker
+    # forever (the MCP handshake itself may already have completed).  Drain
+    # stderr in a daemon pump and keep only a bounded tail instead.
+    stderr_tail = bytearray()
+
+    def _drain_stderr() -> None:
+        if proc.stderr is None:
+            return
+        for chunk in iter(proc.stderr.readline, b""):
+            stderr_tail.extend(chunk)
+            del stderr_tail[:-400]
+
+    threading.Thread(target=_drain_stderr, daemon=True, name="mcp-stderr").start()
     try:
         out = _mcp_handshake(proc, spec, timeout)
     except Exception as exc:  # handshake failures are FAIL, not crashes
         out = {"id": "mcp-handshake", "status": "FAIL", "detail": str(exc)}
     killed = False
+    # Kill the exact process tree on Windows so a cmd.exe shim cannot leave
+    # a specialist MCP child alive.  On other platforms the existing
+    # terminate/kill path remains the portable fallback.
+    if os.name == "nt" and proc.poll() is None:
+        try:
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+                check=False,
+            )
+        except Exception:  # noqa: S110 — best-effort tree cleanup
+            pass
     try:
-        proc.terminate()
+        if proc.poll() is None:
+            proc.terminate()
         proc.wait(timeout=3)
     except Exception:
         try:
             proc.kill()
+            proc.wait(timeout=3)
             killed = True
         except Exception:  # noqa: S110 — best-effort kill after terminate
             pass
-    stderr_tail = b""
-    try:
-        if proc.stderr is not None:
-            stderr_tail = proc.stderr.read()[-400:]
-    except Exception:  # noqa: S110 — server stderr is best-effort evidence
-        pass
     out["process"] = {
         "exit": ("clean" if proc.returncode == 0 else "killed" if killed else "terminated"),
         "returncode": proc.returncode,
-        "stderr_tail": stderr_tail.decode(errors="replace").strip()[-200:] or None,
+        "stderr_tail": bytes(stderr_tail).decode(errors="replace").strip()[-200:] or None,
     }
     return out
 

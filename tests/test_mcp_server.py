@@ -132,3 +132,34 @@ def test_workspace_install_writes_mcp_at_workspace_root(tmp_path: Path) -> None:
     assert receipt["status"] == "completed"
     config = json.loads((workspace / ".mcp.json").read_text(encoding="utf-8"))
     assert config["mcpServers"]["theforge"]["args"] == ["mcp", "serve"]
+
+
+def test_user_install_writes_mcp_at_isolated_user_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The user scope is real, isolated and reversible — not a project alias."""
+    home = tmp_path / "user-home"
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(home))
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+
+    receipt = service.install(
+        scope="user",
+        root=tmp_path / "ignored-project",
+        host="claude",
+        components=("mcp",),
+        yes=True,
+    )
+    assert receipt["status"] == "completed"
+    config = json.loads((home / ".mcp.json").read_text(encoding="utf-8"))
+    assert config["mcpServers"]["theforge"] == {
+        "command": "theforge",
+        "args": ["mcp", "serve"],
+    }
+
+    removed = service.uninstall(scope="user", root=tmp_path / "ignored-project")
+    assert removed["status"] in {"completed", "empty"}
+    if (home / ".mcp.json").exists():
+        assert "theforge" not in json.loads((home / ".mcp.json").read_text(encoding="utf-8")).get(
+            "mcpServers", {}
+        )

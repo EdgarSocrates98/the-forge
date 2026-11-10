@@ -22,6 +22,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from theforge import _forge_portal as fp
+from theforge.contracts.orchestration import OrchestrationReport
 from theforge.portal_adapter import TheForgePortal
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -465,6 +466,82 @@ def test_tasks_federation_executes_real_collect(target: Path) -> None:
         srv.server_close()
 
 
+def test_investigation_plan_and_run_are_signed_and_persisted(
+    target: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The Portal's investigation UX must reach the governed orchestrator.
+
+    The specialist subprocesses are deliberately replaced here: this test
+    proves the Portal contract (normalization, signed approval, execution and
+    receipt persistence) without making the unit suite depend on installed
+    specialist binaries.
+    """
+    from types import SimpleNamespace
+
+    from theforge import orchestrate
+
+    plan_report = OrchestrationReport(kind="plan", intent="diagnose spark", plan_status="planned")
+    run_report = OrchestrationReport(
+        kind="run",
+        intent="diagnose spark",
+        correlation_id="orch-portal-test",
+        plan_status="planned",
+    )
+    monkeypatch.setattr(
+        orchestrate,
+        "orchestrate_plan",
+        lambda *args, **kwargs: SimpleNamespace(report=plan_report),
+    )
+    monkeypatch.setattr(
+        orchestrate,
+        "orchestrate_run",
+        lambda *args, **kwargs: SimpleNamespace(report=run_report),
+    )
+    adapter = TheForgePortal(target)
+    srv = _server(adapter)
+    try:
+        code, planned = _call(
+            srv,
+            "POST",
+            "/investigations/plan",
+            {"intent": "diagnose spark", "inputs": ["runtime_log"]},
+        )
+        assert code == 200
+        assert planned["data"]["plan"]["authorized_risks"] == ["LOCAL_READ"]
+        assert planned["data"]["report"]["kind"] == "plan"
+
+        code, stale = _call(
+            srv,
+            "POST",
+            "/investigations/run",
+            {
+                "plan": {**planned["data"]["plan"], "intent": "tampered"},
+                "plan_token": planned["data"]["plan_token"],
+                "confirm": "execute",
+            },
+        )
+        assert code == 409
+        assert stale["error"]["code"] == "PORTAL-PLAN-STALE"
+
+        code, receipt = _call(
+            srv,
+            "POST",
+            "/investigations/run",
+            {
+                "plan": planned["data"]["plan"],
+                "plan_token": planned["data"]["plan_token"],
+                "confirm": "execute",
+            },
+        )
+        assert code == 200
+        assert receipt["data"]["report"]["kind"] == "run"
+        assert Path(receipt["data"]["path"]).is_file()
+        assert adapter._investigations()["runs"][0]["correlation_id"] == "orch-portal-test"
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
 # --- graph --------------------------------------------------------------------
 
 
@@ -750,6 +827,49 @@ def test_specialists_view_uses_declared_packaged_roster_path(target: Path) -> No
     row = next(item for item in doc["specialists"] if item["provider"] == "packaged-roster-forge")
     assert row["agent_roster"]["state"] == "CONFORMANT"
     assert row["agent_roster"]["routable"] is True
+
+
+def test_specialists_view_projects_agentic_workflows_without_claiming_native_caps(
+    target: Path,
+) -> None:
+    (target / "forge.json").write_text(
+        json.dumps({"forge_id": "workflow-forge"}), encoding="utf-8"
+    )
+    (target / "forge.agentic.json").write_text(
+        json.dumps(
+            {
+                "schema": "forge/SpecialistAgenticManifest/v1",
+                "provider": "workflow-forge",
+                "version": "1.0.0",
+                "workflows": [
+                    {
+                        "id": "knowledge.evidence.list",
+                        "mode": "DIAGNOSTIC_ONLY",
+                        "description": "List evidence",
+                        "read_only": True,
+                        "command": ["{cli}", "knowledge", "evidence", "{product_id}"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    row = next(
+        item
+        for item in TheForgePortal(target)._specialists_view()["specialists"]
+        if item["provider"] == "workflow-forge"
+    )
+    assert row["capabilities"] == []
+    assert row["workflows"] == [
+        {
+            "id": "knowledge.evidence.list",
+            "mode": "DIAGNOSTIC_ONLY",
+            "description": "List evidence",
+            "read_only": True,
+        }
+    ]
+    assert row["workflow_count"] == 1
 
 
 def test_delegations_empty_is_named_state(target: Path) -> None:

@@ -1,6 +1,6 @@
 # Phase 2 — Baseline
 
-Data da leitura: 2026-11-09. Esta auditoria foi revalidada contra os checkouts locais e
+Data da leitura: 2026-11-10. Esta auditoria foi revalidada contra os checkouts locais e
 os últimos runs públicos do GitHub Actions; não presume que os relatórios da Phase
 1.1 ainda sejam atuais.
 
@@ -8,16 +8,16 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 
 | Repositório | Branch/HEAD observado | Worktree | CI mais recente observado |
 |---|---|---|---|
-| spark-forge-aws | `phase2/remediate-claims-20261108` / `4e4661f` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
-| spark-forge-azure | `phase2/knowledge-freshness-20261108` / `55e3859` | limpo | adapter Obsidian local verde; sem workflow publicado para este branch |
-| api-forge | `fix/control-plane-windows-concurrency-20261108` / `029b9aa` | `.codebase-memory/` não rastreado | `API Forge CI` e Windows anteriores verdes; novo commit em validação |
-| platform-forge | `phase2/context-integrity-applicability-20261108` / `2e38343` | `uv.lock` modificado | adapter Obsidian local verde; sem workflow publicado para este branch |
-| the-forge | `phase2/baseline-observability-20261108` / `d4b6e59` | artefatos de auditoria não rastreados | schemas/contratos, runner federado local, matriz instalada Windows e CI `42561474908` verdes; `release-gates` `42561474898` verde |
-| product-forge | `fix/bridge-embedded-parity-20261108` / `f33524f` | `.coverage` não rastreado | 259 passed/1 skipped; regressão CI local 82,62%; jornada instalada Windows `1 passed`; escopo multiusuário de vault, revogação não destrutiva, locks, kill recovery e faults estruturados locais verdes |
-| forge-portal | `feat/api-operations-contract-surface-20261108` / `c3ccad2` | capturas/auditorias modificadas | build, 599 testes, fluxo Portal de conexão/revogação de vault, gate visual local e pacote npm sem artefatos verdes |
-| code-atlas-forge | `main` / `12bdc39` | `.codebase-memory/` e `uv.lock` não rastreados | CI em execução após adapter body-free |
-| forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `92df03f` | `uv.lock` modificado | teste local de allowlist Obsidian verde; CI aguarda run |
-| forge-lens | `main` / `5687788` | limpo | CI em execução após adapter sanitizado |
+| spark-forge-aws | `phase2/remediate-claims-20261108` / `8006321` | limpo | suíte completa local anterior: 15128 passed/14 skipped; adapter Obsidian, compatibilidade Python 3.10 e smoke S3 controlado verdes; correção adicional com 2 testes de redaction (incluindo `title`/`summary`) e Ruff limpo; o CI manual `42737900885` do SHA antigo `02db7ec` terminou `cancelled` porque Python 3.10 atingiu o limite; timeout da matriz integral ampliado de 90 para 180 minutos, branches `phase2/**` executam a matriz completa, runs obsoletos são cancelados e os gates wheel/audit/OTel também rodam; run `42752023082` concluiu `success` no SHA `8006321`, com Python 3.10–3.14, wheels, audit e OTel |
+| spark-forge-azure | `phase2/knowledge-freshness-20261108` / `27dd3f4` | limpo | suíte completa local: 3191 passed/9 skipped; freshness, adapter Obsidian, redaction de `title`/`summary` (2 testes) e compatibilidade Python 3.10 verdes; CI manual `42737901068` verde no SHA publicado |
+| api-forge | `fix/control-plane-windows-concurrency-20261108` / `58a6117` | `.codebase-memory/` não rastreado | suíte completa local: 2029 passed/4 skipped; persistência atômica Windows endurecida, Path flavor preservado em fault injection Linux, redaction de `title`/`summary` (2 testes) e Ruff limpo; CI remoto verde nos runs `42736176051` e `42736175647` |
+| platform-forge | `phase2/context-integrity-applicability-20261108` / `f15fd51` | `uv.lock` modificado | suíte completa local terminou sem falhas; adapter Obsidian com redaction de `title`/`summary` (2 testes), compatibilidade Python 3.10 e receipt de economia resealado; CI manual `42738344886` verde no SHA publicado |
+| the-forge | `cycle-10-apisentinel` / `dba95ac` | artefatos de auditoria não rastreados | schemas/contratos, ciclo de vida governado do conhecimento, metadados comuns dos seis contratos Obsidian, runner federado local usando `forge_obsidian`, contratos `ObsidianNoteRef` validados no E2E, matriz instalada Windows/Linux, smoke TTY/cancelamento 14/14 com default cold-start de 6 s; CI remoto `42688316906` verde em pacote Linux/Windows e Python 3.11–3.14; Portal projeta workflows federados e executa investigação governada; schemas/fuzz revalidados com exit 0, benchmark de observabilidade RSS atualizado em `knowledge-observability-20261110.json`; E2E federado revalidado após os adapters de redaction em `a3d22e0` |
+| product-forge | `fix/bridge-embedded-parity-20261108` / `77dde99` | limpo | 291 passed/1 skipped; `-m not benchmark`: 287 passed/1 skipped/3 deselected; Ruff limpo com classificação explícita de `forge_obsidian`; CI remoto `42729793620` verde; ensaio real em tmpfs de 256 KiB converteu ENOSPC no lock em `OBSIDIAN-LOCK-FAILED`/`sync_state=failed` sem nota, receipt ou temporário parcial; benchmark de escala 100/1.000/10.000 passou com pico RSS observado e 10.000/10.000 wikilinks resolvidos; gateway com provider controlado registrando `17/29` tokens no ledger; distribuição `forge-obsidian` construída a partir da fonte canônica e embutida no Product Forge, ciclo de vida captured→validated com evidência, scan bounded até 10.000 e baseline observável com orçamento de contexto/citações fixture, capacidades Obsidian/knowledge publicadas com IDs normativos, export workflow, índice seguro de paths, MCP read-only com 17 tools, Canvas determinístico e `.base` oficial com validação/serialização, catálogo `dashboard_id → YAML`, importação governada de investigações e teste estrutural da pipeline standalone; Actions pinadas por SHA |
+| forge-portal | `feat/api-operations-contract-surface-20261108` / `1e85c28` | capturas/auditorias modificadas | build verde, 624 testes Angular (57 arquivos), suíte browser completa `10 passed` em 201,63 s, Portal de conexão/revogação de vault, descoberta body-free de paths, ciclo de vida de conhecimento no explorador, deep link Obsidian, handoff explícito de investigação para Product Forge, gate visual local, pacote npm sem artefatos e instalação externa com start estático verdes |
+| code-atlas-forge | `main` / `e959639` | `.codebase-memory/` e `uv.lock` não rastreados | suíte completa local: 1667 passed/21 skipped; relações documentais body-free verdes; Actions pinadas por SHA |
+| forge-agent-bridge | `fix/phase1.1-fast-provider-catalog-20261108` / `5d96989` | `uv.lock` modificado | suíte completa local: 130 passed; reautorização Obsidian verde; CI remoto `42687526019` verde; Actions pinadas por SHA |
+| forge-lens | `main` / `2dba4a5` | limpo | suíte completa local terminou sem falhas; adapter sanitizado verde; Actions pinadas por SHA |
 
 Artefatos existentes não foram limpos, resetados ou incluídos em mudanças desta
 fase.
@@ -79,6 +79,12 @@ fase.
   conflito explícito, histórico de receipts, restauração protegida por backup e
   gerenciamento visual de conexão/revogação de vault; gate visual de conhecimento
   passou em 8 combinações com axe=0, overflow=0 e foco sem anel=0.
+- Portal/The Forge: a jornada Nova investigação agora usa
+  `POST /investigations/plan` → aprovação por token →
+  `POST /investigations/run`; o run chama a orquestração governada real,
+  persiste `OrchestrationReport` redigido e expõe histórico em
+  `GET /investigations`. O padrão é `LOCAL_READ`, com riscos adicionais
+  explicitamente assinados no plano.
 
 Code Atlas agora possui projeção body-free de relações Obsidian e Forge Lens
 possui adapter de receipts sanitizados. O runner local
@@ -86,9 +92,14 @@ possui adapter de receipts sanitizados. O runner local
 adapters, Product Forge, Code Atlas, Lens e Agent Bridge; o resultado está em
 `docs/phase2/FEDERATED_E2E_EVIDENCE.md`.
 
-O que ainda não está comprovado: execução efetiva disparada pelo Portal,
-geração de artefatos em vault real autorizado, falhas reais de disco/permissão
-e ensaio instalável pelo Portal. O provisionamento/revogação multiusuário agora
+O que ainda não está comprovado: geração automática de artefatos em vault real
+autorizado a partir do recibo da investigação, falhas reais de disco/permissão e
+homologação de entrega em produção. O Portal agora oferece handoff explícito
+e auditável do recibo concluído para um documento indexado no Product Forge;
+isso não grava automaticamente no Obsidian. A execução da
+investigação federada agora é disparada pelo Portal e chama o orquestrador
+governado real; o runner Obsidian continua explicitamente fixture-only. O
+provisionamento/revogação multiusuário agora
 possui jornada local real, com escopo por principal/workspace e revogação sem
 exclusão de arquivos; falta validar identidade OIDC e operação em produção.
 Rename/delete,

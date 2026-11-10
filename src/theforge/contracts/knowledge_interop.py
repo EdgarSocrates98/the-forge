@@ -21,6 +21,14 @@ KNOWLEDGE_EVIDENCE_SCHEMA = "theforge/KnowledgeEvidence/v1"
 KNOWLEDGE_CONTEXT_PACK_SCHEMA = "theforge/KnowledgeContextPack/v1"
 KNOWLEDGE_RELATION_SCHEMA = "theforge/KnowledgeRelation/v1"
 KNOWLEDGE_IMPORT_RECEIPT_SCHEMA = "theforge/KnowledgeImportReceipt/v1"
+KNOWLEDGE_STATES = (
+    "captured",
+    "draft",
+    "reviewed",
+    "validated",
+    "deprecated",
+    "rejected",
+)
 
 _RELATION_TYPES = (
     "references",
@@ -82,6 +90,12 @@ class KnowledgeDocument:
     trust_state: str
     created_at: str
     updated_at: str
+    # Lifecycle is separate from trust_state: indexed storage is not
+    # authority. Producers enter as captured/draft and consumers promote only
+    # after their domain-specific evidence gate.
+    knowledge_state: Literal[
+        "captured", "draft", "reviewed", "validated", "deprecated", "rejected"
+    ] = "captured"
     product_id: str | None = None
     source_updated_at: str | None = None
     provenance: dict[str, Any] = field(default_factory=dict)
@@ -106,6 +120,8 @@ class KnowledgeDocument:
             "updated_at",
         ):
             _required(getattr(self, name), name)
+        if self.knowledge_state not in KNOWLEDGE_STATES:
+            raise ContractError(f"unsupported knowledge state {self.knowledge_state!r}")
 
 
 @dataclass(frozen=True, kw_only=True)

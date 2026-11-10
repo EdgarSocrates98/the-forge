@@ -16,6 +16,17 @@
         "restricted"
       ]
     },
+    "content_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "include_frontmatter": {
       "type": "boolean"
     },
@@ -28,6 +39,23 @@
         "import_read_only",
         "reviewed_sync"
       ]
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    },
+    "previous_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
     },
     "provenance": {
       "additionalProperties": {
@@ -49,6 +77,9 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "updated_at": {
+      "type": "string"
     },
     "vault_id": {
       "type": "string"

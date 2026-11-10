@@ -54,6 +54,12 @@
       ],
       "pattern": "^[0-9a-f]{64}$"
     },
+    "provenance": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
     "schema": {
       "type": "string"
     },
@@ -65,6 +71,9 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "updated_at": {
+      "type": "string"
     },
     "vault_id": {
       "type": "string"

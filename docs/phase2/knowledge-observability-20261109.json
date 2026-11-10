@@ -1,0 +1,334 @@
+{
+  "schema": "product-forge/knowledge-observability-benchmark/v1",
+  "status": "PASS",
+  "scope": "local-observability-only",
+  "sizes": [
+    100,
+    1000,
+    10000
+  ],
+  "iterations": 1,
+  "limitations": [
+    "tracemalloc measures Python allocations, not resident process memory",
+    "export measures one document per size, not a bulk export API",
+    "token usage is proven only through a controlled provider fixture; real provider usage is NOT_RUN",
+    "citation quality is fixture-scoped and does not represent provider answer quality"
+  ],
+  "results": [
+    {
+      "documents": 100,
+      "scan": {
+        "status": "PASS",
+        "count": 100,
+        "elapsed_ms": 40.3,
+        "peak_python_bytes": 154775
+      },
+      "import": {
+        "status": "PASS",
+        "count": 100,
+        "elapsed_ms": 223.987,
+        "peak_python_bytes": 366642
+      },
+      "wikilink_resolution": {
+        "status": "PASS",
+        "links": 100,
+        "resolved": 100,
+        "unresolved": 0,
+        "elapsed_ms": 2.73,
+        "peak_python_bytes": 14354
+      },
+      "export": {
+        "status": "PASS",
+        "scope": "one atomic document export",
+        "elapsed_ms": 13.352,
+        "peak_python_bytes": 26121
+      },
+      "reindex_search": {
+        "status": "PASS",
+        "scope": "SQLite FTS local benchmark",
+        "elapsed_ms": 184.274,
+        "peak_python_bytes": 83949,
+        "documents": 100,
+        "iterations": 1,
+        "write_ms_median": 147.853,
+        "search_ms_median": 0.683,
+        "write_ms_max": 147.853,
+        "search_ms_max": 0.683,
+        "chunks": 100,
+        "search_hits": 20,
+        "database_bytes": 143360
+      },
+      "token_budget": {
+        "status": "PASS",
+        "scope": "retrieval-context estimate",
+        "max_context_tokens": 12,
+        "mean_context_tokens": 11.333,
+        "provider_usage": "FIXTURE_PROVIDER",
+        "real_provider_usage": "NOT_RUN",
+        "provider_usage_reason": "the benchmark uses a controlled provider fixture; real provider usage requires a governed model-provider run"
+      },
+      "token_usage": {
+        "status": "PASS",
+        "scope": "controlled subprocess provider fixture",
+        "reported_tokens_in": 17,
+        "reported_tokens_out": 29,
+        "ledger_tokens_in": 17,
+        "ledger_tokens_out": 29,
+        "ledger_runs": 1,
+        "profile": "economy",
+        "request_schema": "productforge/SynthesisRequest/v1",
+        "real_provider_usage": "NOT_RUN",
+        "real_provider_usage_reason": "the receipt intentionally runs only a controlled provider fixture"
+      },
+      "citation_quality": {
+        "status": "PASS",
+        "scope": "deterministic fixture retrieval; not a provider answer-quality evaluation",
+        "precision_at_3": 1.0,
+        "recall_at_3": 1.0,
+        "citation_completeness": 1.0,
+        "queries": [
+          {
+            "question": "spark skew partitions",
+            "expected_document_id": "quality-spark",
+            "retrieved_document_ids": [
+              "quality-spark"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 10
+          },
+          {
+            "question": "api contract breaking endpoint",
+            "expected_document_id": "quality-api",
+            "retrieved_document_ids": [
+              "quality-api"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 12
+          },
+          {
+            "question": "kubernetes deployment rollout",
+            "expected_document_id": "quality-platform",
+            "retrieved_document_ids": [
+              "quality-platform"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 12
+          }
+        ]
+      }
+    },
+    {
+      "documents": 1000,
+      "scan": {
+        "status": "PASS",
+        "count": 1000,
+        "elapsed_ms": 338.125,
+        "peak_python_bytes": 1494689
+      },
+      "import": {
+        "status": "PASS",
+        "count": 1000,
+        "elapsed_ms": 2314.873,
+        "peak_python_bytes": 2883963
+      },
+      "wikilink_resolution": {
+        "status": "PASS",
+        "links": 1000,
+        "resolved": 1000,
+        "unresolved": 0,
+        "elapsed_ms": 29.1,
+        "peak_python_bytes": 83881
+      },
+      "export": {
+        "status": "PASS",
+        "scope": "one atomic document export",
+        "elapsed_ms": 15.541,
+        "peak_python_bytes": 25979
+      },
+      "reindex_search": {
+        "status": "PASS",
+        "scope": "SQLite FTS local benchmark",
+        "elapsed_ms": 1564.137,
+        "peak_python_bytes": 599866,
+        "documents": 1000,
+        "iterations": 1,
+        "write_ms_median": 1514.773,
+        "search_ms_median": 0.587,
+        "write_ms_max": 1514.773,
+        "search_ms_max": 0.587,
+        "chunks": 1000,
+        "search_hits": 20,
+        "database_bytes": 847872
+      },
+      "token_budget": {
+        "status": "PASS",
+        "scope": "retrieval-context estimate",
+        "max_context_tokens": 12,
+        "mean_context_tokens": 11.333,
+        "provider_usage": "FIXTURE_PROVIDER",
+        "real_provider_usage": "NOT_RUN",
+        "provider_usage_reason": "the benchmark uses a controlled provider fixture; real provider usage requires a governed model-provider run"
+      },
+      "token_usage": {
+        "status": "PASS",
+        "scope": "controlled subprocess provider fixture",
+        "reported_tokens_in": 17,
+        "reported_tokens_out": 29,
+        "ledger_tokens_in": 17,
+        "ledger_tokens_out": 29,
+        "ledger_runs": 1,
+        "profile": "economy",
+        "request_schema": "productforge/SynthesisRequest/v1",
+        "real_provider_usage": "NOT_RUN",
+        "real_provider_usage_reason": "the receipt intentionally runs only a controlled provider fixture"
+      },
+      "citation_quality": {
+        "status": "PASS",
+        "scope": "deterministic fixture retrieval; not a provider answer-quality evaluation",
+        "precision_at_3": 1.0,
+        "recall_at_3": 1.0,
+        "citation_completeness": 1.0,
+        "queries": [
+          {
+            "question": "spark skew partitions",
+            "expected_document_id": "quality-spark",
+            "retrieved_document_ids": [
+              "quality-spark"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 10
+          },
+          {
+            "question": "api contract breaking endpoint",
+            "expected_document_id": "quality-api",
+            "retrieved_document_ids": [
+              "quality-api"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 12
+          },
+          {
+            "question": "kubernetes deployment rollout",
+            "expected_document_id": "quality-platform",
+            "retrieved_document_ids": [
+              "quality-platform"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 12
+          }
+        ]
+      }
+    },
+    {
+      "documents": 10000,
+      "scan": {
+        "status": "PASS",
+        "count": 10000,
+        "elapsed_ms": 3450.232,
+        "peak_python_bytes": 15917495
+      },
+      "import": {
+        "status": "PASS",
+        "count": 10000,
+        "elapsed_ms": 23393.521,
+        "peak_python_bytes": 27059078
+      },
+      "wikilink_resolution": {
+        "status": "PASS",
+        "links": 10000,
+        "resolved": 10000,
+        "unresolved": 0,
+        "elapsed_ms": 319.115,
+        "peak_python_bytes": 2947813
+      },
+      "export": {
+        "status": "PASS",
+        "scope": "one atomic document export",
+        "elapsed_ms": 22.045,
+        "peak_python_bytes": 26293
+      },
+      "reindex_search": {
+        "status": "PASS",
+        "scope": "SQLite FTS local benchmark",
+        "elapsed_ms": 17745.448,
+        "peak_python_bytes": 5770134,
+        "documents": 10000,
+        "iterations": 1,
+        "write_ms_median": 17565.553,
+        "search_ms_median": 1.174,
+        "write_ms_max": 17565.553,
+        "search_ms_max": 1.174,
+        "chunks": 10000,
+        "search_hits": 20,
+        "database_bytes": 7929856
+      },
+      "token_budget": {
+        "status": "PASS",
+        "scope": "retrieval-context estimate",
+        "max_context_tokens": 12,
+        "mean_context_tokens": 11.333,
+        "provider_usage": "FIXTURE_PROVIDER",
+        "real_provider_usage": "NOT_RUN",
+        "provider_usage_reason": "the benchmark uses a controlled provider fixture; real provider usage requires a governed model-provider run"
+      },
+      "token_usage": {
+        "status": "PASS",
+        "scope": "controlled subprocess provider fixture",
+        "reported_tokens_in": 17,
+        "reported_tokens_out": 29,
+        "ledger_tokens_in": 17,
+        "ledger_tokens_out": 29,
+        "ledger_runs": 1,
+        "profile": "economy",
+        "request_schema": "productforge/SynthesisRequest/v1",
+        "real_provider_usage": "NOT_RUN",
+        "real_provider_usage_reason": "the receipt intentionally runs only a controlled provider fixture"
+      },
+      "citation_quality": {
+        "status": "PASS",
+        "scope": "deterministic fixture retrieval; not a provider answer-quality evaluation",
+        "precision_at_3": 1.0,
+        "recall_at_3": 1.0,
+        "citation_completeness": 1.0,
+        "queries": [
+          {
+            "question": "spark skew partitions",
+            "expected_document_id": "quality-spark",
+            "retrieved_document_ids": [
+              "quality-spark"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 10
+          },
+          {
+            "question": "api contract breaking endpoint",
+            "expected_document_id": "quality-api",
+            "retrieved_document_ids": [
+              "quality-api"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 12
+          },
+          {
+            "question": "kubernetes deployment rollout",
+            "expected_document_id": "quality-platform",
+            "retrieved_document_ids": [
+              "quality-platform"
+            ],
+            "relevant_retrieved": 1,
+            "citation_fields_complete": true,
+            "context_tokens_estimate": 12
+          }
+        ]
+      }
+    }
+  ]
+}

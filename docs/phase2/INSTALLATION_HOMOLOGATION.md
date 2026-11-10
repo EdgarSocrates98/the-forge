@@ -22,45 +22,57 @@ instalação de 15 dependências e jornada Portal → API → task → chat fake
 passaram (`1 passed` em 21,78 s).
 
 Além disso, a matriz reproduzível
-`scripts/installed_wheel_matrix.py` passou no Windows 11 / Python 3.12.13 em
-2026-11-09: **12/12** projetos Python construíram sdist/wheel, instalaram em
-venvs independentes e responderam ao CLI publicado com `--help` (`status=PASS`).
-O mesmo runner aceita Windows e POSIX, mas a execução Linux ainda precisa ser
-realizada antes de fechar o gate multiplataforma.
+`scripts/installed_wheel_matrix.py` passou em Windows 11 / Python 3.12.13 e em
+Linux WSL2 / Python 3.12.16 em 2026-11-09: **12/12** projetos Python
+construíram sdist/wheel, instalaram em venvs independentes e responderam ao CLI
+publicado com `--help` (`status=PASS`). O runner agora aceita `--timeout` para
+ambientes montados lentos; o sdist do The Forge também exclui caches, venvs,
+`.git`, auditorias e artefatos locais.
 
 Os dois projetos Node também foram verificados no Windows: `forge-cli` produziu
 o pacote `theforge-cli@0.4.1` e o Portal produziu build Angular e pacote npm.
 O Portal passou a usar `.npmignore`; o `npm pack --dry-run` caiu de cerca de
 304 MB (com auditorias e screenshots) para 1,35 MB compactados / 5,8 MB
-descompactados, sem artefatos de auditoria ou E2E.
+descompactados, sem artefatos de auditoria ou E2E. O pacote foi instalado em
+diretório temporário fora do checkout: `forge-portal --help`, TUI sem flags,
+`--json status` e `start` estático responderam; `/` retornou HTTP 200 com o
+bundle compilado.
 
-Pendências de homologação global: executar wheels isoladas de todas as Forjas em
-Windows e Linux, verificar project/workspace/user em instalações limpas, validar
-OIDC e concluir a matriz remota de CI. A conexão/revogação do vault já foi
+Pendências de homologação global: verificar project/workspace/user em instalações
+limpas, validar OIDC e concluir a matriz remota de CI dos branches especialistas.
+A conexão/revogação do vault já foi
 homologada localmente com escopo por principal/workspace e garantia de que a
 revogação não apaga arquivos. O teste opt-in do Product Forge deixa de ser
 considerado um bloqueio local.
 
 ## TTY/TUI
 
-`uv run python scripts/cli_install_matrix.py --check` passou para 14 projetos,
-com `home_tui`, `wizard`, guard non-TTY e installers portáteis detectados.
-Executados com `uv run --with pywinpty` no Windows:
+`uv run python scripts/cli_install_matrix.py --check` foi revalidado em
+2026-11-10 e passou para 14 projetos (`status=PASS`), com `home_tui`,
+`wizard`, guard non-TTY, ambos os streams TTY e installers portáteis detectados.
+Executados com `uv run --with pywinpty` no Windows, com janela de 6 s por CLI
+para absorver cold-start do `uv`:
 
 - `cli_tty_smoke.py` — 14/14 superfícies visíveis;
 - `cli_tty_cancel_smoke.py` — 14/14 cancelamentos antes de mutação.
 
-O smoke de superfície usa 5 s por CLI para tolerar inicialização fria do `uv` em
-máquina limpa; a janela pode ser reduzida explicitamente em runs aquecidos.
+O smoke usa 6 s por CLI para tolerar inicialização fria do `uv` em máquina limpa;
+a janela pode ser reduzida explicitamente em runs aquecidos.
 
-O MCP nativo foi verificado novamente com `theforge install mcp-verify --json`:
+O MCP nativo do The Forge foi verificado novamente com `theforge install mcp-verify --json`:
 handshake real `PASS`, 15 tools descobertas, chamada estruturada de
 `theforge_status` aprovada e exit code do comando `0`.
+
+O MCP do Product Forge também publica 17 tools quando instalado, incluindo
+`obsidian_files`, que expõe somente um índice limitado de paths Markdown
+autorizados; importação/exportação continuam governadas pela API/CLI e exigem
+confirmação explícita.
 
 Para repetir a matriz Python:
 
 ```powershell
 cd E:\projetos\FORJAS\the-forge
 uv run python scripts/installed_wheel_matrix.py `
-  --repos-root E:\projetos\FORJAS
+  --repos-root E:\projetos\FORJAS `
+  --timeout 900
 ```
