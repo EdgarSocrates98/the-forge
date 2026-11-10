@@ -69,18 +69,14 @@ def run(repos_root: Path, *, installed: bool = False) -> dict[str, Any]:
     """
     if not installed:
         _add_repo_paths(repos_root)
-    from apiforge.context.obsidian import build_obsidian_contract_review
-    from code_atlas.context.obsidian import (
-        project_obsidian_relations,  # type: ignore[import-not-found]
-    )
+    from apiforge.context.obsidian import build_obsidian_contract_review  # noqa: I001 - optional federation imports retain per-module type ignores
+    from code_atlas.context.obsidian import project_obsidian_relations  # type: ignore[import-not-found]
     from forge_agent_bridge.context import (  # type: ignore[import-not-found]
         ContextStore,
         KnowledgeContextPack,
         ProductAgentSessionContext,
     )
-    from forge_lens.adapters.obsidian import (
-        trace_from_obsidian_receipt,  # type: ignore[import-not-found]
-    )
+    from forge_lens.adapters.obsidian import trace_from_obsidian_receipt  # type: ignore[import-not-found]
     from forge_obsidian import (  # type: ignore[import-not-found]
         ObsidianVaultError,
         export_vault_document,
