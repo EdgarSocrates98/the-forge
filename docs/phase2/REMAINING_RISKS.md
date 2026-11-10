@@ -59,8 +59,9 @@
    `.github/workflows/publish-forge-obsidian.yml`, com build único, checksum,
    Trusted Publishing/OIDC, instalação limpa de verificação e teste estrutural
    em `1490ff3`. O endpoint público do PyPI ainda responde 404 para
-   `forge-obsidian`, portanto não foi executado dispatch/publicação remota nem
-   consumida uma versão fixada pelos quatro adapters. Até esse gate, os
+   `forge-obsidian`; os artefatos locais wheel/sdist passaram `twine check` em
+   2026-11-10, mas não foi executado dispatch/publicação remota nem consumida
+   uma versão fixada pelos quatro adapters. Até esse gate, os
    especialistas permanecem corretamente limitados a projeções read-only
    `ObsidianNoteRef/v1`; essas projeções agora redigem também `title` e
    `summary`, com testes dedicados nos quatro adapters.
