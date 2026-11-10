@@ -3,9 +3,11 @@
 1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
    componentes federados passaram na revalidação atual. The Forge `42688316906`,
    Agent Bridge `42687526019`, Product Forge `42729793620`, Azure `42737901068`,
-   API `42736176051`/`42736175647`, Platform `42738344886` e o AWS anterior
-   `42714263493` possuem runs verdes; o novo AWS `42737900885` ainda está em
-   execução no SHA `02db7ec`, sem falha nos jobs concluídos. Também passaram
+   API `42736176051`/`42736175647` e Platform `42738344886` possuem runs verdes.
+   O novo AWS `42737900885` terminou `cancelled`: Python 3.11–3.14, wheels e
+   auditoria passaram, mas Python 3.10 terminou `cancelled` no limite do job.
+   O AWS anterior `42714263493` é mantido apenas como evidência histórica.
+   Também passaram
    API Sentinel, Code Atlas, Data Sentinel e Forge Lens. O
    AWS remoto fechou 15122 passed/20 skipped em Python 3.10–3.14, incluindo
    claims, locks, bundle offline, evals, wheels e auditoria. Como hardening adicional, a auditoria local de
@@ -16,7 +18,8 @@
    Windows e Linux WSL2; a matriz limpa do wheel The Forge passou
    project/workspace/user com apply/uninstall; o Portal também foi instalado
    fora do checkout e respondeu por CLI/TUI/status/start estático. O risco de
-   distribuição restante é operacional (OIDC/CI global), não o caminho local.
+   distribuição restante é operacional (OIDC/CI global), não o caminho local;
+   o gate AWS do SHA atual permanece pendente até haver um run completo verde.
 3. **Falhas de infraestrutura:** permission denied foi ensaiado em Windows com
    ACL real num diretório temporário controlado: o Product Forge recusou antes
    da escrita com `OBSIDIAN-PATH-REFUSED`/`sync_state=denied`, nenhum artefato
