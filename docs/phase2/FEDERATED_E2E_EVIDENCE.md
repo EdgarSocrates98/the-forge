@@ -1,6 +1,7 @@
 # Phase 2 — Cross-Forge Obsidian E2E Evidence
 
-Data da execução: 2026-11-10 (revalidação após Product Forge `77dde99` e The Forge `9fe1786`)
+Data da execução: 2026-11-10 (revalidação após Product Forge `77dde99`, os
+adapters `02db7ec`/`27dd3f4`/`58a6117`/`f15fd51` e The Forge `2600c7f`)
 
 ## Escopo
 
