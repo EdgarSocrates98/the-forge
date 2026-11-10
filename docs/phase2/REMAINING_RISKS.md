@@ -2,9 +2,11 @@
 
 1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
    componentes federados passaram na revalidação atual. The Forge `42688316906`,
-   Agent Bridge `42687526019`, Product Forge `42729793620`, Azure `42693963092`,
-   API `42694647843`, Platform `42692546513` e AWS `42714263493` possuem runs
-   verdes, assim como API Sentinel, Code Atlas, Data Sentinel e Forge Lens. O
+   Agent Bridge `42687526019`, Product Forge `42729793620`, Azure `42737901068`,
+   API `42736176051`/`42736175647`, Platform `42738344886` e o AWS anterior
+   `42714263493` possuem runs verdes; o novo AWS `42737900885` ainda está em
+   execução no SHA `02db7ec`, sem falha nos jobs concluídos. Também passaram
+   API Sentinel, Code Atlas, Data Sentinel e Forge Lens. O
    AWS remoto fechou 15122 passed/20 skipped em Python 3.10–3.14, incluindo
    claims, locks, bundle offline, evals, wheels e auditoria. Como hardening adicional, a auditoria local de
    supply chain percorreu 15 repositórios, 50 workflows e 335 ações externas:
@@ -60,7 +62,8 @@
    `forge-obsidian`, portanto não foi executado dispatch/publicação remota nem
    consumida uma versão fixada pelos quatro adapters. Até esse gate, os
    especialistas permanecem corretamente limitados a projeções read-only
-   `ObsidianNoteRef/v1`.
+   `ObsidianNoteRef/v1`; essas projeções agora redigem também `title` e
+   `summary`, com testes dedicados nos quatro adapters.
 
 Até que esses riscos sejam fechados, a recomendação é manter sync revisado,
 fixtures-only nos E2E e confirmação humana para toda mutação.
