@@ -13,6 +13,33 @@ FIXTURES = Path(__file__).parent / "fixtures"
 PROVIDERS = FIXTURES / "providers"
 
 
+def adapter_subprocess_env() -> dict[str, str]:
+    """Expose checkout-local adapters to child replay processes.
+
+    CI installs the adapter distributions editable; this keeps the same replay
+    surface available to contributors running the core tests directly.
+    """
+    repo = Path(__file__).resolve().parent.parent
+    sources = [
+        repo / "src",
+        *(repo / "adapters" / name / "src" for name in (
+            "sparkforge_aws",
+            "sparkforge_azure",
+            "apiforge",
+            "platformforge",
+            "doctordata",
+            "doctorapi",
+        )),
+    ]
+    env = os.environ.copy()
+    entries = [str(path) for path in sources]
+    existing = env.get("PYTHONPATH")
+    if existing:
+        entries.extend(existing.split(os.pathsep))
+    env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(entries))
+    return env
+
+
 def fixture_argv(script: str, *extra: str) -> list[str]:
     return [sys.executable, str(PROVIDERS / script), *extra]
 

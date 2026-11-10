@@ -99,6 +99,9 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
   os subprocessos; o mesmo comando padrão agora passa sem instalação manual ou
   `PYTHONPATH` externo. A execução anterior sem essa preparação falhou
   honestamente com `ModuleNotFoundError` e não foi contada como evidência.
+- O `test_capability_catalog_doc.py` também passou (`30` casos), cobrindo a
+  correspondência bidirecional entre capabilities/actions expostas pelos
+  adapters e o catálogo documental.
 
 Esses resultados atualizam a prova local, mas não removem os limites externos
 descritos no G12.
