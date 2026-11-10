@@ -2,7 +2,7 @@
 
 1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
    componentes federados passaram na revalidação atual. The Forge `42688316906`,
-   Agent Bridge `42687526019`, Product Forge `42727405999`, Azure `42693963092`,
+   Agent Bridge `42687526019`, Product Forge `42729793620`, Azure `42693963092`,
    API `42694647843`, Platform `42692546513` e AWS `42714263493` possuem runs
    verdes, assim como API Sentinel, Code Atlas, Data Sentinel e Forge Lens. O
    AWS remoto fechou 15122 passed/20 skipped em Python 3.10–3.14, incluindo
@@ -39,15 +39,18 @@
    serialização e validação do YAML oficial; filtros/fórmulas continuam sem
    avaliador próprio e dependem do runtime do Obsidian.
 7. **Observabilidade de escala:** baseline local agora cobre scan, importação,
-   resolução de wikilinks, exportação atômica, reindexação/busca SQLite/FTS e
-   pico de alocação Python, orçamento estimado do contexto de recuperação e
-   qualidade de citações fixture (precision/recall/completude) e o registro de
-   tokens no gateway com provider controlado em 100/1.000/10.000 notas. Token
-   usage real de provider continua `NOT_RUN`, pois exige provider governado;
-   `tracemalloc` não substitui RSS. O wall-clock
-   de 10.000 arquivos recém-criados teve uma amostra Windows de 16,90 s,
-   enquanto a importação direta em árvore quente ficou em ~6–8 s; ambos ficam
-   no recibo para tendência, sem transformar uma meta arbitrária em gate.
+   resolução de wikilinks, exportação atômica, reindexação/busca SQLite/FTS,
+   pico de alocação Python e RSS residente, orçamento estimado do contexto de
+   recuperação e qualidade de citações fixture (precision/recall/completude),
+   além do registro de tokens no gateway com provider controlado em
+   100/1.000/10.000 notas. No cenário de 10.000, o pico RSS observado foi de
+   aproximadamente 131 MiB na importação e 116 MiB no SQLite/FTS. A medição de
+   RSS usa amostragem stdlib, portanto picos sub-5 ms podem ser subestimados.
+   Token usage real de provider continua `NOT_RUN`, pois exige provider
+   governado. O wall-clock de 10.000 arquivos recém-criados teve uma amostra
+   Windows de 16,90 s, enquanto a importação direta em árvore quente ficou em
+   ~6–8 s; ambos ficam no recibo para tendência, sem transformar uma meta
+   arbitrária em gate.
 8. **Distribuição técnica neutra:** `forge_obsidian` já está extraído, testado,
    construído como wheel/sdist `forge-obsidian` e incluído no wheel do Product
    Forge. O Product Forge agora também contém a pipeline standalone
