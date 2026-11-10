@@ -8,6 +8,12 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-11-10
+
+### Fixed
+
+- Published the Cycle 2.7 federated release certification baseline.
+
 ## [0.7.4] - 2026-11-04
 
 ### Changed
