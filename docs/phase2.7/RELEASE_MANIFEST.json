@@ -1,0 +1,13 @@
+{
+  "schema": "the-forge/Phase2.7ReleaseManifest/v1",
+  "cycle": "2.7",
+  "verified_at": "2026-11-10T00:00:00-03:00",
+  "repositories": [
+    "spark-forge-aws", "spark-forge-azure", "api-forge", "platform-forge",
+    "the-forge", "product-forge", "forge-agent-bridge", "code-atlas-forge",
+    "forge-lens", "forge-portal"
+  ],
+  "gates": "see QUALITY_GATE_LEDGER.md",
+  "publication": "NOT_RUN",
+  "limitations": ["final hosted CI and isolated E2E pending"]
+}
