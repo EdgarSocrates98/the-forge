@@ -6,11 +6,11 @@
    in this cycle used temporary fixtures.
 3. The codebase-memory graph service was unavailable during the audit; the
    call-graph evidence is source-based.
-4. Pages is green on the fresh current-main run, but GitHub-hosted artifact
+4. Pages is green on the fresh final-main run, but GitHub-hosted artifact
    retention/configuration remains an external operational dependency.
-5. The final CI convergence and release matrix must be updated after the
-   Cycle 2.8 branches are merged. Historical green runs cannot close that
-   gate.
+5. Final CI convergence is green on the exact merged heads recorded in the
+   final matrix. The failed Pages artifact-resolution attempt is retained as
+   an observed transient rather than hidden.
 6. No PyPI/npm publication is claimed; publication requires explicit
    authorization under the cycle rules.
 
