@@ -17,6 +17,7 @@ evidence for it exists in the federated graph.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -50,6 +51,32 @@ ADAPTERS = {
     "forge-doctor-api": ("theforge_doctorapi", NATIVE / "doctorapi" / "default"),
 }
 
+# Keep the checkout-level federation test reproducible without requiring every
+# adapter wheel to be installed first. CI still installs all six distributions
+# in editable mode; this path fallback makes the same test command useful for a
+# contributor running `uv run pytest` directly from the core checkout.
+_ADAPTER_SOURCE_DIRS = tuple(
+    REPO / "adapters" / name / "src"
+    for name in (
+        "sparkforge_aws",
+        "sparkforge_azure",
+        "apiforge",
+        "platformforge",
+        "doctordata",
+        "doctorapi",
+    )
+)
+
+
+def _adapter_environment() -> dict[str, str]:
+    env = os.environ.copy()
+    entries = [str(REPO / "src"), *(str(path) for path in _ADAPTER_SOURCE_DIRS)]
+    existing = env.get("PYTHONPATH")
+    if existing:
+        entries.extend(existing.split(os.pathsep))
+    env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(entries))
+    return env
+
 _REQUEST = json.dumps(
     {"protocol": PROTOCOL_V1, "kind": "Request", "op": "describe", "request_id": "d", "payload": {}}
 ).encode()
@@ -59,7 +86,14 @@ def _describe(module: str, replay: Path) -> tuple[ForgeManifest, dict]:
     """``python -m <adapter> --replay <dir> describe`` -> (ForgeManifest, raw payload)."""
     argv = [sys.executable, "-m", module, "--replay", str(replay), "describe"]
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as cwd:
-        out = subprocess.run(argv, input=_REQUEST, capture_output=True, timeout=60, cwd=cwd)
+        out = subprocess.run(
+            argv,
+            input=_REQUEST,
+            capture_output=True,
+            timeout=60,
+            cwd=cwd,
+            env=_adapter_environment(),
+        )
     assert out.returncode == 0, out.stderr
     response = from_dict(Response, json.loads(out.stdout))
     assert response.status == "ok", response.error

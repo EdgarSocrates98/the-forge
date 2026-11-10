@@ -94,9 +94,11 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
 - A bateria de federação/contratos foi reexecutada com os seis adapters
   disponíveis no workspace (`test_schemas`, `test_fuzz_contracts`,
   `test_federation_adversarial`, `test_federation_conformance` e
-  `test_federated_trace`): progresso até `100%`, exit code `0`. A execução
-  equivalente sem os adapters instalados falhou honestamente na preparação com
-  `ModuleNotFoundError`; ela não foi contada como evidência.
+  `test_federated_trace`): progresso até `100%`, exit code `0`. O harness de
+  conformance passou a propagar automaticamente os seis `src` de adapters para
+  os subprocessos; o mesmo comando padrão agora passa sem instalação manual ou
+  `PYTHONPATH` externo. A execução anterior sem essa preparação falhou
+  honestamente com `ModuleNotFoundError` e não foi contada como evidência.
 
 Esses resultados atualizam a prova local, mas não removem os limites externos
 descritos no G12.
