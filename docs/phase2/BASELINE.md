@@ -8,7 +8,7 @@ os últimos runs públicos do GitHub Actions; não presume que os relatórios da
 
 | Repositório | Branch/HEAD observado | Worktree | CI mais recente observado |
 |---|---|---|---|
-| spark-forge-aws | `phase2/remediate-claims-20261108` / `5f47bf5` | limpo | suíte completa local: 15128 passed/14 skipped; adapter Obsidian, compatibilidade Python 3.10 e smoke S3 controlado verdes; CI remoto `42693341083` ainda em execução |
+| spark-forge-aws | `phase2/remediate-claims-20261108` / `a86cfa4` | limpo | suíte completa local: 15128 passed/14 skipped; adapter Obsidian, compatibilidade Python 3.10 e smoke S3 controlado verdes; CI remoto `42714263493` verde no mesmo SHA, com 15122 passed/20 skipped nas versões Python 3.10–3.14, wheels, auditoria e claims |
 | spark-forge-azure | `phase2/knowledge-freshness-20261108` / `df9f2e6` | limpo | suíte completa local: 3190 passed/9 skipped; freshness, adapter Obsidian e compatibilidade Python 3.10 verdes; CI remoto `42693963092` verde |
 | api-forge | `fix/control-plane-windows-concurrency-20261108` / `a24bb3b` | `.codebase-memory/` não rastreado | suíte completa local: 2028 passed/4 skipped; persistência atômica Windows endurecida, Path flavor preservado em fault injection Linux e adapter Obsidian verde; CI remoto `42694647843` verde |
 | platform-forge | `phase2/context-integrity-applicability-20261108` / `7e2057f` | `uv.lock` modificado | suíte completa local terminou sem falhas; adapter Obsidian, compatibilidade Python 3.10 e receipt de economia resealado; CI remoto `42692546513` verde |
