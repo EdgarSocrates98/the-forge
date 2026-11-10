@@ -1,9 +1,9 @@
 # Cycle 2.8 Final Acceptance
 
-This report is the acceptance template for the final merged heads. It is not
-considered complete until the affected PRs are merged, their required workflows
-are green on the resulting `main` SHAs, and the repository matrix below is
-filled with exact evidence.
+This report is the evidence record for the final merged heads. It is accepted
+only when the affected PRs are merged, their required workflows are green on
+the resulting `main` SHAs, and the repository matrix below contains exact
+evidence.
 
 ## Executive summary
 
@@ -16,16 +16,16 @@ production vault, and provider lanes remain external limitations.
 
 | Repo | Initial SHA | Final SHA | PR | CI | Tests | Status |
 |---|---|---|---|---|---|---|
-| platform-forge | `9ea66ab3d319` | pending merge | pending | pending | local PASS | pending |
-| the-forge | `b7551be32e6d` | pending merge | pending | pending | local PASS | pending |
-| product-forge | `8ede30c554db` | unchanged | none | baseline PASS | `291 passed, 1 skipped` | PASS |
-| api-forge | `076ba0464f60` | pending adapter merge | pending | pending | local PASS | pending |
-| spark-forge-aws | `9b5a7e6e77a0` | pending adapter merge | pending | pending | local PASS | pending |
-| spark-forge-azure | `81c591b49665` | pending adapter merge | pending | pending | local PASS | pending |
-| forge-agent-bridge | `995e59ea9bba` | unchanged | none | baseline PASS | installed PASS | PASS |
-| code-atlas-forge | `c164ea5e2232` | unchanged | none | baseline PASS | installed PASS | PASS |
-| forge-lens | `cd9bba04bf19` | unchanged | none | baseline PASS | installed PASS | PASS |
-| forge-portal | `cd43d5e8d53b` | unchanged | none | baseline PASS | not modified | PASS |
+| platform-forge | `9ea66ab3d319` | `f7b9c8097a0d` | PR #105 | CI `42890835013` PASS | local full suite PASS | PASS |
+| the-forge | `b7551be32e6d` | `c53359edbc8f` | PR #200 | CI `42895841314` PASS | contract/schema/fuzz, source E2E and installed E2E PASS | PASS |
+| product-forge | `8ede30c554db` | `8ede30c554db` | none | CI `42854387286` PASS; publication evidence `42859257773` retained | `291 passed, 1 skipped` | PASS |
+| api-forge | `076ba0464f60` | `c2b95826cfa7` | PR #122 | CI `42890977542` PASS; Pages `42895987092` PASS | `2030 passed, 1 skipped` | PASS |
+| spark-forge-aws | `9b5a7e6e77a0` | `f8c7b4079307` | PR #218, #219 | CI `42900200144` PASS | adapter suite PASS; post-fix main suite PASS | PASS |
+| spark-forge-azure | `81c591b49665` | `1fa18980b2bfc` | PR #109 | CI `42890984027` PASS | `3190 passed, 10 skipped` | PASS |
+| forge-agent-bridge | `995e59ea9bba` | `995e59ea9bba` | none | CI `42839348003` PASS | installed lane PASS | PASS |
+| code-atlas-forge | `c164ea5e2232` | `c164ea5e2232` | none | CI `42851164026` PASS; Release `42854463221` PASS | installed lane PASS | PASS |
+| forge-lens | `cd9bba04bf19` | `cd9bba04bf19` | none | CI `42845275747` PASS | installed lane PASS | PASS |
+| forge-portal | `cd43d5e8d53b` | `63518efd8fdf` | PR #93 | CI `42890978157` PASS | build, CLI/install tests and `npm audit` clean | PASS |
 
 ## Security and contract findings
 
@@ -41,10 +41,9 @@ Source and installed fixture E2E pass. Cloud/provider lanes are
 
 ## Acceptance state
 
-Until the final merge/CI rows are populated, the cycle is `NOT_FINAL` and no
-approval label is asserted. The intended evidence-based final state is
-`PHASE_2_8_APPROVED_WITH_EXTERNAL_LIMITATIONS` only if all mandatory security,
-integrity, installation and CI gates are green. Any mandatory failure yields
-`PHASE_2_8_FAILED`; an unresolved final CI/security blocker yields
-`PHASE_2_8_BLOCKED`.
+The evidence-based final state is
+`PHASE_2_8_APPROVED_WITH_EXTERNAL_LIMITATIONS`. Mandatory security,
+integrity, installation and CI gates are green on the final heads. External
+cloud/provider and production-vault lanes remain explicitly outside the
+available authorization and are not represented as PASS.
 
