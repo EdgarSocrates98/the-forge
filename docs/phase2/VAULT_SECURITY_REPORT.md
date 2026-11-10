@@ -30,6 +30,9 @@ O subconjunto operacional de sync foi revalidado em 2026-11-10 com
 **11 passed, 39 deselected**, incluindo conflito de edição manual e rollback
 sem sobrescrita silenciosa.
 
+A bateria completa de integração Obsidian do Product Forge (vault, templates,
+scoping, boundary e release workflow) passou com **65 passed** em 11,92 s.
+
 ## Limitações
 
 Permission denied foi validado com ACL real no Windows e disk full foi
