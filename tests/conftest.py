@@ -174,6 +174,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_mcp_server.py": ("contract", "integration"),
     "test_ui_screen.py": ("unit",),
     "test_ui_app.py": ("unit",),
+    "test_obsidian_contracts_cycle28.py": ("contract", "security"),
     "test_doc_manifest.py": ("unit",),
     "test_check_onboarding.py": ("unit",),
     "test_doc_drift.py": ("unit",),
