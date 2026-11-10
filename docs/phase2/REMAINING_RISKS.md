@@ -21,8 +21,10 @@
    distribuição restante é operacional (OIDC/CI global), não o caminho local;
    O SHA atual `8006321` ampliou o timeout da matriz de 90 para 180 minutos,
    habilitou a matriz completa em `phase2/**`, inclui wheel/audit/OTel e cancela
-   runs obsoletos; o run `42752023082` está executando e ainda precisa terminar
-   verde para fechar o gate.
+   runs obsoletos; o run `42752023082` concluiu `success` no SHA `8006321`,
+   com Python 3.10–3.14, wheels Ubuntu/Windows, audit e OTel. O gate remoto
+   de CI está fechado; permanecem apenas os riscos operacionais listados
+   abaixo.
 3. **Falhas de infraestrutura:** permission denied foi ensaiado em Windows com
    ACL real num diretório temporário controlado: o Product Forge recusou antes
    da escrita com `OBSIDIAN-PATH-REFUSED`/`sync_state=denied`, nenhum artefato

@@ -9,13 +9,13 @@ intenção, fixture ou documentação em prova de execução externa.
 | Escopo do prompt | Estado | Evidência atual | Limitação que permanece |
 |---|---|---|---|
 | Stage Zero — baseline, ownership, contratos e gap analysis | PASS | `BASELINE.md`, `OWNERSHIP_MATRIX.md`, `CONTRACT_MATRIX.md` e `OBSIDIAN_INTEGRATION_GAP_ANALYSIS.md` versionados | inventários externos continuam dependentes do estado dos repositórios no momento da coleta |
-| Cycle 2.0 — remediação AWS, Platform, Azure e API | PASS local; CI AWS pendente | commits dos quatro especialistas, suítes locais, smoke S3 controlado e CIs Azure/API/Platform verdes; novo run AWS `42752023082` iniciou matriz 3.10–3.14, wheel, audit e OTel | AWS run `42752023082` ainda está em execução; o run antigo `42737900885` terminou `cancelled` porque Python 3.10 atingiu o limite |
+| Cycle 2.0 — remediação AWS, Platform, Azure e API | PASS local + CI remoto | commits dos quatro especialistas, suítes locais, smoke S3 controlado e CIs Azure/API/Platform verdes; run AWS `42752023082` concluiu `success` no SHA `8006321` com matriz Python 3.10–3.14, wheels, audit e OTel | o run antigo `42737900885` terminou `cancelled` porque Python 3.10 atingiu o limite; isso não afeta o SHA atual |
 | Cycle 2.1 — núcleo canônico Obsidian | PASS local | biblioteca neutra `forge_obsidian`, protocolos compostos, seis contratos `theforge/Obsidian*/v1`, Markdown/Canvas/Bases e templates | não é runtime completo do aplicativo Obsidian; fórmulas Bases não são avaliadas |
 | Cycle 2.2 — adapters especialistas | PASS fixture + smoke cloud | quatro adapters exportam `ObsidianNoteRef/v1`, preservam proveniência e redigem campos livres e estruturados | Glue/EMR/Athena/CloudWatch de produção não foram exercitados nesta rodada |
 | Cycle 2.3 — sincronização segura | PASS controlado | plan/baseline/conflict, confirmação, escrita atômica, hash pós-escrita, receipts, rollback, lock, ACL negada e ENOSPC em tmpfs | não foi usado um vault produtivo do usuário; isso seria mutação fora do fixture controlado |
 | Cycle 2.4 — federação e conhecimento | PASS fixture | capabilities normativas, Atlas/Lens/Bridge body-free, autorização, estados `captured`→`validated`, bateria de contratos/federação a `100%` com exit code `0` e E2E federado com quatro notas | execução cloud real e sessão OIDC multiusuário continuam fora da prova |
 | Cycle 2.5 — Bases, Canvas e Portal | PASS local | serializer/validator oficial de `.base`, Canvas determinístico, Portal Angular `624` testes, build e browser `10 passed` | materialização no vault continua explícita e revisada |
-| Cycle 2.6 — testes e certificação | PASS local; parcial externo | testes de contratos/fuzz, segurança, sync, adapters, E2E e instalação; matriz TTY/TUI 14/14 | CI AWS final e alguns gates produtivos continuam pendentes |
+| Cycle 2.6 — testes e certificação | PASS local + CI remoto; parcial produtivo | testes de contratos/fuzz, segurança, sync, adapters, E2E, instalação e matriz AWS completa; matriz TTY/TUI 14/14 | vault/host produtivo, OIDC multiusuário, provider real e recuperação operacional completa continuam fora da prova |
 
 ## Critérios de aceite final
 
@@ -23,7 +23,7 @@ intenção, fixture ou documentação em prova de execução externa.
 |---:|---|---|---|
 | 1 | quatro Forjas preservam comportamento existente | PASS local | suítes completas locais e smoke cloud controlado |
 | 2 | problemas de integridade corrigidos | PASS local | gateway Platform, applicability/versionamento, freshness Azure, claims AWS e contratos API revalidados |
-| 3 | CI obrigatório verde | PENDENTE | AWS `42752023082` está em execução no SHA `8006321`; o run anterior `42737900885` terminou `cancelled` e não substitui o gate atual |
+| 3 | CI obrigatório verde | PASS | AWS `42752023082` concluiu `success` no SHA `8006321`; Python 3.10–3.14, wheels Ubuntu/Windows, audit e OTel passaram |
 | 4 | cada Forge exporta conhecimento útil | PASS fixture | quatro projeções e contratos `ObsidianNoteRef/v1` |
 | 5 | conteúdo original recuperável | PASS controlado | baseline, backup, rollback e conflito manual testados |
 | 6 | sem sobrescrita silenciosa | PASS controlado | baseline/hash, plano e conflito explícito |
@@ -42,11 +42,12 @@ intenção, fixture ou documentação em prova de execução externa.
 
 ## Bloqueios que não devem ser mascarados
 
-1. O aceite remoto final ainda aguarda um run AWS completo verde no SHA
-   `8006321`. O run `42752023082` está em execução; os runs `42750089008` e
-   `42749996543` foram cancelados por obsolescência, e o run `42737900885`, referente ao SHA anterior `02db7ec`, não deve ser tratado como verde: terminou
-   `cancelled` depois que Python 3.10 atingiu o limite do job; não houve
-   alteração de credenciais nem reinício automático.
+1. O aceite remoto do CI AWS foi fechado pelo run `42752023082`, que concluiu
+   `success` no SHA `8006321` com Python 3.10–3.14, wheels Ubuntu/Windows,
+   audit e OTel. Os runs `42750089008` e `42749996543` foram cancelados por
+   obsolescência, e o run `42737900885`, referente ao SHA anterior `02db7ec`,
+   permanece apenas como histórico: terminou `cancelled` depois que Python
+   3.10 atingiu o limite do job.
 2. O uso real de provider para medir tokens permanece `NOT_RUN`; o benchmark
    local usa provider controlado e registra essa limitação.
 3. A sessão AWS local expirou. Nenhuma credencial foi alterada e nenhuma nova
