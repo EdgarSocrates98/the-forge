@@ -80,6 +80,11 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
 
 ### Revalidação adicional — 2026-11-10
 
+- A suíte focada de Obsidian/homologação foi reexecutada no Product Forge com
+  `uv run pytest -q tests/test_obsidian.py tests/test_obsidian_vault_scoping.py
+  tests/test_obsidian_templates.py tests/test_obsidian_release_workflow.py
+  tests/test_obsidian_library_boundary.py tests/test_knowledge_lifecycle.py
+  tests/test_homologation.py`: `72 passed` em `14,84s`.
 - Product Forge `77dde99`: suíte completa `291 passed, 1 skipped`, Ruff limpo e
   CI remoto `42729793620` verde.
 - O benchmark observável passou novamente em `100/1.000/10.000` notas com
