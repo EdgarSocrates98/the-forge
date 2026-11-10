@@ -4,7 +4,7 @@
    componentes federados passaram na revalidação atual. The Forge `42688316906`,
    Agent Bridge `42687526019`, Product Forge `42729793620`, Azure `42737901068`,
    API `42736176051`/`42736175647` e Platform `42738344886` possuem runs verdes.
-   O novo AWS `42737900885` terminou `cancelled`: Python 3.11–3.14, wheels e
+   O AWS `42737900885` do SHA anterior `02db7ec` terminou `cancelled`: Python 3.11–3.14, wheels e
    auditoria passaram, mas Python 3.10 terminou `cancelled` no limite do job.
    O AWS anterior `42714263493` é mantido apenas como evidência histórica.
    Também passaram
@@ -19,7 +19,8 @@
    project/workspace/user com apply/uninstall; o Portal também foi instalado
    fora do checkout e respondeu por CLI/TUI/status/start estático. O risco de
    distribuição restante é operacional (OIDC/CI global), não o caminho local;
-   o gate AWS do SHA atual permanece pendente até haver um run completo verde.
+   O SHA atual `1009366` ampliou o timeout da matriz de 90 para 180 minutos;
+   seu run completo ainda precisa terminar verde para fechar o gate AWS.
 3. **Falhas de infraestrutura:** permission denied foi ensaiado em Windows com
    ACL real num diretório temporário controlado: o Product Forge recusou antes
    da escrita com `OBSIDIAN-PATH-REFUSED`/`sync_state=denied`, nenhum artefato
