@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "theforge-apisentinel-adapter"
 version = "0.1.0"
 description = "forge/v1 adapter exposing API Sentinel's public boundary to The Forge"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 # Stdlib-only by adapter invariant: the adapter imports `api_sentinel` (the
 # specialist's public surface) and never `theforge`.
 dependencies = []
@@ -16,4 +16,4 @@ packages = ["src/theforge_apisentinel"]
 
 [tool.ruff]
 extend = "../../pyproject.toml"
-target-version = "py310"
+target-version = "py311"
