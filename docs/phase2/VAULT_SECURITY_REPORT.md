@@ -24,7 +24,9 @@ foi executada separadamente no Windows e passou (`1 passed`).
 
 ## Limitações
 
-Falhas de disco e permissão têm fault injection estruturado; ainda falta
-executá-las em filesystem real. A interrupção de processo tem teste
-determinístico local; isso não substitui a matriz operacional de produção e
-multiusuário com revogação.
+Permission denied foi validado com ACL real no Windows e disk full foi
+validado em tmpfs real de 256 KiB: ENOSPC durante o lock retornou
+`OBSIDIAN-LOCK-FAILED`/`sync_state=failed` sem nota, receipt ou temporário
+parcial. Ainda falta executar esses cenários em host/vault produtivo. A
+interrupção de processo tem teste determinístico local; isso não substitui a
+matriz operacional de produção e multiusuário com revogação.
