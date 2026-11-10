@@ -11,7 +11,7 @@ Estado global: **BLOCKED para aceite final**.
 | conteúdo recuperável e sem overwrite silencioso | PASS local |
 | classificação/autorização/contexto válido | PASS local |
 | histórico auditável e outputs body-free | PASS local |
-| Portal prático para fluxos implementados | PASS local; Nova investigação tem seleção de evidências, plano assinado, execução governada, histórico, recibo exportável e handoff explícito para Product Forge; conhecimento tem vault escopado, descoberta body-free de paths, preview, import/export, conflitos, histórico e deep link Obsidian |
+| Portal prático para fluxos implementados | PASS local; 624 testes Angular, build de produção e suíte browser completa `10 passed` validaram Nova investigação, federação, Graph Studio, instalação, estados degradados, seleção de evidências, plano assinado, execução governada, histórico, recibo exportável e handoff explícito para Product Forge; conhecimento tem vault escopado, descoberta body-free de paths, preview, import/export, conflitos, histórico e deep link Obsidian |
 | Obsidian opcional e funcional | PASS por design/testes locais; sem Obsidian o restante do ecossistema continua operacional |
 | Bases/Canvas compatíveis com sintaxe declarada | PASS de contrato: Canvas estrutural; Bases YAML oficial com serializer/validador, sem execução de fórmulas |
 | E2E federado reproduzível | PASS fixture-only; 4 notas round-tripped, Atlas/Lens/Bridge e conflito manual |
