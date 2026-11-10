@@ -7,8 +7,12 @@
 | API Forge | referências de endpoint/contrato | preserva API IR e change-control |
 | Platform Forge | incident/runbook/review | não executa recursos do vault |
 
-Os quatro adapters foram homologados em 2026-11-09 com seus testes de projeção
-e lint: AWS (1 passed), Azure (1 passed), API (1 passed) e Platform (1 passed).
+Os quatro adapters foram revalidados em 2026-11-10 com seus testes de projeção
+e lint: AWS (`02db7ec`, 2 passed), Azure (`27dd3f4`, 2 passed), API
+(`58a6117`, 2 passed) e Platform (`cc938d3`, 2 passed). Além dos campos
+estruturados, `title` e `summary` agora passam pela mesma redaction antes de
+serem escritos no Markdown; os testes confirmam que tokens, passwords e
+segredos de fixture não aparecem no corpo das notas.
 Eles são deliberadamente read-only e não declaram `obsidian.import`,
 `obsidian.export` ou `obsidian.sync`; esses fluxos continuam pertencendo ao
    Product Forge por meio da distribuição técnica `forge-obsidian`; exigem a

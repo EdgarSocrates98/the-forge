@@ -15,6 +15,9 @@ Estado: **PASS local; lacunas operacionais explicitadas**.
 - escrita usa arquivo temporário, flush/fsync, replace atômico e hash posterior;
 - lock por documento serializa mutações entre threads/processos suportados;
 - API e Portal exigem confirmação explícita para import/export/rollback/skip.
+- As projeções read-only dos quatro adapters também redigem `title`, `summary` e
+  campos estruturados antes de gerar Markdown; cada adapter tem teste dedicado
+  para impedir vazamento de token/password no corpo da nota.
 
 ## Testes executados
 
