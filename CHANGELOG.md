@@ -10,6 +10,10 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [0.7.5] - 2026-11-10
 
+### 0.7.5 — Agentic Ecosystem
+
+- Carries the Cycle 2.7 federated release certification baseline.
+
 ### Fixed
 
 - Published the Cycle 2.7 federated release certification baseline.
