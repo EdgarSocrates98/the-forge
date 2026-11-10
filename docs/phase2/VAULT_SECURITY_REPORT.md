@@ -26,8 +26,9 @@ lane opcional de sistema instalado quando o opt-in não está habilitado; a lane
 foi executada separadamente no Windows e passou (`1 passed`).
 
 O subconjunto operacional de sync foi revalidado em 2026-11-10 com
-`uv run pytest -q tests/test_obsidian.py -k "process_exit or rollback or atomic or permission or lock or concurrent"`:
-**10 passed, 40 deselected**.
+`uv run pytest -q tests/test_obsidian.py -k "process_exit or rollback or atomic or permission or lock or concurrent or manual"`:
+**11 passed, 39 deselected**, incluindo conflito de edição manual e rollback
+sem sobrescrita silenciosa.
 
 ## Limitações
 
