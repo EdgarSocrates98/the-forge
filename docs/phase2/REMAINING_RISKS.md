@@ -2,7 +2,7 @@
 
 1. **CI remoto global:** todas as matrizes locais dos especialistas e dos
    componentes federados passaram na revalidação atual. The Forge `42688316906`,
-   Agent Bridge `42687526019`, Product Forge `42686444553`, Azure `42693963092`,
+   Agent Bridge `42687526019`, Product Forge `42727405999`, Azure `42693963092`,
    API `42694647843`, Platform `42692546513` e AWS `42714263493` possuem runs
    verdes, assim como API Sentinel, Code Atlas, Data Sentinel e Forge Lens. O
    AWS remoto fechou 15122 passed/20 skipped em Python 3.10–3.14, incluindo
@@ -18,9 +18,11 @@
 3. **Falhas de infraestrutura:** permission denied foi ensaiado em Windows com
    ACL real num diretório temporário controlado: o Product Forge recusou antes
    da escrita com `OBSIDIAN-PATH-REFUSED`/`sync_state=denied`, nenhum artefato
-   parcial foi criado e o ACL foi restaurado. Disk full ainda possui somente
-   fault injection estruturado; process kill possui cobertura determinística
-   local, sem substituir um ensaio operacional completo.
+   parcial foi criado e o ACL foi restaurado. Disk full também foi ensaiado em
+   um tmpfs real de 256 KiB: ENOSPC durante a criação do lock retornou
+   `OBSIDIAN-LOCK-FAILED`/`sync_state=failed`, sem nota, receipt ou temporário
+   parcial. Ainda falta ensaio em host/vault produtivo e recuperação operacional
+   completa; process kill possui cobertura determinística local.
 4. **Multiusuário:** provisioning e revogação por principal/workspace agora
    existem no Product Forge e no Portal, com raiz autorizada, tokens escopados,
    resposta sem caminho físico e revogação que não apaga arquivos. Falta ensaio
