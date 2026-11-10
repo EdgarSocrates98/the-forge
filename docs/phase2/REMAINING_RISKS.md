@@ -19,8 +19,9 @@
    project/workspace/user com apply/uninstall; o Portal também foi instalado
    fora do checkout e respondeu por CLI/TUI/status/start estático. O risco de
    distribuição restante é operacional (OIDC/CI global), não o caminho local;
-   O SHA atual `1009366` ampliou o timeout da matriz de 90 para 180 minutos;
-   seu run completo ainda precisa terminar verde para fechar o gate AWS.
+   O SHA atual `4ada2b7` ampliou o timeout da matriz de 90 para 180 minutos e
+   habilitou a matriz completa em `phase2/**`; o run `42750089008` está
+   `pending` aguardando runner e ainda precisa terminar verde para fechar o gate.
 3. **Falhas de infraestrutura:** permission denied foi ensaiado em Windows com
    ACL real num diretório temporário controlado: o Product Forge recusou antes
    da escrita com `OBSIDIAN-PATH-REFUSED`/`sync_state=denied`, nenhum artefato

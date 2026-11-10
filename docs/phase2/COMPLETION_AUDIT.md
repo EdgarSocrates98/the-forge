@@ -43,7 +43,7 @@ intenção, fixture ou documentação em prova de execução externa.
 ## Bloqueios que não devem ser mascarados
 
 1. O aceite remoto final ainda aguarda um run AWS completo verde no SHA
-   `1009366`. O run `42737900885`, referente ao SHA anterior `02db7ec`, não deve ser tratado como verde: terminou
+   `4ada2b7`. O run `42750089008` está `pending`; o run `42737900885`, referente ao SHA anterior `02db7ec`, não deve ser tratado como verde: terminou
    `cancelled` depois que Python 3.10 atingiu o limite do job; não houve
    alteração de credenciais nem reinício automático.
 2. O uso real de provider para medir tokens permanece `NOT_RUN`; o benchmark
