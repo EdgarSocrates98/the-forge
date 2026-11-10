@@ -1,9 +1,9 @@
 {
   "cycle": "2.7",
   "repository": "the-forge",
-  "version": "0.7.4",
-  "tag": "v0.7.4",
-  "source_commit": "dfeeaf78d81371a283b33e3490089f79b65aa9c1",
+  "version": "0.7.5",
+  "tag": "v0.7.5",
+  "source_commit": "ba9305778d9ce0e51ca4dd2a8adf2814b3c2fc9f",
   "version_source": "pyproject.toml",
   "verified_at": "2026-11-10"
 }
