@@ -102,6 +102,11 @@ Após a execução inicial do relatório, as correções foram revalidadas nas
 - O `test_capability_catalog_doc.py` também passou (`30` casos), cobrindo a
   correspondência bidirecional entre capabilities/actions expostas pelos
   adapters e o catálogo documental.
+- Após o endurecimento do CI AWS (`8006321`), os testes estruturais de workflow
+  e supply-chain passaram localmente: `tests/test_ci_workflow.py` +
+  `tests/test_supply_chain.py` resultaram em `99 passed`; o run remoto
+  `42752023082` é o candidato que exercita esses gates em conjunto com a matriz
+  Python 3.10–3.14.
 
 Esses resultados atualizam a prova local, mas não removem os limites externos
 descritos no G12.
