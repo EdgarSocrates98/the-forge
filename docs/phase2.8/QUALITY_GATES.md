@@ -14,7 +14,7 @@
 | G9 Shared regression | PASS | Product Forge, The Forge contract/schema, Atlas/Lens/Bridge installed lane |
 | G10 Installation | PASS | Wheel matrix plus standalone forge-obsidian lane |
 | G11 CI convergence | PASS | Final-main run matrix in `CI_CONVERGENCE.md`; required workflows green |
-| G12 Release readiness | PASS_WITH_EXTERNAL_LIMITATIONS | Final repository matrix and evidence in `FINAL_ACCEPTANCE.md`; cloud/provider lanes remain external |
+| G12 Release readiness | PASS | Final repository matrix and evidence in `FINAL_ACCEPTANCE.md`; cloud/provider lanes remain external limitations |
 
 Allowed statuses are intentionally retained. External providers are not
 converted into PASS by fixture execution.
