@@ -47,8 +47,9 @@ considerado um bloqueio local.
 
 ## TTY/TUI
 
-`uv run python scripts/cli_install_matrix.py --check` passou para 14 projetos,
-com `home_tui`, `wizard`, guard non-TTY e installers portáteis detectados.
+`uv run python scripts/cli_install_matrix.py --check` foi revalidado em
+2026-11-10 e passou para 14 projetos (`status=PASS`), com `home_tui`,
+`wizard`, guard non-TTY, ambos os streams TTY e installers portáteis detectados.
 Executados com `uv run --with pywinpty` no Windows, com janela de 6 s por CLI
 para absorver cold-start do `uv`:
 
