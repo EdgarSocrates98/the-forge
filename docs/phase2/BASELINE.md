@@ -1,6 +1,6 @@
 # Phase 2 — Baseline
 
-Data da leitura: 2026-11-09. Esta auditoria foi revalidada contra os checkouts locais e
+Data da leitura: 2026-11-10. Esta auditoria foi revalidada contra os checkouts locais e
 os últimos runs públicos do GitHub Actions; não presume que os relatórios da Phase
 1.1 ainda sejam atuais.
 
