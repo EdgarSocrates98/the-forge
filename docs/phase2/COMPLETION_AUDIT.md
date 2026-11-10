@@ -38,7 +38,7 @@ intenção, fixture ou documentação em prova de execução externa.
 | 15 | E2E federado reproduzível | PASS fixture | `notes_exported=4`, `notes_roundtripped=4`, conflito manual detectado |
 | 16 | instalação simples | PASS local | TTY/TUI/wizard 14/14, scopes project/workspace/user e matriz portátil |
 | 17 | sem motores duplicados | PASS arquitetural | ownership único no Product Forge/`forge_obsidian`, adapters finos |
-| 18 | limitações relatadas sem exagero | PASS documental | `EXECUTION_REPORT.md`, `REMAINING_RISKS.md` e este audit registram `PARTIAL`/`PENDENTE` |
+| 18 | limitações relatadas sem exagero | PASS documental | `EXECUTION_REPORT.md`, `REMAINING_RISKS.md` e este audit registram `NOT_RUN` e limitações produtivas sem convertê-las em falha do escopo controlado |
 
 ## Limitações que não devem ser mascaradas
 
