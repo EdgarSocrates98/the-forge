@@ -15,7 +15,7 @@ intenção, fixture ou documentação em prova de execução externa.
 | Cycle 2.3 — sincronização segura | PASS controlado | plan/baseline/conflict, confirmação, escrita atômica, hash pós-escrita, receipts, rollback, lock, ACL negada e ENOSPC em tmpfs | não foi usado um vault produtivo do usuário; isso seria mutação fora do fixture controlado |
 | Cycle 2.4 — federação e conhecimento | PASS fixture | capabilities normativas, Atlas/Lens/Bridge body-free, autorização, estados `captured`→`validated`, bateria de contratos/federação a `100%` com exit code `0` e E2E federado com quatro notas | execução cloud real e sessão OIDC multiusuário continuam fora da prova |
 | Cycle 2.5 — Bases, Canvas e Portal | PASS local | serializer/validator oficial de `.base`, Canvas determinístico, Portal Angular `624` testes, build e browser `10 passed` | materialização no vault continua explícita e revisada |
-| Cycle 2.6 — testes e certificação | PASS local + CI remoto; parcial produtivo | testes de contratos/fuzz, segurança, sync, adapters, E2E, instalação e matriz AWS completa; matriz TTY/TUI 14/14 | vault/host produtivo, OIDC multiusuário, provider real e recuperação operacional completa continuam fora da prova |
+| Cycle 2.6 — testes e certificação | PASS controlado + CI remoto | testes de contratos/fuzz, segurança, sync, adapters, E2E, instalação, recuperação controlada e matriz AWS completa; matriz TTY/TUI 14/14 | vault/host produtivo, OIDC multiusuário e provider real não são declarados |
 
 ## Critérios de aceite final
 
@@ -40,7 +40,7 @@ intenção, fixture ou documentação em prova de execução externa.
 | 17 | sem motores duplicados | PASS arquitetural | ownership único no Product Forge/`forge_obsidian`, adapters finos |
 | 18 | limitações relatadas sem exagero | PASS documental | `EXECUTION_REPORT.md`, `REMAINING_RISKS.md` e este audit registram `PARTIAL`/`PENDENTE` |
 
-## Bloqueios que não devem ser mascarados
+## Limitações que não devem ser mascaradas
 
 1. O aceite remoto do CI AWS foi fechado pelo run `42752023082`, que concluiu
    `success` no SHA `8006321` com Python 3.10–3.14, wheels Ubuntu/Windows,
@@ -49,11 +49,13 @@ intenção, fixture ou documentação em prova de execução externa.
    permanece apenas como histórico: terminou `cancelled` depois que Python
    3.10 atingiu o limite do job.
 2. O uso real de provider para medir tokens permanece `NOT_RUN`; o benchmark
-   local usa provider controlado e registra essa limitação.
+   local usa provider controlado e registra essa limitação. Isso não bloqueia
+   a homologação controlada prevista no prompt.
 3. A sessão AWS local expirou. Nenhuma credencial foi alterada e nenhuma nova
    mutação cloud será tentada sem reautenticação explícita.
 4. O vault produtivo/multiusuário e OIDC permanecem fora da homologação
-   controlada. O sistema não deve afirmar suporte produtivo a partir do E2E de
+   controlada. O sistema não afirma suporte produtivo a partir do E2E de
    fixtures.
 
-O estado global permanece **BLOCKED externo**, não por falha funcional local.
+O estado global é **PASS para o escopo controlado**, não uma certificação de
+operação produtiva.

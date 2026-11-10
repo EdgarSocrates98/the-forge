@@ -74,5 +74,7 @@
    `ObsidianNoteRef/v1`; essas projeções agora redigem também `title` e
    `summary`, com testes dedicados nos quatro adapters.
 
-Até que esses riscos sejam fechados, a recomendação é manter sync revisado,
-fixtures-only nos E2E e confirmação humana para toda mutação.
+Para qualquer rollout produtivo, a recomendação continua sendo manter sync
+revisado, fixtures-only nos E2E até haver ambiente autorizado e confirmação
+humana para toda mutação. Esses riscos não invalidam o aceite controlado da
+Phase 2 nem devem ser apresentados como certificação produtiva.
