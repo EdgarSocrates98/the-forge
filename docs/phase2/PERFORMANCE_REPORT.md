@@ -7,13 +7,13 @@
 | import batch — 100 notas | PASS |
 | import batch — 1.000 notas | PASS |
 | import batch — 10.000 notas | PASS; gate interno do benchmark passou |
-| scan seguro — 100 / 1.000 / 10.000 notas | PASS; `37,178 / 349,594 / 3.700,896 ms`; pico Python `0,27 / 1,48 / 15,86 MiB`; pico RSS `34,93 / 40,62 / 77,04 MiB` |
-| import + projeção — 100 / 1.000 / 10.000 notas | PASS; `228,475 / 2.251,644 / 23.023,980 ms`; pico Python `0,50 / 3,74 / 35,84 MiB`; pico RSS `36,05 / 46,45 / 131,16 MiB` |
-| resolução de wikilinks — 100 / 1.000 / 10.000 notas | PASS; `100/100`, `1.000/1.000`, `10.000/10.000` resolvidos; `2,704 / 27,364 / 285,031 ms`; pico RSS `36,00 / 42,25 / 93,57 MiB` |
-| exportação atômica | PASS; uma nota por cenário em `14,017 / 15,340 / 19,423 ms`; pico RSS `36,05 / 42,37 / 93,56 MiB`; não existe bulk export neste contrato |
-| pico Python e RSS do reindex/search — 100 / 1.000 / 10.000 documentos | PASS; pico Python `0,22 / 1,39 / 13,22 MiB` via `tracemalloc`; pico RSS `37,04 / 45,47 / 115,94 MiB` |
+| scan seguro — 100 / 1.000 / 10.000 notas | PASS; `35,322 / 354,110 / 3.582,683 ms`; pico Python `0,27 / 1,50 / 15,83 MiB`; pico RSS `34,89 / 40,89 / 76,47 MiB` |
+| import + projeção — 100 / 1.000 / 10.000 notas | PASS; `232,463 / 2.184,244 / 23.877,962 ms`; pico Python `0,50 / 3,70 / 35,74 MiB`; pico RSS `36,09 / 46,54 / 130,51 MiB` |
+| resolução de wikilinks — 100 / 1.000 / 10.000 notas | PASS; `100/100`, `1.000/1.000`, `10.000/10.000` resolvidos; `2,660 / 27,646 / 327,075 ms`; pico RSS `35,92 / 42,40 / 95,39 MiB` |
+| exportação atômica | PASS; uma nota por cenário em `18,565 / 18,361 / 21,443 ms`; pico RSS `35,96 / 42,41 / 93,17 MiB`; não existe bulk export neste contrato |
+| pico Python e RSS do reindex/search — 100 / 1.000 / 10.000 documentos | PASS; pico Python `0,23 / 1,28 / 13,10 MiB` via `tracemalloc`; pico RSS `37,27 / 45,23 / 115,36 MiB` |
 | chunking Markdown — 100 / 1.000 / 10.000 documentos | PASS; melhor caso `1,947 / 18,335 / 193,371 ms` (`~51,4k / 54,5k / 51,7k documentos/s`) |
-| SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `141,960 / 1.399,128 / 14.388,378 ms`; busca `0,397 / 0,422 / 0,892 ms`; DB `143.360 / 843.776 / 7.983.104 bytes` |
+| SQLite/FTS local — 100 / 1.000 / 10.000 documentos | PASS; escrita `151,962 / 1.488,089 / 15.725,807 ms`; busca `0,681 / 0,603 / 1,088 ms`; DB `143.360 / 843.776 / 7.991.296 bytes` |
 | orçamento de contexto de recuperação — 100 / 1.000 / 10.000 documentos | PASS fixture; máximo estimado `12` tokens e média `11,333` por consulta; gateway com provider controlado também passa |
 | qualidade de citações — 100 / 1.000 / 10.000 documentos | PASS fixture; precision@3 `1,0`, recall@3 `1,0`, completude dos campos de citação `1,0`; não representa qualidade de resposta de provider |
 | uso de tokens no gateway | PASS fixture; resposta `17/29` tokens e os mesmos valores persistidos no `budget_ledger`, 1 execução; provider real permanece `NOT_RUN` |

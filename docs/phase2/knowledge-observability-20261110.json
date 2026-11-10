@@ -20,45 +20,45 @@
       "scan": {
         "status": "PASS",
         "count": 100,
-        "elapsed_ms": 37.178,
-        "peak_python_bytes": 281556,
-        "peak_rss_bytes": 36634624
+        "elapsed_ms": 35.322,
+        "peak_python_bytes": 281550,
+        "peak_rss_bytes": 36581376
       },
       "import": {
         "status": "PASS",
         "count": 100,
-        "elapsed_ms": 228.475,
-        "peak_python_bytes": 521999,
-        "peak_rss_bytes": 37801984
+        "elapsed_ms": 232.463,
+        "peak_python_bytes": 524593,
+        "peak_rss_bytes": 37838848
       },
       "wikilink_resolution": {
         "status": "PASS",
         "links": 100,
         "resolved": 100,
         "unresolved": 0,
-        "elapsed_ms": 2.704,
-        "peak_python_bytes": 33135,
-        "peak_rss_bytes": 37748736
+        "elapsed_ms": 2.66,
+        "peak_python_bytes": 32895,
+        "peak_rss_bytes": 37662720
       },
       "export": {
         "status": "PASS",
         "scope": "one atomic document export",
-        "elapsed_ms": 14.017,
-        "peak_python_bytes": 65671,
-        "peak_rss_bytes": 37797888
+        "elapsed_ms": 18.565,
+        "peak_python_bytes": 67871,
+        "peak_rss_bytes": 37707776
       },
       "reindex_search": {
         "status": "PASS",
         "scope": "SQLite FTS local benchmark",
-        "elapsed_ms": 180.944,
-        "peak_python_bytes": 227401,
-        "peak_rss_bytes": 38842368,
+        "elapsed_ms": 199.078,
+        "peak_python_bytes": 241244,
+        "peak_rss_bytes": 39079936,
         "documents": 100,
         "iterations": 1,
-        "write_ms_median": 142.014,
-        "search_ms_median": 0.815,
-        "write_ms_max": 142.014,
-        "search_ms_max": 0.815,
+        "write_ms_median": 151.962,
+        "search_ms_median": 0.681,
+        "write_ms_max": 151.962,
+        "search_ms_max": 0.681,
         "chunks": 100,
         "search_hits": 20,
         "database_bytes": 143360
@@ -130,48 +130,48 @@
       "scan": {
         "status": "PASS",
         "count": 1000,
-        "elapsed_ms": 349.594,
-        "peak_python_bytes": 1554006,
-        "peak_rss_bytes": 42594304
+        "elapsed_ms": 354.11,
+        "peak_python_bytes": 1575070,
+        "peak_rss_bytes": 42876928
       },
       "import": {
         "status": "PASS",
         "count": 1000,
-        "elapsed_ms": 2251.644,
-        "peak_python_bytes": 3926596,
-        "peak_rss_bytes": 48709632
+        "elapsed_ms": 2184.244,
+        "peak_python_bytes": 3878542,
+        "peak_rss_bytes": 48795648
       },
       "wikilink_resolution": {
         "status": "PASS",
         "links": 1000,
         "resolved": 1000,
         "unresolved": 0,
-        "elapsed_ms": 27.364,
-        "peak_python_bytes": 102142,
-        "peak_rss_bytes": 44298240
+        "elapsed_ms": 27.646,
+        "peak_python_bytes": 109646,
+        "peak_rss_bytes": 44462080
       },
       "export": {
         "status": "PASS",
         "scope": "one atomic document export",
-        "elapsed_ms": 15.34,
-        "peak_python_bytes": 49695,
-        "peak_rss_bytes": 44421120
+        "elapsed_ms": 18.361,
+        "peak_python_bytes": 60761,
+        "peak_rss_bytes": 44466176
       },
       "reindex_search": {
         "status": "PASS",
         "scope": "SQLite FTS local benchmark",
-        "elapsed_ms": 1779.6,
-        "peak_python_bytes": 1455650,
-        "peak_rss_bytes": 47685632,
+        "elapsed_ms": 1537.23,
+        "peak_python_bytes": 1347127,
+        "peak_rss_bytes": 47427584,
         "documents": 1000,
         "iterations": 1,
-        "write_ms_median": 1726.807,
-        "search_ms_median": 0.604,
-        "write_ms_max": 1726.807,
-        "search_ms_max": 0.604,
+        "write_ms_median": 1488.089,
+        "search_ms_median": 0.603,
+        "write_ms_max": 1488.089,
+        "search_ms_max": 0.603,
         "chunks": 1000,
         "search_hits": 20,
-        "database_bytes": 847872
+        "database_bytes": 843776
       },
       "token_budget": {
         "status": "PASS",
@@ -240,48 +240,48 @@
       "scan": {
         "status": "PASS",
         "count": 10000,
-        "elapsed_ms": 3700.896,
-        "peak_python_bytes": 16627586,
-        "peak_rss_bytes": 80781312
+        "elapsed_ms": 3582.683,
+        "peak_python_bytes": 16598668,
+        "peak_rss_bytes": 80187392
       },
       "import": {
         "status": "PASS",
         "count": 10000,
-        "elapsed_ms": 23023.98,
-        "peak_python_bytes": 37586714,
-        "peak_rss_bytes": 137527296
+        "elapsed_ms": 23877.962,
+        "peak_python_bytes": 37477456,
+        "peak_rss_bytes": 136847360
       },
       "wikilink_resolution": {
         "status": "PASS",
         "links": 10000,
         "resolved": 10000,
         "unresolved": 0,
-        "elapsed_ms": 285.031,
-        "peak_python_bytes": 3014413,
-        "peak_rss_bytes": 98115584
+        "elapsed_ms": 327.075,
+        "peak_python_bytes": 3036907,
+        "peak_rss_bytes": 100020224
       },
       "export": {
         "status": "PASS",
         "scope": "one atomic document export",
-        "elapsed_ms": 19.423,
-        "peak_python_bytes": 58995,
-        "peak_rss_bytes": 98111488
+        "elapsed_ms": 21.443,
+        "peak_python_bytes": 60987,
+        "peak_rss_bytes": 97697792
       },
       "reindex_search": {
         "status": "PASS",
         "scope": "SQLite FTS local benchmark",
-        "elapsed_ms": 16200.988,
-        "peak_python_bytes": 13863894,
-        "peak_rss_bytes": 121626624,
+        "elapsed_ms": 15890.68,
+        "peak_python_bytes": 13731801,
+        "peak_rss_bytes": 120963072,
         "documents": 10000,
         "iterations": 1,
-        "write_ms_median": 16026.346,
-        "search_ms_median": 1.098,
-        "write_ms_max": 16026.346,
-        "search_ms_max": 1.098,
+        "write_ms_median": 15725.807,
+        "search_ms_median": 1.088,
+        "write_ms_max": 15725.807,
+        "search_ms_max": 1.088,
         "chunks": 10000,
         "search_hits": 20,
-        "database_bytes": 7921664
+        "database_bytes": 7991296
       },
       "token_budget": {
         "status": "PASS",
