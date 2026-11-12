@@ -69,7 +69,8 @@ def _manifest_of(repo: Path) -> dict[str, Any] | None:
     if not p.is_file():
         return None
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        doc: dict[str, Any] = json.loads(p.read_text(encoding="utf-8"))
+        return doc
     except Exception:
         return None
 
@@ -140,7 +141,7 @@ def scenario_subset(ws: Path, forges: dict[str, Path], sid: str, ids: list[str])
     roots = {r.forge_id for r in resolver.roots}
     expected = {e["forge"] for e in info["forges"] if e.get("materialized")}
     checks = [
-        check(expected and expected.issubset(roots), "discovered-forges"),
+        check(bool(expected) and expected.issubset(roots), "discovered-forges"),
         check(len(roots) == len(expected), "no-extra-forges"),
         check(len(resolver.list()) > 0, "catalog-nonempty"),
     ]
@@ -349,7 +350,7 @@ def main() -> int:
             try:
                 body = gr.get(some.identity, max_bytes=4096)
                 ev.append({"case": "right-resource", "identity": some.identity,
-                           "ok": bool(body.text), "sha256": body.sha256[:12]})
+                           "ok": bool(body.text), "sha256": (body.sha256 or "")[:12]})
             except ResourceFailure as exc:
                 ev.append({"case": "right-resource", "ok": False, "error": exc.kind.value})
         try:
