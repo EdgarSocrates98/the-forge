@@ -59,7 +59,7 @@ def _scan_dir(root: Path, kind: str, rclass: str) -> list[dict]:
     if not found:
         return []
     entries: list[dict] = []
-    for base, rel in found:
+    for base, _rel in found:
         if kind == "skill":
             items = sorted(
                 p for p in base.iterdir()
@@ -136,7 +136,11 @@ def main(argv: list[str]) -> int:
         resources = generate(root)
         if check:
             if doc.get("resources") != resources:
-                print(f"{root.name}: resources drift ({len(doc.get('resources', []))} declared vs {len(resources)} scanned)")
+                declared = len(doc.get("resources", []))
+                print(
+                    f"{root.name}: resources drift "
+                    f"({declared} declared vs {len(resources)} scanned)"
+                )
                 rc = 1
             else:
                 print(f"{root.name}: {len(resources)} resources in sync")
