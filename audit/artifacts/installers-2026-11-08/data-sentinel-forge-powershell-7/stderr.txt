@@ -1,0 +1,2 @@
+usage: install_portable.py [-h] [--dry-run] [--editable] [--python PYTHON_EXE]
+install_portable.py: error: unrecognized arguments: --install-dir E:\projetos\FORJAS\the-forge\audit\artifacts\installers-2026-11-08\targets\data-sentinel-forge\powershell-7 --quiet

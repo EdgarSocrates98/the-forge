@@ -1,0 +1,47 @@
+........................................................................ [  4%]
+............s........................................................... [  8%]
+........................................................................ [ 12%]
+.........................................................sss............ [ 17%]
+....ssssss.............................................................. [ 21%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 34%]
+........................................................................ [ 38%]
+........................................................................ [ 42%]
+....................................................s................... [ 47%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+........................................................................ [ 59%]
+........................................................................ [ 64%]
+.........................................s................s............. [ 68%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+....s................................................................... [ 81%]
+........................................................................ [ 85%]
+....................................s..............................s.sss [ 89%]
+s.s..................................................................... [ 94%]
+........................................................................ [ 98%]
+............................                                             [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\api\test_files_occurrences.py:162: todo arquivo tem ocorrências
+SKIPPED [1] tests\discovery\test_scanner.py:118: os.symlink exige privilégio no Windows
+SKIPPED [1] tests\discovery\test_scanner.py:136: os.symlink exige privilégio no Windows
+SKIPPED [1] tests\discovery\test_scanner.py:145: os.symlink exige privilégio no Windows
+SKIPPED [1] tests\discovery\test_symlink_git_mode.py:60: git + symlinks POSIX
+SKIPPED [1] tests\discovery\test_symlink_git_mode.py:72: git + symlinks POSIX
+SKIPPED [1] tests\discovery\test_symlink_git_mode.py:83: git + symlinks POSIX
+SKIPPED [1] tests\discovery\test_symlink_git_mode.py:92: git + symlinks POSIX
+SKIPPED [1] tests\discovery\test_symlink_git_mode.py:102: git + symlinks POSIX
+SKIPPED [1] tests\discovery\test_symlink_git_mode.py:112: POSIX only
+SKIPPED [1] tests\e2e\test_hardening.py:99: os.symlink exige privilégio no Windows
+SKIPPED [1] tests\indexing\test_git_intelligence.py:293: case-rename é POSIX
+SKIPPED [1] tests\indexing\test_integrity.py:86: os.symlink exige privilégio no Windows
+SKIPPED [1] tests\resolvers\test_lsp_real.py:48: pyright-langserver ausente — real LSP E2E NOT RUN
+SKIPPED [1] tests\security\test_cycle81_security_final.py:343: explorer_dist ausente neste checkout
+SKIPPED [1] tests\security\test_cycle81_security_final.py:745: explorer_dist ausente neste checkout
+SKIPPED [1] tests\security\test_cycle81_security_final.py:787: POSIX-only surface: bash build script / control-char filenames
+SKIPPED [1] tests\security\test_cycle81_security_final.py:793: POSIX-only surface: bash build script / control-char filenames
+SKIPPED [1] tests\security\test_cycle81_security_final.py:803: POSIX-only surface: bash build script / control-char filenames
+SKIPPED [1] tests\security\test_cycle81_security_final.py:809: POSIX-only surface: bash build script / control-char filenames
+SKIPPED [1] tests\security\test_cycle81_security_final.py:836: POSIX-only surface: bash build script / control-char filenames
+1663 passed, 21 skipped in 899.36s (0:14:59)

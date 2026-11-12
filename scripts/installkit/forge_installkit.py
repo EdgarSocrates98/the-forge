@@ -639,17 +639,22 @@ def state_dir_for(spec: ForgeSpec, scope: str, root: Path) -> Path:
 
 
 def _host_dirs(host: str, scope: str) -> list[str]:
-    """Project/user roots a host reads its assets from."""
+    """Project/user roots a host reads its assets from.
+
+    `.agents/` is the shared surface: Devin, Codex and Copilot all read it
+    natively, so skills/agents are written there ONCE. Host dirs remain only
+    for host-specific config (`.devin` confs/payloads, `.codex` TOML agents,
+    `.github` copilot assets) — never a second copy of the same skill."""
     if scope == "user":
         return {
             "claude": ["~/.claude/skills", "~/.claude/agents"],
-            "devin": ["~/.devin/skills", "~/.agents/skills", "~/.agents/agents"],
+            "devin": ["~/.agents/skills", "~/.agents/agents", "~/.devin"],
             "codex": ["~/.codex", "~/.agents/skills", "~/.agents/agents"],
             "copilot": ["~/.agents/skills", "~/.agents/agents"],
         }.get(host, [])
     return {
         "claude": [".claude/skills", ".claude/agents"],
-        "devin": [".devin/skills", ".agents/skills", ".agents/agents"],
+        "devin": [".agents/skills", ".agents/agents", ".devin"],
         "codex": [".agents/skills", ".agents/agents", ".codex"],
         "copilot": [".agents/skills", ".agents/agents", ".github/skills"],
     }.get(host, [])
@@ -658,8 +663,14 @@ def _host_dirs(host: str, scope: str) -> list[str]:
 def profile_asset_kinds(profile: str) -> tuple[str, ...]:
     return {
         "minimal": ("config", "mcp", "marker", "state"),
-        "recommended": ("config", "mcp", "marker", "state", "skill", "agent"),
-        "full": ("config", "mcp", "marker", "state", "skill", "agent"),
+        "recommended": (
+            "config", "mcp", "marker", "state", "skill", "agent",
+            "knowledge", "rules", "evals",
+        ),
+        "full": (
+            "config", "mcp", "marker", "state", "skill", "agent",
+            "knowledge", "rules", "evals",
+        ),
     }[profile]
 
 
@@ -679,9 +690,25 @@ def components_path(state_dir: Path) -> Path:
 # Optional components selectable beyond the profile. Public names map to
 # asset kinds; "graph-studio"/"tui" are runtime flags persisted to
 # components.json. Core kinds are always installed.
-COMPONENT_KINDS = {"skills": "skill", "agents": "agent", "mcp": "mcp"}
+COMPONENT_KINDS = {
+    "skills": "skill",
+    "agents": "agent",
+    "mcp": "mcp",
+    "knowledge": "knowledge",
+    "rules": "rules",
+    "evals": "evals",
+}
 CORE_KINDS = ("config", "marker", "state")
-OPTIONAL_COMPONENTS = ("skills", "agents", "mcp", "tui", "graph-studio")
+OPTIONAL_COMPONENTS = (
+    "skills",
+    "agents",
+    "mcp",
+    "knowledge",
+    "rules",
+    "evals",
+    "tui",
+    "graph-studio",
+)
 
 
 def component_options(
@@ -766,6 +793,12 @@ def _asset_kind(rel: str) -> str:
         return "skill"
     if "/agents/" in f"/{rel}" or "agent" in Path(rel).name.lower():
         return "agent"
+    if "/knowledge/" in f"/{rel}":
+        return "knowledge"
+    if "/rules/" in f"/{rel}":
+        return "rules"
+    if "/evals/" in f"/{rel}":
+        return "evals"
     if Path(rel).name == ".mcp.json" or "mcp" in rel:
         return "mcp"
     if rel.startswith((".", "")) and Path(rel).suffix in (".json", ".yaml", ".yml", ".toml"):
@@ -831,7 +864,10 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
     try:
         assets = ctx.spec.render_assets(ctx) if ctx.spec.render_assets else {}
         kinds = set(asset_kinds_for(ctx))
-        ctx_bytes = {"skill": 0, "agent": 0, "managed": 0}
+        ctx_bytes = {
+            "skill": 0, "agent": 0, "knowledge": 0, "rules": 0, "evals": 0,
+            "managed": 0,
+        }
         for rel in sorted(assets):
             kind = _asset_kind(rel)
             if kind not in kinds:
@@ -842,7 +878,7 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
                     f"{rel!r}: escapes the install root — remove or fix the asset path",
                 )
             data = assets[rel]
-            if kind in ("skill", "agent"):
+            if kind in ctx_bytes:
                 ctx_bytes[kind] += len(data)
             ctx_bytes["managed"] += len(data)
             target = ctx.root / rel

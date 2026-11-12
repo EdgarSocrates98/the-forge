@@ -1,0 +1,80 @@
+{
+  "schema": "theforge/ForgeKnowledge/v1",
+  "id": "api-sentinel-forge",
+  "name": "API Sentinel",
+  "family": "verification",
+  "summary": "Local-first API reliability, runtime intelligence and incident investigation: runtime observation, SLO assessment, anomaly detection, incident investigation and deployment correlation over real telemetry. Diagnoses from runtime evidence; it is not an engineering producer.",
+  "repository": "https://github.com/EdgarSocrates98/api-sentinel-forge.git",
+  "package": "api-sentinel-forge>=0.1.0,<0.2.0",
+  "binary": "api-sentinel",
+  "adapter": "adapters/apisentinel",
+  "python": ">=3.11",
+  "appropriate_for": [
+    "runtime observation of API services from ingested telemetry (metrics, traces, health probes)",
+    "SLO/SLI assessment and error-budget posture",
+    "anomaly detection and incident investigation from runtime evidence",
+    "deployment-correlation questions (did release X regress the service?)",
+    "consuming api-forge or forge-doctor-api handoff artifacts for independent runtime diagnosis"
+  ],
+  "inappropriate_for": [
+    "producing API code or contracts — it is an observer/diagnostician, not a producer",
+    "static source review of a repository — route to api-forge or forge-doctor-api",
+    "platform estate or CI/CD analysis — route to platform-forge",
+    "any run without the telemetry/runs its diagnostics require"
+  ],
+  "intents": [
+    "api runtime diagnosis",
+    "api incident investigation",
+    "api slo assessment",
+    "api anomaly detection",
+    "sentinel api",
+    "is my api healthy"
+  ],
+  "technologies": [
+    "api",
+    "opentelemetry",
+    "slo",
+    "incident-investigation",
+    "runtime-telemetry"
+  ],
+  "environments": [
+    "local"
+  ],
+  "install": [
+    {
+      "kind": "venv-pip",
+      "command": "python3.11 -m venv <sentinel-venv> && <sentinel-python> -m pip install --upgrade pip && <sentinel-python> -m pip install \"api-sentinel-forge>=0.1.0,<0.2.0\" && <sentinel-python> -m pip install -e <checkout-the-forge>/adapters/apisentinel",
+      "verify": "<sentinel-python> -c \"import api_sentinel, theforge_apisentinel\"",
+      "prerequisites": [
+        "python>=3.11",
+        "pip",
+        "local checkout of the-forge (adapter)"
+      ]
+    },
+    {
+      "kind": "editable",
+      "command": "<sentinel-python> -m pip install -e <checkout-api-sentinel-forge> -e <checkout-the-forge>/adapters/apisentinel",
+      "verify": "<sentinel-python> -c \"import api_sentinel, theforge_apisentinel\"",
+      "prerequisites": [
+        "local checkout of api-sentinel-forge",
+        "local checkout of the-forge (adapter)",
+        "python>=3.11"
+      ]
+    }
+  ],
+  "verify_install": "<sentinel-python> -c \"import api_sentinel, theforge_apisentinel\" && api-sentinel version",
+  "discover_command": "theforge providers add api-sentinel-forge --python <sentinel-python>",
+  "preferred_verifiers": [],
+  "independent_verification": true,
+  "composes_with": [
+    "api-forge",
+    "forge-doctor-api"
+  ],
+  "fallback": [],
+  "limitations_note": "Diagnostics require runtime evidence (telemetry batches, run dumps, SLO windows): the orchestration lane refuses to force a sentinel diagnosis when the caller declares no such inputs. Profile `local` works fully offline; `aws`/`opentelemetry` profiles degrade to honest unavailable states without their collectors.",
+  "examples": [
+    "is checkout-api breaching its SLO this week?",
+    "investigate the 5xx spike after the last deploy"
+  ],
+  "recorded_at": "2026-10-16T00:00:00Z"
+}

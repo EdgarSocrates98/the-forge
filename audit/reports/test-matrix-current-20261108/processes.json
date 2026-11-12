@@ -1,0 +1,74 @@
+[
+  {
+    "repo": "api-forge",
+    "pid": 41000,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\api-forge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\api-forge.stderr.log"
+  },
+  {
+    "repo": "code-atlas-forge",
+    "pid": 1384,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\code-atlas-forge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\code-atlas-forge.stderr.log"
+  },
+  {
+    "repo": "data-sentinel-forge",
+    "pid": 12140,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\data-sentinel-forge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\data-sentinel-forge.stderr.log"
+  },
+  {
+    "repo": "forge-agent-bridge",
+    "pid": 34156,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-agent-bridge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-agent-bridge.stderr.log"
+  },
+  {
+    "repo": "forge-doctor-api",
+    "pid": 33096,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-doctor-api.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-doctor-api.stderr.log"
+  },
+  {
+    "repo": "forge-doctor-data",
+    "pid": 9404,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-doctor-data.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-doctor-data.stderr.log"
+  },
+  {
+    "repo": "forge-lens",
+    "pid": 34640,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-lens.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\forge-lens.stderr.log"
+  },
+  {
+    "repo": "platform-forge",
+    "pid": 41136,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\platform-forge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\platform-forge.stderr.log"
+  },
+  {
+    "repo": "product-forge",
+    "pid": 34836,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\product-forge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\product-forge.stderr.log"
+  },
+  {
+    "repo": "spark-forge-aws",
+    "pid": 27592,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\spark-forge-aws.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\spark-forge-aws.stderr.log"
+  },
+  {
+    "repo": "spark-forge-azure",
+    "pid": 40064,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\spark-forge-azure.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\spark-forge-azure.stderr.log"
+  },
+  {
+    "repo": "the-forge",
+    "pid": 9884,
+    "stdout": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\the-forge.stdout.log",
+    "stderr": "E:\\projetos\\FORJAS\\the-forge\\audit\\reports\\test-matrix-current-20261108\\the-forge.stderr.log"
+  }
+]

@@ -1,0 +1,5 @@
+Code Atlas Forge - portable install - wheel
+source:   E:\projetos\FORJAS\code-atlas-forge
+venv:     C:\Users\edgar\.forjas\code-atlas-forge\venv
+launcher: C:\Users\edgar\.forjas\code-atlas-forge\bin\code-atlas.cmd
+plan only: no files, environments or PATH entries were changed

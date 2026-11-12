@@ -1,0 +1,97 @@
+........................................................................ [  6%]
+........................................................................ [ 12%]
+........................................................................ [ 18%]
+........................................................................ [ 25%]
+........................................................................ [ 31%]
+........................................................................ [ 37%]
+........................................................................ [ 43%]
+........................................................................ [ 50%]
+........................................................................ [ 56%]
+........................................................................ [ 62%]
+........................................................................ [ 69%]
+........................................................................ [ 75%]
+........................................................................ [ 81%]
+s........ss.............ss.............................................. [ 87%]
+........................................................................ [ 94%]
+...................................................................      [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  E:\projetos\FORJAS\forge-lens\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========== forge-lens bench smoke — measured wall time (not SLAs) ============
+  scale.ingest.batch[1k]                        929.1 ms  batch_ms_max=702.16, batch_ms_p50=702.16, batch_ms_p95=702.16, batches=1, capture=full, db_bytes=4927208, spans=1000, spans_per_s=1076, traces=250
+  scale.ingest.single[1k]                         1.6 ms  max_ms=9.851, p50_ms=1.632, p95_ms=4.466, p99_ms=7.039, probes=100
+  scale.list_traces.page[1k]                      2.4 ms  reps_ms=[2.824, 2.361, 2.188], seeded=250
+  scale.list_traces.status_error[1k]              0.4 ms  reps_ms=[0.418, 0.351, 0.342]
+  scale.list_traces.session[1k]                   0.2 ms  reps_ms=[0.242, 0.436, 0.234]
+  scale.list_traces.q[1k]                         1.4 ms  reps_ms=[1.396, 1.423, 1.078]
+  scale.list_traces.tool[1k]                      1.9 ms  reps_ms=[1.901, 1.857, 1.927]
+  scale.list_traces.duration_window[1k]           1.5 ms  reps_ms=[1.485, 1.952, 1.421]
+  scale.list_traces.since_until[1k]               1.0 ms  reps_ms=[1.001, 0.957, 1.043]
+  scale.list_sessions[1k]                         0.4 ms  reps_ms=[0.492, 0.354, 0.338]
+  scale.list_tools[1k]                            0.7 ms  reps_ms=[0.848, 0.719, 0.722], spans=1000
+  scale.get_trace.x50[1k]                        19.7 ms  reads=50, reps_ms=[110.737, 12.355, 19.717]
+  scale.graph.session[1k]                         0.1 ms  reps_ms=[0.166, 0.068, 0.057], traces=10
+  scale.eval.fetch[1k]                           55.5 ms  reads=200
+  scale.eval.battery[1k]                        120.9 ms  evaluators=17, traces=200
+  scale.wal.read_idle[1k]                         0.7 ms  reps_ms=[0.617, 0.666, 1.125]
+  scale.wal.read_during_write[1k]                 3.0 ms  p50_ms=2.967, p95_ms=9.851, readers=3, reads=222
+  scale.wal.write_during_reads[1k]                3.5 ms  p50_ms=3.534, p95_ms=8.449, writes=80
+  scale.ingest.batch[10k]                      7071.8 ms  batch_ms_max=2943.34, batch_ms_p50=2113.63, batch_ms_p95=2860.37, batches=3, capture=full, db_bytes=10485840, spans=10000, spans_per_s=1414, traces=2500
+  scale.ingest.single[10k]                        1.1 ms  max_ms=17.363, p50_ms=1.135, p95_ms=3.69, p99_ms=13.912, probes=100
+  scale.list_traces.page[10k]                     5.2 ms  reps_ms=[5.93, 4.943, 5.239], seeded=2500
+  scale.list_traces.status_error[10k]             6.9 ms  reps_ms=[12.444, 5.066, 6.902]
+  scale.list_traces.session[10k]                  2.0 ms  reps_ms=[2.915, 1.924, 1.985]
+  scale.list_traces.q[10k]                       37.1 ms  reps_ms=[37.127, 25.995, 37.846]
+  scale.list_traces.tool[10k]                    34.5 ms  reps_ms=[30.547, 36.502, 34.54]
+  scale.list_traces.duration_window[10k]         16.0 ms  reps_ms=[16.334, 15.985, 15.501]
+  scale.list_traces.since_until[10k]              2.1 ms  reps_ms=[2.088, 2.755, 1.345]
+  scale.list_sessions[10k]                        2.0 ms  reps_ms=[2.043, 2.898, 1.698]
+  scale.list_tools[10k]                          25.9 ms  reps_ms=[36.01, 25.854, 14.532], spans=10000
+  scale.get_trace.x50[10k]                       11.0 ms  reads=50, reps_ms=[24.354, 10.992, 9.427]
+  scale.graph.session[10k]                        0.7 ms  reps_ms=[0.768, 0.665, 0.625], traces=100
+  scale.eval.fetch[10k]                          38.0 ms  reads=200
+  scale.eval.battery[10k]                       109.1 ms  evaluators=17, traces=200
+  scale.wal.read_idle[10k]                        0.7 ms  reps_ms=[0.611, 0.717, 2.116]
+  scale.wal.read_during_write[10k]                2.6 ms  p50_ms=2.609, p95_ms=10.16, readers=3, reads=202
+  scale.wal.write_during_reads[10k]               2.9 ms  p50_ms=2.906, p95_ms=6.598, writes=80
+  scale.ingest.batch[100k]                    61523.4 ms  batch_ms_max=3119.3, batch_ms_p50=2252.79, batch_ms_p95=3090.29, batches=25, capture=full, db_bytes=66846896, spans=100000, spans_per_s=1625, traces=25000
+  scale.ingest.single[100k]                       1.3 ms  max_ms=23.969, p50_ms=1.276, p95_ms=5.616, p99_ms=13.3, probes=100
+  scale.list_traces.page[100k]                    8.0 ms  reps_ms=[8.001, 7.174, 16.291], seeded=25000
+  scale.list_traces.status_error[100k]           68.4 ms  reps_ms=[486.826, 68.39, 46.212]
+  scale.list_traces.session[100k]                47.6 ms  reps_ms=[36.747, 55.117, 47.566]
+  scale.list_traces.q[100k]                     280.4 ms  reps_ms=[2538.591, 246.978, 280.37]
+  scale.list_traces.tool[100k]                  469.2 ms  reps_ms=[469.187, 413.555, 579.923]
+  scale.list_traces.duration_window[100k]       255.6 ms  reps_ms=[255.598, 347.085, 222.673]
+  scale.list_traces.since_until[100k]             1.4 ms  reps_ms=[2.084, 1.051, 1.425]
+  scale.list_sessions[100k]                     201.0 ms  reps_ms=[246.387, 201.042, 195.921]
+  scale.list_tools[100k]                        296.1 ms  reps_ms=[505.322, 296.11, 259.155], spans=100000
+  scale.get_trace.x50[100k]                      23.1 ms  reads=50, reps_ms=[30.373, 23.081, 18.262]
+  scale.graph.session[100k]                      17.2 ms  reps_ms=[80.277, 17.235, 13.454], traces=1000
+  scale.eval.fetch[100k]                        235.4 ms  reads=200
+  scale.eval.battery[100k]                       90.3 ms  evaluators=17, traces=200
+  scale.wal.read_idle[100k]                       0.7 ms  reps_ms=[0.901, 0.675, 0.528]
+  scale.wal.read_during_write[100k]               1.1 ms  p50_ms=1.083, p95_ms=12.737, readers=3, reads=490
+  scale.wal.write_during_reads[100k]              4.4 ms  p50_ms=4.392, p95_ms=25.449, writes=80
+  scale.graph.trace_tree[10k-spans]             451.3 ms  reps_ms=[775.358, 451.268, 379.014], spans=10000
+  ingest.pipeline                              1122.2 ms  capture=metadata, spans=2000, traces=500
+  corpus.seed                                  2832.2 ms  db_bytes=6631312, spans=4000, traces=1000
+  store.list_traces[page]                         9.2 ms  limit=500, seeded=1000
+  store.list_traces[status=error]                 1.6 ms  limit=500
+  store.list_traces[session_id]                   0.8 ms  limit=100
+  store.list_traces[q=span-name]                  5.0 ms  limit=500
+  store.list_traces[q=trace-id]                   6.8 ms  limit=50
+  store.list_traces[tool]                        21.6 ms  limit=500
+  store.list_traces[duration-window]             18.4 ms  limit=600
+  store.list_traces[since+until]                  1.2 ms  limit=200
+  store.list_traces[last-page]                    1.7 ms  limit=100, offset=900
+  store.list_sessions                             0.9 ms  seeded=1000
+  store.list_tools                                9.5 ms  seeded=4000
+  store.get_trace[x50]                           16.3 ms  reads=50
+  graph.build_trace_graph                       157.8 ms  spans=2000
+  graph.build_session_graph                       0.5 ms  traces=40
+  eval.fetch_traces                             119.5 ms  reads=200
+  eval.battery                                  118.8 ms  evaluators=17, traces=200
+  timings are single-run, hardware-dependent smoke signals

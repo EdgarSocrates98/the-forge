@@ -1,6 +1,6 @@
 ---
 name: forge-ecosystem
-description: "Map of The Forge specialist ecosystem: the six specialists, their families, and how the control plane routes between them. Load when the task may span multiple specialists or when choosing the right specialist is unclear."
+description: "Map of The Forge specialist ecosystem: the specialists, their families, and how the control plane routes between them — including the sentinel runtime diagnosticians (api-sentinel-forge adapted; data-sentinel-forge UNADAPTED). Load when the task may span multiple specialists or when choosing the right specialist is unclear."
 allowed-tools: "Read, Bash, Grep, Glob"
 ---
 
@@ -17,7 +17,7 @@ The Forge is the deterministic control plane (WHO/WHEN/HOW); specialists are the
 | spark-engineering | spark-forge-aws, spark-forge-azure | Spark/data engineering, cloud-split |
 | api-engineering | api-forge | API design, contracts, evolution |
 | platform-engineering | platform-forge | IDP, CI/CD, IaC, k8s, secrets, SRE |
-| verification | forge-doctor-data, forge-doctor-api | Independent reviewers/verifiers — never producers |
+| verification | forge-doctor-data, forge-doctor-api, data-sentinel-forge, api-sentinel-forge | Independent reviewers/verifiers + runtime diagnosticians — never producers |
 
 New specialists enter through the generic path (`theforge provider init` + a `forge-knowledge/<id>.json` package); the routing machinery does not change.
 
@@ -32,5 +32,6 @@ New specialists enter through the generic path (`theforge provider init` + a `fo
 ## Boundaries
 
 - Doctors verify; they never produce engineering work. Routing implementation to `forge-doctor-*` is a category error.
+- Sentinels diagnose from runtime evidence only: `api-sentinel-forge` (API telemetry/SLO/incidents, adapted via `adapters/apisentinel`) and `data-sentinel-forge` (Spark logs/plans/run dumps — **UNADAPTED**, every pick resolves to a provider-absent refusal until its adapter lands). Neither produces engineering work nor accepts a run without the artifacts its diagnostics require.
 - `spark-forge-aws` and `spark-forge-azure` are NOT interchangeable — no AWS↔Azure equivalence (Lake Formation ≠ Unity Catalog, Glue ≠ ADF).
 - Runtime `describe` beats any static list — including this skill. Staleness is detected via surface fingerprints, not recollection.

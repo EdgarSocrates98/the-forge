@@ -1,0 +1,125 @@
+{
+  "cli": "sparkforge-azure",
+  "created_at": "2026-11-08T10:48:05Z",
+  "environment": {
+    "execution_environment": "windows",
+    "prefix": "SPARK_FORGE_AZURE",
+    "schema": "forge/InstallEnvironment/v1",
+    "scope": "user",
+    "shell": "windows",
+    "variables": {
+      "SPARK_FORGE_AZURE_CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7\\.venv\\Scripts\\sparkforge-azure.exe",
+      "SPARK_FORGE_AZURE_HOME": "E:\\projetos\\FORJAS\\spark-forge-azure",
+      "SPARK_FORGE_AZURE_INSTALL_ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7",
+      "SPARK_FORGE_AZURE_LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\sparkforge-azure",
+      "SPARK_FORGE_AZURE_PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7\\.venv\\Scripts\\python.exe",
+      "SPARK_FORGE_AZURE_VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7\\.venv"
+    },
+    "windows_aliases": {
+      "SPARK-FORGE-AZURE-CLI": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7\\.venv\\Scripts\\sparkforge-azure.exe",
+      "SPARK-FORGE-AZURE-HOME": "E:\\projetos\\FORJAS\\spark-forge-azure",
+      "SPARK-FORGE-AZURE-INSTALL-ROOT": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7",
+      "SPARK-FORGE-AZURE-LAUNCHER": "C:\\Users\\edgar\\.local\\bin\\sparkforge-azure",
+      "SPARK-FORGE-AZURE-PYTHON": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7\\.venv\\Scripts\\python.exe",
+      "SPARK-FORGE-AZURE-VENV": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7\\.venv"
+    }
+  },
+  "forge_id": "spark-forge-azure",
+  "hosts_detected": {
+    "claude": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\.local\\bin\\claude.EXE",
+      "config_dirs": [
+        "~/.claude"
+      ]
+    },
+    "codex": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Roaming\\npm\\codex.CMD",
+      "config_dirs": [
+        "~/.codex",
+        "~/.agents"
+      ]
+    },
+    "copilot": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\copilot-shim\\copilot.EXE",
+      "config_dirs": [
+        "~/.agents"
+      ]
+    },
+    "devin": {
+      "activatable": true,
+      "cli": true,
+      "cli_path": "C:\\Users\\edgar\\AppData\\Local\\devin\\cli\\bin\\devin.EXE",
+      "config_dirs": [
+        "~/.devin",
+        "~/.agents"
+      ]
+    }
+  },
+  "install_method": "wheel",
+  "install_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7",
+  "integrity": "unverified",
+  "is_git": true,
+  "managed_files": [
+    "C:\\Users\\edgar\\.forge\\installations\\.spark-forge-azure-bootstrap.json",
+    "C:\\Users\\edgar\\.forge\\installations\\spark-forge-azure.json",
+    "C:\\Users\\edgar\\.local\\bin\\sparkforge-azure",
+    "C:\\Users\\edgar\\.local\\bin\\sparkforge-azure.cmd",
+    "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7"
+  ],
+  "manifest_valid": true,
+  "operation": "install",
+  "platform": {
+    "arch": "AMD64",
+    "os": "Windows",
+    "python": "3.12.13"
+  },
+  "python": {
+    "executable": null,
+    "selection_reason": "--python flag",
+    "source": "flag",
+    "version": null
+  },
+  "schema": "forge/InstallReceipt/v1",
+  "scope": "user",
+  "shim_dir": "C:\\Users\\edgar\\.local\\bin",
+  "source_trust": "B",
+  "stages": [
+    {
+      "stage": "resolve-python",
+      "status": "planned"
+    },
+    {
+      "stage": "create-venv",
+      "status": "planned"
+    },
+    {
+      "stage": "install-runtime",
+      "status": "planned"
+    },
+    {
+      "stage": "write-launcher",
+      "status": "planned"
+    },
+    {
+      "stage": "persist-environment",
+      "status": "planned"
+    },
+    {
+      "stage": "smoke",
+      "status": "planned"
+    },
+    {
+      "stage": "register",
+      "status": "planned"
+    }
+  ],
+  "status": "planned",
+  "target_root": "E:\\projetos\\FORJAS\\the-forge\\audit\\artifacts\\installers-2026-11-08\\targets\\spark-forge-azure\\powershell-7"
+}
+Install plan complete. No files, variables or registry entries were written.

@@ -26,6 +26,7 @@ def test_all_packages_load_and_match_known_providers() -> None:
         "forge-doctor-data",
         "forge-doctor-api",
         "data-sentinel-forge",
+        "api-sentinel-forge",
         "code-atlas-forge",
         "forge-lens",
         "product-forge",
@@ -67,6 +68,7 @@ def test_family_model_is_metadata_not_hardcode() -> None:
         "forge-doctor-api",
         "forge-doctor-data",
         "data-sentinel-forge",
+        "api-sentinel-forge",
     }
 
 

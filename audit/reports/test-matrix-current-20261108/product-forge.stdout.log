@@ -1,0 +1,44 @@
+s....................................................................... [ 31%]
+..........................................F............................. [ 63%]
+........................................................................ [ 95%]
+..........                                                               [100%]
+================================== FAILURES ===================================
+________ test_embedded_bridge_python_sources_match_standalone_checkout ________
+
+    def test_embedded_bridge_python_sources_match_standalone_checkout() -> None:
+        standalone = REPO.parent / "forge-agent-bridge" / "src" / "forge_agent_bridge"
+        embedded = REPO / "src" / "forge_agent_bridge"
+        if not standalone.is_dir():
+            if os.environ.get("FORGE_BRIDGE_PARITY_REQUIRED") == "1":
+                pytest.fail("canonical Bridge checkout is required for this parity run")
+            pytest.skip("standalone Bridge checkout is not present")
+        tracked_suffixes = {".py", ".json"}
+        canonical = {
+            path.relative_to(standalone)
+            for path in standalone.rglob("*")
+            if path.is_file() and path.suffix in tracked_suffixes
+        }
+        bundled = {
+            path.relative_to(embedded)
+            for path in embedded.rglob("*")
+            if path.is_file() and path.suffix in tracked_suffixes
+        }
+        assert bundled == canonical, (
+            "embedded Bridge file inventory diverges: "
+            f"missing={sorted(canonical - bundled)!s}, "
+            f"extra={sorted(bundled - canonical)!s}"
+        )
+        for relative in sorted(canonical):
+            source = standalone / relative
+            copy = embedded / relative
+>           assert copy.read_bytes() == source.read_bytes(), f"embedded Bridge drift: {relative}"
+E           AssertionError: embedded Bridge drift: local_bridge.py
+E           assert b'"""Local Br...inate_all()\n' == b'"""Local Br...inate_all()\n'
+E             
+E             At index 32389 diff: b'f' != b'#'
+E             Use -v to get more diff
+
+tests\test_manifest_version.py:96: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_manifest_version.py::test_embedded_bridge_python_sources_match_standalone_checkout
+1 failed, 224 passed, 1 skipped in 284.49s (0:04:44)
