@@ -8,6 +8,11 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-11-12
+
+Cycle 2.7 patch release: federated SDD contracts and adapters, forge-context kind taxonomy, universal Obsidian export verbs, portal and install UX improvements, provider context-registry wiring, CI hardening and generated-artifact refresh.
+
+
 ## [0.7.5] - 2026-11-10
 
 ### 0.7.5 — Agentic Ecosystem
