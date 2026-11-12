@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -27,9 +28,9 @@ from theforge.contracts.specialist import AgenticManifest  # noqa: E402
 from theforge.specialists import verify_resource_locations  # noqa: E402
 
 
-def probe(repo: Path) -> dict:
+def probe(repo: Path) -> dict[str, Any]:
     mp = repo / "forge.agentic.json"
-    row: dict = {"forge": repo.name, "checks": {}, "ok": False}
+    row: dict[str, Any] = {"forge": repo.name, "checks": {}, "ok": False}
     if not mp.is_file():
         row["checks"] = {"manifest": "MISSING"}
         return row
