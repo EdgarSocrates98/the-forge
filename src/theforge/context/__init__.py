@@ -16,10 +16,12 @@ from theforge.context.resources import (
     build_resolver,
     discover_roots,
 )
+from theforge.context.plan import ContextPlan, plan_context
 from theforge.context.scan import WorkspaceScan, scan_workspace
 
 __all__ = [
     "BUDGETS",
+    "ContextPlan",
     "ForgeResourceRoot",
     "ResourceContent",
     "ResourceErrorKind",
@@ -32,5 +34,6 @@ __all__ = [
     "discover_roots",
     "effective_tiers",
     "extend_context_pack",
+    "plan_context",
     "scan_workspace",
 ]

@@ -2111,3 +2111,22 @@ def resource_content(data: dict[str, Any]) -> str:
             body += "\n… (listing truncated)"
         return f"{header}\n{body}"
     return f"{header}\n{data.get('text') or ''}"
+
+
+def context_plan(data: dict[str, Any]) -> str:
+    lines = [
+        f"# context plan — {data['task']}",
+        f"L1 scanned: {data['level1_forges']} forge catalogs (metadata only)",
+        f"L2 primary: {data['level2_forge'] or '—'}  aux: {', '.join(data['level2_aux']) or '—'}",
+        (
+            f"L3 refs ({len(data['level3_refs'])}, "
+            f"est {data['est_level3_bytes']}B/{data['budget_bytes']}B):"
+        ),
+    ]
+    lines += [f"  · {i}" for i in data["level3_refs"]]
+    m = data.get("metrics") or {}
+    lines.append(
+        f"metrics: scanned={m.get('l1_refs_scanned')} selected={m.get('l2_selected')}"
+        f" skipped-unavailable={m.get('unavailable_skipped')}"
+    )
+    return "\n".join(lines)

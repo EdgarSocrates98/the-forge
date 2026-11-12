@@ -287,6 +287,17 @@ def build_parser() -> argparse.ArgumentParser:
                          help="hash the full file when it fits the integrity cap")
     res_get.set_defaults(handler=commands.cmd_resources_get)
 
+    context = sub.add_parser(
+        "context", help="progressive context routing (Onda 08)"
+    ).add_subparsers(dest="context_command", required=True)
+    ctx_plan = context.add_parser(
+        "plan", parents=[common],
+        help="L1 metadata → L2 specialist → L3 bounded refs routing plan",
+    )
+    ctx_plan.add_argument("task", help="task description to route")
+    ctx_plan.add_argument("--budget", type=int, default=8_000)
+    ctx_plan.set_defaults(handler=commands.cmd_context_plan)
+
     caps = sub.add_parser("capabilities", help="declared capabilities").add_subparsers(
         dest="capabilities_command", required=True
     )

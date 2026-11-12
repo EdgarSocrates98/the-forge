@@ -167,6 +167,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_agentic_manifests.py": ("contract", "integration"),
     "test_resource_catalog.py": ("unit", "contract", "integration"),
     "test_resource_resolver.py": ("unit", "contract", "integration", "security"),
+    "test_context_plan.py": ("unit", "contract"),
     "test_agent_roster_conformance.py": ("unit", "contract"),
     "test_knowledge_interop.py": ("contract", "security"),
     "test_control_plane_e2e.py": ("e2e", "integration"),

@@ -2325,3 +2325,26 @@ def cmd_resources_get(args: argparse.Namespace) -> int:
     }
     _emit(args, doc, render.resource_content)
     return 0
+
+
+def cmd_context_plan(args: argparse.Namespace) -> int:
+    """context.plan — progressive L1→L2→L3 routing plan, metadata-only."""
+    from theforge.context.plan import plan_context
+
+    plan = plan_context(
+        args.task,
+        _resource_resolver(args),
+        level3_budget=args.budget,
+    )
+    doc: dict[str, Any] = {
+        "task": plan.task,
+        "level1_forges": plan.level1_forges,
+        "level2_forge": plan.level2_forge,
+        "level2_aux": plan.level2_aux,
+        "level3_refs": plan.level3_refs,
+        "budget_bytes": plan.budget_bytes,
+        "est_level3_bytes": plan.est_level3_bytes,
+        "metrics": plan.metrics,
+    }
+    _emit(args, doc, render.context_plan)
+    return 0
