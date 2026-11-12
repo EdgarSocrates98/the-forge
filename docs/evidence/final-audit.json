@@ -1,6 +1,6 @@
 {
   "schema": "forge/FinalAudit/v1",
-  "generated_at": "2026-11-12T20:54:02.192467+00:00",
+  "generated_at": "2026-11-12T22:00:49.787909+00:00",
   "workspace": "E:\\projetos\\FORJAS",
   "repos": [
     "api-forge",
@@ -152,19 +152,9 @@
         "detail": "claude,devin,codex,copilot"
       },
       {
-        "check": "mcp-verify-undeclared:api-forge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
-      },
-      {
         "check": "host-adapters-declared:api-sentinel-forge",
         "ok": true,
         "detail": "claude,devin,codex,copilot"
-      },
-      {
-        "check": "mcp-verify-undeclared:api-sentinel-forge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
       },
       {
         "check": "host-adapters-declared:code-atlas-forge",
@@ -172,19 +162,9 @@
         "detail": "claude,devin,codex,copilot"
       },
       {
-        "check": "mcp-verify-undeclared:code-atlas-forge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
-      },
-      {
         "check": "host-adapters-declared:data-sentinel-forge",
         "ok": true,
         "detail": "claude,devin,codex,copilot"
-      },
-      {
-        "check": "mcp-verify-undeclared:data-sentinel-forge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
       },
       {
         "check": "host-adapters-declared:forge-agent-bridge",
@@ -192,19 +172,9 @@
         "detail": "claude,codex,devin,copilot"
       },
       {
-        "check": "mcp-verify-undeclared:forge-agent-bridge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
-      },
-      {
         "check": "host-adapters-declared:forge-doctor-api",
         "ok": true,
         "detail": "claude,devin,codex,copilot"
-      },
-      {
-        "check": "mcp-verify-undeclared:forge-doctor-api",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
       },
       {
         "check": "host-adapters-declared:forge-doctor-data",
@@ -212,19 +182,9 @@
         "detail": "claude,devin,codex,copilot"
       },
       {
-        "check": "mcp-verify-undeclared:forge-doctor-data",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
-      },
-      {
         "check": "host-adapters-declared:forge-lens",
         "ok": true,
         "detail": "claude"
-      },
-      {
-        "check": "mcp-verify-undeclared:forge-lens",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
       },
       {
         "check": "host-adapters-declared:platform-forge",
@@ -232,19 +192,9 @@
         "detail": "claude,devin,codex,copilot"
       },
       {
-        "check": "mcp-verify-undeclared:platform-forge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
-      },
-      {
         "check": "host-adapters-declared:product-forge",
         "ok": true,
         "detail": "claude,devin,codex,copilot"
-      },
-      {
-        "check": "mcp-verify-undeclared:product-forge",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
       },
       {
         "check": "host-adapters-declared:spark-forge-aws",
@@ -252,19 +202,9 @@
         "detail": "claude,devin,codex,copilot"
       },
       {
-        "check": "mcp-verify-undeclared:spark-forge-aws",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
-      },
-      {
         "check": "host-adapters-declared:spark-forge-azure",
         "ok": true,
         "detail": "claude,devin,codex,copilot"
-      },
-      {
-        "check": "mcp-verify-undeclared:spark-forge-azure",
-        "ok": true,
-        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
       },
       {
         "check": "host-adapters-declared:the-forge",
@@ -293,7 +233,7 @@
       {
         "check": "spaces-in-path:discovery",
         "ok": true,
-        "detail": "C:\\Users\\edgar\\AppData\\Local\\Temp\\audit p s dzgn93dg\\ws with spaces"
+        "detail": "C:\\Users\\edgar\\AppData\\Local\\Temp\\audit p s 9w9nuuf5\\ws with spaces"
       },
       {
         "check": "zip-no-git:materialized",
@@ -323,7 +263,7 @@
     ]
   },
   "summary": {
-    "checks": 58,
+    "checks": 46,
     "fail": 0,
     "failures": []
   }
