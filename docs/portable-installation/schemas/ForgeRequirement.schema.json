@@ -1,0 +1,78 @@
+{
+  "$id": "forge/Requirement/v1",
+  "title": "ForgeRequirement/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "feature",
+    "requirements"
+  ],
+  "properties": {
+    "schema": {
+      "const": "forge/Requirement/v1"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "requirements": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "kind",
+          "acceptance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(REQ|NFR|US|AC)-[0-9]{1,4}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "functional",
+              "nonfunctional",
+              "story",
+              "constraint"
+            ]
+          },
+          "acceptance": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string"
+          },
+          "decision_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "critical": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "approved",
+              "implemented",
+              "verified",
+              "rejected",
+              "stale"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false
+}

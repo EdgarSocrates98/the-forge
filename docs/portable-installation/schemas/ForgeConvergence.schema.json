@@ -1,0 +1,78 @@
+{
+  "$id": "forge/Convergence/v1",
+  "title": "ForgeConvergence/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "feature",
+    "ok",
+    "divergences",
+    "compared"
+  ],
+  "properties": {
+    "schema": {
+      "const": "forge/Convergence/v1"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "compared": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "requirements",
+          "design",
+          "plan",
+          "tasks",
+          "build_report",
+          "code",
+          "tests",
+          "evidence",
+          "outcome"
+        ]
+      }
+    },
+    "divergences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "class",
+          "path",
+          "detail"
+        ],
+        "properties": {
+          "class": {
+            "enum": [
+              "missing",
+              "partial",
+              "contradicts",
+              "unrequested",
+              "unverified",
+              "stale"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evaluated_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+    },
+    "evaluator": {
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false
+}
