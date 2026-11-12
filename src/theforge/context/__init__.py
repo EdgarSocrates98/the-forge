@@ -6,6 +6,7 @@ from theforge.context.broker import (
     effective_tiers,
     extend_context_pack,
 )
+from theforge.context.plan import ContextPlan, plan_context
 from theforge.context.resources import (
     ForgeResourceRoot,
     ResourceContent,
@@ -16,7 +17,6 @@ from theforge.context.resources import (
     build_resolver,
     discover_roots,
 )
-from theforge.context.plan import ContextPlan, plan_context
 from theforge.context.scan import WorkspaceScan, scan_workspace
 
 __all__ = [
