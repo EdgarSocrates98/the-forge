@@ -8,42 +8,64 @@
     {
       "id": "doctor",
       "mode": "DIAGNOSTIC_ONLY",
-      "command": ["{cli}", "doctor", "--json"],
+      "command": [
+        "{cli}",
+        "doctor",
+        "--json"
+      ],
       "description": "Inspect host, workspace and provider health",
       "read_only": true
     },
     {
       "id": "capabilities",
       "mode": "DIAGNOSTIC_ONLY",
-      "command": ["{cli}", "capabilities"],
+      "command": [
+        "{cli}",
+        "capabilities"
+      ],
       "description": "List declared and observed specialist capabilities",
       "read_only": true
     },
     {
       "id": "graph",
       "mode": "DIAGNOSTIC_ONLY",
-      "command": ["{cli}", "graph"],
+      "command": [
+        "{cli}",
+        "graph"
+      ],
       "description": "Inspect the cached capability graph",
       "read_only": true
     },
     {
       "id": "plan",
       "mode": "DIRECT_CAPABILITY",
-      "command": ["{cli}", "plan", "{task}"],
+      "command": [
+        "{cli}",
+        "plan",
+        "{task}"
+      ],
       "description": "Create a governed multi-provider task plan",
       "read_only": true
     },
     {
       "id": "ask",
       "mode": "DIRECT_CAPABILITY",
-      "command": ["{cli}", "ask", "{task}"],
+      "command": [
+        "{cli}",
+        "ask",
+        "{task}"
+      ],
       "description": "Route a task to a justified specialist",
       "read_only": false
     },
     {
       "id": "orchestrate",
       "mode": "DIRECT_CAPABILITY",
-      "command": ["{cli}", "orchestrate", "{task}"],
+      "command": [
+        "{cli}",
+        "orchestrate",
+        "{task}"
+      ],
       "description": "Execute a governed multi-specialist DAG",
       "read_only": false
     }
@@ -66,8 +88,261 @@
     "serve"
   ],
   "mcp_verify_tool": "theforge_status",
-  "host_adapters": ["claude", "devin", "codex", "copilot"],
+  "host_adapters": [
+    "claude",
+    "devin",
+    "codex",
+    "copilot"
+  ],
   "read_only_default": true,
   "requires_credentials": false,
-  "requires_network": false
+  "requires_network": false,
+  "resources": [
+    {
+      "id": "forge-api",
+      "kind": "skill",
+      "location": ".claude/skills/forge-api/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-api-sentinel",
+      "kind": "skill",
+      "location": ".claude/skills/forge-api-sentinel/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-bootstrap",
+      "kind": "skill",
+      "location": ".claude/skills/forge-bootstrap/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-capability-negotiation",
+      "kind": "skill",
+      "location": ".claude/skills/forge-capability-negotiation/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-cross-domain-planning",
+      "kind": "skill",
+      "location": ".claude/skills/forge-cross-domain-planning/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-data-sentinel",
+      "kind": "skill",
+      "location": ".claude/skills/forge-data-sentinel/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-discovery",
+      "kind": "skill",
+      "location": ".claude/skills/forge-discovery/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-doctor-api",
+      "kind": "skill",
+      "location": ".claude/skills/forge-doctor-api/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-doctor-data",
+      "kind": "skill",
+      "location": ".claude/skills/forge-doctor-data/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-ecosystem",
+      "kind": "skill",
+      "location": ".claude/skills/forge-ecosystem/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-factory",
+      "kind": "skill",
+      "location": ".claude/skills/forge-factory/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-install",
+      "kind": "skill",
+      "location": ".claude/skills/forge-install/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-orchestration",
+      "kind": "skill",
+      "location": ".claude/skills/forge-orchestration/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-platform",
+      "kind": "skill",
+      "location": ".claude/skills/forge-platform/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-routing",
+      "kind": "skill",
+      "location": ".claude/skills/forge-routing/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-spark-aws",
+      "kind": "skill",
+      "location": ".claude/skills/forge-spark-aws/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-spark-azure",
+      "kind": "skill",
+      "location": ".claude/skills/forge-spark-azure/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-troubleshooting",
+      "kind": "skill",
+      "location": ".claude/skills/forge-troubleshooting/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "forge-verification",
+      "kind": "skill",
+      "location": ".claude/skills/forge-verification/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-debug",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-debug/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-discovery",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-discovery/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-impl",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-impl/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-review",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-review/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-batch",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-batch/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-design",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-design/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-init",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-init/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-quick",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-quick/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-requirements",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-requirements/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-status",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-status/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-spec-tasks",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-spec-tasks/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-steering",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-steering/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-steering-custom",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-steering-custom/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-validate-design",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-validate-design/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-validate-gap",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-validate-gap/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-validate-impl",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-validate-impl/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "kiro-verify-completion",
+      "kind": "skill",
+      "location": ".claude/skills/kiro-verify-completion/SKILL.md",
+      "resource_class": "agentic"
+    },
+    {
+      "id": "contracts/experience",
+      "kind": "contract",
+      "location": "contracts/experience",
+      "resource_class": "validation"
+    },
+    {
+      "id": "tests/fixtures/adapter_shell",
+      "kind": "fixture",
+      "location": "tests/fixtures/adapter_shell",
+      "resource_class": "test-only"
+    },
+    {
+      "id": "tests/fixtures/native",
+      "kind": "fixture",
+      "location": "tests/fixtures/native",
+      "resource_class": "test-only"
+    },
+    {
+      "id": "tests/fixtures/providers",
+      "kind": "fixture",
+      "location": "tests/fixtures/providers",
+      "resource_class": "test-only"
+    },
+    {
+      "id": "tests/fixtures/workspaces",
+      "kind": "fixture",
+      "location": "tests/fixtures/workspaces",
+      "resource_class": "test-only"
+    }
+  ]
 }

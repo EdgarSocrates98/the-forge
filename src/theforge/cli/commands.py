@@ -10,6 +10,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, cast
 
 if TYPE_CHECKING:
+    from theforge.context.resources import (
+        ResourceFailure,
+        ResourceRef,
+        ResourceResolver,
+    )
     from theforge.contracts.benchmark import BenchmarkResult
     from theforge.contracts.specialist import DelegationRequest
 
@@ -2198,3 +2203,148 @@ def cmd_verify(args: argparse.Namespace) -> int:
     doc = fevals.run_plan(root, plan_doc, inputs=_named_inputs(getattr(args, "input", [])))
     _emit(args, doc, render.verify_run)
     return _EVAL_VERDICT_EXIT.get(doc["verdict"], 1)
+
+
+def _resource_resolver(args: argparse.Namespace) -> "ResourceResolver":
+    from theforge.context.resources import build_resolver
+
+    return build_resolver(_root(args))
+
+
+def _ref_doc(ref: "ResourceRef") -> dict[str, Any]:
+    e = ref.entry
+    return {
+        "identity": ref.identity,
+        "forge_id": ref.forge_id,
+        "id": e.id,
+        "kind": e.kind,
+        "resource_class": e.resource_class,
+        "availability": e.availability,
+        "unavailable_reason": e.unavailable_reason,
+        "location": e.location,
+        "origin": ref.origin,
+        "format": e.format,
+        "tags": e.tags,
+        "description": e.description or None,
+        "load_policy": e.load_policy,
+        "access_mode": e.access_mode,
+    }
+
+
+def _resource_fail(args: argparse.Namespace, exc: "ResourceFailure") -> int:
+    _emit(
+        args,
+        {"error": {"kind": exc.kind.value, "detail": exc.detail}},
+        lambda d: f"{d['error']['kind']}: {d['error']['detail']}",
+    )
+    return 1
+
+
+def cmd_resources_list(args: argparse.Namespace) -> int:
+    """resources.list — catalog refs with filters; metadata only (§10.3)."""
+    res = _resource_resolver(args)
+    refs = res.list(
+        forge_id=args.forge,
+        kind=args.kind,
+        resource_class=args.resource_class,
+        availability=args.availability,
+    )
+    data = {
+        "roots": [
+            {"forge_id": r.forge_id, "origin": r.origin, "root": str(r.root)}
+            for r in res.roots
+        ],
+        "count": len(refs),
+        "resources": [_ref_doc(r) for r in refs],
+    }
+    _emit(args, data, render.resources_list)
+    return 0
+
+
+def cmd_resources_search(args: argparse.Namespace) -> int:
+    """resources.search — deterministic substring match, id ranks first."""
+    res = _resource_resolver(args)
+    refs = res.search(
+        args.term, forge_id=args.forge, kind=args.kind, limit=args.limit
+    )
+    _emit(
+        args,
+        {"term": args.term, "count": len(refs), "resources": [_ref_doc(r) for r in refs]},
+        render.resources_list,
+    )
+    return 0
+
+
+def cmd_resources_describe(args: argparse.Namespace) -> int:
+    """resources.describe — one ref + resolved path liveness, no content."""
+    from theforge.context.resources import ResourceFailure
+
+    res = _resource_resolver(args)
+    try:
+        ref = res.describe(args.identity)
+    except ResourceFailure as exc:
+        return _resource_fail(args, exc)
+    target = ref.path
+    doc = _ref_doc(ref)
+    doc["resolved"] = str(target) if target else None
+    doc["exists"] = bool(target and target.exists())
+    doc["is_dir"] = bool(target and target.is_dir())
+    _emit(args, doc, render.resource_describe)
+    return 0
+
+
+def cmd_resources_get(args: argparse.Namespace) -> int:
+    """resources.get — bounded, contained, redacted read or dir listing."""
+    from theforge.context.resources import ResourceFailure
+
+    res = _resource_resolver(args)
+    try:
+        out = res.get(
+            args.identity,
+            max_bytes=args.max_bytes,
+            offset=args.offset,
+            integrity=args.integrity,
+        )
+    except ResourceFailure as exc:
+        return _resource_fail(args, exc)
+    doc: dict[str, Any] = {
+        "identity": out.identity,
+        "origin": out.origin,
+        "location": out.location,
+        "content_type": out.content_type,
+        "text": out.text,
+        "entries": out.entries,
+        "encoding": out.encoding,
+        "served_bytes": out.served_bytes,
+        "file_bytes": out.file_bytes,
+        "truncated": out.truncated,
+        "redacted": out.redacted,
+        "sha256": out.sha256,
+        "sha256_scope": out.sha256_scope,
+        "listing_truncated": out.listing_truncated,
+    }
+    _emit(args, doc, render.resource_content)
+    return 0
+
+
+def cmd_context_plan(args: argparse.Namespace) -> int:
+    """context.plan — progressive L1→L2→L3 routing plan, metadata-only."""
+    from theforge.context.plan import plan_context
+
+    plan = plan_context(
+        args.task,
+        _resource_resolver(args),
+        level3_budget=args.budget,
+    )
+    doc: dict[str, Any] = {
+        "task": plan.task,
+        "level1_forges": plan.level1_forges,
+        "level2_forge": plan.level2_forge,
+        "level2_aux": plan.level2_aux,
+        "level3_refs": plan.level3_refs,
+        "budget_bytes": plan.budget_bytes,
+        "est_level3_bytes": plan.est_level3_bytes,
+        "metrics": plan.metrics,
+    }
+    _emit(args, doc, render.context_plan)
+    return 0

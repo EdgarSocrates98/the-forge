@@ -61,6 +61,10 @@
 
 `--profile` default `auto`: depois do routing, o complexity engine mede a tarefa (repositórios, risco declarado, ambiguidade, impacto) e escolhe o perfil efetivo — gravado no artefato `complexity` (`ComplexityAssessment/v1`) e linkado no receipt por `complexity_sha256`; `explain` mostra `auto-><resolvido>`. O prompt nunca é entrada. Perfis explícitos mantêm a semântica de sempre; só gravam `complexity` quando a avaliação medida promove os limites elásticos um degrau (a evidência da promoção).
 | `workspace show` | descreve repositórios, git, tecnologias e relações usando só o cache do registry ([`workspace show`](#workspace-show)) | 0 |
+| `resources list [--forge id] [--kind k]` | catálogo federado de recursos declarados (`forge.agentic.json` de cada raiz: checkout ou pacote instalado) — metadados e localizações, nunca corpos | 0 |
+| `resources search <q>` | busca em id, descrição e tags do catálogo | 0 |
+| `resources describe <forge:resource>` | metadados completos de um recurso, com localização efetiva (checkout vs. `packaged_location` instalado) | 0 / 2 se desconhecido |
+| `resources get <forge:resource> [--max-bytes N]` | recuperação limitada de um recurso disponível: containment por path real, redação aplicada, hash de integridade no envelope | 0 / 2 / 3 bloqueado por política |
 | `explain <run_id>` | relatório versionado de um run ou plano, com verificação de hashes ([`explain`](#explain)) | 0 / 2 / 6 |
 | `replay <run_id> --mode render\|verify\|execute [--allow-unverified] [--approve CAPABILITY]...` | reapresenta, reverifica ou reexecuta um run ([`replay`](#replay)) | render/verify: 0 / 2 / 6; execute: 0 / 2 / 3 / 4 / 5 |
 | `resume <run_id> [--allow-unverified] [--approve CAPABILITY]...` | continua um run de plano reutilizando os nós provadamente intactos ([`resume`](#resume)) | 0 / 2 / 3 / 4 / 5 |

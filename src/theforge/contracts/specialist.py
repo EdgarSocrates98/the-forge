@@ -136,6 +136,124 @@ class DelegationEntry:
     read_only: bool = True
 
 
+# Typed resource kinds a specialist may declare (Resource Catalog Contract,
+# Wave 03). Legacy ``skills``/``agents`` string lists stay valid; ``resources``
+# adds the typed metadata path without breaking `forge/SpecialistAgenticManifest/v1`.
+ResourceKind = (
+    "skill",
+    "agent",
+    "subagent",
+    "knowledge",
+    "rule",
+    "contract",
+    "command",
+    "config",
+    "eval",
+    "example",
+    "fixture",
+    "protocol",
+    "tool",
+    "mcp-endpoint",
+)
+
+# Kind classes from the catalog contract: not every resource is a document.
+ResourceClass = (
+    "read-only",
+    "policy",
+    "validation",
+    "execution",
+    "configuration",
+    "test-only",
+    "agentic",
+)
+
+RESOURCE_AVAILABILITY = ("available", "unavailable", "conditional")
+RESOURCE_ACCESS_MODES = ("read", "exec", "import", "serve")
+RESOURCE_LOAD_POLICIES = ("lazy", "eager", "on-demand", "never")
+
+
+@dataclass(frozen=True, kw_only=True)
+class ResourceEntry:
+    """Discovery metadata for one typed specialist resource.
+
+    The stable identity is ``<provider>:<id>`` — ``id`` is unique within the
+    declaring manifest. ``location`` is relative to the checkout/package root
+    and is verified, never loaded, by the catalog. A resource without a
+    location must state ``availability`` != ``available`` plus
+    ``unavailable_reason`` — declared-but-unreachable is an explicit state,
+    not a silent hole.
+    """
+
+    id: str
+    kind: str  # ResourceKind
+    location: str | None = None
+    # ``location`` is checkout-relative; ``packaged_location`` is the same
+    # resource's path relative to the installed package root, when the wheel
+    # ships it. One manifest serves both layouts (Onda 05 packaging).
+    packaged_location: str | None = None
+    resource_class: str | None = None  # ResourceClass hint; inferred from kind when absent
+    description: str = ""
+    domain: str | None = None
+    tags: list[str] = field(default_factory=list)
+    version: str | None = None
+    origin: str | None = None  # packaged | checkout | generated | vendored
+    format: str | None = None  # markdown | json | yaml | python | ...
+    mime: str | None = None
+    availability: str = "available"  # RESOURCE_AVAILABILITY
+    unavailable_reason: str | None = None
+    optional: bool = False
+    dependencies: list[str] = field(default_factory=list)
+    access_mode: str = "read"  # RESOURCE_ACCESS_MODES
+    load_policy: str = "lazy"  # RESOURCE_LOAD_POLICIES
+    exec_policy: str | None = None  # for command/tool/mcp-endpoint kinds
+    permissions: list[str] = field(default_factory=list)
+    sha256: str | None = None
+    owner: str | None = None
+    runtime_requirement: str | None = None  # e.g. "network", "credentials:aws"
+    host_compatibility: list[str] = field(default_factory=list)
+    select_when: str | None = None  # inclusion criterion
+    exclude_when: str | None = None  # exclusion criterion
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            raise ContractError("resource entry: id must not be empty")
+        if self.kind not in ResourceKind:
+            raise ContractError(f"resource {self.id!r}: unknown kind {self.kind!r}")
+        if self.resource_class is not None and self.resource_class not in ResourceClass:
+            raise ContractError(
+                f"resource {self.id!r}: unknown resource_class {self.resource_class!r}"
+            )
+        if self.availability not in RESOURCE_AVAILABILITY:
+            raise ContractError(
+                f"resource {self.id!r}: unknown availability {self.availability!r}"
+            )
+        if self.access_mode not in RESOURCE_ACCESS_MODES:
+            raise ContractError(
+                f"resource {self.id!r}: unknown access_mode {self.access_mode!r}"
+            )
+        if self.load_policy not in RESOURCE_LOAD_POLICIES:
+            raise ContractError(
+                f"resource {self.id!r}: unknown load_policy {self.load_policy!r}"
+            )
+        if self.location is None and self.availability == "available":
+            raise ContractError(
+                f"resource {self.id!r}: available resources need a verifiable location"
+            )
+        if self.availability != "available" and not self.unavailable_reason:
+            raise ContractError(
+                f"resource {self.id!r}: unavailable/conditional needs unavailable_reason"
+            )
+        for loc in (self.location, self.packaged_location):
+            if loc is not None and (
+                loc.startswith(("/", "\\"))
+                or ".." in loc.split("/")
+                or ":" in loc
+            ):
+                raise ContractError(
+                    f"resource {self.id!r}: location must be a relative path inside the checkout"
+                )
+
+
 @dataclass(frozen=True, kw_only=True)
 class AgenticManifest:
     """What a specialist exposes beyond deterministic capabilities.
@@ -158,6 +276,10 @@ class AgenticManifest:
     # The consumer validates the paths stay inside the checkout before reading
     # them; this field never grants capability or routing trust by itself.
     agent_roster_paths: list[str] = field(default_factory=list)
+    # Typed resource catalog entries (Wave 03) — additive; ids must be unique.
+    # An entry whose id matches a legacy ``skills``/``agents`` name supersedes
+    # the promoted placeholder in the catalog (enrichment, not collision).
+    resources: list[ResourceEntry] = field(default_factory=list)
     mcp_command: list[str] = field(default_factory=list)
     mcp_verify_tool: str | None = None
     host_adapters: list[str] = field(default_factory=list)  # claude/devin/codex/copilot
@@ -168,6 +290,9 @@ class AgenticManifest:
     def __post_init__(self) -> None:
         if self.schema != AGENTIC_MANIFEST_SCHEMA:
             raise ContractError(f"unsupported schema {self.schema!r}")
+        ids = [r.id for r in self.resources]
+        if len(ids) != len(set(ids)):
+            raise ContractError("resources: duplicate resource ids")
 
 
 @dataclass(frozen=True, kw_only=True)

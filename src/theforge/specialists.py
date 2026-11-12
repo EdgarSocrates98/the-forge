@@ -31,6 +31,7 @@ from theforge.contracts.base import from_dict
 from theforge.contracts.specialist import (
     AgenticManifest,
     DelegationEntry,
+    ResourceEntry,
     SpecialistLifecycle,
 )
 
@@ -134,6 +135,63 @@ def load_agentic_manifest(forge_id: str, checkout: Path | None) -> AgenticManife
         return from_dict(AgenticManifest, doc)
     except (OSError, json.JSONDecodeError, ValueError):
         return None
+
+
+def catalog_resources(manifest: AgenticManifest) -> list[ResourceEntry]:
+    """Merged resource view: legacy ``skills``/``agents`` names promoted to
+    typed entries plus declared ``resources``.
+
+    A typed ``resources`` entry supersedes the promoted placeholder with the
+    same id. Discovery metadata only — this function never opens a resource
+    file.
+    """
+    declared = {r.id for r in manifest.resources}
+    promoted = [
+        ResourceEntry(id=name, kind="skill", location=None,
+                      resource_class="agentic",
+                      availability="conditional",
+                      unavailable_reason="legacy skills[] entry — no typed location declared")
+        for name in manifest.skills
+        if name not in declared
+    ]
+    promoted += [
+        ResourceEntry(id=name, kind="agent", location=None,
+                      resource_class="agentic",
+                      availability="conditional",
+                      unavailable_reason="legacy agents[] entry — no typed location declared")
+        for name in manifest.agents
+        if name not in declared
+    ]
+    return promoted + list(manifest.resources)
+
+
+def verify_resource_locations(
+    manifest: AgenticManifest, root: Path
+) -> list[str]:
+    """Check every declared resource location exists inside ``root``.
+
+    Returns human-readable issues; empty means every ``available`` resource
+    resolves to a real file/dir without leaving the checkout. Reads directory
+    entries and file existence only — never resource contents (catalog gate:
+    verifiable location without integral load).
+    """
+    issues: list[str] = []
+    try:
+        root_real = root.resolve()
+    except OSError:
+        return [f"catalog root {root} does not resolve"]
+    for res in catalog_resources(manifest):
+        if res.location is None:
+            continue  # explicit unavailable state, already validated by contract
+        target = (root_real / res.location).resolve()
+        try:
+            target.relative_to(root_real)
+        except ValueError:
+            issues.append(f"{res.id}: location escapes checkout root: {res.location}")
+            continue
+        if not target.exists():
+            issues.append(f"{res.id}: declared location missing: {res.location}")
+    return issues
 
 
 def _checkout_for(forge_id: str, workspace_root: Path | None) -> Path | None:
