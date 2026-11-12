@@ -103,7 +103,8 @@ def declared_version(repo: Path) -> str | None:
 
 
 def manifest_resources(repo: Path) -> Counter:
-    for cand in (repo / "forge.agentic.json", repo / "src" / "forge_agent_bridge" / "forge.agentic.json"):
+    for cand in (repo / "forge.agentic.json",
+                 repo / "src" / "forge_agent_bridge" / "forge.agentic.json"):
         if cand.exists():
             try:
                 rs = json.loads(cand.read_text(encoding="utf-8")).get("resources", [])

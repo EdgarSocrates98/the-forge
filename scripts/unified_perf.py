@@ -11,12 +11,12 @@ audits/unified-platform/perf-baseline.json.
 from __future__ import annotations
 
 import json
+import queue
 import statistics
 import subprocess
 import sys
 import threading
 import time
-import queue
 from pathlib import Path
 
 ROOT = Path.cwd()
@@ -88,7 +88,7 @@ def mcp_handshake_ms(repo: str, call: str, mcp_args: list[str]) -> dict:
         stderr=subprocess.DEVNULL, text=True, encoding="utf-8",
         errors="replace", bufsize=1,
         env=dict(__import__("os").environ, PYTHONIOENCODING="utf-8"))
-    responses: "queue.Queue[dict]" = queue.Queue()
+    responses: queue.Queue[dict] = queue.Queue()
 
     def reader() -> None:
         for line in proc.stdout:  # type: ignore[union-attr]
@@ -129,7 +129,8 @@ def mcp_handshake_ms(repo: str, call: str, mcp_args: list[str]) -> dict:
         return {"error": str(e)[:160]}
     finally:
         try:
-            proc.terminate(); proc.wait(timeout=5)
+            proc.terminate()
+            proc.wait(timeout=5)
         except Exception:
             proc.kill()
 
@@ -165,7 +166,8 @@ def main() -> int:
     for repo, (call, margs) in MCP_SAMPLE.items():
         r = mcp_handshake_ms(repo, call, margs)
         report["mcp_handshake"][repo] = r
-        print(f"  {repo:22} init={r.get('init_ms')}ms tools={r.get('tools_list_ms')}ms n={r.get('tools')}")
+        print(f"  {repo:22} init={r.get('init_ms')}ms "
+              f"tools={r.get('tools_list_ms')}ms n={r.get('tools')}")
     print("== control plane ==")
     for label, args in (("providers_health", ["providers", "health"]),
                         ("registry_list", ["registry", "list"]),

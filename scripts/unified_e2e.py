@@ -29,19 +29,34 @@ REPORT: dict = {"kind": "forge/unified-e2e/1", "scenarios": {}, "started": time.
 PY = ".venv/Scripts/python.exe"
 
 FORGES = {
-    "the-forge":         {"pkg": "theforge",         "call": "theforge.cli.main:main",            "mcp": ["mcp", "serve"],  "verify": "theforge_status"},
-    "api-forge":         {"pkg": "apiforge",         "call": "apiforge.mcp.main:main",            "mcp": [],                "verify": "portable_status", "cli": "apiforge.cli:app"},
-    "api-sentinel-forge":{"pkg": "api_sentinel",     "call": "api_sentinel.cli:main",             "mcp": ["mcp", "serve"],  "verify": "sentinel_health"},
-    "code-atlas-forge":  {"pkg": "code_atlas",       "call": "code_atlas.cli:main",               "mcp": ["mcp"],           "verify": "atlas_status"},
-    "data-sentinel-forge":{"pkg": "data_sentinel",   "call": "data_sentinel.cli:main",            "mcp": ["mcp", "serve"],  "verify": "sentinel.status"},
-    "forge-agent-bridge":{"pkg": "forge_agent_bridge","call": "forge_agent_bridge.cli:main",      "mcp": ["mcp", "serve"],  "verify": "forge_health"},
-    "forge-doctor-api":  {"pkg": "forge_doctor_api", "call": "forge_doctor_api.cli:main",         "mcp": ["mcp"],           "verify": "doctor.get_reliability"},
-    "forge-doctor-data": {"pkg": "forge_doctor_data","call": "forge_doctor_data.cli:app",         "mcp": ["mcp"],           "verify": "get_execution_baseline"},
-    "forge-lens":        {"pkg": "forge_lens",       "call": "forge_lens.cli.main:main",          "mcp": ["mcp-serve"],     "verify": "lens.capabilities"},
-    "platform-forge":    {"pkg": "platformforge",    "call": "platformforge.mcp.server:main",     "mcp": [],                "verify": "platformforge_inspect", "cli": "platformforge.cli.main:main"},
-    "product-forge":     {"pkg": "product_forge",    "call": "product_forge.cli:main",            "mcp": ["mcp", "serve"],  "verify": "productforge_status"},
-    "spark-forge-aws":   {"pkg": "sparkforge_aws",   "call": "sparkforge_aws.adapters.cli:main",  "mcp": ["mcp", "serve"],  "verify": "sparkforge_aws_runtime_detect"},
-    "spark-forge-azure": {"pkg": "sparkforge_azure", "call": "sparkforge_azure.cli.main:main",    "mcp": ["mcp", "serve"],  "verify": "sfa_version"},
+    "the-forge":         {"pkg": "theforge",          "call": "theforge.cli.main:main",
+                          "mcp": ["mcp", "serve"],   "verify": "theforge_status"},
+    "api-forge":         {"pkg": "apiforge",          "call": "apiforge.mcp.main:main",
+                          "mcp": [],                 "verify": "portable_status",
+                          "cli": "apiforge.cli:app"},
+    "api-sentinel-forge":{"pkg": "api_sentinel",      "call": "api_sentinel.cli:main",
+                          "mcp": ["mcp", "serve"],   "verify": "sentinel_health"},
+    "code-atlas-forge":  {"pkg": "code_atlas",        "call": "code_atlas.cli:main",
+                          "mcp": ["mcp"],            "verify": "atlas_status"},
+    "data-sentinel-forge":{"pkg": "data_sentinel",    "call": "data_sentinel.cli:main",
+                          "mcp": ["mcp", "serve"],   "verify": "sentinel.status"},
+    "forge-agent-bridge":{"pkg": "forge_agent_bridge","call": "forge_agent_bridge.cli:main",
+                          "mcp": ["mcp", "serve"],   "verify": "forge_health"},
+    "forge-doctor-api":  {"pkg": "forge_doctor_api",  "call": "forge_doctor_api.cli:main",
+                          "mcp": ["mcp"],            "verify": "doctor.get_reliability"},
+    "forge-doctor-data": {"pkg": "forge_doctor_data", "call": "forge_doctor_data.cli:app",
+                          "mcp": ["mcp"],            "verify": "get_execution_baseline"},
+    "forge-lens":        {"pkg": "forge_lens",        "call": "forge_lens.cli.main:main",
+                          "mcp": ["mcp-serve"],      "verify": "lens.capabilities"},
+    "platform-forge":    {"pkg": "platformforge",     "call": "platformforge.mcp.server:main",
+                          "mcp": [],                 "verify": "platformforge_inspect",
+                          "cli": "platformforge.cli.main:main"},
+    "product-forge":     {"pkg": "product_forge",     "call": "product_forge.cli:main",
+                          "mcp": ["mcp", "serve"],   "verify": "productforge_status"},
+    "spark-forge-aws":   {"pkg": "sparkforge_aws",    "call": "sparkforge_aws.adapters.cli:main",
+                          "mcp": ["mcp", "serve"],   "verify": "sparkforge_aws_runtime_detect"},
+    "spark-forge-azure": {"pkg": "sparkforge_azure",  "call": "sparkforge_azure.cli.main:main",
+                          "mcp": ["mcp", "serve"],   "verify": "sfa_version"},
 }
 
 # verbs tried in order for standalone operation (onda 7 substrate)
@@ -136,7 +151,7 @@ def mcp_session(repo: str, extra_calls: list[dict] | None = None) -> dict:
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
         text=True, encoding="utf-8", errors="replace", bufsize=1,
         env=dict(os.environ, PYTHONIOENCODING="utf-8"))
-    responses: "queue.Queue[dict]" = queue.Queue()
+    responses: queue.Queue[dict] = queue.Queue()
 
     def reader() -> None:
         for line in proc.stdout:  # type: ignore[union-attr]
@@ -249,7 +264,8 @@ def scenario_mcp() -> None:
 def scenario_domains() -> None:
     """Cenários A–E — real domain verbs per specialist family."""
     cases = {
-        "A-aws":    [("spark-forge-aws", [["playbook", "emr-infra-reviewer"], ["status"], ["sdd", "status"]]),
+        "A-aws":    [("spark-forge-aws",
+                      [["playbook", "emr-infra-reviewer"], ["status"], ["sdd", "status"]]),
                      ("data-sentinel-forge", [["status"]]),
                      ("forge-doctor-data", [["doctor"], ["status"]])],
         "B-azure":  [("spark-forge-azure", [["status"], ["parity"], ["sdd", "status"]])],
@@ -257,7 +273,7 @@ def scenario_domains() -> None:
                      ("forge-doctor-api", [["doctor"], ["status"]]),
                      ("api-sentinel-forge", [["status"]]),
                      ("code-atlas-forge", [["status"]])],
-        "D-platform":[("platform-forge", [["status"], ["inspect"]])],
+        "D-platform":[("platform-forge", [["status"], ["inspect"]])],  # noqa: E501
         "E-product":[("product-forge", [["status"], ["doctor"]])],
     }
     for name, calls in cases.items():
