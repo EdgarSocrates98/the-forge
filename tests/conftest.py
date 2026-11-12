@@ -264,6 +264,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_hosts_flow.py": ("unit", "security", "integration"),
     # forge portal command center (loopback http server allowed by 7.6)
     "test_portal.py": ("unit", "integration", "security"),
+    # code-atlas probe op + forge/context projection for forge cards
+    "test_portal_context_atlas.py": ("unit", "integration", "security"),
     # lf-0023 portal `graph ui` parity — contract boundary, offline
     "test_portal_graph_parity.py": ("unit", "contract"),
     # engineering excellence evidence audit
