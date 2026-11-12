@@ -32,3 +32,4 @@ Operational guide to `api-sentinel-forge` — the API runtime diagnostician (obs
 
 Diagnoses only what the evidence supports; `UNKNOWN`/`UNVERIFIED` are valid answers, fabricated health is a defect. Adapter capabilities are verified against a live `describe()` — drifted specialist surface degrades to manifest limitations, never a surprise.
 <!-- forge:freshness specialists=api-sentinel-forge version=0.1.0 -->
+<!-- forge:freshness specialists=api-sentinel-forge version=0.1.0 -->

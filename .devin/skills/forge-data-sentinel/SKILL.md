@@ -1,15 +1,15 @@
 ---
 name: forge-data-sentinel
-description: "When and how to use data-sentinel-forge: Spark/data runtime diagnostics — event-log and failure diagnosis, Glue/EMR run inspection, SQL and physical-plan analysis, doctor-bundle intake. Load when a Spark task carries runtime evidence (logs, plans, run dumps); NEVER for producing Spark work or static source review. Currently UNADAPTED in The Forge — routing resolves to an honest provider-absent refusal."
-allowed-tools: "Read, Bash, Grep"
+description: "When and how to use data-sentinel-forge: Spark/data runtime diagnosis — OOM, skew, shuffle, spill, EMR/Glue/Databricks run inspection from exported artifacts. Load when the task is runtime diagnosis of data jobs; NEVER for producing pipelines or static source review."
 ---
 
 # forge-data-sentinel
 
-## Overview
-
+<background_information>
 Operational guide to `data-sentinel-forge` — the Spark/data runtime diagnostician (observer, not producer). It diagnoses from exported runtime evidence: driver/executor logs, OOM/skew/shuffle/spill, Glue/EMR run dumps, SQL and physical plans, Iceberg metadata, OpenLineage events, and `forge-doctor-data` handoff bundles.
+</background_information>
 
+<instructions>
 ## Recognize it when the task mentions
 
 "diagnose this glue job failure" · OOM/skew/shuffle/spill in Spark logs · "explain this physical plan" · EMR/Glue run inspection · importing a forge-doctor-data handoff for independent runtime diagnosis.
@@ -30,4 +30,6 @@ Operational guide to `data-sentinel-forge` — the Spark/data runtime diagnostic
 ## Limits
 
 Diagnostics require the runtime artifacts it consumes. The UNADAPTED state is intentional and documented in the knowledge package — a full sentinel adapter is the scope of a later spec, not a workaround to improvise.
+<!-- forge:freshness specialists=data-sentinel-forge version=0.4.0 -->
+</instructions>
 <!-- forge:freshness specialists=data-sentinel-forge version=0.4.0 -->
