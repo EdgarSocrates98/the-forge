@@ -19,6 +19,7 @@ from typing import Any
 
 from theforge import _forge_portal as fp
 from theforge import _installkit as kit
+from theforge import _portal_atlas as _pa
 from theforge import _portal_telemetry as _pt
 from theforge.install import service
 
@@ -101,6 +102,10 @@ class TheForgePortal(fp.PortalAdapter):
             *fp.default_operations(self),
             *_pt.operations(self._telemetry_recorder, self),
             _pt.task_events_op(self._telemetry_recorder, lambda: list(self._tasks)),
+            # GET /atlas/status — read-only loopback probe of code-atlas
+            # (:8741). Named states, never a transport error: the UI
+            # renders available/degraded/unavailable as data.
+            *_pa.atlas_operations(),
             fp.Operation("GET", "/federation", lambda ctx: self._federation()),
             fp.Operation("GET", "/profiles", lambda ctx: self._profiles()),
             fp.Operation("GET", "/hosts", lambda ctx: self._hosts()),
@@ -216,6 +221,7 @@ class TheForgePortal(fp.PortalAdapter):
             },
             {"id": "specialists", "state": "supported"},
             {"id": "delegations", "state": "supported"},
+            {"id": "atlas", "state": "supported"},
         ]
 
     def nav(self) -> list[dict[str, Any]]:
@@ -548,6 +554,82 @@ class TheForgePortal(fp.PortalAdapter):
                 "with_mcp": sum(1 for r in rows if r.get("mcp")),
                 "with_checkout": sum(1 for r in rows if r.get("checkout")),
             },
+            "context": self._forge_context(),
+        }
+
+    def _forge_context(self) -> dict[str, Any]:
+        """``forge/context-registry/v1`` granular projection for forge cards.
+
+        Read-only over ``.forge/context/`` — never repairs (that is
+        ``forge context repair``'s job): absent registry → ``absent``,
+        corrupt → ``corrupt``, unreadable → ``unverified``. Each forge
+        projects manifest state, health, kind and the discovery
+        mechanisms its capabilities declared; fields the manifest never
+        recorded stay null, not invented."""
+        try:
+            from theforge import _forgecontext as fcx
+        except Exception:  # pragma: no cover — vendored engine absent
+            return {"schema": "forge/context-registry/v1", "state": "unverified", "forges": {}}
+        try:
+            reg_path = fcx.registry_path(self._root)
+            if not reg_path.is_file():
+                return {
+                    "schema": "forge/context-registry/v1",
+                    "state": "absent",
+                    "path": str(reg_path),
+                    "count": 0,
+                    "forges": {},
+                }
+            reg = fcx.load_registry(self._root)
+            if reg is None:
+                return {
+                    "schema": "forge/context-registry/v1",
+                    "state": "corrupt",
+                    "path": str(reg_path),
+                    "count": 0,
+                    "forges": {},
+                }
+            manifests = fcx.list_capabilities(self._root)
+        except Exception:  # noqa: BLE001 — read-path failure is unverified, not a crash
+            return {"schema": "forge/context-registry/v1", "state": "unverified", "forges": {}}
+        forges: dict[str, Any] = {}
+        for entry in reg.get("forges") or []:
+            if not isinstance(entry, dict):
+                continue
+            fid = entry.get("forge_id")
+            if not fid:
+                continue
+            manifest = manifests.get(fid) or {}
+            health = manifest.get("health")
+            health = health if isinstance(health, dict) else {}
+            checks = health.get("checks")
+            caps = manifest.get("capabilities")
+            discovery = sorted(
+                {
+                    str(c["discovery"])
+                    for c in (caps or {}).values()
+                    if isinstance(c, dict) and c.get("discovery") not in (None, "none")
+                }
+            )
+            disc = manifest.get("discovery")
+            forges[fid] = {
+                "state": manifest.get("state") or entry.get("state"),
+                "kind": manifest.get("kind") or entry.get("kind"),
+                "health": health.get("status"),
+                "health_checks": len(checks) if isinstance(checks, list) else None,
+                "degraded_reasons": sorted(manifest.get("degraded_reasons") or ()),
+                "discovery": discovery,
+                "discovery_manifest": disc.get("manifest") if isinstance(disc, dict) else None,
+                "scope": entry.get("scope"),
+                "profile": entry.get("profile"),
+                "updated_at": entry.get("updated_at"),
+            }
+        return {
+            "schema": "forge/context-registry/v1",
+            "state": "registered",
+            "path": str(reg_path),
+            "count": len(forges),
+            "forges": forges,
         }
 
     def _federation_plan(self, ctx: fp.RequestContext) -> dict[str, Any]:
@@ -1219,13 +1301,9 @@ class TheForgePortal(fp.PortalAdapter):
                 )
                 if manifest_source is not None:
                     declared_paths = tuple(
-                        Path(item)
-                        for item in entry.agentic_manifest.agent_roster_paths
-                        if item
+                        Path(item) for item in entry.agentic_manifest.agent_roster_paths if item
                     )
-                    roster_dirs = tuple(
-                        dict.fromkeys((*CANONICAL_ROSTER_DIRS, *declared_paths))
-                    )
+                    roster_dirs = tuple(dict.fromkeys((*CANONICAL_ROSTER_DIRS, *declared_paths)))
                     roster = inspect_roster(
                         entry.agentic_manifest,
                         manifest_source.parent,
@@ -1346,9 +1424,7 @@ class TheForgePortal(fp.PortalAdapter):
             "availability": {
                 "state": "available" if runs else "no_investigations",
                 "detail": (
-                    None
-                    if runs
-                    else "no persisted investigations under .forge/orchestrations/"
+                    None if runs else "no persisted investigations under .forge/orchestrations/"
                 ),
             },
             "notes": notes,

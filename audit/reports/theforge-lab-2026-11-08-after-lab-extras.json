@@ -1,0 +1,319 @@
+{
+  "schema": "forge/BenchmarkResult/v1",
+  "suite": "theforge-lab",
+  "forge": "the-forge",
+  "mode": "A",
+  "created_at": "2026-11-08T13:01:14Z",
+  "producer": {
+    "id": "the-forge",
+    "version": "lab-script"
+  },
+  "external": false,
+  "results": [
+    {
+      "scenario_id": "compat-manifest-parity",
+      "verdict": "pass",
+      "metrics": {
+        "components_total": {
+          "value": 14
+        },
+        "components_matched": {
+          "value": 14
+        },
+        "precision": {
+          "value": 1.0,
+          "unit": "ratio"
+        }
+      },
+      "duration_ms": 531,
+      "evidence_ref": "ecosystem-compatibility.json",
+      "detail": ""
+    },
+    {
+      "scenario_id": "api-forge-doctor-api",
+      "verdict": "fail",
+      "metrics": {
+        "participants_declared": {
+          "value": 2
+        },
+        "participants_present": {
+          "value": 2
+        },
+        "labs_invoked": {
+          "value": 1
+        },
+        "handoffs": {
+          "value": 1
+        },
+        "routing_failures": {
+          "value": 1
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "value": 1.0,
+          "unit": "ratio"
+        },
+        "transported_context_bytes": {
+          "value": 29872,
+          "unit": "bytes"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 9561,
+      "evidence_ref": "labs\\multiforge\\api-forge-doctor-api.json",
+      "detail": "lab failures: api-forge=error"
+    },
+    {
+      "scenario_id": "api-plus-infra",
+      "verdict": "fail",
+      "metrics": {
+        "participants_declared": {
+          "value": 2
+        },
+        "participants_present": {
+          "value": 2
+        },
+        "labs_invoked": {
+          "value": 0
+        },
+        "handoffs": {
+          "value": 0
+        },
+        "routing_failures": {
+          "value": 2
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "state": "not_applicable"
+        },
+        "transported_context_bytes": {
+          "state": "not_applicable"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 171,
+      "evidence_ref": "labs\\multiforge\\api-plus-infra.json",
+      "detail": "lab failures: api-forge=error, platform-forge=error"
+    },
+    {
+      "scenario_id": "cloud-migration",
+      "verdict": "fail",
+      "metrics": {
+        "participants_declared": {
+          "value": 2
+        },
+        "participants_present": {
+          "value": 2
+        },
+        "labs_invoked": {
+          "value": 0
+        },
+        "handoffs": {
+          "value": 0
+        },
+        "routing_failures": {
+          "value": 2
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "state": "not_applicable"
+        },
+        "transported_context_bytes": {
+          "state": "not_applicable"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 172,
+      "evidence_ref": "labs\\multiforge\\cloud-migration.json",
+      "detail": "lab failures: spark-forge-aws=error, spark-forge-azure=error"
+    },
+    {
+      "scenario_id": "spark-aws-doctor-data",
+      "verdict": "fail",
+      "metrics": {
+        "participants_declared": {
+          "value": 2
+        },
+        "participants_present": {
+          "value": 2
+        },
+        "labs_invoked": {
+          "value": 1
+        },
+        "handoffs": {
+          "value": 1
+        },
+        "routing_failures": {
+          "value": 1
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "value": 1.0,
+          "unit": "ratio"
+        },
+        "transported_context_bytes": {
+          "value": 38771,
+          "unit": "bytes"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 6875,
+      "evidence_ref": "labs\\multiforge\\spark-aws-doctor-data.json",
+      "detail": "lab failures: spark-forge-aws=error"
+    },
+    {
+      "scenario_id": "spark-azure-doctor-data",
+      "verdict": "fail",
+      "metrics": {
+        "participants_declared": {
+          "value": 2
+        },
+        "participants_present": {
+          "value": 2
+        },
+        "labs_invoked": {
+          "value": 1
+        },
+        "handoffs": {
+          "value": 1
+        },
+        "routing_failures": {
+          "value": 1
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "value": 1.0,
+          "unit": "ratio"
+        },
+        "transported_context_bytes": {
+          "value": 38771,
+          "unit": "bytes"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 7468,
+      "evidence_ref": "labs\\multiforge\\spark-azure-doctor-data.json",
+      "detail": "lab failures: spark-forge-azure=error"
+    },
+    {
+      "scenario_id": "specialist-orchestration",
+      "verdict": "pass",
+      "metrics": {
+        "participants_declared": {
+          "value": 3
+        },
+        "participants_present": {
+          "value": 3
+        },
+        "labs_invoked": {
+          "value": 3
+        },
+        "handoffs": {
+          "value": 3
+        },
+        "routing_failures": {
+          "value": 0
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "value": 1.0,
+          "unit": "ratio"
+        },
+        "transported_context_bytes": {
+          "value": 69308,
+          "unit": "bytes"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 16843,
+      "evidence_ref": "labs\\multiforge\\specialist-orchestration.json",
+      "detail": "3/3 declared labs ok"
+    },
+    {
+      "scenario_id": "workspace-multirepo",
+      "verdict": "fail",
+      "metrics": {
+        "participants_declared": {
+          "value": 2
+        },
+        "participants_present": {
+          "value": 2
+        },
+        "labs_invoked": {
+          "value": 1
+        },
+        "handoffs": {
+          "value": 1
+        },
+        "routing_failures": {
+          "value": 1
+        },
+        "re_executions": {
+          "value": 0
+        },
+        "receipt_integrity": {
+          "value": 1.0,
+          "unit": "ratio"
+        },
+        "transported_context_bytes": {
+          "value": 666,
+          "unit": "bytes"
+        },
+        "duplication_ratio": {
+          "state": "not_applicable"
+        },
+        "cost_usd": {
+          "state": "not_applicable"
+        }
+      },
+      "duration_ms": 781,
+      "evidence_ref": "labs\\multiforge\\workspace-multirepo.json",
+      "detail": "lab failures: platform-forge=error"
+    }
+  ],
+  "notes": [
+    "repos_root=E:\\projetos\\FORJAS"
+  ]
+}

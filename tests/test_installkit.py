@@ -469,8 +469,7 @@ def test_mcp_verify_does_not_block_on_launcher_descendant_stderr(tmp_path):
     stub = tmp_path / "stub_mcp_child.py"
     stub.write_text(
         "import subprocess, sys\n"
-        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
-        + _MCP_STUB,
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n" + _MCP_STUB,
         "utf-8",
     )
     spec = _spec(

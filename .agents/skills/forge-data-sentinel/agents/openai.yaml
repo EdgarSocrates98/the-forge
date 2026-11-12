@@ -1,0 +1,6 @@
+interface:
+  display_name: "Data Sentinel"
+  short_description: "Spark/data runtime diagnostician"
+
+policy:
+  allow_implicit_invocation: false

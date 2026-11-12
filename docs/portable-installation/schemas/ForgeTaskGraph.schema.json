@@ -1,0 +1,88 @@
+{
+  "$id": "forge/TaskGraph/v1",
+  "title": "ForgeTaskGraph/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "feature",
+    "tasks"
+  ],
+  "properties": {
+    "schema": {
+      "const": "forge/TaskGraph/v1"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "tasks": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^T[0-9]{1,4}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "parallel_safe": {
+            "type": "boolean"
+          },
+          "risk": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "write_scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "proof": {
+            "type": "string"
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "requirement_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in-progress",
+              "done",
+              "blocked",
+              "skipped"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false
+}

@@ -1,0 +1,91 @@
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 21%]
+........................................................................ [ 24%]
+........................................................................ [ 28%]
+........................................................................ [ 31%]
+........................................................................ [ 35%]
+........................................F............................... [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+........................................................................ [ 53%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+.....................s.................................................. [ 67%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 78%]
+........................................................................ [ 81%]
+........................................................................ [ 85%]
+........................................................................ [ 88%]
+...........................s............................................ [ 92%]
+........................................................................ [ 95%]
+........................................................................ [ 99%]
+...........                                                              [100%]
+================================== FAILURES ===================================
+_______________ test_baseline_regression_fails_and_equal_passes _______________
+
+tmp_path = WindowsPath('C:/Users/edgar/AppData/Local/Temp/pytest-of-edgar/pytest-1206/test_baseline_regression_fails0')
+
+    def test_baseline_regression_fails_and_equal_passes(tmp_path: Path) -> None:
+        corpus = tmp_path / "corpus"
+        _case(corpus, "right", "breaking", "breaking")
+        _case(corpus, "wrong", "breaking", "compatible")
+        baseline = tmp_path / "baseline.json"
+        report = run_agentic_quality(corpus, min_accuracy=0.0)
+        report["accuracy"] = {"economy": 1.0, "balanced": 1.0, "deep": 1.0}
+        baseline.write_text(json.dumps(report), encoding="utf-8")
+>       regressed = run_agentic_quality(corpus, min_accuracy=0.0, baseline=baseline)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\economy\test_eval_integrity.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\apiforge\evals\agentic_quality.py:251: in run_agentic_quality
+    rows.append(_run_case(case, profile, work, responses_dir))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\apiforge\evals\agentic_quality.py:115: in _run_case
+    result = run_runtime(
+src\apiforge\runtime\runner.py:28: in run_runtime
+    return asyncio.run(
+C:\Users\edgar\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+C:\Users\edgar\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\edgar\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+src\apiforge\runtime\supervisor.py:2093: in execute_run
+    control.start(control_run.run_id, step.step_id)
+src\apiforge\runtime\control.py:259: in start
+    self._save(result)
+src\apiforge\runtime\control.py:94: in _save
+    temporary.replace(directory / "run.json")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/edgar/AppData/Local/Temp/af-agentic-quality-2thka8pw/0-deep/.apiforge/control/run-f0e766d62b2dba92/run.json.tmp')
+target = WindowsPath('C:/Users/edgar/AppData/Local/Temp/af-agentic-quality-2thka8pw/0-deep/.apiforge/control/run-f0e766d62b2dba92/run.json')
+
+    def replace(self, target):
+        """
+        Rename this path to the target path, overwriting if that path exists.
+    
+        The target path may be absolute or relative. Relative paths are
+        interpreted relative to the current working directory, *not* the
+        directory of the Path object.
+    
+        Returns the new Path instance pointing to the target path.
+        """
+>       os.replace(self, target)
+E       PermissionError: [WinError 5] Acesso negado: 'C:\\Users\\edgar\\AppData\\Local\\Temp\\af-agentic-quality-2thka8pw\\0-deep\\.apiforge\\control\\run-f0e766d62b2dba92\\run.json.tmp' -> 'C:\\Users\\edgar\\AppData\\Local\\Temp\\af-agentic-quality-2thka8pw\\0-deep\\.apiforge\\control\\run-f0e766d62b2dba92\\run.json'
+
+C:\Users\edgar\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\pathlib.py:1376: PermissionError
+=========================== short test summary info ===========================
+FAILED tests/economy/test_eval_integrity.py::test_baseline_regression_fails_and_equal_passes
+1 failed, 2024 passed, 4 skipped in 1204.37s (0:20:04)

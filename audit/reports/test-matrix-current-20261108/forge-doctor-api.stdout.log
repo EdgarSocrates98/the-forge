@@ -1,0 +1,55 @@
+.........ss............................................................. [  3%]
+........................................................................ [  7%]
+...............................................sssss..............s..... [ 10%]
+........................................................................ [ 14%]
+........................................................................ [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+......................................................F................. [ 36%]
+........................................................................ [ 39%]
+.............................................ssss.ssss.sssssssssssssssss [ 43%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 68%]
+....s....s.........................s....s.....s....s.................... [ 72%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+........................................................................ [ 87%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+........................................                                 [100%]
+================================== FAILURES ===================================
+________________________ test_status_doctor_round_trip ________________________
+
+target = WindowsPath('E:/projetos/FORJAS/forge-doctor-api/.pytest-tmp/test_status_doctor_round_trip0/consumer')
+home = WindowsPath('E:/projetos/FORJAS/forge-doctor-api/.pytest-tmp/test_status_doctor_round_trip0/home')
+
+    def test_status_doctor_round_trip(target: Path, home: Path) -> None:
+        _run("install", "--root", str(target), "--yes", env_home=home)
+        proc = _run("status", "--root", str(target), env_home=home)
+        assert proc.returncode == 0
+        assert _json(proc)["status"] == "healthy"
+        proc = _run("doctor", "--root", str(target), env_home=home)
+>       assert proc.returncode == 0
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['E:\\projetos\\FORJAS\\forge-doctor-api\\.venv\\Scripts\\python.exe', 'E:\\projetos\\FORJAS\\fo...: 2,\n    "tools_exposed": null\n  },\n  "checked_at": "2026-11-08T19:13:32Z",\n  "repair_hint": null\n}\n', stderr='').returncode
+
+tests\test_forge_install.py:102: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_artifact_contents.py:48: `python -m build` unavailable or failed: E:\projetos\FORJAS\forge-doctor-api\.venv\Scripts\python.exe: No module named build
+SKIPPED [1] tests\test_artifact_contents.py:54: `python -m build` unavailable or failed: E:\projetos\FORJAS\forge-doctor-api\.venv\Scripts\python.exe: No module named build
+SKIPPED [6] tests\test_compat_adversarial.py:276: could not import 'graphql': No module named 'graphql'
+SKIPPED [25] tests\test_graphql.py:40: could not import 'graphql': No module named 'graphql'
+SKIPPED [2] tests\test_oss_corpus.py:172: graphql extra absent — capability gap is explicit
+SKIPPED [2] tests\test_oss_corpus.py:187: graphql extra absent — capability gap is explicit
+SKIPPED [2] tests\test_oss_corpus.py:238: graphql extra absent — capability gap is explicit
+FAILED tests/test_forge_install.py::test_status_doctor_round_trip - assert 1 ...
+1 failed, 1944 passed, 39 skipped in 867.84s (0:14:27)

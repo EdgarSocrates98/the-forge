@@ -1,0 +1,49 @@
+{
+  "$id": "forge/Constitution/v1",
+  "title": "ForgeConstitution/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "owner",
+    "principles"
+  ],
+  "properties": {
+    "schema": {
+      "const": "forge/Constitution/v1"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "supersedes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false
+}

@@ -1,0 +1,111 @@
+{
+  "$id": "forge/SDDGate/v1",
+  "title": "ForgeSDDGate/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "feature",
+    "phase",
+    "ok",
+    "refused",
+    "unresolved"
+  ],
+  "properties": {
+    "schema": {
+      "const": "forge/SDDGate/v1"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "explore",
+        "define",
+        "design",
+        "plan",
+        "build_report",
+        "verify",
+        "ship",
+        "learn"
+      ]
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "refused": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unlock": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unlock": {
+            "type": "string"
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evaluated_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+    },
+    "evaluator": {
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false
+}

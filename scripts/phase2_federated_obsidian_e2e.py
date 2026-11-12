@@ -163,8 +163,7 @@ def run(repos_root: Path, *, installed: bool = False) -> dict[str, Any]:
         ]
         imported = [import_vault_document(vault, str(note["path"])) for note in notes]
         assert all(
-            item["content"] == note["content"]
-            for item, note in zip(imported, notes, strict=True)
+            item["content"] == note["content"] for item, note in zip(imported, notes, strict=True)
         )
         assert all(item["content_hash"] for item in imported)
 

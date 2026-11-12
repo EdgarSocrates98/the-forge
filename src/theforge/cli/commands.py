@@ -942,9 +942,7 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
         return 4
     _emit(args, out, render.install_doc)
     return (
-        0
-        if out.get("status") in ("completed", "planned", "healthy", "unverified", "PASS")
-        else 1
+        0 if out.get("status") in ("completed", "planned", "healthy", "unverified", "PASS") else 1
     )
 
 

@@ -1,0 +1,5 @@
+Data Sentinel Forge - portable install - wheel
+source:   E:\projetos\FORJAS\data-sentinel-forge
+venv:     C:\Users\edgar\.forjas\data-sentinel-forge\venv
+launcher: C:\Users\edgar\.forjas\data-sentinel-forge\bin\data-sentinel.cmd
+plan only: no files, environments or PATH entries were changed

@@ -465,8 +465,7 @@ def run(*, workspace_root: Path, output: Path) -> dict[str, Any]:
             "workspace_root": str(workspace_root),
             "status": "PASS_WITH_LIMITATIONS"
             if all(
-                c["status"] in {"PASSED", "UNAVAILABLE", "NOT_RUN", "SURFACE_ONLY"}
-                for c in checks
+                c["status"] in {"PASSED", "UNAVAILABLE", "NOT_RUN", "SURFACE_ONLY"} for c in checks
             )
             else "FAILED",
             "checks": checks,

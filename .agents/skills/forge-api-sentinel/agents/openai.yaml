@@ -1,0 +1,6 @@
+interface:
+  display_name: "API Sentinel"
+  short_description: "API runtime intelligence specialist"
+
+policy:
+  allow_implicit_invocation: false

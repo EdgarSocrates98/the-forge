@@ -14,6 +14,9 @@
     "name": {"type": "string", "minLength": 1},
     "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+([-.+][0-9A-Za-z.]+)?$"},
     "protocol_version": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["specialist", "orchestrator", "diagnostic-provider",
+                      "code-intelligence", "observability", "user-interface",
+                      "cli-runtime"]},
     "domains": {
       "type": "array",
       "items": {"type": "string", "pattern": "^[a-z0-9-]{1,64}$"},

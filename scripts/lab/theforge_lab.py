@@ -61,11 +61,15 @@ def _declared_version(repo: Path, component: str) -> str | None:
         source = dynamic.get("path")
         if isinstance(source, str):
             version_file = repo / source
-            match = re.search(
-                r"^\s*__version__\s*=\s*['\"]([^'\"]+)['\"]",
-                version_file.read_text(encoding="utf-8"),
-                re.MULTILINE,
-            ) if version_file.is_file() else None
+            match = (
+                re.search(
+                    r"^\s*__version__\s*=\s*['\"]([^'\"]+)['\"]",
+                    version_file.read_text(encoding="utf-8"),
+                    re.MULTILINE,
+                )
+                if version_file.is_file()
+                else None
+            )
             if match:
                 return match.group(1)
         attr = project_attr or dynamic.get("attr")

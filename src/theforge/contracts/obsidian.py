@@ -363,4 +363,3 @@ class ObsidianExportProfile:
             _hash(self.content_hash, "content_hash")
         if self.previous_hash is not None:
             _hash(self.previous_hash, "previous_hash")
-

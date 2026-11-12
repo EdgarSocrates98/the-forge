@@ -1,0 +1,26 @@
+{
+  "schema": "forge/node-install/v1",
+  "package": "theforge-cli",
+  "version": "0.4.1",
+  "root": "E:\\projetos\\FORJAS\\forge-cli",
+  "platform": "win32",
+  "dry_run": true,
+  "mutates": false,
+  "steps": [
+    {
+      "command": "npm.cmd",
+      "args": [
+        "ci"
+      ],
+      "label": "dependências"
+    },
+    {
+      "command": "npm.cmd",
+      "args": [
+        "run",
+        "build"
+      ],
+      "label": "bundle"
+    }
+  ]
+}

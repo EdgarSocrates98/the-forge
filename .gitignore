@@ -42,3 +42,8 @@ uv.lock
 .env.*
 graphify-out/
 e2e/artifacts/
+
+# tooling state / generated dirs
+node_modules/
+.audit-work/
+.codebase-memory/
