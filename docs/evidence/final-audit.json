@@ -1,0 +1,330 @@
+{
+  "schema": "forge/FinalAudit/v1",
+  "generated_at": "2026-11-12T20:54:02.192467+00:00",
+  "workspace": "E:\\projetos\\FORJAS",
+  "repos": [
+    "api-forge",
+    "api-sentinel-forge",
+    "code-atlas-forge",
+    "data-sentinel-forge",
+    "forge-agent-bridge",
+    "forge-doctor-api",
+    "forge-doctor-data",
+    "forge-lens",
+    "platform-forge",
+    "product-forge",
+    "spark-forge-aws",
+    "spark-forge-azure",
+    "the-forge",
+    "the-forge-adapter-fix"
+  ],
+  "contracts": {
+    "parity_copies": 9,
+    "resources_checked": 1372,
+    "checks": [
+      {
+        "check": "vendored:api-forge:apiforge",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:forge-doctor-api:scripts",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:forge-doctor-data:forge_doctor_data",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:platform-forge:platformforge",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:product-forge:product_forge",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:spark-forge-aws:sparkforge_aws",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:spark-forge-azure:sparkforge_azure",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:the-forge:theforge",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "vendored:the-forge-adapter-fix:theforge",
+        "ok": true,
+        "detail": "_forge_portal.py"
+      },
+      {
+        "check": "manifest-parse:api-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:api-sentinel-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:code-atlas-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:data-sentinel-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:forge-agent-bridge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:forge-doctor-api",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:forge-doctor-data",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:forge-lens",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:platform-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:product-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:spark-forge-aws",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:spark-forge-azure",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:the-forge",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "manifest-parse:the-forge-adapter-fix",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "catalog-locations-on-disk",
+        "ok": true,
+        "detail": "0/1372 declared locations absent"
+      }
+    ]
+  },
+  "hosts": {
+    "checks": [
+      {
+        "check": "host-adapters-declared:api-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:api-forge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:api-sentinel-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:api-sentinel-forge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:code-atlas-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:code-atlas-forge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:data-sentinel-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:data-sentinel-forge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:forge-agent-bridge",
+        "ok": true,
+        "detail": "claude,codex,devin,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:forge-agent-bridge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:forge-doctor-api",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:forge-doctor-api",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:forge-doctor-data",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:forge-doctor-data",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:forge-lens",
+        "ok": true,
+        "detail": "claude"
+      },
+      {
+        "check": "mcp-verify-undeclared:forge-lens",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:platform-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:platform-forge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:product-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:product-forge",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:spark-forge-aws",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:spark-forge-aws",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:spark-forge-azure",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "mcp-verify-undeclared:spark-forge-azure",
+        "ok": true,
+        "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"
+      },
+      {
+        "check": "host-adapters-declared:the-forge",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "host-adapters-declared:the-forge-adapter-fix",
+        "ok": true,
+        "detail": "claude,devin,codex,copilot"
+      },
+      {
+        "check": "canonical-agent-specs:the-forge",
+        "ok": true,
+        "detail": "8 AgentSpec/v1"
+      },
+      {
+        "check": "agent-renderer:the-forge",
+        "ok": true,
+        "detail": "agents.py"
+      }
+    ]
+  },
+  "portability_security": {
+    "checks": [
+      {
+        "check": "spaces-in-path:discovery",
+        "ok": true,
+        "detail": "C:\\Users\\edgar\\AppData\\Local\\Temp\\audit p s dzgn93dg\\ws with spaces"
+      },
+      {
+        "check": "zip-no-git:materialized",
+        "ok": true,
+        "detail": "193 files"
+      },
+      {
+        "check": "spaces-in-path:bounded-get",
+        "ok": true,
+        "detail": "spark-forge-aws:analyze-batch-loop"
+      },
+      {
+        "check": "adversarial:traversal-refused",
+        "ok": true,
+        "detail": "../outside-secret.txt → manifest refused at parse"
+      },
+      {
+        "check": "adversarial:symlink-refused",
+        "ok": true,
+        "detail": "link/x.md → retrieval refused: ResourceFailure"
+      },
+      {
+        "check": "adversarial:secret-redacted",
+        "ok": true,
+        "detail": "token=[REDACTED] here"
+      }
+    ]
+  },
+  "summary": {
+    "checks": 58,
+    "fail": 0,
+    "failures": []
+  }
+}
