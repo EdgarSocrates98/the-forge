@@ -7,6 +7,7 @@ Forjas exchange plans and receipts without importing that implementation.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -17,6 +18,8 @@ OBSIDIAN_SYNC_PLAN_SCHEMA = "theforge/ObsidianSyncPlan/v1"
 OBSIDIAN_SYNC_RECEIPT_SCHEMA = "theforge/ObsidianSyncReceipt/v1"
 OBSIDIAN_VAULT_DESCRIPTOR_SCHEMA = "theforge/ObsidianVaultDescriptor/v1"
 OBSIDIAN_NOTE_REF_SCHEMA = "theforge/ObsidianNoteRef/v1"
+OBSIDIAN_NOTE_DRAFT_SCHEMA = "theforge/ObsidianNoteDraft/v1"
+OBSIDIAN_EXPORT_REQUEST_SCHEMA = "theforge/ObsidianExportRequest/v1"
 OBSIDIAN_CONFLICT_SCHEMA = "theforge/ObsidianConflict/v1"
 OBSIDIAN_EXPORT_PROFILE_SCHEMA = "theforge/ObsidianExportProfile/v1"
 _OUTCOMES = (
@@ -196,6 +199,96 @@ class ObsidianNoteRef:
         _hash(self.content_hash, "content_hash")
         if self.previous_hash is not None:
             _hash(self.previous_hash, "previous_hash")
+
+
+@dataclass(frozen=True, kw_only=True)
+class ObsidianNoteDraft:
+    """Reviewable Markdown body plus the metadata needed to make a ref.
+
+    ``ObsidianNoteRef`` is intentionally body-free.  Producers that prepare
+    Markdown must announce this draft contract and consumers that only need
+    identity must call :meth:`note_ref` before crossing a body-free boundary.
+    """
+
+    schema: str = OBSIDIAN_NOTE_DRAFT_SCHEMA
+    version: str = "v1"
+    workspace: str
+    vault_id: str
+    path: str
+    source: str
+    classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
+    content: str
+    content_hash: str = field(metadata={"pattern": SHA256_RE.pattern})
+    previous_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    updated_at: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
+    outcome: str = "draft"
+    warnings: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != OBSIDIAN_NOTE_DRAFT_SCHEMA:
+            raise ContractError(f"unsupported Obsidian note draft schema {self.schema!r}")
+        for name in ("workspace", "vault_id", "source"):
+            _required(getattr(self, name), name)
+        _safe_relative_path(self.path)
+        if not isinstance(self.content, str):
+            raise ContractError("content must be UTF-8 text")
+        expected = hashlib.sha256(self.content.encode("utf-8")).hexdigest()
+        if self.content_hash != expected:
+            raise ContractError("content_hash must match the draft UTF-8 bytes")
+        _hash(self.content_hash, "content_hash")
+        if self.previous_hash is not None:
+            _hash(self.previous_hash, "previous_hash")
+
+    def note_ref(self) -> ObsidianNoteRef:
+        return ObsidianNoteRef(
+            workspace=self.workspace,
+            vault_id=self.vault_id,
+            path=self.path,
+            source=self.source,
+            classification=self.classification,
+            content_hash=self.content_hash,
+            previous_hash=self.previous_hash,
+            updated_at=self.updated_at,
+            provenance=self.provenance,
+            outcome=self.outcome,
+            warnings=self.warnings,
+            unresolved=self.unresolved,
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ObsidianExportRequest:
+    """Authorized export intent; it carries no Markdown body."""
+
+    schema: str = OBSIDIAN_EXPORT_REQUEST_SCHEMA
+    version: str = "v1"
+    workspace: str
+    vault_id: str
+    path: str
+    source: str
+    operation: Literal["export", "import_read_only", "reviewed_sync"] = "export"
+    idempotency_key: str
+    classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
+    content_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    baseline_hash: str | None = field(default=None, metadata={"pattern": SHA256_RE.pattern})
+    approval_ref: str = ""
+    requested_at: str = ""
+    provenance: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.schema != OBSIDIAN_EXPORT_REQUEST_SCHEMA:
+            raise ContractError(f"unsupported Obsidian export request schema {self.schema!r}")
+        for name in ("workspace", "vault_id", "source", "idempotency_key"):
+            _required(getattr(self, name), name)
+        _safe_relative_path(self.path)
+        if self.content_hash is not None:
+            _hash(self.content_hash, "content_hash")
+        if self.baseline_hash is not None:
+            _hash(self.baseline_hash, "baseline_hash")
 
 
 @dataclass(frozen=True, kw_only=True)

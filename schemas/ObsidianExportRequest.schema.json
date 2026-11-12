@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "approval_ref": {
+      "type": "string"
+    },
+    "baseline_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted"
+      ]
+    },
+    "content_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "operation": {
+      "enum": [
+        "export",
+        "import_read_only",
+        "reviewed_sync"
+      ]
+    },
+    "path": {
+      "type": "string"
+    },
+    "provenance": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "requested_at": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "unresolved": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "vault_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workspace": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "workspace",
+    "vault_id",
+    "path",
+    "source",
+    "idempotency_key"
+  ],
+  "title": "ObsidianExportRequest",
+  "type": "object"
+}

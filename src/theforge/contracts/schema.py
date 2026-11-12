@@ -60,6 +60,8 @@ from theforge.contracts import (
     MemorySummary,
     ObsidianConflict,
     ObsidianExportProfile,
+    ObsidianExportRequest,
+    ObsidianNoteDraft,
     ObsidianNoteRef,
     ObsidianSyncPlan,
     ObsidianSyncReceipt,
@@ -199,6 +201,8 @@ EXPORTED: tuple[type[Any], ...] = (
     ObsidianSyncReceipt,
     ObsidianVaultDescriptor,
     ObsidianNoteRef,
+    ObsidianNoteDraft,
+    ObsidianExportRequest,
     ObsidianConflict,
     ObsidianExportProfile,
     # specialized agent registry (W3)
@@ -281,6 +285,8 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     ObsidianSyncReceipt,
     ObsidianVaultDescriptor,
     ObsidianNoteRef,
+    ObsidianNoteDraft,
+    ObsidianExportRequest,
     ObsidianConflict,
     ObsidianExportProfile,
 )

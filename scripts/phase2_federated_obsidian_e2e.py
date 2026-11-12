@@ -51,9 +51,25 @@ def _with_link(note: dict[str, Any], target: str) -> dict[str, Any]:
     }
 
 
-def run(repos_root: Path) -> dict[str, Any]:
-    _add_repo_paths(repos_root)
-    from apiforge.context.obsidian import build_obsidian_contract_review
+def _note_ref(note: dict[str, Any]) -> dict[str, Any]:
+    """Explicitly project a body-bearing draft before federation."""
+    if note.get("schema") != "theforge/ObsidianNoteDraft/v1":
+        return note
+    return {key: value for key, value in note.items() if key != "content"} | {
+        "schema": "theforge/ObsidianNoteRef/v1"
+    }
+
+
+def run(repos_root: Path, *, installed: bool = False) -> dict[str, Any]:
+    """Run the fixture federation either from checkouts or installed wheels.
+
+    The installed lane deliberately does not add any repository source path to
+    ``sys.path``.  ``repos_root`` is retained only for the canonical schema
+    fixture used to validate the public reference projection.
+    """
+    if not installed:
+        _add_repo_paths(repos_root)
+    from apiforge.context.obsidian import build_obsidian_contract_review  # noqa: I001 - optional federation imports retain per-module type ignores
     from code_atlas.context.obsidian import project_obsidian_relations  # type: ignore[import-not-found]
     from forge_agent_bridge.context import (  # type: ignore[import-not-found]
         ContextStore,
@@ -126,7 +142,7 @@ def run(repos_root: Path) -> dict[str, Any]:
             )
         )
         for note in notes:
-            public_note = {key: value for key, value in note.items() if key != "content"}
+            public_note = _note_ref(note)
             errors = sorted(
                 note_validator.iter_errors(public_note),
                 key=lambda error: list(error.path),
@@ -238,8 +254,19 @@ def run(repos_root: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repos-root", type=Path, required=True)
+    parser.add_argument(
+        "--installed",
+        action="store_true",
+        help="run without adding any checkout source paths (installed-package lane)",
+    )
     args = parser.parse_args()
-    print(json.dumps(run(args.repos_root.resolve()), ensure_ascii=False, indent=2))
+    print(
+        json.dumps(
+            run(args.repos_root.resolve(), installed=args.installed),
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0
 
 
