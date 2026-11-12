@@ -2054,3 +2054,60 @@ def verify_run(data: dict[str, Any]) -> str:
     if data.get("conclusion"):
         lines.append(f"  {_clean(data['conclusion'])}")
     return "\n".join(lines)
+
+
+def resources_list(data: dict[str, Any]) -> str:
+    lines: list[str] = []
+    for r in data.get("roots") or []:
+        lines.append(f"root: {_clean(r['forge_id'])} ({r['origin']}) {_clean(r['root'])}")
+    if lines:
+        lines.append("")
+    for res in data.get("resources") or []:
+        line = (
+            f"{_clean(res['identity']):<44} {res['kind']:<10} "
+            f"{res['availability']:<11} {_clean(res.get('resource_class') or '-')}"
+        )
+        if res.get("location"):
+            line += f"  {_clean(res['location'])}"
+        lines.append(line)
+    if data.get("count") is not None:
+        lines.append(f"\n{data['count']} resource(s)")
+    return "\n".join(lines) or "no resources"
+
+
+def resource_describe(data: dict[str, Any]) -> str:
+    lines = [
+        f"{_clean(data['identity'])}",
+        f"  kind: {data['kind']}  class: {_clean(data.get('resource_class') or '-')}"
+        f"  availability: {data['availability']}",
+        f"  origin: {data['origin']}  location: {_clean(data.get('location') or '-')}",
+    ]
+    if data.get("resolved"):
+        state = "exists" if data.get("exists") else "missing"
+        kind = "dir" if data.get("is_dir") else "file"
+        lines.append(f"  resolved: {_clean(data['resolved'])} ({state} {kind})")
+    if data.get("description"):
+        lines.append(f"  {_clean(data['description'])}")
+    if data.get("tags"):
+        lines.append(f"  tags: {', '.join(data['tags'])}")
+    if data.get("unavailable_reason"):
+        lines.append(f"  unavailable: {_clean(data['unavailable_reason'])}")
+    return "\n".join(lines)
+
+
+def resource_content(data: dict[str, Any]) -> str:
+    header = (
+        f"# {data['identity']} ({data['origin']}:{data['location']})"
+        f" served={data['served_bytes']}B"
+        + (f"/{data['file_bytes']}B" if data.get("file_bytes") is not None else "")
+        + (" truncated" if data.get("truncated") else "")
+        + (" redacted" if data.get("redacted") else "")
+    )
+    if data.get("sha256"):
+        header += f"\n# sha256[{data.get('sha256_scope') or 'window'}]={data['sha256']}"
+    if data["content_type"] == "listing":
+        body = "\n".join(data.get("entries") or [])
+        if data.get("listing_truncated"):
+            body += "\n… (listing truncated)"
+        return f"{header}\n{body}"
+    return f"{header}\n{data.get('text') or ''}"

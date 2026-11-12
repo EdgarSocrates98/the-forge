@@ -148,6 +148,7 @@ def catalog_resources(manifest: AgenticManifest) -> list[ResourceEntry]:
     declared = {r.id for r in manifest.resources}
     promoted = [
         ResourceEntry(id=name, kind="skill", location=None,
+                      resource_class="agentic",
                       availability="conditional",
                       unavailable_reason="legacy skills[] entry — no typed location declared")
         for name in manifest.skills
@@ -155,6 +156,7 @@ def catalog_resources(manifest: AgenticManifest) -> list[ResourceEntry]:
     ]
     promoted += [
         ResourceEntry(id=name, kind="agent", location=None,
+                      resource_class="agentic",
                       availability="conditional",
                       unavailable_reason="legacy agents[] entry — no typed location declared")
         for name in manifest.agents

@@ -259,6 +259,34 @@ def build_parser() -> argparse.ArgumentParser:
     agents_show.add_argument("agent_id")
     agents_show.set_defaults(handler=commands.cmd_agents_show)
 
+    resources = sub.add_parser(
+        "resources", help="typed resource catalog: search, describe, retrieve (Onda 04)"
+    ).add_subparsers(dest="resources_command", required=True)
+    res_list = resources.add_parser("list", parents=[common])
+    res_list.add_argument("--forge", dest="forge")
+    res_list.add_argument("--kind", dest="kind")
+    res_list.add_argument("--resource-class", dest="resource_class")
+    res_list.add_argument("--availability", dest="availability")
+    res_list.set_defaults(handler=commands.cmd_resources_list)
+    res_search = resources.add_parser("search", parents=[common])
+    res_search.add_argument("term")
+    res_search.add_argument("--forge", dest="forge")
+    res_search.add_argument("--kind", dest="kind")
+    res_search.add_argument("--limit", type=int, default=50)
+    res_search.set_defaults(handler=commands.cmd_resources_search)
+    res_desc = resources.add_parser("describe", parents=[common])
+    res_desc.add_argument("identity", help="<forge-id>:<resource-id>")
+    res_desc.set_defaults(handler=commands.cmd_resources_describe)
+    res_get = resources.add_parser(
+        "get", parents=[common], help="bounded, contained, redacted resource read"
+    )
+    res_get.add_argument("identity", help="<forge-id>:<resource-id>")
+    res_get.add_argument("--max-bytes", type=int, default=262_144)
+    res_get.add_argument("--offset", type=int, default=0)
+    res_get.add_argument("--integrity", action="store_true",
+                         help="hash the full file when it fits the integrity cap")
+    res_get.set_defaults(handler=commands.cmd_resources_get)
+
     caps = sub.add_parser("capabilities", help="declared capabilities").add_subparsers(
         dest="capabilities_command", required=True
     )
