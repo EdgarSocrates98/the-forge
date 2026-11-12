@@ -108,10 +108,10 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-_FORGECONTEXT_VERSION = "1.3.3"
+_FORGECONTEXT_VERSION = "1.3.4"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "3f858de0c5543e70"
+_SOURCE_SHA256 = "5674012d1a5760df"
 
 SCHEMA_MANIFEST = "forge/context/v1"
 SCHEMA_REGISTRY = "forge/context-registry/v1"
@@ -143,6 +143,22 @@ CHECK_STATUSES = ("PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE")
 HEALTH_STATUSES = ("healthy", "degraded", "unverified", "broken")
 CAPABILITY_DISCOVERY = ("native-runtime", "cli", "mcp", "bundled", "workspace-file", "none")
 COMMAND_MODES = ("direct-capability", "diagnostic-only", "specialist-workflow", "read-only")
+# The ecosystem role taxonomy (install-2.0 §4.0 — additive, optional).
+# ``kind`` classifies the forge itself so hosts and routers can apply
+# per-role rules without inferring from names: a ``diagnostic-provider``
+# never produces engineering work, ``code-intelligence`` never makes
+# product decisions, ``observability`` never mutates, ``user-interface``
+# and ``cli-runtime`` are surfaces/runtimes — ``orchestrator`` coordinates
+# but is never mandatory, ``specialist`` owns domain work.
+FORGE_KINDS = (
+    "specialist",
+    "orchestrator",
+    "diagnostic-provider",
+    "code-intelligence",
+    "observability",
+    "user-interface",
+    "cli-runtime",
+)
 RESOURCE_KINDS = ("copied", "referenced", "bundled", "materialized")
 EVAL_KINDS = ("developer", "runtime-decision", "output-verification", "host-conformance")
 
@@ -590,6 +606,7 @@ _MANIFEST_KEYS = (
     "name",
     "version",
     "protocol_version",
+    "kind",
     "domains",
     "capabilities",
     "skills",
@@ -657,6 +674,8 @@ def validate_manifest(doc: Any) -> list[str]:
         _str(doc["version"], problems, "$.version", pattern=_VERSION_RE)
     if "protocol_version" in doc:
         _str(doc["protocol_version"], problems, "$.protocol_version")
+    if "kind" in doc:
+        _enum(doc["kind"], FORGE_KINDS, problems, "$.kind")
     if "domains" in doc:
         _str_list(doc["domains"], problems, "$.domains", pattern=_DOMAIN_RE)
 
@@ -938,6 +957,7 @@ _REGISTRY_ENTRY_KEYS = (
     "owner",
     "name",
     "version",
+    "kind",
     "state",
     "scope",
     "profile",
@@ -981,6 +1001,8 @@ def _registry_entry(v: Any, problems: list[str], path: str) -> None:
         _str(v["name"], problems, f"{path}.name")
     if "version" in v:
         _str(v["version"], problems, f"{path}.version")
+    if "kind" in v:
+        _enum(v["kind"], FORGE_KINDS, problems, f"{path}.kind")
     if "state" in v:
         _enum(v["state"], MANIFEST_STATES, problems, f"{path}.state")
     if "scope" in v:
@@ -1180,6 +1202,7 @@ def build_manifest(
     executable: str | None = None,
     venv: str | None = None,
     resources: Mapping[str, Mapping[str, Any]] | None = None,
+    kind: str | None = None,
     requires_network: bool | None = None,
     requires_credentials: bool | None = None,
     read_only_default: bool | None = None,
@@ -1205,6 +1228,7 @@ def build_manifest(
     unknown op names and references to undeclared commands."""
     agentic = dict(agentic or {})
     forge_json = dict(forge_json or {})
+    kind = kind or agentic.get("kind") or forge_json.get("kind")
 
     skill_ids = sorted(set(skills) | set(agentic.get("skills") or ()))
     agent_ids = sorted(set(agents) | set(agentic.get("agents") or ()))
@@ -1306,6 +1330,7 @@ def build_manifest(
         "name": name,
         "version": version,
         "protocol_version": protocol_version,
+        **({"kind": str(kind)} if kind else {}),
         "domains": sorted(set(domains)),
         "capabilities": capabilities,
         "skills": skill_ids,
@@ -1476,6 +1501,7 @@ def _entry_from_manifest(
         "owner": manifest["forge_id"],
         "name": manifest["name"],
         "version": manifest["version"],
+        **({"kind": manifest["kind"]} if manifest.get("kind") else {}),
         "state": manifest["state"],
         "scope": inst["scope"],
         "profile": inst["profile"],
@@ -2887,6 +2913,7 @@ def _route_candidate(entry: Mapping[str, Any], manifest: Mapping[str, Any]) -> d
     integ = manifest.get("integrity") or {}
     return {
         "forge_id": entry["forge_id"],
+        "kind": entry.get("kind"),
         "state": entry.get("state", "unavailable"),
         "scope": entry.get("scope"),
         "profile": entry.get("profile"),
@@ -3016,6 +3043,7 @@ __all__ = [
     "E_PATH",
     "E_SCHEMA",
     "EVAL_KINDS",
+    "FORGE_KINDS",
     "HEALTH_STATUSES",
     "HOSTS",
     "JOURNAL_NAME",

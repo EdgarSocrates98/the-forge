@@ -102,7 +102,51 @@ def test_degraded_state_requires_reasons():
     assert exc.value.kind == fctx.E_SCHEMA
     doc2 = _manifest(state="degraded", degraded_reasons=("knowledge bundle absent",))
     assert fctx.validate_manifest(doc2) == []
-    jsonschema.validate(doc2, _schema("ForgeContext.schema.json"))
+
+
+def test_kind_is_optional_and_validated():
+    # absent: legacy manifests stay conforming (additive field)
+    doc = _manifest()
+    assert "kind" not in doc
+    assert fctx.validate_manifest(doc) == []
+    jsonschema.validate(doc, _schema("ForgeContext.schema.json"))
+    # declared: conforms to engine and JSON schema, propagates to the
+    # registry entry and route candidate
+    doc = _manifest(kind="specialist")
+    assert doc["kind"] == "specialist"
+    assert fctx.validate_manifest(doc) == []
+    jsonschema.validate(doc, _schema("ForgeContext.schema.json"))
+    # invalid kind refused by both validators
+    doc["kind"] = "supreme-being"
+    assert fctx.validate_manifest(doc)
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(doc, _schema("ForgeContext.schema.json"))
+
+
+def test_kind_falls_back_to_agentic_and_forge_json():
+    doc = _manifest(agentic={"kind": "diagnostic-provider"})
+    assert doc["kind"] == "diagnostic-provider"
+    doc = _manifest(forge_json={"kind": "observability"})
+    assert doc["kind"] == "observability"
+    # explicit arg wins over metadata
+    doc = _manifest(kind="specialist", agentic={"kind": "observability"})
+    assert doc["kind"] == "specialist"
+
+
+def test_kind_projects_into_registry_and_route(tmp_path):
+    root = tmp_path
+    fctx.register_forge(root, _manifest(kind="diagnostic-provider"), owner="the-forge")
+    reg = fctx.load_registry(root)
+    entry = next(e for e in reg["forges"] if e["forge_id"] == "the-forge")
+    assert entry["kind"] == "diagnostic-provider"
+    jsonschema.validate(reg, _schema("ForgeContextRegistry.schema.json"))
+    out = fctx.route(root, domain="forge-ecosystem")
+    assert out["candidates"][0]["kind"] == "diagnostic-provider"
+    # a manifest without kind yields an entry without the key
+    fctx.register_forge(root, _manifest("other-forge"), owner="other-forge")
+    reg = fctx.load_registry(root)
+    entry = next(e for e in reg["forges"] if e["forge_id"] == "other-forge")
+    assert "kind" not in entry
 
 
 def test_command_and_path_validation():
