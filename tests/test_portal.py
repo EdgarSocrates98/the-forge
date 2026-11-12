@@ -832,9 +832,7 @@ def test_specialists_view_uses_declared_packaged_roster_path(target: Path) -> No
 def test_specialists_view_projects_agentic_workflows_without_claiming_native_caps(
     target: Path,
 ) -> None:
-    (target / "forge.json").write_text(
-        json.dumps({"forge_id": "workflow-forge"}), encoding="utf-8"
-    )
+    (target / "forge.json").write_text(json.dumps({"forge_id": "workflow-forge"}), encoding="utf-8")
     (target / "forge.agentic.json").write_text(
         json.dumps(
             {

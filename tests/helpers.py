@@ -22,14 +22,17 @@ def adapter_subprocess_env() -> dict[str, str]:
     repo = Path(__file__).resolve().parent.parent
     sources = [
         repo / "src",
-        *(repo / "adapters" / name / "src" for name in (
-            "sparkforge_aws",
-            "sparkforge_azure",
-            "apiforge",
-            "platformforge",
-            "doctordata",
-            "doctorapi",
-        )),
+        *(
+            repo / "adapters" / name / "src"
+            for name in (
+                "sparkforge_aws",
+                "sparkforge_azure",
+                "apiforge",
+                "platformforge",
+                "doctordata",
+                "doctorapi",
+            )
+        ),
     ]
     env = os.environ.copy()
     entries = [str(path) for path in sources]

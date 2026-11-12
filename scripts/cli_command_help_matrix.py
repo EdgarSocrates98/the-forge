@@ -139,8 +139,7 @@ def main() -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     summary = {
-        key: report[key]
-        for key in ("repository_count", "command_count", "failure_count", "status")
+        key: report[key] for key in ("repository_count", "command_count", "failure_count", "status")
     }
     print(json.dumps(summary, indent=2))
     if failures:

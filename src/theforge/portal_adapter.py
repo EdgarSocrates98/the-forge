@@ -1301,13 +1301,9 @@ class TheForgePortal(fp.PortalAdapter):
                 )
                 if manifest_source is not None:
                     declared_paths = tuple(
-                        Path(item)
-                        for item in entry.agentic_manifest.agent_roster_paths
-                        if item
+                        Path(item) for item in entry.agentic_manifest.agent_roster_paths if item
                     )
-                    roster_dirs = tuple(
-                        dict.fromkeys((*CANONICAL_ROSTER_DIRS, *declared_paths))
-                    )
+                    roster_dirs = tuple(dict.fromkeys((*CANONICAL_ROSTER_DIRS, *declared_paths)))
                     roster = inspect_roster(
                         entry.agentic_manifest,
                         manifest_source.parent,
@@ -1428,9 +1424,7 @@ class TheForgePortal(fp.PortalAdapter):
             "availability": {
                 "state": "available" if runs else "no_investigations",
                 "detail": (
-                    None
-                    if runs
-                    else "no persisted investigations under .forge/orchestrations/"
+                    None if runs else "no persisted investigations under .forge/orchestrations/"
                 ),
             },
             "notes": notes,

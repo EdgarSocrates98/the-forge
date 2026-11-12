@@ -21,8 +21,7 @@ try:
     from winpty import PtyProcess  # type: ignore[import-not-found]
 except ImportError as exc:  # pragma: no cover
     raise SystemExit(
-        "pywinpty is required; run `uv run --with pywinpty "
-        "python scripts/cli_tty_cancel_smoke.py`"
+        "pywinpty is required; run `uv run --with pywinpty python scripts/cli_tty_cancel_smoke.py`"
     ) from exc
 
 
