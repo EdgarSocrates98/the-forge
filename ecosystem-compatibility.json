@@ -1,154 +1,154 @@
 {
-  "schema": "forge/EcosystemCompatibility/v1",
-  "release": "2026.11",
-  "created_at": "2026-11-02",
-  "producer": {
-    "id": "the-forge",
-    "version": "0.7.5"
+ "schema": "forge/EcosystemCompatibility/v1",
+ "release": "2026.11",
+ "created_at": "2026-11-02",
+ "producer": {
+  "id": "the-forge",
+  "version": "0.7.6"
+ },
+ "components": [
+  {
+   "component": "the-forge",
+   "version": "0.7.6",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "theforge-core"
   },
-  "components": [
-    {
-      "component": "the-forge",
-      "version": "0.7.5",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "theforge-core"
-    },
-    {
-      "component": "api-forge",
-      "version": "0.3.3",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "apiforge-af"
-    },
-    {
-      "component": "platform-forge",
-      "version": "0.3.3",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "platformforge"
-    },
-    {
-      "component": "spark-forge-aws",
-      "version": "0.7.5",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "sparkforge-aws"
-    },
-    {
-      "component": "spark-forge-azure",
-      "version": "0.3.3",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "sparkforge-azure"
-    },
-    {
-      "component": "forge-doctor-data",
-      "version": "1.1.2",
-      "scheme": "pep440",
-      "source": "pyproject.toml",
-      "distribution": "forge-doctor-data"
-    },
-    {
-      "component": "forge-doctor-api",
-      "version": "0.3.2",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "forge-doctor-api"
-    },
-    {
-      "component": "forge-cli",
-      "version": "0.4.2",
-      "scheme": "semver",
-      "source": "package.json",
-      "distribution": "theforge-cli"
-    },
-    {
-      "component": "forge-portal",
-      "version": "1.1.1",
-      "scheme": "semver",
-      "source": "package.json",
-      "distribution": "forge-portal-app"
-    },
-    {
-      "component": "data-sentinel-forge",
-      "version": "0.5.3",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "data-sentinel-forge"
-    },
-    {
-      "component": "code-atlas-forge",
-      "version": "1.1.2",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "code-atlas-forge"
-    },
-    {
-      "component": "forge-lens",
-      "version": "0.2.2",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "forge-lens"
-    },
-    {
-      "component": "product-forge",
-      "version": "0.2.3",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "product-forge"
-    },
-    {
-      "component": "forge-agent-bridge",
-      "version": "0.2.2",
-      "scheme": "semver",
-      "source": "pyproject.toml",
-      "distribution": "forge-agent-bridge"
-    }
-  ],
-  "contracts": [
-    {
-      "family": "specialist_manifest",
-      "contract": "theforge/ForgeManifest",
-      "min_major": 1,
-      "max_major": 1
-    },
-    {
-      "family": "install_receipt",
-      "contract": "forge/InstallReceipt",
-      "min_major": 1,
-      "max_major": 1
-    },
-    {
-      "family": "workspace_install",
-      "contract": "forge/WorkspaceInstall",
-      "min_major": 1,
-      "max_major": 1
-    },
-    {
-      "family": "mcp",
-      "contract": "theforge/McpRegistryDocument",
-      "min_major": 1,
-      "max_major": 1
-    },
-    {
-      "family": "portal_api",
-      "contract": "forge/PortalApi",
-      "min_major": 1,
-      "max_major": 1
-    },
-    {
-      "family": "portal_assets",
-      "contract": "forge/PortalAssets",
-      "min_major": 1,
-      "max_major": 1
-    }
-  ],
-  "notes": [
-    "Baseline de integração 2.0: combinação de SHAs/versões observada em 2026-11-02; especialistas novos entram na matriz mesmo quando a superfície de adapter ainda está pendente.",
-    "portal_api usa o envelope `forge/PortalApi/1` servido por `<cli> portal` (the-forge `_forge_portal.py`); o pacote do app forge-portal declara 1.0.0 — eixo separado do contrato (ver versioning-policy.md).",
-    "portal_assets cobre o manifesto `forge/PortalAssets/1` (sha256 por arquivo) vendored em cada Forja via `forge-portal/scripts/vendor.py` — integridade de bundle verificável.",
-    "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) — scheme declarado por componente, SemVer onde apropriado.",
-    "Knowledge bootstrap é unverified e runtime_discovery; Code Atlas, Lens, Product Forge, Data Sentinel e Agent Bridge ainda não são promovidos a VERIFIED pelo The Forge sem adapters Forge Protocol e evidência de health real."
-  ]
+  {
+   "component": "api-forge",
+   "version": "0.3.5",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "apiforge-af"
+  },
+  {
+   "component": "platform-forge",
+   "version": "0.3.5",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "platformforge"
+  },
+  {
+   "component": "spark-forge-aws",
+   "version": "0.7.7",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "sparkforge-aws"
+  },
+  {
+   "component": "spark-forge-azure",
+   "version": "0.3.5",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "sparkforge-azure"
+  },
+  {
+   "component": "forge-doctor-data",
+   "version": "1.1.3",
+   "scheme": "pep440",
+   "source": "pyproject.toml",
+   "distribution": "forge-doctor-data"
+  },
+  {
+   "component": "forge-doctor-api",
+   "version": "0.3.3",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "forge-doctor-api"
+  },
+  {
+   "component": "forge-cli",
+   "version": "0.5.2",
+   "scheme": "semver",
+   "source": "package.json",
+   "distribution": "theforge-cli"
+  },
+  {
+   "component": "forge-portal",
+   "version": "1.1.2",
+   "scheme": "semver",
+   "source": "package.json",
+   "distribution": "forge-portal-app"
+  },
+  {
+   "component": "data-sentinel-forge",
+   "version": "0.5.4",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "data-sentinel-forge"
+  },
+  {
+   "component": "code-atlas-forge",
+   "version": "1.1.3",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "code-atlas-forge"
+  },
+  {
+   "component": "forge-lens",
+   "version": "0.2.3",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "forge-lens"
+  },
+  {
+   "component": "product-forge",
+   "version": "0.2.4",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "product-forge"
+  },
+  {
+   "component": "forge-agent-bridge",
+   "version": "0.2.3",
+   "scheme": "semver",
+   "source": "pyproject.toml",
+   "distribution": "forge-agent-bridge"
+  }
+ ],
+ "contracts": [
+  {
+   "family": "specialist_manifest",
+   "contract": "theforge/ForgeManifest",
+   "min_major": 1,
+   "max_major": 1
+  },
+  {
+   "family": "install_receipt",
+   "contract": "forge/InstallReceipt",
+   "min_major": 1,
+   "max_major": 1
+  },
+  {
+   "family": "workspace_install",
+   "contract": "forge/WorkspaceInstall",
+   "min_major": 1,
+   "max_major": 1
+  },
+  {
+   "family": "mcp",
+   "contract": "theforge/McpRegistryDocument",
+   "min_major": 1,
+   "max_major": 1
+  },
+  {
+   "family": "portal_api",
+   "contract": "forge/PortalApi",
+   "min_major": 1,
+   "max_major": 1
+  },
+  {
+   "family": "portal_assets",
+   "contract": "forge/PortalAssets",
+   "min_major": 1,
+   "max_major": 1
+  }
+ ],
+ "notes": [
+  "Baseline de integração 2.0: combinação de SHAs/versões observada em 2026-11-02; especialistas novos entram na matriz mesmo quando a superfície de adapter ainda está pendente.",
+  "portal_api usa o envelope `forge/PortalApi/1` servido por `<cli> portal` (the-forge `_forge_portal.py`); o pacote do app forge-portal declara 1.0.0 — eixo separado do contrato (ver versioning-policy.md).",
+  "portal_assets cobre o manifesto `forge/PortalAssets/1` (sha256 por arquivo) vendored em cada Forja via `forge-portal/scripts/vendor.py` — integridade de bundle verificável.",
+  "forge-doctor-data usa PEP 440 (1.0.0rc1, janela RC) — scheme declarado por componente, SemVer onde apropriado.",
+  "Knowledge bootstrap é unverified e runtime_discovery; Code Atlas, Lens, Product Forge, Data Sentinel e Agent Bridge ainda não são promovidos a VERIFIED pelo The Forge sem adapters Forge Protocol e evidência de health real."
+ ]
 }
