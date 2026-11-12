@@ -103,10 +103,17 @@ class ResourceRef:
         return f"{self.forge_id}:{self.entry.id}"
 
     @property
+    def effective_location(self) -> str | None:
+        """Layout-aware location: wheels resolve ``packaged_location``."""
+        if self.origin == "installed" and self.entry.packaged_location:
+            return self.entry.packaged_location
+        return self.entry.location
+
+    @property
     def path(self) -> Path | None:
-        if self.entry.location is None:
+        if self.effective_location is None:
             return None
-        return self.root / self.entry.location
+        return self.root / self.effective_location
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -177,12 +184,15 @@ def discover_roots(
     *,
     explicit: Iterable[tuple[str, Path]] = (),
     package_map: dict[str, str] | None = None,
+    scan_installed: bool = True,
 ) -> list[ForgeResourceRoot]:
     """Discover catalog roots — checkouts, installed dists, explicit dirs.
 
     ``package_map`` maps ``forge_id → distribution name`` for the
     ``installed`` source class; ``explicit`` pairs a ``forge_id`` with an
-    authorized directory (bundle, project, user dir).
+    authorized directory (bundle, project, user dir). ``scan_installed``
+    (default on) additionally scans every installed distribution for a
+    wheel-embedded ``forge.agentic.json`` — installed Forges need no map.
     """
     roots: list[ForgeResourceRoot] = []
     seen: set[tuple[str, str]] = set()
@@ -208,14 +218,29 @@ def discover_roots(
             if fid and (member / "forge.agentic.json").is_file():
                 _add(fid, member, "checkout")
 
-    for fid, dist_name in (package_map or {}).items():
+    def _add_installed(dist: importlib_metadata.Distribution) -> None:
+        mp = _installed_manifest(dist)
+        if mp is None:
+            return
+        # Wheel-embedded manifests sit in a meta-dir (``_data``, ``data``,
+        # ``forge``); the resource root is the package dir itself.
+        pkg_root = mp.parent.parent if mp.parent.name in {
+            "_data", "data", "forge",
+        } else mp.parent
+        fid = _manifest_forge_id(mp)
+        if fid:
+            _add(fid, pkg_root, "installed", manifest_path=mp)
+
+    for _fid, dist_name in (package_map or {}).items():
         try:
             dist = importlib_metadata.distribution(dist_name)
         except importlib_metadata.PackageNotFoundError:
             continue
-        mp = _installed_manifest(dist)
-        if mp is not None:
-            _add(fid, mp.parent, "installed", manifest_path=mp)
+        _add_installed(dist)
+
+    if scan_installed:
+        for dist in importlib_metadata.distributions():
+            _add_installed(dist)
 
     for fid, root in explicit:
         _add(fid, root, "explicit")
@@ -352,14 +377,14 @@ class ResourceResolver:
             raise ResourceFailure(
                 ResourceErrorKind.UNAVAILABLE, f"root does not resolve: {exc}"
             ) from exc
-        assert ref.entry.location is not None  # describe() guarantees
-        target = (root_real / ref.entry.location).resolve()
+        assert ref.effective_location is not None  # describe() guarantees
+        target = (root_real / ref.effective_location).resolve()
         try:
             target.relative_to(root_real)
         except ValueError as exc:
             raise ResourceFailure(
                 ResourceErrorKind.BLOCKED_BY_POLICY,
-                f"{ref.identity}: location escapes root {ref.entry.location!r}",
+                f"{ref.identity}: location escapes root {ref.effective_location!r}",
             ) from exc
         return target
 

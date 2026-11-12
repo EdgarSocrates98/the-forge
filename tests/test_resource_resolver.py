@@ -261,7 +261,9 @@ def test_get_symlink_escape_blocked(tmp_path: Path, tmp_path_factory) -> None:
 def test_discover_roots_explicit_and_checkout(tmp_path: Path) -> None:
     # explicit root
     exp = _root(tmp_path / "exp", fid="exp-forge")
-    roots = discover_roots(None, explicit=[("exp-forge", exp)])
+    roots = discover_roots(
+        None, explicit=[("exp-forge", exp)], scan_installed=False
+    )
     assert [r.forge_id for r in roots] == ["exp-forge"]
     assert roots[0].origin == "explicit"
     # workspace checkout via kit.discover_projects layout (needs .git)

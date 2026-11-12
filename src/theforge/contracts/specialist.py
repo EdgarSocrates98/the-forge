@@ -187,6 +187,10 @@ class ResourceEntry:
     id: str
     kind: str  # ResourceKind
     location: str | None = None
+    # ``location`` is checkout-relative; ``packaged_location`` is the same
+    # resource's path relative to the installed package root, when the wheel
+    # ships it. One manifest serves both layouts (Onda 05 packaging).
+    packaged_location: str | None = None
     resource_class: str | None = None  # ResourceClass hint; inferred from kind when absent
     description: str = ""
     domain: str | None = None
@@ -239,14 +243,15 @@ class ResourceEntry:
             raise ContractError(
                 f"resource {self.id!r}: unavailable/conditional needs unavailable_reason"
             )
-        if self.location is not None and (
-            self.location.startswith(("/", "\\"))
-            or ".." in self.location.split("/")
-            or ":" in self.location
-        ):
-            raise ContractError(
-                f"resource {self.id!r}: location must be a relative path inside the checkout"
-            )
+        for loc in (self.location, self.packaged_location):
+            if loc is not None and (
+                loc.startswith(("/", "\\"))
+                or ".." in loc.split("/")
+                or ":" in loc
+            ):
+                raise ContractError(
+                    f"resource {self.id!r}: location must be a relative path inside the checkout"
+                )
 
 
 @dataclass(frozen=True, kw_only=True)
