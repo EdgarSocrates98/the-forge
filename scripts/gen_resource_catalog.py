@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 KIND_DIRS: list[tuple[str, tuple[str, ...], str]] = [
     # (kind, candidate dirs in priority order, resource_class)
@@ -53,12 +54,12 @@ def _resolve_candidates(root: Path, kind: str) -> list[tuple[Path, str]]:
     return []
 
 
-def _scan_dir(root: Path, kind: str, rclass: str) -> list[dict]:
+def _scan_dir(root: Path, kind: str, rclass: str) -> list[dict[str, Any]]:
     """One entry per SKILL.md / file / collection unit in the first existing dir."""
     found = _resolve_candidates(root, kind)
     if not found:
         return []
-    entries: list[dict] = []
+    entries: list[dict[str, Any]] = []
     for base, _rel in found:
         if kind == "skill":
             items = sorted(
@@ -105,8 +106,8 @@ def _scan_dir(root: Path, kind: str, rclass: str) -> list[dict]:
     return entries
 
 
-def generate(root: Path) -> list[dict]:
-    out: list[dict] = []
+def generate(root: Path) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
     for kind, _dirs, rclass in KIND_DIRS:
         out.extend(_scan_dir(root, kind, rclass))
     # Stable identity must be unique (catalog §9.4): when a name exists as

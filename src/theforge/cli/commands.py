@@ -10,6 +10,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, cast
 
 if TYPE_CHECKING:
+    from theforge.context.resources import (
+        ResourceFailure,
+        ResourceRef,
+        ResourceResolver,
+    )
     from theforge.contracts.benchmark import BenchmarkResult
     from theforge.contracts.specialist import DelegationRequest
 
@@ -2200,13 +2205,13 @@ def cmd_verify(args: argparse.Namespace) -> int:
     return _EVAL_VERDICT_EXIT.get(doc["verdict"], 1)
 
 
-def _resource_resolver(args: argparse.Namespace):
+def _resource_resolver(args: argparse.Namespace) -> "ResourceResolver":
     from theforge.context.resources import build_resolver
 
     return build_resolver(_root(args))
 
 
-def _ref_doc(ref) -> dict[str, Any]:
+def _ref_doc(ref: "ResourceRef") -> dict[str, Any]:
     e = ref.entry
     return {
         "identity": ref.identity,
@@ -2226,7 +2231,7 @@ def _ref_doc(ref) -> dict[str, Any]:
     }
 
 
-def _resource_fail(args: argparse.Namespace, exc) -> int:
+def _resource_fail(args: argparse.Namespace, exc: "ResourceFailure") -> int:
     _emit(
         args,
         {"error": {"kind": exc.kind.value, "detail": exc.detail}},
