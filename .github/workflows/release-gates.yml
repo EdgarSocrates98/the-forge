@@ -132,6 +132,7 @@ jobs:
           python-version: ${{ env.PY_MAIN }}
       - run: |
           python -m pip install --index-url https://pypi.org/simple \
+            uv \
             -e .[dev] \
             -e ./adapters/sparkforge_aws -e ./adapters/sparkforge_azure \
             -e ./adapters/apiforge -e ./adapters/platformforge \
