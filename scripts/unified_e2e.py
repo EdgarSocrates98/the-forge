@@ -21,14 +21,15 @@ import tempfile
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path.cwd()
 OUT = ROOT / "audits" / "unified-platform"
-REPORT: dict = {"kind": "forge/unified-e2e/1", "scenarios": {}, "started": time.time()}
+REPORT: dict[str, Any] = {"kind": "forge/unified-e2e/1", "scenarios": {}, "started": time.time()}
 
 PY = ".venv/Scripts/python.exe"
 
-FORGES = {
+FORGES: dict[str, dict[str, Any]] = {
     "the-forge":         {"pkg": "theforge",          "call": "theforge.cli.main:main",
                           "mcp": ["mcp", "serve"],   "verify": "theforge_status"},
     "api-forge":         {"pkg": "apiforge",          "call": "apiforge.mcp.main:main",
@@ -85,12 +86,12 @@ def venv_py(repo: str) -> str | None:
 
 
 def run_entry(repo: str, args: list[str], *, call: str | None = None,
-              timeout: int = TIMEOUT, cwd: Path | None = None) -> dict:
+              timeout: int = TIMEOUT, cwd: Path | None = None) -> dict[str, Any]:
     py = venv_py(repo)
     if not py:
         return {"rc": None, "error": "venv python missing", "cmd": None}
     fn = call or FORGES[repo].get("cli") or FORGES[repo]["call"]
-    mod, _, attr = fn.partition(":")
+    mod, _, attr = str(fn).partition(":")
     code = (
         "import sys;sys.argv=['cli']+sys.argv[1:];"
         f"from {mod} import {attr} as _m;"
@@ -112,7 +113,7 @@ def run_entry(repo: str, args: list[str], *, call: str | None = None,
         return {"rc": None, "error": str(e), "cmd": args}
 
 
-def first_working(repo: str, verbs: list[list[str]]) -> dict:
+def first_working(repo: str, verbs: list[list[str]]) -> dict[str, Any]:
     """A verb 'works' when the CLI executes and emits a real report —
     a doctor-style non-zero rc reporting an unhealthy/absent state is a
     valid standalone execution, not a broken CLI. `rc` is recorded
@@ -127,7 +128,7 @@ def first_working(repo: str, verbs: list[list[str]]) -> dict:
     return {"rc": None, "error": "no working verb", "tried": [" ".join(v) for v in verbs]}
 
 
-def record(name: str, status: str, evidence: dict, steps: list[dict]) -> None:
+def record(name: str, status: str, evidence: dict[str, Any], steps: list[dict[str, Any]]) -> None:
     REPORT["scenarios"][name] = {
         "status": status, "env": {"os": sys.platform, "python": sys.version.split()[0]},
         "evidence": evidence, "steps": steps,
@@ -135,7 +136,7 @@ def record(name: str, status: str, evidence: dict, steps: list[dict]) -> None:
     print(f"[{status:9}] {name}", flush=True)
 
 
-def mcp_session(repo: str, extra_calls: list[dict] | None = None) -> dict:
+def mcp_session(repo: str, extra_calls: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Real stdio JSON-RPC: initialize -> initialized -> tools/list -> tools/call verify.
     `extra_calls` are sent after the verify call; the last one's response is
     recorded as extra_error/extra_head (used for negative-path checks)."""
@@ -147,11 +148,11 @@ def mcp_session(repo: str, extra_calls: list[dict] | None = None) -> dict:
         f"from {mod} import {attr} as _m;_m()"
     )
     proc = subprocess.Popen(
-        [py, "-c", code, *spec["mcp"]], cwd=str(ROOT / repo),
+        [str(py), "-c", code, *[str(a) for a in spec["mcp"]]], cwd=str(ROOT / repo),
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
         text=True, encoding="utf-8", errors="replace", bufsize=1,
         env=dict(os.environ, PYTHONIOENCODING="utf-8"))
-    responses: queue.Queue[dict] = queue.Queue()
+    responses: queue.Queue[dict[str, Any]] = queue.Queue()
 
     def reader() -> None:
         for line in proc.stdout:  # type: ignore[union-attr]
@@ -166,13 +167,13 @@ def mcp_session(repo: str, extra_calls: list[dict] | None = None) -> dict:
     t = threading.Thread(target=reader, daemon=True)
     t.start()
 
-    def send(obj: dict) -> None:
+    def send(obj: dict[str, Any]) -> None:
         proc.stdin.write(json.dumps(obj) + "\n")  # type: ignore[union-attr]
         proc.stdin.flush()  # type: ignore[union-attr]
 
-    def wait_for(rid: int, timeout: int = 60) -> dict:
+    def wait_for(rid: int, timeout: int = 60) -> dict[str, Any]:
         end = time.time() + timeout
-        stash: list[dict] = []
+        stash: list[dict[str, Any]] = []
         while time.time() < end:
             try:
                 msg = responses.get(timeout=max(0.1, end - time.time()))
@@ -288,8 +289,8 @@ def scenario_domains() -> None:
         record(name, "PASS" if not fails else "FAIL", {"failed": fails}, steps)
 
 
-def _adapter_call(repo: str, adapter_mod: str, op: str, payload: dict,
-                  timeout: int = 90) -> dict:
+def _adapter_call(repo: str, adapter_mod: str, op: str, payload: dict[str, Any],
+                  timeout: int = 90) -> dict[str, Any]:
     """Send one forge/v1 Request to a provider adapter over real stdio."""
     py = venv_py(repo)
     if not py:
@@ -303,7 +304,7 @@ def _adapter_call(repo: str, adapter_mod: str, op: str, payload: dict,
             encoding="utf-8", errors="replace",
             cwd=str(ROOT / repo), env=env)
         line = (r.stdout or "").strip().splitlines()[0]
-        return json.loads(line)
+        return dict(json.loads(line))
     except Exception as e:  # noqa: BLE001
         return {"error": str(e)[:200]}
 
@@ -413,7 +414,7 @@ def scenario_context() -> None:
     for repo in sorted(FORGES):
         m = ROOT / repo / "forge.agentic.json"
         if not m.exists():
-            m = next((ROOT / repo).glob("src/*/forge.agentic.json"), None)
+            m = next((ROOT / repo).glob("src/*/forge.agentic.json"), None)  # type: ignore[assignment]
         if m and m.exists():
             manifests.append((repo, len(m.read_bytes())))
     sizes = {n: sum(b for _, b in manifests[:n]) for n in (1, 3, 8, len(manifests))}
@@ -473,7 +474,7 @@ def scenario_portal() -> None:
         import importlib.util
         pf = ROOT / "the-forge" / "src" / "theforge" / "_forge_portal.py"
         spec = importlib.util.spec_from_file_location("fp", pf)
-        mod = importlib.util.module_from_spec(spec)
+        mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         if hasattr(mod, "workspace_resources"):
             res = mod.workspace_resources(str(ROOT))

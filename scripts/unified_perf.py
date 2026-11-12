@@ -18,6 +18,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path.cwd()
 OUT = ROOT / "audits" / "unified-platform"
@@ -52,7 +53,7 @@ def venv(repo: str) -> str | None:
     return str(p) if p.exists() else None
 
 
-def timed_cli(repo: str, call: str, args: list[str], n: int = 3) -> dict:
+def timed_cli(repo: str, call: str, args: list[str], n: int = 3) -> dict[str, Any]:
     py = venv(repo)
     if not py:
         return {"error": "venv missing"}
@@ -74,7 +75,7 @@ def timed_cli(repo: str, call: str, args: list[str], n: int = 3) -> dict:
             "min_ms": min(times), "rc": rc}
 
 
-def mcp_handshake_ms(repo: str, call: str, mcp_args: list[str]) -> dict:
+def mcp_handshake_ms(repo: str, call: str, mcp_args: list[str]) -> dict[str, Any]:
     py = venv(repo)
     if not py:
         return {"error": "venv missing"}
@@ -88,7 +89,7 @@ def mcp_handshake_ms(repo: str, call: str, mcp_args: list[str]) -> dict:
         stderr=subprocess.DEVNULL, text=True, encoding="utf-8",
         errors="replace", bufsize=1,
         env=dict(__import__("os").environ, PYTHONIOENCODING="utf-8"))
-    responses: queue.Queue[dict] = queue.Queue()
+    responses: queue.Queue[dict[str, Any]] = queue.Queue()
 
     def reader() -> None:
         for line in proc.stdout:  # type: ignore[union-attr]
@@ -140,7 +141,7 @@ def catalog_bytes(n: int) -> int:
     for repo in sorted(CLIS)[:n]:
         m = ROOT / repo / "forge.agentic.json"
         if not m.exists():
-            m = next((ROOT / repo).glob("src/*/forge.agentic.json"), None)
+            m = next((ROOT / repo).glob("src/*/forge.agentic.json"), None)  # type: ignore[assignment]
         if m and m.exists():
             total += len(m.read_bytes())
     return total
@@ -152,7 +153,7 @@ def main() -> int:
     if "--root" in argv:
         ROOT = Path(argv[argv.index("--root") + 1])
     OUT.mkdir(parents=True, exist_ok=True)
-    report: dict = {"kind": "forge/unified-perf/1",
+    report: dict[str, Any] = {"kind": "forge/unified-perf/1",
                     "environment": {"os": sys.platform},
                     "cli_startup": {}, "mcp_handshake": {},
                     "control_plane": {}, "catalog_bytes": {},

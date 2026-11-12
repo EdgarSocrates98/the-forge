@@ -95,14 +95,15 @@ def declared_version(repo: Path) -> str | None:
             m = re.search(r'__version__\s*=\s*"([^"]+)"',
                           init.read_text(encoding="utf-8", errors="replace"))
             if m:
-                return m.group(1)
+                return str(m.group(1))
     pkg = repo / "package.json"
     if pkg.exists():
-        return json.loads(pkg.read_text()).get("version")
+        v = json.loads(pkg.read_text()).get("version")
+        return str(v) if v is not None else None
     return None
 
 
-def manifest_resources(repo: Path) -> Counter:
+def manifest_resources(repo: Path) -> Counter[str]:
     for cand in (repo / "forge.agentic.json",
                  repo / "src" / "forge_agent_bridge" / "forge.agentic.json"):
         if cand.exists():
@@ -124,11 +125,11 @@ def main() -> int:
 
     baseline = {"kind": "forge/unified-baseline/1", "repos": {}}
     rows = []
-    dep_graph = {"nodes": [], "edges": []}
+    dep_graph: dict[str, list[dict[str, str]]] = {"nodes": [], "edges": []}
 
     for name in REPOS:
         repo = root / name
-        entry: dict = {"exists": repo.is_dir()}
+        entry: dict[str, object] = {"exists": repo.is_dir()}
         if repo.is_dir():
             head = git(repo, "rev-parse", "HEAD")
             tags = [t for t in git(repo, "tag", "--sort=-creatordate").splitlines() if t][:3]
@@ -142,11 +143,12 @@ def main() -> int:
                 has_manifest=(repo / "forge.agentic.json").exists()
                 or any(repo.glob("src/*/forge.agentic.json")),
             )
-        baseline["repos"][name] = entry
+        baseline["repos"][name] = entry  # type: ignore[index]
         group = next((g for g, ns in GROUPS.items() if name in ns), "?")
+        latest = entry.get("latest_tags")
+        tag_list = ", ".join(str(t) for t in latest) if isinstance(latest, list) else "—"
         rows.append(f"| {name} | {group} | {entry.get('head','—')} | "
-                    f"{entry.get('version') or '—'} | "
-                    f"{', '.join(entry.get('latest_tags', [])) or '—'} |")
+                    f"{entry.get('version') or '—'} | {tag_list} |")
         dep_graph["nodes"].append({"id": name, "group": group})
         for dep in DEP_EDGES.get(name, []):
             dep_graph["edges"].append({"from": name, "depends_on": dep})
