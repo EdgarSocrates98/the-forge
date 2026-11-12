@@ -1,0 +1,9 @@
+{
+  "cycle": "2.7-patch",
+  "repository": "the-forge",
+  "version": "0.7.6",
+  "tag": "v0.7.6",
+  "source_commit": "0e27e0d87b1e07cbc5eba6da5b507a7a9659eea2",
+  "version_source": "pyproject.toml",
+  "verified_at": "2026-11-12"
+}
