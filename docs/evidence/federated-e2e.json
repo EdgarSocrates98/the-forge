@@ -1,0 +1,741 @@
+{
+  "schema": "forge/FederatedE2E/v1",
+  "generated_at": "2026-11-12T19:44:49.739784+00:00",
+  "source_workspace": "E:\\projetos\\FORJAS",
+  "forge_checkouts": [
+    "api-forge",
+    "api-sentinel-forge",
+    "code-atlas-forge",
+    "data-sentinel-forge",
+    "forge-agent-bridge",
+    "forge-doctor-api",
+    "forge-doctor-data",
+    "forge-lens",
+    "platform-forge",
+    "product-forge",
+    "spark-forge-aws",
+    "spark-forge-azure",
+    "the-forge",
+    "the-forge-adapter-fix"
+  ],
+  "scenarios": {
+    "A-aws-standalone": {
+      "id": "A-aws-standalone",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\A-aws-standalone",
+        "forges": [
+          {
+            "forge": "spark-forge-aws",
+            "materialized": true,
+            "resources_declared": 280,
+            "files_copied": 193,
+            "files_missing": 87
+          }
+        ]
+      },
+      "roots": [
+        "spark-forge-aws"
+      ],
+      "resources": 280,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "B-aws-full": {
+      "id": "B-aws-full",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\B-aws-full",
+        "forges": [
+          {
+            "forge": "spark-forge-aws",
+            "materialized": true,
+            "resources_declared": 280,
+            "files_copied": 193,
+            "files_missing": 87
+          },
+          {
+            "forge": "data-sentinel-forge",
+            "materialized": true,
+            "resources_declared": 66,
+            "files_copied": 51,
+            "files_missing": 15
+          },
+          {
+            "forge": "the-forge",
+            "materialized": true,
+            "resources_declared": 41,
+            "files_copied": 36,
+            "files_missing": 5
+          },
+          {
+            "forge": "forge-doctor-data",
+            "materialized": true,
+            "resources_declared": 105,
+            "files_copied": 104,
+            "files_missing": 1
+          },
+          {
+            "forge": "code-atlas-forge",
+            "materialized": true,
+            "resources_declared": 20,
+            "files_copied": 8,
+            "files_missing": 12
+          }
+        ]
+      },
+      "roots": [
+        "code-atlas-forge",
+        "data-sentinel-forge",
+        "forge-doctor-data",
+        "spark-forge-aws",
+        "the-forge"
+      ],
+      "resources": 519,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "C-apis": {
+      "id": "C-apis",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\C-apis",
+        "forges": [
+          {
+            "forge": "api-forge",
+            "materialized": true,
+            "resources_declared": 557,
+            "files_copied": 519,
+            "files_missing": 38
+          },
+          {
+            "forge": "api-sentinel-forge",
+            "materialized": true,
+            "resources_declared": 1,
+            "files_copied": 0,
+            "files_missing": 1
+          },
+          {
+            "forge": "forge-doctor-api",
+            "materialized": true,
+            "resources_declared": 21,
+            "files_copied": 16,
+            "files_missing": 5
+          },
+          {
+            "forge": "code-atlas-forge",
+            "materialized": true,
+            "resources_declared": 20,
+            "files_copied": 8,
+            "files_missing": 12
+          }
+        ]
+      },
+      "roots": [
+        "api-forge",
+        "api-sentinel-forge",
+        "code-atlas-forge",
+        "forge-doctor-api"
+      ],
+      "resources": 604,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "D-azure": {
+      "id": "D-azure",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\D-azure",
+        "forges": [
+          {
+            "forge": "spark-forge-azure",
+            "materialized": true,
+            "resources_declared": 144,
+            "files_copied": 124,
+            "files_missing": 20
+          },
+          {
+            "forge": "forge-doctor-data",
+            "materialized": true,
+            "resources_declared": 105,
+            "files_copied": 104,
+            "files_missing": 1
+          },
+          {
+            "forge": "code-atlas-forge",
+            "materialized": true,
+            "resources_declared": 20,
+            "files_copied": 8,
+            "files_missing": 12
+          }
+        ]
+      },
+      "roots": [
+        "code-atlas-forge",
+        "forge-doctor-data",
+        "spark-forge-azure"
+      ],
+      "resources": 269,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "E-product": {
+      "id": "E-product",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\E-product",
+        "forges": [
+          {
+            "forge": "product-forge",
+            "materialized": true,
+            "resources_declared": 22,
+            "files_copied": 21,
+            "files_missing": 1
+          },
+          {
+            "forge": "the-forge",
+            "materialized": true,
+            "resources_declared": 41,
+            "files_copied": 36,
+            "files_missing": 5
+          },
+          {
+            "forge": "forge-agent-bridge",
+            "materialized": true,
+            "resources_declared": 3,
+            "files_copied": 3,
+            "files_missing": 0
+          }
+        ]
+      },
+      "roots": [
+        "forge-agent-bridge",
+        "product-forge",
+        "the-forge"
+      ],
+      "resources": 73,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "F-platform": {
+      "id": "F-platform",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\F-platform",
+        "forges": [
+          {
+            "forge": "platform-forge",
+            "materialized": true,
+            "resources_declared": 94,
+            "files_copied": 91,
+            "files_missing": 3
+          },
+          {
+            "forge": "code-atlas-forge",
+            "materialized": true,
+            "resources_declared": 20,
+            "files_copied": 8,
+            "files_missing": 12
+          },
+          {
+            "forge": "the-forge",
+            "materialized": true,
+            "resources_declared": 41,
+            "files_copied": 36,
+            "files_missing": 5
+          }
+        ]
+      },
+      "roots": [
+        "code-atlas-forge",
+        "platform-forge",
+        "the-forge"
+      ],
+      "resources": 162,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "G-all": {
+      "id": "G-all",
+      "workspace": {
+        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\G-all",
+        "forges": [
+          {
+            "forge": "api-forge",
+            "materialized": true,
+            "resources_declared": 557,
+            "files_copied": 519,
+            "files_missing": 38
+          },
+          {
+            "forge": "api-sentinel-forge",
+            "materialized": true,
+            "resources_declared": 1,
+            "files_copied": 0,
+            "files_missing": 1
+          },
+          {
+            "forge": "code-atlas-forge",
+            "materialized": true,
+            "resources_declared": 20,
+            "files_copied": 8,
+            "files_missing": 12
+          },
+          {
+            "forge": "data-sentinel-forge",
+            "materialized": true,
+            "resources_declared": 66,
+            "files_copied": 51,
+            "files_missing": 15
+          },
+          {
+            "forge": "forge-agent-bridge",
+            "materialized": true,
+            "resources_declared": 3,
+            "files_copied": 3,
+            "files_missing": 0
+          },
+          {
+            "forge": "forge-doctor-api",
+            "materialized": true,
+            "resources_declared": 21,
+            "files_copied": 16,
+            "files_missing": 5
+          },
+          {
+            "forge": "forge-doctor-data",
+            "materialized": true,
+            "resources_declared": 105,
+            "files_copied": 104,
+            "files_missing": 1
+          },
+          {
+            "forge": "forge-lens",
+            "materialized": true,
+            "resources_declared": 18,
+            "files_copied": 15,
+            "files_missing": 3
+          },
+          {
+            "forge": "platform-forge",
+            "materialized": true,
+            "resources_declared": 94,
+            "files_copied": 91,
+            "files_missing": 3
+          },
+          {
+            "forge": "product-forge",
+            "materialized": true,
+            "resources_declared": 22,
+            "files_copied": 21,
+            "files_missing": 1
+          },
+          {
+            "forge": "spark-forge-aws",
+            "materialized": true,
+            "resources_declared": 280,
+            "files_copied": 193,
+            "files_missing": 87
+          },
+          {
+            "forge": "spark-forge-azure",
+            "materialized": true,
+            "resources_declared": 144,
+            "files_copied": 124,
+            "files_missing": 20
+          },
+          {
+            "forge": "the-forge",
+            "materialized": true,
+            "resources_declared": 41,
+            "files_copied": 36,
+            "files_missing": 5
+          },
+          {
+            "forge": "the-forge-adapter-fix",
+            "materialized": true,
+            "resources_declared": 0,
+            "files_copied": 0,
+            "files_missing": 0
+          }
+        ]
+      },
+      "roots": [
+        "api-forge",
+        "api-sentinel-forge",
+        "code-atlas-forge",
+        "data-sentinel-forge",
+        "forge-agent-bridge",
+        "forge-doctor-api",
+        "forge-doctor-data",
+        "forge-lens",
+        "platform-forge",
+        "product-forge",
+        "spark-forge-aws",
+        "spark-forge-azure",
+        "the-forge",
+        "the-forge-adapter-fix"
+      ],
+      "resources": 1392,
+      "checks": [
+        {
+          "check": "discovered-forges",
+          "ok": true
+        },
+        {
+          "check": "no-extra-forges",
+          "ok": true
+        },
+        {
+          "check": "catalog-nonempty",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "H-no-git": {
+      "id": "H-no-git",
+      "evidence": "materialized workspaces carry no .git; discovery is manifest-based",
+      "checks": [
+        {
+          "check": "no-.git-anywhere",
+          "ok": true
+        },
+        {
+          "check": "discovery-works-without-git",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "I-offline": {
+      "id": "I-offline",
+      "evidence": "discovery/retrieval/plan read only local filesystem",
+      "checks": [
+        {
+          "check": "fs-only-resolution",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "J-partial-failure": {
+      "id": "J-partial-failure",
+      "checks": [
+        {
+          "check": "healthy-forges-still-discovered",
+          "ok": true
+        },
+        {
+          "check": "corrupt-forge-excluded-not-crashing",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "K-resource-discovery": {
+      "id": "K-resource-discovery",
+      "kind_counts": {
+        "skill": 178,
+        "agent": 163,
+        "knowledge": 709,
+        "rule": 70,
+        "contract": 69,
+        "eval": 31,
+        "example": 9,
+        "fixture": 163,
+        "protocol": 0,
+        "command": 0,
+        "config": 0
+      },
+      "checks": [
+        {
+          "check": ">=6 kinds discoverable (found 8)",
+          "ok": true
+        },
+        {
+          "check": "skills present",
+          "ok": true
+        },
+        {
+          "check": "agents present",
+          "ok": true
+        },
+        {
+          "check": "knowledge present",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "L-portal-cli": {
+      "id": "L-portal-cli",
+      "portal_total": 1392,
+      "cli_total": 1392,
+      "checks": [
+        {
+          "check": "same-per-forge-counts",
+          "ok": true
+        },
+        {
+          "check": "same-total",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "M-upgrade": {
+      "id": "M-upgrade",
+      "checks": [
+        {
+          "check": "user-state-preserved",
+          "ok": true
+        },
+        {
+          "check": "stable-resource-ids-across-upgrade",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "N-uninstall": {
+      "id": "N-uninstall",
+      "checks": [
+        {
+          "check": "removed-forge-gone",
+          "ok": true
+        },
+        {
+          "check": "siblings-untouched",
+          "ok": true
+        },
+        {
+          "check": "remaining-catalogs-intact",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    },
+    "O-context-economy": {
+      "id": "O-context-economy",
+      "matrix": [
+        {
+          "forges": 1,
+          "l1_scanned": 1,
+          "l3_refs": 6,
+          "l3_est_bytes": 7524
+        },
+        {
+          "forges": 3,
+          "l1_scanned": 3,
+          "l3_refs": 7,
+          "l3_est_bytes": 7985
+        },
+        {
+          "forges": 8,
+          "l1_scanned": 8,
+          "l3_refs": 3,
+          "l3_est_bytes": 7948
+        },
+        {
+          "forges": 12,
+          "l1_scanned": 12,
+          "l3_refs": 8,
+          "l3_est_bytes": 7985
+        }
+      ],
+      "checks": [
+        {
+          "check": "l3-bounded-regardless-of-forge-count",
+          "ok": true
+        },
+        {
+          "check": "max-refs-cap",
+          "ok": true
+        }
+      ],
+      "verdict": "pass"
+    }
+  },
+  "evals": {
+    "routing": [
+      {
+        "task": "glue emr spark job oom shuffle skew",
+        "workspace": "B-aws-full",
+        "primary": "spark-forge-aws",
+        "aux": [
+          "data-sentinel-forge",
+          "forge-doctor-data"
+        ],
+        "accepted": [
+          "spark-forge-aws"
+        ],
+        "ok": true
+      },
+      {
+        "task": "openapi contract breaking change rest api",
+        "workspace": "C-apis",
+        "primary": "api-forge",
+        "aux": [
+          "forge-doctor-api",
+          "api-sentinel-forge"
+        ],
+        "accepted": [
+          "api-forge",
+          "forge-doctor-api"
+        ],
+        "ok": true
+      },
+      {
+        "task": "index codebase symbols call graph",
+        "workspace": "C-apis",
+        "primary": "api-forge",
+        "aux": [
+          "forge-doctor-api"
+        ],
+        "accepted": [
+          "api-forge",
+          "code-atlas-forge",
+          "forge-doctor-api"
+        ],
+        "ok": true
+      },
+      {
+        "task": "data quality quarantine validation rules",
+        "workspace": "B-aws-full",
+        "primary": "forge-doctor-data",
+        "aux": [
+          "spark-forge-aws",
+          "data-sentinel-forge"
+        ],
+        "accepted": [
+          "data-sentinel-forge",
+          "forge-doctor-data",
+          "spark-forge-aws"
+        ],
+        "ok": true
+      },
+      {
+        "task": "databricks synapse adls fabric spark job",
+        "workspace": "D-azure",
+        "primary": "spark-forge-azure",
+        "aux": [
+          "forge-doctor-data",
+          "code-atlas-forge"
+        ],
+        "accepted": [
+          "spark-forge-azure"
+        ],
+        "ok": true
+      },
+      {
+        "task": "zzzqxkvbnm wqkfj",
+        "workspace": "G-all",
+        "primary": null,
+        "ok": true,
+        "note": "no fabricated route on zero-match terms"
+      }
+    ],
+    "resources": [
+      {
+        "case": "right-resource",
+        "identity": "api-forge:api-forge-architecture",
+        "ok": true,
+        "sha256": "006e6eef2e67"
+      },
+      {
+        "case": "nonexistent",
+        "ok": true,
+        "kind": "resource_not_installed"
+      },
+      {
+        "case": "manifest-poisoning-traversal",
+        "ok": true,
+        "note": "contract validation refuses traversal locations"
+      }
+    ]
+  },
+  "summary": {
+    "scenarios": {
+      "pass": 15,
+      "fail": 0,
+      "unverified": 0
+    },
+    "evals": {
+      "ok": 9,
+      "total": 9
+    }
+  }
+}
