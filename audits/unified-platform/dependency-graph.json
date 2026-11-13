@@ -1,0 +1,190 @@
+{
+  "nodes": [
+    {
+      "id": "the-forge",
+      "group": "control-plane"
+    },
+    {
+      "id": "forge-cli",
+      "group": "control-plane"
+    },
+    {
+      "id": "forge-portal",
+      "group": "control-plane"
+    },
+    {
+      "id": "forge-agent-bridge",
+      "group": "control-plane"
+    },
+    {
+      "id": "spark-forge-aws",
+      "group": "specialist"
+    },
+    {
+      "id": "spark-forge-azure",
+      "group": "specialist"
+    },
+    {
+      "id": "api-forge",
+      "group": "specialist"
+    },
+    {
+      "id": "platform-forge",
+      "group": "specialist"
+    },
+    {
+      "id": "product-forge",
+      "group": "specialist"
+    },
+    {
+      "id": "code-atlas-forge",
+      "group": "intelligence"
+    },
+    {
+      "id": "forge-lens",
+      "group": "intelligence"
+    },
+    {
+      "id": "data-sentinel-forge",
+      "group": "intelligence"
+    },
+    {
+      "id": "api-sentinel-forge",
+      "group": "intelligence"
+    },
+    {
+      "id": "forge-doctor-api",
+      "group": "intelligence"
+    },
+    {
+      "id": "forge-doctor-data",
+      "group": "intelligence"
+    }
+  ],
+  "edges": [
+    {
+      "from": "the-forge",
+      "depends_on": "forge.agentic.json contracts of all specialists"
+    },
+    {
+      "from": "forge-cli",
+      "depends_on": "installkit (canonical: the-forge)"
+    },
+    {
+      "from": "forge-cli",
+      "depends_on": "registry manifests"
+    },
+    {
+      "from": "forge-portal",
+      "depends_on": "_forge_portal.py vendored from specialists"
+    },
+    {
+      "from": "forge-portal",
+      "depends_on": "portal_adapter endpoints"
+    },
+    {
+      "from": "forge-agent-bridge",
+      "depends_on": "canonical: vendored by product-forge + data-sentinel-forge"
+    },
+    {
+      "from": "spark-forge-aws",
+      "depends_on": "_installkit.py"
+    },
+    {
+      "from": "spark-forge-aws",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "spark-forge-aws",
+      "depends_on": "_forge_obsidian/"
+    },
+    {
+      "from": "spark-forge-azure",
+      "depends_on": "_installkit.py"
+    },
+    {
+      "from": "spark-forge-azure",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "spark-forge-azure",
+      "depends_on": "_forge_obsidian/"
+    },
+    {
+      "from": "api-forge",
+      "depends_on": "_installkit.py"
+    },
+    {
+      "from": "api-forge",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "api-forge",
+      "depends_on": "_forge_obsidian/"
+    },
+    {
+      "from": "platform-forge",
+      "depends_on": "_installkit.py"
+    },
+    {
+      "from": "platform-forge",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "platform-forge",
+      "depends_on": "_forge_obsidian/"
+    },
+    {
+      "from": "product-forge",
+      "depends_on": "forge-agent-bridge (vendored)"
+    },
+    {
+      "from": "product-forge",
+      "depends_on": "_forge_portal.py"
+    },
+    {
+      "from": "code-atlas-forge",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "forge-lens",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "forge-lens",
+      "depends_on": "forge_lens_sdk_ts"
+    },
+    {
+      "from": "data-sentinel-forge",
+      "depends_on": "forge-agent-bridge (vendored)"
+    },
+    {
+      "from": "data-sentinel-forge",
+      "depends_on": "_forge_portal.py"
+    },
+    {
+      "from": "api-sentinel-forge",
+      "depends_on": "textual CLI"
+    },
+    {
+      "from": "api-sentinel-forge",
+      "depends_on": "_forge_portal.py"
+    },
+    {
+      "from": "forge-doctor-api",
+      "depends_on": "_installkit.py"
+    },
+    {
+      "from": "forge-doctor-api",
+      "depends_on": "ui/kit.py"
+    },
+    {
+      "from": "forge-doctor-data",
+      "depends_on": "_installkit.py"
+    },
+    {
+      "from": "forge-doctor-data",
+      "depends_on": "ui/kit.py"
+    }
+  ]
+}

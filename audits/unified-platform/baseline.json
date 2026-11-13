@@ -1,0 +1,50 @@
+{
+  "kind": "forge/unified-baseline/1",
+  "repos": {
+    "api-forge": {
+      "exists": false
+    },
+    "api-sentinel-forge": {
+      "exists": false
+    },
+    "code-atlas-forge": {
+      "exists": false
+    },
+    "data-sentinel-forge": {
+      "exists": false
+    },
+    "forge-agent-bridge": {
+      "exists": false
+    },
+    "forge-cli": {
+      "exists": false
+    },
+    "forge-doctor-api": {
+      "exists": false
+    },
+    "forge-doctor-data": {
+      "exists": false
+    },
+    "forge-lens": {
+      "exists": false
+    },
+    "forge-portal": {
+      "exists": false
+    },
+    "platform-forge": {
+      "exists": false
+    },
+    "product-forge": {
+      "exists": false
+    },
+    "spark-forge-aws": {
+      "exists": false
+    },
+    "spark-forge-azure": {
+      "exists": false
+    },
+    "the-forge": {
+      "exists": false
+    }
+  }
+}

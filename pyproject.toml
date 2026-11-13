@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "theforge-core"
-version = "0.7.6"
+version = "0.7.7"
 description = "Local-first control plane that discovers, routes and governs specialist Forges."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -135,6 +135,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 # across all Forges with a Python 3.10 floor; style diffs are intentional.
 "scripts/installkit/*.py" = ["ALL"]
 "scripts/forge_bootstrap.py" = ["ALL"]
+"scripts/unified_*.py" = ["E501"]
 "src/theforge/_installkit.py" = ["ALL"]
 # Vendored Forge Portal server — byte-identical canonical source shared
 # across all Forges (same class as _installkit).

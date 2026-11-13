@@ -1,0 +1,13 @@
+{
+  "kind": "forge/version-dump/1",
+  "release": "unified-platform",
+  "version": "0.7.7",
+  "previous": "0.7.6",
+  "date": "2026-11-13",
+  "scope": "Ondas 0-19: unified audit artifacts + certification + operational E2E + perf baseline",
+  "evidence": [
+    "audits/unified-platform/",
+    "operational-e2e 12/12 PASS",
+    "final-audit 58/58"
+  ]
+}
