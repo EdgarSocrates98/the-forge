@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
+import time
 from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any
@@ -46,6 +48,16 @@ _PROFILE_MAP = {"economy": "minimal", "balanced": "recommended", "full": "full"}
 # abandoned subprocesses; the merged response still names every timeout in
 # ``federation_notes``.
 _GRAPH_PROVIDER_TIMEOUT_S = 1
+# The install doctor probes artifacts + MCP handshakes (tens of seconds on a
+# cold workspace). health() must not block first paint on it: the probe runs
+# off the request thread and the report stays honest — "probe in progress"
+# until the first pass lands, then cached for a bounded freshness window.
+_DOCTOR_CACHE_TTL_S = 30.0
+# The federated graph view walks the workspace and probes every sibling
+# checkout — tens of seconds on a large monorepo, far past the op timeout.
+# Same contract as the doctor probe: computed off the request thread,
+# "computing" until the first pass lands, then served from a bounded cache.
+_GRAPH_CACHE_TTL_S = 60.0
 
 
 def _version() -> str:
@@ -93,6 +105,16 @@ class TheForgePortal(fp.PortalAdapter):
         self.assets_dir = _ASSETS_DIR
         self._tasks: list[dict[str, Any]] = []
         self._task_seq = 0
+        self._doctor_lock = threading.Lock()
+        self._doctor_cache: dict[str, Any] | None = None
+        self._doctor_error: str | None = None
+        self._doctor_at = 0.0
+        self._doctor_thread: threading.Thread | None = None
+        self._graph_lock = threading.Lock()
+        self._graph_cache: dict[str, Any] | None = None
+        self._graph_error: str | None = None
+        self._graph_at = 0.0
+        self._graph_thread: threading.Thread | None = None
         # forge/PortalEvent/1 opt-in: the server emits op-boundary and
         # transport events into this bounded recorder; /events + /metrics
         # below are read-only projections of what really ran.
@@ -113,7 +135,7 @@ class TheForgePortal(fp.PortalAdapter):
             fp.Operation("GET", "/skills", lambda ctx: self._skills()),
             fp.Operation("GET", "/agents", lambda ctx: self._agents()),
             fp.Operation("GET", "/tasks", lambda ctx: list(self._tasks)),
-            fp.Operation("GET", "/graphs", lambda ctx: self._graphs()),
+            fp.Operation("GET", "/graphs", lambda ctx: self._graphs_op(), cache_ttl=15),
             fp.Operation("GET", "/specialists", lambda ctx: self._specialists_view()),
             fp.Operation("GET", "/delegations", lambda ctx: self._delegations()),
             fp.Operation("GET", "/delegations/graph", lambda ctx: self._delegations_graph()),
@@ -258,14 +280,33 @@ class TheForgePortal(fp.PortalAdapter):
             },
         ]
 
+    def _doctor_snapshot(self) -> tuple[dict[str, Any] | None, str | None, bool]:
+        """(report, error, pending) — the doctor probe runs on a daemon
+        thread so /bootstrap and /health stay interactive. A cold cache
+        reports *pending*: never a fabricated healthy state."""
+        with self._doctor_lock:
+            if self._doctor_at and time.monotonic() - self._doctor_at < _DOCTOR_CACHE_TTL_S:
+                return self._doctor_cache, self._doctor_error, False
+            th = self._doctor_thread
+            if th is None or not th.is_alive():
+                self._doctor_thread = threading.Thread(target=self._doctor_refresh, daemon=True)
+                self._doctor_thread.start()
+            pending = self._doctor_cache is None and self._doctor_error is None
+            return self._doctor_cache, self._doctor_error, pending
+
+    def _doctor_refresh(self) -> None:
+        try:
+            doc = service.doctor(scope="project", root=self._root)
+            err = None
+        except Exception as e:  # noqa: BLE001 — a failed probe is unverified evidence
+            doc, err = None, f"{type(e).__name__}: {e}"
+        with self._doctor_lock:
+            self._doctor_cache, self._doctor_error = doc, err
+            self._doctor_at = time.monotonic()
+
     def health(self) -> dict[str, Any]:
         status = self._status_doc()
-        doctor = None
-        doctor_error: str | None = None
-        try:
-            doctor = service.doctor(scope="project", root=self._root)
-        except Exception as e:  # noqa: BLE001 — doctor failure degrades, never crashes bootstrap
-            doctor_error = f"{type(e).__name__}: {e}"
+        doctor, doctor_error, doctor_pending = self._doctor_snapshot()
         checks = [
             {
                 "id": c.get("id", "check"),
@@ -276,6 +317,14 @@ class TheForgePortal(fp.PortalAdapter):
         ]
         if doctor_error:
             checks.append({"id": "doctor", "state": "UNVERIFIED", "detail": doctor_error})
+        elif doctor_pending:
+            checks.append(
+                {
+                    "id": "doctor",
+                    "state": "UNVERIFIED",
+                    "detail": "doctor probe in progress — refresh for the completed report",
+                }
+            )
         return {
             "state": _health_state(status, doctor),
             "checks": checks,
@@ -1027,10 +1076,10 @@ class TheForgePortal(fp.PortalAdapter):
             for line in head.splitlines():
                 line = line.strip()
                 if line and not line.startswith(("#", "---", "name:", "description:")):
-                    desc = line[:200]
+                    desc = line.strip("\"'")[:200]
                     break
                 if line.startswith("description:"):
-                    desc = line.split(":", 1)[1].strip()[:200]
+                    desc = line.split(":", 1)[1].strip().strip("\"'")[:200]
                     break
             out.append(
                 {
@@ -1224,6 +1273,7 @@ class TheForgePortal(fp.PortalAdapter):
         return doc
 
     def _graphs(self) -> dict[str, Any]:
+        """Synchronous federated view — computes inline (tests, parity checks)."""
         view = self._graph_view()
         if view is None:
             return {
@@ -1238,6 +1288,60 @@ class TheForgePortal(fp.PortalAdapter):
         return {
             "availability": {"state": "available"},
             "views": [view],
+            "studio_url": None,
+        }
+
+    def _graph_snapshot(self) -> tuple[dict[str, Any] | None, str | None, bool]:
+        """(view, error, pending) — mirrors _doctor_snapshot: the federated
+        sweep runs on a daemon thread so /graphs never blocks the op pool.
+        A cold cache reports *pending*, never a fabricated view."""
+        with self._graph_lock:
+            if self._graph_at and time.monotonic() - self._graph_at < _GRAPH_CACHE_TTL_S:
+                return self._graph_cache, self._graph_error, False
+            th = self._graph_thread
+            if th is None or not th.is_alive():
+                self._graph_thread = threading.Thread(target=self._graph_refresh, daemon=True)
+                self._graph_thread.start()
+            pending = self._graph_cache is None and self._graph_error is None
+            return self._graph_cache, self._graph_error, pending
+
+    def _graph_refresh(self) -> None:
+        try:
+            doc = self._graph_view()
+            err = None if doc is not None else "no specialist checkout produced a view"
+        except Exception as e:  # noqa: BLE001 — a failed sweep is unverified evidence
+            doc, err = None, f"{type(e).__name__}: {e}"
+        with self._graph_lock:
+            self._graph_cache, self._graph_error = doc, err
+            self._graph_at = time.monotonic()
+
+    def _graphs_op(self) -> dict[str, Any]:
+        """Non-blocking /graphs handler — cold cache reports ``computing``
+        while the daemon sweep runs; subsequent calls serve the cached view."""
+        view, error, pending = self._graph_snapshot()
+        if view is not None:
+            return {
+                "availability": {"state": "available"},
+                "views": [view],
+                "studio_url": None,
+            }
+        if pending:
+            return {
+                "availability": {
+                    "state": "computing",
+                    "detail": "federated graph view is being computed — refresh shortly",
+                    "unlock": "the first sweep walks the workspace and probes every provider",
+                },
+                "views": [],
+                "studio_url": None,
+            }
+        return {
+            "availability": {
+                "state": "no_graph",
+                "detail": error or "no graph evidence — no specialist checkout produced a view",
+                "unlock": "run `theforge graph` in a workspace with registered providers",
+            },
+            "views": [],
             "studio_url": None,
         }
 

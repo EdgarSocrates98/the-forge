@@ -13,7 +13,12 @@ import json
 import re
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from theforge.specialists import SpecialistView
 
 from theforge.contracts.graphview import (
     ForgeGraphView,
@@ -193,6 +198,10 @@ def federated_views(
 ) -> tuple[list[ForgeGraphView], list[str]]:
     """Collect views from every catalog specialist checkout + the-forge.
 
+    Producers run in parallel: each ``_view_from_cli`` is a subprocess probe
+    bounded by ``timeout``, so serial collection stacked per-provider waits
+    past the Portal's own op timeout. View order keeps the collect order.
+
     Returns ``(views, notes)`` — notes honestly name providers that could
     not produce a view (missing checkout, no graph verb, stale engine).
     """
@@ -201,20 +210,31 @@ def federated_views(
     views: list[ForgeGraphView] = []
     notes: list[str] = []
     views.append(capability_view(root=workspace_root))
+
+    targets = []
     for v in specialists.collect(workspace_root=workspace_root, probe_cli=False):
         # The Forge is already represented by ``capability_view`` above.
         # Invoking its own graph CLI here would recursively start another
         # federated collection, making the Portal graph endpoint unbounded.
         if v.lifecycle.provider == "the-forge":
             continue
+        targets.append(v)
+
+    def probe(v: SpecialistView) -> tuple[str, ForgeGraphView | None, str]:
+        pid = v.lifecycle.provider
         if not v.checkout:
-            notes.append(f"{v.lifecycle.provider}: no checkout — skipped")
-            continue
-        view, reason = _view_from_cli(Path(v.checkout), v.lifecycle.provider, timeout=timeout)
-        if view is None:
-            notes.append(f"{v.lifecycle.provider}: {reason}")
-            continue
-        views.append(view)
+            return pid, None, "no checkout — skipped"
+        view, reason = _view_from_cli(Path(v.checkout), pid, timeout=timeout)
+        return pid, view, reason
+
+    # ``_view_from_cli`` can run two subprocess attempts (with/without
+    # --json), so its worst case is ~2*timeout — the join bound stays above.
+    with ThreadPoolExecutor(max_workers=min(8, len(targets) or 1)) as pool:
+        for pid, view, reason in pool.map(probe, targets):
+            if view is None:
+                notes.append(f"{pid}: {reason}")
+                continue
+            views.append(view)
     return views, notes
 
 
