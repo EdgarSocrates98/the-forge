@@ -1,4 +1,4 @@
-# Context Engineering Evals — 2026-11-13T12:04:45+00:00
+# Context Engineering Evals — 2026-11-13T17:10:10+00:00
 
 Catalog bytes + progressive-context measurements (perf-baseline.json):
 

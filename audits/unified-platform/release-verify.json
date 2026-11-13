@@ -1,0 +1,42 @@
+{
+  "checks": [
+    {
+      "artifact": {
+        "file": "api_sentinel_forge-0.1.2-py3-none-any.whl",
+        "sha256_expected": "35325ca0a01f1a2724ee20c92d06ab3fc978a72e16e585355c294735fbe04064",
+        "sha256_match": true,
+        "sha256_observed": "35325ca0a01f1a2724ee20c92d06ab3fc978a72e16e585355c294735fbe04064",
+        "url": "https://files.pythonhosted.org/packages/47/76/5f5ed36cac085fc8e3c59182ca22545fc06a98bf20c009eb679f49cbf0d8/api_sentinel_forge-0.1.2-py3-none-any.whl"
+      },
+      "entrypoint": {
+        "cmd": [
+          "api-sentinel",
+          "version"
+        ],
+        "out": "version=0.1.2\n",
+        "rc": 0
+      },
+      "install_rc": 0,
+      "package": "api-sentinel-forge==0.1.2",
+      "source": "pypi",
+      "status": "VERIFIED"
+    },
+    {
+      "entrypoint": {
+        "cmd": [
+          "forge-cli",
+          "--version"
+        ],
+        "out": "forge-cli 0.5.3\n",
+        "rc": 0
+      },
+      "install_rc": 0,
+      "package": "theforge-cli",
+      "source": "npm",
+      "status": "VERIFIED",
+      "version": "0.5.3"
+    }
+  ],
+  "generated_at": "2026-11-13T17:10:08+00:00",
+  "kind": "forge/release-verify/1"
+}

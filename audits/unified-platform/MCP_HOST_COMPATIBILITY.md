@@ -1,4 +1,4 @@
-# MCP Host Compatibility — 2026-11-13T12:04:45+00:00
+# MCP Host Compatibility — 2026-11-13T17:10:10+00:00
 
 Stdio JSON-RPC handshake measured live (perf-baseline.json `mcp_handshake`):
 
@@ -28,4 +28,4 @@ Stdio JSON-RPC handshake measured live (perf-baseline.json `mcp_handshake`):
 ```
 
 initialize/initialized/tools-list/tools-call verified against real server
-subprocesses in operational E2E (scenario E-mcp-*).
+subprocesses in operational E2E (mcp-* scenarios).

@@ -1,8 +1,8 @@
 # Final Platform Certification — FORGE unified platform
 
-- Generated: 2026-11-13T12:04:45+00:00 (probe=True)
+- Generated: 2026-11-13T17:10:10+00:00 (probe=True)
 - Verdict: **PRODUCTION READY**
-- Operational E2E: **12/12 PASS**
+- Operational E2E: **21/21 PASS**
 
 ## Dimension states
 
@@ -21,21 +21,21 @@
 
 | repo | version | HEAD | release | index | open PRs |
 |---|---|---|---|---|---|
-| the-forge | 0.7.7 | `3151baf0` | v0.7.7 | {'pypi': 'PUBLISHED'} | 0 |
+| the-forge | 0.7.7 | `f7638161` | certification/final-425dac6 | {'pypi': 'PUBLISHED'} | 0 |
 | forge-cli | 0.5.3 | `0a154fe5` | v0.5.3 | {'npm': 'PUBLISHED'} | 0 |
 | forge-portal | 1.1.3 | `83854c16` | v1.1.3 | {} | 0 |
 | forge-agent-bridge | 0.2.4 | `aef05314` | v0.2.4 | {'pypi': 'PUBLISHED'} | 0 |
-| spark-forge-aws | 0.7.8 | `4811ed26` | v0.7.8 | {'pypi': 'PUBLISHED'} | 0 |
-| spark-forge-azure | 0.3.6 | `2a39929b` | v0.3.6 | {'pypi': 'PUBLISHED'} | 0 |
-| api-forge | 0.3.6 | `8baee537` | v0.3.6 | {'pypi': 'PUBLISHED'} | 0 |
-| platform-forge | 0.3.6 | `64656527` | v0.3.6 | {'pypi': 'PUBLISHED'} | 0 |
-| product-forge | 0.2.5 | `4bed3c02` | v0.2.5 | {'pypi': 'PUBLISHED'} | 0 |
+| spark-forge-aws | 0.7.8 | `6a3dfc19` | v0.7.8 | {'pypi': 'PUBLISHED'} | 0 |
+| spark-forge-azure | 0.3.6 | `98b395fa` | v0.3.6 | {'pypi': 'PUBLISHED'} | 0 |
+| api-forge | 0.3.6 | `ee957154` | v0.3.6 | {'pypi': 'PUBLISHED'} | 0 |
+| platform-forge | 0.3.6 | `41707492` | v0.3.6 | {'pypi': 'PUBLISHED'} | 0 |
+| product-forge | 0.2.5 | `0dedc2e9` | v0.2.5 | {'pypi': 'PUBLISHED'} | 0 |
 | code-atlas-forge | 1.1.4 | `34d9f919` | v1.1.4 | {'pypi': 'PUBLISHED'} | 0 |
-| forge-lens | 0.2.4 | `be7b6101` | v0.2.4 | {'pypi': 'PUBLISHED'} | 12 |
-| data-sentinel-forge | 0.5.5 | `13e1841b` | v0.5.5 | {'pypi': 'PUBLISHED'} | 0 |
+| forge-lens | 0.2.4 | `066a6532` | v0.2.4 | {'pypi': 'PUBLISHED'} | 12 |
+| data-sentinel-forge | 0.5.5 | `4f7170f3` | v0.5.5 | {'pypi': 'PUBLISHED'} | 0 |
 | api-sentinel-forge | 0.1.2 | `88d0a230` | v0.1.2 | {'pypi': 'PUBLISHED'} | 0 |
-| forge-doctor-api | 0.3.4 | `c0601fbb` | v0.3.4 | {'pypi': 'PUBLISHED'} | 0 |
-| forge-doctor-data | 1.1.4 | `118158e2` | v1.1.4 | {'pypi': 'PUBLISHED'} | 0 |
+| forge-doctor-api | 0.3.4 | `23075f99` | v0.3.4 | {'pypi': 'PUBLISHED'} | 0 |
+| forge-doctor-data | 1.1.4 | `a1725c68` | v1.1.4 | {'pypi': 'PUBLISHED'} | 0 |
 
 ## Blocked evidence
 
