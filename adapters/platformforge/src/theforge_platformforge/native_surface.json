@@ -22,7 +22,7 @@
   ],
   "manifest_schema": "platformforge/capability-manifest/v4",
   "provenance": "recorded",
-  "recorded_at": "2026-10-12T00:00:00Z",
+  "recorded_at": "2026-11-13T03:57:37Z",
   "seams": [
     {
       "callable": "analyze_hcl",
@@ -107,7 +107,7 @@
       "present": true
     }
   ],
-  "specialist_version": "0.1.0",
+  "specialist_version": "0.3.6",
   "tools": [
     "platformforge_agents",
     "platformforge_ai",
