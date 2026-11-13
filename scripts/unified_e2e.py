@@ -11,6 +11,7 @@ nothing is declared PASS without a real executed result.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import queue
@@ -128,10 +129,84 @@ def first_working(repo: str, verbs: list[list[str]]) -> dict[str, Any]:
     return {"rc": None, "error": "no working verb", "tried": [" ".join(v) for v in verbs]}
 
 
-def record(name: str, status: str, evidence: dict[str, Any], steps: list[dict[str, Any]]) -> None:
+def _repo_shas() -> dict[str, str]:
+    """Onda 13: per-scenario evidence must carry repository SHAs — read
+    live `git rev-parse` of every sibling at record time."""
+    shas: dict[str, str] = {}
+    for repo in sorted(FORGES) + ["forge-cli", "forge-portal"]:
+        try:
+            r = subprocess.run(
+                ["git", "-C", str(ROOT / repo), "rev-parse", "--short", "HEAD"],
+                capture_output=True, text=True, timeout=15)
+            if r.returncode == 0:
+                shas[repo] = r.stdout.strip()
+        except Exception:  # noqa: BLE001
+            continue
+    return shas
+
+
+def _repo_versions() -> dict[str, str]:
+    """Declared package version per repo (pyproject.toml / package.json)."""
+    vers: dict[str, str] = {}
+    for repo in sorted(FORGES) + ["forge-cli", "forge-portal"]:
+        pp = ROOT / repo / "pyproject.toml"
+        if pp.exists():
+            for line in pp.read_text(encoding="utf-8").splitlines():
+                if line.startswith("version"):
+                    vers[repo] = line.split("=", 1)[1].strip().strip('"')
+                    break
+        pj = ROOT / repo / "package.json"
+        if repo not in vers and pj.exists():
+            with contextlib.suppress(Exception):
+                vers[repo] = json.loads(pj.read_text(encoding="utf-8"))["version"]
+        if repo not in vers:
+            # dynamic (hatch) versions live in src/<pkg>/__init__.py
+            for init in (ROOT / repo).glob("src/*/__init__.py"):
+                for line in init.read_text(encoding="utf-8").splitlines():
+                    if line.startswith("__version__"):
+                        vers[repo] = line.split("=", 1)[1].strip().strip('"')
+                        break
+                if repo in vers:
+                    break
+    return vers
+
+
+_ENV_CACHE: dict[str, Any] = {}
+
+
+def record(name: str, status: str, evidence: dict[str, Any],
+           steps: list[dict[str, Any]], limitations: list[str] | None = None) -> None:
+    if "shas" not in _ENV_CACHE:
+        _ENV_CACHE["shas"] = _repo_shas()
+        _ENV_CACHE["versions"] = _repo_versions()
+    commands: list[str] = []
+    artifacts: list[str] = []
+    lims = list(limitations or [])
+    for s in steps:
+        if isinstance(s, dict):
+            cmd = s.get("cmd") or s.get("verb") or s.get("call")
+            if cmd:
+                commands.append(cmd if isinstance(cmd, str) else " ".join(map(str, cmd)))
+            p = s.get("path") or s.get("artifact")
+            if p:
+                artifacts.append(str(p))
+            for k, v in s.items():
+                if isinstance(v, str) and any(
+                        t in k.lower() for t in ("limit", "skip", "degrad", "ambiguous")):
+                    lims.append(f"{k}: {v}")
     REPORT["scenarios"][name] = {
-        "status": status, "env": {"os": sys.platform, "python": sys.version.split()[0]},
-        "evidence": evidence, "steps": steps,
+        "status": status,
+        "environment": {"workspace": str(ROOT)},
+        "os": sys.platform,
+        "python": sys.version.split()[0],
+        "repo_shas": _ENV_CACHE["shas"],
+        "versions": _ENV_CACHE["versions"],
+        "commands": commands,
+        "artifacts": artifacts,
+        "result": evidence,
+        "evidence": evidence,
+        "limitations": sorted(set(lims)),
+        "steps": steps,
     }
     print(f"[{status:9}] {name}", flush=True)
 
@@ -620,7 +695,11 @@ def main() -> int:
         try:
             fn()
         except Exception as e:  # noqa: BLE001
-            REPORT["scenarios"][fn.__name__] = {"status": "ERROR", "error": str(e)[:400]}
+            REPORT["scenarios"][fn.__name__] = {
+                "status": "ERROR", "error": str(e)[:400],
+                "os": sys.platform, "environment": {"workspace": str(ROOT)},
+                "limitations": ["scenario raised before record()"],
+            }
     REPORT["finished"] = time.time()
     statuses = [s["status"] for s in REPORT["scenarios"].values()]
     REPORT["summary"] = {s: statuses.count(s) for s in set(statuses)}

@@ -1,13 +1,13 @@
-# Context Engineering Evals — 2026-11-13T04:32:38+00:00
+# Context Engineering Evals — 2026-11-13T04:59:08+00:00
 
 Catalog bytes + progressive-context measurements (perf-baseline.json):
 
 ```json
 {
   "1": 119671,
-  "3": 126905,
-  "8": 189844,
-  "13": 305748
+  "3": 126920,
+  "8": 189859,
+  "13": 305763
 }
 ```
 

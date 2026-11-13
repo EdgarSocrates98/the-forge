@@ -1,4 +1,4 @@
-# Portability Matrix — 2026-11-13T04:32:38+00:00
+# Portability Matrix — 2026-11-13T04:59:08+00:00
 
 Install/lifecycle scenario result: `see operational-e2e.json`
 
