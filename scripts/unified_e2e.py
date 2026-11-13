@@ -1203,9 +1203,9 @@ def scenario_federation() -> None:
         # P0-004 — artifact links: each executed provider's run must leave a
         # recoverable run receipt under the workspace (.forge/runs/<id>).
         runs_dir = ws / ".forge" / "runs"
-        child_ids = [st.get("run_id") for st in steps
+        child_ids = [str(st["run_id"]) for st in steps
                      if str(st.get("check", "")).startswith("execute:")
-                     and st.get("run_id")]
+                     and isinstance(st.get("run_id"), str)]
         missing_runs = [rid for rid in child_ids
                         if not (runs_dir / rid).is_dir()]
         links_ok = bool(child_ids) and not missing_runs
