@@ -1,168 +1,315 @@
 {
   "catalog_bytes": {
     "1": 119671,
-    "3": 126905,
-    "8": 189844,
-    "13": 305748
+    "3": 126920,
+    "8": 189859,
+    "13": 305763
+  },
+  "catalog_io": {
+    "1": {
+      "median_ms": 0.8,
+      "resources": 557,
+      "runs_ms": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "3": {
+      "median_ms": 1.4,
+      "resources": 578,
+      "runs_ms": [
+        1.4,
+        1.4,
+        1.4
+      ]
+    },
+    "8": {
+      "median_ms": 3.1,
+      "resources": 791,
+      "runs_ms": [
+        3.1,
+        3.1,
+        3.1
+      ]
+    },
+    "13": {
+      "median_ms": 5.2,
+      "resources": 1372,
+      "runs_ms": [
+        5.2,
+        5.0,
+        5.2
+      ]
+    }
   },
   "cli_startup": {
     "api-forge": {
-      "median_ms": 1437,
-      "min_ms": 1428,
+      "cpu_runs_ms": [
+        4500,
+        4453,
+        4500
+      ],
+      "median_cpu_ms": 4500,
+      "median_ms": 4906,
+      "min_ms": 4890,
+      "peak_mem_bytes": 35938936,
       "rc": 0,
       "runs_ms": [
-        1437,
-        1444,
-        1428
+        4925,
+        4890,
+        4906
       ]
     },
     "api-sentinel-forge": {
-      "median_ms": 891,
-      "min_ms": 834,
+      "cpu_runs_ms": [
+        1922,
+        1875,
+        1891
+      ],
+      "median_cpu_ms": 1891,
+      "median_ms": 2143,
+      "min_ms": 2138,
+      "peak_mem_bytes": 20721296,
       "rc": 0,
       "runs_ms": [
-        944,
-        834,
-        891
+        2147,
+        2138,
+        2143
       ]
     },
     "code-atlas-forge": {
-      "median_ms": 834,
-      "min_ms": 814,
+      "cpu_runs_ms": [
+        1016,
+        984,
+        1031
+      ],
+      "median_cpu_ms": 1016,
+      "median_ms": 1512,
+      "min_ms": 1496,
+      "peak_mem_bytes": 11472962,
       "rc": 0,
       "runs_ms": [
-        834,
-        814,
-        854
+        1512,
+        1496,
+        1535
       ]
     },
     "data-sentinel-forge": {
-      "median_ms": 1092,
-      "min_ms": 995,
+      "cpu_runs_ms": [
+        2188,
+        2297,
+        2297
+      ],
+      "median_cpu_ms": 2297,
+      "median_ms": 2707,
+      "min_ms": 2703,
+      "peak_mem_bytes": 32045584,
       "rc": 2,
       "runs_ms": [
-        1092,
-        995,
-        1122
+        2707,
+        2703,
+        2724
       ]
     },
     "forge-agent-bridge": {
-      "median_ms": 1808,
-      "min_ms": 1748,
+      "cpu_runs_ms": [
+        1484,
+        1469,
+        1594
+      ],
+      "median_cpu_ms": 1484,
+      "median_ms": 2714,
+      "min_ms": 2707,
+      "peak_mem_bytes": 14140319,
       "rc": 0,
       "runs_ms": [
-        1867,
-        1748,
-        1808
+        2855,
+        2714,
+        2707
       ]
     },
     "forge-doctor-api": {
-      "median_ms": 1048,
-      "min_ms": 1014,
+      "cpu_runs_ms": [
+        2688,
+        2609,
+        2734
+      ],
+      "median_cpu_ms": 2688,
+      "median_ms": 3054,
+      "min_ms": 3043,
+      "peak_mem_bytes": 24190503,
       "rc": 2,
       "runs_ms": [
-        1091,
-        1048,
-        1014
+        3043,
+        3054,
+        3058
       ]
     },
     "forge-doctor-data": {
-      "median_ms": 1241,
-      "min_ms": 1234,
+      "cpu_runs_ms": [
+        3578,
+        3609,
+        3578
+      ],
+      "median_cpu_ms": 3578,
+      "median_ms": 3907,
+      "min_ms": 3901,
+      "peak_mem_bytes": 27581117,
       "rc": 0,
       "runs_ms": [
-        1254,
-        1234,
-        1241
+        3922,
+        3907,
+        3901
       ]
     },
     "forge-lens": {
-      "median_ms": 989,
-      "min_ms": 929,
+      "cpu_runs_ms": [
+        2203,
+        2219,
+        2141
+      ],
+      "median_cpu_ms": 2203,
+      "median_ms": 2518,
+      "min_ms": 2516,
+      "peak_mem_bytes": 26135011,
       "rc": 0,
       "runs_ms": [
-        1183,
-        989,
-        929
+        2518,
+        2521,
+        2516
       ]
     },
     "platform-forge": {
-      "median_ms": 359,
-      "min_ms": 353,
+      "cpu_runs_ms": [
+        719,
+        734,
+        750
+      ],
+      "median_cpu_ms": 734,
+      "median_ms": 902,
+      "min_ms": 899,
+      "peak_mem_bytes": 9698750,
       "rc": 0,
       "runs_ms": [
-        367,
-        353,
-        359
+        902,
+        903,
+        899
       ]
     },
     "product-forge": {
-      "median_ms": 524,
-      "min_ms": 510,
+      "cpu_runs_ms": [
+        1125,
+        1109,
+        1094
+      ],
+      "median_cpu_ms": 1109,
+      "median_ms": 1279,
+      "min_ms": 1277,
+      "peak_mem_bytes": 14752212,
       "rc": 0,
       "runs_ms": [
-        510,
-        527,
-        524
+        1315,
+        1279,
+        1277
       ]
     },
     "spark-forge-aws": {
-      "median_ms": 990,
-      "min_ms": 973,
+      "cpu_runs_ms": [
+        2031,
+        2000,
+        1969
+      ],
+      "median_cpu_ms": 2000,
+      "median_ms": 2345,
+      "min_ms": 2322,
+      "peak_mem_bytes": 24610879,
       "rc": 1,
       "runs_ms": [
-        991,
-        990,
-        973
+        2378,
+        2322,
+        2345
       ]
     },
     "spark-forge-azure": {
-      "median_ms": 741,
-      "min_ms": 738,
+      "cpu_runs_ms": [
+        1609,
+        1703,
+        1688
+      ],
+      "median_cpu_ms": 1688,
+      "median_ms": 1975,
+      "min_ms": 1973,
+      "peak_mem_bytes": 18219552,
       "rc": 2,
       "runs_ms": [
-        747,
-        738,
-        741
+        1995,
+        1973,
+        1975
       ]
     },
     "the-forge": {
-      "median_ms": 624,
-      "min_ms": 619,
+      "cpu_runs_ms": [
+        1828,
+        1859,
+        1859
+      ],
+      "median_cpu_ms": 1859,
+      "median_ms": 2037,
+      "min_ms": 2026,
+      "peak_mem_bytes": 17138692,
       "rc": 0,
       "runs_ms": [
-        624,
-        619,
-        632
+        2044,
+        2026,
+        2037
       ]
     }
   },
   "control_plane": {
     "orchestrate_plan": {
-      "median_ms": 2293.0,
-      "min_ms": 790,
+      "cpu_runs_ms": [
+        2188,
+        2203
+      ],
+      "median_cpu_ms": 2195.5,
+      "median_ms": 2371.0,
+      "min_ms": 2360,
+      "peak_mem_bytes": 18137462,
       "rc": 0,
       "runs_ms": [
-        3796,
-        790
+        2360,
+        2382
       ]
     },
     "providers_health": {
-      "median_ms": 3032.0,
-      "min_ms": 2984,
+      "cpu_runs_ms": [
+        1984,
+        1984
+      ],
+      "median_cpu_ms": 1984.0,
+      "median_ms": 4463.5,
+      "min_ms": 4454,
+      "peak_mem_bytes": 17659008,
       "rc": 0,
       "runs_ms": [
-        2984,
-        3080
+        4473,
+        4454
       ]
     },
     "registry_list": {
-      "median_ms": 662.5,
-      "min_ms": 653,
+      "cpu_runs_ms": [
+        1969,
+        1938
+      ],
+      "median_cpu_ms": 1953.5,
+      "median_ms": 2138.5,
+      "min_ms": 2130,
+      "peak_mem_bytes": 17562872,
       "rc": 0,
       "runs_ms": [
-        653,
-        672
+        2147,
+        2130
       ]
     }
   },
@@ -172,22 +319,22 @@
   "kind": "forge/unified-perf/1",
   "mcp_handshake": {
     "data-sentinel-forge": {
-      "init_ms": 1629,
+      "init_ms": 1586,
       "tools": 22,
       "tools_list_ms": 2
     },
     "platform-forge": {
-      "init_ms": 126,
+      "init_ms": 118,
       "tools": 39,
       "tools_list_ms": 1
     },
     "spark-forge-aws": {
-      "init_ms": 2084,
+      "init_ms": 1935,
       "tools": 148,
-      "tools_list_ms": 25
+      "tools_list_ms": 24
     },
     "the-forge": {
-      "init_ms": 1747,
+      "init_ms": 1489,
       "tools": 15,
       "tools_list_ms": 1
     }
@@ -195,5 +342,44 @@
   "portal_bundle": {
     "bytes": 2082654,
     "files": 67
+  },
+  "portal_load": {
+    "median_ms": 26.5,
+    "peak_mem_bytes": 7054831,
+    "resources": 1392,
+    "runs_ms": [
+      26.5,
+      25.9,
+      26.6
+    ]
+  },
+  "resource_retrieval": {
+    "workspace_describe": {
+      "cpu_runs_ms": [
+        1844,
+        1797,
+        1828
+      ],
+      "median_cpu_ms": 1828,
+      "median_ms": 2047,
+      "min_ms": 2037,
+      "peak_mem_bytes": 17335748,
+      "rc": 2,
+      "runs_ms": [
+        2047,
+        2037,
+        2056
+      ]
+    }
+  },
+  "synthetic_expansion": {
+    "bytes": 6528655,
+    "copies_per_real": 4,
+    "files": 65,
+    "parse_ms": 32.8,
+    "parsed": 65,
+    "read_ms": 367.0,
+    "seed": "api-forge\\forge.agentic.json",
+    "synthetic": true
   }
 }
