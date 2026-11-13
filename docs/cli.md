@@ -70,6 +70,7 @@
 | `resume <run_id> [--allow-unverified] [--approve CAPABILITY]...` | continua um run de plano reutilizando os nós provadamente intactos ([`resume`](#resume)) | 0 / 2 / 3 / 4 / 5 |
 | `decisions` | a memória de decisões reutilizáveis do projeto (`.forge/intel/decisions.json`): routing, profile, pattern e veredictos de debate com sua `basis` e trilha de runs | 0 |
 | `trace <run_id>` | *o que aconteceu*: a árvore de spans do run (fases, `provider:<id>`, `node:<id>`, durações, erros) lida do artefato `telemetry` ([`trace`](#trace)) | 0 / 2 |
+| `telemetry export (--run <id>... \| --correlation <id> \| --last N) --out <file\|->` | projeta os artefatos `telemetry` persistidos num `ExportTraceServiceRequest` OTLP/HTTP JSON — o documento que `forge-lens ingest` consome; correlação vira um único trace com `session.id`; ids sha256 determinísticos; runs sem telemetria são nomeados em `skipped` ([`telemetry export`](#telemetry-export)) | 0 / 2 |
 | `memory list [--kind K] [--provider P] [--capability C] [--task-family F] [--surface S] [--subject Q] [--tag T] [--epistemic E] [--all] [--max-entries N] [--max-bytes B]` | consulta estruturada e limitada sobre `.forge/memory/` — [engineering-memory.md](engineering-memory.md) | 0 |
 | `memory learn --run <run_id>` | destila os artefatos persistidos de um run em entries (decision→decision; verification passed→resolution confirmada; falhas→failure observada) | 0 / 2 |
 | `memory export` | entries autorizadas a sair do projeto (escopo `portable`/`organization` apenas — `project`/`workspace` nunca exportam) | 0 |
