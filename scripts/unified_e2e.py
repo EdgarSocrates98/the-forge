@@ -407,14 +407,20 @@ def _check(name: str, repo: str, args: list[str], want: str,
            steps: list[dict[str, Any]], fails: list[str],
            *, timeout: int = TIMEOUT, cwd: Path | None = None,
            env_extra: dict[str, str] | None = None,
-           verifier: Any = None) -> bool:
+           verifier: Any = None,
+           expect: dict[str, list[str]] | None = None) -> bool:
     """Run ``args`` in ``repo`` and apply the semantic ``want`` check.
 
     ``want`` is one of: ``json-items`` (parsed payload emits >=1 item),
     ``rc0-json`` (rc==0 and JSON parses), ``rc0`` (rc==0),
     ``refusal`` (typed non-zero rc / refusal payload — correct denial).
     A custom ``verifier(payload) -> (ok, detail)`` overrides ``want``.
-    """
+
+    P1-006 — ``expect`` asserts STABLE semantic content, not just a
+    non-empty payload: ``{"<field>": ["expected","values"]}`` requires
+    every expected value to appear in the corresponding field of at
+    least one emitted item (fields are searched across id, rule_id,
+    kind, severity, name keys per item)."""
     r = run_json(repo, args, timeout=timeout, cwd=cwd, env_extra=env_extra)
     payload = r.get("json")
     rc = r.get("rc")
@@ -440,6 +446,30 @@ def _check(name: str, repo: str, args: list[str], want: str,
             "rc": rc, "ok": bool(ok)}
     if isinstance(detail, dict):
         step.update({k: v for k, v in detail.items() if k not in step})
+    if ok and expect:
+        items = payload if isinstance(payload, list) else (
+            (payload or {}).get("items") or (payload or {}).get("findings")
+            or (payload or {}).get("facts") or [])
+        missing = []
+        for field, values in expect.items():
+            observed = {str(it.get(field) or it.get("id")
+                            or it.get("kind"))
+                        for it in items if isinstance(it, dict)}
+            if field in ("kind", "type"):
+                observed |= {str(it.get("kind") or it.get("type"))
+                             for it in items if isinstance(it, dict)}
+            if field == "id":
+                observed |= {str(it.get(k))
+                             for it in items if isinstance(it, dict)
+                             for k in ("id", "rule_id", "fact_id")
+                             if it.get(k)}
+            missing += [v for v in values if v not in observed]
+        if missing:
+            step["expected_missing"] = missing
+            ok = False
+        else:
+            step["expected_found"] = expect
+        step["ok"] = bool(ok)
     if not ok:
         step["stdout_head"] = (r.get("stdout") or "")[:200]
         step["stderr_head"] = (r.get("stderr") or "")[:200]
@@ -515,7 +545,11 @@ def scenario_domains() -> None:
            ["analyze", "lakeformation-grants", "--path",
             _fx("spark-forge-aws", "fixtures", "lakeformation",
                 "conta_sem_full_table_access", "input")],
-           "json-items", steps, fails)
+           "json-items", steps, fails,
+           expect={"kind": ["lakeformation.grants.analyzed",
+                            "lakeformation.grant",
+                            "lakeformation.registered_location",
+                            "lakeformation.data_lake_settings"]})
     _check("aws-emr-facts", "spark-forge-aws",
            ["analyze", "emr-cluster", "--path",
             _fx("spark-forge-aws", "fixtures", "emr",
@@ -539,7 +573,9 @@ def scenario_domains() -> None:
     _check("azure-pyspark-facts", "spark-forge-azure",
            ["analyze", "pyspark", "--path", pyspark_fx,
             "--out", str(az_out)],
-           "json-items", steps, fails)
+           "json-items", steps, fails,
+           expect={"kind": ["pyspark.join", "pyspark.action",
+                            "pyspark.conf_set", "pyspark.function_def"]})
     record("B-azure", "PASS" if not fails else "FAIL", {"failed": fails}, steps)
 
     # -- C: API domain ------------------------------------------------------
