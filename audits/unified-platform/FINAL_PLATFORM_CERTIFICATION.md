@@ -1,6 +1,6 @@
 # Final Platform Certification — FORGE unified platform
 
-- Generated: 2026-11-13T03:10:03+00:00 (probe=True)
+- Generated: 2026-11-13T04:32:38+00:00 (probe=True)
 - Verdict: **CONDITIONAL GO**
 - Operational E2E: **12/12 PASS**
 
@@ -21,7 +21,7 @@
 
 | repo | version | HEAD | release | index | open PRs |
 |---|---|---|---|---|---|
-| the-forge | 0.7.7 | `56bcca73` | v0.7.7 | {'pypi': 'PUBLISHED'} | 0 |
+| the-forge | 0.7.7 | `b89ee652` | v0.7.7 | {'pypi': 'PUBLISHED'} | 0 |
 | forge-cli | 0.5.3 | `3acaa3a7` | v0.5.3 | {'npm': 'PUBLISHED'} | 0 |
 | forge-portal | 1.1.3 | `83854c16` | v1.1.3 | {} | 0 |
 | forge-agent-bridge | 0.2.4 | `aef05314` | v0.2.4 | {'pypi': 'PUBLISHED'} | 0 |

@@ -18,7 +18,7 @@
     "pass": 12,
     "total": 12
   },
-  "generated_at": "2026-11-13T03:10:03+00:00",
+  "generated_at": "2026-11-13T04:32:38+00:00",
   "kind": "forge/final-platform-certification/1",
   "probe": true,
   "repos": {
@@ -273,9 +273,9 @@
     },
     "the-forge": {
       "branch": "main",
-      "dirty": true,
+      "dirty": false,
       "exists": true,
-      "head": "56bcca7352c35ff624fc6d492267b67ab086a7e6",
+      "head": "b89ee652aeda5539b57d083b72a2b90137b0caef",
       "index": {
         "pypi": "PUBLISHED"
       },

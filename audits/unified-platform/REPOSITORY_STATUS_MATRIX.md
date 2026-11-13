@@ -1,8 +1,8 @@
-# Repository Status Matrix — 2026-11-13T03:10:03+00:00
+# Repository Status Matrix — 2026-11-13T04:32:38+00:00
 
 | repo | group | version | HEAD sha | tags | release | dirty | open PRs |
 |---|---|---|---|---|---|---|---|
-| the-forge | — | 0.7.7 | `56bcca73` | v0.7.7, v0.7.6, v0.7.5 | v0.7.7 | True | 0 |
+| the-forge | — | 0.7.7 | `b89ee652` | v0.7.7, v0.7.6, v0.7.5 | v0.7.7 | False | 0 |
 | forge-cli | — | 0.5.3 | `3acaa3a7` | v0.5.3, v0.5.2, v0.5.1 | v0.5.3 | False | 0 |
 | forge-portal | — | 1.1.3 | `83854c16` | v1.1.3, v1.1.2, v1.1.1 | v1.1.3 | False | 0 |
 | forge-agent-bridge | — | 0.2.4 | `aef05314` | v0.2.4, v0.2.3, v0.2.2 | v0.2.4 | False | 0 |

@@ -1,4 +1,4 @@
-# Federated E2E Report — 2026-11-13T03:10:03+00:00
+# Federated E2E Report — 2026-11-13T04:32:38+00:00
 
 Source: `operational-e2e.json` (real subprocess execution, not catalog).
 
@@ -9,9 +9,9 @@ Source: `operational-e2e.json` (real subprocess execution, not catalog).
 | C-api | PASS | {'failed': []} |
 | D-platform | PASS | {'failed': []} |
 | E-product | PASS | {'failed': []} |
-| context | PASS | {'bounded': True, 'catalog_bytes_by_forges': {'1': 119671, '3': 126905, '8': 189 |
+| context | PASS | {'bounded': True, 'catalog_bytes_by_forges': {'1': 119671, '3': 126920, '8': 189 |
 | federation | PASS | {} |
-| lifecycle | PASS | {'scratch': 'C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-otp_szhg'} |
+| lifecycle | PASS | {'scratch': 'C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-owhyljhm'} |
 | mcp | PASS | {'failed': []} |
 | portal | PASS | {} |
 | security | PASS | {'failed': []} |
