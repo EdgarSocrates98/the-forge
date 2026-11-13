@@ -1685,6 +1685,25 @@ def trace(data: dict[str, Any]) -> str:
     return "\n".join([*lines, *_labelled("Limitations:", _list(data.get("limitations")))])
 
 
+def telemetry_export(data: dict[str, Any]) -> str:
+    """The OTLP export receipt: where it landed, its digest, and what was
+    honestly skipped."""
+    lines = [
+        f"Exported {data.get('spans', 0)} span(s) across {data.get('traces', 0)} trace(s)",
+        f"  out:     {_clean(data.get('out'))}",
+        f"  sha256:  {_clean(data.get('sha256'))}",
+        f"  ingest:  {_clean(data.get('ingest'))}",
+    ]
+    skipped = data.get("skipped") or {}
+    if skipped:
+        lines.append("  skipped:")
+        for rid, why in sorted(skipped.items()):
+            lines.append(f"    {_clean(rid)}: {_clean(why)}")
+    for warning in data.get("warnings") or []:
+        lines.append(f"  warning: {_clean(warning)}")
+    return "\n".join(lines)
+
+
 def replay(data: dict[str, Any]) -> str:
     run_id = _clean(data["run_id"])
     if data["mode"] == "render":

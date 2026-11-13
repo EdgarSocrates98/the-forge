@@ -16,6 +16,20 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### Added
+
+- `theforge telemetry export`: persisted run telemetry + orchestration
+  receipts -> OTLP/HTTP JSON (`ExportTraceServiceRequest`), the document
+  `forge-lens ingest` consumes. Selection by `--run`/`--correlation`/`--last`;
+  correlation groups become single OTLP traces (`session.id` carries the
+  correlation id); orchestration receipts become `theforge.orchestrate` root
+  spans; `parent_run` links resolve via deterministic sha256 span ids.
+  Deterministic bytes (re-export is identical, re-ingest dedupes), end-anchored
+  time model declared per run (`theforge.time_anchor`), and honest skips —
+  runs without a telemetry artifact are named, never synthesized. Closes the
+  live-correlation gap between the-forge and forge-lens (was `NOT_APPLICABLE`
+  in the federated E2E; now a verified check).
+
 ## [0.7.6] - 2026-11-12
 
 ### 0.7.6 — Agentic Ecosystem

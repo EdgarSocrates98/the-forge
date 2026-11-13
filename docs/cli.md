@@ -70,6 +70,7 @@
 | `resume <run_id> [--allow-unverified] [--approve CAPABILITY]...` | continua um run de plano reutilizando os nós provadamente intactos ([`resume`](#resume)) | 0 / 2 / 3 / 4 / 5 |
 | `decisions` | a memória de decisões reutilizáveis do projeto (`.forge/intel/decisions.json`): routing, profile, pattern e veredictos de debate com sua `basis` e trilha de runs | 0 |
 | `trace <run_id>` | *o que aconteceu*: a árvore de spans do run (fases, `provider:<id>`, `node:<id>`, durações, erros) lida do artefato `telemetry` ([`trace`](#trace)) | 0 / 2 |
+| `telemetry export (--run <id>... \| --correlation <id> \| --last N) --out <file\|->` | projeta os artefatos `telemetry` persistidos num `ExportTraceServiceRequest` OTLP/HTTP JSON — o documento que `forge-lens ingest` consome; correlação vira um único trace com `session.id`; ids sha256 determinísticos; runs sem telemetria são nomeados em `skipped` ([`telemetry export`](#telemetry-export)) | 0 / 2 |
 | `memory list [--kind K] [--provider P] [--capability C] [--task-family F] [--surface S] [--subject Q] [--tag T] [--epistemic E] [--all] [--max-entries N] [--max-bytes B]` | consulta estruturada e limitada sobre `.forge/memory/` — [engineering-memory.md](engineering-memory.md) | 0 |
 | `memory learn --run <run_id>` | destila os artefatos persistidos de um run em entries (decision→decision; verification passed→resolution confirmada; falhas→failure observada) | 0 / 2 |
 | `memory export` | entries autorizadas a sair do projeto (escopo `portable`/`organization` apenas — `project`/`workspace` nunca exportam) | 0 |
@@ -348,6 +349,49 @@ Limitations: none
 - Spans de run `plan`: `scan`, `planning` (routing + decomposição + validação), `node:<id>` por nó (atributos: provider/capability/ação/role + `outcome`, `attempts` > 1 e `reused` quando houver) com `handoff` aninhado, e `synthesis`.
 - Um span `ERROR` marca a etapa que lançou — o detalhe da falha está em `error`/`diagnostic` do run, não no span.
 - Run desconhecido é erro de uso (exit 2). Um run sem artefato `telemetry` reporta `no telemetry recorded` em `Limitations:` (exit 0). `--json` emite `run_id`, `status`, `kind`, `spans` e `limitations`.
+
+## `telemetry export`
+
+`theforge telemetry export` projeta a evidência persistida de um conjunto de
+runs — os artefatos `telemetry` (`RunTelemetry/v1`) mais os recibos de
+`.forge/orchestrations/` — num documento OTLP/HTTP JSON
+(`ExportTraceServiceRequest`), o formato que `forge-lens ingest` (ou
+`POST /v1/otlp/traces`) consome. É o caminho local-first de observabilidade
+federada: nenhum exporter vivo é necessário — o documento é re-derivado do
+que os runs já gravaram.
+
+```
+$ theforge telemetry export --correlation orch-08ecff961a12 --out otlp.json
+Exported 19 span(s) across 1 trace(s)
+  out:     otlp.json
+  sha256:  2a82b37a…
+  ingest:  forge-lens ingest otlp.json
+```
+
+- Seleção: `--run ID` (repetível), `--correlation ID` (todo run cuja telemetria
+  carrega o id + o recibo de orquestração persistido, quando existir) ou
+  `--last N`. Sem seleção é erro de uso (exit 2).
+- Correlação: runs que compartilham `correlation_id` (Wave W — `THEFORGE_
+  CORRELATION_ID`, ou herdada de nó de plano) viram **um único trace OTLP**;
+  runs sem correlação viram um trace cada. `session.id` do resource leva o id,
+  então `forge-lens traces list --session <corr>` recupera o grupo.
+- Hierarquia: o recibo de orquestração (quando persistido) vira o span raiz
+  `theforge.orchestrate` (atributos: intent, `plan_sha256`, `plan_status`,
+  contagem de `delegation_tasks`; um evento `delegation.entry` por pick); cada
+  run vira `theforge.<kind>` filho dele, e os spans locais do `RunTelemetry`
+  aninham sob o run. `parent_run` fora da exportação vira um `parentSpanId`
+  derivado deterministicamente — o store marca `MISSING_PARENT` até o pai ser
+  ingerido, nunca um id inventado.
+- Identidade e tempo determinísticos: `traceId`/`spanId` são `sha256` de ids
+  estáveis (re-exportar é byte-idêntico; re-ingerir deduplica). Os `start_ms`
+  do `RunTelemetry` são offsets monotônicos — o `t0` é ancorado no
+  `created_at` observado do artefato (`theforge.time_anchor=created_at`), com
+  fallback para o timestamp embutido no `run_id`; run sem nenhuma âncora vai
+  para `skipped`, nomeado — nenhum instante é inventado.
+- `--json` emite o recibo (`out`, `sha256`, `traces`, `spans`,
+  `runs_exported`, `skipped`, `warnings`); `--out -` escreve o documento
+  OTLP no stdout e o resumo no stderr. O `sha256` cobre os bytes exatos do
+  arquivo (UTF-8, LF) — o arquivo é a evidência.
 
 ## `lab`
 

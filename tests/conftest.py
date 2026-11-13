@@ -101,6 +101,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_economy_bench.py": ("integration",),
     "test_runs_bench.py": ("integration",),
     "test_telemetry.py": ("unit",),
+    "test_telemetry_export.py": ("unit", "integration"),
     # planned by design (cross-forge-foundation)
     "test_error_taxonomy.py": ("unit",),
     "test_plan_contracts.py": ("unit", "contract"),

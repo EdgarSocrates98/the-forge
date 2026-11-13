@@ -369,6 +369,17 @@ def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
             "federation:multi-exec",
             sum(1 for s in exec_steps if s.get("ok")) >= 2,
             "two or more providers executed"))
+        # Lens correlation is now a real verified path (telemetry export ->
+        # lens ingest -> session trace), no longer an accepted named gap.
+        lens_steps = {
+            s.get("check"): s for s in multi.get("steps") or []
+            if isinstance(s, dict)
+        }
+        g.required_checks.append(CheckResult(
+            "federation:lens-correlation",
+            bool((lens_steps.get("lens-traces-session") or {}).get("ok"))
+            and bool((lens_steps.get("lens-trace-shape") or {}).get("ok")),
+            "correlated trace visible in forge-lens"))
     gates.append(g.finish())
 
     # ---- security_boundaries --------------------------------------------

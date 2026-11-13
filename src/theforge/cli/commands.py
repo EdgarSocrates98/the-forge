@@ -1613,6 +1613,66 @@ def cmd_trace(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_telemetry_export(args: argparse.Namespace) -> int:
+    """``telemetry export``: persisted run telemetry -> OTLP/HTTP JSON file.
+
+    Re-derives an ``ExportTraceServiceRequest`` from what the selected runs
+    already recorded (``telemetry`` artifacts + orchestration receipts) — the
+    document ``forge-lens ingest`` consumes. Deterministic: identical
+    selection -> identical bytes; nothing is invented for runs without a
+    telemetry artifact (they are named in ``skipped``)."""
+    from theforge import telemetry_export
+    from theforge.contracts.canonical import sha256_hex
+
+    root = _root(args)
+    forge_dir = require_forge_dir(root)
+    if not (args.run or args.correlation_id or args.last):
+        raise UsageError(
+            "telemetry export needs a selection: --run ID (repeatable), "
+            "--correlation ID or --last N"
+        )
+    try:
+        document, summary = telemetry_export.build_otlp_request(
+            forge_dir,
+            run_ids=list(args.run or ()),
+            correlation_id=args.correlation_id,
+            last=args.last,
+        )
+    except ValueError as exc:
+        raise UsageError(str(exc)) from exc
+    if not document["resourceSpans"]:
+        raise UsageError(
+            "no exportable telemetry for the selection — runs without a "
+            f"telemetry artifact: {dict(summary.skipped) or 'none'}"
+        )
+    payload = json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False).encode(
+        "utf-8"
+    )
+    if args.out == "-":
+        sys.stdout.write(payload.decode("utf-8") + "\n")
+        for skipped, why in summary.skipped.items():
+            print(f"theforge: skipped {skipped}: {why}", file=sys.stderr)
+        for warning in summary.warnings:
+            print(f"theforge: warning: {warning}", file=sys.stderr)
+        return 0
+    out_path = Path(args.out).resolve()
+    tmp = out_path.with_suffix(out_path.suffix + ".tmp")
+    tmp.write_bytes(payload)  # exact bytes — the reported sha256 covers the file
+    tmp.replace(out_path)
+    data: dict[str, Any] = {
+        "out": str(out_path),
+        "sha256": sha256_hex(payload),
+        "traces": summary.traces,
+        "spans": summary.spans,
+        "runs_exported": summary.runs_exported,
+        "skipped": summary.skipped,
+        "warnings": summary.warnings,
+        "ingest": f"forge-lens ingest {out_path}",
+    }
+    _emit(args, redact(data), render.telemetry_export)
+    return 0
+
+
 def cmd_replay(args: argparse.Namespace) -> int:
     root = _root(args)
     forge_dir = require_forge_dir(root)
