@@ -2,49 +2,326 @@
   "kind": "forge/unified-baseline/1",
   "repos": {
     "api-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "ee957154c95895d41504d0ce7f02a427e398ea1e",
+      "latest_tags": [
+        "v0.3.6",
+        "v0.3.5",
+        "v0.3.4"
+      ],
+      "requires_python": ">=3.12",
+      "resources": {
+        "agent": 26,
+        "eval": 4,
+        "fixture": 34,
+        "knowledge": 411,
+        "rule": 66,
+        "skill": 16
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.3.6"
     },
     "api-sentinel-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "88d0a23050f6dedb6a63aa1494573a7dd8df43d1",
+      "latest_tags": [
+        "v0.1.2",
+        "v0.1.1",
+        "v0.1.0"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "contract": 1
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.1.2"
     },
     "code-atlas-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "34d9f919b89a1710ab03596a73d2d4ebaf4cae40",
+      "latest_tags": [
+        "v1.1.4",
+        "v1.1.3",
+        "v1.1.2"
+      ],
+      "requires_python": ">=3.12",
+      "resources": {
+        "agent": 3,
+        "eval": 8,
+        "fixture": 9
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "1.1.4"
     },
     "data-sentinel-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "4f7170f34868dcbc81d75b637efe2b800710f4b0",
+      "latest_tags": [
+        "v0.5.5",
+        "v0.5.4",
+        "v0.5.3"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "agent": 3,
+        "contract": 40,
+        "example": 1,
+        "fixture": 20,
+        "knowledge": 2
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.5.5"
     },
     "forge-agent-bridge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "aef05314c00092c4caf9cd29566d63cc49945961",
+      "latest_tags": [
+        "v0.2.4",
+        "v0.2.3",
+        "v0.2.2"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "agent": 3
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.2.4"
     },
     "forge-cli": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": false,
+      "head": "0a154fe5b7f8e40228979fc566e113f7ab26ffd4",
+      "latest_tags": [
+        "v0.5.3",
+        "v0.5.2",
+        "v0.5.1"
+      ],
+      "requires_python": "node >=20",
+      "resources": {},
+      "role": null,
+      "role_justification": "installer CLI (npm) \u2014 not a Forge-Protocol provider",
+      "version": "0.5.3"
     },
     "forge-doctor-api": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "23075f99cbcc7937e980bb5b7b4b1088c30adc2b",
+      "latest_tags": [
+        "v0.3.4",
+        "v0.3.3",
+        "v0.3.2"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "agent": 1,
+        "fixture": 5,
+        "knowledge": 15
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.3.4"
     },
     "forge-doctor-data": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "a1725c68eec6b5bab288054eb5f74971801c4642",
+      "latest_tags": [
+        "v1.1.4",
+        "v1.1.3",
+        "v1.1.2"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "agent": 3,
+        "example": 1,
+        "knowledge": 101
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "1.1.4"
     },
     "forge-lens": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "066a65328d6ef56fb8bba3d2bbf164d26569e7bc",
+      "latest_tags": [
+        "v0.2.4",
+        "v0.2.3",
+        "v0.2.2"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "agent": 3,
+        "contract": 1,
+        "example": 3,
+        "fixture": 4,
+        "skill": 7
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.2.4"
     },
     "forge-portal": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": false,
+      "head": "83854c16a4533b84f1b8b4c7cef91ebd86d05376",
+      "latest_tags": [
+        "v1.1.3",
+        "v1.1.2",
+        "v1.1.1"
+      ],
+      "requires_python": null,
+      "resources": {},
+      "role": null,
+      "role_justification": "Portal UI host (Angular) \u2014 not a Forge-Protocol provider",
+      "version": "1.1.3"
     },
     "platform-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "4170749298d84b5a67b7bf0381f0a1514e08a59d",
+      "latest_tags": [
+        "v0.3.6",
+        "v0.3.5",
+        "v0.3.4"
+      ],
+      "requires_python": ">=3.10",
+      "resources": {
+        "agent": 41,
+        "contract": 24,
+        "eval": 2,
+        "knowledge": 14,
+        "rule": 1,
+        "skill": 12
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.3.6"
     },
     "product-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "0dedc2e95bb050192b30e735c2f19810b2ddbef5",
+      "latest_tags": [
+        "v0.2.5",
+        "v0.2.4",
+        "v0.2.3"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "agent": 5,
+        "rule": 1,
+        "skill": 16
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.2.5"
     },
     "spark-forge-aws": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "6a3dfc19448fe984d8d59bfca602092b531883e1",
+      "latest_tags": [
+        "v0.7.8",
+        "v0.7.7",
+        "v0.7.6"
+      ],
+      "requires_python": ">=3.10",
+      "resources": {
+        "agent": 14,
+        "contract": 2,
+        "eval": 8,
+        "example": 2,
+        "fixture": 79,
+        "knowledge": 113,
+        "rule": 1,
+        "skill": 61
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.7.8"
     },
     "spark-forge-azure": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "98b395fa08714a31a7b0eda6873759c7711bdb07",
+      "latest_tags": [
+        "v0.3.6",
+        "v0.3.5",
+        "v0.3.4"
+      ],
+      "requires_python": ">=3.10",
+      "resources": {
+        "agent": 41,
+        "eval": 9,
+        "example": 2,
+        "fixture": 8,
+        "knowledge": 53,
+        "rule": 1,
+        "skill": 30
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.3.6"
     },
     "the-forge": {
-      "exists": false
+      "default_branch": "main",
+      "dirty": false,
+      "exists": true,
+      "has_manifest": true,
+      "head": "f763816191f204fa2d3a3aceb2dbb40bf89bb5bb",
+      "latest_tags": [
+        "certification/final-425dac6",
+        "v0.7.7",
+        "v0.7.6"
+      ],
+      "requires_python": ">=3.11",
+      "resources": {
+        "contract": 1,
+        "fixture": 4,
+        "skill": 36
+      },
+      "role": "forge-protocol-provider",
+      "role_justification": null,
+      "version": "0.7.7"
     }
   }
 }

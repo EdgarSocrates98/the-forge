@@ -1,8 +1,8 @@
-# CI + Release Evidence — 2026-11-13T12:04:45+00:00
+# CI + Release Evidence — 2026-11-13T17:10:10+00:00
 
 | repo | version | tag | release | index state |
 |---|---|---|---|---|
-| the-forge | 0.7.7 | v0.7.7 | v0.7.7 | {'pypi': 'PUBLISHED'} |
+| the-forge | 0.7.7 | v0.7.7 | certification/final-425dac6 | {'pypi': 'PUBLISHED'} |
 | forge-cli | 0.5.3 | v0.5.3 | v0.5.3 | {'npm': 'PUBLISHED'} |
 | forge-portal | 1.1.3 | v1.1.3 | v1.1.3 | — |
 | forge-agent-bridge | 0.2.4 | v0.2.4 | v0.2.4 | {'pypi': 'PUBLISHED'} |

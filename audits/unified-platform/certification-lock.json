@@ -1,0 +1,350 @@
+{
+  "kind": "forge/certification-lock/1",
+  "run_id": "130ad4d2-a51f-4298-b7f7-92922ae2ac4f",
+  "generated_at": "2026-11-13T17:00:16+00:00",
+  "workspace": "E:\\projetos\\FORJAS",
+  "os": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.6",
+  "node": "v24.16.0",
+  "repos": {
+    "the-forge": {
+      "exists": true,
+      "sha": "f763816191f204fa2d3a3aceb2dbb40bf89bb5bb",
+      "branch": "main",
+      "version": "0.7.7",
+      "manifest_checksums": {
+        "forge.agentic.json": "212f7ed9f4e0386b76144dd64abf643b3c6056f8752bb9f1df8cdc313d64c069"
+      },
+      "published": {
+        "tag": "v0.7.7",
+        "dist": "theforge-core"
+      },
+      "critical_deps": {
+        "mcp": "present",
+        "typer": "present"
+      }
+    },
+    "forge-cli": {
+      "exists": true,
+      "sha": "0a154fe5b7f8e40228979fc566e113f7ab26ffd4",
+      "branch": "main",
+      "version": "0.5.3",
+      "manifest_checksums": {
+        "forge.agentic.json": null
+      },
+      "published": {
+        "tag": "v0.5.3",
+        "dist": "theforge-cli"
+      },
+      "critical_deps": {
+        "mcp": "present"
+      }
+    },
+    "forge-portal": {
+      "exists": true,
+      "sha": "83854c16a4533b84f1b8b4c7cef91ebd86d05376",
+      "branch": "main",
+      "version": "1.1.3",
+      "manifest_checksums": {
+        "forge.agentic.json": null
+      },
+      "published": {
+        "tag": "v1.1.3",
+        "dist": "forge-portal-app"
+      },
+      "critical_deps": {}
+    },
+    "forge-agent-bridge": {
+      "exists": true,
+      "sha": "aef05314c00092c4caf9cd29566d63cc49945961",
+      "branch": "main",
+      "version": "0.2.4",
+      "manifest_checksums": {
+        "forge.agentic.json": "d6d1b1b3dd14c3985ee61be9d327646c6796467b43fe9a71aeea4cd767094794"
+      },
+      "published": {
+        "tag": "v0.2.4",
+        "dist": "forge-agent-bridge"
+      },
+      "critical_deps": {}
+    },
+    "spark-forge-aws": {
+      "exists": true,
+      "sha": "6a3dfc19448fe984d8d59bfca602092b531883e1",
+      "branch": "main",
+      "version": "0.7.8",
+      "manifest_checksums": {
+        "forge.agentic.json": "47d7972ab9a1e66f67e1553321ed79ab833a8608cf5297a66119a10fd6475d05"
+      },
+      "published": {
+        "tag": "v0.7.8",
+        "dist": "sparkforge-aws"
+      },
+      "critical_deps": {}
+    },
+    "spark-forge-azure": {
+      "exists": true,
+      "sha": "98b395fa08714a31a7b0eda6873759c7711bdb07",
+      "branch": "main",
+      "version": "0.3.6",
+      "manifest_checksums": {
+        "forge.agentic.json": "6b3da5d83841a52b1066a35323482957273f9e69bfc268cf612757bb107ff78a"
+      },
+      "published": {
+        "tag": "v0.3.6",
+        "dist": "sparkforge-azure"
+      },
+      "critical_deps": {}
+    },
+    "api-forge": {
+      "exists": true,
+      "sha": "ee957154c95895d41504d0ce7f02a427e398ea1e",
+      "branch": "main",
+      "version": "0.3.6",
+      "manifest_checksums": {
+        "forge.agentic.json": "e3e53d781579d1595dcf1255afe2fe1e5d569425af8e6e33e741365175c3864c"
+      },
+      "published": {
+        "tag": "v0.3.6",
+        "dist": "apiforge-af"
+      },
+      "critical_deps": {
+        "mcp": "present",
+        "typer": ".Option"
+      }
+    },
+    "platform-forge": {
+      "exists": true,
+      "sha": "4170749298d84b5a67b7bf0381f0a1514e08a59d",
+      "branch": "main",
+      "version": "0.3.6",
+      "manifest_checksums": {
+        "forge.agentic.json": "4694c3ac7e16e4904fe258920da69e118ca895f4bc0062afd2ebee43595ae0b7"
+      },
+      "published": {
+        "tag": "v0.3.6",
+        "dist": "platformforge"
+      },
+      "critical_deps": {}
+    },
+    "product-forge": {
+      "exists": true,
+      "sha": "0dedc2e95bb050192b30e735c2f19810b2ddbef5",
+      "branch": "main",
+      "version": "0.2.5",
+      "manifest_checksums": {
+        "forge.agentic.json": "7e9876aede330dd5db3bb80348dfcee3032afc0c3942eb757b9f23328fd27888"
+      },
+      "published": {
+        "tag": "v0.2.5",
+        "dist": "product-forge"
+      },
+      "critical_deps": {
+        "mcp": "present"
+      }
+    },
+    "code-atlas-forge": {
+      "exists": true,
+      "sha": "34d9f919b89a1710ab03596a73d2d4ebaf4cae40",
+      "branch": "main",
+      "version": "1.1.4",
+      "manifest_checksums": {
+        "forge.agentic.json": "983957e16d0a82a11f9fcd95cbb6e85070ae8177a1000cfbd9fa024245ee5df0"
+      },
+      "published": {
+        "tag": "v1.1.4",
+        "dist": "code-atlas-forge"
+      },
+      "critical_deps": {}
+    },
+    "forge-lens": {
+      "exists": true,
+      "sha": "066a65328d6ef56fb8bba3d2bbf164d26569e7bc",
+      "branch": "main",
+      "version": "0.2.4",
+      "manifest_checksums": {
+        "forge.agentic.json": "2bb80def5cbfe2f94549fc924629ff323d14e0751e15beae84d782224d435d6f"
+      },
+      "published": {
+        "tag": "v0.2.4",
+        "dist": "forge-lens-fl"
+      },
+      "critical_deps": {}
+    },
+    "data-sentinel-forge": {
+      "exists": true,
+      "sha": "4f7170f34868dcbc81d75b637efe2b800710f4b0",
+      "branch": "main",
+      "version": "0.5.5",
+      "manifest_checksums": {
+        "forge.agentic.json": "d2e8d03cf4ed3b5e4d95b81973ebb27292377e6138b740e9a37827a346a89b27"
+      },
+      "published": {
+        "tag": "v0.5.5",
+        "dist": "data-sentinel-forge"
+      },
+      "critical_deps": {
+        "mcp": "present",
+        "pydantic": ".mypy"
+      }
+    },
+    "api-sentinel-forge": {
+      "exists": true,
+      "sha": "88d0a23050f6dedb6a63aa1494573a7dd8df43d1",
+      "branch": "main",
+      "version": "0.1.2",
+      "manifest_checksums": {
+        "forge.agentic.json": "d7356de63afd9b214d57ea6d691a060935487008c55e27a21b534a477a34cac8"
+      },
+      "published": {
+        "tag": "v0.1.2",
+        "dist": "api-sentinel-forge"
+      },
+      "critical_deps": {
+        "pydantic": ".mypy"
+      }
+    },
+    "forge-doctor-api": {
+      "exists": true,
+      "sha": "23075f99cbcc7937e980bb5b7b4b1088c30adc2b",
+      "branch": "main",
+      "version": "0.3.4",
+      "manifest_checksums": {
+        "forge.agentic.json": "c5de7ae6e81514058c29ff47b066edf00e938e335410cc8bb1e2322a725b7044"
+      },
+      "published": {
+        "tag": "v0.3.4",
+        "dist": "forge-doctor-api"
+      },
+      "critical_deps": {
+        "mcp": "present"
+      }
+    },
+    "forge-doctor-data": {
+      "exists": true,
+      "sha": "a1725c68eec6b5bab288054eb5f74971801c4642",
+      "branch": "main",
+      "version": "1.1.4",
+      "manifest_checksums": {
+        "forge.agentic.json": "c366ef92c6fdb9e57fc871c7c90a881192a47f2b98709f2bd85784b5f0954c7e"
+      },
+      "published": {
+        "tag": "v1.1.4",
+        "dist": "forge-doctor-data"
+      },
+      "critical_deps": {}
+    }
+  },
+  "adapters": {
+    "theforge_sparkforge_aws": "0.3.0",
+    "theforge_sparkforge_azure": "0.1.0",
+    "theforge_apiforge": "0.3.0",
+    "theforge_doctordata": "0.3.0",
+    "theforge_doctorapi": "0.3.0",
+    "theforge_platformforge": "0.1.0",
+    "theforge_apisentinel": "0.1.0"
+  },
+  "contracts": {
+    "agent-catalog.schema.json": null,
+    "documentation-review.schema.json": null,
+    "experience-parity.schema.json": null,
+    "experience-state.schema.json": null,
+    "host-integration.schema.json": null,
+    "installation-state.schema.json": null,
+    "task-invocation.schema.json": null,
+    "theforge/ContextROI/v1": "1",
+    "theforge/ContextBudgetRecommendation/v1": "1",
+    "theforge/StrategyExperiment/v1": "1",
+    "theforge/AgentSpec/v1": "1",
+    "forge/BenchmarkSuite/v1": "1",
+    "forge/BenchmarkResult/v1": "1",
+    "forge/MultiForgeScenario/v1": "1",
+    "theforge/RunBudget/v1": "1",
+    "theforge/CapabilityGraph/v1": "1",
+    "theforge/CapabilityRelation/v1": "1",
+    "theforge/ComplexityAssessment/v1": "1",
+    "theforge/ContextPack/v1": "1",
+    "theforge/GlobalStopDecision/v1": "1",
+    "theforge/DecisionMemory/v1": "1",
+    "theforge/Diagnostic/v1": "1",
+    "theforge/ProviderEconomyReceipt/v1": "1",
+    "theforge/EconomyRollup/v1": "1",
+    "forge/EvidenceHandoff/v1": "1",
+    "theforge/SpecialistCapability/v1": "1",
+    "theforge/Handoff/v1": "1",
+    "theforge/EvidenceHandoff/v1": "1",
+    "theforge/FederatedCapabilityDescriptor/v1": "1",
+    "theforge/ExplainReport/v1": "1",
+    "theforge/WorkspaceGraph/v1": "1",
+    "forge/ForgeGraphView/v1": "1",
+    "forge/GraphDescriptor/v1": "1",
+    "theforge/ProviderSurfaceIdentity/v1": "1",
+    "theforge/InstallationPlan/v1": "1",
+    "theforge/InstallationPlan/v2": "2",
+    "theforge/ProjectIntel/v1": "1",
+    "theforge/ForgeKnowledge/v1": "1",
+    "theforge/KnowledgeSource/v1": "1",
+    "theforge/KnowledgeDocument/v1": "1",
+    "theforge/KnowledgeChunk/v1": "1",
+    "theforge/KnowledgeEvidence/v1": "1",
+    "theforge/KnowledgeContextPack/v1": "1",
+    "theforge/KnowledgeRelation/v1": "1",
+    "theforge/KnowledgeImportReceipt/v1": "1",
+    "theforge/ForgeManifest/v1": "1",
+    "theforge/McpServerEntry/v1": "1",
+    "theforge/McpRegistryDocument/v1": "1",
+    "theforge/EngineeringMemoryEntry/v1": "1",
+    "theforge/MemoryPack/v1": "1",
+    "theforge/MemorySummary/v1": "1",
+    "theforge/FailurePattern/v1": "1",
+    "theforge/CapabilityRequirement/v1": "1",
+    "theforge/CapabilityOffer/v1": "1",
+    "theforge/CapabilityNegotiationResult/v1": "1",
+    "theforge/ExecutionObservation/v1": "1",
+    "theforge/GlobalEconomyReceipt/v1": "1",
+    "theforge/ObsidianSyncPlan/v1": "1",
+    "theforge/ObsidianSyncReceipt/v1": "1",
+    "theforge/ObsidianVaultDescriptor/v1": "1",
+    "theforge/ObsidianNoteRef/v1": "1",
+    "theforge/ObsidianNoteDraft/v1": "1",
+    "theforge/ObsidianExportRequest/v1": "1",
+    "theforge/ObsidianConflict/v1": "1",
+    "theforge/ObsidianExportProfile/v1": "1",
+    "theforge/OrchestrationReport/v1": "1",
+    "theforge/ProviderPerformance/v1": "1",
+    "theforge/ExecutionPlan/v1": "1",
+    "theforge/PlanResult/v1": "1",
+    "theforge/SemanticPlanProposal/v1": "1",
+    "theforge/DecisionRecord/v1": "1",
+    "theforge/PlanState/v1": "1",
+    "theforge/ExecutionReceipt/v1": "1",
+    "theforge/ForgeRegistryEntry/v1": "1",
+    "theforge/RegistryDocument/v1": "1",
+    "theforge/RemoteProviderCandidate/v1": "1",
+    "theforge/RemoteExecutionRequest/v1": "1",
+    "theforge/RemoteExecutionReceipt/v1": "1",
+    "theforge/ResolveRequest/v1": "1",
+    "theforge/RoutingProposal/v1": "1",
+    "theforge/ExecutionResult/v1": "1",
+    "theforge/RiskAssessment/v1": "1",
+    "theforge/RoutingDecision/v1": "1",
+    "forge/SpecialistLifecycleState/v1": "1",
+    "forge/SpecialistAgenticManifest/v1": "1",
+    "forge/SpecialistDelegationRequest/v1": "1",
+    "forge/SpecialistDelegationResult/v1": "1",
+    "forge/HostActivationPlan/v1": "1",
+    "forge/HostActivationReceipt/v1": "1",
+    "forge/SpecialistCapability/v1": "1",
+    "forge/SpecialistDelegation/v1": "1",
+    "theforge/SpecialistDelegation/v1": "1",
+    "theforge/StrategyPolicy/v1": "1",
+    "theforge/PlanSimulation/v1": "1",
+    "theforge/CounterfactualPlanComparison/v1": "1",
+    "theforge/ExecutionTarget/v1": "1",
+    "theforge/TargetNegotiation/v1": "1",
+    "theforge/TaskSpec/v1": "1",
+    "theforge/RunTelemetry/v1": "1",
+    "theforge/VerificationResult/v1": "1",
+    "theforge/WorkspaceDescriptor/v1": "1"
+  }
+}
