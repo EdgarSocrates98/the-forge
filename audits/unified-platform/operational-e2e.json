@@ -1,0 +1,520 @@
+{
+  "finished": 1794526298.0651684,
+  "kind": "forge/unified-e2e/1",
+  "scenarios": {
+    "A-aws": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "rc": 0,
+          "repo": "spark-forge-aws",
+          "stdout_head": "ns deste run. Ele prova\\n   **correspond\\u00eancia**, nunca autoria, e diz isso em `refused`. Passe o `now` da\\n   emiss\\u00e3o e, se houver, o transcript e o provider declarado. Quem receber o\\n   case confere com `sparkforge_aws_receipt_verify`: `not_rechecked` em `tools` ou\\n   `host` \\u00e9 font",
+          "verb": "playbook emr-infra-reviewer"
+        },
+        {
+          "rc": 2,
+          "repo": "data-sentinel-forge",
+          "stdout_head": "",
+          "verb": "status"
+        },
+        {
+          "rc": 0,
+          "repo": "forge-doctor-data",
+          "stdout_head": "forge-doctor-data doctor                                                       \n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Check           \u2502 Status \u2502 Detail                                           \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+          "verb": "doctor"
+        }
+      ]
+    },
+    "B-azure": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "rc": 2,
+          "repo": "spark-forge-azure",
+          "stdout_head": "",
+          "verb": "status"
+        }
+      ]
+    },
+    "C-api": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "rc": 0,
+          "repo": "api-forge",
+          "stdout_head": "{\n  \"evidence_level\": \"unknown\",\n  \"gaps\": [\n    \"AF-ROOT-NOT-FOUND: project manifest was not discovered\",\n    \"AF-ROOT-NOT-FOUND: workspace manifest was not discovered\"\n  ],\n  \"graph\": null,\n  \"paths\": {\n    \"cache_root\": \"E:\\\\projetos\\\\FORJAS\\\\api-forge\\\\.apiforge\\\\cache\",\n    \"config_path\": null,",
+          "verb": "status"
+        },
+        {
+          "rc": 2,
+          "repo": "forge-doctor-api",
+          "stdout_head": "",
+          "verb": "doctor"
+        },
+        {
+          "rc": 0,
+          "repo": "api-sentinel-forge",
+          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.1  integrations=[{'forge': 'api-forge', 'state': 'unverified', 'mode': 'handoff_file', 'reason': \"apiforge not importable \u2014 impl",
+          "verb": "status"
+        },
+        {
+          "rc": 0,
+          "repo": "code-atlas-forge",
+          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@ac37856657d5 (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
+          "verb": "status"
+        }
+      ]
+    },
+    "D-platform": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "rc": 0,
+          "repo": "platform-forge",
+          "stdout_head": "{\n  \"members\": [\n    \"platform-forge\"\n  ],\n  \"multi_repo\": false,\n  \"root\": \"E:\\\\projetos\\\\FORJAS\\\\platform-forge\",\n  \"store\": {\n    \"artifacts\": 0,\n    \"bytes\": 0\n  },\n  \"workspace\": \"platform-forge\"\n}\n",
+          "verb": "status"
+        }
+      ]
+    },
+    "E-product": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "rc": 0,
+          "repo": "product-forge",
+          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.4\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exists\": true,\n  \"profile\": \"recommended\",\n  \"gateway_profile\": \"balanced\",\n  \"llm_provider\": \"none\",\n  ",
+          "verb": "status"
+        }
+      ]
+    },
+    "context": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "bounded": true,
+        "catalog_bytes_by_forges": {
+          "1": 119671,
+          "3": 126905,
+          "8": 189844,
+          "13": 305748
+        },
+        "manifest_count": 13
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "manifest_bytes": 119671,
+          "repo": "api-forge"
+        },
+        {
+          "manifest_bytes": 1639,
+          "repo": "api-sentinel-forge"
+        },
+        {
+          "manifest_bytes": 5595,
+          "repo": "code-atlas-forge"
+        },
+        {
+          "manifest_bytes": 14802,
+          "repo": "data-sentinel-forge"
+        },
+        {
+          "manifest_bytes": 2489,
+          "repo": "forge-agent-bridge"
+        },
+        {
+          "manifest_bytes": 6717,
+          "repo": "forge-doctor-api"
+        },
+        {
+          "manifest_bytes": 33799,
+          "repo": "forge-doctor-data"
+        },
+        {
+          "manifest_bytes": 5132,
+          "repo": "forge-lens"
+        },
+        {
+          "manifest_bytes": 19293,
+          "repo": "platform-forge"
+        },
+        {
+          "manifest_bytes": 7513,
+          "repo": "product-forge"
+        },
+        {
+          "manifest_bytes": 52675,
+          "repo": "spark-forge-aws"
+        },
+        {
+          "manifest_bytes": 27529,
+          "repo": "spark-forge-azure"
+        },
+        {
+          "manifest_bytes": 8894,
+          "repo": "the-forge"
+        }
+      ]
+    },
+    "federation": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {},
+      "status": "PASS",
+      "steps": [
+        {
+          "cmd": "providers health",
+          "out": "api-forge            ok  surface:cfa892682ea1\napi-sentinel-forge   degraded  surface:8c39124b02aa\necho-forge           ok  surface:0a07cd12ff00\nforge-doctor-api     ok  surface:fc92609e8bcd\nforge-doctor-data    ok  surface:39cf2d922efe\nplatform-forge       ok  surface:4bb0aa837941\nspark-forge-aws      ok  surface:9b2b784674fb\nspark-forge-azure    ok  surface:ae70a7a9e6ab\n",
+          "rc": 0
+        },
+        {
+          "ask_status": "partial",
+          "cmd": "ask --use spark-forge-aws",
+          "limitations": [
+            "no input: expected *artifacts/lakeformation/*.json"
+          ],
+          "producer": {
+            "id": "spark-forge-aws",
+            "version": "0.3.0"
+          },
+          "rc": 0,
+          "result_schema": "theforge/ExecutionResult/v1",
+          "run_id": "20261112T233136Z-e851a0f0"
+        }
+      ]
+    },
+    "lifecycle": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-otp_szhg"
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "gitless": true,
+          "step": "F-gitless-copy"
+        },
+        {
+          "name": null,
+          "step": "F-manifest",
+          "verify": "sentinel_health"
+        },
+        {
+          "rc": 0,
+          "step": "G-offline-cli"
+        },
+        {
+          "manifest_broken": true,
+          "other_files_intact": true,
+          "step": "H-partial-corrupt"
+        },
+        {
+          "preserved": true,
+          "step": "I-user-file"
+        }
+      ]
+    },
+    "mcp": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"text\": \"{\\n  \\\"cached_providers\\\": [\\n    \\\"api-forge\\\",\\n    \\\"api-sentinel-forge\\\",\\n    \\\"echo-forge\\\",\\n    \\\"forge-doctor-api\\\",\\n    \\\"forge-doctor-data\\\",\\n    \\\"platform-forge\\\"",
+          "repo": "the-forge",
+          "tools": 15,
+          "verify": "theforge_status"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"text\": \"{\\n  \\\"status\\\": \\\"unresolved\\\",\\n  \\\"paths\\\": {\\n    \\\"version\\\": 1,\\n    \\\"schema\\\": \\\"apiforge/distribution/v1\\\",\\n    \\\"package_root\\\": \\\"E:\\\\\\\\projetos\\\\\\\\FORJAS\\\\\\\\api-for",
+          "repo": "api-forge",
+          "tools": 154,
+          "verify": "portable_status"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"text\": \"{\\\"database\\\": \\\"absent\\\", \\\"sentinel\\\": {}, \\\"state\\\": \\\"PARTIAL\\\", \\\"unknowns\\\": [\\\"database_absent\\\"], \\\"version\\\": \\\"0.1.1\\\", \\\"workspace_initialized\\\": true}\", \"type\": \"tex",
+          "repo": "api-sentinel-forge",
+          "tools": 4,
+          "verify": "sentinel_health"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"root\\\": \\\"E:\\\\\\\\projetos\\\\\\\\FORJAS\\\\\\\\code-atlas-forge\\\", \\\"repo_id\\\": 12, \\\"snapshot_id\\\": 14, \\\"capabilities\\\": {\\\"strategies\\\": [\\\"lexical\\\", \\\"structural\\",
+          "repo": "code-atlas-forge",
+          "tools": 15,
+          "verify": "atlas_status"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"text\": \"{\\\"engine\\\": \\\"data-sentinel-forge\\\", \\\"version\\\": \\\"0.5.4\\\", \\\"tools\\\": 22, \\\"analyzers\\\": 13, \\\"capabilities\\\": 15}\", \"type\": \"text\"}], \"isError\": false, \"structuredContent\": ",
+          "repo": "data-sentinel-forge",
+          "tools": 22,
+          "verify": "sentinel.status"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"server\\\": \\\"forge-agent-bridge\\\", \\\"version\\\": \\\"0.2.3\\\", \\\"protocol\\\": {\\\"supported_revisions\\\": [\\\"2026-07-28\\\", \\\"2025-11-25\\\", \\\"2025-06-18\\\", \\\"2025-03-2",
+          "repo": "forge-agent-bridge",
+          "tools": 7,
+          "verify": "forge_health"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"text\": \"{\\\"circuit_breakers\\\":0,\\\"health_checks\\\":3,\\\"idempotency\\\":[{\\\"subject\\\":\\\"fields\\\",\\\"verdict\\\":\\\"UNKNOWN\\\"}],\\\"retry_policies\\\":4,\\\"timeouts\\\":3,\\\"unknowns\\\":[]}\", \"type\": \"te",
+          "repo": "forge-doctor-api",
+          "tools": 17,
+          "verify": "doctor.get_reliability"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"series\\\": {}\\n}\"}]}",
+          "repo": "forge-doctor-data",
+          "tools": 14,
+          "verify": "get_execution_baseline"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"hosts\\\": {\\\"claude_code\\\": {\\\"native_tracing\\\": false, \\\"mechanism\\\": \\\"hooks + session JSONL logs\\\", \\\"adapter\\\": \\\"adapters.claude_code (JSONL import \\\\u219",
+          "repo": "forge-lens",
+          "tools": 12,
+          "verify": "lens.capabilities"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"result\\\": {\\\"artifacts\\\": {\\\"argocd\\\": [\\\"config.example.yaml\\\", \\\"evals\\\\\\\\cases\\\\\\\\agent-budget-exhaustion\\\\\\\\case.yaml\\\", \\\"evals\\\\\\\\cases\\\\\\\\agent-conflic",
+          "repo": "platform-forge",
+          "tools": 39,
+          "verify": "platformforge_inspect"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"forge_id\\\": \\\"product-forge\\\", \\\"version\\\": \\\"0.2.4\\\"}\"}]}",
+          "repo": "product-forge",
+          "tools": 17,
+          "verify": "productforge_status"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"content\": [{\"text\": \"{\\n  \\\"glue\\\": \\\"\\\",\\n  \\\"emr\\\": \\\"\\\",\\n  \\\"databricks\\\": \\\"\\\",\\n  \\\"spark\\\": \\\"\\\",\\n  \\\"python\\\": \\\"\\\",\\n  \\\"iceberg\\\": \\\"\\\",\\n  \\\"athena\\\": \\\"\\\",\\n  \\\"photon\\\": \\\"\\\",\\n  \\\"det",
+          "repo": "spark-forge-aws",
+          "tools": 148,
+          "verify": "sparkforge_aws_runtime_detect"
+        },
+        {
+          "call_ok": true,
+          "excerpt": "{\"_meta\": {\"sparkforge_azure/trust\": {\"label\": \"TOOL_OUTPUT\", \"authority\": \"data_only\", \"taint\": \"external\"}}, \"content\": [{\"text\": \"{\\\"_trust\\\": {\\\"authority\\\": \\\"data_only\\\", \\\"label\\\": \\\"TOOL_OUTPU",
+          "repo": "spark-forge-azure",
+          "tools": 18,
+          "verify": "sfa_version"
+        }
+      ]
+    },
+    "portal": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {},
+      "status": "PASS",
+      "steps": [
+        {
+          "adapter": "error",
+          "why": "'NoneType' object has no attribute '__dict__'"
+        },
+        {
+          "path": "forge-portal\\dist\\forge-portal-app\\browser\\index.html",
+          "portal_build": true
+        }
+      ]
+    },
+    "security": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "missing-request-id",
+          "code": "ADAPTER-REQUEST-INVALID",
+          "refused": true
+        },
+        {
+          "check": "undeclared-action",
+          "code": "ADAPTER-ACTION-UNSUPPORTED",
+          "refused": true
+        },
+        {
+          "check": "tampered-manifest",
+          "refused": true,
+          "why": "$.version: required field missing"
+        },
+        {
+          "check": "unknown-mcp-tool",
+          "error": null,
+          "result_head": "{\"content\": [{\"text\": \"Unknown tool: bogus.tool.does-not-exist\", \"type\": \"text\"}], \"isError\": true}"
+        }
+      ]
+    },
+    "standalone": {
+      "env": {
+        "os": "win32",
+        "python": "3.14.6"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "the-forge",
+          "stdout_head": "Workspace:  E:\\projetos\\FORJAS\\the-forge\nProviders:  api-forge, api-sentinel-forge, echo-forge, forge-doctor-api, forge-doctor-data, platform-forge, spark-forge-aws, spark-forge-azure\nRuns:       2 (l",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 1,
+          "repo": "spark-forge-aws",
+          "stdout_head": "{\n  \"checked_at\": \"2026-11-12T23:29:31Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 0\n  },\n  \"forge_id\": \"spark-forge-aws\",\n  \"hosts\": {},\n  \"ledger_entries\": 0,\n  \"schema\": \"forge",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 2,
+          "repo": "spark-forge-azure",
+          "stdout_head": "",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "api-forge",
+          "stdout_head": "{\n  \"evidence_level\": \"unknown\",\n  \"gaps\": [\n    \"AF-ROOT-NOT-FOUND: project manifest was not discovered\",\n    \"AF-ROOT-NOT-FOUND: workspace manifest was not discovered\"\n  ],\n  \"graph\": null,\n  \"paths",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "platform-forge",
+          "stdout_head": "{\n  \"members\": [\n    \"platform-forge\"\n  ],\n  \"multi_repo\": false,\n  \"root\": \"E:\\\\projetos\\\\FORJAS\\\\platform-forge\",\n  \"store\": {\n    \"artifacts\": 0,\n    \"bytes\": 0\n  },\n  \"workspace\": \"platform-forge\"",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "product-forge",
+          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.4\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exis",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "code-atlas-forge",
+          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@ac37856657d5 (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "forge-lens",
+          "stdout_head": "[ok] python>=3.11 3.12.13\n[ok] config parseable \n[ok] data dir exists E:\\projetos\\FORJAS\\forge-lens\\.forge-lens\n[ok] sqlite store readable schema=1.0.0\n       traces=0 spans=0 db=131072B\n[ok] server e",
+          "verb": "doctor"
+        },
+        {
+          "error": null,
+          "rc": 2,
+          "repo": "data-sentinel-forge",
+          "stdout_head": "",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "api-sentinel-forge",
+          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.1  integrations=[{'forge': '",
+          "verb": "status"
+        },
+        {
+          "error": null,
+          "rc": 2,
+          "repo": "forge-doctor-api",
+          "stdout_head": "",
+          "verb": "doctor"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "forge-doctor-data",
+          "stdout_head": "forge-doctor-data doctor                                                       \n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Check           \u2502 Status \u2502 Detail     ",
+          "verb": "doctor"
+        },
+        {
+          "error": null,
+          "rc": 0,
+          "repo": "forge-agent-bridge",
+          "stdout_head": "{\n  \"version\": \"0.2.3\",\n  \"providers_detected\": 4,\n  \"providers\": [\n    {\n      \"id\": \"claude-code\",\n      \"installed\": true,\n      \"auth_state\": \"unauthenticated\"\n    },\n    {\n      \"id\": \"codex\",\n  ",
+          "verb": "status"
+        }
+      ]
+    }
+  },
+  "started": 1794526169.422424,
+  "summary": {
+    "PASS": 12
+  }
+}

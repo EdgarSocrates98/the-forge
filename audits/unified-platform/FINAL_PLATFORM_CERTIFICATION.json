@@ -1,0 +1,292 @@
+{
+  "blocked": [],
+  "dimensions": {
+    "ci_federated": "PASS",
+    "contracts": "PASS",
+    "declared_resources": "PASS",
+    "federated_operations": "PASS",
+    "final_versions_traceable": "PASS",
+    "install_lifecycle": "PASS",
+    "portal_real_services": "PASS",
+    "pypi_npm_publication": "PASS",
+    "security_boundaries": "PASS",
+    "specialists_standalone": "PASS"
+  },
+  "e2e": {
+    "pass": 12,
+    "total": 12
+  },
+  "generated_at": "2026-11-13T02:45:10+00:00",
+  "kind": "forge/final-platform-certification/1",
+  "probe": false,
+  "repos": {
+    "api-forge": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "8baee537fa4bc1b78094ddbfa73856716073eeab",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.3.6",
+      "open_prs": 0,
+      "repo": "api-forge",
+      "tags": [
+        "v0.3.6",
+        "v0.3.5",
+        "v0.3.4"
+      ],
+      "version": "0.3.6"
+    },
+    "api-sentinel-forge": {
+      "branch": "release/v0.1.2",
+      "dirty": false,
+      "exists": true,
+      "head": "1c8064199f0e490df4a3985426b7d433052c154f",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.1.0",
+      "open_prs": 1,
+      "repo": "api-sentinel-forge",
+      "tags": [
+        "v0.1.1",
+        "v0.1.0-rc.2",
+        "v0.1.0-rc.1"
+      ],
+      "version": "0.1.2"
+    },
+    "code-atlas-forge": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "34d9f919b89a1710ab03596a73d2d4ebaf4cae40",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v1.1.4",
+      "open_prs": 0,
+      "repo": "code-atlas-forge",
+      "tags": [
+        "v1.1.4",
+        "v1.1.3",
+        "v1.1.2"
+      ],
+      "version": "1.1.4"
+    },
+    "data-sentinel-forge": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "13e1841b0b97e7a4c9abc103a98b29d6f722e481",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.5.5",
+      "open_prs": 0,
+      "repo": "data-sentinel-forge",
+      "tags": [
+        "v0.5.5",
+        "v0.5.4",
+        "v0.5.3"
+      ],
+      "version": "0.5.5"
+    },
+    "forge-agent-bridge": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "aef05314c00092c4caf9cd29566d63cc49945961",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.2.4",
+      "open_prs": 0,
+      "repo": "forge-agent-bridge",
+      "tags": [
+        "v0.2.4",
+        "v0.2.3",
+        "v0.2.2"
+      ],
+      "version": "0.2.4"
+    },
+    "forge-cli": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "3acaa3a750acf971fcb109161c0c86e222e2360f",
+      "index": {
+        "npm": "UNVERIFIED"
+      },
+      "latest_release": "v0.5.3",
+      "open_prs": 0,
+      "repo": "forge-cli",
+      "tags": [
+        "v0.5.3",
+        "v0.5.2",
+        "v0.5.1"
+      ],
+      "version": "0.5.3"
+    },
+    "forge-doctor-api": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "c0601fbbf935a6681c84efd1dca4594ce2be93c6",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.3.4",
+      "open_prs": 0,
+      "repo": "forge-doctor-api",
+      "tags": [
+        "v0.3.4",
+        "v0.3.3",
+        "v0.3.2"
+      ],
+      "version": "0.3.4"
+    },
+    "forge-doctor-data": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "118158e29f4b8c1b53dbe54429dadf53fc8cf28c",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v1.1.4",
+      "open_prs": 0,
+      "repo": "forge-doctor-data",
+      "tags": [
+        "v1.1.4",
+        "v1.1.3",
+        "v1.1.2"
+      ],
+      "version": "1.1.4"
+    },
+    "forge-lens": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "be7b61012d25de1674092be15df52f48c81c3dfc",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.2.4",
+      "open_prs": 12,
+      "repo": "forge-lens",
+      "tags": [
+        "v0.2.4",
+        "v0.2.3",
+        "v0.2.2"
+      ],
+      "version": "0.2.4"
+    },
+    "forge-portal": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "83854c16a4533b84f1b8b4c7cef91ebd86d05376",
+      "latest_release": "v1.1.3",
+      "open_prs": 0,
+      "repo": "forge-portal",
+      "tags": [
+        "v1.1.3",
+        "v1.1.2",
+        "v1.1.1"
+      ],
+      "version": "1.1.3"
+    },
+    "platform-forge": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "646565273b72702f3f7e78c7d17a4bb954f508eb",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.3.6",
+      "open_prs": 0,
+      "repo": "platform-forge",
+      "tags": [
+        "v0.3.6",
+        "v0.3.5",
+        "v0.3.4"
+      ],
+      "version": "0.3.6"
+    },
+    "product-forge": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "4bed3c02835d1f88d0aff4ae8972a6c46fdbecca",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.2.5",
+      "open_prs": 0,
+      "repo": "product-forge",
+      "tags": [
+        "v0.2.5",
+        "v0.2.4",
+        "v0.2.3"
+      ],
+      "version": "0.2.5"
+    },
+    "spark-forge-aws": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "4811ed26094ae944a7492a4af03376093d8fa507",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.7.8",
+      "open_prs": 0,
+      "repo": "spark-forge-aws",
+      "tags": [
+        "v0.7.8",
+        "v0.7.7",
+        "v0.7.6"
+      ],
+      "version": "0.7.8"
+    },
+    "spark-forge-azure": {
+      "branch": "main",
+      "dirty": false,
+      "exists": true,
+      "head": "2a39929b4044a16a725da1c3f9dadf29bee9a363",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.3.6",
+      "open_prs": 0,
+      "repo": "spark-forge-azure",
+      "tags": [
+        "v0.3.6",
+        "v0.3.5",
+        "v0.3.4"
+      ],
+      "version": "0.3.6"
+    },
+    "the-forge": {
+      "branch": "release/v0.7.7",
+      "dirty": true,
+      "exists": true,
+      "head": "06ddb3c2c5ffdf2797374a2e6c97d10d2b4ec0d7",
+      "index": {
+        "pypi": "UNVERIFIED"
+      },
+      "latest_release": "v0.7.5",
+      "open_prs": 0,
+      "repo": "the-forge",
+      "tags": [
+        "v0.7.6",
+        "v0.7.5",
+        "v0.7.4"
+      ],
+      "version": "0.7.7"
+    }
+  },
+  "verdict": "PRODUCTION READY"
+}

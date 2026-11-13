@@ -6,6 +6,14 @@ The project follows Semantic Versioning while pre-1.0: minor versions may
 introduce new public capability surfaces; patch versions close or harden an
 existing cycle without intentionally breaking the Forge Protocol.
 
+## [0.7.7] - 2026-11-13
+
+### 0.7.7 — Agentic Ecosystem
+
+#### Unified platform release
+
+- Ondas 0-19 artifacts: audits/unified-platform/ (baseline, matrix, ownership, dep-graph, operational E2E 12/12, perf baseline) + Wave 19 certification docs + unified_certify.py.
+
 ## [Unreleased]
 
 ## [0.7.6] - 2026-11-12
