@@ -76,15 +76,31 @@ def adapter_version(theforge: Path, adapter: str) -> str | None:
 
 
 def contract_versions(theforge: Path) -> dict[str, str | None]:
+    """Collect every versioned contract id declared in the codebase.
+
+    Versioned contract names carry their own version (``theforge/X/v1``)
+    — scanning the Python declarations is the authoritative source; the
+    optional ``contracts/*.json`` dir is folded in when it exists."""
     contracts: dict[str, str | None] = {}
     cdir = theforge / "contracts"
     if cdir.is_dir():
-        for f in sorted(cdir.glob("*.json")):
+        for f in sorted(cdir.rglob("*.json")):
             try:
                 doc = json.loads(f.read_text(encoding="utf-8"))
                 contracts[f.name] = doc.get("version") or doc.get("contract_version")
             except Exception:
                 contracts[f.name] = None
+    import re
+    pat = re.compile(r"(?:theforge|forge)/[A-Za-z._-]+/v\d+")
+    for f in sorted((theforge / "src").rglob("*.py")):
+        if "contracts" not in f.parts:
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for name in pat.findall(text):
+            contracts[name] = name.rsplit("/v", 1)[1]
     return contracts
 
 
