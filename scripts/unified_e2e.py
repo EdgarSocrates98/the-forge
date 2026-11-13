@@ -481,15 +481,15 @@ def scenario_bridge() -> None:
             fails.append(f"cli:{verb}")
     py = venv_py("forge-agent-bridge")
     if py:
-        r = subprocess.run(
+        proc = subprocess.run(
             [py, "-m", "pytest", "-q", *BRIDGE_LIFECYCLE_TESTS],
             capture_output=True, text=True, timeout=600,
             encoding="utf-8", errors="replace",
             cwd=str(ROOT / "forge-agent-bridge"))
-        tail = (r.stdout or "").strip().splitlines()[-1] \
-            if r.stdout.strip() else r.stderr[-200:]
-        ok = r.returncode == 0
-        steps.append({"check": "lifecycle-tests", "rc": r.returncode,
+        tail = (proc.stdout or "").strip().splitlines()[-1] \
+            if proc.stdout.strip() else proc.stderr[-200:]
+        ok = proc.returncode == 0
+        steps.append({"check": "lifecycle-tests", "rc": proc.returncode,
                       "result": tail, "ok": ok,
                       "scope": "sessions/approvals/cancel/handoff/audit "
                                "+ mcp protocol/security/isolation"})
