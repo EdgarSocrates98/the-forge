@@ -241,6 +241,25 @@ class TestSelection:
         } - {None}
         assert doc_runs == {b} and a not in doc_runs
 
+    def test_last_orders_by_observed_creation_not_id_suffix(
+        self, tmp_path: Path
+    ) -> None:
+        """Same-second run ids differ only in the random suffix — ``--last``
+        must follow the observed ``created_at``, not lexicographic id order."""
+        forge = tmp_path / ".forge"
+        for rid, created in (
+            ("20260101T000000Z-zzzzzzzz", "2026-01-01T00:00:00.000001Z"),
+            ("20260101T000000Z-aaaaaaaa", "2026-01-01T00:00:00.000002Z"),
+        ):
+            run_dir = forge / "runs" / rid
+            run_dir.mkdir(parents=True)
+            (run_dir / "telemetry.json").write_text(
+                json.dumps({"created_at": created, "spans": []}),
+                encoding="utf-8",
+            )
+        _, summary = telemetry_export.build_otlp_request(forge, last=1)
+        assert summary.runs_exported == ["20260101T000000Z-aaaaaaaa"]
+
 
 class TestCli:
     def test_export_writes_deterministic_file(
