@@ -42,7 +42,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 PY="$(command -v python3 || command -v python || command -v py)"
 if [ -z "$PY" ]; then
-  echo "setup: no python on PATH (need $PYTHON_SPEC)" >&2; exit 2
+  printf '  x setup: FORGE-PYTHON-NOT-FOUND - no python on PATH (need %s)\\n' "$PYTHON_SPEC" >&2
+  printf '    remedy: install Python and reopen the shell\\n' >&2
+  exit 2
 fi
 if [ "${PY##*/}" = "py" ]; then exec "$PY" -3 scripts/forge_bootstrap.py "$@"; fi
 exec "$PY" scripts/forge_bootstrap.py "$@"
@@ -56,7 +58,7 @@ foreach ($c in @("python3", "python", "py")) {
     $cmd = Get-Command $c -ErrorAction SilentlyContinue
     if ($cmd) { $py = $cmd.Source; break }
 }
-if (-not $py) { Write-Error "setup: no python on PATH (need $PYTHON_SPEC)"; exit 2 }
+if (-not $py) { Write-Error "setup: FORGE-PYTHON-NOT-FOUND - no python on PATH (need $PYTHON_SPEC)"; exit 2 }
 if ($py.EndsWith("py.exe")) { & $py -3 scripts/forge_bootstrap.py @args } else { & $py scripts/forge_bootstrap.py @args }
 exit $LASTEXITCODE
 """
@@ -66,6 +68,10 @@ INSTALL_SH = """#!/usr/bin/env bash
 # Works from POSIX shells and native Windows Git Bash.
 # The default installs a built wheel (no checkout dependence). Pass --editable
 # for the development flow (CLI tied to this checkout).
+#
+# Presentation: the animated UI lives in scripts/forge_bootstrap.py (stderr);
+# this wrapper only styles its own pre/post messages. Colors are TTY-gated
+# and honor NO_COLOR / CI / TERM=dumb — piped runs stay plain.
 set -euo pipefail
 
 _forge_is_sourced=0
@@ -75,6 +81,21 @@ fi
 _forge_original_dir=$PWD
 _forge_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 cd "$_forge_root"
+
+# -- decoration (plain when not interactive) -------------------------------
+_f_dim=""; _f_green=""; _f_yellow=""; _f_red=""; _f_reset=""
+if [ -t 1 ] && [ -t 2 ] \\
+    && [ -z "${NO_COLOR:-}" ] && [ -z "${FORGE_NO_UI:-}" ] \\
+    && [ -z "${CI:-}" ] && [ -z "${GITHUB_ACTIONS:-}" ] \\
+    && [ "${TERM:-dumb}" != "dumb" ]; then
+  _f_dim=$'\\033[2m'; _f_green=$'\\033[32m'; _f_yellow=$'\\033[33m'
+  _f_red=$'\\033[31m'; _f_reset=$'\\033[0m'
+fi
+# Marks: Unicode on UTF-8 locales, ASCII otherwise (mojibake-safe).
+_m_ok="OK"; _m_next="->"; _m_plan="o"; _m_fail="x"; _m_dash="-"
+case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
+  *[Uu][Tt][Ff]*|*[Uu][Tt][Ff]8*) _m_ok="✓"; _m_next="→"; _m_plan="◌"; _m_fail="✗"; _m_dash="—" ;;
+esac
 
 _forge_is_git_bash=0
 case "${MSYSTEM:-}:${OSTYPE:-}" in
@@ -97,7 +118,11 @@ for candidate in python3 python py; do
   fi
 done
 if [ -z "$PY" ]; then
-  echo "install: no python on PATH (need $PYTHON_SPEC)" >&2
+  printf '  %s%s%s install: FORGE-PYTHON-NOT-FOUND %s no python on PATH (need %s)\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_m_dash" "$PYTHON_SPEC" >&2
+  printf '    %sremedy:%s install Python and reopen the shell, or run %s --python <exe>%s\\n' \\
+      "$_f_yellow" "$_f_reset" "${BASH_SOURCE[0]}" "$_f_dim" >&2
+  printf '%s\\n' "$_f_reset" >&2
   cd "$_forge_original_dir"
   if [ "$_forge_is_sourced" -eq 1 ]; then return 2; fi
   exit 2
@@ -110,13 +135,19 @@ else
 fi
 if [ "$status" -eq 0 ]; then
   env_file="${XDG_CONFIG_HOME:-$HOME/.config}/forjas/env.sh"
+  # Human guidance goes to stderr: stdout stays pure JSON so
+  # `install.sh --json | jq` is clean end-to-end.
   if [ "$_forge_dry_run" -eq 1 ]; then
-    echo "Install plan complete. No files, variables or registry entries were written."
+    printf '  %s%s%s plan only %s no files, variables or registry entries were written.\\n' \\
+      "$_f_yellow" "$_m_plan" "$_f_reset" "$_m_dash" >&2
   elif [ "$_forge_is_git_bash" -eq 1 ]; then
-    echo "Install complete. Windows user variables saved in HKCU and Git Bash environment saved in: $env_file"
-    echo "Reload current Git Bash with: source '$env_file'"
+    printf '  %s%s%s user variables persisted in HKCU\\\\Environment and %s\\n' \\
+      "$_f_green" "$_m_next" "$_f_reset" "$env_file" >&2
+    printf '  %s%s%s reload this Git Bash: %ssource %s%s\\n' \\
+      "$_f_green" "$_m_next" "$_f_reset" "$_f_dim" "$env_file" "$_f_reset" >&2
   else
-    echo "Install complete. Open a new shell or run: source '$env_file'"
+    printf '  %s%s%s open a new shell, or reload now: %ssource %s%s\\n' \\
+      "$_f_green" "$_m_next" "$_f_reset" "$_f_dim" "$env_file" "$_f_reset" >&2
   fi
   if [ "$_forge_is_sourced" -eq 1 ] && [ -f "$env_file" ]; then
     # A sourced installer can update its caller; an executed child cannot.
@@ -156,6 +187,21 @@ if [ -z "${BASH_VERSION:-}" ]; then
   exit 2
 fi
 set -euo pipefail
+
+# -- decoration (plain when not interactive; honors NO_COLOR/CI) -----------
+_f_dim=""; _f_green=""; _f_yellow=""; _f_red=""; _f_reset=""
+if [ -t 1 ] && [ -t 2 ] \\
+    && [ -z "${NO_COLOR:-}" ] && [ -z "${FORGE_NO_UI:-}" ] \\
+    && [ -z "${CI:-}" ] && [ -z "${GITHUB_ACTIONS:-}" ] \\
+    && [ "${TERM:-dumb}" != "dumb" ]; then
+  _f_dim=$'\\033[2m'; _f_green=$'\\033[32m'; _f_yellow=$'\\033[33m'
+  _f_red=$'\\033[31m'; _f_reset=$'\\033[0m'
+fi
+# Marks: Unicode on UTF-8 locales, ASCII otherwise (mojibake-safe).
+_m_ok="OK"; _m_next="->"; _m_plan="o"; _m_fail="x"; _m_dash="-"
+case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
+  *[Uu][Tt][Ff]*|*[Uu][Tt][Ff]8*) _m_ok="✓"; _m_next="→"; _m_plan="◌"; _m_fail="✗"; _m_dash="—" ;;
+esac
 
 _forge_is_sourced=0
 if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
@@ -220,17 +266,25 @@ else
   done
 fi
 if [ -z "$PY" ]; then
-  echo "install.windows.sh: FORGE-PYTHON-NOT-FOUND — nenhum interpretador em PATH (precisa $PYTHON_SPEC)" >&2
-  echo "  remedio: instale Python e reabra o Git Bash, ou aponte FORGE_PYTHON=<caminho/python.exe>, ou rode ./install.windows.sh --python <exe>" >&2
-  echo "  remedy: install Python and reopen Git Bash, or set FORGE_PYTHON=<python.exe path>, or run ./install.windows.sh --python <exe>" >&2
+  printf '  %s%s%s install.windows.sh: FORGE-PYTHON-NOT-FOUND %s nenhum interpretador em PATH (precisa %s)\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_m_dash" "$PYTHON_SPEC" >&2
+  printf '    %sremedio:%s instale Python e reabra o Git Bash, ou aponte FORGE_PYTHON=<caminho/python.exe>, ou rode ./install.windows.sh --python <exe>\\n' \\
+      "$_f_yellow" "$_f_reset" >&2
+  printf '    %sremedy:%s install Python and reopen Git Bash, or set FORGE_PYTHON=<python.exe path>, or run ./install.windows.sh --python <exe>%s\\n' \\
+      "$_f_yellow" "$_f_reset" "$_f_dim" >&2
+  printf '%s\\n' "$_f_reset" >&2
   cd "$_forge_original_dir"
   if [ "$_forge_is_sourced" -eq 1 ]; then return 2; fi
   exit 2
 fi
 if ! command -v "$PY" >/dev/null 2>&1 && [ ! -x "$PY" ]; then
-  echo "install.windows.sh: FORGE-PYTHON-UNEXECUTABLE — o interpretador apontado nao executa: $PY" >&2
-  echo "  remedio: corrija --python/FORGE_PYTHON ou remova a variavel para a varredura de PATH" >&2
-  echo "  remedy: fix --python/FORGE_PYTHON or unset it to fall back to the PATH scan" >&2
+  printf '  %s%s%s install.windows.sh: FORGE-PYTHON-UNEXECUTABLE %s o interpretador apontado nao executa: %s\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_m_dash" "$PY" >&2
+  printf '    %sremedio:%s corrija --python/FORGE_PYTHON ou remova a variavel para a varredura de PATH\\n' \\
+      "$_f_yellow" "$_f_reset" >&2
+  printf '    %sremedy:%s fix --python/FORGE_PYTHON or unset it to fall back to the PATH scan%s\\n' \\
+      "$_f_yellow" "$_f_reset" "$_f_dim" >&2
+  printf '%s\\n' "$_f_reset" >&2
   cd "$_forge_original_dir"
   if [ "$_forge_is_sourced" -eq 1 ]; then return 2; fi
   exit 2
@@ -240,23 +294,29 @@ ARGS=(--persist-env --allow-download "$@")
 _forge_log="${TMPDIR:-${TMP:-/tmp}}/forge-install-windows.$$.log"
 status=0
 if command -v tee >/dev/null 2>&1; then
-  # tee keeps live output AND lets us lift the FORGE-* kind from the
-  # bootstrap's JSON report on failure.
-  "$PY" "${PY_ARGS[@]}" scripts/forge_bootstrap.py "${ARGS[@]}" 2>&1 | tee "$_forge_log" || status=${PIPESTATUS[0]}
+  # tee on STDOUT ONLY: stderr stays attached to the terminal so the
+  # bootstrap's animated UI still runs, while the log captures the pure
+  # JSON report for FORGE-* kind/detail extraction on failure.
+  "$PY" "${PY_ARGS[@]}" scripts/forge_bootstrap.py "${ARGS[@]}" | tee "$_forge_log" || status=${PIPESTATUS[0]}
 else
-  "$PY" "${PY_ARGS[@]}" scripts/forge_bootstrap.py "${ARGS[@]}" 2>&1 || status=$?
+  "$PY" "${PY_ARGS[@]}" scripts/forge_bootstrap.py "${ARGS[@]}" || status=$?
 fi
 
 if [ "$status" -eq 0 ]; then
   rm -f "$_forge_log"
   env_file="${XDG_CONFIG_HOME:-$HOME/.config}/forjas/env.sh"
+  # Human guidance on stderr — the tee'd stdout stays pure JSON.
   if [ "$_forge_dry_run" -eq 1 ]; then
-    echo "Install plan complete. No files, variables or registry entries were written."
+    printf '  %s%s%s plan only %s no files, variables or registry entries were written.\\n' \\
+      "$_f_yellow" "$_m_plan" "$_f_reset" "$_m_dash" >&2
   elif [ "$_forge_is_git_bash" -eq 1 ]; then
-    echo "Install complete. Windows user variables saved in HKCU\\Environment and Git Bash environment saved in: $env_file"
-    echo "Reload current Git Bash with: source '$env_file'"
+    printf '  %s%s%s user variables persisted in HKCU\\\\Environment and %s\\n' \\
+      "$_f_green" "$_m_next" "$_f_reset" "$env_file" >&2
+    printf '  %s%s%s reload this Git Bash: %ssource %s%s\\n' \\
+      "$_f_green" "$_m_next" "$_f_reset" "$_f_dim" "$env_file" "$_f_reset" >&2
   else
-    echo "Install complete. Open a new shell or run: source '$env_file'"
+    printf '  %s%s%s open a new shell, or reload now: %ssource %s%s\\n' \\
+      "$_f_green" "$_m_next" "$_f_reset" "$_f_dim" "$env_file" "$_f_reset" >&2
   fi
   if [ "$_forge_is_sourced" -eq 1 ] && [ -f "$env_file" ]; then
     # A sourced installer can update its caller; an executed child cannot.
@@ -264,23 +324,39 @@ if [ "$status" -eq 0 ]; then
     . "$env_file"
   fi
 else
+  # Lift the FORGE-* kind/detail. The tee'd stdout log carries THIS run's
+  # JSON report (stdout is piped → always emitted) — primary source. The
+  # persisted receipt is the fallback for the tee-less path, where an
+  # interactive TTY suppresses the stdout JSON.
   _forge_kind=""
   _forge_detail=""
-  if [ -f "$_forge_log" ]; then
-    _forge_kind="$(sed -n 's/.*"kind"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$_forge_log" | tail -n 1)"
-    _forge_detail="$(sed -n 's/.*"detail"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$_forge_log" | tail -n 1)"
-  fi
+  _forge_id="$(sed -n 's/.*"forge_id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' forge.json | head -n 1)"
+  _forge_receipt="${FORGE_HOME_OVERRIDE:-$HOME}/.forge/installations/.${_forge_id}-bootstrap.json"
+  for _src in "$_forge_log" "$_forge_receipt"; do
+    if [ -n "$_src" ] && [ -f "$_src" ]; then
+      _forge_kind="$(sed -n 's/.*"kind"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$_src" | tail -n 1)"
+      _forge_detail="$(sed -n 's/.*"detail"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$_src" | tail -n 1)"
+      if [ -n "$_forge_kind" ]; then break; fi
+    fi
+  done
   rm -f "$_forge_log"
   if [ -n "$_forge_kind" ]; then
-    echo "install.windows.sh: ${_forge_kind} — o bootstrap recusou: ${_forge_detail:-ver o relatorio JSON acima}" >&2
-    echo "install.windows.sh: ${_forge_kind} — bootstrap refused: ${_forge_detail:-see the JSON report above}" >&2
+    printf '  %s%s%s install.windows.sh: %s %s o bootstrap recusou: %s\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_forge_kind" "$_m_dash" "${_forge_detail:-ver o receipt acima}" >&2
+    printf '  %s%s%s install.windows.sh: %s %s bootstrap refused: %s\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_forge_kind" "$_m_dash" "${_forge_detail:-see the receipt above}" >&2
   else
     # Bootstrap crashed without a named refusal (traceback, no JSON).
-    echo "install.windows.sh: FORGE-INSTALL-BOOTSTRAP-FAILED — scripts/forge_bootstrap.py saiu com codigo $status sem recusa nomeada" >&2
-    echo "install.windows.sh: FORGE-INSTALL-BOOTSTRAP-FAILED — scripts/forge_bootstrap.py exited $status with no named refusal" >&2
+    printf '  %s%s%s install.windows.sh: FORGE-INSTALL-BOOTSTRAP-FAILED %s scripts/forge_bootstrap.py saiu com codigo %s sem recusa nomeada\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_m_dash" "$status" >&2
+    printf '  %s%s%s install.windows.sh: FORGE-INSTALL-BOOTSTRAP-FAILED %s scripts/forge_bootstrap.py exited %s with no named refusal\\n' \\
+      "$_f_red" "$_m_fail" "$_f_reset" "$_m_dash" "$status" >&2
   fi
-  echo "  remedio: corrija a causa indicada pelo codigo FORGE-* e reexecute ./install.windows.sh; o receipt fica em ~/.forge/installations/" >&2
-  echo "  remedy: fix the cause named by the FORGE-* code and re-run ./install.windows.sh; the receipt lives under ~/.forge/installations/" >&2
+  printf '    %sremedio:%s corrija a causa indicada pelo codigo FORGE-* e reexecute ./install.windows.sh; o receipt fica em ~/.forge/installations/\\n' \\
+    "$_f_yellow" "$_f_reset" >&2
+  printf '    %sremedy:%s fix the cause named by the FORGE-* code and re-run ./install.windows.sh; the receipt lives under ~/.forge/installations/%s\\n' \\
+    "$_f_yellow" "$_f_reset" "$_f_dim" >&2
+  printf '%s\\n' "$_f_reset" >&2
 fi
 cd "$_forge_original_dir"
 if [ "$_forge_is_sourced" -eq 1 ]; then
@@ -289,13 +365,24 @@ fi
 exit "$status"
 """
 
-INSTALL_PS1 = r"""# Forge account install — wheel runtime + user-scoped environment.
+INSTALL_PS1 = r"""# Forge account install - wheel runtime + user-scoped environment.
 # Persists HKCU variables and can refresh current session when dot-sourced.
 # The default installs a built wheel (no checkout dependence). Pass --editable
 # for the development flow (CLI tied to this checkout).
+#
+# Presentation: the animated UI lives in scripts/forge_bootstrap.py (stderr);
+# this wrapper styles only its own pre/post messages via Write-Host colors
+# (native - works in Windows Terminal, conhost and VS Code alike).
 $ErrorActionPreference = "Stop"
 $isDotSourced = $MyInvocation.InvocationName -eq "."
 $oldLocation = Get-Location
+
+function Write-ForgeLine {
+    param([string]$Mark, [string]$Color, [string]$Text)
+    $plain = -not $Host.UI.SupportsVirtualTerminal -or $env:NO_COLOR -or $env:CI -or $env:FORGE_NO_UI
+    if ($plain) { Write-Host $Text } else { Write-Host "  $Mark " -ForegroundColor $Color -NoNewline; Write-Host $Text }
+}
+
 try {
     Set-Location -LiteralPath $PSScriptRoot
     $py = $null
@@ -308,13 +395,13 @@ try {
             break
         }
     }
-    if (-not $py) { throw "install: no Python executable on PATH (need $PYTHON_SPEC)" }
+    if (-not $py) { throw "install: FORGE-PYTHON-NOT-FOUND - no Python executable on PATH (need $PYTHON_SPEC); remedy: install Python and reopen the terminal, or pass --python <exe>" }
     $installArgs = @("--persist-env", "--allow-download") + $args
     & $py @pyArgs scripts/forge_bootstrap.py @installArgs
     $status = $LASTEXITCODE
     if ($status -eq 0) {
         if ($args -contains "--dry-run") {
-            Write-Host "Install plan complete. No files, variables or registry entries were written."
+            Write-ForgeLine "o" "Yellow" "plan only - no files, variables or registry entries were written."
             return
         }
         # Bootstrap writes HKCU. Copy canonical variables into this process too;
@@ -327,12 +414,12 @@ try {
             if ($userEnv.Contains($name)) { Set-Item -Path ("Env:" + $name) -Value ([string]$userEnv[$name]) }
         }
         $envFile = Join-Path $(if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $HOME ".config" }) "forjas\env.sh"
-        Write-Host "Install complete. User variables persisted in HKCU:\Environment."
-        Write-Host "Open a new terminal. Git Bash environment file: $envFile"
-        Write-Host "Dot-source to refresh current PowerShell session: .\install.ps1"
+        Write-ForgeLine ">" "Green" "user variables persisted in HKCU:\Environment"
+        Write-ForgeLine ">" "Green" "open a new terminal - Git Bash env file: $envFile"
+        Write-ForgeLine ">" "Green" "refresh this session: . .\install.ps1"
     }
 } catch {
-    Write-Error $_
+    Write-ForgeLine "x" "Red" "install: $_"
     $status = 2
 } finally {
     Set-Location $oldLocation
@@ -414,6 +501,11 @@ def vendor(
         if CANON_CONTEXT.exists():
             ctx_sha = _sha(CANON_CONTEXT.read_bytes())[:16]
             put(f"{installkit_pkg}/_forgecontext.py", _vendored(CANON_CONTEXT, ctx_sha))
+            # Same lockstep rule as forge_installkit.py: repos carrying the
+            # adapter copy at scripts/forge_context.py drift-gate it against
+            # <pkg>/_forgecontext.py byte-wise.
+            if (repo / "scripts" / "forge_context.py").exists():
+                put("scripts/forge_context.py", _vendored(CANON_CONTEXT, ctx_sha))
 
     if check:
         for rel in drifted:

@@ -360,6 +360,95 @@ def test_dist_mismatch_refusal_redacts_userinfo(tmp_path, capsys):
     assert "https://***@h/x.whl" in out
 
 
+# ---------------------------------------------------------------------------
+# Presentation layer (_Ux): stderr UI vs stdout JSON contract
+# ---------------------------------------------------------------------------
+
+
+def test_ui_disabled_under_capsys_emits_no_ansi(tmp_path, monkeypatch, capsys):
+    """Non-TTY runs keep stderr decoration-free — CI logs stay plain."""
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    code = fb.run(["--repo", str(repo), "--python", sys.executable])
+    cap = capsys.readouterr()
+    assert code == 0
+    assert "\x1b[" not in cap.err
+    # stdout is the pure JSON receipt
+    json.loads(cap.out[cap.out.index("{") :])
+
+
+def test_ui_forced_renders_banner_and_stepper(tmp_path, monkeypatch, capsys):
+    """FORGE_BOOTSTRAP_UI=always exercises the rich path even without a TTY:
+    banner + numbered steps + closing panel land on stderr."""
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    monkeypatch.setenv("FORGE_BOOTSTRAP_UI", "always")
+    code = fb.run(["--repo", str(repo), "--python", sys.executable])
+    cap = capsys.readouterr()
+    assert code == 0
+    assert "\x1b[" in cap.err
+    assert "spark-forge-aws" in cap.err
+    assert "[1/" in cap.err and "[7/" not in cap.err  # no persist-env → 6 steps
+    assert "install complete" in cap.err
+    json.loads(cap.out[cap.out.index("{") :])  # stdout contract untouched
+
+
+def test_ui_forced_dry_run_marks_stages_planned(tmp_path, monkeypatch, capsys):
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    monkeypatch.setenv("FORGE_BOOTSTRAP_UI", "always")
+    code = fb.run(["--repo", str(repo), "--python", sys.executable, "--dry-run"])
+    cap = capsys.readouterr()
+    assert code == 0
+    assert cap.err.count("planned") == 6
+    assert "install plan" in cap.err
+
+
+def test_ui_forced_refusal_renders_panel(tmp_path, monkeypatch, capsys):
+    """A typed refusal shows kind + detail + remedy on stderr."""
+    monkeypatch.setenv("FORGE_BOOTSTRAP_UI", "always")
+    code = fb.run(["--repo", str(tmp_path)])  # no forge.json
+    cap = capsys.readouterr()
+    assert code == 2
+    assert "FORGE-INSTALL-NO-CONFIG" in cap.err
+    assert "install refused" in cap.err
+    assert "remedy" in cap.err
+
+
+def test_ui_quiet_suppresses_all_decoration(tmp_path, monkeypatch, capsys):
+    """--quiet keeps stdout pure JSON and stderr silent — full CI mode."""
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    monkeypatch.setenv("FORGE_BOOTSTRAP_UI", "always")
+    code = fb.run(["--repo", str(repo), "--python", sys.executable, "--quiet"])
+    cap = capsys.readouterr()
+    assert code == 0
+    assert "\x1b[" not in cap.err
+    assert "[forge-bootstrap]" not in cap.err
+
+
+def test_plain_flag_disables_ui(tmp_path, monkeypatch, capsys):
+    repo = _gitless_forge(tmp_path / "src")
+    _stub_stages(monkeypatch, tmp_path)
+    monkeypatch.setenv("FORGE_BOOTSTRAP_UI", "always")
+    code = fb.run(["--repo", str(repo), "--python", sys.executable, "--plain"])
+    cap = capsys.readouterr()
+    assert code == 0
+    assert "\x1b[" not in cap.err
+
+
+def test_remedy_table_covers_bootstrap_kinds():
+    """Every refusal kind the bootstrap can raise has a remediation line —
+    no dead ends in the refusal panel."""
+    import inspect
+    import re as _re
+
+    src = inspect.getsource(fb)
+    kinds = set(_re.findall(r'Refusal\("([A-Z0-9-]+)"', src))
+    missing = kinds - set(fb._REFUSAL_REMEDIES)
+    assert not missing, f"refusal kinds without remedy: {missing}"
+
+
 def test_smoke_failure_never_writes_installation(tmp_path, monkeypatch, capsys):
     """Smoke FAIL → FORGE-INSTALL-VERIFY-FAILED antes do register:
     nenhum manifesto em installations/, nenhuma etapa 'register' no report."""
