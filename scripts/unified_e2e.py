@@ -306,8 +306,9 @@ def mcp_session(repo: str, extra_calls: list[dict[str, Any]] | None = None) -> d
                 continue
             if "error" in resp:
                 out["extra_error"] = str(resp["error"])[:200]
+                out["extra_head"] = resp.get("error")
             else:
-                out["extra_head"] = json.dumps(resp.get("result"))[:400]
+                out["extra_head"] = resp.get("result")
         return out
     finally:
         try:
@@ -808,7 +809,10 @@ def verify_refusal(resp: dict[str, Any], *, code: str,
     the response must carry the forge/v1 envelope, an expected status, the
     expected typed error code and field, and an empty payload (no leaked
     side-effect results). Every dimension is recorded for audit."""
-    err = resp.get("error") or {}
+    raw_err = resp.get("error")
+    # transport-level errors surface as plain strings — a string error is
+    # NOT a typed refusal, it is recorded as such (fail-closed).
+    err: dict[str, Any] = raw_err if isinstance(raw_err, dict) else {}
     dims = {
         "envelope": resp.get("kind") == "Response"
         and resp.get("protocol") == "forge/v1",
@@ -819,6 +823,7 @@ def verify_refusal(resp: dict[str, Any], *, code: str,
         "no_payload_leak": not resp.get("payload"),
         "observed_code": err.get("code"),
         "observed_field": err.get("field"),
+        "untyped_error": raw_err if isinstance(raw_err, str) else None,
     }
     dims["refused"] = all(
         dims[k] for k in
@@ -1172,18 +1177,43 @@ def scenario_federation() -> None:
         if doc:
             prov = doc.get("provenance") or {}
             child_tasks = prov.get("delegation_tasks") or []
+            executed = [e for e in (doc.get("entries") or [])
+                        if e.get("delegation_stage") == "COMPLETED"]
+            # When picks resolve to Forge-Protocol-only capabilities the
+            # governed delegation is honestly `prepared` (no argv child) —
+            # the chain then binds receipt+plan hash; executed children
+            # additionally require their delegation task ids.
             receipt_ok = (doc.get("correlation_id") == corr
-                          and len(child_tasks) >= 1
-                          and bool(prov.get("plan_sha256")))
+                          and bool(prov.get("plan_sha256"))
+                          and (not executed or bool(child_tasks)))
             steps.append({"check": "correlation-chain", "ok": receipt_ok,
                           "receipt": str(f.name) if doc else None,
                           "child_tasks": child_tasks,
+                          "entries_prepared": sum(
+                              1 for e in (doc.get("entries") or [])
+                              if e.get("status") == "prepared"),
+                          "entries_executed": len(executed),
                           "plan_sha256": (prov.get("plan_sha256") or "")[:16]})
         else:
             steps.append({"check": "correlation-chain", "ok": False,
                           "why": "no persisted orchestration receipt found"})
         if not receipt_ok:
             fails.append("correlation-chain")
+
+        # P0-004 — artifact links: each executed provider's run must leave a
+        # recoverable run receipt under the workspace (.forge/runs/<id>).
+        runs_dir = ws / ".forge" / "runs"
+        child_ids = [st.get("run_id") for st in steps
+                     if str(st.get("check", "")).startswith("execute:")
+                     and st.get("run_id")]
+        missing_runs = [rid for rid in child_ids
+                        if not (runs_dir / rid).is_dir()]
+        links_ok = bool(child_ids) and not missing_runs
+        steps.append({"check": "run-receipt-links", "ok": links_ok,
+                      "child_run_ids": child_ids,
+                      "missing_receipts": missing_runs})
+        if not links_ok:
+            fails.append("run-receipt-links")
 
         # Onda 8.4 — Lens correlation: no live telemetry emitter is wired
         # between the-forge and forge-lens today; named state, never faked.
