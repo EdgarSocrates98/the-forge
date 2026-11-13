@@ -51,6 +51,18 @@ OWNERSHIP = {
     "deterministic data diagnostics": "forge-doctor-data",
 }
 
+# Onda 4: honest role declaration. Forge-Protocol providers MUST ship a
+# forge.agentic.json; host/tooling repos declare their non-provider role so
+# "no manifest" is a named state with justification — never an unexplained
+# gap and never a reason to fabricate a SpecialistAgenticManifest.
+PROVIDER_ROLES: dict[str, str] = {r: "forge-protocol-provider" for r in REPOS}
+HOST_ROLES: dict[str, str] = {
+    "forge-cli": "installer CLI (npm) — not a Forge-Protocol provider",
+    "forge-portal": "Portal UI host (Angular) — not a Forge-Protocol provider",
+}
+for _h in HOST_ROLES:
+    PROVIDER_ROLES.pop(_h)
+
 DEP_EDGES = {
     "the-forge": ["forge.agentic.json contracts of all specialists"],
     "forge-cli": ["installkit (canonical: the-forge)", "registry manifests"],
@@ -75,6 +87,25 @@ def git(root: Path, *args: str) -> str:
     r = subprocess.run(["git", "-C", str(root), *args],
                        capture_output=True, text=True, timeout=30)
     return r.stdout.strip()
+
+
+def declared_requires_python(repo: Path) -> str | None:
+    """Real ``requires-python`` from pyproject / package engines — never `?`."""
+    pp = repo / "pyproject.toml"
+    if pp.is_file():
+        for line in pp.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.strip().startswith("requires-python"):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    pkg = repo / "package.json"
+    if pkg.is_file():
+        try:
+            eng = (json.loads(pkg.read_text(encoding="utf-8"))
+                   .get("engines") or {})
+            if eng.get("node"):
+                return f"node {eng['node']}"
+        except Exception:  # noqa: BLE001
+            pass
+    return None
 
 
 def declared_version(repo: Path) -> str | None:
@@ -115,11 +146,48 @@ def manifest_resources(repo: Path) -> Counter[str]:
     return Counter()
 
 
+def resolve_workspace_root(root: Path) -> Path:
+    """Resolve the workspace directory that contains the 15 checkouts.
+
+    P1-001 root cause: running from inside a repo (e.g. `the-forge/`) made
+    `root/<name>` miss every sibling and the baseline recorded
+    `exists: false` for all 15 repos — silently. Resolution rules:
+
+    1. explicit `--root` pointing at the workspace → use as-is;
+    2. `root` is itself one of the checkouts (basename in REPOS) → parent;
+    3. `root` contains most of the checkouts → root;
+    4. `root.parent` contains more checkouts than `root` → parent.
+    """
+    root = root.resolve()
+    present = sum(1 for n in REPOS if (root / n).is_dir())
+    if root.name in REPOS and (root.parent / root.name).is_dir():
+        parent_hits = sum(1 for n in REPOS if (root.parent / n).is_dir())
+        if parent_hits > present:
+            return root.parent
+    parent_hits = sum(1 for n in REPOS if (root.parent / n).is_dir())
+    if parent_hits > present:
+        return root.parent
+    return root
+
+
 def main() -> int:
     root = Path.cwd()
     argv = sys.argv[1:]
     if "--root" in argv:
         root = Path(argv[argv.index("--root") + 1])
+    root = resolve_workspace_root(root)
+    found = sum(1 for n in REPOS if (root / n).is_dir())
+    if found == 0:
+        print(
+            f"baseline: FATAL — nenhum dos {len(REPOS)} checkouts existe em {root}; "
+            "recusando gravar baseline vazio",
+            file=sys.stderr,
+        )
+        return 2
+    if found < len(REPOS):
+        missing = [n for n in REPOS if not (root / n).is_dir()]
+        print(f"baseline: WARN — {found}/{len(REPOS)} checkouts em {root}; ausentes: {missing}",
+              file=sys.stderr)
     out = root / "audits" / "unified-platform"
     out.mkdir(parents=True, exist_ok=True)
 
@@ -137,11 +205,14 @@ def main() -> int:
                 head=head,
                 default_branch="main",
                 version=declared_version(repo),
+                requires_python=declared_requires_python(repo),
                 latest_tags=tags,
                 dirty=bool(git(repo, "status", "--porcelain")),
                 resources=dict(manifest_resources(repo)),
                 has_manifest=(repo / "forge.agentic.json").exists()
                 or any(repo.glob("src/*/forge.agentic.json")),
+                role=PROVIDER_ROLES.get(name),
+                role_justification=HOST_ROLES.get(name),
             )
         baseline["repos"][name] = entry  # type: ignore[index]
         group = next((g for g, ns in GROUPS.items() if name in ns), "?")
