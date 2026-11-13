@@ -248,7 +248,7 @@ def test_describe_without_replay_refuses_when_the_specialist_is_absent() -> None
 
 def test_snapshot_shape_and_canonical_encoding() -> None:
     snapshot = _snapshot()
-    assert snapshot["specialist_version"] == "0.2.0"
+    assert snapshot["specialist_version"] == "0.3.4"
     assert snapshot["provenance"] == "recorded"
     assert snapshot["recorded_at"]
     assert snapshot["protocol_version"] == 2

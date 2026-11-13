@@ -31,6 +31,14 @@ on:
         description: "forge-doctor-api ref to check (default: main)"
         required: false
         default: "main"
+      spark_azure_ref:
+        description: "spark-forge-azure ref to check (default: main)"
+        required: false
+        default: "main"
+      platform_ref:
+        description: "platform-forge ref to check (default: main)"
+        required: false
+        default: "main"
 
 permissions:
   contents: read
@@ -89,6 +97,24 @@ jobs:
           token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
           persist-credentials: false
 
+      - name: Checkout spark-forge-azure
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/spark-forge-azure
+          ref: ${{ inputs.spark_azure_ref || 'main' }}
+          path: siblings/spark-forge-azure
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout platform-forge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/platform-forge
+          ref: ${{ inputs.platform_ref || 'main' }}
+          path: siblings/platform-forge
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
       - name: Set up Python 3.12 (API Forge)
         id: py312
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
@@ -138,6 +164,22 @@ jobs:
           .venv-da/bin/python -m pip install --upgrade pip
           .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
 
+      - name: Spark Forge Azure venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-spark-azure
+          .venv-spark-azure/bin/python -m pip install --upgrade pip
+          .venv-spark-azure/bin/python -m pip install ./siblings/spark-forge-azure ./adapters/sparkforge_azure
+
+      - name: Platform Forge venv (specialist main + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-platform
+          .venv-platform/bin/python -m pip install --upgrade pip
+          .venv-platform/bin/python -m pip install ./siblings/platform-forge ./adapters/platformforge
+
       # theforge provider check -- <argv> — conformance over the live adapter.
       # Absolute interpreter paths: execute/handoff/refusal checks spawn the
       # provider from a fresh temp cwd, so a relative argv cannot be resolved.
@@ -152,3 +194,9 @@ jobs:
 
       - name: Conformance — Doctor API adapter
         run: python -m theforge provider check -- "$PWD/.venv-da/bin/python" -m theforge_doctorapi
+
+      - name: Conformance — Spark Forge Azure adapter
+        run: python -m theforge provider check -- "$PWD/.venv-spark-azure/bin/python" -m theforge_sparkforge_azure
+
+      - name: Conformance — Platform Forge adapter
+        run: python -m theforge provider check -- "$PWD/.venv-platform/bin/python" -m theforge_platformforge

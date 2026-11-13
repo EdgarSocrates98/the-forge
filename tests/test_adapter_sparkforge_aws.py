@@ -217,7 +217,7 @@ def test_exclusions_are_listed_in_limitations(
     assert any(
         "sparkforge_analyze_call_graph" in line and "facts" in line for line in manifest.limitations
     )
-    assert any("0.5.0" in line and "native_catalog.json" in line for line in manifest.limitations)
+    assert any("0.7.8" in line and "native_catalog.json" in line for line in manifest.limitations)
 
 
 def test_every_recorded_tool_has_a_classification(snapshot: dict[str, Any]) -> None:
@@ -435,7 +435,7 @@ def test_replay_recording_prefers_the_error_recording(tmp_path: Path) -> None:
 
 def test_recorded_snapshot_has_origin_version_and_tool_surface(snapshot: dict[str, Any]) -> None:
     assert set(snapshot) == {"specialist_version", "recorded_at", "tools"}
-    assert snapshot["specialist_version"] == "0.5.0"
+    assert snapshot["specialist_version"] == "0.7.8"
     assert len(snapshot["recorded_at"]) == 10  # YYYY-MM-DD (UTC)
     assert len(snapshot["tools"]) >= 143
     for name, entry in snapshot["tools"].items():
