@@ -34,6 +34,7 @@ DOMAIN_SCENARIOS = ("A-aws", "B-azure", "C-api", "D-platform", "E-product",
 FED_SCENARIOS = ("federation-routed", "federation-delegated",
                  "federation-multidomain", "federation-ambiguous",
                  "federation-partial")
+INTEGRATION_SCENARIOS = ("mcp", "bridge")
 
 
 @dataclass
@@ -147,20 +148,49 @@ def _steps_ok(s: dict[str, Any] | None, *, require_all: bool = True) -> CheckRes
     return CheckResult("steps:ok", True)
 
 
+REQUIRED_LOCK_REPOS = 15
+
+
 def _lock_ok(lock: dict[str, Any] | None,
              states: dict[str, dict[str, Any]]) -> list[CheckResult]:
-    """Evidence freshness: SHAs recorded in the lock must equal live HEADs —
-    stale evidence is rejected (Onda 1.4)."""
+    """Evidence freshness + completeness (P1-001): the lock must carry
+    exactly the 15 canonical entries, each with sha+version+manifest
+    checksums, non-empty adapter/contract version maps, and SHAs equal to
+    live HEADs — stale or partial evidence is rejected (Onda 1.4)."""
     if not isinstance(lock, dict) or not lock:
         return [CheckResult("lock:missing", False, "certification-lock.json absent")]
     repos = lock.get("repos")
     if not isinstance(repos, dict) or not repos:
         return [CheckResult("lock:repos", False, "lock has no repo entries")]
     checks: list[CheckResult] = []
+    checks.append(CheckResult(
+        "lock:exact-15", len(repos) == REQUIRED_LOCK_REPOS,
+        f"{len(repos)}/{REQUIRED_LOCK_REPOS} canonical entries"))
     missing = [r for r, e in repos.items()
                if not isinstance(e, dict) or not e.get("exists")]
     checks.append(CheckResult("lock:coverage", not missing,
                               f"missing checkouts: {missing}" if missing else "15/15"))
+    incomplete = [r for r, e in repos.items()
+                  if isinstance(e, dict) and e.get("exists")
+                  and not (e.get("sha") and e.get("version")
+                           and e.get("manifest_checksums"))]
+    checks.append(CheckResult(
+        "lock:fields", not incomplete,
+        f"entries missing sha/version/manifest_checksums: {incomplete}"
+        if incomplete else "all fields"))
+    adapters = lock.get("adapters")
+    unversioned = ([a for a, v in adapters.items() if not v]
+                   if isinstance(adapters, dict) else ["<absent>"])
+    checks.append(CheckResult(
+        "lock:adapters", isinstance(adapters, dict)
+        and bool(adapters) and not unversioned,
+        f"unversioned: {unversioned}" if unversioned else
+        f"{len(adapters) if isinstance(adapters, dict) else 0} adapters"))
+    contracts = lock.get("contracts")
+    checks.append(CheckResult(
+        "lock:contracts", isinstance(contracts, dict) and bool(contracts),
+        f"{len(contracts)} contract versions" if isinstance(contracts, dict)
+        else "absent"))
     drifted = []
     for r, e in repos.items():
         if not isinstance(e, dict) or not e.get("exists"):
@@ -171,6 +201,31 @@ def _lock_ok(lock: dict[str, Any] | None,
     checks.append(CheckResult("lock:no-drift", not drifted,
                               f"drifted: {drifted}" if drifted else "clean"))
     return checks
+
+
+def _e2e_freshness(e2e: dict[str, Any],
+                   lock: dict[str, Any] | None) -> list[CheckResult]:
+    """Onda 1.4 — the E2E's recorded repo_shas must equal the lock SHAs:
+    an E2E executed on older commits can never certify the locked state."""
+    if not isinstance(lock, dict) or not lock:
+        return [CheckResult("e2e:freshness", False, "no lock to bind against")]
+    lshas = {r: (e or {}).get("sha") for r, e in
+             (lock.get("repos") or {}).items()
+             if isinstance(e, dict) and e.get("exists")}
+    seen: dict[str, str] = {}
+    for sc in (e2e.get("scenarios") or {}).values():
+        if isinstance(sc, dict):
+            seen.update({r: s for r, s in (sc.get("repo_shas") or {}).items()
+                         if s})
+    stale = sorted(r for r, s in seen.items()
+                   if lshas.get(r) and s != lshas[r])
+    missing = sorted(r for r in lshas if r not in seen)
+    return [CheckResult("e2e:sha-binding", not stale,
+                        f"scenarios ran on stale SHAs: {stale}"
+                        if stale else "all bound"),
+            CheckResult("e2e:sha-coverage", not missing,
+                        f"repos never recorded by E2E: {missing}"
+                        if missing else "all recorded")]
 
 
 def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
@@ -246,6 +301,29 @@ def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
         g.required_checks.append(CheckResult(
             "resources:coverage", not gap,
             f"checkouts not inventoried: {gap}" if gap else "all"))
+        # P1-005 — functional integrity: every advertised unit resolved,
+        # readable, non-empty, inside repo bounds; duplicates surfaced.
+        broken, escaped = [], []
+        for r, e in inv.items():
+            if not isinstance(e, dict) or not e.get("exists"):
+                continue
+            for kind, ke in (e.get("resources") or {}).items():
+                f = (ke or {}).get("functional")
+                if f is None:
+                    broken.append(f"{r}:{kind} (no functional pass)")
+                    continue
+                broken += [f"{r}:{kind} {b}"
+                           for b in (f.get("broken") or [])]
+                escaped += [f"{r}:{kind} {b}"
+                            for b in (f.get("escaped") or [])]
+        g.required_checks.append(CheckResult(
+            "resources:functional", not broken,
+            f"broken/unverified units: {broken[:10]}"
+            if broken else "all units resolved+readable"))
+        g.required_checks.append(CheckResult(
+            "resources:containment", not escaped,
+            f"path escapes: {escaped[:10]}"
+            if escaped else "no symlink escapes"))
     gates.append(g.finish())
 
     # ---- install_lifecycle ----------------------------------------------
@@ -274,6 +352,10 @@ def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
               "5 federation sub-scenarios PASS incl. >=2 executed providers",
               e2e, prov, ts)
     for name in FED_SCENARIOS:
+        g.required_checks.append(_scenario_ok(_scenario(e2e, name)))
+    # Onda 8 — MCP handshake/tools + bridge session lifecycle are part of
+    # the federated-operations contract, not optional extras.
+    for name in INTEGRATION_SCENARIOS:
         g.required_checks.append(_scenario_ok(_scenario(e2e, name)))
     multi = _scenario(e2e, "federation-multidomain")
     if isinstance(multi, dict) and multi.get("status") == "PASS":
@@ -345,6 +427,22 @@ def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
             f"ci:{wf}", info.get("conclusion") == "success",
             f"last run conclusion={info.get('conclusion')}, "
             f"ref={info.get('ref')}"))
+        # P1-002 — CI bound to the locked commit, not just last-green:
+        # the run's headSha must equal the lock's the-forge sha.
+        lock_sha = (((lock or {}).get("repos") or {})
+                    .get("the-forge") or {}).get("sha")
+        g.required_checks.append(CheckResult(
+            f"ci:{wf}:sha-binding",
+            bool(lock_sha) and info.get("sha") == lock_sha,
+            f"run sha={str(info.get('sha'))[:12]} vs lock "
+            f"{str(lock_sha)[:12]}"))
+        jobs = info.get("jobs") or {}
+        failed_jobs = [j for j, st in jobs.items()
+                       if st in ("failure", "cancelled", "timed_out")]
+        g.required_checks.append(CheckResult(
+            f"ci:{wf}:jobs", bool(jobs) and not failed_jobs,
+            f"failed/cancelled jobs: {failed_jobs}" if failed_jobs
+            else f"{len(jobs)} jobs executed"))
     gates.append(g.finish())
 
     # ---- final_versions_traceable ------------------------------------------
@@ -354,11 +452,25 @@ def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
               "certification-lock clean + every repo version+tag+release",
               {"lock": lock, "states": states}, prov, ts)
     g.required_checks.extend(_lock_ok(lock, states))
+    g.required_checks.extend(_e2e_freshness(e2e, lock))
     untraceable = [r for r, s in states.items()
                    if s.get("exists") and not (s.get("version") and s.get("tags"))]
     g.required_checks.append(CheckResult(
         "versions:complete", not untraceable,
         f"repos lacking version/tag: {untraceable}" if untraceable else "all"))
+    # Onda 1.4 — version trinity: baseline == lock == live state per repo.
+    diverged = []
+    for r, s in states.items():
+        if not s.get("exists"):
+            continue
+        bv = ((baseline.get("repos") or {}).get(r) or {}).get("version")
+        lv = (((lock or {}).get("repos") or {}).get(r) or {}).get("version")
+        sv = s.get("version")
+        if sv and ((bv and bv != sv) or (lv and lv != sv)):
+            diverged.append(f"{r}(state={sv},baseline={bv},lock={lv})")
+    g.required_checks.append(CheckResult(
+        "versions:trinity", not diverged,
+        f"version divergence: {diverged}" if diverged else "all equal"))
     gates.append(g.finish())
 
     # ---- pypi_npm_publication -----------------------------------------------

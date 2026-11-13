@@ -158,6 +158,54 @@ ADVERSARIAL: list[tuple[str, M, str]] = [
     ("index-not-published", _index("NOT_PUBLISHED"),
      "pypi_npm_publication"),
     ("index-unverified", _index("UNVERIFIED"), "pypi_npm_publication"),
+    # --- Onda 2 extension: SHA binding, jobs, lock completeness ---
+    ("e2e-stale-sha",
+     lambda e: [s["repo_shas"].update({"forge-cli": "deadbeef"})
+                for s in e["e2e"]["scenarios"].values()],
+     "final_versions_traceable"),
+    ("e2e-repo-unrecorded",
+     lambda e: [s["repo_shas"].pop("forge-lens", None)
+                for s in e["e2e"]["scenarios"].values()],
+     "final_versions_traceable"),
+    ("ci-wrong-sha",
+     lambda e: e["ci_runs"]["ecosystem-real"].update(
+         {"sha": "notthelockedsha"}), "ci_federated"),
+    ("ci-job-failed",
+     lambda e: e["ci_runs"]["release-compat"]["jobs"].update(
+         {"core": "failure"}), "ci_federated"),
+    ("ci-jobs-absent",
+     lambda e: e["ci_runs"]["ecosystem-real"].update({"jobs": {}}),
+     "ci_federated"),
+    ("lock-adapters-emptied",
+     lambda e: e["lock"].update({"adapters": {}}),
+     "final_versions_traceable"),
+    ("lock-contracts-removed",
+     lambda e: e["lock"].pop("contracts", None),
+     "final_versions_traceable"),
+    ("lock-entry-fields-stripped",
+     lambda e: e["lock"]["repos"][REPO].pop("manifest_checksums", None),
+     "final_versions_traceable"),
+    ("lock-14-of-15",
+     lambda e: e["lock"]["repos"].pop("forge-doctor-data", None),
+     "final_versions_traceable"),
+    ("version-trinity-diverged",
+     lambda e: e["baseline"]["repos"][REPO].update(
+         {"version": "9.9.9"}), "final_versions_traceable"),
+    ("state-version-removed",
+     lambda e: e["states"]["forge-portal"].pop("version", None),
+     "final_versions_traceable"),
+    ("resources-broken-unit",
+     lambda e: e["inventory"]["repos"][REPO]["resources"]["skill"]
+         ["functional"].update({"broken": ["skill/x (0 bytes)"]}),
+     "declared_resources"),
+    ("resources-symlink-escape",
+     lambda e: e["inventory"]["repos"][REPO]["resources"]["skill"]
+         ["functional"].update({"escaped": ["skills/../etc"]}),
+     "declared_resources"),
+    ("resources-no-functional-pass",
+     lambda e: e["inventory"]["repos"][REPO]["resources"]["skill"]
+         .pop("functional", None),
+     "declared_resources"),
     # --- honesty ---
     ("summary-lies-pass", _summary_lie(), "specialists_standalone"),
 ]
@@ -178,8 +226,9 @@ def test_adversarial_blocks_production_ready(
         f"expected gate '{gate_id}' to catch '{name}', got {g}")
 
 
-def test_adversarial_count_is_at_least_30() -> None:
-    assert len(ADVERSARIAL) >= 30
+def test_adversarial_count_is_at_least_45() -> None:
+    """Onda 2 demands ≥45 named negative cases."""
+    assert len(ADVERSARIAL) >= 45
 
 
 def test_pristine_bundle_passes() -> None:

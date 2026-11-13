@@ -20,18 +20,23 @@ from certify_gates import CheckResult, evaluate_gates, gates_report, verdict  # 
 
 TS = "2026-01-01T00:00:00+00:00"
 REPO = "the-forge"
+ALL_REPOS = (REPO, "forge-cli", "forge-portal", "forge-agent-bridge",
+             "spark-forge-aws", "spark-forge-azure", "api-forge",
+             "platform-forge", "product-forge", "code-atlas-forge",
+             "forge-lens", "data-sentinel-forge", "api-sentinel-forge",
+             "forge-doctor-api", "forge-doctor-data")
 
 
 def _states(head: str = "abc123") -> dict:
-    return {REPO: {"repo": REPO, "exists": True, "head": head,
-                   "version": "1.0.0", "tags": ["v1.0.0"],
-                   "index": {"pypi": "PUBLISHED"}}}
+    return {r: {"repo": r, "exists": True, "head": head,
+                "version": "1.0.0", "tags": ["v1.0.0"],
+                "index": {"pypi": "PUBLISHED"}} for r in ALL_REPOS}
 
 
 def _scenario(status: str = "PASS", **over) -> dict:
     s = {"status": status, "steps": [{"check": "x", "ok": True}],
          "commands": ["cmd"], "environment": {}, "os": "Windows",
-         "python": "3.11", "repo_shas": {REPO: "abc123"},
+         "python": "3.11", "repo_shas": {r: "abc123" for r in ALL_REPOS},
          "versions": {REPO: "1.0.0"}, "evidence": {"k": "v"},
          "limitations": []}
     s.update(over)
@@ -40,6 +45,7 @@ def _scenario(status: str = "PASS", **over) -> dict:
 
 def _full_e2e(status: str = "PASS") -> dict:
     names = ("context", "lifecycle", "security", "portal", "standalone",
+             "mcp", "bridge",
              "A-aws", "B-azure", "C-api", "D-platform", "E-product",
              "F-doctors", "G-sentinels", "H-atlas", "I-lens",
              "federation-routed", "federation-delegated",
@@ -63,15 +69,29 @@ def _full_e2e(status: str = "PASS") -> dict:
 
 
 def _evidence(**over) -> dict:
-    e = {"baseline": {"repos": {REPO: {"exists": True, "has_manifest": True,
-                                       "role": "forge-protocol-provider",
-                                       "resources": {"skills": 1}}}},
-         "inventory": {"repos": {REPO: {"exists": True, "resource_total": 5,
-                                        "resources": {"skill": {"count": 5}}}}},
+    e = {"baseline": {"repos": {
+                      r: {"exists": True, "has_manifest": True,
+                          "role": "forge-protocol-provider",
+                          "version": "1.0.0",
+                          "resources": {"skills": 1}} for r in ALL_REPOS}},
+         "inventory": {"repos": {
+                      r: {"exists": True, "resource_total": 5,
+                          "resources": {"skill": {
+                              "count": 5,
+                              "functional": {"units_verified": 5,
+                                             "broken": [],
+                                             "escaped": []}}}}
+                      for r in ALL_REPOS}},
          "e2e": _full_e2e(),
-         "lock": {"repos": {REPO: {"exists": True, "sha": "abc123"}}},
+         "lock": {"repos": {r: {"exists": True, "sha": "abc123",
+                                "version": "1.0.0",
+                                "manifest_checksums": {"m": "x"}}
+                           for r in ALL_REPOS},
+                  "adapters": {"theforge_sparkforge_aws": "1.0.0"},
+                  "contracts": {"forge/v1": "1"}},
          "states": _states(),
-         "ci_runs": {w: {"conclusion": "success", "ref": "main"}
+         "ci_runs": {w: {"conclusion": "success", "ref": "main",
+                         "sha": "abc123", "jobs": {"core": "success"}}
                      for w in ("ecosystem-real", "provider-surface-drift",
                                "release-compat")},
          "timestamp": TS, "environment": {}}
