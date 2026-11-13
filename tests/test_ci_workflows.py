@@ -164,6 +164,8 @@ SIBLING_REPOS = {
     "EdgarSocrates98/api-forge",
     "EdgarSocrates98/forge-doctor-data",
     "EdgarSocrates98/forge-doctor-api",
+    "EdgarSocrates98/spark-forge-azure",
+    "EdgarSocrates98/platform-forge",
 }
 OFF_GATE_TRIGGERS = {"schedule", "workflow_dispatch"}
 
@@ -342,6 +344,20 @@ def test_real_providers_builds_one_venv_per_specialist_with_its_adapter() -> Non
             "./adapters/doctorapi",
             "import forge_doctor_api, theforge_doctorapi",
         ),
+        (
+            ".venv-spark-azure",
+            "py311",
+            "./siblings/spark-forge-azure",
+            "./adapters/sparkforge_azure",
+            "import sparkforge_azure, theforge_sparkforge_azure",
+        ),
+        (
+            ".venv-platform",
+            "py311",
+            "./siblings/platform-forge",
+            "./adapters/platformforge",
+            "import platformforge, theforge_platformforge",
+        ),
     ):
         step = _step_running(job, f"-m venv {venv}")
         env_values = " ".join(str(v) for v in step.get("env", {}).values())
@@ -361,6 +377,8 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
         "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python",
         "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python",
         "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python",
+        "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON=$PWD/.venv-spark-azure/bin/python",
+        "THEFORGE_REAL_PLATFORMFORGE_PYTHON=$PWD/.venv-platform/bin/python",
         "THEFORGE_REAL_PROVIDERS_REQUIRED=1",
     }
     export_lines = [line for line in lines if "$GITHUB_ENV" in line]
@@ -368,8 +386,15 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
     for expected in exports:
         index = _index_of(export_lines, f'echo "{expected}" >> "$GITHUB_ENV"')
         assert index >= 0
-    # the contract is exported after all four venvs exist and before the real tests run
-    for venv in (".venv-api", ".venv-spark-aws", ".venv-dd", ".venv-da"):
+    # the contract is exported after all six venvs exist and before the real tests run
+    for venv in (
+        ".venv-api",
+        ".venv-spark-aws",
+        ".venv-dd",
+        ".venv-da",
+        ".venv-spark-azure",
+        ".venv-platform",
+    ):
         assert _index_of(lines, f"-m venv {venv}") < _index_of(lines, "$GITHUB_ENV")
     assert _index_of(lines, "$GITHUB_ENV") < _index_of(lines, "-m pytest")
     # the variables match the committed contract of tests/real_providers.py
@@ -379,6 +404,8 @@ def test_real_providers_exports_the_env_contract_with_required_on() -> None:
         "THEFORGE_REAL_APIFORGE_PYTHON",
         "THEFORGE_REAL_DOCTORDATA_PYTHON",
         "THEFORGE_REAL_DOCTORAPI_PYTHON",
+        "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON",
+        "THEFORGE_REAL_PLATFORMFORGE_PYTHON",
         "THEFORGE_REAL_PROVIDERS_REQUIRED",
     ):
         assert f'"{name}"' in contract, name
@@ -440,6 +467,7 @@ def test_release_compat_runs_conformance_per_specialist_venv() -> None:
     ):
         install = _index_of(lines, f"{venv}/bin/python -m pip install")
         check = _index_of(
-            lines, f"python -m theforge provider check -- {venv}/bin/python -m {adapter}"
+            lines,
+            f'python -m theforge provider check -- "$PWD/{venv}/bin/python" -m {adapter}',
         )
         assert install < check

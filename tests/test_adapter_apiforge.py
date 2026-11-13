@@ -148,7 +148,7 @@ def test_describe_flags_a_hand_built_snapshot() -> None:
     hand_built = catalog.manifest_payload(
         {**snapshot, "provenance": "hand-built"}, provider_id="api-forge", version="0.3.0"
     )
-    assert any("hand-built" in n and "0.1.0" in n for n in hand_built["limitations"])
+    assert any("hand-built" in n and "0.3.6" in n for n in hand_built["limitations"])
 
 
 def test_describe_is_deterministic() -> None:
@@ -265,7 +265,7 @@ def test_heuristic_record_keeps_its_native_state() -> None:
 
 def test_snapshot_shape_and_order() -> None:
     snapshot = _snapshot()
-    assert snapshot["specialist_version"] == "0.1.0"
+    assert snapshot["specialist_version"] == "0.3.6"
     assert snapshot["recorded_at"]
     records = snapshot["capabilities"]
     ids = [r["capability_id"] for r in records]

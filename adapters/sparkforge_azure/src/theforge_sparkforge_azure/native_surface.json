@@ -1,6 +1,6 @@
 {
   "provenance": "recorded",
-  "recorded_at": "2026-10-08T08:34:09Z",
+  "recorded_at": "2026-11-13T03:57:34Z",
   "seams": [
     {
       "callable": "check",
@@ -58,6 +58,7 @@
     "adls",
     "azure-databricks",
     "bicep",
+    "cosmos-db",
     "delta",
     "entra",
     "event-hubs",
@@ -75,7 +76,7 @@
     "terraform",
     "unity-catalog"
   ],
-  "specialist_version": "0.1.0",
+  "specialist_version": "0.3.6",
   "tools": [
     "sparkforge_sdd_check",
     "sparkforge_sdd_status"

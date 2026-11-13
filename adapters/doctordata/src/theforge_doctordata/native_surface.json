@@ -1,7 +1,7 @@
 {
   "contract_version": "forge-contracts/1",
   "provenance": "recorded",
-  "recorded_at": "2026-10-06T15:24:16Z",
+  "recorded_at": "2026-11-13T03:57:33Z",
   "request_kinds": [
     "scan"
   ],
@@ -26,5 +26,5 @@
       "present": true
     }
   ],
-  "specialist_version": "1.0.0rc1"
+  "specialist_version": "1.1.4"
 }

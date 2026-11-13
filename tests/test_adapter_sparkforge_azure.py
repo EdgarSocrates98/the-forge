@@ -267,7 +267,7 @@ def test_describe_without_replay_refuses_when_the_specialist_is_absent() -> None
 
 def test_snapshot_shape_and_canonical_encoding() -> None:
     snapshot = _snapshot()
-    assert snapshot["specialist_version"] == "0.1.0"
+    assert snapshot["specialist_version"] == "0.3.6"
     assert snapshot["provenance"] == "recorded"
     assert snapshot["recorded_at"]
     names = [seam["name"] for seam in snapshot["seams"]]
