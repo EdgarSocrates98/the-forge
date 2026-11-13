@@ -1,4 +1,4 @@
-# MCP Host Compatibility — 2026-11-13T04:59:08+00:00
+# MCP Host Compatibility — 2026-11-13T05:23:18+00:00
 
 Stdio JSON-RPC handshake measured live (perf-baseline.json `mcp_handshake`):
 
