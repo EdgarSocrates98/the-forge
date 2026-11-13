@@ -1129,7 +1129,9 @@ def scenario_portal() -> None:
     browser_ok: bool | None = None
     if dist.exists():
         try:
-            from playwright.sync_api import sync_playwright  # noqa: F401
+            import importlib.util
+            if importlib.util.find_spec("playwright") is None:
+                raise ImportError("playwright not installed")
             r = subprocess.run(
                 [sys.executable, "-m", "pytest", "e2e/test_browser_e2e.py",
                  "-q", "-x", "--tb=short"],
