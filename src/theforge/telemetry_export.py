@@ -84,6 +84,20 @@ def _ns_from_iso(value: Any) -> int | None:
     return int(dt.timestamp() * 1e9)
 
 
+def _recency_key(store: RunStore, run_id: str) -> tuple[int, int, str]:
+    """Observed-recency probe for selection and ``MAX_RUNS`` trimming.
+
+    ``created_at`` carries microsecond precision, so same-second runs still
+    order by observed creation rather than by the random run-id suffix; the
+    run-id timestamp is the fallback anchor and the id itself the
+    deterministic tiebreak.
+    """
+    telemetry = store.read_optional(run_id, "telemetry") or {}
+    evidence_ns = _ns_from_iso(telemetry.get("created_at")) or 0
+    id_ns = _ns_from_run_id(run_id) or 0
+    return (evidence_ns, id_ns, run_id)
+
+
 def _trace_id(key: str) -> str:
     return hashlib.sha256(f"theforge-trace:{key}".encode()).hexdigest()[:32]
 
@@ -323,7 +337,10 @@ def build_otlp_request(
     elif run_ids:
         selected = list(dict.fromkeys(run_ids))
     elif last:
-        selected = store.list_runs()[-last:]
+        selected = sorted(
+            store.list_runs(), key=lambda rid: _recency_key(store, rid)
+        )[-last:]
+    selected.sort(key=lambda rid: _recency_key(store, rid))
     if len(selected) > MAX_RUNS:
         summary.warnings.append(
             f"selection holds {len(selected)} runs; only the newest {MAX_RUNS} export"
